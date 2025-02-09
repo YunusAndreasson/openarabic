@@ -11,16 +11,17 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store } from '../store/store';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { setTheme } from '../store/themeSlice';
 import { useColorScheme } from 'react-native';
-import { ThemeProvider as CustomThemeProvider } from '@/contexts/ThemeContext';
-import { useTheme } from '@/contexts/ThemeContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 function AppContent() {
   const colorScheme = useColorScheme();
-  const { theme, setTheme } = useTheme();
+  const dispatch = useAppDispatch();
+  const { theme } = useAppSelector(state => state.theme);
   const isDark = theme === 'dark';
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -28,8 +29,8 @@ function AppContent() {
 
   // Initialize theme based on system preference
   useEffect(() => {
-    setTheme(colorScheme === 'dark' ? 'dark' : 'light');
-  }, [colorScheme, setTheme]);
+    dispatch(setTheme(colorScheme === 'dark' ? 'dark' : 'light'));
+  }, [colorScheme, dispatch]);
 
   useEffect(() => {
     if (loaded) {
@@ -55,9 +56,7 @@ function AppContent() {
 export default function RootLayout() {
   return (
     <Provider store={store}>
-      <CustomThemeProvider>
-        <AppContent />
-      </CustomThemeProvider>
+      <AppContent />
     </Provider>
   );
 }

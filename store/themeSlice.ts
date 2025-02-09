@@ -1,31 +1,28 @@
-import { createSlice } from '@reduxjs/toolkit';
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Colors } from '@/constants/Colors';
 
-export type ThemeState = {
-  isDark: boolean;
-  colors: typeof Colors.light | typeof Colors.dark;
-};
+type Theme = 'light' | 'dark';
+
+interface ThemeState {
+  theme: Theme;
+  colors: typeof Colors.light;
+}
 
 const initialState: ThemeState = {
-  isDark: false,
+  theme: 'light',
   colors: Colors.light,
 };
 
-export const themeSlice = createSlice({
+const themeSlice = createSlice({
   name: 'theme',
   initialState,
   reducers: {
-    toggleTheme: state => {
-      state.isDark = !state.isDark;
-      state.colors = state.isDark ? Colors.dark : Colors.light;
-    },
-    setTheme: (state, action: PayloadAction<boolean>) => {
-      state.isDark = action.payload;
-      state.colors = action.payload ? Colors.dark : Colors.light;
+    setTheme: (state, action: PayloadAction<Theme>) => {
+      state.theme = action.payload;
+      state.colors = Colors[action.payload];
     },
   },
 });
 
-export const { toggleTheme, setTheme } = themeSlice.actions;
+export const { setTheme } = themeSlice.actions;
 export default themeSlice.reducer;
