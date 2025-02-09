@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
+import { useColors } from '@/hooks/useColors';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { useAppSelector } from '../../store/hooks';
 
 // Define tab screen configurations separately for better maintainability
 const TAB_SCREENS = [
@@ -30,7 +30,7 @@ const tabBarStyles = Platform.select({
 });
 
 export default function TabLayout() {
-  const { colors } = useAppSelector(state => state.theme);
+  const colors = useColors();
 
   return (
     <Tabs

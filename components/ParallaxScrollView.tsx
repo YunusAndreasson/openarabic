@@ -6,8 +6,7 @@ import Animated, {
   useAnimatedStyle,
   useScrollViewOffset,
 } from 'react-native-reanimated';
-import { useAppSelector } from '../store/hooks';
-
+import { useColors } from '@/hooks/useColors';
 import { ThemedView } from '@/components/ThemedView';
 import { useBottomTabOverflow } from '@/components/ui/TabBarBackground';
 
@@ -18,12 +17,8 @@ type Props = PropsWithChildren<{
   headerBackgroundColor: { dark: string; light: string };
 }>;
 
-export default function ParallaxScrollView({
-  children,
-  headerImage,
-  headerBackgroundColor,
-}: Props) {
-  const { isDark } = useAppSelector(state => state.theme);
+export default function ParallaxScrollView({ children, headerImage }: Props) {
+  const colors = useColors();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollViewOffset(scrollRef);
   const bottom = useBottomTabOverflow();
@@ -53,11 +48,7 @@ export default function ParallaxScrollView({
         contentContainerStyle={{ paddingBottom: bottom }}
       >
         <Animated.View
-          style={[
-            styles.header,
-            { backgroundColor: headerBackgroundColor[isDark ? 'dark' : 'light'] },
-            headerAnimatedStyle,
-          ]}
+          style={[styles.header, { backgroundColor: colors.background }, headerAnimatedStyle]}
         >
           {headerImage}
         </Animated.View>
