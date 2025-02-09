@@ -34,6 +34,9 @@
         }
       ]
     ],
+    "devTools": {
+      "plugins": ["./devtools/MyDevToolsPlugin.tsx"]
+    },
     "experiments": {
       "typedRoutes": true
     }
