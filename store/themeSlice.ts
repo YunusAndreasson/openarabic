@@ -2,10 +2,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Colors } from '@/constants/Colors';
 
 type Theme = 'light' | 'dark';
+type ThemeColors = (typeof Colors)[Theme]; // This creates a union type of both themes
 
 interface ThemeState {
   theme: Theme;
-  colors: typeof Colors.light;
+  colors: ThemeColors;
 }
 
 const initialState: ThemeState = {
@@ -19,7 +20,7 @@ const themeSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
-      // state.colors = Colors[action.payload]; // Enable when testing colors
+      state.colors = Colors[action.payload];
     },
   },
 });
