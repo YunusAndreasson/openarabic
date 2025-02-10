@@ -1,0 +1,34 @@
+---
+description: Guidelines for good code
+globs: *.tsx, *.ts, *.js
+---
+
+# Structure
+
+- app/_layout.txt (entry point)
+- app/(tabs) (tabs)
+- componenets/ (reusable ui components)
+- constants/ (enums, consts)
+- hooks/ (reusable hooks)
+- store/ (redux store)
+
+# Stack
+
+- always use expo alternatives if available
+- use modern react 
+- use redux for state, never context
+
+# General
+
+- keep code DRY
+- avoid unecessary abstractions
+- keep code simple
+- focus on code that is easy to read
+- do not add unecessary comments
+- do not create new high level directories except for those available in Structure
+
+# React
+
+- do not use inline styles
+- use functional componenets
+- do not use console logging
