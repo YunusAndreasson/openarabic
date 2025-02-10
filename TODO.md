@@ -1,0 +1,3 @@
+- [ ] Persist Redux state
+- [ ] Add correct tabs
+- [ ] Fix tab colors

@@ -4,10 +4,9 @@ import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
+import { IconSymbol } from '@/components/IconSymbol';
+import TabBarBackground from '@/components/TabBarBackground';
 
-// Define tab screen configurations separately for better maintainability
 const TAB_SCREENS = [
   {
     name: 'index',
@@ -21,7 +20,6 @@ const TAB_SCREENS = [
   },
 ] as const;
 
-// Separate platform-specific styles
 const tabBarStyles = Platform.select({
   ios: {
     position: 'absolute' as const,
