@@ -19,7 +19,7 @@ const themeSlice = createSlice({
   reducers: {
     setTheme: (state, action: PayloadAction<Theme>) => {
       state.theme = action.payload;
-      state.colors = Colors[action.payload] as typeof Colors.light;
+      // state.colors = Colors[action.payload]; // Enable when testing colors
     },
   },
 });
