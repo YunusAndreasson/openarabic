@@ -19,5 +19,10 @@ export const Colors = {
   },
 } as const;
 
+export enum Theme {
+  Light = 'light',
+  Dark = 'dark',
+}
+
 // This creates a type of all available color names
 export type ColorName = keyof typeof Colors.light;

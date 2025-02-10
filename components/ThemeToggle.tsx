@@ -1,6 +1,7 @@
 import { Button } from 'react-native';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setTheme } from '@/store/themeSlice';
+import { Theme } from '@/constants/Colors';
 
 export function ThemeToggle() {
   const dispatch = useAppDispatch();
@@ -8,8 +9,8 @@ export function ThemeToggle() {
 
   return (
     <Button
-      onPress={() => dispatch(setTheme(theme === 'dark' ? 'light' : 'dark'))}
-      title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Theme`}
+      onPress={() => dispatch(setTheme(theme === Theme.Dark ? Theme.Light : Theme.Dark))}
+      title={`Switch to ${theme === Theme.Dark ? 'Light' : 'Dark'} Theme`}
     />
   );
 }

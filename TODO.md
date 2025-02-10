@@ -1,3 +1,4 @@
 - [x] Persist Redux state
 - [ ] Add correct tabs
 - [x] Fix tab colors
+- [ ] Add Supabase

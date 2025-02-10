@@ -17,6 +17,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setTheme } from '../store/themeSlice';
 import { useColorScheme } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
+import { Theme } from '@/constants/Colors';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,15 +28,15 @@ function AppContent() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
   const { theme } = useAppSelector(state => state.theme);
-  const isDark = theme === 'dark';
+  const isDark = theme === Theme.Dark;
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
     // If the current theme is still default (light) but the system is dark, update to dark mode.
-    if (theme === 'light' && colorScheme === 'dark') {
-      dispatch(setTheme('dark'));
+    if (theme === Theme.Light && colorScheme === Theme.Dark) {
+      dispatch(setTheme(Theme.Dark));
     }
   }, [colorScheme, dispatch, theme]);
 
@@ -54,7 +55,7 @@ function AppContent() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <StatusBar style={isDark ? Theme.Light : Theme.Dark} />
     </NavigationThemeProvider>
   );
 }
