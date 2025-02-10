@@ -12,10 +12,11 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
-import { store } from '../store/store';
+import { store, persistor } from '../store/store';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setTheme } from '../store/themeSlice';
 import { useColorScheme } from 'react-native';
+import { PersistGate } from 'redux-persist/integration/react';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -31,10 +32,12 @@ function AppContent() {
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  // Initialize theme based on system preference
   useEffect(() => {
-    dispatch(setTheme(colorScheme === 'dark' ? 'dark' : 'light'));
-  }, [colorScheme, dispatch]);
+    // If the current theme is still default (light) but the system is dark, update to dark mode.
+    if (theme === 'light' && colorScheme === 'dark') {
+      dispatch(setTheme('dark'));
+    }
+  }, [colorScheme, dispatch, theme]);
 
   useEffect(() => {
     if (loaded) {
@@ -61,9 +64,11 @@ export default function RootLayout() {
 
   return (
     <Provider store={store}>
-      <QueryClientProvider client={queryClient}>
-        <AppContent />
-      </QueryClientProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <QueryClientProvider client={queryClient}>
+          <AppContent />
+        </QueryClientProvider>
+      </PersistGate>
     </Provider>
   );
 }
