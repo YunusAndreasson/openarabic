@@ -1,11 +1,28 @@
-import { Image, StyleSheet } from 'react-native';
-
+import { Image, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { articlesService } from '../../services/articles';
+import type { Database } from '../../types/database.types';
+
+type Article = Database['public']['Tables']['articles']['Row'];
 
 export default function HomeScreen() {
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const data = await articlesService.getArticles();
+        setArticles(data || []);
+      } catch (error) {
+        throw error;
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
   return (
     <ParallaxScrollView
       headerImage={
@@ -15,20 +32,16 @@ export default function HomeScreen() {
         />
       }
     >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-      </ThemedView>
-      <ThemeToggle />
+      <View>
+        {articles.map(article => (
+          <ThemedText key={article.id}>{article.title}</ThemedText>
+        ))}
+      </View>
     </ParallaxScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   reactLogo: {
     height: 178,
     width: 290,
