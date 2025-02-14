@@ -30,7 +30,8 @@ function AppContent() {
   const { theme } = useAppSelector(state => state.theme);
   const isDark = theme === Theme.Dark;
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
+    NotoNaskhArabic: require('../assets/fonts/NotoNaskhArabic-Regular.ttf'),
   });
 
   useEffect(() => {
@@ -54,6 +55,7 @@ function AppContent() {
     <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="article" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={isDark ? Theme.Light : Theme.Dark} />
     </NavigationThemeProvider>

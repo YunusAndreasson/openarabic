@@ -38,7 +38,7 @@ export type Database = {
       articles: {
         Row: {
           audio_url: string | null;
-          author_id: number | null;
+          author_id: number;
           category_id: number;
           created_at: string;
           difficulty_level: number;
@@ -48,7 +48,7 @@ export type Database = {
         };
         Insert: {
           audio_url?: string | null;
-          author_id?: number | null;
+          author_id: number;
           category_id: number;
           created_at?: string;
           difficulty_level: number;
@@ -58,7 +58,7 @@ export type Database = {
         };
         Update: {
           audio_url?: string | null;
-          author_id?: number | null;
+          author_id?: number;
           category_id?: number;
           created_at?: string;
           difficulty_level?: number;
