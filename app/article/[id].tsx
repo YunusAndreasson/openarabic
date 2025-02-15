@@ -1,3 +1,4 @@
+import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -5,15 +6,63 @@ import { ThemedView } from '@/components/ThemedView';
 import { Article } from '@/types/articles.types';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import { useColors } from '@/hooks/useColors';
+import { CollapsibleHeader } from '@/components/CollapsibleHeader';
 import { Colors } from '@/constants/Colors';
-import { useAppSelector } from '@/store/hooks';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  category: {
+    marginBottom: 8,
+    fontSize: 14,
+    textShadowColor: Colors.dark.background + '80',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  title: {
+    textAlign: 'left',
+    marginBottom: 8,
+    fontSize: 32,
+    lineHeight: 40,
+    textShadowColor: Colors.dark.background + 'BF',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  author: {
+    fontSize: 16,
+    textShadowColor: Colors.dark.background + '80',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  sentenceContainer: {
+    marginBottom: 32,
+    paddingHorizontal: 4,
+  },
+  englishText: {
+    fontSize: 18,
+    lineHeight: 28,
+    marginBottom: 8,
+    writingDirection: 'ltr',
+    fontFamily: 'Philosopher',
+    textAlign: 'left',
+  },
+  arabicText: {
+    textAlign: 'right',
+    fontSize: 32,
+    lineHeight: 52,
+    marginBottom: 16,
+    writingDirection: 'rtl',
+    fontFamily: 'NotoNaskhArabic',
+    letterSpacing: 1.3,
+  },
+});
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [article, setArticle] = useState<Article | null>(null);
-  const { theme } = useAppSelector(state => state.theme);
-  const themeColors = Colors[theme];
+  const colors = useColors();
 
   useEffect(() => {
     const fetchArticle = async () => {
@@ -38,102 +87,41 @@ export default function ArticleScreen() {
     );
   }
 
+  const renderHeaderContent = () => (
+    <>
+      {article.category && (
+        <ThemedText
+          style={[styles.category, { color: colors.categoryText }]}
+          type="defaultSemiBold"
+        >
+          {article.category.name.toUpperCase()}
+        </ThemedText>
+      )}
+      <ThemedText type="title" style={styles.title} numberOfLines={3}>
+        {article.title}
+      </ThemedText>
+      {article.author && (
+        <ThemedText style={[styles.author, { color: colors.authorText }]}>
+          By {article.author.name}
+        </ThemedText>
+      )}
+    </>
+  );
+
   return (
-    <ParallaxScrollView
-      headerImage={
-        <View style={styles.headerContainer}>
-          <ThemedText type="title" style={styles.title}>
-            {article.title}
-          </ThemedText>
-          {article.category && (
-            <ThemedText style={styles.category} type="defaultSemiBold">
-              {article.category.name.toUpperCase()}
-            </ThemedText>
-          )}
-          {article.author && (
-            <ThemedText style={styles.author}>By {article.author.name}</ThemedText>
-          )}
-        </View>
-      }
-    >
+    <CollapsibleHeader renderContent={renderHeaderContent} title={article?.title || ''}>
       {article.article_sentences
         .sort((a, b) => a.position - b.position)
-        .map((sentence, index) => (
+        .map(sentence => (
           <View key={sentence.id} style={styles.sentenceContainer}>
-            <ThemedText
-              style={[
-                styles.arabicText,
-                {
-                  color: themeColors.arabicText,
-                },
-              ]}
-            >
+            <ThemedText style={[styles.arabicText, { color: colors.arabicText }]}>
               {sentence.arabic}
             </ThemedText>
-            <ThemedText
-              style={[
-                styles.englishText,
-                {
-                  color: themeColors.englishText,
-                },
-              ]}
-            >
+            <ThemedText style={[styles.englishText, { color: colors.englishText }]}>
               {sentence.english}
             </ThemedText>
-            {index < article.article_sentences.length - 1 && (
-              <View style={[styles.divider, { backgroundColor: themeColors.text }]} />
-            )}
           </View>
         ))}
-    </ParallaxScrollView>
+    </CollapsibleHeader>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  headerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  category: {
-    marginBottom: 4,
-    opacity: 0.7,
-  },
-  author: {
-    opacity: 0.7,
-  },
-  sentenceContainer: {
-    marginBottom: 24,
-  },
-  englishText: {
-    fontSize: 18,
-    lineHeight: 26,
-    marginBottom: 8,
-    writingDirection: 'ltr',
-    fontFamily: 'Philosopher',
-    textAlign: 'left',
-  },
-  arabicText: {
-    textAlign: 'right',
-    fontSize: 30,
-    lineHeight: 50,
-    marginBottom: 12,
-    writingDirection: 'rtl',
-    fontFamily: 'NotoNaskhArabic',
-    letterSpacing: 1.3,
-  },
-  divider: {
-    height: 1,
-    opacity: 0.1,
-    marginTop: 8,
-  },
-});
