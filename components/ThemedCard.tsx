@@ -44,7 +44,7 @@ export default function ThemedCard({
       backgroundColor: 'rgba(0, 0, 0, 0.2)',
     },
     category: {
-      color: colors.tint,
+      color: '#FFFFFF',
     },
     author: {
       color: colors.authorText,

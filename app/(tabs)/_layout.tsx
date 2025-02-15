@@ -4,9 +4,6 @@ import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 
-import { HapticTab } from '@/components/HapticTab';
-import TabBarBackground from '@/components/TabBarBackground';
-
 const TAB_SCREENS = [
   {
     name: 'index',
@@ -25,31 +22,30 @@ const TAB_SCREENS = [
   },
 ] as const;
 
-const tabBarStyles = Platform.select({
-  ios: {
-    position: 'absolute' as const,
-  },
-  default: {},
-});
-
 export default function TabLayout() {
   const colors = useColors();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.tint,
-        tabBarInactiveTintColor: colors.tabIconDefault,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: [
-          tabBarStyles,
-          {
+        tabBarStyle: Platform.select({
+          ios: {
             backgroundColor: colors.background,
             borderTopColor: colors.icon,
           },
-        ],
+          android: {
+            backgroundColor: colors.background,
+            borderTopColor: colors.icon,
+            elevation: 8,
+          },
+        }),
+        headerStyle: {
+          backgroundColor: colors.background,
+        },
+        headerTintColor: colors.text,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
+        tabBarHideOnKeyboard: true,
       }}
     >
       {TAB_SCREENS.map(({ name, title, iconName }) => (
@@ -65,6 +61,7 @@ export default function TabLayout() {
                 color={color}
               />
             ),
+            ...(name === 'index' ? { headerShown: false } : {}),
           }}
         />
       ))}

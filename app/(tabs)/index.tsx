@@ -1,6 +1,15 @@
-import { StyleSheet, FlatList, ListRenderItem, ActivityIndicator } from 'react-native';
+import {
+  StyleSheet,
+  FlatList,
+  ListRenderItem,
+  ActivityIndicator,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Platform,
+} from 'react-native';
 import { useEffect, useState, useCallback, useRef, memo } from 'react';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '../../services/articles';
 import { Article } from '@/types/articles.types';
@@ -12,13 +21,76 @@ const ITEM_HEIGHT = 360;
 
 // Memoize the card component for better performance
 const MemoizedCard = memo(ThemedCard);
-
 export default function TextsScreen() {
+  const navigation = useNavigation<BottomTabNavigationProp<any>>();
+  const lastScrollY = useRef(0);
+  const [isTabBarVisible, setIsTabBarVisible] = useState(true);
   const [articles, setArticles] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const colors = useColors();
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const scrollingDown = currentScrollY > lastScrollY.current;
+      const scrollThreshold = 20; // Minimum scroll distance to trigger hide/show
+
+      if (scrollingDown && isTabBarVisible && currentScrollY > 50) {
+        const scrollDelta = currentScrollY - lastScrollY.current;
+        if (scrollDelta > scrollThreshold) {
+          setIsTabBarVisible(false);
+          navigation.setOptions({
+            tabBarStyle: {
+              ...Platform.select({
+                ios: {
+                  backgroundColor: colors.background,
+                  borderTopColor: colors.icon,
+                },
+                android: {
+                  backgroundColor: colors.background,
+                  borderTopColor: colors.icon,
+                  elevation: 8,
+                },
+              }),
+              position: 'absolute',
+              bottom: -100,
+              height: 0,
+              opacity: 0,
+            },
+          });
+        }
+      } else if (!scrollingDown && !isTabBarVisible) {
+        const scrollDelta = lastScrollY.current - currentScrollY;
+        if (scrollDelta > scrollThreshold) {
+          setIsTabBarVisible(true);
+          navigation.setOptions({
+            tabBarStyle: {
+              ...Platform.select({
+                ios: {
+                  backgroundColor: colors.background,
+                  borderTopColor: colors.icon,
+                },
+                android: {
+                  backgroundColor: colors.background,
+                  borderTopColor: colors.icon,
+                  elevation: 8,
+                },
+              }),
+              position: 'absolute',
+              bottom: 0,
+              height: 49,
+              opacity: 1,
+            },
+          });
+        }
+      }
+
+      lastScrollY.current = currentScrollY;
+    },
+    [isTabBarVisible, navigation, colors]
+  );
 
   const fetchArticles = async () => {
     try {
@@ -101,6 +173,7 @@ export default function TextsScreen() {
         refreshing={isLoading}
         onRefresh={fetchArticles}
         updateCellsBatchingPeriod={100}
+        onScroll={handleScroll}
         scrollEventThrottle={16}
       />
     </ThemedView>
