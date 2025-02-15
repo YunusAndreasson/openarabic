@@ -35,8 +35,8 @@ function AppContent() {
   });
 
   useEffect(() => {
-    // Always sync theme with system theme unless explicitly set by user
-    if (colorScheme && theme !== colorScheme) {
+    // Only sync with system theme on first load
+    if (colorScheme && !theme) {
       dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
     }
   }, [colorScheme, dispatch, theme]);

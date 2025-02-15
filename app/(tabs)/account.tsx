@@ -1,10 +1,11 @@
-import { StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Alert, Linking, View } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { supabase } from '@/services/supabase';
 import Auth from '@/components/Auth';
 import { useColors } from '@/hooks/useColors';
@@ -52,117 +53,73 @@ export default function AccountScreen() {
       .join('');
   };
 
-  const dynamicStyles = {
-    avatar: {
-      shadowColor: colors.text,
-      backgroundColor: colors.tint,
-    },
-    avatarText: {
-      color: colors.background,
-    },
-    menuItem: {
-      borderBottomColor: colors.icon,
-    },
+  const handleSupport = () => {
+    Linking.openURL('mailto:yunus@edenmind.com');
   };
 
   if (!session) {
     return (
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-        <ThemedView style={styles.authContainer}>
+      <ThemedView style={styles.container}>
+        <View style={styles.authContainer}>
           <ThemedText type="title" style={styles.welcomeTitle}>
             Welcome
           </ThemedText>
           <ThemedText style={styles.subtitle}>Sign in to access your account</ThemedText>
           <Auth />
-        </ThemedView>
-      </ScrollView>
+        </View>
+      </ThemedView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      {/* Profile Header */}
-      <ThemedView style={styles.profileHeader}>
-        <ThemedView style={styles.avatarContainer}>
-          <ThemedView style={[styles.avatar, dynamicStyles.avatar]}>
-            <ThemedText style={[styles.avatarText, dynamicStyles.avatarText]}>
-              {session.user.email ? getInitials(session.user.email) : 'U'}
-            </ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.profileInfo}>
-            <ThemedText style={styles.email} numberOfLines={1} ellipsizeMode="tail">
-              {session.user.email}
-            </ThemedText>
-            <ThemedText style={styles.memberSince}>
-              Member since {new Date(session.user.created_at).toLocaleDateString()}
-            </ThemedText>
-          </ThemedView>
-        </ThemedView>
-      </ThemedView>
+    <ThemedView style={styles.container}>
+      <View style={styles.content}>
+        <View>
+          <View style={styles.avatarContainer}>
+            <View
+              style={[styles.avatar, { backgroundColor: colors.tint, shadowColor: colors.text }]}
+            >
+              <ThemedText
+                style={[styles.avatarText, { color: colors.background }]}
+                skipDefaultColor
+              >
+                {session.user.email ? getInitials(session.user.email) : 'U'}
+              </ThemedText>
+            </View>
+            <View style={styles.profileInfo}>
+              <ThemedText style={styles.email} numberOfLines={1} ellipsizeMode="tail">
+                {session.user.email}
+              </ThemedText>
+              <ThemedText style={styles.memberSince}>
+                Member since {new Date(session.user.created_at).toLocaleDateString()}
+              </ThemedText>
+            </View>
+          </View>
 
-      {/* Settings Section */}
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Account Settings</ThemedText>
+          <View style={styles.settingsContainer}>
+            <View style={styles.settingRow}>
+              <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+              <ThemeToggle />
+            </View>
+          </View>
+        </View>
 
-        <TouchableOpacity
-          style={[styles.menuItem, dynamicStyles.menuItem]}
-          onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}
-        >
-          <ThemedView style={styles.menuItemLeft}>
-            <ThemedText style={styles.menuItemText}>Edit Profile</ThemedText>
-          </ThemedView>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.menuItem, dynamicStyles.menuItem]}
-          onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}
-        >
-          <ThemedView style={styles.menuItemLeft}>
-            <ThemedText style={styles.menuItemText}>Change Password</ThemedText>
-          </ThemedView>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.menuItem, dynamicStyles.menuItem]}
-          onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}
-        >
-          <ThemedView style={styles.menuItemLeft}>
-            <ThemedText style={styles.menuItemText}>Notifications</ThemedText>
-          </ThemedView>
-        </TouchableOpacity>
-      </ThemedView>
-
-      {/* Support Section */}
-      <ThemedView style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Support</ThemedText>
-
-        <TouchableOpacity
-          style={[styles.menuItem, dynamicStyles.menuItem]}
-          onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}
-        >
-          <ThemedView style={styles.menuItemLeft}>
-            <ThemedText style={styles.menuItemText}>Help Center</ThemedText>
-          </ThemedView>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.menuItem, dynamicStyles.menuItem]}
-          onPress={() => Alert.alert('Coming Soon', 'This feature will be available soon!')}
-        >
-          <ThemedView style={styles.menuItemLeft}>
-            <ThemedText style={styles.menuItemText}>Terms & Privacy</ThemedText>
-          </ThemedView>
-        </TouchableOpacity>
-      </ThemedView>
-
-      {/* Sign Out Button */}
-      <ThemedButton
-        variant="outlined"
-        title="Sign Out"
-        onPress={signOut}
-        style={styles.signOutButton}
-      />
-    </ScrollView>
+        <View style={styles.buttonContainer}>
+          <ThemedButton
+            variant="outlined"
+            title="Need Help?"
+            onPress={handleSupport}
+            style={styles.button}
+          />
+          <ThemedButton
+            variant="outlined"
+            title="Sign Out"
+            onPress={signOut}
+            style={styles.button}
+          />
+        </View>
+      </View>
+    </ThemedView>
   );
 }
 
@@ -170,13 +127,16 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentContainer: {
+  content: {
+    flex: 1,
     padding: 16,
+    justifyContent: 'space-between',
   },
   authContainer: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: 40,
+    justifyContent: 'center',
+    padding: 16,
   },
   welcomeTitle: {
     fontSize: 28,
@@ -188,13 +148,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
     marginBottom: 32,
   },
-  profileHeader: {
-    marginBottom: 24,
-  },
   avatarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+    marginTop: 16,
   },
   avatar: {
     width: 72,
@@ -213,6 +171,9 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 28,
     fontWeight: '600',
+    height: 32,
+    lineHeight: 32,
+    marginTop: -2,
   },
   profileInfo: {
     flex: 1,
@@ -226,31 +187,24 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     fontSize: 14,
   },
-  section: {
-    marginBottom: 24,
+  buttonContainer: {
+    gap: 12,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 16,
-    opacity: 0.8,
+  button: {
+    width: '100%',
   },
-  menuItem: {
+  settingsContainer: {
+    marginTop: 32,
+    borderRadius: 12,
+  },
+  settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  menuItemText: {
+  settingLabel: {
     fontSize: 16,
-  },
-  signOutButton: {
-    marginTop: 8,
+    fontWeight: '500',
   },
 });

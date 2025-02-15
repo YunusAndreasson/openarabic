@@ -1,15 +1,15 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Colors, Theme } from '@/constants/Colors';
 
-type ThemeColors = (typeof Colors)[Theme]; // This creates a union type of both themes
+type ThemeColors = (typeof Colors)[Theme];
 
 interface ThemeState {
-  theme: Theme;
+  theme: Theme | null;
   colors: ThemeColors;
 }
 
 const initialState: ThemeState = {
-  theme: Theme.Light,
+  theme: null,
   colors: Colors.light,
 };
 

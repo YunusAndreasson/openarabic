@@ -1,12 +1,6 @@
 import React, { ReactNode, useEffect, useMemo } from 'react';
-import {
-  StyleSheet,
-  View,
-  ImageSourcePropType,
-  ImageBackground,
-  StatusBar,
-  Platform,
-} from 'react-native';
+import { StyleSheet, View, ImageSourcePropType, StatusBar, Platform } from 'react-native';
+import { Image } from 'expo-image';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -114,11 +108,14 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <Animated.View style={[styles.header, headerAnimatedStyle]}>
-        <ImageBackground
-          source={backgroundImage || require('@/assets/images/default-header.jpg')}
-          style={styles.backgroundImage}
-          resizeMode="cover"
-        >
+        <View style={styles.imageContainer}>
+          <Image
+            source={backgroundImage || require('@/assets/images/default-header.jpg')}
+            style={styles.backgroundImage}
+            contentFit="cover"
+            transition={300}
+            cachePolicy="memory-disk"
+          />
           <LinearGradient
             colors={gradientColors}
             style={styles.gradient}
@@ -129,7 +126,7 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
               {renderContent()}
             </Animated.View>
           </LinearGradient>
-        </ImageBackground>
+        </View>
       </Animated.View>
 
       <Animated.View style={[styles.navHeader, navHeaderAnimatedStyle]}>
@@ -170,9 +167,13 @@ const styles = StyleSheet.create({
     zIndex: 1,
     overflow: 'hidden',
   },
-  backgroundImage: {
+  imageContainer: {
+    flex: 1,
     width: '100%',
     height: '100%',
+  },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
   },
   gradient: {
     flex: 1,

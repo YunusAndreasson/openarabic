@@ -4,8 +4,8 @@
 - [x] Add Supabase
 - [x] Fix card background color
 - [ ] Add login
-- [ ] Hide bottom bar when scrolling
-- [ ] Put image in parallax scroller
+- [x] Hide bottom bar when scrolling
+- [x] Put image in parallax scroller
 - [ ] Add a veritcal scroller for the categories and authors
 - [ ] Add source for books
 - [ ] Create a constant for margin and padding

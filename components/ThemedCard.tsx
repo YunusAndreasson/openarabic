@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, Image, Pressable, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Pressable, ActivityIndicator } from 'react-native';
+import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from '@/components/ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -66,11 +67,13 @@ export default function ThemedCard({
             </View>
           )}
           <Image
-            source={{ uri: imageUrl }}
+            source={imageUrl}
             style={styles.image}
-            resizeMode="cover"
+            contentFit="cover"
+            transition={300}
             onLoadStart={handleLoadStart}
-            onLoadEnd={handleLoadEnd}
+            onLoad={handleLoadEnd}
+            cachePolicy="memory-disk"
           />
           <LinearGradient
             colors={themedStyles.gradient.colors}
