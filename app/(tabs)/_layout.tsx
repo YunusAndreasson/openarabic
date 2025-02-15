@@ -64,7 +64,7 @@ export default function TabLayout() {
                 color={color}
               />
             ),
-            ...(name === 'index' ? { headerShown: false } : {}),
+            ...(name === 'index' || name === 'account' ? { headerShown: false } : {}),
           }}
         />
       ))}
