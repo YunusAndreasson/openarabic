@@ -1,6 +1,11 @@
 - [x] Persist Redux state
-- [ ] Add correct tabs
+- [x] Add correct tabs
 - [x] Fix tab colors
 - [x] Add Supabase
-
-rG1fuVg0RGWoECEF
+- [x] Fix card background color
+- [ ] Add login
+- [ ] Hide bottom bar when scrolling
+- [ ] Put image in parallax scroller
+- [ ] Add a veritcal scroller for the categories and authors
+- [ ] Add source for books
+- [ ] Create a constant for margin and padding

@@ -35,9 +35,9 @@ function AppContent() {
   });
 
   useEffect(() => {
-    // If the current theme is still default (light) but the system is dark, update to dark mode.
-    if (theme === Theme.Light && colorScheme === Theme.Dark) {
-      dispatch(setTheme(Theme.Dark));
+    // Always sync theme with system theme unless explicitly set by user
+    if (colorScheme && theme !== colorScheme) {
+      dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
     }
   }, [colorScheme, dispatch, theme]);
 

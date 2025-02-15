@@ -3,9 +3,15 @@ import { useColors } from '@/hooks/useColors';
 
 export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  skipDefaultColor?: boolean;
 };
 
-export function ThemedText({ style, type = 'default', ...rest }: ThemedTextProps) {
+export function ThemedText({
+  style,
+  type = 'default',
+  skipDefaultColor = false,
+  ...rest
+}: ThemedTextProps) {
   const colors = useColors();
 
   return (
@@ -16,7 +22,7 @@ export function ThemedText({ style, type = 'default', ...rest }: ThemedTextProps
         type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
         type === 'subtitle' ? styles.subtitle : undefined,
         type === 'link' ? [styles.link, { color: colors.link }] : undefined,
-        { color: colors.text },
+        !skipDefaultColor ? { color: colors.text } : undefined,
         style,
       ]}
       {...rest}

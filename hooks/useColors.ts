@@ -1,11 +1,9 @@
 import { useAppSelector } from '@/store/hooks';
-import { Colors, Theme } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 export function useColors() {
-  const { theme, colors } = useAppSelector(state => state.theme);
-  console.log('Current theme:', theme); // Temporary debug log
-  console.log('Current colors from state:', colors); // Temporary debug log
+  const { theme } = useAppSelector(state => state.theme);
 
-  // Ensure we always return valid colors
-  return colors || Colors[theme] || Colors.light;
+  // Always return the colors from the current theme state
+  return Colors[theme];
 }

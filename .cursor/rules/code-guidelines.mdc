@@ -5,30 +5,112 @@ globs: *.tsx, *.ts, *.js
 
 # Structure
 
-- app/_layout.txt (entry point)
-- app/(tabs) (tabs)
-- componenets/ (reusable ui components)
-- constants/ (enums, consts)
-- hooks/ (reusable hooks)
-- store/ (redux store)
+## Core Directories
+- app/ (Expo Router app directory)
+  - _layout.tsx (root layout with theme and navigation setup)
+  - (tabs)/ (tab-based navigation)
+  - article/ (article-related screens)
+- components/ (reusable UI components)
+- constants/ (enums, constants, configuration)
+- hooks/ (reusable React hooks)
+- store/ (Redux store and slices)
+- services/ (API and external service integrations)
+- types/ (TypeScript type definitions)
+  - *.types.ts (type definitions for specific features)
+  - database.types.ts (database schema types)
+
+## Assets and Config
+- assets/ (static assets like fonts and images)
+- .cursor/ (AI assistant rules and configuration)
 
 # Stack
 
-- always use expo alternatives if available
-- use modern react 
-- use redux for state, never context
+## Core Technologies
+- Expo (latest version)
+- React Native
+- TypeScript
+- Redux Toolkit for state management
+- Expo Router for navigation
+- React Query for data fetching
+
+## Development Guidelines
+- Use Expo features and APIs when available
+- Use modern React patterns (hooks, functional components)
+- Use Redux for global state, never Context API
+- Use TypeScript strictly - avoid any
 
 # General
 
-- keep code DRY
-- avoid unecessary abstractions
-- keep code simple
-- focus on code that is easy to read
-- do not add unecessary comments
-- do not create new high level directories except for those available in Structure
+## Code Style
+- Keep code DRY (Don't Repeat Yourself)
+- Avoid unnecessary abstractions
+- Write simple, readable code
+- Minimize comments - write self-documenting code
+- Follow existing patterns in the codebase
 
-# React
+## Project Structure
+- Keep files in appropriate directories based on their purpose
+- Create new files in existing directories
+- Don't create new top-level directories without discussion
+- Use feature-based organization within directories
 
-- do not use inline styles
-- use functional componenets
-- do not use console logging
+# React and React Native
+
+## Component Guidelines
+- Use functional components
+- Use TypeScript interfaces for props
+- Avoid inline styles - use StyleSheet.create
+- Keep components focused and single-purpose
+- Don't use console.log in production code
+
+## Data Fetching
+- Use React Query for API calls
+- Define services in services/ directory
+- Define types in types/ directory
+- Handle loading and error states
+
+# Colors and Theming
+
+## Theme System
+- Theme state is managed by Redux via themeSlice
+- System theme is automatically synced unless explicitly overridden
+- All colors are defined in constants/Colors.ts for both light and dark themes
+- Colors are accessed via the useColors hook
+
+## Using Colors in Components
+- Always use the useColors hook from @/hooks/useColors
+  ```typescript
+  const colors = useColors();
+  ```
+- Never use Colors constants or useColorScheme directly
+- All components must support both light and dark themes
+- When adding new colors:
+  1. Add to both light and dark themes in Colors.ts
+  2. Add TypeScript types if needed
+
+## ThemedText Component
+- Use skipDefaultColor when providing custom colors:
+  ```typescript
+  // For custom colored text
+  <ThemedText 
+    style={[styles.category, { color: colors.categoryText }]}
+    skipDefaultColor
+  >
+    {text}
+  </ThemedText>
+
+  // For default text color
+  <ThemedText style={styles.title}>
+    {text}
+  </ThemedText>
+  ```
+- The component automatically handles default text colors if skipDefaultColor is not set
+
+## Theme State Management
+- Theme changes are handled in app/_layout.tsx
+- System theme changes are automatically applied
+- Theme state persists across app restarts
+- Theme can be manually controlled via the setTheme action:
+  ```typescript
+  dispatch(setTheme(Theme.Dark)); // or Theme.Light
+  ```

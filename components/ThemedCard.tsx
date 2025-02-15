@@ -1,8 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Image, Pressable } from 'react-native';
-import { useColorScheme } from 'react-native';
-import { Colors } from '../constants/Colors';
-import { ThemedText } from './ThemedText';
+import { useColors } from '@/hooks/useColors';
+import { ThemedText } from '@/components/ThemedText';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -19,8 +18,7 @@ export default function ThemedCard({
   author,
   onPress,
 }: ThemedCardProps) {
-  const colorScheme = useColorScheme() ?? 'light';
-  const colors = Colors[colorScheme];
+  const colors = useColors();
 
   return (
     <Pressable onPress={onPress}>
@@ -40,15 +38,16 @@ export default function ThemedCard({
             <ThemedText
               style={[styles.category, { color: colors.categoryText }]}
               type="defaultSemiBold"
+              skipDefaultColor
             >
               {category.toUpperCase()}
             </ThemedText>
           </View>
-          <ThemedText style={styles.title} type="subtitle">
+          <ThemedText style={[styles.title, { color: colors.text }]} type="subtitle">
             {title}
           </ThemedText>
           <View style={styles.row}>
-            <ThemedText style={[styles.author, { color: colors.authorText }]}>
+            <ThemedText style={[styles.author, { color: colors.authorText }]} skipDefaultColor>
               By {author}
             </ThemedText>
           </View>
