@@ -8,17 +8,20 @@ const TAB_SCREENS = [
   {
     name: 'index',
     title: 'Texts',
-    iconName: 'book-outline',
+    iconOutline: 'book-outline',
+    iconFilled: 'book',
   },
   {
     name: 'vocabulary',
     title: 'Vocabulary',
-    iconName: 'text-outline',
+    iconOutline: 'text-outline',
+    iconFilled: 'text',
   },
   {
     name: 'account',
     title: 'Account',
-    iconName: 'person-circle-outline',
+    iconOutline: 'person-circle-outline',
+    iconFilled: 'person-circle',
   },
 ] as const;
 
@@ -48,15 +51,15 @@ export default function TabLayout() {
         tabBarHideOnKeyboard: true,
       }}
     >
-      {TAB_SCREENS.map(({ name, title, iconName }) => (
+      {TAB_SCREENS.map(({ name, title, iconOutline, iconFilled }) => (
         <Tabs.Screen
           key={name}
           name={name}
           options={{
             title,
-            tabBarIcon: ({ color, size }) => (
+            tabBarIcon: ({ color, size, focused }) => (
               <Ionicons
-                name={iconName as keyof typeof Ionicons.glyphMap}
+                name={(focused ? iconFilled : iconOutline) as keyof typeof Ionicons.glyphMap}
                 size={size}
                 color={color}
               />
