@@ -8,7 +8,7 @@ import { ThemedView } from '@/components/ThemedView';
 
 const ITEM_HEIGHT = 300; // Approximate height of our card
 
-export default function HomeScreen() {
+export default function TextsScreen() {
   const [articles, setArticles] = useState<Article[]>([]);
   const flatListRef = useRef<FlatList>(null);
 

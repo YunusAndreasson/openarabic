@@ -2,21 +2,26 @@ import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
+import { Ionicons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/IconSymbol';
 import TabBarBackground from '@/components/TabBarBackground';
 
 const TAB_SCREENS = [
   {
     name: 'index',
-    title: 'Home',
-    iconName: 'house.fill',
+    title: 'Texts',
+    iconName: 'book-outline',
   },
   {
-    name: 'explore',
-    title: 'Explore',
-    iconName: 'paperplane.fill',
+    name: 'vocabulary',
+    title: 'Vocabulary',
+    iconName: 'text-outline',
+  },
+  {
+    name: 'account',
+    title: 'Account',
+    iconName: 'person-circle-outline',
   },
 ] as const;
 
@@ -53,7 +58,13 @@ export default function TabLayout() {
           name={name}
           options={{
             title,
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name={iconName} color={color} />,
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons
+                name={iconName as keyof typeof Ionicons.glyphMap}
+                size={size}
+                color={color}
+              />
+            ),
           }}
         />
       ))}

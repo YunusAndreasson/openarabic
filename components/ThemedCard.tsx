@@ -36,16 +36,22 @@ export default function ThemedCard({
       >
         <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
         <View style={styles.contentContainer}>
-          <ThemedText
-            style={[styles.category, { color: colors.categoryText }]}
-            type="defaultSemiBold"
-          >
-            {category.toUpperCase()}
-          </ThemedText>
+          <View style={styles.row}>
+            <ThemedText
+              style={[styles.category, { color: colors.categoryText }]}
+              type="defaultSemiBold"
+            >
+              {category.toUpperCase()}
+            </ThemedText>
+          </View>
           <ThemedText style={styles.title} type="subtitle">
             {title}
           </ThemedText>
-          <ThemedText style={[styles.author, { color: colors.authorText }]}>By {author}</ThemedText>
+          <View style={styles.row}>
+            <ThemedText style={[styles.author, { color: colors.authorText }]}>
+              By {author}
+            </ThemedText>
+          </View>
         </View>
       </View>
     </Pressable>
@@ -73,6 +79,11 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   category: {
     fontSize: 12,

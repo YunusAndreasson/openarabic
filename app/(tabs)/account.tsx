@@ -1,26 +1,21 @@
 import { StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/IconSymbol';
 
-export default function TabTwoScreen() {
+export default function AccountScreen() {
   return (
     <ParallaxScrollView
       headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
+        <Ionicons size={310} color="#808080" name="person-circle" style={styles.headerImage} />
       }
     >
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
+        <ThemedText type="title">Account</ThemedText>
       </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
+      <ThemedText>Account settings and preferences will be available here.</ThemedText>
     </ParallaxScrollView>
   );
 }
