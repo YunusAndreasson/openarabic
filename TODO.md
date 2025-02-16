@@ -8,4 +8,8 @@
 - [x] Put image in parallax scroller
 - [ ] Add a veritcal scroller for the categories and authors
 - [ ] Add source for books
-- [ ] Create a constant for margin and padding
+- [ ] Render arabic sentences based on word
+- [ ] Add a play button to play the Arabic text
+- [ ] Add a playlist/bookmarks
+- [ ] Add a toast (use when adding to playlist)
+- [ ] Add a floating player as in Perplexity
