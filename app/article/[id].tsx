@@ -32,7 +32,6 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontSize: 18,
-    lineHeight: 28,
     marginBottom: 8,
     writingDirection: 'ltr',
     fontFamily: 'Philosopher',
@@ -41,11 +40,11 @@ const styles = StyleSheet.create({
   arabicText: {
     textAlign: 'right',
     fontSize: 32,
-    lineHeight: 52,
+    lineHeight: 48,
     marginBottom: 16,
     writingDirection: 'rtl',
     fontFamily: 'NotoNaskhArabic',
-    letterSpacing: 1.3,
+    includeFontPadding: false,
   },
 });
 
