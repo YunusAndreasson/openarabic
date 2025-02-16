@@ -87,7 +87,16 @@ export default function ArticleScreen() {
           {article.category.name.toUpperCase()}
         </ThemedText>
       )}
-      <ThemedText type="title" style={styles.title} numberOfLines={3}>
+      <ThemedText
+        type="title"
+        style={[
+          styles.title,
+          {
+            color: colors.titleText,
+          },
+        ]}
+        numberOfLines={3}
+      >
         {article.title}
       </ThemedText>
       {article.author && (
