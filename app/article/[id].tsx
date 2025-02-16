@@ -8,7 +8,6 @@ import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
-import { Colors } from '@/constants/Colors';
 
 const styles = StyleSheet.create({
   container: {
@@ -17,24 +16,15 @@ const styles = StyleSheet.create({
   category: {
     marginBottom: 8,
     fontSize: 14,
-    textShadowColor: Colors.dark.background + '80',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   title: {
     textAlign: 'left',
     marginBottom: 8,
     fontSize: 32,
     lineHeight: 40,
-    textShadowColor: Colors.dark.background + 'BF',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
   },
   author: {
     fontSize: 16,
-    textShadowColor: Colors.dark.background + '80',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
   },
   sentenceContainer: {
     marginBottom: 32,

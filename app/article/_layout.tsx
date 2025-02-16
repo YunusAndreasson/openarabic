@@ -6,8 +6,10 @@ export default function ArticleLayout() {
       <Stack.Screen
         name="[id]"
         options={{
-          title: 'Home',
+          title: '',
           headerShown: true,
+          headerTransparent: true,
+          headerTintColor: '#FFFFFF',
         }}
       />
     </Stack>
