@@ -45,10 +45,10 @@ export default function ThemedCard({
       backgroundColor: 'rgba(0, 0, 0, 0.2)',
     },
     category: {
-      color: '#FFFFFF',
+      color: colors.background,
     },
     author: {
-      color: colors.authorText,
+      color: colors.tabIconDefault,
     },
   };
 
@@ -83,7 +83,7 @@ export default function ThemedCard({
           <View style={styles.categoryContainer}>
             <BlurView intensity={35} tint="dark" style={styles.categoryPill}>
               <View style={[styles.categoryBackground, themedStyles.categoryBackground]}>
-                <ThemedText style={[styles.category, themedStyles.category]} type="defaultSemiBold">
+                <ThemedText style={[styles.category, themedStyles.category]} skipDefaultColor>
                   {category.toUpperCase()}
                 </ThemedText>
               </View>

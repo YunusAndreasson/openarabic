@@ -15,6 +15,7 @@ export const Colors = {
     arabicText: '#1A1A1A', // Slightly darker for Arabic text to enhance clarity
     englishText: '#4D4D4D', // A bit lighter for English text
     titleText: '#000000', // Pure black for maximum title contrast
+    white: '#FFFFFF',
   },
   dark: {
     text: '#E0E0E0', // Off-white text for dark mode
@@ -31,6 +32,7 @@ export const Colors = {
     arabicText: '#F0F0F0', // Brighter for Arabic text to enhance clarity
     englishText: '#CCCCCC', // Slightly subdued for English text
     titleText: '#FFFFFF', // Pure white for maximum title contrast
+    white: '#FFFFFF',
   },
 } as const;
 

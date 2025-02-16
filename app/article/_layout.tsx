@@ -1,6 +1,9 @@
 import { Stack } from 'expo-router';
+import { useColors } from '@/hooks/useColors';
 
 export default function ArticleLayout() {
+  const colors = useColors();
+
   return (
     <Stack>
       <Stack.Screen
@@ -9,7 +12,7 @@ export default function ArticleLayout() {
           title: '',
           headerShown: true,
           headerTransparent: true,
-          headerTintColor: '#FFFFFF',
+          headerTintColor: colors.white,
         }}
       />
     </Stack>
