@@ -1,34 +1,34 @@
 /* eslint-disable no-unused-vars */
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: '#0a7ea4',
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: '#0a7ea4',
-    link: '#0a7ea4',
-    cardBackground: '#FFFFFF',
-    cardBorder: '#E6E8EB',
-    categoryText: '#687076',
-    authorText: '#687076',
-    arabicText: '#1A1A1A', // Very dark gray for Arabic in light mode
-    englishText: '#4D4D4D', // Medium gray for English in light mode
+    text: '#222222', // Dark gray text for optimal readability
+    background: '#FFFFFF', // Off-white background to reduce glare
+    tint: '#444444', // Neutral gray accent for interactive elements
+    icon: '#666666', // Mid-gray for icons
+    tabIconDefault: '#666666', // Consistent gray for inactive tabs
+    tabIconSelected: '#444444', // Matching tint for active tabs
+    link: '#444444', // Neutral gray for links
+    cardBackground: '#F0F0F0', // Subtle contrast for card backgrounds
+    cardBorder: '#DDDDDD', // Light gray border for clear delineation
+    categoryText: '#666666', // Secondary text in gray
+    authorText: '#666666',
+    arabicText: '#1A1A1A', // Slightly darker for Arabic text to enhance clarity
+    englishText: '#4D4D4D', // A bit lighter for English text
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#000',
-    tint: '#fff',
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: '#333',
-    link: '#fff',
-    cardBackground: '#1C1C1C',
-    cardBorder: '#2D2D2D',
-    categoryText: '#9BA1A6',
-    authorText: '#9BA1A6',
-    arabicText: '#E6E6E6', // Light gray for Arabic in dark mode
-    englishText: '#BBBBBB', // Darker gray for English in dark mode
+    text: '#E0E0E0', // Off-white text for dark mode
+    background: '#000000', // Dark gray background instead of true black
+    tint: '#EEEEEE', // Neutral gray accent for a refined appearance
+    icon: '#BBBBBB', // Soft gray for icons
+    tabIconDefault: '#BBBBBB', // Consistent with icon color for inactive tabs
+    tabIconSelected: '#AAAAAA', // Matching tint for active tabs
+    link: '#AAAAAA', // Neutral gray for links
+    cardBackground: '#1E1E1E', // Slightly lighter than background for depth
+    cardBorder: '#2A2A2A', // Subtle gray border for cards
+    categoryText: '#BBBBBB', // Secondary text in soft gray
+    authorText: '#BBBBBB',
+    arabicText: '#F0F0F0', // Brighter for Arabic text to enhance clarity
+    englishText: '#CCCCCC', // Slightly subdued for English text
   },
 } as const;
 

@@ -3,7 +3,7 @@
 - [x] Fix tab colors
 - [x] Add Supabase
 - [x] Fix card background color
-- [ ] Add login
+- [x] Add login
 - [x] Hide bottom bar when scrolling
 - [x] Put image in parallax scroller
 - [ ] Add a veritcal scroller for the categories and authors
