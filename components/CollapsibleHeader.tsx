@@ -113,7 +113,6 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
             source={backgroundImage || require('@/assets/images/default-header.jpg')}
             style={styles.backgroundImage}
             contentFit="cover"
-            transition={300}
             cachePolicy="memory-disk"
           />
           <LinearGradient
