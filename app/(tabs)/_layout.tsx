@@ -20,8 +20,8 @@ const TAB_SCREENS = [
   {
     name: 'account',
     title: 'Account',
-    iconOutline: 'person-circle-outline',
-    iconFilled: 'person-circle',
+    iconOutline: 'person-outline',
+    iconFilled: 'person',
   },
 ] as const;
 

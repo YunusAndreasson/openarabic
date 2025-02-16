@@ -14,12 +14,12 @@ import { useNavigation } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 
-const HEADER_HEIGHT = 280;
+const HEADER_HEIGHT = 340;
 const HEADER_HEIGHT_COLLAPSED = 0;
 const NAV_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
 const NAV_HEADER_HEIGHT = Platform.OS === 'ios' ? 96 : 80;
 const SCROLL_THRESHOLD = HEADER_HEIGHT - HEADER_HEIGHT_COLLAPSED;
-const HEADER_FADE_THRESHOLD = SCROLL_THRESHOLD * 0.7;
+const HEADER_FADE_THRESHOLD = SCROLL_THRESHOLD * 0.8;
 
 interface Props {
   children: ReactNode;
@@ -37,13 +37,18 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
     return ['transparent', colors.background] as const;
   }, [colors.background]);
 
-  useEffect(() => {
-    navigation.setOptions({
+  const initialNavOptions = useMemo(
+    () => ({
       headerTitle: '',
       headerTransparent: true,
       headerStyle: { backgroundColor: 'transparent' },
-    });
-  }, [navigation]);
+    }),
+    []
+  );
+
+  useEffect(() => {
+    navigation.setOptions(initialNavOptions);
+  }, [navigation, initialNavOptions]);
 
   const updateNavigation = (progress: number) => {
     navigation.setOptions({
