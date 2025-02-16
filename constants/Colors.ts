@@ -10,7 +10,7 @@ export const Colors = {
     link: '#444444', // Neutral gray for links
     cardBackground: '#F0F0F0', // Subtle contrast for card backgrounds
     cardBorder: '#DDDDDD', // Light gray border for clear delineation
-    categoryText: '#666666', // Secondary text in gray
+    categoryText: '#444444', // Darker gray for better readability
     authorText: '#666666',
     arabicText: '#1A1A1A', // Slightly darker for Arabic text to enhance clarity
     englishText: '#4D4D4D', // A bit lighter for English text
