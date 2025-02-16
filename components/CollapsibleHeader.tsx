@@ -39,7 +39,7 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
 
   const initialNavOptions = useMemo(
     () => ({
-      headerTitle: '',
+      headerTitle: null,
       headerTransparent: true,
       headerStyle: { backgroundColor: 'transparent' },
     }),
@@ -52,7 +52,7 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
 
   const updateNavigation = (progress: number) => {
     navigation.setOptions({
-      headerTitle: progress > 0.9 ? title : '',
+      headerTitle: progress > 0.9 ? title : null,
       headerStyle: {
         backgroundColor: 'transparent',
       },
