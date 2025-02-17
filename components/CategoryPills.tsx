@@ -33,7 +33,7 @@ export function CategoryPills({
           right: 0,
           zIndex: 1,
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 16),
+          paddingTop: Math.max(insets.top, 42),
         },
         scrollContent: {
           paddingHorizontal: 16,
