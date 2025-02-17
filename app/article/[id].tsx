@@ -8,6 +8,7 @@ import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
+import { AudioPlayButton } from '@/components/AudioPlayButton';
 
 const styles = StyleSheet.create({
   container: {
@@ -45,6 +46,9 @@ const styles = StyleSheet.create({
     writingDirection: 'rtl',
     fontFamily: 'NotoNaskhArabic',
     includeFontPadding: false,
+  },
+  content: {
+    flex: 1,
   },
 });
 
@@ -108,18 +112,21 @@ export default function ArticleScreen() {
 
   return (
     <CollapsibleHeader renderContent={renderHeaderContent} title={article?.title || ''}>
-      {article.article_sentences
-        .sort((a, b) => a.position - b.position)
-        .map(sentence => (
-          <View key={sentence.id} style={styles.sentenceContainer}>
-            <ThemedText style={[styles.arabicText, { color: colors.arabicText }]}>
-              {sentence.arabic}
-            </ThemedText>
-            <ThemedText style={[styles.englishText, { color: colors.englishText }]}>
-              {sentence.english}
-            </ThemedText>
-          </View>
-        ))}
+      <View style={styles.content}>
+        {article.audio_url && <AudioPlayButton audioUrl={article.audio_url} />}
+        {article.article_sentences
+          .sort((a, b) => a.position - b.position)
+          .map(sentence => (
+            <View key={sentence.id} style={styles.sentenceContainer}>
+              <ThemedText style={[styles.arabicText, { color: colors.arabicText }]}>
+                {sentence.arabic}
+              </ThemedText>
+              <ThemedText style={[styles.englishText, { color: colors.englishText }]}>
+                {sentence.english}
+              </ThemedText>
+            </View>
+          ))}
+      </View>
     </CollapsibleHeader>
   );
 }
