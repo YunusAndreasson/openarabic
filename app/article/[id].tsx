@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
 import { AudioPlayButton } from '@/components/AudioPlayButton';
+import { ReadingListButton } from '@/components/ReadingListButton';
 
 const styles = StyleSheet.create({
   container: {
@@ -48,6 +49,15 @@ const styles = StyleSheet.create({
     includeFontPadding: false,
   },
   content: {
+    flex: 1,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 16,
+    marginBottom: -8,
+  },
+  buttonWrapper: {
     flex: 1,
   },
 });
@@ -107,13 +117,24 @@ export default function ArticleScreen() {
           By {article.author.name}
         </ThemedText>
       )}
+      <View style={styles.buttonContainer}>
+        {article?.audio_url && (
+          <View style={styles.buttonWrapper}>
+            <AudioPlayButton audioUrl={article.audio_url} />
+          </View>
+        )}
+        {article?.id && (
+          <View style={styles.buttonWrapper}>
+            <ReadingListButton articleId={article.id} />
+          </View>
+        )}
+      </View>
     </>
   );
 
   return (
     <CollapsibleHeader renderContent={renderHeaderContent} title={article?.title || ''}>
       <View style={styles.content}>
-        {article.audio_url && <AudioPlayButton audioUrl={article.audio_url} />}
         {article.article_sentences
           .sort((a, b) => a.position - b.position)
           .map(sentence => (

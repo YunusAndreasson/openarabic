@@ -8,6 +8,7 @@ import { ThemedText } from './ThemedText';
 
 interface AudioPlayButtonProps {
   audioUrl: string;
+  style?: any;
 }
 
 function AudioWave({ isPlaying, color }: { isPlaying: boolean; color: string }) {

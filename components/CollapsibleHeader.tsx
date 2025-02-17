@@ -14,10 +14,10 @@ import { useNavigation } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 
-const HEADER_HEIGHT = 340;
+const HEADER_HEIGHT = 380;
 const HEADER_HEIGHT_COLLAPSED = 0;
 const NAV_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
-const NAV_HEADER_HEIGHT = Platform.OS === 'ios' ? 96 : 80;
+const NAV_HEADER_HEIGHT = Platform.OS === 'ios' ? 100 : 80;
 const SCROLL_THRESHOLD = HEADER_HEIGHT - HEADER_HEIGHT_COLLAPSED;
 const HEADER_FADE_THRESHOLD = SCROLL_THRESHOLD * 0.8;
 
@@ -148,7 +148,7 @@ export function CollapsibleHeader({ children, backgroundImage, renderContent, ti
         scrollEventThrottle={16}
         contentContainerStyle={[
           styles.contentContainer,
-          { paddingTop: HEADER_HEIGHT + 24, backgroundColor: colors.background },
+          { paddingTop: HEADER_HEIGHT, backgroundColor: colors.background },
         ]}
         showsVerticalScrollIndicator={false}
         bounces={true}
