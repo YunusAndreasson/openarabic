@@ -6,7 +6,10 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
+  View,
+  Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState, useCallback, useRef, memo } from 'react';
 import { router, useNavigation } from 'expo-router';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -16,6 +19,10 @@ import { Article } from '@/types/articles.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
+import { CategoryPills } from '@/components/CategoryPills';
+import { categoriesService } from '@/services/categories';
+import type { Tables } from '@/types/database.types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ITEM_HEIGHT = 360;
 
@@ -25,17 +32,24 @@ export default function TextsScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const lastScrollY = useRef(0);
   const [isTabBarVisible, setIsTabBarVisible] = useState(true);
+  const categoryVisibleAnim = useRef(new Animated.Value(1)).current;
   const [articles, setArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Tables<'categories'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  // Calculate the total height of the CategoryPills component
+  const categoryPillsHeight = Math.max(insets.top, 16) + 12 + 8 + 32; // paddingTop + paddingVertical + pillHeight
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const currentScrollY = event.nativeEvent.contentOffset.y;
       const scrollingDown = currentScrollY > lastScrollY.current;
-      const scrollThreshold = 20; // Minimum scroll distance to trigger hide/show
+      const scrollThreshold = 20;
 
       if (scrollingDown && isTabBarVisible && currentScrollY > 50) {
         const scrollDelta = currentScrollY - lastScrollY.current;
@@ -60,6 +74,11 @@ export default function TextsScreen() {
               opacity: 0,
             },
           });
+          Animated.timing(categoryVisibleAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
         }
       } else if (!scrollingDown && !isTabBarVisible) {
         const scrollDelta = lastScrollY.current - currentScrollY;
@@ -84,20 +103,29 @@ export default function TextsScreen() {
               opacity: 1,
             },
           });
+          Animated.timing(categoryVisibleAnim, {
+            toValue: 1,
+            duration: 200,
+            useNativeDriver: true,
+          }).start();
         }
       }
 
       lastScrollY.current = currentScrollY;
     },
-    [isTabBarVisible, navigation, colors]
+    [isTabBarVisible, navigation, colors, categoryVisibleAnim]
   );
 
   const fetchArticles = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await articlesService.getArticles();
-      setArticles(data);
+      const [articlesData, categoriesData] = await Promise.all([
+        articlesService.getArticles(selectedCategory?.id),
+        categoriesService.getCategories(),
+      ]);
+      setArticles(articlesData);
+      setCategories(categoriesData);
     } catch {
       setError('Failed to load articles');
     } finally {
@@ -107,7 +135,9 @@ export default function TextsScreen() {
 
   useEffect(() => {
     fetchArticles();
-  }, []);
+  }, [selectedCategory]);
+
+  const filteredArticles = articles;
 
   const renderItem: ListRenderItem<Article> = useCallback(({ item }) => {
     return (
@@ -137,6 +167,12 @@ export default function TextsScreen() {
     []
   );
 
+  const handleCategorySelect = useCallback((category: Tables<'categories'> | null) => {
+    setSelectedCategory(category);
+    // Scroll to top smoothly when changing categories
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
+
   if (isLoading) {
     return (
       <ThemedView style={styles.centerContainer}>
@@ -156,31 +192,49 @@ export default function TextsScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={articles}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        getItemLayout={getItemLayout}
-        maxToRenderPerBatch={2}
-        windowSize={3}
-        initialNumToRender={2}
-        removeClippedSubviews={true}
-        contentContainerStyle={styles.listContainer}
-        showsVerticalScrollIndicator={false}
-        onEndReachedThreshold={0.5}
-        refreshing={isLoading}
-        onRefresh={fetchArticles}
-        updateCellsBatchingPeriod={100}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      />
-    </ThemedView>
+    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <ThemedView style={styles.container}>
+        <CategoryPills
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onSelectCategory={handleCategorySelect}
+          visible={categoryVisibleAnim}
+        />
+        <FlatList
+          ref={flatListRef}
+          data={filteredArticles}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          getItemLayout={getItemLayout}
+          maxToRenderPerBatch={2}
+          windowSize={3}
+          initialNumToRender={2}
+          removeClippedSubviews={true}
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingTop: categoryPillsHeight + 8 }, // Add some spacing between pills and list
+          ]}
+          showsVerticalScrollIndicator={false}
+          onEndReachedThreshold={0.5}
+          refreshing={isLoading}
+          onRefresh={fetchArticles}
+          updateCellsBatchingPeriod={100}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
+        />
+      </ThemedView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },

@@ -42,10 +42,10 @@ export default function ThemedCard({
       colors: ['transparent', 'transparent', colors.cardBackground] as const,
     },
     categoryBackground: {
-      backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      backgroundColor: colors.cardBackground,
     },
     category: {
-      color: colors.background,
+      color: colors.titleText,
     },
     author: {
       color: colors.tabIconDefault,
@@ -81,7 +81,7 @@ export default function ThemedCard({
             style={styles.gradient}
           />
           <View style={styles.categoryContainer}>
-            <BlurView intensity={35} tint="dark" style={styles.categoryPill}>
+            <BlurView intensity={20} tint="light" style={styles.categoryPill}>
               <View style={[styles.categoryBackground, themedStyles.categoryBackground]}>
                 <ThemedText style={[styles.category, themedStyles.category]} skipDefaultColor>
                   {category.toUpperCase()}
