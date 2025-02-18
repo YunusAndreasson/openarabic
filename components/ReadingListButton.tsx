@@ -115,7 +115,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
                 color={isInReadingList ? colors.tint : colors.background}
               />
               <ThemedText style={textStyles} skipDefaultColor>
-                {isInReadingList ? 'Saved' : 'Save'}
+                {isInReadingList ? 'Added to playlist' : 'Add to playlist'}
               </ThemedText>
             </View>
           </TouchableOpacity>

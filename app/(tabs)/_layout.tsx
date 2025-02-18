@@ -18,6 +18,13 @@ const TAB_SCREENS = [
     iconFilled: 'text',
   },
   {
+    name: 'playlist',
+    title: 'Playlist',
+    iconOutline: 'list-outline',
+    iconFilled: 'list',
+  },
+
+  {
     name: 'account',
     title: 'Account',
     iconOutline: 'person-outline',
@@ -51,16 +58,16 @@ export default function TabLayout() {
         tabBarHideOnKeyboard: true,
       }}
     >
-      {TAB_SCREENS.map(({ name, title, iconOutline, iconFilled }) => (
+      {TAB_SCREENS.map(screen => (
         <Tabs.Screen
-          key={name}
-          name={name}
+          key={screen.name}
+          name={screen.name}
           options={{
-            title,
-            tabBarIcon: ({ color, size, focused }) => (
+            title: screen.title,
+            tabBarIcon: ({ focused, color }) => (
               <Ionicons
-                name={(focused ? iconFilled : iconOutline) as keyof typeof Ionicons.glyphMap}
-                size={size}
+                name={focused ? screen.iconFilled : screen.iconOutline}
+                size={24}
                 color={color}
               />
             ),
