@@ -125,7 +125,7 @@ export default function AccountScreen() {
             <ThemedButton
               variant="outlined"
               title="Twitter"
-              onPress={() => handleSocialLink('https://twitter.com/edenmind')}
+              onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
               icon="logo-twitter"
               style={styles.actionButton}
             />
@@ -133,11 +133,21 @@ export default function AccountScreen() {
             <ThemedButton
               variant="outlined"
               title="Instagram"
-              onPress={() => handleSocialLink('https://instagram.com/edenmind')}
+              onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
               icon="logo-instagram"
               style={styles.actionButton}
             />
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <ThemedButton
+              variant="outlined"
+              title="Facebook"
+              onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
+              icon="logo-facebook"
+              style={styles.actionButton}
+            />
           </View>
+
+          <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
         </View>
 
         {/* Support & Account Section */}
