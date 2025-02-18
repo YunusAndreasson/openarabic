@@ -16,7 +16,6 @@ interface PlaylistCardProps {
 
 export default function PlaylistCard({
   title,
-  category,
   author,
   audioUrl,
   onRemove,

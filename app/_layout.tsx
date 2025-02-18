@@ -45,7 +45,6 @@ function AppContent() {
           borderLeftColor: colors.tint,
           backgroundColor: colors.cardBackground,
           borderColor: colors.cardBorder,
-          borderWidth: 1,
           borderRadius: 12,
           width: '90%',
           height: 'auto',
@@ -57,7 +56,6 @@ function AppContent() {
         text1Style={{
           fontSize: 20,
           fontWeight: '600',
-          fontFamily: 'Philosopher',
           color: colors.titleText,
         }}
         text2Style={{
