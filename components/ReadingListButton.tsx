@@ -5,6 +5,8 @@ import { useAuth } from '../hooks/useAuth';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
+import * as Haptics from 'expo-haptics';
+import Toast from 'react-native-toast-message';
 
 interface ReadingListButtonProps {
   articleId: number;
@@ -64,6 +66,14 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
         await readingListService.removeFromReadingList(user.id, articleId);
       } else {
         await readingListService.addToReadingList(user.id, articleId);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Toast.show({
+          type: 'success',
+          text1: 'Added to playlist',
+          text2: 'Ready for listening on the go',
+          position: 'bottom',
+          visibilityTime: 3000,
+        });
       }
       setIsInReadingList(!isInReadingList);
     } catch {
@@ -87,7 +97,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
   const buttonStyles = [
     styles.button,
     {
-      backgroundColor: isInReadingList ? colors.background : colors.tint,
+      backgroundColor: isInReadingList ? colors.cardBackground : colors.tint,
     },
   ];
 
@@ -95,6 +105,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
     styles.buttonText,
     {
       color: isInReadingList ? colors.tint : colors.background,
+      opacity: isInReadingList ? 0.9 : 1,
     },
   ];
 
@@ -115,7 +126,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
                 color={isInReadingList ? colors.tint : colors.background}
               />
               <ThemedText style={textStyles} skipDefaultColor>
-                {isInReadingList ? 'Added to playlist' : 'Add to playlist'}
+                {isInReadingList ? 'In playlist' : 'Add to playlist'}
               </ThemedText>
             </View>
           </TouchableOpacity>

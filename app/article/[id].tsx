@@ -10,14 +10,29 @@ import { useColors } from '@/hooks/useColors';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
 import { AudioPlayButton } from '@/components/AudioPlayButton';
 import { ReadingListButton } from '@/components/ReadingListButton';
+import { BlurView } from 'expo-blur';
+import { Colors } from '@/constants/Colors';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  category: {
+  categoryContainer: {
+    alignSelf: 'flex-start',
     marginBottom: 8,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  categoryPill: {
+    borderRadius: 6,
+  },
+  categoryBackground: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  category: {
     fontSize: 14,
+    letterSpacing: 0.5,
   },
   title: {
     textAlign: 'left',
@@ -93,12 +108,29 @@ export default function ArticleScreen() {
   const renderHeaderContent = () => (
     <>
       {article.category && (
-        <ThemedText
-          style={[styles.category, { color: colors.categoryText }]}
-          type="defaultSemiBold"
-        >
-          {article.category.name.toUpperCase()}
-        </ThemedText>
+        <View style={styles.categoryContainer}>
+          <BlurView
+            intensity={10}
+            tint={colors.background === Colors.dark.background ? 'dark' : 'light'}
+            style={styles.categoryPill}
+          >
+            <View style={[styles.categoryBackground]}>
+              <View
+                style={{
+                  ...StyleSheet.absoluteFillObject,
+                  backgroundColor: colors.background,
+                  opacity: 0.3,
+                }}
+              />
+              <ThemedText
+                style={[styles.category, { color: colors.categoryText }]}
+                type="defaultSemiBold"
+              >
+                {article.category.name.toUpperCase()}
+              </ThemedText>
+            </View>
+          </BlurView>
+        </View>
       )}
       <ThemedText
         type="title"

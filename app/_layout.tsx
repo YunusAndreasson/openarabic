@@ -18,6 +18,8 @@ import { setTheme } from '../store/themeSlice';
 import { useColorScheme } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
+import Toast, { BaseToast, BaseToastProps } from 'react-native-toast-message';
+import { useColors } from '@/hooks/useColors';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -29,10 +31,42 @@ function AppContent() {
   const dispatch = useAppDispatch();
   const { theme } = useAppSelector(state => state.theme);
   const isDark = theme === Theme.Dark;
+  const colors = useColors();
   const [loaded] = useFonts({
     Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
     NotoNaskhArabic: require('../assets/fonts/NotoNaskhArabic-Regular.ttf'),
   });
+
+  const toastConfig = {
+    success: (props: BaseToastProps) => (
+      <BaseToast
+        {...props}
+        style={{
+          borderLeftColor: colors.tint,
+          backgroundColor: colors.cardBackground,
+          borderColor: colors.cardBorder,
+          borderWidth: 1,
+          borderRadius: 12,
+          width: '90%',
+          height: 'auto',
+        }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+        }}
+        text1Style={{
+          fontSize: 20,
+          fontWeight: '600',
+          fontFamily: 'Philosopher',
+          color: colors.titleText,
+        }}
+        text2Style={{
+          fontSize: 17,
+          color: colors.text,
+        }}
+      />
+    ),
+  };
 
   useEffect(() => {
     // Only sync with system theme on first load
@@ -58,6 +92,7 @@ function AppContent() {
         <Stack.Screen name="article" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={isDark ? Theme.Light : Theme.Dark} />
+      <Toast config={toastConfig} />
     </NavigationThemeProvider>
   );
 }

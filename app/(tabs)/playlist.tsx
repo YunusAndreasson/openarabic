@@ -160,7 +160,7 @@ export default function PlaylistScreen() {
       await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
       setCurrentSound(newSound);
       setIsPlaying(true);
-    } catch (error) {
+    } catch {
       await stopCurrentSound();
     }
   };
