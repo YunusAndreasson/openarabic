@@ -1,6 +1,7 @@
 import { StyleSheet, Alert, Linking, View } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -57,6 +58,10 @@ export default function AccountScreen() {
     Linking.openURL('mailto:yunus@edenmind.com');
   };
 
+  const handleSocialLink = (url: string) => {
+    Linking.openURL(url);
+  };
+
   if (!session) {
     return (
       <ThemedView style={styles.container}>
@@ -74,11 +79,10 @@ export default function AccountScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
-        <View>
+        {/* Profile Section */}
+        <View style={styles.section}>
           <View style={styles.avatarContainer}>
-            <View
-              style={[styles.avatar, { backgroundColor: colors.tint, shadowColor: colors.text }]}
-            >
+            <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
               <ThemedText
                 style={[styles.avatarText, { color: colors.background }]}
                 skipDefaultColor
@@ -90,33 +94,72 @@ export default function AccountScreen() {
               <ThemedText style={styles.email} numberOfLines={1} ellipsizeMode="tail">
                 {session.user.email}
               </ThemedText>
-              <ThemedText style={styles.memberSince}>
+              <ThemedText
+                style={[styles.memberSince, { color: colors.tabIconDefault }]}
+                skipDefaultColor
+              >
                 Member since {new Date(session.user.created_at).toLocaleDateString()}
               </ThemedText>
             </View>
           </View>
+        </View>
 
-          <View style={styles.settingsContainer}>
+        {/* Settings Section */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Preferences</ThemedText>
+          <View style={[styles.settingsContainer, { backgroundColor: colors.cardBackground }]}>
             <View style={styles.settingRow}>
-              <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+              <View style={styles.settingLabelContainer}>
+                <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
+                <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+              </View>
               <ThemeToggle />
             </View>
           </View>
         </View>
 
-        <View style={styles.buttonContainer}>
-          <ThemedButton
-            variant="outlined"
-            title="Need Help?"
-            onPress={handleSupport}
-            style={styles.button}
-          />
-          <ThemedButton
-            variant="outlined"
-            title="Sign Out"
-            onPress={signOut}
-            style={styles.button}
-          />
+        {/* Connect Section */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Connect With Us</ThemedText>
+          <View style={[styles.connectContainer, { backgroundColor: colors.cardBackground }]}>
+            <ThemedButton
+              variant="outlined"
+              title="Twitter"
+              onPress={() => handleSocialLink('https://twitter.com/edenmind')}
+              icon="logo-twitter"
+              style={styles.actionButton}
+            />
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <ThemedButton
+              variant="outlined"
+              title="Instagram"
+              onPress={() => handleSocialLink('https://instagram.com/edenmind')}
+              icon="logo-instagram"
+              style={styles.actionButton}
+            />
+          </View>
+        </View>
+
+        {/* Support & Account Section */}
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Support & Account</ThemedText>
+          <View style={[styles.actionsContainer, { backgroundColor: colors.cardBackground }]}>
+            <ThemedButton
+              variant="outlined"
+              title="Contact Support"
+              onPress={handleSupport}
+              icon="mail"
+              style={styles.actionButton}
+            />
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <ThemedButton
+              variant="outlined"
+              title="Sign Out"
+              onPress={signOut}
+              icon="log-out"
+              style={[styles.actionButton, styles.signOutButton]}
+            />
+          </View>
         </View>
       </View>
     </ThemedView>
@@ -130,7 +173,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 16,
-    justifyContent: 'space-between',
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   authContainer: {
     flex: 1,
@@ -152,7 +202,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginTop: 16,
   },
   avatar: {
     width: 72,
@@ -184,27 +233,48 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   memberSince: {
-    opacity: 0.6,
     fontSize: 14,
   },
-  buttonContainer: {
-    gap: 12,
-  },
-  button: {
-    width: '100%',
-  },
   settingsContainer: {
-    marginTop: 32,
     borderRadius: 12,
+    paddingHorizontal: 16,
+  },
+  connectContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
+    paddingVertical: 16,
+  },
+  settingLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   settingLabel: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  actionsContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  actionButton: {
+    width: '100%',
+    justifyContent: 'flex-start',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 0,
+    borderWidth: 0,
+  },
+  signOutButton: {
+    opacity: 0.7,
+  },
+  divider: {
+    height: 1,
+    opacity: 0.2,
   },
 });

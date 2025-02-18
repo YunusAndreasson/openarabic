@@ -6,10 +6,9 @@
 - [x] Add login
 - [x] Hide bottom bar when scrolling
 - [x] Put image in parallax scroller
-- [ ] Add a veritcal scroller for the categories and authors
+- [x] Add a veritcal scroller for the categories and authors
 - [ ] Add source for books
-- [ ] Render arabic sentences based on word
-- [ ] Add a play button to play the Arabic text
-- [ ] Add a playlist/bookmarks
-- [ ] Add a toast (use when adding to playlist)
-- [ ] Add a floating player as in Perplexity
+- [ ] Render arabic sentences based on word count
+- [ ] Basic vocabulary memoerization
+- [x] Add a play button to play the Arabic text
+- [x] Add a playlist/bookmarks
