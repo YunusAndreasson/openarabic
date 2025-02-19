@@ -1,9 +1,7 @@
 import React from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
-import { Article } from '@/types/articles.types';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -12,6 +10,12 @@ import { AudioPlayButton } from '@/components/AudioPlayButton';
 import { ReadingListButton } from '@/components/ReadingListButton';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
+import { ArabicWord } from '@/components/ArabicWord';
+import type { Tables } from '@/types/database.types';
+import { studyWordsService } from '@/services/study_words';
+import { useAuth } from '@/hooks/useAuth';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Toast from 'react-native-toast-message';
 
 const styles = StyleSheet.create({
   container: {
@@ -54,15 +58,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Philosopher',
     textAlign: 'left',
   },
-  arabicText: {
-    textAlign: 'right',
-    fontSize: 32,
-    lineHeight: 48,
-    marginBottom: 16,
-    writingDirection: 'rtl',
-    fontFamily: 'NotoNaskhArabic',
-    includeFontPadding: false,
-  },
   content: {
     flex: 1,
   },
@@ -75,29 +70,63 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     flex: 1,
   },
+  arabicSentence: {
+    flexDirection: 'row-reverse',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
 });
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const [article, setArticle] = useState<Article | null>(null);
   const colors = useColors();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchArticle = async () => {
-      try {
-        if (id) {
-          const data = await articlesService.getArticleById(parseInt(id));
-          setArticle(data);
-        }
-      } catch (error) {
-        throw error;
-      }
-    };
+  // Fetch article data
+  const { data: article, isLoading: isLoadingArticle } = useQuery({
+    queryKey: ['article', id],
+    queryFn: () => articlesService.getArticleById(parseInt(id!)),
+    enabled: !!id,
+  });
 
-    fetchArticle();
-  }, [id]);
+  // Fetch study words
+  const { data: studyWords = [] } = useQuery({
+    queryKey: ['studyWords', user?.id],
+    queryFn: () => studyWordsService.getStudyWords(user!.id),
+    enabled: !!user,
+  });
 
-  if (!article) {
+  // Create a Set of selected word IDs for efficient lookup
+  const selectedWordIds = React.useMemo(
+    () => new Set(studyWords.map(w => w.sentence_word_id)),
+    [studyWords]
+  );
+
+  // Toggle word mutation
+  const toggleWordMutation = useMutation({
+    mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
+      studyWordsService.toggleStudyWord(userId, wordId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
+    },
+    onError: () => {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update word status',
+      });
+    },
+  });
+
+  const handleWordPress = async (word: Tables<'sentence_words'>) => {
+    if (!user) return;
+    toggleWordMutation.mutate({ userId: user.id, wordId: word.id });
+  };
+
+  if (isLoadingArticle || !article) {
     return (
       <ThemedView style={styles.container}>
         <ThemedText>Loading...</ThemedText>
@@ -119,7 +148,7 @@ export default function ArticleScreen() {
                 style={{
                   ...StyleSheet.absoluteFillObject,
                   backgroundColor: colors.background,
-                  opacity: 0.3,
+                  opacity: 0.3 as number,
                 }}
               />
               <ThemedText
@@ -171,9 +200,18 @@ export default function ArticleScreen() {
           .sort((a, b) => a.position - b.position)
           .map(sentence => (
             <View key={sentence.id} style={styles.sentenceContainer}>
-              <ThemedText style={[styles.arabicText, { color: colors.arabicText }]}>
-                {sentence.arabic}
-              </ThemedText>
+              <View style={styles.arabicSentence}>
+                {sentence.sentence_words
+                  .sort((a, b) => a.position - b.position)
+                  .map(word => (
+                    <ArabicWord
+                      key={word.id}
+                      word={word}
+                      isSelected={selectedWordIds.has(word.id)}
+                      onPress={handleWordPress}
+                    />
+                  ))}
+              </View>
               <ThemedText style={[styles.englishText, { color: colors.englishText }]}>
                 {sentence.english}
               </ThemedText>

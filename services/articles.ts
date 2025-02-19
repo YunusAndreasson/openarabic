@@ -31,7 +31,14 @@ export const articlesService = {
         *,
         category:categories(*),
         author:authors(*),
-        article_sentences(*)
+        article_sentences(
+          *,
+          sentence_words(
+            *,
+            root:roots(*),
+            word_type:word_types(*)
+          )
+        )
       `
       )
       .eq('id', id)

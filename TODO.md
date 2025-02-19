@@ -7,8 +7,13 @@
 - [x] Hide bottom bar when scrolling
 - [x] Put image in parallax scroller
 - [x] Add a veritcal scroller for the categories and authors
-- [ ] Add source for books
-- [ ] Render arabic sentences based on word count
-- [ ] Basic vocabulary memoerization
 - [x] Add a play button to play the Arabic text
 - [x] Add a playlist/bookmarks
+- [ ] Add source for books
+- [x] Render arabic sentences based on word count
+- [ ] Basic vocabulary memoerization
+- [ ] Modal that pops up to show translation, more information and add to vocabulary
+- [ ] Use image from the article
+- [ ] Add Text resize to Account
+- [ ] Add show English text to Account
+- [ ] Add a horizontal scroller below article with more from the same author

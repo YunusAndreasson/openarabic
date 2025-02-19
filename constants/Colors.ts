@@ -13,6 +13,7 @@ export const Colors = {
     categoryText: '#222222', // Darker gray for better readability
     authorText: '#222222',
     arabicText: '#1A1A1A', // Slightly darker for Arabic text to enhance clarity
+    highlightedArabicText: '#0066CC', // Blue for highlighted Arabic words
     englishText: '#4D4D4D', // A bit lighter for English text
     titleText: '#000000', // Pure black for maximum title contrast
     white: '#FFFFFF',
@@ -30,6 +31,7 @@ export const Colors = {
     categoryText: '#BBBBBB', // Secondary text in soft gray
     authorText: '#BBBBBB',
     arabicText: '#F0F0F0', // Brighter for Arabic text to enhance clarity
+    highlightedArabicText: '#66B2FF', // Light blue for highlighted Arabic words
     englishText: '#CCCCCC', // Slightly subdued for English text
     titleText: '#FFFFFF', // Pure white for maximum title contrast
     white: '#FFFFFF',
