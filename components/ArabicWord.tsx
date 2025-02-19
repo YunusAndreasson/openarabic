@@ -6,61 +6,76 @@ import * as Haptics from 'expo-haptics';
 import type { Tables } from '@/types/database.types';
 import { WordDetailsModal } from './WordDetailsModal';
 
+type WordWithDetails = Tables<'sentence_words'> & {
+  root: Tables<'roots'> | null;
+  word_type: Tables<'word_types'> | null;
+};
+
 interface ArabicWordProps {
-  word: Tables<'sentence_words'> & {
-    root: Tables<'roots'>;
-    word_type: Tables<'word_types'>;
-  };
-  isSelected?: boolean;
-  onPress?: (word: ArabicWordProps['word']) => void;
+  word: WordWithDetails;
+  isSelected: boolean;
+  onPress: (word: Tables<'sentence_words'>) => void;
+  scale?: number;
+  baseSize?: number;
 }
 
-export function ArabicWord({ word, isSelected, onPress }: ArabicWordProps) {
+export function ArabicWord({
+  word,
+  isSelected,
+  onPress,
+  scale = 1,
+  baseSize = 32,
+}: ArabicWordProps) {
+  const [modalVisible, setModalVisible] = useState(false);
   const colors = useColors();
-  const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsModalVisible(true);
+    setModalVisible(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
+  const handleModalClose = () => {
+    setModalVisible(false);
   };
 
-  const handleToggleStudy = () => {
-    onPress?.(word);
+  const handleStudyPress = () => {
+    onPress(word);
   };
-
-  const textColor = isSelected ? colors.highlightedArabicText : colors.arabicText;
 
   return (
     <>
-      <TouchableOpacity onPress={handlePress} style={styles.container} activeOpacity={0.7}>
-        <ThemedText style={[styles.text, { color: textColor }]} skipDefaultColor>
+      <TouchableOpacity onPress={handlePress} style={styles.wordContainer}>
+        <ThemedText
+          style={[
+            styles.arabicText,
+            {
+              color: isSelected ? colors.highlightedArabicText : colors.text,
+              fontSize: baseSize * scale,
+              lineHeight: Math.round(baseSize * scale * 1.5),
+            },
+          ]}
+          skipDefaultColor
+        >
           {word.word_form}
         </ThemedText>
       </TouchableOpacity>
       <WordDetailsModal
+        visible={modalVisible}
+        onClose={handleModalClose}
         word={word}
-        visible={isModalVisible}
-        onClose={handleCloseModal}
         isSelected={isSelected}
-        onToggleStudy={handleToggleStudy}
+        onStudyPress={handleStudyPress}
       />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wordContainer: {
     marginHorizontal: 4,
+    marginVertical: 2,
   },
-  text: {
-    fontSize: 32,
-    lineHeight: 48,
-    writingDirection: 'rtl',
+  arabicText: {
     fontFamily: 'NotoNaskhArabic',
-    includeFontPadding: false,
   },
 });

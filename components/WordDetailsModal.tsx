@@ -1,155 +1,158 @@
 import React from 'react';
-import { StyleSheet, Modal, View, TouchableOpacity, Pressable } from 'react-native';
+import { StyleSheet, View, Modal, TouchableWithoutFeedback, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
+import { useAppSelector } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 interface WordDetailsModalProps {
-  word: Tables<'sentence_words'> & {
-    root: Tables<'roots'>;
-    word_type: Tables<'word_types'>;
-  };
   visible: boolean;
   onClose: () => void;
-  isSelected?: boolean;
-  onToggleStudy?: () => void;
+  word: Tables<'sentence_words'> & {
+    root: Tables<'roots'> | null;
+    word_type: Tables<'word_types'> | null;
+  };
+  isSelected: boolean;
+  onStudyPress: () => void;
 }
 
 export function WordDetailsModal({
-  word,
   visible,
   onClose,
+  word,
   isSelected,
-  onToggleStudy,
+  onStudyPress,
 }: WordDetailsModalProps) {
   const colors = useColors();
+  const { fontScale } = useAppSelector(state => state.settings);
 
   const handleStudyPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onToggleStudy?.();
+    onStudyPress();
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      <BlurView
-        intensity={90}
-        tint={colors.background === Colors.dark.background ? 'dark' : 'light'}
-        style={StyleSheet.absoluteFill}
-      />
-      <Pressable style={styles.overlay} onPress={onClose}>
-        <Pressable style={styles.contentContainer} onPress={e => e.stopPropagation()}>
-          <View
-            style={[
-              styles.content,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-              },
-            ]}
-          >
-            <View style={styles.header}>
-              <ThemedText
-                style={[
-                  styles.arabicWord,
-                  {
-                    color:
-                      colors.background === Colors.dark.background
-                        ? Colors.dark.white
-                        : Colors.light.arabicText,
-                  },
-                ]}
-                skipDefaultColor
-              >
-                {word.word_form}
-              </ThemedText>
-              <ThemedText style={styles.translation}>{word.english}</ThemedText>
-            </View>
+    <Modal visible={visible} transparent animationType="fade">
+      <TouchableWithoutFeedback onPress={onClose}>
+        <View style={styles.overlay}>
+          <BlurView intensity={20} tint="dark" style={styles.contentContainer}>
+            <View
+              style={[
+                styles.content,
+                { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+              ]}
+            >
+              <View style={styles.header}>
+                <ThemedText
+                  style={[
+                    styles.arabicWord,
+                    {
+                      color:
+                        colors.background === Colors.dark.background
+                          ? Colors.dark.white
+                          : Colors.light.arabicText,
+                      fontSize: 36 * fontScale,
+                      lineHeight: Math.round(48 * fontScale),
+                    },
+                  ]}
+                  skipDefaultColor
+                >
+                  {word.word_form}
+                </ThemedText>
+                <ThemedText style={[styles.translation, { fontSize: 18 * fontScale }]}>
+                  {word.english}
+                </ThemedText>
+              </View>
 
-            <View style={styles.detailsContainer}>
-              {word.root && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.label}>Root Form</ThemedText>
-                  <View style={[styles.pill, { backgroundColor: colors.cardBackground }]}>
-                    <ThemedText
-                      style={[
-                        styles.rootText,
-                        {
-                          color:
-                            colors.background === Colors.dark.background
-                              ? Colors.dark.white
-                              : Colors.light.arabicText,
-                        },
-                      ]}
-                      skipDefaultColor
-                    >
-                      {word.root.letters}
-                    </ThemedText>
-                    {word.root.meaning && (
-                      <ThemedText style={styles.rootMeaning}>{word.root.meaning}</ThemedText>
-                    )}
+              <View style={styles.detailsContainer}>
+                {word.root && (
+                  <View style={styles.detailRow}>
+                    <ThemedText style={[styles.label, { fontSize: 14 }]}>Root</ThemedText>
+                    <View style={[styles.pill, { backgroundColor: colors.cardBackground }]}>
+                      <ThemedText
+                        style={[
+                          styles.rootText,
+                          {
+                            color:
+                              colors.background === Colors.dark.background
+                                ? Colors.dark.white
+                                : Colors.light.arabicText,
+                            fontSize: 24 * fontScale,
+                          },
+                        ]}
+                        skipDefaultColor
+                      >
+                        {word.root.letters}
+                      </ThemedText>
+                      {word.root.meaning && (
+                        <ThemedText style={[styles.rootMeaning, { fontSize: 14 }]}>
+                          {word.root.meaning}
+                        </ThemedText>
+                      )}
+                    </View>
                   </View>
-                </View>
-              )}
+                )}
 
-              {word.word_type && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.label}>Word Type</ThemedText>
-                  <View style={[styles.pill, { backgroundColor: colors.cardBackground }]}>
-                    <ThemedText style={styles.typeText}>{word.word_type.name}</ThemedText>
+                {word.word_type && (
+                  <View style={styles.detailRow}>
+                    <ThemedText style={[styles.label, { fontSize: 14 }]}>Type</ThemedText>
+                    <View style={[styles.pill, { backgroundColor: colors.cardBackground }]}>
+                      <ThemedText style={[styles.typeText, { fontSize: 16 }]}>
+                        {word.word_type.name}
+                      </ThemedText>
+                    </View>
                   </View>
-                </View>
-              )}
+                )}
 
-              {word.grammar_note && (
-                <View style={styles.grammarNote}>
-                  <ThemedText style={styles.label}>Grammar Note</ThemedText>
-                  <View style={[styles.notePill, { backgroundColor: colors.cardBackground }]}>
-                    <ThemedText style={styles.noteText}>{word.grammar_note}</ThemedText>
+                {word.grammar_note && (
+                  <View style={styles.grammarNote}>
+                    <ThemedText style={[styles.label, { fontSize: 14 }]}>Grammar Note</ThemedText>
+                    <View style={[styles.notePill, { backgroundColor: colors.cardBackground }]}>
+                      <ThemedText style={[styles.noteText, { fontSize: 14 }]}>
+                        {word.grammar_note}
+                      </ThemedText>
+                    </View>
                   </View>
-                </View>
-              )}
+                )}
+              </View>
 
-              <TouchableOpacity
+              <Pressable
+                onPress={handleStudyPress}
                 style={[
                   styles.studyButton,
                   {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: isSelected ? colors.highlightedArabicText : colors.tint,
+                    backgroundColor: isSelected ? colors.cardBackground : colors.tint,
+                    borderColor: colors.tint,
                   },
                 ]}
-                onPress={handleStudyPress}
-                activeOpacity={0.7}
               >
                 <Ionicons
                   name={isSelected ? 'bookmark' : 'bookmark-outline'}
                   size={20}
-                  color={isSelected ? colors.highlightedArabicText : colors.tint}
+                  color={isSelected ? colors.tint : colors.background}
                   style={styles.studyIcon}
                 />
                 <ThemedText
                   style={[
                     styles.studyButtonText,
-                    { color: isSelected ? colors.highlightedArabicText : colors.tint },
+                    {
+                      color: isSelected ? colors.tint : colors.background,
+                      fontSize: 16,
+                    },
                   ]}
                   skipDefaultColor
                 >
-                  {isSelected ? 'Added to Vocabulary' : 'Add to Vocabulary'}
+                  {isSelected ? 'Remove from Study List' : 'Add to Study List'}
                 </ThemedText>
-              </TouchableOpacity>
+              </Pressable>
             </View>
-          </View>
-        </Pressable>
-      </Pressable>
+          </BlurView>
+        </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 }
@@ -183,14 +186,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   arabicWord: {
-    fontSize: 48,
-    lineHeight: 86,
     fontFamily: 'NotoNaskhArabic',
     marginBottom: 8,
     textAlign: 'center',
   },
   translation: {
-    fontSize: 20,
     textAlign: 'center',
     fontWeight: '600',
   },
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   rootText: {
-    fontSize: 32,
+    fontSize: 24,
     fontFamily: 'NotoNaskhArabic',
     textAlign: 'center',
   },

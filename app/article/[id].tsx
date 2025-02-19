@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
+import { useAppSelector } from '@/store/hooks';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
 import { AudioPlayButton } from '@/components/AudioPlayButton';
 import { ReadingListButton } from '@/components/ReadingListButton';
@@ -48,12 +49,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   sentenceContainer: {
-    marginBottom: 32,
     paddingHorizontal: 4,
+    marginBottom: 24,
   },
   englishText: {
-    fontSize: 18,
-    marginBottom: 8,
     writingDirection: 'ltr',
     fontFamily: 'Philosopher',
     textAlign: 'left',
@@ -75,7 +74,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
+    gap: 4,
   },
 });
 
@@ -84,6 +84,7 @@ export default function ArticleScreen() {
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const settings = useAppSelector(state => state.settings);
 
   // Fetch article data
   const { data: article, isLoading: isLoadingArticle } = useQuery({
@@ -163,12 +164,7 @@ export default function ArticleScreen() {
       )}
       <ThemedText
         type="title"
-        style={[
-          styles.title,
-          {
-            color: colors.titleText,
-          },
-        ]}
+        style={[styles.title, { color: colors.titleText }]}
         numberOfLines={3}
       >
         {article.title}
@@ -209,12 +205,25 @@ export default function ArticleScreen() {
                       word={word}
                       isSelected={selectedWordIds.has(word.id)}
                       onPress={handleWordPress}
+                      scale={settings.fontScale}
+                      baseSize={24}
                     />
                   ))}
               </View>
-              <ThemedText style={[styles.englishText, { color: colors.englishText }]}>
-                {sentence.english}
-              </ThemedText>
+              {settings.showEnglish && (
+                <ThemedText
+                  style={[
+                    styles.englishText,
+                    {
+                      color: colors.englishText,
+                      fontSize: 16 * settings.fontScale,
+                      lineHeight: Math.round(22 * settings.fontScale),
+                    },
+                  ]}
+                >
+                  {sentence.english}
+                </ThemedText>
+              )}
             </View>
           ))}
       </View>

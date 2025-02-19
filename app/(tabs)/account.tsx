@@ -7,13 +7,19 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { CustomSlider } from '@/components/Slider';
+import { Toggle } from '@/components/Toggle';
 import { supabase } from '@/services/supabase';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import Auth from '@/components/Auth';
 import { useColors } from '@/hooks/useColors';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const colors = useColors();
+  const dispatch = useAppDispatch();
+  const settings = useAppSelector(state => state.settings);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -77,7 +83,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} scrollable={true}>
       <View style={styles.content}>
         {/* Profile Section */}
         <View style={styles.section}>
@@ -114,6 +120,72 @@ export default function AccountScreen() {
                 <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
               </View>
               <ThemeToggle />
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <Ionicons name="text" size={20} color={colors.tabIconDefault} />
+                <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
+              </View>
+              <View style={styles.sliderContainer}>
+                <ThemedText
+                  style={[styles.scaleText, { color: colors.tabIconDefault }]}
+                  skipDefaultColor
+                >
+                  {Math.round(settings.fontScale * 100)}%
+                </ThemedText>
+                <CustomSlider
+                  value={settings.fontScale}
+                  onValueChange={value => dispatch(setFontScale(value))}
+                  minimumValue={0.8}
+                  maximumValue={1.3}
+                  step={0.1}
+                  style={styles.slider}
+                />
+              </View>
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
+                <Ionicons name="language" size={20} color={colors.tabIconDefault} />
+                <ThemedText style={styles.settingLabel}>Show English</ThemedText>
+              </View>
+              <Toggle
+                value={settings.showEnglish}
+                onValueChange={value => dispatch(setShowEnglish(value))}
+              />
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <View style={styles.previewContainer}>
+              <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
+              <View style={[styles.arabicPreview, { backgroundColor: colors.background }]}>
+                <View style={styles.previewScroller}>
+                  <ThemedText
+                    style={[
+                      styles.arabicPreviewText,
+                      {
+                        fontSize: 24 * settings.fontScale,
+                        lineHeight: Math.round(36 * settings.fontScale),
+                      },
+                    ]}
+                  >
+                    مرحباً بك في اللغة العربية
+                  </ThemedText>
+                  {settings.showEnglish && (
+                    <ThemedText
+                      style={[
+                        styles.englishPreviewText,
+                        {
+                          fontSize: 16 * settings.fontScale,
+                          lineHeight: Math.round(22 * settings.fontScale),
+                        },
+                      ]}
+                    >
+                      Welcome to the Arabic language
+                    </ThemedText>
+                  )}
+                </View>
+              </View>
             </View>
           </View>
         </View>
@@ -286,5 +358,57 @@ const styles = StyleSheet.create({
   divider: {
     height: 1,
     opacity: 0.2,
+  },
+  sliderContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingLeft: 12,
+  },
+  slider: {
+    flex: 1,
+  },
+  scaleText: {
+    fontSize: 14,
+    fontWeight: '500',
+    width: 48,
+  },
+  previewContainer: {
+    padding: 0,
+    marginBottom: 18,
+  },
+  previewLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    opacity: 0.7,
+    marginBottom: 12,
+  },
+  arabicPreview: {
+    borderRadius: 12,
+    height: 140,
+    overflow: 'hidden',
+  },
+  previewScroller: {
+    padding: 16,
+    gap: 8,
+    minHeight: '100%',
+    justifyContent: 'center',
+  },
+  arabicPreviewText: {
+    fontFamily: 'NotoNaskhArabic',
+    textAlign: 'right',
+  },
+  englishPreviewText: {
+    fontFamily: 'Philosopher',
+    textAlign: 'left',
+    opacity: 0.9,
+    marginBottom: 24,
+  },
+  previewNote: {
+    fontSize: 12,
+    opacity: 0.5,
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
