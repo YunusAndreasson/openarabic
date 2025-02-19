@@ -1,6 +1,6 @@
 import React from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useLocalSearchParams, router } from 'expo-router';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
@@ -17,6 +17,7 @@ import { studyWordsService } from '@/services/study_words';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+import { CompactArticleCard } from '@/components/CompactArticleCard';
 
 const styles = StyleSheet.create({
   container: {
@@ -77,6 +78,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     gap: 4,
   },
+  moreFromAuthor: {
+    marginTop: 32,
+    paddingHorizontal: 16,
+  },
+  moreFromAuthorTitle: {
+    fontSize: 20,
+    marginBottom: 16,
+    fontWeight: '600',
+  },
+  moreFromCategory: {
+    marginTop: 32,
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
+  horizontalList: {
+    paddingLeft: 16,
+    marginHorizontal: -16,
+  },
 });
 
 export default function ArticleScreen() {
@@ -126,6 +145,32 @@ export default function ArticleScreen() {
     if (!user) return;
     toggleWordMutation.mutate({ userId: user.id, wordId: word.id });
   };
+
+  // Fetch more articles from the same author
+  const { data: moreArticles = [] } = useQuery({
+    queryKey: ['articles', article?.author?.id],
+    queryFn: () => articlesService.getArticles(undefined, article!.author!.id),
+    enabled: !!article?.author?.id,
+  });
+
+  // Filter out the current article from the list
+  const otherArticles = React.useMemo(
+    () => moreArticles.filter(a => a.id !== article?.id),
+    [moreArticles, article?.id]
+  );
+
+  // Fetch more articles from the same category
+  const { data: categoryArticles = [] } = useQuery({
+    queryKey: ['articles', article?.category?.id],
+    queryFn: () => articlesService.getArticles(article!.category!.id),
+    enabled: !!article?.category?.id,
+  });
+
+  // Filter out the current article from the category list
+  const otherCategoryArticles = React.useMemo(
+    () => categoryArticles.filter(a => a.id !== article?.id),
+    [categoryArticles, article?.id]
+  );
 
   if (isLoadingArticle || !article) {
     return (
@@ -191,7 +236,7 @@ export default function ArticleScreen() {
 
   return (
     <CollapsibleHeader renderContent={renderHeaderContent} title={article?.title || ''}>
-      <View style={styles.content}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {article.article_sentences
           .sort((a, b) => a.position - b.position)
           .map(sentence => (
@@ -226,7 +271,59 @@ export default function ArticleScreen() {
               )}
             </View>
           ))}
-      </View>
+
+        {otherArticles.length > 0 && (
+          <View style={styles.moreFromAuthor}>
+            <ThemedText style={styles.moreFromAuthorTitle}>
+              More from {article.author?.name}
+            </ThemedText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            >
+              {otherArticles.map(otherArticle => (
+                <CompactArticleCard
+                  key={otherArticle.id}
+                  article={otherArticle}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/article/[id]',
+                      params: { id: otherArticle.id },
+                    });
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {otherCategoryArticles.length > 0 && (
+          <View style={styles.moreFromCategory}>
+            <ThemedText style={styles.moreFromAuthorTitle}>
+              More from {article.category?.name}
+            </ThemedText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            >
+              {otherCategoryArticles.map(otherArticle => (
+                <CompactArticleCard
+                  key={otherArticle.id}
+                  article={otherArticle}
+                  onPress={() => {
+                    router.push({
+                      pathname: '/article/[id]',
+                      params: { id: otherArticle.id },
+                    });
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </ScrollView>
     </CollapsibleHeader>
   );
 }
