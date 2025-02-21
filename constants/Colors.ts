@@ -17,6 +17,9 @@ export const Colors = {
     englishText: '#4D4D4D', // A bit lighter for English text
     titleText: '#000000', // Pure black for maximum title contrast
     white: '#FFFFFF',
+    success: '#34C759', // Green for success states
+    warning: '#FF9500', // Orange for warning states
+    info: '#007AFF', // Blue for info states
   },
   dark: {
     text: '#E0E0E0', // Off-white text for dark mode
@@ -35,6 +38,9 @@ export const Colors = {
     englishText: '#CCCCCC', // Slightly subdued for English text
     titleText: '#FFFFFF', // Pure white for maximum title contrast
     white: '#FFFFFF',
+    success: '#30D158', // Green for success states
+    warning: '#FF9F0A', // Orange for warning states
+    info: '#0A84FF', // Blue for info states
   },
 } as const;
 

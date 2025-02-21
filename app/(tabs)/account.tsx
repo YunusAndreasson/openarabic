@@ -405,10 +405,4 @@ const styles = StyleSheet.create({
     opacity: 0.9,
     marginBottom: 24,
   },
-  previewNote: {
-    fontSize: 12,
-    opacity: 0.5,
-    textAlign: 'center',
-    marginTop: 8,
-  },
 });
