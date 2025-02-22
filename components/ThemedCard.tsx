@@ -24,8 +24,6 @@ export default function ThemedCard({
   const colors = useColors();
   const [imageLoading, setImageLoading] = useState(true);
 
-  const handlePressIn = useCallback(() => {}, []);
-  const handlePressOut = useCallback(() => {}, []);
   const handleLoadStart = useCallback(() => setImageLoading(true), []);
   const handleLoadEnd = useCallback(() => setImageLoading(false), []);
 
@@ -55,8 +53,6 @@ export default function ThemedCard({
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
     >
       <View style={[styles.card, themedStyles.card]}>
