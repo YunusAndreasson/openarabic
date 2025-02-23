@@ -14,6 +14,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import Auth from '@/components/Auth';
 import { useColors } from '@/hooks/useColors';
+import { LAYOUT } from '@/constants/layout';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
@@ -113,7 +114,16 @@ export default function AccountScreen() {
         {/* Settings Section */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Preferences</ThemedText>
-          <View style={[styles.settingsContainer, { backgroundColor: colors.cardBackground }]}>
+          <View
+            style={[
+              styles.settingsContainer,
+              {
+                backgroundColor: colors.cardBackground,
+                shadowColor: colors.text,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
                 <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
@@ -158,33 +168,35 @@ export default function AccountScreen() {
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <View style={styles.previewContainer}>
               <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
-              <View style={[styles.arabicPreview, { backgroundColor: colors.background }]}>
-                <View style={styles.previewScroller}>
+              <View style={[styles.previewScroller]}>
+                <ThemedText
+                  style={[
+                    styles.arabicPreviewText,
+                    {
+                      fontSize: 24 * settings.fontScale,
+                      lineHeight: Math.round(36 * settings.fontScale),
+                      color: colors.arabicText,
+                    },
+                  ]}
+                  skipDefaultColor
+                >
+                  مرحباً بك في اللغة العربية
+                </ThemedText>
+                {settings.showEnglish && (
                   <ThemedText
                     style={[
-                      styles.arabicPreviewText,
+                      styles.englishPreviewText,
                       {
-                        fontSize: 24 * settings.fontScale,
-                        lineHeight: Math.round(36 * settings.fontScale),
+                        fontSize: 16 * settings.fontScale,
+                        lineHeight: Math.round(22 * settings.fontScale),
+                        color: colors.text,
                       },
                     ]}
+                    skipDefaultColor
                   >
-                    مرحباً بك في اللغة العربية
+                    Welcome to the Arabic language
                   </ThemedText>
-                  {settings.showEnglish && (
-                    <ThemedText
-                      style={[
-                        styles.englishPreviewText,
-                        {
-                          fontSize: 16 * settings.fontScale,
-                          lineHeight: Math.round(22 * settings.fontScale),
-                        },
-                      ]}
-                    >
-                      Welcome to the Arabic language
-                    </ThemedText>
-                  )}
-                </View>
+                )}
               </View>
             </View>
           </View>
@@ -193,7 +205,16 @@ export default function AccountScreen() {
         {/* Connect Section */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Connect With Us</ThemedText>
-          <View style={[styles.connectContainer, { backgroundColor: colors.cardBackground }]}>
+          <View
+            style={[
+              styles.connectContainer,
+              {
+                backgroundColor: colors.cardBackground,
+                shadowColor: colors.text,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
             <ThemedButton
               variant="outlined"
               title="Twitter"
@@ -219,13 +240,22 @@ export default function AccountScreen() {
             />
           </View>
 
-          <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+          <View style={[styles.sectionDivider, { backgroundColor: colors.cardBorder }]} />
         </View>
 
         {/* Support & Account Section */}
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Support & Account</ThemedText>
-          <View style={[styles.actionsContainer, { backgroundColor: colors.cardBackground }]}>
+          <View
+            style={[
+              styles.actionsContainer,
+              {
+                backgroundColor: colors.cardBackground,
+                shadowColor: colors.text,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
             <ThemedButton
               variant="outlined"
               title="Contact Support"
@@ -251,148 +281,165 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+  },
+  sectionDivider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: LAYOUT.SPACING.LARGE,
   },
   authContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: LAYOUT.SCREEN_EDGE_PADDING,
   },
   welcomeTitle: {
     fontSize: 28,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   subtitle: {
     fontSize: 16,
     opacity: 0.7,
-    marginBottom: 32,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   avatarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   avatar: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    justifyContent: 'center',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: 'center',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 28,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-    height: 32,
-    lineHeight: 32,
-    marginTop: -2,
   },
   profileInfo: {
     flex: 1,
+    marginLeft: LAYOUT.SPACING.MEDIUM,
   },
   email: {
-    fontSize: 20,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   memberSince: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   settingsContainer: {
-    borderRadius: 12,
-    paddingHorizontal: 16,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    elevation: 2,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   connectContainer: {
-    borderRadius: 12,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+    elevation: 2,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  actionsContainer: {
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
   },
   settingLabelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: LAYOUT.SPACING.MEDIUM,
+    flex: 1,
   },
   settingLabel: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '500',
-  },
-  actionsContainer: {
-    borderRadius: 12,
-    overflow: 'hidden',
+    flex: 1,
   },
   actionButton: {
-    width: '100%',
-    justifyContent: 'flex-start',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
     borderRadius: 0,
     borderWidth: 0,
+    justifyContent: 'flex-start',
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
   },
   signOutButton: {
-    opacity: 0.7,
-  },
-  divider: {
-    height: 1,
-    opacity: 0.2,
+    opacity: 0.8,
   },
   sliderContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingLeft: 12,
+    gap: LAYOUT.SPACING.MEDIUM,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
   },
   slider: {
     flex: 1,
   },
   scaleText: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    width: 48,
+    width: 44,
+    textAlign: 'right',
   },
   previewContainer: {
-    padding: 0,
-    marginBottom: 18,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   previewLabel: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    opacity: 0.7,
-    marginBottom: 12,
-  },
-  arabicPreview: {
-    borderRadius: 12,
-    height: 140,
-    overflow: 'hidden',
+    opacity: 0.8,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   previewScroller: {
-    padding: 16,
-    gap: 8,
-    minHeight: '100%',
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM,
+    height: 140,
     justifyContent: 'center',
   },
   arabicPreviewText: {
@@ -400,9 +447,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   englishPreviewText: {
-    fontFamily: 'Philosopher',
-    textAlign: 'left',
-    opacity: 0.9,
-    marginBottom: 24,
+    opacity: 0.8,
   },
 });

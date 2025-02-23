@@ -1,158 +1,100 @@
 import React from 'react';
-import { StyleSheet, View, Modal, TouchableWithoutFeedback, Pressable } from 'react-native';
+import { StyleSheet, View, Modal, TouchableOpacity } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { useAppSelector } from '@/store/hooks';
-import type { Tables } from '@/types/database.types';
-import { Colors } from '@/constants/Colors';
+import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LAYOUT } from '@/constants/layout';
 
 interface WordDetailsModalProps {
   visible: boolean;
   onClose: () => void;
-  word: Tables<'sentence_words'> & {
-    root: Tables<'roots'> | null;
-    word_type: Tables<'word_types'> | null;
+  word: {
+    arabic: string;
+    translation: string;
+    root?: string;
+    rootMeaning?: string;
+    type?: string;
+    grammarNotes?: string[];
   };
-  isSelected: boolean;
-  onStudyPress: () => void;
+  onStudyPress?: () => void;
 }
 
-export function WordDetailsModal({
-  visible,
-  onClose,
-  word,
-  isSelected,
-  onStudyPress,
-}: WordDetailsModalProps) {
+export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordDetailsModalProps) {
   const colors = useColors();
-  const { fontScale } = useAppSelector(state => state.settings);
 
   const handleStudyPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onStudyPress();
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    onStudyPress?.();
   };
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.overlay}>
-          <BlurView intensity={20} tint="dark" style={styles.contentContainer}>
-            <View
-              style={[
-                styles.content,
-                { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-              ]}
-            >
-              <View style={styles.header}>
-                <ThemedText
-                  style={[
-                    styles.arabicWord,
-                    {
-                      color:
-                        colors.background === Colors.dark.background
-                          ? Colors.dark.white
-                          : Colors.light.arabicText,
-                      fontSize: 36 * fontScale,
-                      lineHeight: Math.round(48 * fontScale),
-                    },
-                  ]}
-                  skipDefaultColor
-                >
-                  {word.word_form}
-                </ThemedText>
-                <ThemedText style={[styles.translation, { fontSize: 18 * fontScale }]}>
-                  {word.english}
-                </ThemedText>
-              </View>
+      <View style={styles.overlay}>
+        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={styles.contentContainer}>
+          <View style={[styles.content, { backgroundColor: colors.cardBackground }]}>
+            <View style={styles.header}>
+              <ThemedText style={styles.arabicWord}>{word.arabic}</ThemedText>
+              <ThemedText style={styles.translation}>{word.translation}</ThemedText>
+            </View>
 
-              <View style={styles.detailsContainer}>
-                {word.root && (
-                  <View style={styles.detailRow}>
-                    <ThemedText style={[styles.label, { fontSize: 14 }]}>Root</ThemedText>
-                    <View style={[styles.pill, { backgroundColor: colors.cardBackground }]}>
-                      <ThemedText
-                        style={[
-                          styles.rootText,
-                          {
-                            color:
-                              colors.background === Colors.dark.background
-                                ? Colors.dark.white
-                                : Colors.light.arabicText,
-                            fontSize: 24 * fontScale,
-                          },
-                        ]}
-                        skipDefaultColor
-                      >
-                        {word.root.letters}
-                      </ThemedText>
-                      {word.root.meaning && (
-                        <ThemedText style={[styles.rootMeaning, { fontSize: 14 }]}>
-                          {word.root.meaning}
-                        </ThemedText>
-                      )}
-                    </View>
+            <View style={styles.detailsContainer}>
+              {word.root && (
+                <View style={styles.detailRow}>
+                  <ThemedText style={styles.label}>Root</ThemedText>
+                  <View style={[styles.pill, { backgroundColor: colors.text + '10' }]}>
+                    <ThemedText style={styles.rootText}>{word.root}</ThemedText>
+                    {word.rootMeaning && (
+                      <ThemedText style={styles.rootMeaning}>{word.rootMeaning}</ThemedText>
+                    )}
                   </View>
-                )}
+                </View>
+              )}
 
-                {word.word_type && (
-                  <View style={styles.detailRow}>
-                    <ThemedText style={[styles.label, { fontSize: 14 }]}>Type</ThemedText>
-                    <View style={[styles.pill, { backgroundColor: colors.cardBackground }]}>
-                      <ThemedText style={[styles.typeText, { fontSize: 16 }]}>
-                        {word.word_type.name}
-                      </ThemedText>
-                    </View>
+              {word.type && (
+                <View style={styles.detailRow}>
+                  <ThemedText style={styles.label}>Type</ThemedText>
+                  <View style={[styles.pill, { backgroundColor: colors.text + '10' }]}>
+                    <ThemedText style={styles.typeText}>{word.type}</ThemedText>
                   </View>
-                )}
+                </View>
+              )}
 
-                {word.grammar_note && (
-                  <View style={styles.grammarNote}>
-                    <ThemedText style={[styles.label, { fontSize: 14 }]}>Grammar Note</ThemedText>
-                    <View style={[styles.notePill, { backgroundColor: colors.cardBackground }]}>
-                      <ThemedText style={[styles.noteText, { fontSize: 14 }]}>
-                        {word.grammar_note}
-                      </ThemedText>
+              {word.grammarNotes && word.grammarNotes.length > 0 && (
+                <View style={styles.grammarNote}>
+                  <ThemedText style={styles.label}>Grammar Notes</ThemedText>
+                  {word.grammarNotes.map((note, index) => (
+                    <View
+                      key={index}
+                      style={[styles.notePill, { backgroundColor: colors.text + '10' }]}
+                    >
+                      <ThemedText style={styles.noteText}>{note}</ThemedText>
                     </View>
-                  </View>
-                )}
-              </View>
+                  ))}
+                </View>
+              )}
+            </View>
 
-              <Pressable
-                onPress={handleStudyPress}
+            {onStudyPress && (
+              <TouchableOpacity
                 style={[
                   styles.studyButton,
                   {
-                    backgroundColor: isSelected ? colors.cardBackground : colors.tint,
-                    borderColor: colors.tint,
+                    backgroundColor: colors.text + '10',
+                    borderColor: colors.text + '20',
                   },
                 ]}
+                onPress={handleStudyPress}
               >
-                <Ionicons
-                  name={isSelected ? 'bookmark' : 'bookmark-outline'}
-                  size={20}
-                  color={isSelected ? colors.tint : colors.background}
-                  style={styles.studyIcon}
-                />
-                <ThemedText
-                  style={[
-                    styles.studyButtonText,
-                    {
-                      color: isSelected ? colors.tint : colors.background,
-                      fontSize: 16,
-                    },
-                  ]}
-                  skipDefaultColor
-                >
-                  {isSelected ? 'Remove from Study List' : 'Add to Study List'}
-                </ThemedText>
-              </Pressable>
-            </View>
-          </BlurView>
+                <Ionicons name="school" size={20} color={colors.text} style={styles.studyIcon} />
+                <ThemedText style={styles.studyButtonText}>Study this word</ThemedText>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 }
@@ -166,91 +108,93 @@ const styles = StyleSheet.create({
   contentContainer: {
     width: '90%',
     maxWidth: 400,
-    paddingVertical: 16,
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   content: {
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.CARD.PADDING.LARGE,
+    borderWidth: StyleSheet.hairlineWidth,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
     shadowOpacity: 0.15,
-    shadowRadius: 16,
+    shadowRadius: LAYOUT.SPACING.LARGE,
     elevation: 8,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   arabicWord: {
     fontFamily: 'NotoNaskhArabic',
-    marginBottom: 8,
+    marginBottom: LAYOUT.SPACING.SMALL,
     textAlign: 'center',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
   },
   translation: {
     textAlign: 'center',
     fontWeight: '600',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
   },
   detailsContainer: {
-    gap: 16,
+    gap: LAYOUT.SPACING.LARGE,
   },
   detailRow: {
-    gap: 6,
+    gap: LAYOUT.SPACING.TINY,
   },
   label: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    marginBottom: LAYOUT.SPACING.TINY,
     fontWeight: '500',
     opacity: 0.8,
   },
   pill: {
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   rootText: {
-    fontSize: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     fontFamily: 'NotoNaskhArabic',
     textAlign: 'center',
   },
   rootMeaning: {
-    fontSize: 14,
-    marginTop: 6,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    marginTop: LAYOUT.SPACING.TINY,
     textAlign: 'center',
     opacity: 0.9,
   },
   typeText: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
     fontWeight: '500',
   },
   grammarNote: {
-    gap: 6,
+    gap: LAYOUT.SPACING.TINY,
   },
   notePill: {
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   noteText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   studyButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 14,
-    borderRadius: 16,
-    marginTop: 16,
-    borderWidth: 1,
+    padding: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   studyIcon: {
-    marginRight: 8,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   studyButtonText: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
   },
 });

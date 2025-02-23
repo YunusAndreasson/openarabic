@@ -4,6 +4,7 @@ import { supabase } from '@/services/supabase';
 import { ThemedView } from './ThemedView';
 import { ThemedInput } from './ThemedInput';
 import { ThemedButton } from './ThemedButton';
+import { LAYOUT } from '@/constants/layout';
 
 /**
  * Email validation regex and password requirements
@@ -176,15 +177,15 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   buttonContainer: {
     width: '100%',
-    gap: 12,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   button: {
     width: '100%',

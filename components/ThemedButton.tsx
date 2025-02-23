@@ -2,6 +2,7 @@ import { StyleSheet, TouchableOpacity, TouchableOpacityProps } from 'react-nativ
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
+import { LAYOUT } from '@/constants/layout';
 
 interface ThemedButtonProps extends TouchableOpacityProps {
   variant?: 'filled' | 'outlined';
@@ -68,17 +69,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 30,
+    paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.LARGE,
+    paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
     minWidth: 120,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
     textAlign: 'center',
   },
   icon: {
-    marginRight: 8,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
 });

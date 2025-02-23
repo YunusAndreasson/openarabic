@@ -9,6 +9,45 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { Audio } from 'expo-av';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
+  },
+  message: {
+    textAlign: 'center',
+    marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
+    opacity: 0.6,
+  },
+  controls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  button: {
+    flex: 1,
+  },
+  waveContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 2,
+    height: 16,
+  },
+  bar: {
+    width: 2,
+    height: 16,
+    borderRadius: 1,
+  },
+});
 
 function AudioWave({ isPlaying, color }: { isPlaying: boolean; color: string }) {
   const anim1 = useRef(new Animated.Value(0.4)).current;
@@ -87,6 +126,7 @@ export default function PlaylistScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledList, setShuffledList] = useState<typeof readingList>([]);
   const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
+  const colors = useColors();
 
   const { data: readingList, isLoading } = useQuery({
     queryKey: ['readingList', user?.id],
@@ -236,78 +276,30 @@ export default function PlaylistScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
-      <View style={styles.controls}>
+      <View style={[styles.controls, { borderTopColor: colors.icon }]}>
         <ThemedButton
-          onPress={handlePlayAll}
-          style={[styles.button]}
-          disabled={isPlaying && playMode === 'shuffle'}
+          variant="filled"
           title={isPlaying && playMode === 'normal' ? 'Stop' : 'Play All'}
           icon={isPlaying && playMode === 'normal' ? 'stop-circle' : 'play-circle'}
+          onPress={handlePlayAll}
+          style={styles.button}
         >
-          <View style={styles.buttonContent}>
-            {isPlaying && playMode === 'normal' && (
-              <AudioWave isPlaying={isPlaying} color="white" />
-            )}
-          </View>
+          {isPlaying && playMode === 'normal' && (
+            <AudioWave isPlaying={isPlaying} color={colors.background} />
+          )}
         </ThemedButton>
         <ThemedButton
-          onPress={handleShuffle}
-          style={[styles.button]}
-          disabled={isPlaying && playMode === 'normal'}
+          variant="filled"
           title={isPlaying && playMode === 'shuffle' ? 'Stop' : 'Shuffle'}
           icon={isPlaying && playMode === 'shuffle' ? 'stop-circle' : 'shuffle'}
+          onPress={handleShuffle}
+          style={styles.button}
         >
-          <View style={styles.buttonContent}>
-            {isPlaying && playMode === 'shuffle' && (
-              <AudioWave isPlaying={isPlaying} color="white" />
-            )}
-          </View>
+          {isPlaying && playMode === 'shuffle' && (
+            <AudioWave isPlaying={isPlaying} color={colors.background} />
+          )}
         </ThemedButton>
       </View>
     </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listContent: {
-    paddingVertical: 8,
-    flexGrow: 1,
-  },
-  message: {
-    textAlign: 'center',
-    marginTop: 20,
-    marginHorizontal: 20,
-    fontSize: 16,
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    gap: 12,
-  },
-  button: {
-    flex: 1,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 20,
-  },
-  waveContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: 8,
-    height: 20,
-    gap: 2,
-  },
-  bar: {
-    width: 3,
-    height: 16,
-    borderRadius: 1.5,
-  },
-});

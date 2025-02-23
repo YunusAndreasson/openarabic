@@ -3,6 +3,7 @@ import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
+import { LAYOUT } from '@/constants/layout';
 import {
   Canvas,
   RoundedRect,
@@ -14,9 +15,8 @@ import {
 } from '@shopify/react-native-skia';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_MARGIN = 8;
-const HORIZONTAL_PADDING = 20;
-const CARD_WIDTH = (SCREEN_WIDTH - HORIZONTAL_PADDING * 2 - CARD_MARGIN) / 2;
+const CARD_MARGIN = 4;
+const CARD_WIDTH = (SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - CARD_MARGIN) / 2;
 
 interface VocabularyStatsProps {
   totalWords: number;
@@ -75,13 +75,13 @@ export function VocabularyStats({
           <RoundedRect
             x={0}
             y={0}
-            width={SCREEN_WIDTH - HORIZONTAL_PADDING * 2}
+            width={SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2}
             height={120}
             r={16}
           >
             <LinearGradient
               start={vec(0, 0)}
-              end={vec(SCREEN_WIDTH - HORIZONTAL_PADDING * 2, 120)}
+              end={vec(SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2, 120)}
               colors={[colors.text + '08', colors.text + '02']}
             />
           </RoundedRect>
@@ -157,21 +157,21 @@ export function VocabularyStats({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: HORIZONTAL_PADDING,
+    width: '100%',
   },
   progressCard: {
-    borderRadius: 16,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     height: 120,
-    marginBottom: 16,
+    marginBottom: LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
   },
   progressCanvas: {
     position: 'absolute',
-    width: SCREEN_WIDTH - HORIZONTAL_PADDING * 2,
+    width: SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2,
     height: 120,
   },
   progressContent: {
-    padding: 20,
+    padding: LAYOUT.CARD.PADDING.SMALL,
     flex: 1,
   },
   progressRow: {
@@ -183,26 +183,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   progressLabel: {
-    fontSize: 15,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: 0.7,
-    marginBottom: 8,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   progressValue: {
-    fontSize: 36,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: '700',
     opacity: 0.9,
-    marginBottom: 8,
-    lineHeight: 36,
+    marginBottom: LAYOUT.SPACING.TINY,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   progressSubtext: {
-    fontSize: 13,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: 0.5,
   },
   circleCanvas: {
     width: 80,
     height: 80,
-    marginTop: -4,
+    marginTop: -LAYOUT.SPACING.TINY,
   },
   grid: {
     flexDirection: 'row',
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   statCard: {
     width: CARD_WIDTH,
     height: 84,
-    borderRadius: 16,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   cardCanvas: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     height: 84,
   },
   statContent: {
-    padding: 12,
+    padding: LAYOUT.CARD.PADDING.SMALL,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -237,17 +237,17 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   statTextContainer: {
-    marginLeft: 12,
+    marginLeft: LAYOUT.SPACING.SMALL,
     flex: 1,
   },
   value: {
-    fontSize: 20,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '700',
     opacity: 0.9,
   },
   label: {
-    fontSize: 13,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: 0.6,
-    marginTop: 2,
+    marginTop: LAYOUT.SPACING.TINY,
   },
 });

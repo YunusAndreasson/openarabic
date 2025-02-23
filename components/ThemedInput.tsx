@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useState } from 'react';
 import { ThemedText } from './ThemedText';
+import { LAYOUT } from '@/constants/layout';
 
 interface ThemedInputProps extends TextInputProps {
   icon?: string;
@@ -94,40 +95,40 @@ export function ThemedInput({
 const styles = StyleSheet.create({
   wrapper: {
     width: '100%',
-    marginVertical: 6,
+    marginVertical: LAYOUT.SPACING.TINY,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    height: 52,
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
+    height: LAYOUT.INPUT.HEIGHT,
+    borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    borderWidth: LAYOUT.INPUT.BORDER_WIDTH.DEFAULT,
   },
   containerFocused: {
-    borderWidth: 2,
+    borderWidth: LAYOUT.INPUT.BORDER_WIDTH.FOCUSED,
   },
   input: {
     flex: 1,
     height: '100%',
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
   },
   leftIcon: {
-    marginRight: 12,
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   rightIcon: {
-    marginLeft: 8,
+    marginLeft: LAYOUT.SPACING.SMALL,
   },
   hitSlop: {
-    top: 12,
-    bottom: 12,
-    left: 12,
-    right: 12,
+    top: LAYOUT.SPACING.MEDIUM,
+    bottom: LAYOUT.SPACING.MEDIUM,
+    left: LAYOUT.SPACING.MEDIUM,
+    right: LAYOUT.SPACING.MEDIUM,
   },
   helperText: {
-    fontSize: 12,
-    marginTop: 4,
-    marginLeft: 4,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginTop: LAYOUT.SPACING.TINY,
+    marginLeft: LAYOUT.SPACING.TINY,
   },
 });

@@ -2,9 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { StyleSheet, View, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
-import { ThemedText } from '@/components/ThemedText';
+import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { LAYOUT } from '@/constants/layout';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -103,16 +104,16 @@ export default function ThemedCard({
 
 const styles = StyleSheet.create({
   pressable: {
-    marginHorizontal: 16,
-    marginVertical: 8,
+    marginHorizontal: LAYOUT.CARD.MARGIN.LARGE,
+    marginVertical: LAYOUT.CARD.MARGIN.MEDIUM,
   },
   pressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
   card: {
-    borderRadius: 20,
-    borderWidth: 0.5,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
     elevation: 6,
     shadowOffset: {
@@ -150,31 +151,31 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     position: 'absolute',
-    top: 12,
-    left: 12,
+    top: LAYOUT.SPACING.MEDIUM,
+    left: LAYOUT.SPACING.MEDIUM,
     overflow: 'hidden',
-    borderRadius: 8,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   categoryPill: {
-    borderRadius: 8,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   categoryBackground: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   category: {
-    fontSize: 11,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   contentContainer: {
-    padding: 20,
-    paddingTop: 24,
+    padding: LAYOUT.CARD.PADDING.LARGE,
+    paddingTop: LAYOUT.SPACING.XXLARGE,
   },
   title: {
-    marginBottom: 6,
-    fontSize: 20,
-    lineHeight: 26,
+    marginBottom: LAYOUT.SPACING.TINY,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '700',
     letterSpacing: 0.3,
   },
@@ -183,7 +184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   author: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: 0.9,
     letterSpacing: 0.2,
   },

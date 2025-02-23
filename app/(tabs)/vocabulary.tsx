@@ -9,8 +9,7 @@ import { studyWordsService } from '@/services/study_words';
 import { router } from 'expo-router';
 import { ThemedButton } from '@/components/ThemedButton';
 import { useColors } from '@/hooks/useColors';
-
-const HORIZONTAL_PADDING = 20;
+import { LAYOUT } from '@/constants/layout';
 
 export default function VocabularyScreen() {
   const { user } = useAuth();
@@ -110,39 +109,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: 48,
+    paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   bottomSpacer: {
-    height: 100,
+    height: LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   message: {
-    fontSize: 17,
+    fontSize: 16,
     textAlign: 'center',
-    marginTop: 24,
-    marginHorizontal: HORIZONTAL_PADDING,
+    marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     opacity: 0.9,
   },
   submessage: {
-    fontSize: 15,
+    fontSize: 14,
     textAlign: 'center',
-    marginTop: 12,
-    marginHorizontal: HORIZONTAL_PADDING,
+    marginTop: LAYOUT.SPACING.TINY,
+    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     opacity: 0.6,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: '20%',
+    paddingBottom: '10%',
   },
   buttonContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: HORIZONTAL_PADDING,
-    paddingBottom: 32,
-    paddingTop: 16,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingVertical: LAYOUT.SPACING.SMALL,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },

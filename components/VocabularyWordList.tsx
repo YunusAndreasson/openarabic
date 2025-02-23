@@ -1,10 +1,12 @@
 import React from 'react';
-import { StyleSheet, View, FlatList, Pressable } from 'react-native';
+import { StyleSheet, View, FlatList } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
+import { CompactThemedCard } from './CompactThemedCard';
 import type { Tables } from '@/types/database.types';
+import { LAYOUT } from '@/constants/layout';
 
 type StudyWord = Tables<'study_words'> & {
   sentence_word:
@@ -33,16 +35,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
     const isMastered = studyWord.interval_days >= 30;
 
     return (
-      <Pressable
-        onPress={() => onWordPress(studyWord)}
-        style={[
-          styles.wordCard,
-          {
-            backgroundColor: colors.cardBackground,
-            borderColor: colors.cardBorder,
-          },
-        ]}
-      >
+      <CompactThemedCard onPress={() => onWordPress(studyWord)}>
         <View style={styles.wordInfo}>
           <ThemedText
             style={[
@@ -85,7 +78,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
             </View>
           </BlurView>
         </View>
-      </Pressable>
+      </CompactThemedCard>
     );
   };
 
@@ -118,17 +111,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
-  wordCard: {
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   wordInfo: {
     flex: 1,
-    marginRight: 16,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   arabicWord: {
     fontSize: 24,

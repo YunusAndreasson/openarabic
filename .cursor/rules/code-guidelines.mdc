@@ -53,6 +53,7 @@ globs: *.tsx, *.ts, *.js
 - Create new files in existing directories
 - Don't create new top-level directories without discussion
 - Use feature-based organization within directories
+- Use layout margins and paddings in constants/layout.ts
 
 # React and React Native
 

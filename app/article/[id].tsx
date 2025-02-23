@@ -18,6 +18,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
+import { LAYOUT } from '@/constants/layout';
 
 const styles = StyleSheet.create({
   container: {
@@ -25,33 +26,33 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     alignSelf: 'flex-start',
-    marginBottom: 8,
-    borderRadius: 6,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
   },
   categoryPill: {
-    borderRadius: 6,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   categoryBackground: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   category: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     letterSpacing: 0.5,
   },
   title: {
     textAlign: 'left',
-    marginBottom: 8,
-    fontSize: 32,
-    lineHeight: 40,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   author: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
   },
   sentenceContainer: {
-    paddingHorizontal: 4,
-    marginBottom: 24,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   englishText: {
     writingDirection: 'ltr',
@@ -63,9 +64,9 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    gap: 16,
-    marginTop: 16,
-    marginBottom: -8,
+    gap: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: -LAYOUT.SPACING.SMALL,
   },
   buttonWrapper: {
     flex: 1,
@@ -75,26 +76,26 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 4,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.TINY,
   },
   moreFromAuthor: {
-    marginTop: 32,
-    paddingHorizontal: 16,
+    marginTop: LAYOUT.SPACING.XXLARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   moreFromAuthorTitle: {
-    fontSize: 20,
-    marginBottom: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
     fontWeight: '600',
   },
   moreFromCategory: {
-    marginTop: 32,
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+    marginTop: LAYOUT.SPACING.XXLARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   horizontalList: {
-    paddingLeft: 16,
-    marginHorizontal: -16,
+    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
+    marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
 

@@ -5,6 +5,8 @@ import * as Haptics from 'expo-haptics';
 import { useColors } from '@/hooks/useColors';
 import { useNavigation } from 'expo-router';
 import { ThemedText } from './ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { Ionicons } from '@expo/vector-icons';
 
 interface AudioPlayButtonProps {
   audioUrl: string;
@@ -231,14 +233,14 @@ export function AudioPlayButton({ audioUrl }: AudioPlayButtonProps) {
 const styles = StyleSheet.create({
   outerContainer: {
     width: '100%',
-    paddingBottom: 36,
+    paddingBottom: LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM,
     position: 'relative',
     zIndex: 1,
   },
   container: {
     width: '100%',
     alignItems: 'center',
-    minHeight: 52,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
   buttonWrapper: {
     width: '100%',
@@ -248,39 +250,39 @@ const styles = StyleSheet.create({
       height: 1,
     },
     shadowOpacity: 0.08,
-    shadowRadius: 3,
+    shadowRadius: LAYOUT.SPACING.TINY,
     elevation: 2,
     position: 'absolute',
-    borderRadius: 12,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   button: {
     width: '100%',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
+    paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
+    paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
   },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
     textAlign: 'center',
   },
   waveContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 16,
+    height: LAYOUT.SPACING.LARGE,
   },
   bar: {
     width: 2,
-    height: 10,
-    borderRadius: 1,
-    marginHorizontal: 1,
+    height: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.SPACING.TINY / 4,
+    marginHorizontal: LAYOUT.SPACING.TINY / 4,
     opacity: 0.8,
   },
 });

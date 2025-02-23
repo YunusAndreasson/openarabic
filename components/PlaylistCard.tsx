@@ -4,6 +4,8 @@ import { useColors } from '@/hooks/useColors';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactAudioPlayButton } from './CompactAudioPlayButton';
+import { CompactThemedCard } from './CompactThemedCard';
+import { LAYOUT } from '@/constants/layout';
 
 interface PlaylistCardProps {
   title: string;
@@ -24,7 +26,7 @@ export default function PlaylistCard({
   const colors = useColors();
 
   return (
-    <Pressable style={[styles.card, { backgroundColor: colors.cardBackground }]} onPress={onPress}>
+    <CompactThemedCard onPress={onPress}>
       <View style={styles.leftContainer}>
         <CompactAudioPlayButton audioUrl={audioUrl} size={20} />
       </View>
@@ -39,39 +41,30 @@ export default function PlaylistCard({
       <Pressable onPress={onRemove} style={styles.removeButton} hitSlop={12}>
         <Ionicons name="close-circle" size={20} color={colors.tint} style={styles.removeIcon} />
       </Pressable>
-    </Pressable>
+    </CompactThemedCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 12,
-    marginVertical: 2,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
   leftContainer: {
-    marginRight: 12,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   textContainer: {
     flex: 1,
-    marginRight: 8,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   title: {
-    fontSize: 15,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    marginBottom: 2,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   author: {
-    fontSize: 13,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: 0.6,
   },
   removeButton: {
-    padding: 6,
-    marginRight: -6,
+    padding: LAYOUT.SPACING.TINY,
+    marginRight: -LAYOUT.SPACING.TINY,
   },
   removeIcon: {
     opacity: 0.8,

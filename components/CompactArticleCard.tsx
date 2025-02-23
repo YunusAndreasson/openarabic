@@ -5,6 +5,7 @@ import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { BlurView } from 'expo-blur';
 import type { Article } from '../types/articles.types';
+import { LAYOUT } from '../constants/layout';
 
 interface CompactArticleCardProps {
   article: Article;
@@ -55,7 +56,7 @@ export function CompactArticleCard({ article, onPress }: CompactArticleCardProps
 
 const styles = StyleSheet.create({
   pressable: {
-    marginRight: 12,
+    marginRight: LAYOUT.SPACING.MEDIUM,
     width: 200,
   },
   pressed: {
@@ -63,7 +64,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   card: {
-    borderRadius: 12,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     elevation: 4,
     shadowColor: '#000',
@@ -85,29 +86,29 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     position: 'absolute',
-    top: 8,
-    left: 8,
+    top: LAYOUT.SPACING.SMALL,
+    left: LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
-    borderRadius: 6,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   categoryPill: {
-    borderRadius: 6,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   categoryBackground: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
     opacity: 0.9,
   },
   category: {
-    fontSize: 10,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.5,
   },
   contentContainer: {
-    padding: 12,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   title: {
-    fontSize: 14,
-    lineHeight: 18,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
   },
 });

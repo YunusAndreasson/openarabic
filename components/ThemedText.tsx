@@ -1,5 +1,6 @@
 import { Text, type TextProps, StyleSheet } from 'react-native';
 import { useColors } from '@/hooks/useColors';
+import { LAYOUT } from '@/constants/layout';
 
 export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
@@ -32,25 +33,25 @@ export function ThemedText({
 
 const styles = StyleSheet.create({
   default: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   defaultSemiBold: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
   },
   title: {
-    fontSize: 32,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: 'bold',
-    lineHeight: 32,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   subtitle: {
-    fontSize: 20,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: 'bold',
   },
   link: {
-    lineHeight: 30,
-    fontSize: 16,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
   },
 });

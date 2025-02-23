@@ -7,6 +7,7 @@ import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import * as Haptics from 'expo-haptics';
 import Toast from 'react-native-toast-message';
+import { LAYOUT } from '../constants/layout';
 
 interface ReadingListButtonProps {
   articleId: number;
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
-    minHeight: 52,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
   buttonWrapper: {
     width: '100%',
@@ -158,23 +159,23 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
     position: 'absolute',
-    borderRadius: 12,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   button: {
     width: '100%',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
+    paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
+    paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
   },
   buttonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
     textAlign: 'center',
   },
