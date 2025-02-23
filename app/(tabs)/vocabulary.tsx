@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyStats } from '@/components/VocabularyStats';
@@ -8,9 +8,13 @@ import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
 import { router } from 'expo-router';
 import { ThemedButton } from '@/components/ThemedButton';
+import { useColors } from '@/hooks/useColors';
+
+const HORIZONTAL_PADDING = 20;
 
 export default function VocabularyScreen() {
   const { user } = useAuth();
+  const colors = useColors();
 
   const { data: studyWords = [], isLoading } = useQuery({
     queryKey: ['studyWords', user?.id],
@@ -18,7 +22,6 @@ export default function VocabularyScreen() {
     enabled: !!user,
   });
 
-  // Filter out study words with missing sentence_word data
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null);
   }, [studyWords]);
@@ -60,12 +63,14 @@ export default function VocabularyScreen() {
   if (!validStudyWords.length) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>
-          You haven't added any words to your study list yet.
-        </ThemedText>
-        <ThemedText style={styles.submessage}>
-          Start reading articles and tap on words to add them to your vocabulary.
-        </ThemedText>
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.message}>
+            You haven't added any words to your study list yet.
+          </ThemedText>
+          <ThemedText style={styles.submessage}>
+            Start reading articles and tap on words to add them to your vocabulary.
+          </ThemedText>
+        </View>
       </ThemedView>
     );
   }
@@ -74,16 +79,24 @@ export default function VocabularyScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <VocabularyStats {...stats} />
-      {hasDueWords ? (
-        <ThemedButton
-          title={`Review ${stats.dueWords} Words`}
-          icon="play-circle"
-          onPress={handleStartReview}
-          style={styles.reviewButton}
-        />
-      ) : (
-        <ThemedText style={styles.message}>No words due for review.</ThemedText>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <VocabularyStats {...stats} />
+        <View style={styles.bottomSpacer} />
+      </ScrollView>
+
+      {hasDueWords && (
+        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
+          <ThemedButton
+            title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
+            icon="play-circle"
+            onPress={handleStartReview}
+            variant="filled"
+          />
+        </View>
       )}
     </ThemedView>
   );
@@ -92,22 +105,45 @@ export default function VocabularyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 48,
+  },
+  bottomSpacer: {
+    height: 100,
   },
   message: {
-    fontSize: 18,
+    fontSize: 17,
     textAlign: 'center',
     marginTop: 24,
-    marginHorizontal: 24,
+    marginHorizontal: HORIZONTAL_PADDING,
+    opacity: 0.9,
   },
   submessage: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: 'center',
     marginTop: 12,
-    marginHorizontal: 24,
-    opacity: 0.7,
+    marginHorizontal: HORIZONTAL_PADDING,
+    opacity: 0.6,
   },
-  reviewButton: {
-    marginTop: 24,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: '20%',
+  },
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: HORIZONTAL_PADDING,
+    paddingBottom: 32,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
   },
 });
