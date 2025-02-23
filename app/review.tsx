@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Dimensions, Animated, PanResponder, Pressable } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -7,12 +7,41 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
 import { router, Stack } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.4;
-const SWIPE_OUT_DURATION = 250;
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+const SWIPE_OUT_DURATION = 200;
+const FADE_DURATION = 150;
+const DEBOUNCE_DELAY = 300; // Prevent rapid swipes
+
+// Add color feedback for swipe directions
+const getSwipeColors = (dx: number, colors: any) => {
+  const swipeProgress = Math.abs(dx) / SWIPE_THRESHOLD;
+  const opacity = Math.min(swipeProgress * 0.25, 0.25); // Reduce max opacity to 25%
+
+  if (dx > 0) {
+    return { backgroundColor: colors.success, opacity };
+  } else if (dx < 0) {
+    return { backgroundColor: colors.warning, opacity };
+  }
+  return { backgroundColor: 'transparent', opacity: 0 };
+};
+
+// Add throttle utility with proper typing
+const throttle = <T extends (...args: any[]) => any>(func: T, limit: number): T => {
+  let inThrottle: boolean;
+  return ((...args: Parameters<T>): ReturnType<T> | void => {
+    if (!inThrottle) {
+      func(...args);
+      inThrottle = true;
+      requestAnimationFrame(() => {
+        inThrottle = false;
+      });
+    }
+  }) as T;
+};
 
 export default function ReviewScreen() {
   useEffect(() => {
@@ -30,7 +59,7 @@ export default function ReviewScreen() {
   // Keep a stable reference to the current words
   const wordsRef = useRef<any[]>([]);
 
-  // Fetch due words
+  // Optimize data fetching with increased stale time
   const {
     data: dueWords = [],
     isLoading,
@@ -44,37 +73,57 @@ export default function ReviewScreen() {
 
       const now = new Date();
       const filtered = words
-        .filter(
-          word =>
-            word.sentence_word && new Date(word.next_review_at) <= now && word.interval_days < 30
-        )
-        .sort(
-          (a, b) => new Date(a.next_review_at).getTime() - new Date(b.next_review_at).getTime()
-        );
+        .filter(word => {
+          if (!word.sentence_word || !word.next_review_at) return false;
+          const reviewDate = new Date(word.next_review_at);
+          return reviewDate <= now && word.interval_days < 30;
+        })
+        .sort((a, b) => {
+          const dateA = new Date(a.next_review_at);
+          const dateB = new Date(b.next_review_at);
+          return dateA.getTime() - dateB.getTime();
+        });
 
+      console.log(`Found ${filtered.length} words due for review`);
       return filtered;
     },
     enabled: !!user,
-    // Prevent automatic background updates during animations
-    staleTime: 5000,
-    gcTime: 10000,
+    staleTime: 30000, // Increase stale time to 30 seconds
+    gcTime: 300000, // Increase cache time to 5 minutes
     refetchOnWindowFocus: false,
   });
 
   // Update wordsRef when dueWords changes
   useEffect(() => {
     if (dueWords && Array.isArray(dueWords)) {
-      wordsRef.current = dueWords;
+      // Make sure we have a fresh copy of the words
+      wordsRef.current = [...dueWords];
       setCurrentIndex(0);
     }
   }, [dueWords]);
 
-  // Keep track of the current animation state
+  // Enhanced animation state tracking
   const animationState = useRef({
     isAnimating: false,
+    isMutating: false,
+    lastSwipeTime: 0,
     currentWord: null as any,
     direction: null as 'left' | 'right' | null,
+    animationPromise: null as Promise<void> | null,
   }).current;
+
+  const isInteractionDisabled = () => {
+    const now = Date.now();
+    const isDebouncing = now - animationState.lastSwipeTime < DEBOUNCE_DELAY;
+    return (
+      isLoading ||
+      isFetching ||
+      isUpdating ||
+      animationState.isAnimating ||
+      animationState.isMutating ||
+      isDebouncing
+    );
+  };
 
   // Update word review status
   const updateWordMutation = useMutation({
@@ -87,6 +136,7 @@ export default function ReviewScreen() {
       success: boolean;
       wordToUpdate: any;
     }) => {
+      animationState.isMutating = true;
       setIsUpdating(true);
 
       const newInterval = success
@@ -111,152 +161,233 @@ export default function ReviewScreen() {
         await studyWordsService.updateWordReview(wordId, update);
         return { success: true };
       } catch (error: any) {
-        throw error; // Re-throw to trigger onError
+        throw error;
       }
     },
-    onSuccess: () => {},
+    onSuccess: () => {
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+    },
     onSettled: () => {
+      animationState.isMutating = false;
       setIsUpdating(false);
     },
     onError: () => {
-      // Reset animation state on error
-      setIsAnimating(false);
-      position.setValue({ x: 0, y: 0 });
+      resetPosition();
     },
   });
 
-  const forceSwipe = (direction: 'left' | 'right') => {
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const fadeOut = () => {
+    return new Promise<void>(resolve => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: FADE_DURATION,
+        useNativeDriver: true,
+      }).start(() => resolve());
+    });
+  };
+
+  const fadeIn = () => {
+    return new Promise<void>(resolve => {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: FADE_DURATION,
+        useNativeDriver: true,
+      }).start(() => resolve());
+    });
+  };
+
+  // Memoize animation sequence for better performance
+  const createAnimationSequence = useCallback(
+    (toValue: any, duration: number) => {
+      return Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: toValue.fade,
+          duration: FADE_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.spring(position, {
+          toValue: { x: toValue.x, y: 0 },
+          useNativeDriver: true,
+          tension: 40,
+          friction: 5,
+          velocity: toValue.velocity || 0,
+        }),
+      ]);
+    },
+    [fadeAnim, position]
+  );
+
+  // Memoize reset position function
+  const resetPosition = useCallback(async () => {
+    position.stopAnimation();
+    fadeAnim.stopAnimation();
+
+    if (animationState.animationPromise) {
+      return animationState.animationPromise;
+    }
+
+    const resetPromise = new Promise<void>(resolve => {
+      createAnimationSequence({ fade: 1, x: 0 }, FADE_DURATION).start(() => {
+        animationState.isAnimating = false;
+        animationState.currentWord = null;
+        animationState.direction = null;
+        animationState.animationPromise = null;
+        setIsAnimating(false);
+        setSwipeDirection({ dx: 0, opacity: 0 });
+        resolve();
+      });
+    });
+
+    animationState.animationPromise = resetPromise;
+    return resetPromise;
+  }, [createAnimationSequence, position, fadeAnim]);
+
+  const forceSwipe = async (direction: 'left' | 'right') => {
     const currentWords = wordsRef.current;
 
+    if (isInteractionDisabled()) {
+      await resetPosition();
+      return;
+    }
+
+    // Update last swipe time
+    animationState.lastSwipeTime = Date.now();
+
     // Ensure we have valid data before proceeding
-    if (!currentWords || !Array.isArray(currentWords) || currentWords.length === 0) {
-      resetPosition();
-      return;
-    }
-
-    if (isLoading || isFetching || isUpdating || animationState.isAnimating) {
-      resetPosition();
-      return;
-    }
-
-    // Validate we have words and current index is valid
-    if (currentIndex >= currentWords.length) {
-      resetPosition();
+    if (!currentWords?.length || currentIndex >= currentWords.length) {
+      await resetPosition();
       return;
     }
 
     const wordToUpdate = currentWords[currentIndex];
-
-    // Validate the word data structure
-
-    // Validate the word data structure
     if (!wordToUpdate?.sentence_word?.id) {
-      resetPosition();
+      await resetPosition();
       return;
     }
 
-    const x = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
+    const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH;
 
-    // Set animation state first
     animationState.isAnimating = true;
     animationState.currentWord = wordToUpdate;
     animationState.direction = direction;
     setIsAnimating(true);
 
-    // First animate the card out
-    Animated.timing(position, {
-      toValue: { x, y: 0 },
-      duration: SWIPE_OUT_DURATION,
-      useNativeDriver: true,
-    }).start(async ({ finished }) => {
-      if (!finished) {
-        resetPosition();
-        return;
-      }
+    const swipePromise = new Promise<void>(resolve => {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: FADE_DURATION,
+          useNativeDriver: true,
+        }),
+        Animated.timing(position, {
+          toValue: { x, y: 0 },
+          duration: SWIPE_OUT_DURATION,
+          useNativeDriver: true,
+        }),
+      ]).start(async ({ finished }) => {
+        if (!finished) {
+          await resetPosition();
+          resolve();
+          return;
+        }
 
-      try {
-        // Update the word in the database
-        await updateWordMutation.mutateAsync({
-          wordId: wordToUpdate.sentence_word_id,
-          success: direction === 'right',
-          wordToUpdate: wordToUpdate,
-        });
+        try {
+          await updateWordMutation.mutateAsync({
+            wordId: wordToUpdate.sentence_word_id,
+            success: direction === 'right',
+            wordToUpdate: wordToUpdate,
+          });
 
-        // After successful update, prepare for the next card
-        const nextIndex = currentIndex + 1;
+          position.setValue({ x: 0, y: 0 });
 
-        // Reset position without animation for the next card
-        position.setValue({ x: 0, y: 0 });
+          // Fade in the next card
+          await new Promise<void>(fadeResolve => {
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: FADE_DURATION,
+              useNativeDriver: true,
+            }).start(() => {
+              animationState.isAnimating = false;
+              animationState.currentWord = null;
+              animationState.direction = null;
+              animationState.animationPromise = null;
+              setIsAnimating(false);
+              fadeResolve();
+            });
+          });
 
-        // Update the index after position is reset
-        setCurrentIndex(nextIndex);
-
-        // Reset all animation states
-        animationState.isAnimating = false;
-        animationState.currentWord = null;
-        animationState.direction = null;
-        setIsAnimating(false);
-
-        // Invalidate queries after everything is complete
-        await queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
-        await queryClient.invalidateQueries({ queryKey: ['dueWords', user?.id] });
-      } catch {
-        resetPosition();
-      }
+          // Invalidate queries after everything is complete
+          await queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
+          await queryClient.invalidateQueries({ queryKey: ['dueWords', user?.id] });
+        } catch (error) {
+          console.error('Error updating word:', error);
+          await resetPosition();
+        }
+        resolve();
+      });
     });
+
+    animationState.animationPromise = swipePromise;
+    return swipePromise;
   };
 
-  const resetPosition = () => {
-    // Cancel any ongoing animation
-    position.stopAnimation();
+  const [swipeDirection, setSwipeDirection] = useState<{ dx: number; opacity: number }>({
+    dx: 0,
+    opacity: 0,
+  });
 
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: true,
-      tension: 40,
-      friction: 5,
-    }).start(() => {
-      animationState.isAnimating = false;
-      animationState.currentWord = null;
-      animationState.direction = null;
-      setIsAnimating(false);
-    });
-  };
+  // Throttled pan responder move handler
+  const handlePanResponderMove = useCallback(
+    throttle((dx: number) => {
+      if (isInteractionDisabled()) return;
 
+      const resistance = 0.75;
+      const adjustedDx = dx * resistance;
+      position.setValue({ x: adjustedDx, y: 0 });
+
+      setSwipeDirection({ dx: adjustedDx, opacity: Math.abs(adjustedDx) / SCREEN_WIDTH });
+
+      const maxDragDistance = SCREEN_WIDTH * 0.4;
+      const fadeValue = Math.max(0.7, 1 - Math.abs(dx) / maxDragDistance);
+      fadeAnim.setValue(fadeValue);
+    }, 16), // ~60fps
+    [position, fadeAnim, isInteractionDisabled]
+  );
+
+  // Memoize pan responder
   const panResponderRef = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !isAnimating,
-      onMoveShouldSetPanResponder: () => !isAnimating,
+      onStartShouldSetPanResponder: () => !isInteractionDisabled(),
+      onMoveShouldSetPanResponder: (_, { dx, dy }) => {
+        return !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5;
+      },
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
-        // Simply start from current position
-        position.setOffset({ x: 0, y: 0 });
+        if (isInteractionDisabled()) return;
         position.setValue({ x: 0, y: 0 });
+        setSwipeDirection({ dx: 0, opacity: 0 });
       },
-      onPanResponderMove: (_, { dx }) => {
-        if (isLoading || isFetching || isUpdating || animationState.isAnimating) {
-          return;
-        }
-        position.setValue({ x: dx, y: 0 });
-      },
-      onPanResponderRelease: (_, { dx, vx }) => {
-        position.flattenOffset();
+      onPanResponderMove: (_, { dx }) => handlePanResponderMove(dx),
+      onPanResponderRelease: async (_, { dx, vx }) => {
+        if (isInteractionDisabled()) return;
 
-        if (isLoading || isFetching || isUpdating || animationState.isAnimating) {
-          return;
-        }
+        position.flattenOffset();
+        setSwipeDirection({ dx: 0, opacity: 0 });
 
         const isRightSwipe = dx > SWIPE_THRESHOLD || (dx > 0 && vx > 0.3);
         const isLeftSwipe = dx < -SWIPE_THRESHOLD || (dx < 0 && vx < -0.3);
 
         if (isRightSwipe) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          forceSwipe('right');
+          await forceSwipe('right');
         } else if (isLeftSwipe) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          forceSwipe('left');
+          await forceSwipe('left');
         } else {
-          resetPosition();
+          await resetPosition();
         }
       },
     })
@@ -266,92 +397,164 @@ export default function ReviewScreen() {
     router.back();
   };
 
+  // Get current word data
+  const currentWord = dueWords?.[currentIndex];
+  const word = currentWord?.sentence_word;
+  const wordForm = word?.word_form;
+  const sentence = word?.sentence?.arabic;
+
+  // Memoized computations
+  const parts = useMemo(() => {
+    if (!sentence || !wordForm) return ['', ''];
+    return sentence.split(wordForm);
+  }, [sentence, wordForm]);
+
+  const progress = useMemo(() => {
+    return (currentIndex / (dueWords?.length || 1)) * 100;
+  }, [currentIndex, dueWords?.length]);
+
   // Show loading state during any data operations
   if (!user || isLoading || isFetching) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Loading...</ThemedText>
-      </ThemedView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ThemedView style={styles.container}>
+          <View style={styles.header}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
+            <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.completeContainer}>
+            <ThemedText style={styles.message}>Loading...</ThemedText>
+          </View>
+        </ThemedView>
+      </>
     );
   }
 
   // Show error state
   if (isError) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Error loading words: {error?.message}</ThemedText>
-      </ThemedView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ThemedView style={styles.container}>
+          <View style={styles.header}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
+            <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.completeContainer}>
+            <ThemedText style={styles.message}>Error loading words</ThemedText>
+            <ThemedText style={styles.submessage}>{error?.message}</ThemedText>
+          </View>
+        </ThemedView>
+      </>
     );
   }
 
   // Ensure we have valid data
   if (!dueWords || !Array.isArray(dueWords) || dueWords.length === 0) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>No words due for review.</ThemedText>
-      </ThemedView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ThemedView style={styles.container}>
+          <View style={styles.header}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
+            <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.completeContainer}>
+            <ThemedText style={styles.message}>No words due for review</ThemedText>
+          </View>
+        </ThemedView>
+      </>
     );
   }
 
   if (currentIndex >= dueWords.length) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Review complete!</ThemedText>
-        <ThemedText style={styles.submessage}>
-          You've reviewed all {dueWords.length} words.
-        </ThemedText>
-      </ThemedView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ThemedView style={styles.container}>
+          <View style={styles.header}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
+              <View
+                style={[styles.progressFill, { width: '100%', backgroundColor: colors.tint }]}
+              />
+            </View>
+            <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+
+          <View style={styles.completeContainer}>
+            <ThemedText style={styles.message}>Review complete!</ThemedText>
+            <ThemedText style={styles.submessage}>
+              You've reviewed all {dueWords.length} words.
+            </ThemedText>
+          </View>
+        </ThemedView>
+      </>
     );
   }
 
-  const currentWord = dueWords[currentIndex];
   if (!currentWord?.sentence_word) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Error loading word data.</ThemedText>
-      </ThemedView>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <ThemedView style={styles.container}>
+          <View style={styles.header}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
+            <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+          <View style={styles.completeContainer}>
+            <ThemedText style={styles.message}>Error loading word data</ThemedText>
+          </View>
+        </ThemedView>
+      </>
     );
   }
 
-  const word = currentWord.sentence_word;
-  const progress = ((currentIndex + 1) / dueWords.length) * 100;
-
-  // Get the sentence and word form with proper error handling
-  const wordForm = word.word_form;
-  const sentence = word.sentence?.arabic;
-
-  // If we don't have a sentence, show just the word
   if (!sentence) {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <ThemedView style={styles.container}>
-          <Pressable onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </Pressable>
+          <View style={styles.header}>
+            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${progress}%`, backgroundColor: colors.tint },
+                ]}
+              />
+            </View>
+            <Pressable onPress={handleClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </Pressable>
+          </View>
+
+          {/* Swipe direction feedback overlay */}
+          {swipeDirection.dx !== 0 && (
+            <View style={[styles.swipeFeedback, getSwipeColors(swipeDirection.dx, colors)]} />
+          )}
 
           <Animated.View
             style={[
-              styles.card,
+              styles.contentContainer,
               {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-                transform: [
-                  {
-                    translateX: position.x,
-                  },
-                  {
-                    rotate: position.x.interpolate({
-                      inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
-                      outputRange: ['-20deg', '0deg', '20deg'],
-                    }),
-                  },
-                ],
+                transform: [{ translateX: position.x }],
+                opacity: fadeAnim,
               },
             ]}
             {...panResponderRef.panHandlers}
           >
-            <View style={styles.sentenceContainer}>
+            <View style={styles.wordContainer}>
               <ThemedText
                 style={[styles.highlightedWord, { color: colors.arabicText }]}
                 skipDefaultColor
@@ -361,27 +564,24 @@ export default function ReviewScreen() {
             </View>
           </Animated.View>
 
-          {/* Progress bar */}
-          <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
-            <View
-              style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
-            />
-          </View>
-
-          {/* Progress text */}
-          <ThemedText style={styles.progressText}>
-            {currentIndex + 1} of {dueWords.length}
-          </ThemedText>
-
-          {/* Swipe instructions */}
           <View style={styles.instructions}>
-            <View style={styles.instruction}>
-              <Ionicons name="arrow-back" size={24} color={colors.warning} />
-              <ThemedText style={styles.instructionText}>Swipe left if you don't know</ThemedText>
+            <View style={[styles.instructionSide, { backgroundColor: colors.warning + '20' }]}>
+              <MaterialCommunityIcons
+                name="gesture-swipe-left"
+                size={24}
+                color={colors.warning}
+                style={styles.instructionIcon}
+              />
+              <ThemedText style={styles.instructionText}>Don't know</ThemedText>
             </View>
-            <View style={styles.instruction}>
-              <ThemedText style={styles.instructionText}>Swipe right if you know</ThemedText>
-              <Ionicons name="arrow-forward" size={24} color={colors.success} />
+            <View style={[styles.instructionSide, { backgroundColor: colors.success + '20' }]}>
+              <ThemedText style={styles.instructionText}>Know it</ThemedText>
+              <MaterialCommunityIcons
+                name="gesture-swipe-right"
+                size={24}
+                color={colors.success}
+                style={styles.instructionIcon}
+              />
             </View>
           </View>
         </ThemedView>
@@ -389,41 +589,37 @@ export default function ReviewScreen() {
     );
   }
 
-  // Split the sentence only if we have both sentence and wordForm
-  const parts = sentence.split(wordForm);
-
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ThemedView style={styles.container}>
-        {/* Close button */}
-        <Pressable onPress={handleClose} style={styles.closeButton}>
-          <Ionicons name="close" size={24} color={colors.text} />
-        </Pressable>
+        <View style={styles.header}>
+          <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
+            <View
+              style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
+            />
+          </View>
+          <Pressable onPress={handleClose} style={styles.closeButton}>
+            <Ionicons name="close" size={24} color={colors.text} />
+          </Pressable>
+        </View>
 
-        {/* Card */}
+        {/* Swipe direction feedback overlay */}
+        {swipeDirection.dx !== 0 && (
+          <View style={[styles.swipeFeedback, getSwipeColors(swipeDirection.dx, colors)]} />
+        )}
+
         <Animated.View
           style={[
-            styles.card,
+            styles.contentContainer,
             {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.cardBorder,
-              transform: [
-                {
-                  translateX: position.x,
-                },
-                {
-                  rotate: position.x.interpolate({
-                    inputRange: [-SCREEN_WIDTH * 1.5, 0, SCREEN_WIDTH * 1.5],
-                    outputRange: ['-20deg', '0deg', '20deg'],
-                  }),
-                },
-              ],
+              transform: [{ translateX: position.x }],
+              opacity: fadeAnim,
             },
           ]}
           {...panResponderRef.panHandlers}
         >
-          <View style={styles.sentenceContainer}>
+          <View style={styles.wordContainer}>
             <ThemedText style={[styles.sentence, { color: colors.arabicText }]} skipDefaultColor>
               {parts[0]}
               <ThemedText
@@ -437,27 +633,24 @@ export default function ReviewScreen() {
           </View>
         </Animated.View>
 
-        {/* Progress bar */}
-        <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
-          <View
-            style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
-          />
-        </View>
-
-        {/* Progress text */}
-        <ThemedText style={styles.progressText}>
-          {currentIndex + 1} of {dueWords.length}
-        </ThemedText>
-
-        {/* Swipe instructions */}
         <View style={styles.instructions}>
-          <View style={styles.instruction}>
-            <Ionicons name="arrow-back" size={24} color={colors.warning} />
-            <ThemedText style={styles.instructionText}>Swipe left if you don't know</ThemedText>
+          <View style={[styles.instructionSide, { backgroundColor: colors.warning + '20' }]}>
+            <MaterialCommunityIcons
+              name="gesture-swipe-left"
+              size={24}
+              color={colors.warning}
+              style={styles.instructionIcon}
+            />
+            <ThemedText style={styles.instructionText}>Don't know</ThemedText>
           </View>
-          <View style={styles.instruction}>
-            <ThemedText style={styles.instructionText}>Swipe right if you know</ThemedText>
-            <Ionicons name="arrow-forward" size={24} color={colors.success} />
+          <View style={[styles.instructionSide, { backgroundColor: colors.success + '20' }]}>
+            <ThemedText style={styles.instructionText}>Know it</ThemedText>
+            <MaterialCommunityIcons
+              name="gesture-swipe-right"
+              size={24}
+              color={colors.success}
+              style={styles.instructionIcon}
+            />
           </View>
         </View>
       </ThemedView>
@@ -468,29 +661,33 @@ export default function ReviewScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 0,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 48,
+    paddingHorizontal: 16,
+    height: 40,
   },
   closeButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    zIndex: 1,
     padding: 8,
-  },
-  card: {
-    flex: 1,
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
+    marginLeft: 16,
+    height: 40,
+    width: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 24,
   },
-  sentenceContainer: {
+  contentContainer: {
     flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  wordContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
+    marginBottom: 32, // Add some bottom margin for better spacing
   },
   sentence: {
     fontSize: 32,
@@ -504,44 +701,57 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   progressBar: {
+    flex: 1,
     height: 4,
     borderRadius: 2,
     overflow: 'hidden',
-    marginBottom: 8,
   },
   progressFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  progressText: {
-    textAlign: 'center',
-    fontSize: 14,
-    opacity: 0.7,
-    marginBottom: 16,
+    width: '0%',
   },
   instructions: {
-    flexDirection: 'column',
-    gap: 12,
-    marginBottom: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 48,
+    opacity: 0.6, // Reduce opacity for more subtle appearance
   },
-  instruction: {
+  instructionSide: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 12,
+    paddingVertical: 10, // Slightly increase padding
+    paddingHorizontal: 20, // Slightly increase padding
+    borderRadius: 24, // Increase border radius for softer look
   },
   instructionText: {
-    fontSize: 16,
+    fontSize: 15,
+    fontWeight: '500',
+    opacity: 0.9, // Slightly reduce text opacity
+  },
+  instructionIcon: {
+    opacity: 0.8, // Reduce icon opacity
   },
   message: {
     fontSize: 24,
     textAlign: 'center',
-    marginTop: 24,
   },
   submessage: {
     fontSize: 16,
     textAlign: 'center',
     marginTop: 12,
     opacity: 0.7,
+  },
+  completeContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+  },
+  swipeFeedback: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: -1,
   },
 });
