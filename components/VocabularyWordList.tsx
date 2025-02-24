@@ -99,47 +99,47 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginBottom: 24,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   title: {
-    fontSize: 20,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-    marginBottom: 12,
-    marginHorizontal: 16,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   listContent: {
-    paddingHorizontal: 16,
-    gap: 12,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   wordInfo: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
   },
   arabicWord: {
-    fontSize: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     fontFamily: 'NotoNaskhArabic',
-    marginBottom: 4,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   translation: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: 0.8,
   },
   statusContainer: {
-    borderRadius: 12,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   statusPill: {
-    borderRadius: 12,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
   },
   statusBackground: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 6,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL - 2,
+    gap: LAYOUT.SPACING.SMALL - 2,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '600',
   },
 });

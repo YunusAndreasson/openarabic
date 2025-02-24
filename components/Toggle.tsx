@@ -133,9 +133,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   shadow: {
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: LAYOUT.OPACITY.OVERLAY,
+    shadowRadius: LAYOUT.SPACING.TINY / 2,
+    elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
       width: 0,
       height: 1,

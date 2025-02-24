@@ -29,19 +29,19 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: LAYOUT.OPACITY.OVERLAY,
+    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.MEDIUM,
   },
   pressed: {
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
 });

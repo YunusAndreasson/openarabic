@@ -22,6 +22,7 @@ import { useNavigation } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LAYOUT } from '@/constants/layout';
 
 // Extract constants to avoid recalculation
 const HEADER_HEIGHT = 380;
@@ -30,7 +31,7 @@ const NAV_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
 const NAV_HEADER_HEIGHT = Platform.OS === 'ios' ? 100 : 80;
 const SCROLL_THRESHOLD = HEADER_HEIGHT - HEADER_HEIGHT_COLLAPSED;
 const HEADER_FADE_THRESHOLD = SCROLL_THRESHOLD * 0.8;
-const ANIMATION_DURATION = 300;
+const ANIMATION_DURATION = LAYOUT.ANIMATION.DURATION.NORMAL;
 
 interface Props {
   children: ReactNode;
@@ -250,12 +251,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   headerContent: {
-    padding: 20,
-    paddingBottom: 24,
-    paddingTop: NAV_HEIGHT + 20,
+    padding: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XXLARGE,
+    paddingTop: NAV_HEIGHT + LAYOUT.SPACING.LARGE,
   },
   contentContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   navHeader: {
     position: 'absolute',
@@ -263,7 +264,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: NAV_HEADER_HEIGHT,
-    zIndex: 2,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   blur: {
     flex: 1,

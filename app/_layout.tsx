@@ -20,6 +20,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
 import Toast, { BaseToast, BaseToastProps } from 'react-native-toast-message';
 import { useColors } from '@/hooks/useColors';
+import { LAYOUT } from '@/constants/layout';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -45,21 +46,21 @@ function AppContent() {
           borderLeftColor: colors.tint,
           backgroundColor: colors.cardBackground,
           borderColor: colors.cardBorder,
-          borderRadius: 12,
+          borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
           width: '90%',
           height: 'auto',
         }}
         contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+          paddingVertical: LAYOUT.SPACING.MEDIUM,
         }}
         text1Style={{
-          fontSize: 20,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
           fontWeight: '600',
           color: colors.titleText,
         }}
         text2Style={{
-          fontSize: 17,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
           color: colors.text,
         }}
       />

@@ -5,6 +5,7 @@ import { useColors } from '@/hooks/useColors';
 import * as Haptics from 'expo-haptics';
 import type { Tables } from '@/types/database.types';
 import { WordDetailsModal } from './WordDetailsModal';
+import { LAYOUT } from '@/constants/layout';
 
 type WordWithDetails = Tables<'sentence_words'> & {
   root: Tables<'roots'> | null;
@@ -72,8 +73,8 @@ export function ArabicWord({
 
 const styles = StyleSheet.create({
   wordContainer: {
-    marginHorizontal: 4,
-    marginVertical: 2,
+    marginHorizontal: LAYOUT.SPACING.TINY / 2,
+    marginVertical: LAYOUT.SPACING.TINY / 2,
   },
   arabicText: {
     fontFamily: 'NotoNaskhArabic',

@@ -293,8 +293,12 @@ export default function ArticleScreen() {
                     styles.englishText,
                     {
                       color: colors.englishText,
-                      fontSize: 16 * settings.fontScale,
-                      lineHeight: Math.round(22 * settings.fontScale),
+                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                      lineHeight: Math.round(
+                        LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                          LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                          settings.fontScale
+                      ),
                     },
                   ]}
                 >

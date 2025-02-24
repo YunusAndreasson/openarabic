@@ -159,8 +159,12 @@ export default function AccountScreen() {
                   style={[
                     styles.arabicPreviewText,
                     {
-                      fontSize: 24 * settings.fontScale,
-                      lineHeight: Math.round(36 * settings.fontScale),
+                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
+                      lineHeight: Math.round(
+                        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+                          LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                          settings.fontScale
+                      ),
                       color: colors.arabicText,
                     },
                   ]}
@@ -173,8 +177,12 @@ export default function AccountScreen() {
                     style={[
                       styles.englishPreviewText,
                       {
-                        fontSize: 16 * settings.fontScale,
-                        lineHeight: Math.round(22 * settings.fontScale),
+                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                        lineHeight: Math.round(
+                          LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                            LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                            settings.fontScale
+                        ),
                         color: colors.text,
                       },
                     ]}

@@ -3,9 +3,10 @@ import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from './ThemedText';
-import { useColors } from '../hooks/useColors';
+import { useColors } from '@/hooks/useColors';
 import type { Tables } from '../types/database.types';
 import * as Haptics from 'expo-haptics';
+import { LAYOUT } from '@/constants/layout';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];
@@ -74,21 +75,21 @@ function CategoryPillsComponent({
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 1,
+          zIndex: LAYOUT.Z_INDEX.HEADER,
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, 42),
+          paddingTop: Math.max(insets.top, LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL),
         },
         scrollContent: {
-          paddingHorizontal: 16,
-          gap: 8,
-          paddingVertical: 12,
-          paddingBottom: 8,
+          paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+          gap: LAYOUT.SPACING.MEDIUM,
+          paddingVertical: LAYOUT.SPACING.MEDIUM,
+          paddingBottom: LAYOUT.SPACING.MEDIUM,
         },
         pill: {
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-          borderRadius: 12,
-          borderWidth: 1,
+          paddingHorizontal: LAYOUT.SPACING.LARGE,
+          paddingVertical: LAYOUT.SPACING.MEDIUM,
+          borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
           shadowOffset: {
             width: 0,
             height: 1,
@@ -98,7 +99,7 @@ function CategoryPillsComponent({
           elevation: 2,
         },
         pillText: {
-          fontSize: 15,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           fontWeight: '600',
         },
         activePill: {

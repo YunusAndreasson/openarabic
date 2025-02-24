@@ -684,13 +684,13 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontFamily: 'NotoNaskhArabic',
     textAlign: 'center',
-    lineHeight: 48,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   highlightedWord: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontFamily: 'NotoNaskhArabic',
     fontWeight: '700',
-    lineHeight: 48,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   progressBar: {
     flex: 1,

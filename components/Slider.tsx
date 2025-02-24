@@ -44,11 +44,11 @@ export function CustomSlider({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 40,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     justifyContent: 'center',
   },
   slider: {
     width: '100%',
-    height: 40,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
 });

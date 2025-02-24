@@ -256,8 +256,8 @@ const styles = StyleSheet.create({
   },
   errorText: {
     textAlign: 'center',
-    marginHorizontal: 20,
-    fontSize: 16,
+    marginHorizontal: LAYOUT.SPACING.LARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -267,11 +267,11 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   emptyText: {
-    marginTop: 8,
-    fontSize: 14,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: 0.7,
   },
   flatListContent: {
-    paddingVertical: 12,
+    paddingVertical: LAYOUT.LIST_VERTICAL_SPACING,
   },
 });

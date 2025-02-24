@@ -6,18 +6,16 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
+import type { Tables } from '@/types/database.types';
 
 interface WordDetailsModalProps {
   visible: boolean;
   onClose: () => void;
-  word: {
-    arabic: string;
-    translation: string;
-    root?: string;
-    rootMeaning?: string;
-    type?: string;
-    grammarNotes?: string[];
+  word: Tables<'sentence_words'> & {
+    root: Tables<'roots'> | null;
+    word_type: Tables<'word_types'> | null;
   };
+  isSelected: boolean;
   onStudyPress?: () => void;
 }
 
@@ -42,8 +40,8 @@ function WordDetailsModalComponent({
 
   // Memoize styles to prevent new object creation on each render
   const containerStyle = useMemo(
-    () => [styles.modalContainer, { backgroundColor: colors.overlay }],
-    [colors.overlay]
+    () => [styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }],
+    []
   );
 
   const contentStyle = useMemo(
@@ -96,88 +94,93 @@ function WordDetailsModalComponent({
   );
 
   return (
-    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <Pressable style={containerStyle} onPress={handleBackdropPress}>
-        <Pressable style={contentStyle} onPress={e => e.stopPropagation()}>
-          <View style={styles.header}>
-            <ThemedText style={arabicWordStyle} skipDefaultColor>
-              {word.arabic}
-            </ThemedText>
-            <ThemedText style={translationStyle} skipDefaultColor>
-              {word.translation}
-            </ThemedText>
-          </View>
+    <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
+      <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="dark">
+        <Pressable style={containerStyle} onPress={handleBackdropPress}>
+          <Pressable style={contentStyle} onPress={e => e.stopPropagation()}>
+            <View style={styles.header}>
+              <ThemedText style={arabicWordStyle} skipDefaultColor>
+                {word.word_form}
+              </ThemedText>
+              <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
+                {word.english}
+              </ThemedText>
+            </View>
 
-          <View style={styles.detailsContainer}>
-            {word.root && (
-              <View style={styles.detailRow}>
-                <ThemedText style={labelStyle} skipDefaultColor>
-                  Root
-                </ThemedText>
-                <View style={pillStyle}>
-                  <ThemedText style={rootTextStyle} skipDefaultColor>
-                    {word.root}
+            <View style={styles.detailsContainer}>
+              {word.root && (
+                <View style={styles.detailRow}>
+                  <ThemedText style={labelStyle} skipDefaultColor>
+                    Root
                   </ThemedText>
-                  {word.rootMeaning && (
-                    <ThemedText style={rootMeaningStyle} skipDefaultColor>
-                      {word.rootMeaning}
+                  <View style={pillStyle}>
+                    <ThemedText style={rootTextStyle} skipDefaultColor>
+                      {word.root.letters}
                     </ThemedText>
-                  )}
+                    {word.root.meaning && (
+                      <ThemedText style={rootMeaningStyle} skipDefaultColor>
+                        {word.root.meaning}
+                      </ThemedText>
+                    )}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
 
-            {word.type && (
-              <View style={styles.detailRow}>
-                <ThemedText style={labelStyle} skipDefaultColor>
-                  Type
-                </ThemedText>
-                <View style={pillStyle}>
-                  <ThemedText style={typeTextStyle} skipDefaultColor>
-                    {word.type}
+              {word.word_type && (
+                <View style={styles.detailRow}>
+                  <ThemedText style={labelStyle} skipDefaultColor>
+                    Type
                   </ThemedText>
-                </View>
-              </View>
-            )}
-
-            {word.grammarNotes && word.grammarNotes.length > 0 && (
-              <View style={styles.grammarNote}>
-                <ThemedText style={labelStyle} skipDefaultColor>
-                  Grammar Notes
-                </ThemedText>
-                {word.grammarNotes.map((note, index) => (
-                  <View key={index} style={pillStyle}>
-                    <ThemedText style={noteTextStyle} skipDefaultColor>
-                      {note}
+                  <View style={pillStyle}>
+                    <ThemedText style={typeTextStyle} skipDefaultColor>
+                      {word.word_type.name}
                     </ThemedText>
                   </View>
-                ))}
-              </View>
-            )}
-          </View>
+                </View>
+              )}
 
-          {onStudyPress && (
-            <TouchableOpacity
-              style={[
-                styles.studyButton,
-                {
-                  backgroundColor: colors.textOverlay,
-                  borderColor: colors.borderOverlay,
-                },
-              ]}
-              onPress={handleStudyPress}
-            >
-              <Ionicons name="school" size={20} color={colors.titleText} style={styles.studyIcon} />
-              <ThemedText
-                style={[styles.studyButtonText, { color: colors.titleText }]}
-                skipDefaultColor
+              {word.grammar_note && (
+                <View style={styles.grammarNote}>
+                  <ThemedText style={labelStyle} skipDefaultColor>
+                    Grammar Notes
+                  </ThemedText>
+                  <View style={pillStyle}>
+                    <ThemedText style={noteTextStyle} skipDefaultColor>
+                      {word.grammar_note}
+                    </ThemedText>
+                  </View>
+                </View>
+              )}
+            </View>
+
+            {onStudyPress && (
+              <TouchableOpacity
+                style={[
+                  styles.studyButton,
+                  {
+                    backgroundColor: colors.textOverlay,
+                    borderColor: colors.borderOverlay,
+                  },
+                ]}
+                onPress={handleStudyPress}
               >
-                Study this word
-              </ThemedText>
-            </TouchableOpacity>
-          )}
+                <Ionicons
+                  name="school"
+                  size={20}
+                  color={colors.titleText}
+                  style={styles.studyIcon}
+                />
+                <ThemedText
+                  style={[styles.studyButtonText, { color: colors.titleText }]}
+                  skipDefaultColor
+                >
+                  Study this word
+                </ThemedText>
+              </TouchableOpacity>
+            )}
+          </Pressable>
         </Pressable>
-      </Pressable>
+      </BlurView>
     </Modal>
   );
 }
@@ -194,9 +197,10 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '90%',
     maxWidth: 400,
-    paddingVertical: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.XXLARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.CARD.PADDING.LARGE,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.SHADOW.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.MODAL,
@@ -204,17 +208,20 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.XXLARGE,
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
   arabicWord: {
     fontFamily: 'NotoNaskhArabic',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   translation: {
     textAlign: 'center',
     fontWeight: '600',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   detailsContainer: {
     gap: LAYOUT.SPACING.LARGE,
