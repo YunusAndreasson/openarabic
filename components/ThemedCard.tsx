@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -36,6 +37,7 @@ function ThemedCardComponent({
   isLoading = false,
 }: ThemedCardProps): React.JSX.Element {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
@@ -64,9 +66,6 @@ function ThemedCardComponent({
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(() => {
-    // Determine if we're in dark mode based on the background color
-    const isDarkMode = colors.background === '#000000';
-
     return {
       card: {
         backgroundColor: colors.cardBackground,
@@ -92,7 +91,7 @@ function ThemedCardComponent({
         color: colors.tabIconDefault,
       },
     };
-  }, [colors]);
+  }, [colors, isDarkMode]);
 
   // Memoize pressable style function to prevent unnecessary rerenders
   const getPressableStyle = useCallback(
@@ -226,15 +225,9 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     overflow: 'hidden',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   imageContainer: {
     position: 'relative',

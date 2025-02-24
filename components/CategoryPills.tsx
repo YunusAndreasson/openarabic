@@ -118,7 +118,7 @@ function CategoryPillsComponent({
         },
         inactivePillText: {
           color: colors.text,
-          opacity: 0.6,
+          opacity: LAYOUT.OPACITY.DIMMED,
         },
       }),
     [colors, insets]

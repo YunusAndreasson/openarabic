@@ -27,19 +27,14 @@ export function CompactThemedCard({ children, onPress }: CompactThemedCardProps)
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
     elevation: LAYOUT.Z_INDEX.CARD,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: LAYOUT.OPACITY.OVERLAY,
-    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   pressed: {
     opacity: LAYOUT.OPACITY.PRESSED,

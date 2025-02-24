@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
   },
@@ -119,8 +119,8 @@ const styles = StyleSheet.create({
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
   },
 });

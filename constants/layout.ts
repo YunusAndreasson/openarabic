@@ -183,4 +183,14 @@ export const LAYOUT = {
       DOTTED: 'dotted',
     },
   },
+
+  // Header dimensions
+  HEADER: {
+    HEIGHT: {
+      EXPANDED: 380,
+      COLLAPSED: 0,
+    },
+    NAV_HEIGHT: Platform.OS === 'ios' ? 44 : 56,
+    NAV_HEADER_HEIGHT: Platform.OS === 'ios' ? 100 : 80,
+  },
 };

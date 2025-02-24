@@ -23,12 +23,13 @@ import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 // Extract constants to avoid recalculation
-const HEADER_HEIGHT = 380;
-const HEADER_HEIGHT_COLLAPSED = 0;
-const NAV_HEIGHT = Platform.OS === 'ios' ? 44 : 56;
-const NAV_HEADER_HEIGHT = Platform.OS === 'ios' ? 100 : 80;
+const HEADER_HEIGHT = LAYOUT.HEADER.HEIGHT.EXPANDED;
+const HEADER_HEIGHT_COLLAPSED = LAYOUT.HEADER.HEIGHT.COLLAPSED;
+const NAV_HEIGHT = LAYOUT.HEADER.NAV_HEIGHT;
+const NAV_HEADER_HEIGHT = LAYOUT.HEADER.NAV_HEADER_HEIGHT;
 const SCROLL_THRESHOLD = HEADER_HEIGHT - HEADER_HEIGHT_COLLAPSED;
 const HEADER_FADE_THRESHOLD = SCROLL_THRESHOLD * 0.8;
 const ANIMATION_DURATION = LAYOUT.ANIMATION.DURATION.NORMAL;
@@ -49,6 +50,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   accessibilityLabel,
 }: Props) {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const scrollY = useSharedValue(0);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -159,13 +161,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
             contentFit="cover"
             cachePolicy="memory-disk"
             transition={ANIMATION_DURATION}
-            placeholder={
-              Platform.OS === 'ios'
-                ? {
-                    uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-                  }
-                : undefined
-            }
+            placeholder={Platform.OS === 'ios' ? { color: colors.cardBackground } : undefined}
             accessible={false}
           />
           <LinearGradient
@@ -192,13 +188,12 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
         accessibilityRole="header"
         accessibilityLabel={`${title} navigation bar`}
       >
-        <BlurView
-          intensity={80}
-          tint={colors.background === Colors.dark.background ? 'dark' : 'light'}
-          style={styles.blur}
-        >
+        <BlurView intensity={80} tint={isDarkMode ? 'dark' : 'light'} style={styles.blur}>
           <View
-            style={[styles.navHeaderBackground, { backgroundColor: colors.cardBackground + '80' }]}
+            style={[
+              styles.navHeaderBackground,
+              { backgroundColor: colors.cardBackground, opacity: LAYOUT.OPACITY.OVERLAY },
+            ]}
           />
         </BlurView>
       </Animated.View>
@@ -235,7 +230,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 1,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
     overflow: 'hidden',
   },
   imageContainer: {
