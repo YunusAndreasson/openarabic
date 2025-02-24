@@ -43,17 +43,7 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, []);
 
-  const buttonContainerStyle = useMemo(
-    () => [
-      styles.buttonContainer,
-      {
-        backgroundColor: colors.background,
-        borderTopColor: colors.icon,
-        shadowColor: colors.shadow,
-      },
-    ],
-    [colors.background, colors.icon, colors.shadow]
-  );
+  const buttonContainerStyle = useMemo(() => [styles.buttonContainer], []);
 
   if (!user) {
     return (
@@ -157,19 +147,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
-    borderTopWidth: 0.5,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
   },
   messageContainer: {
     flex: 1,

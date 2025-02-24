@@ -139,24 +139,10 @@ export default function PlaylistScreen() {
       {
         bottom: 0,
         paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
-        backgroundColor: colors.background,
-        borderTopWidth: 0.5,
-        borderTopColor: colors.icon,
         zIndex: LAYOUT.Z_INDEX.HEADER,
-        ...Platform.select({
-          ios: {
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-          },
-          android: {
-            elevation: 8,
-          },
-        }),
       },
     ],
-    [colors.background, colors.icon]
+    []
   );
 
   const { data: readingList, isLoading } = useQuery({

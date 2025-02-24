@@ -6,7 +6,6 @@ import { useColors } from '@/hooks/useColors';
 import { useNavigation } from 'expo-router';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { Ionicons } from '@expo/vector-icons';
 
 interface AudioPlayButtonProps {
   audioUrl: string;

@@ -267,10 +267,11 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
   },
   scrollContent: {
-    paddingRight: 0, // Remove right padding to align scrollbar to the edge
+    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   content: {
     flex: 1,
