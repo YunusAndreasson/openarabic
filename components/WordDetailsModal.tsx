@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Modal, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
@@ -29,99 +29,141 @@ export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordD
     onStudyPress?.();
   };
 
+  const handleBackdropPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onClose();
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.overlay}>
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={styles.contentContainer}>
-          <View style={[styles.content, { backgroundColor: colors.cardBackground }]}>
-            <View style={styles.header}>
-              <ThemedText style={styles.arabicWord}>{word.arabic}</ThemedText>
-              <ThemedText style={styles.translation}>{word.translation}</ThemedText>
-            </View>
+    <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
+      <Pressable
+        style={[styles.modalContainer, { backgroundColor: colors.overlay }]}
+        onPress={handleBackdropPress}
+      >
+        <Pressable
+          style={[
+            styles.modalContent,
+            {
+              backgroundColor: colors.cardBackground,
+              shadowColor: colors.shadow,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+          onPress={e => e.stopPropagation()}
+        >
+          <View style={styles.header}>
+            <ThemedText style={[styles.arabicWord, { color: colors.arabicText }]} skipDefaultColor>
+              {word.arabic}
+            </ThemedText>
+            <ThemedText style={[styles.translation, { color: colors.titleText }]} skipDefaultColor>
+              {word.translation}
+            </ThemedText>
+          </View>
 
-            <View style={styles.detailsContainer}>
-              {word.root && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.label}>Root</ThemedText>
-                  <View style={[styles.pill, { backgroundColor: colors.text + '10' }]}>
-                    <ThemedText style={styles.rootText}>{word.root}</ThemedText>
-                    {word.rootMeaning && (
-                      <ThemedText style={styles.rootMeaning}>{word.rootMeaning}</ThemedText>
-                    )}
-                  </View>
-                </View>
-              )}
-
-              {word.type && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={styles.label}>Type</ThemedText>
-                  <View style={[styles.pill, { backgroundColor: colors.text + '10' }]}>
-                    <ThemedText style={styles.typeText}>{word.type}</ThemedText>
-                  </View>
-                </View>
-              )}
-
-              {word.grammarNotes && word.grammarNotes.length > 0 && (
-                <View style={styles.grammarNote}>
-                  <ThemedText style={styles.label}>Grammar Notes</ThemedText>
-                  {word.grammarNotes.map((note, index) => (
-                    <View
-                      key={index}
-                      style={[styles.notePill, { backgroundColor: colors.text + '10' }]}
+          <View style={styles.detailsContainer}>
+            {word.root && (
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.label, { color: colors.titleText }]} skipDefaultColor>
+                  Root
+                </ThemedText>
+                <View style={[styles.pill, { backgroundColor: colors.textOverlay }]}>
+                  <ThemedText
+                    style={[styles.rootText, { color: colors.arabicText }]}
+                    skipDefaultColor
+                  >
+                    {word.root}
+                  </ThemedText>
+                  {word.rootMeaning && (
+                    <ThemedText
+                      style={[styles.rootMeaning, { color: colors.titleText }]}
+                      skipDefaultColor
                     >
-                      <ThemedText style={styles.noteText}>{note}</ThemedText>
-                    </View>
-                  ))}
+                      {word.rootMeaning}
+                    </ThemedText>
+                  )}
                 </View>
-              )}
-            </View>
+              </View>
+            )}
 
-            {onStudyPress && (
-              <TouchableOpacity
-                style={[
-                  styles.studyButton,
-                  {
-                    backgroundColor: colors.text + '10',
-                    borderColor: colors.text + '20',
-                  },
-                ]}
-                onPress={handleStudyPress}
-              >
-                <Ionicons name="school" size={20} color={colors.text} style={styles.studyIcon} />
-                <ThemedText style={styles.studyButtonText}>Study this word</ThemedText>
-              </TouchableOpacity>
+            {word.type && (
+              <View style={styles.detailRow}>
+                <ThemedText style={[styles.label, { color: colors.titleText }]} skipDefaultColor>
+                  Type
+                </ThemedText>
+                <View style={[styles.pill, { backgroundColor: colors.textOverlay }]}>
+                  <ThemedText
+                    style={[styles.typeText, { color: colors.titleText }]}
+                    skipDefaultColor
+                  >
+                    {word.type}
+                  </ThemedText>
+                </View>
+              </View>
+            )}
+
+            {word.grammarNotes && word.grammarNotes.length > 0 && (
+              <View style={styles.grammarNote}>
+                <ThemedText style={[styles.label, { color: colors.titleText }]} skipDefaultColor>
+                  Grammar Notes
+                </ThemedText>
+                {word.grammarNotes.map((note, index) => (
+                  <View
+                    key={index}
+                    style={[styles.notePill, { backgroundColor: colors.textOverlay }]}
+                  >
+                    <ThemedText
+                      style={[styles.noteText, { color: colors.titleText }]}
+                      skipDefaultColor
+                    >
+                      {note}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
             )}
           </View>
-        </View>
-      </View>
+
+          {onStudyPress && (
+            <TouchableOpacity
+              style={[
+                styles.studyButton,
+                {
+                  backgroundColor: colors.textOverlay,
+                  borderColor: colors.borderOverlay,
+                },
+              ]}
+              onPress={handleStudyPress}
+            >
+              <Ionicons name="school" size={20} color={colors.titleText} style={styles.studyIcon} />
+              <ThemedText
+                style={[styles.studyButtonText, { color: colors.titleText }]}
+                skipDefaultColor
+              >
+                Study this word
+              </ThemedText>
+            </TouchableOpacity>
+          )}
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
+  modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  contentContainer: {
+  modalContent: {
     width: '90%',
     maxWidth: 400,
     paddingVertical: LAYOUT.SPACING.LARGE,
-  },
-  content: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     padding: LAYOUT.CARD.PADDING.LARGE,
-    borderWidth: StyleSheet.hairlineWidth,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: LAYOUT.SPACING.LARGE,
-    elevation: 8,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    ...LAYOUT.SHADOW.MEDIUM,
+    zIndex: LAYOUT.Z_INDEX.MODAL,
   },
   header: {
     alignItems: 'center',
@@ -148,7 +190,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     marginBottom: LAYOUT.SPACING.TINY,
     fontWeight: '500',
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   pill: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,

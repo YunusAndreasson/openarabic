@@ -179,26 +179,6 @@ export default function ReviewScreen() {
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const fadeOut = () => {
-    return new Promise<void>(resolve => {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: FADE_DURATION,
-        useNativeDriver: true,
-      }).start(() => resolve());
-    });
-  };
-
-  const fadeIn = () => {
-    return new Promise<void>(resolve => {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: FADE_DURATION,
-        useNativeDriver: true,
-      }).start(() => resolve());
-    });
-  };
-
   // Memoize animation sequence for better performance
   const createAnimationSequence = useCallback(
     (toValue: any, duration: number) => {
@@ -322,8 +302,7 @@ export default function ReviewScreen() {
           // Invalidate queries after everything is complete
           await queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
           await queryClient.invalidateQueries({ queryKey: ['dueWords', user?.id] });
-        } catch (error) {
-          console.error('Error updating word:', error);
+        } catch {
           await resetPosition();
         }
         resolve();
@@ -565,7 +544,7 @@ export default function ReviewScreen() {
           </Animated.View>
 
           <View style={styles.instructions}>
-            <View style={[styles.instructionSide, { backgroundColor: colors.warning + '20' }]}>
+            <View style={[styles.instructionSide, { backgroundColor: colors.warningOverlay }]}>
               <MaterialCommunityIcons
                 name="gesture-swipe-left"
                 size={24}
@@ -574,7 +553,7 @@ export default function ReviewScreen() {
               />
               <ThemedText style={styles.instructionText}>Don't know</ThemedText>
             </View>
-            <View style={[styles.instructionSide, { backgroundColor: colors.success + '20' }]}>
+            <View style={[styles.instructionSide, { backgroundColor: colors.successOverlay }]}>
               <ThemedText style={styles.instructionText}>Know it</ThemedText>
               <MaterialCommunityIcons
                 name="gesture-swipe-right"
@@ -634,7 +613,7 @@ export default function ReviewScreen() {
         </Animated.View>
 
         <View style={styles.instructions}>
-          <View style={[styles.instructionSide, { backgroundColor: colors.warning + '20' }]}>
+          <View style={[styles.instructionSide, { backgroundColor: colors.warningOverlay }]}>
             <MaterialCommunityIcons
               name="gesture-swipe-left"
               size={24}
@@ -643,7 +622,7 @@ export default function ReviewScreen() {
             />
             <ThemedText style={styles.instructionText}>Don't know</ThemedText>
           </View>
-          <View style={[styles.instructionSide, { backgroundColor: colors.success + '20' }]}>
+          <View style={[styles.instructionSide, { backgroundColor: colors.successOverlay }]}>
             <ThemedText style={styles.instructionText}>Know it</ThemedText>
             <MaterialCommunityIcons
               name="gesture-swipe-right"
@@ -753,5 +732,11 @@ const styles = StyleSheet.create({
   swipeFeedback: {
     ...StyleSheet.absoluteFillObject,
     zIndex: -1,
+  },
+  warningOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  successOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 });

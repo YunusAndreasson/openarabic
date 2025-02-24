@@ -18,7 +18,11 @@ export function CompactArticleCard({ article, onPress }: CompactArticleCardProps
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.pressable,
+        pressed && styles.pressed,
+        { shadowColor: colors.shadow },
+      ]}
     >
       <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
         <View style={styles.imageContainer}>
@@ -60,25 +64,19 @@ const styles = StyleSheet.create({
     width: 200,
   },
   pressed: {
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.PRESSED,
     transform: [{ scale: 0.98 }],
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   imageContainer: {
     position: 'relative',
     width: '100%',
     height: 120,
+    zIndex: LAYOUT.Z_INDEX.BASE,
   },
   image: {
     width: '100%',

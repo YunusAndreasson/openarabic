@@ -9,6 +9,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CustomSlider } from '@/components/Slider';
 import { Toggle } from '@/components/Toggle';
+import { Avatar } from '@/components/Avatar';
 import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
@@ -49,18 +50,6 @@ export default function AccountScreen() {
     ]);
   }
 
-  const getInitials = (email: string) => {
-    // Get username part before @ symbol
-    const username = email.split('@')[0];
-    // Split by common separators and get first letter of each part
-    const parts = username.split(/[-._]/);
-    // Take first two parts and get their first letters
-    return parts
-      .slice(0, 2)
-      .map(part => part[0].toUpperCase())
-      .join('');
-  };
-
   const handleSupport = () => {
     Linking.openURL('mailto:yunus@edenmind.com');
   };
@@ -89,14 +78,7 @@ export default function AccountScreen() {
         {/* Profile Section */}
         <View style={styles.section}>
           <View style={styles.avatarContainer}>
-            <View style={[styles.avatar, { backgroundColor: colors.tint }]}>
-              <ThemedText
-                style={[styles.avatarText, { color: colors.background }]}
-                skipDefaultColor
-              >
-                {session.user.email ? getInitials(session.user.email) : 'U'}
-              </ThemedText>
-            </View>
+            <Avatar email={session.user.email} size="medium" />
             <View style={styles.profileInfo}>
               <ThemedText style={styles.email} numberOfLines={1} ellipsizeMode="tail">
                 {session.user.email}
@@ -307,13 +289,13 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SCREEN_EDGE_PADDING,
   },
   welcomeTitle: {
-    fontSize: 28,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: '700',
     marginBottom: LAYOUT.SPACING.TINY,
   },
   subtitle: {
-    fontSize: 16,
-    opacity: 0.7,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   avatarContainer: {
@@ -321,17 +303,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
   },
   profileInfo: {
     flex: 1,
@@ -347,7 +318,7 @@ const styles = StyleSheet.create({
   },
   settingsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    elevation: 2,
+    elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -359,7 +330,7 @@ const styles = StyleSheet.create({
   connectContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-    elevation: 2,
+    elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
       width: 0,
       height: 1,

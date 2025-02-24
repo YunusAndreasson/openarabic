@@ -20,6 +20,12 @@ export const Colors = {
     success: '#34C759', // Green for success states
     warning: '#FF9500', // Orange for warning states
     info: '#007AFF', // Blue for info states
+    shadow: '#000000', // Shadow color for light theme
+    overlay: 'rgba(0, 0, 0, 0.1)', // Overlay color for light theme
+    successOverlay: 'rgba(52, 199, 89, 0.2)', // Success state with opacity
+    warningOverlay: 'rgba(255, 149, 0, 0.2)', // Warning state with opacity
+    textOverlay: 'rgba(34, 34, 34, 0.1)', // Text color with opacity
+    borderOverlay: 'rgba(34, 34, 34, 0.2)', // Border color with opacity
   },
   dark: {
     text: '#E0E0E0', // Off-white text for dark mode
@@ -41,6 +47,12 @@ export const Colors = {
     success: '#30D158', // Green for success states
     warning: '#FF9F0A', // Orange for warning states
     info: '#0A84FF', // Blue for info states
+    shadow: '#000000', // Shadow color for dark theme
+    overlay: 'rgba(255, 255, 255, 0.1)', // Overlay color for dark theme
+    successOverlay: 'rgba(48, 209, 88, 0.2)', // Success state with opacity
+    warningOverlay: 'rgba(255, 159, 10, 0.2)', // Warning state with opacity
+    textOverlay: 'rgba(224, 224, 224, 0.1)', // Text color with opacity
+    borderOverlay: 'rgba(224, 224, 224, 0.2)', // Border color with opacity
   },
 } as const;
 

@@ -13,44 +13,35 @@ export function CompactThemedCard({ children, onPress }: CompactThemedCardProps)
 
   return (
     <Pressable
+      onPress={onPress}
       style={({ pressed }) => [
-        styles.card,
-        {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.cardBorder,
-          shadowColor: '#000000',
-        },
+        styles.container,
+        { shadowColor: colors.shadow },
         pressed && styles.pressed,
       ]}
-      onPress={onPress}
     >
-      <View style={styles.container}>{children}</View>
+      <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>{children}</View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  container: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    elevation: 6,
+    elevation: 4,
     shadowOffset: {
       width: 0,
-      height: 6,
+      height: 2,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    marginVertical: LAYOUT.CARD.MARGIN.SMALL,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.CARD.PADDING.SMALL,
-    paddingHorizontal: LAYOUT.CARD.PADDING.SMALL,
+  card: {
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   pressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
+    opacity: 0.7,
   },
 });

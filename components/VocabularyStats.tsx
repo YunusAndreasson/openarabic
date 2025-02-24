@@ -4,15 +4,7 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
-import {
-  Canvas,
-  RoundedRect,
-  LinearGradient,
-  vec,
-  Circle,
-  Path,
-  Skia,
-} from '@shopify/react-native-skia';
+import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CARD_MARGIN = 4;
@@ -70,22 +62,15 @@ export function VocabularyStats({
   return (
     <View style={styles.container}>
       {/* Progress Overview */}
-      <View style={[styles.progressCard, { backgroundColor: colors.cardBackground }]}>
-        <Canvas style={styles.progressCanvas}>
-          <RoundedRect
-            x={0}
-            y={0}
-            width={SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2}
-            height={120}
-            r={16}
-          >
-            <LinearGradient
-              start={vec(0, 0)}
-              end={vec(SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2, 120)}
-              colors={[colors.text + '08', colors.text + '02']}
-            />
-          </RoundedRect>
-        </Canvas>
+      <View
+        style={[
+          styles.progressCard,
+          {
+            backgroundColor: colors.cardBackground,
+            shadowColor: colors.shadow,
+          },
+        ]}
+      >
         <View style={styles.progressContent}>
           <View style={styles.progressRow}>
             <View style={styles.progressTextContainer}>
@@ -123,17 +108,14 @@ export function VocabularyStats({
         {stats.map(stat => (
           <View
             key={stat.label}
-            style={[styles.statCard, { backgroundColor: colors.cardBackground }]}
+            style={[
+              styles.statCard,
+              {
+                backgroundColor: colors.cardBackground,
+                shadowColor: colors.shadow,
+              },
+            ]}
           >
-            <Canvas style={styles.cardCanvas}>
-              <RoundedRect x={0} y={0} width={CARD_WIDTH} height={84} r={16}>
-                <LinearGradient
-                  start={vec(0, 0)}
-                  end={vec(CARD_WIDTH, 84)}
-                  colors={[colors.text + '08', colors.text + '02']}
-                />
-              </RoundedRect>
-            </Canvas>
             <View style={styles.statContent}>
               <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
                 <Ionicons
@@ -164,11 +146,7 @@ const styles = StyleSheet.create({
     height: 120,
     marginBottom: LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
-  },
-  progressCanvas: {
-    position: 'absolute',
-    width: SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2,
-    height: 120,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   progressContent: {
     padding: LAYOUT.CARD.PADDING.SMALL,
@@ -185,19 +163,19 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   progressValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: '700',
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.TINY,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   progressSubtext: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.5,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   circleCanvas: {
     width: 80,
@@ -214,11 +192,7 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-  },
-  cardCanvas: {
-    position: 'absolute',
-    width: CARD_WIDTH,
-    height: 84,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   statContent: {
     padding: LAYOUT.CARD.PADDING.SMALL,
@@ -234,7 +208,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   icon: {
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   statTextContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -243,11 +217,10 @@ const styles = StyleSheet.create({
   value: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '700',
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.6,
-    marginTop: LAYOUT.SPACING.TINY,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
 });

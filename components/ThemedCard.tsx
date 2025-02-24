@@ -108,20 +108,14 @@ const styles = StyleSheet.create({
     marginVertical: LAYOUT.CARD.MARGIN.MEDIUM,
   },
   pressed: {
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.PRESSED,
     transform: [{ scale: 0.98 }],
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-    elevation: 6,
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
+    ...LAYOUT.SHADOW.LARGE,
   },
   imageContainer: {
     position: 'relative',
@@ -185,7 +179,7 @@ const styles = StyleSheet.create({
   },
   author: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.DIMMED,
     letterSpacing: 0.2,
   },
 });

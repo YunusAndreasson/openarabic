@@ -28,10 +28,10 @@ export function ThemedButton({
       ? { backgroundColor: colors.tint }
       : {
           borderColor: colors.tint,
-          borderWidth: 1,
+          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
           backgroundColor: 'transparent',
         },
-    disabled && { opacity: 0.6 },
+    disabled && { opacity: LAYOUT.OPACITY.DISABLED },
     style,
   ];
 
@@ -46,7 +46,7 @@ export function ThemedButton({
     <TouchableOpacity
       style={buttonStyles}
       disabled={disabled || loading}
-      activeOpacity={0.8}
+      activeOpacity={LAYOUT.OPACITY.PRESSED}
       {...props}
     >
       {icon && (

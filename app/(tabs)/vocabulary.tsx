@@ -88,7 +88,16 @@ export default function VocabularyScreen() {
       </ScrollView>
 
       {hasDueWords && (
-        <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
+        <View
+          style={[
+            styles.buttonContainer,
+            {
+              backgroundColor: colors.background,
+              borderTopColor: colors.overlay,
+              shadowColor: colors.shadow,
+            },
+          ]}
+        >
           <ThemedButton
             title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
             icon="play-circle"
@@ -117,18 +126,18 @@ const styles = StyleSheet.create({
     height: LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   message: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
     marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   submessage: {
-    fontSize: 14,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
     marginTop: LAYOUT.SPACING.TINY,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   emptyContainer: {
     flex: 1,
@@ -143,7 +152,8 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
 });

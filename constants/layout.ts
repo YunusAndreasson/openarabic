@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -100,6 +100,87 @@ export const LAYOUT = {
       TIGHT: 1.2,
       NORMAL: 1.5,
       LOOSE: 1.8,
+    },
+  },
+
+  // Shadow configurations for different elevations
+  SHADOW: {
+    SMALL: Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+    MEDIUM: Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
+    LARGE: Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+
+  // Opacity levels for various UI states
+  OPACITY: {
+    DISABLED: 0.5,
+    DIMMED: 0.7,
+    OVERLAY: 0.4,
+    PRESSED: 0.8,
+    HOVER: 0.9,
+    ACTIVE: 1,
+  },
+
+  // Z-index and elevation levels for layering
+  Z_INDEX: {
+    BASE: 0,
+    CARD: 1,
+    HEADER: 2,
+    MODAL: 3,
+    OVERLAY: 4,
+    TOOLTIP: 5,
+    POPUP: 6,
+  },
+
+  // Animation timing constants (in milliseconds)
+  ANIMATION: {
+    DURATION: {
+      FAST: 200,
+      NORMAL: 300,
+      SLOW: 500,
+    },
+  },
+
+  // Border styles
+  BORDER: {
+    WIDTH: {
+      THIN: 0.5,
+      NORMAL: 1,
+      THICK: 2,
+    },
+    STYLE: {
+      SOLID: 'solid',
+      DASHED: 'dashed',
+      DOTTED: 'dotted',
     },
   },
 };
