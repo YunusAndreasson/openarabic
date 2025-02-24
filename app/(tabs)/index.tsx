@@ -23,6 +23,7 @@ import { CategoryPills } from '@/components/CategoryPills';
 import { categoriesService } from '@/services/categories';
 import type { Tables } from '@/types/database.types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LAYOUT } from '@/constants/layout';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -57,27 +58,6 @@ export default function TextsScreen() {
     () => Math.max(insets.top, 16) + 12 + 8 + 32, // paddingTop + paddingVertical + pillHeight
     [insets.top]
   );
-
-  const tabBarStyle = useMemo(() => {
-    const style: ViewStyle = {
-      ...Platform.select({
-        ios: {
-          backgroundColor: colors.cardBackground,
-          borderTopColor: colors.icon,
-        },
-        android: {
-          backgroundColor: colors.cardBackground,
-          borderTopColor: colors.icon,
-          elevation: 8,
-        },
-      }),
-      position: 'absolute' as const,
-      bottom: isTabBarVisible ? 0 : -100,
-      height: isTabBarVisible ? 'auto' : 0,
-      opacity: isTabBarVisible ? 1 : 0,
-    };
-    return style;
-  }, [colors.cardBackground, colors.icon, isTabBarVisible]);
 
   // Callbacks
   const fetchArticles = useCallback(
@@ -128,7 +108,11 @@ export default function TextsScreen() {
     (visible: boolean) => {
       if (visible !== isTabBarVisible) {
         setIsTabBarVisible(visible);
-        navigation.setOptions({ tabBarStyle });
+
+        // Simply hide the tab bar by setting display: 'none'
+        navigation.setOptions({
+          tabBarStyle: visible ? undefined : { display: 'none' },
+        });
 
         Animated.timing(categoryVisibleAnim, {
           toValue: visible ? 1 : 0,
@@ -137,7 +121,7 @@ export default function TextsScreen() {
         }).start();
       }
     },
-    [categoryVisibleAnim, isTabBarVisible, navigation, tabBarStyle]
+    [categoryVisibleAnim, isTabBarVisible, navigation]
   );
 
   const handleScroll = useCallback(
@@ -145,13 +129,18 @@ export default function TextsScreen() {
       const currentScrollY = event.nativeEvent.contentOffset.y;
       const scrollingDown = currentScrollY > lastScrollY.current;
 
+      // Only process if we've scrolled a meaningful amount
+      const scrollDelta = Math.abs(currentScrollY - lastScrollY.current);
+      if (scrollDelta < 5) {
+        lastScrollY.current = currentScrollY;
+        return;
+      }
+
       if (scrollingDown && isTabBarVisible && currentScrollY > INITIAL_SCROLL_THRESHOLD) {
-        const scrollDelta = currentScrollY - lastScrollY.current;
         if (scrollDelta > SCROLL_THRESHOLD) {
           toggleTabBarVisibility(false);
         }
       } else if (!scrollingDown && !isTabBarVisible) {
-        const scrollDelta = lastScrollY.current - currentScrollY;
         if (scrollDelta > SCROLL_THRESHOLD) {
           toggleTabBarVisibility(true);
         }
@@ -172,7 +161,7 @@ export default function TextsScreen() {
         onPress={() => router.push(`/article/${item.id}`)}
       />
     ),
-    []
+    [router]
   );
 
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
@@ -217,10 +206,10 @@ export default function TextsScreen() {
         onRefresh={handleRefresh}
         tintColor={colors.tint}
         colors={[colors.tint]}
-        progressBackgroundColor={colors.cardBackground}
+        progressBackgroundColor={colors.background}
       />
     ),
-    [isRefreshing, handleRefresh, colors.tint, colors.cardBackground]
+    [isRefreshing, handleRefresh, colors.tint, colors.background]
   );
 
   // Effects
@@ -232,15 +221,8 @@ export default function TextsScreen() {
     fetchArticles();
   }, [fetchArticles]);
 
-  // Update tab bar style when colors change
-  useEffect(() => {
-    if (isTabBarVisible) {
-      navigation.setOptions({ tabBarStyle });
-    }
-  }, [colors, isTabBarVisible, navigation, tabBarStyle]);
-
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.cardBackground }]}>
+    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         ref={flatListRef}
         data={articles}

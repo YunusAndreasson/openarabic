@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyStats } from '@/components/VocabularyStats';
@@ -48,11 +48,11 @@ export default function VocabularyScreen() {
       styles.buttonContainer,
       {
         backgroundColor: colors.background,
-        borderTopColor: colors.overlay,
+        borderTopColor: colors.icon,
         shadowColor: colors.shadow,
       },
     ],
-    [colors.background, colors.overlay, colors.shadow]
+    [colors.background, colors.icon, colors.shadow]
   );
 
   if (!user) {
@@ -100,7 +100,6 @@ export default function VocabularyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <VocabularyStats {...stats} />
-        <View style={styles.bottomSpacer} />
       </ScrollView>
 
       {hasDueWords && (
@@ -126,11 +125,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
+    paddingBottom:
+      LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL * 2 + 44,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  bottomSpacer: {
-    height: LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -159,9 +156,20 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+    paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
+    borderTopWidth: 0.5,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-    ...LAYOUT.SHADOW.MEDIUM,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   },
   messageContainer: {
     flex: 1,

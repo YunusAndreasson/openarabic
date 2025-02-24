@@ -75,7 +75,7 @@ function CategoryPillsComponent({
           left: 0,
           right: 0,
           zIndex: 1,
-          backgroundColor: colors.cardBackground,
+          backgroundColor: colors.background,
           paddingTop: Math.max(insets.top, 42),
         },
         scrollContent: {
@@ -102,12 +102,12 @@ function CategoryPillsComponent({
           fontWeight: '600',
         },
         activePill: {
-          backgroundColor: colors.cardBackground,
+          backgroundColor: colors.background,
           borderColor: colors.cardBorder,
           shadowColor: colors.text,
         },
         inactivePill: {
-          backgroundColor: colors.cardBackground,
+          backgroundColor: colors.background,
           borderColor: colors.cardBorder,
           shadowColor: colors.text,
         },
@@ -155,6 +155,7 @@ function CategoryPillsComponent({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        removeClippedSubviews={true}
       >
         <CategoryPill
           category={null}

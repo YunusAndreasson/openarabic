@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, FlatList, View, Animated } from 'react-native';
+import { StyleSheet, FlatList, View, Animated, Platform } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,7 +19,8 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
+    paddingBottom:
+      LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL * 2 + 44,
   },
   message: {
     textAlign: 'center',
@@ -32,6 +33,9 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     gap: LAYOUT.SPACING.SMALL,
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   button: {
     flex: 1,
@@ -128,6 +132,32 @@ export default function PlaylistScreen() {
   const [shuffledList, setShuffledList] = useState<typeof readingList>([]);
   const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
   const colors = useColors();
+
+  const controlsStyle = useMemo(
+    () => [
+      styles.controls,
+      {
+        bottom: 0,
+        paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
+        backgroundColor: colors.background,
+        borderTopWidth: 0.5,
+        borderTopColor: colors.icon,
+        zIndex: LAYOUT.Z_INDEX.HEADER,
+        ...Platform.select({
+          ios: {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+          },
+          android: {
+            elevation: 8,
+          },
+        }),
+      },
+    ],
+    [colors.background, colors.icon]
+  );
 
   const { data: readingList, isLoading } = useQuery({
     queryKey: ['readingList', user?.id],
@@ -277,7 +307,7 @@ export default function PlaylistScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
-      <View style={[styles.controls]}>
+      <View style={controlsStyle}>
         <ThemedButton
           variant="filled"
           title={isPlaying && playMode === 'normal' ? 'Stop' : 'Play All'}

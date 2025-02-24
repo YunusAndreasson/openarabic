@@ -3,6 +3,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
+import { LAYOUT } from '@/constants/layout';
 
 const TAB_SCREENS = [
   {
@@ -40,13 +41,31 @@ export default function TabLayout() {
       screenOptions={{
         tabBarStyle: Platform.select({
           ios: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
             backgroundColor: colors.background,
             borderTopColor: colors.icon,
+            borderTopWidth: 0.5,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 4,
+            height: LAYOUT.BOTTOM_BAR.HEIGHT,
+            zIndex: LAYOUT.Z_INDEX.HEADER,
           },
           android: {
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
             backgroundColor: colors.background,
             borderTopColor: colors.icon,
+            borderTopWidth: 0.5,
             elevation: 8,
+            height: LAYOUT.BOTTOM_BAR.HEIGHT,
+            zIndex: LAYOUT.Z_INDEX.HEADER,
           },
         }),
         headerStyle: {

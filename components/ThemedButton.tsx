@@ -97,13 +97,13 @@ const styles = StyleSheet.create({
   innerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     width: '100%',
   },
   buttonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
-    textAlign: 'center',
+    textAlign: 'left',
   },
   iconContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -113,6 +113,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
 });

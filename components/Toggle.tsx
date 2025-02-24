@@ -13,10 +13,10 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   // Memoize dimensions to prevent recalculation on each render
   const dimensions = useMemo(() => {
-    const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL;
+    const TOGGLE_HEIGHT = LAYOUT.BUTTON.HEIGHT.SMALL - 4; // Make it slightly smaller
     const TOGGLE_PADDING = LAYOUT.SPACING.TINY;
     const HANDLE_SIZE = TOGGLE_HEIGHT - TOGGLE_PADDING * 2;
-    const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.85; // Golden ratio-ish
+    const TOGGLE_WIDTH = TOGGLE_HEIGHT * 1.75; // Slightly smaller ratio
     const TRAVEL_DISTANCE = TOGGLE_WIDTH - HANDLE_SIZE - TOGGLE_PADDING * 2;
 
     return {

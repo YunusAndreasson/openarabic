@@ -73,7 +73,11 @@ export default function AccountScreen() {
   }
 
   return (
-    <ThemedView style={styles.container} scrollable={true}>
+    <ThemedView
+      style={styles.container}
+      scrollable={true}
+      contentContainerStyle={styles.scrollContent}
+    >
       <View style={styles.content}>
         {/* Profile Section */}
         <View style={styles.section}>
@@ -116,6 +120,17 @@ export default function AccountScreen() {
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <View style={styles.settingRow}>
               <View style={styles.settingLabelContainer}>
+                <Ionicons name="language" size={20} color={colors.tabIconDefault} />
+                <ThemedText style={styles.settingLabel}>Show English</ThemedText>
+              </View>
+              <Toggle
+                value={settings.showEnglish}
+                onValueChange={value => dispatch(setShowEnglish(value))}
+              />
+            </View>
+            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+            <View style={styles.settingRow}>
+              <View style={styles.settingLabelContainer}>
                 <Ionicons name="text" size={20} color={colors.tabIconDefault} />
                 <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
               </View>
@@ -135,17 +150,6 @@ export default function AccountScreen() {
                   style={styles.slider}
                 />
               </View>
-            </View>
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                <ThemedText style={styles.settingLabel}>Show English</ThemedText>
-              </View>
-              <Toggle
-                value={settings.showEnglish}
-                onValueChange={value => dispatch(setShowEnglish(value))}
-              />
             </View>
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <View style={styles.previewContainer}>
@@ -265,6 +269,9 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
+  scrollContent: {
+    paddingRight: 0, // Remove right padding to align scrollbar to the edge
+  },
   content: {
     flex: 1,
     paddingVertical: LAYOUT.SPACING.LARGE,
@@ -375,7 +382,7 @@ const styles = StyleSheet.create({
   actionButton: {
     borderRadius: 0,
     borderWidth: 0,
-    justifyContent: 'flex-start',
+    justifyContent: 'flex-start', // Left align the button content
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
   },
@@ -391,6 +398,7 @@ const styles = StyleSheet.create({
   },
   slider: {
     flex: 1,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM, // Match height with toggle
   },
   scaleText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     marginTop: LAYOUT.SPACING.TINY,
     textAlign: 'center',
-    opacity: 0.9,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   typeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -250,10 +250,6 @@ const styles = StyleSheet.create({
   },
   grammarNote: {
     gap: LAYOUT.SPACING.TINY,
-  },
-  notePill: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.SPACING.MEDIUM,
   },
   noteText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -266,7 +262,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
     borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
     marginTop: LAYOUT.SPACING.LARGE,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   studyIcon: {
     marginRight: LAYOUT.SPACING.SMALL,
