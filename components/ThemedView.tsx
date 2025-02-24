@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, type ViewProps, type StyleProp, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,24 +11,32 @@ export interface ThemedViewProps extends ViewProps {
   children?: React.ReactNode;
 }
 
-export function ThemedView({
+function ThemedViewComponent({
   children,
   scrollable = false,
   style,
   contentContainerStyle,
   ...otherProps
 }: ThemedViewProps) {
-  if (scrollable) {
+  // Use useMemo to prevent unnecessary rerenders when props don't change
+  const content = useMemo(() => {
+    if (scrollable) {
+      return (
+        <SafeAreaView style={style} {...otherProps}>
+          <ScrollView contentContainerStyle={contentContainerStyle}>{children}</ScrollView>
+        </SafeAreaView>
+      );
+    }
+
     return (
       <SafeAreaView style={style} {...otherProps}>
-        <ScrollView contentContainerStyle={contentContainerStyle}>{children}</ScrollView>
+        {children}
       </SafeAreaView>
     );
-  }
+  }, [children, contentContainerStyle, otherProps, scrollable, style]);
 
-  return (
-    <SafeAreaView style={style} {...otherProps}>
-      {children}
-    </SafeAreaView>
-  );
+  return content;
 }
+
+// Memoize the component to prevent unnecessary rerenders
+export const ThemedView = React.memo(ThemedViewComponent);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { StyleSheet, View, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColors } from '@/hooks/useColors';
@@ -21,41 +21,89 @@ interface WordDetailsModalProps {
   onStudyPress?: () => void;
 }
 
-export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordDetailsModalProps) {
+function WordDetailsModalComponent({
+  visible,
+  onClose,
+  word,
+  onStudyPress,
+}: WordDetailsModalProps) {
   const colors = useColors();
 
-  const handleStudyPress = () => {
+  // Memoize handlers to prevent unnecessary rerenders
+  const handleStudyPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onStudyPress?.();
-  };
+  }, [onStudyPress]);
 
-  const handleBackdropPress = () => {
+  const handleBackdropPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onClose();
-  };
+  }, [onClose]);
+
+  // Memoize styles to prevent new object creation on each render
+  const containerStyle = useMemo(
+    () => [styles.modalContainer, { backgroundColor: colors.overlay }],
+    [colors.overlay]
+  );
+
+  const contentStyle = useMemo(
+    () => [
+      styles.modalContent,
+      {
+        backgroundColor: colors.cardBackground,
+        shadowColor: colors.shadow,
+        borderColor: colors.cardBorder,
+      },
+    ],
+    [colors.cardBackground, colors.shadow, colors.cardBorder]
+  );
+
+  const arabicWordStyle = useMemo(
+    () => [styles.arabicWord, { color: colors.arabicText }],
+    [colors.arabicText]
+  );
+
+  const translationStyle = useMemo(
+    () => [styles.translation, { color: colors.titleText }],
+    [colors.titleText]
+  );
+
+  const labelStyle = useMemo(() => [styles.label, { color: colors.titleText }], [colors.titleText]);
+
+  const pillStyle = useMemo(
+    () => [styles.pill, { backgroundColor: colors.textOverlay }],
+    [colors.textOverlay]
+  );
+
+  const rootTextStyle = useMemo(
+    () => [styles.rootText, { color: colors.arabicText }],
+    [colors.arabicText]
+  );
+
+  const rootMeaningStyle = useMemo(
+    () => [styles.rootMeaning, { color: colors.titleText }],
+    [colors.titleText]
+  );
+
+  const typeTextStyle = useMemo(
+    () => [styles.typeText, { color: colors.titleText }],
+    [colors.titleText]
+  );
+
+  const noteTextStyle = useMemo(
+    () => [styles.noteText, { color: colors.titleText }],
+    [colors.titleText]
+  );
 
   return (
     <Modal animationType="slide" transparent={true} visible={visible} onRequestClose={onClose}>
-      <Pressable
-        style={[styles.modalContainer, { backgroundColor: colors.overlay }]}
-        onPress={handleBackdropPress}
-      >
-        <Pressable
-          style={[
-            styles.modalContent,
-            {
-              backgroundColor: colors.cardBackground,
-              shadowColor: colors.shadow,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-          onPress={e => e.stopPropagation()}
-        >
+      <Pressable style={containerStyle} onPress={handleBackdropPress}>
+        <Pressable style={contentStyle} onPress={e => e.stopPropagation()}>
           <View style={styles.header}>
-            <ThemedText style={[styles.arabicWord, { color: colors.arabicText }]} skipDefaultColor>
+            <ThemedText style={arabicWordStyle} skipDefaultColor>
               {word.arabic}
             </ThemedText>
-            <ThemedText style={[styles.translation, { color: colors.titleText }]} skipDefaultColor>
+            <ThemedText style={translationStyle} skipDefaultColor>
               {word.translation}
             </ThemedText>
           </View>
@@ -63,21 +111,15 @@ export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordD
           <View style={styles.detailsContainer}>
             {word.root && (
               <View style={styles.detailRow}>
-                <ThemedText style={[styles.label, { color: colors.titleText }]} skipDefaultColor>
+                <ThemedText style={labelStyle} skipDefaultColor>
                   Root
                 </ThemedText>
-                <View style={[styles.pill, { backgroundColor: colors.textOverlay }]}>
-                  <ThemedText
-                    style={[styles.rootText, { color: colors.arabicText }]}
-                    skipDefaultColor
-                  >
+                <View style={pillStyle}>
+                  <ThemedText style={rootTextStyle} skipDefaultColor>
                     {word.root}
                   </ThemedText>
                   {word.rootMeaning && (
-                    <ThemedText
-                      style={[styles.rootMeaning, { color: colors.titleText }]}
-                      skipDefaultColor
-                    >
+                    <ThemedText style={rootMeaningStyle} skipDefaultColor>
                       {word.rootMeaning}
                     </ThemedText>
                   )}
@@ -87,14 +129,11 @@ export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordD
 
             {word.type && (
               <View style={styles.detailRow}>
-                <ThemedText style={[styles.label, { color: colors.titleText }]} skipDefaultColor>
+                <ThemedText style={labelStyle} skipDefaultColor>
                   Type
                 </ThemedText>
-                <View style={[styles.pill, { backgroundColor: colors.textOverlay }]}>
-                  <ThemedText
-                    style={[styles.typeText, { color: colors.titleText }]}
-                    skipDefaultColor
-                  >
+                <View style={pillStyle}>
+                  <ThemedText style={typeTextStyle} skipDefaultColor>
                     {word.type}
                   </ThemedText>
                 </View>
@@ -103,18 +142,12 @@ export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordD
 
             {word.grammarNotes && word.grammarNotes.length > 0 && (
               <View style={styles.grammarNote}>
-                <ThemedText style={[styles.label, { color: colors.titleText }]} skipDefaultColor>
+                <ThemedText style={labelStyle} skipDefaultColor>
                   Grammar Notes
                 </ThemedText>
                 {word.grammarNotes.map((note, index) => (
-                  <View
-                    key={index}
-                    style={[styles.notePill, { backgroundColor: colors.textOverlay }]}
-                  >
-                    <ThemedText
-                      style={[styles.noteText, { color: colors.titleText }]}
-                      skipDefaultColor
-                    >
+                  <View key={index} style={pillStyle}>
+                    <ThemedText style={noteTextStyle} skipDefaultColor>
                       {note}
                     </ThemedText>
                   </View>
@@ -148,6 +181,9 @@ export function WordDetailsModal({ visible, onClose, word, onStudyPress }: WordD
     </Modal>
   );
 }
+
+// Memoize the component to prevent unnecessary rerenders
+export const WordDetailsModal = React.memo(WordDetailsModalComponent);
 
 const styles = StyleSheet.create({
   modalContainer: {

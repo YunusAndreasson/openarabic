@@ -1,12 +1,13 @@
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { setTheme } from '@/store/themeSlice';
 import { Theme } from '@/constants/Colors';
-import { useCallback } from 'react';
+import { useCallback, memo } from 'react';
 import { Toggle } from './Toggle';
 
-export function ThemeToggle() {
+function ThemeToggleComponent() {
   const dispatch = useAppDispatch();
-  const { theme } = useAppSelector(state => state.theme);
+  // Use the memoized selector to prevent unnecessary rerenders
+  const theme = useAppSelectorMemo(state => state.theme.theme);
 
   const handleValueChange = useCallback(
     (isDark: boolean) => {
@@ -17,3 +18,6 @@ export function ThemeToggle() {
 
   return <Toggle value={theme === Theme.Dark} onValueChange={handleValueChange} />;
 }
+
+// Memoize the component to prevent unnecessary rerenders
+export const ThemeToggle = memo(ThemeToggleComponent);

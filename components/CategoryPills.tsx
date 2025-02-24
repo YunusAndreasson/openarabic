@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-unused-styles */
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from './ThemedText';
@@ -14,7 +14,49 @@ interface CategoryPillsProps {
   visible: Animated.Value;
 }
 
-export function CategoryPills({
+// Create a memoized category pill component
+const CategoryPill = React.memo(
+  ({
+    category,
+    isSelected,
+    onPress,
+    styles,
+  }: {
+    category: Tables<'categories'> | null;
+    isSelected: boolean;
+    onPress: () => void;
+    styles: any;
+  }) => {
+    // Memoize the pill style
+    const pillStyle = useMemo(
+      () => [styles.pill, isSelected ? styles.activePill : styles.inactivePill],
+      [styles, isSelected]
+    );
+
+    // Memoize the text style
+    const textStyle = useMemo(
+      () => [styles.pillText, isSelected ? styles.activePillText : styles.inactivePillText],
+      [styles, isSelected]
+    );
+
+    const displayText = category ? capitalizeFirstLetter(category.name) : 'All';
+
+    return (
+      <TouchableOpacity style={pillStyle} onPress={onPress}>
+        <ThemedText style={textStyle} skipDefaultColor>
+          {displayText}
+        </ThemedText>
+      </TouchableOpacity>
+    );
+  }
+);
+
+// Helper function
+const capitalizeFirstLetter = (str: string) => {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+function CategoryPillsComponent({
   categories,
   selectedCategory,
   onSelectCategory,
@@ -23,6 +65,7 @@ export function CategoryPills({
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
+  // Memoize the styles
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -80,6 +123,7 @@ export function CategoryPills({
     [colors, insets]
   );
 
+  // Memoize the animated style
   const containerAnimatedStyle = useMemo(
     () => ({
       transform: [
@@ -95,65 +139,43 @@ export function CategoryPills({
     [visible]
   );
 
-  const handlePress = (category: Tables<'categories'> | null) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onSelectCategory(category);
-  };
+  // Memoize the press handler factory
+  const createPressHandler = useCallback(
+    (category: Tables<'categories'> | null) => () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onSelectCategory(category);
+    },
+    [onSelectCategory]
+  );
 
-  const capitalizeFirstLetter = (str: string) => {
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-
+  // Render the component
   return (
     <Animated.View style={[styles.container, containerAnimatedStyle]}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
-        scrollEventThrottle={16}
-        snapToAlignment="center"
-        decelerationRate="fast"
       >
-        <TouchableOpacity
-          style={[styles.pill, !selectedCategory ? styles.activePill : styles.inactivePill]}
-          onPress={() => handlePress(null)}
-          activeOpacity={0.7}
-        >
-          <ThemedText
-            style={[
-              styles.pillText,
-              !selectedCategory ? styles.activePillText : styles.inactivePillText,
-            ]}
-            skipDefaultColor
-          >
-            All
-          </ThemedText>
-        </TouchableOpacity>
+        <CategoryPill
+          category={null}
+          isSelected={selectedCategory === null}
+          onPress={createPressHandler(null)}
+          styles={styles}
+        />
 
         {categories.map(category => (
-          <TouchableOpacity
+          <CategoryPill
             key={category.id}
-            style={[
-              styles.pill,
-              selectedCategory?.id === category.id ? styles.activePill : styles.inactivePill,
-            ]}
-            onPress={() => handlePress(category)}
-            activeOpacity={0.7}
-          >
-            <ThemedText
-              style={[
-                styles.pillText,
-                selectedCategory?.id === category.id
-                  ? styles.activePillText
-                  : styles.inactivePillText,
-              ]}
-              skipDefaultColor
-            >
-              {capitalizeFirstLetter(category.name)}
-            </ThemedText>
-          </TouchableOpacity>
+            category={category}
+            isSelected={selectedCategory?.id === category.id}
+            onPress={createPressHandler(category)}
+            styles={styles}
+          />
         ))}
       </ScrollView>
     </Animated.View>
   );
 }
+
+// Memoize the entire component
+export const CategoryPills = React.memo(CategoryPillsComponent);

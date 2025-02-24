@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
   message: {
     textAlign: 'center',
     marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   controls: {
     flexDirection: 'row',
@@ -38,9 +38,10 @@ const styles = StyleSheet.create({
   },
   waveContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     gap: 2,
     height: 16,
+    marginLeft: LAYOUT.SPACING.SMALL,
   },
   bar: {
     width: 2,
@@ -276,7 +277,7 @@ export default function PlaylistScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       />
-      <View style={[styles.controls, { borderTopColor: colors.icon }]}>
+      <View style={[styles.controls]}>
         <ThemedButton
           variant="filled"
           title={isPlaying && playMode === 'normal' ? 'Stop' : 'Play All'}

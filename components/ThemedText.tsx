@@ -1,13 +1,14 @@
 import { Text, type TextProps, StyleSheet } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
+import React, { useMemo } from 'react';
 
 export type ThemedTextProps = TextProps & {
   type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
   skipDefaultColor?: boolean;
 };
 
-export function ThemedText({
+function ThemedTextComponent({
   style,
   type = 'default',
   skipDefaultColor = false,
@@ -15,21 +16,25 @@ export function ThemedText({
 }: ThemedTextProps) {
   const colors = useColors();
 
-  return (
-    <Text
-      style={[
-        type === 'default' ? styles.default : undefined,
-        type === 'title' ? styles.title : undefined,
-        type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
-        type === 'subtitle' ? styles.subtitle : undefined,
-        type === 'link' ? [styles.link, { color: colors.link }] : undefined,
-        !skipDefaultColor ? { color: colors.text } : undefined,
-        style,
-      ]}
-      {...rest}
-    />
+  // Memoize the style array to prevent new object creation on each render
+  const textStyle = useMemo(
+    () => [
+      type === 'default' ? styles.default : undefined,
+      type === 'title' ? styles.title : undefined,
+      type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
+      type === 'subtitle' ? styles.subtitle : undefined,
+      type === 'link' ? [styles.link, { color: colors.link }] : undefined,
+      !skipDefaultColor ? { color: colors.text } : undefined,
+      style,
+    ],
+    [colors, skipDefaultColor, style, type]
   );
+
+  return <Text style={textStyle} {...rest} />;
 }
+
+// Memoize the component to prevent unnecessary rerenders
+export const ThemedText = React.memo(ThemedTextComponent);
 
 const styles = StyleSheet.create({
   default: {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
@@ -15,7 +15,7 @@ interface ThemedCardProps {
   onPress?: () => void;
 }
 
-export default function ThemedCard({
+function ThemedCardComponent({
   imageUrl,
   title,
   category,
@@ -28,39 +28,63 @@ export default function ThemedCard({
   const handleLoadStart = useCallback(() => setImageLoading(true), []);
   const handleLoadEnd = useCallback(() => setImageLoading(false), []);
 
-  const themedStyles = {
-    card: {
-      backgroundColor: colors.cardBackground,
-      borderColor: colors.cardBorder,
-      shadowColor: colors.text,
-    },
-    loadingContainer: {
-      backgroundColor: colors.cardBackground,
-    },
-    gradient: {
-      colors: ['transparent', 'transparent', colors.cardBackground] as const,
-    },
-    categoryBackground: {
-      backgroundColor: colors.cardBackground,
-    },
-    category: {
-      color: colors.titleText,
-    },
-    author: {
-      color: colors.tabIconDefault,
-    },
-  };
+  // Memoize styles to prevent new object creation on each render
+  const themedStyles = useMemo(
+    () => ({
+      card: {
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.cardBorder,
+        shadowColor: colors.text,
+      },
+      loadingContainer: {
+        backgroundColor: colors.cardBackground,
+      },
+      gradient: {
+        colors: ['transparent', 'transparent', colors.cardBackground] as const,
+      },
+      categoryBackground: {
+        backgroundColor: colors.cardBackground,
+      },
+      category: {
+        color: colors.titleText,
+      },
+      author: {
+        color: colors.tabIconDefault,
+      },
+    }),
+    [colors]
+  );
+
+  // Memoize pressable style function to prevent unnecessary rerenders
+  const getPressableStyle = useCallback(
+    ({ pressed }: { pressed: boolean }) => [
+      styles.pressable,
+      pressed && styles.pressed,
+      { shadowColor: themedStyles.card.shadowColor },
+    ],
+    [themedStyles.card.shadowColor]
+  );
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}
-    >
-      <View style={[styles.card, themedStyles.card]}>
+    <Pressable onPress={onPress} style={getPressableStyle}>
+      <View
+        style={[
+          styles.card,
+          {
+            backgroundColor: themedStyles.card.backgroundColor,
+            borderColor: themedStyles.card.borderColor,
+          },
+        ]}
+      >
         <View style={styles.imageContainer}>
           {imageLoading && (
-            <View style={[styles.loadingContainer, themedStyles.loadingContainer]}>
-              <ActivityIndicator size="large" color={colors.tint} />
+            <View
+              style={[
+                styles.loadingContainer,
+                { backgroundColor: themedStyles.loadingContainer.backgroundColor },
+              ]}
+            >
+              <ActivityIndicator size="small" color={colors.tint} />
             </View>
           )}
           <Image
@@ -69,18 +93,25 @@ export default function ThemedCard({
             contentFit="cover"
             transition={300}
             onLoadStart={handleLoadStart}
-            onLoad={handleLoadEnd}
-            cachePolicy="memory-disk"
+            onLoadEnd={handleLoadEnd}
           />
           <LinearGradient
             colors={themedStyles.gradient.colors}
-            locations={[0, 0.6, 1]}
             style={styles.gradient}
+            locations={[0, 0.7, 1]}
           />
           <View style={styles.categoryContainer}>
-            <BlurView intensity={20} tint="light" style={styles.categoryPill}>
-              <View style={[styles.categoryBackground, themedStyles.categoryBackground]}>
-                <ThemedText style={[styles.category, themedStyles.category]} skipDefaultColor>
+            <BlurView intensity={10} tint="light" style={styles.categoryPill}>
+              <View
+                style={[
+                  styles.categoryBackground,
+                  { backgroundColor: themedStyles.categoryBackground.backgroundColor },
+                ]}
+              >
+                <ThemedText
+                  style={[styles.category, { color: themedStyles.category.color }]}
+                  skipDefaultColor
+                >
                   {category.toUpperCase()}
                 </ThemedText>
               </View>
@@ -88,19 +119,23 @@ export default function ThemedCard({
           </View>
         </View>
         <View style={styles.contentContainer}>
-          <ThemedText style={styles.title} type="subtitle" numberOfLines={2}>
+          <ThemedText style={styles.title} numberOfLines={2}>
             {title}
           </ThemedText>
-          <View style={styles.authorContainer}>
-            <ThemedText style={[styles.author, themedStyles.author]} skipDefaultColor>
-              {author}
-            </ThemedText>
-          </View>
+          <ThemedText
+            style={[styles.author, { color: themedStyles.author.color }]}
+            skipDefaultColor
+          >
+            {author}
+          </ThemedText>
         </View>
       </View>
     </Pressable>
   );
 }
+
+// Memoize the component to prevent unnecessary rerenders
+export default React.memo(ThemedCardComponent);
 
 const styles = StyleSheet.create({
   pressable: {
@@ -172,10 +207,6 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '700',
     letterSpacing: 0.3,
-  },
-  authorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   author: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

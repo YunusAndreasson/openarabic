@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Animated, TouchableOpacity } from 'react-native';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import * as Haptics from 'expo-haptics';
@@ -13,7 +13,8 @@ interface AudioPlayButtonProps {
   style?: any;
 }
 
-function AudioWave({ isPlaying, color }: { isPlaying: boolean; color: string }) {
+// Memoize the AudioWave component to prevent unnecessary rerenders
+const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color: string }) => {
   const anim1 = useRef(new Animated.Value(0.4)).current;
   const anim2 = useRef(new Animated.Value(0.4)).current;
   const anim3 = useRef(new Animated.Value(0.4)).current;
@@ -67,17 +68,19 @@ function AudioWave({ isPlaying, color }: { isPlaying: boolean; color: string }) 
       ))}
     </View>
   );
-}
+});
 
-export function AudioPlayButton({ audioUrl }: AudioPlayButtonProps) {
+// Main component with optimizations
+function AudioPlayButtonComponent({ audioUrl, style }: AudioPlayButtonProps) {
   const colors = useColors();
   const [sound, setSound] = useState<Audio.Sound>();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
-  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const animatePress = () => {
+  // Memoize the animation function
+  const animatePress = useCallback(() => {
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.97,
@@ -90,9 +93,10 @@ export function AudioPlayButton({ audioUrl }: AudioPlayButtonProps) {
         useNativeDriver: true,
       }),
     ]).start();
-  };
+  }, [scaleAnim]);
 
-  async function loadSound() {
+  // Memoize the loadSound function
+  const loadSound = useCallback(async () => {
     try {
       setIsLoading(true);
       const { sound } = await Audio.Sound.createAsync(
@@ -100,80 +104,63 @@ export function AudioPlayButton({ audioUrl }: AudioPlayButtonProps) {
         { shouldPlay: false },
         onPlaybackStatusUpdate
       );
-      await Audio.setAudioModeAsync({
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-      });
       setSound(sound);
-      return sound;
-    } catch {
-      return null;
-    } finally {
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error loading sound', error);
       setIsLoading(false);
     }
-  }
+  }, [audioUrl]);
 
-  async function resetSound() {
-    if (sound) {
-      await sound.unloadAsync();
-      setSound(undefined);
-    }
-  }
-
-  function onPlaybackStatusUpdate(status: AVPlaybackStatus) {
+  // Memoize the onPlaybackStatusUpdate function
+  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
     if (status.isLoaded) {
       setIsPlaying(status.isPlaying);
       if (status.didJustFinish) {
         setIsPlaying(false);
-        resetSound();
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
     }
-  }
+  }, []);
 
-  async function togglePlayback() {
+  // Memoize the togglePlayback function
+  const togglePlayback = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    animatePress();
+
+    if (!sound) {
+      await loadSound();
+      return;
+    }
+
     try {
-      animatePress();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-      if (!sound) {
-        const newSound = await loadSound();
-        if (newSound) {
-          await newSound.playAsync();
-        }
-      } else {
-        if (isPlaying) {
+      const status = await sound.getStatusAsync();
+      if (status.isLoaded) {
+        if (status.isPlaying) {
           await sound.pauseAsync();
         } else {
-          const status = await sound.getStatusAsync();
-          if (status.isLoaded && status.positionMillis === status.durationMillis) {
-            await resetSound();
-            const newSound = await loadSound();
-            if (newSound) {
-              await newSound.playAsync();
-            }
-          } else {
-            await sound.playAsync();
-          }
+          await sound.playAsync();
         }
       }
-    } catch {
-      await resetSound();
+    } catch (error) {
+      console.error('Error toggling playback', error);
     }
-  }
+  }, [sound, loadSound, animatePress]);
 
+  // Load sound on mount and unload on unmount
   useEffect(() => {
     loadSound();
+
     return () => {
-      resetSound();
+      if (sound) {
+        sound.unloadAsync();
+      }
     };
-  }, [audioUrl]);
+  }, [audioUrl, loadSound, sound]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
       if (sound) {
         sound.stopAsync();
-        resetSound();
       }
     });
     return unsubscribe;
@@ -229,6 +216,9 @@ export function AudioPlayButton({ audioUrl }: AudioPlayButtonProps) {
     </View>
   );
 }
+
+// Memoize the entire component
+export const AudioPlayButton = React.memo(AudioPlayButtonComponent);
 
 const styles = StyleSheet.create({
   outerContainer: {

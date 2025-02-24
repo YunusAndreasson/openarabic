@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -7,7 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_MARGIN = 4;
+const CARD_MARGIN = LAYOUT.SPACING.SMALL;
 const CARD_WIDTH = (SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - CARD_MARGIN) / 2;
 
 interface VocabularyStatsProps {
@@ -17,6 +17,7 @@ interface VocabularyStatsProps {
   learningWords: number;
 }
 
+// Memoize the arc path creation function to prevent recalculation
 const createArcPath = (progress: number, radius: number): string => {
   const center = radius;
   const startAngle = -Math.PI / 2; // Start from top
@@ -32,45 +33,100 @@ const createArcPath = (progress: number, radius: number): string => {
   return `M ${center} ${center - radius} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
 };
 
-export function VocabularyStats({
+// Create a memoized stat card component
+const StatCard = React.memo(
+  ({ label, value, icon, colors }: { label: string; value: number; icon: string; colors: any }) => {
+    const cardStyle = useMemo(
+      () => [
+        styles.statCard,
+        {
+          backgroundColor: colors.cardBackground,
+          shadowColor: colors.shadow,
+        },
+      ],
+      [colors.cardBackground, colors.shadow]
+    );
+
+    const iconContainerStyle = useMemo(
+      () => [styles.iconContainer, { backgroundColor: `${colors.text}10` }],
+      [colors.text]
+    );
+
+    const iconStyle = useMemo(() => ({ color: colors.icon }), [colors.icon]);
+
+    return (
+      <View style={cardStyle}>
+        <View style={styles.statContent}>
+          <View style={styles.statTextContainer}>
+            <ThemedText style={styles.statValue}>{value}</ThemedText>
+            <ThemedText style={styles.statLabel}>{label}</ThemedText>
+          </View>
+          <View style={iconContainerStyle}>
+            <Ionicons name={icon as any} size={24} color={iconStyle.color} />
+          </View>
+        </View>
+      </View>
+    );
+  }
+);
+
+function VocabularyStatsComponent({
   totalWords,
   dueWords,
   masteredWords,
   learningWords,
 }: VocabularyStatsProps) {
   const colors = useColors();
-  const progress = totalWords > 0 ? (masteredWords / totalWords) * 100 : 0;
 
-  const stats = [
-    {
-      label: 'Due Today',
-      value: dueWords,
-      icon: 'time-outline',
-    },
-    {
-      label: 'Mastered',
-      value: masteredWords,
-      icon: 'checkmark-circle-outline',
-    },
-    {
-      label: 'Learning',
-      value: learningWords,
-      icon: 'school-outline',
-    },
-  ];
+  // Memoize the progress calculation
+  const progress = useMemo(
+    () => (totalWords > 0 ? (masteredWords / totalWords) * 100 : 0),
+    [totalWords, masteredWords]
+  );
+
+  // Memoize the stats array
+  const stats = useMemo(
+    () => [
+      {
+        label: 'Due Today',
+        value: dueWords,
+        icon: 'time-outline',
+      },
+      {
+        label: 'Mastered',
+        value: masteredWords,
+        icon: 'checkmark-circle-outline',
+      },
+      {
+        label: 'Learning',
+        value: learningWords,
+        icon: 'school-outline',
+      },
+    ],
+    [dueWords, masteredWords, learningWords]
+  );
+
+  // Memoize the arc path
+  const arcPath = useMemo(() => createArcPath(progress, 32), [progress]);
+
+  // Memoize styles
+  const progressCardStyle = useMemo(
+    () => [
+      styles.progressCard,
+      {
+        backgroundColor: colors.cardBackground,
+        shadowColor: colors.shadow,
+      },
+    ],
+    [colors.cardBackground, colors.shadow]
+  );
+
+  const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
 
   return (
     <View style={styles.container}>
       {/* Progress Overview */}
-      <View
-        style={[
-          styles.progressCard,
-          {
-            backgroundColor: colors.cardBackground,
-            shadowColor: colors.shadow,
-          },
-        ]}
-      >
+      <View style={progressCardStyle}>
         <View style={styles.progressContent}>
           <View style={styles.progressRow}>
             <View style={styles.progressTextContainer}>
@@ -87,12 +143,12 @@ export function VocabularyStats({
                 cx={40}
                 cy={40}
                 r={32}
-                color={colors.text + '10'}
+                color={circleBackgroundColor}
                 style="stroke"
                 strokeWidth={6}
               />
               <Path
-                path={createArcPath(progress, 32)}
+                path={arcPath}
                 color={colors.text}
                 style="stroke"
                 strokeWidth={6}
@@ -103,53 +159,39 @@ export function VocabularyStats({
         </View>
       </View>
 
-      {/* Stats Grid */}
-      <View style={styles.grid}>
-        {stats.map(stat => (
-          <View
-            key={stat.label}
-            style={[
-              styles.statCard,
-              {
-                backgroundColor: colors.cardBackground,
-                shadowColor: colors.shadow,
-              },
-            ]}
-          >
-            <View style={styles.statContent}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
-                <Ionicons
-                  name={stat.icon as any}
-                  size={18}
-                  color={colors.text}
-                  style={styles.icon}
-                />
-              </View>
-              <View style={styles.statTextContainer}>
-                <ThemedText style={styles.value}>{stat.value}</ThemedText>
-                <ThemedText style={styles.label}>{stat.label}</ThemedText>
-              </View>
-            </View>
-          </View>
+      {/* Stats Cards */}
+      <View style={styles.statsRow}>
+        {stats.map((stat, index) => (
+          <StatCard
+            key={index}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            colors={colors}
+          />
         ))}
       </View>
     </View>
   );
 }
 
+// Memoize the entire component
+export const VocabularyStats = React.memo(VocabularyStatsComponent);
+
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   progressCard: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    height: 120,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    height: 130,
+    marginBottom: LAYOUT.SPACING.LARGE,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
   },
   progressContent: {
-    padding: LAYOUT.CARD.PADDING.SMALL,
+    padding: LAYOUT.CARD.PADDING.LARGE,
     flex: 1,
   },
   progressRow: {
@@ -159,18 +201,19 @@ const styles = StyleSheet.create({
   },
   progressTextContainer: {
     flex: 1,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   progressLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   progressValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: '700',
     opacity: LAYOUT.OPACITY.DIMMED,
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   progressSubtext: {
@@ -180,46 +223,47 @@ const styles = StyleSheet.create({
   circleCanvas: {
     width: 80,
     height: 80,
-    marginTop: -LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.SMALL,
   },
-  grid: {
+  statsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: CARD_MARGIN,
+    justifyContent: 'space-between',
   },
   statCard: {
     width: CARD_WIDTH,
-    height: 84,
+    height: 90,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     ...LAYOUT.SHADOW.MEDIUM,
   },
   statContent: {
-    padding: LAYOUT.CARD.PADDING.SMALL,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  statTextContainer: {
+    flex: 1,
   },
   iconContainer: {
-    width: 28,
-    height: 28,
+    width: 40,
+    height: 40,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: LAYOUT.SPACING.MEDIUM,
   },
-  icon: {
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  statTextContainer: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    flex: 1,
-  },
-  value: {
+  statValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '700',
     opacity: LAYOUT.OPACITY.DIMMED,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
-  label: {
+  statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: LAYOUT.OPACITY.DISABLED,
   },

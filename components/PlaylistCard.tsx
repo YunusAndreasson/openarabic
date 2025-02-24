@@ -18,6 +18,7 @@ interface PlaylistCardProps {
 
 export default function PlaylistCard({
   title,
+  category,
   author,
   audioUrl,
   onRemove,
@@ -27,36 +28,62 @@ export default function PlaylistCard({
 
   return (
     <CompactThemedCard onPress={onPress}>
-      <View style={styles.leftContainer}>
-        <CompactAudioPlayButton audioUrl={audioUrl} size={20} />
+      <View style={styles.container}>
+        <View style={styles.leftContainer}>
+          <CompactAudioPlayButton audioUrl={audioUrl} size={20} />
+        </View>
+        <View style={styles.textContainer}>
+          <ThemedText numberOfLines={1} style={styles.title}>
+            {title}
+          </ThemedText>
+          <View style={styles.metaContainer}>
+            <ThemedText
+              style={[styles.category, { color: colors.tint }]}
+              skipDefaultColor
+              numberOfLines={1}
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </ThemedText>
+            <ThemedText style={styles.author} numberOfLines={1}>
+              {author}
+            </ThemedText>
+          </View>
+        </View>
+        <Pressable onPress={onRemove} style={styles.removeButton} hitSlop={12}>
+          <Ionicons name="close-circle" size={20} color={colors.tint} style={styles.removeIcon} />
+        </Pressable>
       </View>
-      <View style={styles.textContainer}>
-        <ThemedText numberOfLines={1} style={styles.title}>
-          {title}
-        </ThemedText>
-        <ThemedText style={styles.author} numberOfLines={1}>
-          {author}
-        </ThemedText>
-      </View>
-      <Pressable onPress={onRemove} style={styles.removeButton} hitSlop={12}>
-        <Ionicons name="close-circle" size={20} color={colors.tint} style={styles.removeIcon} />
-      </Pressable>
     </CompactThemedCard>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   leftContainer: {
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center',
   },
   textContainer: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
     marginBottom: LAYOUT.SPACING.TINY,
+  },
+  metaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  category: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '500',
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   author: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -64,7 +91,7 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     padding: LAYOUT.SPACING.TINY,
-    marginRight: -LAYOUT.SPACING.TINY,
+    alignSelf: 'center',
   },
   removeIcon: {
     opacity: 0.8,

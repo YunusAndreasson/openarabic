@@ -9,7 +9,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState, useCallback, useRef, memo } from 'react';
+import { useEffect, useState, useCallback, useRef, memo, useMemo } from 'react';
 import { router, useNavigation } from 'expo-router';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import ThemedCard from '@/components/ThemedCard';
@@ -27,6 +27,7 @@ const ITEM_HEIGHT = 360;
 
 // Memoize the card component for better performance
 const MemoizedCard = memo(ThemedCard);
+
 export default function TextsScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const lastScrollY = useRef(0);
@@ -42,8 +43,12 @@ export default function TextsScreen() {
   const insets = useSafeAreaInsets();
 
   // Calculate the total height of the CategoryPills component
-  const categoryPillsHeight = Math.max(insets.top, 16) + 12 + 8 + 32; // paddingTop + paddingVertical + pillHeight
+  const categoryPillsHeight = useMemo(
+    () => Math.max(insets.top, 16) + 12 + 8 + 32, // paddingTop + paddingVertical + pillHeight
+    [insets.top]
+  );
 
+  // Memoize the scroll handler to prevent unnecessary rerenders
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const currentScrollY = event.nativeEvent.contentOffset.y;
@@ -98,7 +103,7 @@ export default function TextsScreen() {
               }),
               position: 'absolute',
               bottom: 0,
-              height: 49,
+              height: 'auto',
               opacity: 1,
             },
           });
@@ -112,53 +117,61 @@ export default function TextsScreen() {
 
       lastScrollY.current = currentScrollY;
     },
-    [isTabBarVisible, navigation, colors, categoryVisibleAnim]
+    [categoryVisibleAnim, colors.background, colors.icon, isTabBarVisible, navigation]
   );
 
-  const fetchArticles = async () => {
+  // Memoize the fetchArticles function to prevent unnecessary rerenders
+  const fetchArticles = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const [articlesData, categoriesData] = await Promise.all([
-        articlesService.getArticles(selectedCategory?.id),
-        categoriesService.getCategories(),
-      ]);
-      setArticles(articlesData);
-      setCategories(categoriesData);
+      const fetchedArticles = await articlesService.getArticles(
+        selectedCategory ? selectedCategory.id : undefined
+      );
+      setArticles(fetchedArticles);
     } catch {
-      setError('Failed to load articles');
+      setError('Failed to fetch articles');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchArticles();
   }, [selectedCategory]);
 
-  const filteredArticles = articles;
+  // Memoize the fetchCategories function to prevent unnecessary rerenders
+  const fetchCategories = useCallback(async () => {
+    try {
+      const fetchedCategories = await categoriesService.getCategories();
+      setCategories(fetchedCategories);
+    } catch {
+      setError('Failed to fetch categories');
+    }
+  }, []);
 
-  const renderItem: ListRenderItem<Article> = useCallback(({ item }) => {
-    return (
+  // Memoize the handleCategorySelect function to prevent unnecessary rerenders
+  const handleCategorySelect = useCallback((category: Tables<'categories'> | null) => {
+    setSelectedCategory(category);
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, []);
+
+  // Memoize the renderItem function to prevent unnecessary rerenders
+  const renderItem = useCallback<ListRenderItem<Article>>(
+    ({ item }) => (
       <MemoizedCard
         imageUrl={'https://picsum.photos/800/400'}
         title={item.title}
         category={item.category?.name ?? 'Uncategorized'}
         author={item.author?.name ?? 'Anonymous'}
-        onPress={() => {
-          router.push({
-            pathname: '/article/[id]',
-            params: { id: item.id },
-          });
-        }}
+        onPress={() => router.push(`/article/${item.id}`)}
       />
-    );
-  }, []);
+    ),
+    []
+  );
 
+  // Memoize the keyExtractor function to prevent unnecessary rerenders
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
+  // Memoize the getItemLayout function to prevent unnecessary rerenders
   const getItemLayout = useCallback(
-    (_data: ArrayLike<Article> | null | undefined, index: number) => ({
+    (_: any, index: number) => ({
       length: ITEM_HEIGHT,
       offset: ITEM_HEIGHT * index,
       index,
@@ -166,85 +179,67 @@ export default function TextsScreen() {
     []
   );
 
-  const handleCategorySelect = useCallback((category: Tables<'categories'> | null) => {
-    setSelectedCategory(category);
-    // Scroll to top smoothly when changing categories
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  }, []);
+  // Memoize the ListEmptyComponent to prevent unnecessary rerenders
+  const ListEmptyComponent = useCallback(() => {
+    if (isLoading) {
+      return (
+        <ThemedView style={styles.emptyContainer}>
+          <ActivityIndicator size="large" color={colors.tint} />
+        </ThemedView>
+      );
+    }
 
-  if (isLoading) {
+    if (error) {
+      return (
+        <ThemedView style={styles.emptyContainer}>
+          <ThemedText style={styles.errorText}>{error}</ThemedText>
+        </ThemedView>
+      );
+    }
+
     return (
-      <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={colors.tint} />
-        <ThemedText style={styles.loadingText}>Loading articles...</ThemedText>
+      <ThemedView style={styles.emptyContainer}>
+        <ThemedText style={styles.emptyText}>No articles found</ThemedText>
       </ThemedView>
     );
-  }
+  }, [isLoading, error, colors.tint]);
 
-  if (error) {
-    return (
-      <ThemedView style={styles.centerContainer}>
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
-        <ThemedText style={styles.errorSubtext}>Pull down to try again</ThemedText>
-      </ThemedView>
-    );
-  }
+  // Fetch articles and categories on mount
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    fetchArticles();
+  }, [fetchArticles]);
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
-      <ThemedView style={styles.container}>
-        <CategoryPills
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={handleCategorySelect}
-          visible={categoryVisibleAnim}
-        />
-        <FlatList
-          ref={flatListRef}
-          data={filteredArticles}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          getItemLayout={getItemLayout}
-          maxToRenderPerBatch={2}
-          windowSize={3}
-          initialNumToRender={2}
-          removeClippedSubviews={true}
-          contentContainerStyle={[
-            styles.listContainer,
-            { paddingTop: categoryPillsHeight + 8 }, // Add some spacing between pills and list
-          ]}
-          showsVerticalScrollIndicator={false}
-          onEndReachedThreshold={0.5}
-          refreshing={isLoading}
-          onRefresh={fetchArticles}
-          updateCellsBatchingPeriod={100}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-            autoscrollToTopThreshold: 10,
-          }}
-        />
-      </ThemedView>
-    </SafeAreaView>
+    <ThemedView style={styles.container}>
+      <CategoryPills
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={handleCategorySelect}
+        visible={categoryVisibleAnim}
+      />
+      <FlatList
+        ref={flatListRef}
+        data={articles}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
+        contentContainerStyle={[styles.flatListContent, { paddingTop: categoryPillsHeight + 16 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        ListEmptyComponent={ListEmptyComponent}
+        showsVerticalScrollIndicator={false}
+      />
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   container: {
     flex: 1,
-  },
-  listContainer: {
-    paddingVertical: 12,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
   },
   errorText: {
     textAlign: 'center',
@@ -252,15 +247,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  errorSubtext: {
-    textAlign: 'center',
-    marginHorizontal: 20,
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: {
+    marginTop: 8,
     fontSize: 14,
     opacity: 0.7,
   },
-  loadingText: {
-    marginTop: 8,
-    fontSize: 14,
-    opacity: 0.8,
+  flatListContent: {
+    paddingVertical: 12,
   },
 });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '../hooks/useColors';
@@ -12,19 +12,33 @@ interface CompactArticleCardProps {
   onPress?: () => void;
 }
 
-export function CompactArticleCard({ article, onPress }: CompactArticleCardProps) {
+function CompactArticleCardComponent({ article, onPress }: CompactArticleCardProps) {
   const colors = useColors();
+
+  // Memoize styles that depend on colors
+  const pressableStyle = useMemo(() => ({ shadowColor: colors.shadow }), [colors.shadow]);
+
+  const cardStyle = useMemo(
+    () => [styles.card, { backgroundColor: colors.cardBackground }],
+    [colors.cardBackground]
+  );
+
+  const categoryBackgroundStyle = useMemo(
+    () => [styles.categoryBackground, { backgroundColor: colors.background }],
+    [colors.background]
+  );
+
+  const categoryTextStyle = useMemo(
+    () => [styles.category, { color: colors.categoryText }],
+    [colors.categoryText]
+  );
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.pressable,
-        pressed && styles.pressed,
-        { shadowColor: colors.shadow },
-      ]}
+      style={({ pressed }) => [styles.pressable, pressed && styles.pressed, pressableStyle]}
     >
-      <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>
+      <View style={cardStyle}>
         <View style={styles.imageContainer}>
           <Image
             source={'https://picsum.photos/800/400'}
@@ -36,11 +50,8 @@ export function CompactArticleCard({ article, onPress }: CompactArticleCardProps
           {article.category && (
             <View style={styles.categoryContainer}>
               <BlurView intensity={10} tint="light" style={styles.categoryPill}>
-                <View style={[styles.categoryBackground, { backgroundColor: colors.background }]}>
-                  <ThemedText
-                    style={[styles.category, { color: colors.categoryText }]}
-                    skipDefaultColor
-                  >
+                <View style={categoryBackgroundStyle}>
+                  <ThemedText style={categoryTextStyle} skipDefaultColor>
                     {article.category.name.toUpperCase()}
                   </ThemedText>
                 </View>
@@ -57,6 +68,9 @@ export function CompactArticleCard({ article, onPress }: CompactArticleCardProps
     </Pressable>
   );
 }
+
+// Memoize the component to prevent unnecessary rerenders
+export const CompactArticleCard = React.memo(CompactArticleCardComponent);
 
 const styles = StyleSheet.create({
   pressable: {

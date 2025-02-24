@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -39,14 +39,28 @@ export default function VocabularyScreen() {
     };
   }, [validStudyWords]);
 
-  const handleStartReview = () => {
+  const handleStartReview = useCallback(() => {
     router.push('/review');
-  };
+  }, []);
+
+  const buttonContainerStyle = useMemo(
+    () => [
+      styles.buttonContainer,
+      {
+        backgroundColor: colors.background,
+        borderTopColor: colors.overlay,
+        shadowColor: colors.shadow,
+      },
+    ],
+    [colors.background, colors.overlay, colors.shadow]
+  );
 
   if (!user) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
+        <View style={styles.messageContainer}>
+          <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
+        </View>
       </ThemedView>
     );
   }
@@ -54,7 +68,9 @@ export default function VocabularyScreen() {
   if (isLoading) {
     return (
       <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Loading vocabulary...</ThemedText>
+        <View style={styles.messageContainer}>
+          <ThemedText style={styles.message}>Loading vocabulary...</ThemedText>
+        </View>
       </ThemedView>
     );
   }
@@ -88,16 +104,7 @@ export default function VocabularyScreen() {
       </ScrollView>
 
       {hasDueWords && (
-        <View
-          style={[
-            styles.buttonContainer,
-            {
-              backgroundColor: colors.background,
-              borderTopColor: colors.overlay,
-              shadowColor: colors.shadow,
-            },
-          ]}
-        >
+        <View style={buttonContainerStyle}>
           <ThemedButton
             title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
             icon="play-circle"
@@ -143,7 +150,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: '10%',
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
   },
   buttonContainer: {
     position: 'absolute',
@@ -155,5 +162,10 @@ const styles = StyleSheet.create({
     borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
     zIndex: LAYOUT.Z_INDEX.HEADER,
     ...LAYOUT.SHADOW.MEDIUM,
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
