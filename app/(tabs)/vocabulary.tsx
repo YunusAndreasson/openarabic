@@ -47,8 +47,13 @@ export default function VocabularyScreen() {
 
   if (!user) {
     return (
-      <ThemedView style={styles.container}>
-        <View style={styles.messageContainer}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <View
+          style={[
+            styles.messageContainer,
+            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          ]}
+        >
           <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
         </View>
       </ThemedView>
@@ -57,8 +62,13 @@ export default function VocabularyScreen() {
 
   if (isLoading) {
     return (
-      <ThemedView style={styles.container}>
-        <View style={styles.messageContainer}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <View
+          style={[
+            styles.messageContainer,
+            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          ]}
+        >
           <ThemedText style={styles.message}>Loading vocabulary...</ThemedText>
         </View>
       </ThemedView>
@@ -67,8 +77,13 @@ export default function VocabularyScreen() {
 
   if (!validStudyWords.length) {
     return (
-      <ThemedView style={styles.container}>
-        <View style={styles.emptyContainer}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <View
+          style={[
+            styles.emptyContainer,
+            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          ]}
+        >
           <ThemedText style={styles.message}>
             You haven't added any words to your study list yet.
           </ThemedText>
@@ -86,7 +101,10 @@ export default function VocabularyScreen() {
     <ThemedView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <VocabularyStats {...stats} />
@@ -114,7 +132,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
     paddingBottom:
       LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL * 2 + 44,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -122,7 +139,6 @@ const styles = StyleSheet.create({
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
-    marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     opacity: LAYOUT.OPACITY.DIMMED,
   },

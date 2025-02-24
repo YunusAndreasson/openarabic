@@ -56,9 +56,7 @@ export default function TextsScreen() {
   // Memoized values
   const categoryPillsHeight = useMemo(() => {
     // Calculate height based on insets and layout constants
-    const topPadding =
-      insets.top + (Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM);
-    return topPadding + LAYOUT.SPACING.MEDIUM * 2 + 28;
+    return insets.top + LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM + 36;
   }, [insets.top]);
 
   // Callbacks
@@ -224,14 +222,22 @@ export default function TextsScreen() {
   }, [fetchArticles]);
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ThemedView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ padding: 0 }}
+    >
       <FlatList
         ref={flatListRef}
         data={articles}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemLayout={getItemLayout}
-        contentContainerStyle={[styles.flatListContent, { paddingTop: categoryPillsHeight }]}
+        contentContainerStyle={[
+          styles.flatListContent,
+          {
+            paddingTop: categoryPillsHeight || LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
+          },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         ListEmptyComponent={ListEmptyComponent}
@@ -274,6 +280,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   flatListContent: {
-    paddingVertical: LAYOUT.LIST_VERTICAL_SPACING,
+    paddingBottom: LAYOUT.LIST_VERTICAL_SPACING,
+    paddingTop: 0,
   },
 });

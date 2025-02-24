@@ -76,7 +76,10 @@ export default function AccountScreen() {
     <ThemedView
       style={styles.container}
       scrollable={true}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[
+        styles.scrollContent,
+        { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+      ]}
     >
       <View style={styles.content}>
         {/* Profile Section */}
@@ -281,7 +284,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingVertical: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
   section: {
     marginBottom: LAYOUT.SPACING.XXLARGE,

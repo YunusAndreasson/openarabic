@@ -77,13 +77,12 @@ function CategoryPillsComponent({
           right: 0,
           zIndex: LAYOUT.Z_INDEX.HEADER,
           backgroundColor: colors.background,
-          paddingTop:
-            insets.top + (Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM),
+          paddingTop: insets.top,
         },
         scrollContent: {
           paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           gap: LAYOUT.SPACING.SMALL,
-          paddingVertical: LAYOUT.SPACING.MEDIUM,
+          paddingTop: LAYOUT.CONTENT_SPACING.TOP,
           paddingBottom: LAYOUT.SPACING.MEDIUM,
         },
         pill: {

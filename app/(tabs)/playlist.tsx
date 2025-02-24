@@ -18,13 +18,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
     paddingBottom:
       LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL * 2 + 44,
   },
   message: {
     textAlign: 'center',
-    marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.DIMMED,
   },
   controls: {
@@ -251,24 +249,43 @@ export default function PlaylistScreen() {
 
   if (!user) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Please sign in to view your playlist</ThemedText>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <ThemedText
+          style={[
+            styles.message,
+            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          ]}
+        >
+          Please sign in to view your playlist
+        </ThemedText>
       </ThemedView>
     );
   }
 
   if (isLoading) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>Loading...</ThemedText>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <ThemedText
+          style={[
+            styles.message,
+            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          ]}
+        >
+          Loading...
+        </ThemedText>
       </ThemedView>
     );
   }
 
   if (!readingList?.length) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText style={styles.message}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <ThemedText
+          style={[
+            styles.message,
+            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          ]}
+        >
           Your playlist is empty. Add articles to get started!
         </ThemedText>
       </ThemedView>
@@ -291,7 +308,10 @@ export default function PlaylistScreen() {
           />
         )}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+        ]}
       />
       <View style={controlsStyle}>
         <ThemedButton
