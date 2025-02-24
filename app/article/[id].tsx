@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
@@ -23,6 +23,11 @@ import { LAYOUT } from '@/constants/layout';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   categoryContainer: {
     alignSelf: 'flex-start',
@@ -97,6 +102,10 @@ const styles = StyleSheet.create({
     paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
     marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
   },
+  emptyRelatedContent: {
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+  },
 });
 
 export default function ArticleScreen() {
@@ -121,7 +130,7 @@ export default function ArticleScreen() {
   });
 
   // Create a Set of selected word IDs for efficient lookup
-  const selectedWordIds = React.useMemo(
+  const selectedWordIds = useMemo(
     () => new Set(studyWords.map(w => w.sentence_word_id)),
     [studyWords]
   );
@@ -142,10 +151,13 @@ export default function ArticleScreen() {
     },
   });
 
-  const handleWordPress = async (word: Tables<'sentence_words'>) => {
-    if (!user) return;
-    toggleWordMutation.mutate({ userId: user.id, wordId: word.id });
-  };
+  const handleWordPress = useCallback(
+    async (word: Tables<'sentence_words'>) => {
+      if (!user) return;
+      toggleWordMutation.mutate({ userId: user.id, wordId: word.id });
+    },
+    [user, toggleWordMutation]
+  );
 
   // Fetch more articles from the same author
   const { data: moreArticles = [] } = useQuery({
@@ -155,7 +167,7 @@ export default function ArticleScreen() {
   });
 
   // Filter out the current article from the list
-  const otherArticles = React.useMemo(
+  const otherArticles = useMemo(
     () => moreArticles.filter(a => a.id !== article?.id),
     [moreArticles, article?.id]
   );
@@ -168,75 +180,94 @@ export default function ArticleScreen() {
   });
 
   // Filter out the current article from the category list
-  const otherCategoryArticles = React.useMemo(
+  const otherCategoryArticles = useMemo(
     () => categoryArticles.filter(a => a.id !== article?.id),
     [categoryArticles, article?.id]
   );
 
-  if (isLoadingArticle || !article) {
+  const handleArticlePress = useCallback((articleId: number) => {
+    router.push({
+      pathname: '/article/[id]',
+      params: { id: articleId },
+    });
+  }, []);
+
+  const renderHeaderContent = useCallback(
+    () => (
+      <>
+        {article?.category && (
+          <View style={styles.categoryContainer}>
+            <BlurView
+              intensity={10}
+              tint={colors.background === Colors.dark.background ? 'dark' : 'light'}
+              style={styles.categoryPill}
+            >
+              <View style={[styles.categoryBackground]}>
+                <View
+                  style={{
+                    ...StyleSheet.absoluteFillObject,
+                    backgroundColor: colors.background,
+                    opacity: 0.3,
+                  }}
+                />
+                <ThemedText
+                  style={[styles.category, { color: colors.categoryText }]}
+                  type="defaultSemiBold"
+                  skipDefaultColor
+                >
+                  {article.category.name.toUpperCase()}
+                </ThemedText>
+              </View>
+            </BlurView>
+          </View>
+        )}
+        <ThemedText
+          type="title"
+          style={[styles.title, { color: colors.titleText }]}
+          numberOfLines={3}
+        >
+          {article?.title}
+        </ThemedText>
+        {article?.author && (
+          <ThemedText style={[styles.author, { color: colors.authorText }]}>
+            By {article.author.name}
+          </ThemedText>
+        )}
+        <View style={styles.buttonContainer}>
+          {article?.audio_url && (
+            <View style={styles.buttonWrapper}>
+              <AudioPlayButton audioUrl={article.audio_url} />
+            </View>
+          )}
+          {article?.id && (
+            <View style={styles.buttonWrapper}>
+              <ReadingListButton articleId={article.id} />
+            </View>
+          )}
+        </View>
+      </>
+    ),
+    [article, colors]
+  );
+
+  if (isLoadingArticle) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText>Loading...</ThemedText>
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.info} />
       </ThemedView>
     );
   }
 
-  const renderHeaderContent = () => (
-    <>
-      {article.category && (
-        <View style={styles.categoryContainer}>
-          <BlurView
-            intensity={10}
-            tint={colors.background === Colors.dark.background ? 'dark' : 'light'}
-            style={styles.categoryPill}
-          >
-            <View style={[styles.categoryBackground]}>
-              <View
-                style={{
-                  ...StyleSheet.absoluteFillObject,
-                  backgroundColor: colors.background,
-                  opacity: 0.3 as number,
-                }}
-              />
-              <ThemedText
-                style={[styles.category, { color: colors.categoryText }]}
-                type="defaultSemiBold"
-              >
-                {article.category.name.toUpperCase()}
-              </ThemedText>
-            </View>
-          </BlurView>
-        </View>
-      )}
-      <ThemedText
-        type="title"
-        style={[styles.title, { color: colors.titleText }]}
-        numberOfLines={3}
-      >
-        {article.title}
-      </ThemedText>
-      {article.author && (
-        <ThemedText style={[styles.author, { color: colors.authorText }]}>
-          By {article.author.name}
-        </ThemedText>
-      )}
-      <View style={styles.buttonContainer}>
-        {article?.audio_url && (
-          <View style={styles.buttonWrapper}>
-            <AudioPlayButton audioUrl={article.audio_url} />
-          </View>
-        )}
-        {article?.id && (
-          <View style={styles.buttonWrapper}>
-            <ReadingListButton articleId={article.id} />
-          </View>
-        )}
-      </View>
-    </>
-  );
+  if (!article) {
+    return (
+      <ThemedView style={styles.container}>
+        <ThemedText>Article not found</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
-    <CollapsibleHeader renderContent={renderHeaderContent} title={article?.title || ''}>
+    <CollapsibleHeader renderContent={renderHeaderContent} title={article.title || ''}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {article.article_sentences
           .sort((a, b) => a.position - b.position)
@@ -287,12 +318,7 @@ export default function ArticleScreen() {
                 <CompactArticleCard
                   key={otherArticle.id}
                   article={otherArticle}
-                  onPress={() => {
-                    router.push({
-                      pathname: '/article/[id]',
-                      params: { id: otherArticle.id },
-                    });
-                  }}
+                  onPress={() => handleArticlePress(otherArticle.id)}
                 />
               ))}
             </ScrollView>
@@ -313,12 +339,7 @@ export default function ArticleScreen() {
                 <CompactArticleCard
                   key={otherArticle.id}
                   article={otherArticle}
-                  onPress={() => {
-                    router.push({
-                      pathname: '/article/[id]',
-                      params: { id: otherArticle.id },
-                    });
-                  }}
+                  onPress={() => handleArticlePress(otherArticle.id)}
                 />
               ))}
             </ScrollView>
