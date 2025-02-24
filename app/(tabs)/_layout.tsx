@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { Platform, StyleSheet, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
@@ -15,16 +15,15 @@ const TAB_SCREENS = [
   {
     name: 'vocabulary',
     title: 'Vocabulary',
-    iconOutline: 'text-outline',
-    iconFilled: 'text',
+    iconOutline: 'library-outline',
+    iconFilled: 'library',
   },
   {
     name: 'playlist',
     title: 'Playlist',
-    iconOutline: 'list-outline',
-    iconFilled: 'list',
+    iconOutline: 'play-circle-outline',
+    iconFilled: 'play-circle',
   },
-
   {
     name: 'account',
     title: 'Account',
@@ -33,44 +32,20 @@ const TAB_SCREENS = [
   },
 ] as const;
 
+// Standard icon size for tab bar
+const ICON_SIZE = 24;
+
 export default function TabLayout() {
   const colors = useColors();
+
+  // Memoize styles to prevent unnecessary recalculations on re-renders
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: colors.background,
-            borderTopColor: colors.icon,
-            borderTopWidth: 0.5,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 4,
-            height: LAYOUT.BOTTOM_BAR.HEIGHT,
-            zIndex: LAYOUT.Z_INDEX.HEADER,
-          },
-          android: {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            backgroundColor: colors.background,
-            borderTopColor: colors.icon,
-            borderTopWidth: 0.5,
-            elevation: 8,
-            height: LAYOUT.BOTTOM_BAR.HEIGHT,
-            zIndex: LAYOUT.Z_INDEX.HEADER,
-          },
-        }),
-        headerStyle: {
-          backgroundColor: colors.background,
-        },
+        tabBarStyle: styles.tabBar,
+        headerStyle: styles.header,
         headerTintColor: colors.text,
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
@@ -86,7 +61,7 @@ export default function TabLayout() {
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 name={focused ? screen.iconFilled : screen.iconOutline}
-                size={24}
+                size={ICON_SIZE}
                 color={color}
               />
             ),
@@ -97,3 +72,43 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+// Extract styles to a separate function for better organization and memoization
+const createStyles = (colors: ReturnType<typeof useColors>) => {
+  // Define platform-specific tab bar styles
+  const iosTabBarStyle: ViewStyle = {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    borderTopColor: colors.icon,
+    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: LAYOUT.OPACITY.DIMMED / 2, // 0.35 (half of DIMMED opacity)
+    shadowRadius: LAYOUT.SPACING.SMALL / 2, // 4
+    height: LAYOUT.BOTTOM_BAR.HEIGHT,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+  };
+
+  const androidTabBarStyle: ViewStyle = {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.background,
+    borderTopColor: colors.icon,
+    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+    elevation: 8, // Use a direct value since we can't safely access nested optional properties
+    height: LAYOUT.BOTTOM_BAR.HEIGHT,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+  };
+
+  return StyleSheet.create({
+    tabBar: Platform.OS === 'ios' ? iosTabBarStyle : androidTabBarStyle,
+    header: {
+      backgroundColor: colors.background,
+    },
+  });
+};
