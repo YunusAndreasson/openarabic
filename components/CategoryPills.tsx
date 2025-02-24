@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-unused-styles */
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, Animated, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -77,18 +77,19 @@ function CategoryPillsComponent({
           right: 0,
           zIndex: LAYOUT.Z_INDEX.HEADER,
           backgroundColor: colors.background,
-          paddingTop: Math.max(insets.top, LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL),
+          paddingTop:
+            insets.top + (Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM),
         },
         scrollContent: {
           paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-          gap: LAYOUT.SPACING.MEDIUM,
+          gap: LAYOUT.SPACING.SMALL,
           paddingVertical: LAYOUT.SPACING.MEDIUM,
           paddingBottom: LAYOUT.SPACING.MEDIUM,
         },
         pill: {
-          paddingHorizontal: LAYOUT.SPACING.LARGE,
-          paddingVertical: LAYOUT.SPACING.MEDIUM,
-          borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+          paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+          paddingVertical: LAYOUT.SPACING.SMALL,
+          borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
           borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
           shadowOffset: {
             width: 0,
@@ -99,7 +100,7 @@ function CategoryPillsComponent({
           elevation: 2,
         },
         pillText: {
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
           fontWeight: '600',
         },
         activePill: {

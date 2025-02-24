@@ -233,8 +233,6 @@ export default function AccountScreen() {
               style={styles.actionButton}
             />
           </View>
-
-          <View style={[styles.sectionDivider, { backgroundColor: colors.cardBorder }]} />
         </View>
 
         {/* Support & Account Section */}
@@ -293,10 +291,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-  },
-  sectionDivider: {
-    height: StyleSheet.hairlineWidth,
-    marginVertical: LAYOUT.SPACING.LARGE,
   },
   authContainer: {
     flex: 1,

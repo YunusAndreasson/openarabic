@@ -54,10 +54,12 @@ export default function TextsScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // Memoized values
-  const categoryPillsHeight = useMemo(
-    () => Math.max(insets.top, 16) + 12 + 8 + 32, // paddingTop + paddingVertical + pillHeight
-    [insets.top]
-  );
+  const categoryPillsHeight = useMemo(() => {
+    // Calculate height based on insets and layout constants
+    const topPadding =
+      insets.top + (Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM);
+    return topPadding + LAYOUT.SPACING.MEDIUM * 2 + 28;
+  }, [insets.top]);
 
   // Callbacks
   const fetchArticles = useCallback(

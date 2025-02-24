@@ -80,12 +80,12 @@ function ThemedCardComponent({
       },
       categoryBackground: {
         // In dark mode, use a more subtle background
-        backgroundColor: isDarkMode ? colors.tint + '30' : colors.tint,
+        backgroundColor: isDarkMode ? colors.tint + '20' : colors.tint + '90',
       },
       category: {
         // In dark mode, use the tint color; in light mode, use white for contrast
         color: isDarkMode ? colors.tint : colors.white,
-        fontWeight: '700',
+        fontWeight: '600',
       },
       author: {
         color: colors.tabIconDefault,
@@ -170,7 +170,7 @@ function ThemedCardComponent({
                 />
                 <View style={styles.categoryContainer}>
                   <BlurView
-                    intensity={colors.background === '#000000' ? 15 : 0}
+                    intensity={colors.background === '#000000' ? 10 : 0}
                     tint={colors.background === '#000000' ? 'dark' : 'default'}
                     style={styles.categoryPill}
                   >
@@ -269,12 +269,13 @@ const styles = StyleSheet.create({
   },
   categoryBackground: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
   category: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
   contentContainer: {
     padding: LAYOUT.CARD.PADDING.LARGE,
