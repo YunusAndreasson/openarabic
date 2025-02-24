@@ -7,8 +7,9 @@ import {
   NativeSyntheticEvent,
   Platform,
   Animated,
+  RefreshControl,
+  ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState, useCallback, useRef, memo, useMemo } from 'react';
 import { router, useNavigation } from 'expo-router';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -23,136 +24,144 @@ import { categoriesService } from '@/services/categories';
 import type { Tables } from '@/types/database.types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// Constants
 const ITEM_HEIGHT = 360;
+const SCROLL_THRESHOLD = 20;
+const ANIMATION_DURATION = 200;
+const INITIAL_SCROLL_THRESHOLD = 50;
 
 // Memoize the card component for better performance
 const MemoizedCard = memo(ThemedCard);
 
 export default function TextsScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
+  const colors = useColors();
+  const insets = useSafeAreaInsets();
+
+  // Refs
   const lastScrollY = useRef(0);
-  const [isTabBarVisible, setIsTabBarVisible] = useState(true);
+  const flatListRef = useRef<FlatList>(null);
   const categoryVisibleAnim = useRef(new Animated.Value(1)).current;
+
+  // State
+  const [isTabBarVisible, setIsTabBarVisible] = useState(true);
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Tables<'categories'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const flatListRef = useRef<FlatList>(null);
-  const colors = useColors();
-  const insets = useSafeAreaInsets();
 
-  // Calculate the total height of the CategoryPills component
+  // Memoized values
   const categoryPillsHeight = useMemo(
     () => Math.max(insets.top, 16) + 12 + 8 + 32, // paddingTop + paddingVertical + pillHeight
     [insets.top]
   );
 
-  // Memoize the scroll handler to prevent unnecessary rerenders
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const currentScrollY = event.nativeEvent.contentOffset.y;
-      const scrollingDown = currentScrollY > lastScrollY.current;
-      const scrollThreshold = 20;
+  const tabBarStyle = useMemo(() => {
+    const style: ViewStyle = {
+      ...Platform.select({
+        ios: {
+          backgroundColor: colors.cardBackground,
+          borderTopColor: colors.icon,
+        },
+        android: {
+          backgroundColor: colors.cardBackground,
+          borderTopColor: colors.icon,
+          elevation: 8,
+        },
+      }),
+      position: 'absolute' as const,
+      bottom: isTabBarVisible ? 0 : -100,
+      height: isTabBarVisible ? 'auto' : 0,
+      opacity: isTabBarVisible ? 1 : 0,
+    };
+    return style;
+  }, [colors.cardBackground, colors.icon, isTabBarVisible]);
 
-      if (scrollingDown && isTabBarVisible && currentScrollY > 50) {
-        const scrollDelta = currentScrollY - lastScrollY.current;
-        if (scrollDelta > scrollThreshold) {
-          setIsTabBarVisible(false);
-          navigation.setOptions({
-            tabBarStyle: {
-              ...Platform.select({
-                ios: {
-                  backgroundColor: colors.background,
-                  borderTopColor: colors.icon,
-                },
-                android: {
-                  backgroundColor: colors.background,
-                  borderTopColor: colors.icon,
-                  elevation: 8,
-                },
-              }),
-              position: 'absolute',
-              bottom: -100,
-              height: 0,
-              opacity: 0,
-            },
-          });
-          Animated.timing(categoryVisibleAnim, {
-            toValue: 0,
-            duration: 200,
-            useNativeDriver: true,
-          }).start();
+  // Callbacks
+  const fetchArticles = useCallback(
+    async (showRefreshing = false) => {
+      try {
+        if (showRefreshing) {
+          setIsRefreshing(true);
+        } else if (!isRefreshing) {
+          setIsLoading(true);
         }
-      } else if (!scrollingDown && !isTabBarVisible) {
-        const scrollDelta = lastScrollY.current - currentScrollY;
-        if (scrollDelta > scrollThreshold) {
-          setIsTabBarVisible(true);
-          navigation.setOptions({
-            tabBarStyle: {
-              ...Platform.select({
-                ios: {
-                  backgroundColor: colors.background,
-                  borderTopColor: colors.icon,
-                },
-                android: {
-                  backgroundColor: colors.background,
-                  borderTopColor: colors.icon,
-                  elevation: 8,
-                },
-              }),
-              position: 'absolute',
-              bottom: 0,
-              height: 'auto',
-              opacity: 1,
-            },
-          });
-          Animated.timing(categoryVisibleAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }).start();
-        }
+        setError(null);
+
+        const fetchedArticles = await articlesService.getArticles(
+          selectedCategory ? selectedCategory.id : undefined
+        );
+        setArticles(fetchedArticles);
+      } catch (err) {
+        setError('Failed to fetch articles. Pull down to try again.');
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
       }
-
-      lastScrollY.current = currentScrollY;
     },
-    [categoryVisibleAnim, colors.background, colors.icon, isTabBarVisible, navigation]
+    [selectedCategory, isRefreshing]
   );
 
-  // Memoize the fetchArticles function to prevent unnecessary rerenders
-  const fetchArticles = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const fetchedArticles = await articlesService.getArticles(
-        selectedCategory ? selectedCategory.id : undefined
-      );
-      setArticles(fetchedArticles);
-    } catch {
-      setError('Failed to fetch articles');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedCategory]);
-
-  // Memoize the fetchCategories function to prevent unnecessary rerenders
   const fetchCategories = useCallback(async () => {
     try {
       const fetchedCategories = await categoriesService.getCategories();
       setCategories(fetchedCategories);
     } catch {
-      setError('Failed to fetch categories');
+      // We don't set error here to avoid blocking article display
+      console.warn('Failed to fetch categories');
     }
   }, []);
 
-  // Memoize the handleCategorySelect function to prevent unnecessary rerenders
+  const handleRefresh = useCallback(() => {
+    fetchArticles(true);
+    fetchCategories();
+  }, [fetchArticles, fetchCategories]);
+
   const handleCategorySelect = useCallback((category: Tables<'categories'> | null) => {
     setSelectedCategory(category);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
-  // Memoize the renderItem function to prevent unnecessary rerenders
+  const toggleTabBarVisibility = useCallback(
+    (visible: boolean) => {
+      if (visible !== isTabBarVisible) {
+        setIsTabBarVisible(visible);
+        navigation.setOptions({ tabBarStyle });
+
+        Animated.timing(categoryVisibleAnim, {
+          toValue: visible ? 1 : 0,
+          duration: ANIMATION_DURATION,
+          useNativeDriver: true,
+        }).start();
+      }
+    },
+    [categoryVisibleAnim, isTabBarVisible, navigation, tabBarStyle]
+  );
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const scrollingDown = currentScrollY > lastScrollY.current;
+
+      if (scrollingDown && isTabBarVisible && currentScrollY > INITIAL_SCROLL_THRESHOLD) {
+        const scrollDelta = currentScrollY - lastScrollY.current;
+        if (scrollDelta > SCROLL_THRESHOLD) {
+          toggleTabBarVisibility(false);
+        }
+      } else if (!scrollingDown && !isTabBarVisible) {
+        const scrollDelta = lastScrollY.current - currentScrollY;
+        if (scrollDelta > SCROLL_THRESHOLD) {
+          toggleTabBarVisibility(true);
+        }
+      }
+
+      lastScrollY.current = currentScrollY;
+    },
+    [isTabBarVisible, toggleTabBarVisibility]
+  );
+
   const renderItem = useCallback<ListRenderItem<Article>>(
     ({ item }) => (
       <MemoizedCard
@@ -166,10 +175,8 @@ export default function TextsScreen() {
     []
   );
 
-  // Memoize the keyExtractor function to prevent unnecessary rerenders
   const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
-  // Memoize the getItemLayout function to prevent unnecessary rerenders
   const getItemLayout = useCallback(
     (_: any, index: number) => ({
       length: ITEM_HEIGHT,
@@ -179,9 +186,8 @@ export default function TextsScreen() {
     []
   );
 
-  // Memoize the ListEmptyComponent to prevent unnecessary rerenders
   const ListEmptyComponent = useCallback(() => {
-    if (isLoading) {
+    if (isLoading && !isRefreshing) {
       return (
         <ThemedView style={styles.emptyContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
@@ -202,9 +208,22 @@ export default function TextsScreen() {
         <ThemedText style={styles.emptyText}>No articles found</ThemedText>
       </ThemedView>
     );
-  }, [isLoading, error, colors.tint]);
+  }, [isLoading, isRefreshing, error, colors.tint]);
 
-  // Fetch articles and categories on mount
+  const refreshControl = useMemo(
+    () => (
+      <RefreshControl
+        refreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        tintColor={colors.tint}
+        colors={[colors.tint]}
+        progressBackgroundColor={colors.cardBackground}
+      />
+    ),
+    [isRefreshing, handleRefresh, colors.tint, colors.cardBackground]
+  );
+
+  // Effects
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
@@ -213,25 +232,37 @@ export default function TextsScreen() {
     fetchArticles();
   }, [fetchArticles]);
 
+  // Update tab bar style when colors change
+  useEffect(() => {
+    if (isTabBarVisible) {
+      navigation.setOptions({ tabBarStyle });
+    }
+  }, [colors, isTabBarVisible, navigation, tabBarStyle]);
+
   return (
-    <ThemedView style={styles.container}>
-      <CategoryPills
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onSelectCategory={handleCategorySelect}
-        visible={categoryVisibleAnim}
-      />
+    <ThemedView style={[styles.container, { backgroundColor: colors.cardBackground }]}>
       <FlatList
         ref={flatListRef}
         data={articles}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemLayout={getItemLayout}
-        contentContainerStyle={[styles.flatListContent, { paddingTop: categoryPillsHeight + 16 }]}
+        contentContainerStyle={[styles.flatListContent, { paddingTop: categoryPillsHeight }]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         ListEmptyComponent={ListEmptyComponent}
         showsVerticalScrollIndicator={false}
+        refreshControl={refreshControl}
+        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={5}
+      />
+      <CategoryPills
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onSelectCategory={handleCategorySelect}
+        visible={categoryVisibleAnim}
       />
     </ThemedView>
   );
@@ -251,6 +282,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    minHeight: 200,
   },
   emptyText: {
     marginTop: 8,

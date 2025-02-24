@@ -323,8 +323,8 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: LAYOUT.OPACITY.DIMMED,
+    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
   connectContainer: {
@@ -335,20 +335,20 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: LAYOUT.OPACITY.DIMMED,
+    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
   actionsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-    elevation: 2,
+    elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: LAYOUT.OPACITY.DIMMED,
+    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
   divider: {
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
   },
   signOutButton: {
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   sliderContainer: {
     flex: 1,
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   previewLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   previewScroller: {
@@ -418,6 +418,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   englishPreviewText: {
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, Dimensions, Animated, PanResponder, Pressable } from 'react-native';
+import { StyleSheet, View, Animated, PanResponder, Pressable } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -9,17 +9,18 @@ import { studyWordsService } from '@/services/study_words';
 import { router, Stack } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+// Constants for animation and interaction
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
-const SWIPE_OUT_DURATION = 200;
-const FADE_DURATION = 150;
-const DEBOUNCE_DELAY = 300; // Prevent rapid swipes
+const SWIPE_OUT_DURATION = LAYOUT.ANIMATION.DURATION.FAST;
+const FADE_DURATION = LAYOUT.ANIMATION.DURATION.FAST * 0.75;
+const DEBOUNCE_DELAY = LAYOUT.ANIMATION.DURATION.NORMAL;
 
 // Add color feedback for swipe directions
 const getSwipeColors = (dx: number, colors: any) => {
   const swipeProgress = Math.abs(dx) / SWIPE_THRESHOLD;
-  const opacity = Math.min(swipeProgress * 0.25, 0.25); // Reduce max opacity to 25%
+  const opacity = Math.min(swipeProgress * 0.25, 0.25);
 
   if (dx > 0) {
     return { backgroundColor: colors.success, opacity };
@@ -59,6 +60,31 @@ export default function ReviewScreen() {
   // Keep a stable reference to the current words
   const wordsRef = useRef<any[]>([]);
 
+  // Enhanced animation state tracking
+  const animationState = useRef({
+    isAnimating: false,
+    isMutating: false,
+    lastSwipeTime: 0,
+    currentWord: null as any,
+    direction: null as 'left' | 'right' | null,
+    animationPromise: null as Promise<void> | null,
+  }).current;
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Add cleanup for animations when component unmounts
+  useEffect(() => {
+    return () => {
+      // Stop any ongoing animations on unmount
+      position.stopAnimation();
+      fadeAnim.stopAnimation();
+      // Clean up any pending state
+      animationState.isAnimating = false;
+      animationState.isMutating = false;
+      animationState.animationPromise = null;
+    };
+  }, [position, fadeAnim, animationState]);
+
   // Optimize data fetching with increased stale time
   const {
     data: dueWords = [],
@@ -84,7 +110,6 @@ export default function ReviewScreen() {
           return dateA.getTime() - dateB.getTime();
         });
 
-      console.log(`Found ${filtered.length} words due for review`);
       return filtered;
     },
     enabled: !!user,
@@ -101,16 +126,6 @@ export default function ReviewScreen() {
       setCurrentIndex(0);
     }
   }, [dueWords]);
-
-  // Enhanced animation state tracking
-  const animationState = useRef({
-    isAnimating: false,
-    isMutating: false,
-    lastSwipeTime: 0,
-    currentWord: null as any,
-    direction: null as 'left' | 'right' | null,
-    animationPromise: null as Promise<void> | null,
-  }).current;
 
   const isInteractionDisabled = () => {
     const now = Date.now();
@@ -143,7 +158,7 @@ export default function ReviewScreen() {
         ? Math.max(1, Math.round(wordToUpdate.interval_days * wordToUpdate.ease_factor))
         : 1;
       const newEaseFactor = success
-        ? Math.max(1.3, wordToUpdate.ease_factor + (0.1 - (5 - 5) * (0.08 + (5 - 5) * 0.02)))
+        ? Math.max(1.3, wordToUpdate.ease_factor + 0.1)
         : Math.max(1.3, wordToUpdate.ease_factor - 0.2);
 
       const nextReview = new Date();
@@ -176,8 +191,6 @@ export default function ReviewScreen() {
       resetPosition();
     },
   });
-
-  const fadeAnim = useRef(new Animated.Value(1)).current;
 
   // Memoize animation sequence for better performance
   const createAnimationSequence = useCallback(
@@ -318,23 +331,21 @@ export default function ReviewScreen() {
     opacity: 0,
   });
 
-  // Throttled pan responder move handler
-  const handlePanResponderMove = useCallback(
-    throttle((dx: number) => {
-      if (isInteractionDisabled()) return;
+  const throttledMove = throttle((dx: number) => {
+    if (isInteractionDisabled()) return;
 
-      const resistance = 0.75;
-      const adjustedDx = dx * resistance;
-      position.setValue({ x: adjustedDx, y: 0 });
+    const resistance = 0.75;
+    const adjustedDx = dx * resistance;
+    position.setValue({ x: adjustedDx, y: 0 });
 
-      setSwipeDirection({ dx: adjustedDx, opacity: Math.abs(adjustedDx) / SCREEN_WIDTH });
+    setSwipeDirection({ dx: adjustedDx, opacity: Math.abs(adjustedDx) / SCREEN_WIDTH });
 
-      const maxDragDistance = SCREEN_WIDTH * 0.4;
-      const fadeValue = Math.max(0.7, 1 - Math.abs(dx) / maxDragDistance);
-      fadeAnim.setValue(fadeValue);
-    }, 16), // ~60fps
-    [position, fadeAnim, isInteractionDisabled]
-  );
+    const maxDragDistance = SCREEN_WIDTH * 0.4;
+    const fadeValue = Math.max(0.7, 1 - Math.abs(dx) / maxDragDistance);
+    fadeAnim.setValue(fadeValue);
+  }, 16);
+
+  const handlePanResponderMove = useCallback(throttledMove, [throttledMove]);
 
   // Memoize pan responder
   const panResponderRef = useRef(
@@ -646,12 +657,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     height: 40,
   },
   closeButton: {
-    padding: 8,
-    marginLeft: 16,
+    padding: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.MEDIUM,
     height: 40,
     width: 40,
     alignItems: 'center',
@@ -660,83 +671,79 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   wordContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 32, // Add some bottom margin for better spacing
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   sentence: {
-    fontSize: 32,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontFamily: 'NotoNaskhArabic',
     textAlign: 'center',
     lineHeight: 48,
   },
   highlightedWord: {
-    fontSize: 32,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontFamily: 'NotoNaskhArabic',
     fontWeight: '700',
+    lineHeight: 48,
   },
   progressBar: {
     flex: 1,
     height: 4,
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER.WIDTH.THIN * 4,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER.WIDTH.THIN * 4,
     width: '0%',
   },
   instructions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     marginBottom: 48,
-    opacity: 0.6, // Reduce opacity for more subtle appearance
+    opacity: LAYOUT.OPACITY.DIMMED, // Reduce opacity for more subtle appearance
   },
   instructionSide: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 10, // Slightly increase padding
-    paddingHorizontal: 20, // Slightly increase padding
-    borderRadius: 24, // Increase border radius for softer look
+    gap: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL + 2, // Slightly increase padding
+    paddingHorizontal: LAYOUT.SPACING.LARGE + 4, // Slightly increase padding
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE, // Increase border radius for softer look
   },
   instructionText: {
-    fontSize: 15,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    opacity: 0.9, // Slightly reduce text opacity
+    opacity: LAYOUT.OPACITY.ACTIVE - 0.1, // Slightly reduce text opacity
   },
   instructionIcon: {
-    opacity: 0.8, // Reduce icon opacity
+    opacity: LAYOUT.OPACITY.DIMMED + 0.1, // Reduce icon opacity
   },
   message: {
-    fontSize: 24,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     textAlign: 'center',
   },
   submessage: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
     textAlign: 'center',
-    marginTop: 12,
-    opacity: 0.7,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   completeContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   swipeFeedback: {
     ...StyleSheet.absoluteFillObject,
     zIndex: -1,
-  },
-  warningOverlay: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  successOverlay: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
 });

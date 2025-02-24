@@ -75,7 +75,7 @@ function CategoryPillsComponent({
           left: 0,
           right: 0,
           zIndex: 1,
-          backgroundColor: colors.background,
+          backgroundColor: colors.cardBackground,
           paddingTop: Math.max(insets.top, 42),
         },
         scrollContent: {
@@ -107,7 +107,7 @@ function CategoryPillsComponent({
           shadowColor: colors.text,
         },
         inactivePill: {
-          backgroundColor: colors.background,
+          backgroundColor: colors.cardBackground,
           borderColor: colors.cardBorder,
           shadowColor: colors.text,
         },

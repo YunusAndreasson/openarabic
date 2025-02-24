@@ -3,11 +3,11 @@ export const Colors = {
   light: {
     text: '#222222', // Dark gray text for optimal readability
     background: '#FFFFFF', // Off-white background to reduce glare
-    tint: '#444444', // Neutral gray accent for interactive elements
+    tint: '#333333', // Darker neutral gray for better contrast
     icon: '#666666', // Mid-gray for icons
     tabIconDefault: '#666666', // Consistent gray for inactive tabs
-    tabIconSelected: '#444444', // Matching tint for active tabs
-    link: '#444444', // Neutral gray for links
+    tabIconSelected: '#333333', // Matching tint for active tabs
+    link: '#333333', // Neutral gray for links
     cardBackground: '#F0F0F0', // Subtle contrast for card backgrounds
     cardBorder: '#DDDDDD', // Light gray border for clear delineation
     categoryText: '#222222', // Darker gray for better readability
@@ -35,7 +35,7 @@ export const Colors = {
     tabIconDefault: '#BBBBBB', // Consistent with icon color for inactive tabs
     tabIconSelected: '#AAAAAA', // Matching tint for active tabs
     link: '#AAAAAA', // Neutral gray for links
-    cardBackground: '#1E1E1E', // Slightly lighter than background for depth
+    cardBackground: '#121212', // Darker background for better contrast
     cardBorder: '#2A2A2A', // Subtle gray border for cards
     categoryText: '#BBBBBB', // Secondary text in soft gray
     authorText: '#BBBBBB',
