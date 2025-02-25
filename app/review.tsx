@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, Animated, PanResponder, Pressable, Modal } from 'react-native';
+import { StyleSheet, View, Animated, PanResponder, Pressable, Modal, Easing } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -17,10 +17,10 @@ const SWIPE_OUT_DURATION = LAYOUT.ANIMATION.DURATION.FAST;
 const FADE_DURATION = LAYOUT.ANIMATION.DURATION.FAST * 0.75;
 const DEBOUNCE_DELAY = LAYOUT.ANIMATION.DURATION.NORMAL;
 
-// Add color feedback for swipe directions
+// Add color feedback for swipe directions - make more subtle
 const getSwipeColors = (dx: number, colors: any) => {
   const swipeProgress = Math.abs(dx) / SWIPE_THRESHOLD;
-  const opacity = Math.min(swipeProgress * 0.3, 0.3); // Increased opacity for better feedback
+  const opacity = Math.min(swipeProgress * 0.2, 0.2); // Reduced opacity for more subtle feedback
 
   if (dx > 0) {
     return { backgroundColor: colors.success, opacity };
@@ -74,6 +74,39 @@ export default function ReviewScreen() {
   }).current;
 
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Add a subtle pulse animation for the tap instruction
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (!isAnswerRevealed) {
+      // Create a subtle pulsing effect for the tap instruction
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.8,
+            duration: 1500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+            easing: Easing.inOut(Easing.ease),
+          }),
+        ])
+      ).start();
+    } else {
+      // Stop the animation when answer is revealed
+      pulseAnim.stopAnimation();
+      pulseAnim.setValue(1);
+    }
+
+    return () => {
+      pulseAnim.stopAnimation();
+    };
+  }, [isAnswerRevealed, pulseAnim]);
 
   // Add cleanup for animations when component unmounts
   useEffect(() => {
@@ -338,14 +371,16 @@ export default function ReviewScreen() {
   const throttledMove = throttle((dx: number) => {
     if (isInteractionDisabled()) return;
 
-    const resistance = 0.75;
+    // Increase resistance for more subtle movement
+    const resistance = 0.65;
     const adjustedDx = dx * resistance;
     position.setValue({ x: adjustedDx, y: 0 });
 
     setSwipeDirection({ dx: adjustedDx, opacity: Math.abs(adjustedDx) / SCREEN_WIDTH });
 
+    // Adjust fade values for a more subtle effect
     const maxDragDistance = SCREEN_WIDTH * 0.4;
-    const fadeValue = Math.max(0.7, 1 - Math.abs(dx) / maxDragDistance);
+    const fadeValue = Math.max(0.8, 1 - Math.abs(dx) / maxDragDistance);
     fadeAnim.setValue(fadeValue);
   }, 16);
 
@@ -375,12 +410,13 @@ export default function ReviewScreen() {
     resetRevealState();
   };
 
-  // Update the panResponder to use handleSwipe instead of forceSwipe
+  // Update the panResponder to remove the swipe-down gesture
   const panResponderRef = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => !isInteractionDisabled(),
       onMoveShouldSetPanResponder: (_, { dx, dy }) => {
-        return !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 5;
+        // Increase threshold for initiating swipe to prevent accidental swipes
+        return !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10;
       },
       onPanResponderTerminationRequest: () => false,
       onPanResponderGrant: () => {
@@ -395,8 +431,9 @@ export default function ReviewScreen() {
         position.flattenOffset();
         setSwipeDirection({ dx: 0, opacity: 0 });
 
-        const isRightSwipe = dx > SWIPE_THRESHOLD || (dx > 0 && vx > 0.3);
-        const isLeftSwipe = dx < -SWIPE_THRESHOLD || (dx < 0 && vx < -0.3);
+        // Adjust swipe threshold for a more intentional swipe
+        const isRightSwipe = dx > SWIPE_THRESHOLD || (dx > 0 && vx > 0.4);
+        const isLeftSwipe = dx < -SWIPE_THRESHOLD || (dx < 0 && vx < -0.4);
 
         if (isRightSwipe) {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -455,9 +492,6 @@ export default function ReviewScreen() {
         <ThemedView style={styles.container}>
           <View style={styles.header}>
             <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-            </Pressable>
           </View>
           <View style={styles.completeContainer}>
             <ThemedText style={styles.message}>Loading...</ThemedText>
@@ -475,9 +509,6 @@ export default function ReviewScreen() {
         <ThemedView style={styles.container}>
           <View style={styles.header}>
             <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-            </Pressable>
           </View>
           <View style={styles.completeContainer}>
             <ThemedText style={styles.message}>Error loading words</ThemedText>
@@ -496,9 +527,6 @@ export default function ReviewScreen() {
         <ThemedView style={styles.container}>
           <View style={styles.header}>
             <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-            </Pressable>
           </View>
           <View style={styles.completeContainer}>
             <ThemedText style={styles.message}>No words due for review</ThemedText>
@@ -519,9 +547,6 @@ export default function ReviewScreen() {
                 style={[styles.progressFill, { width: '100%', backgroundColor: colors.tint }]}
               />
             </View>
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-            </Pressable>
           </View>
 
           <View style={styles.completeContainer}>
@@ -542,9 +567,6 @@ export default function ReviewScreen() {
         <ThemedView style={styles.container}>
           <View style={styles.header}>
             <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-            </Pressable>
           </View>
           <View style={styles.completeContainer}>
             <ThemedText style={styles.message}>Error loading word data</ThemedText>
@@ -568,9 +590,6 @@ export default function ReviewScreen() {
                 ]}
               />
             </View>
-            <Pressable onPress={handleClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-            </Pressable>
           </View>
 
           {/* Swipe direction feedback overlay */}
@@ -578,45 +597,138 @@ export default function ReviewScreen() {
             <View style={[styles.swipeFeedback, getSwipeColors(swipeDirection.dx, colors)]} />
           )}
 
-          <Animated.View
-            style={[
-              styles.contentContainer,
-              {
-                transform: [{ translateX: position.x }],
-                opacity: fadeAnim,
-              },
-            ]}
-            {...panResponderRef.panHandlers}
+          <Pressable
+            onPress={handleRevealAnswer}
+            style={styles.fullScreenTapArea}
+            disabled={isInteractionDisabled()}
           >
-            <Pressable onPress={handleRevealAnswer} style={styles.wordContainer}>
-              <ThemedText
-                style={[styles.highlightedWord, { color: colors.white }]}
-                skipDefaultColor
-              >
-                {wordForm}
-              </ThemedText>
-
-              <Animated.View
-                style={[
-                  styles.answerContainer,
-                  {
-                    opacity: answerOpacity,
-                    transform: [{ translateY }],
-                  },
-                ]}
-              >
-                <ThemedText style={styles.tapToRevealText}>
-                  {isAnswerRevealed
-                    ? "Swipe right if you knew it, left if you didn't"
-                    : 'Tap to reveal meaning'}
+            <Animated.View
+              style={[
+                styles.contentContainer,
+                {
+                  transform: [{ translateX: position.x }],
+                  opacity: fadeAnim,
+                },
+              ]}
+              {...panResponderRef.panHandlers}
+            >
+              <View style={styles.wordContainer}>
+                <ThemedText
+                  style={[styles.sentence, { color: colors.authorText, opacity: 0.5 }]}
+                  skipDefaultColor
+                >
+                  {parts[0]}
+                  <ThemedText
+                    style={[styles.highlightedWord, { color: colors.white }]}
+                    skipDefaultColor
+                  >
+                    {wordForm}
+                  </ThemedText>
+                  {parts[1]}
                 </ThemedText>
-              </Animated.View>
-            </Pressable>
-          </Animated.View>
 
-          <Pressable onPress={handleInfoPress} style={styles.infoButton}>
-            <Ionicons name="information-circle-outline" size={24} color={colors.tabIconDefault} />
+                <Animated.View
+                  style={[
+                    styles.answerContainer,
+                    {
+                      opacity: answerOpacity,
+                      transform: [{ translateY }],
+                    },
+                  ]}
+                >
+                  {isAnswerRevealed && (
+                    <>
+                      <ThemedText style={styles.answerLabel}>Meaning</ThemedText>
+                      <ThemedText style={styles.answerText}>
+                        {currentWord?.sentence_word?.english || 'Translation not available'}
+                      </ThemedText>
+                      <View style={styles.swipeInstructionContainer}>
+                        <View style={styles.swipeInstructionItem}>
+                          <MaterialCommunityIcons
+                            name="gesture-swipe-left"
+                            size={20}
+                            color={colors.warning}
+                          />
+                          <ThemedText
+                            style={[styles.swipeInstructionText, { color: colors.warning }]}
+                            skipDefaultColor
+                          >
+                            Didn't know
+                          </ThemedText>
+                        </View>
+                        <View style={styles.swipeInstructionItem}>
+                          <ThemedText
+                            style={[styles.swipeInstructionText, { color: colors.success }]}
+                            skipDefaultColor
+                          >
+                            Knew it
+                          </ThemedText>
+                          <MaterialCommunityIcons
+                            name="gesture-swipe-right"
+                            size={20}
+                            color={colors.success}
+                          />
+                        </View>
+                      </View>
+                    </>
+                  )}
+                  {!isAnswerRevealed && (
+                    <Animated.View
+                      style={{
+                        opacity: pulseAnim,
+                        transform: [{ scale: pulseAnim }],
+                      }}
+                    >
+                      <ThemedText
+                        style={[styles.tapToRevealText, { backgroundColor: `${colors.tint}15` }]}
+                      >
+                        Tap to reveal
+                      </ThemedText>
+                    </Animated.View>
+                  )}
+                </Animated.View>
+              </View>
+            </Animated.View>
           </Pressable>
+
+          <View style={styles.buttonContainer}>
+            <Pressable
+              onPress={handleClose}
+              style={({ pressed }) => [
+                styles.actionButton,
+                {
+                  backgroundColor: colors.elevation1,
+                  opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
+                },
+              ]}
+              hitSlop={8}
+            >
+              <Ionicons
+                name="close-outline"
+                size={26}
+                color={colors.tabIconDefault}
+                style={{ marginTop: 1 }}
+              />
+            </Pressable>
+            <Pressable
+              onPress={handleInfoPress}
+              style={({ pressed }) => [
+                styles.actionButton,
+                {
+                  backgroundColor: colors.elevation1,
+                  opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
+                },
+              ]}
+              hitSlop={8}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={26}
+                color={colors.tabIconDefault}
+                style={{ marginTop: 1 }}
+              />
+            </Pressable>
+          </View>
 
           {/* Instructions Modal */}
           <Modal
@@ -630,37 +742,45 @@ export default function ReviewScreen() {
                 <ThemedText style={styles.modalTitle}>How to Review</ThemedText>
 
                 <View style={styles.instructionRow}>
-                  <Ionicons name="hand-left-outline" size={24} color={colors.text} />
-                  <ThemedText style={styles.modalText}>
-                    Tap the word to reveal its meaning
-                  </ThemedText>
+                  <View style={[styles.iconContainer, { backgroundColor: colors.cardBackground }]}>
+                    <Ionicons name="hand-left-outline" size={24} color={colors.text} />
+                  </View>
+                  <ThemedText style={styles.modalText}>Tap to reveal meaning</ThemedText>
                 </View>
 
                 <View style={styles.instructionRow}>
-                  <MaterialCommunityIcons
-                    name="gesture-swipe-right"
-                    size={24}
-                    color={colors.success}
-                  />
-                  <ThemedText style={styles.modalText}>Swipe right if you knew the word</ThemedText>
+                  <View style={[styles.iconContainer, { backgroundColor: `${colors.success}20` }]}>
+                    <MaterialCommunityIcons
+                      name="gesture-swipe-right"
+                      size={24}
+                      color={colors.success}
+                    />
+                  </View>
+                  <ThemedText style={styles.modalText}>Swipe right if you knew it</ThemedText>
                 </View>
 
                 <View style={styles.instructionRow}>
-                  <MaterialCommunityIcons
-                    name="gesture-swipe-left"
-                    size={24}
-                    color={colors.warning}
-                  />
-                  <ThemedText style={styles.modalText}>
-                    Swipe left if you didn't know the word
-                  </ThemedText>
+                  <View style={[styles.iconContainer, { backgroundColor: `${colors.warning}20` }]}>
+                    <MaterialCommunityIcons
+                      name="gesture-swipe-left"
+                      size={24}
+                      color={colors.warning}
+                    />
+                  </View>
+                  <ThemedText style={styles.modalText}>Swipe left if you didn't know</ThemedText>
                 </View>
 
                 <Pressable
-                  style={[styles.closeModalButton, { backgroundColor: colors.cardBackground }]}
+                  style={({ pressed }) => [
+                    styles.closeModalButton,
+                    {
+                      backgroundColor: colors.cardBackground,
+                      opacity: pressed ? 0.8 : 1,
+                    },
+                  ]}
                   onPress={handleCloseInstructions}
                 >
-                  <ThemedText>Got it</ThemedText>
+                  <ThemedText style={styles.closeButtonText}>Got it</ThemedText>
                 </Pressable>
               </View>
             </Pressable>
@@ -680,96 +800,143 @@ export default function ReviewScreen() {
               style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
             />
           </View>
-          <Pressable onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={colors.tabIconDefault} />
-          </Pressable>
         </View>
 
-        {/* Swipe direction feedback overlay */}
+        {/* Swipe direction feedback overlay - make more subtle */}
         {swipeDirection.dx !== 0 && (
           <View style={[styles.swipeFeedback, getSwipeColors(swipeDirection.dx, colors)]} />
         )}
 
-        <Animated.View
-          style={[
-            styles.contentContainer,
-            {
-              transform: [{ translateX: position.x }],
-              opacity: fadeAnim,
-            },
-          ]}
-          {...panResponderRef.panHandlers}
+        {/* Make the entire screen tappable instead of just the word container */}
+        <Pressable
+          onPress={handleRevealAnswer}
+          style={styles.fullScreenTapArea}
+          disabled={isInteractionDisabled()}
         >
-          <Pressable onPress={handleRevealAnswer} style={styles.wordContainer}>
-            <ThemedText
-              style={[styles.sentence, { color: colors.authorText, opacity: 0.5 }]}
-              skipDefaultColor
-            >
-              {parts[0]}
-              <ThemedText
-                style={[styles.highlightedWord, { color: colors.white }]}
-                skipDefaultColor
-              >
-                {wordForm}
+          <Animated.View
+            style={[
+              styles.contentContainer,
+              {
+                transform: [{ translateX: position.x }],
+                opacity: fadeAnim,
+              },
+            ]}
+            {...panResponderRef.panHandlers}
+          >
+            <View style={styles.wordContainer}>
+              <ThemedText style={[styles.sentence, { color: colors.authorText }]} skipDefaultColor>
+                {parts[0]}
+                <ThemedText
+                  style={[styles.highlightedWord, { color: colors.white }]}
+                  skipDefaultColor
+                >
+                  {wordForm}
+                </ThemedText>
+                {parts[1]}
               </ThemedText>
-              {parts[1]}
-            </ThemedText>
 
-            <Animated.View
-              style={[
-                styles.answerContainer,
-                {
-                  opacity: answerOpacity,
-                  transform: [{ translateY }],
-                },
-              ]}
-            >
-              {isAnswerRevealed && (
-                <>
-                  <ThemedText style={styles.answerLabel}>Meaning:</ThemedText>
-                  <ThemedText style={styles.answerText}>
-                    {currentWord?.sentence_word?.english || 'Translation not available'}
-                  </ThemedText>
-                  <View style={styles.swipeInstructionContainer}>
-                    <View style={styles.swipeInstructionItem}>
-                      <MaterialCommunityIcons
-                        name="gesture-swipe-left"
-                        size={20}
-                        color={colors.warning}
-                      />
-                      <ThemedText
-                        style={[styles.swipeInstructionText, { color: colors.warning }]}
-                        skipDefaultColor
-                      >
-                        Didn't know
-                      </ThemedText>
+              <Animated.View
+                style={[
+                  styles.answerContainer,
+                  {
+                    opacity: answerOpacity,
+                    transform: [{ translateY }],
+                  },
+                ]}
+              >
+                {isAnswerRevealed && (
+                  <>
+                    <ThemedText style={styles.answerLabel}>Meaning</ThemedText>
+                    <ThemedText style={styles.answerText}>
+                      {currentWord?.sentence_word?.english || 'Translation not available'}
+                    </ThemedText>
+                    <View style={styles.swipeInstructionContainer}>
+                      <View style={styles.swipeInstructionItem}>
+                        <MaterialCommunityIcons
+                          name="gesture-swipe-left"
+                          size={20}
+                          color={colors.warning}
+                        />
+                        <ThemedText
+                          style={[styles.swipeInstructionText, { color: colors.warning }]}
+                          skipDefaultColor
+                        >
+                          Didn't know
+                        </ThemedText>
+                      </View>
+                      <View style={styles.swipeInstructionItem}>
+                        <ThemedText
+                          style={[styles.swipeInstructionText, { color: colors.success }]}
+                          skipDefaultColor
+                        >
+                          Knew it
+                        </ThemedText>
+                        <MaterialCommunityIcons
+                          name="gesture-swipe-right"
+                          size={20}
+                          color={colors.success}
+                        />
+                      </View>
                     </View>
-                    <View style={styles.swipeInstructionItem}>
-                      <ThemedText
-                        style={[styles.swipeInstructionText, { color: colors.success }]}
-                        skipDefaultColor
-                      >
-                        Knew it
-                      </ThemedText>
-                      <MaterialCommunityIcons
-                        name="gesture-swipe-right"
-                        size={20}
-                        color={colors.success}
-                      />
-                    </View>
-                  </View>
-                </>
-              )}
-              {!isAnswerRevealed && (
-                <ThemedText style={styles.tapToRevealText}>Tap to reveal meaning</ThemedText>
-              )}
-            </Animated.View>
-          </Pressable>
-        </Animated.View>
-
-        <Pressable onPress={handleInfoPress} style={styles.infoButton}>
-          <Ionicons name="information-circle-outline" size={24} color={colors.tabIconDefault} />
+                  </>
+                )}
+                {!isAnswerRevealed && (
+                  <Animated.View
+                    style={{
+                      opacity: pulseAnim,
+                      transform: [{ scale: pulseAnim }],
+                    }}
+                  >
+                    <ThemedText
+                      style={[styles.tapToRevealText, { backgroundColor: `${colors.tint}15` }]}
+                    >
+                      Tap to reveal
+                    </ThemedText>
+                  </Animated.View>
+                )}
+              </Animated.View>
+            </View>
+          </Animated.View>
         </Pressable>
+
+        <View style={styles.buttonContainer}>
+          <Pressable
+            onPress={handleClose}
+            style={({ pressed }) => [
+              styles.actionButton,
+              {
+                backgroundColor: colors.elevation1,
+                opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
+              },
+            ]}
+            hitSlop={8}
+          >
+            <Ionicons
+              name="close-outline"
+              size={26}
+              color={colors.tabIconDefault}
+              style={{ marginTop: 1 }}
+            />
+          </Pressable>
+          <Pressable
+            onPress={handleInfoPress}
+            style={({ pressed }) => [
+              styles.actionButton,
+              {
+                backgroundColor: colors.elevation1,
+                opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
+              },
+            ]}
+            hitSlop={8}
+          >
+            <Ionicons
+              name="information-circle-outline"
+              size={26}
+              color={colors.tabIconDefault}
+              style={{ marginTop: 1 }}
+            />
+          </Pressable>
+        </View>
 
         {/* Instructions Modal */}
         <Modal
@@ -783,35 +950,45 @@ export default function ReviewScreen() {
               <ThemedText style={styles.modalTitle}>How to Review</ThemedText>
 
               <View style={styles.instructionRow}>
-                <Ionicons name="hand-left-outline" size={24} color={colors.text} />
-                <ThemedText style={styles.modalText}>Tap the word to reveal its meaning</ThemedText>
+                <View style={[styles.iconContainer, { backgroundColor: colors.cardBackground }]}>
+                  <Ionicons name="hand-left-outline" size={24} color={colors.text} />
+                </View>
+                <ThemedText style={styles.modalText}>Tap to reveal meaning</ThemedText>
               </View>
 
               <View style={styles.instructionRow}>
-                <MaterialCommunityIcons
-                  name="gesture-swipe-right"
-                  size={24}
-                  color={colors.success}
-                />
-                <ThemedText style={styles.modalText}>Swipe right if you knew the word</ThemedText>
+                <View style={[styles.iconContainer, { backgroundColor: `${colors.success}20` }]}>
+                  <MaterialCommunityIcons
+                    name="gesture-swipe-right"
+                    size={24}
+                    color={colors.success}
+                  />
+                </View>
+                <ThemedText style={styles.modalText}>Swipe right if you knew it</ThemedText>
               </View>
 
               <View style={styles.instructionRow}>
-                <MaterialCommunityIcons
-                  name="gesture-swipe-left"
-                  size={24}
-                  color={colors.warning}
-                />
-                <ThemedText style={styles.modalText}>
-                  Swipe left if you didn't know the word
-                </ThemedText>
+                <View style={[styles.iconContainer, { backgroundColor: `${colors.warning}20` }]}>
+                  <MaterialCommunityIcons
+                    name="gesture-swipe-left"
+                    size={24}
+                    color={colors.warning}
+                  />
+                </View>
+                <ThemedText style={styles.modalText}>Swipe left if you didn't know</ThemedText>
               </View>
 
               <Pressable
-                style={[styles.closeModalButton, { backgroundColor: colors.cardBackground }]}
+                style={({ pressed }) => [
+                  styles.closeModalButton,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    opacity: pressed ? 0.8 : 1,
+                  },
+                ]}
                 onPress={handleCloseInstructions}
               >
-                <ThemedText>Got it</ThemedText>
+                <ThemedText style={styles.closeButtonText}>Got it</ThemedText>
               </Pressable>
             </View>
           </Pressable>
@@ -880,11 +1057,19 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER.WIDTH.THIN * 4,
     width: '0%',
   },
-  infoButton: {
+  buttonContainer: {
     position: 'absolute',
     bottom: 48,
     alignSelf: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  actionButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
     opacity: LAYOUT.OPACITY.DIMMED,
   },
   modalOverlay: {
@@ -894,31 +1079,42 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '80%',
+    width: '85%',
     padding: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
+    fontWeight: '700',
     marginBottom: LAYOUT.SPACING.LARGE,
+    textAlign: 'center',
   },
   instructionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.MEDIUM,
     width: '100%',
+    paddingVertical: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.MEDIUM,
   },
   modalText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    flex: 1,
   },
   closeModalButton: {
     marginTop: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 120,
   },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
@@ -944,11 +1140,13 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     width: '100%',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   answerLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     marginBottom: LAYOUT.SPACING.SMALL,
+    opacity: 0.8,
   },
   answerText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -960,6 +1158,11 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: LAYOUT.OPACITY.DIMMED,
     fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   swipeInstructionContainer: {
     flexDirection: 'row',
@@ -975,5 +1178,22 @@ const styles = StyleSheet.create({
   swipeInstructionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
+  },
+  fullScreenTapArea: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  closeButtonText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '700',
   },
 });
