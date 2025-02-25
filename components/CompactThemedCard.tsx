@@ -16,7 +16,10 @@ export function CompactThemedCard({ children, onPress }: CompactThemedCardProps)
       onPress={onPress}
       style={({ pressed }) => [
         styles.container,
-        { shadowColor: colors.shadow },
+        {
+          shadowColor: colors.cardShadow,
+          borderColor: colors.cardBorder,
+        },
         pressed && styles.pressed,
       ]}
     >
@@ -29,8 +32,10 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
-    elevation: LAYOUT.Z_INDEX.CARD,
+    elevation: 3,
     ...LAYOUT.SHADOW.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
@@ -38,5 +43,6 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: LAYOUT.OPACITY.PRESSED,
+    transform: [{ scale: 0.98 }],
   },
 });

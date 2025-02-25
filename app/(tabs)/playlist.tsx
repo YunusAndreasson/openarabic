@@ -24,6 +24,15 @@ const styles = StyleSheet.create({
   message: {
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.DIMMED,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  submessage: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    textAlign: 'center',
+    marginTop: LAYOUT.SPACING.TINY,
+    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   controls: {
     flexDirection: 'row',
@@ -34,9 +43,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    bottom: 0,
+    paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   button: {
     flex: 1,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
   waveContainer: {
     flexDirection: 'row',
@@ -49,6 +63,11 @@ const styles = StyleSheet.create({
     width: 2,
     height: 16,
     borderRadius: 1,
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
@@ -131,17 +150,7 @@ export default function PlaylistScreen() {
   const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
   const colors = useColors();
 
-  const controlsStyle = useMemo(
-    () => [
-      styles.controls,
-      {
-        bottom: 0,
-        paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
-        zIndex: LAYOUT.Z_INDEX.HEADER,
-      },
-    ],
-    []
-  );
+  const controlsStyle = useMemo(() => [styles.controls], []);
 
   const { data: readingList, isLoading } = useQuery({
     queryKey: ['readingList', user?.id],
@@ -250,14 +259,14 @@ export default function PlaylistScreen() {
   if (!user) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <ThemedText
+        <View
           style={[
-            styles.message,
+            styles.messageContainer,
             { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
           ]}
         >
-          Please sign in to view your playlist
-        </ThemedText>
+          <ThemedText style={styles.message}>Please sign in to view your playlist</ThemedText>
+        </View>
       </ThemedView>
     );
   }
@@ -265,14 +274,14 @@ export default function PlaylistScreen() {
   if (isLoading) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <ThemedText
+        <View
           style={[
-            styles.message,
+            styles.messageContainer,
             { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
           ]}
         >
-          Loading...
-        </ThemedText>
+          <ThemedText style={styles.message}>Loading...</ThemedText>
+        </View>
       </ThemedView>
     );
   }
@@ -280,14 +289,16 @@ export default function PlaylistScreen() {
   if (!readingList?.length) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <ThemedText
+        <View
           style={[
-            styles.message,
+            styles.messageContainer,
             { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
           ]}
         >
-          Your playlist is empty. Add articles to get started!
-        </ThemedText>
+          <ThemedText style={styles.message}>
+            Your playlist is empty. Add articles to get started!
+          </ThemedText>
+        </View>
       </ThemedView>
     );
   }
