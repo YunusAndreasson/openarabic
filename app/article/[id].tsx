@@ -9,7 +9,6 @@ import { useAppSelector } from '@/store/hooks';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
 import { AudioPlayButton } from '@/components/AudioPlayButton';
 import { ReadingListButton } from '@/components/ReadingListButton';
-import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 import { ArabicWord } from '@/components/ArabicWord';
 import type { Tables } from '@/types/database.types';
@@ -19,6 +18,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
 import { LAYOUT } from '@/constants/layout';
+import { CategoryPill } from '@/components/CategoryPill';
 
 const styles = StyleSheet.create({
   container: {
@@ -31,20 +31,7 @@ const styles = StyleSheet.create({
   },
   categoryContainer: {
     alignSelf: 'flex-start',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-    overflow: 'hidden',
-  },
-  categoryPill: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-  },
-  categoryBackground: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  category: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    letterSpacing: 0.5,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   title: {
     textAlign: 'left',
@@ -197,28 +184,7 @@ export default function ArticleScreen() {
       <>
         {article?.category && (
           <View style={styles.categoryContainer}>
-            <BlurView
-              intensity={10}
-              tint={colors.background === Colors.dark.background ? 'dark' : 'light'}
-              style={styles.categoryPill}
-            >
-              <View style={[styles.categoryBackground]}>
-                <View
-                  style={{
-                    ...StyleSheet.absoluteFillObject,
-                    backgroundColor: colors.background,
-                    opacity: 0.3,
-                  }}
-                />
-                <ThemedText
-                  style={[styles.category, { color: colors.categoryText }]}
-                  type="defaultSemiBold"
-                  skipDefaultColor
-                >
-                  {article.category.name.toUpperCase()}
-                </ThemedText>
-              </View>
-            </BlurView>
+            <CategoryPill category={article.category.name} absolute={false} />
           </View>
         )}
         <ThemedText
