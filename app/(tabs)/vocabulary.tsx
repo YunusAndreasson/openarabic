@@ -29,6 +29,7 @@ interface StudyWord {
   } | null;
   next_review_at: string;
   interval_days: number;
+  review_count: number;
 }
 
 // Helper function to get a motivational message based on stats
@@ -162,26 +163,53 @@ export default function VocabularyScreen() {
     };
   }, [validStudyWords]);
 
-  // Sample data for the graph - in a real app, this would come from the API
+  // Generate weekly progress data based on actual review history
   const weeklyProgressData = useMemo(() => {
-    // Generate sample data for the last 7 days
+    // Get the days of the week
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-    // Create a more realistic pattern that shows a learning trend
-    const pattern = [3, 0, 5, 2, 4, 1, 7]; // More words on weekends, fewer on weekdays
-
-    return Array(7)
+    // Create an array to hold the last 7 days
+    const last7Days = Array(7)
       .fill(0)
       .map((_, index) => {
-        const dayIndex = (today - 6 + index + 7) % 7; // Calculate the day of week for each of the last 7 days
+        const date = new Date(today);
+        date.setDate(today.getDate() - (6 - index));
         return {
-          date: days[dayIndex],
-          // Use the pattern for more realistic data
-          wordsLearned: pattern[index],
+          date: days[date.getDay()],
+          fullDate: date,
+          wordsLearned: 0,
         };
       });
-  }, []);
+
+    // Count words learned per day based on review_count changes
+    validStudyWords.forEach(word => {
+      // This is an approximation since we don't have the exact review history
+      // In a real app, you would have a reviews table with timestamps
+      if (word.review_count > 0) {
+        const reviewDate = new Date(word.next_review_at);
+        // Adjust date back by interval days to estimate when the last review happened
+        reviewDate.setDate(reviewDate.getDate() - word.interval_days);
+
+        // Check if the review date falls within our 7-day window
+        for (let i = 0; i < 7; i++) {
+          const dayData = last7Days[i];
+          if (
+            reviewDate.getDate() === dayData.fullDate.getDate() &&
+            reviewDate.getMonth() === dayData.fullDate.getMonth() &&
+            reviewDate.getFullYear() === dayData.fullDate.getFullYear()
+          ) {
+            dayData.wordsLearned += 1;
+            break;
+          }
+        }
+      }
+    });
+
+    // Return the data without the fullDate property
+    return last7Days.map(({ date, wordsLearned }) => ({ date, wordsLearned }));
+  }, [validStudyWords]);
 
   const motivationalMessage = useMemo(() => getMotivationalMessage(stats), [stats]);
 

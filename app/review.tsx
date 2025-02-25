@@ -4,7 +4,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +50,7 @@ export default function ReviewScreen() {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -285,6 +286,16 @@ export default function ReviewScreen() {
     [swipeDirection.dx, colors]
   );
 
+  // Check if review is completed and invalidate relevant queries
+  useEffect(() => {
+    if (currentIndex >= dueWords.length && dueWords.length > 0) {
+      // Invalidate any queries that depend on vocabulary data
+      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+      queryClient.invalidateQueries({ queryKey: ['studyWords'] });
+      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+    }
+  }, [currentIndex, dueWords.length, queryClient]);
+
   if (isLoading || !user) {
     return (
       <ThemedView style={styles.container}>
@@ -306,7 +317,17 @@ export default function ReviewScreen() {
         </View>
         <View style={styles.completedContainer}>
           <ThemedText style={styles.completedText}>Review complete!</ThemedText>
-          <ThemedButton title="Done" onPress={handleClose} variant="filled" />
+          <ThemedButton
+            title="Done"
+            onPress={() => {
+              // Ensure data is refreshed before navigating back
+              queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+              queryClient.invalidateQueries({ queryKey: ['studyWords'] });
+              queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+              handleClose();
+            }}
+            variant="filled"
+          />
         </View>
       </ThemedView>
     );
