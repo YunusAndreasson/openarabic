@@ -1,14 +1,11 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '@/constants/layout';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
+import { LAYOUT } from '@/constants/layout';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_MARGIN = LAYOUT.SPACING.SMALL;
-const CARD_WIDTH = (SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - CARD_MARGIN) / 2;
 
 interface VocabularyStatsProps {
   totalWords: number;
@@ -33,57 +30,11 @@ const createArcPath = (progress: number, radius: number): string => {
   return `M ${center} ${center - radius} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
 };
 
-// Create a memoized stat card component
-const StatCard = React.memo(
-  ({ label, value, icon, colors }: { label: string; value: number; icon: string; colors: any }) => {
-    const cardStyle = useMemo(
-      () => [
-        styles.statCard,
-        {
-          backgroundColor: colors.cardBackground,
-          shadowColor: colors.shadow,
-          borderColor: colors.cardBorder,
-        },
-      ],
-      [colors.cardBackground, colors.shadow, colors.cardBorder]
-    );
-
-    const iconContainerStyle = useMemo(
-      () => [
-        styles.iconContainer,
-        {
-          backgroundColor: `${colors.text}10`,
-          borderColor: colors.cardBorder + '40',
-        },
-      ],
-      [colors.text, colors.cardBorder]
-    );
-
-    const iconStyle = useMemo(() => ({ color: colors.icon }), [colors.icon]);
-
-    return (
-      <View style={cardStyle}>
-        <View style={styles.statContent}>
-          <View style={styles.statTextContainer}>
-            <ThemedText style={styles.statValue}>{value}</ThemedText>
-            <ThemedText style={styles.statLabel}>{label}</ThemedText>
-          </View>
-          <View style={iconContainerStyle}>
-            <Ionicons name={icon as any} size={24} color={iconStyle.color} />
-          </View>
-        </View>
-      </View>
-    );
-  }
-);
-
-function VocabularyStatsComponent({
-  totalWords,
-  dueWords,
-  masteredWords,
-  learningWords,
-}: VocabularyStatsProps) {
+function VocabularyStatsComponent({ totalWords, masteredWords }: VocabularyStatsProps) {
   const colors = useColors();
+
+  // Use state for animated progress
+  const [animatedProgress, setAnimatedProgress] = useState(0);
 
   // Memoize the progress calculation
   const progress = useMemo(
@@ -91,30 +42,47 @@ function VocabularyStatsComponent({
     [totalWords, masteredWords]
   );
 
-  // Memoize the stats array
-  const stats = useMemo(
-    () => [
-      {
-        label: 'Due Today',
-        value: dueWords,
-        icon: 'time-outline',
-      },
-      {
-        label: 'Mastered',
-        value: masteredWords,
-        icon: 'checkmark-circle-outline',
-      },
-      {
-        label: 'Learning',
-        value: learningWords,
-        icon: 'school-outline',
-      },
-    ],
-    [dueWords, masteredWords, learningWords]
-  );
+  // Run animation when progress changes
+  useEffect(() => {
+    let startTimestamp: number | null = null;
+    let animationFrameId: number;
+    const duration = 1000; // Animation duration in ms
+    const startValue = animatedProgress;
+    const endValue = progress;
 
-  // Memoize the arc path
-  const arcPath = useMemo(() => createArcPath(progress, 32), [progress]);
+    // Animation function using requestAnimationFrame
+    const animate = (timestamp: number) => {
+      if (!startTimestamp) startTimestamp = timestamp;
+      const elapsed = timestamp - startTimestamp;
+
+      // Calculate progress (0 to 1)
+      const animationProgress = Math.min(elapsed / duration, 1);
+
+      // Apply easing function (cubic out)
+      const easedProgress = 1 - Math.pow(1 - animationProgress, 3);
+
+      // Calculate current value
+      const currentValue = startValue + (endValue - startValue) * easedProgress;
+
+      // Update state
+      setAnimatedProgress(currentValue);
+
+      // Continue animation if not finished
+      if (animationProgress < 1) {
+        animationFrameId = requestAnimationFrame(animate);
+      }
+    };
+
+    // Start animation
+    animationFrameId = requestAnimationFrame(animate);
+
+    // Cleanup
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [progress]);
 
   // Memoize styles
   const progressCardStyle = useMemo(
@@ -132,54 +100,44 @@ function VocabularyStatsComponent({
   const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
 
   return (
-    <View style={styles.container}>
-      {/* Progress Overview */}
-      <View style={progressCardStyle}>
-        <View style={styles.progressContent}>
-          <View style={styles.progressRow}>
-            <View style={styles.progressTextContainer}>
-              <ThemedText style={styles.progressLabel}>Progress</ThemedText>
-              <ThemedText style={styles.progressValue}>{progress.toFixed(0)}%</ThemedText>
-              <ThemedText style={styles.progressSubtext}>
-                {masteredWords} of {totalWords} words mastered
-              </ThemedText>
-            </View>
+    <View style={progressCardStyle}>
+      <View style={styles.progressContent}>
+        <View style={styles.progressRow}>
+          <View style={styles.progressTextContainer}>
+            <ThemedText style={styles.progressLabel}>Progress</ThemedText>
+            <ThemedText style={styles.progressValue}>{Math.round(progress)}%</ThemedText>
+            <ThemedText style={styles.progressSubtext}>
+              {masteredWords} of {totalWords} words mastered
+            </ThemedText>
+          </View>
 
-            {/* Circular Progress */}
-            <View style={styles.circleContainer}>
-              <Canvas style={styles.circleCanvas}>
-                <Circle
-                  cx={40}
-                  cy={40}
-                  r={32}
-                  color={circleBackgroundColor}
-                  style="stroke"
-                  strokeWidth={6}
-                />
-                <Path
-                  path={arcPath}
-                  color={colors.text}
-                  style="stroke"
-                  strokeWidth={6}
-                  transform={[{ translateX: 8 }, { translateY: 8 }]}
-                />
-              </Canvas>
-            </View>
+          {/* Circular Progress */}
+          <View style={styles.circleContainer}>
+            <Canvas style={styles.circleCanvas}>
+              {/* Background circle */}
+              <Circle
+                cx={40}
+                cy={40}
+                r={32}
+                color={circleBackgroundColor}
+                style="stroke"
+                strokeWidth={6}
+              />
+
+              {/* Progress arc - using animated progress */}
+              <Path
+                path={createArcPath(animatedProgress, 32)}
+                color={colors.text}
+                style="stroke"
+                strokeWidth={6}
+                transform={[{ translateX: 8 }, { translateY: 8 }]}
+              />
+
+              {/* Center dot */}
+              <Circle cx={40} cy={40} r={3} color={colors.text} />
+            </Canvas>
           </View>
         </View>
-      </View>
-
-      {/* Stats Cards */}
-      <View style={styles.statsRow}>
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
-            colors={colors}
-          />
-        ))}
       </View>
     </View>
   );
@@ -189,14 +147,9 @@ function VocabularyStatsComponent({
 export const VocabularyStats = React.memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
   progressCard: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     height: 130,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
     overflow: 'hidden',
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     ...LAYOUT.SHADOW.MEDIUM,
@@ -241,50 +194,5 @@ const styles = StyleSheet.create({
   circleCanvas: {
     width: 80,
     height: 80,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: CARD_MARGIN,
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    width: CARD_WIDTH,
-    height: 90,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
-  },
-  statContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statTextContainer: {
-    flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
-  statValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    opacity: LAYOUT.OPACITY.DIMMED,
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  statLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DISABLED,
   },
 });
