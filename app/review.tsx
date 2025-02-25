@@ -1,27 +1,43 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, Animated, PanResponder, Pressable, Modal, Easing } from 'react-native';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { StyleSheet, View, Animated, PanResponder, Pressable, Modal } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
 import { router, Stack } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
-// Constants for animation and interaction
+// Types for study words
+interface StudyWord {
+  sentence_word_id: string;
+  sentence_word: {
+    word_form: string;
+    english: string;
+    sentence?: {
+      arabic: string;
+    };
+  };
+  interval_days: number;
+  ease_factor: number;
+  next_review_at: string;
+  review_count: number;
+  lapses: number;
+}
+
+// Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
 const SWIPE_OUT_DURATION = LAYOUT.ANIMATION.DURATION.FAST;
-const FADE_DURATION = LAYOUT.ANIMATION.DURATION.FAST * 0.75;
-const DEBOUNCE_DELAY = LAYOUT.ANIMATION.DURATION.NORMAL;
+const MEANING_DISPLAY_DURATION = 1600;
 
-// Add color feedback for swipe directions - make more subtle
-const getSwipeColors = (dx: number, colors: any) => {
+// Swipe feedback utility
+const getSwipeColors = (dx: number, colors: ReturnType<typeof useColors>) => {
   const swipeProgress = Math.abs(dx) / SWIPE_THRESHOLD;
-  const opacity = Math.min(swipeProgress * 0.2, 0.2); // Reduced opacity for more subtle feedback
-
+  const opacity = Math.min(swipeProgress * 0.3, 0.3);
   if (dx > 0) {
     return { backgroundColor: colors.success, opacity };
   } else if (dx < 0) {
@@ -30,763 +46,259 @@ const getSwipeColors = (dx: number, colors: any) => {
   return { backgroundColor: 'transparent', opacity: 0 };
 };
 
-// Add throttle utility with proper typing
-const throttle = <T extends (...args: any[]) => any>(func: T, limit: number): T => {
-  let inThrottle: boolean;
-  return ((...args: Parameters<T>): ReturnType<T> | void => {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      requestAnimationFrame(() => {
-        inThrottle = false;
-      });
-    }
-  }) as T;
-};
-
+// Main Component
 export default function ReviewScreen() {
   useEffect(() => {
     router.setParams({ hideHeader: 'true' });
   }, []);
 
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const position = useRef(new Animated.ValueXY()).current;
   const [isAnimating, setIsAnimating] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
-  const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
-  const revealAnim = useRef(new Animated.Value(0)).current;
+  const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState({ dx: 0, opacity: 0 });
+  const mountedRef = useRef(true);
+  const position = useRef(new Animated.ValueXY()).current;
+  const wordsRef = useRef<StudyWord[]>([]);
+  const meaningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Keep a stable reference to the current words
-  const wordsRef = useRef<any[]>([]);
-
-  // Enhanced animation state tracking
-  const animationState = useRef({
-    isAnimating: false,
-    isMutating: false,
-    lastSwipeTime: 0,
-    currentWord: null as any,
-    direction: null as 'left' | 'right' | null,
-    animationPromise: null as Promise<void> | null,
-  }).current;
-
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-
-  // Add a subtle pulse animation for the tap instruction
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!isAnswerRevealed) {
-      // Create a subtle pulsing effect for the tap instruction
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 0.8,
-            duration: 1500,
-            useNativeDriver: true,
-            easing: Easing.inOut(Easing.ease),
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-            easing: Easing.inOut(Easing.ease),
-          }),
-        ])
-      ).start();
-    } else {
-      // Stop the animation when answer is revealed
-      pulseAnim.stopAnimation();
-      pulseAnim.setValue(1);
-    }
-
-    return () => {
-      pulseAnim.stopAnimation();
-    };
-  }, [isAnswerRevealed, pulseAnim]);
-
-  // Add cleanup for animations when component unmounts
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Stop any ongoing animations on unmount
+      mountedRef.current = false;
       position.stopAnimation();
-      fadeAnim.stopAnimation();
-      revealAnim.stopAnimation();
-      // Clean up any pending state
-      animationState.isAnimating = false;
-      animationState.isMutating = false;
-      animationState.animationPromise = null;
+      if (meaningTimeoutRef.current) {
+        clearTimeout(meaningTimeoutRef.current);
+      }
     };
-  }, [position, fadeAnim, revealAnim, animationState]);
+  }, []);
 
-  // Optimize data fetching with increased stale time
-  const {
-    data: dueWords = [],
-    isLoading,
-    isFetching,
-    isError,
-    error,
-  } = useQuery({
+  // Fetch due words
+  const { data: dueWords = [], isLoading } = useQuery({
     queryKey: ['dueWords', user?.id],
     queryFn: async () => {
-      const words = await studyWordsService.getStudyWords(user!.id);
-
+      if (!user?.id) throw new Error('User ID is required');
+      const words = await studyWordsService.getStudyWords(user.id);
       const now = new Date();
-      const filtered = words
-        .filter(word => {
-          if (!word.sentence_word || !word.next_review_at) return false;
-          const reviewDate = new Date(word.next_review_at);
-          return reviewDate <= now && word.interval_days < 30;
-        })
-        .sort((a, b) => {
-          const dateA = new Date(a.next_review_at);
-          const dateB = new Date(b.next_review_at);
-          return dateA.getTime() - dateB.getTime();
-        });
 
-      return filtered;
+      // Directly convert dates to numbers for comparison
+      const filteredWords = words.filter(
+        word =>
+          word.sentence_word &&
+          word.next_review_at &&
+          new Date(word.next_review_at).getTime() <= now.getTime() &&
+          word.interval_days < 30
+      );
+
+      // Sort by next review date
+      return filteredWords.sort((a, b) => {
+        const dateA = new Date(a.next_review_at).getTime();
+        const dateB = new Date(b.next_review_at).getTime();
+        return dateA - dateB;
+      });
     },
-    enabled: !!user,
-    staleTime: 30000, // Increase stale time to 30 seconds
-    gcTime: 300000, // Increase cache time to 5 minutes
-    refetchOnWindowFocus: false,
+    enabled: !!user?.id,
   });
 
-  // Update wordsRef when dueWords changes
   useEffect(() => {
     if (dueWords && Array.isArray(dueWords)) {
-      // Make sure we have a fresh copy of the words
-      wordsRef.current = [...dueWords];
-      setCurrentIndex(0);
+      wordsRef.current = [...dueWords] as StudyWord[];
     }
   }, [dueWords]);
 
-  const isInteractionDisabled = () => {
-    const now = Date.now();
-    const isDebouncing = now - animationState.lastSwipeTime < DEBOUNCE_DELAY;
-    return (
-      isLoading ||
-      isFetching ||
-      isUpdating ||
-      animationState.isAnimating ||
-      animationState.isMutating ||
-      isDebouncing
-    );
-  };
+  const isInteractionDisabled = useCallback(
+    () => isLoading || isUpdating || isAnimating || showMeaningOverlay,
+    [isLoading, isUpdating, isAnimating, showMeaningOverlay]
+  );
 
-  // Update word review status
+  // Word update mutation
   const updateWordMutation = useMutation({
     mutationFn: async ({
       wordId,
       success,
       wordToUpdate,
     }: {
-      wordId: number;
+      wordId: string;
       success: boolean;
-      wordToUpdate: any;
+      wordToUpdate: StudyWord;
     }) => {
-      animationState.isMutating = true;
       setIsUpdating(true);
-
       const newInterval = success
         ? Math.max(1, Math.round(wordToUpdate.interval_days * wordToUpdate.ease_factor))
         : 1;
       const newEaseFactor = success
         ? Math.max(1.3, wordToUpdate.ease_factor + 0.1)
         : Math.max(1.3, wordToUpdate.ease_factor - 0.2);
-
       const nextReview = new Date();
       nextReview.setDate(nextReview.getDate() + newInterval);
 
-      const update = {
+      await studyWordsService.updateWordReview(wordId, {
         interval_days: newInterval,
         ease_factor: newEaseFactor,
         next_review_at: nextReview.toISOString(),
         review_count: wordToUpdate.review_count + 1,
         lapses: success ? wordToUpdate.lapses : wordToUpdate.lapses + 1,
-      };
-
-      try {
-        await studyWordsService.updateWordReview(wordId, update);
-        return { success: true };
-      } catch (error: any) {
-        throw error;
-      }
+      });
     },
     onSuccess: () => {
-      const nextIndex = currentIndex + 1;
-      setCurrentIndex(nextIndex);
+      if (mountedRef.current) {
+        setCurrentIndex(prev => prev + 1);
+        position.setValue({ x: 0, y: 0 });
+      }
     },
     onSettled: () => {
-      animationState.isMutating = false;
-      setIsUpdating(false);
-    },
-    onError: () => {
-      resetPosition();
+      if (mountedRef.current) setIsUpdating(false);
     },
   });
 
-  // Memoize animation sequence for better performance
-  const createAnimationSequence = useCallback(
-    (toValue: any, duration: number) => {
-      return Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: toValue.fade,
-          duration: FADE_DURATION,
-          useNativeDriver: true,
-        }),
-        Animated.spring(position, {
-          toValue: { x: toValue.x, y: 0 },
-          useNativeDriver: true,
-          tension: 40,
-          friction: 5,
-          velocity: toValue.velocity || 0,
-        }),
-      ]);
-    },
-    [fadeAnim, position]
-  );
+  // Handle swipe action
+  const handleSwipe = useCallback(
+    (direction: 'left' | 'right') => {
+      if (isInteractionDisabled()) return;
 
-  // Memoize reset position function
-  const resetPosition = useCallback(async () => {
-    position.stopAnimation();
-    fadeAnim.stopAnimation();
+      const wordToUpdate = wordsRef.current[currentIndex];
+      if (!wordToUpdate?.sentence_word_id) return;
 
-    if (animationState.animationPromise) {
-      return animationState.animationPromise;
-    }
+      setIsAnimating(true);
 
-    const resetPromise = new Promise<void>(resolve => {
-      createAnimationSequence({ fade: 1, x: 0 }, FADE_DURATION).start(() => {
-        animationState.isAnimating = false;
-        animationState.currentWord = null;
-        animationState.direction = null;
-        animationState.animationPromise = null;
-        setIsAnimating(false);
-        setSwipeDirection({ dx: 0, opacity: 0 });
-        resolve();
-      });
-    });
-
-    animationState.animationPromise = resetPromise;
-    return resetPromise;
-  }, [createAnimationSequence, position, fadeAnim]);
-
-  const forceSwipe = async (direction: 'left' | 'right') => {
-    const currentWords = wordsRef.current;
-
-    if (isInteractionDisabled()) {
-      await resetPosition();
-      return;
-    }
-
-    // Update last swipe time
-    animationState.lastSwipeTime = Date.now();
-
-    // Ensure we have valid data before proceeding
-    if (!currentWords?.length || currentIndex >= currentWords.length) {
-      await resetPosition();
-      return;
-    }
-
-    const wordToUpdate = currentWords[currentIndex];
-    if (!wordToUpdate?.sentence_word?.id) {
-      await resetPosition();
-      return;
-    }
-
-    const x = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH;
-
-    animationState.isAnimating = true;
-    animationState.currentWord = wordToUpdate;
-    animationState.direction = direction;
-    setIsAnimating(true);
-
-    const swipePromise = new Promise<void>(resolve => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: FADE_DURATION,
-          useNativeDriver: true,
-        }),
+      if (direction === 'right') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Animated.timing(position, {
-          toValue: { x, y: 0 },
+          toValue: { x: SCREEN_WIDTH, y: 0 },
           duration: SWIPE_OUT_DURATION,
           useNativeDriver: true,
-        }),
-      ]).start(async ({ finished }) => {
-        if (!finished) {
-          await resetPosition();
-          resolve();
-          return;
-        }
-
-        try {
-          await updateWordMutation.mutateAsync({
+        }).start(() => {
+          updateWordMutation.mutate({
             wordId: wordToUpdate.sentence_word_id,
-            success: direction === 'right',
-            wordToUpdate: wordToUpdate,
+            success: true,
+            wordToUpdate,
           });
-
-          position.setValue({ x: 0, y: 0 });
-
-          // Fade in the next card
-          await new Promise<void>(fadeResolve => {
-            Animated.timing(fadeAnim, {
-              toValue: 1,
-              duration: FADE_DURATION,
-              useNativeDriver: true,
-            }).start(() => {
-              animationState.isAnimating = false;
-              animationState.currentWord = null;
-              animationState.direction = null;
-              animationState.animationPromise = null;
-              setIsAnimating(false);
-              fadeResolve();
+          setIsAnimating(false);
+        });
+      } else if (direction === 'left') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Animated.timing(position, {
+          toValue: { x: -SCREEN_WIDTH, y: 0 },
+          duration: SWIPE_OUT_DURATION,
+          useNativeDriver: true,
+        }).start(() => {
+          setShowMeaningOverlay(true);
+          meaningTimeoutRef.current = setTimeout(() => {
+            setShowMeaningOverlay(false);
+            updateWordMutation.mutate({
+              wordId: wordToUpdate.sentence_word_id,
+              success: false,
+              wordToUpdate,
             });
-          });
+            setIsAnimating(false);
+          }, MEANING_DISPLAY_DURATION);
+        });
+      }
+    },
+    [position, currentIndex, isInteractionDisabled, updateWordMutation]
+  );
 
-          // Invalidate queries after everything is complete
-          await queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
-          await queryClient.invalidateQueries({ queryKey: ['dueWords', user?.id] });
-        } catch {
-          await resetPosition();
-        }
-        resolve();
-      });
-    });
-
-    animationState.animationPromise = swipePromise;
-    return swipePromise;
-  };
-
-  const [swipeDirection, setSwipeDirection] = useState<{ dx: number; opacity: number }>({
-    dx: 0,
-    opacity: 0,
-  });
-
-  const throttledMove = throttle((dx: number) => {
-    if (isInteractionDisabled()) return;
-
-    // Increase resistance for more subtle movement
-    const resistance = 0.65;
-    const adjustedDx = dx * resistance;
-    position.setValue({ x: adjustedDx, y: 0 });
-
-    setSwipeDirection({ dx: adjustedDx, opacity: Math.abs(adjustedDx) / SCREEN_WIDTH });
-
-    // Adjust fade values for a more subtle effect
-    const maxDragDistance = SCREEN_WIDTH * 0.4;
-    const fadeValue = Math.max(0.8, 1 - Math.abs(dx) / maxDragDistance);
-    fadeAnim.setValue(fadeValue);
-  }, 16);
-
-  const handlePanResponderMove = useCallback(throttledMove, [throttledMove]);
-
-  const handleRevealAnswer = () => {
-    if (isAnswerRevealed) return;
-
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setIsAnswerRevealed(true);
-
-    Animated.timing(revealAnim, {
-      toValue: 1,
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const resetRevealState = () => {
-    setIsAnswerRevealed(false);
-    revealAnim.setValue(0);
-  };
-
-  // Create a wrapper for forceSwipe that also resets the reveal state
-  const handleSwipe = async (direction: 'left' | 'right') => {
-    await forceSwipe(direction);
-    resetRevealState();
-  };
-
-  // Update the panResponder to remove the swipe-down gesture
-  const panResponderRef = useRef(
+  // Pan responder
+  const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !isInteractionDisabled(),
-      onMoveShouldSetPanResponder: (_, { dx, dy }) => {
-        // Increase threshold for initiating swipe to prevent accidental swipes
-        return !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10;
+      onMoveShouldSetPanResponder: (_, { dx, dy }) =>
+        !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10,
+      onPanResponderMove: (_, { dx }) => {
+        position.setValue({ x: dx, y: 0 });
+        setSwipeDirection({ dx, opacity: Math.abs(dx) / SCREEN_WIDTH });
       },
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        if (isInteractionDisabled()) return;
-        position.setValue({ x: 0, y: 0 });
+      onPanResponderRelease: (_, { dx }) => {
         setSwipeDirection({ dx: 0, opacity: 0 });
-      },
-      onPanResponderMove: (_, { dx }) => handlePanResponderMove(dx),
-      onPanResponderRelease: async (_, { dx, vx }) => {
-        if (isInteractionDisabled()) return;
-
-        position.flattenOffset();
-        setSwipeDirection({ dx: 0, opacity: 0 });
-
-        // Adjust swipe threshold for a more intentional swipe
-        const isRightSwipe = dx > SWIPE_THRESHOLD || (dx > 0 && vx > 0.4);
-        const isLeftSwipe = dx < -SWIPE_THRESHOLD || (dx < 0 && vx < -0.4);
-
-        if (isRightSwipe) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          await handleSwipe('right');
-        } else if (isLeftSwipe) {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          await handleSwipe('left');
+        if (dx > SWIPE_THRESHOLD) {
+          handleSwipe('right');
+        } else if (dx < -SWIPE_THRESHOLD) {
+          handleSwipe('left');
         } else {
-          await resetPosition();
+          Animated.spring(position, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: true,
+          }).start(() => setIsAnimating(false));
         }
       },
     })
   ).current;
 
-  const handleClose = () => {
-    router.back();
-  };
+  // UI handlers
+  const handleClose = () => router.back();
+  const [showInstructions, setShowInstructions] = useState(false);
 
-  const handleInfoPress = () => {
-    setShowInstructions(true);
-  };
-
-  const handleCloseInstructions = () => {
-    setShowInstructions(false);
-  };
-
-  // Get current word data
-  const currentWord = dueWords?.[currentIndex];
+  // Current word data
+  const currentWord = dueWords?.[currentIndex] as StudyWord | undefined;
   const word = currentWord?.sentence_word;
   const wordForm = word?.word_form;
   const sentence = word?.sentence?.arabic;
+  const parts = sentence && wordForm ? sentence.split(wordForm) : ['', ''];
+  const progress = dueWords.length > 0 ? (currentIndex / dueWords.length) * 100 : 0;
 
-  // Memoized computations
-  const parts = useMemo(() => {
-    if (!sentence || !wordForm) return ['', ''];
-    return sentence.split(wordForm);
-  }, [sentence, wordForm]);
+  // Get progress bar background color based on theme
+  const progressBarBg = isDarkMode ? colors.elevation1 : `${colors.text}15`;
 
-  const progress = useMemo(() => {
-    return (currentIndex / (dueWords?.length || 1)) * 100;
-  }, [currentIndex, dueWords?.length]);
-
-  // Calculate translation and opacity for the answer reveal animation
-  const translateY = revealAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [20, 0],
-  });
-
-  const answerOpacity = revealAnim;
-
-  // Show loading state during any data operations
-  if (!user || isLoading || isFetching) {
+  if (isLoading || !user) {
     return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <ThemedView style={styles.container}>
-          <View style={styles.header}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-          </View>
-          <View style={styles.completeContainer}>
-            <ThemedText style={styles.message}>Loading...</ThemedText>
-          </View>
-        </ThemedView>
-      </>
-    );
-  }
-
-  // Show error state
-  if (isError) {
-    return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <ThemedView style={styles.container}>
-          <View style={styles.header}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-          </View>
-          <View style={styles.completeContainer}>
-            <ThemedText style={styles.message}>Error loading words</ThemedText>
-            <ThemedText style={styles.submessage}>{error?.message}</ThemedText>
-          </View>
-        </ThemedView>
-      </>
-    );
-  }
-
-  // Ensure we have valid data
-  if (!dueWords || !Array.isArray(dueWords) || dueWords.length === 0) {
-    return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <ThemedView style={styles.container}>
-          <View style={styles.header}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-          </View>
-          <View style={styles.completeContainer}>
-            <ThemedText style={styles.message}>No words due for review</ThemedText>
-          </View>
-        </ThemedView>
-      </>
+      <ThemedView style={styles.container}>
+        <View style={[styles.progressBar, { backgroundColor: progressBarBg }]}>
+          <View style={[styles.progressFill, { width: '0%', backgroundColor: colors.tint }]} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ThemedText style={styles.loadingText}>Loading...</ThemedText>
+        </View>
+      </ThemedView>
     );
   }
 
   if (currentIndex >= dueWords.length) {
     return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <ThemedView style={styles.container}>
-          <View style={styles.header}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
-              <View
-                style={[styles.progressFill, { width: '100%', backgroundColor: colors.tint }]}
-              />
-            </View>
-          </View>
-
-          <View style={styles.completeContainer}>
-            <ThemedText style={styles.message}>Review complete!</ThemedText>
-            <ThemedText style={styles.submessage}>
-              You've reviewed all {dueWords.length} words.
-            </ThemedText>
-          </View>
-        </ThemedView>
-      </>
-    );
-  }
-
-  if (!currentWord?.sentence_word) {
-    return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <ThemedView style={styles.container}>
-          <View style={styles.header}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]} />
-          </View>
-          <View style={styles.completeContainer}>
-            <ThemedText style={styles.message}>Error loading word data</ThemedText>
-          </View>
-        </ThemedView>
-      </>
-    );
-  }
-
-  if (!sentence) {
-    return (
-      <>
-        <Stack.Screen options={{ headerShown: false }} />
-        <ThemedView style={styles.container}>
-          <View style={styles.header}>
-            <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${progress}%`, backgroundColor: colors.tint },
-                ]}
-              />
-            </View>
-          </View>
-
-          {/* Swipe direction feedback overlay */}
-          {swipeDirection.dx !== 0 && (
-            <View style={[styles.swipeFeedback, getSwipeColors(swipeDirection.dx, colors)]} />
-          )}
-
+      <ThemedView style={styles.container}>
+        <View style={[styles.progressBar, { backgroundColor: progressBarBg }]}>
+          <View style={[styles.progressFill, { width: '100%', backgroundColor: colors.success }]} />
+        </View>
+        <View style={styles.completedContainer}>
+          <ThemedText style={styles.completedText}>Review complete!</ThemedText>
           <Pressable
-            onPress={handleRevealAnswer}
-            style={styles.fullScreenTapArea}
-            disabled={isInteractionDisabled()}
+            onPress={handleClose}
+            style={({ pressed }) => [
+              styles.doneButton,
+              { backgroundColor: colors.tint, opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1 },
+            ]}
           >
-            <Animated.View
-              style={[
-                styles.contentContainer,
-                {
-                  transform: [{ translateX: position.x }],
-                  opacity: fadeAnim,
-                },
-              ]}
-              {...panResponderRef.panHandlers}
-            >
-              <View style={styles.wordContainer}>
-                <ThemedText
-                  style={[styles.sentence, { color: colors.authorText, opacity: 0.5 }]}
-                  skipDefaultColor
-                >
-                  {parts[0]}
-                  <ThemedText
-                    style={[styles.highlightedWord, { color: colors.white }]}
-                    skipDefaultColor
-                  >
-                    {wordForm}
-                  </ThemedText>
-                  {parts[1]}
-                </ThemedText>
-
-                <Animated.View
-                  style={[
-                    styles.answerContainer,
-                    {
-                      opacity: answerOpacity,
-                      transform: [{ translateY }],
-                    },
-                  ]}
-                >
-                  {isAnswerRevealed && (
-                    <>
-                      <ThemedText style={styles.answerLabel}>Meaning</ThemedText>
-                      <ThemedText style={styles.answerText}>
-                        {currentWord?.sentence_word?.english || 'Translation not available'}
-                      </ThemedText>
-                      <View style={styles.swipeInstructionContainer}>
-                        <View style={styles.swipeInstructionItem}>
-                          <MaterialCommunityIcons
-                            name="gesture-swipe-left"
-                            size={20}
-                            color={colors.warning}
-                          />
-                          <ThemedText
-                            style={[styles.swipeInstructionText, { color: colors.warning }]}
-                            skipDefaultColor
-                          >
-                            Didn't know
-                          </ThemedText>
-                        </View>
-                        <View style={styles.swipeInstructionItem}>
-                          <ThemedText
-                            style={[styles.swipeInstructionText, { color: colors.success }]}
-                            skipDefaultColor
-                          >
-                            Knew it
-                          </ThemedText>
-                          <MaterialCommunityIcons
-                            name="gesture-swipe-right"
-                            size={20}
-                            color={colors.success}
-                          />
-                        </View>
-                      </View>
-                    </>
-                  )}
-                  {!isAnswerRevealed && (
-                    <Animated.View
-                      style={{
-                        opacity: pulseAnim,
-                        transform: [{ scale: pulseAnim }],
-                      }}
-                    >
-                      <ThemedText
-                        style={[styles.tapToRevealText, { backgroundColor: `${colors.tint}15` }]}
-                      >
-                        Tap to reveal
-                      </ThemedText>
-                    </Animated.View>
-                  )}
-                </Animated.View>
-              </View>
-            </Animated.View>
+            <ThemedText style={[styles.doneButtonText, { color: colors.white }]} skipDefaultColor>
+              Done
+            </ThemedText>
           </Pressable>
+        </View>
+      </ThemedView>
+    );
+  }
 
-          <View style={styles.buttonContainer}>
-            <Pressable
-              onPress={handleClose}
-              style={({ pressed }) => [
-                styles.actionButton,
-                {
-                  backgroundColor: colors.elevation1,
-                  opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
-                },
-              ]}
-              hitSlop={8}
-            >
-              <Ionicons
-                name="close-outline"
-                size={26}
-                color={colors.tabIconDefault}
-                style={{ marginTop: 1 }}
-              />
-            </Pressable>
-            <Pressable
-              onPress={handleInfoPress}
-              style={({ pressed }) => [
-                styles.actionButton,
-                {
-                  backgroundColor: colors.elevation1,
-                  opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
-                },
-              ]}
-              hitSlop={8}
-            >
-              <Ionicons
-                name="information-circle-outline"
-                size={26}
-                color={colors.tabIconDefault}
-                style={{ marginTop: 1 }}
-              />
-            </Pressable>
-          </View>
-
-          {/* Instructions Modal */}
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={showInstructions}
-            onRequestClose={handleCloseInstructions}
+  if (!currentWord || !sentence) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={[styles.progressBar, { backgroundColor: progressBarBg }]}>
+          <View style={[styles.progressFill, { width: '0%', backgroundColor: colors.tint }]} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ThemedText style={styles.errorText}>Error loading word</ThemedText>
+          <Pressable
+            onPress={handleClose}
+            style={({ pressed }) => [
+              styles.doneButton,
+              { backgroundColor: colors.tint, opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1 },
+            ]}
           >
-            <Pressable style={styles.modalOverlay} onPress={handleCloseInstructions}>
-              <View style={[styles.modalContent, { backgroundColor: colors.elevation2 }]}>
-                <ThemedText style={styles.modalTitle}>How to Review</ThemedText>
-
-                <View style={styles.instructionRow}>
-                  <View style={[styles.iconContainer, { backgroundColor: colors.cardBackground }]}>
-                    <Ionicons name="hand-left-outline" size={24} color={colors.text} />
-                  </View>
-                  <ThemedText style={styles.modalText}>Tap to reveal meaning</ThemedText>
-                </View>
-
-                <View style={styles.instructionRow}>
-                  <View style={[styles.iconContainer, { backgroundColor: `${colors.success}20` }]}>
-                    <MaterialCommunityIcons
-                      name="gesture-swipe-right"
-                      size={24}
-                      color={colors.success}
-                    />
-                  </View>
-                  <ThemedText style={styles.modalText}>Swipe right if you knew it</ThemedText>
-                </View>
-
-                <View style={styles.instructionRow}>
-                  <View style={[styles.iconContainer, { backgroundColor: `${colors.warning}20` }]}>
-                    <MaterialCommunityIcons
-                      name="gesture-swipe-left"
-                      size={24}
-                      color={colors.warning}
-                    />
-                  </View>
-                  <ThemedText style={styles.modalText}>Swipe left if you didn't know</ThemedText>
-                </View>
-
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.closeModalButton,
-                    {
-                      backgroundColor: colors.cardBackground,
-                      opacity: pressed ? 0.8 : 1,
-                    },
-                  ]}
-                  onPress={handleCloseInstructions}
-                >
-                  <ThemedText style={styles.closeButtonText}>Got it</ThemedText>
-                </Pressable>
-              </View>
-            </Pressable>
-          </Modal>
-        </ThemedView>
-      </>
+            <ThemedText style={[styles.doneButtonText, { color: colors.white }]} skipDefaultColor>
+              Go Back
+            </ThemedText>
+          </Pressable>
+        </View>
+      </ThemedView>
     );
   }
 
@@ -794,406 +306,286 @@ export default function ReviewScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <View style={[styles.progressBar, { backgroundColor: colors.cardBackground }]}>
-            <View
-              style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
-            />
-          </View>
+        {/* Progress bar with increased top margin */}
+        <View
+          style={[
+            styles.progressBar,
+            { backgroundColor: progressBarBg, marginTop: LAYOUT.SPACING.XLARGE },
+          ]}
+        >
+          <View
+            style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
+          />
         </View>
 
-        {/* Swipe direction feedback overlay - make more subtle */}
         {swipeDirection.dx !== 0 && (
           <View style={[styles.swipeFeedback, getSwipeColors(swipeDirection.dx, colors)]} />
         )}
 
-        {/* Make the entire screen tappable instead of just the word container */}
-        <Pressable
-          onPress={handleRevealAnswer}
-          style={styles.fullScreenTapArea}
-          disabled={isInteractionDisabled()}
+        <Animated.View
+          style={[styles.card, { transform: [{ translateX: position.x }] }]}
+          {...panResponder.panHandlers}
         >
-          <Animated.View
-            style={[
-              styles.contentContainer,
-              {
-                transform: [{ translateX: position.x }],
-                opacity: fadeAnim,
-              },
-            ]}
-            {...panResponderRef.panHandlers}
-          >
-            <View style={styles.wordContainer}>
-              <ThemedText style={[styles.sentence, { color: colors.authorText }]} skipDefaultColor>
-                {parts[0]}
-                <ThemedText
-                  style={[styles.highlightedWord, { color: colors.white }]}
-                  skipDefaultColor
-                >
-                  {wordForm}
-                </ThemedText>
-                {parts[1]}
-              </ThemedText>
+          <ThemedText style={styles.sentence} skipDefaultColor>
+            <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
+              {parts[0]}
+            </ThemedText>
+            <ThemedText style={[styles.studyWord, { color: colors.tint }]} skipDefaultColor>
+              {wordForm}
+            </ThemedText>
+            <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
+              {parts[1]}
+            </ThemedText>
+          </ThemedText>
+        </Animated.View>
 
-              <Animated.View
-                style={[
-                  styles.answerContainer,
-                  {
-                    opacity: answerOpacity,
-                    transform: [{ translateY }],
-                  },
-                ]}
-              >
-                {isAnswerRevealed && (
-                  <>
-                    <ThemedText style={styles.answerLabel}>Meaning</ThemedText>
-                    <ThemedText style={styles.answerText}>
-                      {currentWord?.sentence_word?.english || 'Translation not available'}
-                    </ThemedText>
-                    <View style={styles.swipeInstructionContainer}>
-                      <View style={styles.swipeInstructionItem}>
-                        <MaterialCommunityIcons
-                          name="gesture-swipe-left"
-                          size={20}
-                          color={colors.warning}
-                        />
-                        <ThemedText
-                          style={[styles.swipeInstructionText, { color: colors.warning }]}
-                          skipDefaultColor
-                        >
-                          Didn't know
-                        </ThemedText>
-                      </View>
-                      <View style={styles.swipeInstructionItem}>
-                        <ThemedText
-                          style={[styles.swipeInstructionText, { color: colors.success }]}
-                          skipDefaultColor
-                        >
-                          Knew it
-                        </ThemedText>
-                        <MaterialCommunityIcons
-                          name="gesture-swipe-right"
-                          size={20}
-                          color={colors.success}
-                        />
-                      </View>
-                    </View>
-                  </>
-                )}
-                {!isAnswerRevealed && (
-                  <Animated.View
-                    style={{
-                      opacity: pulseAnim,
-                      transform: [{ scale: pulseAnim }],
-                    }}
-                  >
-                    <ThemedText
-                      style={[styles.tapToRevealText, { backgroundColor: `${colors.tint}15` }]}
-                    >
-                      Tap to reveal
-                    </ThemedText>
-                  </Animated.View>
-                )}
-              </Animated.View>
-            </View>
-          </Animated.View>
-        </Pressable>
+        {/* Simplified meaning overlay for displaying the correct answer */}
+        {showMeaningOverlay && (
+          <View style={[styles.meaningOverlay, { backgroundColor: colors.modalOverlay }]}>
+            <ThemedText
+              style={{
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+                fontWeight: '600',
+                textAlign: 'center',
+                color: colors.white,
+              }}
+              skipDefaultColor
+            >
+              {currentWord?.sentence_word?.english || 'Translation not available'}
+            </ThemedText>
+          </View>
+        )}
 
+        {/* Updated bottom button container with larger icons */}
         <View style={styles.buttonContainer}>
           <Pressable
             onPress={handleClose}
+            disabled={isInteractionDisabled()}
             style={({ pressed }) => [
               styles.actionButton,
               {
-                backgroundColor: colors.elevation1,
-                opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
+                backgroundColor: pressed ? `${colors.cardBackground}80` : colors.cardBackground,
               },
             ]}
-            hitSlop={8}
           >
-            <Ionicons
-              name="close-outline"
-              size={26}
-              color={colors.tabIconDefault}
-              style={{ marginTop: 1 }}
-            />
+            <Ionicons name="close" size={LAYOUT.TYPOGRAPHY.SCALE.LARGE} color={colors.icon} />
           </Pressable>
           <Pressable
-            onPress={handleInfoPress}
+            onPress={() => setShowInstructions(true)}
+            disabled={isInteractionDisabled()}
             style={({ pressed }) => [
               styles.actionButton,
               {
-                backgroundColor: colors.elevation1,
-                opacity: pressed ? 0.7 : LAYOUT.OPACITY.DIMMED,
+                backgroundColor: pressed ? `${colors.cardBackground}80` : colors.cardBackground,
               },
             ]}
-            hitSlop={8}
           >
             <Ionicons
-              name="information-circle-outline"
-              size={26}
-              color={colors.tabIconDefault}
-              style={{ marginTop: 1 }}
+              name="information-circle"
+              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
+              color={colors.icon}
             />
           </Pressable>
         </View>
 
-        {/* Instructions Modal */}
         <Modal
-          animationType="fade"
-          transparent={true}
           visible={showInstructions}
-          onRequestClose={handleCloseInstructions}
+          transparent
+          onRequestClose={() => setShowInstructions(false)}
+          animationType="fade"
         >
-          <Pressable style={styles.modalOverlay} onPress={handleCloseInstructions}>
-            <View style={[styles.modalContent, { backgroundColor: colors.elevation2 }]}>
+          <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
+            <ThemedView style={styles.modalContent}>
               <ThemedText style={styles.modalTitle}>How to Review</ThemedText>
-
-              <View style={styles.instructionRow}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.cardBackground }]}>
-                  <Ionicons name="hand-left-outline" size={24} color={colors.text} />
-                </View>
-                <ThemedText style={styles.modalText}>Tap to reveal meaning</ThemedText>
+              <View style={styles.modalInstructionRow}>
+                <Ionicons
+                  name="chevron-forward"
+                  size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
+                  color={colors.success}
+                />
+                <ThemedText style={styles.modalText}>Swipe right: I know this word</ThemedText>
               </View>
-
-              <View style={styles.instructionRow}>
-                <View style={[styles.iconContainer, { backgroundColor: `${colors.success}20` }]}>
-                  <MaterialCommunityIcons
-                    name="gesture-swipe-right"
-                    size={24}
-                    color={colors.success}
-                  />
-                </View>
-                <ThemedText style={styles.modalText}>Swipe right if you knew it</ThemedText>
+              <View style={styles.modalInstructionRow}>
+                <Ionicons
+                  name="chevron-back"
+                  size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
+                  color={colors.warning}
+                />
+                <ThemedText style={styles.modalText}>Swipe left: I don't know this word</ThemedText>
               </View>
-
-              <View style={styles.instructionRow}>
-                <View style={[styles.iconContainer, { backgroundColor: `${colors.warning}20` }]}>
-                  <MaterialCommunityIcons
-                    name="gesture-swipe-left"
-                    size={24}
-                    color={colors.warning}
-                  />
-                </View>
-                <ThemedText style={styles.modalText}>Swipe left if you didn't know</ThemedText>
-              </View>
-
               <Pressable
+                onPress={() => setShowInstructions(false)}
                 style={({ pressed }) => [
-                  styles.closeModalButton,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    opacity: pressed ? 0.8 : 1,
-                  },
+                  styles.modalButton,
+                  { backgroundColor: colors.tint, opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1 },
                 ]}
-                onPress={handleCloseInstructions}
               >
-                <ThemedText style={styles.closeButtonText}>Got it</ThemedText>
+                <ThemedText
+                  style={[styles.modalButtonText, { color: colors.white }]}
+                  skipDefaultColor
+                >
+                  Got it
+                </ThemedText>
               </Pressable>
-            </View>
-          </Pressable>
+            </ThemedView>
+          </View>
         </Modal>
       </ThemedView>
     </>
   );
 }
 
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 0,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 48,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    height: 40,
-  },
-  closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    height: 40,
-    width: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED, // Make close button less prominent
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  wordContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.XXLARGE,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    width: '100%',
-  },
-  sentence: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontFamily: 'NotoNaskhArabic',
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
-  highlightedWord: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontFamily: 'NotoNaskhArabic',
-    fontWeight: '700',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-    opacity: 1, // Keep highlighted word fully visible
+    padding: LAYOUT.SCREEN_EDGE_PADDING,
   },
   progressBar: {
-    flex: 1,
-    height: 4,
-    borderRadius: LAYOUT.BORDER.WIDTH.THIN * 4,
-    overflow: 'hidden',
+    height: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.SPACING.SMALL / 2,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    width: '100%',
   },
   progressFill: {
     height: '100%',
-    borderRadius: LAYOUT.BORDER.WIDTH.THIN * 4,
-    width: '0%',
+    borderRadius: LAYOUT.SPACING.SMALL / 2,
+  },
+  card: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.LARGE,
+  },
+  sentence: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.4,
+  },
+  dimmedText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontFamily: 'NotoNaskhArabic',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.4,
+  },
+  studyWord: {
+    fontWeight: 'bold',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, // Same size as dimmedText
+    fontFamily: 'NotoNaskhArabic',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.4,
+  },
+  meaningOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+  answerLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: '600',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  answerText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  swipeFeedback: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: -1,
   },
   buttonContainer: {
-    position: 'absolute',
-    bottom: 48,
-    alignSelf: 'center',
     flexDirection: 'row',
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     gap: LAYOUT.SPACING.MEDIUM,
   },
   actionButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    alignItems: 'center',
     justifyContent: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
+    alignItems: 'center',
+    ...LAYOUT.SHADOW.SMALL,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '85%',
-    padding: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.XLARGE,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: SCREEN_WIDTH * 0.85,
+    maxWidth: 400,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   modalTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '700',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: 'bold',
     marginBottom: LAYOUT.SPACING.LARGE,
-    textAlign: 'center',
   },
-  instructionRow: {
+  modalInstructionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    gap: LAYOUT.SPACING.MEDIUM,
+    marginVertical: LAYOUT.SPACING.SMALL,
   },
   modalText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    flex: 1,
+    marginLeft: LAYOUT.SPACING.SMALL,
   },
-  closeModalButton: {
+  modalButton: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
+    alignItems: 'center',
     marginTop: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 120,
   },
-  message: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    textAlign: 'center',
-  },
-  submessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  completeContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  swipeFeedback: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: -1,
-  },
-  answerContainer: {
-    marginTop: LAYOUT.SPACING.XLARGE,
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  answerLabel: {
+  modalButtonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: 0.8,
   },
-  answerText: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '700',
+    textAlign: 'center',
+  },
+  completedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.LARGE,
+  },
+  completedText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  errorText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  tapToRevealText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-  },
-  swipeInstructionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+  doneButton: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
   },
-  swipeInstructionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  swipeInstructionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-  },
-  fullScreenTapArea: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'center',
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  closeButtonText: {
+  doneButtonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
