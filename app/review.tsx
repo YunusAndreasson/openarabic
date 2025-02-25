@@ -634,3 +634,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
 });
+
+// Add display name
+ReviewScreen.displayName = 'ReviewScreen';

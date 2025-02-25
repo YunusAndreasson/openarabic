@@ -69,14 +69,33 @@ export const VocabularyGraph = React.memo(
 
     // Create the path for the area under the curve
     const areaPath = useMemo(() => {
-      if (points.length === 0) return '';
+      if (!points || points.length === 0) return '';
+      if (points.length === 1) {
+        // Handle single point case
+        const p = points[0];
+        return `M ${p.x} ${p.y} L ${p.x} ${GRAPH_HEIGHT} L ${p.x} ${GRAPH_HEIGHT} Z`;
+      }
 
       let path = `M ${points[0].x} ${points[0].y}`;
 
-      // Add points to the path
-      points.forEach(point => {
-        path += ` L ${point.x} ${point.y}`;
-      });
+      // Create smooth curve using cubic bezier curves
+      for (let i = 0; i < points.length - 1; i++) {
+        const current = points[i];
+        const next = points[i + 1];
+
+        // Calculate horizontal distance between points
+        const xDistance = next.x - current.x;
+
+        // Calculate control points for smooth curve
+        // Using 1/3 ratio for control points creates a natural curve
+        const controlPointX1 = current.x + xDistance / 3;
+        const controlPointY1 = current.y;
+        const controlPointX2 = next.x - xDistance / 3;
+        const controlPointY2 = next.y;
+
+        // Add cubic bezier curve command
+        path += ` C ${controlPointX1} ${controlPointY1}, ${controlPointX2} ${controlPointY2}, ${next.x} ${next.y}`;
+      }
 
       // Complete the path by going down to the bottom and back to start
       path += ` L ${points[points.length - 1].x} ${GRAPH_HEIGHT}`;
@@ -86,16 +105,35 @@ export const VocabularyGraph = React.memo(
       return path;
     }, [points, GRAPH_HEIGHT]);
 
-    // Create the line path
+    // Create the line path with smooth curves
     const linePath = useMemo(() => {
-      if (points.length === 0) return '';
+      if (!points || points.length === 0) return '';
+      if (points.length === 1) {
+        // Handle single point case
+        const p = points[0];
+        return `M ${p.x - 10} ${p.y} L ${p.x + 10} ${p.y}`;
+      }
 
       let path = `M ${points[0].x} ${points[0].y}`;
 
-      // Add points to the path
-      points.forEach(point => {
-        path += ` L ${point.x} ${point.y}`;
-      });
+      // Create smooth curve using cubic bezier curves
+      for (let i = 0; i < points.length - 1; i++) {
+        const current = points[i];
+        const next = points[i + 1];
+
+        // Calculate horizontal distance between points
+        const xDistance = next.x - current.x;
+
+        // Calculate control points for smooth curve
+        // Using 1/3 ratio for control points creates a natural curve
+        const controlPointX1 = current.x + xDistance / 3;
+        const controlPointY1 = current.y;
+        const controlPointX2 = next.x - xDistance / 3;
+        const controlPointY2 = next.y;
+
+        // Add cubic bezier curve command
+        path += ` C ${controlPointX1} ${controlPointY1}, ${controlPointX2} ${controlPointY2}, ${next.x} ${next.y}`;
+      }
 
       return path;
     }, [points]);
@@ -229,6 +267,9 @@ export const VocabularyGraph = React.memo(
     );
   }
 );
+
+// Add display name
+VocabularyGraph.displayName = 'VocabularyGraph';
 
 const styles = StyleSheet.create({
   card: {
