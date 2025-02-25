@@ -1,9 +1,17 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, TouchableOpacity, TouchableOpacityProps, View } from 'react-native';
+import React from 'react';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  TouchableOpacityProps,
+  View,
+  Platform,
+  GestureResponderEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import * as Haptics from 'expo-haptics';
 
 interface ThemedButtonProps extends TouchableOpacityProps {
   variant?: 'filled' | 'outlined';
@@ -22,48 +30,44 @@ export function ThemedButton({
   style,
   disabled,
   children,
-  iconSize = 20,
+  iconSize = 24, // Increased default icon size
+  onPress,
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
 
-  // Memoize styles to prevent unnecessary rerenders
-  const buttonStyles = useMemo(
-    () => [
-      styles.button,
-      variant === 'filled'
-        ? { backgroundColor: colors.tint }
-        : {
-            borderColor: colors.tint,
-            borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-            backgroundColor: 'transparent',
-          },
-      disabled && { opacity: LAYOUT.OPACITY.DISABLED },
-      style,
-    ],
-    [variant, colors.tint, disabled, style]
-  );
+  // Handle press with haptic feedback
+  const handlePress = (event: GestureResponderEvent) => {
+    if (onPress && !disabled && !loading) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      onPress(event);
+    }
+  };
 
-  const textStyles = useMemo(
-    () => [
-      styles.buttonText,
-      {
-        color: variant === 'filled' ? colors.background : colors.tint,
-      },
-    ],
-    [variant, colors.background, colors.tint]
-  );
-
-  const iconColor = useMemo(
-    () => (variant === 'filled' ? colors.background : colors.tint),
-    [variant, colors.background, colors.tint]
-  );
+  // Determine colors based on variant
+  const backgroundColor = variant === 'filled' ? colors.tint : 'transparent';
+  const textColor = variant === 'filled' ? colors.background : colors.tint;
+  const iconColor = variant === 'filled' ? colors.background : colors.tint;
+  const borderWidth = variant === 'outlined' ? LAYOUT.BORDER.WIDTH.NORMAL : 0;
+  const borderColor = variant === 'outlined' ? colors.tint : colors.cardBorder;
 
   return (
     <TouchableOpacity
-      style={buttonStyles}
+      style={[
+        styles.button,
+        {
+          backgroundColor,
+          borderColor,
+          borderWidth,
+          shadowColor: colors.cardShadow,
+        },
+        Platform.OS === 'ios' && styles.iosShadow,
+        disabled && styles.buttonDisabled,
+        style,
+      ]}
       disabled={disabled || loading}
       activeOpacity={LAYOUT.OPACITY.PRESSED}
+      onPress={handlePress}
       {...props}
     >
       <View style={styles.innerContainer}>
@@ -73,7 +77,7 @@ export function ThemedButton({
           </View>
         )}
         <View style={styles.contentContainer}>
-          <ThemedText style={textStyles} skipDefaultColor>
+          <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
             {title}
           </ThemedText>
           {children}
@@ -88,22 +92,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.LARGE,
+    paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
     paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
     minWidth: 160,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
+    elevation: 4, // Android elevation
+  },
+  iosShadow: {
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+  },
+  buttonDisabled: {
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   innerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     width: '100%',
   },
   buttonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
-    textAlign: 'left',
+    textAlign: 'center',
+    letterSpacing: 0.3,
   },
   iconContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
@@ -113,6 +127,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
   },
 });
