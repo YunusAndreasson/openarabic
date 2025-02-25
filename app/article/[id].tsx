@@ -73,25 +73,20 @@ const styles = StyleSheet.create({
   },
   moreFromAuthor: {
     marginTop: LAYOUT.SPACING.XXLARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   moreFromAuthorTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     fontWeight: '600',
   },
   moreFromCategory: {
     marginTop: LAYOUT.SPACING.XXLARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   horizontalList: {
-    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  emptyRelatedContent: {
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    alignItems: 'center',
+    paddingLeft: 0,
+    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
+    marginHorizontal: 0,
   },
 });
 

@@ -54,8 +54,9 @@ export const CompactArticleCard = React.memo(CompactArticleCardComponent);
 
 const styles = StyleSheet.create({
   pressable: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.SMALL,
     width: 220,
+    marginLeft: 0,
   },
   pressed: {
     opacity: LAYOUT.OPACITY.PRESSED,
