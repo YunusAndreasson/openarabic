@@ -11,9 +11,9 @@
 - [x] Add a playlist/bookmarks
 - [ ] Add source for books
 - [x] Render arabic sentences based on word count
-- [ ] Basic vocabulary memorization
+- [x] Basic vocabulary memorization
 - [x] Modal that pops up to show translation, more information and add to vocabulary
 - [ ] Use image from the article
 - [x] Add Text resize to Account
 - [x] Add show English text to Account
-- [ ] Add a horizontal scroller below article with more from the same author
+- [x] Add a horizontal scroller below article with more from the same author
