@@ -7,9 +7,10 @@ import { LAYOUT } from '@/constants/layout';
 
 interface CategoryPillProps {
   category: string;
+  absolute?: boolean;
 }
 
-export function CategoryPill({ category }: CategoryPillProps): React.JSX.Element {
+export function CategoryPill({ category, absolute = true }: CategoryPillProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
@@ -34,7 +35,9 @@ export function CategoryPill({ category }: CategoryPillProps): React.JSX.Element
   }, [colors, isDarkMode]);
 
   return (
-    <View style={[styles.container, themedStyles.container]}>
+    <View
+      style={[styles.container, themedStyles.container, !absolute && styles.nonAbsoluteContainer]}
+    >
       <ThemedText
         style={[styles.text, themedStyles.text]}
         skipDefaultColor
@@ -60,6 +63,11 @@ const styles = StyleSheet.create({
     ...LAYOUT.SHADOW.SMALL,
     elevation: 2, // Slightly reduced elevation to match card better
     zIndex: LAYOUT.Z_INDEX.CARD + 1, // Ensure it's above other card elements
+  },
+  nonAbsoluteContainer: {
+    position: 'relative',
+    top: 0,
+    left: 0,
   },
   text: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1, // Slightly larger than tiny

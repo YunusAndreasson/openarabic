@@ -172,13 +172,7 @@ function ThemedCardComponent({
                   style={styles.gradient}
                   locations={[0, 0.5, 1]}
                 />
-                <BlurView
-                  intensity={isDarkMode ? 10 : 0}
-                  tint={isDarkMode ? 'dark' : 'default'}
-                  style={styles.blurView}
-                >
-                  <CategoryPill category={category} />
-                </BlurView>
+                <CategoryPill category={category} />
               </View>
               <View style={styles.contentContainer}>
                 <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">

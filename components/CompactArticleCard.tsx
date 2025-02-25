@@ -3,9 +3,9 @@ import { StyleSheet, View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
-import { BlurView } from 'expo-blur';
 import type { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
+import { CategoryPill } from './CategoryPill';
 
 interface CompactArticleCardProps {
   article: Article;
@@ -23,16 +23,6 @@ function CompactArticleCardComponent({ article, onPress }: CompactArticleCardPro
     [colors.cardBackground]
   );
 
-  const categoryBackgroundStyle = useMemo(
-    () => [styles.categoryBackground, { backgroundColor: colors.background }],
-    [colors.background]
-  );
-
-  const categoryTextStyle = useMemo(
-    () => [styles.category, { color: colors.categoryText }],
-    [colors.categoryText]
-  );
-
   return (
     <Pressable
       onPress={onPress}
@@ -47,17 +37,7 @@ function CompactArticleCardComponent({ article, onPress }: CompactArticleCardPro
             transition={300}
             cachePolicy="memory-disk"
           />
-          {article.category && (
-            <View style={styles.categoryContainer}>
-              <BlurView intensity={10} tint="light" style={styles.categoryPill}>
-                <View style={categoryBackgroundStyle}>
-                  <ThemedText style={categoryTextStyle} skipDefaultColor>
-                    {article.category.name.toUpperCase()}
-                  </ThemedText>
-                </View>
-              </BlurView>
-            </View>
-          )}
+          {article.category && <CategoryPill category={article.category.name} />}
         </View>
         <View style={styles.contentContainer}>
           <ThemedText style={styles.title} numberOfLines={2}>
@@ -75,7 +55,7 @@ export const CompactArticleCard = React.memo(CompactArticleCardComponent);
 const styles = StyleSheet.create({
   pressable: {
     marginRight: LAYOUT.SPACING.MEDIUM,
-    width: 200,
+    width: 220,
   },
   pressed: {
     opacity: LAYOUT.OPACITY.PRESSED,
@@ -89,38 +69,19 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     width: '100%',
-    height: 120,
+    height: 130,
     zIndex: LAYOUT.Z_INDEX.BASE,
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  categoryContainer: {
-    position: 'absolute',
-    top: LAYOUT.SPACING.SMALL,
-    left: LAYOUT.SPACING.SMALL,
-    overflow: 'hidden',
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-  },
-  categoryPill: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-  },
-  categoryBackground: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    opacity: 0.9,
-  },
-  category: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.5,
-  },
   contentContainer: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
   },
 });
