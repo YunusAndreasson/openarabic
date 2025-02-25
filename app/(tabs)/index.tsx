@@ -109,9 +109,15 @@ export default function TextsScreen() {
       if (visible !== isTabBarVisible) {
         setIsTabBarVisible(visible);
 
-        // Simply hide the tab bar by setting display: 'none'
+        // Update tab bar visibility with proper styling
         navigation.setOptions({
-          tabBarStyle: visible ? undefined : { display: 'none' },
+          tabBarStyle: visible
+            ? {
+                backgroundColor: colors.background,
+                borderTopColor: colors.cardBorder,
+                borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+              }
+            : { display: 'none' },
         });
 
         Animated.timing(categoryVisibleAnim, {
@@ -121,7 +127,7 @@ export default function TextsScreen() {
         }).start();
       }
     },
-    [categoryVisibleAnim, isTabBarVisible, navigation]
+    [categoryVisibleAnim, isTabBarVisible, navigation, colors.background, colors.cardBorder]
   );
 
   const handleScroll = useCallback(

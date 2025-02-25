@@ -57,7 +57,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
                 styles.statusBackground,
                 {
                   backgroundColor: isMastered
-                    ? colors.success
+                    ? '#495057'
                     : isOverdue
                       ? colors.warning
                       : colors.info,

@@ -82,7 +82,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) => {
     left: 0,
     right: 0,
     backgroundColor: colors.background,
-    borderTopColor: colors.icon,
+    borderTopColor: colors.cardBorder,
     borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: -2 },
@@ -98,7 +98,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) => {
     left: 0,
     right: 0,
     backgroundColor: colors.background,
-    borderTopColor: colors.icon,
+    borderTopColor: colors.cardBorder,
     borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
     elevation: 8, // Use a direct value since we can't safely access nested optional properties
     height: LAYOUT.BOTTOM_BAR.HEIGHT,

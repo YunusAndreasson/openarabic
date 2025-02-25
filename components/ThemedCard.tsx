@@ -16,6 +16,7 @@ import { BlurView } from 'expo-blur';
 import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { CategoryPill } from './CategoryPill';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -70,13 +71,13 @@ function ThemedCardComponent({
       card: {
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
-        shadowColor: colors.text,
+        shadowColor: colors.cardShadow,
       },
       loadingContainer: {
         backgroundColor: colors.cardBackground,
       },
       gradient: {
-        colors: ['transparent', 'rgba(0,0,0,0.05)', colors.cardBackground] as const,
+        colors: [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as const,
       },
       categoryBackground: {
         // In dark mode, use a more subtle background
@@ -88,7 +89,10 @@ function ThemedCardComponent({
         fontWeight: '600',
       },
       author: {
-        color: colors.tabIconDefault,
+        color: colors.authorText,
+      },
+      image: {
+        backgroundColor: colors.imagePlaceholder,
       },
     };
   }, [colors, isDarkMode]);
@@ -144,7 +148,7 @@ function ThemedCardComponent({
                 )}
                 <Image
                   source={imageUrl}
-                  style={styles.image}
+                  style={[styles.image, themedStyles.image]}
                   contentFit="cover"
                   transition={300}
                   onLoadStart={handleLoadStart}
@@ -168,27 +172,13 @@ function ThemedCardComponent({
                   style={styles.gradient}
                   locations={[0, 0.5, 1]}
                 />
-                <View style={styles.categoryContainer}>
-                  <BlurView
-                    intensity={colors.background === '#000000' ? 10 : 0}
-                    tint={colors.background === '#000000' ? 'dark' : 'default'}
-                    style={styles.categoryPill}
-                  >
-                    <View
-                      style={[
-                        styles.categoryBackground,
-                        { backgroundColor: themedStyles.categoryBackground.backgroundColor },
-                      ]}
-                    >
-                      <ThemedText
-                        style={[styles.category, { color: themedStyles.category.color }]}
-                        skipDefaultColor
-                      >
-                        {category.toUpperCase()}
-                      </ThemedText>
-                    </View>
-                  </BlurView>
-                </View>
+                <BlurView
+                  intensity={isDarkMode ? 10 : 0}
+                  tint={isDarkMode ? 'dark' : 'default'}
+                  style={styles.blurView}
+                >
+                  <CategoryPill category={category} />
+                </BlurView>
               </View>
               <View style={styles.contentContainer}>
                 <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">
@@ -228,6 +218,7 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
+    elevation: 3,
   },
   imageContainer: {
     position: 'relative',
@@ -237,7 +228,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.05)', // Subtle placeholder color
   },
   loadingContainer: {
     position: 'absolute',
@@ -255,27 +245,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: -1,
     height: 160,
-  },
-  categoryContainer: {
-    position: 'absolute',
-    top: LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SPACING.MEDIUM,
-    overflow: 'hidden',
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-    zIndex: LAYOUT.Z_INDEX.CARD,
-  },
-  categoryPill: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-  },
-  categoryBackground: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  category: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    fontWeight: '600',
   },
   contentContainer: {
     padding: LAYOUT.CARD.PADDING.LARGE,
@@ -317,5 +286,14 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  blurView: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+    overflow: 'hidden',
   },
 });

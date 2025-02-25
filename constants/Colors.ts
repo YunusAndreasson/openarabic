@@ -1,58 +1,86 @@
 /* eslint-disable no-unused-vars */
 export const Colors = {
   light: {
-    text: '#222222', // Dark gray text for optimal readability
-    background: '#FFFFFF', // Off-white background to reduce glare
-    tint: '#333333', // Darker neutral gray for better contrast
-    icon: '#666666', // Mid-gray for icons
-    tabIconDefault: '#666666', // Consistent gray for inactive tabs
-    tabIconSelected: '#333333', // Matching tint for active tabs
-    link: '#333333', // Neutral gray for links
-    cardBackground: '#F0F0F0', // Subtle contrast for card backgrounds
-    cardBorder: '#DDDDDD', // Light gray border for clear delineation
-    categoryText: '#222222', // Darker gray for better readability
-    authorText: '#222222',
-    arabicText: '#1A1A1A', // Slightly darker for Arabic text to enhance clarity
-    highlightedArabicText: '#0066CC', // Blue for highlighted Arabic words
-    englishText: '#4D4D4D', // A bit lighter for English text
-    titleText: '#000000', // Pure black for maximum title contrast
+    // Enhanced grayscale palette with better depth perception
+    text: '#212529', // Darkest gray for primary text
+    background: '#f8f9fa', // Lightest gray for background
+    tint: '#343a40', // Dark gray for tint/accent
+    icon: '#495057', // Medium-dark gray for icons
+    tabIconDefault: '#adb5bd', // Lighter gray for inactive tabs (increased contrast)
+    tabIconSelected: '#343a40', // Dark gray for active tabs
+    link: '#343a40', // Dark gray for links
+    cardBackground: '#ffffff', // Pure white for card backgrounds (increased contrast with page background)
+    cardBorder: '#dee2e6', // Light gray for card borders
+    cardShadow: '#adb5bd', // Medium-light gray for card shadows
+    categoryText: '#212529', // Darkest gray for category text
+    authorText: '#6c757d', // Medium gray for author text (better hierarchy)
+    arabicText: '#212529', // Darkest gray for Arabic text
+    highlightedArabicText: '#343a40', // Dark gray for highlighted Arabic text
+    englishText: '#495057', // Medium-dark gray for English text
+    titleText: '#212529', // Darkest gray for title text
     white: '#FFFFFF',
-    success: '#34C759', // Green for success states
-    warning: '#FF9500', // Orange for warning states
-    info: '#007AFF', // Blue for info states
-    shadow: '#000000', // Shadow color for light theme
-    overlay: 'rgba(0, 0, 0, 0.1)', // Overlay color for light theme
-    successOverlay: 'rgba(52, 199, 89, 0.2)', // Success state with opacity
-    warningOverlay: 'rgba(255, 149, 0, 0.2)', // Warning state with opacity
-    textOverlay: 'rgba(34, 34, 34, 0.1)', // Text color with opacity
-    borderOverlay: 'rgba(34, 34, 34, 0.2)', // Border color with opacity
+    success: '#2b8a3e', // Green in grayscale-compatible shade
+    warning: '#e67700', // Orange in grayscale-compatible shade
+    info: '#1864ab', // Blue in grayscale-compatible shade
+    shadow: '#adb5bd', // Medium-light gray for shadows
+    overlay: 'rgba(33, 37, 41, 0.1)', // Overlay with darkest gray
+    successOverlay: 'rgba(43, 138, 62, 0.2)', // Success with opacity
+    warningOverlay: 'rgba(230, 119, 0, 0.2)', // Warning with opacity
+    textOverlay: 'rgba(33, 37, 41, 0.1)', // Text with opacity
+    borderOverlay: 'rgba(33, 37, 41, 0.2)', // Border with opacity
+    gradientStart: 'rgba(255, 255, 255, 0)', // Transparent start for gradients
+    gradientMiddle: 'rgba(248, 249, 250, 0.7)', // Semi-transparent middle for gradients
+    gradientEnd: 'rgba(255, 255, 255, 1)', // Solid end for gradients
+    elevation1: '#ffffff', // Level 1 elevation (cards, buttons)
+    elevation2: '#f8f9fa', // Level 2 elevation (modals, popovers)
+    elevation3: '#f1f3f5', // Level 3 elevation (top-level modals)
+    // New colors to replace hardcoded values
+    imagePlaceholder: 'rgba(0, 0, 0, 0.05)', // Subtle placeholder color for images
+    textShadowLight: 'rgba(0, 0, 0, 0.2)', // Light text shadow
+    textShadowDark: 'rgba(0, 0, 0, 0.5)', // Dark text shadow
+    modalOverlay: 'rgba(0, 0, 0, 0.5)', // Modal background overlay
+    black: '#000000', // Pure black for specific use cases
   },
   dark: {
-    text: '#E0E0E0', // Off-white text for dark mode
-    background: '#000000', // Dark gray background instead of true black
-    tint: '#EEEEEE', // Neutral gray accent for a refined appearance
-    icon: '#BBBBBB', // Soft gray for icons
-    tabIconDefault: '#BBBBBB', // Consistent with icon color for inactive tabs
-    tabIconSelected: '#AAAAAA', // Matching tint for active tabs
-    link: '#AAAAAA', // Neutral gray for links
-    cardBackground: '#121212', // Darker background for better contrast
-    cardBorder: '#2A2A2A', // Subtle gray border for cards
-    categoryText: '#BBBBBB', // Secondary text in soft gray
-    authorText: '#BBBBBB',
-    arabicText: '#F0F0F0', // Brighter for Arabic text to enhance clarity
-    highlightedArabicText: '#66B2FF', // Light blue for highlighted Arabic words
-    englishText: '#CCCCCC', // Slightly subdued for English text
-    titleText: '#FFFFFF', // Pure white for maximum title contrast
+    // Enhanced grayscale palette for dark mode with better depth perception
+    text: '#f8f9fa', // Lightest gray for text (increased contrast)
+    background: '#212529', // Darkest gray for background
+    tint: '#ced4da', // Light gray for tint/accent
+    icon: '#adb5bd', // Medium-light gray for icons
+    tabIconDefault: '#6c757d', // Medium gray for inactive tabs
+    tabIconSelected: '#e9ecef', // Very light gray for active tabs (increased contrast)
+    link: '#ced4da', // Light gray for links
+    cardBackground: '#2b3035', // Slightly lighter than background (distinct layers)
+    cardBorder: '#495057', // Medium-dark gray for card borders
+    cardShadow: '#000000', // Black for card shadows in dark mode
+    categoryText: '#e9ecef', // Very light gray for category text
+    authorText: '#adb5bd', // Medium-light gray for author text
+    arabicText: '#f8f9fa', // Lightest gray for Arabic text
+    highlightedArabicText: '#e9ecef', // Very light gray for highlighted Arabic
+    englishText: '#dee2e6', // Light gray for English text
+    titleText: '#f8f9fa', // Lightest gray for title text
     white: '#FFFFFF',
-    success: '#30D158', // Green for success states
-    warning: '#FF9F0A', // Orange for warning states
-    info: '#0A84FF', // Blue for info states
-    shadow: '#000000', // Shadow color for dark theme
-    overlay: 'rgba(255, 255, 255, 0.1)', // Overlay color for dark theme
-    successOverlay: 'rgba(48, 209, 88, 0.2)', // Success state with opacity
-    warningOverlay: 'rgba(255, 159, 10, 0.2)', // Warning state with opacity
-    textOverlay: 'rgba(224, 224, 224, 0.1)', // Text color with opacity
-    borderOverlay: 'rgba(224, 224, 224, 0.2)', // Border color with opacity
+    success: '#40c057', // Brighter green for dark mode
+    warning: '#fcc419', // Brighter yellow/orange for dark mode
+    info: '#339af0', // Brighter blue for dark mode
+    shadow: '#000000', // Black for shadows (increased contrast)
+    overlay: 'rgba(248, 249, 250, 0.1)', // Overlay with lightest gray
+    successOverlay: 'rgba(64, 192, 87, 0.2)', // Success with opacity
+    warningOverlay: 'rgba(252, 196, 25, 0.2)', // Warning with opacity
+    textOverlay: 'rgba(233, 236, 239, 0.1)', // Text with opacity
+    borderOverlay: 'rgba(233, 236, 239, 0.2)', // Border with opacity
+    gradientStart: 'rgba(33, 37, 41, 0)', // Transparent start for gradients
+    gradientMiddle: 'rgba(43, 48, 53, 0.7)', // Semi-transparent middle for gradients
+    gradientEnd: 'rgba(43, 48, 53, 1)', // Solid end for gradients
+    elevation1: '#2b3035', // Level 1 elevation (cards, buttons)
+    elevation2: '#343a40', // Level 2 elevation (modals, popovers)
+    elevation3: '#495057', // Level 3 elevation (top-level modals)
+    // New colors to replace hardcoded values
+    imagePlaceholder: 'rgba(0, 0, 0, 0.2)', // Darker placeholder color for images in dark mode
+    textShadowLight: 'rgba(0, 0, 0, 0.2)', // Light text shadow
+    textShadowDark: 'rgba(0, 0, 0, 0.5)', // Dark text shadow
+    modalOverlay: 'rgba(0, 0, 0, 0.7)', // Modal background overlay (darker for dark mode)
+    black: '#000000', // Pure black for specific use cases
   },
 } as const;
 

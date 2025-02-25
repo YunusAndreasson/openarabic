@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Modal, TouchableOpacity, Pressable } from 'react-native';
+import { StyleSheet, View, Modal, TouchableOpacity, Pressable, ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 interface WordDetailsModalProps {
   visible: boolean;
@@ -23,9 +24,11 @@ function WordDetailsModalComponent({
   visible,
   onClose,
   word,
+  isSelected,
   onStudyPress,
 }: WordDetailsModalProps) {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // Memoize handlers to prevent unnecessary rerenders
   const handleStudyPress = useCallback(() => {
@@ -40,8 +43,8 @@ function WordDetailsModalComponent({
 
   // Memoize styles to prevent new object creation on each render
   const containerStyle = useMemo(
-    () => [styles.modalContainer, { backgroundColor: 'rgba(0,0,0,0.5)' }],
-    []
+    () => [styles.modalContainer, { backgroundColor: colors.modalOverlay }],
+    [colors.modalOverlay]
   );
 
   const contentStyle = useMemo(
@@ -57,8 +60,38 @@ function WordDetailsModalComponent({
   );
 
   const arabicWordStyle = useMemo(
-    () => [styles.arabicWord, { color: colors.arabicText }],
-    [colors.arabicText]
+    () => [
+      styles.arabicWord,
+      {
+        color: isSelected ? (isDarkMode ? '#ced4da' : '#343a40') : colors.arabicText,
+        fontWeight: isSelected ? ('700' as const) : ('normal' as const),
+      },
+    ],
+    [colors.arabicText, isSelected, isDarkMode]
+  );
+
+  // Add a style for the word container to show a subtle indicator in dark mode
+  const wordContainerStyle = useMemo(
+    () => ({
+      position: 'relative' as const,
+      paddingBottom: isSelected ? LAYOUT.SPACING.SMALL : 0,
+    }),
+    [isSelected]
+  );
+
+  // Add a style for the indicator line
+  const indicatorStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      bottom: 0,
+      left: '30%' as any,
+      right: '30%' as any,
+      height: 1,
+      borderBottomWidth: 0.8,
+      borderBottomColor: isDarkMode ? '#ced4da80' : '#34383c50',
+      borderStyle: 'dotted' as const,
+    }),
+    [isDarkMode]
   );
 
   const translationStyle = useMemo(
@@ -93,15 +126,29 @@ function WordDetailsModalComponent({
     [colors.titleText]
   );
 
+  const studyButtonStyle = useMemo(
+    () => [
+      styles.studyButton,
+      {
+        backgroundColor: isSelected ? (isDarkMode ? '#6c757d' : '#dee2e6') : colors.textOverlay,
+        borderColor: colors.borderOverlay,
+      },
+    ],
+    [colors.textOverlay, colors.borderOverlay, isSelected, isDarkMode]
+  );
+
   return (
     <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
       <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="dark">
         <Pressable style={containerStyle} onPress={handleBackdropPress}>
           <Pressable style={contentStyle} onPress={e => e.stopPropagation()}>
             <View style={styles.header}>
-              <ThemedText style={arabicWordStyle} skipDefaultColor>
-                {word.word_form}
-              </ThemedText>
+              <View style={wordContainerStyle}>
+                <ThemedText style={arabicWordStyle} skipDefaultColor>
+                  {word.word_form}
+                </ThemedText>
+                {isSelected && <View style={indicatorStyle} />}
+              </View>
               <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
                 {word.english}
               </ThemedText>
@@ -154,18 +201,9 @@ function WordDetailsModalComponent({
             </View>
 
             {onStudyPress && (
-              <TouchableOpacity
-                style={[
-                  styles.studyButton,
-                  {
-                    backgroundColor: colors.textOverlay,
-                    borderColor: colors.borderOverlay,
-                  },
-                ]}
-                onPress={handleStudyPress}
-              >
+              <TouchableOpacity style={studyButtonStyle} onPress={handleStudyPress}>
                 <Ionicons
-                  name="school"
+                  name={isSelected ? 'checkmark-circle' : 'school'}
                   size={20}
                   color={colors.titleText}
                   style={styles.studyIcon}
@@ -174,7 +212,7 @@ function WordDetailsModalComponent({
                   style={[styles.studyButtonText, { color: colors.titleText }]}
                   skipDefaultColor
                 >
-                  Study this word
+                  {isSelected ? 'Word added to study list' : 'Study this word'}
                 </ThemedText>
               </TouchableOpacity>
             )}
