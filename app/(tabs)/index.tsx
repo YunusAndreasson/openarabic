@@ -56,7 +56,7 @@ export default function TextsScreen() {
   // Memoized values
   const categoryPillsHeight = useMemo(() => {
     // Calculate height based on insets and layout constants
-    return insets.top + LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE;
+    return insets.top + LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE;
   }, [insets.top]);
 
   // Callbacks
@@ -241,9 +241,7 @@ export default function TextsScreen() {
         contentContainerStyle={[
           styles.flatListContent,
           {
-            paddingTop:
-              (categoryPillsHeight || LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM) -
-              LAYOUT.SPACING.SMALL,
+            paddingTop: categoryPillsHeight || LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
           },
         ]}
         onScroll={handleScroll}

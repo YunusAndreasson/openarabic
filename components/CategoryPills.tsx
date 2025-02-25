@@ -8,6 +8,7 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { Tables } from '../types/database.types';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];
@@ -115,27 +116,48 @@ function CategoryPillsComponent({
     <Animated.View
       style={[styles.container, { backgroundColor: colors.background }, containerAnimatedStyle]}
     >
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-        removeClippedSubviews={true}
-      >
-        <HorizontalCategoryPill
-          category={null}
-          isSelected={selectedCategory === null}
-          onPress={createPressHandler(null)}
+      <View style={styles.scrollContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          removeClippedSubviews={true}
+        >
+          <HorizontalCategoryPill
+            category={null}
+            isSelected={selectedCategory === null}
+            onPress={createPressHandler(null)}
+          />
+
+          {categories.map(category => (
+            <HorizontalCategoryPill
+              key={category.id}
+              category={category}
+              isSelected={selectedCategory?.id === category.id}
+              onPress={createPressHandler(category)}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Left fade gradient (subtle) */}
+        <LinearGradient
+          colors={[colors.background, 'transparent']}
+          start={{ x: 0, y: 0.5 }}
+          end={{ x: 0.05, y: 0.5 }}
+          style={styles.leftFadeGradient}
+          pointerEvents="none"
         />
 
-        {categories.map(category => (
-          <HorizontalCategoryPill
-            key={category.id}
-            category={category}
-            isSelected={selectedCategory?.id === category.id}
-            onPress={createPressHandler(category)}
-          />
-        ))}
-      </ScrollView>
+        {/* Right fade gradient (more pronounced, starts earlier) */}
+        <LinearGradient
+          colors={['transparent', colors.background, colors.background]}
+          start={{ x: 0.3, y: 0.5 }}
+          end={{ x: 1, y: 0.5 }}
+          locations={[0, 0.7, 1]}
+          style={styles.rightFadeGradient}
+          pointerEvents="none"
+        />
+      </View>
     </Animated.View>
   );
 }
@@ -151,11 +173,31 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
+  scrollContainer: {
+    position: 'relative',
+    overflow: 'hidden',
+  },
   scrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     gap: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.CONTENT_SPACING.TOP,
     paddingBottom: 0, // Removed padding completely (was LAYOUT.SPACING.TINY)
+  },
+  leftFadeGradient: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: LAYOUT.SCREEN_EDGE_PADDING,
+    zIndex: 1,
+  },
+  rightFadeGradient: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: '40%', // Use percentage instead of fixed width to better adapt to different screen sizes
+    zIndex: 1,
   },
   pill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
