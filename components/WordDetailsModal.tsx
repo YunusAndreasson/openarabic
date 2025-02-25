@@ -1,5 +1,14 @@
-import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Modal, TouchableOpacity, Pressable, ViewStyle } from 'react-native';
+import React, { useCallback, useMemo, useRef, useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Modal,
+  TouchableOpacity,
+  Pressable,
+  Animated,
+  Dimensions,
+  Platform,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
@@ -30,6 +39,24 @@ function WordDetailsModalComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
+  // Animation values - simplified to just fade
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Run animations when visibility changes
+  useEffect(() => {
+    if (visible) {
+      // Reset animation to initial value
+      fadeAnim.setValue(0);
+
+      // Start animation
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: LAYOUT.ANIMATION.DURATION.NORMAL,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [visible, fadeAnim]);
+
   // Memoize handlers to prevent unnecessary rerenders
   const handleStudyPress = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -37,9 +64,16 @@ function WordDetailsModalComponent({
   }, [onStudyPress]);
 
   const handleBackdropPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onClose();
-  }, [onClose]);
+    // Run exit animation
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: LAYOUT.ANIMATION.DURATION.FAST,
+      useNativeDriver: true,
+    }).start(() => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onClose();
+    });
+  }, [onClose, fadeAnim]);
 
   // Memoize styles to prevent new object creation on each render
   const containerStyle = useMemo(
@@ -102,8 +136,15 @@ function WordDetailsModalComponent({
   const labelStyle = useMemo(() => [styles.label, { color: colors.titleText }], [colors.titleText]);
 
   const pillStyle = useMemo(
-    () => [styles.pill, { backgroundColor: colors.textOverlay }],
-    [colors.textOverlay]
+    () => [
+      styles.pill,
+      {
+        backgroundColor: colors.textOverlay,
+        borderColor: colors.borderOverlay,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+      },
+    ],
+    [colors.textOverlay, colors.borderOverlay]
   );
 
   const rootTextStyle = useMemo(
@@ -130,93 +171,134 @@ function WordDetailsModalComponent({
     () => [
       styles.studyButton,
       {
-        backgroundColor: isSelected ? (isDarkMode ? '#6c757d' : '#dee2e6') : colors.textOverlay,
+        backgroundColor: isSelected
+          ? isDarkMode
+            ? '#6c757d'
+            : '#dee2e6'
+          : isDarkMode
+            ? colors.elevation2
+            : colors.textOverlay,
         borderColor: colors.borderOverlay,
       },
     ],
-    [colors.textOverlay, colors.borderOverlay, isSelected, isDarkMode]
+    [colors.textOverlay, colors.borderOverlay, colors.elevation2, isSelected, isDarkMode]
   );
 
+  // Create animated style - simplified to just fade
+  const animatedContentStyle = {
+    opacity: fadeAnim,
+  };
+
   return (
-    <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
-      <BlurView intensity={80} style={StyleSheet.absoluteFill} tint="dark">
+    <Modal
+      animationType="none"
+      transparent={true}
+      visible={visible}
+      onRequestClose={handleBackdropPress}
+      statusBarTranslucent={true}
+    >
+      <BlurView
+        intensity={isDarkMode ? 60 : 80}
+        style={StyleSheet.absoluteFill}
+        tint={isDarkMode ? 'dark' : 'light'}
+      >
         <Pressable style={containerStyle} onPress={handleBackdropPress}>
-          <Pressable style={contentStyle} onPress={e => e.stopPropagation()}>
-            <View style={styles.header}>
-              <View style={wordContainerStyle}>
-                <ThemedText style={arabicWordStyle} skipDefaultColor>
-                  {word.word_form}
-                </ThemedText>
-                {isSelected && <View style={indicatorStyle} />}
-              </View>
-              <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
-                {word.english}
-              </ThemedText>
-            </View>
-
-            <View style={styles.detailsContainer}>
-              {word.root && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={labelStyle} skipDefaultColor>
-                    Root
-                  </ThemedText>
-                  <View style={pillStyle}>
-                    <ThemedText style={rootTextStyle} skipDefaultColor>
-                      {word.root.letters}
-                    </ThemedText>
-                    {word.root.meaning && (
-                      <ThemedText style={rootMeaningStyle} skipDefaultColor>
-                        {word.root.meaning}
-                      </ThemedText>
-                    )}
-                  </View>
-                </View>
-              )}
-
-              {word.word_type && (
-                <View style={styles.detailRow}>
-                  <ThemedText style={labelStyle} skipDefaultColor>
-                    Type
-                  </ThemedText>
-                  <View style={pillStyle}>
-                    <ThemedText style={typeTextStyle} skipDefaultColor>
-                      {word.word_type.name}
-                    </ThemedText>
-                  </View>
-                </View>
-              )}
-
-              {word.grammar_note && (
-                <View style={styles.grammarNote}>
-                  <ThemedText style={labelStyle} skipDefaultColor>
-                    Grammar Notes
-                  </ThemedText>
-                  <View style={pillStyle}>
-                    <ThemedText style={noteTextStyle} skipDefaultColor>
-                      {word.grammar_note}
-                    </ThemedText>
-                  </View>
-                </View>
-              )}
-            </View>
-
-            {onStudyPress && (
-              <TouchableOpacity style={studyButtonStyle} onPress={handleStudyPress}>
-                <Ionicons
-                  name={isSelected ? 'checkmark-circle' : 'school'}
-                  size={20}
-                  color={colors.titleText}
-                  style={styles.studyIcon}
-                />
-                <ThemedText
-                  style={[styles.studyButtonText, { color: colors.titleText }]}
-                  skipDefaultColor
+          <Animated.View style={animatedContentStyle}>
+            <Pressable style={contentStyle} onPress={e => e.stopPropagation()}>
+              <View style={styles.closeButtonContainer}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={handleBackdropPress}
+                  hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
                 >
-                  {isSelected ? 'Word added to study list' : 'Study this word'}
+                  <Ionicons
+                    name="close-circle"
+                    size={28}
+                    color={isDarkMode ? colors.tabIconDefault : colors.icon}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.header}>
+                <View style={wordContainerStyle}>
+                  <ThemedText style={arabicWordStyle} skipDefaultColor>
+                    {word.word_form}
+                  </ThemedText>
+                  {isSelected && <View style={indicatorStyle} />}
+                </View>
+                <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
+                  {word.english}
                 </ThemedText>
-              </TouchableOpacity>
-            )}
-          </Pressable>
+              </View>
+
+              <View style={styles.detailsContainer}>
+                {word.root && (
+                  <View style={styles.detailRow}>
+                    <ThemedText style={labelStyle} skipDefaultColor>
+                      Root
+                    </ThemedText>
+                    <View style={pillStyle}>
+                      <ThemedText style={rootTextStyle} skipDefaultColor>
+                        {word.root.letters}
+                      </ThemedText>
+                      {word.root.meaning && (
+                        <ThemedText style={rootMeaningStyle} skipDefaultColor>
+                          {word.root.meaning}
+                        </ThemedText>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {word.word_type && (
+                  <View style={styles.detailRow}>
+                    <ThemedText style={labelStyle} skipDefaultColor>
+                      Type
+                    </ThemedText>
+                    <View style={pillStyle}>
+                      <ThemedText style={typeTextStyle} skipDefaultColor>
+                        {word.word_type.name}
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+
+                {word.grammar_note && (
+                  <View style={styles.grammarNote}>
+                    <ThemedText style={labelStyle} skipDefaultColor>
+                      Grammar Notes
+                    </ThemedText>
+                    <View style={pillStyle}>
+                      <ThemedText style={noteTextStyle} skipDefaultColor>
+                        {word.grammar_note}
+                      </ThemedText>
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {onStudyPress && (
+                <TouchableOpacity
+                  style={studyButtonStyle}
+                  onPress={handleStudyPress}
+                  activeOpacity={LAYOUT.OPACITY.PRESSED}
+                >
+                  <Ionicons
+                    name={isSelected ? 'checkmark-circle' : 'school'}
+                    size={20}
+                    color={colors.titleText}
+                    style={styles.studyIcon}
+                  />
+                  <ThemedText
+                    style={[styles.studyButtonText, { color: colors.titleText }]}
+                    skipDefaultColor
+                  >
+                    {isSelected ? 'Word added to study list' : 'Study this word'}
+                  </ThemedText>
+                </TouchableOpacity>
+              )}
+            </Pressable>
+          </Animated.View>
         </Pressable>
       </BlurView>
     </Modal>
@@ -226,6 +308,9 @@ function WordDetailsModalComponent({
 // Memoize the component to prevent unnecessary rerenders
 export const WordDetailsModal = React.memo(WordDetailsModalComponent);
 
+const { width } = Dimensions.get('window');
+const maxWidth = Math.min(width * 0.9, 400);
+
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
@@ -233,8 +318,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    width: '90%',
-    maxWidth: 400,
+    width: maxWidth,
     paddingTop: LAYOUT.SPACING.XXLARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
@@ -242,6 +326,15 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.SHADOW.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.MODAL,
+  },
+  closeButtonContainer: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.MEDIUM,
+    right: LAYOUT.SPACING.MEDIUM,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+  closeButton: {
+    padding: LAYOUT.SPACING.TINY,
   },
   header: {
     alignItems: 'center',
@@ -276,6 +369,17 @@ const styles = StyleSheet.create({
   pill: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     padding: LAYOUT.SPACING.MEDIUM,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
   rootText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
@@ -306,8 +410,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
     borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   studyIcon: {
     marginRight: LAYOUT.SPACING.SMALL,
