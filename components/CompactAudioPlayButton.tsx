@@ -9,16 +9,24 @@ interface CompactAudioPlayButtonProps {
   audioUrl: string;
   size?: number;
   style?: any;
+  iconColor?: string;
+  activeIconColor?: string;
 }
 
 export function CompactAudioPlayButton({
   audioUrl,
   size = 20,
   style,
+  iconColor,
+  activeIconColor,
 }: CompactAudioPlayButtonProps) {
   const colors = useColors();
   const [isPlaying, setIsPlaying] = useState(false);
   const [sound, setSound] = useState<Audio.Sound>();
+
+  // Use custom colors if provided, otherwise fall back to theme colors
+  const defaultColor = iconColor || colors.tint;
+  const playingColor = activeIconColor || colors.success;
 
   async function playSound() {
     try {
@@ -67,7 +75,11 @@ export function CompactAudioPlayButton({
 
   return (
     <TouchableOpacity onPress={playSound} style={[styles.button, style]}>
-      <Ionicons name={isPlaying ? 'pause' : 'play'} size={size} color={colors.tint} />
+      <Ionicons
+        name={isPlaying ? 'pause' : 'play'}
+        size={size}
+        color={isPlaying ? playingColor : defaultColor}
+      />
     </TouchableOpacity>
   );
 }

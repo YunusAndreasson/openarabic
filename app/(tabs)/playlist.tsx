@@ -321,8 +321,9 @@ export default function PlaylistScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
-          { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+          { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.SMALL },
         ]}
+        ItemSeparatorComponent={() => <View style={{ height: 6 }} />}
       />
       <View style={controlsStyle}>
         <ThemedButton

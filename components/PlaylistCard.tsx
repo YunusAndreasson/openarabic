@@ -37,23 +37,66 @@ export default function PlaylistCard({
     [colors.tint]
   );
 
-  const categoryStyle = useMemo(() => [styles.category, { color: colors.tint }], [colors.tint]);
+  const categoryStyle = useMemo(
+    () => [
+      styles.category,
+      {
+        color: colors.authorText,
+      },
+    ],
+    [colors.authorText]
+  );
+
+  const playButtonContainerStyle = useMemo(
+    () => [
+      styles.playButtonContainer,
+      {
+        backgroundColor: colors.tint + '10',
+        borderColor: colors.tint + '30',
+      },
+    ],
+    [colors.tint]
+  );
+
+  const playButtonStyle = useMemo(
+    () => ({
+      width: '100%',
+      height: '100%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }),
+    []
+  );
 
   return (
     <CompactThemedCard onPress={onPress}>
       <View style={styles.container}>
         <View style={styles.leftContainer}>
-          <CompactAudioPlayButton audioUrl={audioUrl} size={20} />
+          <View style={playButtonContainerStyle}>
+            <CompactAudioPlayButton
+              audioUrl={audioUrl}
+              size={20}
+              style={playButtonStyle}
+              iconColor={colors.tint}
+              activeIconColor={colors.tint}
+            />
+          </View>
         </View>
         <View style={styles.textContainer}>
-          <ThemedText numberOfLines={1} style={styles.title}>
-            {title}
-          </ThemedText>
+          <View style={styles.row}>
+            <ThemedText numberOfLines={1} style={styles.title}>
+              {title}
+            </ThemedText>
+          </View>
           <View style={styles.metaContainer}>
             <ThemedText style={categoryStyle} skipDefaultColor numberOfLines={1}>
               {category.charAt(0).toUpperCase() + category.slice(1)}
             </ThemedText>
-            <ThemedText style={styles.author} numberOfLines={1}>
+            <ThemedText
+              style={[styles.author, { color: colors.authorText }]}
+              skipDefaultColor
+              numberOfLines={1}
+            >
               {author}
             </ThemedText>
           </View>
@@ -66,7 +109,7 @@ export default function PlaylistCard({
           accessibilityRole="button"
         >
           <View style={[styles.removeIconContainer, { borderColor: colors.cardBorder + '40' }]}>
-            <Ionicons name="close-circle" size={20} style={removeIconStyle} />
+            <Ionicons name="close-circle" size={18} style={removeIconStyle} />
           </View>
         </Pressable>
       </View>
@@ -78,42 +121,58 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY + 1,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    minHeight: 48,
   },
   leftContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'center',
   },
+  playButtonContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+  },
   textContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.TINY,
     justifyContent: 'center',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    marginBottom: LAYOUT.SPACING.TINY,
+    flex: 1,
   },
   metaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 1,
   },
   category: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
+    fontWeight: '400',
     marginRight: LAYOUT.SPACING.SMALL,
+    opacity: 0.8,
   },
   author: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
     opacity: LAYOUT.OPACITY.DISABLED,
   },
   removeButton: {
-    padding: LAYOUT.SPACING.TINY,
+    padding: 2,
     alignSelf: 'center',
   },
   removeIconContainer: {
-    width: 32,
-    height: 32,
+    width: 28,
+    height: 28,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
     alignItems: 'center',
     justifyContent: 'center',

@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.SMALL,
   },
   pressed: {
     opacity: LAYOUT.OPACITY.PRESSED,
