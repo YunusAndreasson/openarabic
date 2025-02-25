@@ -42,14 +42,21 @@ const StatCard = React.memo(
         {
           backgroundColor: colors.cardBackground,
           shadowColor: colors.shadow,
+          borderColor: colors.cardBorder,
         },
       ],
-      [colors.cardBackground, colors.shadow]
+      [colors.cardBackground, colors.shadow, colors.cardBorder]
     );
 
     const iconContainerStyle = useMemo(
-      () => [styles.iconContainer, { backgroundColor: `${colors.text}10` }],
-      [colors.text]
+      () => [
+        styles.iconContainer,
+        {
+          backgroundColor: `${colors.text}10`,
+          borderColor: colors.cardBorder + '40',
+        },
+      ],
+      [colors.text, colors.cardBorder]
     );
 
     const iconStyle = useMemo(() => ({ color: colors.icon }), [colors.icon]);
@@ -116,9 +123,10 @@ function VocabularyStatsComponent({
       {
         backgroundColor: colors.cardBackground,
         shadowColor: colors.shadow,
+        borderColor: colors.cardBorder,
       },
     ],
-    [colors.cardBackground, colors.shadow]
+    [colors.cardBackground, colors.shadow, colors.cardBorder]
   );
 
   const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
@@ -138,23 +146,25 @@ function VocabularyStatsComponent({
             </View>
 
             {/* Circular Progress */}
-            <Canvas style={styles.circleCanvas}>
-              <Circle
-                cx={40}
-                cy={40}
-                r={32}
-                color={circleBackgroundColor}
-                style="stroke"
-                strokeWidth={6}
-              />
-              <Path
-                path={arcPath}
-                color={colors.text}
-                style="stroke"
-                strokeWidth={6}
-                transform={[{ translateX: 8 }, { translateY: 8 }]}
-              />
-            </Canvas>
+            <View style={styles.circleContainer}>
+              <Canvas style={styles.circleCanvas}>
+                <Circle
+                  cx={40}
+                  cy={40}
+                  r={32}
+                  color={circleBackgroundColor}
+                  style="stroke"
+                  strokeWidth={6}
+                />
+                <Path
+                  path={arcPath}
+                  color={colors.text}
+                  style="stroke"
+                  strokeWidth={6}
+                  transform={[{ translateX: 8 }, { translateY: 8 }]}
+                />
+              </Canvas>
+            </View>
           </View>
         </View>
       </View>
@@ -181,14 +191,16 @@ export const VocabularyStats = React.memo(VocabularyStatsComponent);
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   progressCard: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     height: 130,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     overflow: 'hidden',
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     ...LAYOUT.SHADOW.MEDIUM,
+    elevation: 3,
   },
   progressContent: {
     padding: LAYOUT.CARD.PADDING.LARGE,
@@ -197,7 +209,8 @@ const styles = StyleSheet.create({
   progressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    height: '100%',
   },
   progressTextContainer: {
     flex: 1,
@@ -220,10 +233,14 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: LAYOUT.OPACITY.DISABLED,
   },
+  circleContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
   circleCanvas: {
     width: 80,
     height: 80,
-    marginTop: LAYOUT.SPACING.SMALL,
   },
   statsRow: {
     flexDirection: 'row',
@@ -234,10 +251,12 @@ const styles = StyleSheet.create({
   statCard: {
     width: CARD_WIDTH,
     height: 90,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     ...LAYOUT.SHADOW.MEDIUM,
+    elevation: 3,
   },
   statContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
@@ -256,6 +275,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   statValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,

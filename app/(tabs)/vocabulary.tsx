@@ -43,6 +43,7 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, []);
 
+  // Memoize styles to prevent unnecessary rerenders
   const buttonContainerStyle = useMemo(() => [styles.buttonContainer], []);
 
   if (!user) {
@@ -117,6 +118,7 @@ export default function VocabularyScreen() {
             icon="play-circle"
             onPress={handleStartReview}
             variant="filled"
+            style={styles.reviewButton}
           />
         </View>
       )}
@@ -169,5 +171,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  reviewButton: {
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
 });
