@@ -1,10 +1,17 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { StyleSheet, View, Pressable, StyleProp, ViewStyle, Animated } from 'react-native';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  StyleProp,
+  ViewStyle,
+  Animated,
+  Platform,
+} from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
 import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -34,23 +41,83 @@ function ThemedCardComponent({
   const isDarkMode = useIsDarkMode();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const fadeAnim = useMemo(() => new Animated.Value(0), []);
-  const scaleAnim = useMemo(() => new Animated.Value(1), []);
+  const [isRendered, setIsRendered] = useState(false);
 
+  // Animation values using useRef for better performance
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const loadingFadeAnim = useRef(new Animated.Value(1)).current;
+
+  // Track if component is mounted to prevent state updates after unmount
+  const isMounted = useRef(true);
+
+  // Cleanup on unmount
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Mark component as rendered after initial layout
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isMounted.current) {
+        setIsRendered(true);
+      }
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Initial fade-in animation
+  useEffect(() => {
+    fadeAnim.setValue(0);
+
+    Animated.sequence([
+      Animated.delay(100),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }),
+    ]).start();
   }, [fadeAnim]);
 
-  const handleLoadStart = useCallback(() => setImageLoading(true), []);
-  const handleLoadEnd = useCallback(() => setImageLoading(false), []);
+  // Image loading handlers
+  const handleLoadStart = useCallback(() => {
+    setImageLoading(true);
+    loadingFadeAnim.setValue(0.5);
+    Animated.timing(loadingFadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [loadingFadeAnim]);
+
+  const handleLoadEnd = useCallback(() => {
+    Animated.timing(loadingFadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      if (isMounted.current) {
+        setImageLoading(false);
+      }
+    });
+  }, [loadingFadeAnim]);
+
   const handleError = useCallback(() => {
-    setImageLoading(false);
-    setImageError(true);
-  }, []);
+    Animated.timing(loadingFadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      if (isMounted.current) {
+        setImageLoading(false);
+        setImageError(true);
+      }
+    });
+  }, [loadingFadeAnim]);
 
   const handlePress = useCallback(() => {
     if (onPress) {
@@ -59,39 +126,7 @@ function ThemedCardComponent({
     }
   }, [onPress]);
 
-  // Memoize styles to prevent new object creation on each render
-  const themedStyles = useMemo(() => {
-    return {
-      card: {
-        backgroundColor: colors.cardBackground,
-        borderColor: colors.cardBorder,
-        shadowColor: colors.cardShadow,
-      },
-      loadingContainer: {
-        backgroundColor: colors.cardBackground,
-      },
-      gradient: {
-        colors: [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as const,
-      },
-      categoryBackground: {
-        // In dark mode, use a more subtle background
-        backgroundColor: isDarkMode ? colors.tint + '20' : colors.tint + '90',
-      },
-      category: {
-        // In dark mode, use the tint color; in light mode, use white for contrast
-        color: isDarkMode ? colors.tint : colors.white,
-        fontWeight: '600',
-      },
-      author: {
-        color: colors.authorText,
-      },
-      image: {
-        backgroundColor: colors.imagePlaceholder,
-      },
-    };
-  }, [colors, isDarkMode]);
-
-  // Handle press animations
+  // Press animation handlers
   const handlePressIn = useCallback(() => {
     Animated.spring(scaleAnim, {
       toValue: 0.97,
@@ -110,12 +145,152 @@ function ThemedCardComponent({
     }).start();
   }, [scaleAnim]);
 
+  // Memoize styles to prevent new object creation on each render
+  const themedStyles = useMemo(
+    () => ({
+      card: {
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.cardBorder,
+        shadowColor: colors.cardShadow,
+      },
+      loadingContainer: {
+        backgroundColor: isDarkMode ? colors.cardBackground : 'rgba(255, 255, 255, 0.85)',
+      },
+      gradient: {
+        colors: [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as const,
+      },
+      categoryBackground: {
+        backgroundColor: isDarkMode ? colors.tint + '20' : colors.tint + '90',
+      },
+      category: {
+        color: isDarkMode ? colors.tint : colors.white,
+        fontWeight: '600',
+      },
+      author: {
+        color: colors.authorText,
+      },
+      image: {
+        backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
+      },
+    }),
+    [colors, isDarkMode]
+  );
+
+  // Apply different styles based on platform and theme to fix light mode artifacts
+  const cardStyle = useMemo(() => {
+    const baseStyle = [
+      styles.card,
+      {
+        backgroundColor: isRendered ? themedStyles.card.backgroundColor : 'transparent',
+        borderColor: themedStyles.card.borderColor,
+      },
+      isLoading && styles.cardLoading,
+    ];
+
+    // Add platform-specific styles to fix light mode artifacts
+    if (Platform.OS === 'ios' && !isDarkMode) {
+      baseStyle.push(styles.iosLightModeCard as any);
+    }
+
+    return baseStyle;
+  }, [isRendered, themedStyles.card, isLoading, isDarkMode]);
+
+  // Memoize the card content to prevent unnecessary re-renders
+  const cardContent = useMemo(() => {
+    if (isLoading) {
+      return (
+        <View
+          style={[
+            styles.loadingCardContainer,
+            { backgroundColor: themedStyles.card.backgroundColor },
+          ]}
+        >
+          <Loader size="small" />
+        </View>
+      );
+    }
+
+    return (
+      <>
+        <View style={styles.imageContainer}>
+          {imageLoading && (
+            <Animated.View
+              style={[
+                styles.loadingContainer,
+                {
+                  backgroundColor: themedStyles.loadingContainer.backgroundColor,
+                  opacity: loadingFadeAnim,
+                },
+              ]}
+            >
+              <Loader size="small" color={colors.tint} />
+            </Animated.View>
+          )}
+          <Image
+            source={imageUrl}
+            style={[styles.image, themedStyles.image]}
+            contentFit="cover"
+            transition={300}
+            onLoadStart={handleLoadStart}
+            onLoadEnd={handleLoadEnd}
+            onError={handleError}
+            cachePolicy="memory-disk"
+            placeholder={
+              imageLoading ? undefined : { color: themedStyles.loadingContainer.backgroundColor }
+            }
+            recyclingKey={imageUrl}
+          />
+          {imageError && (
+            <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
+              <ThemedText style={styles.errorText}>Image not available</ThemedText>
+            </View>
+          )}
+          <LinearGradient
+            colors={themedStyles.gradient.colors}
+            style={styles.gradient}
+            locations={[0, 0.5, 1]}
+          />
+          <CategoryPill category={category} />
+        </View>
+        <View style={styles.contentContainer}>
+          <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+            {title}
+          </ThemedText>
+          <ThemedText
+            style={[styles.author, { color: themedStyles.author.color }]}
+            skipDefaultColor
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {author}
+          </ThemedText>
+        </View>
+      </>
+    );
+  }, [
+    isLoading,
+    imageLoading,
+    imageError,
+    imageUrl,
+    title,
+    author,
+    category,
+    colors,
+    themedStyles,
+    loadingFadeAnim,
+    handleLoadStart,
+    handleLoadEnd,
+    handleError,
+  ]);
+
   return (
     <Animated.View
       style={[
-        { opacity: fadeAnim },
         styles.animatedContainer,
-        { transform: [{ scale: scaleAnim }] },
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }],
+        },
       ]}
     >
       <Pressable
@@ -129,82 +304,7 @@ function ThemedCardComponent({
         accessibilityHint="Opens the article details"
         disabled={isLoading}
       >
-        <View
-          style={[
-            styles.card,
-            {
-              backgroundColor: themedStyles.card.backgroundColor,
-              borderColor: themedStyles.card.borderColor,
-            },
-            isLoading && styles.cardLoading,
-          ]}
-        >
-          {isLoading ? (
-            <View
-              style={[
-                styles.loadingCardContainer,
-                { backgroundColor: themedStyles.card.backgroundColor },
-              ]}
-            >
-              <Loader size="small" />
-            </View>
-          ) : (
-            <>
-              <View style={styles.imageContainer}>
-                {imageLoading && (
-                  <View
-                    style={[
-                      styles.loadingContainer,
-                      { backgroundColor: themedStyles.loadingContainer.backgroundColor },
-                    ]}
-                  >
-                    <Loader size="small" color={colors.tint} />
-                  </View>
-                )}
-                <Image
-                  source={imageUrl}
-                  style={[styles.image, themedStyles.image]}
-                  contentFit="cover"
-                  transition={300}
-                  onLoadStart={handleLoadStart}
-                  onLoadEnd={handleLoadEnd}
-                  onError={handleError}
-                  cachePolicy="memory-disk"
-                  placeholder={
-                    imageLoading
-                      ? undefined
-                      : { color: themedStyles.loadingContainer.backgroundColor }
-                  }
-                  recyclingKey={imageUrl}
-                />
-                {imageError && (
-                  <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
-                    <ThemedText style={styles.errorText}>Image not available</ThemedText>
-                  </View>
-                )}
-                <LinearGradient
-                  colors={themedStyles.gradient.colors}
-                  style={styles.gradient}
-                  locations={[0, 0.5, 1]}
-                />
-                <CategoryPill category={category} />
-              </View>
-              <View style={styles.contentContainer}>
-                <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">
-                  {title}
-                </ThemedText>
-                <ThemedText
-                  style={[styles.author, { color: themedStyles.author.color }]}
-                  skipDefaultColor
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {author}
-                </ThemedText>
-              </View>
-            </>
-          )}
-        </View>
+        <View style={cardStyle}>{cardContent}</View>
       </Pressable>
     </Animated.View>
   );
@@ -217,9 +317,11 @@ const styles = StyleSheet.create({
   animatedContainer: {
     marginHorizontal: LAYOUT.CARD.MARGIN.LARGE,
     marginVertical: LAYOUT.CARD.MARGIN.MEDIUM,
+    backfaceVisibility: 'hidden',
+    overflow: 'visible',
   },
   pressable: {
-    // No margins here as they're now on the animated container
+    overflow: 'visible',
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
@@ -228,10 +330,18 @@ const styles = StyleSheet.create({
     ...LAYOUT.SHADOW.MEDIUM,
     elevation: 3,
   },
+  iosLightModeCard: {
+    backgroundColor: 'white',
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    borderColor: 'transparent',
+  },
   imageContainer: {
     position: 'relative',
     width: '100%',
     height: 220,
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   image: {
     width: '100%',
@@ -246,6 +356,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,
+    overflow: 'hidden',
   },
   gradient: {
     position: 'absolute',
@@ -275,6 +386,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.CARD.PADDING.LARGE,
+    overflow: 'hidden',
   },
   cardLoading: {
     opacity: LAYOUT.OPACITY.DIMMED,
@@ -294,14 +406,5 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  blurView: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1,
-    overflow: 'hidden',
   },
 });
