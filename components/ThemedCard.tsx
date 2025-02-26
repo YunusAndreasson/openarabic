@@ -35,6 +35,7 @@ function ThemedCardComponent({
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const fadeAnim = useMemo(() => new Animated.Value(0), []);
+  const scaleAnim = useMemo(() => new Animated.Value(1), []);
 
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -90,22 +91,38 @@ function ThemedCardComponent({
     };
   }, [colors, isDarkMode]);
 
-  // Memoize pressable style function to prevent unnecessary rerenders
-  const getPressableStyle = useCallback(
-    ({ pressed }: { pressed: boolean }) => [
-      styles.pressable,
-      pressed && styles.pressed,
-      { shadowColor: themedStyles.card.shadowColor },
-      style,
-    ],
-    [themedStyles.card.shadowColor, style]
-  );
+  // Handle press animations
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  }, [scaleAnim]);
 
   return (
-    <Animated.View style={{ opacity: fadeAnim }}>
+    <Animated.View
+      style={[
+        { opacity: fadeAnim },
+        styles.animatedContainer,
+        { transform: [{ scale: scaleAnim }] },
+      ]}
+    >
       <Pressable
         onPress={handlePress}
-        style={getPressableStyle}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[styles.pressable, style]}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={`${category} article: ${title} by ${author}`}
@@ -197,13 +214,12 @@ function ThemedCardComponent({
 export default React.memo(ThemedCardComponent);
 
 const styles = StyleSheet.create({
-  pressable: {
+  animatedContainer: {
     marginHorizontal: LAYOUT.CARD.MARGIN.LARGE,
     marginVertical: LAYOUT.CARD.MARGIN.MEDIUM,
   },
-  pressed: {
-    opacity: LAYOUT.OPACITY.PRESSED,
-    transform: [{ scale: 0.98 }],
+  pressable: {
+    // No margins here as they're now on the animated container
   },
   card: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
