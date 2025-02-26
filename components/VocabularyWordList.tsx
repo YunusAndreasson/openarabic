@@ -1,5 +1,5 @@
-import React from 'react';
-import { StyleSheet, View, FlatList } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, View, FlatList, ListRenderItem } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CompactThemedCard } from './CompactThemedCard';
 import type { Tables } from '@/types/database.types';
 import { LAYOUT } from '@/constants/layout';
+import { useWordStatus } from '@/hooks/useWordStatus';
 
 type StudyWord = Tables<'study_words'> & {
   sentence_word:
@@ -23,19 +24,20 @@ interface VocabularyWordListProps {
   onWordPress: (word: StudyWord) => void;
 }
 
-export function VocabularyWordList({ title, words, onWordPress }: VocabularyWordListProps) {
-  const colors = useColors();
+// Separate word item component for better performance
+const WordItem = React.memo(
+  ({ studyWord, onPress, colors }: { studyWord: StudyWord; onPress: () => void; colors: any }) => {
+    // Use hooks outside of conditionals
+    const { statusLabel, statusIcon, isMastered, isOverdue } = useWordStatus(
+      studyWord.next_review_at,
+      studyWord.interval_days
+    );
 
-  const renderItem = ({ item: studyWord }: { item: StudyWord }) => {
     const word = studyWord.sentence_word;
     if (!word) return null;
 
-    const dueDate = new Date(studyWord.next_review_at);
-    const isOverdue = dueDate < new Date();
-    const isMastered = studyWord.interval_days >= 30;
-
     return (
-      <CompactThemedCard onPress={() => onWordPress(studyWord)}>
+      <CompactThemedCard onPress={onPress}>
         <View style={styles.wordInfo}>
           <ThemedText
             style={[
@@ -64,23 +66,48 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
                 },
               ]}
             >
-              <Ionicons
-                name={isMastered ? 'checkmark-circle' : isOverdue ? 'time' : 'school'}
-                size={16}
-                color={colors.background}
-              />
+              <Ionicons name={statusIcon} size={16} color={colors.background} />
               <ThemedText
                 style={[styles.statusText, { color: colors.background }]}
                 skipDefaultColor
               >
-                {isMastered ? 'Mastered' : isOverdue ? 'Due' : 'Learning'}
+                {statusLabel}
               </ThemedText>
             </View>
           </BlurView>
         </View>
       </CompactThemedCard>
     );
-  };
+  }
+);
+
+WordItem.displayName = 'WordItem';
+
+export function VocabularyWordList({ title, words, onWordPress }: VocabularyWordListProps) {
+  const colors = useColors();
+
+  // Memoize the render item function to prevent recreating on each render
+  const renderItem = useCallback<ListRenderItem<StudyWord>>(
+    ({ item: studyWord }) => (
+      <WordItem studyWord={studyWord} onPress={() => onWordPress(studyWord)} colors={colors} />
+    ),
+    [colors, onWordPress]
+  );
+
+  // Memoize key extractor for better performance
+  const keyExtractor = useCallback((item: StudyWord) => `${item.sentence_word_id}`, []);
+
+  // If there are no words, show a simple message
+  if (words.length === 0) {
+    return (
+      <View style={styles.container}>
+        <ThemedText style={styles.title}>{title}</ThemedText>
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>No words available</ThemedText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -88,9 +115,13 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
       <FlatList
         data={words}
         renderItem={renderItem}
-        keyExtractor={item => `${item.sentence_word_id}`}
+        keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        maxToRenderPerBatch={10} // Limit batch size for smoother performance
+        windowSize={5} // Reduce window size for better performance
+        initialNumToRender={10} // Limit initial render for better startup time
+        removeClippedSubviews={true} // Improve memory usage by detaching off-screen views
       />
     </View>
   );
@@ -141,5 +172,14 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '600',
+  },
+  emptyContainer: {
+    padding: LAYOUT.SPACING.XLARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
 });

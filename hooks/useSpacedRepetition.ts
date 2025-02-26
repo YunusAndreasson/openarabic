@@ -34,6 +34,7 @@ interface UseSpacedRepetitionReturn {
   progress: number;
   isComplete: boolean;
   invalidateQueries: () => void;
+  transitionType: 'fade' | 'slide'; // Ensure transitionType is properly exported
 }
 
 /**
@@ -45,8 +46,10 @@ export function useSpacedRepetition({
 }: UseSpacedRepetitionProps): UseSpacedRepetitionReturn {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [transitionType, setTransitionType] = useState<'fade' | 'slide'>('fade');
   const wordsRef = useRef<StudyWord[]>([]);
   const mountedRef = useRef(true);
+  const hasUpdatedWords = useRef(false);
   const queryClient = useQueryClient();
 
   // Cleanup on unmount
@@ -56,29 +59,44 @@ export function useSpacedRepetition({
     };
   }, []);
 
+  // Function to invalidate queries
+  const invalidateQueries = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+    queryClient.invalidateQueries({ queryKey: ['studyWords'] });
+    queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+    queryClient.invalidateQueries({ queryKey: ['dueWords'] });
+  }, [queryClient]);
+
   // Fetch due words
   const { data: dueWords = [], isLoading } = useQuery({
     queryKey: ['dueWords', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       const words = await studyWordsService.getStudyWords(userId);
-      const now = new Date();
 
-      // Directly convert dates to numbers for comparison
-      const filteredWords = words.filter(
-        word =>
-          word.sentence_word &&
-          word.next_review_at &&
-          new Date(word.next_review_at).getTime() <= now.getTime() &&
-          word.interval_days < 30
-      );
+      // Pre-compute current timestamp once for comparison
+      const now = Date.now();
 
-      // Sort by next review date
-      return filteredWords.sort((a, b) => {
-        const dateA = new Date(a.next_review_at).getTime();
-        const dateB = new Date(b.next_review_at).getTime();
-        return dateA - dateB;
+      // Filter due words more efficiently
+      const filteredWords = words.filter(word => {
+        if (!word.sentence_word || !word.next_review_at) return false;
+
+        // Avoid creating multiple Date objects in the loop
+        const reviewDate = new Date(word.next_review_at).getTime();
+        return reviewDate <= now && word.interval_days < 30;
       });
+
+      // Sort by next review date (oldest first)
+      if (filteredWords.length > 1) {
+        filteredWords.sort((a, b) => {
+          // Use cached timestamp values to avoid redundant Date object creation
+          const dateA = new Date(a.next_review_at).getTime();
+          const dateB = new Date(b.next_review_at).getTime();
+          return dateA - dateB;
+        });
+      }
+
+      return filteredWords;
     },
     enabled: !!userId,
   });
@@ -95,8 +113,8 @@ export function useSpacedRepetition({
   // Calculate progress percentage
   const progress = dueWords.length > 0 ? (currentIndex / dueWords.length) * 100 : 0;
 
-  // Get current word
-  const currentWord = dueWords[currentIndex];
+  // Get current word with safety check to prevent "error loading word"
+  const currentWord = currentIndex < dueWords.length ? dueWords[currentIndex] : undefined;
 
   // Word update mutation
   const updateWordMutation = useMutation({
@@ -110,6 +128,11 @@ export function useSpacedRepetition({
       wordToUpdate: StudyWord;
     }) => {
       setIsUpdating(true);
+      hasUpdatedWords.current = true;
+
+      // No need to set transition type here, it's already set in updateWord function
+      // Remove duplicate: setTransitionType(success ? 'fade' : 'slide');
+
       const newInterval = success
         ? Math.max(1, Math.round(wordToUpdate.interval_days * wordToUpdate.ease_factor))
         : 1;
@@ -131,13 +154,14 @@ export function useSpacedRepetition({
         console.error('Error updating word review:', error);
         // Continue to next word even if there's an error
         if (mountedRef.current) {
-          setCurrentIndex(prev => prev + 1);
+          setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
         }
       }
     },
     onSuccess: () => {
       if (mountedRef.current) {
-        setCurrentIndex(prev => prev + 1);
+        // Always use function form to ensure latest value
+        setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
       }
     },
     onSettled: () => {
@@ -148,8 +172,15 @@ export function useSpacedRepetition({
   // Update word function
   const updateWord = useCallback(
     async (wordId: string, success: boolean) => {
+      // Guard against updating past the end of the array
+      if (currentIndex >= wordsRef.current.length) return;
+
       const wordToUpdate = wordsRef.current[currentIndex];
       if (!wordToUpdate?.sentence_word_id) return;
+
+      // Set transition type immediately before the animation starts
+      // This is the ONLY place we should set the transition type
+      setTransitionType(success ? 'fade' : 'slide');
 
       await updateWordMutation.mutate({
         wordId,
@@ -168,15 +199,16 @@ export function useSpacedRepetition({
         onComplete();
       }
     }
-  }, [isComplete, onComplete]);
+  }, [isComplete, onComplete, invalidateQueries]);
 
-  // Function to invalidate queries
-  const invalidateQueries = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-    queryClient.invalidateQueries({ queryKey: ['studyWords'] });
-    queryClient.invalidateQueries({ queryKey: ['userProgress'] });
-    queryClient.invalidateQueries({ queryKey: ['dueWords'] });
-  }, [queryClient]);
+  // Invalidate queries on unmount if session was started but not completed
+  useEffect(() => {
+    return () => {
+      if (hasUpdatedWords.current && !isComplete && mountedRef.current) {
+        invalidateQueries();
+      }
+    };
+  }, [invalidateQueries, isComplete]);
 
   return {
     dueWords,
@@ -188,5 +220,6 @@ export function useSpacedRepetition({
     progress,
     isComplete,
     invalidateQueries,
+    transitionType, // Make sure we export transitionType
   };
 }

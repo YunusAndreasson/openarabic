@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
@@ -15,6 +15,8 @@ import {
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { Loader } from './Loader';
+import { useComponentAnimation } from '@/hooks/useComponentAnimation';
+import { useGraphData } from '@/hooks/useGraphData';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -29,16 +31,7 @@ interface VocabularyGraphProps {
 export const VocabularyGraph = React.memo(
   ({ data = [], title = 'Weekly Progress', isLoading = false }: VocabularyGraphProps) => {
     const colors = useColors();
-    const [isReady, setIsReady] = useState(false);
-
-    // Set component as ready after a short delay to ensure smooth rendering
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setIsReady(true);
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }, []);
+    const { isReady } = useComponentAnimation();
 
     // Canvas dimensions
     const PADDING = 16;
@@ -46,109 +39,12 @@ export const VocabularyGraph = React.memo(
     const GRAPH_WIDTH =
       Dimensions.get('window').width - LAYOUT.SCREEN_EDGE_PADDING * 2 - PADDING * 2;
 
-    // Y-axis calculations
-    const maxValue = useMemo(() => {
-      if (data.length === 0) return 5;
-      const max = Math.max(...data.map(item => item.wordsLearned), 5); // Minimum of 5 for scale
-      return Math.ceil(max / 5) * 5; // Round up to nearest 5
-    }, [data]);
-
-    // Create points for the graph
-    const points = useMemo(() => {
-      if (data.length <= 1) {
-        // Handle edge case of 0 or 1 data points
-        if (data.length === 0) return [];
-
-        // If only one data point, create a flat line
-        const point = {
-          x: GRAPH_WIDTH / 2,
-          y: GRAPH_HEIGHT - (data[0].wordsLearned / maxValue) * GRAPH_HEIGHT,
-          value: data[0].wordsLearned,
-          label: data[0].date,
-        };
-        return [{ ...point, x: 0 }, point, { ...point, x: GRAPH_WIDTH }];
-      }
-
-      const segmentWidth = GRAPH_WIDTH / (data.length - 1);
-
-      return data.map((item, index) => {
-        const x = index * segmentWidth;
-        // Invert Y coordinate (0 is at top in canvas)
-        const y = GRAPH_HEIGHT - (item.wordsLearned / maxValue) * GRAPH_HEIGHT;
-        return { x, y, value: item.wordsLearned, label: item.date };
-      });
-    }, [data, GRAPH_WIDTH, GRAPH_HEIGHT, maxValue]);
-
-    // Create the path for the area under the curve
-    const areaPath = useMemo(() => {
-      if (!points || points.length === 0) return '';
-      if (points.length === 1) {
-        // Handle single point case
-        const p = points[0];
-        return `M ${p.x} ${p.y} L ${p.x} ${GRAPH_HEIGHT} L ${p.x} ${GRAPH_HEIGHT} Z`;
-      }
-
-      let path = `M ${points[0].x} ${points[0].y}`;
-
-      // Create smooth curve using cubic bezier curves
-      for (let i = 0; i < points.length - 1; i++) {
-        const current = points[i];
-        const next = points[i + 1];
-
-        // Calculate horizontal distance between points
-        const xDistance = next.x - current.x;
-
-        // Calculate control points for smooth curve
-        // Using 1/3 ratio for control points creates a natural curve
-        const controlPointX1 = current.x + xDistance / 3;
-        const controlPointY1 = current.y;
-        const controlPointX2 = next.x - xDistance / 3;
-        const controlPointY2 = next.y;
-
-        // Add cubic bezier curve command
-        path += ` C ${controlPointX1} ${controlPointY1}, ${controlPointX2} ${controlPointY2}, ${next.x} ${next.y}`;
-      }
-
-      // Complete the path by going down to the bottom and back to start
-      path += ` L ${points[points.length - 1].x} ${GRAPH_HEIGHT}`;
-      path += ` L ${points[0].x} ${GRAPH_HEIGHT}`;
-      path += ' Z'; // Close the path
-
-      return path;
-    }, [points, GRAPH_HEIGHT]);
-
-    // Create the line path with smooth curves
-    const linePath = useMemo(() => {
-      if (!points || points.length === 0) return '';
-      if (points.length === 1) {
-        // Handle single point case
-        const p = points[0];
-        return `M ${p.x - 10} ${p.y} L ${p.x + 10} ${p.y}`;
-      }
-
-      let path = `M ${points[0].x} ${points[0].y}`;
-
-      // Create smooth curve using cubic bezier curves
-      for (let i = 0; i < points.length - 1; i++) {
-        const current = points[i];
-        const next = points[i + 1];
-
-        // Calculate horizontal distance between points
-        const xDistance = next.x - current.x;
-
-        // Calculate control points for smooth curve
-        // Using 1/3 ratio for control points creates a natural curve
-        const controlPointX1 = current.x + xDistance / 3;
-        const controlPointY1 = current.y;
-        const controlPointX2 = next.x - xDistance / 3;
-        const controlPointY2 = next.y;
-
-        // Add cubic bezier curve command
-        path += ` C ${controlPointX1} ${controlPointY1}, ${controlPointX2} ${controlPointY2}, ${next.x} ${next.y}`;
-      }
-
-      return path;
-    }, [points]);
+    // Use the graph data hook to process data
+    const { points, areaPath, linePath, totalWordsLearned, dailyAverage, maxValue } = useGraphData(
+      data,
+      GRAPH_WIDTH,
+      GRAPH_HEIGHT
+    );
 
     // Card style with theme colors
     const cardStyle = useMemo(
@@ -163,33 +59,26 @@ export const VocabularyGraph = React.memo(
       [colors.cardBackground, colors.shadow, colors.cardBorder]
     );
 
-    // Calculate total words learned
-    const totalWordsLearned = useMemo(() => {
-      return data.reduce((sum, item) => sum + item.wordsLearned, 0);
-    }, [data]);
-
-    // Calculate daily average
-    const dailyAverage = useMemo(() => {
-      if (data.length === 0) return 0;
-      const average = totalWordsLearned / data.length;
-      return Math.round(average * 10) / 10; // Round to 1 decimal place
-    }, [totalWordsLearned, data.length]);
-
     // Memoize gradient colors
     const gradientColors = useMemo(() => [`${colors.text}15`, `${colors.text}05`], [colors.text]);
+
+    // Card header with title and icon - reused in both loading and loaded states
+    const cardHeader = (
+      <View style={styles.header}>
+        <View style={styles.titleRow}>
+          <ThemedText style={styles.title}>{title}</ThemedText>
+          <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
+            <Ionicons name="trending-up" size={16} color={colors.icon} />
+          </View>
+        </View>
+      </View>
+    );
 
     // Show loading state
     if (isLoading || !isReady) {
       return (
         <View style={cardStyle}>
-          <View style={styles.header}>
-            <View style={styles.titleRow}>
-              <ThemedText style={styles.title}>{title}</ThemedText>
-              <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
-                <Ionicons name="trending-up" size={16} color={colors.icon} />
-              </View>
-            </View>
-          </View>
+          {cardHeader}
           <View style={styles.loadingContainer}>
             <Loader size="small" color={colors.tint} />
             <ThemedText style={styles.loadingText}>Loading graph...</ThemedText>
@@ -198,16 +87,21 @@ export const VocabularyGraph = React.memo(
       );
     }
 
-    return (
-      <View style={cardStyle}>
-        <View style={styles.header}>
-          <View style={styles.titleRow}>
-            <ThemedText style={styles.title}>{title}</ThemedText>
-            <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
-              <Ionicons name="trending-up" size={16} color={colors.icon} />
-            </View>
+    // Show empty state with message when no data is available
+    if (data.length === 0) {
+      return (
+        <View style={cardStyle}>
+          {cardHeader}
+          <View style={styles.loadingContainer}>
+            <ThemedText style={styles.loadingText}>No data available yet</ThemedText>
           </View>
         </View>
+      );
+    }
+
+    return (
+      <View style={cardStyle}>
+        {cardHeader}
 
         <View style={styles.graphContainer}>
           <Canvas style={styles.canvas}>

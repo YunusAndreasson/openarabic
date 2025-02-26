@@ -1,10 +1,13 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
 import { Loader } from './Loader';
+import { useComponentAnimation } from '@/hooks/useComponentAnimation';
+import { useProgressAnimation } from '@/hooks/useProgressAnimation';
+import { createArcPath } from '@/utils/graphUtils';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -16,93 +19,26 @@ interface VocabularyStatsProps {
   isLoading?: boolean;
 }
 
-// Memoize the arc path creation function to prevent recalculation
-const createArcPath = (progress: number, radius: number): string => {
-  const center = radius;
-  const startAngle = -Math.PI / 2; // Start from top
-  const endAngle = startAngle + (2 * Math.PI * progress) / 100;
-
-  const x1 = center + radius * Math.cos(startAngle);
-  const y1 = center + radius * Math.sin(startAngle);
-  const x2 = center + radius * Math.cos(endAngle);
-  const y2 = center + radius * Math.sin(endAngle);
-
-  const largeArcFlag = progress > 50 ? 1 : 0;
-
-  return `M ${center} ${center - radius} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
-};
-
 function VocabularyStatsComponent({
   totalWords,
+  dueWords,
   masteredWords,
+  learningWords,
   isLoading = false,
 }: VocabularyStatsProps) {
   const colors = useColors();
-  const [isReady, setIsReady] = useState(false);
+  const { isReady } = useComponentAnimation();
 
-  // Use state for animated progress
-  const [animatedProgress, setAnimatedProgress] = useState(0);
-
-  // Memoize the progress calculation
+  // Calculate progress as a percentage - protect against division by zero
   const progress = useMemo(
     () => (totalWords > 0 ? (masteredWords / totalWords) * 100 : 0),
     [totalWords, masteredWords]
   );
 
-  // Set component as ready after a short delay to ensure smooth rendering
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 300);
+  // Use the animation hook to animate the progress
+  const animatedProgress = useProgressAnimation(progress, 1000, isReady);
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Run animation when progress changes
-  useEffect(() => {
-    if (!isReady) return;
-
-    let startTimestamp: number | null = null;
-    let animationFrameId: number;
-    const duration = 1000; // Animation duration in ms
-    const startValue = animatedProgress;
-    const endValue = progress;
-
-    // Animation function using requestAnimationFrame
-    const animate = (timestamp: number) => {
-      if (!startTimestamp) startTimestamp = timestamp;
-      const elapsed = timestamp - startTimestamp;
-
-      // Calculate progress (0 to 1)
-      const animationProgress = Math.min(elapsed / duration, 1);
-
-      // Apply easing function (cubic out)
-      const easedProgress = 1 - Math.pow(1 - animationProgress, 3);
-
-      // Calculate current value
-      const currentValue = startValue + (endValue - startValue) * easedProgress;
-
-      // Update state
-      setAnimatedProgress(currentValue);
-
-      // Continue animation if not finished
-      if (animationProgress < 1) {
-        animationFrameId = requestAnimationFrame(animate);
-      }
-    };
-
-    // Start animation
-    animationFrameId = requestAnimationFrame(animate);
-
-    // Cleanup
-    return () => {
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-    };
-  }, [progress, isReady]);
-
-  // Memoize styles
+  // Memoize styles to prevent unnecessary re-renders
   const progressCardStyle = useMemo(
     () => [
       styles.progressCard,

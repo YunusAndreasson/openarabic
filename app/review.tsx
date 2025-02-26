@@ -12,6 +12,7 @@ import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
+import { Loader } from '@/components/Loader';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
@@ -30,6 +31,7 @@ export default function ReviewScreen() {
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const mountedRef = useRef(true);
   const position = useRef(new Animated.ValueXY()).current;
+  const fadeOpacity = useRef(new Animated.Value(1)).current;
   const meaningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use the spaced repetition hook
@@ -42,6 +44,8 @@ export default function ReviewScreen() {
     progress,
     isComplete,
     invalidateQueries,
+    transitionType,
+    dueWords,
   } = useSpacedRepetition({
     userId: user?.id,
     onComplete: () => {
@@ -80,10 +84,8 @@ export default function ReviewScreen() {
           duration: SWIPE_OUT_DURATION,
           useNativeDriver: true,
         }).start(() => {
-          // Hide current word before updating to next word
           position.setValue({ x: -SCREEN_WIDTH, y: 0 });
           updateWord(currentWord.sentence_word_id, true);
-          // Animation will be reset in onSuccess callback
           setIsAnimating(false);
         });
       } else if (direction === 'left') {
@@ -96,10 +98,8 @@ export default function ReviewScreen() {
           setShowMeaningOverlay(true);
           meaningTimeoutRef.current = setTimeout(() => {
             setShowMeaningOverlay(false);
-            // Hide current word before updating to next word
             position.setValue({ x: -SCREEN_WIDTH, y: 0 });
             updateWord(currentWord.sentence_word_id, false);
-            // Animation will be reset in onSuccess callback
             setIsAnimating(false);
           }, MEANING_DISPLAY_DURATION);
         });
@@ -161,28 +161,66 @@ export default function ReviewScreen() {
 
   // Reset animation when current index changes
   useEffect(() => {
-    // Animate the new word coming in from the right
-    position.setValue({ x: SCREEN_WIDTH, y: 0 });
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      useNativeDriver: true,
-    }).start();
-  }, [currentIndex, position]);
+    // Stop any ongoing animations first for better performance
+    fadeOpacity.stopAnimation();
+    position.stopAnimation();
+
+    // Choose animation type based on transitionType
+    if (transitionType === 'fade') {
+      // For correct answers, fade in place
+      fadeOpacity.setValue(0);
+      position.setValue({ x: 0, y: 0 });
+
+      // Use timing animation with easing for smooth fade
+      Animated.timing(fadeOpacity, {
+        toValue: 1,
+        duration: 250, // Slightly faster for better UX
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // For incorrect answers, slide in from right (default behavior)
+      position.setValue({ x: SCREEN_WIDTH, y: 0 });
+
+      // Use spring for natural slide motion
+      Animated.spring(position, {
+        toValue: { x: 0, y: 0 },
+        useNativeDriver: true,
+        tension: 65, // Slightly higher tension for faster animation
+        friction: 7, // Keep same friction for bouncy effect
+      }).start();
+    }
+  }, [currentIndex, position, fadeOpacity, transitionType]);
+
+  // Memoize the progress bar style for better performance
+  const progressBarStyle = useMemo(
+    () => ({
+      height: LAYOUT.SPACING.SMALL,
+      borderRadius: LAYOUT.SPACING.SMALL / 2,
+      marginBottom: LAYOUT.SPACING.LARGE,
+      width: '100%' as any, // Type assertion to fix width compatibility issue
+      marginTop: isLoading || isComplete || !currentWord ? 0 : LAYOUT.SPACING.XLARGE,
+    }),
+    [isLoading, isComplete, currentWord]
+  );
 
   if (isLoading || !user) {
     return (
       <ThemedView style={styles.container}>
-        <ProgressBar
-          progress={0}
-          style={{
-            height: LAYOUT.SPACING.SMALL,
-            borderRadius: LAYOUT.SPACING.SMALL / 2,
-            marginBottom: LAYOUT.SPACING.LARGE,
-            width: '100%',
-          }}
-        />
+        <ProgressBar progress={0} style={progressBarStyle} />
         <View style={styles.loadingContainer}>
-          <ThemedText style={styles.loadingText}>Loading...</ThemedText>
+          <Loader size="large" color={colors.tint} />
+        </View>
+      </ThemedView>
+    );
+  }
+
+  if (dueWords.length === 0 && !isLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <ProgressBar progress={0} style={progressBarStyle} />
+        <View style={styles.completedContainer}>
+          <ThemedText style={styles.completedText}>No words to review!</ThemedText>
+          <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
         </View>
       </ThemedView>
     );
@@ -191,21 +229,12 @@ export default function ReviewScreen() {
   if (isComplete) {
     return (
       <ThemedView style={styles.container}>
-        <ProgressBar
-          progress={100}
-          style={{
-            height: LAYOUT.SPACING.SMALL,
-            borderRadius: LAYOUT.SPACING.SMALL / 2,
-            marginBottom: LAYOUT.SPACING.LARGE,
-            width: '100%',
-          }}
-        />
+        <ProgressBar progress={100} style={progressBarStyle} />
         <View style={styles.completedContainer}>
           <ThemedText style={styles.completedText}>Review complete!</ThemedText>
           <ThemedButton
             title="Done"
             onPress={() => {
-              // Ensure data is refreshed before navigating back
               invalidateQueries();
               handleClose();
             }}
@@ -216,20 +245,24 @@ export default function ReviewScreen() {
     );
   }
 
-  if (!currentWord || !sentence || !wordForm) {
+  if (!currentWord) {
     return (
       <ThemedView style={styles.container}>
-        <ProgressBar
-          progress={0}
-          style={{
-            height: LAYOUT.SPACING.SMALL,
-            borderRadius: LAYOUT.SPACING.SMALL / 2,
-            marginBottom: LAYOUT.SPACING.LARGE,
-            width: '100%',
-          }}
-        />
+        <ProgressBar progress={0} style={progressBarStyle} />
         <View style={styles.loadingContainer}>
           <ThemedText style={styles.errorText}>Error loading word</ThemedText>
+          <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
+        </View>
+      </ThemedView>
+    );
+  }
+
+  if (!sentence || !wordForm) {
+    return (
+      <ThemedView style={styles.container}>
+        <ProgressBar progress={0} style={progressBarStyle} />
+        <View style={styles.loadingContainer}>
+          <ThemedText style={styles.errorText}>Error loading sentence data</ThemedText>
           <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
         </View>
       </ThemedView>
@@ -240,21 +273,14 @@ export default function ReviewScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <ThemedView style={styles.container}>
-        {/* Progress bar with increased top margin */}
-        <ProgressBar
-          progress={progress}
-          style={{
-            height: LAYOUT.SPACING.SMALL,
-            borderRadius: LAYOUT.SPACING.SMALL / 2,
-            marginBottom: LAYOUT.SPACING.LARGE,
-            width: '100%',
-            marginTop: LAYOUT.SPACING.XLARGE,
-          }}
-          fillColor={colors.tint}
-        />
+        <ProgressBar progress={progress} style={progressBarStyle} fillColor={colors.tint} />
 
         <Animated.View
-          style={[styles.card, { transform: [{ translateX: position.x }] }]}
+          style={[
+            styles.card,
+            { transform: [{ translateX: position.x }] },
+            { opacity: fadeOpacity },
+          ]}
           {...panResponder.panHandlers}
         >
           <ThemedText style={styles.sentence} skipDefaultColor>
@@ -270,7 +296,6 @@ export default function ReviewScreen() {
           </ThemedText>
         </Animated.View>
 
-        {/* Simplified meaning overlay for displaying the correct answer */}
         {showMeaningOverlay && (
           <View
             style={[
@@ -288,7 +313,6 @@ export default function ReviewScreen() {
           </View>
         )}
 
-        {/* Updated bottom button container with larger icons - always visible */}
         <View style={styles.buttonContainer}>
           <Pressable
             onPress={handleClose}
@@ -427,10 +451,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
   },
   completedContainer: {
     flex: 1,
