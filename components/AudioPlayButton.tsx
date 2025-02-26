@@ -6,14 +6,15 @@ import { useColors } from '@/hooks/useColors';
 import { useNavigation } from 'expo-router';
 import { LAYOUT } from '@/constants/layout';
 import { ThemedButton } from './ThemedButton';
+import { Ionicons } from '@expo/vector-icons';
 
 interface AudioPlayButtonProps {
   audioUrl: string;
   style?: any;
 }
 
-// Memoize the AudioWave component to prevent unnecessary rerenders
-const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color: string }) => {
+// Custom AudioWaveIcon component that can be placed in the icon position
+const AudioWaveIcon = React.memo(({ color }: { color: string }) => {
   const anim1 = useRef(new Animated.Value(0.4)).current;
   const anim2 = useRef(new Animated.Value(0.4)).current;
   const anim3 = useRef(new Animated.Value(0.4)).current;
@@ -21,43 +22,42 @@ const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color:
   const animations = useMemo(() => [anim1, anim2, anim3], [anim1, anim2, anim3]);
 
   useEffect(() => {
-    if (isPlaying) {
-      const animationSequence = animations.map((anim, i) =>
-        Animated.sequence([
-          Animated.delay(i * 200),
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(anim, {
-                toValue: 1,
-                duration: 500,
-                useNativeDriver: true,
-              }),
-              Animated.timing(anim, {
-                toValue: 0.4,
-                duration: 500,
-                useNativeDriver: true,
-              }),
-            ])
-          ),
-        ])
-      );
+    const animationSequence = animations.map((anim, i) =>
+      Animated.sequence([
+        Animated.delay(i * 200),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0.4,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+      ])
+    );
 
-      Animated.parallel(animationSequence).start();
-    } else {
+    Animated.parallel(animationSequence).start();
+
+    return () => {
       animations.forEach(anim => {
         anim.stopAnimation();
-        anim.setValue(0.4);
       });
-    }
-  }, [isPlaying, animations]);
+    };
+  }, [animations]);
 
   return (
-    <View style={styles.waveContainer}>
+    <View style={styles.iconWaveContainer}>
       {animations.map((anim, index) => (
         <Animated.View
           key={index}
           style={[
-            styles.bar,
+            styles.iconBar,
             {
               backgroundColor: color,
               transform: [{ scaleY: anim }],
@@ -72,27 +72,11 @@ const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color:
 // Main component with optimizations
 function AudioPlayButtonComponent({ audioUrl, style }: AudioPlayButtonProps) {
   const colors = useColors();
-  const [sound, setSound] = useState<Audio.Sound>();
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigation = useNavigation();
-
-  // Memoize the loadSound function
-  const loadSound = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUrl },
-        { shouldPlay: false },
-        onPlaybackStatusUpdate
-      );
-      setSound(sound);
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Error loading sound', error);
-      setIsLoading(false);
-    }
-  }, [audioUrl]);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   // Memoize the onPlaybackStatusUpdate function
   const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
@@ -105,63 +89,108 @@ function AudioPlayButtonComponent({ audioUrl, style }: AudioPlayButtonProps) {
   }, []);
 
   // Memoize the togglePlayback function
-  const togglePlayback = useCallback(
-    async (event: any) => {
+  const togglePlayback = useCallback(async () => {
+    try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
       if (!sound) {
-        await loadSound();
+        setIsLoading(true);
+        // Create a new sound instance
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          { shouldPlay: true },
+          onPlaybackStatusUpdate
+        );
+
+        // Store in state and ref
+        setSound(newSound);
+        soundRef.current = newSound;
+        setIsPlaying(true);
+        setIsLoading(false);
         return;
       }
 
-      try {
-        const status = await sound.getStatusAsync();
-        if (status.isLoaded) {
-          if (status.isPlaying) {
-            await sound.pauseAsync();
-          } else {
-            await sound.playAsync();
+      // Get the latest status
+      const status = await sound.getStatusAsync();
+
+      if (status.isLoaded) {
+        if (status.isPlaying) {
+          await sound.pauseAsync();
+        } else {
+          // If it reached the end, seek to start
+          if (
+            status.positionMillis !== undefined &&
+            status.durationMillis !== undefined &&
+            status.positionMillis >= status.durationMillis - 100
+          ) {
+            await sound.setPositionAsync(0);
           }
+          await sound.playAsync();
         }
-      } catch (error) {
-        console.error('Error toggling playback', error);
+      } else {
+        // Sound was unloaded, create a new one
+        setIsLoading(true);
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          { shouldPlay: true },
+          onPlaybackStatusUpdate
+        );
+        setSound(newSound);
+        soundRef.current = newSound;
+        setIsPlaying(true);
+        setIsLoading(false);
       }
-    },
-    [sound, loadSound]
-  );
+    } catch (error) {
+      console.error('Error toggling playback', error);
+      setIsLoading(false);
 
-  // Load sound on mount and unload on unmount
-  useEffect(() => {
-    loadSound();
-
-    return () => {
+      // Reset if there was an error
       if (sound) {
-        sound.unloadAsync();
+        try {
+          await sound.unloadAsync();
+        } catch (e) {
+          // Ignore errors during cleanup
+        }
+        setSound(null);
+        soundRef.current = null;
+      }
+    }
+  }, [sound, audioUrl, onPlaybackStatusUpdate]);
+
+  // Clean up sound on unmount
+  useEffect(() => {
+    return () => {
+      const currentSound = soundRef.current;
+      if (currentSound) {
+        currentSound.unloadAsync().catch(() => {});
+        soundRef.current = null;
       }
     };
-  }, [audioUrl, loadSound, sound]);
+  }, []);
 
+  // Stop audio when navigating away
   useEffect(() => {
     const unsubscribe = navigation.addListener('beforeRemove', () => {
-      if (sound) {
-        sound.stopAsync();
+      const currentSound = soundRef.current;
+      if (currentSound) {
+        currentSound.stopAsync().catch(() => {});
       }
     });
     return unsubscribe;
-  }, [sound, navigation]);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>
       <ThemedButton
         variant={isPlaying ? 'outlined' : 'filled'}
         title={isPlaying ? 'Pause' : 'Play'}
+        icon={isPlaying ? undefined : 'play-circle'}
+        iconComponent={isPlaying ? <AudioWaveIcon color={colors.tint} /> : undefined}
         onPress={togglePlayback}
-        disabled={false}
+        disabled={isLoading}
         loading={isLoading}
-        style={[styles.button, style]}
-      >
-        <AudioWave isPlaying={isPlaying} color={isPlaying ? colors.tint : colors.background} />
-      </ThemedButton>
+        style={styles.button}
+      />
     </View>
   );
 }
@@ -181,13 +210,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     height: LAYOUT.SPACING.LARGE,
-    marginLeft: LAYOUT.SPACING.MEDIUM,
+    marginLeft: 0, // Reduced margin to place closer to the text
   },
   bar: {
     width: 2,
     height: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.SPACING.TINY / 4,
     marginHorizontal: LAYOUT.SPACING.TINY / 4,
+    opacity: 0.8,
+  },
+  iconWaveContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 24,
+    width: 24,
+    justifyContent: 'center',
+  },
+  iconBar: {
+    width: 2,
+    height: 16,
+    borderRadius: 1,
+    marginHorizontal: 1,
     opacity: 0.8,
   },
 });

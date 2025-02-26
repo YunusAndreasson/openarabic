@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState, useCallback } from 'react';
+import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { readingListService } from '../services/reading_list';
 import { useAuth } from '../hooks/useAuth';
 import { useColors } from '../hooks/useColors';
@@ -10,7 +10,7 @@ import { ThemedButton } from './ThemedButton';
 
 interface ReadingListButtonProps {
   articleId: number;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function ReadingListButton({ articleId, style }: ReadingListButtonProps) {
@@ -19,29 +19,29 @@ export function ReadingListButton({ articleId, style }: ReadingListButtonProps) 
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
 
+  const checkReadingListStatus = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const status = await readingListService.isInReadingList(user.id, articleId);
+      setIsInReadingList(status);
+    } catch (error) {
+      console.error('Error checking reading list status', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, articleId]);
+
   useEffect(() => {
     if (user && !isAuthLoading) {
       checkReadingListStatus();
     } else {
       setIsLoading(false);
     }
-  }, [user, articleId, isAuthLoading]);
+  }, [user, articleId, isAuthLoading, checkReadingListStatus]);
 
-  const checkReadingListStatus = async () => {
-    try {
-      const status = await readingListService.isInReadingList(user!.id, articleId);
-      setIsInReadingList(status);
-    } catch {
-      console.error('Error checking reading list status');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const toggleReadingList = async (event: any) => {
-    if (!user) {
-      return;
-    }
+  const toggleReadingList = useCallback(async () => {
+    if (!user) return;
 
     setIsLoading(true);
     try {
@@ -59,12 +59,12 @@ export function ReadingListButton({ articleId, style }: ReadingListButtonProps) 
         });
       }
       setIsInReadingList(!isInReadingList);
-    } catch {
-      console.error('Error toggling reading list');
+    } catch (error) {
+      console.error('Error toggling reading list', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, articleId, isInReadingList]);
 
   return (
     <View style={styles.container}>
@@ -75,7 +75,7 @@ export function ReadingListButton({ articleId, style }: ReadingListButtonProps) 
         onPress={toggleReadingList}
         disabled={!user || isLoading}
         loading={isLoading}
-        style={[styles.button, style]}
+        style={styles.button}
       />
     </View>
   );

@@ -217,7 +217,7 @@ export default function AccountScreen() {
               title="Twitter"
               onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
               icon="logo-twitter"
-              style={styles.actionButton}
+              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
             />
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <ThemedButton
@@ -225,7 +225,7 @@ export default function AccountScreen() {
               title="Instagram"
               onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
               icon="logo-instagram"
-              style={styles.actionButton}
+              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
             />
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <ThemedButton
@@ -233,7 +233,7 @@ export default function AccountScreen() {
               title="Facebook"
               onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
               icon="logo-facebook"
-              style={styles.actionButton}
+              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
             />
           </View>
         </View>
@@ -256,7 +256,7 @@ export default function AccountScreen() {
               title="Contact Support"
               onPress={handleSupport}
               icon="mail"
-              style={styles.actionButton}
+              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
             />
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <ThemedButton
@@ -264,7 +264,11 @@ export default function AccountScreen() {
               title="Sign Out"
               onPress={signOut}
               icon="log-out"
-              style={[styles.actionButton, styles.signOutButton]}
+              style={[
+                styles.actionButton,
+                styles.signOutButton,
+                { backgroundColor: colors.cardBackground },
+              ]}
             />
           </View>
         </View>
@@ -348,7 +352,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: LAYOUT.OPACITY.DIMMED,
+    shadowOpacity: 0.1,
     shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -360,12 +364,13 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: LAYOUT.OPACITY.DIMMED,
+    shadowOpacity: 0.1,
     shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
+    opacity: 0.5,
   },
   settingRow: {
     flexDirection: 'row',
@@ -388,9 +393,10 @@ const styles = StyleSheet.create({
   actionButton: {
     borderRadius: 0,
     borderWidth: 0,
-    justifyContent: 'flex-start', // Left align the button content
+    justifyContent: 'flex-start',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
+    minHeight: 48,
   },
   signOutButton: {
     opacity: LAYOUT.OPACITY.DIMMED,

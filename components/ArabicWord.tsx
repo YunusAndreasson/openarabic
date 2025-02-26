@@ -80,7 +80,8 @@ export function ArabicWord({
                 {
                   width: baseSize * scale * word.word_form.length * 0.3, // Reduce width multiplier from 0.4 to 0.3
                   bottom: -1,
-                  borderBottomColor: isDarkMode ? '#ced4da80' : '#34383c50', // Different colors for dark/light modes
+                  borderBottomColor: isDarkMode ? '#ced4da90' : '#000000AA', // Darker underline in light mode
+                  borderBottomWidth: 1.5, // Thicker underline for better visibility
                 },
               ]}
             />

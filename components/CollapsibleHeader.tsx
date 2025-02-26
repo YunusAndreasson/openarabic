@@ -40,6 +40,7 @@ interface Props {
   renderContent: () => ReactNode;
   title: string;
   accessibilityLabel?: string;
+  customGradientColors?: readonly [string, string, ...string[]];
 }
 
 export const CollapsibleHeader = memo(function CollapsibleHeader({
@@ -48,6 +49,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   renderContent,
   title,
   accessibilityLabel,
+  customGradientColors,
 }: Props) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -57,8 +59,16 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
 
   // Memoize gradient colors to prevent unnecessary re-renders
   const gradientColors = useMemo(() => {
-    return ['transparent', colors.background] as const;
-  }, [colors.background]);
+    // Use custom gradient colors if provided, otherwise use default
+    if (customGradientColors) {
+      return customGradientColors;
+    }
+
+    // Enhanced default gradient for better readability in light mode
+    return isDarkMode
+      ? (['transparent', colors.background] as const)
+      : (['transparent', 'rgba(255, 255, 255, 0.8)', colors.background] as const); // Three-color gradient for light mode
+  }, [colors.background, customGradientColors, isDarkMode]);
 
   // Memoize initial navigation options
   const initialNavOptions = useMemo(

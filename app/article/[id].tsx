@@ -1,14 +1,12 @@
 import React, { useMemo, useCallback } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, FlatList } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useAppSelector } from '@/store/hooks';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
-import { AudioPlayButton } from '@/components/AudioPlayButton';
-import { ReadingListButton } from '@/components/ReadingListButton';
 import { ArabicWord } from '@/components/ArabicWord';
 import type { Tables } from '@/types/database.types';
 import { studyWordsService } from '@/services/study_words';
@@ -17,8 +15,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
 import { LAYOUT } from '@/constants/layout';
-import { CategoryPill } from '@/components/CategoryPill';
 import { Loader } from '@/components/Loader';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { ArticleSentence } from '@/components/ArticleSentence';
+import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
+import { ArticleHeader } from '@/components/ArticleHeader';
+import type { Article } from '@/types/articles.types';
 
 const styles = StyleSheet.create({
   container: {
@@ -28,68 +30,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
     width: '100%',
     height: '100%',
-  },
-  categoryContainer: {
-    alignSelf: 'flex-start',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  title: {
-    textAlign: 'left',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
-  author: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-  },
-  sentenceContainer: {
-    paddingHorizontal: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.XXLARGE,
-  },
-  englishText: {
-    writingDirection: 'ltr',
-    fontFamily: 'Philosopher',
-    textAlign: 'left',
   },
   content: {
     flex: 1,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.LARGE,
-    marginBottom: -LAYOUT.SPACING.SMALL,
-  },
-  buttonWrapper: {
-    flex: 1,
-  },
-  arabicSentence: {
-    flexDirection: 'row-reverse',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.TINY,
-  },
-  moreFromAuthor: {
-    marginTop: LAYOUT.SPACING.XXLARGE,
-  },
-  moreFromAuthorTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    fontWeight: '600',
-  },
-  moreFromCategory: {
-    marginTop: LAYOUT.SPACING.XXLARGE,
+  sentenceList: {
     paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
-  horizontalList: {
-    paddingLeft: 0,
-    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
-    marginHorizontal: 0,
+  relatedArticlesContainer: {
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
 });
 
@@ -99,28 +50,31 @@ export default function ArticleScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const settings = useAppSelector(state => state.settings);
+  const isDarkMode = useIsDarkMode();
 
-  // Fetch article data
+  const articleId = useMemo(() => {
+    if (!id) return undefined;
+    const parsed = parseInt(id);
+    return isNaN(parsed) ? undefined : parsed;
+  }, [id]);
+
   const { data: article, isLoading: isLoadingArticle } = useQuery({
-    queryKey: ['article', id],
-    queryFn: () => articlesService.getArticleById(parseInt(id!)),
-    enabled: !!id,
+    queryKey: ['article', articleId],
+    queryFn: () => articlesService.getArticleById(articleId!),
+    enabled: !!articleId,
   });
 
-  // Fetch study words
   const { data: studyWords = [] } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id),
     enabled: !!user,
   });
 
-  // Create a Set of selected word IDs for efficient lookup
   const selectedWordIds = useMemo(
     () => new Set(studyWords.map(w => w.sentence_word_id)),
     [studyWords]
   );
 
-  // Toggle word mutation
   const toggleWordMutation = useMutation({
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
       studyWordsService.toggleStudyWord(userId, wordId),
@@ -144,31 +98,46 @@ export default function ArticleScreen() {
     [user, toggleWordMutation]
   );
 
-  // Fetch more articles from the same author
   const { data: moreArticles = [] } = useQuery({
-    queryKey: ['articles', article?.author?.id],
+    queryKey: ['articles', 'author', article?.author?.id],
     queryFn: () => articlesService.getArticles(undefined, article!.author!.id),
     enabled: !!article?.author?.id,
   });
 
-  // Filter out the current article from the list
   const otherArticles = useMemo(
     () => moreArticles.filter(a => a.id !== article?.id),
     [moreArticles, article?.id]
   );
 
-  // Fetch more articles from the same category
   const { data: categoryArticles = [] } = useQuery({
-    queryKey: ['articles', article?.category?.id],
+    queryKey: ['articles', 'category', article?.category?.id],
     queryFn: () => articlesService.getArticles(article!.category!.id),
     enabled: !!article?.category?.id,
   });
 
-  // Filter out the current article from the category list
   const otherCategoryArticles = useMemo(
     () => categoryArticles.filter(a => a.id !== article?.id),
     [categoryArticles, article?.id]
   );
+
+  const sortedSentences = useMemo(() => {
+    if (!article?.article_sentences) return [];
+    return [...article.article_sentences].sort((a, b) => a.position - b.position);
+  }, [article?.article_sentences]);
+
+  // Pre-process and sort words for all sentences to avoid sorting in the render phase
+  const sentenceWordsMap = useMemo(() => {
+    if (!sortedSentences.length) return new Map();
+
+    const wordsMap = new Map();
+    sortedSentences.forEach(sentence => {
+      wordsMap.set(
+        sentence.id,
+        [...sentence.sentence_words].sort((a, b) => a.position - b.position)
+      );
+    });
+    return wordsMap;
+  }, [sortedSentences]);
 
   const handleArticlePress = useCallback((articleId: number) => {
     router.push({
@@ -177,42 +146,120 @@ export default function ArticleScreen() {
     });
   }, []);
 
+  // Enhanced text shadow style with stronger shadow for light mode
+  const textShadowStyle = useMemo(() => {
+    return isDarkMode
+      ? {
+          textShadowColor: colors.textShadowDark,
+        }
+      : null;
+  }, [colors.textShadowDark, isDarkMode]);
+
+  // Always use black text for title and author in light mode
+  const headerTextColor = useMemo(
+    () => (isDarkMode ? colors.white : '#000000'),
+    [isDarkMode, colors.white]
+  );
+
+  // Custom gradient colors for better readability in light mode
+  const gradientColors = useMemo(() => {
+    return isDarkMode
+      ? (['transparent', colors.background] as const)
+      : (['transparent', 'rgba(255, 255, 255, 0.8)', colors.background] as const); // Three-color gradient for light mode
+  }, [colors.background, isDarkMode]);
+
   const renderHeaderContent = useCallback(
     () => (
-      <>
-        {article?.category && (
-          <View style={styles.categoryContainer}>
-            <CategoryPill category={article.category.name} absolute={false} />
-          </View>
-        )}
-        <ThemedText
-          type="title"
-          style={[styles.title, { color: colors.titleText }]}
-          numberOfLines={3}
-        >
-          {article?.title}
-        </ThemedText>
-        {article?.author && (
-          <ThemedText style={[styles.author, { color: colors.authorText }]}>
-            By {article.author.name}
-          </ThemedText>
-        )}
-        <View style={styles.buttonContainer}>
-          {article?.audio_url && (
-            <View style={styles.buttonWrapper}>
-              <AudioPlayButton audioUrl={article.audio_url} />
-            </View>
-          )}
-          {article?.id && (
-            <View style={styles.buttonWrapper}>
-              <ReadingListButton articleId={article.id} />
-            </View>
-          )}
-        </View>
-      </>
+      <ArticleHeader
+        article={article || null}
+        headerTextColor={headerTextColor}
+        isDarkMode={isDarkMode}
+        textShadowStyle={textShadowStyle}
+      />
     ),
-    [article, colors]
+    [article, textShadowStyle, headerTextColor, isDarkMode]
   );
+
+  const renderArticleCard = useCallback(
+    (articleData: Article) => (
+      <CompactArticleCard
+        key={articleData.id}
+        article={articleData}
+        onPress={() => handleArticlePress(articleData.id)}
+      />
+    ),
+    [handleArticlePress]
+  );
+
+  // Manually add the missing properties to make the word compatible with WordWithDetails type
+  const enhanceWord = useCallback((word: Tables<'sentence_words'>) => {
+    return {
+      ...word,
+      root: null,
+      word_type: null,
+    };
+  }, []);
+
+  // Render word with enhanced visibility for study words
+  const renderWord = useCallback(
+    (word: Tables<'sentence_words'>) => {
+      const enhancedWord = enhanceWord(word);
+      const isSelected = selectedWordIds.has(word.id);
+
+      return (
+        <ArabicWord
+          key={word.id}
+          word={enhancedWord}
+          isSelected={isSelected}
+          onPress={handleWordPress}
+          scale={settings.fontScale}
+          baseSize={24}
+        />
+      );
+    },
+    [handleWordPress, selectedWordIds, settings.fontScale, enhanceWord]
+  );
+
+  // Optimized sentence renderer for FlatList
+  const renderSentenceItem = useCallback(
+    ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
+      const words = sentenceWordsMap.get(sentence.id) || [];
+      return (
+        <ArticleSentence
+          key={sentence.id}
+          sentence={sentence}
+          words={words}
+          renderWord={renderWord}
+          settings={settings}
+          colors={colors}
+        />
+      );
+    },
+    [sentenceWordsMap, renderWord, settings, colors]
+  );
+
+  // Footer component for related articles
+  const ListFooterComponent = useCallback(() => {
+    return (
+      <View style={styles.relatedArticlesContainer}>
+        {otherArticles.length > 0 && (
+          <RelatedArticlesSection
+            title={`More from ${article?.author?.name}`}
+            articles={otherArticles}
+            renderArticleCard={renderArticleCard}
+          />
+        )}
+
+        {otherCategoryArticles.length > 0 && (
+          <RelatedArticlesSection
+            title={`More from ${article?.category?.name}`}
+            articles={otherCategoryArticles}
+            renderArticleCard={renderArticleCard}
+          />
+        )}
+      </View>
+    );
+  }, [otherArticles, otherCategoryArticles, article, renderArticleCard]);
 
   if (isLoadingArticle) {
     return (
@@ -233,89 +280,24 @@ export default function ArticleScreen() {
   }
 
   return (
-    <CollapsibleHeader renderContent={renderHeaderContent} title={article.title || ''}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {article.article_sentences
-          .sort((a, b) => a.position - b.position)
-          .map(sentence => (
-            <View key={sentence.id} style={styles.sentenceContainer}>
-              <View style={styles.arabicSentence}>
-                {sentence.sentence_words
-                  .sort((a, b) => a.position - b.position)
-                  .map(word => (
-                    <ArabicWord
-                      key={word.id}
-                      word={word}
-                      isSelected={selectedWordIds.has(word.id)}
-                      onPress={handleWordPress}
-                      scale={settings.fontScale}
-                      baseSize={24}
-                    />
-                  ))}
-              </View>
-              {settings.showEnglish && (
-                <ThemedText
-                  style={[
-                    styles.englishText,
-                    {
-                      color: colors.englishText,
-                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-                      lineHeight: Math.round(
-                        LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                          LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                          settings.fontScale
-                      ),
-                    },
-                  ]}
-                >
-                  {sentence.english}
-                </ThemedText>
-              )}
-            </View>
-          ))}
-
-        {otherArticles.length > 0 && (
-          <View style={styles.moreFromAuthor}>
-            <ThemedText style={styles.moreFromAuthorTitle}>
-              More from {article.author?.name}
-            </ThemedText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-            >
-              {otherArticles.map(otherArticle => (
-                <CompactArticleCard
-                  key={otherArticle.id}
-                  article={otherArticle}
-                  onPress={() => handleArticlePress(otherArticle.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {otherCategoryArticles.length > 0 && (
-          <View style={styles.moreFromCategory}>
-            <ThemedText style={styles.moreFromAuthorTitle}>
-              More from {article.category?.name}
-            </ThemedText>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalList}
-            >
-              {otherCategoryArticles.map(otherArticle => (
-                <CompactArticleCard
-                  key={otherArticle.id}
-                  article={otherArticle}
-                  onPress={() => handleArticlePress(otherArticle.id)}
-                />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-      </ScrollView>
+    <CollapsibleHeader
+      renderContent={renderHeaderContent}
+      title={article.title || ''}
+      customGradientColors={gradientColors}
+    >
+      <FlatList
+        data={sortedSentences}
+        renderItem={renderSentenceItem}
+        keyExtractor={item => item.id.toString()}
+        style={styles.content}
+        contentContainerStyle={styles.sentenceList}
+        showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        initialNumToRender={5}
+        maxToRenderPerBatch={5}
+        windowSize={10}
+        ListFooterComponent={ListFooterComponent}
+      />
     </CollapsibleHeader>
   );
 }
