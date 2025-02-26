@@ -1,45 +1,22 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Animated, PanResponder, Pressable, Modal } from 'react-native';
+import { StyleSheet, View, Animated, PanResponder, Pressable } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studyWordsService } from '@/services/study_words';
+import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 import { router, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ThemedButton } from '@/components/ThemedButton';
-
-// Types for study words
-interface StudyWord {
-  sentence_word_id: string;
-  sentence_word: {
-    word_form: string;
-    english: string;
-    sentence?: {
-      arabic: string;
-    };
-  };
-  interval_days: number;
-  ease_factor: number;
-  next_review_at: string;
-  review_count: number;
-  lapses: number;
-}
+import { ProgressBar } from '@/components/ProgressBar';
+import { ThemedModal } from '@/components/ThemedModal';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
 const SWIPE_OUT_DURATION = LAYOUT.ANIMATION.DURATION.FAST;
 const MEANING_DISPLAY_DURATION = 1600;
-
-// Swipe feedback utility
-const getSwipeColors = (dx: number, colors: ReturnType<typeof useColors>) => {
-  // Return transparent background with zero opacity to remove the flash effect
-  return { backgroundColor: 'transparent', opacity: 0 };
-};
 
 // Main Component
 export default function ReviewScreen() {
@@ -48,18 +25,29 @@ export default function ReviewScreen() {
   }, []);
 
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
-  const [swipeDirection, setSwipeDirection] = useState({ dx: 0, opacity: 0 });
   const mountedRef = useRef(true);
   const position = useRef(new Animated.ValueXY()).current;
-  const wordsRef = useRef<StudyWord[]>([]);
   const meaningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Use the spaced repetition hook
+  const {
+    currentIndex,
+    currentWord,
+    isLoading,
+    isUpdating,
+    updateWord,
+    progress,
+    isComplete,
+    invalidateQueries,
+  } = useSpacedRepetition({
+    userId: user?.id,
+    onComplete: () => {
+      // Additional completion logic if needed
+    },
+  });
 
   // Cleanup on unmount
   useEffect(() => {
@@ -72,110 +60,16 @@ export default function ReviewScreen() {
     };
   }, []);
 
-  // Fetch due words
-  const { data: dueWords = [], isLoading } = useQuery({
-    queryKey: ['dueWords', user?.id],
-    queryFn: async () => {
-      if (!user?.id) throw new Error('User ID is required');
-      const words = await studyWordsService.getStudyWords(user.id);
-      const now = new Date();
-
-      // Directly convert dates to numbers for comparison
-      const filteredWords = words.filter(
-        word =>
-          word.sentence_word &&
-          word.next_review_at &&
-          new Date(word.next_review_at).getTime() <= now.getTime() &&
-          word.interval_days < 30
-      );
-
-      // Sort by next review date
-      return filteredWords.sort((a, b) => {
-        const dateA = new Date(a.next_review_at).getTime();
-        const dateB = new Date(b.next_review_at).getTime();
-        return dateA - dateB;
-      });
-    },
-    enabled: !!user?.id,
-  });
-
-  useEffect(() => {
-    if (dueWords && Array.isArray(dueWords)) {
-      wordsRef.current = [...dueWords] as StudyWord[];
-    }
-  }, [dueWords]);
-
   const isInteractionDisabled = useCallback(
     () => isLoading || isUpdating || isAnimating || showMeaningOverlay,
     [isLoading, isUpdating, isAnimating, showMeaningOverlay]
   );
 
-  // Word update mutation
-  const updateWordMutation = useMutation({
-    mutationFn: async ({
-      wordId,
-      success,
-      wordToUpdate,
-    }: {
-      wordId: string;
-      success: boolean;
-      wordToUpdate: StudyWord;
-    }) => {
-      setIsUpdating(true);
-      const newInterval = success
-        ? Math.max(1, Math.round(wordToUpdate.interval_days * wordToUpdate.ease_factor))
-        : 1;
-      const newEaseFactor = success
-        ? Math.max(1.3, wordToUpdate.ease_factor + 0.1)
-        : Math.max(1.3, wordToUpdate.ease_factor - 0.2);
-      const nextReview = new Date();
-      nextReview.setDate(nextReview.getDate() + newInterval);
-
-      try {
-        await studyWordsService.updateWordReview(Number(wordId), {
-          interval_days: newInterval,
-          ease_factor: newEaseFactor,
-          next_review_at: nextReview.toISOString(),
-          review_count: wordToUpdate.review_count + 1,
-          lapses: success ? wordToUpdate.lapses : wordToUpdate.lapses + 1,
-        });
-      } catch (error) {
-        console.error('Error updating word review:', error);
-        // Continue to next word even if there's an error
-        if (mountedRef.current) {
-          setCurrentIndex(prev => prev + 1);
-          // Animate the new word coming in from the right
-          position.setValue({ x: SCREEN_WIDTH, y: 0 });
-          Animated.spring(position, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: true,
-          }).start();
-        }
-      }
-    },
-    onSuccess: () => {
-      if (mountedRef.current) {
-        setCurrentIndex(prev => prev + 1);
-        // Animate the new word coming in from the right
-        position.setValue({ x: SCREEN_WIDTH, y: 0 });
-        Animated.spring(position, {
-          toValue: { x: 0, y: 0 },
-          useNativeDriver: true,
-        }).start();
-      }
-    },
-    onSettled: () => {
-      if (mountedRef.current) setIsUpdating(false);
-    },
-  });
-
   // Handle swipe action
   const handleSwipe = useCallback(
     (direction: 'left' | 'right') => {
       if (isInteractionDisabled()) return;
-
-      const wordToUpdate = wordsRef.current[currentIndex];
-      if (!wordToUpdate?.sentence_word_id) return;
+      if (!currentWord?.sentence_word_id) return;
 
       setIsAnimating(true);
 
@@ -188,11 +82,7 @@ export default function ReviewScreen() {
         }).start(() => {
           // Hide current word before updating to next word
           position.setValue({ x: -SCREEN_WIDTH, y: 0 });
-          updateWordMutation.mutate({
-            wordId: wordToUpdate.sentence_word_id,
-            success: true,
-            wordToUpdate,
-          });
+          updateWord(currentWord.sentence_word_id, true);
           // Animation will be reset in onSuccess callback
           setIsAnimating(false);
         });
@@ -208,18 +98,14 @@ export default function ReviewScreen() {
             setShowMeaningOverlay(false);
             // Hide current word before updating to next word
             position.setValue({ x: -SCREEN_WIDTH, y: 0 });
-            updateWordMutation.mutate({
-              wordId: wordToUpdate.sentence_word_id,
-              success: false,
-              wordToUpdate,
-            });
+            updateWord(currentWord.sentence_word_id, false);
             // Animation will be reset in onSuccess callback
             setIsAnimating(false);
           }, MEANING_DISPLAY_DURATION);
         });
       }
     },
-    [position, currentIndex, isInteractionDisabled, updateWordMutation]
+    [position, currentWord, isInteractionDisabled, updateWord]
   );
 
   // Pan responder - memoized to prevent recreation on each render
@@ -230,10 +116,8 @@ export default function ReviewScreen() {
           !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10,
         onPanResponderMove: (_, { dx }) => {
           position.setValue({ x: dx, y: 0 });
-          setSwipeDirection({ dx, opacity: Math.abs(dx) / SCREEN_WIDTH });
         },
         onPanResponderRelease: (_, { dx }) => {
-          setSwipeDirection({ dx: 0, opacity: 0 });
           if (dx > SWIPE_THRESHOLD) {
             handleSwipe('right');
           } else if (dx < -SWIPE_THRESHOLD) {
@@ -257,20 +141,15 @@ export default function ReviewScreen() {
 
   // Current word data - memoized to prevent recalculations
   const currentWordData = useCallback(() => {
-    const currentWord = dueWords?.[currentIndex] as StudyWord | undefined;
     const word = currentWord?.sentence_word;
     const wordForm = word?.word_form;
     const sentence = word?.sentence?.arabic;
     const parts = sentence && wordForm ? sentence.split(wordForm) : ['', ''];
-    const progress = dueWords.length > 0 ? (currentIndex / dueWords.length) * 100 : 0;
 
-    return { currentWord, word, wordForm, sentence, parts, progress };
-  }, [dueWords, currentIndex]);
+    return { word, wordForm, sentence, parts };
+  }, [currentWord]);
 
-  const { currentWord, word, wordForm, sentence, parts, progress } = currentWordData();
-
-  // Get progress bar background color based on theme
-  const progressBarBg = isDarkMode ? colors.elevation1 : `${colors.text}15`;
+  const { wordForm, sentence, parts } = currentWordData();
 
   // Ensure meaning timeout is cleared when component unmounts or when overlay is hidden
   useEffect(() => {
@@ -280,28 +159,28 @@ export default function ReviewScreen() {
     }
   }, [showMeaningOverlay]);
 
-  // Memoize swipe feedback colors to prevent recalculation on each render
-  const swipeFeedbackColors = useMemo(
-    () => getSwipeColors(swipeDirection.dx, colors),
-    [swipeDirection.dx, colors]
-  );
-
-  // Check if review is completed and invalidate relevant queries
+  // Reset animation when current index changes
   useEffect(() => {
-    if (currentIndex >= dueWords.length && dueWords.length > 0) {
-      // Invalidate any queries that depend on vocabulary data
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-      queryClient.invalidateQueries({ queryKey: ['studyWords'] });
-      queryClient.invalidateQueries({ queryKey: ['userProgress'] });
-    }
-  }, [currentIndex, dueWords.length, queryClient]);
+    // Animate the new word coming in from the right
+    position.setValue({ x: SCREEN_WIDTH, y: 0 });
+    Animated.spring(position, {
+      toValue: { x: 0, y: 0 },
+      useNativeDriver: true,
+    }).start();
+  }, [currentIndex, position]);
 
   if (isLoading || !user) {
     return (
       <ThemedView style={styles.container}>
-        <View style={[styles.progressBar, { backgroundColor: progressBarBg }]}>
-          <View style={[styles.progressFill, { width: '0%', backgroundColor: colors.tint }]} />
-        </View>
+        <ProgressBar
+          progress={0}
+          style={{
+            height: LAYOUT.SPACING.SMALL,
+            borderRadius: LAYOUT.SPACING.SMALL / 2,
+            marginBottom: LAYOUT.SPACING.LARGE,
+            width: '100%',
+          }}
+        />
         <View style={styles.loadingContainer}>
           <ThemedText style={styles.loadingText}>Loading...</ThemedText>
         </View>
@@ -309,21 +188,25 @@ export default function ReviewScreen() {
     );
   }
 
-  if (currentIndex >= dueWords.length) {
+  if (isComplete) {
     return (
       <ThemedView style={styles.container}>
-        <View style={[styles.progressBar, { backgroundColor: progressBarBg }]}>
-          <View style={[styles.progressFill, { width: '100%', backgroundColor: colors.tint }]} />
-        </View>
+        <ProgressBar
+          progress={100}
+          style={{
+            height: LAYOUT.SPACING.SMALL,
+            borderRadius: LAYOUT.SPACING.SMALL / 2,
+            marginBottom: LAYOUT.SPACING.LARGE,
+            width: '100%',
+          }}
+        />
         <View style={styles.completedContainer}>
           <ThemedText style={styles.completedText}>Review complete!</ThemedText>
           <ThemedButton
             title="Done"
             onPress={() => {
               // Ensure data is refreshed before navigating back
-              queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-              queryClient.invalidateQueries({ queryKey: ['studyWords'] });
-              queryClient.invalidateQueries({ queryKey: ['userProgress'] });
+              invalidateQueries();
               handleClose();
             }}
             variant="filled"
@@ -336,9 +219,15 @@ export default function ReviewScreen() {
   if (!currentWord || !sentence || !wordForm) {
     return (
       <ThemedView style={styles.container}>
-        <View style={[styles.progressBar, { backgroundColor: progressBarBg }]}>
-          <View style={[styles.progressFill, { width: '0%', backgroundColor: colors.tint }]} />
-        </View>
+        <ProgressBar
+          progress={0}
+          style={{
+            height: LAYOUT.SPACING.SMALL,
+            borderRadius: LAYOUT.SPACING.SMALL / 2,
+            marginBottom: LAYOUT.SPACING.LARGE,
+            width: '100%',
+          }}
+        />
         <View style={styles.loadingContainer}>
           <ThemedText style={styles.errorText}>Error loading word</ThemedText>
           <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
@@ -352,56 +241,30 @@ export default function ReviewScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <ThemedView style={styles.container}>
         {/* Progress bar with increased top margin */}
-        <View
-          style={[
-            styles.progressBar,
-            { backgroundColor: progressBarBg, marginTop: LAYOUT.SPACING.XLARGE },
-          ]}
-        >
-          <View
-            style={[styles.progressFill, { width: `${progress}%`, backgroundColor: colors.tint }]}
-          />
-        </View>
+        <ProgressBar
+          progress={progress}
+          style={{
+            height: LAYOUT.SPACING.SMALL,
+            borderRadius: LAYOUT.SPACING.SMALL / 2,
+            marginBottom: LAYOUT.SPACING.LARGE,
+            width: '100%',
+            marginTop: LAYOUT.SPACING.XLARGE,
+          }}
+          fillColor={colors.tint}
+        />
 
         <Animated.View
           style={[styles.card, { transform: [{ translateX: position.x }] }]}
           {...panResponder.panHandlers}
         >
           <ThemedText style={styles.sentence} skipDefaultColor>
-            <ThemedText
-              style={[
-                styles.dimmedText,
-                {
-                  color: `${colors.text}70`,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
-                },
-              ]}
-              skipDefaultColor
-            >
+            <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
               {parts[0]}
             </ThemedText>
-            <ThemedText
-              style={[
-                styles.studyWord,
-                {
-                  color: colors.tint,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
-                },
-              ]}
-              skipDefaultColor
-            >
+            <ThemedText style={[styles.studyWord, { color: colors.tint }]} skipDefaultColor>
               {wordForm}
             </ThemedText>
-            <ThemedText
-              style={[
-                styles.dimmedText,
-                {
-                  color: `${colors.text}70`,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
-                },
-              ]}
-              skipDefaultColor
-            >
+            <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
               {parts[1]}
             </ThemedText>
           </ThemedText>
@@ -413,22 +276,13 @@ export default function ReviewScreen() {
             style={[
               styles.meaningOverlay,
               {
-                backgroundColor: `${colors.modalOverlay}80`, // Make it semi-transparent
-                // Don't cover the progress bar or buttons
+                backgroundColor: `${colors.modalOverlay}80`,
                 top: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL + LAYOUT.SPACING.LARGE,
-                bottom: 100, // Leave space for the buttons
+                bottom: 100,
               },
             ]}
           >
-            <ThemedText
-              style={{
-                fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.1, // Increase text size by 10%
-                fontWeight: '600',
-                textAlign: 'center',
-                color: colors.white,
-              }}
-              skipDefaultColor
-            >
+            <ThemedText style={[styles.meaningText, { color: colors.white }]} skipDefaultColor>
               {currentWord?.sentence_word?.english || 'Translation not available'}
             </ThemedText>
           </View>
@@ -444,7 +298,7 @@ export default function ReviewScreen() {
                 backgroundColor: pressed
                   ? `${colors.cardBackground}80`
                   : `${colors.cardBackground}90`,
-                zIndex: LAYOUT.Z_INDEX.OVERLAY + 1, // Ensure buttons are above overlay
+                zIndex: LAYOUT.Z_INDEX.OVERLAY + 1,
               },
             ]}
           >
@@ -462,7 +316,7 @@ export default function ReviewScreen() {
                 backgroundColor: pressed
                   ? `${colors.cardBackground}80`
                   : `${colors.cardBackground}90`,
-                zIndex: LAYOUT.Z_INDEX.OVERLAY + 1, // Ensure buttons are above overlay
+                zIndex: LAYOUT.Z_INDEX.OVERLAY + 1,
               },
             ]}
           >
@@ -474,48 +328,29 @@ export default function ReviewScreen() {
           </Pressable>
         </View>
 
-        <Modal
+        <ThemedModal
           visible={showInstructions}
-          transparent
-          onRequestClose={() => setShowInstructions(false)}
-          animationType="fade"
+          onClose={() => setShowInstructions(false)}
+          title="How to Review"
+          useBlur={true}
         >
-          <View style={[styles.modalOverlay, { backgroundColor: colors.modalOverlay }]}>
-            <ThemedView style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-              <ThemedText style={styles.modalTitle}>How to Review</ThemedText>
-              <View style={styles.modalInstructionRow}>
-                <Ionicons
-                  name="chevron-forward"
-                  size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-                  color={colors.success}
-                />
-                <ThemedText style={styles.modalText}>Swipe right: I know this word</ThemedText>
-              </View>
-              <View style={styles.modalInstructionRow}>
-                <Ionicons
-                  name="chevron-back"
-                  size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-                  color={colors.warning}
-                />
-                <ThemedText style={styles.modalText}>Swipe left: I don't know this word</ThemedText>
-              </View>
-              <Pressable
-                onPress={() => setShowInstructions(false)}
-                style={({ pressed }) => [
-                  styles.modalButton,
-                  { backgroundColor: colors.tint, opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1 },
-                ]}
-              >
-                <ThemedText
-                  style={[styles.modalButtonText, { color: colors.white }]}
-                  skipDefaultColor
-                >
-                  Got it
-                </ThemedText>
-              </Pressable>
-            </ThemedView>
+          <View style={styles.modalInstructionRow}>
+            <Ionicons
+              name="chevron-forward"
+              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
+              color={colors.success}
+            />
+            <ThemedText style={styles.modalText}>Swipe right: I know this word</ThemedText>
           </View>
-        </Modal>
+          <View style={styles.modalInstructionRow}>
+            <Ionicons
+              name="chevron-back"
+              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
+              color={colors.warning}
+            />
+            <ThemedText style={styles.modalText}>Swipe left: I don't know this word</ThemedText>
+          </View>
+        </ThemedModal>
       </ThemedView>
     </>
   );
@@ -526,16 +361,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  progressBar: {
-    height: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.SPACING.SMALL / 2,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: LAYOUT.SPACING.SMALL / 2,
   },
   card: {
     flex: 1,
@@ -568,13 +393,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
-  swipeFeedback: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: -1,
+  meaningText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.1,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -592,23 +414,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...LAYOUT.SHADOW.SMALL,
   },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    padding: LAYOUT.SPACING.XLARGE,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    width: SCREEN_WIDTH * 0.85,
-    maxWidth: 400,
-    ...LAYOUT.SHADOW.MEDIUM,
-  },
-  modalTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: 'bold',
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
   modalInstructionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -617,16 +422,6 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  modalButton: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
-  },
-  modalButtonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
   },
   loadingContainer: {
     flex: 1,

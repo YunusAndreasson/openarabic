@@ -13,6 +13,7 @@ import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { Loader } from '@/components/Loader';
 
 // Define types for our components
 interface StatsType {
@@ -136,14 +137,17 @@ const EnhancedEmptyState = React.memo(({ colors }: { colors: any }) => {
 });
 
 export default function VocabularyScreen() {
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
 
-  const { data: studyWords = [], isLoading } = useQuery({
+  const { data: studyWords = [], isLoading: isDataLoading } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id),
     enabled: !!user,
   });
+
+  // Combined loading state
+  const isLoading = isAuthLoading || isDataLoading;
 
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null) as StudyWord[];
@@ -227,6 +231,17 @@ export default function VocabularyScreen() {
     [stats.dueWords, stats.masteredWords, stats.learningWords]
   );
 
+  // Show loader while authentication is being checked
+  if (isLoading) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={[styles.fullScreenLoader, { backgroundColor: colors.background }]}>
+          <Loader size="large" />
+        </View>
+      </ThemedView>
+    );
+  }
+
   if (!user) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
@@ -237,21 +252,6 @@ export default function VocabularyScreen() {
           ]}
         >
           <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
-        </View>
-      </ThemedView>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View
-          style={[
-            styles.messageContainer,
-            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
-          ]}
-        >
-          <ThemedText style={styles.message}>Loading vocabulary...</ThemedText>
         </View>
       </ThemedView>
     );
@@ -476,5 +476,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  fullScreenLoader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
 });

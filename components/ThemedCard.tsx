@@ -1,13 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  ActivityIndicator,
-  StyleProp,
-  ViewStyle,
-  Animated,
-} from 'react-native';
+import { StyleSheet, View, Pressable, StyleProp, ViewStyle, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
@@ -17,6 +9,7 @@ import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
+import { Loader } from './Loader';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -130,8 +123,13 @@ function ThemedCardComponent({
           ]}
         >
           {isLoading ? (
-            <View style={styles.loadingCardContainer}>
-              <ActivityIndicator size="large" color={colors.tint} />
+            <View
+              style={[
+                styles.loadingCardContainer,
+                { backgroundColor: themedStyles.card.backgroundColor },
+              ]}
+            >
+              <Loader size="small" />
             </View>
           ) : (
             <>
@@ -143,7 +141,7 @@ function ThemedCardComponent({
                       { backgroundColor: themedStyles.loadingContainer.backgroundColor },
                     ]}
                   >
-                    <ActivityIndicator size="small" color={colors.tint} />
+                    <Loader size="small" color={colors.tint} />
                   </View>
                 )}
                 <Image

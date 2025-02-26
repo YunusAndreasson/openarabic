@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
@@ -9,7 +9,6 @@ import { useAppSelector } from '@/store/hooks';
 import { CollapsibleHeader } from '@/components/CollapsibleHeader';
 import { AudioPlayButton } from '@/components/AudioPlayButton';
 import { ReadingListButton } from '@/components/ReadingListButton';
-import { Colors } from '@/constants/Colors';
 import { ArabicWord } from '@/components/ArabicWord';
 import type { Tables } from '@/types/database.types';
 import { studyWordsService } from '@/services/study_words';
@@ -19,6 +18,7 @@ import Toast from 'react-native-toast-message';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
 import { LAYOUT } from '@/constants/layout';
 import { CategoryPill } from '@/components/CategoryPill';
+import { Loader } from '@/components/Loader';
 
 const styles = StyleSheet.create({
   container: {
@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    height: '100%',
   },
   categoryContainer: {
     alignSelf: 'flex-start',
@@ -213,8 +216,10 @@ export default function ArticleScreen() {
 
   if (isLoadingArticle) {
     return (
-      <ThemedView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.info} />
+      <ThemedView style={styles.container}>
+        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+          <Loader size="large" />
+        </View>
       </ThemedView>
     );
   }

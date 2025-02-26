@@ -24,6 +24,7 @@ import { categoriesService } from '@/services/categories';
 import type { Tables } from '@/types/database.types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
+import { Loader } from '@/components/Loader';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -184,8 +185,8 @@ export default function TextsScreen() {
   const ListEmptyComponent = useCallback(() => {
     if (isLoading && !isRefreshing) {
       return (
-        <ThemedView style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color={colors.tint} />
+        <ThemedView style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+          <Loader size="large" />
         </ThemedView>
       );
     }
@@ -203,7 +204,7 @@ export default function TextsScreen() {
         <ThemedText style={styles.emptyText}>No articles found</ThemedText>
       </ThemedView>
     );
-  }, [isLoading, isRefreshing, error, colors.tint]);
+  }, [isLoading, isRefreshing, error, colors.background]);
 
   const refreshControl = useMemo(
     () => (
@@ -279,6 +280,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 200,
+    width: '100%',
   },
   emptyText: {
     marginTop: LAYOUT.SPACING.MEDIUM,
