@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo } from 'react';
 import { StyleSheet, View, Animated, Easing, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
+import { LAYOUT } from '../constants/layout';
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -19,57 +20,76 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   // Animation for pulsating effect
   const pulseAnim = useRef(new Animated.Value(0.8)).current;
 
+  // Animation configuration
+  const animationConfig = useMemo(
+    () => ({
+      duration: 800,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }),
+    []
+  );
+
   useEffect(() => {
     // Create a pulsating animation
-    Animated.loop(
+    const pulseAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 1.2,
-          duration: 800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          ...animationConfig,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0.8,
-          duration: 800,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          ...animationConfig,
         }),
       ])
-    ).start();
+    );
+
+    pulseAnimation.start();
 
     return () => {
-      pulseAnim.stopAnimation();
+      // Properly clean up animation
+      pulseAnimation.stop();
     };
-  }, []);
+  }, [animationConfig]);
 
   // Size configuration
-  const circleSize = size === 'large' ? 20 : 10;
+  const circleSize = size === 'large' ? 40 : 20;
+  const borderWidth = size === 'large' ? 4 : 2;
+
+  // Compute dynamic styles based on props
+  const dynamicCircleStyle = useMemo(
+    () => ({
+      width: circleSize,
+      height: circleSize,
+      borderRadius: circleSize / 2,
+      borderWidth: borderWidth,
+      borderColor: loaderColor,
+      // Use transparent color properly
+      backgroundColor: 'transparent',
+      transform: [{ scale: pulseAnim }],
+    }),
+    [circleSize, borderWidth, loaderColor, pulseAnim]
+  );
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View
-        style={[
-          styles.circle,
-          {
-            width: circleSize,
-            height: circleSize,
-            borderRadius: circleSize / 2,
-            backgroundColor: loaderColor,
-            transform: [{ scale: pulseAnim }],
-          },
-        ]}
-      />
+      <Animated.View style={[styles.circle, dynamicCircleStyle]} />
     </View>
   );
 };
+
+Loader.displayName = 'Loader';
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: 50,
+    minHeight: 50,
+    padding: LAYOUT.SPACING.SMALL,
   },
   circle: {
-    // The circle is styled inline
+    opacity: 0.8,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
@@ -14,6 +14,7 @@ import {
 } from '@shopify/react-native-skia';
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
+import { Loader } from './Loader';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -22,11 +23,22 @@ interface VocabularyGraphProps {
     wordsLearned: number;
   }[];
   title?: string;
+  isLoading?: boolean;
 }
 
 export const VocabularyGraph = React.memo(
-  ({ data = [], title = 'Weekly Progress' }: VocabularyGraphProps) => {
+  ({ data = [], title = 'Weekly Progress', isLoading = false }: VocabularyGraphProps) => {
     const colors = useColors();
+    const [isReady, setIsReady] = useState(false);
+
+    // Set component as ready after a short delay to ensure smooth rendering
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setIsReady(true);
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }, []);
 
     // Canvas dimensions
     const PADDING = 16;
@@ -165,6 +177,26 @@ export const VocabularyGraph = React.memo(
 
     // Memoize gradient colors
     const gradientColors = useMemo(() => [`${colors.text}15`, `${colors.text}05`], [colors.text]);
+
+    // Show loading state
+    if (isLoading || !isReady) {
+      return (
+        <View style={cardStyle}>
+          <View style={styles.header}>
+            <View style={styles.titleRow}>
+              <ThemedText style={styles.title}>{title}</ThemedText>
+              <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
+                <Ionicons name="trending-up" size={16} color={colors.icon} />
+              </View>
+            </View>
+          </View>
+          <View style={styles.loadingContainer}>
+            <Loader size="small" color={colors.tint} />
+            <ThemedText style={styles.loadingText}>Loading graph...</ThemedText>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <View style={cardStyle}>
@@ -351,5 +383,16 @@ const styles = StyleSheet.create({
   footerSubtext: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.DISABLED,
+  },
+  loadingContainer: {
+    height: 160,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  loadingText: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
 });

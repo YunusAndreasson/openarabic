@@ -1,9 +1,12 @@
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyStats } from '@/components/VocabularyStats';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
+import { StreakCard } from '@/components/StreakCard';
+import { StatCard } from '@/components/StatCard';
+import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
@@ -11,143 +14,30 @@ import { router } from 'expo-router';
 import { ThemedButton } from '@/components/ThemedButton';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { Loader } from '@/components/Loader';
-
-// Define types for our components
-interface StatsType {
-  totalWords: number;
-  dueWords: number;
-  masteredWords: number;
-  learningWords: number;
-}
-
-interface StudyWord {
-  sentence_word?: {
-    word: string;
-    translation: string;
-  } | null;
-  next_review_at: string;
-  interval_days: number;
-  review_count: number;
-}
-
-// Helper function to get a motivational message based on stats
-const getMotivationalMessage = (stats: StatsType): string => {
-  if (stats.dueWords > 0) {
-    return `You have ${stats.dueWords} words to review today. Keep up the good work!`;
-  } else if (stats.totalWords === 0) {
-    return 'Start building your vocabulary today!';
-  } else if (stats.masteredWords === stats.totalWords) {
-    return "Amazing! You've mastered all your words. Add more to keep learning!";
-  } else {
-    return 'Great job! All caught up with your reviews for today.';
-  }
-};
-
-// Streak component to show consecutive days of practice
-const StreakCard = React.memo(({ streak = 5, colors }: { streak?: number; colors: any }) => {
-  return (
-    <View
-      style={[
-        styles.statCard,
-        { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-      ]}
-    >
-      <View style={styles.statContent}>
-        <View style={styles.statTextContainer}>
-          <ThemedText style={styles.statValue}>{streak}</ThemedText>
-          <ThemedText style={styles.statLabel}>Day Streak</ThemedText>
-        </View>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
-          ]}
-        >
-          <Ionicons name="flame" size={24} color={colors.icon} />
-        </View>
-      </View>
-    </View>
-  );
-});
-
-// Stat card component to ensure consistent styling
-const StatCard = React.memo(
-  ({ label, value, icon, colors }: { label: string; value: number; icon: string; colors: any }) => {
-    return (
-      <View
-        style={[
-          styles.statCard,
-          { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-        ]}
-      >
-        <View style={styles.statContent}>
-          <View style={styles.statTextContainer}>
-            <ThemedText style={styles.statValue}>{value}</ThemedText>
-            <ThemedText style={styles.statLabel}>{label}</ThemedText>
-          </View>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
-            ]}
-          >
-            <Ionicons name={icon as any} size={24} color={colors.icon} />
-          </View>
-        </View>
-      </View>
-    );
-  }
-);
-
-// Enhanced empty state component
-const EnhancedEmptyState = React.memo(({ colors }: { colors: any }) => {
-  const handleBrowseArticles = useCallback(() => {
-    router.push('/(tabs)');
-  }, []);
-
-  return (
-    <View style={styles.enhancedEmptyContainer}>
-      <View style={[styles.emptyIconContainer, { backgroundColor: colors.text + '10' }]}>
-        <Ionicons
-          name="book-outline"
-          size={48}
-          color={colors.text}
-          style={{ opacity: LAYOUT.OPACITY.DIMMED }}
-        />
-      </View>
-      <ThemedText style={styles.emptyTitle}>Build Your Vocabulary</ThemedText>
-      <ThemedText style={styles.emptyMessage}>
-        You haven't added any words to your study list yet.
-      </ThemedText>
-      <ThemedText style={styles.emptySubmessage}>
-        Start reading articles and tap on words to add them to your vocabulary.
-      </ThemedText>
-      <TouchableOpacity
-        style={[styles.emptyActionButton, { backgroundColor: colors.text + '10' }]}
-        onPress={handleBrowseArticles}
-      >
-        <ThemedText style={styles.emptyActionText}>Browse Articles</ThemedText>
-        <Ionicons name="arrow-forward" size={16} color={colors.text} />
-      </TouchableOpacity>
-    </View>
-  );
-});
+import { getMotivationalMessage, StudyWord } from '@/utils/vocabulary';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
 
-  const { data: studyWords = [], isLoading: isDataLoading } = useQuery({
+  const {
+    data: studyWords = [],
+    isLoading: isDataLoading,
+    isFetching,
+    status,
+  } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id),
     enabled: !!user,
+    staleTime: 60000, // 1 minute
+    refetchOnWindowFocus: false,
   });
 
-  // Combined loading state
-  const isLoading = isAuthLoading || isDataLoading;
+  // Enhanced loading state detection - cover all possible loading scenarios
+  const isLoading =
+    isAuthLoading || (!!user && (isDataLoading || isFetching || status === 'pending'));
 
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null) as StudyWord[];
@@ -172,7 +62,7 @@ export default function VocabularyScreen() {
     // Get the days of the week
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    // We don't need dayOfWeek variable, so removing it
 
     // Create an array to hold the last 7 days
     const last7Days = Array(7)
@@ -231,17 +121,21 @@ export default function VocabularyScreen() {
     [stats.dueWords, stats.masteredWords, stats.learningWords]
   );
 
-  // Show loader while authentication is being checked
+  // Show loader while authentication is being checked OR while data is loading/fetching
   if (isLoading) {
     return (
       <ThemedView style={styles.container}>
         <View style={[styles.fullScreenLoader, { backgroundColor: colors.background }]}>
-          <Loader size="large" />
+          <View style={styles.loaderContainer}>
+            <Loader size="large" color={colors.tint} />
+            <ThemedText style={styles.loaderText}>Loading vocabulary...</ThemedText>
+          </View>
         </View>
       </ThemedView>
     );
   }
 
+  // Only proceed after loading is complete
   if (!user) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
@@ -260,75 +154,93 @@ export default function VocabularyScreen() {
   if (!validStudyWords.length) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <EnhancedEmptyState colors={colors} />
+        <VocabularyEmptyState colors={colors} />
       </ThemedView>
     );
   }
 
   const hasDueWords = stats.dueWords > 0;
 
+  // Add a fallback loading state check for when data is still loading after initial load
+  const isStillLoading = isFetching || status === 'pending';
+
   return (
     <ThemedView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.CONTENT_SPACING.TOP }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Motivational message */}
-        <View style={styles.messageHeader}>
-          <ThemedText style={styles.motivationalText}>{motivationalMessage}</ThemedText>
+      {isStillLoading ? (
+        <View style={[styles.inlineLoader, { backgroundColor: colors.background }]}>
+          <Loader size="large" color={colors.tint} />
+          <ThemedText style={styles.loaderText}>Loading vocabulary...</ThemedText>
         </View>
+      ) : (
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.CONTENT_SPACING.TOP }]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Motivational message */}
+          <View style={styles.messageHeader}>
+            <ThemedText style={styles.motivationalText}>{motivationalMessage}</ThemedText>
+          </View>
 
-        {/* Progress card - now at the top by itself */}
-        <View style={styles.progressCardContainer}>
-          <VocabularyStats
-            totalWords={stats.totalWords}
-            masteredWords={stats.masteredWords}
-            dueWords={stats.dueWords}
-            learningWords={stats.learningWords}
-          />
-        </View>
-
-        {/* Weekly Progress Graph */}
-        <VocabularyGraph data={weeklyProgressData} title="Words Learned This Week" />
-
-        {/* Stats section - now includes streak card as one of the square cards */}
-        <View style={styles.statsGrid}>
-          <StreakCard streak={5} colors={colors} />
-
-          {/* Stat cards - using the StatCard component for consistency */}
-          {statCardsData.map((stat, index) => (
-            <StatCard
-              key={index}
-              label={stat.label}
-              value={stat.value}
-              icon={stat.icon}
-              colors={colors}
+          {/* Progress card - now at the top by itself */}
+          <View style={styles.progressCardContainer}>
+            <VocabularyStats
+              totalWords={stats.totalWords}
+              masteredWords={stats.masteredWords}
+              dueWords={stats.dueWords}
+              learningWords={stats.learningWords}
+              isLoading={isStillLoading}
             />
-          ))}
-        </View>
+          </View>
 
-        {/* Review button - now directly below the cards */}
-        {hasDueWords && (
-          <Animated.View entering={FadeIn.duration(800).delay(300)} style={styles.buttonContainer}>
-            <Pressable
-              onPress={handleStartReview}
-              style={({ pressed }) => [
-                styles.reviewButtonContainer,
-                { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
-              ]}
-            >
-              <ThemedButton
-                title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
-                icon="play-circle"
-                onPress={handleStartReview}
-                variant="filled"
-                style={styles.reviewButton}
+          {/* Weekly Progress Graph */}
+          <VocabularyGraph
+            data={weeklyProgressData}
+            title="Words Learned This Week"
+            isLoading={isStillLoading}
+          />
+
+          {/* Stats section - now includes streak card as one of the square cards */}
+          <View style={styles.statsGrid}>
+            <StreakCard streak={5} colors={colors} />
+
+            {/* Stat cards - using the StatCard component for consistency */}
+            {statCardsData.map((stat, index) => (
+              <StatCard
+                key={index}
+                label={stat.label}
+                value={stat.value}
+                icon={stat.icon}
+                colors={colors}
               />
-            </Pressable>
-          </Animated.View>
-        )}
-      </ScrollView>
+            ))}
+          </View>
+
+          {/* Review button - now directly below the cards */}
+          {hasDueWords && (
+            <Animated.View
+              entering={FadeIn.duration(800).delay(300)}
+              style={styles.buttonContainer}
+            >
+              <Pressable
+                onPress={handleStartReview}
+                style={({ pressed }) => [
+                  styles.reviewButtonContainer,
+                  { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
+                ]}
+              >
+                <ThemedButton
+                  title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
+                  icon="play-circle"
+                  onPress={handleStartReview}
+                  variant="filled"
+                  style={styles.reviewButton}
+                />
+              </Pressable>
+            </Animated.View>
+          )}
+        </ScrollView>
+      )}
     </ThemedView>
   );
 }
@@ -363,103 +275,11 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  statCard: {
-    width: '48%',
-    height: 90,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    overflow: 'hidden',
-    ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
-  },
-  statContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  statTextContainer: {
-    flex: 1,
-  },
-  statValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  statLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  submessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  enhancedEmptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
-  },
-  emptyIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  emptyTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-  },
-  emptyMessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  emptySubmessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DISABLED,
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  emptyActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
-  },
-  emptyActionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginRight: LAYOUT.SPACING.SMALL,
   },
   buttonContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
@@ -483,5 +303,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     height: '100%',
+  },
+  loaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loaderText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+    marginLeft: LAYOUT.SPACING.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  inlineLoader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });

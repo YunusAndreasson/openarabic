@@ -1,7 +1,6 @@
 /* eslint-disable react-native/no-unused-styles */
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Animated, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { StyleSheet, ScrollView, TouchableOpacity, Animated, View, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -34,6 +33,9 @@ const HorizontalCategoryPill = React.memo(
 
     // Memoize the styles based on selection state and theme
     const pillStyle = useMemo(() => {
+      // For unselected pills in light mode, we need a more opaque background to hide the shadow line
+      const unselectedLightBgOpacity = '90'; // Increased from 60 to 90 to hide the shadow line
+
       return [
         styles.pill,
         {
@@ -43,8 +45,20 @@ const HorizontalCategoryPill = React.memo(
               : `${colors.tint}70` // Selected, light mode (70% opacity - more subtle)
             : isDarkMode
               ? `${colors.elevation2}40` // Unselected, dark mode (40% opacity - more dimmed)
-              : `${colors.elevation1}60`, // Unselected, light mode (60% opacity - more dimmed)
+              : `${colors.elevation1}${unselectedLightBgOpacity}`, // Unselected, light mode (increased opacity)
           borderColor: colors.cardBorder, // Use card border color for all pills for consistency
+          // Theme-aware shadow for iOS
+          ...Platform.select({
+            ios: {
+              shadowColor: isDarkMode ? colors.shadow : isSelected ? colors.shadow : 'transparent',
+              shadowOffset: { width: 0, height: isSelected ? 2 : 0 },
+              shadowOpacity: isSelected ? 0.1 : 0,
+              shadowRadius: isSelected ? 4 : 0,
+            },
+            android: {
+              elevation: isSelected ? 1 : 0, // Only apply elevation to selected pills
+            },
+          }),
         },
       ];
     }, [isSelected, colors, isDarkMode]);
@@ -75,6 +89,7 @@ const HorizontalCategoryPill = React.memo(
     );
   }
 );
+HorizontalCategoryPill.displayName = 'HorizontalCategoryPill';
 
 function CategoryPillsComponent({
   categories,
@@ -83,7 +98,6 @@ function CategoryPillsComponent({
   visible,
 }: CategoryPillsProps) {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
 
   // Memoize the animated style
   const containerAnimatedStyle = useMemo(
@@ -139,15 +153,6 @@ function CategoryPillsComponent({
           ))}
         </ScrollView>
 
-        {/* Left fade gradient (subtle) */}
-        <LinearGradient
-          colors={[colors.background, 'transparent']}
-          start={{ x: 0, y: 0.5 }}
-          end={{ x: 0.05, y: 0.5 }}
-          style={styles.leftFadeGradient}
-          pointerEvents="none"
-        />
-
         {/* Right fade gradient (more pronounced, starts earlier) */}
         <LinearGradient
           colors={['transparent', colors.background, colors.background]}
@@ -164,6 +169,7 @@ function CategoryPillsComponent({
 
 // Memoize the entire component
 export const CategoryPills = React.memo(CategoryPillsComponent);
+CategoryPills.displayName = 'CategoryPills';
 
 const styles = StyleSheet.create({
   container: {
@@ -204,8 +210,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY + 2, // Match CategoryPill's padding (TINY + 2)
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: 0.5, // Thinner border for a more elegant look
-    ...LAYOUT.SHADOW.SMALL,
-    elevation: 1, // Reduced elevation for a more subtle look
+    // Remove shadow from base style - we'll apply it conditionally in the component
   },
   pillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1, // Match CategoryPill's font size

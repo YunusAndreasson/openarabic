@@ -4,6 +4,7 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
+import { Loader } from './Loader';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -12,6 +13,7 @@ interface VocabularyStatsProps {
   dueWords: number;
   masteredWords: number;
   learningWords: number;
+  isLoading?: boolean;
 }
 
 // Memoize the arc path creation function to prevent recalculation
@@ -30,8 +32,13 @@ const createArcPath = (progress: number, radius: number): string => {
   return `M ${center} ${center - radius} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
 };
 
-function VocabularyStatsComponent({ totalWords, masteredWords }: VocabularyStatsProps) {
+function VocabularyStatsComponent({
+  totalWords,
+  masteredWords,
+  isLoading = false,
+}: VocabularyStatsProps) {
   const colors = useColors();
+  const [isReady, setIsReady] = useState(false);
 
   // Use state for animated progress
   const [animatedProgress, setAnimatedProgress] = useState(0);
@@ -42,8 +49,19 @@ function VocabularyStatsComponent({ totalWords, masteredWords }: VocabularyStats
     [totalWords, masteredWords]
   );
 
+  // Set component as ready after a short delay to ensure smooth rendering
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Run animation when progress changes
   useEffect(() => {
+    if (!isReady) return;
+
     let startTimestamp: number | null = null;
     let animationFrameId: number;
     const duration = 1000; // Animation duration in ms
@@ -82,7 +100,7 @@ function VocabularyStatsComponent({ totalWords, masteredWords }: VocabularyStats
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [progress]);
+  }, [progress, isReady]);
 
   // Memoize styles
   const progressCardStyle = useMemo(
@@ -98,6 +116,18 @@ function VocabularyStatsComponent({ totalWords, masteredWords }: VocabularyStats
   );
 
   const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
+
+  // Show loading state
+  if (isLoading || !isReady) {
+    return (
+      <View style={progressCardStyle}>
+        <View style={styles.loadingContainer}>
+          <Loader size="small" color={colors.tint} />
+          <ThemedText style={styles.loadingText}>Loading stats...</ThemedText>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={progressCardStyle}>
@@ -194,5 +224,16 @@ const styles = StyleSheet.create({
   circleCanvas: {
     width: 80,
     height: 80,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  loadingText: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
 });
