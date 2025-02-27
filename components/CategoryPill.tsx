@@ -21,9 +21,10 @@ export function CategoryPill({ category, absolute = true }: CategoryPillProps): 
     return {
       container: {
         backgroundColor: isDarkMode
-          ? `${colors.tint}25` // More transparent in dark mode (25% opacity)
-          : `${colors.tint}95`, // Increased opacity in light mode (from 85% to 95%)
-        borderColor: isDarkMode ? colors.cardBorder : 'transparent',
+          ? `${colors.cardBackground}90` // Lighten the card background with some transparency
+          : colors.tint, // Keep solid tint color in light mode
+        borderColor: isDarkMode ? `${colors.tint}50` : 'transparent',
+        borderWidth: isDarkMode ? 1 : 0.5,
         // Theme-aware shadow - only apply in dark mode
         ...Platform.select({
           ios: {
@@ -39,8 +40,8 @@ export function CategoryPill({ category, absolute = true }: CategoryPillProps): 
       },
       text: {
         color: isDarkMode
-          ? colors.tint // Use tint color in dark mode for better contrast
-          : colors.white, // Use white in light mode for contrast against dark background
+          ? colors.tint // Keep tint color for text in dark mode
+          : colors.white, // Keep white in light mode
       },
     };
   }, [colors, isDarkMode]);
