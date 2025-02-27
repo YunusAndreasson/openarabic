@@ -200,6 +200,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
         scrollEventThrottle: 16,
         contentContainerStyle: {
           paddingTop: HEADER_HEIGHT + 5, // Reduced from 10 to 5 to pull up the first sentence even more
+          paddingHorizontal: Platform.OS === 'android' ? LAYOUT.SPACING.SMALL : 0, // Add horizontal padding for Android
           ...(children.props.contentContainerStyle || {}),
         },
       };
@@ -208,7 +209,16 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
     }
 
     // For other components, just wrap them in a container with margin
-    return <View style={{ marginTop: HEADER_HEIGHT + 5 }}>{children}</View>;
+    return (
+      <View
+        style={{
+          marginTop: HEADER_HEIGHT + 5,
+          paddingHorizontal: Platform.OS === 'android' ? LAYOUT.SPACING.MEDIUM : 0, // Add horizontal padding for Android
+        }}
+      >
+        {children}
+      </View>
+    );
   };
 
   return (
@@ -302,8 +312,12 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     padding: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: Platform.OS === 'android' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: NAV_HEIGHT + LAYOUT.SPACING.XLARGE + 30, // Increased to 30px more padding at the top for the category pill
+    paddingTop:
+      Platform.OS === 'ios'
+        ? NAV_HEIGHT + LAYOUT.SPACING.XLARGE + 60 // Significantly increased padding on iOS
+        : NAV_HEIGHT + LAYOUT.SPACING.XLARGE + 30, // Original padding for Android
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
@@ -335,9 +349,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 55 : 25,
+    top: Platform.OS === 'ios' ? 50 : 25,
     left: 15,
-    zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Ensure it's above the header
+    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
   },
   backButtonBlur: {
     padding: 8,

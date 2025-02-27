@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { CategoryPill } from './CategoryPill';
@@ -18,7 +18,9 @@ const styles = StyleSheet.create({
   categoryContainer: {
     alignSelf: 'flex-start',
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: Platform.OS === 'ios' ? 60 : LAYOUT.SPACING.LARGE,
+    paddingTop: Platform.OS === 'ios' ? 90 : LAYOUT.SPACING.LARGE,
+    marginLeft: 0,
   },
   title: {
     textAlign: 'left',

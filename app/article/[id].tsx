@@ -1,6 +1,6 @@
 import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
-import { StyleSheet, View, FlatList } from 'react-native';
+import { StyleSheet, View, FlatList, Platform } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
@@ -42,12 +42,13 @@ const styles = StyleSheet.create({
   },
   sentenceList: {
     paddingBottom: LAYOUT.SPACING.XXLARGE,
+    paddingHorizontal: Platform.OS === 'android' ? LAYOUT.SPACING.LARGE : 0,
   },
   relatedArticlesContainer: {
     paddingTop: LAYOUT.SPACING.LARGE,
   },
   headerContent: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: Platform.OS === 'android' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM,
     paddingTop: 0,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     backgroundColor: 'transparent',
@@ -241,7 +242,16 @@ export default function ArticleScreen() {
 
   const renderHeaderContent = useCallback(
     () => (
-      <View style={styles.headerContent}>
+      <View
+        style={[
+          styles.headerContent,
+          {
+            paddingHorizontal:
+              Platform.OS === 'android' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM,
+            paddingTop: Platform.OS === 'ios' ? LAYOUT.SPACING.XLARGE : 0,
+          },
+        ]}
+      >
         <ArticleHeader
           article={article || null}
           headerTextColor={headerTextColor}

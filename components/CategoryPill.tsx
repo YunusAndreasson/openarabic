@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     top: 0,
     left: 0,
+    marginTop: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : 0, // Significantly increased margin on iOS
   },
   text: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
