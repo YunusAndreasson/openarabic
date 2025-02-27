@@ -1,6 +1,6 @@
 import { StyleSheet, Alert, Linking, View } from 'react-native';
 import { Session } from '@supabase/supabase-js';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -16,12 +16,47 @@ import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import Auth from '@/components/Auth';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
+
+  // Optimize shadow handling with memoized values
+  const isDarkMode = useMemo(
+    () => colors.background === Colors.dark.background,
+    [colors.background]
+  );
+  const shadowStyles = useMemo(
+    () => ({
+      primary: {
+        shadowColor: colors.shadow,
+        shadowOpacity: isDarkMode ? 0 : LAYOUT.OPACITY.DIMMED,
+      },
+      secondary: {
+        shadowColor: colors.shadow,
+        shadowOpacity: isDarkMode ? 0 : 0.1,
+      },
+    }),
+    [colors.shadow, isDarkMode]
+  );
+
+  // Custom button styles to ensure left alignment
+  const buttonStyles = useMemo(
+    () => ({
+      innerContainer: {
+        justifyContent: 'flex-start' as const,
+        alignItems: 'flex-start' as const,
+      },
+      contentContainer: {
+        justifyContent: 'flex-start' as const,
+        alignItems: 'flex-start' as const,
+      },
+    }),
+    []
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -108,8 +143,8 @@ export default function AccountScreen() {
               styles.settingsContainer,
               {
                 backgroundColor: colors.cardBackground,
-                shadowColor: colors.text,
                 borderColor: colors.cardBorder,
+                ...shadowStyles.primary,
               },
             ]}
           >
@@ -207,8 +242,8 @@ export default function AccountScreen() {
               styles.connectContainer,
               {
                 backgroundColor: colors.cardBackground,
-                shadowColor: colors.text,
                 borderColor: colors.cardBorder,
+                ...shadowStyles.secondary,
               },
             ]}
           >
@@ -218,6 +253,8 @@ export default function AccountScreen() {
               onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
               icon="logo-twitter"
               style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+              innerContainerStyle={buttonStyles.innerContainer}
+              contentContainerStyle={buttonStyles.contentContainer}
             />
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <ThemedButton
@@ -226,6 +263,8 @@ export default function AccountScreen() {
               onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
               icon="logo-instagram"
               style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+              innerContainerStyle={buttonStyles.innerContainer}
+              contentContainerStyle={buttonStyles.contentContainer}
             />
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <ThemedButton
@@ -234,6 +273,8 @@ export default function AccountScreen() {
               onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
               icon="logo-facebook"
               style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+              innerContainerStyle={buttonStyles.innerContainer}
+              contentContainerStyle={buttonStyles.contentContainer}
             />
           </View>
         </View>
@@ -246,8 +287,8 @@ export default function AccountScreen() {
               styles.actionsContainer,
               {
                 backgroundColor: colors.cardBackground,
-                shadowColor: colors.text,
                 borderColor: colors.cardBorder,
+                ...shadowStyles.secondary,
               },
             ]}
           >
@@ -257,6 +298,8 @@ export default function AccountScreen() {
               onPress={handleSupport}
               icon="mail"
               style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+              innerContainerStyle={buttonStyles.innerContainer}
+              contentContainerStyle={buttonStyles.contentContainer}
             />
             <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
             <ThemedButton
@@ -269,6 +312,8 @@ export default function AccountScreen() {
                 styles.signOutButton,
                 { backgroundColor: colors.cardBackground },
               ]}
+              innerContainerStyle={buttonStyles.innerContainer}
+              contentContainerStyle={buttonStyles.contentContainer}
             />
           </View>
         </View>
@@ -340,7 +385,6 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: LAYOUT.OPACITY.DIMMED,
     shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -352,7 +396,6 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
     shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -364,7 +407,6 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.1,
     shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -397,6 +439,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
     minHeight: 48,
+    alignItems: 'flex-start',
   },
   signOutButton: {
     opacity: LAYOUT.OPACITY.DIMMED,
@@ -431,7 +474,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     gap: LAYOUT.SPACING.MEDIUM,
     height: 140,
-    justifyContent: 'center',
   },
   arabicPreviewText: {
     fontFamily: 'NotoNaskhArabic',

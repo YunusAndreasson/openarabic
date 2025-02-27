@@ -6,6 +6,7 @@ import {
   View,
   Platform,
   GestureResponderEvent,
+  ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
@@ -21,6 +22,8 @@ interface ThemedButtonProps extends TouchableOpacityProps {
   loading?: boolean;
   children?: React.ReactNode;
   iconSize?: number;
+  contentContainerStyle?: ViewStyle;
+  innerContainerStyle?: ViewStyle;
 }
 
 export function ThemedButton({
@@ -34,6 +37,8 @@ export function ThemedButton({
   children,
   iconSize = 24,
   onPress,
+  contentContainerStyle,
+  innerContainerStyle,
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
@@ -80,7 +85,7 @@ export function ThemedButton({
       onPress={handlePress}
       {...props}
     >
-      <View style={styles.innerContainer}>
+      <View style={[styles.innerContainer, innerContainerStyle]}>
         {iconComponent ? (
           <View style={styles.iconContainer}>{iconComponent}</View>
         ) : icon ? (
@@ -89,7 +94,7 @@ export function ThemedButton({
           </View>
         ) : null}
 
-        <View style={styles.contentContainer}>
+        <View style={[styles.contentContainer, contentContainerStyle]}>
           <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
             {title}
           </ThemedText>

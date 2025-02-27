@@ -2,6 +2,7 @@ import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useCallback, useEffect, useRef, memo, useMemo } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 
 interface ToggleProps {
   value: boolean;
@@ -10,6 +11,10 @@ interface ToggleProps {
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
+  const isDarkMode = useMemo(
+    () => colors.background === Colors.dark.background,
+    [colors.background]
+  );
 
   // Memoize dimensions to prevent recalculation on each render
   const dimensions = useMemo(() => {
@@ -90,6 +95,14 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     [TOGGLE_HEIGHT, TOGGLE_WIDTH, colors.icon, colors.tint, toggleScale, value]
   );
 
+  const shadowStyle = useMemo(
+    () => ({
+      shadowColor: colors.shadow,
+      shadowOpacity: isDarkMode ? 0 : LAYOUT.OPACITY.OVERLAY,
+    }),
+    [colors.shadow, isDarkMode]
+  );
+
   const handleStyle = useMemo(
     () => [
       styles.handle,
@@ -99,11 +112,11 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         borderRadius: HANDLE_SIZE / 2,
         backgroundColor: colors.background,
         transform: [{ translateX }],
-        shadowColor: colors.text,
+        ...shadowStyle,
       },
       styles.shadow,
     ],
-    [HANDLE_SIZE, colors.background, colors.text, translateX]
+    [HANDLE_SIZE, colors.background, shadowStyle, translateX]
   );
 
   return (
@@ -133,7 +146,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   shadow: {
-    shadowOpacity: LAYOUT.OPACITY.OVERLAY,
     shadowRadius: LAYOUT.SPACING.TINY / 2,
     elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
