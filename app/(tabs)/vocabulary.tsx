@@ -1,21 +1,18 @@
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { VocabularyStats } from '@/components/VocabularyStats';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
-import { StreakCard } from '@/components/StreakCard';
-import { StatCard } from '@/components/StatCard';
+import { VocabularyDashboard } from '@/components/VocabularyDashboard';
+import { ThemedButton } from '@/components/ThemedButton';
 import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
 import { router } from 'expo-router';
-import { ThemedButton } from '@/components/ThemedButton';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { Loader, LoadingScreen, LoadingContainer } from '@/components/Loader';
+import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { getMotivationalMessage, StudyWord } from '@/utils/vocabulary';
 
 export default function VocabularyScreen() {
@@ -111,16 +108,6 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, []);
 
-  // Memoize the stat cards data
-  const statCardsData = useMemo(
-    () => [
-      { label: 'Due Today', value: stats.dueWords, icon: 'time-outline' },
-      { label: 'Mastered', value: stats.masteredWords, icon: 'checkmark-circle-outline' },
-      { label: 'Learning', value: stats.learningWords, icon: 'school-outline' },
-    ],
-    [stats.dueWords, stats.masteredWords, stats.learningWords]
-  );
-
   // Show loader while authentication is being checked OR while data is loading/fetching
   if (isLoading) {
     return <LoadingScreen />;
@@ -170,16 +157,15 @@ export default function VocabularyScreen() {
             <ThemedText style={styles.motivationalText}>{motivationalMessage}</ThemedText>
           </View>
 
-          {/* Progress card - now at the top by itself */}
-          <View style={styles.progressCardContainer}>
-            <VocabularyStats
-              totalWords={stats.totalWords}
-              masteredWords={stats.masteredWords}
-              dueWords={stats.dueWords}
-              learningWords={stats.learningWords}
-              isLoading={isStillLoading}
-            />
-          </View>
+          {/* Vocabulary Dashboard */}
+          <VocabularyDashboard
+            totalWords={stats.totalWords}
+            masteredWords={stats.masteredWords}
+            dueWords={stats.dueWords}
+            learningWords={stats.learningWords}
+            streak={5}
+            colors={colors}
+          />
 
           {/* Weekly Progress Graph */}
           <VocabularyGraph
@@ -188,44 +174,17 @@ export default function VocabularyScreen() {
             isLoading={isStillLoading}
           />
 
-          {/* Stats section - now includes streak card as one of the square cards */}
-          <View style={styles.statsGrid}>
-            <StreakCard streak={5} colors={colors} />
-
-            {/* Stat cards - using the StatCard component for consistency */}
-            {statCardsData.map((stat, index) => (
-              <StatCard
-                key={index}
-                label={stat.label}
-                value={stat.value}
-                icon={stat.icon}
-                colors={colors}
-              />
-            ))}
-          </View>
-
-          {/* Review button - now directly below the cards */}
+          {/* Review Button - using standard ThemedButton */}
           {hasDueWords && (
-            <Animated.View
-              entering={FadeIn.duration(800).delay(300)}
-              style={styles.buttonContainer}
-            >
-              <Pressable
+            <View style={styles.reviewButtonContainer}>
+              <ThemedButton
+                title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
+                icon="play-circle"
                 onPress={handleStartReview}
-                style={({ pressed }) => [
-                  styles.reviewButtonContainer,
-                  { opacity: pressed ? 0.9 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] },
-                ]}
-              >
-                <ThemedButton
-                  title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
-                  icon="play-circle"
-                  onPress={handleStartReview}
-                  variant="filled"
-                  style={styles.reviewButton}
-                />
-              </Pressable>
-            </Animated.View>
+                variant="filled"
+                style={styles.reviewButton}
+              />
+            </View>
           )}
         </ScrollView>
       )}
@@ -252,37 +211,22 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DIMMED,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
-  progressCardContainer: {
-    width: '100%',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     opacity: LAYOUT.OPACITY.DIMMED,
   },
-  buttonContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  reviewButtonContainer: {
-    width: '100%',
-  },
-  reviewButton: {
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
-  },
   messageContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  reviewButtonContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
+  },
+  reviewButton: {
+    width: '100%',
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
   },
 });
