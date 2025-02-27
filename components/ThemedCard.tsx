@@ -5,7 +5,7 @@ import {
   Pressable,
   StyleProp,
   ViewStyle,
-  Animated,
+  Animated as RNAnimated,
   Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
@@ -18,6 +18,12 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
 import { Loader, LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -45,9 +51,12 @@ function ThemedCardComponent({
   const [isRendered, setIsRendered] = useState(false);
 
   // Animation values using useRef for better performance
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const loadingFadeAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
+  const scaleAnim = useRef(new RNAnimated.Value(1)).current;
+  const loadingFadeAnim = useRef(new RNAnimated.Value(1)).current;
+
+  // Reanimated values for smoother animations
+  const opacity = useSharedValue(1);
 
   // Track if component is mounted to prevent state updates after unmount
   const isMounted = useRef(true);
@@ -74,9 +83,9 @@ function ThemedCardComponent({
   useEffect(() => {
     fadeAnim.setValue(0);
 
-    Animated.sequence([
-      Animated.delay(100),
-      Animated.timing(fadeAnim, {
+    RNAnimated.sequence([
+      RNAnimated.delay(100),
+      RNAnimated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
         useNativeDriver: true,
@@ -88,7 +97,7 @@ function ThemedCardComponent({
   const handleLoadStart = useCallback(() => {
     setImageLoading(true);
     loadingFadeAnim.setValue(0.5);
-    Animated.timing(loadingFadeAnim, {
+    RNAnimated.timing(loadingFadeAnim, {
       toValue: 1,
       duration: 200,
       useNativeDriver: true,
@@ -96,7 +105,7 @@ function ThemedCardComponent({
   }, [loadingFadeAnim]);
 
   const handleLoadEnd = useCallback(() => {
-    Animated.timing(loadingFadeAnim, {
+    RNAnimated.timing(loadingFadeAnim, {
       toValue: 0,
       duration: 200,
       useNativeDriver: true,
@@ -108,7 +117,7 @@ function ThemedCardComponent({
   }, [loadingFadeAnim]);
 
   const handleError = useCallback(() => {
-    Animated.timing(loadingFadeAnim, {
+    RNAnimated.timing(loadingFadeAnim, {
       toValue: 0,
       duration: 200,
       useNativeDriver: true,
@@ -120,16 +129,39 @@ function ThemedCardComponent({
     });
   }, [loadingFadeAnim]);
 
+  // Handle press with haptic feedback
   const handlePress = useCallback(() => {
     if (onPress) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      onPress();
+      // Provide haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+      // Fade out animation
+      opacity.value = withTiming(0.8, {
+        duration: 150,
+        easing: Easing.out(Easing.ease),
+      });
+
+      // Platform-specific timing adjustments
+      const navigationDelay = Platform.OS === 'ios' ? 50 : 0;
+
+      // Delay navigation slightly to allow animation to start
+      setTimeout(() => {
+        // Reset opacity after navigation
+        setTimeout(() => {
+          opacity.value = withTiming(1, {
+            duration: 300,
+            easing: Easing.inOut(Easing.ease),
+          });
+        }, 300);
+
+        onPress();
+      }, navigationDelay);
     }
-  }, [onPress]);
+  }, [onPress, opacity]);
 
   // Press animation handlers
   const handlePressIn = useCallback(() => {
-    Animated.spring(scaleAnim, {
+    RNAnimated.spring(scaleAnim, {
       toValue: 0.97,
       friction: 8,
       tension: 40,
@@ -138,7 +170,7 @@ function ThemedCardComponent({
   }, [scaleAnim]);
 
   const handlePressOut = useCallback(() => {
-    Animated.spring(scaleAnim, {
+    RNAnimated.spring(scaleAnim, {
       toValue: 1,
       friction: 8,
       tension: 40,
@@ -215,7 +247,7 @@ function ThemedCardComponent({
       <>
         <View style={styles.imageContainer}>
           {imageLoading && (
-            <Animated.View
+            <RNAnimated.View
               style={[
                 styles.loadingContainer,
                 {
@@ -225,7 +257,7 @@ function ThemedCardComponent({
               ]}
             >
               <LoadingContainer size="small" />
-            </Animated.View>
+            </RNAnimated.View>
           )}
           <Image
             source={imageUrl}
@@ -284,6 +316,13 @@ function ThemedCardComponent({
     handleError,
   ]);
 
+  // Create animated style for the card
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  });
+
   return (
     <Animated.View
       style={[
@@ -292,6 +331,7 @@ function ThemedCardComponent({
           opacity: fadeAnim,
           transform: [{ scale: scaleAnim }],
         },
+        animatedStyle,
       ]}
     >
       <Pressable
