@@ -99,21 +99,13 @@ function CategoryPillsComponent({
 }: CategoryPillsProps) {
   const colors = useColors();
 
-  // Memoize the animated style
+  // Memoize the animated style - remove the transform and opacity animations
+  // since we're handling those in the parent component now
   const containerAnimatedStyle = useMemo(
     () => ({
-      transform: [
-        {
-          translateY: visible.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-100, 0],
-          }),
-        },
-      ],
-      opacity: visible,
       marginBottom: -LAYOUT.SPACING.XLARGE, // Increased negative margin from MEDIUM to XLARGE
     }),
-    [visible]
+    []
   );
 
   // Memoize the press handler factory
@@ -128,7 +120,7 @@ function CategoryPillsComponent({
   // Render the component
   return (
     <Animated.View
-      style={[styles.container, { backgroundColor: colors.background }, containerAnimatedStyle]}
+      style={[styles.container, { backgroundColor: 'transparent' }, containerAnimatedStyle]}
     >
       <View style={styles.scrollContainer}>
         <ScrollView
