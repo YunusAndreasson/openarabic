@@ -86,15 +86,24 @@ export default function TextsScreen() {
         }
         setError(null);
 
-        const fetchedArticles = await articlesService.getArticles(
-          selectedCategory ? selectedCategory.id : undefined
-        );
+        // Add a small delay to ensure the refresh indicator is visible
+        // This helps on devices where the network is too fast
+        const fetchedArticles = await Promise.all([
+          articlesService.getArticles(selectedCategory ? selectedCategory.id : undefined),
+          // Minimum delay of 500ms to ensure refresh indicator is visible
+          new Promise(resolve => setTimeout(resolve, 500)),
+        ]).then(([articles]) => articles);
+
         setArticles(fetchedArticles);
       } catch (err) {
         setError('Failed to fetch articles. Pull down to try again.');
       } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
+        // Small delay before hiding the refresh indicator
+        setTimeout(() => {
+          setIsLoading(false);
+          setIsRefreshing(false);
+          isRefreshingRef.current = false;
+        }, 300);
       }
     },
     [selectedCategory, isRefreshing]
@@ -113,6 +122,9 @@ export default function TextsScreen() {
   const handleRefresh = useCallback(() => {
     // Trigger haptic feedback when refreshing
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Set isRefreshingRef to true to ensure proper state tracking
+    isRefreshingRef.current = true;
+    // Call fetchArticles with true to show the refreshing indicator
     fetchArticles(true);
     fetchCategories();
   }, [fetchArticles, fetchCategories]);
@@ -159,7 +171,7 @@ export default function TextsScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: 'transparent', // Changed to transparent for blur effect
+            backgroundColor: colors.background, // Changed from transparent to solid background
             borderTopWidth: 0,
             height: LAYOUT.BOTTOM_BAR.HEIGHT,
             zIndex: LAYOUT.Z_INDEX.HEADER,
@@ -194,13 +206,8 @@ export default function TextsScreen() {
                   fontWeight: '500',
                 }
               : undefined,
-          tabBarBackground: () => (
-            <BlurView
-              intensity={80}
-              tint={isDarkTheme ? 'dark' : 'light'}
-              style={StyleSheet.absoluteFill}
-            />
-          ),
+          // Remove the blur background
+          tabBarBackground: undefined,
         });
 
         // Animate both tab bar and categories
@@ -212,6 +219,7 @@ export default function TextsScreen() {
       isTabBarVisible,
       navigation,
       colors.shadow,
+      colors.background,
       isDarkTheme,
       tabBarVisibleAnim,
       animateTabBar,
@@ -221,7 +229,7 @@ export default function TextsScreen() {
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const { y: currentScrollY } = event.nativeEvent.contentOffset;
       const currentTimestamp = Date.now();
       const scrollingDown = currentScrollY > lastScrollY.current;
 
@@ -229,6 +237,10 @@ export default function TextsScreen() {
       if (currentScrollY < -50 && !isRefreshingRef.current) {
         isRefreshingRef.current = true;
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        // Manually trigger refresh when pull gesture is detected
+        if (!isRefreshing) {
+          handleRefresh();
+        }
       } else if (currentScrollY >= 0) {
         isRefreshingRef.current = false;
       }
@@ -278,6 +290,7 @@ export default function TextsScreen() {
     [isTabBarVisible, toggleTabBarVisibility]
   );
 
+  // Memoize the renderItem function to prevent unnecessary re-renders
   const renderItem = useCallback<ListRenderItem<Article>>(
     ({ item }) => (
       <MemoizedCard
@@ -302,6 +315,7 @@ export default function TextsScreen() {
     []
   );
 
+  // Memoize the empty component to prevent unnecessary re-renders
   const ListEmptyComponent = useCallback(() => {
     if (isLoading && !isRefreshing) {
       return (
@@ -326,6 +340,7 @@ export default function TextsScreen() {
     );
   }, [isLoading, isRefreshing, error, colors.tint]);
 
+  // Memoize the refresh control to prevent unnecessary re-renders
   const refreshControl = useMemo(
     () => (
       <RefreshControl
@@ -334,9 +349,70 @@ export default function TextsScreen() {
         tintColor={colors.tint}
         colors={[colors.tint]}
         progressBackgroundColor={colors.background}
+        progressViewOffset={categoryPillsHeight} // Adjust for the category pills
+        title={isRefreshing ? 'Refreshing...' : 'Pull to refresh'} // iOS only
+        titleColor={colors.text}
       />
     ),
-    [isRefreshing, handleRefresh, colors.tint, colors.background]
+    [isRefreshing, handleRefresh, colors.tint, colors.background, colors.text, categoryPillsHeight]
+  );
+
+  // Memoize category pill rendering for better performance
+  const renderCategoryPill = useCallback(
+    (category: Tables<'categories'> | null) => {
+      const isSelected =
+        category === null ? selectedCategory === null : selectedCategory?.id === category.id;
+
+      const backgroundColor = isSelected
+        ? isDarkTheme
+          ? `${colors.tint}20`
+          : `${colors.tint}70`
+        : isDarkTheme
+          ? `${colors.elevation2}40`
+          : `${colors.elevation1}90`;
+
+      const textColor = isSelected
+        ? isDarkTheme
+          ? colors.white
+          : colors.white
+        : isDarkTheme
+          ? `${colors.text}90`
+          : `${colors.text}80`;
+
+      const fontWeight = isSelected ? '700' : '600';
+      const categoryName = category?.name?.toUpperCase() || 'ALL';
+
+      return (
+        <TouchableOpacity
+          key={category?.id || 'all'}
+          style={[
+            styles.categoryPill,
+            {
+              backgroundColor,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            handleCategorySelect(category);
+          }}
+        >
+          <ThemedText
+            style={[
+              styles.categoryPillText,
+              {
+                color: textColor,
+                fontWeight,
+              },
+            ]}
+            skipDefaultColor
+          >
+            {categoryName}
+          </ThemedText>
+        </TouchableOpacity>
+      );
+    },
+    [selectedCategory, isDarkTheme, colors, handleCategorySelect]
   );
 
   // Effects
@@ -348,11 +424,54 @@ export default function TextsScreen() {
     fetchArticles();
   }, [fetchArticles]);
 
+  // Sync isRefreshingRef with isRefreshing state
+  useEffect(() => {
+    // When isRefreshing becomes false, ensure isRefreshingRef is also false
+    if (!isRefreshing) {
+      isRefreshingRef.current = false;
+    }
+  }, [isRefreshing]);
+
+  // Memoize the FlatList content container style
+  const flatListContentContainerStyle = useMemo(
+    () => [
+      styles.flatListContent,
+      {
+        paddingTop: categoryPillsHeight,
+        paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT,
+      },
+    ],
+    [categoryPillsHeight, insets.bottom]
+  );
+
+  // Memoize the header container style for better performance
+  const headerContainerStyle = useMemo(
+    () => [
+      styles.headerContainer,
+      {
+        transform: [
+          {
+            translateY: categoryVisibleAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-100, 0],
+            }),
+          },
+        ],
+        opacity: categoryVisibleAnim,
+        backgroundColor: 'transparent',
+        height: categoryPillsHeight,
+        paddingTop: insets.top,
+      },
+    ],
+    [categoryVisibleAnim, categoryPillsHeight, insets.top]
+  );
+
   return (
     <View style={{ flex: 1 }}>
       <ThemedView
         style={[styles.container, { backgroundColor: colors.background }]}
         contentContainerStyle={{ padding: 0 }}
+        useSafeArea={false}
       >
         <FlatList
           ref={flatListRef}
@@ -360,12 +479,7 @@ export default function TextsScreen() {
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           getItemLayout={getItemLayout}
-          contentContainerStyle={[
-            styles.flatListContent,
-            {
-              paddingTop: categoryPillsHeight - 60, // Reduce padding to close the gap
-            },
-          ]}
+          contentContainerStyle={flatListContentContainerStyle}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           ListEmptyComponent={ListEmptyComponent}
@@ -375,43 +489,30 @@ export default function TextsScreen() {
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={5}
-          // Add decelerationRate for smoother scrolling
+          updateCellsBatchingPeriod={50}
           decelerationRate={Platform.OS === 'ios' ? 'normal' : 0.985}
-          // Add momentum scrolling for iOS
           snapToAlignment="start"
+          automaticallyAdjustContentInsets={false}
+          contentInsetAdjustmentBehavior="never"
+          alwaysBounceVertical={true}
+          // Additional performance optimizations
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+            autoscrollToTopThreshold: 10,
+          }}
+          // Optimize memory usage
+          onEndReachedThreshold={0.5}
         />
       </ThemedView>
 
-      {/* Category Pills with Blur Effect */}
+      {/* Category Pills */}
       <Animated.View
-        style={[
-          styles.headerContainer,
-          {
-            transform: [
-              {
-                translateY: categoryVisibleAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [-100, 0],
-                }),
-              },
-            ],
-            opacity: categoryVisibleAnim,
-            backgroundColor: 'transparent', // Make transparent to show blur
-            height: categoryPillsHeight,
-          },
-        ]}
+        style={headerContainerStyle}
+        // Add hardware acceleration for smoother animations
+        needsOffscreenAlphaCompositing={true}
       >
-        <BlurView
-          intensity={isDarkTheme ? 40 : 80}
-          tint={isDarkTheme ? 'dark' : 'light'}
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: isDarkTheme ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.5)' },
-          ]}
-        />
-
-        {/* Safe area spacer */}
-        <View style={{ height: insets.top }} />
+        {/* Transparent background */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]} />
 
         {/* Category pills */}
         <View style={styles.categoryContainer}>
@@ -419,93 +520,18 @@ export default function TextsScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoryScrollContent}
+            // Optimize scrolling performance
+            removeClippedSubviews={true}
+            scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
+            directionalLockEnabled={true}
+            bounces={false}
           >
             {/* "All" category */}
-            <TouchableOpacity
-              style={[
-                styles.categoryPill,
-                {
-                  backgroundColor:
-                    selectedCategory === null
-                      ? isDarkTheme
-                        ? `${colors.tint}20`
-                        : `${colors.tint}70`
-                      : isDarkTheme
-                        ? `${colors.elevation2}40`
-                        : `${colors.elevation1}90`,
-                  borderColor: colors.cardBorder,
-                },
-              ]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                handleCategorySelect(null);
-              }}
-            >
-              <ThemedText
-                style={[
-                  styles.categoryPillText,
-                  {
-                    color:
-                      selectedCategory === null
-                        ? isDarkTheme
-                          ? colors.white
-                          : colors.white
-                        : isDarkTheme
-                          ? `${colors.text}90`
-                          : `${colors.text}80`,
-                    fontWeight: selectedCategory === null ? '700' : '600',
-                  },
-                ]}
-                skipDefaultColor
-              >
-                ALL
-              </ThemedText>
-            </TouchableOpacity>
+            {renderCategoryPill(null)}
 
             {/* Category pills */}
-            {categories.map(category => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryPill,
-                  {
-                    backgroundColor:
-                      selectedCategory?.id === category.id
-                        ? isDarkTheme
-                          ? `${colors.tint}20`
-                          : `${colors.tint}70`
-                        : isDarkTheme
-                          ? `${colors.elevation2}40`
-                          : `${colors.elevation1}90`,
-                    borderColor: colors.cardBorder,
-                  },
-                ]}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  handleCategorySelect(category);
-                }}
-              >
-                <ThemedText
-                  style={[
-                    styles.categoryPillText,
-                    {
-                      color:
-                        selectedCategory?.id === category.id
-                          ? isDarkTheme
-                            ? colors.white
-                            : colors.white
-                          : isDarkTheme
-                            ? `${colors.text}90`
-                            : `${colors.text}80`,
-                      fontWeight: selectedCategory?.id === category.id ? '700' : '600',
-                    },
-                  ]}
-                  skipDefaultColor
-                >
-                  {category.name.toUpperCase()}
-                </ThemedText>
-              </TouchableOpacity>
-            ))}
+            {categories.map(category => renderCategoryPill(category))}
           </ScrollView>
 
           {/* Right fade gradient */}
@@ -526,6 +552,8 @@ export default function TextsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 0,
+    marginBottom: 0,
   },
   errorText: {
     textAlign: 'center',
@@ -547,6 +575,7 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: LAYOUT.LIST_VERTICAL_SPACING,
+    // No horizontal padding to allow content to fill the screen width
   },
   headerContainer: {
     position: 'absolute',
@@ -556,6 +585,8 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER,
     borderBottomWidth: 0.5,
     borderBottomColor: 'rgba(150,150,150,0.2)', // Subtle border for separation
+    marginTop: 0,
+    // Hardware acceleration is applied in the Animated.View props
   },
   categoryContainer: {
     height: 30, // Fixed height for the category container

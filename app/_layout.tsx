@@ -21,6 +21,7 @@ import { Theme } from '@/constants/Colors';
 import Toast, { BaseToast, BaseToastProps } from 'react-native-toast-message';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -103,7 +104,9 @@ export default function RootLayout() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <QueryClientProvider client={queryClient}>
-          <AppContent />
+          <SafeAreaProvider>
+            <AppContent />
+          </SafeAreaProvider>
         </QueryClientProvider>
       </PersistGate>
     </Provider>

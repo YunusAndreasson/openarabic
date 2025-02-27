@@ -7,6 +7,7 @@ import {
   Animated,
   Platform,
   Easing,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
@@ -22,6 +23,10 @@ export interface ThemedViewProps extends ViewProps {
   fadeInDuration?: number;
   /** Optional delay before starting the fade-in animation */
   fadeInDelay?: number;
+  /** Whether to use SafeAreaView (default: true) */
+  useSafeArea?: boolean;
+  /** Whether to include bottom insets in safe area (default: true) */
+  includeBottomInset?: boolean;
   children?: React.ReactNode;
 }
 
@@ -32,6 +37,8 @@ function ThemedViewComponent({
   contentContainerStyle,
   fadeInDuration = 600, // Longer duration for more subtle effect
   fadeInDelay = 100, // Small delay before animation starts
+  useSafeArea = true,
+  includeBottomInset = true,
   ...otherProps
 }: ThemedViewProps) {
   const colors = useColors();
@@ -61,6 +68,7 @@ function ThemedViewComponent({
     () => [
       {
         backgroundColor: colors.background,
+        flex: 1,
       },
       style,
     ],
@@ -81,27 +89,50 @@ function ThemedViewComponent({
       </Animated.View>
     );
 
-    if (scrollable) {
+    // Create the scrollable content
+    const scrollableContent = (
+      <ScrollView
+        contentContainerStyle={contentContainerStyle}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        removeClippedSubviews={Platform.OS === 'android'}
+        // Optimize scrolling
+        automaticallyAdjustContentInsets={false}
+        contentInsetAdjustmentBehavior="never"
+        alwaysBounceVertical={true}
+      >
+        {animatedContent}
+      </ScrollView>
+    );
+
+    // Determine whether to use SafeAreaView or regular View
+    if (useSafeArea) {
       return (
-        <SafeAreaView style={themedStyle} {...otherProps}>
-          <ScrollView
-            contentContainerStyle={contentContainerStyle}
-            showsVerticalScrollIndicator={false}
-            bounces={true}
-            removeClippedSubviews={Platform.OS === 'android'}
-          >
-            {animatedContent}
-          </ScrollView>
+        <SafeAreaView
+          style={themedStyle}
+          {...otherProps}
+          edges={includeBottomInset ? undefined : ['top', 'left', 'right']}
+        >
+          {scrollable ? scrollableContent : animatedContent}
         </SafeAreaView>
       );
     }
 
     return (
-      <SafeAreaView style={themedStyle} {...otherProps}>
-        {animatedContent}
-      </SafeAreaView>
+      <View style={themedStyle} {...otherProps}>
+        {scrollable ? scrollableContent : animatedContent}
+      </View>
     );
-  }, [children, contentContainerStyle, otherProps, scrollable, themedStyle, fadeAnim]);
+  }, [
+    children,
+    contentContainerStyle,
+    otherProps,
+    scrollable,
+    themedStyle,
+    fadeAnim,
+    useSafeArea,
+    includeBottomInset,
+  ]);
 
   return content;
 }
