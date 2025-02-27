@@ -4,6 +4,7 @@ import { Platform, StyleSheet, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
+import { HapticTab } from '@/components/HapticTab';
 
 const TAB_SCREENS = [
   {
@@ -50,6 +51,13 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarHideOnKeyboard: true,
+        // Ensure consistent styling for all tabs
+        tabBarShowLabel: true,
+        tabBarLabelStyle: styles.tabBarLabel,
+        // Use HapticTab for all tabs to ensure consistent behavior
+        tabBarButton: props => <HapticTab {...props} />,
+        // Adjust icon position for better alignment with label
+        tabBarIconStyle: styles.tabBarIcon,
       }}
     >
       {TAB_SCREENS.map(screen => (
@@ -75,40 +83,56 @@ export default function TabLayout() {
 
 // Extract styles to a separate function for better organization and memoization
 const createStyles = (colors: ReturnType<typeof useColors>) => {
-  // Define platform-specific tab bar styles
-  const iosTabBarStyle: ViewStyle = {
+  // Define a single consistent tab bar style for both platforms
+  const tabBarStyle: ViewStyle = {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     backgroundColor: colors.background,
-    borderTopColor: colors.cardBorder,
-    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: LAYOUT.OPACITY.DIMMED / 2, // 0.35 (half of DIMMED opacity)
-    shadowRadius: LAYOUT.SPACING.SMALL / 2, // 4
+    // Remove the border top to eliminate separation line
+    borderTopWidth: 0,
     height: LAYOUT.BOTTOM_BAR.HEIGHT,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-  };
-
-  const androidTabBarStyle: ViewStyle = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: colors.background,
-    borderTopColor: colors.cardBorder,
-    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-    elevation: 8, // Use a direct value since we can't safely access nested optional properties
-    height: LAYOUT.BOTTOM_BAR.HEIGHT,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
+    // Add platform-specific shadow styling
+    ...Platform.select({
+      ios: {
+        shadowColor: colors.shadow,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
+        shadowRadius: LAYOUT.SPACING.SMALL / 2,
+        // Add padding for iOS to ensure text visibility
+        paddingBottom: LAYOUT.SPACING.SMALL,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
   };
 
   return StyleSheet.create({
-    tabBar: Platform.OS === 'ios' ? iosTabBarStyle : androidTabBarStyle,
+    tabBar: tabBarStyle,
     header: {
       backgroundColor: colors.background,
     },
+    tabBarLabel: {
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+      // Adjust padding based on platform
+      ...Platform.select({
+        ios: {
+          marginBottom: LAYOUT.SPACING.TINY,
+          fontWeight: '500', // Make text slightly bolder on iOS for better visibility
+        },
+        android: {
+          paddingBottom: 2,
+        },
+      }),
+    },
+    tabBarIcon:
+      Platform.OS === 'ios'
+        ? {
+            marginTop: LAYOUT.SPACING.TINY,
+          }
+        : {},
   });
 };

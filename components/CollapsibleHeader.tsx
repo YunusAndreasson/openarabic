@@ -1,4 +1,4 @@
-import React, { ReactNode, useCallback, useEffect, useMemo, memo } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, memo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -24,6 +24,7 @@ import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { LoadingContainer } from './Loader';
 
 // Extract constants to avoid recalculation
 const HEADER_HEIGHT = LAYOUT.HEADER.HEIGHT.EXPANDED;
@@ -41,6 +42,7 @@ interface Props {
   title: string;
   accessibilityLabel?: string;
   customGradientColors?: readonly [string, string, ...string[]];
+  onImageLoaded?: () => void;
 }
 
 export const CollapsibleHeader = memo(function CollapsibleHeader({
@@ -50,12 +52,14 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   title,
   accessibilityLabel,
   customGradientColors,
+  onImageLoaded,
 }: Props) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const scrollY = useSharedValue(0);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const [isImageLoading, setIsImageLoading] = useState(true);
 
   // Memoize gradient colors to prevent unnecessary re-renders
   const gradientColors = useMemo(() => {
@@ -156,6 +160,14 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   // Memoize the default image to prevent unnecessary re-renders
   const defaultImage = useMemo(() => require('@/assets/images/default-header.jpg'), []);
 
+  // Handle image loading
+  const handleImageLoaded = useCallback(() => {
+    setIsImageLoading(false);
+    if (onImageLoaded) {
+      onImageLoaded();
+    }
+  }, [onImageLoaded]);
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -173,7 +185,13 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
             transition={ANIMATION_DURATION}
             placeholder={Platform.OS === 'ios' ? { color: colors.cardBackground } : undefined}
             accessible={false}
+            onLoad={handleImageLoaded}
           />
+          {isImageLoading && (
+            <View style={styles.imageLoadingContainer}>
+              <LoadingContainer color={colors.tint} />
+            </View>
+          )}
           <LinearGradient
             colors={gradientColors}
             style={styles.gradient}
@@ -277,5 +295,15 @@ const styles = StyleSheet.create({
   navHeaderBackground: {
     ...StyleSheet.absoluteFillObject,
     opacity: 0.8,
+  },
+  imageLoadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
   },
 });

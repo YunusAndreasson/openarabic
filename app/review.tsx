@@ -12,7 +12,7 @@ import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
-import { Loader } from '@/components/Loader';
+import { Loader, LoadingScreen } from '@/components/Loader';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
@@ -249,9 +249,14 @@ export default function ReviewScreen() {
     return (
       <ThemedView style={styles.container}>
         <ProgressBar progress={0} style={progressBarStyle} />
-        <View style={styles.loadingContainer}>
+        <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>Error loading word</ThemedText>
-          <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
+          <ThemedButton
+            title="Go Back"
+            onPress={handleClose}
+            variant="filled"
+            style={styles.errorButton}
+          />
         </View>
       </ThemedView>
     );
@@ -261,9 +266,14 @@ export default function ReviewScreen() {
     return (
       <ThemedView style={styles.container}>
         <ProgressBar progress={0} style={progressBarStyle} />
-        <View style={styles.loadingContainer}>
+        <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>Error loading sentence data</ThemedText>
-          <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
+          <ThemedButton
+            title="Go Back"
+            onPress={handleClose}
+            variant="filled"
+            style={styles.errorButton}
+          />
         </View>
       </ThemedView>
     );
@@ -464,10 +474,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.LARGE,
+  },
   errorText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontSize: 18,
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  errorButton: {
+    minWidth: 120,
   },
 });
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { StyleSheet, View, FlatList } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
@@ -15,12 +15,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
 import { LAYOUT } from '@/constants/layout';
-import { Loader } from '@/components/Loader';
+import { Loader, LoadingScreen } from '@/components/Loader';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ArticleSentence } from '@/components/ArticleSentence';
 import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
 import { ArticleHeader } from '@/components/ArticleHeader';
 import type { Article } from '@/types/articles.types';
+import { Image } from 'expo-image';
 
 const styles = StyleSheet.create({
   container: {
@@ -51,6 +52,27 @@ export default function ArticleScreen() {
   const queryClient = useQueryClient();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
+  const [isImageLoading, setIsImageLoading] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Preload the default header image
+  useEffect(() => {
+    const defaultImage = require('@/assets/images/default-header.jpg');
+    const preloadImage = async () => {
+      try {
+        await Image.prefetch(defaultImage);
+      } catch (error) {
+        console.error('Error preloading image:', error);
+      } finally {
+        // If there's no article to load, we can consider the image loaded
+        if (!id) {
+          setIsImageLoading(false);
+        }
+      }
+    };
+
+    preloadImage();
+  }, []);
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
@@ -63,6 +85,38 @@ export default function ArticleScreen() {
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
   });
+
+  // Reset image loading state when article changes
+  useEffect(() => {
+    if (article) {
+      setIsImageLoading(true);
+    }
+  }, [article?.id]);
+
+  // Handle image loading completion
+  const handleImageLoaded = useCallback(() => {
+    setIsImageLoading(false);
+    setIsInitialLoad(false);
+  }, []);
+
+  // Preload default image when article data is available
+  useEffect(() => {
+    if (article) {
+      const preloadDefaultImage = async () => {
+        try {
+          const defaultImage = require('@/assets/images/default-header.jpg');
+          await Image.prefetch(defaultImage);
+          handleImageLoaded();
+        } catch (error) {
+          console.error('Error preloading default image:', error);
+          // Even if there's an error, we should still hide the loading screen
+          handleImageLoaded();
+        }
+      };
+
+      preloadDefaultImage();
+    }
+  }, [article, handleImageLoaded]);
 
   const { data: studyWords = [] } = useQuery({
     queryKey: ['studyWords', user?.id],
@@ -261,14 +315,11 @@ export default function ArticleScreen() {
     );
   }, [otherArticles, otherCategoryArticles, article, renderArticleCard]);
 
-  if (isLoadingArticle) {
-    return (
-      <ThemedView style={styles.container}>
-        <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-          <Loader size="large" />
-        </View>
-      </ThemedView>
-    );
+  // Determine if we should show the loading screen
+  const isLoading = isLoadingArticle || (isInitialLoad && isImageLoading);
+
+  if (isLoading) {
+    return <LoadingScreen />;
   }
 
   if (!article) {
@@ -284,6 +335,7 @@ export default function ArticleScreen() {
       renderContent={renderHeaderContent}
       title={article.title || ''}
       customGradientColors={gradientColors}
+      onImageLoaded={handleImageLoaded}
     >
       <FlatList
         data={sortedSentences}

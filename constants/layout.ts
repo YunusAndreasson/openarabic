@@ -26,7 +26,7 @@ export const LAYOUT = {
 
   // Specific component heights
   BOTTOM_BAR: {
-    HEIGHT: 49, // Match tab bar height
+    HEIGHT: Platform.OS === 'ios' ? 80 : 49, // Taller on iOS to accommodate text and spacing
     MARGIN: 12, // Tighter margin for bottom elements
   },
 

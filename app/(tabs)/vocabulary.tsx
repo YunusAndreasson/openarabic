@@ -15,7 +15,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { Loader } from '@/components/Loader';
+import { Loader, LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { getMotivationalMessage, StudyWord } from '@/utils/vocabulary';
 
 export default function VocabularyScreen() {
@@ -123,16 +123,7 @@ export default function VocabularyScreen() {
 
   // Show loader while authentication is being checked OR while data is loading/fetching
   if (isLoading) {
-    return (
-      <ThemedView style={styles.container}>
-        <View style={[styles.fullScreenLoader, { backgroundColor: colors.background }]}>
-          <View style={styles.loaderContainer}>
-            <Loader size="large" color={colors.tint} />
-            <ThemedText style={styles.loaderText}>Loading vocabulary...</ThemedText>
-          </View>
-        </View>
-      </ThemedView>
-    );
+    return <LoadingScreen />;
   }
 
   // Only proceed after loading is complete
@@ -167,10 +158,7 @@ export default function VocabularyScreen() {
   return (
     <ThemedView style={styles.container}>
       {isStillLoading ? (
-        <View style={[styles.inlineLoader, { backgroundColor: colors.background }]}>
-          <Loader size="large" color={colors.tint} />
-          <ThemedText style={styles.loaderText}>Loading vocabulary...</ThemedText>
-        </View>
+        <LoadingContainer size="large" height={300} />
       ) : (
         <ScrollView
           style={styles.scrollView}
@@ -296,29 +284,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  fullScreenLoader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-  },
-  loaderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loaderText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  inlineLoader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });

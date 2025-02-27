@@ -14,7 +14,7 @@ import {
 } from '@shopify/react-native-skia';
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
-import { Loader } from './Loader';
+import { Loader, LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/useComponentAnimation';
 import { useGraphData } from '@/hooks/useGraphData';
 
@@ -79,10 +79,7 @@ export const VocabularyGraph = React.memo(
       return (
         <View style={cardStyle}>
           {cardHeader}
-          <View style={styles.loadingContainer}>
-            <Loader size="small" color={colors.tint} />
-            <ThemedText style={styles.loadingText}>Loading graph...</ThemedText>
-          </View>
+          <LoadingContainer height={160} />
         </View>
       );
     }
@@ -282,7 +279,6 @@ const styles = StyleSheet.create({
     height: 160,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
   },
   loadingText: {
     marginLeft: LAYOUT.SPACING.SMALL,

@@ -11,6 +11,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { Audio } from 'expo-av';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { LoadingScreen } from '../../components/Loader';
 
 const styles = StyleSheet.create({
   container: {
@@ -272,18 +273,7 @@ export default function PlaylistScreen() {
   }
 
   if (isLoading) {
-    return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View
-          style={[
-            styles.messageContainer,
-            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
-          ]}
-        >
-          <ThemedText style={styles.message}>Loading...</ThemedText>
-        </View>
-      </ThemedView>
-    );
+    return <LoadingScreen />;
   }
 
   if (!readingList?.length) {

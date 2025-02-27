@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useMemo } from 'react';
 import { StyleSheet, View, Animated, Easing, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
+import { ThemedView } from './ThemedView';
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -79,7 +80,60 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   );
 };
 
+interface LoadingScreenProps {
+  color?: string;
+  fadeInDelay?: number;
+  fadeInDuration?: number;
+}
+
+/**
+ * A full-screen loading component that uses ThemedView for consistent styling
+ * and automatically handles background colors and animations.
+ */
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({
+  color,
+  fadeInDelay = 100,
+  fadeInDuration = 600,
+}) => {
+  const colors = useColors();
+
+  return (
+    <ThemedView style={styles.fullScreen} fadeInDelay={fadeInDelay} fadeInDuration={fadeInDuration}>
+      <View style={styles.loaderContainer}>
+        <Loader size="large" color={color || colors.tint} />
+      </View>
+    </ThemedView>
+  );
+};
+
+interface LoadingContainerProps {
+  size?: 'small' | 'large';
+  color?: string;
+  style?: ViewStyle;
+  height?: number;
+}
+
+/**
+ * A component-level loading container for consistent styling
+ */
+export const LoadingContainer: React.FC<LoadingContainerProps> = ({
+  size = 'small',
+  color,
+  style,
+  height = 160,
+}) => {
+  const colors = useColors();
+
+  return (
+    <View style={[styles.componentLoader, { height }, style]}>
+      <Loader size={size} color={color || colors.tint} />
+    </View>
+  );
+};
+
 Loader.displayName = 'Loader';
+LoadingScreen.displayName = 'LoadingScreen';
+LoadingContainer.displayName = 'LoadingContainer';
 
 const styles = StyleSheet.create({
   container: {
@@ -91,5 +145,20 @@ const styles = StyleSheet.create({
   },
   circle: {
     opacity: 0.8,
+  },
+  fullScreen: {
+    flex: 1,
+  },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  componentLoader: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
   },
 });

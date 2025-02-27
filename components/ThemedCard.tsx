@@ -16,7 +16,8 @@ import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
-import { Loader } from './Loader';
+import { Loader, LoadingContainer } from './Loader';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -205,7 +206,7 @@ function ThemedCardComponent({
             { backgroundColor: themedStyles.card.backgroundColor },
           ]}
         >
-          <Loader size="small" />
+          <LoadingContainer size="small" height={300} />
         </View>
       );
     }
@@ -223,7 +224,7 @@ function ThemedCardComponent({
                 },
               ]}
             >
-              <Loader size="small" color={colors.tint} />
+              <LoadingContainer size="small" />
             </Animated.View>
           )}
           <Image

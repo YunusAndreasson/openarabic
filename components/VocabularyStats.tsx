@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
-import { Loader } from './Loader';
+import { Loader, LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/useComponentAnimation';
 import { useProgressAnimation } from '@/hooks/useProgressAnimation';
 import { createArcPath } from '@/utils/graphUtils';
@@ -57,10 +57,7 @@ function VocabularyStatsComponent({
   if (isLoading || !isReady) {
     return (
       <View style={progressCardStyle}>
-        <View style={styles.loadingContainer}>
-          <Loader size="small" color={colors.tint} />
-          <ThemedText style={styles.loadingText}>Loading stats...</ThemedText>
-        </View>
+        <LoadingContainer height={100} />
       </View>
     );
   }
@@ -165,7 +162,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    flexDirection: 'row',
   },
   loadingText: {
     marginLeft: LAYOUT.SPACING.SMALL,

@@ -9,6 +9,7 @@ import {
   Animated,
   RefreshControl,
   ViewStyle,
+  View,
 } from 'react-native';
 import { useEffect, useState, useCallback, useRef, memo, useMemo } from 'react';
 import { router, useNavigation } from 'expo-router';
@@ -24,7 +25,7 @@ import { categoriesService } from '@/services/categories';
 import type { Tables } from '@/types/database.types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
-import { Loader } from '@/components/Loader';
+import { Loader, LoadingScreen } from '@/components/Loader';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -114,11 +115,41 @@ export default function TextsScreen() {
         navigation.setOptions({
           tabBarStyle: visible
             ? {
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
                 backgroundColor: colors.background,
-                borderTopColor: colors.cardBorder,
-                borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+                // Remove border top to eliminate separation line
+                borderTopWidth: 0,
+                height: LAYOUT.BOTTOM_BAR.HEIGHT,
+                zIndex: LAYOUT.Z_INDEX.HEADER,
+                // Add platform-specific shadow styling
+                ...Platform.select({
+                  ios: {
+                    shadowColor: colors.shadow,
+                    shadowOffset: { width: 0, height: -2 },
+                    shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
+                    shadowRadius: LAYOUT.SPACING.SMALL / 2,
+                    // Add padding for iOS to ensure text visibility
+                    paddingBottom: LAYOUT.SPACING.SMALL,
+                  },
+                  android: {
+                    elevation: 8,
+                  },
+                }),
               }
             : { display: 'none' },
+          // Also update the icon style for consistency
+          tabBarIconStyle: Platform.OS === 'ios' ? { marginTop: LAYOUT.SPACING.TINY } : undefined,
+          tabBarLabelStyle:
+            Platform.OS === 'ios'
+              ? {
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                  marginBottom: LAYOUT.SPACING.TINY,
+                  fontWeight: '500',
+                }
+              : undefined,
         });
 
         Animated.timing(categoryVisibleAnim, {
@@ -128,7 +159,7 @@ export default function TextsScreen() {
         }).start();
       }
     },
-    [categoryVisibleAnim, isTabBarVisible, navigation, colors.background, colors.cardBorder]
+    [categoryVisibleAnim, isTabBarVisible, navigation, colors.background, colors.shadow]
   );
 
   const handleScroll = useCallback(
@@ -185,8 +216,8 @@ export default function TextsScreen() {
   const ListEmptyComponent = useCallback(() => {
     if (isLoading && !isRefreshing) {
       return (
-        <ThemedView style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-          <Loader size="large" />
+        <ThemedView style={styles.emptyContainer}>
+          <Loader size="large" color={colors.tint} />
         </ThemedView>
       );
     }
