@@ -18,6 +18,7 @@ const styles = StyleSheet.create({
   categoryContainer: {
     alignSelf: 'flex-start',
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   title: {
     textAlign: 'left',

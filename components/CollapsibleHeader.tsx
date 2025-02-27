@@ -6,6 +6,8 @@ import {
   StatusBar,
   Platform,
   AccessibilityInfo,
+  FlatList,
+  TouchableOpacity,
 } from 'react-native';
 import { Image } from 'expo-image';
 import Animated, {
@@ -15,16 +17,18 @@ import Animated, {
   interpolate,
   runOnJS,
   withTiming,
+  Extrapolate,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useColors } from '@/hooks/useColors';
-import { useNavigation } from 'expo-router';
+import { useNavigation, router } from 'expo-router';
 import { BlurView } from 'expo-blur';
 import { Colors } from '@/constants/Colors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { LoadingContainer } from './Loader';
+import { Ionicons } from '@expo/vector-icons';
 
 // Extract constants to avoid recalculation
 const HEADER_HEIGHT = LAYOUT.HEADER.HEIGHT.EXPANDED;
@@ -43,6 +47,7 @@ interface Props {
   accessibilityLabel?: string;
   customGradientColors?: readonly [string, string, ...string[]];
   onImageLoaded?: () => void;
+  imageSource?: ImageSourcePropType;
 }
 
 export const CollapsibleHeader = memo(function CollapsibleHeader({
@@ -53,6 +58,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   accessibilityLabel,
   customGradientColors,
   onImageLoaded,
+  imageSource,
 }: Props) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -80,6 +86,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
       headerTitle: null,
       headerTransparent: true,
       headerStyle: { backgroundColor: 'transparent' },
+      headerShown: false, // Ensure no headers appear when scrolling down
     }),
     []
   );
@@ -97,13 +104,14 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   const updateNavigation = useCallback(
     (progress: number) => {
       navigation.setOptions({
-        headerTitle: progress > 0.9 ? title : null,
+        headerTitle: null, // Never show header title when scrolling
+        headerShown: false, // Ensure no headers appear when scrolling down
         headerStyle: {
           backgroundColor: 'transparent',
         },
       });
     },
-    [navigation, title]
+    [navigation]
   );
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -125,9 +133,13 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
 
     const opacity = interpolate(scrollY.value, [0, HEADER_FADE_THRESHOLD], [1, 0], 'clamp');
 
+    // Add zoom out effect when pulling down
+    const scale = interpolate(scrollY.value, [-100, 0], [1.2, 1], Extrapolate.CLAMP);
+
     return {
       height,
       opacity,
+      transform: [{ scale }],
     };
   });
 
@@ -136,24 +148,17 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
 
     const scale = interpolate(scrollY.value, [0, SCROLL_THRESHOLD], [1, 0.9], 'clamp');
 
-    const translateY = interpolate(scrollY.value, [0, SCROLL_THRESHOLD], [0, 10], 'clamp');
+    // Enhanced pull-down effect for the content
+    const translateY = interpolate(
+      scrollY.value,
+      [-100, 0, SCROLL_THRESHOLD],
+      [30, 0, 10],
+      Extrapolate.CLAMP
+    );
 
     return {
       opacity,
       transform: [{ scale }, { translateY }],
-    };
-  });
-
-  const navHeaderAnimatedStyle = useAnimatedStyle(() => {
-    const opacity = interpolate(
-      scrollY.value,
-      [HEADER_HEIGHT * 0.7, HEADER_HEIGHT],
-      [0, 1],
-      'clamp'
-    );
-
-    return {
-      opacity: withTiming(opacity, { duration: ANIMATION_DURATION }),
     };
   });
 
@@ -168,6 +173,32 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
     }
   }, [onImageLoaded]);
 
+  // Render children with proper scrolling behavior
+  // Without creating nested scrollable views
+  const renderScrollableContent = () => {
+    if (!React.isValidElement(children)) {
+      return children;
+    }
+
+    // Handle FlatList specifically to avoid nested ScrollView warnings
+    if (children.type === FlatList || children.props.data) {
+      const flatListProps = {
+        ...children.props,
+        onScroll: scrollHandler,
+        scrollEventThrottle: 16,
+        contentContainerStyle: {
+          paddingTop: HEADER_HEIGHT + 5, // Further reduced gap between header and first sentence
+          ...(children.props.contentContainerStyle || {}),
+        },
+      };
+
+      return <Animated.FlatList {...flatListProps} />;
+    }
+
+    // For other components, just wrap them in a container with margin
+    return <View style={{ marginTop: HEADER_HEIGHT + 5 }}>{children}</View>;
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -178,7 +209,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
       >
         <View style={styles.imageContainer}>
           <Image
-            source={backgroundImage || defaultImage}
+            source={imageSource || backgroundImage || defaultImage}
             style={styles.backgroundImage}
             contentFit="cover"
             cachePolicy="memory-disk"
@@ -211,40 +242,24 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
         </View>
       </Animated.View>
 
-      <Animated.View
-        style={[styles.navHeader, navHeaderAnimatedStyle, { paddingTop: insets.top }]}
-        accessibilityRole="header"
-        accessibilityLabel={`${title} navigation bar`}
+      {/* Back button - always visible with reduced opacity blur */}
+      <TouchableOpacity
+        onPress={() => router.back()}
+        accessibilityLabel="Go back"
+        accessibilityRole="button"
+        style={styles.backButton}
       >
-        <BlurView intensity={80} tint={isDarkMode ? 'dark' : 'light'} style={styles.blur}>
-          <View
-            style={[
-              styles.navHeaderBackground,
-              { backgroundColor: colors.cardBackground, opacity: LAYOUT.OPACITY.OVERLAY },
-            ]}
+        <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.backButtonBlur}>
+          <Ionicons
+            name="chevron-back"
+            size={22}
+            color={colors.text}
+            style={styles.backButtonIcon}
           />
         </BlurView>
-      </Animated.View>
+      </TouchableOpacity>
 
-      <Animated.ScrollView
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        contentContainerStyle={[
-          styles.contentContainer,
-          {
-            paddingTop: HEADER_HEIGHT,
-            backgroundColor: colors.background,
-            paddingBottom: insets.bottom + 20,
-          },
-        ]}
-        showsVerticalScrollIndicator={false}
-        bounces={true}
-        removeClippedSubviews={true}
-        accessibilityRole="scrollbar"
-        accessibilityLabel={`${title} content`}
-      >
-        {children}
-      </Animated.ScrollView>
+      {renderScrollableContent()}
     </View>
   );
 });
@@ -276,25 +291,10 @@ const styles = StyleSheet.create({
   headerContent: {
     padding: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: NAV_HEIGHT + LAYOUT.SPACING.LARGE,
+    paddingTop: NAV_HEIGHT + LAYOUT.SPACING.XXLARGE + 10, // Significantly increased top padding for category pill
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
-  navHeader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: NAV_HEADER_HEIGHT,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-  },
-  blur: {
-    flex: 1,
-  },
-  navHeaderBackground: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.8,
   },
   imageLoadingContainer: {
     position: 'absolute',
@@ -305,5 +305,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 55 : 25,
+    left: 15,
+    zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Ensure it's above the header
+  },
+  backButtonBlur: {
+    padding: 8,
+    borderRadius: 18,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.7,
+  },
+  backButtonIcon: {
+    alignSelf: 'center',
   },
 });

@@ -3,6 +3,10 @@ import { Dimensions, Platform } from 'react-native';
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
+// Add constants for CollapsibleHeader component
+export const HEADER_HEIGHT = 50;
+export const HEADER_IMAGE_HEIGHT = 200;
+
 export const LAYOUT = {
   // Screen edge spacing
   SCREEN_EDGE_PADDING: 12, // Tighter horizontal margin matching index.tsx

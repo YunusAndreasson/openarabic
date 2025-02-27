@@ -22,6 +22,9 @@ import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
 import { ArticleHeader } from '@/components/ArticleHeader';
 import type { Article } from '@/types/articles.types';
 import { Image } from 'expo-image';
+import { CategoryPill } from '@/components/CategoryPill';
+import { AudioPlayButton } from '@/components/AudioPlayButton';
+import { ReadingListButton } from '@/components/ReadingListButton';
 
 const styles = StyleSheet.create({
   container: {
@@ -41,7 +44,44 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   relatedArticlesContainer: {
-    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.XXLARGE,
+  },
+  headerContent: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.XXLARGE,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    backgroundColor: 'transparent',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  categoryContainer: {
+    alignSelf: 'flex-start',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  title: {
+    textAlign: 'left',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  author: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    letterSpacing: 0.2,
+    fontWeight: '600',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  buttonWrapper: {
+    flex: 1,
+  },
+  textShadow: {
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });
 
@@ -55,23 +95,16 @@ export default function ArticleScreen() {
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Preload the default header image
-  useEffect(() => {
-    const defaultImage = require('@/assets/images/default-header.jpg');
-    const preloadImage = async () => {
-      try {
-        await Image.prefetch(defaultImage);
-      } catch (error) {
-        console.error('Error preloading image:', error);
-      } finally {
-        // If there's no article to load, we can consider the image loaded
-        if (!id) {
-          setIsImageLoading(false);
-        }
-      }
-    };
+  // Optimize image loading with proper error handling
+  const handleImageError = useCallback(() => {
+    console.warn('Error loading article image, falling back to default');
+    setIsImageLoading(false);
+    setIsInitialLoad(false);
+  }, []);
 
-    preloadImage();
+  // Memoize the image source to prevent unnecessary re-renders
+  const imageSource = useMemo(() => {
+    return require('@/assets/images/default-header.jpg');
   }, []);
 
   const articleId = useMemo(() => {
@@ -90,33 +123,24 @@ export default function ArticleScreen() {
   useEffect(() => {
     if (article) {
       setIsImageLoading(true);
-    }
-  }, [article?.id]);
 
-  // Handle image loading completion
-  const handleImageLoaded = useCallback(() => {
-    setIsImageLoading(false);
-    setIsInitialLoad(false);
-  }, []);
-
-  // Preload default image when article data is available
-  useEffect(() => {
-    if (article) {
+      // Preload default image when article data is available
       const preloadDefaultImage = async () => {
         try {
           const defaultImage = require('@/assets/images/default-header.jpg');
           await Image.prefetch(defaultImage);
-          handleImageLoaded();
         } catch (error) {
           console.error('Error preloading default image:', error);
+        } finally {
           // Even if there's an error, we should still hide the loading screen
-          handleImageLoaded();
+          setIsImageLoading(false);
+          setIsInitialLoad(false);
         }
       };
 
       preloadDefaultImage();
     }
-  }, [article, handleImageLoaded]);
+  }, [article?.id]);
 
   const { data: studyWords = [] } = useQuery({
     queryKey: ['studyWords', user?.id],
@@ -215,23 +239,18 @@ export default function ArticleScreen() {
     [isDarkMode, colors.white]
   );
 
-  // Custom gradient colors for better readability in light mode
-  const gradientColors = useMemo(() => {
-    return isDarkMode
-      ? (['transparent', colors.background] as const)
-      : (['transparent', 'rgba(255, 255, 255, 0.8)', colors.background] as const); // Three-color gradient for light mode
-  }, [colors.background, isDarkMode]);
-
   const renderHeaderContent = useCallback(
     () => (
-      <ArticleHeader
-        article={article || null}
-        headerTextColor={headerTextColor}
-        isDarkMode={isDarkMode}
-        textShadowStyle={textShadowStyle}
-      />
+      <View style={styles.headerContent}>
+        <ArticleHeader
+          article={article || null}
+          headerTextColor={headerTextColor}
+          isDarkMode={isDarkMode}
+          textShadowStyle={textShadowStyle}
+        />
+      </View>
     ),
-    [article, textShadowStyle, headerTextColor, isDarkMode]
+    [article, textShadowStyle, headerTextColor, isDarkMode, styles.headerContent]
   );
 
   const renderArticleCard = useCallback(
@@ -318,7 +337,7 @@ export default function ArticleScreen() {
   // Determine if we should show the loading screen
   const isLoading = isLoadingArticle || (isInitialLoad && isImageLoading);
 
-  if (isLoading) {
+  if (isInitialLoad || isLoadingArticle) {
     return <LoadingScreen />;
   }
 
@@ -332,10 +351,14 @@ export default function ArticleScreen() {
 
   return (
     <CollapsibleHeader
-      renderContent={renderHeaderContent}
       title={article.title || ''}
-      customGradientColors={gradientColors}
-      onImageLoaded={handleImageLoaded}
+      imageSource={imageSource}
+      accessibilityLabel={article.title || 'Article'}
+      onImageLoaded={() => {
+        setIsImageLoading(false);
+        setIsInitialLoad(false);
+      }}
+      renderContent={renderHeaderContent}
     >
       <FlatList
         data={sortedSentences}
@@ -345,10 +368,21 @@ export default function ArticleScreen() {
         contentContainerStyle={styles.sentenceList}
         showsVerticalScrollIndicator={false}
         removeClippedSubviews={true}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={10}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        updateCellsBatchingPeriod={50}
+        windowSize={5}
+        getItemLayout={(data, index) => ({
+          length: 80, // approximate height of each item
+          offset: 80 * index,
+          index,
+        })}
         ListFooterComponent={ListFooterComponent}
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+        }}
+        onEndReachedThreshold={0.5}
+        scrollEventThrottle={16}
       />
     </CollapsibleHeader>
   );
