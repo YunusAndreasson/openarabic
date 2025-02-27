@@ -86,7 +86,6 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
       headerTitle: null,
       headerTransparent: true,
       headerStyle: { backgroundColor: 'transparent' },
-      headerShown: false, // Ensure no headers appear when scrolling down
     }),
     []
   );
@@ -104,14 +103,13 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   const updateNavigation = useCallback(
     (progress: number) => {
       navigation.setOptions({
-        headerTitle: null, // Never show header title when scrolling
-        headerShown: false, // Ensure no headers appear when scrolling down
+        headerTitle: progress > 0.9 ? title : null,
         headerStyle: {
           backgroundColor: 'transparent',
         },
       });
     },
-    [navigation]
+    [navigation, title]
   );
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -133,23 +131,24 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
 
     const opacity = interpolate(scrollY.value, [0, HEADER_FADE_THRESHOLD], [1, 0], 'clamp');
 
-    // Add zoom out effect when pulling down
-    const scale = interpolate(scrollY.value, [-100, 0], [1.2, 1], Extrapolate.CLAMP);
+    // Add zoom out effect when pulling down - ensure it's a number
+    const scaleValue = interpolate(scrollY.value, [-100, 0], [1.2, 1], Extrapolate.CLAMP);
 
     return {
       height,
       opacity,
-      transform: [{ scale }],
+      transform: [{ scale: scaleValue }],
     };
   });
 
   const headerContentAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(scrollY.value, [0, HEADER_FADE_THRESHOLD], [1, 0], 'clamp');
 
-    const scale = interpolate(scrollY.value, [0, SCROLL_THRESHOLD], [1, 0.9], 'clamp');
+    // Ensure scale is a number
+    const scaleValue = interpolate(scrollY.value, [0, SCROLL_THRESHOLD], [1, 0.9], 'clamp');
 
     // Enhanced pull-down effect for the content
-    const translateY = interpolate(
+    const translateYValue = interpolate(
       scrollY.value,
       [-100, 0, SCROLL_THRESHOLD],
       [30, 0, 10],
@@ -158,7 +157,20 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
 
     return {
       opacity,
-      transform: [{ scale }, { translateY }],
+      transform: [{ scale: scaleValue }, { translateY: translateYValue }],
+    };
+  });
+
+  const navHeaderAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [HEADER_HEIGHT * 0.7, HEADER_HEIGHT],
+      [0, 1],
+      'clamp'
+    );
+
+    return {
+      opacity: withTiming(opacity, { duration: ANIMATION_DURATION }),
     };
   });
 
@@ -187,7 +199,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
         onScroll: scrollHandler,
         scrollEventThrottle: 16,
         contentContainerStyle: {
-          paddingTop: HEADER_HEIGHT + 5, // Further reduced gap between header and first sentence
+          paddingTop: HEADER_HEIGHT + 5, // Reduced from 10 to 5 to pull up the first sentence even more
           ...(children.props.contentContainerStyle || {}),
         },
       };
@@ -291,10 +303,25 @@ const styles = StyleSheet.create({
   headerContent: {
     padding: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: NAV_HEIGHT + LAYOUT.SPACING.XXLARGE + 10, // Significantly increased top padding for category pill
+    paddingTop: NAV_HEIGHT + LAYOUT.SPACING.XLARGE + 30, // Increased to 30px more padding at the top for the category pill
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
+  },
+  navHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: NAV_HEADER_HEIGHT,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+  },
+  blur: {
+    flex: 1,
+  },
+  navHeaderBackground: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.8,
   },
   imageLoadingContainer: {
     position: 'absolute',

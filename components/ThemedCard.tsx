@@ -19,8 +19,8 @@ import { CategoryPill } from './CategoryPill';
 import { Loader, LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
-  useAnimatedStyle,
   useSharedValue,
+  useAnimatedStyle,
   withTiming,
   Easing,
 } from 'react-native-reanimated';
@@ -57,6 +57,7 @@ function ThemedCardComponent({
 
   // Reanimated values for smoother animations
   const opacity = useSharedValue(1);
+  const scale = useSharedValue(1);
 
   // Track if component is mounted to prevent state updates after unmount
   const isMounted = useRef(true);
@@ -159,24 +160,24 @@ function ThemedCardComponent({
     }
   }, [onPress, opacity]);
 
-  // Press animation handlers
+  // Handle press animations
   const handlePressIn = useCallback(() => {
-    RNAnimated.spring(scaleAnim, {
-      toValue: 0.97,
-      friction: 8,
-      tension: 40,
+    RNAnimated.timing(scaleAnim, {
+      toValue: 0.98,
+      duration: 150,
       useNativeDriver: true,
     }).start();
-  }, [scaleAnim]);
+    scale.value = withTiming(0.98, { duration: 150 });
+  }, [scaleAnim, scale]);
 
   const handlePressOut = useCallback(() => {
-    RNAnimated.spring(scaleAnim, {
+    RNAnimated.timing(scaleAnim, {
       toValue: 1,
-      friction: 8,
-      tension: 40,
+      duration: 150,
       useNativeDriver: true,
     }).start();
-  }, [scaleAnim]);
+    scale.value = withTiming(1, { duration: 150 });
+  }, [scaleAnim, scale]);
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(
@@ -320,6 +321,7 @@ function ThemedCardComponent({
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
+      transform: [{ scale: scale.value }],
     };
   });
 
@@ -329,7 +331,6 @@ function ThemedCardComponent({
         styles.animatedContainer,
         {
           opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }],
         },
         animatedStyle,
       ]}

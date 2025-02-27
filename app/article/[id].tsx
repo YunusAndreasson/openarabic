@@ -44,14 +44,14 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   relatedArticlesContainer: {
-    paddingTop: LAYOUT.SPACING.XXLARGE,
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
   headerContent: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.XXLARGE,
+    paddingTop: 0,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     backgroundColor: 'transparent',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   categoryContainer: {
     alignSelf: 'flex-start',
