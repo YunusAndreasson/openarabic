@@ -26,13 +26,14 @@ import { useColors } from '@/hooks/useColors';
 import { CategoryPills } from '@/components/CategoryPills';
 import { categoriesService } from '@/services/categories';
 import type { Tables } from '@/types/database.types';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, EdgeInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { Loader, LoadingScreen } from '@/components/Loader';
 import { useAppSelectorMemo } from '@/store/hooks';
 import { Theme } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -43,6 +44,161 @@ const VELOCITY_THRESHOLD = 0.5;
 
 // Memoize the card component for better performance
 const MemoizedCard = memo(ThemedCard);
+
+const CategoryPill = React.memo(
+  ({
+    category,
+    isSelected,
+    onSelect,
+    colors,
+    isDarkMode,
+  }: {
+    category: Tables<'categories'> | null;
+    isSelected: boolean;
+    onSelect: () => void;
+    colors: ReturnType<typeof useColors>;
+    isDarkMode: boolean;
+  }) => {
+    const backgroundColor = useMemo(
+      () =>
+        isSelected
+          ? isDarkMode
+            ? `${colors.tint}20`
+            : `${colors.tint}70`
+          : isDarkMode
+            ? `${colors.elevation2}40`
+            : `${colors.elevation1}90`,
+      [isSelected, isDarkMode, colors.tint, colors.elevation1, colors.elevation2]
+    );
+
+    const textColor = useMemo(
+      () =>
+        isSelected
+          ? isDarkMode
+            ? colors.white
+            : colors.white
+          : isDarkMode
+            ? `${colors.text}90`
+            : `${colors.text}80`,
+      [isSelected, isDarkMode, colors.white, colors.text]
+    );
+
+    const categoryName = category?.name?.toUpperCase() || 'ALL';
+    const fontWeight = isSelected ? '700' : '600';
+
+    return (
+      <TouchableOpacity
+        key={category?.id || 'all'}
+        style={[
+          styles.categoryPill,
+          {
+            backgroundColor,
+            borderColor: colors.cardBorder,
+          },
+        ]}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onSelect();
+        }}
+      >
+        <ThemedText
+          style={[
+            styles.categoryPillText,
+            {
+              color: textColor,
+              fontWeight,
+            },
+          ]}
+          skipDefaultColor
+        >
+          {categoryName}
+        </ThemedText>
+      </TouchableOpacity>
+    );
+  }
+);
+
+CategoryPill.displayName = 'CategoryPill';
+
+const AnimatedHeader = memo(
+  ({
+    categoryVisibleAnim,
+    colors,
+    categoryPillsHeight,
+    insets,
+    isDarkTheme,
+    categories,
+    renderCategoryPill,
+  }: {
+    categoryVisibleAnim: Animated.Value;
+    colors: ReturnType<typeof useColors>;
+    categoryPillsHeight: number;
+    insets: { top: number; bottom: number; left: number; right: number };
+    isDarkTheme: boolean;
+    categories: Tables<'categories'>[];
+    renderCategoryPill: (category: Tables<'categories'> | null) => React.ReactNode;
+  }) => {
+    const headerContainerStyle = useMemo(
+      () => [
+        styles.headerContainer,
+        {
+          transform: [
+            {
+              translateY: categoryVisibleAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [-100, 0],
+              }),
+            },
+          ],
+          opacity: categoryVisibleAnim,
+          backgroundColor: colors.background + '80',
+          height: categoryPillsHeight + LAYOUT.SPACING.MEDIUM,
+          paddingTop: Platform.select({
+            ios: insets.top,
+            android: insets.top + LAYOUT.SPACING.MEDIUM,
+          }),
+        },
+      ],
+      [categoryVisibleAnim, categoryPillsHeight, insets.top, colors.background]
+    );
+
+    return (
+      <Animated.View
+        style={headerContainerStyle}
+        needsOffscreenAlphaCompositing={Platform.OS === 'android'}
+      >
+        <View style={styles.categoryContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryScrollContent}
+            removeClippedSubviews={true}
+            scrollEventThrottle={16}
+            directionalLockEnabled={true}
+            bounces={false}
+            overScrollMode="never"
+          >
+            {renderCategoryPill(null)}
+            {categories.map(category => renderCategoryPill(category))}
+          </ScrollView>
+
+          {(Platform.OS === 'android' || (Platform.OS === 'ios' && isDarkTheme)) && (
+            <LinearGradient
+              colors={['transparent', colors.background, colors.background]}
+              start={{ x: 0.3, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              locations={[0, 0.7, 1]}
+              style={styles.rightFadeGradient}
+              pointerEvents="none"
+            />
+          )}
+        </View>
+      </Animated.View>
+    );
+  }
+);
+
+AnimatedHeader.displayName = 'AnimatedHeader';
 
 export default function TextsScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
@@ -71,8 +227,15 @@ export default function TextsScreen() {
 
   // Memoized values
   const categoryPillsHeight = useMemo(() => {
-    // Calculate height for the category pills area
-    return insets.top + 30; // 30px for the actual pills
+    const baseHeight = 30; // Fixed height for the category container
+    const topInset = insets.top || 0;
+
+    return (
+      Platform.select({
+        ios: topInset + baseHeight,
+        android: topInset + LAYOUT.SPACING.XLARGE,
+      }) ?? topInset + baseHeight
+    ); // Provide fallback value
   }, [insets.top]);
 
   // Callbacks
@@ -363,56 +526,18 @@ export default function TextsScreen() {
       const isSelected =
         category === null ? selectedCategory === null : selectedCategory?.id === category.id;
 
-      const backgroundColor = isSelected
-        ? isDarkTheme
-          ? `${colors.tint}20`
-          : `${colors.tint}70`
-        : isDarkTheme
-          ? `${colors.elevation2}40`
-          : `${colors.elevation1}90`;
-
-      const textColor = isSelected
-        ? isDarkTheme
-          ? colors.white
-          : colors.white
-        : isDarkTheme
-          ? `${colors.text}90`
-          : `${colors.text}80`;
-
-      const fontWeight = isSelected ? '700' : '600';
-      const categoryName = category?.name?.toUpperCase() || 'ALL';
-
       return (
-        <TouchableOpacity
+        <CategoryPill
           key={category?.id || 'all'}
-          style={[
-            styles.categoryPill,
-            {
-              backgroundColor,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            handleCategorySelect(category);
-          }}
-        >
-          <ThemedText
-            style={[
-              styles.categoryPillText,
-              {
-                color: textColor,
-                fontWeight,
-              },
-            ]}
-            skipDefaultColor
-          >
-            {categoryName}
-          </ThemedText>
-        </TouchableOpacity>
+          category={category}
+          isSelected={isSelected}
+          onSelect={() => handleCategorySelect(category)}
+          colors={colors}
+          isDarkMode={isDarkTheme}
+        />
       );
     },
-    [selectedCategory, isDarkTheme, colors, handleCategorySelect]
+    [selectedCategory, colors, isDarkTheme, handleCategorySelect]
   );
 
   // Effects
@@ -444,32 +569,10 @@ export default function TextsScreen() {
     [categoryPillsHeight, insets.bottom]
   );
 
-  // Memoize the header container style for better performance
-  const headerContainerStyle = useMemo(
-    () => [
-      styles.headerContainer,
-      {
-        transform: [
-          {
-            translateY: categoryVisibleAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [-100, 0],
-            }),
-          },
-        ],
-        opacity: categoryVisibleAnim,
-        backgroundColor: 'transparent',
-        height: categoryPillsHeight,
-        paddingTop: insets.top,
-      },
-    ],
-    [categoryVisibleAnim, categoryPillsHeight, insets.top]
-  );
-
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <ThemedView
-        style={[styles.container, { backgroundColor: colors.background }]}
+        style={{ backgroundColor: colors.background }}
         contentContainerStyle={{ padding: 0 }}
         useSafeArea={false}
       >
@@ -485,7 +588,7 @@ export default function TextsScreen() {
           ListEmptyComponent={ListEmptyComponent}
           showsVerticalScrollIndicator={false}
           refreshControl={refreshControl}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={true} // Enable for both platforms for better performance
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={5}
@@ -494,59 +597,24 @@ export default function TextsScreen() {
           snapToAlignment="start"
           automaticallyAdjustContentInsets={false}
           contentInsetAdjustmentBehavior="never"
-          alwaysBounceVertical={true}
-          // Additional performance optimizations
           maintainVisibleContentPosition={{
             minIndexForVisible: 0,
             autoscrollToTopThreshold: 10,
           }}
-          // Optimize memory usage
           onEndReachedThreshold={0.5}
         />
       </ThemedView>
 
       {/* Category Pills */}
-      <Animated.View
-        style={headerContainerStyle}
-        // Add hardware acceleration for smoother animations
-        needsOffscreenAlphaCompositing={true}
-      >
-        {/* Transparent background */}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]} />
-
-        {/* Category pills */}
-        <View style={styles.categoryContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScrollContent}
-            // Optimize scrolling performance
-            removeClippedSubviews={true}
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={false}
-            directionalLockEnabled={true}
-            bounces={false}
-          >
-            {/* "All" category */}
-            {renderCategoryPill(null)}
-
-            {/* Category pills */}
-            {categories.map(category => renderCategoryPill(category))}
-          </ScrollView>
-
-          {/* Right fade gradient - only show for dark mode on iOS or any theme on Android */}
-          {(Platform.OS === 'android' || (Platform.OS === 'ios' && isDarkTheme)) && (
-            <LinearGradient
-              colors={['transparent', colors.background, colors.background]}
-              start={{ x: 0.3, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              locations={[0, 0.7, 1]}
-              style={styles.rightFadeGradient}
-              pointerEvents="none"
-            />
-          )}
-        </View>
-      </Animated.View>
+      <AnimatedHeader
+        categoryVisibleAnim={categoryVisibleAnim}
+        colors={colors}
+        categoryPillsHeight={categoryPillsHeight}
+        insets={insets}
+        isDarkTheme={isDarkTheme}
+        categories={categories}
+        renderCategoryPill={renderCategoryPill}
+      />
     </View>
   );
 }
@@ -554,8 +622,6 @@ export default function TextsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 0,
-    marginBottom: 0,
   },
   errorText: {
     textAlign: 'center',
@@ -586,10 +652,22 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
     marginTop: 0,
-    // Hardware acceleration is applied in the Animated.View props
+    // Add a subtle shadow for better separation
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.15)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   categoryContainer: {
     height: 30, // Fixed height for the category container
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Add space below the pills
   },
   categoryScrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,

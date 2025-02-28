@@ -13,6 +13,8 @@ import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactThemedCard } from '@/components/CompactThemedCard';
+import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 const styles = StyleSheet.create({
   container: {
@@ -44,7 +46,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.CONTENT_SPACING.TOP,
+    paddingTop: Platform.select({
+      ios: LAYOUT.CONTENT_SPACING.TOP,
+      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    }),
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   savedArticlesText: {
@@ -299,6 +304,8 @@ const ArticleCard = React.memo(
 );
 
 export default function PlaylistScreen() {
+  const colors = useColors();
+  const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [currentSound, setCurrentSound] = useState<Audio.Sound>();
@@ -307,7 +314,6 @@ export default function PlaylistScreen() {
   const [shuffledList, setShuffledList] = useState<typeof readingList>([]);
   const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
   const [playProgress, setPlayProgress] = useState(0);
-  const colors = useColors();
   const progressUpdateInterval = useRef<NodeJS.Timeout>();
 
   const { data: readingList, isLoading } = useQuery({

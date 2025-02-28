@@ -46,8 +46,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarStyle: styles.tabBar,
-        headerStyle: styles.header,
-        headerTintColor: colors.text,
+        headerShown: false,
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
         tabBarHideOnKeyboard: true,
@@ -73,7 +72,6 @@ export default function TabLayout() {
                 color={color}
               />
             ),
-            headerShown: false,
           }}
         />
       ))}
@@ -85,15 +83,10 @@ export default function TabLayout() {
 const createStyles = (colors: ReturnType<typeof useColors>) => {
   // Define a single consistent tab bar style for both platforms
   const tabBarStyle: ViewStyle = {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: colors.background,
     // Remove the border top to eliminate separation line
     borderTopWidth: 0,
     height: LAYOUT.BOTTOM_BAR.HEIGHT,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
     // Add platform-specific shadow styling
     ...Platform.select({
       ios: {
@@ -112,9 +105,6 @@ const createStyles = (colors: ReturnType<typeof useColors>) => {
 
   return StyleSheet.create({
     tabBar: tabBarStyle,
-    header: {
-      backgroundColor: colors.background,
-    },
     tabBarLabel: {
       fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
       // Adjust padding based on platform

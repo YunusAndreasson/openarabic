@@ -1,5 +1,5 @@
-import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import React, { useMemo, useCallback, useEffect } from 'react';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
@@ -9,11 +9,12 @@ import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
-import { router } from 'expo-router';
+import { router, useNavigation } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { StudyWord } from '@/utils/vocabulary';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 // Create a memoized component for the sign-in message
 const SignInMessage = React.memo(() => (
@@ -49,6 +50,7 @@ ReviewButton.displayName = 'ReviewButton';
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
+  const navigation = useNavigation<BottomTabNavigationProp<any>>();
 
   const {
     data: studyWords = [],
@@ -174,7 +176,15 @@ export default function VocabularyScreen() {
       ) : (
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.CONTENT_SPACING.TOP }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: Platform.select({
+                ios: LAYOUT.CONTENT_SPACING.TOP,
+                android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+              }),
+            },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {/* Vocabulary Dashboard */}

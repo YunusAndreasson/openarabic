@@ -1,7 +1,9 @@
-import { StyleSheet, Alert, Linking, View } from 'react-native';
+import { StyleSheet, Alert, Linking, View, Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState, useMemo } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -23,6 +25,7 @@ export default function AccountScreen() {
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
+  const navigation = useNavigation<BottomTabNavigationProp<any>>();
 
   // Optimize shadow handling with memoized values
   const isDarkMode = useMemo(
@@ -113,7 +116,12 @@ export default function AccountScreen() {
       scrollable={true}
       contentContainerStyle={[
         styles.scrollContent,
-        { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+        {
+          paddingTop: Platform.select({
+            ios: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
+            android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+          }),
+        },
       ]}
     >
       <View style={styles.content}>
