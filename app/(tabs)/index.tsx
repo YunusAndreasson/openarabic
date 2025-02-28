@@ -534,15 +534,17 @@ export default function TextsScreen() {
             {categories.map(category => renderCategoryPill(category))}
           </ScrollView>
 
-          {/* Right fade gradient */}
-          <LinearGradient
-            colors={['transparent', colors.background, colors.background]}
-            start={{ x: 0.3, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            locations={[0, 0.7, 1]}
-            style={styles.rightFadeGradient}
-            pointerEvents="none"
-          />
+          {/* Right fade gradient - only show for dark mode on iOS or any theme on Android */}
+          {(Platform.OS === 'android' || (Platform.OS === 'ios' && isDarkTheme)) && (
+            <LinearGradient
+              colors={['transparent', colors.background, colors.background]}
+              start={{ x: 0.3, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              locations={[0, 0.7, 1]}
+              style={styles.rightFadeGradient}
+              pointerEvents="none"
+            />
+          )}
         </View>
       </Animated.View>
     </View>
@@ -583,8 +585,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-    borderBottomWidth: 0.5,
-    borderBottomColor: 'rgba(150,150,150,0.2)', // Subtle border for separation
     marginTop: 0,
     // Hardware acceleration is applied in the Animated.View props
   },
