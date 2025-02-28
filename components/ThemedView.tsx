@@ -8,8 +8,9 @@ import {
   Platform,
   Easing,
   View,
+  StyleSheet,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 
@@ -27,6 +28,12 @@ export interface ThemedViewProps extends ViewProps {
   useSafeArea?: boolean;
   /** Whether to include bottom insets in safe area (default: true) */
   includeBottomInset?: boolean;
+  /** Specific edges to apply safe area insets to (overrides includeBottomInset) */
+  safeAreaEdges?: Edge[];
+  /** Whether to apply fade-in animation (default: true) */
+  animated?: boolean;
+  /** Optional ScrollView props */
+  scrollViewProps?: Omit<React.ComponentProps<typeof ScrollView>, 'children'>;
   children?: React.ReactNode;
 }
 
@@ -39,15 +46,20 @@ function ThemedViewComponent({
   fadeInDelay = 100, // Small delay before animation starts
   useSafeArea = true,
   includeBottomInset = true,
+  safeAreaEdges,
+  animated = true,
+  scrollViewProps,
   ...otherProps
 }: ThemedViewProps) {
   const colors = useColors();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useRef(new Animated.Value(animated ? 0 : 1)).current;
 
   // Apply fade-in effect when component mounts
   useEffect(() => {
+    if (!animated) return;
+
     // Use a sequence with a small delay for a more natural feel
-    Animated.sequence([
+    const animation = Animated.sequence([
       Animated.delay(fadeInDelay),
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -55,36 +67,44 @@ function ThemedViewComponent({
         easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Smooth cubic bezier curve
         useNativeDriver: true,
       }),
-    ]).start();
+    ]);
+
+    animation.start();
 
     // Clean up animation when component unmounts
     return () => {
-      fadeAnim.stopAnimation();
+      animation.stop();
     };
-  }, [fadeAnim, fadeInDuration, fadeInDelay]);
+  }, [fadeAnim, fadeInDuration, fadeInDelay, animated]);
 
   // Apply theme-based styling
   const themedStyle = useMemo(
     () => [
+      styles.container,
       {
         backgroundColor: colors.background,
-        flex: 1,
       },
       style,
     ],
     [colors.background, style]
   );
 
+  // Determine which edges to apply safe area insets to
+  const edges = useMemo((): Edge[] | undefined => {
+    // If specific edges are provided, use those
+    if (safeAreaEdges) {
+      return safeAreaEdges;
+    }
+
+    // Otherwise, determine based on includeBottomInset
+    return includeBottomInset ? undefined : (['top', 'left', 'right'] as Edge[]);
+  }, [includeBottomInset, safeAreaEdges]);
+
   // Use useMemo to prevent unnecessary rerenders when props don't change
   const content = useMemo(() => {
     // Wrap content in Animated.View for fade-in effect
     const animatedContent = (
-      <Animated.View
-        style={{
-          flex: 1,
-          opacity: fadeAnim,
-        }}
-      >
+      <Animated.View style={[styles.animatedContent, animated ? { opacity: fadeAnim } : undefined]}>
         {children}
       </Animated.View>
     );
@@ -96,10 +116,10 @@ function ThemedViewComponent({
         showsVerticalScrollIndicator={false}
         bounces={true}
         removeClippedSubviews={Platform.OS === 'android'}
-        // Optimize scrolling
         automaticallyAdjustContentInsets={false}
         contentInsetAdjustmentBehavior="never"
         alwaysBounceVertical={true}
+        {...scrollViewProps}
       >
         {animatedContent}
       </ScrollView>
@@ -108,11 +128,7 @@ function ThemedViewComponent({
     // Determine whether to use SafeAreaView or regular View
     if (useSafeArea) {
       return (
-        <SafeAreaView
-          style={themedStyle}
-          {...otherProps}
-          edges={includeBottomInset ? undefined : ['top', 'left', 'right']}
-        >
+        <SafeAreaView style={themedStyle} {...otherProps} edges={edges}>
           {scrollable ? scrollableContent : animatedContent}
         </SafeAreaView>
       );
@@ -131,11 +147,22 @@ function ThemedViewComponent({
     themedStyle,
     fadeAnim,
     useSafeArea,
-    includeBottomInset,
+    edges,
+    animated,
+    scrollViewProps,
   ]);
 
   return content;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  animatedContent: {
+    flex: 1,
+  },
+});
 
 // Memoize the component to prevent unnecessary rerenders
 export const ThemedView = React.memo(ThemedViewComponent);
