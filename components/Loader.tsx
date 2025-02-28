@@ -82,23 +82,17 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
 
 interface LoadingScreenProps {
   color?: string;
-  fadeInDelay?: number;
-  fadeInDuration?: number;
 }
 
 /**
  * A full-screen loading component that uses ThemedView for consistent styling
- * and automatically handles background colors and animations.
+ * and automatically handles background colors.
  */
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({
-  color,
-  fadeInDelay = 100,
-  fadeInDuration = 600,
-}) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
 
   return (
-    <ThemedView style={styles.fullScreen} fadeInDelay={fadeInDelay} fadeInDuration={fadeInDuration}>
+    <ThemedView style={styles.fullScreen}>
       <View style={styles.loaderContainer}>
         <Loader size="large" color={color || colors.tint} />
       </View>

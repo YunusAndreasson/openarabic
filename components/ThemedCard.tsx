@@ -1,13 +1,5 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-  Animated as RNAnimated,
-  Platform,
-} from 'react-native';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { StyleSheet, View, Pressable, StyleProp, ViewStyle, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
@@ -16,13 +8,16 @@ import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
-import { Loader, LoadingContainer } from './Loader';
-import { Ionicons } from '@expo/vector-icons';
+import { LoadingContainer } from './Loader';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   Easing,
+  withSequence,
+  withDelay,
+  runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 
 interface ThemedCardProps {
@@ -48,87 +43,129 @@ function ThemedCardComponent({
   const isDarkMode = useIsDarkMode();
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [isRendered, setIsRendered] = useState(false);
+  const [imageReady, setImageReady] = useState(false);
 
-  // Animation values using useRef for better performance
-  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
-  const scaleAnim = useRef(new RNAnimated.Value(1)).current;
-  const loadingFadeAnim = useRef(new RNAnimated.Value(1)).current;
-
-  // Reanimated values for smoother animations
-  const opacity = useSharedValue(1);
+  // Use Reanimated shared values for all animations
+  const cardOpacity = useSharedValue(0); // Start with 0 opacity for fade-in
   const scale = useSharedValue(1);
+  const loadingOpacity = useSharedValue(1);
+  const contentOpacity = useSharedValue(0);
 
   // Track if component is mounted to prevent state updates after unmount
   const isMounted = useRef(true);
 
+  // Keep track of the current image URL to handle prop changes
+  const imageUrlRef = useRef(imageUrl);
+
   // Cleanup on unmount
-  useEffect(() => {
+  React.useEffect(() => {
+    // Initial fade-in animation for the card
+    cardOpacity.value = withSequence(
+      withDelay(
+        50, // Reduced delay for faster initial appearance
+        withTiming(1, {
+          duration: 300, // Faster fade-in
+          easing: Easing.out(Easing.ease),
+        })
+      )
+    );
+
     return () => {
       isMounted.current = false;
+      // Cancel any ongoing animations to prevent memory leaks
+      cancelAnimation(cardOpacity);
+      cancelAnimation(scale);
+      cancelAnimation(loadingOpacity);
+      cancelAnimation(contentOpacity);
     };
   }, []);
 
-  // Mark component as rendered after initial layout
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isMounted.current) {
-        setIsRendered(true);
-      }
-    }, 50);
+  // Handle image URL changes
+  React.useEffect(() => {
+    if (imageUrlRef.current !== imageUrl) {
+      imageUrlRef.current = imageUrl;
 
-    return () => clearTimeout(timer);
-  }, []);
+      // Reset image states when URL changes
+      setImageLoading(true);
+      setImageError(false);
+      setImageReady(false);
 
-  // Initial fade-in animation
-  useEffect(() => {
-    fadeAnim.setValue(0);
-
-    RNAnimated.sequence([
-      RNAnimated.delay(100),
-      RNAnimated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim]);
+      // Reset animations
+      loadingOpacity.value = 1;
+      contentOpacity.value = 0;
+    }
+  }, [imageUrl]);
 
   // Image loading handlers
   const handleLoadStart = useCallback(() => {
+    if (!isMounted.current) return;
+
     setImageLoading(true);
-    loadingFadeAnim.setValue(0.5);
-    RNAnimated.timing(loadingFadeAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }, [loadingFadeAnim]);
+    setImageReady(false);
+
+    // Ensure loading indicator is visible
+    loadingOpacity.value = withTiming(1, {
+      duration: 150,
+      easing: Easing.inOut(Easing.ease),
+    });
+
+    // Hide content until image is loaded
+    contentOpacity.value = withTiming(0, {
+      duration: 100,
+      easing: Easing.out(Easing.ease),
+    });
+  }, []);
 
   const handleLoadEnd = useCallback(() => {
-    RNAnimated.timing(loadingFadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      if (isMounted.current) {
-        setImageLoading(false);
+    if (!isMounted.current) return;
+
+    // Fade out loading indicator
+    loadingOpacity.value = withTiming(
+      0,
+      {
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+      },
+      () => {
+        if (isMounted.current) {
+          runOnJS(setImageLoading)(false);
+          runOnJS(setImageReady)(true);
+        }
       }
+    );
+
+    // Fade in content
+    contentOpacity.value = withTiming(1, {
+      duration: 250,
+      easing: Easing.inOut(Easing.ease),
     });
-  }, [loadingFadeAnim]);
+  }, []);
 
   const handleError = useCallback(() => {
-    RNAnimated.timing(loadingFadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      if (isMounted.current) {
-        setImageLoading(false);
-        setImageError(true);
+    if (!isMounted.current) return;
+
+    // Fade out loading indicator
+    loadingOpacity.value = withTiming(
+      0,
+      {
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+      },
+      () => {
+        if (isMounted.current) {
+          runOnJS(setImageLoading)(false);
+          runOnJS(setImageError)(true);
+          runOnJS(setImageReady)(true);
+        }
       }
+    );
+
+    // Fade in error content
+    contentOpacity.value = withTiming(1, {
+      duration: 250,
+      easing: Easing.inOut(Easing.ease),
     });
-  }, [loadingFadeAnim]);
+  }, []);
 
   // Handle press with haptic feedback
   const handlePress = useCallback(() => {
@@ -136,9 +173,9 @@ function ThemedCardComponent({
       // Provide haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      // Fade out animation
-      opacity.value = withTiming(0.8, {
-        duration: 150,
+      // Scale down animation
+      scale.value = withTiming(0.98, {
+        duration: 100,
         easing: Easing.out(Easing.ease),
       });
 
@@ -147,37 +184,33 @@ function ThemedCardComponent({
 
       // Delay navigation slightly to allow animation to start
       setTimeout(() => {
-        // Reset opacity after navigation
+        // Reset scale after navigation
         setTimeout(() => {
-          opacity.value = withTiming(1, {
-            duration: 300,
-            easing: Easing.inOut(Easing.ease),
+          scale.value = withTiming(1, {
+            duration: 200,
+            easing: Easing.out(Easing.ease),
           });
-        }, 300);
+        }, 200);
 
         onPress();
       }, navigationDelay);
     }
-  }, [onPress, opacity]);
+  }, [onPress, scale]);
 
   // Handle press animations
   const handlePressIn = useCallback(() => {
-    RNAnimated.timing(scaleAnim, {
-      toValue: 0.98,
+    scale.value = withTiming(0.98, {
       duration: 150,
-      useNativeDriver: true,
-    }).start();
-    scale.value = withTiming(0.98, { duration: 150 });
-  }, [scaleAnim, scale]);
+      easing: Easing.out(Easing.ease),
+    });
+  }, [scale]);
 
   const handlePressOut = useCallback(() => {
-    RNAnimated.timing(scaleAnim, {
-      toValue: 1,
-      duration: 150,
-      useNativeDriver: true,
-    }).start();
-    scale.value = withTiming(1, { duration: 150 });
-  }, [scaleAnim, scale]);
+    scale.value = withTiming(1, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [scale]);
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(
@@ -215,7 +248,7 @@ function ThemedCardComponent({
     const baseStyle = [
       styles.card,
       {
-        backgroundColor: isRendered ? themedStyles.card.backgroundColor : 'transparent',
+        backgroundColor: themedStyles.card.backgroundColor,
         borderColor: themedStyles.card.borderColor,
       },
       isLoading && styles.cardLoading,
@@ -227,7 +260,22 @@ function ThemedCardComponent({
     }
 
     return baseStyle;
-  }, [isRendered, themedStyles.card, isLoading, isDarkMode]);
+  }, [themedStyles.card, isLoading, isDarkMode]);
+
+  // Create animated style for the card
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: cardOpacity.value,
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  // Create animated style for the content
+  const contentAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: contentOpacity.value,
+    };
+  });
 
   // Memoize the card content to prevent unnecessary re-renders
   const cardContent = useMemo(() => {
@@ -247,19 +295,20 @@ function ThemedCardComponent({
     return (
       <>
         <View style={styles.imageContainer}>
-          {imageLoading && (
-            <RNAnimated.View
-              style={[
-                styles.loadingContainer,
-                {
-                  backgroundColor: themedStyles.loadingContainer.backgroundColor,
-                  opacity: loadingFadeAnim,
-                },
-              ]}
-            >
-              <LoadingContainer size="small" />
-            </RNAnimated.View>
-          )}
+          {/* Always render the loading container, control visibility with opacity */}
+          <Animated.View
+            style={[
+              styles.loadingContainer,
+              {
+                backgroundColor: themedStyles.loadingContainer.backgroundColor,
+                opacity: loadingOpacity,
+              },
+            ]}
+          >
+            <LoadingContainer size="small" />
+          </Animated.View>
+
+          {/* Pre-render the image with opacity 0 to start loading early */}
           <Image
             source={imageUrl}
             style={[styles.image, themedStyles.image]}
@@ -269,24 +318,31 @@ function ThemedCardComponent({
             onLoadEnd={handleLoadEnd}
             onError={handleError}
             cachePolicy="memory-disk"
-            placeholder={
-              imageLoading ? undefined : { color: themedStyles.loadingContainer.backgroundColor }
-            }
+            placeholder={{ color: themedStyles.loadingContainer.backgroundColor }}
             recyclingKey={imageUrl}
           />
-          {imageError && (
-            <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
-              <ThemedText style={styles.errorText}>Image not available</ThemedText>
-            </View>
-          )}
-          <LinearGradient
-            colors={themedStyles.gradient.colors}
-            style={styles.gradient}
-            locations={[0, 0.5, 1]}
-          />
-          <CategoryPill category={category} />
+
+          {/* Animated container for content that appears after image loads */}
+          <Animated.View
+            style={[styles.imageOverlayContainer, contentAnimatedStyle]}
+            pointerEvents="none"
+          >
+            {imageError ? (
+              <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
+                <ThemedText style={styles.errorText}>Image not available</ThemedText>
+              </View>
+            ) : (
+              <LinearGradient
+                colors={themedStyles.gradient.colors}
+                style={styles.gradient}
+                locations={[0, 0.5, 1]}
+              />
+            )}
+            <CategoryPill category={category} />
+          </Animated.View>
         </View>
-        <View style={styles.contentContainer}>
+
+        <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}>
           <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">
             {title}
           </ThemedText>
@@ -298,12 +354,11 @@ function ThemedCardComponent({
           >
             {author}
           </ThemedText>
-        </View>
+        </Animated.View>
       </>
     );
   }, [
     isLoading,
-    imageLoading,
     imageError,
     imageUrl,
     title,
@@ -311,30 +366,12 @@ function ThemedCardComponent({
     category,
     colors,
     themedStyles,
-    loadingFadeAnim,
-    handleLoadStart,
-    handleLoadEnd,
-    handleError,
+    loadingOpacity,
+    contentAnimatedStyle,
   ]);
 
-  // Create animated style for the card
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-      transform: [{ scale: scale.value }],
-    };
-  });
-
   return (
-    <Animated.View
-      style={[
-        styles.animatedContainer,
-        {
-          opacity: fadeAnim,
-        },
-        animatedStyle,
-      ]}
-    >
+    <Animated.View style={[styles.animatedContainer, cardAnimatedStyle]}>
       <Pressable
         onPress={handlePress}
         onPressIn={handlePressIn}
@@ -344,7 +381,7 @@ function ThemedCardComponent({
         accessibilityRole="button"
         accessibilityLabel={`${category} article: ${title} by ${author}`}
         accessibilityHint="Opens the article details"
-        disabled={isLoading}
+        disabled={isLoading || !imageReady}
       >
         <View style={cardStyle}>{cardContent}</View>
       </Pressable>
@@ -383,6 +420,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 220,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
+  },
+  imageOverlayContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     overflow: 'hidden',
   },
   image: {

@@ -180,8 +180,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
-    ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   statsRow: {

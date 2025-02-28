@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, FlatList, View, Animated, Platform } from 'react-native';
+import { StyleSheet, FlatList, View, Animated, Platform, Pressable } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
-import PlaylistCard from '@/components/PlaylistCard';
 import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -12,6 +11,8 @@ import { Audio } from 'expo-av';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
+import { Ionicons } from '@expo/vector-icons';
+import { CompactThemedCard } from '@/components/CompactThemedCard';
 
 const styles = StyleSheet.create({
   container: {
@@ -19,39 +20,112 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom:
-      LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL * 2 + 44,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + 100,
   },
-  message: {
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  emptyStateTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
     textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  submessage: {
+  emptyStateMessage: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DISABLED,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
-  controls: {
+  savedArticlesInfo: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    gap: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.CONTENT_SPACING.TOP,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  savedArticlesText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  controlsContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    paddingBottom: LAYOUT.SPACING.SMALL + LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: LAYOUT.Z_INDEX.HEADER,
+    backgroundColor: 'transparent',
+  },
+  controlsCard: {
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    overflow: 'hidden',
+    ...LAYOUT.SHADOW.MEDIUM,
+    elevation: 3,
+  },
+  controlsContent: {
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+  },
+  nowPlayingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+    height: 60,
+  },
+  nowPlayingInfo: {
+    flex: 1,
+    marginLeft: LAYOUT.SPACING.MEDIUM,
+  },
+  nowPlayingTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  nowPlayingMeta: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  iconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+  },
+  progressContainer: {
+    height: 3,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    marginVertical: LAYOUT.SPACING.SMALL,
+    borderRadius: 1.5,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 1.5,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
   button: {
     flex: 1,
     borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
+  },
+  skipButton: {
+    padding: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   waveContainer: {
     flexDirection: 'row',
@@ -65,14 +139,60 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 1,
   },
-  messageContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  listSeparator: {
+    height: LAYOUT.SPACING.SMALL,
+  },
+  articleCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    padding: LAYOUT.SPACING.MEDIUM,
+    minHeight: 72,
+  },
+  articleTextContainer: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  articleTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '500',
+    marginBottom: LAYOUT.SPACING.TINY,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  },
+  articleMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  articleAuthor: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
+    opacity: LAYOUT.OPACITY.DISABLED,
+  },
+  playerPlaceholder: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+  },
+  playerPlaceholderText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  compactPlayer: {
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  playerSection: {
+    height: 72,
+    justifyContent: 'center',
+  },
+  progressWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
 });
 
-function AudioWave({ isPlaying, color }: { isPlaying: boolean; color: string }) {
+const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color: string }) => {
   const anim1 = useRef(new Animated.Value(0.4)).current;
   const anim2 = useRef(new Animated.Value(0.4)).current;
   const anim3 = useRef(new Animated.Value(0.4)).current;
@@ -139,7 +259,44 @@ function AudioWave({ isPlaying, color }: { isPlaying: boolean; color: string }) 
       ))}
     </View>
   );
-}
+});
+
+const ArticleCard = React.memo(
+  ({
+    title,
+    author,
+    onPress,
+  }: {
+    title: string;
+    category: string;
+    author: string;
+    onPress: () => void;
+  }) => {
+    const colors = useColors();
+
+    return (
+      <CompactThemedCard onPress={onPress}>
+        <View style={styles.articleCard}>
+          <View style={styles.articleTextContainer}>
+            <ThemedText numberOfLines={2} style={styles.articleTitle}>
+              {title}
+            </ThemedText>
+            <View style={styles.articleMeta}>
+              <ThemedText
+                style={[styles.articleAuthor, { color: colors.authorText }]}
+                skipDefaultColor
+                numberOfLines={1}
+              >
+                {author}
+              </ThemedText>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.text} style={{ opacity: 0.3 }} />
+        </View>
+      </CompactThemedCard>
+    );
+  }
+);
 
 export default function PlaylistScreen() {
   const { user } = useAuth();
@@ -149,9 +306,9 @@ export default function PlaylistScreen() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledList, setShuffledList] = useState<typeof readingList>([]);
   const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
+  const [playProgress, setPlayProgress] = useState(0);
   const colors = useColors();
-
-  const controlsStyle = useMemo(() => [styles.controls], []);
+  const progressUpdateInterval = useRef<NodeJS.Timeout>();
 
   const { data: readingList, isLoading } = useQuery({
     queryKey: ['readingList', user?.id],
@@ -175,6 +332,9 @@ export default function PlaylistScreen() {
 
       return () => {
         stopCurrentSound();
+        if (progressUpdateInterval.current) {
+          clearInterval(progressUpdateInterval.current);
+        }
       };
     }, [user?.id, queryClient])
   );
@@ -185,10 +345,28 @@ export default function PlaylistScreen() {
         await currentSound.stopAsync();
         await currentSound.unloadAsync();
       } catch (error) {
-        throw error;
+        console.error('Error stopping sound:', error);
       }
       setCurrentSound(undefined);
       setIsPlaying(false);
+      setPlayProgress(0);
+      if (progressUpdateInterval.current) {
+        clearInterval(progressUpdateInterval.current);
+        progressUpdateInterval.current = undefined;
+      }
+    }
+  };
+
+  const updatePlayProgress = async () => {
+    if (currentSound) {
+      try {
+        const status = await currentSound.getStatusAsync();
+        if (status.isLoaded && status.durationMillis) {
+          setPlayProgress(status.positionMillis / status.durationMillis);
+        }
+      } catch (error) {
+        console.error('Error updating play progress:', error);
+      }
     }
   };
 
@@ -225,7 +403,15 @@ export default function PlaylistScreen() {
       await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
       setCurrentSound(newSound);
       setIsPlaying(true);
-    } catch {
+      setPlayProgress(0);
+
+      // Start progress update interval
+      if (progressUpdateInterval.current) {
+        clearInterval(progressUpdateInterval.current);
+      }
+      progressUpdateInterval.current = setInterval(updatePlayProgress, 500);
+    } catch (error) {
+      console.error('Error playing article:', error);
       await stopCurrentSound();
     }
   };
@@ -257,37 +443,110 @@ export default function PlaylistScreen() {
     }
   };
 
+  // Render empty state for not logged in users
   if (!user) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View
-          style={[
-            styles.messageContainer,
-            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
-          ]}
-        >
-          <ThemedText style={styles.message}>Please sign in to view your playlist</ThemedText>
+      <ThemedView style={styles.container}>
+        <View style={styles.emptyStateContainer}>
+          <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
+          <ThemedText style={styles.emptyStateMessage}>
+            Please sign in to view and manage your saved articles
+          </ThemedText>
+          <ThemedButton
+            title="Go to Profile"
+            icon="person-circle"
+            onPress={() => router.push('/(tabs)/profile' as any)}
+          />
         </View>
       </ThemedView>
     );
   }
 
+  // Show loading state
   if (isLoading) {
     return <LoadingScreen />;
   }
 
+  // Get the currently playing article
+  const currentArticle = isPlaying
+    ? playMode === 'shuffle' && shuffledList
+      ? shuffledList[currentIndex]
+      : readingList?.[currentIndex]
+    : null;
+
+  // Render empty playlist state
   if (!readingList?.length) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View
-          style={[
-            styles.messageContainer,
-            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
-          ]}
-        >
-          <ThemedText style={styles.message}>
-            Your playlist is empty. Add articles to get started!
+      <ThemedView style={styles.container}>
+        <View style={styles.savedArticlesInfo}>
+          <Ionicons
+            name="bookmark"
+            size={18}
+            color={colors.text}
+            style={{ opacity: LAYOUT.OPACITY.DIMMED }}
+          />
+          <ThemedText style={styles.savedArticlesText}>Saved Articles</ThemedText>
+        </View>
+        <View style={styles.emptyStateContainer}>
+          <ThemedText style={styles.emptyStateTitle}>No saved articles yet</ThemedText>
+          <ThemedText style={styles.emptyStateMessage}>
+            Save articles to listen to them later or read them offline
           </ThemedText>
+          <ThemedButton title="Browse Articles" icon="newspaper" onPress={() => router.push('/')} />
+        </View>
+        <View style={styles.controlsContainer}>
+          <View
+            style={[
+              styles.controlsCard,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
+            <View style={[styles.controlsContent]}>
+              <View
+                style={[
+                  styles.playerPlaceholder,
+                  styles.playerSection,
+                  {
+                    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+                    borderBottomColor: colors.cardBorder + '40',
+                    marginBottom: LAYOUT.SPACING.MEDIUM,
+                    paddingBottom: LAYOUT.SPACING.MEDIUM,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name="headset"
+                  size={22}
+                  color={colors.text}
+                  style={{ opacity: LAYOUT.OPACITY.DIMMED }}
+                />
+                <ThemedText style={styles.playerPlaceholderText}>
+                  Add articles to start listening
+                </ThemedText>
+              </View>
+              <View style={styles.buttonRow}>
+                <ThemedButton
+                  variant="filled"
+                  title="Play All"
+                  icon="play-circle"
+                  onPress={() => {}}
+                  style={styles.button}
+                  disabled={true}
+                />
+                <ThemedButton
+                  variant="filled"
+                  title="Shuffle"
+                  icon="shuffle"
+                  onPress={() => {}}
+                  style={styles.button}
+                  disabled={true}
+                />
+              </View>
+            </View>
+          </View>
         </View>
       </ThemedView>
     );
@@ -295,49 +554,131 @@ export default function PlaylistScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={styles.savedArticlesInfo}>
+        <Ionicons
+          name="bookmark"
+          size={18}
+          color={colors.text}
+          style={{ opacity: LAYOUT.OPACITY.DIMMED }}
+        />
+        <ThemedText style={styles.savedArticlesText}>
+          {readingList.length} {readingList.length === 1 ? 'article' : 'articles'} saved
+        </ThemedText>
+      </View>
+
       <FlatList
         data={readingList}
         keyExtractor={item => `${item.article_id}`}
         renderItem={({ item }) => (
-          <PlaylistCard
+          <ArticleCard
             title={item.article.title}
             category={item.article.category.name}
             author={item.article.author.name}
-            audioUrl={item.article.audio_url}
-            onRemove={() => removeFromReadingList.mutate(item.article_id)}
             onPress={() => router.push(`/article/${item.article_id}`)}
           />
         )}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.listContent,
-          { paddingTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.SMALL },
-        ]}
-        ItemSeparatorComponent={() => <View style={{ height: 6 }} />}
+        contentContainerStyle={styles.listContent}
+        ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
+        removeClippedSubviews={Platform.OS === 'android'}
+        initialNumToRender={8}
+        maxToRenderPerBatch={5}
+        windowSize={10}
       />
-      <View style={controlsStyle}>
-        <ThemedButton
-          variant="filled"
-          title={isPlaying && playMode === 'normal' ? 'Stop' : 'Play All'}
-          icon={isPlaying && playMode === 'normal' ? 'stop-circle' : 'play-circle'}
-          onPress={handlePlayAll}
-          style={styles.button}
+
+      <View style={styles.controlsContainer}>
+        <View
+          style={[
+            styles.controlsCard,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.cardBorder,
+            },
+          ]}
         >
-          {isPlaying && playMode === 'normal' && (
-            <AudioWave isPlaying={isPlaying} color={colors.background} />
-          )}
-        </ThemedButton>
-        <ThemedButton
-          variant="filled"
-          title={isPlaying && playMode === 'shuffle' ? 'Stop' : 'Shuffle'}
-          icon={isPlaying && playMode === 'shuffle' ? 'stop-circle' : 'shuffle'}
-          onPress={handleShuffle}
-          style={styles.button}
-        >
-          {isPlaying && playMode === 'shuffle' && (
-            <AudioWave isPlaying={isPlaying} color={colors.background} />
-          )}
-        </ThemedButton>
+          <View style={styles.controlsContent}>
+            {currentArticle && isPlaying ? (
+              <View style={styles.playerSection}>
+                <View
+                  style={[
+                    styles.nowPlayingContainer,
+                    { borderBottomColor: colors.cardBorder + '40' },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.iconContainer,
+                      {
+                        backgroundColor: colors.tint + '10',
+                        borderColor: colors.cardBorder + '40',
+                      },
+                    ]}
+                  >
+                    <AudioWave isPlaying={isPlaying} color={colors.tint} />
+                  </View>
+                  <View style={styles.nowPlayingInfo}>
+                    <ThemedText style={styles.nowPlayingTitle} numberOfLines={1}>
+                      {currentArticle.article.title}
+                    </ThemedText>
+                    <ThemedText style={styles.nowPlayingMeta} numberOfLines={1}>
+                      {currentArticle.article.author.name}
+                    </ThemedText>
+                  </View>
+                </View>
+                <View style={styles.progressWrapper}>
+                  <View style={styles.progressContainer}>
+                    <Animated.View
+                      style={[
+                        styles.progressBar,
+                        {
+                          width: `${playProgress * 100}%`,
+                          backgroundColor: colors.tint,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.playerSection,
+                  {
+                    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+                    borderBottomColor: colors.cardBorder + '40',
+                    marginBottom: LAYOUT.SPACING.MEDIUM,
+                  },
+                ]}
+              >
+                <View style={styles.playerPlaceholder}>
+                  <Ionicons
+                    name="headset"
+                    size={22}
+                    color={colors.text}
+                    style={{ opacity: LAYOUT.OPACITY.DIMMED }}
+                  />
+                  <ThemedText style={styles.playerPlaceholderText}>Ready to play</ThemedText>
+                </View>
+              </View>
+            )}
+            <View style={styles.buttonRow}>
+              <ThemedButton
+                variant="filled"
+                title={isPlaying && playMode === 'normal' ? 'Stop' : 'Play All'}
+                icon={isPlaying && playMode === 'normal' ? 'stop-circle' : 'play-circle'}
+                onPress={handlePlayAll}
+                style={styles.button}
+              />
+              <ThemedButton
+                variant="filled"
+                title={isPlaying && playMode === 'shuffle' ? 'Stop' : 'Shuffle'}
+                icon={isPlaying && playMode === 'shuffle' ? 'stop-circle' : 'shuffle'}
+                onPress={handleShuffle}
+                style={styles.button}
+              />
+            </View>
+          </View>
+        </View>
       </View>
     </ThemedView>
   );

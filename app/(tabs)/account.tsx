@@ -144,7 +144,7 @@ export default function AccountScreen() {
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: colors.cardBorder,
-                ...shadowStyles.primary,
+                ...shadowStyles.secondary,
               },
             ]}
           >

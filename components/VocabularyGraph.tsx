@@ -199,8 +199,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   header: {
