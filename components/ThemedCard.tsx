@@ -413,7 +413,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     shadowOpacity: 0.12,
     shadowRadius: 10,
-    borderColor: 'transparent',
   },
   imageContainer: {
     position: 'relative',

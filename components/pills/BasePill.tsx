@@ -24,13 +24,16 @@ export const createBasePillStyles = ({
     container: {
       backgroundColor: isSelected
         ? isDarkMode
-          ? `${colors.tint}20` // Selected, dark mode (20% opacity)
+          ? `${colors.cardBackground}90` // Selected, dark mode (use cardBackground with 90% opacity)
           : `${colors.tint}70` // Selected, light mode (70% opacity)
         : isDarkMode
           ? `${colors.elevation2}40` // Unselected, dark mode (40% opacity)
           : `${colors.elevation1}90`, // Unselected, light mode (90% opacity)
-      borderColor: colors.cardBorder,
-      borderWidth: 0.5,
+      borderColor:
+        isSelected && isDarkMode
+          ? `${colors.tint}50` // Selected in dark mode (tint with 50% opacity)
+          : colors.cardBorder, // Default border color
+      borderWidth: isSelected && isDarkMode ? 1 : 0.5,
       borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
       paddingHorizontal: LAYOUT.SPACING.MEDIUM,
       paddingVertical: LAYOUT.SPACING.TINY + 2,
@@ -50,7 +53,7 @@ export const createBasePillStyles = ({
     text: {
       color: isSelected
         ? isDarkMode
-          ? colors.white // Selected text in dark mode
+          ? colors.tint // Selected text in dark mode (use tint color)
           : colors.white // Selected text in light mode
         : isDarkMode
           ? `${colors.text}90` // Unselected text in dark mode

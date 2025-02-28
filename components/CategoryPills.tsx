@@ -8,6 +8,7 @@ import type { Tables } from '../types/database.types';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
+import { createBasePillStyles } from './pills/BasePill';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];
@@ -31,58 +32,18 @@ const HorizontalCategoryPill = React.memo(
     const isDarkMode = useIsDarkMode();
     const displayText = category ? category.name.toUpperCase() : 'ALL';
 
-    // Memoize the styles based on selection state and theme
-    const pillStyle = useMemo(() => {
-      // For unselected pills in light mode, we need a more opaque background to hide the shadow line
-      const unselectedLightBgOpacity = '90'; // Increased from 60 to 90 to hide the shadow line
-
-      return [
-        styles.pill,
-        {
-          backgroundColor: isSelected
-            ? isDarkMode
-              ? `${colors.tint}20` // Selected, dark mode (20% opacity - more subtle)
-              : `${colors.tint}70` // Selected, light mode (70% opacity - more subtle)
-            : isDarkMode
-              ? `${colors.elevation2}40` // Unselected, dark mode (40% opacity - more dimmed)
-              : `${colors.elevation1}${unselectedLightBgOpacity}`, // Unselected, light mode (increased opacity)
-          borderColor: colors.cardBorder, // Use card border color for all pills for consistency
-          // Theme-aware shadow for iOS
-          ...Platform.select({
-            ios: {
-              shadowColor: isDarkMode ? colors.shadow : isSelected ? colors.shadow : 'transparent',
-              shadowOffset: { width: 0, height: isSelected ? 2 : 0 },
-              shadowOpacity: isSelected ? 0.1 : 0,
-              shadowRadius: isSelected ? 4 : 0,
-            },
-            android: {
-              elevation: isSelected ? 1 : 0, // Only apply elevation to selected pills
-            },
-          }),
-        },
-      ];
-    }, [isSelected, colors, isDarkMode]);
-
-    // Memoize the text style based on selection state and theme
-    const textStyle = useMemo(() => {
-      return [
-        styles.pillText,
-        {
-          color: isSelected
-            ? isDarkMode
-              ? colors.white // Selected text in dark mode is white for better contrast
-              : colors.white // Selected text in light mode is white
-            : isDarkMode
-              ? `${colors.text}90` // Unselected text in dark mode (90% opacity)
-              : `${colors.text}80`, // Unselected text in light mode (80% opacity)
-          fontWeight: isSelected ? '700' : ('600' as '700' | '600'), // Selected text is bolder
-        },
-      ];
+    // Use the shared base pill styles
+    const pillStyles = useMemo(() => {
+      return createBasePillStyles({
+        isSelected,
+        isDarkMode,
+        colors,
+      });
     }, [isSelected, colors, isDarkMode]);
 
     return (
-      <TouchableOpacity style={pillStyle} onPress={onPress} activeOpacity={0.7}>
-        <ThemedText style={textStyle} skipDefaultColor>
+      <TouchableOpacity style={pillStyles.container} onPress={onPress} activeOpacity={0.7}>
+        <ThemedText style={pillStyles.text} skipDefaultColor>
           {displayText}
         </ThemedText>
       </TouchableOpacity>
@@ -196,18 +157,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: '40%', // Use percentage instead of fixed width to better adapt to different screen sizes
     zIndex: 1,
-  },
-  pill: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY + 2, // Match CategoryPill's padding (TINY + 2)
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderWidth: 0.5, // Thinner border for a more elegant look
-    // Remove shadow from base style - we'll apply it conditionally in the component
-  },
-  pillText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1, // Match CategoryPill's font size
-    letterSpacing: 0.5,
-    textAlign: 'center',
-    lineHeight: 16, // Match CategoryPill's line height
   },
 });
