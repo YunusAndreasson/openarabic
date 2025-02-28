@@ -13,7 +13,38 @@ import { router } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
-import { getMotivationalMessage, StudyWord } from '@/utils/vocabulary';
+import { StudyWord } from '@/utils/vocabulary';
+
+// Create a memoized component for the sign-in message
+const SignInMessage = React.memo(() => (
+  <View
+    style={[
+      styles.messageContainer,
+      { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
+    ]}
+  >
+    <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
+  </View>
+));
+
+SignInMessage.displayName = 'SignInMessage';
+
+// Create a memoized component for the review button
+const ReviewButton = React.memo(
+  ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => (
+    <View style={styles.reviewButtonContainer}>
+      <ThemedButton
+        title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
+        icon="play-circle"
+        onPress={onPress}
+        variant="filled"
+        style={styles.reviewButton}
+      />
+    </View>
+  )
+);
+
+ReviewButton.displayName = 'ReviewButton';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -33,76 +64,82 @@ export default function VocabularyScreen() {
   });
 
   // Enhanced loading state detection - cover all possible loading scenarios
-  const isLoading =
-    isAuthLoading || (!!user && (isDataLoading || isFetching || status === 'pending'));
+  const isLoading = useMemo(
+    () => isAuthLoading || (!!user && (isDataLoading || status === 'pending')),
+    [isAuthLoading, user, isDataLoading, status]
+  );
+
+  // Separate loading state for content that can show a loading indicator
+  const isContentLoading = useMemo(() => !!user && isFetching, [user, isFetching]);
 
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null) as StudyWord[];
   }, [studyWords]);
 
   const stats = useMemo(() => {
+    if (!validStudyWords.length)
+      return { totalWords: 0, dueWords: 0, masteredWords: 0, learningWords: 0 };
+
     const now = new Date();
     const dueWords = validStudyWords.filter(word => new Date(word.next_review_at) <= now);
     const masteredWords = validStudyWords.filter(word => word.interval_days >= 30);
-    const learningWords = validStudyWords.filter(word => word.interval_days < 30);
+    const learningWords = validStudyWords.length - masteredWords.length;
 
     return {
       totalWords: validStudyWords.length,
       dueWords: dueWords.length,
       masteredWords: masteredWords.length,
-      learningWords: learningWords.length,
+      learningWords,
     };
   }, [validStudyWords]);
 
   // Generate weekly progress data based on actual review history
   const weeklyProgressData = useMemo(() => {
+    if (!validStudyWords.length)
+      return Array(7)
+        .fill(0)
+        .map((_, i) => ({
+          date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
+          wordsLearned: 0,
+        }));
+
     // Get the days of the week
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date();
-    // We don't need dayOfWeek variable, so removing it
 
-    // Create an array to hold the last 7 days
-    const last7Days = Array(7)
-      .fill(0)
-      .map((_, index) => {
-        const date = new Date(today);
-        date.setDate(today.getDate() - (6 - index));
-        return {
-          date: days[date.getDay()],
-          fullDate: date,
-          wordsLearned: 0,
-        };
+    // Create an array to hold the last 7 days with pre-initialized counts
+    const dayMap = new Map();
+
+    // Initialize the map with the last 7 days
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (6 - i));
+      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      dayMap.set(dayKey, {
+        date: days[date.getDay()],
+        wordsLearned: 0,
       });
+    }
 
     // Count words learned per day based on review_count changes
     validStudyWords.forEach(word => {
-      // This is an approximation since we don't have the exact review history
-      // In a real app, you would have a reviews table with timestamps
       if (word.review_count > 0) {
         const reviewDate = new Date(word.next_review_at);
         // Adjust date back by interval days to estimate when the last review happened
         reviewDate.setDate(reviewDate.getDate() - word.interval_days);
 
-        // Check if the review date falls within our 7-day window
-        for (let i = 0; i < 7; i++) {
-          const dayData = last7Days[i];
-          if (
-            reviewDate.getDate() === dayData.fullDate.getDate() &&
-            reviewDate.getMonth() === dayData.fullDate.getMonth() &&
-            reviewDate.getFullYear() === dayData.fullDate.getFullYear()
-          ) {
-            dayData.wordsLearned += 1;
-            break;
-          }
+        const dayKey = `${reviewDate.getFullYear()}-${reviewDate.getMonth()}-${reviewDate.getDate()}`;
+        if (dayMap.has(dayKey)) {
+          const dayData = dayMap.get(dayKey);
+          dayData.wordsLearned += 1;
+          dayMap.set(dayKey, dayData);
         }
       }
     });
 
-    // Return the data without the fullDate property
-    return last7Days.map(({ date, wordsLearned }) => ({ date, wordsLearned }));
+    // Convert map back to array in the correct order
+    return Array.from(dayMap.values());
   }, [validStudyWords]);
-
-  const motivationalMessage = useMemo(() => getMotivationalMessage(stats), [stats]);
 
   const handleStartReview = useCallback(() => {
     router.push('/review');
@@ -117,14 +154,7 @@ export default function VocabularyScreen() {
   if (!user) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View
-          style={[
-            styles.messageContainer,
-            { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
-          ]}
-        >
-          <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
-        </View>
+        <SignInMessage />
       </ThemedView>
     );
   }
@@ -137,14 +167,9 @@ export default function VocabularyScreen() {
     );
   }
 
-  const hasDueWords = stats.dueWords > 0;
-
-  // Add a fallback loading state check for when data is still loading after initial load
-  const isStillLoading = isFetching || status === 'pending';
-
   return (
     <ThemedView style={styles.container}>
-      {isStillLoading ? (
+      {isContentLoading ? (
         <LoadingContainer size="large" height={300} />
       ) : (
         <ScrollView
@@ -152,11 +177,6 @@ export default function VocabularyScreen() {
           contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.CONTENT_SPACING.TOP }]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Motivational message */}
-          <View style={styles.messageHeader}>
-            <ThemedText style={styles.motivationalText}>{motivationalMessage}</ThemedText>
-          </View>
-
           {/* Vocabulary Dashboard */}
           <VocabularyDashboard
             totalWords={stats.totalWords}
@@ -171,20 +191,12 @@ export default function VocabularyScreen() {
           <VocabularyGraph
             data={weeklyProgressData}
             title="Words Learned This Week"
-            isLoading={isStillLoading}
+            isLoading={isContentLoading}
           />
 
-          {/* Review Button - using standard ThemedButton */}
-          {hasDueWords && (
-            <View style={styles.reviewButtonContainer}>
-              <ThemedButton
-                title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'word' : 'words'}`}
-                icon="play-circle"
-                onPress={handleStartReview}
-                variant="filled"
-                style={styles.reviewButton}
-              />
-            </View>
+          {/* Review Button - using memoized component */}
+          {stats.dueWords > 0 && (
+            <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
           )}
         </ScrollView>
       )}
@@ -202,14 +214,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  messageHeader: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  motivationalText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
