@@ -2,8 +2,6 @@ import {
   StyleSheet,
   FlatList,
   ListRenderItem,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   Platform,
   View,
   ScrollView,
@@ -154,7 +152,6 @@ export default function ArticlesScreen() {
 
   // Refs
   const flatListRef = useRef<FlatList>(null);
-  const isRefreshingRef = useRef(false);
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
@@ -192,7 +189,6 @@ export default function ArticlesScreen() {
         setTimeout(() => {
           setIsLoading(false);
           setIsRefreshing(false);
-          isRefreshingRef.current = false;
         }, 300);
       }
     },
@@ -210,7 +206,6 @@ export default function ArticlesScreen() {
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    isRefreshingRef.current = true;
     fetchArticles(true);
     fetchCategories();
   }, [fetchArticles, fetchCategories]);
@@ -220,7 +215,7 @@ export default function ArticlesScreen() {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
-  // Set up default tab bar styling
+  // Effects
   useEffect(() => {
     navigation.setOptions({
       tabBarStyle: {
@@ -251,28 +246,9 @@ export default function ArticlesScreen() {
     });
   }, [navigation, colors]);
 
-  // Simplified scroll handler - only handles pull-to-refresh
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { y: currentScrollY } = event.nativeEvent.contentOffset;
-
-      // Pull-to-refresh detection
-      if (currentScrollY < -50 && !isRefreshingRef.current) {
-        isRefreshingRef.current = true;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        if (!isRefreshing) {
-          handleRefresh();
-        }
-      } else if (currentScrollY >= 0) {
-        isRefreshingRef.current = false;
-      }
-    },
-    [isRefreshing, handleRefresh]
-  );
-
   const renderItem: ListRenderItem<Article> = ({ item }) => (
     <ThemedCard
-      imageUrl={'https://picsum.photos/800/400'}
+      imageUrl={item.image_url || 'https://picsum.photos/800/400'}
       title={item.title}
       category={item.category?.name ?? 'Uncategorized'}
       author={item.author?.name ?? 'Anonymous'}
@@ -318,12 +294,6 @@ export default function ArticlesScreen() {
     fetchArticles();
   }, [fetchCategories, fetchArticles]);
 
-  useEffect(() => {
-    if (!isRefreshing) {
-      isRefreshingRef.current = false;
-    }
-  }, [isRefreshing]);
-
   return (
     <View style={styles.container}>
       <ThemedView
@@ -354,8 +324,6 @@ export default function ArticlesScreen() {
               paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT,
             },
           ]}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
           ListEmptyComponent={ListEmptyComponent}
           showsVerticalScrollIndicator={false}
           refreshControl={

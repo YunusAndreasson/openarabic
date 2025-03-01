@@ -52,11 +52,9 @@ function ThemedCardComponent({
     setImageReady(true);
   }, []);
 
-  // Handle press with haptic feedback
+  // Handle press without haptic feedback
   const handlePress = useCallback(() => {
     if (onPress) {
-      // Provide haptic feedback
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       onPress();
     }
   }, [onPress]);
@@ -151,7 +149,7 @@ function ThemedCardComponent({
 
           {/* Image */}
           <Image
-            source={imageUrl}
+            source={{ uri: imageUrl }}
             style={[styles.image, themedStyles.image]}
             contentFit="cover"
             transition={300}
@@ -219,12 +217,21 @@ function ThemedCardComponent({
     <View style={styles.container}>
       <Pressable
         onPress={handlePress}
-        style={[styles.pressable, style]}
+        style={({ pressed }) => [
+          styles.pressable,
+          style,
+          pressed && {
+            transform: [{ scale: 0.985 }],
+            opacity: 0.97,
+          },
+        ]}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={`${category} article: ${title} by ${author}`}
         accessibilityHint="Opens the article details"
         disabled={isLoading || !imageReady}
+        android_ripple={{ color: colors.tint, borderless: false, radius: -5 }}
+        pressRetentionOffset={{ top: 20, left: 20, right: 20, bottom: 20 }}
       >
         <View style={cardStyle}>{cardContent}</View>
       </Pressable>
