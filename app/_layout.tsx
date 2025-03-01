@@ -91,7 +91,7 @@ function AppContent() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="article" options={{ headerShown: false }} />
       </Stack>
-      <StatusBar style={isDark ? Theme.Light : Theme.Dark} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <Toast config={toastConfig} />
     </NavigationThemeProvider>
   );

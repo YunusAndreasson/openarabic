@@ -48,6 +48,8 @@ interface Props {
   customGradientColors?: readonly [string, string, ...string[]];
   onImageLoaded?: () => void;
   imageSource?: ImageSourcePropType;
+  isLoading?: boolean;
+  showBackButton?: boolean;
 }
 
 export const CollapsibleHeader = memo(function CollapsibleHeader({
@@ -59,6 +61,8 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
   customGradientColors,
   onImageLoaded,
   imageSource,
+  isLoading,
+  showBackButton = true,
 }: Props) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -223,7 +227,7 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <Animated.View
         style={[styles.header, headerAnimatedStyle]}
         accessibilityRole="header"
@@ -265,21 +269,27 @@ export const CollapsibleHeader = memo(function CollapsibleHeader({
       </Animated.View>
 
       {/* Back button - always visible with reduced opacity blur */}
-      <TouchableOpacity
-        onPress={() => router.back()}
-        accessibilityLabel="Go back"
-        accessibilityRole="button"
-        style={styles.backButton}
-      >
-        <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.backButtonBlur}>
-          <Ionicons
-            name="chevron-back"
-            size={22}
-            color={colors.text}
-            style={styles.backButtonIcon}
-          />
-        </BlurView>
-      </TouchableOpacity>
+      {showBackButton && (
+        <TouchableOpacity
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          style={styles.backButton}
+        >
+          <BlurView
+            intensity={70}
+            tint={isDarkMode ? 'dark' : 'light'}
+            style={styles.backButtonBlur}
+          >
+            <Ionicons
+              name="chevron-back"
+              size={22}
+              color={colors.text}
+              style={styles.backButtonIcon}
+            />
+          </BlurView>
+        </TouchableOpacity>
+      )}
 
       {renderScrollableContent()}
     </View>

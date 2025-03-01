@@ -6,11 +6,11 @@ import {
   FlatList,
   Platform,
   TouchableOpacity,
-  StatusBar,
   Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
@@ -69,9 +69,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  scrollIndicator: {
-    width: 3,
   },
 });
 
@@ -374,11 +371,7 @@ export default function ArticleScreen() {
   // Render article screen
   return (
     <ThemedView style={[styles.container, styles.fullScreenContainer]} useSafeArea={false}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-      />
+      <StatusBar hidden />
 
       {/* Animated back button */}
       {BackButton}
