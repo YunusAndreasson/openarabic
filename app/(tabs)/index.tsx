@@ -2,33 +2,29 @@ import {
   StyleSheet,
   FlatList,
   ListRenderItem,
-  ActivityIndicator,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Platform,
   Animated,
   RefreshControl,
-  ViewStyle,
   View,
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { useEffect, useState, useCallback, useRef, memo, useMemo } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { router, useNavigation } from 'expo-router';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { BlurView } from 'expo-blur';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '../../services/articles';
 import { Article } from '@/types/articles.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { CategoryPills } from '@/components/CategoryPills';
 import { categoriesService } from '@/services/categories';
 import type { Tables } from '@/types/database.types';
-import { useSafeAreaInsets, EdgeInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
-import { Loader, LoadingScreen } from '@/components/Loader';
+import { Loader } from '@/components/Loader';
 import { useAppSelectorMemo } from '@/store/hooks';
 import { Theme } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
@@ -38,169 +34,146 @@ import React from 'react';
 // Constants
 const ITEM_HEIGHT = 360;
 const SCROLL_THRESHOLD = 10;
-const ANIMATION_DURATION = 250;
 const INITIAL_SCROLL_THRESHOLD = 20;
 const VELOCITY_THRESHOLD = 0.5;
 
-// Memoize the card component for better performance
-const MemoizedCard = memo(ThemedCard);
+// Should be moved to a separate file
+const CategoryPill = ({
+  category,
+  isSelected,
+  onSelect,
+  colors,
+  isDarkMode,
+}: {
+  category: Tables<'categories'> | null;
+  isSelected: boolean;
+  onSelect: () => void;
+  colors: ReturnType<typeof useColors>;
+  isDarkMode: boolean;
+}) => {
+  const backgroundColor = isSelected
+    ? isDarkMode
+      ? `${colors.tint}20`
+      : `${colors.tint}70`
+    : isDarkMode
+      ? `${colors.elevation2}40`
+      : `${colors.elevation1}90`;
 
-const CategoryPill = React.memo(
-  ({
-    category,
-    isSelected,
-    onSelect,
-    colors,
-    isDarkMode,
-  }: {
-    category: Tables<'categories'> | null;
-    isSelected: boolean;
-    onSelect: () => void;
-    colors: ReturnType<typeof useColors>;
-    isDarkMode: boolean;
-  }) => {
-    const backgroundColor = useMemo(
-      () =>
-        isSelected
-          ? isDarkMode
-            ? `${colors.tint}20`
-            : `${colors.tint}70`
-          : isDarkMode
-            ? `${colors.elevation2}40`
-            : `${colors.elevation1}90`,
-      [isSelected, isDarkMode, colors.tint, colors.elevation1, colors.elevation2]
-    );
+  const textColor = isSelected
+    ? colors.white
+    : isDarkMode
+      ? `${colors.text}90`
+      : `${colors.text}80`;
 
-    const textColor = useMemo(
-      () =>
-        isSelected
-          ? isDarkMode
-            ? colors.white
-            : colors.white
-          : isDarkMode
-            ? `${colors.text}90`
-            : `${colors.text}80`,
-      [isSelected, isDarkMode, colors.white, colors.text]
-    );
+  const categoryName = category?.name?.toUpperCase() || 'ALL';
+  const fontWeight = isSelected ? '700' : '600';
 
-    const categoryName = category?.name?.toUpperCase() || 'ALL';
-    const fontWeight = isSelected ? '700' : '600';
-
-    return (
-      <TouchableOpacity
-        key={category?.id || 'all'}
+  return (
+    <TouchableOpacity
+      key={category?.id || 'all'}
+      style={[
+        styles.categoryPill,
+        {
+          backgroundColor,
+          borderColor: colors.cardBorder,
+        },
+      ]}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onSelect();
+      }}
+    >
+      <ThemedText
         style={[
-          styles.categoryPill,
+          styles.categoryPillText,
           {
-            backgroundColor,
-            borderColor: colors.cardBorder,
+            color: textColor,
+            fontWeight,
           },
         ]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onSelect();
-        }}
+        skipDefaultColor
       >
-        <ThemedText
-          style={[
-            styles.categoryPillText,
-            {
-              color: textColor,
-              fontWeight,
-            },
-          ]}
-          skipDefaultColor
-        >
-          {categoryName}
-        </ThemedText>
-      </TouchableOpacity>
-    );
-  }
-);
+        {categoryName}
+      </ThemedText>
+    </TouchableOpacity>
+  );
+};
 
-CategoryPill.displayName = 'CategoryPill';
-
-const AnimatedHeader = memo(
-  ({
-    categoryVisibleAnim,
-    colors,
-    categoryPillsHeight,
-    insets,
-    isDarkTheme,
-    categories,
-    renderCategoryPill,
-  }: {
-    categoryVisibleAnim: Animated.Value;
-    colors: ReturnType<typeof useColors>;
-    categoryPillsHeight: number;
-    insets: { top: number; bottom: number; left: number; right: number };
-    isDarkTheme: boolean;
-    categories: Tables<'categories'>[];
-    renderCategoryPill: (category: Tables<'categories'> | null) => React.ReactNode;
-  }) => {
-    const headerContainerStyle = useMemo(
-      () => [
-        styles.headerContainer,
+// Should be moved to a separate file
+const AnimatedHeader = ({
+  categoryVisibleAnim,
+  colors,
+  categoryPillsHeight,
+  insets,
+  isDarkTheme,
+  categories,
+  renderCategoryPill,
+}: {
+  categoryVisibleAnim: Animated.Value;
+  colors: ReturnType<typeof useColors>;
+  categoryPillsHeight: number;
+  insets: { top: number; bottom: number; left: number; right: number };
+  isDarkTheme: boolean;
+  categories: Tables<'categories'>[];
+  renderCategoryPill: (category: Tables<'categories'> | null) => React.ReactNode;
+}) => {
+  const headerContainerStyle = [
+    styles.headerContainer,
+    {
+      transform: [
         {
-          transform: [
-            {
-              translateY: categoryVisibleAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [-100, 0],
-              }),
-            },
-          ],
-          opacity: categoryVisibleAnim,
-          backgroundColor: colors.background + '80',
-          height: categoryPillsHeight + LAYOUT.SPACING.MEDIUM,
-          paddingTop: Platform.select({
-            ios: insets.top,
-            android: insets.top + LAYOUT.SPACING.MEDIUM,
+          translateY: categoryVisibleAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-100, 0],
           }),
         },
       ],
-      [categoryVisibleAnim, categoryPillsHeight, insets.top, colors.background]
-    );
+      opacity: categoryVisibleAnim,
+      backgroundColor: colors.background + '80',
+      height: categoryPillsHeight + LAYOUT.SPACING.MEDIUM,
+      paddingTop: Platform.select({
+        ios: insets.top,
+        android: insets.top + LAYOUT.SPACING.MEDIUM,
+      }),
+    },
+  ];
 
-    return (
-      <Animated.View
-        style={headerContainerStyle}
-        needsOffscreenAlphaCompositing={Platform.OS === 'android'}
-      >
-        <View style={styles.categoryContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScrollContent}
-            removeClippedSubviews={true}
-            scrollEventThrottle={16}
-            directionalLockEnabled={true}
-            bounces={false}
-            overScrollMode="never"
-          >
-            {renderCategoryPill(null)}
-            {categories.map(category => renderCategoryPill(category))}
-          </ScrollView>
+  return (
+    <Animated.View
+      style={headerContainerStyle}
+      needsOffscreenAlphaCompositing={Platform.OS === 'android'}
+    >
+      <View style={styles.categoryContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryScrollContent}
+          removeClippedSubviews={true}
+          scrollEventThrottle={16}
+          directionalLockEnabled={true}
+          bounces={false}
+          overScrollMode="never"
+        >
+          {renderCategoryPill(null)}
+          {categories.map(category => renderCategoryPill(category))}
+        </ScrollView>
 
-          {(Platform.OS === 'android' || (Platform.OS === 'ios' && isDarkTheme)) && (
-            <LinearGradient
-              colors={['transparent', colors.background, colors.background]}
-              start={{ x: 0.3, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              locations={[0, 0.7, 1]}
-              style={styles.rightFadeGradient}
-              pointerEvents="none"
-            />
-          )}
-        </View>
-      </Animated.View>
-    );
-  }
-);
+        {(Platform.OS === 'android' || (Platform.OS === 'ios' && isDarkTheme)) && (
+          <LinearGradient
+            colors={['transparent', colors.background, colors.background]}
+            start={{ x: 0.3, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            locations={[0, 0.7, 1]}
+            style={styles.rightFadeGradient}
+            pointerEvents="none"
+          />
+        )}
+      </View>
+    </Animated.View>
+  );
+};
 
-AnimatedHeader.displayName = 'AnimatedHeader';
-
-export default function TextsScreen() {
+export default function ArticlesScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -225,20 +198,16 @@ export default function TextsScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Memoized values
-  const categoryPillsHeight = useMemo(() => {
-    const baseHeight = 30; // Fixed height for the category container
-    const topInset = insets.top || 0;
+  // Calculate values
+  const baseHeight = 30; // Fixed height for the category container
+  const topInset = insets.top || 0;
 
-    return (
-      Platform.select({
-        ios: topInset + baseHeight,
-        android: topInset + LAYOUT.SPACING.XLARGE,
-      }) ?? topInset + baseHeight
-    ); // Provide fallback value
-  }, [insets.top]);
+  const categoryPillsHeight =
+    Platform.select({
+      ios: topInset + baseHeight,
+      android: topInset + LAYOUT.SPACING.XLARGE,
+    }) ?? topInset + baseHeight;
 
-  // Callbacks
   const fetchArticles = useCallback(
     async (showRefreshing = false) => {
       try {
@@ -249,8 +218,6 @@ export default function TextsScreen() {
         }
         setError(null);
 
-        // Add a small delay to ensure the refresh indicator is visible
-        // This helps on devices where the network is too fast
         const fetchedArticles = await Promise.all([
           articlesService.getArticles(selectedCategory ? selectedCategory.id : undefined),
           // Minimum delay of 500ms to ensure refresh indicator is visible
@@ -261,7 +228,6 @@ export default function TextsScreen() {
       } catch (err) {
         setError('Failed to fetch articles. Pull down to try again.');
       } finally {
-        // Small delay before hiding the refresh indicator
         setTimeout(() => {
           setIsLoading(false);
           setIsRefreshing(false);
@@ -277,17 +243,13 @@ export default function TextsScreen() {
       const fetchedCategories = await categoriesService.getCategories();
       setCategories(fetchedCategories);
     } catch {
-      // We don't set error here to avoid blocking article display
       console.warn('Failed to fetch categories');
     }
   }, []);
 
   const handleRefresh = useCallback(() => {
-    // Trigger haptic feedback when refreshing
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    // Set isRefreshingRef to true to ensure proper state tracking
     isRefreshingRef.current = true;
-    // Call fetchArticles with true to show the refreshing indicator
     fetchArticles(true);
     fetchCategories();
   }, [fetchArticles, fetchCategories]);
@@ -297,29 +259,28 @@ export default function TextsScreen() {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, []);
 
-  const animateCategories = useCallback(
+  // Simplified animation functions
+  const animateVisibility = useCallback(
     (visible: boolean) => {
-      // Animate categories just like the tab bar
-      Animated.spring(categoryVisibleAnim, {
-        toValue: visible ? 1 : 0,
-        useNativeDriver: true,
-        friction: 8,
-        tension: 50,
-      }).start();
-    },
-    [categoryVisibleAnim]
-  );
+      // Animate both categories and tab bar together
+      const animations = [
+        Animated.spring(categoryVisibleAnim, {
+          toValue: visible ? 1 : 0,
+          useNativeDriver: true,
+          friction: 8,
+          tension: 50,
+        }),
+        Animated.spring(tabBarVisibleAnim, {
+          toValue: visible ? 1 : 0,
+          useNativeDriver: true,
+          friction: 8,
+          tension: 50,
+        }),
+      ];
 
-  const animateTabBar = useCallback(
-    (visible: boolean) => {
-      Animated.spring(tabBarVisibleAnim, {
-        toValue: visible ? 1 : 0,
-        useNativeDriver: true,
-        friction: 8,
-        tension: 50,
-      }).start();
+      Animated.parallel(animations).start();
     },
-    [tabBarVisibleAnim]
+    [categoryVisibleAnim, tabBarVisibleAnim]
   );
 
   const toggleTabBarVisibility = useCallback(
@@ -334,7 +295,7 @@ export default function TextsScreen() {
             bottom: 0,
             left: 0,
             right: 0,
-            backgroundColor: colors.background, // Changed from transparent to solid background
+            backgroundColor: colors.background,
             borderTopWidth: 0,
             height: LAYOUT.BOTTOM_BAR.HEIGHT,
             zIndex: LAYOUT.Z_INDEX.HEADER,
@@ -369,27 +330,17 @@ export default function TextsScreen() {
                   fontWeight: '500',
                 }
               : undefined,
-          // Remove the blur background
           tabBarBackground: undefined,
         });
 
         // Animate both tab bar and categories
-        animateTabBar(visible);
-        animateCategories(visible);
+        animateVisibility(visible);
       }
     },
-    [
-      isTabBarVisible,
-      navigation,
-      colors.shadow,
-      colors.background,
-      isDarkTheme,
-      tabBarVisibleAnim,
-      animateTabBar,
-      animateCategories,
-    ]
+    [isTabBarVisible, navigation, colors, tabBarVisibleAnim, animateVisibility]
   );
 
+  // Simplified scroll handler
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       const { y: currentScrollY } = event.nativeEvent.contentOffset;
@@ -400,7 +351,6 @@ export default function TextsScreen() {
       if (currentScrollY < -50 && !isRefreshingRef.current) {
         isRefreshingRef.current = true;
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        // Manually trigger refresh when pull gesture is detected
         if (!isRefreshing) {
           handleRefresh();
         }
@@ -408,24 +358,16 @@ export default function TextsScreen() {
         isRefreshingRef.current = false;
       }
 
-      // Calculate velocity (pixels per millisecond)
+      // Calculate velocity
       if (lastScrollTimestamp.current) {
         const timeDelta = currentTimestamp - lastScrollTimestamp.current;
         if (timeDelta > 0) {
           scrollVelocity.current = Math.abs(currentScrollY - lastScrollY.current) / timeDelta;
         }
       }
-
       lastScrollTimestamp.current = currentTimestamp;
 
-      // Detect tiny scrolls and ignore them
-      const scrollDelta = Math.abs(currentScrollY - lastScrollY.current);
-      if (scrollDelta < 2) {
-        lastScrollY.current = currentScrollY;
-        return;
-      }
-
-      // Always show category pills when at the top of the list
+      // Always show headers at top of list
       if (currentScrollY < 10) {
         if (!isTabBarVisible) {
           toggleTabBarVisibility(true);
@@ -434,52 +376,51 @@ export default function TextsScreen() {
         return;
       }
 
-      // Velocity-based detection for more responsive UI
+      // Check if scroll is significant enough to trigger UI changes
+      const scrollDelta = Math.abs(currentScrollY - lastScrollY.current);
       const isSignificantMovement =
         scrollVelocity.current > VELOCITY_THRESHOLD || scrollDelta > SCROLL_THRESHOLD;
 
-      if (scrollingDown && isTabBarVisible && currentScrollY > INITIAL_SCROLL_THRESHOLD) {
-        if (isSignificantMovement) {
-          toggleTabBarVisibility(false);
-        }
-      } else if (!scrollingDown && !isTabBarVisible) {
-        if (isSignificantMovement || currentScrollY < INITIAL_SCROLL_THRESHOLD) {
-          toggleTabBarVisibility(true);
-        }
+      // Update UI based on scroll direction and significance
+      if (
+        scrollingDown &&
+        isTabBarVisible &&
+        isSignificantMovement &&
+        currentScrollY > INITIAL_SCROLL_THRESHOLD
+      ) {
+        toggleTabBarVisibility(false);
+      } else if (
+        !scrollingDown &&
+        !isTabBarVisible &&
+        (isSignificantMovement || currentScrollY < INITIAL_SCROLL_THRESHOLD)
+      ) {
+        toggleTabBarVisibility(true);
       }
 
       lastScrollY.current = currentScrollY;
     },
-    [isTabBarVisible, toggleTabBarVisibility]
+    [isTabBarVisible, toggleTabBarVisibility, isRefreshing, handleRefresh]
   );
 
-  // Memoize the renderItem function to prevent unnecessary re-renders
-  const renderItem = useCallback<ListRenderItem<Article>>(
-    ({ item }) => (
-      <MemoizedCard
-        imageUrl={'https://picsum.photos/800/400'}
-        title={item.title}
-        category={item.category?.name ?? 'Uncategorized'}
-        author={item.author?.name ?? 'Anonymous'}
-        onPress={() => router.push(`/article/${item.id}`)}
-      />
-    ),
-    [router]
+  const renderItem: ListRenderItem<Article> = ({ item }) => (
+    <ThemedCard
+      imageUrl={'https://picsum.photos/800/400'}
+      title={item.title}
+      category={item.category?.name ?? 'Uncategorized'}
+      author={item.author?.name ?? 'Anonymous'}
+      onPress={() => router.push(`/article/${item.id}`)}
+    />
   );
 
-  const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
+  const keyExtractor = (item: Article) => item.id.toString();
 
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset: ITEM_HEIGHT * index,
-      index,
-    }),
-    []
-  );
+  const getItemLayout = (_: any, index: number) => ({
+    length: ITEM_HEIGHT,
+    offset: ITEM_HEIGHT * index,
+    index,
+  });
 
-  // Memoize the empty component to prevent unnecessary re-renders
-  const ListEmptyComponent = useCallback(() => {
+  const ListEmptyComponent = () => {
     if (isLoading && !isRefreshing) {
       return (
         <ThemedView style={styles.emptyContainer}>
@@ -501,44 +442,23 @@ export default function TextsScreen() {
         <ThemedText style={styles.emptyText}>No articles found</ThemedText>
       </ThemedView>
     );
-  }, [isLoading, isRefreshing, error, colors.tint]);
+  };
 
-  // Memoize the refresh control to prevent unnecessary re-renders
-  const refreshControl = useMemo(
-    () => (
-      <RefreshControl
-        refreshing={isRefreshing}
-        onRefresh={handleRefresh}
-        tintColor={colors.tint}
-        colors={[colors.tint]}
-        progressBackgroundColor={colors.background}
-        progressViewOffset={categoryPillsHeight} // Adjust for the category pills
-        title={isRefreshing ? 'Refreshing...' : 'Pull to refresh'} // iOS only
-        titleColor={colors.text}
+  const renderCategoryPill = (category: Tables<'categories'> | null) => {
+    const isSelected =
+      category === null ? selectedCategory === null : selectedCategory?.id === category.id;
+
+    return (
+      <CategoryPill
+        key={category?.id || 'all'}
+        category={category}
+        isSelected={isSelected}
+        onSelect={() => handleCategorySelect(category)}
+        colors={colors}
+        isDarkMode={isDarkTheme}
       />
-    ),
-    [isRefreshing, handleRefresh, colors.tint, colors.background, colors.text, categoryPillsHeight]
-  );
-
-  // Memoize category pill rendering for better performance
-  const renderCategoryPill = useCallback(
-    (category: Tables<'categories'> | null) => {
-      const isSelected =
-        category === null ? selectedCategory === null : selectedCategory?.id === category.id;
-
-      return (
-        <CategoryPill
-          key={category?.id || 'all'}
-          category={category}
-          isSelected={isSelected}
-          onSelect={() => handleCategorySelect(category)}
-          colors={colors}
-          isDarkMode={isDarkTheme}
-        />
-      );
-    },
-    [selectedCategory, colors, isDarkTheme, handleCategorySelect]
-  );
+    );
+  };
 
   // Effects
   useEffect(() => {
@@ -551,23 +471,10 @@ export default function TextsScreen() {
 
   // Sync isRefreshingRef with isRefreshing state
   useEffect(() => {
-    // When isRefreshing becomes false, ensure isRefreshingRef is also false
     if (!isRefreshing) {
       isRefreshingRef.current = false;
     }
   }, [isRefreshing]);
-
-  // Memoize the FlatList content container style
-  const flatListContentContainerStyle = useMemo(
-    () => [
-      styles.flatListContent,
-      {
-        paddingTop: categoryPillsHeight,
-        paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT,
-      },
-    ],
-    [categoryPillsHeight, insets.bottom]
-  );
 
   return (
     <View style={styles.container}>
@@ -582,13 +489,30 @@ export default function TextsScreen() {
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           getItemLayout={getItemLayout}
-          contentContainerStyle={flatListContentContainerStyle}
+          contentContainerStyle={[
+            styles.flatListContent,
+            {
+              paddingTop: categoryPillsHeight,
+              paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT,
+            },
+          ]}
           onScroll={handleScroll}
           scrollEventThrottle={16}
           ListEmptyComponent={ListEmptyComponent}
           showsVerticalScrollIndicator={false}
-          refreshControl={refreshControl}
-          removeClippedSubviews={true} // Enable for both platforms for better performance
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              tintColor={colors.tint}
+              colors={[colors.tint]}
+              progressBackgroundColor={colors.background}
+              progressViewOffset={categoryPillsHeight}
+              title={isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
+              titleColor={colors.text}
+            />
+          }
+          removeClippedSubviews={true}
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={5}
@@ -643,7 +567,6 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: LAYOUT.LIST_VERTICAL_SPACING,
-    // No horizontal padding to allow content to fill the screen width
   },
   headerContainer: {
     position: 'absolute',
@@ -652,7 +575,6 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
     marginTop: 0,
-    // Add a subtle shadow for better separation
     ...Platform.select({
       ios: {
         shadowColor: 'rgba(0,0,0,0.15)',
@@ -666,8 +588,8 @@ const styles = StyleSheet.create({
     }),
   },
   categoryContainer: {
-    height: 30, // Fixed height for the category container
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Add space below the pills
+    height: 30,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   categoryScrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
