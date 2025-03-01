@@ -16,14 +16,14 @@ const TAB_SCREENS = [
   {
     name: 'vocabulary',
     title: 'Vocabulary',
-    iconOutline: 'library-outline',
-    iconFilled: 'library',
+    iconOutline: 'language-outline',
+    iconFilled: 'language',
   },
   {
     name: 'playlist',
     title: 'Playlist',
-    iconOutline: 'play-circle-outline',
-    iconFilled: 'play-circle',
+    iconOutline: 'headset-outline',
+    iconFilled: 'headset',
   },
   {
     name: 'account',

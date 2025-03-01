@@ -100,7 +100,6 @@ export default function AccountScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <Ionicons name="person" size={24} color={colors.text} style={styles.headerIcon} />
           <ThemedText style={styles.headerTitle}>Account</ThemedText>
         </View>
         <View style={styles.authContainer}>
@@ -118,7 +117,6 @@ export default function AccountScreen() {
     <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
       {/* Fixed header */}
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <Ionicons name="person" size={24} color={colors.text} style={styles.headerIcon} />
         <ThemedText style={styles.headerTitle}>Account</ThemedText>
       </View>
 

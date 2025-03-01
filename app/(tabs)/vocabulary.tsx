@@ -158,7 +158,6 @@ export default function VocabularyScreen() {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <Ionicons name="book" size={24} color={colors.text} style={styles.headerIcon} />
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
         <SignInMessage />
@@ -170,7 +169,6 @@ export default function VocabularyScreen() {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <Ionicons name="book" size={24} color={colors.text} style={styles.headerIcon} />
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
         <VocabularyEmptyState colors={colors} />
@@ -181,7 +179,6 @@ export default function VocabularyScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <Ionicons name="book" size={24} color={colors.text} style={styles.headerIcon} />
         <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
       </View>
       {isContentLoading ? (

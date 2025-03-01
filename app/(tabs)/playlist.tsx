@@ -452,7 +452,6 @@ export default function PlaylistScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <Ionicons name="headset" size={24} color={colors.text} style={styles.headerIcon} />
           <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
         </View>
         <View style={styles.emptyStateContainer}>
@@ -487,7 +486,6 @@ export default function PlaylistScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <Ionicons name="headset" size={24} color={colors.text} style={styles.headerIcon} />
           <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
         </View>
         <View style={styles.emptyStateContainer}>
@@ -558,7 +556,6 @@ export default function PlaylistScreen() {
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <Ionicons name="headset" size={24} color={colors.text} style={styles.headerIcon} />
         <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
       </View>
 
