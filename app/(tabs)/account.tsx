@@ -99,6 +99,10 @@ export default function AccountScreen() {
   if (!session) {
     return (
       <ThemedView style={styles.container}>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <Ionicons name="person" size={24} color={colors.text} style={styles.headerIcon} />
+          <ThemedText style={styles.headerTitle}>Account</ThemedText>
+        </View>
         <View style={styles.authContainer}>
           <ThemedText type="title" style={styles.welcomeTitle}>
             Welcome
@@ -111,221 +115,215 @@ export default function AccountScreen() {
   }
 
   return (
-    <ThemedView
-      style={styles.container}
-      scrollable={true}
-      contentContainerStyle={[
-        styles.scrollContent,
-        {
-          paddingTop: Platform.select({
-            ios: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM,
-            android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-          }),
-        },
-      ]}
-    >
-      <View style={styles.content}>
-        {/* Profile Section */}
-        <View style={styles.section}>
-          <View style={styles.avatarContainer}>
-            <Avatar email={session.user.email} size="medium" />
-            <View style={styles.profileInfo}>
-              <ThemedText style={styles.email} numberOfLines={1} ellipsizeMode="tail">
-                {session.user.email}
-              </ThemedText>
-              <ThemedText
-                style={[styles.memberSince, { color: colors.tabIconDefault }]}
-                skipDefaultColor
-              >
-                Member since {new Date(session.user.created_at).toLocaleDateString()}
-              </ThemedText>
-            </View>
-          </View>
-        </View>
+    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
+      {/* Fixed header */}
+      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+        <Ionicons name="person" size={24} color={colors.text} style={styles.headerIcon} />
+        <ThemedText style={styles.headerTitle}>Account</ThemedText>
+      </View>
 
-        {/* Settings Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Preferences</ThemedText>
-          <View
-            style={[
-              styles.settingsContainer,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-                ...shadowStyles.secondary,
-              },
-            ]}
-          >
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
-                <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+      {/* Scrollable content */}
+      <ThemedView
+        scrollable={true}
+        useSafeArea={false}
+        includeBottomInset={false}
+        contentContainerStyle={{
+          paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+          paddingTop: LAYOUT.SPACING.MEDIUM,
+          paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+        }}
+      >
+        <View style={styles.content}>
+          {/* Settings Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Preferences</ThemedText>
+            <View
+              style={[
+                styles.settingsContainer,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.cardBorder,
+                  ...shadowStyles.secondary,
+                },
+              ]}
+            >
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
+                  <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+                </View>
+                <ThemeToggle />
               </View>
-              <ThemeToggle />
-            </View>
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                <ThemedText style={styles.settingLabel}>Show English</ThemedText>
-              </View>
-              <Toggle
-                value={settings.showEnglish}
-                onValueChange={value => dispatch(setShowEnglish(value))}
-              />
-            </View>
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <View style={styles.settingRow}>
-              <View style={styles.settingLabelContainer}>
-                <Ionicons name="text" size={20} color={colors.tabIconDefault} />
-                <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
-              </View>
-              <View style={styles.sliderContainer}>
-                <ThemedText
-                  style={[styles.scaleText, { color: colors.tabIconDefault }]}
-                  skipDefaultColor
-                >
-                  {Math.round(settings.fontScale * 100)}%
-                </ThemedText>
-                <CustomSlider
-                  value={settings.fontScale}
-                  onValueChange={value => dispatch(setFontScale(value))}
-                  minimumValue={0.8}
-                  maximumValue={1.3}
-                  step={0.1}
-                  style={styles.slider}
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <Ionicons name="language" size={20} color={colors.tabIconDefault} />
+                  <ThemedText style={styles.settingLabel}>Show English</ThemedText>
+                </View>
+                <Toggle
+                  value={settings.showEnglish}
+                  onValueChange={value => dispatch(setShowEnglish(value))}
                 />
               </View>
-            </View>
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <View style={styles.previewContainer}>
-              <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
-              <View style={[styles.previewScroller]}>
-                <ThemedText
-                  style={[
-                    styles.arabicPreviewText,
-                    {
-                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
-                      lineHeight: Math.round(
-                        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
-                          LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                          settings.fontScale
-                      ),
-                      color: colors.arabicText,
-                    },
-                  ]}
-                  skipDefaultColor
-                >
-                  مرحباً بك في اللغة العربية
-                </ThemedText>
-                {settings.showEnglish && (
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
+                  <Ionicons name="text" size={20} color={colors.tabIconDefault} />
+                  <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
+                </View>
+                <View style={styles.sliderContainer}>
+                  <ThemedText
+                    style={[styles.scaleText, { color: colors.tabIconDefault }]}
+                    skipDefaultColor
+                  >
+                    {Math.round(settings.fontScale * 100)}%
+                  </ThemedText>
+                  <CustomSlider
+                    value={settings.fontScale}
+                    onValueChange={value => dispatch(setFontScale(value))}
+                    minimumValue={0.8}
+                    maximumValue={1.3}
+                    step={0.1}
+                    style={styles.slider}
+                  />
+                </View>
+              </View>
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.previewContainer}>
+                <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
+                <View style={[styles.previewScroller]}>
                   <ThemedText
                     style={[
-                      styles.englishPreviewText,
+                      styles.arabicPreviewText,
                       {
-                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
                         lineHeight: Math.round(
-                          LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                          LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
                             LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
                             settings.fontScale
                         ),
-                        color: colors.text,
+                        color: colors.arabicText,
                       },
                     ]}
                     skipDefaultColor
                   >
-                    Welcome to the Arabic language
+                    مرحباً بك في اللغة العربية
                   </ThemedText>
-                )}
+                  {settings.showEnglish && (
+                    <ThemedText
+                      style={[
+                        styles.englishPreviewText,
+                        {
+                          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                          lineHeight: Math.round(
+                            LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                              LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                              settings.fontScale
+                          ),
+                          color: colors.text,
+                        },
+                      ]}
+                      skipDefaultColor
+                    >
+                      Welcome to the Arabic language
+                    </ThemedText>
+                  )}
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {/* Connect Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Connect With Us</ThemedText>
+            <View
+              style={[
+                styles.connectContainer,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.cardBorder,
+                  ...shadowStyles.secondary,
+                },
+              ]}
+            >
+              <ThemedButton
+                variant="outlined"
+                title="Twitter"
+                onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
+                icon="logo-twitter"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <ThemedButton
+                variant="outlined"
+                title="Instagram"
+                onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
+                icon="logo-instagram"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <ThemedButton
+                variant="outlined"
+                title="Facebook"
+                onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
+                icon="logo-facebook"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
+            </View>
+          </View>
+
+          {/* Support & Account Section */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Support & Account</ThemedText>
+            <View
+              style={[
+                styles.actionsContainer,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.cardBorder,
+                  ...shadowStyles.secondary,
+                },
+              ]}
+            >
+              <ThemedButton
+                variant="outlined"
+                title="Contact Support"
+                onPress={handleSupport}
+                icon="mail"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.signOutContainer}>
+                <ThemedButton
+                  variant="outlined"
+                  title="Sign Out"
+                  onPress={signOut}
+                  icon="log-out"
+                  style={[
+                    styles.actionButton,
+                    styles.signOutButton,
+                    { backgroundColor: colors.cardBackground },
+                  ]}
+                  innerContainerStyle={buttonStyles.innerContainer}
+                  contentContainerStyle={buttonStyles.contentContainer}
+                />
+                <ThemedText style={styles.signedInLabel}>Signed in as:</ThemedText>
+                <ThemedText style={styles.signedInEmail} numberOfLines={1} ellipsizeMode="tail">
+                  {session.user.email}
+                </ThemedText>
               </View>
             </View>
           </View>
         </View>
-
-        {/* Connect Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Connect With Us</ThemedText>
-          <View
-            style={[
-              styles.connectContainer,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-                ...shadowStyles.secondary,
-              },
-            ]}
-          >
-            <ThemedButton
-              variant="outlined"
-              title="Twitter"
-              onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
-              icon="logo-twitter"
-              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-              innerContainerStyle={buttonStyles.innerContainer}
-              contentContainerStyle={buttonStyles.contentContainer}
-            />
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <ThemedButton
-              variant="outlined"
-              title="Instagram"
-              onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
-              icon="logo-instagram"
-              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-              innerContainerStyle={buttonStyles.innerContainer}
-              contentContainerStyle={buttonStyles.contentContainer}
-            />
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <ThemedButton
-              variant="outlined"
-              title="Facebook"
-              onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
-              icon="logo-facebook"
-              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-              innerContainerStyle={buttonStyles.innerContainer}
-              contentContainerStyle={buttonStyles.contentContainer}
-            />
-          </View>
-        </View>
-
-        {/* Support & Account Section */}
-        <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Support & Account</ThemedText>
-          <View
-            style={[
-              styles.actionsContainer,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-                ...shadowStyles.secondary,
-              },
-            ]}
-          >
-            <ThemedButton
-              variant="outlined"
-              title="Contact Support"
-              onPress={handleSupport}
-              icon="mail"
-              style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-              innerContainerStyle={buttonStyles.innerContainer}
-              contentContainerStyle={buttonStyles.contentContainer}
-            />
-            <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-            <ThemedButton
-              variant="outlined"
-              title="Sign Out"
-              onPress={signOut}
-              icon="log-out"
-              style={[
-                styles.actionButton,
-                styles.signOutButton,
-                { backgroundColor: colors.cardBackground },
-              ]}
-              innerContainerStyle={buttonStyles.innerContainer}
-              contentContainerStyle={buttonStyles.contentContainer}
-            />
-          </View>
-        </View>
-      </View>
+      </ThemedView>
     </ThemedView>
   );
 }
@@ -333,24 +331,37 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
   },
-  scrollContent: {
-    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.XXLARGE,
+  headerContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: Platform.select({
+      ios: LAYOUT.CONTENT_SPACING.TOP,
+      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    }),
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
+  },
+  headerIcon: {
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   content: {
     flex: 1,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: 0,
   },
   section: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   sectionTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: 0,
   },
   authContainer: {
     flex: 1,
@@ -369,22 +380,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   avatarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  profileInfo: {
-    flex: 1,
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-  },
-  email: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  memberSince: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    display: 'none',
   },
   settingsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
@@ -449,8 +445,24 @@ const styles = StyleSheet.create({
     minHeight: 48,
     alignItems: 'flex-start',
   },
+  signOutContainer: {
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
+  },
   signOutButton: {
     opacity: LAYOUT.OPACITY.DIMMED,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingVertical: 0,
+    paddingLeft: 0,
+  },
+  signedInLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  signedInEmail: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    marginTop: LAYOUT.SPACING.TINY,
   },
   sliderContainer: {
     flex: 1,

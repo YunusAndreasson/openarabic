@@ -20,8 +20,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: Platform.select({
+      ios: LAYOUT.CONTENT_SPACING.TOP,
+      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    }),
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
+  },
+  headerIcon: {
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + 100,
   },
   emptyStateContainer: {
@@ -41,21 +60,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  savedArticlesInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: Platform.select({
-      ios: LAYOUT.CONTENT_SPACING.TOP,
-      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-    }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  savedArticlesText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    marginLeft: LAYOUT.SPACING.SMALL,
   },
   controlsContainer: {
     position: 'absolute',
@@ -150,8 +154,8 @@ const styles = StyleSheet.create({
   articleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-    minHeight: 72,
+    padding: LAYOUT.SPACING.SMALL,
+    minHeight: 56,
   },
   articleTextContainer: {
     flex: 1,
@@ -162,10 +166,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginBottom: LAYOUT.SPACING.TINY,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
-  articleMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   articleAuthor: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
@@ -283,20 +283,18 @@ const ArticleCard = React.memo(
       <CompactThemedCard onPress={onPress}>
         <View style={styles.articleCard}>
           <View style={styles.articleTextContainer}>
-            <ThemedText numberOfLines={2} style={styles.articleTitle}>
+            <ThemedText numberOfLines={1} style={styles.articleTitle}>
               {title}
             </ThemedText>
-            <View style={styles.articleMeta}>
-              <ThemedText
-                style={[styles.articleAuthor, { color: colors.authorText }]}
-                skipDefaultColor
-                numberOfLines={1}
-              >
-                {author}
-              </ThemedText>
-            </View>
+            <ThemedText
+              style={[styles.articleAuthor, { color: colors.authorText }]}
+              skipDefaultColor
+              numberOfLines={1}
+            >
+              {author}
+            </ThemedText>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.text} style={{ opacity: 0.3 }} />
+          <Ionicons name="chevron-forward" size={18} color={colors.text} style={{ opacity: 0.3 }} />
         </View>
       </CompactThemedCard>
     );
@@ -453,6 +451,10 @@ export default function PlaylistScreen() {
   if (!user) {
     return (
       <ThemedView style={styles.container}>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <Ionicons name="headset" size={24} color={colors.text} style={styles.headerIcon} />
+          <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+        </View>
         <View style={styles.emptyStateContainer}>
           <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
           <ThemedText style={styles.emptyStateMessage}>
@@ -484,14 +486,9 @@ export default function PlaylistScreen() {
   if (!readingList?.length) {
     return (
       <ThemedView style={styles.container}>
-        <View style={styles.savedArticlesInfo}>
-          <Ionicons
-            name="bookmark"
-            size={18}
-            color={colors.text}
-            style={{ opacity: LAYOUT.OPACITY.DIMMED }}
-          />
-          <ThemedText style={styles.savedArticlesText}>Saved Articles</ThemedText>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <Ionicons name="headset" size={24} color={colors.text} style={styles.headerIcon} />
+          <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
         </View>
         <View style={styles.emptyStateContainer}>
           <ThemedText style={styles.emptyStateTitle}>No saved articles yet</ThemedText>
@@ -560,16 +557,9 @@ export default function PlaylistScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.savedArticlesInfo}>
-        <Ionicons
-          name="bookmark"
-          size={18}
-          color={colors.text}
-          style={{ opacity: LAYOUT.OPACITY.DIMMED }}
-        />
-        <ThemedText style={styles.savedArticlesText}>
-          {readingList.length} {readingList.length === 1 ? 'article' : 'articles'} saved
-        </ThemedText>
+      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+        <Ionicons name="headset" size={24} color={colors.text} style={styles.headerIcon} />
+        <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
       </View>
 
       <FlatList

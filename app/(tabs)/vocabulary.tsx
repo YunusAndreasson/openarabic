@@ -15,6 +15,7 @@ import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { StudyWord } from '@/utils/vocabulary';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
 
 // Create a memoized component for the sign-in message
 const SignInMessage = React.memo(() => (
@@ -156,6 +157,10 @@ export default function VocabularyScreen() {
   if (!user) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <Ionicons name="book" size={24} color={colors.text} style={styles.headerIcon} />
+          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+        </View>
         <SignInMessage />
       </ThemedView>
     );
@@ -164,6 +169,10 @@ export default function VocabularyScreen() {
   if (!validStudyWords.length) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <Ionicons name="book" size={24} color={colors.text} style={styles.headerIcon} />
+          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+        </View>
         <VocabularyEmptyState colors={colors} />
       </ThemedView>
     );
@@ -171,20 +180,16 @@ export default function VocabularyScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+        <Ionicons name="book" size={24} color={colors.text} style={styles.headerIcon} />
+        <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+      </View>
       {isContentLoading ? (
         <LoadingContainer size="large" height={300} />
       ) : (
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: Platform.select({
-                ios: LAYOUT.CONTENT_SPACING.TOP,
-                android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-              }),
-            },
-          ]}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.SPACING.MEDIUM }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Vocabulary Dashboard */}
@@ -242,5 +247,23 @@ const styles = StyleSheet.create({
   reviewButton: {
     width: '100%',
     borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+  },
+  headerContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: Platform.select({
+      ios: LAYOUT.CONTENT_SPACING.TOP,
+      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    }),
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  headerTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
   },
 });
