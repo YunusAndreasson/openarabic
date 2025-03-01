@@ -324,7 +324,7 @@ export default function PlaylistScreen() {
         await soundRef.current.unloadAsync().catch(() => {});
         soundRef.current = null;
       } catch (error) {
-        console.log('Error during cleanup:', error);
+        // Error during cleanup
       }
     }
   };
@@ -340,20 +340,18 @@ export default function PlaylistScreen() {
         playThroughEarpieceAndroid: false,
       });
     } catch (error) {
-      console.error('Failed to set audio mode:', error);
+      // Failed to set audio mode
     }
   };
 
   // Load and play audio with the specified URL
   const loadAndPlayAudio = async (audioUrl: string) => {
     if (!audioUrl) {
-      console.error('No audio URL provided');
       setAudioState(AUDIO_STATES.ERROR);
       return false;
     }
 
     try {
-      console.log(`Loading audio: ${audioUrl}`);
       setAudioState(AUDIO_STATES.LOADING);
       lastActionTimeRef.current = Date.now();
 
@@ -369,13 +367,10 @@ export default function PlaylistScreen() {
 
       soundRef.current = sound;
 
-      console.log('Audio loaded successfully');
-
       // Add a small delay before playing to ensure the audio system is ready
       await new Promise(resolve => setTimeout(resolve, 300));
 
       // Start playing
-      console.log('Starting playback');
       await sound.playAsync();
 
       setAudioState(AUDIO_STATES.PLAYING);
@@ -384,10 +379,8 @@ export default function PlaylistScreen() {
       // Start progress tracking
       startProgressTracking();
 
-      console.log('Track is now playing');
       return true;
     } catch (error) {
-      console.error('Error loading or playing audio:', error);
       setAudioState(AUDIO_STATES.ERROR);
       return false;
     }
@@ -398,7 +391,6 @@ export default function PlaylistScreen() {
     if (!status.isLoaded) {
       // Handle error
       if (status.error) {
-        console.error(`Playback error: ${status.error}`);
         setAudioState(AUDIO_STATES.ERROR);
       }
       return;
@@ -414,14 +406,12 @@ export default function PlaylistScreen() {
       setAudioState(AUDIO_STATES.PLAYING);
     } else if (status.isBuffering) {
       // Still consider it playing, just buffering
-      console.log('Audio is buffering...');
     } else {
       setAudioState(AUDIO_STATES.PAUSED);
     }
 
     // Handle playback finishing
     if (status.didJustFinish) {
-      console.log('Playback finished, moving to next track');
       playNextTrack();
     }
   };
@@ -442,7 +432,7 @@ export default function PlaylistScreen() {
             setPlaybackProgress(status.positionMillis / status.durationMillis);
           }
         } catch (error) {
-          console.log('Error getting playback status:', error);
+          // Error getting playback status
         }
       }
     }, 1000);
@@ -468,7 +458,6 @@ export default function PlaylistScreen() {
 
     // Check if we have a playlist
     if (!readingList || readingList.length === 0) {
-      console.log('No items in playlist');
       return;
     }
 
@@ -487,7 +476,6 @@ export default function PlaylistScreen() {
 
     lastActionTimeRef.current = Date.now();
 
-    console.log('Stopping playback');
     await cleanupAudio();
 
     setAudioState(AUDIO_STATES.IDLE);
@@ -506,7 +494,6 @@ export default function PlaylistScreen() {
 
     // Check if we have a playlist
     if (!readingList || readingList.length === 0) {
-      console.log('No items in playlist');
       return;
     }
 
@@ -562,7 +549,7 @@ export default function PlaylistScreen() {
     const subscription = AppState.addEventListener('change', nextAppState => {
       // Pause when app goes to background
       if (nextAppState !== 'active' && audioState === AUDIO_STATES.PLAYING && soundRef.current) {
-        soundRef.current.pauseAsync().catch(err => console.log('Error pausing:', err));
+        soundRef.current.pauseAsync().catch(() => {});
       }
     });
 
@@ -591,13 +578,9 @@ export default function PlaylistScreen() {
       const audioUrl = track?.article?.audio_url;
 
       if (audioUrl) {
-        console.log(`New track selected: ${track.article.title}`);
-
         // Load and play the audio
         loadAndPlayAudio(audioUrl);
       } else {
-        console.error('Selected track has no audio URL');
-
         // Try to skip to next track if this one has no audio
         playNextTrack();
       }

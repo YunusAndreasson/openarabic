@@ -3,6 +3,7 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import { useNavigation } from 'expo-router';
+import Toast from 'react-native-toast-message';
 
 export interface AudioOptions {
   /**
@@ -212,9 +213,6 @@ export function useAudio(audioUrl: string | null, options: AudioOptions = {}) {
       setIsLoading(true);
       setError(null);
 
-      // Log audio loading attempt for debugging
-      console.log(`Attempting to load audio from URL: ${audioUrl}`);
-
       // Unload any existing sound
       await unloadSound();
 
@@ -245,7 +243,6 @@ export function useAudio(audioUrl: string | null, options: AudioOptions = {}) {
         setSound(newSound);
         soundRef.current = newSound;
         setIsLoading(false);
-        console.log('Audio successfully loaded');
       } else {
         // Component unmounted during loading
         await newSound.unloadAsync();
@@ -256,10 +253,6 @@ export function useAudio(audioUrl: string | null, options: AudioOptions = {}) {
       if (isMountedRef.current) {
         setIsLoading(false);
 
-        // Enhanced error logging
-        console.error(`Audio loading failed for URL: ${audioUrl}`);
-        console.error('Error details:', err);
-
         // Check if this is a network error
         if (err instanceof Error) {
           const errorMessage = err.message.toLowerCase();
@@ -268,7 +261,11 @@ export function useAudio(audioUrl: string | null, options: AudioOptions = {}) {
             errorMessage.includes('timeout') ||
             errorMessage.includes('connection')
           ) {
-            console.error('Network error detected when loading audio');
+            Toast.show({
+              type: 'error',
+              text1: 'Network Error',
+              text2: 'Unable to load audio due to network issues',
+            });
           }
         }
 
