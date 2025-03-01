@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, Pressable, StyleProp, ViewStyle, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
@@ -9,16 +9,6 @@ import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
 import { LoadingContainer } from './Loader';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-  withSequence,
-  withDelay,
-  runOnJS,
-  cancelAnimation,
-} from 'react-native-reanimated';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -45,126 +35,21 @@ function ThemedCardComponent({
   const [imageError, setImageError] = useState(false);
   const [imageReady, setImageReady] = useState(false);
 
-  // Use Reanimated shared values for all animations
-  const cardOpacity = useSharedValue(0); // Start with 0 opacity for fade-in
-  const scale = useSharedValue(1);
-  const loadingOpacity = useSharedValue(1);
-  const contentOpacity = useSharedValue(0);
-
-  // Track if component is mounted to prevent state updates after unmount
-  const isMounted = useRef(true);
-
-  // Keep track of the current image URL to handle prop changes
-  const imageUrlRef = useRef(imageUrl);
-
-  // Cleanup on unmount
-  React.useEffect(() => {
-    // Initial fade-in animation for the card
-    cardOpacity.value = withSequence(
-      withDelay(
-        50, // Reduced delay for faster initial appearance
-        withTiming(1, {
-          duration: 300, // Faster fade-in
-          easing: Easing.out(Easing.ease),
-        })
-      )
-    );
-
-    return () => {
-      isMounted.current = false;
-      // Cancel any ongoing animations to prevent memory leaks
-      cancelAnimation(cardOpacity);
-      cancelAnimation(scale);
-      cancelAnimation(loadingOpacity);
-      cancelAnimation(contentOpacity);
-    };
-  }, []);
-
-  // Handle image URL changes
-  React.useEffect(() => {
-    if (imageUrlRef.current !== imageUrl) {
-      imageUrlRef.current = imageUrl;
-
-      // Reset image states when URL changes
-      setImageLoading(true);
-      setImageError(false);
-      setImageReady(false);
-
-      // Reset animations
-      loadingOpacity.value = 1;
-      contentOpacity.value = 0;
-    }
-  }, [imageUrl]);
-
   // Image loading handlers
   const handleLoadStart = useCallback(() => {
-    if (!isMounted.current) return;
-
     setImageLoading(true);
     setImageReady(false);
-
-    // Ensure loading indicator is visible
-    loadingOpacity.value = withTiming(1, {
-      duration: 150,
-      easing: Easing.inOut(Easing.ease),
-    });
-
-    // Hide content until image is loaded
-    contentOpacity.value = withTiming(0, {
-      duration: 100,
-      easing: Easing.out(Easing.ease),
-    });
   }, []);
 
   const handleLoadEnd = useCallback(() => {
-    if (!isMounted.current) return;
-
-    // Fade out loading indicator
-    loadingOpacity.value = withTiming(
-      0,
-      {
-        duration: 200,
-        easing: Easing.out(Easing.ease),
-      },
-      () => {
-        if (isMounted.current) {
-          runOnJS(setImageLoading)(false);
-          runOnJS(setImageReady)(true);
-        }
-      }
-    );
-
-    // Fade in content
-    contentOpacity.value = withTiming(1, {
-      duration: 250,
-      easing: Easing.inOut(Easing.ease),
-    });
+    setImageLoading(false);
+    setImageReady(true);
   }, []);
 
   const handleError = useCallback(() => {
-    if (!isMounted.current) return;
-
-    // Fade out loading indicator
-    loadingOpacity.value = withTiming(
-      0,
-      {
-        duration: 200,
-        easing: Easing.out(Easing.ease),
-      },
-      () => {
-        if (isMounted.current) {
-          runOnJS(setImageLoading)(false);
-          runOnJS(setImageError)(true);
-          runOnJS(setImageReady)(true);
-        }
-      }
-    );
-
-    // Fade in error content
-    contentOpacity.value = withTiming(1, {
-      duration: 250,
-      easing: Easing.inOut(Easing.ease),
-    });
+    setImageLoading(false);
+    setImageError(true);
+    setImageReady(true);
   }, []);
 
   // Handle press with haptic feedback
@@ -172,56 +57,20 @@ function ThemedCardComponent({
     if (onPress) {
       // Provide haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      // Scale down animation
-      scale.value = withTiming(0.98, {
-        duration: 100,
-        easing: Easing.out(Easing.ease),
-      });
-
-      // Platform-specific timing adjustments
-      const navigationDelay = Platform.OS === 'ios' ? 50 : 0;
-
-      // Delay navigation slightly to allow animation to start
-      setTimeout(() => {
-        // Reset scale after navigation
-        setTimeout(() => {
-          scale.value = withTiming(1, {
-            duration: 200,
-            easing: Easing.out(Easing.ease),
-          });
-        }, 200);
-
-        onPress();
-      }, navigationDelay);
+      onPress();
     }
-  }, [onPress, scale]);
-
-  // Handle press animations
-  const handlePressIn = useCallback(() => {
-    scale.value = withTiming(0.98, {
-      duration: 150,
-      easing: Easing.out(Easing.ease),
-    });
-  }, [scale]);
-
-  const handlePressOut = useCallback(() => {
-    scale.value = withTiming(1, {
-      duration: 200,
-      easing: Easing.out(Easing.ease),
-    });
-  }, [scale]);
+  }, [onPress]);
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(() => {
     // Helper function to create a gradient with the card background color
-    const createCardGradient = (color: string) => {
+    const createCardGradient = () => {
       // For iOS light mode, we need to create a custom gradient that matches the card background
       if (Platform.OS === 'ios' && !isDarkMode) {
         // Use white color to match the iosLightModeCard style
         return [
           'rgba(255, 255, 255, 0)', // Start with transparent
-          'rgba(255, 255, 255, 0.95)', // Mid-fade with 80% opacity
+          'rgba(255, 255, 255, 0.95)', // Mid-fade with high opacity
           'white', // End with pure white to match iosLightModeCard
         ] as readonly [string, string, string];
       }
@@ -240,14 +89,7 @@ function ThemedCardComponent({
         backgroundColor: isDarkMode ? colors.cardBackground : 'rgba(255, 255, 255, 0.85)',
       },
       gradient: {
-        colors: createCardGradient(colors.cardBackground),
-      },
-      categoryBackground: {
-        backgroundColor: isDarkMode ? colors.tint + '20' : colors.tint + '90',
-      },
-      category: {
-        color: isDarkMode ? colors.tint : colors.white,
-        fontWeight: '600',
+        colors: createCardGradient(),
       },
       author: {
         color: colors.authorText,
@@ -277,21 +119,6 @@ function ThemedCardComponent({
     return baseStyle;
   }, [themedStyles.card, isLoading, isDarkMode]);
 
-  // Create animated style for the card
-  const cardAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: cardOpacity.value,
-      transform: [{ scale: scale.value }],
-    };
-  });
-
-  // Create animated style for the content
-  const contentAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: contentOpacity.value,
-    };
-  });
-
   // Memoize the card content to prevent unnecessary re-renders
   const cardContent = useMemo(() => {
     if (isLoading) {
@@ -310,20 +137,19 @@ function ThemedCardComponent({
     return (
       <>
         <View style={styles.imageContainer}>
-          {/* Always render the loading container, control visibility with opacity */}
-          <Animated.View
-            style={[
-              styles.loadingContainer,
-              {
-                backgroundColor: themedStyles.loadingContainer.backgroundColor,
-                opacity: loadingOpacity,
-              },
-            ]}
-          >
-            <LoadingContainer size="small" />
-          </Animated.View>
+          {/* Loading container */}
+          {imageLoading && (
+            <View
+              style={[
+                styles.loadingContainer,
+                { backgroundColor: themedStyles.loadingContainer.backgroundColor },
+              ]}
+            >
+              <LoadingContainer size="small" />
+            </View>
+          )}
 
-          {/* Pre-render the image with opacity 0 to start loading early */}
+          {/* Image */}
           <Image
             source={imageUrl}
             style={[styles.image, themedStyles.image]}
@@ -337,32 +163,31 @@ function ThemedCardComponent({
             recyclingKey={imageUrl}
           />
 
-          {/* Animated container for content that appears after image loads */}
-          <Animated.View
-            style={[styles.imageOverlayContainer, contentAnimatedStyle]}
-            pointerEvents="none"
-          >
-            {imageError ? (
-              <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
-                <ThemedText style={styles.errorText}>Image not available</ThemedText>
-              </View>
-            ) : (
-              <LinearGradient
-                colors={themedStyles.gradient.colors}
-                style={[
-                  styles.gradient,
-                  Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
-                ]}
-                locations={Platform.OS === 'ios' && !isDarkMode ? [0, 0.85, 0.98] : [0, 0.5, 1]}
-                start={{ x: 0.5, y: 0 }}
-                end={{ x: 0.5, y: 1 }}
-              />
-            )}
-            <CategoryPill category={category} />
-          </Animated.View>
+          {/* Image overlay content */}
+          {imageReady && (
+            <View style={styles.imageOverlayContainer} pointerEvents="none">
+              {imageError ? (
+                <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
+                  <ThemedText style={styles.errorText}>Image not available</ThemedText>
+                </View>
+              ) : (
+                <LinearGradient
+                  colors={themedStyles.gradient.colors}
+                  style={[
+                    styles.gradient,
+                    Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
+                  ]}
+                  locations={Platform.OS === 'ios' && !isDarkMode ? [0, 0.85, 0.98] : [0, 0.5, 1]}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                />
+              )}
+              <CategoryPill category={category} />
+            </View>
+          )}
         </View>
 
-        <Animated.View style={[styles.contentContainer, contentAnimatedStyle]}>
+        <View style={styles.contentContainer}>
           <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">
             {title}
           </ThemedText>
@@ -374,28 +199,26 @@ function ThemedCardComponent({
           >
             {author}
           </ThemedText>
-        </Animated.View>
+        </View>
       </>
     );
   }, [
     isLoading,
     imageError,
+    imageLoading,
+    imageReady,
     imageUrl,
     title,
     author,
     category,
     colors,
     themedStyles,
-    loadingOpacity,
-    contentAnimatedStyle,
   ]);
 
   return (
-    <Animated.View style={[styles.animatedContainer, cardAnimatedStyle]}>
+    <View style={styles.container}>
       <Pressable
         onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         style={[styles.pressable, style]}
         accessible={true}
         accessibilityRole="button"
@@ -405,7 +228,7 @@ function ThemedCardComponent({
       >
         <View style={cardStyle}>{cardContent}</View>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 
@@ -413,10 +236,9 @@ function ThemedCardComponent({
 export default React.memo(ThemedCardComponent);
 
 const styles = StyleSheet.create({
-  animatedContainer: {
+  container: {
     marginHorizontal: LAYOUT.CARD.MARGIN.LARGE,
     marginVertical: LAYOUT.CARD.MARGIN.MEDIUM,
-    backfaceVisibility: 'hidden',
     overflow: 'visible',
   },
   pressable: {
@@ -518,6 +340,5 @@ const styles = StyleSheet.create({
     bottom: -8,
     height: 240,
     zIndex: 1,
-    opacity: 1,
   },
 });
