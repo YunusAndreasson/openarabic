@@ -27,6 +27,7 @@ import { Theme } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -152,6 +153,9 @@ export default function ArticlesScreen() {
 
   // Refs
   const flatListRef = useRef<FlatList>(null);
+  const isInitialMount = useRef(true);
+  const loadingStartTime = useRef<number | null>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
@@ -160,6 +164,7 @@ export default function ArticlesScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(false);
 
   // Calculate header height
   const topInset = insets.top || 0;
@@ -169,27 +174,41 @@ export default function ArticlesScreen() {
 
   const fetchArticles = useCallback(
     async (showRefreshing = false) => {
+      // Clear any existing timeouts
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = undefined;
+      }
+
       try {
         if (showRefreshing) {
           setIsRefreshing(true);
         } else if (!isRefreshing) {
           setIsLoading(true);
+          loadingStartTime.current = Date.now();
         }
         setError(null);
 
-        const fetchedArticles = await Promise.all([
-          articlesService.getArticles(selectedCategory ? selectedCategory.id : undefined),
-          new Promise(resolve => setTimeout(resolve, 500)),
-        ]).then(([articles]) => articles);
+        const fetchedArticles = await articlesService.getArticles(
+          selectedCategory ? selectedCategory.id : undefined
+        );
 
         setArticles(fetchedArticles);
       } catch (err) {
         setError('Failed to fetch articles. Pull down to try again.');
       } finally {
-        setTimeout(() => {
+        // Ensure loader shows for at least 500ms for a more consistent experience
+        const timeElapsed = loadingStartTime.current ? Date.now() - loadingStartTime.current : 0;
+        const minDelay = Math.max(0, 500 - timeElapsed);
+
+        loadingTimeoutRef.current = setTimeout(() => {
           setIsLoading(false);
           setIsRefreshing(false);
-        }, 300);
+          isInitialMount.current = false;
+          loadingStartTime.current = null;
+          // Force a re-render
+          setForceUpdate(prev => !prev);
+        }, minDelay);
       }
     },
     [selectedCategory, isRefreshing]
@@ -288,11 +307,48 @@ export default function ArticlesScreen() {
     );
   };
 
-  // Effects
+  // Modify app loading initialization
   useEffect(() => {
-    fetchCategories();
-    fetchArticles();
+    const initialLoadingStartTime = Date.now();
+    loadingStartTime.current = initialLoadingStartTime;
+
+    Promise.all([fetchCategories(), fetchArticles()]).catch(error => {
+      console.error('Error during initial loading:', error);
+    });
+
+    // Clean up function to prevent memory leaks
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = undefined;
+      }
+      loadingStartTime.current = null;
+    };
   }, [fetchCategories, fetchArticles]);
+
+  // Add focus effect for cleanup when switching tabs
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // Clear any pending timeouts when screen loses focus
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = undefined;
+        }
+        loadingStartTime.current = null;
+      };
+    }, [])
+  );
+
+  // This is where we render the component based on loading state
+  if (isLoading && isInitialMount.current) {
+    // Use full-screen loader for initial loading
+    return (
+      <ThemedView style={styles.container}>
+        <Loader size="large" color={colors.tint} style={styles.fullScreenLoader} />
+      </ThemedView>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -429,5 +485,15 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     height: LAYOUT.BOTTOM_BAR.HEIGHT,
     zIndex: LAYOUT.Z_INDEX.HEADER,
+  },
+  fullScreenLoader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });

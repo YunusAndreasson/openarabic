@@ -313,23 +313,67 @@ export default function PlaylistScreen() {
   const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
   const [playProgress, setPlayProgress] = useState(0);
   const progressUpdateInterval = useRef<NodeJS.Timeout>();
+  const isInitialMount = useRef(true);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const { data: readingList, isLoading } = useQuery({
+  const {
+    data: readingList,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
     enabled: !!user?.id,
+    // Adding staleTime to prevent frequent refetches
+    staleTime: 60000, // 1 minute
   });
 
-  const removeFromReadingList = useMutation({
-    mutationFn: (articleId: number) =>
-      readingListService.removeFromReadingList(user!.id, articleId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['readingList'] });
-    },
-  });
+  // Track when loading started to ensure minimum display time
+  const loadingStartTime = useRef<number | null>(null);
 
+  // Combined loading state that includes both initial loading and fetching updates
+  const isLoadingData = useMemo(() => {
+    const isCurrentlyLoading = isLoading || (isInitialMount.current && isFetching);
+
+    // Start tracking loading time
+    if (isCurrentlyLoading && loadingStartTime.current === null) {
+      loadingStartTime.current = Date.now();
+    }
+
+    // If not actually loading anymore, check if minimum time elapsed
+    if (!isCurrentlyLoading && loadingStartTime.current !== null) {
+      const timeElapsed = Date.now() - loadingStartTime.current;
+      if (timeElapsed < 500) {
+        // Haven't shown loader for 500ms yet, so keep showing
+        // Clear any existing timeout
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+
+        // Set a timeout to update the state after the minimum time
+        loadingTimeoutRef.current = setTimeout(() => {
+          loadingStartTime.current = null;
+          // Force a re-render to hide the loader
+          setPlayProgress(prev => prev); // This is a trick to force a re-render
+        }, 500 - timeElapsed);
+
+        return true;
+      }
+      // Reset timer
+      loadingStartTime.current = null;
+    }
+
+    return isCurrentlyLoading;
+  }, [isLoading, isFetching]);
+
+  // Handle initial mount and tab focus effects
   useFocusEffect(
     React.useCallback(() => {
+      // On first focus, mark as no longer initial mount
+      if (isInitialMount.current) {
+        isInitialMount.current = false;
+      }
+
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: ['readingList'] });
       }
@@ -339,9 +383,23 @@ export default function PlaylistScreen() {
         if (progressUpdateInterval.current) {
           clearInterval(progressUpdateInterval.current);
         }
+        // Clear loading timeout when unmounting
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+        // Reset loading state when unmounting to prevent stuck loaders
+        loadingStartTime.current = null;
       };
     }, [user?.id, queryClient])
   );
+
+  const removeFromReadingList = useMutation({
+    mutationFn: (articleId: number) =>
+      readingListService.removeFromReadingList(user!.id, articleId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['readingList'] });
+    },
+  });
 
   const stopCurrentSound = async () => {
     if (currentSound) {
@@ -469,8 +527,8 @@ export default function PlaylistScreen() {
     );
   }
 
-  // Show loading state
-  if (isLoading) {
+  // Show loading state - this now covers both initial loading and subsequent fetches
+  if (isLoadingData) {
     return <LoadingScreen />;
   }
 

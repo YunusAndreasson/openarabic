@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect } from 'react';
+import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -16,6 +16,7 @@ import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { StudyWord } from '@/utils/vocabulary';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Create a memoized component for the sign-in message
 const SignInMessage = React.memo(() => (
@@ -52,6 +53,11 @@ export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
+  const loadingStartTime = useRef<number | null>(null);
+  const isInitialMount = useRef(true);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
+  // State to force re-render when needed
+  const [forceUpdate, setForceUpdate] = useState(false);
 
   const {
     data: studyWords = [],
@@ -66,14 +72,60 @@ export default function VocabularyScreen() {
     refetchOnWindowFocus: false,
   });
 
-  // Enhanced loading state detection - cover all possible loading scenarios
-  const isLoading = useMemo(
-    () => isAuthLoading || (!!user && (isDataLoading || status === 'pending')),
-    [isAuthLoading, user, isDataLoading, status]
+  // Enhanced loading state detection with minimum duration
+  const isLoading = useMemo(() => {
+    const isCurrentlyLoading = isAuthLoading || (!!user && (isDataLoading || status === 'pending'));
+
+    // Start tracking loading time
+    if (isCurrentlyLoading && loadingStartTime.current === null) {
+      loadingStartTime.current = Date.now();
+    }
+
+    // If not actually loading anymore, check if minimum time elapsed
+    if (!isCurrentlyLoading && loadingStartTime.current !== null) {
+      const timeElapsed = Date.now() - loadingStartTime.current;
+      if (timeElapsed < 500) {
+        // Clear any existing timeout
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+
+        // Set a timeout to update after minimum time
+        loadingTimeoutRef.current = setTimeout(() => {
+          loadingStartTime.current = null;
+          isInitialMount.current = false;
+          // Force a re-render to update the loading state
+          setForceUpdate(prev => !prev);
+        }, 500 - timeElapsed);
+
+        // Haven't shown loader for 500ms yet, so keep showing
+        return true;
+      }
+      // Reset timer and mark initial mount as done
+      loadingStartTime.current = null;
+      isInitialMount.current = false;
+    }
+
+    return isCurrentlyLoading;
+  }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
+
+  // Clean up on unmount and focus change
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // Clear any pending timeouts when screen loses focus
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = undefined;
+        }
+        // Reset loading state when unmounting
+        loadingStartTime.current = null;
+      };
+    }, [])
   );
 
   // Separate loading state for content that can show a loading indicator
-  const isContentLoading = useMemo(() => !!user && isFetching, [user, isFetching]);
+  const isContentLoading = useMemo(() => !!user && isFetching, [user, isFetching, forceUpdate]);
 
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null) as StudyWord[];
@@ -148,7 +200,7 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, []);
 
-  // Show loader while authentication is being checked OR while data is loading/fetching
+  // Show loader while authentication is being checked OR while data is loading
   if (isLoading) {
     return <LoadingScreen />;
   }
