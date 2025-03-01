@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, FlatList, View, Animated, Platform, Pressable } from 'react-native';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { StyleSheet, FlatList, View, Animated, Platform, Image, AppState } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
 import { router, useFocusEffect } from 'expo-router';
@@ -13,8 +13,15 @@ import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactThemedCard } from '@/components/CompactThemedCard';
-import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
+// ====== AUDIO PLAYER CONSTANTS ======
+const AUDIO_STATES = {
+  IDLE: 'idle', // Not playing anything
+  LOADING: 'loading', // Loading audio
+  PLAYING: 'playing', // Playing audio
+  PAUSED: 'paused', // Audio loaded but paused
+  ERROR: 'error', // Error occurred
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -34,9 +41,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-  },
-  headerIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
   },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -81,60 +85,16 @@ const styles = StyleSheet.create({
   controlsContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
-  nowPlayingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-    height: 60,
-  },
-  nowPlayingInfo: {
-    flex: 1,
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-  },
-  nowPlayingTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  nowPlayingMeta: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
-  progressContainer: {
-    height: 3,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    marginVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: 1.5,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 1.5,
-  },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.SMALL,
     height: LAYOUT.BUTTON.HEIGHT.LARGE,
   },
   button: {
     flex: 1,
     borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
-  },
-  skipButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
   waveContainer: {
     flexDirection: 'row',
@@ -171,33 +131,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
     opacity: LAYOUT.OPACITY.DISABLED,
   },
-  playerPlaceholder: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 60,
-  },
-  playerPlaceholderText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  compactPlayer: {
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  playerSection: {
-    height: 72,
-    justifyContent: 'center',
-  },
-  progressWrapper: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
 });
 
-const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color: string }) => {
+const AudioWave = React.memo(({ color }: { color: string }) => {
   const anim1 = useRef(new Animated.Value(0.4)).current;
   const anim2 = useRef(new Animated.Value(0.4)).current;
   const anim3 = useRef(new Animated.Value(0.4)).current;
@@ -206,39 +142,28 @@ const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color:
   const animations = useMemo(() => [anim1, anim2, anim3], [anim1, anim2, anim3]);
 
   useEffect(() => {
-    if (isPlaying) {
-      const animationSequence = animations.map((anim, i) =>
-        Animated.sequence([
-          Animated.delay(i * 200),
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(anim, {
-                toValue: 1,
-                duration: 500,
-                useNativeDriver: true,
-              }),
-              Animated.timing(anim, {
-                toValue: 0.4,
-                duration: 500,
-                useNativeDriver: true,
-              }),
-            ])
-          ),
-        ])
-      );
+    const animationSequence = animations.map((anim, i) =>
+      Animated.sequence([
+        Animated.delay(i * 200),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(anim, {
+              toValue: 1,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(anim, {
+              toValue: 0.4,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+      ])
+    );
 
-      animationsRef.current = Animated.parallel(animationSequence);
-      animationsRef.current.start();
-    } else {
-      if (animationsRef.current) {
-        animationsRef.current.stop();
-        animationsRef.current = undefined;
-      }
-      animations.forEach(anim => {
-        anim.stopAnimation();
-        anim.setValue(0.4);
-      });
-    }
+    animationsRef.current = Animated.parallel(animationSequence);
+    animationsRef.current.start();
 
     return () => {
       if (animationsRef.current) {
@@ -246,7 +171,7 @@ const AudioWave = React.memo(({ isPlaying, color }: { isPlaying: boolean; color:
         animationsRef.current = undefined;
       }
     };
-  }, [isPlaying, animations]);
+  }, [animations]);
 
   return (
     <View style={styles.waveContainer}>
@@ -270,20 +195,55 @@ const ArticleCard = React.memo(
   ({
     title,
     author,
+    imageUrl,
+    isPlaying,
     onPress,
   }: {
     title: string;
-    category: string;
     author: string;
+    imageUrl?: string;
+    isPlaying?: boolean;
     onPress: () => void;
   }) => {
     const colors = useColors();
 
     return (
-      <CompactThemedCard onPress={onPress}>
+      <CompactThemedCard
+        onPress={onPress}
+        style={
+          isPlaying
+            ? {
+                borderColor: colors.tint,
+                borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+              }
+            : undefined
+        }
+      >
         <View style={styles.articleCard}>
+          {imageUrl && (
+            <View
+              style={{
+                ...StyleSheet.absoluteFillObject,
+                opacity: isPlaying ? 0.3 : 0.15,
+                overflow: 'hidden',
+                borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+              }}
+            >
+              <Image
+                source={{ uri: imageUrl }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  resizeMode: 'cover',
+                }}
+              />
+            </View>
+          )}
           <View style={styles.articleTextContainer}>
-            <ThemedText numberOfLines={1} style={styles.articleTitle}>
+            <ThemedText
+              numberOfLines={1}
+              style={[styles.articleTitle, isPlaying && { color: colors.tint }]}
+            >
               {title}
             </ThemedText>
             <ThemedText
@@ -294,7 +254,16 @@ const ArticleCard = React.memo(
               {author}
             </ThemedText>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.text} style={{ opacity: 0.3 }} />
+          {isPlaying ? (
+            <AudioWave color={colors.tint} />
+          ) : (
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={colors.text}
+              style={{ opacity: 0.3 }}
+            />
+          )}
         </View>
       </CompactThemedCard>
     );
@@ -303,19 +272,10 @@ const ArticleCard = React.memo(
 
 export default function PlaylistScreen() {
   const colors = useColors();
-  const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [currentSound, setCurrentSound] = useState<Audio.Sound>();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [shuffledList, setShuffledList] = useState<typeof readingList>([]);
-  const [playMode, setPlayMode] = useState<'normal' | 'shuffle'>('normal');
-  const [playProgress, setPlayProgress] = useState(0);
-  const progressUpdateInterval = useRef<NodeJS.Timeout>();
-  const isInitialMount = useRef(true);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
 
+  // Query for reading list
   const {
     data: readingList,
     isLoading,
@@ -324,188 +284,351 @@ export default function PlaylistScreen() {
     queryKey: ['readingList', user?.id],
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
     enabled: !!user?.id,
-    // Adding staleTime to prevent frequent refetches
     staleTime: 60000, // 1 minute
   });
 
-  // Track when loading started to ensure minimum display time
-  const loadingStartTime = useRef<number | null>(null);
+  // Simple audio state management
+  const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
+  const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
+  const [isShuffleMode, setIsShuffleMode] = useState(false);
+  const [playbackProgress, setPlaybackProgress] = useState(0);
+  const [shuffledList, setShuffledList] = useState<any[]>([]);
 
-  // Combined loading state that includes both initial loading and fetching updates
-  const isLoadingData = useMemo(() => {
-    const isCurrentlyLoading = isLoading || (isInitialMount.current && isFetching);
+  // Simple refs for audio instance, timers, and state tracking
+  const soundRef = useRef<Audio.Sound | null>(null);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const lastActionTimeRef = useRef(Date.now());
 
-    // Start tracking loading time
-    if (isCurrentlyLoading && loadingStartTime.current === null) {
-      loadingStartTime.current = Date.now();
+  // Get active playlist based on mode
+  const activePlaylist = useMemo(() => {
+    return isShuffleMode ? shuffledList : readingList || [];
+  }, [isShuffleMode, shuffledList, readingList]);
+
+  // Get current track
+  const currentTrack = useMemo(() => {
+    if (currentTrackIndex < 0 || !activePlaylist || currentTrackIndex >= activePlaylist.length) {
+      return null;
+    }
+    return activePlaylist[currentTrackIndex];
+  }, [currentTrackIndex, activePlaylist]);
+
+  // Get current audio URL
+  const currentAudioUrl = useMemo(() => {
+    return currentTrack?.article?.audio_url || null;
+  }, [currentTrack]);
+
+  // Clean up all audio resources
+  const cleanupAudio = async () => {
+    // Clear any timers
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
     }
 
-    // If not actually loading anymore, check if minimum time elapsed
-    if (!isCurrentlyLoading && loadingStartTime.current !== null) {
-      const timeElapsed = Date.now() - loadingStartTime.current;
-      if (timeElapsed < 500) {
-        // Haven't shown loader for 500ms yet, so keep showing
-        // Clear any existing timeout
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-        }
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
 
-        // Set a timeout to update the state after the minimum time
-        loadingTimeoutRef.current = setTimeout(() => {
-          loadingStartTime.current = null;
-          // Force a re-render to hide the loader
-          setPlayProgress(prev => prev); // This is a trick to force a re-render
-        }, 500 - timeElapsed);
-
-        return true;
+    // Unload sound if it exists
+    if (soundRef.current) {
+      try {
+        await soundRef.current.stopAsync().catch(() => {});
+        await soundRef.current.unloadAsync().catch(() => {});
+        soundRef.current = null;
+      } catch (error) {
+        console.log('Error during cleanup:', error);
       }
-      // Reset timer
-      loadingStartTime.current = null;
+    }
+  };
+
+  // Initialize audio session
+  const initAudioSession = async () => {
+    try {
+      // Set audio mode once at the beginning
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (error) {
+      console.error('Failed to set audio mode:', error);
+    }
+  };
+
+  // Load and play audio with the specified URL
+  const loadAndPlayAudio = async (audioUrl: string) => {
+    if (!audioUrl) {
+      console.error('No audio URL provided');
+      setAudioState(AUDIO_STATES.ERROR);
+      return false;
     }
 
-    return isCurrentlyLoading;
-  }, [isLoading, isFetching]);
+    try {
+      console.log(`Loading audio: ${audioUrl}`);
+      setAudioState(AUDIO_STATES.LOADING);
+      lastActionTimeRef.current = Date.now();
 
-  // Handle initial mount and tab focus effects
+      // Clean up any existing audio first
+      await cleanupAudio();
+
+      // Create the new sound object
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUrl },
+        { shouldPlay: false },
+        onPlaybackStatusUpdate
+      );
+
+      soundRef.current = sound;
+
+      console.log('Audio loaded successfully');
+
+      // Add a small delay before playing to ensure the audio system is ready
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Start playing
+      console.log('Starting playback');
+      await sound.playAsync();
+
+      setAudioState(AUDIO_STATES.PLAYING);
+      lastActionTimeRef.current = Date.now();
+
+      // Start progress tracking
+      startProgressTracking();
+
+      console.log('Track is now playing');
+      return true;
+    } catch (error) {
+      console.error('Error loading or playing audio:', error);
+      setAudioState(AUDIO_STATES.ERROR);
+      return false;
+    }
+  };
+
+  // Update playback status
+  const onPlaybackStatusUpdate = (status: any) => {
+    if (!status.isLoaded) {
+      // Handle error
+      if (status.error) {
+        console.error(`Playback error: ${status.error}`);
+        setAudioState(AUDIO_STATES.ERROR);
+      }
+      return;
+    }
+
+    // Update position and duration
+    if (status.positionMillis !== undefined && status.durationMillis) {
+      setPlaybackProgress(status.positionMillis / status.durationMillis);
+    }
+
+    // Handle playback state changes
+    if (status.isPlaying) {
+      setAudioState(AUDIO_STATES.PLAYING);
+    } else if (status.isBuffering) {
+      // Still consider it playing, just buffering
+      console.log('Audio is buffering...');
+    } else {
+      setAudioState(AUDIO_STATES.PAUSED);
+    }
+
+    // Handle playback finishing
+    if (status.didJustFinish) {
+      console.log('Playback finished, moving to next track');
+      playNextTrack();
+    }
+  };
+
+  // Track progress for UI updates
+  const startProgressTracking = () => {
+    // Clear any existing interval
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    // Create new interval
+    progressIntervalRef.current = setInterval(async () => {
+      if (soundRef.current && audioState === AUDIO_STATES.PLAYING) {
+        try {
+          const status = await soundRef.current.getStatusAsync();
+          if (status.isLoaded && status.durationMillis) {
+            setPlaybackProgress(status.positionMillis / status.durationMillis);
+          }
+        } catch (error) {
+          console.log('Error getting playback status:', error);
+        }
+      }
+    }, 1000);
+  };
+
+  // Play/stop logic
+  const togglePlayback = async () => {
+    if (audioState === AUDIO_STATES.PLAYING) {
+      await stopPlayback();
+    } else {
+      await startPlayback();
+    }
+  };
+
+  // Start playback in normal sequence mode
+  const startPlayback = async () => {
+    // Prevent rapid button presses
+    if (Date.now() - lastActionTimeRef.current < 1000) {
+      return;
+    }
+
+    lastActionTimeRef.current = Date.now();
+
+    // Check if we have a playlist
+    if (!readingList || readingList.length === 0) {
+      console.log('No items in playlist');
+      return;
+    }
+
+    setIsShuffleMode(false);
+    setCurrentTrackIndex(0);
+
+    // The useEffect will handle loading and playing when currentTrackIndex changes
+  };
+
+  // Stop all playback
+  const stopPlayback = async () => {
+    // Prevent rapid button presses
+    if (Date.now() - lastActionTimeRef.current < 1000) {
+      return;
+    }
+
+    lastActionTimeRef.current = Date.now();
+
+    console.log('Stopping playback');
+    await cleanupAudio();
+
+    setAudioState(AUDIO_STATES.IDLE);
+    setCurrentTrackIndex(-1);
+    setPlaybackProgress(0);
+  };
+
+  // Start playback in shuffle mode
+  const startShufflePlayback = async () => {
+    // Prevent rapid button presses
+    if (Date.now() - lastActionTimeRef.current < 1000) {
+      return;
+    }
+
+    lastActionTimeRef.current = Date.now();
+
+    // Check if we have a playlist
+    if (!readingList || readingList.length === 0) {
+      console.log('No items in playlist');
+      return;
+    }
+
+    // Create shuffled playlist
+    const shuffled = [...readingList].sort(() => Math.random() - 0.5);
+
+    // Make sure the first item has a valid audio URL
+    if (!shuffled[0]?.article?.audio_url) {
+      const validIndex = shuffled.findIndex(item => !!item?.article?.audio_url);
+      if (validIndex > 0) {
+        [shuffled[0], shuffled[validIndex]] = [shuffled[validIndex], shuffled[0]];
+      }
+    }
+
+    setShuffledList(shuffled);
+    setIsShuffleMode(true);
+    setCurrentTrackIndex(0);
+
+    // The useEffect will handle loading and playing when currentTrackIndex changes
+  };
+
+  // Play the next track in the sequence
+  const playNextTrack = async () => {
+    if (currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
+      // End of playlist, stop playback
+      await stopPlayback();
+      return;
+    }
+
+    // Move to next track
+    setCurrentTrackIndex(prev => prev + 1);
+
+    // The useEffect will handle loading and playing when currentTrackIndex changes
+  };
+
+  // Handle component focus and cleanup
   useFocusEffect(
     React.useCallback(() => {
-      // On first focus, mark as no longer initial mount
-      if (isInitialMount.current) {
-        isInitialMount.current = false;
-      }
-
+      // Refresh reading list when screen is focused
       if (user?.id) {
         queryClient.invalidateQueries({ queryKey: ['readingList'] });
       }
 
       return () => {
-        stopCurrentSound();
-        if (progressUpdateInterval.current) {
-          clearInterval(progressUpdateInterval.current);
-        }
-        // Clear loading timeout when unmounting
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-        }
-        // Reset loading state when unmounting to prevent stuck loaders
-        loadingStartTime.current = null;
+        // Clean up audio when screen is unfocused
+        cleanupAudio();
       };
     }, [user?.id, queryClient])
   );
 
-  const removeFromReadingList = useMutation({
-    mutationFn: (articleId: number) =>
-      readingListService.removeFromReadingList(user!.id, articleId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['readingList'] });
-    },
-  });
-
-  const stopCurrentSound = async () => {
-    if (currentSound) {
-      try {
-        await currentSound.stopAsync();
-        await currentSound.unloadAsync();
-      } catch (error) {
-        console.error('Error stopping sound:', error);
+  // Monitor app state changes
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      // Pause when app goes to background
+      if (nextAppState !== 'active' && audioState === AUDIO_STATES.PLAYING && soundRef.current) {
+        soundRef.current.pauseAsync().catch(err => console.log('Error pausing:', err));
       }
-      setCurrentSound(undefined);
-      setIsPlaying(false);
-      setPlayProgress(0);
-      if (progressUpdateInterval.current) {
-        clearInterval(progressUpdateInterval.current);
-        progressUpdateInterval.current = undefined;
-      }
-    }
-  };
+    });
 
-  const updatePlayProgress = async () => {
-    if (currentSound) {
-      try {
-        const status = await currentSound.getStatusAsync();
-        if (status.isLoaded && status.durationMillis) {
-          setPlayProgress(status.positionMillis / status.durationMillis);
-        }
-      } catch (error) {
-        console.error('Error updating play progress:', error);
-      }
-    }
-  };
+    return () => {
+      subscription.remove();
+    };
+  }, [audioState]);
 
-  const playNext = async () => {
-    const list = playMode === 'shuffle' ? shuffledList : readingList;
-    if (!list || currentIndex >= list.length - 1) {
-      setCurrentIndex(0);
-      await stopCurrentSound();
-      return;
-    }
+  // Initialize audio session when component mounts
+  useEffect(() => {
+    initAudioSession();
 
-    setCurrentIndex(prev => prev + 1);
-    await playArticle(list[currentIndex + 1].article.audio_url);
-  };
+    // Set mounted flag
+    isMountedRef.current = true;
 
-  const playArticle = async (audioUrl: string) => {
-    try {
-      await stopCurrentSound();
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: audioUrl },
-        { shouldPlay: true },
-        async status => {
-          if (!status.isLoaded) return;
-          if (status.didJustFinish) {
-            const list = playMode === 'shuffle' ? shuffledList : readingList;
-            if (list && list.length > 1) {
-              await playNext();
-            } else {
-              await stopCurrentSound();
-            }
-          }
-        }
-      );
-      await Audio.setAudioModeAsync({ playsInSilentModeIOS: true });
-      setCurrentSound(newSound);
-      setIsPlaying(true);
-      setPlayProgress(0);
+    return () => {
+      isMountedRef.current = false;
+      cleanupAudio();
+    };
+  }, []);
 
-      // Start progress update interval
-      if (progressUpdateInterval.current) {
-        clearInterval(progressUpdateInterval.current);
-      }
-      progressUpdateInterval.current = setInterval(updatePlayProgress, 500);
-    } catch (error) {
-      console.error('Error playing article:', error);
-      await stopCurrentSound();
-    }
-  };
+  // Load and play track when currentTrackIndex or activePlaylist changes
+  useEffect(() => {
+    if (currentTrackIndex >= 0 && activePlaylist && currentTrackIndex < activePlaylist.length) {
+      const track = activePlaylist[currentTrackIndex];
+      const audioUrl = track?.article?.audio_url;
 
-  const handlePlayAll = async () => {
-    if (isPlaying) {
-      await stopCurrentSound();
-    } else {
-      setPlayMode('normal');
-      setShuffledList([]);
-      setCurrentIndex(0);
-      if (readingList?.length) {
-        await playArticle(readingList[0].article.audio_url);
+      if (audioUrl) {
+        console.log(`New track selected: ${track.article.title}`);
+
+        // Load and play the audio
+        loadAndPlayAudio(audioUrl);
+      } else {
+        console.error('Selected track has no audio URL');
+
+        // Try to skip to next track if this one has no audio
+        playNextTrack();
       }
     }
-  };
+  }, [currentTrackIndex, activePlaylist]);
 
-  const handleShuffle = async () => {
-    if (!readingList?.length) return;
+  // Loading screen
+  if (isLoading || isFetching) {
+    return (
+      <ThemedView style={styles.container}>
+        <LoadingScreen />
+      </ThemedView>
+    );
+  }
 
-    if (isPlaying) {
-      await stopCurrentSound();
-    } else {
-      setPlayMode('shuffle');
-      const shuffled = [...readingList].sort(() => Math.random() - 0.5);
-      setShuffledList(shuffled);
-      setCurrentIndex(0);
-      await playArticle(shuffled[0].article.audio_url);
-    }
-  };
-
-  // Render empty state for not logged in users
+  // Not logged in
   if (!user) {
     return (
       <ThemedView style={styles.container}>
@@ -527,19 +650,7 @@ export default function PlaylistScreen() {
     );
   }
 
-  // Show loading state - this now covers both initial loading and subsequent fetches
-  if (isLoadingData) {
-    return <LoadingScreen />;
-  }
-
-  // Get the currently playing article
-  const currentArticle = isPlaying
-    ? playMode === 'shuffle' && shuffledList
-      ? shuffledList[currentIndex]
-      : readingList?.[currentIndex]
-    : null;
-
-  // Render empty playlist state
+  // Empty playlist
   if (!readingList?.length) {
     return (
       <ThemedView style={styles.container}>
@@ -553,64 +664,11 @@ export default function PlaylistScreen() {
           </ThemedText>
           <ThemedButton title="Browse Articles" icon="newspaper" onPress={() => router.push('/')} />
         </View>
-        <View style={styles.controlsContainer}>
-          <View
-            style={[
-              styles.controlsCard,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-              },
-            ]}
-          >
-            <View style={[styles.controlsContent]}>
-              <View
-                style={[
-                  styles.playerPlaceholder,
-                  styles.playerSection,
-                  {
-                    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-                    borderBottomColor: colors.cardBorder + '40',
-                    marginBottom: LAYOUT.SPACING.MEDIUM,
-                    paddingBottom: LAYOUT.SPACING.MEDIUM,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name="headset"
-                  size={22}
-                  color={colors.text}
-                  style={{ opacity: LAYOUT.OPACITY.DIMMED }}
-                />
-                <ThemedText style={styles.playerPlaceholderText}>
-                  Add articles to start listening
-                </ThemedText>
-              </View>
-              <View style={styles.buttonRow}>
-                <ThemedButton
-                  variant="filled"
-                  title="Play All"
-                  icon="play-circle"
-                  onPress={() => {}}
-                  style={styles.button}
-                  disabled={true}
-                />
-                <ThemedButton
-                  variant="filled"
-                  title="Shuffle"
-                  icon="shuffle"
-                  onPress={() => {}}
-                  style={styles.button}
-                  disabled={true}
-                />
-              </View>
-            </View>
-          </View>
-        </View>
       </ThemedView>
     );
   }
 
+  // Normal display with playlist
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
@@ -620,14 +678,23 @@ export default function PlaylistScreen() {
       <FlatList
         data={readingList}
         keyExtractor={item => `${item.article_id}`}
-        renderItem={({ item }) => (
-          <ArticleCard
-            title={item.article.title}
-            category={item.article.category.name}
-            author={item.article.author.name}
-            onPress={() => router.push(`/article/${item.article_id}`)}
-          />
-        )}
+        renderItem={({ item }) => {
+          // Determine if this item is currently playing
+          const isItemPlaying =
+            audioState === AUDIO_STATES.PLAYING &&
+            ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+              (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+
+          return (
+            <ArticleCard
+              title={item.article.title}
+              author={item.article.author.name}
+              imageUrl={item.article.image_url}
+              isPlaying={isItemPlaying}
+              onPress={() => router.push(`/article/${item.article_id}`)}
+            />
+          );
+        }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
@@ -648,83 +715,25 @@ export default function PlaylistScreen() {
           ]}
         >
           <View style={styles.controlsContent}>
-            {currentArticle && isPlaying ? (
-              <View style={styles.playerSection}>
-                <View
-                  style={[
-                    styles.nowPlayingContainer,
-                    { borderBottomColor: colors.cardBorder + '40' },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.iconContainer,
-                      {
-                        backgroundColor: colors.tint + '10',
-                        borderColor: colors.cardBorder + '40',
-                      },
-                    ]}
-                  >
-                    <AudioWave isPlaying={isPlaying} color={colors.tint} />
-                  </View>
-                  <View style={styles.nowPlayingInfo}>
-                    <ThemedText style={styles.nowPlayingTitle} numberOfLines={1}>
-                      {currentArticle.article.title}
-                    </ThemedText>
-                    <ThemedText style={styles.nowPlayingMeta} numberOfLines={1}>
-                      {currentArticle.article.author.name}
-                    </ThemedText>
-                  </View>
-                </View>
-                <View style={styles.progressWrapper}>
-                  <View style={styles.progressContainer}>
-                    <Animated.View
-                      style={[
-                        styles.progressBar,
-                        {
-                          width: `${playProgress * 100}%`,
-                          backgroundColor: colors.tint,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-              </View>
-            ) : (
-              <View
-                style={[
-                  styles.playerSection,
-                  {
-                    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-                    borderBottomColor: colors.cardBorder + '40',
-                    marginBottom: LAYOUT.SPACING.MEDIUM,
-                  },
-                ]}
-              >
-                <View style={styles.playerPlaceholder}>
-                  <Ionicons
-                    name="headset"
-                    size={22}
-                    color={colors.text}
-                    style={{ opacity: LAYOUT.OPACITY.DIMMED }}
-                  />
-                  <ThemedText style={styles.playerPlaceholderText}>Ready to play</ThemedText>
-                </View>
-              </View>
-            )}
             <View style={styles.buttonRow}>
               <ThemedButton
                 variant="filled"
-                title={isPlaying && playMode === 'normal' ? 'Stop' : 'Play All'}
-                icon={isPlaying && playMode === 'normal' ? 'stop-circle' : 'play-circle'}
-                onPress={handlePlayAll}
+                title={audioState === AUDIO_STATES.PLAYING && !isShuffleMode ? 'Stop' : 'Play All'}
+                icon={
+                  audioState === AUDIO_STATES.PLAYING && !isShuffleMode
+                    ? 'stop-circle'
+                    : 'play-circle'
+                }
+                onPress={togglePlayback}
                 style={styles.button}
               />
               <ThemedButton
                 variant="filled"
-                title={isPlaying && playMode === 'shuffle' ? 'Stop' : 'Shuffle'}
-                icon={isPlaying && playMode === 'shuffle' ? 'stop-circle' : 'shuffle'}
-                onPress={handleShuffle}
+                title={audioState === AUDIO_STATES.PLAYING && isShuffleMode ? 'Stop' : 'Shuffle'}
+                icon={
+                  audioState === AUDIO_STATES.PLAYING && isShuffleMode ? 'stop-circle' : 'shuffle'
+                }
+                onPress={startShufflePlayback}
                 style={styles.button}
               />
             </View>

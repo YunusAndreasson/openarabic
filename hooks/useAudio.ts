@@ -173,52 +173,6 @@ export function useAudio(audioUrl: string | null, options: AudioOptions = {}) {
   );
 
   /**
-   * Load the audio file
-   */
-  const loadAudio = useCallback(async () => {
-    if (!audioUrl) return null;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Unload any existing sound
-      await unloadSound();
-
-      // Configure audio mode for iOS
-      if (Platform.OS === 'ios' && playsInSilentModeIOS) {
-        await Audio.setAudioModeAsync({ playsInSilentModeIOS });
-      }
-
-      // Create a new sound instance
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: audioUrl },
-        { shouldPlay: false },
-        onPlaybackStatusUpdate
-      );
-
-      // Store in state and ref
-      if (isMountedRef.current) {
-        setSound(newSound);
-        soundRef.current = newSound;
-        setIsLoading(false);
-      } else {
-        // Component unmounted during loading
-        await newSound.unloadAsync();
-      }
-
-      return newSound;
-    } catch (err) {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-        setError(err instanceof Error ? err : new Error(String(err)));
-        if (onError) onError(err);
-      }
-      return null;
-    }
-  }, [audioUrl, onPlaybackStatusUpdate, playsInSilentModeIOS, onError]);
-
-  /**
    * Unload the sound and clean up resources
    */
   const unloadSound = useCallback(async () => {
@@ -247,6 +201,83 @@ export function useAudio(audioUrl: string | null, options: AudioOptions = {}) {
       setError(err instanceof Error ? err : new Error(String(err)));
     }
   }, [onError]);
+
+  /**
+   * Load the audio file
+   */
+  const loadAudio = useCallback(async () => {
+    if (!audioUrl) return null;
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Log audio loading attempt for debugging
+      console.log(`Attempting to load audio from URL: ${audioUrl}`);
+
+      // Unload any existing sound
+      await unloadSound();
+
+      // Configure audio mode for iOS
+      if (Platform.OS === 'ios' && playsInSilentModeIOS) {
+        await Audio.setAudioModeAsync({ playsInSilentModeIOS });
+      }
+
+      // Add a timeout for loading to prevent hanging indefinitely on network issues
+      const loadPromise = Audio.Sound.createAsync(
+        { uri: audioUrl },
+        { shouldPlay: false },
+        onPlaybackStatusUpdate
+      );
+
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Audio loading timed out')), 10000); // 10 second timeout
+      });
+
+      // Race the loading against the timeout
+      const { sound: newSound } = (await Promise.race([loadPromise, timeoutPromise])) as {
+        sound: Audio.Sound;
+      };
+
+      // Store in state and ref
+      if (isMountedRef.current) {
+        setSound(newSound);
+        soundRef.current = newSound;
+        setIsLoading(false);
+        console.log('Audio successfully loaded');
+      } else {
+        // Component unmounted during loading
+        await newSound.unloadAsync();
+      }
+
+      return newSound;
+    } catch (err) {
+      if (isMountedRef.current) {
+        setIsLoading(false);
+
+        // Enhanced error logging
+        console.error(`Audio loading failed for URL: ${audioUrl}`);
+        console.error('Error details:', err);
+
+        // Check if this is a network error
+        if (err instanceof Error) {
+          const errorMessage = err.message.toLowerCase();
+          if (
+            errorMessage.includes('network') ||
+            errorMessage.includes('timeout') ||
+            errorMessage.includes('connection')
+          ) {
+            console.error('Network error detected when loading audio');
+          }
+        }
+
+        setError(err instanceof Error ? err : new Error(String(err)));
+        if (onError) onError(err);
+      }
+      return null;
+    }
+  }, [audioUrl, onPlaybackStatusUpdate, playsInSilentModeIOS, onError, unloadSound]);
 
   /**
    * Play the audio

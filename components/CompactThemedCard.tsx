@@ -6,9 +6,10 @@ import { LAYOUT } from '@/constants/layout';
 interface CompactThemedCardProps {
   children: React.ReactNode;
   onPress?: () => void;
+  style?: any;
 }
 
-export function CompactThemedCard({ children, onPress }: CompactThemedCardProps) {
+export function CompactThemedCard({ children, onPress, style }: CompactThemedCardProps) {
   const colors = useColors();
 
   return (
@@ -20,6 +21,7 @@ export function CompactThemedCard({ children, onPress }: CompactThemedCardProps)
           shadowColor: colors.cardShadow,
           borderColor: colors.cardBorder,
         },
+        style,
         pressed && styles.pressed,
       ]}
     >
