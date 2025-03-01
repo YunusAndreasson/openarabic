@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, FlatList, View, Animated, Platform, Image, AppState } from 'react-native';
+import { StyleSheet, FlatList, View, Animated, Platform, AppState } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: LAYOUT.Z_INDEX.HEADER,
     backgroundColor: 'transparent',
@@ -114,8 +114,9 @@ const styles = StyleSheet.create({
   articleCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.SMALL,
-    minHeight: 56,
+    padding: LAYOUT.SPACING.MEDIUM,
+    minHeight: 64,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
   },
   articleTextContainer: {
     flex: 1,
@@ -130,6 +131,9 @@ const styles = StyleSheet.create({
   articleAuthor: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
     opacity: LAYOUT.OPACITY.DISABLED,
+  },
+  listItemContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });
 
@@ -195,13 +199,11 @@ const ArticleCard = React.memo(
   ({
     title,
     author,
-    imageUrl,
     isPlaying,
     onPress,
   }: {
     title: string;
     author: string;
-    imageUrl?: string;
     isPlaying?: boolean;
     onPress: () => void;
   }) => {
@@ -215,34 +217,17 @@ const ArticleCard = React.memo(
             ? {
                 borderColor: colors.tint,
                 borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+                transform: [{ scale: 1.01 }],
+                ...LAYOUT.SHADOW.LARGE,
               }
             : undefined
         }
       >
         <View style={styles.articleCard}>
-          {imageUrl && (
-            <View
-              style={{
-                ...StyleSheet.absoluteFillObject,
-                opacity: isPlaying ? 0.3 : 0.15,
-                overflow: 'hidden',
-                borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-              }}
-            >
-              <Image
-                source={{ uri: imageUrl }}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  resizeMode: 'cover',
-                }}
-              />
-            </View>
-          )}
           <View style={styles.articleTextContainer}>
             <ThemedText
               numberOfLines={1}
-              style={[styles.articleTitle, isPlaying && { color: colors.tint }]}
+              style={[styles.articleTitle, isPlaying && { color: colors.tint, fontWeight: '600' }]}
             >
               {title}
             </ThemedText>
@@ -686,25 +671,25 @@ export default function PlaylistScreen() {
               (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
 
           return (
-            <ArticleCard
-              title={item.article.title}
-              author={item.article.author.name}
-              imageUrl={item.article.image_url}
-              isPlaying={isItemPlaying}
-              onPress={() => router.push(`/article/${item.article_id}`)}
-            />
+            <View style={styles.listItemContainer}>
+              <ArticleCard
+                title={item.article.title}
+                author={item.article.author.name}
+                isPlaying={isItemPlaying}
+                onPress={() => router.push(`/article/${item.article_id}`)}
+              />
+            </View>
           );
         }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
         removeClippedSubviews={Platform.OS === 'android'}
         initialNumToRender={8}
         maxToRenderPerBatch={5}
         windowSize={10}
       />
 
-      <View style={styles.controlsContainer}>
+      <Animated.View style={styles.controlsContainer}>
         <View
           style={[
             styles.controlsCard,
@@ -739,7 +724,7 @@ export default function PlaylistScreen() {
             </View>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </ThemedView>
   );
 }
