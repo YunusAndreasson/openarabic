@@ -213,8 +213,24 @@ function ThemedCardComponent({
   }, [scale]);
 
   // Memoize styles to prevent new object creation on each render
-  const themedStyles = useMemo(
-    () => ({
+  const themedStyles = useMemo(() => {
+    // Helper function to create a gradient with the card background color
+    const createCardGradient = (color: string) => {
+      // For iOS light mode, we need to create a custom gradient that matches the card background
+      if (Platform.OS === 'ios' && !isDarkMode) {
+        // Use white color to match the iosLightModeCard style
+        return [
+          'rgba(255, 255, 255, 0)', // Start with transparent
+          'rgba(255, 255, 255, 0.95)', // Mid-fade with 80% opacity
+          'white', // End with pure white to match iosLightModeCard
+        ] as readonly [string, string, string];
+      }
+
+      // For other platforms/themes, use the default gradient colors
+      return [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as const;
+    };
+
+    return {
       card: {
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
@@ -224,7 +240,7 @@ function ThemedCardComponent({
         backgroundColor: isDarkMode ? colors.cardBackground : 'rgba(255, 255, 255, 0.85)',
       },
       gradient: {
-        colors: [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as const,
+        colors: createCardGradient(colors.cardBackground),
       },
       categoryBackground: {
         backgroundColor: isDarkMode ? colors.tint + '20' : colors.tint + '90',
@@ -239,9 +255,8 @@ function ThemedCardComponent({
       image: {
         backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
       },
-    }),
-    [colors, isDarkMode]
-  );
+    };
+  }, [colors, isDarkMode]);
 
   // Apply different styles based on platform and theme to fix light mode artifacts
   const cardStyle = useMemo(() => {
@@ -334,8 +349,13 @@ function ThemedCardComponent({
             ) : (
               <LinearGradient
                 colors={themedStyles.gradient.colors}
-                style={styles.gradient}
-                locations={[0, 0.5, 1]}
+                style={[
+                  styles.gradient,
+                  Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
+                ]}
+                locations={Platform.OS === 'ios' && !isDarkMode ? [0, 0.85, 0.98] : [0, 0.5, 1]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
               />
             )}
             <CategoryPill category={category} />
@@ -450,6 +470,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: -1,
     height: 160,
+    zIndex: 1,
   },
   contentContainer: {
     padding: LAYOUT.CARD.PADDING.LARGE,
@@ -492,5 +513,11 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  iosLightModeGradient: {
+    bottom: -8,
+    height: 240,
+    zIndex: 1,
+    opacity: 1,
   },
 });
