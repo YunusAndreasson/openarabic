@@ -41,20 +41,27 @@ function WordDetailsModalComponent({
     () => [
       styles.arabicWord,
       {
-        color: isSelected ? (isDarkMode ? '#ced4da' : '#343a40') : colors.arabicText,
+        color: isSelected ? colors.tint : colors.arabicText,
         fontWeight: isSelected ? ('700' as const) : ('normal' as const),
+        textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
+        textShadowRadius: isSelected ? 0.5 : 0,
+        textShadowOffset: { width: 0, height: 0 },
       },
     ],
-    [colors.arabicText, isSelected, isDarkMode]
+    [colors.arabicText, colors.tint, colors.textShadowLight, isSelected]
   );
 
   // Add a style for the word container to show a subtle indicator in dark mode
   const wordContainerStyle = useMemo(
     () => ({
       position: 'relative' as const,
-      paddingBottom: isSelected ? LAYOUT.SPACING.SMALL : 0,
+      paddingBottom: isSelected ? LAYOUT.SPACING.TINY : 0,
+      backgroundColor: isSelected ? colors.textOverlay : 'transparent', // Use textOverlay for selected words
+      borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+      paddingHorizontal: isSelected ? LAYOUT.SPACING.SMALL : 0,
+      paddingTop: isSelected ? LAYOUT.SPACING.TINY : 0,
     }),
-    [isSelected]
+    [isSelected, colors.textOverlay]
   );
 
   // Add a style for the indicator line
@@ -62,14 +69,13 @@ function WordDetailsModalComponent({
     () => ({
       position: 'absolute' as const,
       bottom: 0,
-      left: '30%' as any,
-      right: '30%' as any,
-      height: 1,
-      borderBottomWidth: 0.8,
-      borderBottomColor: isDarkMode ? '#ced4da80' : '#34383c50',
-      borderStyle: 'dotted' as const,
+      left: '20%' as any,
+      right: '20%' as any,
+      height: 1.5,
+      backgroundColor: colors.borderOverlay,
+      borderRadius: 1,
     }),
-    [isDarkMode]
+    [colors.borderOverlay]
   );
 
   const translationStyle = useMemo(
@@ -136,7 +142,7 @@ function WordDetailsModalComponent({
       blurIntensity={isDarkMode ? 60 : 80}
       contentStyle={styles.modalContent}
       useHaptics={false}
-      animationDuration={200}
+      animationDuration={100}
       animationType="fade"
     >
       <View style={styles.header}>

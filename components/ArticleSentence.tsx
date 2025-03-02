@@ -39,29 +39,36 @@ const styles = StyleSheet.create({
   },
 });
 
+// Function to create dynamic styles based on settings and colors
+const getEnglishTextStyle = (
+  settings: ArticleSentenceProps['settings'],
+  colors: ArticleSentenceProps['colors']
+) => {
+  return {
+    color: colors.englishText,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+    lineHeight: Math.round(
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
+    ),
+  };
+};
+
 // Memoized sentence component for better list performance
 export const ArticleSentence = React.memo(
-  ({ sentence, words, renderWord, settings, colors }: ArticleSentenceProps) => (
-    <View style={styles.sentenceContainer}>
-      <View style={styles.arabicSentence}>{words.map(renderWord)}</View>
-      {settings.showEnglish && (
-        <ThemedText
-          style={[
-            styles.englishText,
-            {
-              color: colors.englishText,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-              lineHeight: Math.round(
-                LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                  LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                  settings.fontScale
-              ),
-            },
-          ]}
-        >
-          {sentence.english}
-        </ThemedText>
-      )}
-    </View>
-  )
+  ({ sentence, words, renderWord, settings, colors }: ArticleSentenceProps) => {
+    // Memoize dynamic styles
+    const englishTextStyle = React.useMemo(
+      () => getEnglishTextStyle(settings, colors),
+      [settings.fontScale, colors.englishText]
+    );
+
+    return (
+      <View style={styles.sentenceContainer}>
+        <View style={styles.arabicSentence}>{words.map(renderWord)}</View>
+        {settings.showEnglish && (
+          <ThemedText style={[styles.englishText, englishTextStyle]}>{sentence.english}</ThemedText>
+        )}
+      </View>
+    );
+  }
 );

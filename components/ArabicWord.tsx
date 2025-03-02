@@ -1,5 +1,5 @@
 import React, { useState, memo, useMemo, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, View, TextStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, TextStyle, Animated } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import type { Tables } from '@/types/database.types';
@@ -31,6 +31,19 @@ function ArabicWordComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
+  // Create an animated value for the scale effect
+  const scaleAnim = useMemo(() => new Animated.Value(1), []);
+
+  // Apply scale animation when isSelected changes
+  React.useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: isSelected ? 1.02 : 1,
+      friction: 8,
+      tension: 40,
+      useNativeDriver: true,
+    }).start();
+  }, [isSelected, scaleAnim]);
+
   const handlePress = useCallback(() => {
     setModalVisible(true);
   }, []);
@@ -54,8 +67,11 @@ function ArabicWordComponent({
       fontSize: baseSize * scale,
       lineHeight: Math.round(baseSize * scale * 1.5),
       fontWeight: isSelected ? '600' : ('normal' as TextStyle['fontWeight']),
+      textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
+      textShadowRadius: isSelected ? 1 : 0,
+      textShadowOffset: { width: 0, height: 0 },
     }),
-    [textColor, baseSize, scale, isSelected]
+    [textColor, baseSize, scale, isSelected, colors.textShadowLight]
   );
 
   // Memoize the underline style
@@ -64,23 +80,31 @@ function ArabicWordComponent({
       ...styles.underline,
       width: `${Math.min(100, word.word_form.length * 90)}%` as any,
       backgroundColor: isDarkMode
-        ? `${colors.tint}60` // 60% opacity in dark mode
-        : `${colors.tint}40`, // 40% opacity in light mode
+        ? colors.borderOverlay // Use borderOverlay color in dark mode
+        : colors.textOverlay, // Use textOverlay color in light mode
     }),
-    [isDarkMode, colors.tint, word.word_form.length]
+    [isDarkMode, colors.borderOverlay, colors.textOverlay, word.word_form.length]
+  );
+
+  // Create animated container style with scale transform
+  const animatedContainerStyle = useMemo(
+    () => ({
+      transform: [{ scale: scaleAnim }],
+    }),
+    [scaleAnim]
   );
 
   return (
     <>
       <TouchableOpacity onPress={handlePress} style={styles.wordContainer}>
-        <View style={styles.wordWrapper}>
+        <Animated.View style={[styles.wordWrapper, animatedContainerStyle]}>
           <ThemedText style={textStyle} skipDefaultColor>
             {word.word_form}
           </ThemedText>
 
           {/* Enhanced underline for selected words */}
           {isSelected && <View style={underlineStyle} />}
-        </View>
+        </Animated.View>
       </TouchableOpacity>
       <WordDetailsModal
         visible={modalVisible}
@@ -109,10 +133,10 @@ const styles = StyleSheet.create({
     fontFamily: 'NotoNaskhArabic',
   },
   underline: {
-    height: 2,
-    borderRadius: 1,
+    height: 1.5,
     position: 'absolute',
-    bottom: -2,
+    bottom: -1.5,
     alignSelf: 'center',
+    borderRadius: 1,
   },
 });

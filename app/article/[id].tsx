@@ -37,6 +37,11 @@ import { readingListService } from '@/services/reading_list';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   content: {
     flex: 1,
@@ -68,13 +73,6 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     alignSelf: 'center',
-  },
-  fullScreenContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
 });
 
@@ -295,19 +293,20 @@ export default function ArticleScreen() {
     [handleArticlePress]
   );
 
+  // Add styles for animated buttons
+  const animatedButtonStyle = useMemo(
+    () => ({
+      transform: [{ translateY: backButtonAnim }],
+      opacity: isBackButtonVisible ? 1 : 0,
+      top: Platform.OS === 'ios' ? insets.top + 10 : insets.top + 5,
+    }),
+    [backButtonAnim, isBackButtonVisible, insets.top]
+  );
+
   // Memoize the back button component to prevent unnecessary re-renders
   const BackButton = useMemo(() => {
     return (
-      <Animated.View
-        style={[
-          styles.backButton,
-          {
-            top: Platform.OS === 'ios' ? insets.top + 10 : insets.top + 5,
-            transform: [{ translateY: backButtonAnim }],
-            opacity: isBackButtonVisible ? 1 : 0,
-          },
-        ]}
-      >
+      <Animated.View style={[styles.backButton, animatedButtonStyle]}>
         <TouchableOpacity
           onPress={() => router.back()}
           accessibilityLabel="Go back"
@@ -319,23 +318,14 @@ export default function ArticleScreen() {
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [insets.top, backButtonAnim, isBackButtonVisible, isDarkMode, colors.text]);
+  }, [animatedButtonStyle, isDarkMode, colors.text]);
 
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
     if (!user) return null;
 
     return (
-      <Animated.View
-        style={[
-          styles.playlistButton,
-          {
-            top: Platform.OS === 'ios' ? insets.top + 10 : insets.top + 5,
-            transform: [{ translateY: backButtonAnim }],
-            opacity: isBackButtonVisible ? 1 : 0,
-          },
-        ]}
-      >
+      <Animated.View style={[styles.playlistButton, animatedButtonStyle]}>
         <TouchableOpacity
           onPress={handleToggleReadingList}
           accessibilityLabel={isInReadingList ? 'Remove from playlist' : 'Add to playlist'}
@@ -353,9 +343,7 @@ export default function ArticleScreen() {
       </Animated.View>
     );
   }, [
-    insets.top,
-    backButtonAnim,
-    isBackButtonVisible,
+    animatedButtonStyle,
     isDarkMode,
     colors.text,
     colors.tint,
@@ -439,7 +427,7 @@ export default function ArticleScreen() {
   // Calculate content padding based on safe area insets
   const contentPadding = useMemo(
     () => ({
-      paddingTop: insets.top + (Platform.OS === 'ios' ? 50 : 45),
+      paddingTop: insets.top + (Platform.OS === 'ios' ? 70 : 65),
       paddingBottom: 4,
     }),
     [insets.top]
@@ -476,7 +464,7 @@ export default function ArticleScreen() {
 
   // Render article screen
   return (
-    <ThemedView style={[styles.container, styles.fullScreenContainer]} useSafeArea={false}>
+    <ThemedView style={styles.container} useSafeArea={false}>
       <StatusBar hidden />
 
       {/* Animated back button */}
@@ -499,7 +487,7 @@ export default function ArticleScreen() {
         maxToRenderPerBatch={5}
         updateCellsBatchingPeriod={50}
         windowSize={5}
-        getItemLayout={(data, index) => ({
+        getItemLayout={(_data, index) => ({
           length: 80, // approximate height of each item
           offset: 80 * index,
           index,

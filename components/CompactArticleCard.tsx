@@ -16,19 +16,28 @@ function CompactArticleCardComponent({ article, onPress }: CompactArticleCardPro
   const colors = useColors();
 
   // Memoize styles that depend on colors
-  const pressableStyle = useMemo(() => ({ shadowColor: colors.shadow }), [colors.shadow]);
-
-  const cardStyle = useMemo(
-    () => [styles.card, { backgroundColor: colors.cardBackground }],
-    [colors.cardBackground]
+  const dynamicStyles = useMemo(
+    () => ({
+      pressable: {
+        shadowColor: colors.shadow,
+      },
+      card: {
+        backgroundColor: colors.cardBackground,
+      },
+    }),
+    [colors.shadow, colors.cardBackground]
   );
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.pressable, pressed && styles.pressed, pressableStyle]}
+      style={({ pressed }) => [
+        styles.pressable,
+        pressed && styles.pressed,
+        dynamicStyles.pressable,
+      ]}
     >
-      <View style={cardStyle}>
+      <View style={[styles.card, dynamicStyles.card]}>
         <View style={styles.imageContainer}>
           <Image
             source={'https://picsum.photos/800/400'}
