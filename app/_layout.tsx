@@ -36,7 +36,7 @@ function AppContent() {
   const colors = useColors();
   const [loaded] = useFonts({
     Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
-    NotoNaskhArabic: require('../assets/fonts/NotoNaskhArabic-Regular.ttf'),
+    NotoNaskhArabic: require('../assets/fonts/Madina.otf'),
   });
 
   const toastConfig = {

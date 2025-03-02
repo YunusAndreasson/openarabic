@@ -2,8 +2,6 @@ import { StyleSheet, Alert, Linking, View, Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -11,14 +9,12 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { CustomSlider } from '@/components/Slider';
 import { Toggle } from '@/components/Toggle';
-import { Avatar } from '@/components/Avatar';
 import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import Auth from '@/components/Auth';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-import { Colors } from '@/constants/Colors';
 import { LoadingScreen } from '@/components/Loader';
 
 export default function AccountScreen() {
@@ -27,15 +23,8 @@ export default function AccountScreen() {
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
-  const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const loadingStartTime = useRef<number | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-
-  // Optimize shadow handling with memoized values
-  const isDarkMode = useMemo(
-    () => colors.background === Colors.dark.background,
-    [colors.background]
-  );
 
   // Custom button styles to ensure left alignment
   const buttonStyles = useMemo(
@@ -391,20 +380,8 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
   },
-  headerIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
   content: {
     flex: 1,
-    paddingHorizontal: 0,
-  },
-  section: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  sectionTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: 0,
   },
   authContainer: {
@@ -422,9 +399,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  avatarContainer: {
-    display: 'none',
   },
   settingsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,

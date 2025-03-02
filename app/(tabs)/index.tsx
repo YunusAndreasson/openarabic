@@ -352,11 +352,7 @@ export default function ArticlesScreen() {
 
   return (
     <View style={styles.container}>
-      <ThemedView
-        style={{ backgroundColor: colors.background }}
-        contentContainerStyle={{ padding: 0 }}
-        useSafeArea={false}
-      >
+      <ThemedView style={{ backgroundColor: colors.background }} useSafeArea={false}>
         <CategoryHeader
           colors={colors}
           categoryPillsHeight={categoryPillsHeight}

@@ -199,9 +199,6 @@ export default function VocabularyScreen() {
     if (!validStudyWords.length)
       return { totalWords: 0, dueWords: 0, masteredWords: 0, learningWords: 0, streak: 0 };
 
-    const now = new Date();
-    const nowTimestamp = now.getTime();
-
     // Use the directly fetched due words count instead of filtering again
     const dueWordsCount = dueWordsData.length;
 
@@ -463,9 +460,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  headerIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
