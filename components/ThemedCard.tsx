@@ -74,7 +74,11 @@ function ThemedCardComponent({
       }
 
       // For other platforms/themes, use the default gradient colors
-      return [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as const;
+      return [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as readonly [
+        string,
+        string,
+        string,
+      ];
     };
 
     return {
@@ -84,7 +88,7 @@ function ThemedCardComponent({
         shadowColor: colors.cardShadow,
       },
       loadingContainer: {
-        backgroundColor: isDarkMode ? colors.cardBackground : 'rgba(255, 255, 255, 0.85)',
+        backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay,
       },
       gradient: {
         colors: createCardGradient(),

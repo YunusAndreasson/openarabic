@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   },
   itemAuthor: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   progressContainer: {
     position: 'absolute',
@@ -102,7 +102,6 @@ const styles = StyleSheet.create({
   },
   progressIndicator: {
     height: 2, // Slightly thicker for better visibility
-    backgroundColor: 'rgba(0,0,0,0.04)', // Lighter background for better contrast
     width: '100%',
     overflow: 'hidden',
   },
@@ -204,14 +203,14 @@ const PlaylistItem = React.memo(
               name="chevron-forward"
               size={16}
               color={colors.tint}
-              style={{ opacity: 0.7 }}
+              style={{ opacity: LAYOUT.OPACITY.DIMMED }}
             />
           ) : (
             <Ionicons
               name="chevron-forward"
               size={16}
               color={colors.text}
-              style={{ opacity: 0.3 }}
+              style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
             />
           )}
         </View>
@@ -221,7 +220,7 @@ const PlaylistItem = React.memo(
           <View
             style={[
               styles.progressIndicator,
-              { backgroundColor: isActive ? 'rgba(0,0,0,0.04)' : 'transparent' },
+              { backgroundColor: isActive ? colors.textOverlay : 'transparent' },
             ]}
           >
             {isActive && (
@@ -729,6 +728,16 @@ export default function PlaylistScreen() {
       }
     }
   }, [currentTrackIndex, activePlaylist]);
+
+  // Create dynamic styles that depend on colors
+  const dynamicStyles = useMemo(
+    () => ({
+      progressIndicator: {
+        backgroundColor: colors.textOverlay,
+      },
+    }),
+    [colors]
+  );
 
   // Loading screen
   if (isLoading) {

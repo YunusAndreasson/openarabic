@@ -297,8 +297,11 @@ export default function ArticleScreen() {
   const animatedButtonStyle = useMemo(
     () => ({
       transform: [{ translateY: backButtonAnim }],
-      opacity: isBackButtonVisible ? 1 : 0,
-      top: Platform.OS === 'ios' ? insets.top + 10 : insets.top + 5,
+      opacity: isBackButtonVisible ? LAYOUT.OPACITY.ACTIVE : 0,
+      top:
+        Platform.OS === 'ios'
+          ? insets.top + LAYOUT.SPACING.MEDIUM
+          : insets.top + LAYOUT.SPACING.SMALL,
     }),
     [backButtonAnim, isBackButtonVisible, insets.top]
   );

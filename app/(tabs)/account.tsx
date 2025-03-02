@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: StyleSheet.hairlineWidth,
-    opacity: 0.5,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   settingRow: {
     flexDirection: 'row',

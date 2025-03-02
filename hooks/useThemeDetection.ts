@@ -1,5 +1,5 @@
 import { useColors } from './useColors';
-import { Colors, Theme } from '../constants/Colors';
+import { Colors } from '../constants/Colors';
 
 /**
  * A hook to consistently detect if the current theme is dark mode

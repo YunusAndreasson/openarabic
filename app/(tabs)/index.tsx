@@ -130,7 +130,7 @@ const CategoryHeader = ({
         {/* Gradient fade for right edge */}
         {(Platform.OS === 'android' || isDarkTheme) && (
           <LinearGradient
-            colors={['transparent', colors.background, colors.background]}
+            colors={[colors.gradientStart, colors.gradientMiddle, colors.background]}
             start={{ x: 0.3, y: 0.5 }}
             end={{ x: 1, y: 0.5 }}
             locations={[0, 0.7, 1]}
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: LAYOUT.SPACING.MEDIUM,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   flatListContent: {
     paddingBottom: LAYOUT.LIST_VERTICAL_SPACING,
@@ -448,9 +448,9 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER,
     ...Platform.select({
       ios: {
-        shadowColor: 'rgba(0,0,0,0.2)',
+        shadowColor: '#000000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 1,
+        shadowOpacity: LAYOUT.OPACITY.ACTIVE,
         shadowRadius: 2,
       },
       android: {
