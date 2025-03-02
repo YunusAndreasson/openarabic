@@ -46,17 +46,12 @@ export function ArabicWord({
   };
 
   // Determine the text color based on whether the word is selected for study
-  // Using appropriate grayscale colors for both light and dark modes
-  const textColor = isSelected
-    ? isDarkMode
-      ? '#ced4da'
-      : '#343a40' // Lighter gray in dark mode, darker gray in light mode
-    : colors.text; // Use regular text color for other words
+  const textColor = isSelected ? colors.tint : colors.text;
 
   return (
     <>
       <TouchableOpacity onPress={handlePress} style={styles.wordContainer}>
-        <View>
+        <View style={styles.wordWrapper}>
           <ThemedText
             style={[
               styles.arabicText,
@@ -64,7 +59,7 @@ export function ArabicWord({
                 color: textColor,
                 fontSize: baseSize * scale,
                 lineHeight: Math.round(baseSize * scale * 1.5),
-                fontWeight: isSelected ? '700' : 'normal', // Make selected words bold for emphasis
+                fontWeight: isSelected ? '600' : 'normal', // Slightly bolder for selected words
               },
             ]}
             skipDefaultColor
@@ -72,16 +67,16 @@ export function ArabicWord({
             {word.word_form}
           </ThemedText>
 
-          {/* Add a dotted underline for selected words in both light and dark modes */}
+          {/* Enhanced underline for selected words */}
           {isSelected && (
             <View
               style={[
                 styles.underline,
                 {
-                  width: baseSize * scale * word.word_form.length * 0.3, // Reduce width multiplier from 0.4 to 0.3
-                  bottom: -1,
-                  borderBottomColor: isDarkMode ? '#ced4da90' : '#000000AA', // Darker underline in light mode
-                  borderBottomWidth: 1.5, // Thicker underline for better visibility
+                  width: `${Math.min(100, word.word_form.length * 90)}%`, // Responsive width based on word length
+                  backgroundColor: isDarkMode
+                    ? `${colors.tint}60` // 60% opacity in dark mode
+                    : `${colors.tint}40`, // 40% opacity in light mode
                 },
               ]}
             />
@@ -104,14 +99,18 @@ const styles = StyleSheet.create({
     marginHorizontal: LAYOUT.SPACING.TINY / 2,
     marginVertical: LAYOUT.SPACING.TINY / 2,
   },
+  wordWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+  },
   arabicText: {
     fontFamily: 'NotoNaskhArabic',
   },
   underline: {
+    height: 2,
+    borderRadius: 1,
     position: 'absolute',
-    height: 1,
-    borderBottomWidth: 0.8,
-    borderStyle: 'dotted',
+    bottom: -2,
     alignSelf: 'center',
   },
 });
