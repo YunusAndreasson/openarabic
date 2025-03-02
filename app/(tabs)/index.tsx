@@ -9,8 +9,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { router, useNavigation } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { router } from 'expo-router';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '../../services/articles';
 import { Article } from '@/types/articles.types';
@@ -120,8 +121,6 @@ const CategoryHeader = ({
           contentContainerStyle={styles.categoryScrollContent}
           removeClippedSubviews={true}
           scrollEventThrottle={16}
-          directionalLockEnabled={true}
-          bounces={false}
           overScrollMode="never"
         >
           {renderPill(null)}
@@ -265,25 +264,32 @@ export default function ArticlesScreen() {
     });
   }, [navigation, colors]);
 
-  const renderItem: ListRenderItem<Article> = ({ item }) => (
-    <ThemedCard
-      imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-      title={item.title}
-      category={item.category?.name ?? 'Uncategorized'}
-      author={item.author?.name ?? 'Anonymous'}
-      onPress={() => router.push(`/article/${item.id}`)}
-    />
+  // Memoize renderItem to prevent unnecessary re-renders
+  const renderItem = useCallback<ListRenderItem<Article>>(
+    ({ item }) => (
+      <ThemedCard
+        imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+        title={item.title}
+        category={item.category?.name ?? 'Uncategorized'}
+        author={item.author?.name ?? 'Anonymous'}
+        onPress={() => router.push(`/article/${item.id}`)}
+      />
+    ),
+    []
   );
 
-  const keyExtractor = (item: Article) => item.id.toString();
+  const keyExtractor = useCallback((item: Article) => item.id.toString(), []);
 
-  const getItemLayout = (_: any, index: number) => ({
-    length: ITEM_HEIGHT,
-    offset: ITEM_HEIGHT * index,
-    index,
-  });
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * index,
+      index,
+    }),
+    []
+  );
 
-  const ListEmptyComponent = () => {
+  const ListEmptyComponent = useCallback(() => {
     if (isLoading && !isRefreshing) {
       return (
         <ThemedView style={styles.emptyContainer}>
@@ -305,7 +311,13 @@ export default function ArticlesScreen() {
         <ThemedText style={styles.emptyText}>No articles found</ThemedText>
       </ThemedView>
     );
-  };
+  }, [isLoading, isRefreshing, error, colors.tint]);
+
+  // Memoized separator component for better performance
+  const ItemSeparatorComponent = useCallback(
+    () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
+    []
+  );
 
   // Modify app loading initialization
   useEffect(() => {
@@ -377,6 +389,7 @@ export default function ArticlesScreen() {
             },
           ]}
           ListEmptyComponent={ListEmptyComponent}
+          ItemSeparatorComponent={ItemSeparatorComponent}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -394,6 +407,7 @@ export default function ArticlesScreen() {
           initialNumToRender={4}
           maxToRenderPerBatch={4}
           windowSize={5}
+          updateCellsBatchingPeriod={50}
           decelerationRate="normal"
         />
       </ThemedView>

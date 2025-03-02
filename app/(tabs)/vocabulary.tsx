@@ -119,7 +119,6 @@ export default function VocabularyScreen() {
     useCallback(() => {
       // Only refetch if we have a user and we're not on initial mount
       if (user && !isInitialMount.current) {
-        console.log('Refetching vocabulary data after screen focus');
         refetch();
       }
 
@@ -152,6 +151,7 @@ export default function VocabularyScreen() {
       />
     </View>
   ));
+  ErrorMessage.displayName = 'ErrorMessage';
 
   // Enhanced loading state detection with minimum duration
   const isLoading = useMemo(() => {

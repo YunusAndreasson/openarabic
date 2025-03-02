@@ -13,6 +13,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
 import { Loader } from '@/components/Loader';
+import Toast from 'react-native-toast-message';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
@@ -70,7 +71,11 @@ export default function ReviewScreen() {
   // Invalidate queries when there are no due words
   useEffect(() => {
     if (!isLoading && dueWords.length === 0) {
-      console.log('No due words found, invalidating queries');
+      Toast.show({
+        type: 'info',
+        text1: 'No due words found',
+        text2: 'Refreshing data...',
+      });
       invalidateQueries();
     }
   }, [isLoading, dueWords.length, invalidateQueries]);
