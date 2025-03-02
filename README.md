@@ -137,3 +137,22 @@ The application follows a clean separation of concerns:
 - Uses a combination of StyleSheet and inline styles
 - Adapts to light/dark mode with appropriate color schemes
 - Follows consistent spacing and typography defined in constants
+
+## Code Maintenance
+
+### Knip - Removing Unused Code
+
+This project uses [Knip](https://github.com/webpro/knip) to identify and remove unused code. To use Knip:
+
+```bash
+# Find all unused files, exports, and dependencies
+npm run knip
+
+# Focus on production dependencies only
+npm run knip:production
+
+# Focus on unused TypeScript types
+npm run knip:types
+```
+
+For detailed information about using Knip in this project, see [KNIP.md](./KNIP.md).

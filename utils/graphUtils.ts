@@ -9,8 +9,6 @@ export const createArcPath = (progress: number, radius: number): string => {
   const startAngle = -Math.PI / 2; // Start from top
   const endAngle = startAngle + (2 * Math.PI * progress) / 100;
 
-  const x1 = center + radius * Math.cos(startAngle);
-  const y1 = center + radius * Math.sin(startAngle);
   const x2 = center + radius * Math.cos(endAngle);
   const y2 = center + radius * Math.sin(endAngle);
 

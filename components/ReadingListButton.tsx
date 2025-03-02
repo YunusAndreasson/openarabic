@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { readingListService } from '../services/reading_list';
 import { useAuth } from '../hooks/useAuth';
-import { useColors } from '../hooks/useColors';
 import * as Haptics from 'expo-haptics';
 import Toast from 'react-native-toast-message';
 import { LAYOUT } from '../constants/layout';
@@ -13,11 +12,10 @@ interface ReadingListButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export function ReadingListButton({ articleId, style }: ReadingListButtonProps) {
+export function ReadingListButton({ articleId }: ReadingListButtonProps) {
   const [isInReadingList, setIsInReadingList] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user, isLoading: isAuthLoading } = useAuth();
-  const colors = useColors();
 
   const checkReadingListStatus = useCallback(async () => {
     if (!user) return;

@@ -13,8 +13,3 @@ export type Article = Tables<'articles'> & {
   article_sentences: ArticleSentence[];
   audio_url: string | null;
 };
-
-export type ArticleCardProps = {
-  article: Article;
-  onPress?: (article: Article) => void;
-};
