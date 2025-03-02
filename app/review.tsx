@@ -12,19 +12,16 @@ import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
-import { Loader, LoadingScreen } from '@/components/Loader';
+import { Loader } from '@/components/Loader';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
 const SWIPE_OUT_DURATION = LAYOUT.ANIMATION.DURATION.FAST;
 const MEANING_DISPLAY_DURATION = 1600;
+const INITIAL_FADE_DURATION = 250;
 
 // Main Component
 export default function ReviewScreen() {
-  useEffect(() => {
-    router.setParams({ hideHeader: 'true' });
-  }, []);
-
   const colors = useColors();
   const { user } = useAuth();
   const [isAnimating, setIsAnimating] = useState(false);
@@ -32,7 +29,24 @@ export default function ReviewScreen() {
   const mountedRef = useRef(true);
   const position = useRef(new Animated.ValueXY()).current;
   const fadeOpacity = useRef(new Animated.Value(1)).current;
+  const screenFadeOpacity = useRef(new Animated.Value(0)).current;
   const meaningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isScreenReady, setIsScreenReady] = useState(false);
+
+  // Add initial fade-in animation
+  useEffect(() => {
+    setIsScreenReady(true);
+
+    const timeout = setTimeout(() => {
+      Animated.timing(screenFadeOpacity, {
+        toValue: 1,
+        duration: INITIAL_FADE_DURATION,
+        useNativeDriver: true,
+      }).start();
+    }, 100);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   // Use the spaced repetition hook
   const {
@@ -52,6 +66,14 @@ export default function ReviewScreen() {
       // Additional completion logic if needed
     },
   });
+
+  // Invalidate queries when there are no due words
+  useEffect(() => {
+    if (!isLoading && dueWords.length === 0) {
+      console.log('No due words found, invalidating queries');
+      invalidateQueries();
+    }
+  }, [isLoading, dueWords.length, invalidateQueries]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -136,7 +158,20 @@ export default function ReviewScreen() {
   );
 
   // UI handlers
-  const handleClose = () => router.back();
+  const handleClose = useCallback(() => {
+    // Invalidate the study words query to ensure vocabulary screen gets fresh data
+    invalidateQueries();
+
+    // Fade out the screen
+    Animated.timing(screenFadeOpacity, {
+      toValue: 0,
+      duration: INITIAL_FADE_DURATION,
+      useNativeDriver: true,
+    }).start(() => {
+      router.back();
+    });
+  }, [screenFadeOpacity, invalidateQueries]);
+
   const [showInstructions, setShowInstructions] = useState(false);
 
   // Current word data - memoized to prevent recalculations
@@ -161,32 +196,26 @@ export default function ReviewScreen() {
 
   // Reset animation when current index changes
   useEffect(() => {
-    // Stop any ongoing animations first for better performance
     fadeOpacity.stopAnimation();
     position.stopAnimation();
 
-    // Choose animation type based on transitionType
     if (transitionType === 'fade') {
-      // For correct answers, fade in place
       fadeOpacity.setValue(0);
       position.setValue({ x: 0, y: 0 });
 
-      // Use timing animation with easing for smooth fade
       Animated.timing(fadeOpacity, {
         toValue: 1,
-        duration: 250, // Slightly faster for better UX
+        duration: 250,
         useNativeDriver: true,
       }).start();
     } else {
-      // For incorrect answers, slide in from right (default behavior)
       position.setValue({ x: SCREEN_WIDTH, y: 0 });
 
-      // Use spring for natural slide motion
       Animated.spring(position, {
         toValue: { x: 0, y: 0 },
         useNativeDriver: true,
-        tension: 65, // Slightly higher tension for faster animation
-        friction: 7, // Keep same friction for bouncy effect
+        tension: 65,
+        friction: 7,
       }).start();
     }
   }, [currentIndex, position, fadeOpacity, transitionType]);
@@ -197,91 +226,108 @@ export default function ReviewScreen() {
       height: LAYOUT.SPACING.SMALL,
       borderRadius: LAYOUT.SPACING.SMALL / 2,
       marginBottom: LAYOUT.SPACING.LARGE,
-      width: '100%' as any, // Type assertion to fix width compatibility issue
+      width: '100%' as any,
       marginTop: isLoading || isComplete || !currentWord ? 0 : LAYOUT.SPACING.XLARGE,
     }),
     [isLoading, isComplete, currentWord]
   );
 
-  if (isLoading || !user) {
-    return (
-      <ThemedView style={styles.container}>
-        <ProgressBar progress={0} style={progressBarStyle} />
-        <View style={styles.loadingContainer}>
-          <Loader size="large" color={colors.tint} />
-        </View>
-      </ThemedView>
-    );
-  }
+  // Render content based on state
+  const renderContent = () => {
+    if (isLoading || !user) {
+      return (
+        <ThemedView style={styles.container}>
+          <ProgressBar progress={0} style={progressBarStyle} />
+          <View style={styles.loadingContainer}>
+            <Loader size="large" color={colors.tint} />
+          </View>
+        </ThemedView>
+      );
+    }
 
-  if (dueWords.length === 0 && !isLoading) {
-    return (
-      <ThemedView style={styles.container}>
-        <ProgressBar progress={0} style={progressBarStyle} />
-        <View style={styles.completedContainer}>
-          <ThemedText style={styles.completedText}>No words to review!</ThemedText>
-          <ThemedButton title="Go Back" onPress={handleClose} variant="filled" />
-        </View>
-      </ThemedView>
-    );
-  }
+    if (dueWords.length === 0 && !isLoading) {
+      return (
+        <ThemedView style={styles.container}>
+          <ProgressBar progress={0} style={progressBarStyle} />
+          <View style={styles.completedContainer}>
+            <ThemedText style={styles.completedText}>No words to review!</ThemedText>
+            <ThemedButton
+              title="Go Back"
+              onPress={() => {
+                // Ensure we invalidate queries before navigating back
+                invalidateQueries();
+                handleClose();
+              }}
+              variant="filled"
+            />
+          </View>
+        </ThemedView>
+      );
+    }
 
-  if (isComplete) {
-    return (
-      <ThemedView style={styles.container}>
-        <ProgressBar progress={100} style={progressBarStyle} />
-        <View style={styles.completedContainer}>
-          <ThemedText style={styles.completedText}>Review complete!</ThemedText>
-          <ThemedButton
-            title="Done"
-            onPress={() => {
-              invalidateQueries();
-              handleClose();
-            }}
-            variant="filled"
-          />
-        </View>
-      </ThemedView>
-    );
-  }
+    if (isComplete) {
+      return (
+        <ThemedView style={styles.container}>
+          <ProgressBar progress={100} style={progressBarStyle} />
+          <View style={styles.completedContainer}>
+            <ThemedText style={styles.completedText}>Review complete!</ThemedText>
+            <ThemedButton
+              title="Done"
+              onPress={() => {
+                // Ensure we invalidate queries before navigating back
+                invalidateQueries();
+                handleClose();
+              }}
+              variant="filled"
+            />
+          </View>
+        </ThemedView>
+      );
+    }
 
-  if (!currentWord) {
-    return (
-      <ThemedView style={styles.container}>
-        <ProgressBar progress={0} style={progressBarStyle} />
-        <View style={styles.errorContainer}>
-          <ThemedText style={styles.errorText}>Error loading word</ThemedText>
-          <ThemedButton
-            title="Go Back"
-            onPress={handleClose}
-            variant="filled"
-            style={styles.errorButton}
-          />
-        </View>
-      </ThemedView>
-    );
-  }
+    if (!currentWord) {
+      return (
+        <ThemedView style={styles.container}>
+          <ProgressBar progress={0} style={progressBarStyle} />
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>Error loading word</ThemedText>
+            <ThemedButton
+              title="Go Back"
+              onPress={() => {
+                // Ensure we invalidate queries before navigating back
+                invalidateQueries();
+                handleClose();
+              }}
+              variant="filled"
+              style={styles.errorButton}
+            />
+          </View>
+        </ThemedView>
+      );
+    }
 
-  if (!sentence || !wordForm) {
-    return (
-      <ThemedView style={styles.container}>
-        <ProgressBar progress={0} style={progressBarStyle} />
-        <View style={styles.errorContainer}>
-          <ThemedText style={styles.errorText}>Error loading sentence data</ThemedText>
-          <ThemedButton
-            title="Go Back"
-            onPress={handleClose}
-            variant="filled"
-            style={styles.errorButton}
-          />
-        </View>
-      </ThemedView>
-    );
-  }
+    if (!sentence || !wordForm) {
+      return (
+        <ThemedView style={styles.container}>
+          <ProgressBar progress={0} style={progressBarStyle} />
+          <View style={styles.errorContainer}>
+            <ThemedText style={styles.errorText}>Error loading sentence data</ThemedText>
+            <ThemedButton
+              title="Go Back"
+              onPress={() => {
+                // Ensure we invalidate queries before navigating back
+                invalidateQueries();
+                handleClose();
+              }}
+              variant="filled"
+              style={styles.errorButton}
+            />
+          </View>
+        </ThemedView>
+      );
+    }
 
-  return (
-    <>
-      <Stack.Screen options={{ headerShown: false }} />
+    return (
       <ThemedView style={styles.container}>
         <ProgressBar progress={progress} style={progressBarStyle} fillColor={colors.tint} />
 
@@ -386,7 +432,25 @@ export default function ReviewScreen() {
           </View>
         </ThemedModal>
       </ThemedView>
-    </>
+    );
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <Stack.Screen
+        options={{
+          headerShown: false,
+          animation: 'none',
+          presentation: 'containedModal',
+          gestureEnabled: false,
+        }}
+      />
+      {isScreenReady && (
+        <Animated.View style={{ flex: 1, opacity: screenFadeOpacity }}>
+          {renderContent()}
+        </Animated.View>
+      )}
+    </View>
   );
 }
 

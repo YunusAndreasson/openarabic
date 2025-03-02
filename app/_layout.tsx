@@ -87,9 +87,23 @@ function AppContent() {
 
   return (
     <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-      <Stack>
+      <Stack
+        screenOptions={{
+          headerShown: true,
+          animation: 'slide_from_right',
+        }}
+      >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="article" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="review"
+          options={{
+            headerShown: false,
+            animation: 'none',
+            presentation: 'containedModal',
+            gestureEnabled: false,
+          }}
+        />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Toast config={toastConfig} />

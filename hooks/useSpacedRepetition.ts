@@ -77,13 +77,14 @@ export function useSpacedRepetition({
       // Pre-compute current timestamp once for comparison
       const now = Date.now();
 
-      // Filter due words more efficiently
+      // Filter due words more efficiently - only check if review date is due
+      // Remove the interval_days < 30 condition to match vocabulary screen's definition
       const filteredWords = words.filter(word => {
         if (!word.sentence_word || !word.next_review_at) return false;
 
         // Avoid creating multiple Date objects in the loop
         const reviewDate = new Date(word.next_review_at).getTime();
-        return reviewDate <= now && word.interval_days < 30;
+        return reviewDate <= now;
       });
 
       // Sort by next review date (oldest first)

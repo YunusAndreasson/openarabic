@@ -79,6 +79,7 @@ export default function VocabularyScreen() {
     isFetching,
     status,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id),
@@ -86,6 +87,31 @@ export default function VocabularyScreen() {
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false,
   });
+
+  // Refetch data when the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      // Only refetch if we have a user and we're not on initial mount
+      if (user && !isInitialMount.current) {
+        console.log('Refetching vocabulary data after screen focus');
+        refetch();
+      }
+
+      // Mark initial mount as completed after first render
+      if (isInitialMount.current && user) {
+        isInitialMount.current = false;
+      }
+
+      return () => {
+        // Clean up any pending timeouts
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = undefined;
+        }
+        loadingStartTime.current = null;
+      };
+    }, [user, refetch])
+  );
 
   // Create a memoized error message component
   const ErrorMessage = React.memo(() => (
@@ -135,19 +161,6 @@ export default function VocabularyScreen() {
 
     return isCurrentlyLoading;
   }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
-
-  // Clean up on unmount and focus change
-  useFocusEffect(
-    React.useCallback(() => {
-      return () => {
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = undefined;
-        }
-        loadingStartTime.current = null;
-      };
-    }, [])
-  );
 
   // Separate loading state for content that can show a loading indicator
   const isContentLoading = useMemo(() => !!user && isFetching, [user, isFetching, forceUpdate]);
@@ -284,7 +297,10 @@ export default function VocabularyScreen() {
   }, [validStudyWords]);
 
   const handleStartReview = useCallback(() => {
-    router.push('/review');
+    // Simple timeout to ensure smooth transition
+    setTimeout(() => {
+      router.navigate('/review');
+    }, 50);
   }, []);
 
   // Show loader while authentication is being checked OR while data is loading
