@@ -1,8 +1,7 @@
 import React, { useState, memo, useMemo, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, View, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
-import * as Haptics from 'expo-haptics';
 import type { Tables } from '@/types/database.types';
 import { WordDetailsModal } from './WordDetailsModal';
 import { LAYOUT } from '@/constants/layout';
