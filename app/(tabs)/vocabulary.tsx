@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useRef, useState } from 'react';
+import React, { useMemo, useCallback, useRef, useState } from 'react';
 import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -15,7 +15,6 @@ import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { StudyWord } from '@/utils/vocabulary';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 
 // Create a memoized component for the sign-in message
@@ -49,6 +48,22 @@ const ReviewButton = React.memo(
 
 ReviewButton.displayName = 'ReviewButton';
 
+// Helper function to estimate the last review date for a word
+const estimateLastReviewDate = (word: StudyWord, currentTime: Date): Date | null => {
+  if (word.review_count === 0) return null;
+
+  // The next review date is scheduled as last review date + interval days
+  const reviewDate = new Date(word.next_review_at);
+
+  // If the word has been reviewed, subtract interval days to get the approximate last review date
+  reviewDate.setDate(reviewDate.getDate() - word.interval_days);
+
+  // Ensure we don't return future dates for last review
+  if (reviewDate > currentTime) return new Date(currentTime);
+
+  return reviewDate;
+};
+
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
@@ -56,7 +71,6 @@ export default function VocabularyScreen() {
   const loadingStartTime = useRef<number | null>(null);
   const isInitialMount = useRef(true);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  // State to force re-render when needed
   const [forceUpdate, setForceUpdate] = useState(false);
 
   const {
@@ -64,6 +78,7 @@ export default function VocabularyScreen() {
     isLoading: isDataLoading,
     isFetching,
     status,
+    error,
   } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id),
@@ -71,6 +86,20 @@ export default function VocabularyScreen() {
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false,
   });
+
+  // Create a memoized error message component
+  const ErrorMessage = React.memo(() => (
+    <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
+      <ThemedText style={[styles.message, { color: '#FF3B30' }]}>
+        Error loading your vocabulary data. Please try again later.
+      </ThemedText>
+      <ThemedButton
+        title="Retry"
+        onPress={() => navigation.navigate('vocabulary')}
+        style={{ marginTop: LAYOUT.SPACING.LARGE }}
+      />
+    </View>
+  ));
 
   // Enhanced loading state detection with minimum duration
   const isLoading = useMemo(() => {
@@ -94,11 +123,9 @@ export default function VocabularyScreen() {
         loadingTimeoutRef.current = setTimeout(() => {
           loadingStartTime.current = null;
           isInitialMount.current = false;
-          // Force a re-render to update the loading state
           setForceUpdate(prev => !prev);
         }, 500 - timeElapsed);
 
-        // Haven't shown loader for 500ms yet, so keep showing
         return true;
       }
       // Reset timer and mark initial mount as done
@@ -113,12 +140,10 @@ export default function VocabularyScreen() {
   useFocusEffect(
     React.useCallback(() => {
       return () => {
-        // Clear any pending timeouts when screen loses focus
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
           loadingTimeoutRef.current = undefined;
         }
-        // Reset loading state when unmounting
         loadingStartTime.current = null;
       };
     }, [])
@@ -133,18 +158,83 @@ export default function VocabularyScreen() {
 
   const stats = useMemo(() => {
     if (!validStudyWords.length)
-      return { totalWords: 0, dueWords: 0, masteredWords: 0, learningWords: 0 };
+      return { totalWords: 0, dueWords: 0, masteredWords: 0, learningWords: 0, streak: 0 };
 
     const now = new Date();
     const dueWords = validStudyWords.filter(word => new Date(word.next_review_at) <= now);
     const masteredWords = validStudyWords.filter(word => word.interval_days >= 30);
     const learningWords = validStudyWords.length - masteredWords.length;
 
+    // Calculate streak based on review history
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Find last review dates
+    const reviewDates = validStudyWords
+      .map(word => estimateLastReviewDate(word, now))
+      .filter(Boolean) as Date[];
+
+    if (reviewDates.length === 0) {
+      return {
+        totalWords: validStudyWords.length,
+        dueWords: dueWords.length,
+        masteredWords: masteredWords.length,
+        learningWords,
+        streak: 0,
+      };
+    }
+
+    // Sort descending to get the most recent review first
+    reviewDates.sort((a, b) => b.getTime() - a.getTime());
+
+    const lastReviewDate = new Date(reviewDates[0]);
+    lastReviewDate.setHours(0, 0, 0, 0);
+
+    // Check if user has reviewed today
+    const daysDifference = Math.floor(
+      (today.getTime() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysDifference > 1) {
+      // Streak broken - more than 1 day since last review
+      streak = 0;
+    } else {
+      // Count consecutive days with reviews
+      let currentDate = new Date(today);
+      let currentStreak = 0;
+      const MAX_ITERATIONS = 366; // Safety limit (maximum 1 year of streak)
+      let iterations = 0;
+
+      // Group review dates by day
+      const reviewDatesByDay = new Map();
+      reviewDates.forEach(date => {
+        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        reviewDatesByDay.set(dateKey, true);
+      });
+
+      // Check for consecutive days backward in time
+      while (iterations < MAX_ITERATIONS) {
+        iterations++;
+        const dateKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
+
+        if (reviewDatesByDay.has(dateKey)) {
+          currentStreak++;
+          currentDate.setDate(currentDate.getDate() - 1);
+        } else {
+          break;
+        }
+      }
+
+      streak = currentStreak;
+    }
+
     return {
       totalWords: validStudyWords.length,
       dueWords: dueWords.length,
       masteredWords: masteredWords.length,
       learningWords,
+      streak,
     };
   }, [validStudyWords]);
 
@@ -158,7 +248,7 @@ export default function VocabularyScreen() {
           wordsLearned: 0,
         }));
 
-    // Get the days of the week
+    const now = new Date();
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date();
 
@@ -176,13 +266,10 @@ export default function VocabularyScreen() {
       });
     }
 
-    // Count words learned per day based on review_count changes
+    // Count words learned per day based on estimated review dates
     validStudyWords.forEach(word => {
-      if (word.review_count > 0) {
-        const reviewDate = new Date(word.next_review_at);
-        // Adjust date back by interval days to estimate when the last review happened
-        reviewDate.setDate(reviewDate.getDate() - word.interval_days);
-
+      const reviewDate = estimateLastReviewDate(word, now);
+      if (reviewDate) {
         const dayKey = `${reviewDate.getFullYear()}-${reviewDate.getMonth()}-${reviewDate.getDate()}`;
         if (dayMap.has(dayKey)) {
           const dayData = dayMap.get(dayKey);
@@ -217,6 +304,18 @@ export default function VocabularyScreen() {
     );
   }
 
+  // Show error state if data fetching failed
+  if (error) {
+    return (
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+        </View>
+        <ErrorMessage />
+      </ThemedView>
+    );
+  }
+
   if (!validStudyWords.length) {
     return (
       <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
@@ -247,7 +346,7 @@ export default function VocabularyScreen() {
             masteredWords={stats.masteredWords}
             dueWords={stats.dueWords}
             learningWords={stats.learningWords}
-            streak={5}
+            streak={stats.streak}
             colors={colors}
           />
 
@@ -295,7 +394,7 @@ const styles = StyleSheet.create({
   },
   reviewButton: {
     width: '100%',
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
   },
   headerContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,

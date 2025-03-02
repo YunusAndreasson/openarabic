@@ -44,9 +44,9 @@ const styles = StyleSheet.create({
   },
   // Content area
   listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL * 4,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM * 5,
   },
   emptyStateContainer: {
     flex: 1,
@@ -68,46 +68,67 @@ const styles = StyleSheet.create({
   },
   // List item styling
   itemContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: 0,
+    position: 'relative', // Important for proper progress indicator positioning
   },
-  cardContent: {
+  listItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.CARD.PADDING.SMALL - 4,
+    paddingTop: LAYOUT.SPACING.SMALL * 0.8,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   itemContentContainer: {
     flex: 1,
     paddingRight: LAYOUT.SPACING.MEDIUM,
   },
   itemTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
     fontWeight: '500',
     marginBottom: LAYOUT.SPACING.TINY / 2,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight: (LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1) * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   itemAuthor: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
+    opacity: 0.7,
+  },
+  progressContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1, // Ensure progress indicator appears above other elements
   },
   progressIndicator: {
-    height: 1.5,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    height: 2, // Slightly thicker for better visibility
+    backgroundColor: 'rgba(0,0,0,0.04)', // Lighter background for better contrast
     width: '100%',
-    marginVertical: LAYOUT.SPACING.TINY,
     overflow: 'hidden',
-    borderRadius: 1,
   },
   progressBar: {
     height: '100%',
     width: '0%',
-    borderRadius: 1,
   },
   // Bottom action bar - similar to vocabulary screen
   bottomControlsContainer: {
     position: 'absolute',
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    left: 0,
-    right: 0,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    left: LAYOUT.SCREEN_EDGE_PADDING,
+    right: LAYOUT.SCREEN_EDGE_PADDING,
+    backgroundColor: 'transparent',
+  },
+  controlsCard: {
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    padding: LAYOUT.SPACING.MEDIUM,
+    backgroundColor: 'transparent',
+  },
+  controlsTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '500',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -119,7 +140,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// Playlist Item Component - simplified
+// Playlist Item Component - redesigned as simple list item with just progress indicator
 const PlaylistItem = React.memo(
   ({
     title,
@@ -139,64 +160,89 @@ const PlaylistItem = React.memo(
     const colors = useColors();
     const isActive = isPlaying || isPaused;
 
-    const borderColor = isActive
-      ? `rgba(${parseInt(colors.tint.slice(1, 3), 16)}, ${parseInt(colors.tint.slice(3, 5), 16)}, ${parseInt(colors.tint.slice(5, 7), 16)}, 0.8)`
-      : colors.cardBorder;
-
     return (
-      <View style={styles.itemContainer}>
-        <CompactThemedCard
-          onPress={() => router.push(`/article/${articleId}`)}
-          style={isActive ? { borderColor: borderColor, borderWidth: 1.5 } : null}
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={() => router.push(`/article/${articleId}`)}
+        activeOpacity={0.7}
+      >
+        <View
+          style={[
+            styles.listItem,
+            {
+              borderBottomColor: colors.cardBorder,
+              backgroundColor: isActive ? `${colors.tint}08` : 'transparent',
+            },
+          ]}
         >
-          <View>
-            <View style={styles.cardContent}>
-              <View style={styles.itemContentContainer}>
-                <ThemedText
-                  numberOfLines={2}
-                  style={[styles.itemTitle, isActive && { color: colors.tint }]}
-                >
-                  {title}
-                </ThemedText>
-                <ThemedText
-                  style={[styles.itemAuthor, { color: colors.authorText }]}
-                  skipDefaultColor
-                  numberOfLines={1}
-                >
-                  {author}
-                </ThemedText>
-              </View>
-
-              <Ionicons
-                name="chevron-forward"
-                size={18}
-                color={colors.text}
-                style={{ opacity: 0.3 }}
-              />
-            </View>
-
-            {/* Always render the progress indicator container for consistent sizing */}
-            <View style={styles.progressIndicator}>
-              {isActive && (
-                <View
-                  style={[
-                    styles.progressBar,
-                    {
-                      backgroundColor: colors.tint,
-                      width: `${progress * 100}%`,
-                    },
-                  ]}
-                />
-              )}
-            </View>
+          <View style={styles.itemContentContainer}>
+            <ThemedText
+              numberOfLines={1}
+              style={[
+                styles.itemTitle,
+                isActive && {
+                  color: colors.tint,
+                  fontWeight: '600', // Slightly bolder when active
+                },
+              ]}
+            >
+              {title}
+            </ThemedText>
+            <ThemedText
+              style={[
+                styles.itemAuthor,
+                isActive && { opacity: 0.8 }, // More visible when active
+              ]}
+              numberOfLines={1}
+            >
+              {author}
+            </ThemedText>
           </View>
-        </CompactThemedCard>
-      </View>
+
+          {isActive ? (
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={colors.tint}
+              style={{ opacity: 0.7 }}
+            />
+          ) : (
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={colors.text}
+              style={{ opacity: 0.3 }}
+            />
+          )}
+        </View>
+
+        {/* Progress indicator at bottom of the item */}
+        <View style={styles.progressContainer}>
+          <View
+            style={[
+              styles.progressIndicator,
+              { backgroundColor: isActive ? 'rgba(0,0,0,0.04)' : 'transparent' },
+            ]}
+          >
+            {isActive && (
+              <View
+                style={[
+                  styles.progressBar,
+                  {
+                    backgroundColor: colors.tint,
+                    width: `${progress * 100}%`,
+                  },
+                ]}
+              />
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
     );
   }
 );
 
-// Bottom Action Buttons - similar to vocabulary screen's review button
+// Bottom Action Buttons component
 const BottomControls = React.memo(
   ({
     onPlayAll,
@@ -213,21 +259,32 @@ const BottomControls = React.memo(
 
     return (
       <View style={styles.bottomControlsContainer}>
-        <View style={styles.actionButtonsRow}>
-          <ThemedButton
-            title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
-            icon={isPlaying && !isShuffleMode ? 'stop-circle' : 'play-circle'}
-            onPress={onPlayAll}
-            variant="filled"
-            style={{ flex: 1 }}
-          />
-          <ThemedButton
-            title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
-            icon={isPlaying && isShuffleMode ? 'stop-circle' : 'shuffle'}
-            onPress={onShuffle}
-            variant="outlined"
-            style={[{ flex: 1 }, styles.shuffleButton, { borderColor: colors.tint }]}
-          />
+        <View
+          style={[
+            styles.controlsCard,
+            {
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+        >
+          <ThemedText style={styles.controlsTitle}>PLAYBACK CONTROLS</ThemedText>
+          <View style={styles.actionButtonsRow}>
+            <ThemedButton
+              title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
+              icon={isPlaying && !isShuffleMode ? 'stop-circle' : 'play-circle'}
+              onPress={onPlayAll}
+              variant="filled"
+              style={{ flex: 1 }}
+            />
+            <ThemedButton
+              title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
+              icon={isPlaying && isShuffleMode ? 'stop-circle' : 'shuffle'}
+              onPress={onShuffle}
+              variant="outlined"
+              style={[{ flex: 1 }, styles.shuffleButton, { borderColor: colors.tint }]}
+            />
+          </View>
         </View>
       </View>
     );
@@ -236,7 +293,7 @@ const BottomControls = React.memo(
 
 export default function PlaylistScreen() {
   const colors = useColors();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList<any>>(null);
 
@@ -275,7 +332,7 @@ export default function PlaylistScreen() {
 
   // Enhanced loading state detection with minimum duration (like Vocabulary screen)
   const isLoading = useMemo(() => {
-    const isCurrentlyLoading = !!user && (isDataLoading || status === 'pending');
+    const isCurrentlyLoading = isAuthLoading || (!!user && (isDataLoading || status === 'pending'));
 
     // Start tracking loading time
     if (isCurrentlyLoading && loadingStartTime.current === null) {
@@ -311,7 +368,7 @@ export default function PlaylistScreen() {
     }
 
     return isCurrentlyLoading;
-  }, [user, isDataLoading, status, forceUpdate]);
+  }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
 
   // Clean up loading timeouts on focus change
   useFocusEffect(
