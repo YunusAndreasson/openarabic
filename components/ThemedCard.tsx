@@ -260,7 +260,6 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
   },
   iosLightModeCard: {
     backgroundColor: 'white',
