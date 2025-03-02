@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, FlatList, View, Animated, Platform, AppState } from 'react-native';
+import {
+  StyleSheet,
+  FlatList,
+  View,
+  Animated,
+  Platform,
+  AppState,
+  TouchableOpacity,
+  Pressable,
+  useColorScheme,
+  ImageBackground,
+} from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,6 +23,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CompactThemedCard } from '@/components/CompactThemedCard';
 
 // ====== AUDIO PLAYER CONSTANTS ======
@@ -42,10 +55,11 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
   },
+  // Content area
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + 100,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL * 4,
   },
   emptyStateContainer: {
     flex: 1,
@@ -65,192 +79,160 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  controlsContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-    backgroundColor: 'transparent',
+  // List item styling
+  itemContainer: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
-  controlsCard: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    overflow: 'hidden',
-    ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
-  },
-  controlsContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.MEDIUM,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE,
-  },
-  button: {
-    flex: 1,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
-  },
-  waveContainer: {
+  cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
-    height: 16,
-    marginLeft: LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.CARD.PADDING.SMALL - 4,
   },
-  bar: {
-    width: 2,
-    height: 16,
-    borderRadius: 1,
-  },
-  listSeparator: {
-    height: LAYOUT.SPACING.SMALL,
-  },
-  articleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-    minHeight: 64,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-  },
-  articleTextContainer: {
+  itemContentContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
-  articleTitle: {
+  itemTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.TINY / 2,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
-  articleAuthor: {
+  itemAuthor: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
-    opacity: LAYOUT.OPACITY.DISABLED,
   },
-  listItemContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  progressIndicator: {
+    height: 1.5,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    width: '100%',
+    marginVertical: LAYOUT.SPACING.TINY,
+    overflow: 'hidden',
+    borderRadius: 1,
+  },
+  progressBar: {
+    height: '100%',
+    width: '0%',
+    borderRadius: 1,
+  },
+  // Bottom action bar - similar to vocabulary screen
+  bottomControlsContainer: {
+    position: 'absolute',
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    left: 0,
+    right: 0,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  actionButtonsRow: {
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center',
+  },
+  shuffleButton: {
+    borderWidth: 1,
   },
 });
 
-const AudioWave = React.memo(({ color }: { color: string }) => {
-  const anim1 = useRef(new Animated.Value(0.4)).current;
-  const anim2 = useRef(new Animated.Value(0.4)).current;
-  const anim3 = useRef(new Animated.Value(0.4)).current;
-  const animationsRef = useRef<Animated.CompositeAnimation>();
-
-  const animations = useMemo(() => [anim1, anim2, anim3], [anim1, anim2, anim3]);
-
-  useEffect(() => {
-    const animationSequence = animations.map((anim, i) =>
-      Animated.sequence([
-        Animated.delay(i * 200),
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(anim, {
-              toValue: 1,
-              duration: 500,
-              useNativeDriver: true,
-            }),
-            Animated.timing(anim, {
-              toValue: 0.4,
-              duration: 500,
-              useNativeDriver: true,
-            }),
-          ])
-        ),
-      ])
-    );
-
-    animationsRef.current = Animated.parallel(animationSequence);
-    animationsRef.current.start();
-
-    return () => {
-      if (animationsRef.current) {
-        animationsRef.current.stop();
-        animationsRef.current = undefined;
-      }
-    };
-  }, [animations]);
-
-  return (
-    <View style={styles.waveContainer}>
-      {animations.map((anim, index) => (
-        <Animated.View
-          key={index}
-          style={[
-            styles.bar,
-            {
-              backgroundColor: color,
-              transform: [{ scaleY: anim }],
-            },
-          ]}
-        />
-      ))}
-    </View>
-  );
-});
-
-const ArticleCard = React.memo(
+// Playlist Item Component - simplified
+const PlaylistItem = React.memo(
   ({
     title,
     author,
     isPlaying,
-    onPress,
+    isPaused,
+    progress,
+    articleId,
   }: {
     title: string;
     author: string;
-    isPlaying?: boolean;
-    onPress: () => void;
+    isPlaying: boolean;
+    isPaused: boolean;
+    progress: number;
+    articleId: number;
   }) => {
+    const colors = useColors();
+    const isActive = isPlaying || isPaused;
+
+    const borderColor = isActive
+      ? `rgba(${parseInt(colors.tint.slice(1, 3), 16)}, ${parseInt(colors.tint.slice(3, 5), 16)}, ${parseInt(colors.tint.slice(5, 7), 16)}, 0.8)`
+      : colors.cardBorder;
+
+    return (
+      <View style={styles.itemContainer}>
+        <CompactThemedCard
+          onPress={() => router.push(`/article/${articleId}`)}
+          style={isActive ? { borderColor: borderColor, borderWidth: 1.5 } : null}
+        >
+          <View>
+            <View style={styles.cardContent}>
+              <View style={styles.itemContentContainer}>
+                <ThemedText
+                  numberOfLines={2}
+                  style={[styles.itemTitle, isActive && { color: colors.tint }]}
+                >
+                  {title}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.itemAuthor, { color: colors.authorText }]}
+                  skipDefaultColor
+                  numberOfLines={1}
+                >
+                  {author}
+                </ThemedText>
+              </View>
+
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.text}
+                style={{ opacity: 0.3 }}
+              />
+            </View>
+
+            {/* Always render the progress indicator container for consistent sizing */}
+            <View style={styles.progressIndicator}>
+              {isActive && (
+                <View
+                  style={[
+                    styles.progressBar,
+                    {
+                      backgroundColor: colors.tint,
+                      width: `${progress * 100}%`,
+                    },
+                  ]}
+                />
+              )}
+            </View>
+          </View>
+        </CompactThemedCard>
+      </View>
+    );
+  }
+);
+
+// Bottom Action Buttons - similar to vocabulary screen's review button
+const BottomControls = React.memo(
+  ({ onPlayAll, onShuffle }: { onPlayAll: () => void; onShuffle: () => void }) => {
     const colors = useColors();
 
     return (
-      <CompactThemedCard
-        onPress={onPress}
-        style={
-          isPlaying
-            ? {
-                borderColor: colors.tint,
-                borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-                transform: [{ scale: 1.01 }],
-                ...LAYOUT.SHADOW.LARGE,
-              }
-            : undefined
-        }
-      >
-        <View style={styles.articleCard}>
-          <View style={styles.articleTextContainer}>
-            <ThemedText
-              numberOfLines={1}
-              style={[styles.articleTitle, isPlaying && { color: colors.tint, fontWeight: '600' }]}
-            >
-              {title}
-            </ThemedText>
-            <ThemedText
-              style={[styles.articleAuthor, { color: colors.authorText }]}
-              skipDefaultColor
-              numberOfLines={1}
-            >
-              {author}
-            </ThemedText>
-          </View>
-          {isPlaying ? (
-            <AudioWave color={colors.tint} />
-          ) : (
-            <Ionicons
-              name="chevron-forward"
-              size={18}
-              color={colors.text}
-              style={{ opacity: 0.3 }}
-            />
-          )}
+      <View style={styles.bottomControlsContainer}>
+        <View style={styles.actionButtonsRow}>
+          <ThemedButton
+            title="Play All"
+            icon="play-circle"
+            onPress={onPlayAll}
+            variant="filled"
+            style={{ flex: 1 }}
+          />
+          <ThemedButton
+            title="Shuffle"
+            icon="shuffle"
+            onPress={onShuffle}
+            variant="outlined"
+            style={[{ flex: 1 }, styles.shuffleButton, { borderColor: colors.tint }]}
+          />
         </View>
-      </CompactThemedCard>
+      </View>
     );
   }
 );
@@ -259,12 +241,20 @@ export default function PlaylistScreen() {
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const flatListRef = useRef<FlatList<any>>(null);
+
+  // Loading state management (similar to Vocabulary screen)
+  const loadingStartTime = useRef<number | null>(null);
+  const isInitialMount = useRef(true);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
+  const [forceUpdate, setForceUpdate] = useState(false);
 
   // Query for reading list
   const {
     data: readingList,
-    isLoading,
+    isLoading: isDataLoading,
     isFetching,
+    status,
   } = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
@@ -278,13 +268,68 @@ export default function PlaylistScreen() {
   const [isShuffleMode, setIsShuffleMode] = useState(false);
   const [playbackProgress, setPlaybackProgress] = useState(0);
   const [shuffledList, setShuffledList] = useState<any[]>([]);
+  const [playlistMode, setPlaylistMode] = useState(false); // Track if we're playing a list or single item
 
   // Simple refs for audio instance, timers, and state tracking
   const soundRef = useRef<Audio.Sound | null>(null);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
   const lastActionTimeRef = useRef(Date.now());
+
+  // Enhanced loading state detection with minimum duration (like Vocabulary screen)
+  const isLoading = useMemo(() => {
+    const isCurrentlyLoading = !!user && (isDataLoading || status === 'pending');
+
+    // Start tracking loading time
+    if (isCurrentlyLoading && loadingStartTime.current === null) {
+      loadingStartTime.current = Date.now();
+    }
+
+    // If not actually loading anymore, check if minimum time elapsed
+    if (!isCurrentlyLoading && loadingStartTime.current !== null) {
+      const timeElapsed = Date.now() - loadingStartTime.current;
+
+      // Ensure loading shows for at least 500ms to avoid flashes
+      if (timeElapsed < 500) {
+        // Clear any existing timeout
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+
+        // Set a timeout to update after minimum time
+        loadingTimeoutRef.current = setTimeout(() => {
+          loadingStartTime.current = null;
+          isInitialMount.current = false;
+          // Force a re-render to update the loading state
+          setForceUpdate(prev => !prev);
+        }, 500 - timeElapsed);
+
+        // Haven't shown loader for 500ms yet, so keep showing
+        return true;
+      }
+
+      // Reset timer and mark initial mount as done
+      loadingStartTime.current = null;
+      isInitialMount.current = false;
+    }
+
+    return isCurrentlyLoading;
+  }, [user, isDataLoading, status, forceUpdate]);
+
+  // Clean up loading timeouts on focus change
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        // Clear any pending timeouts when screen loses focus
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+          loadingTimeoutRef.current = undefined;
+        }
+        // Reset loading state when unmounting
+        loadingStartTime.current = null;
+      };
+    }, [])
+  );
 
   // Get active playlist based on mode
   const activePlaylist = useMemo(() => {
@@ -304,14 +349,14 @@ export default function PlaylistScreen() {
     return currentTrack?.article?.audio_url || null;
   }, [currentTrack]);
 
+  // Check if something is currently playing
+  const isCurrentlyPlaying = useMemo(() => {
+    return audioState !== AUDIO_STATES.IDLE;
+  }, [audioState]);
+
   // Clean up all audio resources
   const cleanupAudio = async () => {
     // Clear any timers
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = null;
-    }
-
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
@@ -412,7 +457,14 @@ export default function PlaylistScreen() {
 
     // Handle playback finishing
     if (status.didJustFinish) {
-      playNextTrack();
+      // If in single item mode, don't auto-advance
+      if (!playlistMode) {
+        // Just stop playback when finished
+        stopPlayback();
+      } else {
+        // In playlist mode, proceed to next track
+        playNextTrack();
+      }
     }
   };
 
@@ -438,12 +490,36 @@ export default function PlaylistScreen() {
     }, 1000);
   };
 
-  // Play/stop logic
-  const togglePlayback = async () => {
-    if (audioState === AUDIO_STATES.PLAYING) {
-      await stopPlayback();
+  // Play/pause/resume the selected track
+  const toggleTrack = async (index: number) => {
+    // Prevent rapid button presses
+    if (Date.now() - lastActionTimeRef.current < 500) {
+      return;
+    }
+
+    lastActionTimeRef.current = Date.now();
+
+    // If clicking on the currently playing track, toggle pause/play
+    if (index === currentTrackIndex && audioState !== AUDIO_STATES.IDLE) {
+      if (audioState === AUDIO_STATES.PLAYING) {
+        // Pause the current track
+        if (soundRef.current) {
+          await soundRef.current.pauseAsync().catch(() => {});
+          setAudioState(AUDIO_STATES.PAUSED);
+        }
+      } else if (audioState === AUDIO_STATES.PAUSED) {
+        // Resume the current track
+        if (soundRef.current) {
+          await soundRef.current.playAsync().catch(() => {});
+          setAudioState(AUDIO_STATES.PLAYING);
+        }
+      }
     } else {
-      await startPlayback();
+      // Start playing a new track
+      setCurrentTrackIndex(index);
+      setIsShuffleMode(false);
+      // Set to single item mode when directly tapping a track
+      setPlaylistMode(false);
     }
   };
 
@@ -463,8 +539,8 @@ export default function PlaylistScreen() {
 
     setIsShuffleMode(false);
     setCurrentTrackIndex(0);
-
-    // The useEffect will handle loading and playing when currentTrackIndex changes
+    // Set to playlist mode
+    setPlaylistMode(true);
   };
 
   // Stop all playback
@@ -481,6 +557,7 @@ export default function PlaylistScreen() {
     setAudioState(AUDIO_STATES.IDLE);
     setCurrentTrackIndex(-1);
     setPlaybackProgress(0);
+    setPlaylistMode(false);
   };
 
   // Start playback in shuffle mode
@@ -511,22 +588,34 @@ export default function PlaylistScreen() {
     setShuffledList(shuffled);
     setIsShuffleMode(true);
     setCurrentTrackIndex(0);
-
-    // The useEffect will handle loading and playing when currentTrackIndex changes
+    // Set to playlist mode
+    setPlaylistMode(true);
   };
 
   // Play the next track in the sequence
   const playNextTrack = async () => {
-    if (currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
-      // End of playlist, stop playback
+    // If not in playlist mode or at the end of playlist, stop playback
+    if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
       await stopPlayback();
       return;
     }
 
     // Move to next track
     setCurrentTrackIndex(prev => prev + 1);
+  };
 
-    // The useEffect will handle loading and playing when currentTrackIndex changes
+  // Play the previous track in the sequence
+  const playPreviousTrack = async () => {
+    if (currentTrackIndex <= 0) {
+      // Beginning of playlist, restart current track
+      if (soundRef.current) {
+        await soundRef.current.setPositionAsync(0).catch(() => {});
+      }
+      return;
+    }
+
+    // Move to previous track
+    setCurrentTrackIndex(prev => prev - 1);
   };
 
   // Handle component focus and cleanup
@@ -588,7 +677,7 @@ export default function PlaylistScreen() {
   }, [currentTrackIndex, activePlaylist]);
 
   // Loading screen
-  if (isLoading || isFetching) {
+  if (isLoading) {
     return (
       <ThemedView style={styles.container}>
         <LoadingScreen />
@@ -599,7 +688,7 @@ export default function PlaylistScreen() {
   // Not logged in
   if (!user) {
     return (
-      <ThemedView style={styles.container}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
         </View>
@@ -621,7 +710,7 @@ export default function PlaylistScreen() {
   // Empty playlist
   if (!readingList?.length) {
     return (
-      <ThemedView style={styles.container}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
         </View>
@@ -638,76 +727,47 @@ export default function PlaylistScreen() {
 
   // Normal display with playlist
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+      {/* Clean header */}
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
         <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
       </View>
 
       <FlatList
+        ref={flatListRef}
         data={readingList}
         keyExtractor={item => `${item.article_id}`}
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           // Determine if this item is currently playing
           const isItemPlaying =
             audioState === AUDIO_STATES.PLAYING &&
             ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
               (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
 
+          const isItemPaused =
+            audioState === AUDIO_STATES.PAUSED &&
+            ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+              (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+
           return (
-            <View style={styles.listItemContainer}>
-              <ArticleCard
-                title={item.article.title}
-                author={item.article.author.name}
-                isPlaying={isItemPlaying}
-                onPress={() => router.push(`/article/${item.article_id}`)}
-              />
-            </View>
+            <PlaylistItem
+              title={item.article.title}
+              author={item.article.author.name}
+              isPlaying={isItemPlaying}
+              isPaused={isItemPaused}
+              progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
+              articleId={item.article_id}
+            />
           );
         }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
         removeClippedSubviews={Platform.OS === 'android'}
-        initialNumToRender={8}
-        maxToRenderPerBatch={5}
-        windowSize={10}
+        initialNumToRender={10}
       />
 
-      <Animated.View style={styles.controlsContainer}>
-        <View
-          style={[
-            styles.controlsCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-        >
-          <View style={styles.controlsContent}>
-            <View style={styles.buttonRow}>
-              <ThemedButton
-                variant="filled"
-                title={audioState === AUDIO_STATES.PLAYING && !isShuffleMode ? 'Stop' : 'Play All'}
-                icon={
-                  audioState === AUDIO_STATES.PLAYING && !isShuffleMode
-                    ? 'stop-circle'
-                    : 'play-circle'
-                }
-                onPress={togglePlayback}
-                style={styles.button}
-              />
-              <ThemedButton
-                variant="filled"
-                title={audioState === AUDIO_STATES.PLAYING && isShuffleMode ? 'Stop' : 'Shuffle'}
-                icon={
-                  audioState === AUDIO_STATES.PLAYING && isShuffleMode ? 'stop-circle' : 'shuffle'
-                }
-                onPress={startShufflePlayback}
-                style={styles.button}
-              />
-            </View>
-          </View>
-        </View>
-      </Animated.View>
+      {/* Bottom Action Buttons - similar to vocabulary screen */}
+      <BottomControls onPlayAll={startPlayback} onShuffle={startShufflePlayback} />
     </ThemedView>
   );
 }
