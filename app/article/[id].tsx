@@ -32,6 +32,7 @@ import type { Article } from '@/types/articles.types';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { readingListService } from '@/services/reading_list';
 
 const styles = StyleSheet.create({
   container: {
@@ -52,7 +53,12 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
     left: 15,
   },
-  backButtonBlur: {
+  playlistButton: {
+    position: 'absolute',
+    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
+    right: 15,
+  },
+  buttonBlur: {
     padding: 8,
     borderRadius: 18,
     overflow: 'hidden',
@@ -60,7 +66,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     opacity: 0.85,
   },
-  backButtonIcon: {
+  buttonIcon: {
     alignSelf: 'center',
   },
   fullScreenContainer: {
@@ -102,6 +108,70 @@ export default function ArticleScreen() {
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
   });
+
+  // Check if article is in reading list
+  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
+    queryKey: ['isInReadingList', user?.id, articleId],
+    queryFn: () => readingListService.isInReadingList(user!.id, articleId!),
+    enabled: !!user && !!articleId,
+  });
+
+  // Add to reading list mutation
+  const addToReadingListMutation = useMutation({
+    mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
+      readingListService.addToReadingList(userId, articleId),
+    onSuccess: () => {
+      Toast.show({
+        type: 'success',
+        text1: 'Added to playlist',
+        position: 'bottom',
+      });
+      refetchReadingListStatus();
+      queryClient.invalidateQueries({ queryKey: ['readingList'] });
+    },
+    onError: () => {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to add to playlist',
+        position: 'bottom',
+      });
+    },
+  });
+
+  // Remove from reading list mutation
+  const removeFromReadingListMutation = useMutation({
+    mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
+      readingListService.removeFromReadingList(userId, articleId),
+    onSuccess: () => {
+      Toast.show({
+        type: 'success',
+        text1: 'Removed from playlist',
+        position: 'bottom',
+      });
+      refetchReadingListStatus();
+      queryClient.invalidateQueries({ queryKey: ['readingList'] });
+    },
+    onError: () => {
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to remove from playlist',
+        position: 'bottom',
+      });
+    },
+  });
+
+  // Toggle article in reading list
+  const handleToggleReadingList = useCallback(() => {
+    if (!user || !articleId) return;
+
+    if (isInReadingList) {
+      removeFromReadingListMutation.mutate({ userId: user.id, articleId });
+    } else {
+      addToReadingListMutation.mutate({ userId: user.id, articleId });
+    }
+  }, [user, articleId, isInReadingList, addToReadingListMutation, removeFromReadingListMutation]);
 
   // Update animation when visibility changes
   useEffect(() => {
@@ -243,22 +313,56 @@ export default function ArticleScreen() {
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <BlurView
-            intensity={70}
-            tint={isDarkMode ? 'dark' : 'light'}
-            style={styles.backButtonBlur}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={22}
-              color={colors.text}
-              style={styles.backButtonIcon}
-            />
+          <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
+            <Ionicons name="chevron-back" size={22} color={colors.text} style={styles.buttonIcon} />
           </BlurView>
         </TouchableOpacity>
       </Animated.View>
     );
   }, [insets.top, backButtonAnim, isBackButtonVisible, isDarkMode, colors.text]);
+
+  // Memoize the playlist button component
+  const PlaylistButton = useMemo(() => {
+    if (!user) return null;
+
+    return (
+      <Animated.View
+        style={[
+          styles.playlistButton,
+          {
+            top: Platform.OS === 'ios' ? insets.top + 10 : insets.top + 5,
+            transform: [{ translateY: backButtonAnim }],
+            opacity: isBackButtonVisible ? 1 : 0,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          onPress={handleToggleReadingList}
+          accessibilityLabel={isInReadingList ? 'Remove from playlist' : 'Add to playlist'}
+          accessibilityRole="button"
+        >
+          <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
+            <Ionicons
+              name={isInReadingList ? 'bookmark' : 'bookmark-outline'}
+              size={22}
+              color={isInReadingList ? colors.tint : colors.text}
+              style={styles.buttonIcon}
+            />
+          </BlurView>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }, [
+    insets.top,
+    backButtonAnim,
+    isBackButtonVisible,
+    isDarkMode,
+    colors.text,
+    colors.tint,
+    isInReadingList,
+    handleToggleReadingList,
+    user,
+  ]);
 
   // Optimize enhanceWord function - restore required properties for type compatibility
   const enhanceWord = useCallback((word: Tables<'sentence_words'>) => {
@@ -335,7 +439,7 @@ export default function ArticleScreen() {
   // Calculate content padding based on safe area insets
   const contentPadding = useMemo(
     () => ({
-      paddingTop: insets.top + (Platform.OS === 'ios' ? 12 : 8),
+      paddingTop: insets.top + (Platform.OS === 'ios' ? 50 : 45),
       paddingBottom: 4,
     }),
     [insets.top]
@@ -377,6 +481,9 @@ export default function ArticleScreen() {
 
       {/* Animated back button */}
       {BackButton}
+
+      {/* Animated playlist button */}
+      {PlaylistButton}
 
       {/* Article content */}
       <FlatList
