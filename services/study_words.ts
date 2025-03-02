@@ -8,8 +8,14 @@ interface WordReviewUpdate {
   lapses: number;
 }
 
+// Define an options interface for getStudyWords
+interface GetStudyWordsOptions {
+  onlyDue?: boolean;
+  forStats?: boolean;
+}
+
 export const studyWordsService = {
-  async getStudyWords(userId: string) {
+  async getStudyWords(userId: string, options: GetStudyWordsOptions = {}) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -21,10 +27,19 @@ export const studyWordsService = {
       throw new Error('User ID mismatch');
     }
 
-    const { data, error } = await supabase
-      .from('study_words')
-      .select(
-        `
+    // Build the query step by step with proper typing
+    let query = supabase.from('study_words');
+
+    // Define the selection based on options
+    let selectQuery;
+    if (options.forStats) {
+      // For stats, we only need core fields, not all the relationships
+      selectQuery = query.select(
+        'interval_days, next_review_at, review_count, created_at, sentence_word_id'
+      );
+    } else {
+      // Full data with relationships
+      selectQuery = query.select(`
         *,
         sentence_word:sentence_words (
           *,
@@ -34,9 +49,19 @@ export const studyWordsService = {
             *
           )
         )
-      `
-      )
-      .eq('user_id', userId);
+      `);
+    }
+
+    // Add filters after the select
+    let filteredQuery = selectQuery.eq('user_id', userId);
+
+    // Add due date filter if requested
+    if (options.onlyDue) {
+      const now = new Date().toISOString();
+      filteredQuery = filteredQuery.lte('next_review_at', now);
+    }
+
+    const { data, error } = await filteredQuery;
 
     if (error) {
       throw error;

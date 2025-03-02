@@ -16,6 +16,7 @@ import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { StudyWord } from '@/utils/vocabulary';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Create a memoized component for the sign-in message
 const SignInMessage = React.memo(() => (
@@ -48,6 +49,21 @@ const ReviewButton = React.memo(
 
 ReviewButton.displayName = 'ReviewButton';
 
+// Create a disabled review button for when there are no words to review
+const DisabledReviewButton = React.memo(() => (
+  <View style={styles.reviewButtonContainer}>
+    <ThemedButton
+      title="No words to review"
+      icon="checkmark-circle"
+      disabled={true}
+      variant="outlined"
+      style={styles.reviewButton}
+    />
+  </View>
+));
+
+DisabledReviewButton.displayName = 'DisabledReviewButton';
+
 // Helper function to estimate the last review date for a word
 const estimateLastReviewDate = (word: StudyWord, currentTime: Date): Date | null => {
   if (word.review_count === 0) return null;
@@ -72,6 +88,7 @@ export default function VocabularyScreen() {
   const isInitialMount = useRef(true);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
   const [forceUpdate, setForceUpdate] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     data: studyWords = [],
@@ -82,10 +99,19 @@ export default function VocabularyScreen() {
     refetch,
   } = useQuery({
     queryKey: ['studyWords', user?.id],
-    queryFn: () => studyWordsService.getStudyWords(user!.id),
+    queryFn: () => studyWordsService.getStudyWords(user!.id, { forStats: false }),
     enabled: !!user,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false,
+  });
+
+  // Add a separate query just for due words count
+  const { data: dueWordsData = [] } = useQuery({
+    queryKey: ['dueWords', user?.id],
+    queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
+    enabled: !!user,
+    staleTime: 30000, // 30 seconds
+    gcTime: 60000, // 1 minute
   });
 
   // Refetch data when the screen comes into focus
@@ -174,12 +200,30 @@ export default function VocabularyScreen() {
       return { totalWords: 0, dueWords: 0, masteredWords: 0, learningWords: 0, streak: 0 };
 
     const now = new Date();
-    const dueWords = validStudyWords.filter(word => new Date(word.next_review_at) <= now);
+    const nowTimestamp = now.getTime();
+
+    // Use the directly fetched due words count instead of filtering again
+    const dueWordsCount = dueWordsData.length;
+
+    // Optimize by avoiding creating multiple Date objects in the filter callback
     const masteredWords = validStudyWords.filter(word => word.interval_days >= 30);
     const learningWords = validStudyWords.length - masteredWords.length;
 
+    return {
+      totalWords: validStudyWords.length,
+      dueWords: dueWordsCount,
+      masteredWords: masteredWords.length,
+      learningWords,
+      streak: 0, // Will be calculated later
+    };
+  }, [validStudyWords, dueWordsData.length]);
+
+  // Update streak calculation function to run separately
+  const streak = useMemo(() => {
+    if (!validStudyWords.length) return 0;
+
+    const now = new Date();
     // Calculate streak based on review history
-    let streak = 0;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -189,13 +233,7 @@ export default function VocabularyScreen() {
       .filter(Boolean) as Date[];
 
     if (reviewDates.length === 0) {
-      return {
-        totalWords: validStudyWords.length,
-        dueWords: dueWords.length,
-        masteredWords: masteredWords.length,
-        learningWords,
-        streak: 0,
-      };
+      return 0;
     }
 
     // Sort descending to get the most recent review first
@@ -211,7 +249,7 @@ export default function VocabularyScreen() {
 
     if (daysDifference > 1) {
       // Streak broken - more than 1 day since last review
-      streak = 0;
+      return 0;
     } else {
       // Count consecutive days with reviews
       let currentDate = new Date(today);
@@ -239,17 +277,14 @@ export default function VocabularyScreen() {
         }
       }
 
-      streak = currentStreak;
+      return currentStreak;
     }
-
-    return {
-      totalWords: validStudyWords.length,
-      dueWords: dueWords.length,
-      masteredWords: masteredWords.length,
-      learningWords,
-      streak,
-    };
   }, [validStudyWords]);
+
+  // Combine stats with streak
+  const combinedStats = useMemo(() => {
+    return { ...stats, streak };
+  }, [stats, streak]);
 
   // Generate weekly progress data based on actual review history
   const weeklyProgressData = useMemo(() => {
@@ -296,12 +331,16 @@ export default function VocabularyScreen() {
     return Array.from(dayMap.values());
   }, [validStudyWords]);
 
+  // Function to start a review
   const handleStartReview = useCallback(() => {
-    // Simple timeout to ensure smooth transition
+    // Invalidate due words query before navigating
+    queryClient.invalidateQueries({ queryKey: ['dueWords', user?.id] });
+
+    // Add slight delay for smooth transition
     setTimeout(() => {
-      router.navigate('/review');
-    }, 50);
-  }, []);
+      router.push('/review');
+    }, 100);
+  }, [router, queryClient, user?.id]);
 
   // Show loader while authentication is being checked OR while data is loading
   if (isLoading) {
@@ -358,24 +397,26 @@ export default function VocabularyScreen() {
         >
           {/* Vocabulary Dashboard */}
           <VocabularyDashboard
-            totalWords={stats.totalWords}
-            masteredWords={stats.masteredWords}
-            dueWords={stats.dueWords}
-            learningWords={stats.learningWords}
-            streak={stats.streak}
+            totalWords={combinedStats.totalWords}
+            masteredWords={combinedStats.masteredWords}
+            dueWords={combinedStats.dueWords}
+            learningWords={combinedStats.learningWords}
+            streak={combinedStats.streak}
             colors={colors}
           />
 
-          {/* Weekly Progress Graph */}
+          {/* Weekly Progress */}
           <VocabularyGraph
+            title="Weekly Progress"
             data={weeklyProgressData}
-            title="Words Learned This Week"
             isLoading={isContentLoading}
           />
 
-          {/* Review Button - using memoized component */}
-          {stats.dueWords > 0 && (
-            <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+          {/* Review Button - always show either enabled or disabled version */}
+          {combinedStats.dueWords > 0 ? (
+            <ReviewButton dueWords={combinedStats.dueWords} onPress={handleStartReview} />
+          ) : (
+            <DisabledReviewButton />
           )}
         </ScrollView>
       )}

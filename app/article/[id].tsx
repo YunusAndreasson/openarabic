@@ -122,11 +122,12 @@ export default function ArticleScreen() {
   // Fetch study words
   const { data: studyWords = [] } = useQuery({
     queryKey: ['studyWords', user?.id],
-    queryFn: () => studyWordsService.getStudyWords(user!.id),
+    queryFn: () => studyWordsService.getStudyWords(user!.id, { forStats: false }),
     enabled: !!user,
+    staleTime: 60000, // 1 minute cache
   });
 
-  // Create a set of selected word IDs for faster lookups
+  // Create a set of selected word IDs for faster lookups - using a Set improves lookup performance
   const selectedWordIds = useMemo(
     () => new Set(studyWords.map(w => w.sentence_word_id)),
     [studyWords]
@@ -137,6 +138,7 @@ export default function ArticleScreen() {
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
       studyWordsService.toggleStudyWord(userId, wordId),
     onSuccess: () => {
+      // Only invalidate the studyWords query for the current user
       queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
     },
     onError: () => {

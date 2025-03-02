@@ -61,35 +61,24 @@ export function useSpacedRepetition({
 
   // Function to invalidate queries
   const invalidateQueries = useCallback(() => {
+    // More targeted invalidation by using exact query keys
     queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-    queryClient.invalidateQueries({ queryKey: ['studyWords'] });
+    queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
     queryClient.invalidateQueries({ queryKey: ['userProgress'] });
-    queryClient.invalidateQueries({ queryKey: ['dueWords'] });
-  }, [queryClient]);
+    queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
+  }, [queryClient, userId]);
 
-  // Fetch due words
+  // Fetch due words - use server-side filtering for better performance
   const { data: dueWords = [], isLoading } = useQuery({
     queryKey: ['dueWords', userId],
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
-      const words = await studyWordsService.getStudyWords(userId);
+      // Use the onlyDue option to filter on the server side
+      const words = await studyWordsService.getStudyWords(userId, { onlyDue: true });
 
-      // Pre-compute current timestamp once for comparison
-      const now = Date.now();
-
-      // Filter due words more efficiently - only check if review date is due
-      // Remove the interval_days < 30 condition to match vocabulary screen's definition
-      const filteredWords = words.filter(word => {
-        if (!word.sentence_word || !word.next_review_at) return false;
-
-        // Avoid creating multiple Date objects in the loop
-        const reviewDate = new Date(word.next_review_at).getTime();
-        return reviewDate <= now;
-      });
-
-      // Sort by next review date (oldest first)
-      if (filteredWords.length > 1) {
-        filteredWords.sort((a, b) => {
+      // Server already filtered for due words, so we just need to sort
+      if (words.length > 1) {
+        words.sort((a, b) => {
           // Use cached timestamp values to avoid redundant Date object creation
           const dateA = new Date(a.next_review_at).getTime();
           const dateB = new Date(b.next_review_at).getTime();
@@ -97,9 +86,12 @@ export function useSpacedRepetition({
         });
       }
 
-      return filteredWords;
+      return words;
     },
     enabled: !!userId,
+    // Improve caching strategy
+    staleTime: 60 * 1000, // 1 minute before considering stale
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (React Query v5 uses gcTime instead of cacheTime)
   });
 
   useEffect(() => {
@@ -131,9 +123,6 @@ export function useSpacedRepetition({
       setIsUpdating(true);
       hasUpdatedWords.current = true;
 
-      // No need to set transition type here, it's already set in updateWord function
-      // Remove duplicate: setTransitionType(success ? 'fade' : 'slide');
-
       const newInterval = success
         ? Math.max(1, Math.round(wordToUpdate.interval_days * wordToUpdate.ease_factor))
         : 1;
@@ -143,25 +132,43 @@ export function useSpacedRepetition({
       const nextReview = new Date();
       nextReview.setDate(nextReview.getDate() + newInterval);
 
+      // Prepare update payload
+      const updatedWord = {
+        interval_days: newInterval,
+        ease_factor: newEaseFactor,
+        next_review_at: nextReview.toISOString(),
+        review_count: wordToUpdate.review_count + 1,
+        lapses: success ? wordToUpdate.lapses : wordToUpdate.lapses + 1,
+      };
+
+      // Apply optimistic update to cache
+      queryClient.setQueryData(['dueWords', userId], (oldData: StudyWord[] | undefined) => {
+        if (!oldData) return oldData;
+        // Create a new array with the updated word
+        return oldData.map(word =>
+          String(word.sentence_word_id) === String(wordId) ? { ...word, ...updatedWord } : word
+        );
+      });
+
       try {
-        await studyWordsService.updateWordReview(Number(wordId), {
-          interval_days: newInterval,
-          ease_factor: newEaseFactor,
-          next_review_at: nextReview.toISOString(),
-          review_count: wordToUpdate.review_count + 1,
-          lapses: success ? wordToUpdate.lapses : wordToUpdate.lapses + 1,
-        });
+        await studyWordsService.updateWordReview(Number(wordId), updatedWord);
+        return { wordId, success, updatedWord };
       } catch (error) {
         console.error('Error updating word review:', error);
-        // Continue to next word even if there's an error
-        if (mountedRef.current) {
-          setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
-        }
+        // Invalidate cache on error to ensure it's up to date
+        invalidateQueries();
+        throw error;
       }
     },
     onSuccess: () => {
       if (mountedRef.current) {
         // Always use function form to ensure latest value
+        setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
+      }
+    },
+    onError: () => {
+      // Continue to next word even if there's an error
+      if (mountedRef.current) {
         setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
       }
     },
@@ -178,6 +185,15 @@ export function useSpacedRepetition({
 
       const wordToUpdate = wordsRef.current[currentIndex];
       if (!wordToUpdate?.sentence_word_id) return;
+
+      // Ensure we're comparing the correct IDs (both as strings or both as numbers)
+      if (String(wordToUpdate.sentence_word_id) !== String(wordId)) {
+        console.error('Word ID mismatch in updateWord', {
+          expected: wordToUpdate.sentence_word_id,
+          received: wordId,
+        });
+        return;
+      }
 
       // Set transition type immediately before the animation starts
       // This is the ONLY place we should set the transition type
