@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   actionButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     alignItems: 'center',
     ...LAYOUT.SHADOW.SMALL,

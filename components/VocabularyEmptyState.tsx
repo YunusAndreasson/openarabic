@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   emptyIconContainer: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,

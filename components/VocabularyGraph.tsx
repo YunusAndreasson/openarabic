@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
   },

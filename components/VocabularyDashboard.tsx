@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   iconWrapper: {
     backgroundColor: Colors.light.cardBackground,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    padding: 8,
+    padding: LAYOUT.SPACING.SMALL,
   },
   statValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -225,11 +225,11 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     height: 8,
-    borderRadius: 4,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 4,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
   },
 });

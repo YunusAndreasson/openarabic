@@ -137,6 +137,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -1.5,
     alignSelf: 'center',
-    borderRadius: 1,
+    borderRadius: LAYOUT.SPACING.TINY,
   },
 });
