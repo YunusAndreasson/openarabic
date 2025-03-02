@@ -64,12 +64,12 @@ const styles = StyleSheet.create({
     right: 15,
   },
   buttonBlur: {
-    padding: 8,
-    borderRadius: 18,
+    padding: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    opacity: 0.85,
+    opacity: LAYOUT.OPACITY.OVERLAY,
   },
   buttonIcon: {
     alignSelf: 'center',

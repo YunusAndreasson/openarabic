@@ -446,17 +446,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: LAYOUT.OPACITY.ACTIVE,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
+    ...LAYOUT.SHADOW.SMALL,
   },
   categoryContainer: {
     height: 30,

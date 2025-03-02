@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
+import { Colors } from '../constants/Colors';
 
 interface VocabularyDashboardProps {
   totalWords: number;
@@ -191,11 +192,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: Colors.light.cardBackground,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    padding: 8,
   },
   statValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,

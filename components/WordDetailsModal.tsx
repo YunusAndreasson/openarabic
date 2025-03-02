@@ -273,17 +273,7 @@ const styles = StyleSheet.create({
   pill: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     padding: LAYOUT.SPACING.MEDIUM,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
+    ...LAYOUT.SHADOW.SMALL,
   },
   rootText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,

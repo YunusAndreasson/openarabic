@@ -264,8 +264,8 @@ const styles = StyleSheet.create({
   },
   iosLightModeCard: {
     backgroundColor: 'white',
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    shadowOpacity: LAYOUT.OPACITY.OVERLAY,
+    shadowRadius: 8,
   },
   imageContainer: {
     position: 'relative',
