@@ -135,6 +135,9 @@ function WordDetailsModalComponent({
       useBlur={true}
       blurIntensity={isDarkMode ? 60 : 80}
       contentStyle={styles.modalContent}
+      useHaptics={false}
+      animationDuration={200}
+      animationType="fade"
     >
       <View style={styles.header}>
         <View style={wordContainerStyle}>
