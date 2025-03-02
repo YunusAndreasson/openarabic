@@ -36,15 +36,6 @@ export default function AccountScreen() {
     () => colors.background === Colors.dark.background,
     [colors.background]
   );
-  const shadowStyles = useMemo(
-    () => ({
-      secondary: {
-        shadowColor: colors.shadow,
-        shadowOpacity: isDarkMode ? 0 : 0.1,
-      },
-    }),
-    [colors.shadow, isDarkMode]
-  );
 
   // Custom button styles to ensure left alignment
   const buttonStyles = useMemo(
@@ -204,7 +195,6 @@ export default function AccountScreen() {
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: colors.cardBorder,
-                ...shadowStyles.secondary,
               },
             ]}
           >
@@ -300,7 +290,6 @@ export default function AccountScreen() {
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: colors.cardBorder,
-                ...shadowStyles.secondary,
                 marginTop: LAYOUT.SPACING.MEDIUM,
               },
             ]}
@@ -343,7 +332,6 @@ export default function AccountScreen() {
               {
                 backgroundColor: colors.cardBackground,
                 borderColor: colors.cardBorder,
-                ...shadowStyles.secondary,
                 marginTop: LAYOUT.SPACING.MEDIUM,
               },
             ]}
@@ -440,35 +428,18 @@ const styles = StyleSheet.create({
   },
   settingsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    elevation: LAYOUT.Z_INDEX.CARD,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    overflow: 'hidden',
   },
   connectContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-    elevation: LAYOUT.Z_INDEX.CARD,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   actionsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-    elevation: LAYOUT.Z_INDEX.CARD,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderWidth: StyleSheet.hairlineWidth,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
