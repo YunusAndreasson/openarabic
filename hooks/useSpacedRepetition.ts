@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studyWordsService } from '../services/study_words';
 
@@ -92,6 +92,8 @@ export function useSpacedRepetition({
     // Improve caching strategy
     staleTime: 60 * 1000, // 1 minute before considering stale
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (React Query v5 uses gcTime instead of cacheTime)
+    retry: 3, // Retry failed requests 3 times
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 
   useEffect(() => {
@@ -101,13 +103,22 @@ export function useSpacedRepetition({
   }, [dueWords]);
 
   // Calculate if review is complete
-  const isComplete = currentIndex >= dueWords.length && dueWords.length > 0;
+  const isComplete = useMemo(
+    () => currentIndex >= dueWords.length && dueWords.length > 0,
+    [currentIndex, dueWords.length]
+  );
 
   // Calculate progress percentage
-  const progress = dueWords.length > 0 ? (currentIndex / dueWords.length) * 100 : 0;
+  const progress = useMemo(
+    () => (dueWords.length > 0 ? (currentIndex / dueWords.length) * 100 : 0),
+    [currentIndex, dueWords.length]
+  );
 
   // Get current word with safety check to prevent "error loading word"
-  const currentWord = currentIndex < dueWords.length ? dueWords[currentIndex] : undefined;
+  const currentWord = useMemo(
+    () => (currentIndex < dueWords.length ? dueWords[currentIndex] : undefined),
+    [currentIndex, dueWords]
+  );
 
   // Word update mutation
   const updateWordMutation = useMutation({
@@ -177,6 +188,10 @@ export function useSpacedRepetition({
     },
   });
 
+  const determineTransitionType = useCallback((success: boolean) => {
+    return success ? 'fade' : 'slide';
+  }, []);
+
   // Update word function
   const updateWord = useCallback(
     async (wordId: string, success: boolean) => {
@@ -197,7 +212,7 @@ export function useSpacedRepetition({
 
       // Set transition type immediately before the animation starts
       // This is the ONLY place we should set the transition type
-      setTransitionType(success ? 'fade' : 'slide');
+      setTransitionType(determineTransitionType(success));
 
       await updateWordMutation.mutate({
         wordId,
@@ -205,7 +220,7 @@ export function useSpacedRepetition({
         wordToUpdate,
       });
     },
-    [currentIndex, updateWordMutation]
+    [currentIndex, updateWordMutation, determineTransitionType]
   );
 
   // Check if review is completed and invalidate relevant queries
@@ -221,8 +236,8 @@ export function useSpacedRepetition({
   // Invalidate queries on unmount if session was started but not completed
   useEffect(() => {
     return () => {
-      if (hasUpdatedWords.current && !isComplete && mountedRef.current) {
-        invalidateQueries();
+      if (hasUpdatedWords.current && !isComplete) {
+        invalidateQueries(); // No need to check mountedRef here
       }
     };
   }, [invalidateQueries, isComplete]);

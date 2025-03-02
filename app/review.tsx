@@ -13,13 +13,12 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
 import { Loader } from '@/components/Loader';
-import Toast from 'react-native-toast-message';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
 const SWIPE_OUT_DURATION = LAYOUT.ANIMATION.DURATION.FAST;
 const MEANING_DISPLAY_DURATION = 1600;
-const INITIAL_FADE_DURATION = 250;
+const INITIAL_FADE_DURATION = 150;
 
 // Main Component
 export default function ReviewScreen() {
@@ -30,23 +29,18 @@ export default function ReviewScreen() {
   const mountedRef = useRef(true);
   const position = useRef(new Animated.ValueXY()).current;
   const fadeOpacity = useRef(new Animated.Value(1)).current;
-  const screenFadeOpacity = useRef(new Animated.Value(0)).current;
+  const screenFadeOpacity = useRef(new Animated.Value(0.5)).current;
   const meaningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [isScreenReady, setIsScreenReady] = useState(false);
+  const [isScreenReady, setIsScreenReady] = useState(true);
 
-  // Add initial fade-in animation
+  // Optimize fade-in animation
   useEffect(() => {
-    setIsScreenReady(true);
-
-    const timeout = setTimeout(() => {
-      Animated.timing(screenFadeOpacity, {
-        toValue: 1,
-        duration: INITIAL_FADE_DURATION,
-        useNativeDriver: true,
-      }).start();
-    }, 100);
-
-    return () => clearTimeout(timeout);
+    // Start animation immediately with better performance values
+    Animated.timing(screenFadeOpacity, {
+      toValue: 1,
+      duration: INITIAL_FADE_DURATION,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   // Use the spaced repetition hook
@@ -67,18 +61,6 @@ export default function ReviewScreen() {
       // Additional completion logic if needed
     },
   });
-
-  // Invalidate queries when there are no due words
-  useEffect(() => {
-    if (!isLoading && dueWords.length === 0) {
-      Toast.show({
-        type: 'info',
-        text1: 'No due words found',
-        text2: 'Refreshing data...',
-      });
-      invalidateQueries();
-    }
-  }, [isLoading, dueWords.length, invalidateQueries]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -349,7 +331,7 @@ export default function ReviewScreen() {
               {parts[0]}
             </ThemedText>
             <ThemedText style={[styles.studyWord, { color: colors.tint }]} skipDefaultColor>
-              {wordForm}
+              {' ' + wordForm + ' '}
             </ThemedText>
             <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
               {parts[1]}
@@ -450,11 +432,9 @@ export default function ReviewScreen() {
           gestureEnabled: false,
         }}
       />
-      {isScreenReady && (
-        <Animated.View style={{ flex: 1, opacity: screenFadeOpacity }}>
-          {renderContent()}
-        </Animated.View>
-      )}
+      <Animated.View style={{ flex: 1, opacity: screenFadeOpacity }}>
+        {renderContent()}
+      </Animated.View>
     </View>
   );
 }
@@ -469,23 +449,30 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
   },
   sentence: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.8,
+    letterSpacing: 1.5,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   dimmedText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     fontFamily: 'NotoNaskhArabic',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.8,
+    letterSpacing: 1.5,
+    marginHorizontal: LAYOUT.SPACING.SMALL,
   },
   studyWord: {
     fontWeight: 'bold',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     fontFamily: 'NotoNaskhArabic',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.8,
+    letterSpacing: 2,
+    marginHorizontal: LAYOUT.SPACING.SMALL,
   },
   meaningOverlay: {
     position: 'absolute',

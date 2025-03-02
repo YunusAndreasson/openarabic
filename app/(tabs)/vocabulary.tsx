@@ -330,13 +330,15 @@ export default function VocabularyScreen() {
 
   // Function to start a review
   const handleStartReview = useCallback(() => {
-    // Invalidate due words query before navigating
-    queryClient.invalidateQueries({ queryKey: ['dueWords', user?.id] });
+    // Prefetch data before navigation for faster rendering
+    queryClient.prefetchQuery({
+      queryKey: ['dueWords', user?.id],
+      queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
+      staleTime: 0, // Ensure we get the freshest data
+    });
 
-    // Add slight delay for smooth transition
-    setTimeout(() => {
-      router.push('/review');
-    }, 100);
+    // Navigate immediately to improve perceived performance
+    router.push('/review');
   }, [router, queryClient, user?.id]);
 
   // Show loader while authentication is being checked OR while data is loading
