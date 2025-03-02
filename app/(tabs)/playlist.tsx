@@ -1,16 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  StyleSheet,
-  FlatList,
-  View,
-  Animated,
-  Platform,
-  AppState,
-  TouchableOpacity,
-  Pressable,
-  useColorScheme,
-  ImageBackground,
-} from 'react-native';
+import { StyleSheet, FlatList, View, Platform, AppState, TouchableOpacity } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,8 +12,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
 import { CompactThemedCard } from '@/components/CompactThemedCard';
 
 // ====== AUDIO PLAYER CONSTANTS ======
@@ -211,22 +198,32 @@ const PlaylistItem = React.memo(
 
 // Bottom Action Buttons - similar to vocabulary screen's review button
 const BottomControls = React.memo(
-  ({ onPlayAll, onShuffle }: { onPlayAll: () => void; onShuffle: () => void }) => {
+  ({
+    onPlayAll,
+    onShuffle,
+    isPlaying,
+    isShuffleMode,
+  }: {
+    onPlayAll: () => void;
+    onShuffle: () => void;
+    isPlaying: boolean;
+    isShuffleMode: boolean;
+  }) => {
     const colors = useColors();
 
     return (
       <View style={styles.bottomControlsContainer}>
         <View style={styles.actionButtonsRow}>
           <ThemedButton
-            title="Play All"
-            icon="play-circle"
+            title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
+            icon={isPlaying && !isShuffleMode ? 'stop-circle' : 'play-circle'}
             onPress={onPlayAll}
             variant="filled"
             style={{ flex: 1 }}
           />
           <ThemedButton
-            title="Shuffle"
-            icon="shuffle"
+            title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
+            icon={isPlaying && isShuffleMode ? 'stop-circle' : 'shuffle'}
             onPress={onShuffle}
             variant="outlined"
             style={[{ flex: 1 }, styles.shuffleButton, { borderColor: colors.tint }]}
@@ -767,7 +764,12 @@ export default function PlaylistScreen() {
       />
 
       {/* Bottom Action Buttons - similar to vocabulary screen */}
-      <BottomControls onPlayAll={startPlayback} onShuffle={startShufflePlayback} />
+      <BottomControls
+        onPlayAll={isCurrentlyPlaying ? stopPlayback : startPlayback}
+        onShuffle={isCurrentlyPlaying ? stopPlayback : startShufflePlayback}
+        isPlaying={isCurrentlyPlaying}
+        isShuffleMode={isShuffleMode}
+      />
     </ThemedView>
   );
 }
