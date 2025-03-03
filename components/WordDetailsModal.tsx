@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, Dimensions, Platform } from 'react-native';
+import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ThemedModal } from './ThemedModal';
+import { ThemedButton } from './ThemedButton';
 
 interface WordDetailsModalProps {
   visible: boolean;
@@ -51,33 +52,6 @@ function WordDetailsModalComponent({
     [colors.arabicText, colors.tint, colors.textShadowLight, isSelected]
   );
 
-  // Add a style for the word container to show a subtle indicator in dark mode
-  const wordContainerStyle = useMemo(
-    () => ({
-      position: 'relative' as const,
-      paddingBottom: isSelected ? LAYOUT.SPACING.TINY : 0,
-      backgroundColor: isSelected ? colors.textOverlay : 'transparent', // Use textOverlay for selected words
-      borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-      paddingHorizontal: isSelected ? LAYOUT.SPACING.SMALL : 0,
-      paddingTop: isSelected ? LAYOUT.SPACING.TINY : 0,
-    }),
-    [isSelected, colors.textOverlay]
-  );
-
-  // Add a style for the indicator line
-  const indicatorStyle = useMemo(
-    () => ({
-      position: 'absolute' as const,
-      bottom: 0,
-      left: '20%' as any,
-      right: '20%' as any,
-      height: 1.5,
-      backgroundColor: colors.borderOverlay,
-      borderRadius: 1,
-    }),
-    [colors.borderOverlay]
-  );
-
   const translationStyle = useMemo(
     () => [styles.translation, { color: colors.titleText }],
     [colors.titleText]
@@ -86,14 +60,12 @@ function WordDetailsModalComponent({
   const labelStyle = useMemo(() => [styles.label, { color: colors.titleText }], [colors.titleText]);
 
   const pillStyle = useMemo(
-    () => [
-      styles.pill,
-      {
-        backgroundColor: colors.textOverlay,
-        borderColor: colors.borderOverlay,
-        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-      },
-    ],
+    () => ({
+      ...styles.pill,
+      backgroundColor: colors.textOverlay,
+      borderColor: colors.borderOverlay,
+      borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    }),
     [colors.textOverlay, colors.borderOverlay]
   );
 
@@ -117,21 +89,22 @@ function WordDetailsModalComponent({
     [colors.titleText]
   );
 
-  const studyButtonStyle = useMemo(
-    () => [
-      styles.studyButton,
-      {
-        backgroundColor: isSelected
-          ? isDarkMode
-            ? '#6c757d'
-            : '#dee2e6'
-          : isDarkMode
-            ? colors.elevation2
-            : colors.textOverlay,
-        borderColor: colors.borderOverlay,
-      },
-    ],
-    [colors.textOverlay, colors.borderOverlay, colors.elevation2, isSelected, isDarkMode]
+  // Custom button style for selected state to ensure border is visible
+  const buttonStyle = useMemo(() => {
+    return {
+      ...styles.studyButton,
+      borderWidth: isSelected ? 1 : 0,
+      borderColor: isSelected ? colors.tint : 'transparent',
+    };
+  }, [isSelected, colors.tint]);
+
+  // Modal content style with dynamic background color
+  const modalContentStyle = useMemo(
+    (): ViewStyle => ({
+      ...styles.modalContent,
+      backgroundColor: colors.cardBackground,
+    }),
+    [colors.cardBackground]
   );
 
   return (
@@ -139,90 +112,80 @@ function WordDetailsModalComponent({
       visible={visible}
       onClose={onClose}
       useBlur={true}
-      blurIntensity={isDarkMode ? 60 : 80}
-      contentStyle={styles.modalContent}
+      blurIntensity={isDarkMode ? 20 : 40}
+      contentStyle={modalContentStyle}
       useHaptics={false}
-      animationDuration={100}
+      animationDuration={200}
       animationType="fade"
+      showCloseButton={false}
+      overlayOpacity={0.2}
     >
-      <View style={styles.header}>
-        <View style={wordContainerStyle}>
+      <View style={styles.contentWrapper}>
+        <View style={styles.header}>
           <ThemedText style={arabicWordStyle} skipDefaultColor>
             {word.word_form}
           </ThemedText>
-          {isSelected && <View style={indicatorStyle} />}
-        </View>
-        <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
-          {word.english}
-        </ThemedText>
-      </View>
-
-      <View style={styles.detailsContainer}>
-        {word.root && (
-          <View style={styles.detailRow}>
-            <ThemedText style={labelStyle} skipDefaultColor>
-              Root
-            </ThemedText>
-            <View style={pillStyle}>
-              <ThemedText style={rootTextStyle} skipDefaultColor>
-                {word.root.letters}
-              </ThemedText>
-              {word.root.meaning && (
-                <ThemedText style={rootMeaningStyle} skipDefaultColor>
-                  {word.root.meaning}
-                </ThemedText>
-              )}
-            </View>
-          </View>
-        )}
-
-        {word.word_type && (
-          <View style={styles.detailRow}>
-            <ThemedText style={labelStyle} skipDefaultColor>
-              Type
-            </ThemedText>
-            <View style={pillStyle}>
-              <ThemedText style={typeTextStyle} skipDefaultColor>
-                {word.word_type.name}
-              </ThemedText>
-            </View>
-          </View>
-        )}
-
-        {word.grammar_note && (
-          <View style={styles.grammarNote}>
-            <ThemedText style={labelStyle} skipDefaultColor>
-              Grammar Notes
-            </ThemedText>
-            <View style={pillStyle}>
-              <ThemedText style={noteTextStyle} skipDefaultColor>
-                {word.grammar_note}
-              </ThemedText>
-            </View>
-          </View>
-        )}
-      </View>
-
-      {onStudyPress && (
-        <TouchableOpacity
-          style={studyButtonStyle}
-          onPress={handleStudyPress}
-          activeOpacity={LAYOUT.OPACITY.PRESSED}
-        >
-          <Ionicons
-            name={isSelected ? 'checkmark-circle' : 'school'}
-            size={20}
-            color={colors.titleText}
-            style={styles.studyIcon}
-          />
-          <ThemedText
-            style={[styles.studyButtonText, { color: colors.titleText }]}
-            skipDefaultColor
-          >
-            {isSelected ? 'Word added to study list' : 'Study this word'}
+          <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
+            {word.english}
           </ThemedText>
-        </TouchableOpacity>
-      )}
+        </View>
+
+        <View style={styles.detailsContainer}>
+          {word.root && (
+            <View style={styles.detailRow}>
+              <ThemedText style={labelStyle} skipDefaultColor>
+                Root
+              </ThemedText>
+              <View style={pillStyle}>
+                <ThemedText style={rootTextStyle} skipDefaultColor>
+                  {word.root.letters}
+                </ThemedText>
+                {word.root.meaning && (
+                  <ThemedText style={rootMeaningStyle} skipDefaultColor>
+                    {word.root.meaning}
+                  </ThemedText>
+                )}
+              </View>
+            </View>
+          )}
+
+          {word.word_type && (
+            <View style={styles.detailRow}>
+              <ThemedText style={labelStyle} skipDefaultColor>
+                Type
+              </ThemedText>
+              <View style={pillStyle}>
+                <ThemedText style={typeTextStyle} skipDefaultColor>
+                  {word.word_type.name}
+                </ThemedText>
+              </View>
+            </View>
+          )}
+
+          {word.grammar_note && (
+            <View style={styles.grammarNote}>
+              <ThemedText style={labelStyle} skipDefaultColor>
+                Grammar Notes
+              </ThemedText>
+              <View style={pillStyle}>
+                <ThemedText style={noteTextStyle} skipDefaultColor>
+                  {word.grammar_note}
+                </ThemedText>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {onStudyPress && (
+          <ThemedButton
+            title={isSelected ? 'Word added to study list' : 'Study this word'}
+            icon={isSelected ? 'checkmark-circle' : 'school'}
+            variant={isSelected ? 'outlined' : 'filled'}
+            onPress={handleStudyPress}
+            style={buttonStyle}
+          />
+        )}
+      </View>
     </ThemedModal>
   );
 }
@@ -236,76 +199,71 @@ const maxWidth = Math.min(width * 0.9, 400);
 const styles = StyleSheet.create({
   modalContent: {
     width: maxWidth,
+    padding: 0,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 8,
+      },
+    }),
+  },
+  contentWrapper: {
+    width: '100%',
+    gap: LAYOUT.SPACING.XLARGE,
     paddingTop: LAYOUT.SPACING.XXLARGE,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
   header: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XXLARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
+    width: '100%',
+    gap: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   arabicWord: {
     fontFamily: 'NotoNaskhArabic',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 2,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   translation: {
     textAlign: 'center',
     fontWeight: '600',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
   },
   detailsContainer: {
     gap: LAYOUT.SPACING.LARGE,
+    width: '100%',
   },
   detailRow: {
-    gap: LAYOUT.SPACING.TINY,
+    gap: LAYOUT.SPACING.SMALL,
+    width: '100%',
+    marginHorizontal: LAYOUT.SPACING.XLARGE,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    marginBottom: LAYOUT.SPACING.TINY,
-    fontWeight: '500',
+    fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
   },
   pill: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.SPACING.MEDIUM,
-    ...LAYOUT.SHADOW.SMALL,
-  },
-  rootText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontFamily: 'NotoNaskhArabic',
-    textAlign: 'center',
-  },
-  rootMeaning: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    marginTop: LAYOUT.SPACING.TINY,
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  typeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  grammarNote: {
-    gap: LAYOUT.SPACING.TINY,
-  },
-  noteText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
-  studyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
-    marginTop: LAYOUT.SPACING.XLARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    padding: LAYOUT.SPACING.LARGE,
+    marginHorizontal: -LAYOUT.SPACING.XLARGE,
+    marginVertical: 0,
+    width: 'auto',
+    alignSelf: 'stretch',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -318,11 +276,36 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  studyIcon: {
-    marginRight: LAYOUT.SPACING.SMALL,
+  rootText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontFamily: 'NotoNaskhArabic',
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.4,
   },
-  studyButtonText: {
+  rootMeaning: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
+    opacity: LAYOUT.OPACITY.DIMMED,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+  },
+  typeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
+    textAlign: 'center',
+    fontWeight: '500',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+  },
+  grammarNote: {
+    gap: LAYOUT.SPACING.SMALL,
+    width: '100%',
+    marginHorizontal: LAYOUT.SPACING.XLARGE,
+  },
+  noteText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+  },
+  studyButton: {
+    alignSelf: 'center',
+    minWidth: 200,
   },
 });

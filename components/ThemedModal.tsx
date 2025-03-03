@@ -8,6 +8,7 @@ import {
   Dimensions,
   ViewStyle,
   TextStyle,
+  Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColors } from '../hooks/useColors';
@@ -102,6 +103,11 @@ interface ThemedModalProps {
    * @default 'fade'
    */
   animationType?: 'fade' | 'slide' | 'none';
+  /**
+   * Opacity of the modal overlay
+   * @default 0.8
+   */
+  overlayOpacity?: number;
 }
 
 /**
@@ -124,23 +130,32 @@ function ThemedModalComponent({
   animationDuration = LAYOUT.ANIMATION.DURATION.NORMAL,
   blurIntensity = 80,
   animationType = 'fade',
+  overlayOpacity = 0.8,
 }: ThemedModalProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const fadeAnim = useSharedValue(0);
+  const scaleAnim = useSharedValue(0.95);
 
   // Run animations when visibility changes
   useEffect(() => {
     if (visible) {
-      // Reset animation to initial value
+      // Reset animation to initial values
       fadeAnim.value = 0;
+      scaleAnim.value = 0.95;
 
-      // Start animation
+      // Start animations with optimized timing
       fadeAnim.value = withTiming(1, {
         duration: animationDuration,
+        easing: Easing.out(Easing.cubic),
+      });
+
+      scaleAnim.value = withTiming(1, {
+        duration: animationDuration,
+        easing: Easing.out(Easing.cubic),
       });
     }
-  }, [visible, fadeAnim, animationDuration]);
+  }, [visible, fadeAnim, scaleAnim, animationDuration]);
 
   // Function to trigger haptic feedback and close
   const triggerCloseWithHaptics = useCallback(() => {
@@ -160,15 +175,21 @@ function ThemedModalComponent({
         0,
         {
           duration: LAYOUT.ANIMATION.DURATION.FAST,
+          easing: Easing.in(Easing.cubic),
         },
         () => {
           runOnJS(triggerCloseWithHaptics)();
         }
       );
+
+      scaleAnim.value = withTiming(0.95, {
+        duration: LAYOUT.ANIMATION.DURATION.FAST,
+        easing: Easing.in(Easing.cubic),
+      });
     } else {
       triggerCloseWithHaptics();
     }
-  }, [closeOnBackdropPress, animated, fadeAnim, triggerCloseWithHaptics]);
+  }, [closeOnBackdropPress, animated, fadeAnim, scaleAnim, triggerCloseWithHaptics]);
 
   // Calculate modal width
   const modalWidth = useMemo(() => {
@@ -178,8 +199,13 @@ function ThemedModalComponent({
 
   // Memoize styles to prevent new object creation on each render
   const containerStyle = useMemo(
-    () => [styles.modalContainer, { backgroundColor: colors.modalOverlay }],
-    [colors.modalOverlay]
+    () => [
+      styles.modalContainer,
+      {
+        backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
+      },
+    ],
+    [overlayOpacity]
   );
 
   const defaultContentStyle = useMemo(
@@ -200,6 +226,7 @@ function ThemedModalComponent({
   const animatedContentStyle = useAnimatedStyle(
     () => ({
       opacity: animated ? fadeAnim.value : 1,
+      transform: [{ scale: animated ? scaleAnim.value : 1 }],
     }),
     [animated]
   );
@@ -222,8 +249,8 @@ function ThemedModalComponent({
             <Animated.View
               style={[defaultContentStyle, animatedContentStyle]}
               entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
-              exiting={FadeOut.duration(200)}
-              layout={Layout.springify()}
+              exiting={FadeOut.duration(150)}
+              layout={Layout.springify().damping(20).stiffness(300)}
             >
               <Pressable onPress={e => e.stopPropagation()}>
                 {showCloseButton && (
@@ -259,8 +286,8 @@ function ThemedModalComponent({
           <Animated.View
             style={[defaultContentStyle, animatedContentStyle]}
             entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
-            exiting={FadeOut.duration(200)}
-            layout={Layout.springify()}
+            exiting={FadeOut.duration(150)}
+            layout={Layout.springify().damping(20).stiffness(300)}
           >
             <Pressable onPress={e => e.stopPropagation()}>
               {showCloseButton && (
