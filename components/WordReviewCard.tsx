@@ -1,10 +1,19 @@
-import React, { useRef, useEffect } from 'react';
-import { Animated, StyleSheet, Dimensions, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, Dimensions, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
-import { TransitionType, startAnimation, getAnimationStyles } from '../utils/animationUtils';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  FadeIn,
+} from 'react-native-reanimated';
 import type { StudyWord } from '../hooks/useSpacedRepetition';
+
+// Define transition types
+export type TransitionType = 'fade' | 'slide';
 
 interface WordReviewCardProps {
   word?: StudyWord;
@@ -18,25 +27,39 @@ export const WordReviewCard = React.memo(
   ({ word, transitionType = 'fade', isVisible }: WordReviewCardProps) => {
     const colors = useColors();
 
-    // Animation values
-    const fadeOpacity = useRef(new Animated.Value(0)).current;
-    const slidePosition = useRef(new Animated.Value(SCREEN_WIDTH)).current;
+    // Animation values using Reanimated shared values
+    const fadeOpacity = useSharedValue(0);
+    const slidePosition = useSharedValue(SCREEN_WIDTH);
 
-    const animationConfig = {
-      fadeOpacity,
-      slidePosition,
-      screenWidth: SCREEN_WIDTH,
-    };
-
-    // Animation styles based on transition type
-    const { containerStyle } = getAnimationStyles(animationConfig, transitionType);
+    // Create animated styles using Reanimated
+    const animatedStyle = useAnimatedStyle(() => {
+      if (transitionType === 'fade') {
+        return {
+          opacity: fadeOpacity.value,
+        };
+      } else {
+        return {
+          transform: [{ translateX: slidePosition.value }],
+        };
+      }
+    });
 
     // Run animation when word changes or becomes visible
     useEffect(() => {
       if (word && isVisible) {
-        startAnimation(animationConfig, transitionType);
+        // Reset animations to initial state
+        if (transitionType === 'fade') {
+          fadeOpacity.value = 0;
+          fadeOpacity.value = withTiming(1, { duration: 300 });
+        } else {
+          slidePosition.value = SCREEN_WIDTH;
+          slidePosition.value = withSpring(0, {
+            damping: 15,
+            stiffness: 50,
+          });
+        }
       }
-    }, [word, isVisible, transitionType]);
+    }, [word, isVisible, transitionType, fadeOpacity, slidePosition]);
 
     // Handle case when no word is provided
     if (!word || !word.sentence_word) {
@@ -51,7 +74,7 @@ export const WordReviewCard = React.memo(
             backgroundColor: colors.cardBackground,
             borderColor: colors.cardBorder,
           },
-          containerStyle, // Apply the appropriate animation style
+          animatedStyle,
         ]}
       >
         <View style={styles.wordContainer}>

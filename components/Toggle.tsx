@@ -1,8 +1,15 @@
-import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useCallback, useEffect, useRef, memo, useMemo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useCallback, useEffect, memo, useMemo } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withSequence,
+} from 'react-native-reanimated';
 
 interface ToggleProps {
   value: boolean;
@@ -35,52 +42,45 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = dimensions;
 
-  // Use refs for animated values to prevent recreation on rerenders
-  const translateX = useRef(new Animated.Value(value ? TRAVEL_DISTANCE : 0)).current;
-  const toggleScale = useRef(new Animated.Value(1)).current;
-
-  // Memoize animation function to prevent recreation on each render
-  const animate = useCallback(
-    (toValue: number) => {
-      Animated.spring(translateX, {
-        toValue,
-        useNativeDriver: true,
-        stiffness: 180,
-        damping: 15,
-        mass: 1,
-      }).start();
-    },
-    [translateX]
-  );
-
-  // Memoize press animation function
-  const animatePress = useCallback(() => {
-    Animated.sequence([
-      Animated.timing(toggleScale, {
-        toValue: 0.95,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(toggleScale, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [toggleScale]);
+  // Use Reanimated shared values instead of Animated.Value
+  const translateX = useSharedValue(value ? TRAVEL_DISTANCE : 0);
+  const toggleScale = useSharedValue(1);
 
   // Update animation when value changes
   useEffect(() => {
-    animate(value ? TRAVEL_DISTANCE : 0);
-  }, [value, animate, TRAVEL_DISTANCE]);
+    translateX.value = withSpring(value ? TRAVEL_DISTANCE : 0, {
+      stiffness: 180,
+      damping: 15,
+      mass: 1,
+    });
+  }, [value, TRAVEL_DISTANCE, translateX]);
 
   // Memoize press handler to prevent recreation on each render
   const handlePress = useCallback(() => {
-    animatePress();
-    onValueChange(!value);
-  }, [onValueChange, value, animatePress]);
+    // Animate press effect
+    toggleScale.value = withSequence(
+      withTiming(0.95, { duration: 100 }),
+      withTiming(1, { duration: 150 })
+    );
 
-  // Memoize styles to prevent new object creation on each render
+    onValueChange(!value);
+  }, [onValueChange, value, toggleScale]);
+
+  // Use Reanimated's useAnimatedStyle for better performance
+  const containerAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: toggleScale.value }],
+      backgroundColor: value ? colors.tint : colors.icon,
+    };
+  }, [value, colors.tint, colors.icon]);
+
+  const handleAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
+
+  // Memoize static styles to prevent new object creation on each render
   const containerStyle = useMemo(
     () => [
       styles.container,
@@ -88,11 +88,9 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         width: TOGGLE_WIDTH,
         height: TOGGLE_HEIGHT,
         borderRadius: TOGGLE_HEIGHT / 2,
-        backgroundColor: value ? colors.tint : colors.icon,
-        transform: [{ scale: toggleScale }],
       },
     ],
-    [TOGGLE_HEIGHT, TOGGLE_WIDTH, colors.icon, colors.tint, toggleScale, value]
+    [TOGGLE_HEIGHT, TOGGLE_WIDTH]
   );
 
   const shadowStyle = useMemo(
@@ -111,19 +109,20 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         height: HANDLE_SIZE,
         borderRadius: HANDLE_SIZE / 2,
         backgroundColor: colors.background,
-        transform: [{ translateX }],
         ...shadowStyle,
       },
       styles.shadow,
     ],
-    [HANDLE_SIZE, colors.background, shadowStyle, translateX]
+    [HANDLE_SIZE, colors.background, shadowStyle]
   );
 
   return (
-    <TouchableOpacity onPress={handlePress} style={containerStyle} activeOpacity={1}>
-      <View style={styles.toggleTrack}>
-        <Animated.View style={handleStyle} />
-      </View>
+    <TouchableOpacity onPress={handlePress} activeOpacity={1}>
+      <Animated.View style={[containerStyle, containerAnimatedStyle]}>
+        <View style={styles.toggleTrack}>
+          <Animated.View style={[handleStyle, handleAnimatedStyle]} />
+        </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 }

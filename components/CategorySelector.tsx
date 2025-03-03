@@ -17,7 +17,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { createBasePillStyles } from './pills/BasePill';
 import type { Tables } from '../types/database.types';
-import { BlurView } from 'expo-blur';
 
 // Define a type for our category item (including the "All" option)
 export type CategoryItem = Tables<'categories'>;
@@ -86,6 +85,12 @@ const CategoryPill = React.memo(function CategoryPill({
               : `${colors.elevation1}90`,
         ]
       ),
+      // Add shadow for better visibility
+      shadowColor: colors.text,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: isDarkMode ? 0.3 : 0.2,
+      shadowRadius: 2,
+      elevation: 3,
     };
   });
 
@@ -204,37 +209,13 @@ function CategorySelectorComponent({
     return renderer;
   }, [selectedCategoryId, onSelectCategory, isDarkMode, colors]);
 
-  // Memoize the blur background to prevent re-renders
-  const blurBackground = useMemo(() => {
-    if (Platform.OS === 'ios') {
-      return (
-        <BlurView
-          style={styles.blurContainer}
-          intensity={60}
-          tint={isDarkMode ? 'dark' : 'light'}
-        />
-      );
-    } else {
-      return (
-        <View
-          style={[
-            styles.blurContainer,
-            {
-              backgroundColor: isDarkMode ? `rgba(25, 25, 35, 0.55)` : `rgba(245, 245, 250, 0.6)`,
-            },
-          ]}
-        />
-      );
-    }
-  }, [isDarkMode]);
-
   // optimize list performance
   const keyExtractor = useSharedValue((item: CategoryItem) => item.id.toString());
 
   return (
     <Animated.View style={styles.containerOuter} entering={FadeIn.duration(500)}>
-      {/* Background blur effect */}
-      {blurBackground}
+      {/* Background blur effect removed */}
+      {/* {blurBackground} */}
 
       {/* Category list */}
       <AnimatedFlatList
@@ -269,7 +250,10 @@ const styles = StyleSheet.create({
     zIndex: 10, // Higher z-index to ensure it stays on top
     marginTop: 0, // Ensure no top margin
     marginBottom: LAYOUT.SPACING.TINY, // Add space below the selector
+    // Make background fully transparent
+    backgroundColor: 'transparent',
   },
+  // Keep the blurContainer style for reference but it won't be used
   blurContainer: {
     position: 'absolute',
     top: 0,

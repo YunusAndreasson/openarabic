@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Animated, PanResponder, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable, Dimensions } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -13,6 +13,15 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
 import { Loader } from '@/components/Loader';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+  useAnimatedGestureHandler,
+  runOnJS,
+} from 'react-native-reanimated';
+import { PanGestureHandler, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Constants
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
@@ -27,20 +36,20 @@ export default function ReviewScreen() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const mountedRef = useRef(true);
-  const position = useRef(new Animated.ValueXY()).current;
-  const fadeOpacity = useRef(new Animated.Value(1)).current;
-  const screenFadeOpacity = useRef(new Animated.Value(0.5)).current;
+
+  // Replace Animated.ValueXY with Reanimated shared values
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const fadeOpacity = useSharedValue(1);
+  const screenFadeOpacity = useSharedValue(0.5);
+
   const meaningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isScreenReady, setIsScreenReady] = useState(true);
 
-  // Optimize fade-in animation
+  // Optimize fade-in animation with Reanimated
   useEffect(() => {
     // Start animation immediately with better performance values
-    Animated.timing(screenFadeOpacity, {
-      toValue: 1,
-      duration: INITIAL_FADE_DURATION,
-      useNativeDriver: true,
-    }).start();
+    screenFadeOpacity.value = withTiming(1, { duration: INITIAL_FADE_DURATION });
   }, []);
 
   // Use the spaced repetition hook
@@ -65,99 +74,125 @@ export default function ReviewScreen() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      // Set mounted ref to false to prevent state updates after unmount
       mountedRef.current = false;
-      position.stopAnimation();
+
+      // Clear any pending timeouts
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
+        meaningTimeoutRef.current = null;
       }
     };
   }, []);
 
-  const isInteractionDisabled = useCallback(
-    () => isLoading || isUpdating || isAnimating || showMeaningOverlay,
-    [isLoading, isUpdating, isAnimating, showMeaningOverlay]
-  );
+  // Function to check if interaction should be disabled
+  const isInteractionDisabled = useCallback(() => {
+    return Boolean(isAnimating || isLoading || !currentWord);
+  }, [isAnimating, isLoading, currentWord]);
 
-  // Handle swipe action
+  // Handle swipe with Reanimated
   const handleSwipe = useCallback(
     (direction: 'left' | 'right') => {
-      if (isInteractionDisabled()) return;
-      if (!currentWord?.sentence_word_id) return;
+      // Check if we should allow interaction
+      if (isAnimating || isLoading || !currentWord || !currentWord.sentence_word_id) {
+        return;
+      }
 
       setIsAnimating(true);
 
       if (direction === 'right') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Animated.timing(position, {
-          toValue: { x: SCREEN_WIDTH, y: 0 },
-          duration: SWIPE_OUT_DURATION,
-          useNativeDriver: true,
-        }).start(() => {
-          position.setValue({ x: -SCREEN_WIDTH, y: 0 });
+
+        // Animate card off screen to the right
+        translateX.value = withTiming(SCREEN_WIDTH, { duration: SWIPE_OUT_DURATION });
+
+        // Use a timeout instead of callback for animation completion
+        setTimeout(() => {
           updateWord(currentWord.sentence_word_id, true);
           setIsAnimating(false);
-        });
+        }, SWIPE_OUT_DURATION + 50);
       } else if (direction === 'left') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-        Animated.timing(position, {
-          toValue: { x: -SCREEN_WIDTH, y: 0 },
-          duration: SWIPE_OUT_DURATION,
-          useNativeDriver: true,
-        }).start(() => {
+
+        // Animate card off screen to the left
+        translateX.value = withTiming(-SCREEN_WIDTH, { duration: SWIPE_OUT_DURATION });
+
+        // Use a timeout instead of callback for animation completion
+        setTimeout(() => {
           setShowMeaningOverlay(true);
           meaningTimeoutRef.current = setTimeout(() => {
             setShowMeaningOverlay(false);
-            position.setValue({ x: -SCREEN_WIDTH, y: 0 });
+            translateX.value = -SCREEN_WIDTH;
             updateWord(currentWord.sentence_word_id, false);
             setIsAnimating(false);
           }, MEANING_DISPLAY_DURATION);
-        });
+        }, SWIPE_OUT_DURATION + 50);
       }
     },
-    [position, currentWord, isInteractionDisabled, updateWord]
+    [currentWord, isAnimating, isLoading, updateWord]
   );
 
-  // Pan responder - memoized to prevent recreation on each render
-  const panResponder = useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, { dx, dy }) =>
-          !isInteractionDisabled() && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10,
-        onPanResponderMove: (_, { dx }) => {
-          position.setValue({ x: dx, y: 0 });
-        },
-        onPanResponderRelease: (_, { dx }) => {
-          if (dx > SWIPE_THRESHOLD) {
-            handleSwipe('right');
-          } else if (dx < -SWIPE_THRESHOLD) {
-            handleSwipe('left');
-          } else {
-            Animated.spring(position, {
-              toValue: { x: 0, y: 0 },
-              useNativeDriver: true,
-            }).start(() => {
-              if (mountedRef.current) setIsAnimating(false);
-            });
-          }
-        },
-      }),
-    [isInteractionDisabled, position, handleSwipe, SWIPE_THRESHOLD]
-  );
+  // Gesture handler for pan gestures
+  const gestureHandler = useAnimatedGestureHandler({
+    onStart: () => {
+      // We don't need to check anything on start
+    },
+    onActive: event => {
+      // Only handle horizontal gestures if not disabled
+      if (
+        Math.abs(event.translationX) > Math.abs(event.translationY) &&
+        Math.abs(event.translationX) > 10
+      ) {
+        translateX.value = event.translationX;
+      }
+    },
+    onEnd: event => {
+      if (event.translationX > SWIPE_THRESHOLD) {
+        runOnJS(handleSwipe)('right');
+      } else if (event.translationX < -SWIPE_THRESHOLD) {
+        runOnJS(handleSwipe)('left');
+      } else {
+        // Return to center if not swiped far enough
+        translateX.value = withSpring(0);
+        runOnJS(setIsAnimating)(false);
+      }
+    },
+  });
+
+  // Animated styles for the card
+  const cardAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
+      opacity: fadeOpacity.value,
+    };
+  });
+
+  // Animated style for screen fade
+  const screenAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: screenFadeOpacity.value,
+    };
+  });
 
   // UI handlers
   const handleClose = useCallback(() => {
     // Invalidate the study words query to ensure vocabulary screen gets fresh data
     invalidateQueries();
 
+    // Clear any pending timeouts
+    if (meaningTimeoutRef.current) {
+      clearTimeout(meaningTimeoutRef.current);
+      meaningTimeoutRef.current = null;
+    }
+
     // Fade out the screen
-    Animated.timing(screenFadeOpacity, {
-      toValue: 0,
-      duration: INITIAL_FADE_DURATION,
-      useNativeDriver: true,
-    }).start(() => {
+    screenFadeOpacity.value = withTiming(0, { duration: INITIAL_FADE_DURATION });
+
+    // Use a timeout instead of callback
+    setTimeout(() => {
       router.back();
-    });
-  }, [screenFadeOpacity, invalidateQueries]);
+    }, INITIAL_FADE_DURATION + 50);
+  }, [invalidateQueries]);
 
   const [showInstructions, setShowInstructions] = useState(false);
 
@@ -183,29 +218,23 @@ export default function ReviewScreen() {
 
   // Reset animation when current index changes
   useEffect(() => {
-    fadeOpacity.stopAnimation();
-    position.stopAnimation();
+    // Reset animation values
+    translateX.value = 0;
+    translateY.value = 0;
 
     if (transitionType === 'fade') {
-      fadeOpacity.setValue(0);
-      position.setValue({ x: 0, y: 0 });
-
-      Animated.timing(fadeOpacity, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
+      // For fade transition
+      fadeOpacity.value = 0;
+      fadeOpacity.value = withTiming(1, { duration: 250 });
     } else {
-      position.setValue({ x: SCREEN_WIDTH, y: 0 });
-
-      Animated.spring(position, {
-        toValue: { x: 0, y: 0 },
-        useNativeDriver: true,
-        tension: 65,
-        friction: 7,
-      }).start();
+      // For slide transition
+      translateX.value = SCREEN_WIDTH;
+      translateX.value = withSpring(0, {
+        damping: 7,
+        stiffness: 65,
+      });
     }
-  }, [currentIndex, position, fadeOpacity, transitionType]);
+  }, [currentIndex, translateX, translateY, fadeOpacity, transitionType]);
 
   // Memoize the progress bar style for better performance
   const progressBarStyle = useMemo(
@@ -219,206 +248,82 @@ export default function ReviewScreen() {
     [isLoading, isComplete, currentWord]
   );
 
-  // Render content based on state
+  // Render the main content
   const renderContent = () => {
-    if (isLoading || !user) {
+    if (isLoading) {
       return (
-        <ThemedView style={styles.container}>
-          <ProgressBar progress={0} style={progressBarStyle} />
-          <View style={styles.loadingContainer}>
-            <Loader size="large" color={colors.tint} />
-          </View>
-        </ThemedView>
-      );
-    }
-
-    if (dueWords.length === 0 && !isLoading) {
-      return (
-        <ThemedView style={styles.container}>
-          <ProgressBar progress={0} style={progressBarStyle} />
-          <View style={styles.completedContainer}>
-            <ThemedText style={styles.completedText}>No words to review!</ThemedText>
-            <ThemedButton
-              title="Go Back"
-              onPress={() => {
-                // Ensure we invalidate queries before navigating back
-                invalidateQueries();
-                handleClose();
-              }}
-              variant="filled"
-            />
-          </View>
-        </ThemedView>
-      );
-    }
-
-    if (isComplete) {
-      return (
-        <ThemedView style={styles.container}>
-          <ProgressBar progress={100} style={progressBarStyle} />
-          <View style={styles.completedContainer}>
-            <ThemedText style={styles.completedText}>Review complete!</ThemedText>
-            <ThemedButton
-              title="Done"
-              onPress={() => {
-                // Ensure we invalidate queries before navigating back
-                invalidateQueries();
-                handleClose();
-              }}
-              variant="filled"
-            />
-          </View>
-        </ThemedView>
+        <View style={styles.loaderContainer}>
+          <Loader size="large" />
+        </View>
       );
     }
 
     if (!currentWord) {
       return (
-        <ThemedView style={styles.container}>
-          <ProgressBar progress={0} style={progressBarStyle} />
-          <View style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>Error loading word</ThemedText>
-            <ThemedButton
-              title="Go Back"
-              onPress={() => {
-                // Ensure we invalidate queries before navigating back
-                invalidateQueries();
-                handleClose();
-              }}
-              variant="filled"
-              style={styles.errorButton}
-            />
-          </View>
-        </ThemedView>
-      );
-    }
-
-    if (!sentence || !wordForm) {
-      return (
-        <ThemedView style={styles.container}>
-          <ProgressBar progress={0} style={progressBarStyle} />
-          <View style={styles.errorContainer}>
-            <ThemedText style={styles.errorText}>Error loading sentence data</ThemedText>
-            <ThemedButton
-              title="Go Back"
-              onPress={() => {
-                // Ensure we invalidate queries before navigating back
-                invalidateQueries();
-                handleClose();
-              }}
-              variant="filled"
-              style={styles.errorButton}
-            />
-          </View>
-        </ThemedView>
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>
+            {isUpdating
+              ? 'Error loading words. Please try again.'
+              : 'No words to review at this time.'}
+          </ThemedText>
+          <ThemedButton title="Return to Vocabulary" onPress={handleClose} style={styles.button} />
+        </View>
       );
     }
 
     return (
-      <ThemedView style={styles.container}>
-        <ProgressBar progress={progress} style={progressBarStyle} fillColor={colors.tint} />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <View style={styles.container}>
+          <ProgressBar progress={progress} style={progressBarStyle} fillColor={colors.tint} />
 
-        <Animated.View
-          style={[
-            styles.card,
-            { transform: [{ translateX: position.x }] },
-            { opacity: fadeOpacity },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          <ThemedText style={styles.sentence} skipDefaultColor>
-            <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
-              {parts[0]}
-            </ThemedText>
-            <ThemedText style={[styles.studyWord, { color: colors.tint }]} skipDefaultColor>
-              {' ' + wordForm + ' '}
-            </ThemedText>
-            <ThemedText style={[styles.dimmedText, { color: `${colors.text}70` }]} skipDefaultColor>
-              {parts[1]}
-            </ThemedText>
-          </ThemedText>
-        </Animated.View>
+          <PanGestureHandler onGestureEvent={gestureHandler}>
+            <Animated.View style={[styles.cardContainer, cardAnimatedStyle]}>
+              <ThemedText style={styles.sentence} skipDefaultColor>
+                <ThemedText
+                  style={[styles.dimmedText, { color: `${colors.text}70` }]}
+                  skipDefaultColor
+                >
+                  {parts[0]}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.highlightedText, { color: colors.arabicText }]}
+                  skipDefaultColor
+                >
+                  {wordForm}
+                </ThemedText>
+                <ThemedText
+                  style={[styles.dimmedText, { color: `${colors.text}70` }]}
+                  skipDefaultColor
+                >
+                  {parts[1]}
+                </ThemedText>
+              </ThemedText>
+            </Animated.View>
+          </PanGestureHandler>
 
-        {showMeaningOverlay && (
-          <View
-            style={[
-              styles.meaningOverlay,
-              {
-                backgroundColor: `${colors.modalOverlay}80`,
-                top: LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL + LAYOUT.SPACING.LARGE,
-                bottom: 100,
-              },
-            ]}
-          >
-            <ThemedText style={[styles.meaningText, { color: colors.white }]} skipDefaultColor>
-              {currentWord?.sentence_word?.english || 'Translation not available'}
-            </ThemedText>
+          <View style={styles.buttonContainer}>
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: '#FF6B6B' }]}
+              onPress={() => {
+                if (isAnimating || isLoading || !currentWord) return;
+                handleSwipe('left');
+              }}
+            >
+              <Ionicons name="close" size={32} color="#FFFFFF" />
+            </Pressable>
+
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: '#4CAF50' }]}
+              onPress={() => {
+                if (isAnimating || isLoading || !currentWord) return;
+                handleSwipe('right');
+              }}
+            >
+              <Ionicons name="checkmark" size={32} color="#FFFFFF" />
+            </Pressable>
           </View>
-        )}
-
-        <View style={styles.buttonContainer}>
-          <Pressable
-            onPress={handleClose}
-            style={({ pressed }) => [
-              styles.actionButton,
-              {
-                backgroundColor: pressed
-                  ? `${colors.cardBackground}80`
-                  : `${colors.cardBackground}90`,
-                zIndex: LAYOUT.Z_INDEX.OVERLAY + 1,
-              },
-            ]}
-          >
-            <Ionicons
-              name="close"
-              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-              color={`${colors.icon}90`}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => setShowInstructions(true)}
-            style={({ pressed }) => [
-              styles.actionButton,
-              {
-                backgroundColor: pressed
-                  ? `${colors.cardBackground}80`
-                  : `${colors.cardBackground}90`,
-                zIndex: LAYOUT.Z_INDEX.OVERLAY + 1,
-              },
-            ]}
-          >
-            <Ionicons
-              name="information-circle"
-              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-              color={`${colors.icon}90`}
-            />
-          </Pressable>
         </View>
-
-        <ThemedModal
-          visible={showInstructions}
-          onClose={() => setShowInstructions(false)}
-          title="How to Review"
-          useBlur={true}
-        >
-          <View style={styles.modalInstructionRow}>
-            <Ionicons
-              name="chevron-forward"
-              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-              color={colors.success}
-            />
-            <ThemedText style={styles.modalText}>Swipe right: I know this word</ThemedText>
-          </View>
-          <View style={styles.modalInstructionRow}>
-            <Ionicons
-              name="chevron-back"
-              size={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-              color={colors.warning}
-            />
-            <ThemedText style={styles.modalText}>Swipe left: I don't know this word</ThemedText>
-          </View>
-        </ThemedModal>
-      </ThemedView>
+      </GestureHandlerRootView>
     );
   };
 
@@ -432,9 +337,7 @@ export default function ReviewScreen() {
           gestureEnabled: false,
         }}
       />
-      <Animated.View style={{ flex: 1, opacity: screenFadeOpacity }}>
-        {renderContent()}
-      </Animated.View>
+      <Animated.View style={screenAnimatedStyle}>{renderContent()}</Animated.View>
     </View>
   );
 }
@@ -445,34 +348,20 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: LAYOUT.SCREEN_EDGE_PADDING,
   },
-  card: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
-  },
   sentence: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.8,
-    letterSpacing: 1.5,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    fontFamily: 'NotoNaskhArabic',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.8,
   },
   dimmedText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     fontFamily: 'NotoNaskhArabic',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.8,
-    letterSpacing: 1.5,
-    marginHorizontal: LAYOUT.SPACING.SMALL,
   },
-  studyWord: {
+  highlightedText: {
     fontWeight: 'bold',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
     fontFamily: 'NotoNaskhArabic',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE * 1.8,
-    letterSpacing: 2,
-    marginHorizontal: LAYOUT.SPACING.SMALL,
   },
   meaningOverlay: {
     position: 'absolute',
@@ -490,16 +379,13 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.LARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'space-around',
+    marginVertical: LAYOUT.SPACING.LARGE,
   },
   actionButton: {
-    width: 44,
-    height: 44,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     ...LAYOUT.SHADOW.SMALL,
@@ -507,42 +393,37 @@ const styles = StyleSheet.create({
   modalInstructionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   modalText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  loadingContainer: {
+  loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  completedContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.LARGE,
-  },
-  completedText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    textAlign: 'center',
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  errorContainer: {
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.LARGE,
   },
-  errorText: {
+  emptyText: {
     fontSize: 18,
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  errorButton: {
+  button: {
     minWidth: 120,
+  },
+  cardContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
   },
 });
 

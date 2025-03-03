@@ -37,16 +37,16 @@ export const createBasePillStyles = ({
       borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
       paddingHorizontal: LAYOUT.SPACING.MEDIUM,
       paddingVertical: LAYOUT.SPACING.TINY + 2,
-      // Theme-aware shadow
+      // Enhanced shadow for better visibility against any background
       ...Platform.select({
         ios: {
-          shadowColor: isDarkMode ? colors.shadow : isSelected ? colors.shadow : 'transparent',
-          shadowOffset: { width: 0, height: isSelected || isDarkMode ? 2 : 0 },
-          shadowOpacity: isSelected || isDarkMode ? 0.1 : 0,
-          shadowRadius: isSelected || isDarkMode ? 4 : 0,
+          shadowColor: isDarkMode ? colors.text : colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDarkMode ? 0.3 : 0.25,
+          shadowRadius: 4,
         },
         android: {
-          elevation: isSelected || isDarkMode ? (isSelected ? 1 : 2) : 0,
+          elevation: isSelected ? 4 : 3,
         },
       }),
     },
