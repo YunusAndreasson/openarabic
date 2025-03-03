@@ -103,6 +103,7 @@ function WordDetailsModalComponent({
     (): ViewStyle => ({
       ...styles.modalContent,
       backgroundColor: colors.cardBackground,
+      maxHeight: '85%',
     }),
     [colors.cardBackground]
   );
@@ -112,20 +113,20 @@ function WordDetailsModalComponent({
       visible={visible}
       onClose={onClose}
       useBlur={true}
-      blurIntensity={isDarkMode ? 20 : 40}
+      blurIntensity={isDarkMode ? 15 : 30}
       contentStyle={modalContentStyle}
-      useHaptics={false}
-      animationDuration={200}
+      useHaptics={true}
+      animationDuration={250}
       animationType="fade"
       showCloseButton={false}
-      overlayOpacity={0.2}
+      overlayOpacity={0.15}
     >
       <View style={styles.contentWrapper}>
         <View style={styles.header}>
           <ThemedText style={arabicWordStyle} skipDefaultColor>
             {word.word_form}
           </ThemedText>
-          <ThemedText style={translationStyle} skipDefaultColor numberOfLines={2}>
+          <ThemedText style={translationStyle} skipDefaultColor numberOfLines={3}>
             {word.english}
           </ThemedText>
         </View>
@@ -200,24 +201,24 @@ const styles = StyleSheet.create({
   modalContent: {
     width: maxWidth,
     padding: 0,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE * 1.5,
     overflow: 'hidden',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 16,
       },
       android: {
-        elevation: 8,
+        elevation: 12,
       },
     }),
   },
   contentWrapper: {
     width: '100%',
     gap: LAYOUT.SPACING.XLARGE,
-    paddingTop: LAYOUT.SPACING.XXLARGE,
+    paddingTop: LAYOUT.SPACING.XLARGE,
     paddingBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
   },
@@ -225,12 +226,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
     gap: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   arabicWord: {
     fontFamily: 'NotoNaskhArabic',
     textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.2,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 2,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     includeFontPadding: false,
@@ -242,6 +242,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    opacity: 0.9,
   },
   detailsContainer: {
     gap: LAYOUT.SPACING.LARGE,
@@ -256,6 +257,8 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   pill: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
@@ -268,11 +271,11 @@ const styles = StyleSheet.create({
       ios: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.08,
         shadowRadius: 4,
       },
       android: {
-        elevation: 2,
+        elevation: 1,
       },
     }),
   },
@@ -306,6 +309,7 @@ const styles = StyleSheet.create({
   },
   studyButton: {
     alignSelf: 'center',
-    minWidth: 200,
+    minWidth: 240,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
