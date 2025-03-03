@@ -1,10 +1,11 @@
 import { StyleSheet, FlatList, ListRenderItem, Platform, View, RefreshControl } from 'react-native';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '../../services/articles';
+import { categoriesService } from '../../services/categories';
 import { Article } from '@/types/articles.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -17,9 +18,27 @@ import { Theme } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import { CategorySelector } from '../../components/CategorySelector';
+import type { Tables } from '@/types/database.types';
 
 // Constants
 const ITEM_HEIGHT = 360;
+
+// Fixed height for the category selector (match this with the actual component)
+const CATEGORY_SELECTOR_HEIGHT = 38;
+
+// Empty state components
+const EmptyState = React.memo(() => (
+  <View style={styles.emptyContainer}>
+    <ThemedText style={styles.emptyText}>No articles available right now</ThemedText>
+  </View>
+));
+
+const ErrorState = React.memo(({ message }: { message: string }) => (
+  <View style={styles.emptyContainer}>
+    <ThemedText style={styles.emptyText}>{message}</ThemedText>
+  </View>
+));
 
 export default function ArticlesScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
@@ -36,10 +55,45 @@ export default function ArticlesScreen() {
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
+  const [filteredArticles, setFilteredArticles] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(false);
+
+  // Memoized values
+  const hasCategories = useMemo(() => categories.length > 0, [categories.length]);
+
+  // Filter articles when category selection changes
+  useEffect(() => {
+    if (selectedCategoryId === null) {
+      setFilteredArticles(articles);
+    } else {
+      setFilteredArticles(articles.filter(article => article.category_id === selectedCategoryId));
+    }
+  }, [articles, selectedCategoryId]);
+
+  // Memoized content container style
+  const contentContainerStyle = useMemo(
+    () => ({
+      ...styles.flatListContent,
+      paddingTop: hasCategories
+        ? CATEGORY_SELECTOR_HEIGHT + LAYOUT.SPACING.LARGE
+        : LAYOUT.SPACING.LARGE,
+    }),
+    [hasCategories]
+  );
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const fetchedCategories = await categoriesService.getCategories();
+      setCategories(fetchedCategories);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    }
+  }, []);
 
   const fetchArticles = useCallback(
     async (showRefreshing = false) => {
@@ -60,6 +114,11 @@ export default function ArticlesScreen() {
 
         const fetchedArticles = await articlesService.getArticles();
         setArticles(fetchedArticles);
+
+        // Also fetch categories if they haven't been fetched yet
+        if (categories.length === 0) {
+          fetchCategories();
+        }
       } catch (err) {
         setError('Failed to fetch articles. Pull down to try again.');
       } finally {
@@ -79,7 +138,7 @@ export default function ArticlesScreen() {
         }
       }
     },
-    [isRefreshing]
+    [isRefreshing, categories.length, fetchCategories]
   );
 
   const handleRefresh = useCallback(() => {
@@ -87,7 +146,19 @@ export default function ArticlesScreen() {
     fetchArticles(true);
   }, [fetchArticles]);
 
-  // Effects
+  const handleCategorySelect = useCallback((categoryId: number | null) => {
+    // Play haptic feedback for category selection
+    Haptics.selectionAsync();
+
+    // Scroll to top when category changes
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+
+    setSelectedCategoryId(categoryId);
+  }, []);
+
+  // Navigation options
   useEffect(() => {
     navigation.setOptions({
       tabBarStyle: {
@@ -121,17 +192,14 @@ export default function ArticlesScreen() {
   // Memoize renderItem to prevent unnecessary re-renders
   const renderItem = useCallback<ListRenderItem<Article>>(
     ({ item }) => (
-      <View style={{ width: '100%' }}>
+      <View style={styles.articleItemContainer}>
         <ThemedCard
           imageUrl={item.image_url || 'https://picsum.photos/800/400'}
           title={item.title}
           category={item.category?.name ?? 'Uncategorized'}
           author={item.author?.name ?? 'Anonymous'}
           onPress={() => router.push(`/article/${item.id}`)}
-          style={{
-            width: '100%',
-            // No need for margins as they're removed from the base component
-          }}
+          style={styles.articleCard}
         />
       </View>
     ),
@@ -149,26 +217,20 @@ export default function ArticlesScreen() {
     []
   );
 
-  const ListEmptyComponent = useCallback(() => {
+  // Memoize list empty component
+  const ListEmptyComponent = useMemo(() => {
     if (error) {
-      return (
-        <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>{error}</ThemedText>
-        </View>
-      );
+      return <ErrorState message={error} />;
     }
 
-    return (
-      <View style={styles.emptyContainer}>
-        <ThemedText style={styles.emptyText}>No articles available</ThemedText>
-      </View>
+    return selectedCategoryId === null ? (
+      <EmptyState />
+    ) : (
+      <ErrorState message={`No articles found in this category. Try another category.`} />
     );
-  }, [error]);
+  }, [error, selectedCategoryId]);
 
-  const ItemSeparatorComponent = useCallback(
-    () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
-    []
-  );
+  const ItemSeparatorComponent = useCallback(() => <View style={styles.itemSeparator} />, []);
 
   // Use focus effect to refresh data when tab becomes active
   useFocusEffect(
@@ -185,13 +247,14 @@ export default function ArticlesScreen() {
   // Toggle forceUpdate to trigger a re-render if needed (e.g., for theme changes)
   useEffect(() => {
     if (!isInitialMount.current) {
-      setForceUpdate(prev => !prev);
+      // Use functional state updates for theme changes
+      setArticles(prevArticles => [...prevArticles]);
     } else {
       isInitialMount.current = false;
     }
   }, [isDarkTheme]);
 
-  // Render
+  // Render loading state
   if (isLoading && !isRefreshing) {
     return (
       <ThemedView style={styles.container}>
@@ -200,91 +263,120 @@ export default function ArticlesScreen() {
     );
   }
 
+  // Main render
   return (
     <ThemedView style={styles.container}>
-      {/* Standard header like vocabulary and playlist screens */}
+      {/* Header with title */}
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
         <ThemedText style={styles.headerTitle}>Texts</ThemedText>
       </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={articles}
-        keyExtractor={keyExtractor}
-        renderItem={renderItem}
-        getItemLayout={getItemLayout}
-        ListEmptyComponent={ListEmptyComponent}
-        ItemSeparatorComponent={ItemSeparatorComponent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[colors.tint]}
-            tintColor={colors.tint}
-            progressBackgroundColor={colors.cardBackground}
-          />
-        }
-        contentContainerStyle={styles.flatListContent}
-      />
+      {/* Content container with proper padding */}
+      <View style={styles.contentContainer}>
+        {/* Article list with optimized rendering */}
+        <FlatList
+          ref={flatListRef}
+          data={filteredArticles}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          getItemLayout={getItemLayout}
+          ListEmptyComponent={ListEmptyComponent}
+          ItemSeparatorComponent={ItemSeparatorComponent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.tint]}
+              tintColor={colors.tint}
+              progressBackgroundColor={colors.cardBackground}
+            />
+          }
+          contentContainerStyle={contentContainerStyle}
+          scrollEventThrottle={16}
+          removeClippedSubviews={Platform.OS === 'android'}
+          maxToRenderPerBatch={5}
+          windowSize={10}
+          initialNumToRender={4}
+        />
+
+        {/* Sticky floating category selector with perfect spacing */}
+        {hasCategories && (
+          <View style={styles.categorySelectorWrapper}>
+            <CategorySelector
+              categories={categories}
+              selectedCategoryId={selectedCategoryId}
+              onSelectCategory={handleCategorySelect}
+            />
+          </View>
+        )}
+      </View>
     </ThemedView>
   );
 }
-
-const EmptyState = () => (
-  <View style={styles.emptyContainer}>
-    <ThemedText style={styles.emptyText}>No articles available right now</ThemedText>
-  </View>
-);
-
-const ErrorState = ({ message }: { message: string }) => (
-  <View style={styles.emptyContainer}>
-    <ThemedText style={styles.emptyText}>{message}</ThemedText>
-  </View>
-);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  emptyContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 200,
-    width: '100%',
-  },
-  emptyText: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  flatListContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+  contentContainer: {
+    flex: 1,
+    position: 'relative',
   },
   headerContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: Platform.select({
-      ios: LAYOUT.CONTENT_SPACING.TOP,
-      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-    }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    zIndex: 5,
+    marginBottom: 0,
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  categorySelectorWrapper: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.TINY,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  articleItemContainer: {
+    width: '100%',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  articleCard: {
+    width: '100%',
+    marginBottom: 0,
+  },
+  itemSeparator: {
+    height: LAYOUT.SPACING.XLARGE,
+  },
+  emptyContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.XLARGE,
+    flex: 1,
+    minHeight: 300,
+  },
+  emptyText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    textAlign: 'center',
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   tabBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 0,
-    height: LAYOUT.BOTTOM_BAR.HEIGHT,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
 });
