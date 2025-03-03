@@ -9,6 +9,11 @@ import Animated, {
   withTiming,
   withSpring,
   FadeIn,
+  FadeOut,
+  SlideInRight,
+  Layout,
+  Easing,
+  runOnJS,
 } from 'react-native-reanimated';
 import type { StudyWord } from '../hooks/useSpacedRepetition';
 
@@ -50,13 +55,25 @@ export const WordReviewCard = React.memo(
         // Reset animations to initial state
         if (transitionType === 'fade') {
           fadeOpacity.value = 0;
-          fadeOpacity.value = withTiming(1, { duration: 300 });
+          fadeOpacity.value = withTiming(1, {
+            duration: 300,
+            easing: Easing.out(Easing.cubic), // Smoother easing for fade-in
+          });
         } else {
           slidePosition.value = SCREEN_WIDTH;
           slidePosition.value = withSpring(0, {
-            damping: 15,
-            stiffness: 50,
+            damping: 20, // Increased damping for less bouncy behavior
+            stiffness: 100, // Increased stiffness for faster movement
+            mass: 0.8, // Lower mass for quicker response
+            overshootClamping: false,
           });
+        }
+      } else {
+        // Animate out when not visible
+        if (transitionType === 'fade') {
+          fadeOpacity.value = withTiming(0, { duration: 200 });
+        } else {
+          slidePosition.value = withTiming(-SCREEN_WIDTH, { duration: 300 });
         }
       }
     }, [word, isVisible, transitionType, fadeOpacity, slidePosition]);
@@ -66,6 +83,15 @@ export const WordReviewCard = React.memo(
       return null;
     }
 
+    // Determine which entry animation to use
+    const getEntryAnimation = () => {
+      if (transitionType === 'fade') {
+        return FadeIn.duration(300).easing(Easing.out(Easing.cubic));
+      } else {
+        return SlideInRight.springify().damping(20).stiffness(100).mass(0.8);
+      }
+    };
+
     return (
       <Animated.View
         style={[
@@ -74,25 +100,38 @@ export const WordReviewCard = React.memo(
             backgroundColor: colors.cardBackground,
             borderColor: colors.cardBorder,
           },
-          animatedStyle,
+          // We can remove this since we're using entry animations
+          // animatedStyle,
         ]}
+        // Add Reanimated layout animations
+        entering={getEntryAnimation()}
+        exiting={FadeOut.duration(200)}
+        layout={Layout.springify().damping(20)}
       >
         <View style={styles.wordContainer}>
-          <ThemedText style={[styles.arabicWord, { color: colors.arabicText }]} skipDefaultColor>
+          <Animated.Text
+            style={[styles.arabicWord, { color: colors.arabicText }]}
+            entering={FadeIn.delay(150).duration(300)}
+          >
             {word.sentence_word.word_form}
-          </ThemedText>
+          </Animated.Text>
 
-          <ThemedText style={styles.englishWord}>{word.sentence_word.english}</ThemedText>
+          <Animated.Text style={styles.englishWord} entering={FadeIn.delay(200).duration(300)}>
+            {word.sentence_word.english}
+          </Animated.Text>
 
           {word.sentence_word.sentence?.arabic && (
-            <View style={styles.sentenceContainer}>
+            <Animated.View
+              style={styles.sentenceContainer}
+              entering={FadeIn.delay(300).duration(400)}
+            >
               <ThemedText
                 style={[styles.arabicSentence, { color: `${colors.arabicText}CC` }]}
                 skipDefaultColor
               >
                 {word.sentence_word.sentence.arabic}
               </ThemedText>
-            </View>
+            </Animated.View>
           )}
         </View>
       </Animated.View>

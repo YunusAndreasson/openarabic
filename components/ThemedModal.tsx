@@ -21,6 +21,10 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
+  FadeIn,
+  FadeOut,
+  Layout,
+  Easing,
 } from 'react-native-reanimated';
 
 interface ThemedModalProps {
@@ -215,8 +219,13 @@ function ThemedModalComponent({
           tint={isDarkMode ? 'dark' : 'light'}
         >
           <Pressable style={containerStyle} onPress={handleBackdropPress}>
-            <Animated.View style={animatedContentStyle}>
-              <Pressable style={defaultContentStyle} onPress={e => e.stopPropagation()}>
+            <Animated.View
+              style={[defaultContentStyle, animatedContentStyle]}
+              entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
+              exiting={FadeOut.duration(200)}
+              layout={Layout.springify()}
+            >
+              <Pressable onPress={e => e.stopPropagation()}>
                 {showCloseButton && (
                   <View style={styles.closeButtonContainer}>
                     <TouchableOpacity
@@ -240,15 +249,20 @@ function ThemedModalComponent({
                     {title}
                   </ThemedText>
                 )}
-                {children}
+                <Animated.View entering={FadeIn.delay(100).duration(300)}>{children}</Animated.View>
               </Pressable>
             </Animated.View>
           </Pressable>
         </BlurView>
       ) : (
         <Pressable style={containerStyle} onPress={handleBackdropPress}>
-          <Animated.View style={animatedContentStyle}>
-            <Pressable style={defaultContentStyle} onPress={e => e.stopPropagation()}>
+          <Animated.View
+            style={[defaultContentStyle, animatedContentStyle]}
+            entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
+            exiting={FadeOut.duration(200)}
+            layout={Layout.springify()}
+          >
+            <Pressable onPress={e => e.stopPropagation()}>
               {showCloseButton && (
                 <View style={styles.closeButtonContainer}>
                   <TouchableOpacity
@@ -269,7 +283,7 @@ function ThemedModalComponent({
                   {title}
                 </ThemedText>
               )}
-              {children}
+              <Animated.View entering={FadeIn.delay(100).duration(300)}>{children}</Animated.View>
             </Pressable>
           </Animated.View>
         </Pressable>

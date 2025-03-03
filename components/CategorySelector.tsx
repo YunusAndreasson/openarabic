@@ -14,6 +14,9 @@ import Animated, {
   SlideInRight,
   useAnimatedScrollHandler,
   Layout,
+  ZoomIn,
+  Easing,
+  withDelay,
 } from 'react-native-reanimated';
 import { createBasePillStyles } from './pills/BasePill';
 import type { Tables } from '../types/database.types';
@@ -53,38 +56,40 @@ const CategoryPill = React.memo(function CategoryPill({
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
-  // Animate pill on selection
+  // Animate pill on selection - optimized animation values
   const animatedStyles = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      scale.value,
+      [0.95, 1, 1.05],
+      [
+        isSelected
+          ? isDarkMode
+            ? colors.cardBackground
+            : colors.tint
+          : isDarkMode
+            ? `${colors.elevation2}40`
+            : `${colors.elevation1}90`,
+        isSelected
+          ? isDarkMode
+            ? `${colors.cardBackground}90`
+            : `${colors.tint}70`
+          : isDarkMode
+            ? `${colors.elevation2}40`
+            : `${colors.elevation1}90`,
+        isSelected
+          ? isDarkMode
+            ? colors.cardBackground
+            : colors.tint
+          : isDarkMode
+            ? `${colors.elevation2}40`
+            : `${colors.elevation1}90`,
+      ]
+    );
+
     return {
       transform: [{ scale: scale.value }],
       opacity: opacity.value,
-      backgroundColor: interpolateColor(
-        scale.value,
-        [0.95, 1, 1.05],
-        [
-          isSelected
-            ? isDarkMode
-              ? colors.cardBackground
-              : colors.tint
-            : isDarkMode
-              ? `${colors.elevation2}40`
-              : `${colors.elevation1}90`,
-          isSelected
-            ? isDarkMode
-              ? `${colors.cardBackground}90`
-              : `${colors.tint}70`
-            : isDarkMode
-              ? `${colors.elevation2}40`
-              : `${colors.elevation1}90`,
-          isSelected
-            ? isDarkMode
-              ? colors.cardBackground
-              : colors.tint
-            : isDarkMode
-              ? `${colors.elevation2}40`
-              : `${colors.elevation1}90`,
-        ]
-      ),
+      backgroundColor,
       // Add shadow for better visibility
       shadowColor: colors.text,
       shadowOffset: { width: 0, height: 1 },
@@ -94,78 +99,55 @@ const CategoryPill = React.memo(function CategoryPill({
     };
   });
 
-  // Use the shared base pill styles
-  const pillStyles = useMemo(
-    () =>
-      createBasePillStyles({
-        isSelected,
-        isDarkMode,
-        colors,
-      }),
-    [isSelected, isDarkMode, colors]
-  );
-
-  // Custom styles for more compact pills
-  const compactPillStyles = useMemo(
-    () => ({
-      container: {
-        ...pillStyles.container,
-        paddingVertical: 6, // Smaller vertical padding
-        paddingHorizontal: LAYOUT.SPACING.MEDIUM - 2,
-        backgroundColor: undefined, // We'll handle this in the animated style
-      },
-      text: {
-        ...pillStyles.text,
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY, // Slightly smaller font
-      },
-    }),
-    [pillStyles]
-  );
-
-  // Handle press with animation
+  // Handle press with optimized animation
   const handlePress = () => {
-    // Only animate if not already selected
-    if (!isSelected) {
-      // Slight bounce effect
-      scale.value = withSequence(
-        withTiming(0.95, { duration: 100 }),
-        withTiming(1.05, { duration: 100 }),
-        withTiming(1, { duration: 100 })
-      );
-
-      // Fade effect
-      opacity.value = withSequence(
-        withTiming(0.8, { duration: 150 }),
-        withTiming(1, { duration: 150 })
-      );
-    }
-
+    scale.value = withSequence(
+      withTiming(0.95, { duration: 100, easing: Easing.out(Easing.quad) }),
+      withTiming(1.05, { duration: 100, easing: Easing.in(Easing.quad) }),
+      withTiming(1, { duration: 150, easing: Easing.inOut(Easing.quad) })
+    );
     onPress();
   };
 
+  // Entry animation with staggered timing based on index
+  const entryAnimation = useMemo(() => {
+    return ZoomIn.duration(400)
+      .easing(Easing.out(Easing.quad))
+      .delay(100 + index * 50);
+  }, [index]);
+
   return (
     <AnimatedPressable
-      style={[styles.categoryItem, compactPillStyles.container, animatedStyles]}
+      style={[styles.categoryPill, isSelected ? styles.selectedPill : null, animatedStyles]}
       onPress={handlePress}
-      entering={FadeIn.delay(50 * index).duration(300)}
-      layout={Layout.springify()}
-      accessibilityRole="button"
-      accessibilityState={{ selected: isSelected }}
-      accessibilityLabel={`Category ${item.name}`}
+      entering={entryAnimation}
+      layout={Layout.springify().damping(15)}
     >
       <ThemedText
-        style={[styles.categoryText, compactPillStyles.text]}
-        skipDefaultColor
+        style={[
+          styles.pillText,
+          {
+            color: isSelected
+              ? isDarkMode
+                ? colors.white
+                : colors.white
+              : isDarkMode
+                ? colors.text
+                : colors.text,
+          },
+        ]}
         numberOfLines={1}
         ellipsizeMode="tail"
       >
-        {item.name.toUpperCase()}
+        {item.id === -1 ? 'ALL' : item.name.toUpperCase()}
       </ThemedText>
     </AnimatedPressable>
   );
 });
 
-// Main component is memoized for performance
+CategoryPill.displayName = 'CategoryPill';
+
+// Main component
 function CategorySelectorComponent({
   categories,
   selectedCategoryId,
@@ -174,26 +156,24 @@ function CategorySelectorComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Animated scroll state
-  const scrollX = useSharedValue(0);
+  // Create a "ALL" category and combine with the provided categories
+  const allCategories = useMemo(() => {
+    // Create "All" category with id -1 to ensure it's unique
+    const allCategory = { id: -1, name: 'All', created_at: '', updated_at: '' };
+    return [allCategory, ...categories];
+  }, [categories]);
 
-  // Create scroll handler with Reanimated 2
+  // Optimize scroll handler
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: event => {
-      scrollX.value = event.contentOffset.x;
+      // We could implement scroll effects here if needed
     },
   });
 
-  // Create a special "All" category for showing all articles
-  const allCategories = useMemo(() => {
-    return [{ id: -1, name: 'All' } as CategoryItem, ...categories];
-  }, [categories]);
-
-  // Render a single category pill - memoized to prevent unnecessary re-renders
+  // Memoize the render function to avoid recreating on each render
   const renderCategoryItem = useMemo(() => {
     const renderer: ListRenderItem<CategoryItem> = ({ item, index }) => {
-      const isSelected =
-        (item.id === -1 && selectedCategoryId === null) || item.id === selectedCategoryId;
+      const isSelected = selectedCategoryId === (item.id === -1 ? null : item.id);
 
       return (
         <CategoryPill
@@ -213,11 +193,11 @@ function CategorySelectorComponent({
   const keyExtractor = useSharedValue((item: CategoryItem) => item.id.toString());
 
   return (
-    <Animated.View style={styles.containerOuter} entering={FadeIn.duration(500)}>
-      {/* Background blur effect removed */}
-      {/* {blurBackground} */}
-
-      {/* Category list */}
+    <Animated.View
+      style={styles.containerOuter}
+      entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
+    >
+      {/* Category list with optimized list rendering */}
       <AnimatedFlatList
         data={allCategories}
         renderItem={renderCategoryItem}
@@ -225,16 +205,16 @@ function CategorySelectorComponent({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        initialNumToRender={8}
-        maxToRenderPerBatch={10}
-        windowSize={5}
+        initialNumToRender={10}
+        maxToRenderPerBatch={15}
+        windowSize={7}
         decelerationRate="fast"
         snapToAlignment="center"
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={true}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
-        entering={SlideInRight.springify().delay(200)}
-        layout={Layout.springify()}
+        entering={SlideInRight.springify().damping(15).delay(200)}
+        layout={Layout.springify().damping(15)}
       />
     </Animated.View>
   );
@@ -248,36 +228,29 @@ const styles = StyleSheet.create({
     position: 'relative',
     height: 38, // Fixed height for the container
     zIndex: 10, // Higher z-index to ensure it stays on top
-    marginTop: 0, // Ensure no top margin
-    marginBottom: LAYOUT.SPACING.TINY, // Add space below the selector
-    // Make background fully transparent
-    backgroundColor: 'transparent',
   },
-  // Keep the blurContainer style for reference but it won't be used
-  blurContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 0, // Remove top border radius so it extends seamlessly to the header
-    borderBottomLeftRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderBottomRightRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
-    marginHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  listContent: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL / 2, // Increased vertical padding
-  },
-  categoryItem: {
+  categoryPill: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL - 2,
+    borderRadius: 18,
     marginRight: LAYOUT.SPACING.SMALL,
-    height: 30, // Fixed height for the pill
-    justifyContent: 'center', // Center the text vertically
+    height: 34,
+    minWidth: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 'auto',
   },
-  categoryText: {
+  selectedPill: {
+    // Additional styles for selected state
+  },
+  pillText: {
+    fontSize: 12,
     fontWeight: '600',
     textAlign: 'center',
-    letterSpacing: 0.3, // Slightly tighter letter spacing
+  },
+  listContent: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    alignItems: 'center',
+    paddingBottom: 4,
   },
 });

@@ -9,7 +9,9 @@ import Animated, {
   withSpring,
   withTiming,
   withSequence,
+  Easing,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 interface ToggleProps {
   value: boolean;
@@ -46,33 +48,37 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const translateX = useSharedValue(value ? TRAVEL_DISTANCE : 0);
   const toggleScale = useSharedValue(1);
 
-  // Update animation when value changes
+  // Update animation when value changes with improved timing
   useEffect(() => {
+    // Use spring for smoother, more natural movement
     translateX.value = withSpring(value ? TRAVEL_DISTANCE : 0, {
-      stiffness: 180,
-      damping: 15,
-      mass: 1,
+      mass: 0.5, // Lower mass for quicker response
+      damping: 15, // Slightly higher damping for less bounce
+      stiffness: 120, // Increased stiffness for faster animation
+      overshootClamping: false,
     });
-  }, [value, TRAVEL_DISTANCE, translateX]);
 
-  // Memoize press handler to prevent recreation on each render
-  const handlePress = useCallback(() => {
-    // Animate press effect
+    // Add subtle scale animation for better feedback
     toggleScale.value = withSequence(
-      withTiming(0.95, { duration: 100 }),
-      withTiming(1, { duration: 150 })
+      withTiming(0.95, { duration: 100, easing: Easing.inOut(Easing.quad) }),
+      withTiming(1, { duration: 150, easing: Easing.inOut(Easing.quad) })
     );
+  }, [value, translateX, TRAVEL_DISTANCE, toggleScale]);
 
+  // Handle press with haptic feedback
+  const handlePress = useCallback(() => {
+    // Add light haptic feedback for better user experience
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onValueChange(!value);
-  }, [onValueChange, value, toggleScale]);
+  }, [onValueChange, value]);
 
-  // Use Reanimated's useAnimatedStyle for better performance
+  // Background color animation
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {
+      backgroundColor: value ? colors.tint : isDarkMode ? colors.elevation2 : colors.icon,
       transform: [{ scale: toggleScale.value }],
-      backgroundColor: value ? colors.tint : colors.icon,
     };
-  }, [value, colors.tint, colors.icon]);
+  }, [value, colors.tint, colors.elevation2, colors.icon, isDarkMode]);
 
   const handleAnimatedStyle = useAnimatedStyle(() => {
     return {
@@ -127,29 +133,27 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   );
 }
 
-// Memoize the component to prevent unnecessary rerenders
+// Use memo to prevent unnecessary re-renders
 export const Toggle = memo(ToggleComponent);
 
 const styles = StyleSheet.create({
   container: {
     justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   toggleTrack: {
-    position: 'absolute',
-    left: LAYOUT.SPACING.TINY,
-    right: LAYOUT.SPACING.TINY,
-    top: LAYOUT.SPACING.TINY,
-    bottom: LAYOUT.SPACING.TINY,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
   },
   handle: {
-    position: 'absolute',
+    position: 'relative',
   },
   shadow: {
-    shadowRadius: LAYOUT.SPACING.TINY / 2,
-    elevation: LAYOUT.Z_INDEX.CARD,
     shadowOffset: {
       width: 0,
       height: 1,
     },
+    shadowRadius: 2,
+    elevation: 2,
   },
 });

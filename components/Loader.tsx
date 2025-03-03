@@ -11,6 +11,8 @@ import Animated, {
   Easing,
   withSequence,
   WithTimingConfig,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 
 interface LoaderProps {
@@ -29,29 +31,40 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
 
   // Animation for pulsating effect using Reanimated shared value
   const pulseAnim = useSharedValue(0.8);
+  const opacityAnim = useSharedValue(0);
 
-  // Animation configuration
+  // Animation configuration with improved easing
   const animationConfig: WithTimingConfig = useMemo(
     () => ({
-      duration: 800,
-      easing: Easing.inOut(Easing.ease),
+      duration: 700, // Slightly faster animation
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Improved easing curve for smoother animation
     }),
     []
   );
 
   useEffect(() => {
+    // Fade in the loader
+    opacityAnim.value = withTiming(1, {
+      duration: 300,
+      easing: Easing.out(Easing.cubic),
+    });
+
     // Create a pulsating animation with Reanimated
     pulseAnim.value = withRepeat(
-      withSequence(withTiming(1.2, animationConfig), withTiming(0.8, animationConfig)),
+      withSequence(
+        withTiming(1.1, animationConfig), // Slightly smaller maximum scale for more subtle effect
+        withTiming(0.85, animationConfig) // Slightly larger minimum scale
+      ),
       -1, // Infinite repetitions
-      false // Don't reverse the animation
+      true // Reverse the animation for smoother transitions
     );
 
     return () => {
       // Cleanup animation by setting to initial value
       pulseAnim.value = 0.8;
+      opacityAnim.value = withTiming(0, { duration: 200 });
     };
-  }, [animationConfig, pulseAnim]);
+  }, [animationConfig, pulseAnim, opacityAnim]);
 
   // Size configuration
   const circleSize = size === 'large' ? 40 : 20;
@@ -67,13 +80,18 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
       borderColor: loaderColor,
       backgroundColor: 'transparent',
       transform: [{ scale: pulseAnim.value }],
+      opacity: opacityAnim.value,
     }),
     [circleSize, borderWidth, loaderColor]
   );
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View style={[styles.circle, animatedCircleStyle]} />
+      <Animated.View
+        style={[styles.circle, animatedCircleStyle]}
+        entering={FadeIn.duration(300).easing(Easing.out(Easing.cubic))}
+        exiting={FadeOut.duration(200)}
+      />
     </View>
   );
 };
@@ -91,9 +109,9 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
 
   return (
     <ThemedView style={styles.fullScreen}>
-      <View style={styles.loaderContainer}>
+      <Animated.View style={styles.loaderContainer} entering={FadeIn.duration(400)}>
         <Loader size="large" color={color || colors.tint} />
-      </View>
+      </Animated.View>
     </ThemedView>
   );
 };
@@ -117,9 +135,12 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
   const colors = useColors();
 
   return (
-    <View style={[styles.componentLoader, { height }, style]}>
+    <Animated.View
+      style={[styles.componentLoader, { height }, style]}
+      entering={FadeIn.duration(300)}
+    >
       <Loader size={size} color={color || colors.tint} />
-    </View>
+    </Animated.View>
   );
 };
 
