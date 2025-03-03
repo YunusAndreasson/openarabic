@@ -1,13 +1,4 @@
-import {
-  StyleSheet,
-  FlatList,
-  ListRenderItem,
-  Platform,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { StyleSheet, FlatList, ListRenderItem, Platform, View, RefreshControl } from 'react-native';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -18,130 +9,17 @@ import { Article } from '@/types/articles.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { categoriesService } from '@/services/categories';
-import type { Tables } from '@/types/database.types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
-import { Loader } from '@/components/Loader';
+import { Loader, LoadingScreen } from '@/components/Loader';
 import { useAppSelectorMemo } from '@/store/hooks';
 import { Theme } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
 // Constants
 const ITEM_HEIGHT = 360;
-
-// Should be moved to a separate file
-const CategoryHeader = ({
-  colors,
-  categoryPillsHeight,
-  insets,
-  isDarkTheme,
-  categories,
-  selectedCategory,
-  onCategorySelect,
-}: {
-  colors: ReturnType<typeof useColors>;
-  categoryPillsHeight: number;
-  insets: { top: number; bottom: number; left: number; right: number };
-  isDarkTheme: boolean;
-  categories: Tables<'categories'>[];
-  selectedCategory: Tables<'categories'> | null;
-  onCategorySelect: (category: Tables<'categories'> | null) => void;
-}) => {
-  const headerContainerStyle = [
-    styles.headerContainer,
-    {
-      backgroundColor: `${colors.background}${isDarkTheme ? 'CC' : '99'}`,
-      height: categoryPillsHeight + LAYOUT.SPACING.MEDIUM,
-      paddingTop: Platform.OS === 'ios' ? insets.top : insets.top + LAYOUT.SPACING.MEDIUM,
-    },
-  ];
-
-  const renderPill = (category: Tables<'categories'> | null) => {
-    const isSelected =
-      category === null ? selectedCategory === null : selectedCategory?.id === category.id;
-
-    const backgroundColor = isSelected
-      ? isDarkTheme
-        ? `${colors.tint}20`
-        : `${colors.tint}70`
-      : isDarkTheme
-        ? `${colors.elevation2}40`
-        : `${colors.elevation1}90`;
-
-    const textColor = isSelected
-      ? colors.white
-      : isDarkTheme
-        ? `${colors.text}90`
-        : `${colors.text}80`;
-
-    const categoryName = category?.name?.toUpperCase() || 'ALL';
-    const fontWeight = isSelected ? '700' : '600';
-
-    return (
-      <TouchableOpacity
-        key={category?.id || 'all'}
-        style={[
-          styles.categoryPill,
-          {
-            backgroundColor,
-            borderColor: colors.cardBorder,
-          },
-        ]}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          onCategorySelect(category);
-        }}
-      >
-        <ThemedText
-          style={[
-            styles.categoryPillText,
-            {
-              color: textColor,
-              fontWeight,
-            },
-          ]}
-          skipDefaultColor
-        >
-          {categoryName}
-        </ThemedText>
-      </TouchableOpacity>
-    );
-  };
-
-  return (
-    <View style={headerContainerStyle}>
-      <View style={styles.categoryContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.categoryScrollContent}
-          removeClippedSubviews={true}
-          scrollEventThrottle={16}
-          overScrollMode="never"
-        >
-          {renderPill(null)}
-          {categories.map(category => renderPill(category))}
-        </ScrollView>
-
-        {/* Gradient fade for right edge */}
-        {(Platform.OS === 'android' || isDarkTheme) && (
-          <LinearGradient
-            colors={[colors.gradientStart, colors.gradientMiddle, colors.background]}
-            start={{ x: 0.3, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            locations={[0, 0.7, 1]}
-            style={styles.rightFadeGradient}
-            pointerEvents="none"
-          />
-        )}
-      </View>
-    </View>
-  );
-};
 
 export default function ArticlesScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
@@ -158,18 +36,10 @@ export default function ArticlesScreen() {
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
-  const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Tables<'categories'> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(false);
-
-  // Calculate header height
-  const topInset = insets.top || 0;
-  const baseHeight = 30;
-  const categoryPillsHeight =
-    Platform.OS === 'ios' ? topInset + baseHeight : topInset + LAYOUT.SPACING.XLARGE;
 
   const fetchArticles = useCallback(
     async (showRefreshing = false) => {
@@ -188,50 +58,34 @@ export default function ArticlesScreen() {
         }
         setError(null);
 
-        const fetchedArticles = await articlesService.getArticles(
-          selectedCategory ? selectedCategory.id : undefined
-        );
-
+        const fetchedArticles = await articlesService.getArticles();
         setArticles(fetchedArticles);
       } catch (err) {
         setError('Failed to fetch articles. Pull down to try again.');
       } finally {
         // Ensure loader shows for at least 500ms for a more consistent experience
         const timeElapsed = loadingStartTime.current ? Date.now() - loadingStartTime.current : 0;
-        const minDelay = Math.max(0, 500 - timeElapsed);
+        const remainingTime = Math.max(0, 500 - timeElapsed);
 
-        loadingTimeoutRef.current = setTimeout(() => {
+        if (remainingTime > 0 && !showRefreshing) {
+          loadingTimeoutRef.current = setTimeout(() => {
+            setIsLoading(false);
+            loadingStartTime.current = null;
+          }, remainingTime);
+        } else {
           setIsLoading(false);
           setIsRefreshing(false);
-          isInitialMount.current = false;
           loadingStartTime.current = null;
-          // Force a re-render
-          setForceUpdate(prev => !prev);
-        }, minDelay);
+        }
       }
     },
-    [selectedCategory, isRefreshing]
+    [isRefreshing]
   );
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const fetchedCategories = await categoriesService.getCategories();
-      setCategories(fetchedCategories);
-    } catch {
-      console.warn('Failed to fetch categories');
-    }
-  }, []);
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     fetchArticles(true);
-    fetchCategories();
-  }, [fetchArticles, fetchCategories]);
-
-  const handleCategorySelect = useCallback((category: Tables<'categories'> | null) => {
-    setSelectedCategory(category);
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  }, []);
+  }, [fetchArticles]);
 
   // Effects
   useEffect(() => {
@@ -290,143 +144,104 @@ export default function ArticlesScreen() {
   );
 
   const ListEmptyComponent = useCallback(() => {
-    if (isLoading && !isRefreshing) {
-      return (
-        <ThemedView style={styles.emptyContainer}>
-          <Loader size="large" color={colors.tint} />
-        </ThemedView>
-      );
-    }
-
     if (error) {
       return (
-        <ThemedView style={styles.emptyContainer}>
-          <ThemedText style={styles.errorText}>{error}</ThemedText>
-        </ThemedView>
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>{error}</ThemedText>
+        </View>
       );
     }
 
     return (
-      <ThemedView style={styles.emptyContainer}>
-        <ThemedText style={styles.emptyText}>No articles found</ThemedText>
-      </ThemedView>
+      <View style={styles.emptyContainer}>
+        <ThemedText style={styles.emptyText}>No articles available</ThemedText>
+      </View>
     );
-  }, [isLoading, isRefreshing, error, colors.tint]);
+  }, [error]);
 
-  // Memoized separator component for better performance
   const ItemSeparatorComponent = useCallback(
-    () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
+    () => <View style={{ height: LAYOUT.LIST_VERTICAL_SPACING }} />,
     []
   );
 
-  // Modify app loading initialization
-  useEffect(() => {
-    const initialLoadingStartTime = Date.now();
-    loadingStartTime.current = initialLoadingStartTime;
-
-    Promise.all([fetchCategories(), fetchArticles()]).catch(error => {
-      console.error('Error during initial loading:', error);
-    });
-
-    // Clean up function to prevent memory leaks
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = undefined;
-      }
-      loadingStartTime.current = null;
-    };
-  }, [fetchCategories, fetchArticles]);
-
-  // Add focus effect for cleanup when switching tabs
+  // Use focus effect to refresh data when tab becomes active
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
+      fetchArticles();
       return () => {
-        // Clear any pending timeouts when screen loses focus
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = undefined;
         }
-        loadingStartTime.current = null;
       };
-    }, [])
+    }, [fetchArticles])
   );
 
-  // This is where we render the component based on loading state
-  if (isLoading && isInitialMount.current) {
-    // Use full-screen loader for initial loading
+  // Toggle forceUpdate to trigger a re-render if needed (e.g., for theme changes)
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      setForceUpdate(prev => !prev);
+    } else {
+      isInitialMount.current = false;
+    }
+  }, [isDarkTheme]);
+
+  // Render
+  if (isLoading && !isRefreshing) {
     return (
       <ThemedView style={styles.container}>
-        <Loader size="large" color={colors.tint} style={styles.fullScreenLoader} />
+        <LoadingScreen />
       </ThemedView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ThemedView style={{ backgroundColor: colors.background }} useSafeArea={false}>
-        <CategoryHeader
-          colors={colors}
-          categoryPillsHeight={categoryPillsHeight}
-          insets={insets}
-          isDarkTheme={isDarkTheme}
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategorySelect={handleCategorySelect}
-        />
+    <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+      {/* Standard header like vocabulary and playlist screens */}
+      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+        <ThemedText style={styles.headerTitle}>Texts</ThemedText>
+      </View>
 
-        <FlatList
-          ref={flatListRef}
-          data={articles}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          getItemLayout={getItemLayout}
-          contentContainerStyle={[
-            styles.flatListContent,
-            {
-              paddingTop: categoryPillsHeight + LAYOUT.SPACING.MEDIUM,
-              paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT,
-            },
-          ]}
-          ListEmptyComponent={ListEmptyComponent}
-          ItemSeparatorComponent={ItemSeparatorComponent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              tintColor={colors.tint}
-              colors={[colors.tint]}
-              progressBackgroundColor={colors.background}
-              progressViewOffset={categoryPillsHeight + LAYOUT.SPACING.MEDIUM}
-              title={isRefreshing ? 'Refreshing...' : 'Pull to refresh'}
-              titleColor={colors.text}
-            />
-          }
-          removeClippedSubviews={true}
-          initialNumToRender={4}
-          maxToRenderPerBatch={4}
-          windowSize={5}
-          updateCellsBatchingPeriod={50}
-          decelerationRate="normal"
-        />
-      </ThemedView>
-    </View>
+      <FlatList
+        ref={flatListRef}
+        data={articles}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        getItemLayout={getItemLayout}
+        ListEmptyComponent={ListEmptyComponent}
+        ItemSeparatorComponent={ItemSeparatorComponent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.tint]}
+            tintColor={colors.tint}
+            progressBackgroundColor={colors.cardBackground}
+          />
+        }
+        contentContainerStyle={styles.flatListContent}
+      />
+    </ThemedView>
   );
 }
+
+const EmptyState = () => (
+  <View style={styles.emptyContainer}>
+    <ThemedText style={styles.emptyText}>No articles available right now</ThemedText>
+  </View>
+);
+
+const ErrorState = ({ message }: { message: string }) => (
+  <View style={styles.emptyContainer}>
+    <ThemedText style={styles.emptyText}>{message}</ThemedText>
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  errorText: {
-    textAlign: 'center',
-    marginHorizontal: LAYOUT.SPACING.LARGE,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-  },
   emptyContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 200,
@@ -438,44 +253,24 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DIMMED,
   },
   flatListContent: {
-    paddingBottom: LAYOUT.LIST_VERTICAL_SPACING,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
   },
   headerContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-    ...LAYOUT.SHADOW.SMALL,
-  },
-  categoryContainer: {
-    height: 30,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  categoryScrollContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: 0,
-    gap: LAYOUT.SPACING.SMALL,
+    paddingTop: Platform.select({
+      ios: LAYOUT.CONTENT_SPACING.TOP,
+      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    }),
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  categoryPill: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY + 1,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-    borderWidth: 0.5,
-  },
-  categoryPillText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
-    letterSpacing: 0.5,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
-  rightFadeGradient: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: '40%',
-    zIndex: 1,
+  headerTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
   },
   tabBar: {
     position: 'absolute',
@@ -485,15 +280,5 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     height: LAYOUT.BOTTOM_BAR.HEIGHT,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-  },
-  fullScreenLoader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
 });
