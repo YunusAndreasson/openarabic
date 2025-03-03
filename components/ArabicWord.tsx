@@ -1,11 +1,12 @@
 import React, { useState, memo, useMemo, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, View, TextStyle, Animated } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import type { Tables } from '@/types/database.types';
 import { WordDetailsModal } from './WordDetailsModal';
 import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 type WordWithDetails = Tables<'sentence_words'> & {
   root: Tables<'roots'> | null;
@@ -31,17 +32,15 @@ function ArabicWordComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Create an animated value for the scale effect
-  const scaleAnim = useMemo(() => new Animated.Value(1), []);
+  // Create a shared value for the scale effect
+  const scaleAnim = useSharedValue(1);
 
   // Apply scale animation when isSelected changes
   React.useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: isSelected ? 1.02 : 1,
-      friction: 8,
-      tension: 40,
-      useNativeDriver: true,
-    }).start();
+    scaleAnim.value = withSpring(isSelected ? 1.02 : 1, {
+      damping: 8,
+      stiffness: 40,
+    });
   }, [isSelected, scaleAnim]);
 
   const handlePress = useCallback(() => {
@@ -87,12 +86,11 @@ function ArabicWordComponent({
   );
 
   // Create animated container style with scale transform
-  const animatedContainerStyle = useMemo(
-    () => ({
-      transform: [{ scale: scaleAnim }],
-    }),
-    [scaleAnim]
-  );
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scaleAnim.value }],
+    };
+  });
 
   return (
     <>

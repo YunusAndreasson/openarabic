@@ -1,11 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, ReactNode } from 'react';
+import React, { useCallback, useEffect, useMemo, ReactNode } from 'react';
 import {
   StyleSheet,
   View,
   Modal,
   TouchableOpacity,
   Pressable,
-  Animated,
   Dimensions,
   ViewStyle,
   TextStyle,
@@ -17,6 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+} from 'react-native-reanimated';
 
 interface ThemedModalProps {
   /**
@@ -118,46 +123,48 @@ function ThemedModalComponent({
 }: ThemedModalProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const fadeAnim = useSharedValue(0);
 
   // Run animations when visibility changes
   useEffect(() => {
     if (visible) {
       // Reset animation to initial value
-      fadeAnim.setValue(0);
+      fadeAnim.value = 0;
 
       // Start animation
-      Animated.timing(fadeAnim, {
-        toValue: 1,
+      fadeAnim.value = withTiming(1, {
         duration: animationDuration,
-        useNativeDriver: true,
-      }).start();
+      });
     }
   }, [visible, fadeAnim, animationDuration]);
+
+  // Function to trigger haptic feedback and close
+  const triggerCloseWithHaptics = useCallback(() => {
+    if (useHaptics) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    onClose();
+  }, [useHaptics, onClose]);
 
   // Handle backdrop press
   const handleBackdropPress = useCallback(() => {
     if (!closeOnBackdropPress) return;
 
     if (animated) {
-      // Run exit animation
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: LAYOUT.ANIMATION.DURATION.FAST,
-        useNativeDriver: true,
-      }).start(() => {
-        if (useHaptics) {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Run exit animation using Reanimated
+      fadeAnim.value = withTiming(
+        0,
+        {
+          duration: LAYOUT.ANIMATION.DURATION.FAST,
+        },
+        () => {
+          runOnJS(triggerCloseWithHaptics)();
         }
-        onClose();
-      });
+      );
     } else {
-      if (useHaptics) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
-      onClose();
+      triggerCloseWithHaptics();
     }
-  }, [closeOnBackdropPress, animated, fadeAnim, useHaptics, onClose]);
+  }, [closeOnBackdropPress, animated, fadeAnim, triggerCloseWithHaptics]);
 
   // Calculate modal width
   const modalWidth = useMemo(() => {
@@ -185,12 +192,12 @@ function ThemedModalComponent({
     [colors.cardBackground, colors.shadow, colors.cardBorder, modalWidth, contentStyle]
   );
 
-  // Create animated style
-  const animatedContentStyle = useMemo(
+  // Create animated style with Reanimated
+  const animatedContentStyle = useAnimatedStyle(
     () => ({
-      opacity: animated ? fadeAnim : 1,
+      opacity: animated ? fadeAnim.value : 1,
     }),
-    [animated, fadeAnim]
+    [animated]
   );
 
   return (
@@ -276,34 +283,41 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   modalContent: {
-    paddingTop: LAYOUT.SPACING.XXLARGE,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    ...LAYOUT.SHADOW.MEDIUM,
-    zIndex: LAYOUT.Z_INDEX.MODAL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    padding: LAYOUT.SPACING.LARGE,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    borderWidth: 1,
+    position: 'relative',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
   },
   closeButtonContainer: {
     position: 'absolute',
-    top: LAYOUT.SPACING.MEDIUM,
-    right: LAYOUT.SPACING.MEDIUM,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    top: 0,
+    right: 0,
+    zIndex: 10,
+    padding: LAYOUT.SPACING.SMALL,
   },
   closeButton: {
-    padding: LAYOUT.SPACING.TINY,
-  },
-  modalTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: 'bold',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    textAlign: 'center',
+    padding: 4,
   },
 });
 
-// Memoize the component to prevent unnecessary rerenders
+// Memoize the entire component
 export const ThemedModal = React.memo(ThemedModalComponent);
+ThemedModal.displayName = 'ThemedModal';
 
 export default ThemedModal;

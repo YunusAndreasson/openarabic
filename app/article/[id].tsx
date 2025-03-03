@@ -6,9 +6,10 @@ import {
   FlatList,
   Platform,
   TouchableOpacity,
-  Animated,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/ThemedView';
@@ -33,6 +34,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readingListService } from '@/services/reading_list';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 const styles = StyleSheet.create({
   container: {
@@ -74,6 +76,11 @@ const styles = StyleSheet.create({
   buttonIcon: {
     alignSelf: 'center',
   },
+  backButtonContainer: {
+    position: 'absolute',
+    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
+    left: 15,
+  },
 });
 
 // Threshold for scroll direction detection
@@ -89,8 +96,8 @@ export default function ArticleScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
 
-  // Animation values for back button
-  const backButtonAnim = useRef(new Animated.Value(0)).current;
+  // Animation values for back button using Reanimated
+  const backButtonAnim = useSharedValue(0);
   const [isBackButtonVisible, setIsBackButtonVisible] = useState(true);
   const prevScrollYValue = useRef(0);
 
@@ -171,13 +178,11 @@ export default function ArticleScreen() {
     }
   }, [user, articleId, isInReadingList, addToReadingListMutation, removeFromReadingListMutation]);
 
-  // Update animation when visibility changes
+  // Update animation when visibility changes using Reanimated
   useEffect(() => {
-    Animated.timing(backButtonAnim, {
-      toValue: isBackButtonVisible ? 0 : -80,
+    backButtonAnim.value = withTiming(isBackButtonVisible ? 0 : -80, {
       duration: 200,
-      useNativeDriver: true,
-    }).start();
+    });
   }, [isBackButtonVisible, backButtonAnim]);
 
   // Set loading state based on article loading
@@ -293,42 +298,19 @@ export default function ArticleScreen() {
     [handleArticlePress]
   );
 
-  // Add styles for animated buttons
-  const animatedButtonStyle = useMemo(
-    () => ({
-      transform: [{ translateY: backButtonAnim }],
-      opacity: isBackButtonVisible ? LAYOUT.OPACITY.ACTIVE : 0,
-      top:
-        Platform.OS === 'ios'
-          ? insets.top + LAYOUT.SPACING.MEDIUM
-          : insets.top + LAYOUT.SPACING.SMALL,
-    }),
-    [backButtonAnim, isBackButtonVisible, insets.top]
-  );
-
-  // Memoize the back button component to prevent unnecessary re-renders
-  const BackButton = useMemo(() => {
-    return (
-      <Animated.View style={[styles.backButton, animatedButtonStyle]}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
-        >
-          <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} style={styles.buttonIcon} />
-          </BlurView>
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  }, [animatedButtonStyle, isDarkMode, colors.text]);
+  // Create animated style for back button
+  const backButtonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: backButtonAnim.value }],
+    };
+  });
 
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
     if (!user) return null;
 
     return (
-      <Animated.View style={[styles.playlistButton, animatedButtonStyle]}>
+      <Animated.View style={[styles.playlistButton, { top: insets.top + LAYOUT.SPACING.MEDIUM }]}>
         <TouchableOpacity
           onPress={handleToggleReadingList}
           accessibilityLabel={isInReadingList ? 'Remove from playlist' : 'Add to playlist'}
@@ -346,7 +328,7 @@ export default function ArticleScreen() {
       </Animated.View>
     );
   }, [
-    animatedButtonStyle,
+    insets.top,
     isDarkMode,
     colors.text,
     colors.tint,
@@ -471,7 +453,22 @@ export default function ArticleScreen() {
       <StatusBar hidden />
 
       {/* Animated back button */}
-      {BackButton}
+      <Animated.View
+        style={[
+          styles.backButtonContainer,
+          { top: insets.top + LAYOUT.SPACING.MEDIUM },
+          backButtonAnimatedStyle,
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: colors.cardBackground }]}
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Ionicons name="chevron-back" size={24} color={colors.text} />
+        </TouchableOpacity>
+      </Animated.View>
 
       {/* Animated playlist button */}
       {PlaylistButton}

@@ -1,17 +1,18 @@
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, Animated, View } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import type { Tables } from '../../types/database.types';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HorizontalCategoryPill } from './HorizontalCategoryPill';
+import Animated, { useAnimatedStyle, SharedValue, interpolate } from 'react-native-reanimated';
 
 interface CategoryPillsContainerProps {
   categories: Tables<'categories'>[];
   selectedCategory: Tables<'categories'> | null;
   onSelectCategory: (category: Tables<'categories'> | null) => void;
-  visible: Animated.Value;
+  visible: SharedValue<number>;
 }
 
 function CategoryPillsContainerComponent({
@@ -22,22 +23,18 @@ function CategoryPillsContainerComponent({
 }: CategoryPillsContainerProps): React.JSX.Element {
   const colors = useColors();
 
-  // Memoize the animated style
-  const containerAnimatedStyle = useMemo(
-    () => ({
+  // Memoize the animated style using Reanimated
+  const containerAnimatedStyle = useAnimatedStyle(() => {
+    return {
       transform: [
         {
-          translateY: visible.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-100, 0],
-          }),
+          translateY: interpolate(visible.value, [0, 1], [-100, 0]),
         },
       ],
-      opacity: visible,
+      opacity: visible.value,
       marginBottom: -LAYOUT.SPACING.XLARGE,
-    }),
-    [visible]
-  );
+    };
+  });
 
   // Memoize the press handler factory
   const createPressHandler = useCallback(

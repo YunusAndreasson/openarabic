@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-unused-styles */
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, Animated, View, Platform } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, View, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -9,12 +9,13 @@ import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createBasePillStyles } from './pills/BasePill';
+import Animated, { useAnimatedStyle, SharedValue } from 'react-native-reanimated';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];
   selectedCategory: Tables<'categories'> | null;
   onSelectCategory: (category: Tables<'categories'> | null) => void;
-  visible: Animated.Value;
+  visible: SharedValue<number>;
 }
 
 // Create a memoized category pill component for the horizontal list

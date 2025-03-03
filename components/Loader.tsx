@@ -1,8 +1,17 @@
-import React, { useEffect, useRef, useMemo } from 'react';
-import { StyleSheet, View, Animated, Easing, ViewStyle } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  Easing,
+  withSequence,
+  WithTimingConfig,
+} from 'react-native-reanimated';
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -18,64 +27,53 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   // Use provided color or default to text color (which will be white in dark mode, black in light mode)
   const loaderColor = color || colors.text;
 
-  // Animation for pulsating effect
-  const pulseAnim = useRef(new Animated.Value(0.8)).current;
+  // Animation for pulsating effect using Reanimated shared value
+  const pulseAnim = useSharedValue(0.8);
 
   // Animation configuration
-  const animationConfig = useMemo(
+  const animationConfig: WithTimingConfig = useMemo(
     () => ({
       duration: 800,
       easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
     }),
     []
   );
 
   useEffect(() => {
-    // Create a pulsating animation
-    const pulseAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          ...animationConfig,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 0.8,
-          ...animationConfig,
-        }),
-      ])
+    // Create a pulsating animation with Reanimated
+    pulseAnim.value = withRepeat(
+      withSequence(withTiming(1.2, animationConfig), withTiming(0.8, animationConfig)),
+      -1, // Infinite repetitions
+      false // Don't reverse the animation
     );
 
-    pulseAnimation.start();
-
     return () => {
-      // Properly clean up animation
-      pulseAnimation.stop();
+      // Cleanup animation by setting to initial value
+      pulseAnim.value = 0.8;
     };
-  }, [animationConfig]);
+  }, [animationConfig, pulseAnim]);
 
   // Size configuration
   const circleSize = size === 'large' ? 40 : 20;
   const borderWidth = size === 'large' ? 4 : 2;
 
-  // Compute dynamic styles based on props
-  const dynamicCircleStyle = useMemo(
+  // Create animated style using Reanimated
+  const animatedCircleStyle = useAnimatedStyle(
     () => ({
       width: circleSize,
       height: circleSize,
       borderRadius: circleSize / 2,
       borderWidth: borderWidth,
       borderColor: loaderColor,
-      // Use transparent color properly
       backgroundColor: 'transparent',
-      transform: [{ scale: pulseAnim }],
+      transform: [{ scale: pulseAnim.value }],
     }),
-    [circleSize, borderWidth, loaderColor, pulseAnim]
+    [circleSize, borderWidth, loaderColor]
   );
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View style={[styles.circle, dynamicCircleStyle]} />
+      <Animated.View style={[styles.circle, animatedCircleStyle]} />
     </View>
   );
 };
