@@ -111,15 +111,15 @@ export const VocabularyStats = React.memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
   progressCard: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     height: 130,
     overflow: 'hidden',
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.SHADOW.MEDIUM,
     elevation: 3,
   },
   progressContent: {
-    padding: LAYOUT.CARD.PADDING.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     flex: 1,
   },
   progressRow: {

@@ -81,10 +81,10 @@ WordReviewCard.displayName = 'WordReviewCard';
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     margin: LAYOUT.SPACING.MEDIUM,
-    padding: LAYOUT.CARD.PADDING.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     minHeight: 200,
     ...LAYOUT.SHADOW.MEDIUM,
   },

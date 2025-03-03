@@ -185,6 +185,7 @@ export default function AccountScreen() {
                 backgroundColor: colors.cardBackground,
                 borderColor: colors.cardBorder,
               },
+              LAYOUT.SHADOW.MEDIUM,
             ]}
           >
             <View style={styles.settingRow}>
@@ -281,6 +282,7 @@ export default function AccountScreen() {
                 borderColor: colors.cardBorder,
                 marginTop: LAYOUT.SPACING.MEDIUM,
               },
+              LAYOUT.SHADOW.MEDIUM,
             ]}
           >
             <ThemedButton
@@ -323,6 +325,7 @@ export default function AccountScreen() {
                 borderColor: colors.cardBorder,
                 marginTop: LAYOUT.SPACING.MEDIUM,
               },
+              LAYOUT.SHADOW.MEDIUM,
             ]}
           >
             <ThemedButton
@@ -404,16 +407,19 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   connectContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   actionsContainer: {
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   divider: {
     height: StyleSheet.hairlineWidth,
@@ -424,7 +430,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
+    paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
   },
   settingLabelContainer: {
     flexDirection: 'row',
@@ -442,13 +448,13 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     justifyContent: 'flex-start',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
+    paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
     minHeight: 48,
     alignItems: 'flex-start',
   },
   signOutContainer: {
     paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.CARD.PADDING.LARGE,
+    paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
   },
   signOutButton: {
     opacity: LAYOUT.OPACITY.DIMMED,

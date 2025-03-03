@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   contentContainer: {
-    padding: LAYOUT.CARD.PADDING.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     paddingTop: LAYOUT.SPACING.XXLARGE,
   },
   title: {
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     height: 300,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: LAYOUT.CARD.PADDING.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     overflow: 'hidden',
   },
   cardLoading: {
