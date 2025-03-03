@@ -1,7 +1,8 @@
 import { StyleSheet, Alert, Linking, View, Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -25,6 +26,7 @@ export default function AccountScreen() {
   const settings = useAppSelector(state => state.settings);
   const loadingStartTime = useRef<number | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
+  const dataLoadedRef = useRef(false);
 
   // Custom button styles to ensure left alignment
   const buttonStyles = useMemo(
@@ -41,38 +43,51 @@ export default function AccountScreen() {
     []
   );
 
-  useEffect(() => {
-    async function loadSession() {
-      // Clear any existing timeouts to prevent potential issues
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = undefined;
-      }
-
-      setIsLoading(true);
-      loadingStartTime.current = Date.now();
-      try {
-        const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-      } catch (error) {
-        console.error('Error fetching session:', error);
-      } finally {
-        // Ensure loader shows for at least 500ms
-        const timeElapsed = Date.now() - (loadingStartTime.current || 0);
-        if (timeElapsed < 500) {
-          loadingTimeoutRef.current = setTimeout(() => {
-            setIsLoading(false);
-            loadingStartTime.current = null;
-          }, 500 - timeElapsed);
-        } else {
-          setIsLoading(false);
-          loadingStartTime.current = null;
-        }
-      }
+  const loadSession = useCallback(async () => {
+    // Skip if data is already loaded
+    if (dataLoadedRef.current && session) {
+      return;
     }
 
-    loadSession();
+    // Clear any existing timeouts to prevent potential issues
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = undefined;
+    }
 
+    setIsLoading(true);
+    loadingStartTime.current = Date.now();
+    try {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      dataLoadedRef.current = true;
+    } catch (error) {
+      console.error('Error fetching session:', error);
+    } finally {
+      // Ensure loader shows for at least 500ms
+      const timeElapsed = Date.now() - (loadingStartTime.current || 0);
+      if (timeElapsed < 500) {
+        loadingTimeoutRef.current = setTimeout(() => {
+          setIsLoading(false);
+          loadingStartTime.current = null;
+        }, 500 - timeElapsed);
+      } else {
+        setIsLoading(false);
+        loadingStartTime.current = null;
+      }
+    }
+  }, [session]);
+
+  // Use focus effect to only load session when tab is focused and data isn't loaded yet
+  useFocusEffect(
+    useCallback(() => {
+      if (!dataLoadedRef.current) {
+        loadSession();
+      }
+    }, [loadSession])
+  );
+
+  useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
     });

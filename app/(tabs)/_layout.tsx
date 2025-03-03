@@ -93,6 +93,7 @@ export default function TabLayout() {
                 color={color}
               />
             ),
+            unmountOnBlur: false,
           }}
         />
       ))}

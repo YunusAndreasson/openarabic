@@ -117,9 +117,25 @@ export default function VocabularyScreen() {
   // Refetch data when the screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      // Only refetch if we have a user and we're not on initial mount
+      // Only refetch if we have a user and this isn't the initial focus
+      // Also check if data is stale before refetching
       if (user && !isInitialMount.current) {
-        refetch();
+        // Check if data is stale before refetching
+        const studyWordsQueryData = queryClient.getQueryState(['studyWords', user?.id]);
+        const dueWordsQueryData = queryClient.getQueryState(['dueWords', user?.id]);
+
+        const isStudyWordsStale = studyWordsQueryData?.dataUpdatedAt
+          ? Date.now() - studyWordsQueryData.dataUpdatedAt > 60000 // 1 minute
+          : true;
+
+        const isDueWordsStale = dueWordsQueryData?.dataUpdatedAt
+          ? Date.now() - dueWordsQueryData.dataUpdatedAt > 30000 // 30 seconds
+          : true;
+
+        // Only refetch if data is stale
+        if (isStudyWordsStale || isDueWordsStale) {
+          refetch();
+        }
       }
 
       // Mark initial mount as completed after first render
@@ -135,7 +151,7 @@ export default function VocabularyScreen() {
         }
         loadingStartTime.current = null;
       };
-    }, [user, refetch])
+    }, [user, refetch, queryClient])
   );
 
   // Create a memoized error message component

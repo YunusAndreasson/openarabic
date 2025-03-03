@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
   containerOuter: {
     position: 'relative',
     height: 38, // Fixed height for the container
-    zIndex: 10, // Higher z-index to ensure it stays on top
+    zIndex: 0, // Set to 0 to ensure it's below the refresh indicator
   },
   categoryPill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

@@ -52,6 +52,7 @@ export default function ArticlesScreen() {
   const isInitialMount = useRef(true);
   const loadingStartTime = useRef<number | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
+  const dataLoadedRef = useRef(false);
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
@@ -114,6 +115,7 @@ export default function ArticlesScreen() {
 
         const fetchedArticles = await articlesService.getArticles();
         setArticles(fetchedArticles);
+        dataLoadedRef.current = true;
 
         // Also fetch categories if they haven't been fetched yet
         if (categories.length === 0) {
@@ -121,6 +123,9 @@ export default function ArticlesScreen() {
         }
       } catch (err) {
         setError('Failed to fetch articles. Pull down to try again.');
+        // Make sure to set loading states to false on error
+        setIsLoading(false);
+        setIsRefreshing(false);
       } finally {
         // Ensure loader shows for at least 500ms for a more consistent experience
         const timeElapsed = loadingStartTime.current ? Date.now() - loadingStartTime.current : 0;
@@ -129,6 +134,7 @@ export default function ArticlesScreen() {
         if (remainingTime > 0 && !showRefreshing) {
           loadingTimeoutRef.current = setTimeout(() => {
             setIsLoading(false);
+            setIsRefreshing(false);
             loadingStartTime.current = null;
           }, remainingTime);
         } else {
@@ -143,6 +149,7 @@ export default function ArticlesScreen() {
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setForceUpdate(true);
     fetchArticles(true);
   }, [fetchArticles]);
 
@@ -232,30 +239,59 @@ export default function ArticlesScreen() {
 
   const ItemSeparatorComponent = useCallback(() => <View style={styles.itemSeparator} />, []);
 
-  // Use focus effect to refresh data when tab becomes active
+  // Use focus effect to refresh data when tab becomes active, but only when necessary
   useFocusEffect(
     useCallback(() => {
-      fetchArticles();
+      // Always fetch on first mount, then only when force update is requested
+      if (isInitialMount.current || forceUpdate) {
+        fetchArticles();
+        if (forceUpdate) {
+          setForceUpdate(false);
+        }
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+        }
+      } else {
+        // If we already have data but are still showing loading, make sure to hide it
+        if (dataLoadedRef.current && isLoading) {
+          setIsLoading(false);
+        }
+      }
+
       return () => {
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
         }
       };
-    }, [fetchArticles])
+    }, [fetchArticles, forceUpdate, isLoading])
   );
 
-  // Toggle forceUpdate to trigger a re-render if needed (e.g., for theme changes)
+  // Force loading to false if we have data, regardless of other conditions
   useEffect(() => {
-    if (!isInitialMount.current) {
-      // Use functional state updates for theme changes
-      setArticles(prevArticles => [...prevArticles]);
-    } else {
-      isInitialMount.current = false;
+    if (articles.length > 0) {
+      // Use a small timeout to ensure state updates properly
+      setTimeout(() => {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }, 100);
     }
-  }, [isDarkTheme]);
+  }, [articles]);
+
+  // Add a safety timeout to ensure loading state doesn't get stuck
+  useEffect(() => {
+    if (isLoading) {
+      // If loading takes more than 5 seconds, force it to complete
+      const safetyTimeout = setTimeout(() => {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }, 5000);
+
+      return () => clearTimeout(safetyTimeout);
+    }
+  }, [isLoading]);
 
   // Render loading state
-  if (isLoading && !isRefreshing) {
+  if (isLoading && !isRefreshing && (!dataLoadedRef.current || articles.length === 0)) {
     return (
       <ThemedView style={styles.container}>
         <LoadingScreen />
@@ -283,6 +319,7 @@ export default function ArticlesScreen() {
           ListEmptyComponent={ListEmptyComponent}
           ItemSeparatorComponent={ItemSeparatorComponent}
           showsVerticalScrollIndicator={false}
+          style={{ zIndex: 5 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -290,6 +327,7 @@ export default function ArticlesScreen() {
               colors={[colors.tint]}
               tintColor={colors.tint}
               progressBackgroundColor={colors.cardBackground}
+              style={{ zIndex: 10 }}
             />
           }
           contentContainerStyle={contentContainerStyle}
@@ -302,7 +340,10 @@ export default function ArticlesScreen() {
 
         {/* Sticky floating category selector with perfect spacing */}
         {hasCategories && (
-          <View style={styles.categorySelectorWrapper}>
+          <View
+            style={styles.categorySelectorWrapper}
+            pointerEvents="box-none" // Allow touch events to pass through to the underlying FlatList
+          >
             <CategorySelector
               categories={categories}
               selectedCategoryId={selectedCategoryId}
@@ -343,7 +384,7 @@ const styles = StyleSheet.create({
     top: LAYOUT.SPACING.TINY,
     left: 0,
     right: 0,
-    zIndex: 10,
+    zIndex: 0,
   },
   articleItemContainer: {
     width: '100%',

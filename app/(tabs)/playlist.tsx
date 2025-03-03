@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, FlatList, View, Platform, AppState, TouchableOpacity } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
@@ -300,6 +300,7 @@ export default function PlaylistScreen() {
   const loadingStartTime = useRef<number | null>(null);
   const isInitialMount = useRef(true);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
+  const dataLoadedRef = useRef(false);
   const [forceUpdate, setForceUpdate] = useState(false);
 
   // Query for reading list
@@ -308,12 +309,20 @@ export default function PlaylistScreen() {
     isLoading: isDataLoading,
     isFetching,
     status,
+    refetch,
   } = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
     enabled: !!user?.id,
     staleTime: 60000, // 1 minute
   });
+
+  // Mark data as loaded when we get results
+  useEffect(() => {
+    if (readingList && readingList.length >= 0) {
+      dataLoadedRef.current = true;
+    }
+  }, [readingList]);
 
   // Simple audio state management
   const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
@@ -369,9 +378,30 @@ export default function PlaylistScreen() {
     return isCurrentlyLoading;
   }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
 
-  // Clean up loading timeouts on focus change
+  // Clean up loading timeouts on focus change and conditionally refetch data
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
+      // Only refetch if we have a user and this isn't the initial focus
+      // Also check if data is stale before refetching
+      if (user?.id && !isInitialMount.current) {
+        // Check if data is stale before refetching
+        const readingListQueryData = queryClient.getQueryState(['readingList', user?.id]);
+
+        const isReadingListStale = readingListQueryData?.dataUpdatedAt
+          ? Date.now() - readingListQueryData.dataUpdatedAt > 60000 // 1 minute
+          : true;
+
+        // Only refetch if data is stale
+        if (isReadingListStale) {
+          refetch();
+        }
+      }
+
+      // Mark initial mount as completed after first render
+      if (isInitialMount.current && user) {
+        isInitialMount.current = false;
+      }
+
       return () => {
         // Clear any pending timeouts when screen loses focus
         if (loadingTimeoutRef.current) {
@@ -381,7 +411,7 @@ export default function PlaylistScreen() {
         // Reset loading state when unmounting
         loadingStartTime.current = null;
       };
-    }, [])
+    }, [user, refetch, queryClient])
   );
 
   // Get active playlist based on mode
