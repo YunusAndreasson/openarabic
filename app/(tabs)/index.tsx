@@ -319,7 +319,7 @@ export default function ArticlesScreen() {
           ListEmptyComponent={ListEmptyComponent}
           ItemSeparatorComponent={ItemSeparatorComponent}
           showsVerticalScrollIndicator={false}
-          style={{ zIndex: 5 }}
+          style={{ zIndex: 1 }}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -327,7 +327,7 @@ export default function ArticlesScreen() {
               colors={[colors.tint]}
               tintColor={colors.tint}
               progressBackgroundColor={colors.cardBackground}
-              style={{ zIndex: 10 }}
+              style={{ zIndex: 1 }}
             />
           }
           contentContainerStyle={contentContainerStyle}
@@ -340,10 +340,7 @@ export default function ArticlesScreen() {
 
         {/* Sticky floating category selector with perfect spacing */}
         {hasCategories && (
-          <View
-            style={styles.categorySelectorWrapper}
-            pointerEvents="box-none" // Allow touch events to pass through to the underlying FlatList
-          >
+          <View style={styles.categorySelectorWrapper} pointerEvents="box-none">
             <CategorySelector
               categories={categories}
               selectedCategoryId={selectedCategoryId}
@@ -384,7 +381,9 @@ const styles = StyleSheet.create({
     top: LAYOUT.SPACING.TINY,
     left: 0,
     right: 0,
-    zIndex: 0,
+    zIndex: 10,
+    paddingTop: 2,
+    paddingBottom: 4,
   },
   articleItemContainer: {
     width: '100%',

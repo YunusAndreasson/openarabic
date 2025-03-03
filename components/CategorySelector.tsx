@@ -5,18 +5,10 @@ import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { LAYOUT } from '../constants/layout';
 import Animated, {
-  FadeIn,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
-  withSequence,
   interpolateColor,
-  SlideInRight,
-  useAnimatedScrollHandler,
   Layout,
-  ZoomIn,
-  Easing,
-  withDelay,
 } from 'react-native-reanimated';
 import { createBasePillStyles } from './pills/BasePill';
 import type { Tables } from '../types/database.types';
@@ -54,7 +46,6 @@ const CategoryPill = React.memo(function CategoryPill({
 }) {
   // Animation values
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
 
   // Animate pill on selection - optimized animation values
   const animatedStyles = useAnimatedStyle(() => {
@@ -88,7 +79,6 @@ const CategoryPill = React.memo(function CategoryPill({
 
     return {
       transform: [{ scale: scale.value }],
-      opacity: opacity.value,
       backgroundColor,
       // Add shadow for better visibility
       shadowColor: colors.text,
@@ -99,28 +89,10 @@ const CategoryPill = React.memo(function CategoryPill({
     };
   });
 
-  // Handle press with optimized animation
-  const handlePress = () => {
-    scale.value = withSequence(
-      withTiming(0.95, { duration: 100, easing: Easing.out(Easing.quad) }),
-      withTiming(1.05, { duration: 100, easing: Easing.in(Easing.quad) }),
-      withTiming(1, { duration: 150, easing: Easing.inOut(Easing.quad) })
-    );
-    onPress();
-  };
-
-  // Entry animation with staggered timing based on index
-  const entryAnimation = useMemo(() => {
-    return ZoomIn.duration(400)
-      .easing(Easing.out(Easing.quad))
-      .delay(100 + index * 50);
-  }, [index]);
-
   return (
     <AnimatedPressable
       style={[styles.categoryPill, isSelected ? styles.selectedPill : null, animatedStyles]}
-      onPress={handlePress}
-      entering={entryAnimation}
+      onPress={onPress}
       layout={Layout.springify().damping(15)}
     >
       <ThemedText
@@ -163,13 +135,6 @@ function CategorySelectorComponent({
     return [allCategory, ...categories];
   }, [categories]);
 
-  // Optimize scroll handler
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: event => {
-      // We could implement scroll effects here if needed
-    },
-  });
-
   // Memoize the render function to avoid recreating on each render
   const renderCategoryItem = useMemo(() => {
     const renderer: ListRenderItem<CategoryItem> = ({ item, index }) => {
@@ -190,18 +155,15 @@ function CategorySelectorComponent({
   }, [selectedCategoryId, onSelectCategory, isDarkMode, colors]);
 
   // optimize list performance
-  const keyExtractor = useSharedValue((item: CategoryItem) => item.id.toString());
+  const keyExtractor = (item: CategoryItem) => item.id.toString();
 
   return (
-    <Animated.View
-      style={styles.containerOuter}
-      entering={FadeIn.duration(500).easing(Easing.out(Easing.cubic))}
-    >
+    <View style={styles.containerOuter}>
       {/* Category list with optimized list rendering */}
-      <AnimatedFlatList
+      <FlatList
         data={allCategories}
         renderItem={renderCategoryItem}
-        keyExtractor={keyExtractor.value}
+        keyExtractor={keyExtractor}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
@@ -211,12 +173,8 @@ function CategorySelectorComponent({
         decelerationRate="fast"
         snapToAlignment="center"
         removeClippedSubviews={true}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        entering={SlideInRight.springify().damping(15).delay(200)}
-        layout={Layout.springify().damping(15)}
       />
-    </Animated.View>
+    </View>
   );
 }
 
@@ -227,7 +185,7 @@ const styles = StyleSheet.create({
   containerOuter: {
     position: 'relative',
     height: 38, // Fixed height for the container
-    zIndex: 0, // Set to 0 to ensure it's below the refresh indicator
+    zIndex: 10, // Ensure it's above the FlatList
   },
   categoryPill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

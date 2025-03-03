@@ -53,13 +53,13 @@ CategoryPill.displayName = 'CategoryPill';
 const styles = StyleSheet.create({
   container: {
     maxWidth: '70%',
-    zIndex: LAYOUT.Z_INDEX.CARD + 1,
+    zIndex: 15,
   },
   nonAbsoluteContainer: {
     position: 'relative',
     top: 0,
     left: 0,
-    marginTop: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : 0, // Significantly increased margin on iOS
+    marginTop: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : 0,
   },
   text: {
     textAlign: 'center',

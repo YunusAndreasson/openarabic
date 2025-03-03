@@ -41,12 +41,12 @@ export const createBasePillStyles = ({
       ...Platform.select({
         ios: {
           shadowColor: isDarkMode ? colors.text : colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDarkMode ? 0.3 : 0.25,
-          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: isDarkMode ? 0.2 : 0.15,
+          shadowRadius: 3,
         },
         android: {
-          elevation: isSelected ? 4 : 3,
+          elevation: isSelected ? 3 : 2,
         },
       }),
     },
@@ -71,7 +71,7 @@ export const createBasePillStyles = ({
 export const basePillStyles = StyleSheet.create({
   container: {
     maxWidth: '70%',
-    zIndex: LAYOUT.Z_INDEX.CARD + 1,
+    zIndex: 15, // Higher z-index to ensure it stays on top of everything
   },
   absoluteContainer: {
     position: 'absolute',
