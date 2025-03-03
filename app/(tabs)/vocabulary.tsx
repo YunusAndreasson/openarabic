@@ -205,11 +205,21 @@ export default function VocabularyScreen() {
   }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
 
   // Separate loading state for content that can show a loading indicator
-  const isContentLoading = useMemo(() => !!user && isFetching, [user, isFetching, forceUpdate]);
+  const isContentLoading = useMemo(() => {
+    // Consider content loading if:
+    // 1. User exists and data is being fetched
+    // 2. OR if we're in the initial data loading phase
+    return (!!user && isFetching) || (!!user && isDataLoading);
+  }, [user, isFetching, isDataLoading, forceUpdate]);
 
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null) as StudyWord[];
   }, [studyWords]);
+
+  // Ensure data is fully processed before rendering
+  const isDataReady = useMemo(() => {
+    return !!user && !isContentLoading && validStudyWords.length > 0;
+  }, [user, isContentLoading, validStudyWords.length]);
 
   const stats = useMemo(() => {
     if (!validStudyWords.length)
@@ -424,7 +434,7 @@ export default function VocabularyScreen() {
           <VocabularyGraph
             title="Weekly Progress"
             data={weeklyProgressData}
-            isLoading={isContentLoading}
+            isLoading={!isDataReady}
           />
 
           {/* Review Button - always show either enabled or disabled version */}

@@ -4,6 +4,12 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { Colors } from '../constants/Colors';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
 interface VocabularyDashboardProps {
   totalWords: number;
@@ -45,19 +51,44 @@ const ProgressBar = React.memo(
     percentage: number;
     backgroundColor: string;
     fillColor: string;
-  }) => (
-    <View style={[styles.progressBarBg, { backgroundColor }]}>
-      <View
-        style={[
-          styles.progressBarFill,
-          {
-            width: `${percentage}%`,
-            backgroundColor: fillColor,
-          },
-        ]}
-      />
-    </View>
-  )
+  }) => {
+    // Create a shared value for the width percentage
+    const widthPercentage = useSharedValue(0);
+
+    // Track if this is the initial mount
+    const isInitialMount = React.useRef(true);
+
+    // Animate the width percentage when the component mounts or percentage changes
+    React.useEffect(() => {
+      // Small delay to ensure the component is fully rendered
+      const animationDelay = isInitialMount.current ? 100 : 0;
+
+      const animationTimeout = setTimeout(() => {
+        widthPercentage.value = withTiming(percentage, {
+          duration: 1000,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        });
+        isInitialMount.current = false;
+      }, animationDelay);
+
+      return () => clearTimeout(animationTimeout);
+    }, [percentage]);
+
+    // Create an animated style for the fill - memoized to avoid unnecessary recalculations
+    const animatedStyle = useAnimatedStyle(
+      () => ({
+        width: `${widthPercentage.value}%`,
+        backgroundColor: fillColor,
+      }),
+      [fillColor]
+    );
+
+    return (
+      <View style={[styles.progressBarBg, { backgroundColor }]}>
+        <Animated.View style={[styles.progressBarFill, animatedStyle]} />
+      </View>
+    );
+  }
 );
 
 ProgressBar.displayName = 'ProgressBar';
