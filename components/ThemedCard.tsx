@@ -248,16 +248,14 @@ export default React.memo(ThemedCardComponent);
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: LAYOUT.CARD.MARGIN.LARGE,
-    marginVertical: LAYOUT.CARD.MARGIN.MEDIUM,
     overflow: 'visible',
   },
   pressable: {
     overflow: 'visible',
   },
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
   },

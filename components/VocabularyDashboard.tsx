@@ -178,10 +178,11 @@ VocabularyDashboard.displayName = 'VocabularyDashboard';
 const styles = StyleSheet.create({
   mainCard: {
     width: '100%',
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   statsRow: {
     flexDirection: 'row',

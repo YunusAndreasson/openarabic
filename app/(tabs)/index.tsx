@@ -121,13 +121,19 @@ export default function ArticlesScreen() {
   // Memoize renderItem to prevent unnecessary re-renders
   const renderItem = useCallback<ListRenderItem<Article>>(
     ({ item }) => (
-      <ThemedCard
-        imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-        title={item.title}
-        category={item.category?.name ?? 'Uncategorized'}
-        author={item.author?.name ?? 'Anonymous'}
-        onPress={() => router.push(`/article/${item.id}`)}
-      />
+      <View style={{ width: '100%' }}>
+        <ThemedCard
+          imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+          title={item.title}
+          category={item.category?.name ?? 'Uncategorized'}
+          author={item.author?.name ?? 'Anonymous'}
+          onPress={() => router.push(`/article/${item.id}`)}
+          style={{
+            width: '100%',
+            // No need for margins as they're removed from the base component
+          }}
+        />
+      </View>
     ),
     []
   );
@@ -160,7 +166,7 @@ export default function ArticlesScreen() {
   }, [error]);
 
   const ItemSeparatorComponent = useCallback(
-    () => <View style={{ height: LAYOUT.LIST_VERTICAL_SPACING }} />,
+    () => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />,
     []
   );
 
@@ -195,7 +201,7 @@ export default function ArticlesScreen() {
   }
 
   return (
-    <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+    <ThemedView style={styles.container}>
       {/* Standard header like vocabulary and playlist screens */}
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
         <ThemedText style={styles.headerTitle}>Texts</ThemedText>
@@ -255,7 +261,7 @@ const styles = StyleSheet.create({
   flatListContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   headerContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,

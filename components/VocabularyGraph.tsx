@@ -196,10 +196,11 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   header: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
