@@ -34,7 +34,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readingListService } from '@/services/reading_list';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 
 const styles = StyleSheet.create({
   container: {
@@ -59,11 +64,13 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
     left: 15,
+    overflow: 'hidden',
   },
   playlistButton: {
     position: 'absolute',
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
     right: 15,
+    overflow: 'hidden',
   },
   buttonBlur: {
     padding: LAYOUT.SPACING.SMALL,
@@ -71,7 +78,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    opacity: LAYOUT.OPACITY.OVERLAY,
+    opacity: 0.9,
   },
   buttonIcon: {
     alignSelf: 'center',
@@ -98,7 +105,9 @@ export default function ArticleScreen() {
 
   // Animation values for back button using Reanimated
   const backButtonAnim = useSharedValue(0);
-  const [isBackButtonVisible, setIsBackButtonVisible] = useState(true);
+  const playlistButtonAnim = useSharedValue(0);
+  const buttonsOpacity = useSharedValue(1); // Add opacity shared value
+  const [isButtonsVisible, setIsButtonsVisible] = useState(true);
   const prevScrollYValue = useRef(0);
 
   // Parse article ID once
@@ -180,10 +189,18 @@ export default function ArticleScreen() {
 
   // Update animation when visibility changes using Reanimated
   useEffect(() => {
-    backButtonAnim.value = withTiming(isBackButtonVisible ? 0 : -80, {
-      duration: 200,
-    });
-  }, [isBackButtonVisible, backButtonAnim]);
+    // Use the same animation configuration for both buttons
+    const config = {
+      duration: 300,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+    };
+
+    // Move buttons completely off-screen when not visible
+    // Use negative value that's larger than the button height to ensure it's completely hidden
+    backButtonAnim.value = withTiming(isButtonsVisible ? 0 : -100, config);
+    playlistButtonAnim.value = withTiming(isButtonsVisible ? 0 : -100, config);
+    buttonsOpacity.value = withTiming(isButtonsVisible ? 1 : 0, config);
+  }, [isButtonsVisible, backButtonAnim, playlistButtonAnim, buttonsOpacity]);
 
   // Set loading state based on article loading
   useEffect(() => {
@@ -302,42 +319,84 @@ export default function ArticleScreen() {
   const backButtonAnimatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: backButtonAnim.value }],
+      opacity: buttonsOpacity.value,
+    };
+  });
+
+  // Create animated style for playlist button
+  const playlistButtonAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: playlistButtonAnim.value }],
+      opacity: buttonsOpacity.value,
     };
   });
 
   // Memoize the back button component to match playlist button implementation
   const BackButton = useMemo(() => {
+    const buttonStyle = {
+      ...styles.buttonBlur,
+      backgroundColor: isDarkMode ? 'rgba(40, 40, 40, 0.8)' : 'rgba(240, 240, 240, 0.8)',
+    };
+
     return (
-      <Animated.View style={[styles.backButton, { top: insets.top + LAYOUT.SPACING.MEDIUM }]}>
+      <Animated.View
+        style={[
+          styles.backButton,
+          { top: insets.top + LAYOUT.SPACING.MEDIUM },
+          backButtonAnimatedStyle,
+        ]}
+      >
         <TouchableOpacity
           onPress={() => router.back()}
           accessibilityLabel="Go back"
           accessibilityRole="button"
         >
-          <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
-            <Ionicons name="chevron-back" size={22} color={colors.text} style={styles.buttonIcon} />
+          <BlurView intensity={90} tint={isDarkMode ? 'dark' : 'light'} style={buttonStyle}>
+            <Ionicons
+              name="chevron-back"
+              size={24}
+              color={isDarkMode ? '#FFFFFF' : '#000000'}
+              style={styles.buttonIcon}
+            />
           </BlurView>
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [insets.top, isDarkMode, colors.text]);
+  }, [insets.top, isDarkMode, backButtonAnimatedStyle]);
 
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
     if (!user) return null;
 
+    const buttonStyle = {
+      ...styles.buttonBlur,
+      backgroundColor: isDarkMode ? 'rgba(40, 40, 40, 0.8)' : 'rgba(240, 240, 240, 0.8)',
+    };
+
+    // Use a more vibrant color for the active headset icon
+    const activeIconColor = '#FF3B30'; // Bright red color for active state
+    const inactiveIconColor = isDarkMode ? '#FFFFFF' : '#000000';
+
     return (
-      <Animated.View style={[styles.playlistButton, { top: insets.top + LAYOUT.SPACING.MEDIUM }]}>
+      <Animated.View
+        style={[
+          styles.playlistButton,
+          { top: insets.top + LAYOUT.SPACING.MEDIUM },
+          playlistButtonAnimatedStyle,
+        ]}
+      >
         <TouchableOpacity
           onPress={handleToggleReadingList}
-          accessibilityLabel={isInReadingList ? 'Remove from playlist' : 'Add to playlist'}
+          accessibilityLabel={
+            isInReadingList ? 'Remove from audio playlist' : 'Add to audio playlist'
+          }
           accessibilityRole="button"
         >
-          <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
+          <BlurView intensity={90} tint={isDarkMode ? 'dark' : 'light'} style={buttonStyle}>
             <Ionicons
               name={isInReadingList ? 'headset' : 'headset-outline'}
-              size={22}
-              color={isInReadingList ? colors.tint : colors.text}
+              size={24}
+              color={isInReadingList ? activeIconColor : inactiveIconColor}
               style={styles.buttonIcon}
             />
           </BlurView>
@@ -347,11 +406,10 @@ export default function ArticleScreen() {
   }, [
     insets.top,
     isDarkMode,
-    colors.text,
-    colors.tint,
     isInReadingList,
     handleToggleReadingList,
     user,
+    playlistButtonAnimatedStyle,
   ]);
 
   // Optimize enhanceWord function - restore required properties for type compatibility
@@ -436,19 +494,28 @@ export default function ArticleScreen() {
   );
 
   // Simplify the scroll handling logic
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const currentScrollY = event.nativeEvent.contentOffset.y;
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
 
-    if (Math.abs(currentScrollY - prevScrollYValue.current) < SCROLL_THRESHOLD) {
       // Skip small movements to reduce unnecessary state updates
-      return;
-    }
+      if (Math.abs(currentScrollY - prevScrollYValue.current) < SCROLL_THRESHOLD) {
+        return;
+      }
 
-    // Show button when scrolling up or at top, hide when scrolling down
-    setIsBackButtonVisible(currentScrollY < prevScrollYValue.current || currentScrollY <= 0);
+      // Show buttons when scrolling up or at the very top, hide when scrolling down
+      const isScrollingUp = currentScrollY < prevScrollYValue.current;
+      const isAtTop = currentScrollY <= 0;
 
-    prevScrollYValue.current = currentScrollY;
-  }, []);
+      // Only update state if it's changing to avoid unnecessary re-renders
+      if (isButtonsVisible !== (isScrollingUp || isAtTop)) {
+        setIsButtonsVisible(isScrollingUp || isAtTop);
+      }
+
+      prevScrollYValue.current = currentScrollY;
+    },
+    [isButtonsVisible]
+  );
 
   // Render loading screen
   if (isLoading) {
