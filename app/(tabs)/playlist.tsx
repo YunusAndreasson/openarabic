@@ -785,12 +785,12 @@ export default function PlaylistScreen() {
       <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+            <ThemedText style={styles.headerTitle}>Audio Playlist</ThemedText>
           </View>
           <View style={styles.emptyStateContainer}>
             <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
             <ThemedText style={styles.emptyStateMessage}>
-              Please sign in to view and manage your saved articles
+              Please sign in to view and manage your audio playlist
             </ThemedText>
             <ThemedButton
               title="Go to Profile"
@@ -809,10 +809,10 @@ export default function PlaylistScreen() {
       <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+            <ThemedText style={styles.headerTitle}>Audio Playlist</ThemedText>
           </View>
           <View style={styles.emptyStateContainer}>
-            <ThemedText style={styles.emptyStateTitle}>Your Playlist is Empty</ThemedText>
+            <ThemedText style={styles.emptyStateTitle}>Your Audio Playlist is Empty</ThemedText>
             <ThemedText style={styles.emptyStateMessage}>
               Save articles to your playlist to listen to them later
             </ThemedText>
@@ -833,7 +833,7 @@ export default function PlaylistScreen() {
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Clean header */}
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+          <ThemedText style={styles.headerTitle}>Audio Playlist</ThemedText>
         </View>
 
         <FlatList

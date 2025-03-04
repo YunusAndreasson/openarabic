@@ -128,7 +128,7 @@ export default function ArticleScreen() {
     onSuccess: () => {
       Toast.show({
         type: 'success',
-        text1: 'Added to playlist',
+        text1: 'Added to audio playlist',
         position: 'bottom',
       });
       refetchReadingListStatus();
@@ -138,7 +138,7 @@ export default function ArticleScreen() {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to add to playlist',
+        text2: 'Failed to add to audio playlist',
         position: 'bottom',
       });
     },
@@ -151,7 +151,7 @@ export default function ArticleScreen() {
     onSuccess: () => {
       Toast.show({
         type: 'success',
-        text1: 'Removed from playlist',
+        text1: 'Removed from audio playlist',
         position: 'bottom',
       });
       refetchReadingListStatus();
@@ -161,7 +161,7 @@ export default function ArticleScreen() {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to remove from playlist',
+        text2: 'Failed to remove from audio playlist',
         position: 'bottom',
       });
     },
@@ -335,7 +335,7 @@ export default function ArticleScreen() {
         >
           <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
             <Ionicons
-              name={isInReadingList ? 'bookmark' : 'bookmark-outline'}
+              name={isInReadingList ? 'headset' : 'headset-outline'}
               size={22}
               color={isInReadingList ? colors.tint : colors.text}
               style={styles.buttonIcon}
