@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   },
   buttonBlur: {
     padding: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: 20,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -305,6 +305,23 @@ export default function ArticleScreen() {
     };
   });
 
+  // Memoize the back button component to match playlist button implementation
+  const BackButton = useMemo(() => {
+    return (
+      <Animated.View style={[styles.backButton, { top: insets.top + LAYOUT.SPACING.MEDIUM }]}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <BlurView intensity={70} tint={isDarkMode ? 'dark' : 'light'} style={styles.buttonBlur}>
+            <Ionicons name="chevron-back" size={22} color={colors.text} style={styles.buttonIcon} />
+          </BlurView>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  }, [insets.top, isDarkMode, colors.text]);
+
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
     if (!user) return null;
@@ -453,22 +470,7 @@ export default function ArticleScreen() {
       <StatusBar hidden />
 
       {/* Animated back button */}
-      <Animated.View
-        style={[
-          styles.backButtonContainer,
-          { top: insets.top + LAYOUT.SPACING.MEDIUM },
-          backButtonAnimatedStyle,
-        ]}
-      >
-        <TouchableOpacity
-          style={[styles.backButton, { backgroundColor: colors.cardBackground }]}
-          onPress={() => router.back()}
-          accessibilityLabel="Go back"
-          accessibilityRole="button"
-        >
-          <Ionicons name="chevron-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </Animated.View>
+      {BackButton}
 
       {/* Animated playlist button */}
       {PlaylistButton}
