@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { StyleSheet, View, Pressable, Platform, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -6,6 +6,8 @@ import Animated, {
   withSpring,
   withTiming,
   runOnJS,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -88,12 +90,14 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
+    backgroundColor: 'rgba(0,0,0,0.1)',
   },
   meaningText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     textAlign: 'center',
-    fontWeight: '600',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+    fontWeight: '700',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
+    padding: LAYOUT.SPACING.LARGE,
   },
   footer: {
     width: '100%',
@@ -188,6 +192,9 @@ export default function ReviewScreen() {
   const { user } = useAuth();
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const meaningTimeoutRef = useRef<NodeJS.Timeout>();
+  const animationTimeoutRef = useRef<NodeJS.Timeout>();
+  const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
 
   const { currentWord, isLoading, updateWord, progress, isComplete, invalidateQueries, dueWords } =
     useSpacedRepetition({
@@ -197,51 +204,57 @@ export default function ReviewScreen() {
   // Animation values
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const meaningOpacity = useSharedValue(0);
+
+  // Clean up timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+      if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
+    };
+  }, []);
 
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
     (success: boolean) => {
-      // Provide haptic feedback
-      Haptics.impactAsync(
-        success ? Haptics.ImpactFeedbackStyle.Medium : Haptics.ImpactFeedbackStyle.Light
-      );
+      // Clear any existing timeouts
+      if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
+      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+      if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
 
-      // If the user doesn't know the word, show the meaning
-      if (!success) {
-        setShowMeaningOverlay(true);
-        // Hide the meaning after a delay
-        setTimeout(() => {
-          setShowMeaningOverlay(false);
-          // Update the word status after showing the meaning
-          if (currentWord?.sentence_word_id) {
-            // First update the word in the database
-            updateWord(currentWord.sentence_word_id, success);
-            // Then handle animations - faster timing
-            setTimeout(() => {
-              // Reset position and fade in the new word
-              translateX.value = 0;
-              opacity.value = 0;
-              setTimeout(() => {
-                opacity.value = withTiming(1, { duration: 150 }); // Faster fade-in
-              }, 20); // Shorter delay
-            }, 50); // Shorter delay
-          }
-        }, 1500); // Shorter meaning display time
-      } else {
-        // Update the word status immediately for success
+      const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
           // First update the word in the database
           updateWord(currentWord.sentence_word_id, success);
+
           // Then handle animations - faster timing
-          setTimeout(() => {
+          animationTimeoutRef.current = setTimeout(() => {
             // Reset position and fade in the new word
             translateX.value = 0;
             opacity.value = 0;
-            setTimeout(() => {
-              opacity.value = withTiming(1, { duration: 150 }); // Faster fade-in
-            }, 20); // Shorter delay
-          }, 50); // Shorter delay
+
+            fadeInTimeoutRef.current = setTimeout(() => {
+              opacity.value = withTiming(1, { duration: 200 }); // Slightly longer fade-in for smoother transition
+            }, 50); // Slightly longer delay for better timing
+          }, 100); // Slightly longer delay to ensure animations complete properly
         }
+      };
+
+      // If the user doesn't know the word, show the meaning
+      if (!success) {
+        // Fade in the meaning overlay
+        setShowMeaningOverlay(true);
+
+        // Hide the meaning after a delay
+        meaningTimeoutRef.current = setTimeout(() => {
+          setShowMeaningOverlay(false);
+          // Update the word status after showing the meaning
+          updateWordAndAnimate();
+        }, 2000); // Slightly longer display time for better readability
+      } else {
+        // Update the word status immediately for success
+        updateWordAndAnimate();
       }
     },
     [currentWord, updateWord, opacity, translateX]
@@ -274,7 +287,7 @@ export default function ReviewScreen() {
       }
     });
 
-  // Log when current word changes to help debug
+  // Reset opacity when current word changes
   useEffect(() => {
     if (currentWord) {
       // Reset opacity to 1 when word changes
@@ -421,11 +434,35 @@ export default function ReviewScreen() {
           </GestureDetector>
 
           {showMeaningOverlay && (
-            <View style={baseStyles.meaningOverlay}>
-              <ThemedText style={baseStyles.meaningText}>
+            <Animated.View
+              style={baseStyles.meaningOverlay}
+              entering={FadeIn.duration(200)}
+              exiting={FadeOut.duration(200)}
+            >
+              <ThemedText
+                style={[
+                  baseStyles.meaningText,
+                  {
+                    color: colors.tint,
+                    backgroundColor: colors.cardBackground,
+                    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+                    ...Platform.select({
+                      ios: {
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 4,
+                      },
+                      android: {
+                        elevation: 4,
+                      },
+                    }),
+                  },
+                ]}
+              >
                 {currentWord?.sentence_word?.english || 'No translation available'}
               </ThemedText>
-            </View>
+            </Animated.View>
           )}
 
           <View style={baseStyles.footer}>
