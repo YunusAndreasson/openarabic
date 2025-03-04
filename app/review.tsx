@@ -26,7 +26,7 @@ import { Loader } from '@/components/Loader';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 const BASE_FONT_SIZE = 20;
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15;
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
@@ -218,6 +218,11 @@ export default function ReviewScreen() {
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
     (success: boolean) => {
+      // Add haptic feedback only when swiping left (don't know the word)
+      if (!success) {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
       // Clear any existing timeouts
       if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
       if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
@@ -263,7 +268,7 @@ export default function ReviewScreen() {
   // Create a pan gesture handler for the entire screen
   const panGesture = Gesture.Pan()
     .activateAfterLongPress(0) // Activate immediately
-    .minDistance(5) // Reduce minimum distance to detect swipe
+    .minDistance(1) // Reduced from 5 to 1 to detect swipe with minimal movement
     .onUpdate(event => {
       // Update the horizontal position based on the gesture
       translateX.value = event.translationX;
@@ -343,6 +348,10 @@ export default function ReviewScreen() {
         backgroundColor: colors.textOverlay,
         justifyContent: 'center' as const,
         alignItems: 'center' as const,
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingTop: 0,
+        paddingBottom: 0,
       },
     }),
     [colors]
@@ -439,27 +448,7 @@ export default function ReviewScreen() {
               entering={FadeIn.duration(200)}
               exiting={FadeOut.duration(200)}
             >
-              <ThemedText
-                style={[
-                  baseStyles.meaningText,
-                  {
-                    color: colors.tint,
-                    backgroundColor: colors.cardBackground,
-                    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
-                    ...Platform.select({
-                      ios: {
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.1,
-                        shadowRadius: 4,
-                      },
-                      android: {
-                        elevation: 4,
-                      },
-                    }),
-                  },
-                ]}
-              >
+              <ThemedText style={[baseStyles.meaningText, { color: colors.tint }]}>
                 {currentWord?.sentence_word?.english || 'No translation available'}
               </ThemedText>
             </Animated.View>
@@ -495,27 +484,25 @@ export default function ReviewScreen() {
           overlayOpacity={0.15}
         >
           <View style={[baseStyles.modalInnerContent, { backgroundColor: colors.cardBackground }]}>
-            <View style={[baseStyles.modalInstructionRow, { marginBottom: LAYOUT.SPACING.MEDIUM }]}>
+            <View
+              style={[
+                baseStyles.modalInstructionRow,
+                {
+                  marginBottom: LAYOUT.SPACING.MEDIUM,
+                  justifyContent: 'center',
+                },
+              ]}
+            >
               <View style={colorStyles.modalIconContainer}>
-                <Ionicons
-                  name="arrow-back"
-                  size={24}
-                  color={colors.tint}
-                  style={baseStyles.modalIcon}
-                />
+                <Ionicons name="arrow-back" size={24} color={colors.tint} />
               </View>
               <ThemedText style={baseStyles.modalText}>
                 Swipe left if you don't know the word
               </ThemedText>
             </View>
-            <View style={baseStyles.modalInstructionRow}>
+            <View style={[baseStyles.modalInstructionRow, { justifyContent: 'center' }]}>
               <View style={colorStyles.modalIconContainer}>
-                <Ionicons
-                  name="arrow-forward"
-                  size={24}
-                  color={colors.tint}
-                  style={baseStyles.modalIcon}
-                />
+                <Ionicons name="arrow-forward" size={24} color={colors.tint} />
               </View>
               <ThemedText style={baseStyles.modalText}>Swipe right if you know the word</ThemedText>
             </View>
