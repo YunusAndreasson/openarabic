@@ -803,7 +803,7 @@ export default function PlaylistScreen() {
   // Empty playlist
   if (!readingList?.length) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
         </View>
@@ -820,7 +820,7 @@ export default function PlaylistScreen() {
 
   // Normal display with playlist
   return (
-    <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
       {/* Clean header */}
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
         <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
@@ -855,7 +855,7 @@ export default function PlaylistScreen() {
         }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={true}
         initialNumToRender={10}
       />
 

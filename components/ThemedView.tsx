@@ -72,7 +72,7 @@ function ThemedViewComponent({
         contentContainerStyle={contentContainerStyle}
         showsVerticalScrollIndicator={false}
         bounces={true}
-        removeClippedSubviews={Platform.OS === 'android'}
+        removeClippedSubviews={true}
         automaticallyAdjustContentInsets={false}
         contentInsetAdjustmentBehavior="never"
         alwaysBounceVertical={true}

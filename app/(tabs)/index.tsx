@@ -76,7 +76,7 @@ export default function ArticlesScreen() {
   // Memoized content container style
   const contentContainerStyle = useMemo(
     () => ({
-      ...styles.flatListContent,
+      flexGrow: 1,
       backgroundColor: colors.background,
       paddingTop: hasCategories
         ? CATEGORY_SELECTOR_HEIGHT + LAYOUT.SPACING.LARGE
@@ -310,7 +310,7 @@ export default function ArticlesScreen() {
           }
           contentContainerStyle={contentContainerStyle}
           scrollEventThrottle={16}
-          removeClippedSubviews={Platform.OS === 'android'}
+          removeClippedSubviews={true}
           maxToRenderPerBatch={5}
           windowSize={10}
           initialNumToRender={4}
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   categorySelectorWrapper: {
     position: 'absolute',
@@ -386,12 +386,5 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: LAYOUT.OPACITY.DIMMED,
     textAlign: 'center',
-  },
-  flatListContent: {
-    flexGrow: 1,
-    paddingBottom:
-      Platform.OS === 'ios'
-        ? LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT - 20 // Reduce padding on iOS
-        : LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
 });

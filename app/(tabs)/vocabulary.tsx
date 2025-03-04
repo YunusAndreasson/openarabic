@@ -375,7 +375,7 @@ export default function VocabularyScreen() {
   // Only proceed after loading is complete
   if (!user) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
@@ -387,7 +387,7 @@ export default function VocabularyScreen() {
   // Show error state if data fetching failed
   if (error) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
@@ -398,7 +398,7 @@ export default function VocabularyScreen() {
 
   if (!validStudyWords.length) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
@@ -408,7 +408,7 @@ export default function VocabularyScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
         <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
       </View>
