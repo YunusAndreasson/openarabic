@@ -12,7 +12,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
-import { Loader, LoadingScreen } from '@/components/Loader';
+import { LoadingScreen } from '@/components/Loader';
 import { useAppSelectorMemo } from '@/store/hooks';
 import { Theme } from '@/constants/Colors';
 import * as Haptics from 'expo-haptics';
@@ -41,11 +41,8 @@ const ErrorState = React.memo(({ message }: { message: string }) => (
 ));
 
 export default function ArticlesScreen() {
-  const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const currentTheme = useAppSelectorMemo(state => state.theme.theme);
-  const isDarkTheme = currentTheme === Theme.Dark;
 
   // Refs
   const flatListRef = useRef<FlatList>(null);
@@ -80,11 +77,19 @@ export default function ArticlesScreen() {
   const contentContainerStyle = useMemo(
     () => ({
       ...styles.flatListContent,
+      backgroundColor: colors.background,
       paddingTop: hasCategories
         ? CATEGORY_SELECTOR_HEIGHT + LAYOUT.SPACING.LARGE
         : LAYOUT.SPACING.LARGE,
+      paddingBottom:
+        Platform.OS === 'ios'
+          ? LAYOUT.CONTENT_SPACING.BOTTOM +
+            LAYOUT.BOTTOM_BAR.HEIGHT -
+            20 +
+            (insets.bottom > 0 ? 0 : 10)
+          : LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     }),
-    [hasCategories]
+    [hasCategories, colors.background, insets.bottom]
   );
 
   const fetchCategories = useCallback(async () => {
@@ -164,37 +169,6 @@ export default function ArticlesScreen() {
 
     setSelectedCategoryId(categoryId);
   }, []);
-
-  // Navigation options
-  useEffect(() => {
-    navigation.setOptions({
-      tabBarStyle: {
-        ...styles.tabBar,
-        backgroundColor: colors.background,
-        ...Platform.select({
-          ios: {
-            shadowColor: colors.shadow,
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
-            shadowRadius: LAYOUT.SPACING.SMALL / 2,
-            paddingBottom: LAYOUT.SPACING.SMALL,
-          },
-          android: {
-            elevation: 8,
-          },
-        }),
-      },
-      tabBarIconStyle: Platform.OS === 'ios' ? { marginTop: LAYOUT.SPACING.TINY } : undefined,
-      tabBarLabelStyle:
-        Platform.OS === 'ios'
-          ? {
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-              marginBottom: LAYOUT.SPACING.TINY,
-              fontWeight: '500',
-            }
-          : undefined,
-    });
-  }, [navigation, colors]);
 
   // Memoize renderItem to prevent unnecessary re-renders
   const renderItem = useCallback<ListRenderItem<Article>>(
@@ -301,14 +275,18 @@ export default function ArticlesScreen() {
 
   // Main render
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      style={styles.container}
+      useSafeArea={true}
+      includeBottomInset={false} // Don't include bottom inset to avoid double padding with tab bar
+    >
       {/* Header with title */}
       <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
         <ThemedText style={styles.headerTitle}>Texts</ThemedText>
       </View>
 
       {/* Content container with proper padding */}
-      <View style={styles.contentContainer}>
+      <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
         {/* Article list with optimized rendering */}
         <FlatList
           ref={flatListRef}
@@ -319,7 +297,7 @@ export default function ArticlesScreen() {
           ListEmptyComponent={ListEmptyComponent}
           ItemSeparatorComponent={ItemSeparatorComponent}
           showsVerticalScrollIndicator={false}
-          style={{ zIndex: 1 }}
+          style={{ zIndex: 1, backgroundColor: colors.background }}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -362,15 +340,16 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   headerContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: Platform.select({
+      ios: LAYOUT.CONTENT_SPACING.TOP,
+      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    }),
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    borderBottomWidth: StyleSheet.hairlineWidth,
     zIndex: 5,
-    marginBottom: 0,
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
@@ -410,13 +389,9 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     flexGrow: 1,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-  },
-  tabBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingBottom:
+      Platform.OS === 'ios'
+        ? LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT - 20 // Reduce padding on iOS
+        : LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
 });
