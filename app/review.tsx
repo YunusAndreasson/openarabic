@@ -8,6 +8,7 @@ import Animated, {
   runOnJS,
   FadeIn,
   FadeOut,
+  withSequence,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -27,6 +28,7 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 const BASE_FONT_SIZE = 20;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
+const ANIMATION_CONFIG = { damping: 15, stiffness: 150 }; // Smooth animation
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
@@ -72,9 +74,9 @@ const baseStyles = StyleSheet.create({
     fontFamily: 'NotoNaskhArabic',
   },
   studyWord: {
-    fontWeight: '600',
-    fontSize: BASE_FONT_SIZE * 1.75,
-    lineHeight: Math.round(BASE_FONT_SIZE * 1.75 * 2.2),
+    fontWeight: '700',
+    fontSize: BASE_FONT_SIZE * 1.5,
+    lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.2),
   },
   dimmedText: {
     fontWeight: '400',
@@ -155,9 +157,6 @@ const baseStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  modalIcon: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
   modalText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
@@ -195,6 +194,11 @@ export default function ReviewScreen() {
   const meaningTimeoutRef = useRef<NodeJS.Timeout>();
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
   const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
+  const [currentSentence, setCurrentSentence] = useState({
+    beforeWord: '',
+    wordForm: '',
+    afterWord: '',
+  });
 
   const { currentWord, isLoading, updateWord, progress, isComplete, invalidateQueries, dueWords } =
     useSpacedRepetition({
@@ -204,7 +208,6 @@ export default function ReviewScreen() {
   // Animation values
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const meaningOpacity = useSharedValue(0);
 
   // Clean up timeouts when component unmounts
   useEffect(() => {
@@ -214,6 +217,26 @@ export default function ReviewScreen() {
       if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
     };
   }, []);
+
+  // Prepare the word parts for display
+  const getWordParts = useCallback(() => {
+    if (!currentWord) return { beforeWord: '', wordForm: '', afterWord: '' };
+
+    const sentence = currentWord.sentence_word.sentence?.arabic || '';
+    const wordForm = currentWord.sentence_word.word_form;
+    const wordIndex = sentence.indexOf(wordForm);
+    const beforeWord = wordIndex > 0 ? sentence.substring(0, wordIndex) : '';
+    const afterWord = wordIndex >= 0 ? sentence.substring(wordIndex + wordForm.length) : sentence;
+
+    return { beforeWord, wordForm, afterWord };
+  }, [currentWord]);
+
+  // Update current sentence when currentWord changes
+  useEffect(() => {
+    if (currentWord) {
+      setCurrentSentence(getWordParts());
+    }
+  }, [currentWord, getWordParts]);
 
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
@@ -230,19 +253,32 @@ export default function ReviewScreen() {
 
       const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
-          // First update the word in the database
-          updateWord(currentWord.sentence_word_id, success);
+          try {
+            // First update the word in the database
+            updateWord(currentWord.sentence_word_id, success);
 
-          // Then handle animations - faster timing
-          animationTimeoutRef.current = setTimeout(() => {
-            // Reset position and fade in the new word
+            // Reset position immediately
             translateX.value = 0;
+
+            // Set opacity to 0 immediately
             opacity.value = 0;
 
+            // Use a small delay to ensure the new word is loaded before fading in
             fadeInTimeoutRef.current = setTimeout(() => {
-              opacity.value = withTiming(1, { duration: 200 }); // Slightly longer fade-in for smoother transition
-            }, 50); // Slightly longer delay for better timing
-          }, 100); // Slightly longer delay to ensure animations complete properly
+              // Update the sentence parts first, then fade in
+              setCurrentSentence(getWordParts());
+
+              // Small additional delay to ensure state update completes
+              setTimeout(() => {
+                opacity.value = withTiming(1, { duration: 200 });
+              }, 50);
+            }, 50);
+          } catch (error) {
+            console.error('Error updating word:', error);
+            // Fallback animation in case of error
+            translateX.value = withSpring(0, ANIMATION_CONFIG);
+            opacity.value = withTiming(1, { duration: 200 });
+          }
         }
       };
 
@@ -256,19 +292,19 @@ export default function ReviewScreen() {
           setShowMeaningOverlay(false);
           // Update the word status after showing the meaning
           updateWordAndAnimate();
-        }, 2000); // Slightly longer display time for better readability
+        }, 1500); // Shorter display time for faster progression
       } else {
         // Update the word status immediately for success
         updateWordAndAnimate();
       }
     },
-    [currentWord, updateWord, opacity, translateX]
+    [currentWord, updateWord, opacity, translateX, getWordParts]
   );
 
   // Create a pan gesture handler for the entire screen
   const panGesture = Gesture.Pan()
     .activateAfterLongPress(0) // Activate immediately
-    .minDistance(1) // Reduced from 5 to 1 to detect swipe with minimal movement
+    .minDistance(1) // Minimal movement to detect swipe
     .onUpdate(event => {
       // Update the horizontal position based on the gesture
       translateX.value = event.translationX;
@@ -276,29 +312,19 @@ export default function ReviewScreen() {
     .onEnd(event => {
       if (event.translationX > SWIPE_THRESHOLD) {
         // Swipe right - success
-        translateX.value = withSpring(SCREEN_WIDTH, { damping: 20, stiffness: 200 }, () => {
-          // Faster spring
+        translateX.value = withSpring(SCREEN_WIDTH, ANIMATION_CONFIG, () => {
           runOnJS(handleWordUpdate)(true);
         });
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         // Swipe left - failure
-        translateX.value = withSpring(-SCREEN_WIDTH, { damping: 20, stiffness: 200 }, () => {
-          // Faster spring
+        translateX.value = withSpring(-SCREEN_WIDTH, ANIMATION_CONFIG, () => {
           runOnJS(handleWordUpdate)(false);
         });
       } else {
         // Return to center if not swiped far enough
-        translateX.value = withSpring(0, { damping: 20, stiffness: 200 }); // Faster spring
+        translateX.value = withSpring(0, ANIMATION_CONFIG);
       }
     });
-
-  // Reset opacity when current word changes
-  useEffect(() => {
-    if (currentWord) {
-      // Reset opacity to 1 when word changes
-      opacity.value = 1;
-    }
-  }, [currentWord, opacity]);
 
   // Handle close button press
   const handleClose = useCallback(() => {
@@ -318,19 +344,6 @@ export default function ReviewScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setShowInstructions(true);
   }, []);
-
-  // Prepare the word parts for display
-  const getWordParts = useCallback(() => {
-    if (!currentWord) return { beforeWord: '', wordForm: '', afterWord: '' };
-
-    const sentence = currentWord.sentence_word.sentence?.arabic || '';
-    const wordForm = currentWord.sentence_word.word_form;
-    const wordIndex = sentence.indexOf(wordForm);
-    const beforeWord = wordIndex > 0 ? sentence.substring(0, wordIndex) : '';
-    const afterWord = wordIndex >= 0 ? sentence.substring(wordIndex + wordForm.length) : sentence;
-
-    return { beforeWord, wordForm, afterWord };
-  }, [currentWord]);
 
   // Memoize color-dependent styles
   const colorStyles = useMemo(
@@ -370,6 +383,9 @@ export default function ReviewScreen() {
     return (
       <ThemedView style={baseStyles.container}>
         <Loader size="large" />
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.LARGE }}>
+          Loading your review words...
+        </ThemedText>
       </ThemedView>
     );
   }
@@ -402,8 +418,8 @@ export default function ReviewScreen() {
     );
   }
 
-  // Extract word parts for display
-  const { beforeWord, wordForm, afterWord } = getWordParts();
+  // Extract word parts for display - use the state version instead of direct calculation
+  const { beforeWord, wordForm, afterWord } = currentSentence;
 
   return (
     <ThemedView style={baseStyles.container}>
@@ -420,7 +436,7 @@ export default function ReviewScreen() {
               <Animated.View style={cardStyle}>
                 <ThemedText style={baseStyles.sentence} skipDefaultColor>
                   <ThemedText
-                    style={[baseStyles.dimmedText, { color: colors.englishText }]}
+                    style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
                     skipDefaultColor
                   >
                     {beforeWord}
@@ -432,7 +448,7 @@ export default function ReviewScreen() {
                     {wordForm}
                   </ThemedText>
                   <ThemedText
-                    style={[baseStyles.dimmedText, { color: colors.englishText }]}
+                    style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
                     skipDefaultColor
                   >
                     {afterWord}
@@ -445,8 +461,8 @@ export default function ReviewScreen() {
           {showMeaningOverlay && (
             <Animated.View
               style={baseStyles.meaningOverlay}
-              entering={FadeIn.duration(200)}
-              exiting={FadeOut.duration(200)}
+              entering={FadeIn.duration(150)}
+              exiting={FadeOut.duration(150)}
             >
               <ThemedText style={[baseStyles.meaningText, { color: colors.tint }]}>
                 {currentWord?.sentence_word?.english || 'No translation available'}
@@ -457,13 +473,27 @@ export default function ReviewScreen() {
           <View style={baseStyles.footer}>
             <Pressable
               onPress={handleClose}
-              style={[baseStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+              style={({ pressed }) => [
+                baseStyles.actionButton,
+                {
+                  backgroundColor: colors.cardBackground,
+                  opacity: pressed ? 0.8 : 1,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                },
+              ]}
             >
               <Ionicons name="close" size={28} color={colors.englishText} />
             </Pressable>
             <Pressable
               onPress={handleInfoPress}
-              style={[baseStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+              style={({ pressed }) => [
+                baseStyles.actionButton,
+                {
+                  backgroundColor: colors.cardBackground,
+                  opacity: pressed ? 0.8 : 1,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                },
+              ]}
             >
               <Ionicons name="information-circle-outline" size={28} color={colors.englishText} />
             </Pressable>
