@@ -20,6 +20,7 @@ import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { CategorySelector } from '../../components/CategorySelector';
 import type { Tables } from '@/types/database.types';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -275,59 +276,61 @@ export default function ArticlesScreen() {
 
   // Main render
   return (
-    <ThemedView
-      style={styles.container}
-      useSafeArea={true}
-      includeBottomInset={false} // Don't include bottom inset to avoid double padding with tab bar
-    >
-      {/* Header with title */}
-      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <ThemedText style={styles.headerTitle}>Texts</ThemedText>
-      </View>
+    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+      <ThemedView
+        style={styles.container}
+        useSafeArea={true}
+        includeBottomInset={false} // Don't include bottom inset to avoid double padding with tab bar
+      >
+        {/* Header with title */}
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText style={styles.headerTitle}>Texts</ThemedText>
+        </View>
 
-      {/* Content container with proper padding */}
-      <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        {/* Article list with optimized rendering */}
-        <FlatList
-          ref={flatListRef}
-          data={filteredArticles}
-          keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout}
-          ListEmptyComponent={ListEmptyComponent}
-          ItemSeparatorComponent={ItemSeparatorComponent}
-          showsVerticalScrollIndicator={false}
-          style={{ zIndex: 1, backgroundColor: colors.background }}
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={[colors.tint]}
-              tintColor={colors.tint}
-              progressBackgroundColor={colors.cardBackground}
-              style={{ zIndex: 1 }}
-            />
-          }
-          contentContainerStyle={contentContainerStyle}
-          scrollEventThrottle={16}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={5}
-          windowSize={10}
-          initialNumToRender={4}
-        />
+        {/* Content container with proper padding */}
+        <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
+          {/* Article list with optimized rendering */}
+          <FlatList
+            ref={flatListRef}
+            data={filteredArticles}
+            keyExtractor={keyExtractor}
+            renderItem={renderItem}
+            getItemLayout={getItemLayout}
+            ListEmptyComponent={ListEmptyComponent}
+            ItemSeparatorComponent={ItemSeparatorComponent}
+            showsVerticalScrollIndicator={false}
+            style={{ zIndex: 1, backgroundColor: colors.background }}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={[colors.tint]}
+                tintColor={colors.tint}
+                progressBackgroundColor={colors.cardBackground}
+                style={{ zIndex: 1 }}
+              />
+            }
+            contentContainerStyle={contentContainerStyle}
+            scrollEventThrottle={16}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={5}
+            windowSize={10}
+            initialNumToRender={4}
+          />
 
-        {/* Sticky floating category selector with perfect spacing */}
-        {hasCategories && (
-          <View style={styles.categorySelectorWrapper} pointerEvents="box-none">
-            <CategorySelector
-              categories={categories}
-              selectedCategoryId={selectedCategoryId}
-              onSelectCategory={handleCategorySelect}
-            />
-          </View>
-        )}
-      </View>
-    </ThemedView>
+          {/* Sticky floating category selector with perfect spacing */}
+          {hasCategories && (
+            <View style={styles.categorySelectorWrapper} pointerEvents="box-none">
+              <CategorySelector
+                categories={categories}
+                selectedCategoryId={selectedCategoryId}
+                onSelectCategory={handleCategorySelect}
+              />
+            </View>
+          )}
+        </View>
+      </ThemedView>
+    </Animated.View>
   );
 }
 

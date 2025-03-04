@@ -17,6 +17,8 @@ import { StudyWord } from '@/utils/vocabulary';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
+import Animated from 'react-native-reanimated';
+import { FadeIn } from 'react-native-reanimated';
 
 // Create a memoized component for the sign-in message
 const SignInMessage = React.memo(() => (
@@ -375,77 +377,85 @@ export default function VocabularyScreen() {
   // Only proceed after loading is complete
   if (!user) {
     return (
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-        </View>
-        <SignInMessage />
-      </ThemedView>
+      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+          </View>
+          <SignInMessage />
+        </ThemedView>
+      </Animated.View>
     );
   }
 
   // Show error state if data fetching failed
   if (error) {
     return (
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-        </View>
-        <ErrorMessage />
-      </ThemedView>
+      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+          </View>
+          <ErrorMessage />
+        </ThemedView>
+      </Animated.View>
     );
   }
 
   if (!validStudyWords.length) {
     return (
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-        </View>
-        <VocabularyEmptyState colors={colors} />
-      </ThemedView>
+      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+          </View>
+          <VocabularyEmptyState colors={colors} />
+        </ThemedView>
+      </Animated.View>
     );
   }
 
   return (
-    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-      </View>
-      {isContentLoading ? (
-        <LoadingContainer size="large" height={300} />
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.SPACING.MEDIUM }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Vocabulary Dashboard */}
-          <VocabularyDashboard
-            totalWords={combinedStats.totalWords}
-            masteredWords={combinedStats.masteredWords}
-            dueWords={combinedStats.dueWords}
-            learningWords={combinedStats.learningWords}
-            streak={combinedStats.streak}
-            colors={colors}
-          />
+    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+      <ThemedView style={styles.container}>
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+        </View>
+        {isContentLoading ? (
+          <LoadingContainer size="large" height={300} />
+        ) : (
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.SPACING.MEDIUM }]}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Vocabulary Dashboard */}
+            <VocabularyDashboard
+              totalWords={combinedStats.totalWords}
+              masteredWords={combinedStats.masteredWords}
+              dueWords={combinedStats.dueWords}
+              learningWords={combinedStats.learningWords}
+              streak={combinedStats.streak}
+              colors={colors}
+            />
 
-          {/* Weekly Progress */}
-          <VocabularyGraph
-            title="Weekly Progress"
-            data={weeklyProgressData}
-            isLoading={!isDataReady}
-          />
+            {/* Weekly Progress */}
+            <VocabularyGraph
+              title="Weekly Progress"
+              data={weeklyProgressData}
+              isLoading={!isDataReady}
+            />
 
-          {/* Review Button - always show either enabled or disabled version */}
-          {combinedStats.dueWords > 0 ? (
-            <ReviewButton dueWords={combinedStats.dueWords} onPress={handleStartReview} />
-          ) : (
-            <DisabledReviewButton />
-          )}
-        </ScrollView>
-      )}
-    </ThemedView>
+            {/* Review Button - always show either enabled or disabled version */}
+            {combinedStats.dueWords > 0 ? (
+              <ReviewButton dueWords={combinedStats.dueWords} onPress={handleStartReview} />
+            ) : (
+              <DisabledReviewButton />
+            )}
+          </ScrollView>
+        )}
+      </ThemedView>
+    </Animated.View>
   );
 }
 

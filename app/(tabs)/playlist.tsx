@@ -13,6 +13,7 @@ import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactThemedCard } from '@/components/CompactThemedCard';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 // ====== AUDIO PLAYER CONSTANTS ======
 const AUDIO_STATES = {
@@ -781,91 +782,101 @@ export default function PlaylistScreen() {
   // Not logged in
   if (!user) {
     return (
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
-        </View>
-        <View style={styles.emptyStateContainer}>
-          <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
-          <ThemedText style={styles.emptyStateMessage}>
-            Please sign in to view and manage your saved articles
-          </ThemedText>
-          <ThemedButton
-            title="Go to Profile"
-            icon="person-circle"
-            onPress={() => router.push('/(tabs)/profile' as any)}
-          />
-        </View>
-      </ThemedView>
+      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+          </View>
+          <View style={styles.emptyStateContainer}>
+            <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
+            <ThemedText style={styles.emptyStateMessage}>
+              Please sign in to view and manage your saved articles
+            </ThemedText>
+            <ThemedButton
+              title="Go to Profile"
+              icon="person-circle"
+              onPress={() => router.push('/(tabs)/profile' as any)}
+            />
+          </View>
+        </ThemedView>
+      </Animated.View>
     );
   }
 
-  // Empty playlist
-  if (!readingList?.length) {
+  // Empty reading list
+  if (!readingList || readingList.length === 0) {
     return (
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
-        </View>
-        <View style={styles.emptyStateContainer}>
-          <ThemedText style={styles.emptyStateTitle}>No saved articles yet</ThemedText>
-          <ThemedText style={styles.emptyStateMessage}>
-            Save articles to listen to them later or read them offline
-          </ThemedText>
-          <ThemedButton title="Browse Articles" icon="newspaper" onPress={() => router.push('/')} />
-        </View>
-      </ThemedView>
+      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+          </View>
+          <View style={styles.emptyStateContainer}>
+            <ThemedText style={styles.emptyStateTitle}>Your Playlist is Empty</ThemedText>
+            <ThemedText style={styles.emptyStateMessage}>
+              Save articles to your playlist to listen to them later
+            </ThemedText>
+            <ThemedButton
+              title="Browse Articles"
+              icon="book"
+              onPress={() => router.push('/(tabs)/' as any)}
+            />
+          </View>
+        </ThemedView>
+      </Animated.View>
     );
   }
 
   // Normal display with playlist
   return (
-    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-      {/* Clean header */}
-      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
-      </View>
+    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
+        {/* Clean header */}
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText style={styles.headerTitle}>Playlist</ThemedText>
+        </View>
 
-      <FlatList
-        ref={flatListRef}
-        data={readingList}
-        keyExtractor={item => `${item.article_id}`}
-        renderItem={({ item, index }) => {
-          // Determine if this item is currently playing
-          const isItemPlaying =
-            audioState === AUDIO_STATES.PLAYING &&
-            ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-              (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+        <FlatList
+          ref={flatListRef}
+          data={readingList}
+          keyExtractor={item => `${item.article_id}`}
+          renderItem={({ item, index }) => {
+            // Determine if this item is currently playing
+            const isItemPlaying =
+              audioState === AUDIO_STATES.PLAYING &&
+              ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+                (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
 
-          const isItemPaused =
-            audioState === AUDIO_STATES.PAUSED &&
-            ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-              (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+            const isItemPaused =
+              audioState === AUDIO_STATES.PAUSED &&
+              ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+                (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
 
-          return (
-            <PlaylistItem
-              title={item.article.title}
-              author={item.article.author.name}
-              isPlaying={isItemPlaying}
-              isPaused={isItemPaused}
-              progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
-              articleId={item.article_id}
-            />
-          );
-        }}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        removeClippedSubviews={true}
-        initialNumToRender={10}
-      />
+            return (
+              <PlaylistItem
+                title={item.article.title}
+                author={item.article.author.name}
+                isPlaying={isItemPlaying}
+                isPaused={isItemPaused}
+                progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
+                articleId={item.article_id}
+              />
+            );
+          }}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          removeClippedSubviews={true}
+          initialNumToRender={10}
+        />
 
-      {/* Bottom Action Buttons - similar to vocabulary screen */}
-      <BottomControls
-        onPlayAll={isCurrentlyPlaying ? stopPlayback : startPlayback}
-        onShuffle={isCurrentlyPlaying ? stopPlayback : startShufflePlayback}
-        isPlaying={isCurrentlyPlaying}
-        isShuffleMode={isShuffleMode}
-      />
-    </ThemedView>
+        {/* Bottom Action Buttons - similar to vocabulary screen */}
+        <BottomControls
+          onPlayAll={isCurrentlyPlaying ? stopPlayback : startPlayback}
+          onShuffle={isCurrentlyPlaying ? stopPlayback : startShufflePlayback}
+          isPlaying={isCurrentlyPlaying}
+          isShuffleMode={isShuffleMode}
+        />
+      </ThemedView>
+    </Animated.View>
   );
 }

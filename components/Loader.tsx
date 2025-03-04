@@ -108,11 +108,13 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
 
   return (
-    <ThemedView style={styles.fullScreen}>
-      <Animated.View style={styles.loaderContainer} entering={FadeIn.duration(400)}>
-        <Loader size="large" color={color || colors.tint} />
-      </Animated.View>
-    </ThemedView>
+    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(400)}>
+      <ThemedView style={styles.fullScreen}>
+        <Animated.View style={styles.loaderContainer} entering={FadeIn.duration(500)}>
+          <Loader size="large" color={color || colors.tint} />
+        </Animated.View>
+      </ThemedView>
+    </Animated.View>
   );
 };
 
