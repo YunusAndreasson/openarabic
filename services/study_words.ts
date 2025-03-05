@@ -142,11 +142,14 @@ export const studyWordsService = {
 
       return false;
     } else {
+      // Get current time for both created_at and next_review_at
+      const currentTime = new Date().toISOString();
+
       const newWord = {
         user_id: userId,
         sentence_word_id: sentenceWordId,
-        next_review_at: new Date().toISOString(),
-        created_at: new Date().toISOString(),
+        next_review_at: currentTime, // Set to current time so it shows up immediately for review
+        created_at: currentTime,
         ease_factor: 2.5,
         interval_days: 1,
         stability: 1,

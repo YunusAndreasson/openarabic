@@ -3,7 +3,6 @@ import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native'
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -33,7 +32,6 @@ function WordDetailsModalComponent({
 
   // Memoize handlers to prevent unnecessary rerenders
   const handleStudyPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onStudyPress?.();
   }, [onStudyPress]);
 

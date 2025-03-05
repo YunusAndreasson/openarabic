@@ -7,6 +7,8 @@ import { WordDetailsModal } from './WordDetailsModal';
 import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/useAuth';
 
 type WordWithDetails = Tables<'sentence_words'> & {
   root: Tables<'roots'> | null;
@@ -31,6 +33,8 @@ function ArabicWordComponent({
   const [modalVisible, setModalVisible] = useState(false);
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Create a shared value for the scale effect
   const scaleAnim = useSharedValue(1);
@@ -53,7 +57,12 @@ function ArabicWordComponent({
 
   const handleStudyPress = useCallback(() => {
     onPress(word);
-  }, [onPress, word]);
+
+    // Invalidate the dueWords query to refresh the vocabulary screen
+    if (user) {
+      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+    }
+  }, [onPress, word, queryClient, user]);
 
   // Determine the text color based on whether the word is selected for study
   const textColor = isSelected ? colors.tint : colors.text;

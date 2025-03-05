@@ -14,7 +14,6 @@ import { BlurView } from 'expo-blur';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated, {
@@ -157,13 +156,11 @@ function ThemedModalComponent({
     }
   }, [visible, fadeAnim, scaleAnim, animationDuration]);
 
-  // Function to trigger haptic feedback and close
-  const triggerCloseWithHaptics = useCallback(() => {
-    if (useHaptics) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
+  // Function to close without haptic feedback
+  const triggerClose = useCallback(() => {
+    // Removed haptic feedback
     onClose();
-  }, [useHaptics, onClose]);
+  }, [onClose]);
 
   // Handle backdrop press
   const handleBackdropPress = useCallback(() => {
@@ -178,7 +175,7 @@ function ThemedModalComponent({
           easing: Easing.in(Easing.cubic),
         },
         () => {
-          runOnJS(triggerCloseWithHaptics)();
+          runOnJS(triggerClose)();
         }
       );
 
@@ -187,9 +184,9 @@ function ThemedModalComponent({
         easing: Easing.in(Easing.cubic),
       });
     } else {
-      triggerCloseWithHaptics();
+      triggerClose();
     }
-  }, [closeOnBackdropPress, animated, fadeAnim, scaleAnim, triggerCloseWithHaptics]);
+  }, [closeOnBackdropPress, animated, fadeAnim, scaleAnim, triggerClose]);
 
   // Calculate modal width
   const modalWidth = useMemo(() => {

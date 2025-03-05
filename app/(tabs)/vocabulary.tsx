@@ -112,7 +112,7 @@ export default function VocabularyScreen() {
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
     enabled: !!user,
-    staleTime: 30000, // 30 seconds
+    staleTime: 0, // Always fetch fresh data for due words
     gcTime: 60000, // 1 minute
   });
 
@@ -120,23 +120,20 @@ export default function VocabularyScreen() {
   useFocusEffect(
     useCallback(() => {
       // Only refetch if we have a user and this isn't the initial focus
-      // Also check if data is stale before refetching
       if (user && !isInitialMount.current) {
-        // Check if data is stale before refetching
+        // Always refetch dueWords to ensure we have the latest data
+        queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+
+        // Check if studyWords data is stale before refetching
         const studyWordsQueryData = queryClient.getQueryState(['studyWords', user?.id]);
-        const dueWordsQueryData = queryClient.getQueryState(['dueWords', user?.id]);
 
         const isStudyWordsStale = studyWordsQueryData?.dataUpdatedAt
           ? Date.now() - studyWordsQueryData.dataUpdatedAt > 60000 // 1 minute
           : true;
 
-        const isDueWordsStale = dueWordsQueryData?.dataUpdatedAt
-          ? Date.now() - dueWordsQueryData.dataUpdatedAt > 30000 // 30 seconds
-          : true;
-
-        // Only refetch if data is stale
-        if (isStudyWordsStale || isDueWordsStale) {
-          refetch();
+        // Only refetch studyWords if data is stale
+        if (isStudyWordsStale) {
+          queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
         }
       }
 
@@ -153,7 +150,7 @@ export default function VocabularyScreen() {
         }
         loadingStartTime.current = null;
       };
-    }, [user, refetch, queryClient])
+    }, [user, queryClient])
   );
 
   // Create a memoized error message component
@@ -358,16 +355,21 @@ export default function VocabularyScreen() {
 
   // Function to start a review
   const handleStartReview = useCallback(() => {
+    if (!user) return;
+
+    // Invalidate the dueWords query first to ensure we get the freshest data
+    queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+
     // Prefetch data before navigation for faster rendering
     queryClient.prefetchQuery({
-      queryKey: ['dueWords', user?.id],
-      queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
+      queryKey: ['dueWords', user.id],
+      queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
       staleTime: 0, // Ensure we get the freshest data
     });
 
     // Navigate immediately to improve perceived performance
     router.push('/review');
-  }, [router, queryClient, user?.id]);
+  }, [router, queryClient, user]);
 
   // Show loader while authentication is being checked OR while data is loading
   if (isLoading) {

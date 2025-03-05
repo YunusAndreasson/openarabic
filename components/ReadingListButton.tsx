@@ -48,17 +48,22 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
       } else {
         await readingListService.addToReadingList(user.id, articleId);
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Toast.show({
-          type: 'success',
-          text1: 'Added to playlist',
-          text2: 'Ready for listening on the go',
-          position: 'bottom',
-          visibilityTime: 3000,
-        });
       }
+
       setIsInReadingList(!isInReadingList);
+      Toast.show({
+        type: isInReadingList ? 'info' : 'success',
+        text1: isInReadingList ? 'Removed from playlist' : 'Added to playlist',
+        position: 'bottom',
+      });
     } catch (error) {
       console.error('Error toggling reading list', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to update playlist',
+        position: 'bottom',
+      });
     } finally {
       setIsLoading(false);
     }

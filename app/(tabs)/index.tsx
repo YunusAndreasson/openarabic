@@ -15,12 +15,12 @@ import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
 import { useAppSelectorMemo } from '@/store/hooks';
 import { Theme } from '@/constants/Colors';
-import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { CategorySelector } from '../../components/CategorySelector';
 import type { Tables } from '@/types/database.types';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 // Constants
 const ITEM_HEIGHT = 360;
