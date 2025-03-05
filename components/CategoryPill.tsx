@@ -15,8 +15,11 @@ export function CategoryPill({ category, absolute = true }: CategoryPillProps): 
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Convert the category to uppercase for better visual hierarchy
-  const displayCategory = category.toUpperCase();
+  // Capitalize the first letter of the category
+  const displayCategory = useMemo(() => {
+    if (!category) return '';
+    return category.charAt(0).toUpperCase() + category.slice(1);
+  }, [category]);
 
   // Use the shared base pill styles with isSelected=true since CategoryPill is always "selected" in terms of styling
   const pillStyles = useMemo(() => {
