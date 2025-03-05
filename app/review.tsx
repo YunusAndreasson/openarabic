@@ -8,7 +8,6 @@ import Animated, {
   runOnJS,
   FadeIn,
   FadeOut,
-  withSequence,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';

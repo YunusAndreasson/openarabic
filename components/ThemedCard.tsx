@@ -9,6 +9,13 @@ import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
 import { LoadingContainer } from './Loader';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  interpolate,
+  Extrapolate,
+} from 'react-native-reanimated';
 
 interface ThemedCardProps {
   imageUrl: string;
@@ -35,6 +42,9 @@ function ThemedCardComponent({
   const [imageError, setImageError] = useState(false);
   const [imageReady, setImageReady] = useState(false);
 
+  // Animation shared values
+  const pressed = useSharedValue(0);
+
   // Image loading handlers
   const handleLoadStart = useCallback(() => {
     setImageLoading(true);
@@ -58,6 +68,18 @@ function ThemedCardComponent({
       onPress();
     }
   }, [onPress]);
+
+  // Animated styles for the card
+  const animatedCardStyle = useAnimatedStyle(() => {
+    const scale = interpolate(pressed.value, [0, 1], [1, 0.985], Extrapolate.CLAMP);
+
+    const opacity = interpolate(pressed.value, [0, 1], [1, 0.97], Extrapolate.CLAMP);
+
+    return {
+      transform: [{ scale }],
+      opacity,
+    };
+  });
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(() => {
@@ -221,14 +243,27 @@ function ThemedCardComponent({
     <View style={styles.container}>
       <Pressable
         onPress={handlePress}
-        style={({ pressed }) => [
-          styles.pressable,
-          style,
-          pressed && {
-            transform: [{ scale: 0.985 }],
-            opacity: 0.97,
-          },
-        ]}
+        onPressIn={() => {
+          pressed.value = withSpring(1, {
+            mass: 0.8,
+            damping: 15,
+            stiffness: 150,
+            overshootClamping: false,
+            restDisplacementThreshold: 0.001,
+            restSpeedThreshold: 0.001,
+          });
+        }}
+        onPressOut={() => {
+          pressed.value = withSpring(0, {
+            mass: 0.5,
+            damping: 12,
+            stiffness: 120,
+            overshootClamping: false,
+            restDisplacementThreshold: 0.001,
+            restSpeedThreshold: 0.001,
+          });
+        }}
+        style={[styles.pressable, style]}
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={`${category} article: ${title} by ${author}`}
@@ -237,7 +272,7 @@ function ThemedCardComponent({
         android_ripple={{ color: colors.tint, borderless: false, radius: -5 }}
         pressRetentionOffset={{ top: 20, left: 20, right: 20, bottom: 20 }}
       >
-        <View style={cardStyle}>{cardContent}</View>
+        <Animated.View style={[cardStyle, animatedCardStyle]}>{cardContent}</Animated.View>
       </Pressable>
     </View>
   );
