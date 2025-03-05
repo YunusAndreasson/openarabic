@@ -78,24 +78,27 @@ const styles = StyleSheet.create({
   },
   featuredSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: 0,
   },
   dailyPickSection: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: 0,
   },
   sectionTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
+    letterSpacing: -0.3,
+    paddingHorizontal: 0,
   },
   sectionHeaderWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
+    marginRight: LAYOUT.SCREEN_EDGE_PADDING,
   },
   progressIndicator: {
     backgroundColor: '#FF9500',
@@ -144,25 +147,24 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     textAlign: 'center',
   },
-  // Author filter list styles
   authorListContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0, 0, 0, 0.01)',
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   authorListHeaderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
+    marginRight: LAYOUT.SCREEN_EDGE_PADDING,
   },
   clearFilterButton: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: 16,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   clearFilterText: {
@@ -187,24 +189,15 @@ const styles = StyleSheet.create({
   authorPill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: 20,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
     marginRight: LAYOUT.SPACING.SMALL,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     minWidth: 100,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.7,
-    shadowRadius: 2,
-    elevation: 2,
+    ...LAYOUT.SHADOW.SMALL,
   },
   authorPillSelected: {
-    shadowColor: 'rgba(0, 0, 0, 0.3)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
-    elevation: 4,
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   authorPillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -215,14 +208,14 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     textAlign: 'center',
-    marginBottom: 2,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   filterNoticeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     padding: LAYOUT.SPACING.MEDIUM,
-    marginVertical: LAYOUT.SPACING.LARGE,
+    marginVertical: LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     backgroundColor: 'rgba(0, 0, 0, 0.03)',
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
@@ -230,11 +223,12 @@ const styles = StyleSheet.create({
   filterNoticeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.DIMMED,
   },
   backButtonContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
@@ -243,7 +237,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderRadius: 20,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
   },
   backButtonText: {
@@ -251,25 +245,42 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.TINY,
     fontWeight: '500',
   },
-  // Category filter list styles
   categoryListContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    backgroundColor: 'rgba(0, 0, 0, 0.01)',
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   endMessageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.XLARGE,
+    paddingVertical: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    marginBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.XLARGE : LAYOUT.SPACING.LARGE,
   },
   endMessageText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
-    opacity: 0.5,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    fontWeight: '400',
+    letterSpacing: 0.2,
   },
+});
+
+// SectionTitle component to ensure consistent alignment
+const SectionTitle = React.memo(({ title }: { title: string }) => {
+  return (
+    <View style={{ marginLeft: LAYOUT.SCREEN_EDGE_PADDING, marginBottom: LAYOUT.SPACING.SMALL }}>
+      <ThemedText
+        style={{
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+          fontWeight: '600',
+          letterSpacing: -0.3,
+        }}
+      >
+        {title}
+      </ThemedText>
+    </View>
+  );
 });
 
 // Empty state components
@@ -313,15 +324,17 @@ const DailyPick = React.memo(
 
     return (
       <Animated.View style={styles.dailyPickSection} entering={FadeIn.duration(600)}>
-        <ThemedText style={styles.sectionTitle}>Daily Pick</ThemedText>
-        <ThemedCard
-          imageUrl={dailyPick.image_url || 'https://picsum.photos/800/400'}
-          title={dailyPick.title}
-          category={dailyPick.category?.name ?? 'Uncategorized'}
-          author={dailyPick.author?.name ?? 'Anonymous'}
-          onPress={() => onArticlePress(dailyPick)}
-          style={styles.dailyPickCard}
-        />
+        <SectionTitle title="Daily Pick" />
+        <View style={{ paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING }}>
+          <ThemedCard
+            imageUrl={dailyPick.image_url || 'https://picsum.photos/800/400'}
+            title={dailyPick.title}
+            category={dailyPick.category?.name ?? 'Uncategorized'}
+            author={dailyPick.author?.name ?? 'Anonymous'}
+            onPress={() => onArticlePress(dailyPick)}
+            style={styles.dailyPickCard}
+          />
+        </View>
       </Animated.View>
     );
   }
@@ -357,7 +370,7 @@ const CategorySection = React.memo(
 
     return (
       <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(delay)}>
-        <ThemedText style={styles.sectionTitle}>{displayTitle}</ThemedText>
+        <SectionTitle title={displayTitle} />
         <Animated.ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -394,24 +407,25 @@ const FeaturedArticles = React.memo(
 
     return (
       <Animated.View style={styles.featuredSection} entering={FadeIn.duration(500).delay(300)}>
-        <ThemedText style={styles.sectionTitle}>Featured Articles</ThemedText>
-
-        {articles.map((article, index) => (
-          <Animated.View
-            key={`featured-${article.id}`}
-            style={{ marginBottom: index < articles.length - 1 ? LAYOUT.SPACING.MEDIUM : 0 }}
-            entering={FadeIn.duration(400).delay(300 + index * 100)}
-          >
-            <ThemedCard
-              imageUrl={article.image_url || 'https://picsum.photos/800/400'}
-              title={article.title}
-              category={article.category?.name ?? 'Uncategorized'}
-              author={article.author?.name ?? 'Anonymous'}
-              onPress={() => onArticlePress(article)}
-              style={styles.featuredCard}
-            />
-          </Animated.View>
-        ))}
+        <SectionTitle title="Featured Articles" />
+        <View style={{ paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING }}>
+          {articles.map((article, index) => (
+            <Animated.View
+              key={`featured-${article.id}`}
+              style={{ marginBottom: index < articles.length - 1 ? LAYOUT.SPACING.MEDIUM : 0 }}
+              entering={FadeIn.duration(400).delay(300 + index * 100)}
+            >
+              <ThemedCard
+                imageUrl={article.image_url || 'https://picsum.photos/800/400'}
+                title={article.title}
+                category={article.category?.name ?? 'Uncategorized'}
+                author={article.author?.name ?? 'Anonymous'}
+                onPress={() => onArticlePress(article)}
+                style={styles.featuredCard}
+              />
+            </Animated.View>
+          ))}
+        </View>
       </Animated.View>
     );
   }
@@ -429,25 +443,18 @@ const ContinueReadingSection = React.memo(
     if (articles.length === 0) return null;
 
     return (
-      <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(200)}>
-        <View style={styles.sectionHeaderWithIcon}>
-          <ThemedText style={styles.sectionTitle}>Continue Reading</ThemedText>
-          <View style={styles.progressIndicator}>
-            <ThemedText style={styles.progressText} skipDefaultColor>
-              {articles.length}
-            </ThemedText>
-          </View>
-        </View>
+      <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(100)}>
+        <SectionTitle title="Continue Reading" />
         <Animated.ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
           removeClippedSubviews={true}
-          entering={FadeIn.duration(400).delay(300)}
+          entering={FadeIn.duration(400).delay(200)}
         >
           {articles.map(article => (
             <CompactArticleCard
-              key={article.id.toString()}
+              key={`reading-${article.id}`}
               article={article}
               onPress={() => onArticlePress(article)}
             />
@@ -479,20 +486,21 @@ const AuthorFilterList = React.memo(
     // Use pills for authors
     return (
       <Animated.View
-        style={[
-          styles.authorListContainer,
-          {
-            borderTopColor: colors.cardBorder,
-            borderBottomColor: colors.cardBorder,
-          },
-        ]}
-        entering={FadeIn.duration(500).delay(600)}
+        style={[styles.authorListContainer]}
+        entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(600)}
       >
-        <View style={styles.authorListHeaderContainer}>
-          <ThemedText style={styles.sectionTitle}>Browse by Author</ThemedText>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginRight: LAYOUT.SCREEN_EDGE_PADDING,
+          }}
+        >
+          <SectionTitle title="Browse by Author" />
           {selectedAuthorId !== null && (
             <Pressable
-              style={[styles.clearFilterButton, { backgroundColor: `${colors.tint}20` }]}
+              style={[styles.clearFilterButton, { backgroundColor: colors.textOverlay }]}
               onPress={onClearFilter}
             >
               <ThemedText style={[styles.clearFilterText, { color: colors.tint }]} skipDefaultColor>
@@ -504,7 +512,7 @@ const AuthorFilterList = React.memo(
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
+          contentContainerStyle={[styles.horizontalList, { paddingBottom: LAYOUT.SPACING.TINY }]}
           removeClippedSubviews={true}
         >
           {authors.map(author => {
@@ -512,12 +520,18 @@ const AuthorFilterList = React.memo(
             return (
               <Animated.View
                 key={`author-pill-${author.id}`}
-                entering={FadeIn.duration(300).delay(650)}
+                entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(650)}
               >
                 <Pressable
-                  style={[
+                  style={({ pressed }) => [
                     styles.authorPill,
-                    { backgroundColor: isSelected ? `${colors.tint}15` : colors.cardBackground },
+                    {
+                      backgroundColor: isSelected
+                        ? colors.textOverlay
+                        : pressed
+                          ? colors.background
+                          : colors.cardBackground,
+                    },
                     isSelected && styles.authorPillSelected,
                   ]}
                   onPress={() => onSelectAuthor(author.id)}
@@ -548,10 +562,12 @@ const FilterNotice = React.memo(({ type, name }: { type: 'author' | 'category'; 
   const colors = useColors();
 
   return (
-    <View style={[styles.filterNoticeContainer, { backgroundColor: `${colors.tint}10` }]}>
+    <View style={[styles.filterNoticeContainer, { backgroundColor: colors.textOverlay }]}>
       <ThemedText style={styles.filterNoticeText}>
         Showing articles from {type === 'author' ? 'author' : 'category'}{' '}
-        <ThemedText style={{ fontWeight: '600' }}>{name}</ThemedText>
+        <ThemedText style={{ fontWeight: '600', color: colors.tint }} skipDefaultColor>
+          {name}
+        </ThemedText>
       </ThemedText>
     </View>
   );
@@ -564,10 +580,10 @@ const BackButton = React.memo(({ onPress }: { onPress: () => void }) => {
   return (
     <View style={styles.backButtonContainer}>
       <Pressable
-        style={[styles.backButton, { backgroundColor: `${colors.tint}20` }]}
+        style={[styles.backButton, { backgroundColor: colors.textOverlay }]}
         onPress={onPress}
       >
-        <ThemedText style={[{ color: colors.tint }, { fontSize: 16 }]} skipDefaultColor>
+        <ThemedText style={[{ color: colors.tint, fontSize: 16 }]} skipDefaultColor>
           ←
         </ThemedText>
         <ThemedText style={[styles.backButtonText, { color: colors.tint }]} skipDefaultColor>
@@ -597,22 +613,14 @@ const CategoryFilterList = React.memo(
     // Use pills for categories
     return (
       <Animated.View
-        style={[
-          styles.categoryListContainer,
-          {
-            borderTopColor: colors.cardBorder,
-            borderBottomColor: colors.cardBorder,
-          },
-        ]}
-        entering={FadeIn.duration(500).delay(700)}
+        style={[styles.categoryListContainer]}
+        entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(700)}
       >
-        <View style={styles.authorListHeaderContainer}>
-          <ThemedText style={styles.sectionTitle}>Browse by Category</ThemedText>
-        </View>
+        <SectionTitle title="Browse by Category" />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
+          contentContainerStyle={[styles.horizontalList, { paddingBottom: LAYOUT.SPACING.TINY }]}
           removeClippedSubviews={true}
         >
           {categories.map(category => {
@@ -620,12 +628,18 @@ const CategoryFilterList = React.memo(
             return (
               <Animated.View
                 key={`category-pill-${category.id}`}
-                entering={FadeIn.duration(300).delay(750)}
+                entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(750)}
               >
                 <Pressable
-                  style={[
+                  style={({ pressed }) => [
                     styles.authorPill,
-                    { backgroundColor: isSelected ? `${colors.tint}15` : colors.cardBackground },
+                    {
+                      backgroundColor: isSelected
+                        ? colors.textOverlay
+                        : pressed
+                          ? colors.background
+                          : colors.cardBackground,
+                    },
                     isSelected && styles.authorPillSelected,
                   ]}
                   onPress={() => onSelectCategory(category.id)}
@@ -653,9 +667,14 @@ const CategoryFilterList = React.memo(
 
 // End Message Component
 const EndMessage = React.memo(() => {
+  const colors = useColors();
+
   return (
-    <Animated.View style={styles.endMessageContainer} entering={FadeIn.duration(500).delay(800)}>
-      <ThemedText style={styles.endMessageText}>
+    <Animated.View
+      style={styles.endMessageContainer}
+      entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(800)}
+    >
+      <ThemedText style={[styles.endMessageText, { color: colors.authorText }]} skipDefaultColor>
         You've reached the end of your personalized reading selection
       </ThemedText>
     </Animated.View>
@@ -766,15 +785,15 @@ export default function ArticlesScreen() {
       .slice(0, 10);
   }, [filteredArticles]);
 
-  // Memoized content container style - fix iOS bottom padding
+  // Updated contentContainerStyle with fixed iOS padding
   const contentContainerStyle = useMemo(
     () => ({
       flexGrow: 1,
       backgroundColor: colors.background,
       paddingTop: LAYOUT.SPACING.MEDIUM,
-      paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM,
+      paddingBottom: 0,
     }),
-    [colors.background, insets.bottom]
+    [colors.background]
   );
 
   const fetchAuthors = useCallback(async () => {
@@ -982,13 +1001,19 @@ export default function ArticlesScreen() {
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['top', 'left', 'right']}
+    >
       <Animated.ScrollView
         ref={scrollViewRef}
         contentContainerStyle={contentContainerStyle}
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        automaticallyAdjustContentInsets={false}
+        contentInsetAdjustmentBehavior="never"
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
