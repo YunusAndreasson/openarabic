@@ -84,13 +84,14 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: 0,
   },
-  sectionTitle: {
+  sectionTitleContainer: {
+    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  sectionTitleText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
     letterSpacing: -0.3,
-    paddingHorizontal: 0,
   },
   sectionHeaderWithIcon: {
     flexDirection: 'row',
@@ -198,6 +199,7 @@ const styles = StyleSheet.create({
   },
   authorPillSelected: {
     ...LAYOUT.SHADOW.MEDIUM,
+    transform: [{ scale: 1.02 }],
   },
   authorPillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -239,6 +241,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    minHeight: 44,
   },
   backButtonText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -262,23 +265,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: LAYOUT.OPACITY.DIMMED,
     fontWeight: '400',
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
   },
 });
 
 // SectionTitle component to ensure consistent alignment
 const SectionTitle = React.memo(({ title }: { title: string }) => {
   return (
-    <View style={{ marginLeft: LAYOUT.SCREEN_EDGE_PADDING, marginBottom: LAYOUT.SPACING.SMALL }}>
-      <ThemedText
-        style={{
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-          fontWeight: '600',
-          letterSpacing: -0.3,
-        }}
-      >
-        {title}
-      </ThemedText>
+    <View style={styles.sectionTitleContainer}>
+      <ThemedText style={styles.sectionTitleText}>{title}</ThemedText>
     </View>
   );
 });
@@ -577,11 +572,24 @@ const FilterNotice = React.memo(({ type, name }: { type: 'author' | 'category'; 
 const BackButton = React.memo(({ onPress }: { onPress: () => void }) => {
   const colors = useColors();
 
+  const handlePress = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  }, [onPress]);
+
   return (
     <View style={styles.backButtonContainer}>
       <Pressable
-        style={[styles.backButton, { backgroundColor: colors.textOverlay }]}
-        onPress={onPress}
+        style={({ pressed }) => [
+          styles.backButton,
+          {
+            backgroundColor: colors.textOverlay,
+            opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
+          },
+        ]}
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel="Back to home"
       >
         <ThemedText style={[{ color: colors.tint, fontSize: 16 }]} skipDefaultColor>
           ←
@@ -674,7 +682,11 @@ const EndMessage = React.memo(() => {
       style={styles.endMessageContainer}
       entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(800)}
     >
-      <ThemedText style={[styles.endMessageText, { color: colors.authorText }]} skipDefaultColor>
+      <ThemedText
+        style={[styles.endMessageText, { color: colors.authorText }]}
+        skipDefaultColor
+        accessibilityRole="text"
+      >
         You've reached the end of your personalized reading selection
       </ThemedText>
     </Animated.View>
@@ -785,7 +797,7 @@ export default function ArticlesScreen() {
       .slice(0, 10);
   }, [filteredArticles]);
 
-  // Updated contentContainerStyle with fixed iOS padding
+  // Refined content container style for consistent spacing
   const contentContainerStyle = useMemo(
     () => ({
       flexGrow: 1,
@@ -1005,6 +1017,8 @@ export default function ArticlesScreen() {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['top', 'left', 'right']}
+      accessibilityLabel="Articles browse screen"
+      accessibilityRole="scrollbar"
     >
       <Animated.ScrollView
         ref={scrollViewRef}
