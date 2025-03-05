@@ -1,6 +1,7 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import themeReducer from './themeSlice';
 import settingsReducer from './settingsSlice';
+import readingListReducer from './readingListSlice';
 import devToolsEnhancer from 'redux-devtools-expo-dev-plugin';
 import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,13 +10,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const rootReducer = combineReducers({
   theme: themeReducer,
   settings: settingsReducer,
+  readingList: readingListReducer,
 });
 
 // Configure redux-persist
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['theme', 'settings'],
+  whitelist: ['theme', 'settings', 'readingList'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

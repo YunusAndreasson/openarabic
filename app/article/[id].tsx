@@ -16,7 +16,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { articlesService } from '@/services/articles';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { useAppSelector } from '@/store/hooks';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { ArabicWord } from '@/components/ArabicWord';
 import type { Tables } from '@/types/database.types';
 import { studyWordsService } from '@/services/study_words';
@@ -34,6 +34,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readingListService } from '@/services/reading_list';
+import { addToReadingList, incrementReadCount } from '@/store/readingListSlice';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -98,6 +99,7 @@ export default function ArticleScreen() {
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
   const [isLoading, setIsLoading] = useState(true);
@@ -516,6 +518,29 @@ export default function ArticleScreen() {
     },
     [isButtonsVisible]
   );
+
+  // Add the article to the reading list when it's viewed
+  useEffect(() => {
+    if (id) {
+      const articleId = parseInt(id as string, 10);
+      if (!isNaN(articleId)) {
+        try {
+          console.log('Adding article to reading list:', articleId);
+
+          // Only add to reading list if user is authenticated
+          if (user) {
+            // Add to reading list and increment read count
+            dispatch(addToReadingList(articleId));
+            dispatch(incrementReadCount(articleId));
+          } else {
+            console.log('User not authenticated, skipping add to reading list');
+          }
+        } catch (error) {
+          console.error('Error adding article to reading list:', error);
+        }
+      }
+    }
+  }, [id, dispatch, user]);
 
   // Render loading screen
   if (isLoading) {

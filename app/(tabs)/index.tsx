@@ -15,7 +15,6 @@ import { router } from 'expo-router';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { readingListService } from '@/services/readingList';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { Article } from '@/types/articles.types';
@@ -25,7 +24,7 @@ import { useColors } from '@/hooks/useColors';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
-import { useAppSelectorMemo } from '@/store/hooks';
+import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { Theme } from '@/constants/Colors';
 import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
@@ -44,6 +43,8 @@ import { Image } from 'expo-image';
 import SectionTitle from '@/components/SectionTitle';
 import EndMessage from '@/components/EndMessage';
 import { FooterCircle } from '@/components/FooterCircle';
+import ArticleList from '@/components/ArticleList';
+import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -270,6 +271,18 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0.3,
   },
+  emptyReadingContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    minHeight: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyReadingText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    opacity: 0.7,
+    textAlign: 'center',
+  },
 });
 
 // Empty state components
@@ -429,26 +442,35 @@ const ContinueReadingSection = React.memo(
     articles: Article[];
     onArticlePress: (article: Article) => void;
   }) => {
-    if (articles.length === 0) return null;
+    const colors = useColors();
 
+    // Always show the section, even if there are no articles
     return (
       <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(100)}>
         <SectionTitle title="Continue Reading" />
-        <Animated.ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-          removeClippedSubviews={true}
-          entering={FadeIn.duration(400).delay(200)}
-        >
-          {articles.map(article => (
-            <CompactArticleCard
-              key={`reading-${article.id}`}
-              article={article}
-              onPress={() => onArticlePress(article)}
-            />
-          ))}
-        </Animated.ScrollView>
+        {articles.length === 0 ? (
+          <View style={styles.emptyReadingContainer}>
+            <ThemedText style={styles.emptyReadingText}>
+              Browse articles to see them here
+            </ThemedText>
+          </View>
+        ) : (
+          <Animated.ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+            removeClippedSubviews={true}
+            entering={FadeIn.duration(400).delay(200)}
+          >
+            {articles.map(article => (
+              <CompactArticleCard
+                key={`reading-${article.id}`}
+                article={article}
+                onPress={() => onArticlePress(article)}
+              />
+            ))}
+          </Animated.ScrollView>
+        )}
       </Animated.View>
     );
   }
@@ -670,6 +692,7 @@ const CategoryFilterList = React.memo(
 export default function ArticlesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const dispatch = useAppDispatch();
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
@@ -680,7 +703,6 @@ export default function ArticlesScreen() {
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
-  const [inProgressArticles, setInProgressArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
   const [authors, setAuthors] = useState<Tables<'authors'>[]>([]);
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null);
@@ -689,6 +711,20 @@ export default function ArticlesScreen() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forceUpdate, setForceUpdate] = useState(false);
+
+  // Get inProgressArticles from Redux
+  const { inProgressArticles } = useAppSelectorMemo(state => state.readingList);
+
+  // Debug log to check if inProgressArticles is being populated
+  useEffect(() => {
+    console.log('inProgressArticles:', inProgressArticles);
+  }, [inProgressArticles]);
+
+  // Add an effect to fetch in-progress articles when the component mounts
+  useEffect(() => {
+    console.log('Dispatching fetchInProgressArticles on mount');
+    dispatch(fetchInProgressArticles());
+  }, [dispatch]);
 
   // Is in filtered view (either by author or category)
   const isInFilteredView = useMemo(
@@ -793,27 +829,17 @@ export default function ArticlesScreen() {
     }
   }, []);
 
-  const fetchReadingList = useCallback(async () => {
-    try {
-      // This is a placeholder - you'll need to implement the actual service
-      const inProgress = await readingListService.getInProgressArticles();
-      setInProgressArticles(inProgress);
-    } catch (err) {
-      console.error('Failed to fetch reading list:', err);
-      // Don't set error state here, as it's not critical
-      setInProgressArticles([]);
-    }
-  }, []);
-
   const fetchCategories = useCallback(async () => {
     try {
-      const fetchedCategories = await categoriesService.getCategories();
-      setCategories(fetchedCategories);
+      const categoriesData = await categoriesService.getCategories();
+      setCategories(categoriesData);
     } catch (err) {
       console.error('Failed to fetch categories:', err);
+      // Don't set error state here, as it's not critical
     }
   }, []);
 
+  // Fetch data function
   const fetchArticles = useCallback(
     async (showRefreshing = false) => {
       // Clear any existing timeouts
@@ -831,23 +857,29 @@ export default function ArticlesScreen() {
         }
         setError(null);
 
+        // Fetch articles
         const fetchedArticles = await articlesService.getArticles();
         setArticles(fetchedArticles);
         dataLoadedRef.current = true;
 
         // Also fetch categories if they haven't been fetched yet
         if (categories.length === 0) {
-          fetchCategories();
+          const categoriesData = await categoriesService.getCategories();
+          setCategories(categoriesData);
         }
 
-        // Fetch reading list
-        fetchReadingList();
+        // Fetch in-progress articles using Redux
+        console.log('Dispatching fetchInProgressArticles from fetchArticles');
+        dispatch(fetchInProgressArticles());
 
-        // Fetch authors
+        // Fetch authors if they haven't been fetched yet
         if (authors.length === 0) {
-          fetchAuthors();
+          const authorsData = await supabase.from('authors').select('*');
+          if (authorsData.error) throw authorsData.error;
+          setAuthors(authorsData.data);
         }
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError('Failed to fetch articles. Pull down to try again.');
         // Make sure to set loading states to false on error
         setIsLoading(false);
@@ -870,14 +902,7 @@ export default function ArticlesScreen() {
         }
       }
     },
-    [
-      isRefreshing,
-      categories.length,
-      fetchCategories,
-      fetchReadingList,
-      authors.length,
-      fetchAuthors,
-    ]
+    [isRefreshing, categories.length, authors.length, dispatch]
   );
 
   const handleRefresh = useCallback(() => {
@@ -886,9 +911,33 @@ export default function ArticlesScreen() {
     fetchArticles(true);
   }, [fetchArticles]);
 
-  const handleArticlePress = useCallback((article: Article) => {
-    router.push(`/article/${article.id}`);
-  }, []);
+  const handleArticlePress = useCallback(
+    async (article: Article) => {
+      try {
+        console.log('Article pressed:', article.id);
+
+        // Check if user is authenticated before adding to reading list
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          console.log('User not authenticated, skipping add to reading list');
+          // Just navigate to the article page without adding to reading list
+          router.push(`/article/${article.id}`);
+          return;
+        }
+
+        // Add the article to the reading list before navigating
+        dispatch(addToReadingList(article.id));
+
+        // Navigate to the article page
+        router.push(`/article/${article.id}`);
+      } catch (error) {
+        console.error('Error in handleArticlePress:', error);
+        // Still navigate to the article page even if there's an error
+        router.push(`/article/${article.id}`);
+      }
+    },
+    [dispatch]
+  );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
     Haptics.selectionAsync();
@@ -981,6 +1030,97 @@ export default function ArticlesScreen() {
     return catCopy;
   }, [categories]);
 
+  // Create a header component for the FlatList
+  const ListHeaderComponent = useCallback(() => {
+    if (isInFilteredView) {
+      return (
+        <>
+          <BackButton onPress={handleClearFilters} />
+          {selectedAuthor && <FilterNotice type="author" name={selectedAuthor.name} />}
+          {selectedCategory && <FilterNotice type="category" name={selectedCategory.name} />}
+        </>
+      );
+    }
+
+    return (
+      <>
+        <DailyPick articles={articles} onArticlePress={handleArticlePress} />
+
+        <ContinueReadingSection articles={inProgressArticles} onArticlePress={handleArticlePress} />
+
+        {latestArticles.length > 0 && (
+          <CategorySection
+            title="Latest Articles"
+            articles={latestArticles}
+            onArticlePress={handleArticlePress}
+            delay={150}
+            showTimeAgo={true}
+          />
+        )}
+
+        {featuredArticles.length > 0 && (
+          <FeaturedArticles articles={featuredArticles} onArticlePress={handleArticlePress} />
+        )}
+
+        {recentArticles.length > 0 && (
+          <CategorySection
+            title="Recently Added"
+            articles={recentArticles}
+            onArticlePress={handleArticlePress}
+            delay={300}
+          />
+        )}
+
+        {beginnerArticles.length > 0 && (
+          <CategorySection
+            title="Beginner Friendly"
+            articles={beginnerArticles}
+            onArticlePress={handleArticlePress}
+            delay={400}
+          />
+        )}
+
+        {/* Author filter list */}
+        <AuthorFilterList
+          authors={authors}
+          selectedAuthorId={selectedAuthorId}
+          onSelectAuthor={handleSelectAuthor}
+          onClearFilter={handleClearFilters}
+        />
+
+        {/* Category filter list */}
+        <CategoryFilterList
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={handleSelectCategory}
+        />
+      </>
+    );
+  }, [
+    isInFilteredView,
+    selectedAuthor,
+    selectedCategory,
+    articles,
+    inProgressArticles,
+    latestArticles,
+    featuredArticles,
+    recentArticles,
+    beginnerArticles,
+    authors,
+    categories,
+    selectedAuthorId,
+    selectedCategoryId,
+    handleClearFilters,
+    handleArticlePress,
+    handleSelectAuthor,
+    handleSelectCategory,
+  ]);
+
+  // Create an empty state component
+  const EmptyStateComponent = useCallback(() => {
+    return <EmptyState />;
+  }, []);
+
   // Show loading screen if no data yet
   if (isLoading && !isRefreshing && articles.length === 0) {
     return <LoadingScreen />;
@@ -994,120 +1134,20 @@ export default function ArticlesScreen() {
       accessibilityLabel="Articles browse screen"
       accessibilityRole="scrollbar"
     >
-      <Animated.ScrollView
-        ref={scrollViewRef}
-        contentContainerStyle={contentContainerStyle}
-        showsVerticalScrollIndicator={false}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        automaticallyAdjustContentInsets={false}
-        contentInsetAdjustmentBehavior="never"
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            progressBackgroundColor={colors.cardBackground}
-            colors={[colors.tint]}
-            tintColor={colors.tint}
-          />
-        }
-      >
-        {error ? (
-          <ErrorState message={error} />
-        ) : articles.length === 0 ? (
-          <EmptyState />
-        ) : (
-          <>
-            {/* Show filter notice and back button when in filtered view */}
-            {isInFilteredView && (
-              <>
-                <BackButton onPress={handleClearFilters} />
-                {selectedAuthor && <FilterNotice type="author" name={selectedAuthor.name} />}
-                {selectedCategory && <FilterNotice type="category" name={selectedCategory.name} />}
-              </>
-            )}
-
-            {/* Show these sections only when not in filtered view */}
-            {!isInFilteredView && (
-              <>
-                <DailyPick articles={articles} onArticlePress={handleArticlePress} />
-
-                <ContinueReadingSection
-                  articles={inProgressArticles}
-                  onArticlePress={handleArticlePress}
-                />
-
-                {latestArticles.length > 0 && (
-                  <CategorySection
-                    title="Latest Articles"
-                    articles={latestArticles}
-                    onArticlePress={handleArticlePress}
-                    delay={150}
-                    showTimeAgo={true}
-                  />
-                )}
-
-                {featuredArticles.length > 0 && (
-                  <FeaturedArticles
-                    articles={featuredArticles}
-                    onArticlePress={handleArticlePress}
-                  />
-                )}
-
-                {recentArticles.length > 0 && (
-                  <CategorySection
-                    title="Recently Added"
-                    articles={recentArticles}
-                    onArticlePress={handleArticlePress}
-                    delay={300}
-                  />
-                )}
-
-                {beginnerArticles.length > 0 && (
-                  <CategorySection
-                    title="Beginner Friendly"
-                    articles={beginnerArticles}
-                    onArticlePress={handleArticlePress}
-                    delay={400}
-                  />
-                )}
-
-                {/* Author filter list */}
-                <AuthorFilterList
-                  authors={authors}
-                  selectedAuthorId={selectedAuthorId}
-                  onSelectAuthor={handleSelectAuthor}
-                  onClearFilter={handleClearFilters}
-                />
-
-                {/* Category filter list */}
-                <CategoryFilterList
-                  categories={categories}
-                  selectedCategoryId={selectedCategoryId}
-                  onSelectCategory={handleSelectCategory}
-                />
-              </>
-            )}
-
-            {/* Show filtered articles when in filtered view */}
-            {isInFilteredView && filteredArticles.length > 0 && (
-              <CategorySection
-                title="Articles"
-                articles={filteredArticles}
-                onArticlePress={handleArticlePress}
-                delay={150}
-                showTimeAgo={true}
-              />
-            )}
-
-            {/* Add a graceful end message */}
-            <EndMessage />
-
-            {/* Add the footer circle */}
-            <FooterCircle color={colors.text} size={40} borderWidth={2.5} />
-          </>
-        )}
-      </Animated.ScrollView>
+      {error ? (
+        <ErrorState message={error} />
+      ) : (
+        <ArticleList
+          articles={isInFilteredView ? filteredArticles : []}
+          isLoading={isLoading}
+          isRefreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          onArticlePress={handleArticlePress}
+          ListHeaderComponent={ListHeaderComponent()}
+          ListEmptyComponent={EmptyStateComponent()}
+          contentContainerStyle={contentContainerStyle}
+        />
+      )}
     </ThemedView>
   );
 }
