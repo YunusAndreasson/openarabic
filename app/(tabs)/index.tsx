@@ -207,8 +207,9 @@ const styles = StyleSheet.create({
   },
   authorPillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    textAlign: 'center',
+    opacity: LAYOUT.OPACITY.DIMMED,
+    fontWeight: '400',
+    letterSpacing: 0.3,
   },
   authorNameText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -271,25 +272,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0.3,
   },
-  emptyReadingContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minHeight: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyReadingText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
 });
 
 // Empty state components
 const EmptyState = React.memo(() => (
-  <View style={styles.emptyContainer}>
-    <ThemedText style={styles.emptyText}>No articles available right now</ThemedText>
-  </View>
+  <View style={styles.emptyContainer}>{/* Empty state without any message */}</View>
 ));
 
 const ErrorState = React.memo(({ message }: { message: string }) => (
@@ -442,35 +429,27 @@ const ContinueReadingSection = React.memo(
     articles: Article[];
     onArticlePress: (article: Article) => void;
   }) => {
-    const colors = useColors();
+    // Don't render the section if there are no articles
+    if (articles.length === 0) return null;
 
-    // Always show the section, even if there are no articles
     return (
       <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(100)}>
         <SectionTitle title="Continue Reading" />
-        {articles.length === 0 ? (
-          <View style={styles.emptyReadingContainer}>
-            <ThemedText style={styles.emptyReadingText}>
-              Browse articles to see them here
-            </ThemedText>
-          </View>
-        ) : (
-          <Animated.ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-            removeClippedSubviews={true}
-            entering={FadeIn.duration(400).delay(200)}
-          >
-            {articles.map(article => (
-              <CompactArticleCard
-                key={`reading-${article.id}`}
-                article={article}
-                onPress={() => onArticlePress(article)}
-              />
-            ))}
-          </Animated.ScrollView>
-        )}
+        <Animated.ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+          removeClippedSubviews={true}
+          entering={FadeIn.duration(400).delay(200)}
+        >
+          {articles.map(article => (
+            <CompactArticleCard
+              key={`reading-${article.id}`}
+              article={article}
+              onPress={() => onArticlePress(article)}
+            />
+          ))}
+        </Animated.ScrollView>
       </Animated.View>
     );
   }
@@ -715,14 +694,8 @@ export default function ArticlesScreen() {
   // Get inProgressArticles from Redux
   const { inProgressArticles } = useAppSelectorMemo(state => state.readingList);
 
-  // Debug log to check if inProgressArticles is being populated
-  useEffect(() => {
-    console.log('inProgressArticles:', inProgressArticles);
-  }, [inProgressArticles]);
-
   // Add an effect to fetch in-progress articles when the component mounts
   useEffect(() => {
-    console.log('Dispatching fetchInProgressArticles on mount');
     dispatch(fetchInProgressArticles());
   }, [dispatch]);
 
@@ -840,103 +813,51 @@ export default function ArticlesScreen() {
   }, []);
 
   // Fetch data function
-  const fetchArticles = useCallback(
-    async (showRefreshing = false) => {
-      // Clear any existing timeouts
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = undefined;
-      }
+  const fetchArticles = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        if (showRefreshing) {
-          setIsRefreshing(true);
-        } else if (!isRefreshing) {
-          setIsLoading(true);
-          loadingStartTime.current = Date.now();
-        }
-        setError(null);
+    try {
+      const fetchedArticles = await articlesService.getArticles({
+        limit: 50,
+        offset: 0,
+        categoryId: selectedCategoryId,
+        authorId: selectedAuthorId,
+      });
 
-        // Fetch articles
-        const fetchedArticles = await articlesService.getArticles();
-        setArticles(fetchedArticles);
-        dataLoadedRef.current = true;
+      setArticles(fetchedArticles);
 
-        // Also fetch categories if they haven't been fetched yet
-        if (categories.length === 0) {
-          const categoriesData = await categoriesService.getCategories();
-          setCategories(categoriesData);
-        }
-
-        // Fetch in-progress articles using Redux
-        console.log('Dispatching fetchInProgressArticles from fetchArticles');
-        dispatch(fetchInProgressArticles());
-
-        // Fetch authors if they haven't been fetched yet
-        if (authors.length === 0) {
-          const authorsData = await supabase.from('authors').select('*');
-          if (authorsData.error) throw authorsData.error;
-          setAuthors(authorsData.data);
-        }
-      } catch (err) {
-        console.error('Error fetching data:', err);
-        setError('Failed to fetch articles. Pull down to try again.');
-        // Make sure to set loading states to false on error
-        setIsLoading(false);
-        setIsRefreshing(false);
-      } finally {
-        // Ensure loader shows for at least 500ms for a more consistent experience
-        const timeElapsed = loadingStartTime.current ? Date.now() - loadingStartTime.current : 0;
-        const remainingTime = Math.max(0, 500 - timeElapsed);
-
-        if (remainingTime > 0 && !showRefreshing) {
-          loadingTimeoutRef.current = setTimeout(() => {
-            setIsLoading(false);
-            setIsRefreshing(false);
-            loadingStartTime.current = null;
-          }, remainingTime);
-        } else {
-          setIsLoading(false);
-          setIsRefreshing(false);
-          loadingStartTime.current = null;
-        }
-      }
-    },
-    [isRefreshing, categories.length, authors.length, dispatch]
-  );
+      // Dispatch fetchInProgressArticles after fetching articles
+      dispatch(fetchInProgressArticles());
+    } catch (err) {
+      setError('Failed to load articles');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [selectedCategoryId, selectedAuthorId, dispatch]);
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setForceUpdate(true);
-    fetchArticles(true);
+    fetchArticles();
   }, [fetchArticles]);
 
   const handleArticlePress = useCallback(
-    async (article: Article) => {
-      try {
-        console.log('Article pressed:', article.id);
+    (article: Article) => {
+      // Navigate to article detail
+      router.push(`/article/${article.id}`);
 
-        // Check if user is authenticated before adding to reading list
-        const { data } = await supabase.auth.getSession();
-        if (!data.session) {
-          console.log('User not authenticated, skipping add to reading list');
-          // Just navigate to the article page without adding to reading list
-          router.push(`/article/${article.id}`);
-          return;
-        }
-
-        // Add the article to the reading list before navigating
-        dispatch(addToReadingList(article.id));
-
-        // Navigate to the article page
-        router.push(`/article/${article.id}`);
-      } catch (error) {
-        console.error('Error in handleArticlePress:', error);
-        // Still navigate to the article page even if there's an error
-        router.push(`/article/${article.id}`);
+      // Add to reading list if authenticated
+      if (!session?.user) {
+        // Skip adding to reading list if not authenticated
+        return;
       }
+
+      // Add to reading list
+      dispatch(addToReadingList(article));
     },
-    [dispatch]
+    [dispatch, router, session?.user]
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
@@ -1118,7 +1039,8 @@ export default function ArticlesScreen() {
 
   // Create an empty state component
   const EmptyStateComponent = useCallback(() => {
-    return <EmptyState />;
+    // Return an empty fragment instead of null to satisfy the type requirement
+    return <></>;
   }, []);
 
   // Show loading screen if no data yet

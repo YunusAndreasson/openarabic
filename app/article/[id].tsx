@@ -525,18 +525,14 @@ export default function ArticleScreen() {
       const articleId = parseInt(id as string, 10);
       if (!isNaN(articleId)) {
         try {
-          console.log('Adding article to reading list:', articleId);
-
           // Only add to reading list if user is authenticated
           if (user) {
             // Add to reading list and increment read count
             dispatch(addToReadingList(articleId));
             dispatch(incrementReadCount(articleId));
-          } else {
-            console.log('User not authenticated, skipping add to reading list');
           }
         } catch (error) {
-          console.error('Error adding article to reading list:', error);
+          // Silently handle errors
         }
       }
     }

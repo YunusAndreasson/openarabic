@@ -10,18 +10,12 @@ export const readingListService = {
         error: authError,
       } = await supabase.auth.getUser();
 
-      if (authError) {
-        console.error('Auth error in getInProgressArticles:', authError);
-        throw authError;
-      }
+      if (authError) throw authError;
 
       if (!user) {
-        console.log('No user found, returning empty reading list');
         // If no user is logged in, return an empty array
         return [];
       }
-
-      console.log('Fetching in-progress articles for user:', user.id);
 
       // Get articles from reading_list that are not completed
       const { data, error } = await supabase
@@ -40,10 +34,7 @@ export const readingListService = {
         .eq('completed', false)
         .order('position', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching reading list:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Extract the articles from the nested structure
       const articles = data
@@ -53,10 +44,8 @@ export const readingListService = {
           return item.articles as unknown as Article;
         });
 
-      console.log(`Found ${articles.length} in-progress articles`);
       return articles;
     } catch (error) {
-      console.error('Error in getInProgressArticles:', error);
       throw error;
     }
   },
@@ -69,17 +58,11 @@ export const readingListService = {
         error: authError,
       } = await supabase.auth.getUser();
 
-      if (authError) {
-        console.error('Auth error in addToReadingList:', authError);
-        throw authError;
-      }
+      if (authError) throw authError;
 
       if (!user) {
-        console.error('User must be logged in to add to reading list');
         throw new Error('User must be logged in to add to reading list');
       }
-
-      console.log(`Adding article ${articleId} to reading list for user ${user.id}`);
 
       // Get the current highest position
       const { data: positionData, error: positionError } = await supabase
@@ -89,10 +72,7 @@ export const readingListService = {
         .order('position', { ascending: false })
         .limit(1);
 
-      if (positionError) {
-        console.error('Error getting highest position:', positionError);
-        throw positionError;
-      }
+      if (positionError) throw positionError;
 
       // Calculate the next position
       const nextPosition = positionData.length > 0 ? positionData[0].position + 1 : 0;
@@ -111,14 +91,8 @@ export const readingListService = {
         .from('reading_list')
         .upsert(insertData, { onConflict: 'user_id,article_id' });
 
-      if (error) {
-        console.error('Error upserting into reading list:', error);
-        throw error;
-      }
-
-      console.log(`Successfully added article ${articleId} to reading list`);
+      if (error) throw error;
     } catch (error) {
-      console.error('Error in addToReadingList:', error);
       throw error;
     }
   },
@@ -131,16 +105,11 @@ export const readingListService = {
         error: authError,
       } = await supabase.auth.getUser();
 
-      if (authError) {
-        console.error('Auth error in markAsCompleted:', authError);
-        throw authError;
-      }
+      if (authError) throw authError;
 
       if (!user) {
         throw new Error('User must be logged in to update reading list');
       }
-
-      console.log(`Marking article ${articleId} as completed for user ${user.id}`);
 
       // Update the article in the reading list
       const { error } = await supabase
@@ -152,14 +121,8 @@ export const readingListService = {
         .eq('user_id', user.id)
         .eq('article_id', articleId);
 
-      if (error) {
-        console.error('Error marking article as completed:', error);
-        throw error;
-      }
-
-      console.log(`Successfully marked article ${articleId} as completed`);
+      if (error) throw error;
     } catch (error) {
-      console.error('Error in markAsCompleted:', error);
       throw error;
     }
   },
@@ -172,16 +135,11 @@ export const readingListService = {
         error: authError,
       } = await supabase.auth.getUser();
 
-      if (authError) {
-        console.error('Auth error in incrementReadCount:', authError);
-        throw authError;
-      }
+      if (authError) throw authError;
 
       if (!user) {
         throw new Error('User must be logged in to update reading list');
       }
-
-      console.log(`Incrementing read count for article ${articleId} for user ${user.id}`);
 
       // Get the current read count
       const { data, error: fetchError } = await supabase
@@ -195,11 +153,9 @@ export const readingListService = {
         // If the article is not in the reading list yet, add it first
         if (fetchError.code === 'PGRST116') {
           // No rows returned
-          console.log(`Article ${articleId} not found in reading list, adding it first`);
           await this.addToReadingList(articleId);
           return;
         }
-        console.error('Error fetching read count:', fetchError);
         throw fetchError;
       }
 
@@ -212,14 +168,8 @@ export const readingListService = {
         .eq('user_id', user.id)
         .eq('article_id', articleId);
 
-      if (error) {
-        console.error('Error incrementing read count:', error);
-        throw error;
-      }
-
-      console.log(`Successfully incremented read count for article ${articleId}`);
+      if (error) throw error;
     } catch (error) {
-      console.error('Error in incrementReadCount:', error);
       throw error;
     }
   },
