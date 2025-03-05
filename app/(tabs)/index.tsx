@@ -41,6 +41,9 @@ import * as Haptics from 'expo-haptics';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
 import type { CategoryItem } from '@/components/CategorySelector';
 import { Image } from 'expo-image';
+import SectionTitle from '@/components/SectionTitle';
+import EndMessage from '@/components/EndMessage';
+import { FooterCircle } from '@/components/FooterCircle';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -267,15 +270,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0.3,
   },
-});
-
-// SectionTitle component to ensure consistent alignment
-const SectionTitle = React.memo(({ title }: { title: string }) => {
-  return (
-    <View style={styles.sectionTitleContainer}>
-      <ThemedText style={styles.sectionTitleText}>{title}</ThemedText>
-    </View>
-  );
 });
 
 // Empty state components
@@ -672,26 +666,6 @@ const CategoryFilterList = React.memo(
     );
   }
 );
-
-// End Message Component
-const EndMessage = React.memo(() => {
-  const colors = useColors();
-
-  return (
-    <Animated.View
-      style={styles.endMessageContainer}
-      entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(800)}
-    >
-      <ThemedText
-        style={[styles.endMessageText, { color: colors.authorText }]}
-        skipDefaultColor
-        accessibilityRole="text"
-      >
-        You've reached the end of your personalized reading selection
-      </ThemedText>
-    </Animated.View>
-  );
-});
 
 export default function ArticlesScreen() {
   const colors = useColors();
@@ -1128,6 +1102,9 @@ export default function ArticlesScreen() {
 
             {/* Add a graceful end message */}
             <EndMessage />
+
+            {/* Add the footer circle */}
+            <FooterCircle color={colors.text} size={40} borderWidth={2.5} />
           </>
         )}
       </Animated.ScrollView>
