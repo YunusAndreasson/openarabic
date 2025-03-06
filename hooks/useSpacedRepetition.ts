@@ -54,6 +54,9 @@ export function useSpacedRepetition({
 
   // Cleanup on unmount
   useEffect(() => {
+    // Reset mounted flag to prevent state updates after unmount
+    mountedRef.current = true;
+
     return () => {
       mountedRef.current = false;
     };
@@ -162,6 +165,7 @@ export function useSpacedRepetition({
       });
 
       try {
+        // Convert wordId to number as required by the service
         await studyWordsService.updateWordReview(Number(wordId), updatedWord);
         return { wordId, success, updatedWord };
       } catch (error) {
@@ -195,13 +199,16 @@ export function useSpacedRepetition({
   // Update word function
   const updateWord = useCallback(
     async (wordId: string, success: boolean) => {
+      // Prevent updates if component is unmounted
+      if (!mountedRef.current) return;
+
       // Guard against updating past the end of the array
       if (currentIndex >= wordsRef.current.length) return;
 
       const wordToUpdate = wordsRef.current[currentIndex];
       if (!wordToUpdate?.sentence_word_id) return;
 
-      // Ensure we're comparing the correct IDs (both as strings or both as numbers)
+      // Ensure we're comparing the correct IDs (both as strings)
       if (String(wordToUpdate.sentence_word_id) !== String(wordId)) {
         console.error('Word ID mismatch in updateWord', {
           expected: wordToUpdate.sentence_word_id,
@@ -236,11 +243,13 @@ export function useSpacedRepetition({
   // Invalidate queries on unmount if session was started but not completed
   useEffect(() => {
     return () => {
-      if (hasUpdatedWords.current && !isComplete) {
-        invalidateQueries(); // No need to check mountedRef here
+      if (hasUpdatedWords.current) {
+        // Always invalidate queries on unmount if we've updated words
+        // We don't need to check mountedRef here as this is a cleanup function
+        invalidateQueries();
       }
     };
-  }, [invalidateQueries, isComplete]);
+  }, [invalidateQueries]);
 
   return {
     dueWords,
