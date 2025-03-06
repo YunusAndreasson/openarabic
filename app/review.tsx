@@ -28,6 +28,7 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 const BASE_FONT_SIZE = 20;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
 const ANIMATION_CONFIG = { damping: 15, stiffness: 150 }; // Smooth animation
+const FADE_DURATION = 150; // Quick but noticeable fade duration
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
@@ -71,16 +72,19 @@ const baseStyles = StyleSheet.create({
     fontSize: BASE_FONT_SIZE * 1.5,
     lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.2),
     fontFamily: 'NotoNaskhArabic',
+    letterSpacing: 2,
   },
   studyWord: {
     fontWeight: '700',
     fontSize: BASE_FONT_SIZE * 1.5,
     lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.2),
+    letterSpacing: 3,
   },
   dimmedText: {
     fontWeight: '400',
     fontSize: BASE_FONT_SIZE * 1.5,
     lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.2),
+    letterSpacing: 2,
   },
   meaningOverlay: {
     position: 'absolute',
@@ -193,11 +197,18 @@ export default function ReviewScreen() {
   const meaningTimeoutRef = useRef<NodeJS.Timeout>();
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
   const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
+  const resetTransitionRef = useRef<NodeJS.Timeout>();
   const [currentSentence, setCurrentSentence] = useState({
     beforeWord: '',
     wordForm: '',
     afterWord: '',
   });
+  const [nextSentence, setNextSentence] = useState({
+    beforeWord: '',
+    wordForm: '',
+    afterWord: '',
+  });
+  const isTransitioning = useRef(false);
 
   const { currentWord, isLoading, updateWord, progress, isComplete, invalidateQueries, dueWords } =
     useSpacedRepetition({
@@ -214,6 +225,7 @@ export default function ReviewScreen() {
       if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
       if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
+      if (resetTransitionRef.current) clearTimeout(resetTransitionRef.current);
     };
   }, []);
 
@@ -233,9 +245,18 @@ export default function ReviewScreen() {
   // Update current sentence when currentWord changes
   useEffect(() => {
     if (currentWord) {
-      setCurrentSentence(getWordParts());
+      // When the current word changes, update the next sentence immediately
+      // This ensures the content is ready before animation
+      const parts = getWordParts();
+      setNextSentence(parts);
+
+      // Only update current sentence if we're not in a transition
+      // and the word is visible (opacity is 1)
+      if (!isTransitioning.current && opacity.value === 1) {
+        setCurrentSentence(parts);
+      }
     }
-  }, [currentWord, getWordParts]);
+  }, [currentWord, getWordParts, opacity.value]);
 
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
@@ -249,10 +270,14 @@ export default function ReviewScreen() {
       if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
       if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
+      if (resetTransitionRef.current) clearTimeout(resetTransitionRef.current);
 
       const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
           try {
+            // Set transitioning flag to true
+            isTransitioning.current = true;
+
             // First update the word in the database
             updateWord(currentWord.sentence_word_id, success);
 
@@ -262,21 +287,32 @@ export default function ReviewScreen() {
             // Set opacity to 0 immediately
             opacity.value = 0;
 
+            // For "knew the word" (success), use a quicker transition
+            const animationDelay = success ? 30 : 80;
+            const animationDuration = success ? FADE_DURATION : 200;
+            const resetDelay = animationDelay + animationDuration + 50; // Add buffer time
+
             // Use a small delay to ensure the new word is loaded before fading in
             fadeInTimeoutRef.current = setTimeout(() => {
-              // Update the sentence parts first, then fade in
-              setCurrentSentence(getWordParts());
+              // Update the current sentence with the pre-loaded next sentence
+              // This happens while opacity is 0, so the user won't see any glitch
+              setCurrentSentence(nextSentence);
 
-              // Small additional delay to ensure state update completes
-              setTimeout(() => {
-                opacity.value = withTiming(1, { duration: 200 });
-              }, 50);
-            }, 50);
+              // Fade in immediately without additional delay
+              opacity.value = withTiming(1, { duration: animationDuration });
+
+              // Use a regular timeout to reset the transition flag
+              // This is safer than using the animation completion callback
+              resetTransitionRef.current = setTimeout(() => {
+                isTransitioning.current = false;
+              }, animationDuration + 50); // Add a small buffer
+            }, animationDelay);
           } catch (error) {
             console.error('Error updating word:', error);
             // Fallback animation in case of error
             translateX.value = withSpring(0, ANIMATION_CONFIG);
             opacity.value = withTiming(1, { duration: 200 });
+            isTransitioning.current = false;
           }
         }
       };
@@ -297,7 +333,7 @@ export default function ReviewScreen() {
         updateWordAndAnimate();
       }
     },
-    [currentWord, updateWord, opacity, translateX, getWordParts]
+    [currentWord, updateWord, opacity, translateX, nextSentence]
   );
 
   // Create a pan gesture handler for the entire screen
@@ -420,6 +456,10 @@ export default function ReviewScreen() {
   // Extract word parts for display - use the state version instead of direct calculation
   const { beforeWord, wordForm, afterWord } = currentSentence;
 
+  // Add spaces around the word form for better visual separation
+  const spacedBeforeWord = beforeWord ? beforeWord + ' ' : '';
+  const spacedAfterWord = afterWord ? ' ' + afterWord : '';
+
   return (
     <ThemedView style={baseStyles.container}>
       <GestureHandlerRootView style={baseStyles.gestureRoot}>
@@ -438,7 +478,7 @@ export default function ReviewScreen() {
                     style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
                     skipDefaultColor
                   >
-                    {beforeWord}
+                    {spacedBeforeWord}
                   </ThemedText>
                   <ThemedText
                     style={[baseStyles.studyWord, { color: colors.tint }]}
@@ -450,7 +490,7 @@ export default function ReviewScreen() {
                     style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
                     skipDefaultColor
                   >
-                    {afterWord}
+                    {spacedAfterWord}
                   </ThemedText>
                 </ThemedText>
               </Animated.View>
