@@ -14,8 +14,8 @@ import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { ArticleSkeleton, ArticleSkeletonRow } from './ArticleSkeleton';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { FooterCircle } from './FooterCircle';
 import EndMessage from './EndMessage';
+import { CopyrightFooter } from './CopyrightFooter';
 
 interface ArticleListProps {
   articles: Article[];
@@ -119,7 +119,7 @@ const ArticleList: React.FC<ArticleListProps> = ({
     return (
       <>
         <EndMessage />
-        <FooterCircle color={colors.text} size={40} borderWidth={2.5} />
+        <CopyrightFooter />
       </>
     );
   };

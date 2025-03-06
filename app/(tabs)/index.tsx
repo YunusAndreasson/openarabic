@@ -42,9 +42,9 @@ import type { CategoryItem } from '@/components/CategorySelector';
 import { Image } from 'expo-image';
 import SectionTitle from '@/components/SectionTitle';
 import EndMessage from '@/components/EndMessage';
-import { FooterCircle } from '@/components/FooterCircle';
 import ArticleList from '@/components/ArticleList';
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
+import { useAuth } from '@/hooks/useAuth';
 
 // Constants
 const ITEM_HEIGHT = 360;
@@ -672,6 +672,7 @@ export default function ArticlesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
+  const { session } = useAuth();
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
@@ -694,10 +695,43 @@ export default function ArticlesScreen() {
   // Get inProgressArticles from Redux
   const { inProgressArticles } = useAppSelectorMemo(state => state.readingList);
 
+  // Define fetchAuthors and fetchCategories functions
+  const fetchAuthors = useCallback(async () => {
+    console.log('Fetching authors...');
+    try {
+      const { data } = await supabase.from('authors').select('*');
+      console.log('Authors fetched:', data?.length);
+      setAuthors(data || []);
+    } catch (err) {
+      console.error('Failed to fetch authors:', err);
+    }
+  }, []);
+
+  const fetchCategories = useCallback(async () => {
+    console.log('Fetching categories...');
+    try {
+      const categoriesData = await categoriesService.getCategories();
+      console.log('Categories fetched:', categoriesData.length);
+      setCategories(categoriesData);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      // Don't set error state here, as it's not critical
+    }
+  }, []);
+
   // Add an effect to fetch in-progress articles when the component mounts
   useEffect(() => {
     dispatch(fetchInProgressArticles());
   }, [dispatch]);
+
+  // Add effects to fetch authors and categories when the component mounts
+  useEffect(() => {
+    fetchAuthors();
+  }, [fetchAuthors]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   // Is in filtered view (either by author or category)
   const isInFilteredView = useMemo(
@@ -791,41 +825,27 @@ export default function ArticlesScreen() {
     [colors.background]
   );
 
-  const fetchAuthors = useCallback(async () => {
-    try {
-      // Direct Supabase query to get authors
-      const { data, error } = await supabase.from('authors').select('*');
-      if (error) throw error;
-      setAuthors(data || []);
-    } catch (err) {
-      console.error('Failed to fetch authors:', err);
-    }
-  }, []);
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const categoriesData = await categoriesService.getCategories();
-      setCategories(categoriesData);
-    } catch (err) {
-      console.error('Failed to fetch categories:', err);
-      // Don't set error state here, as it's not critical
-    }
-  }, []);
-
   // Fetch data function
   const fetchArticles = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const fetchedArticles = await articlesService.getArticles({
-        limit: 50,
-        offset: 0,
-        categoryId: selectedCategoryId,
-        authorId: selectedAuthorId,
-      });
+      // Only pass the ID if it's not null
+      const categoryId = selectedCategoryId !== null ? selectedCategoryId : undefined;
+      const authorId = selectedAuthorId !== null ? selectedAuthorId : undefined;
 
+      const fetchedArticles = await articlesService.getArticles(categoryId, authorId);
       setArticles(fetchedArticles);
+
+      // Fetch authors and categories if they haven't been fetched yet
+      if (authors.length === 0) {
+        fetchAuthors();
+      }
+
+      if (categories.length === 0) {
+        fetchCategories();
+      }
 
       // Dispatch fetchInProgressArticles after fetching articles
       dispatch(fetchInProgressArticles());
@@ -835,7 +855,15 @@ export default function ArticlesScreen() {
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [selectedCategoryId, selectedAuthorId, dispatch]);
+  }, [
+    selectedCategoryId,
+    selectedAuthorId,
+    dispatch,
+    authors.length,
+    categories.length,
+    fetchAuthors,
+    fetchCategories,
+  ]);
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -855,7 +883,7 @@ export default function ArticlesScreen() {
       }
 
       // Add to reading list
-      dispatch(addToReadingList(article));
+      dispatch(addToReadingList(article.id));
     },
     [dispatch, router, session?.user]
   );
@@ -953,6 +981,10 @@ export default function ArticlesScreen() {
 
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {
+    // Debug logs
+    console.log('Authors length:', authors.length);
+    console.log('Categories length:', categories.length);
+
     if (isInFilteredView) {
       return (
         <>
