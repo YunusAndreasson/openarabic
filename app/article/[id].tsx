@@ -89,6 +89,74 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
     left: 15,
   },
+  // Article header styles
+  articleHeaderContainer: {
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  articleTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
+    fontWeight: '700',
+    marginBottom: LAYOUT.SPACING.LARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
+  },
+  articleMetaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  authorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  authorName: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '500',
+    marginLeft: LAYOUT.SPACING.TINY,
+  },
+  articleInfoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  articleInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  articleInfoText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginLeft: LAYOUT.SPACING.TINY,
+    opacity: 0.7,
+  },
+  categoryContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    borderRadius: 16,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  categoryText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  divider: {
+    height: 1,
+    marginVertical: LAYOUT.SPACING.SMALL,
+    width: '100%',
+  },
+  summaryText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
+    opacity: 0.85,
+    fontStyle: 'italic',
+    paddingTop: LAYOUT.SPACING.SMALL,
+  },
 });
 
 // Threshold for scroll direction detection
@@ -139,7 +207,7 @@ export default function ArticleScreen() {
     onSuccess: () => {
       Toast.show({
         type: 'success',
-        text1: 'Added to audio playlist',
+        text1: 'Added to bookmarks',
         position: 'bottom',
       });
       refetchReadingListStatus();
@@ -149,7 +217,7 @@ export default function ArticleScreen() {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to add to audio playlist',
+        text2: 'Failed to add to bookmarks',
         position: 'bottom',
       });
     },
@@ -162,7 +230,7 @@ export default function ArticleScreen() {
     onSuccess: () => {
       Toast.show({
         type: 'success',
-        text1: 'Removed from audio playlist',
+        text1: 'Removed from bookmarks',
         position: 'bottom',
       });
       refetchReadingListStatus();
@@ -172,7 +240,7 @@ export default function ArticleScreen() {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to remove from audio playlist',
+        text2: 'Failed to remove from bookmarks',
         position: 'bottom',
       });
     },
@@ -375,8 +443,8 @@ export default function ArticleScreen() {
       backgroundColor: isDarkMode ? 'rgba(40, 40, 40, 0.8)' : 'rgba(240, 240, 240, 0.8)',
     };
 
-    // Use a more vibrant color for the active headset icon
-    const activeIconColor = '#FF3B30'; // Bright red color for active state
+    // Use the default color for the headset icon
+    const activeIconColor = isDarkMode ? '#FFFFFF' : '#000000';
     const inactiveIconColor = isDarkMode ? '#FFFFFF' : '#000000';
 
     return (
@@ -389,14 +457,12 @@ export default function ArticleScreen() {
       >
         <TouchableOpacity
           onPress={handleToggleReadingList}
-          accessibilityLabel={
-            isInReadingList ? 'Remove from audio playlist' : 'Add to audio playlist'
-          }
+          accessibilityLabel={isInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'}
           accessibilityRole="button"
         >
           <BlurView intensity={90} tint={isDarkMode ? 'dark' : 'light'} style={buttonStyle}>
             <Ionicons
-              name={isInReadingList ? 'headset' : 'headset-outline'}
+              name={isInReadingList ? 'bookmark' : 'bookmark-outline'}
               size={24}
               color={isInReadingList ? activeIconColor : inactiveIconColor}
               style={styles.buttonIcon}
@@ -538,6 +604,74 @@ export default function ArticleScreen() {
     }
   }, [id, dispatch, user]);
 
+  // Article Header Component
+  const ArticleHeader = useMemo(() => {
+    if (!article) return null;
+
+    // Calculate reading time based on number of sentences (rough estimate)
+    const readingTime = article.article_sentences?.length
+      ? Math.max(1, Math.ceil(article.article_sentences.length / 10))
+      : 3;
+
+    // Capitalize first letter of category
+    const categoryName = article.category?.name
+      ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
+      : 'Uncategorized';
+
+    return (
+      <View style={styles.articleHeaderContainer}>
+        <ThemedText style={styles.articleTitle}>{article.title}</ThemedText>
+
+        <View style={styles.articleMetaContainer}>
+          <View style={styles.authorContainer}>
+            <Ionicons name="person-circle-outline" size={20} color={colors.text} />
+            <ThemedText style={styles.authorName}>
+              {article.author?.name || 'Unknown Author'}
+            </ThemedText>
+          </View>
+        </View>
+
+        <View style={styles.articleInfoContainer}>
+          <View
+            style={[
+              styles.categoryContainer,
+              {
+                backgroundColor: `${colors.tint}15`,
+                ...Platform.select({
+                  ios: {
+                    shadowColor: colors.shadow,
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 2,
+                  },
+                  android: {
+                    elevation: 2,
+                  },
+                }),
+              },
+            ]}
+          >
+            <ThemedText style={[styles.categoryText, { color: colors.tint }]}>
+              {categoryName}
+            </ThemedText>
+          </View>
+
+          <View style={styles.articleInfoItem}>
+            <Ionicons name="time-outline" size={16} color={colors.text} />
+            <ThemedText style={styles.articleInfoText}>{readingTime} min read</ThemedText>
+          </View>
+
+          <View style={styles.articleInfoItem}>
+            <Ionicons name="stats-chart-outline" size={16} color={colors.text} />
+            <ThemedText style={styles.articleInfoText}>Level {article.difficulty_level}</ThemedText>
+          </View>
+        </View>
+
+        {article.summary && <ThemedText style={styles.summaryText}>{article.summary}</ThemedText>}
+      </View>
+    );
+  }, [article, colors]);
+
   // Render loading screen
   if (isLoading) {
     return <LoadingScreen />;
@@ -582,6 +716,7 @@ export default function ArticleScreen() {
           offset: 80 * index,
           index,
         })}
+        ListHeaderComponent={ArticleHeader}
         ListFooterComponent={ListFooterComponent}
         onEndReachedThreshold={0.5}
         scrollEventThrottle={16}

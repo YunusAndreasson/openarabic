@@ -20,10 +20,10 @@ const TAB_SCREENS = [
     iconFilled: 'language',
   },
   {
-    name: 'playlist',
-    title: 'Playlist',
-    iconOutline: 'headset-outline',
-    iconFilled: 'headset',
+    name: 'bookmarks',
+    title: 'Bookmarks',
+    iconOutline: 'bookmark-outline',
+    iconFilled: 'bookmark',
   },
   {
     name: 'account',
@@ -93,7 +93,6 @@ export default function TabLayout() {
                 color={color}
               />
             ),
-            unmountOnBlur: false,
           }}
         />
       ))}

@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
 });
 
 // Playlist Item Component - redesigned as simple list item with just progress indicator
-const PlaylistItem = React.memo(
+const BookmarkItem = React.memo(
   ({
     title,
     author,
@@ -291,7 +291,7 @@ const BottomControls = React.memo(
   }
 );
 
-export default function PlaylistScreen() {
+export default function BookmarksScreen() {
   const colors = useColors();
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -499,13 +499,11 @@ export default function PlaylistScreen() {
       // Add a small delay before playing to ensure the audio system is ready
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Start playing
+      // Start playback
       await sound.playAsync();
-
       setAudioState(AUDIO_STATES.PLAYING);
-      lastActionTimeRef.current = Date.now();
 
-      // Start progress tracking
+      // Start tracking progress
       startProgressTracking();
 
       return true;
@@ -515,35 +513,35 @@ export default function PlaylistScreen() {
     }
   };
 
-  // Update playback status
+  // Handle playback status updates
   const onPlaybackStatusUpdate = (status: any) => {
     if (!status.isLoaded) {
-      // Handle error
       if (status.error) {
         setAudioState(AUDIO_STATES.ERROR);
       }
       return;
     }
 
-    // Update position and duration
-    if (status.positionMillis !== undefined && status.durationMillis) {
-      setPlaybackProgress(status.positionMillis / status.durationMillis);
-    }
-
-    // Handle playback state changes
+    // Update progress if playing
     if (status.isPlaying) {
-      setAudioState(AUDIO_STATES.PLAYING);
-    } else if (status.isBuffering) {
-      // Still consider it playing, just buffering
-    } else {
-      setAudioState(AUDIO_STATES.PAUSED);
+      const progress = status.positionMillis / status.durationMillis;
+      setPlaybackProgress(progress || 0);
     }
 
-    // Handle playback finishing
+    // Handle playback completion
     if (status.didJustFinish) {
-      // If in single item mode, don't auto-advance
+      if (status.isLooping) {
+        return;
+      }
+
+      // Update state based on playback mode
+      if (audioState === AUDIO_STATES.PLAYING) {
+        setAudioState(AUDIO_STATES.PAUSED);
+      }
+
+      // Handle completion based on mode
       if (!playlistMode) {
-        // Just stop playback when finished
+        // Single track mode - just stop
         stopPlayback();
       } else {
         // In playlist mode, proceed to next track
@@ -552,107 +550,84 @@ export default function PlaylistScreen() {
     }
   };
 
-  // Track progress for UI updates
+  // Start tracking playback progress
   const startProgressTracking = () => {
     // Clear any existing interval
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
     }
 
-    // Create new interval
+    // Set up progress tracking interval
     progressIntervalRef.current = setInterval(async () => {
       if (soundRef.current && audioState === AUDIO_STATES.PLAYING) {
         try {
           const status = await soundRef.current.getStatusAsync();
           if (status.isLoaded && status.durationMillis) {
-            setPlaybackProgress(status.positionMillis / status.durationMillis);
+            const progress = status.positionMillis / status.durationMillis;
+            setPlaybackProgress(progress);
           }
         } catch (error) {
-          // Error getting playback status
+          // Error getting status
         }
       }
-    }, 1000);
+    }, 1000); // Update every second
   };
 
-  // Play/pause/resume the selected track
+  // Toggle track playback
   const toggleTrack = async (index: number) => {
-    // Prevent rapid button presses
-    if (Date.now() - lastActionTimeRef.current < 500) {
-      return;
-    }
-
-    lastActionTimeRef.current = Date.now();
-
-    // If clicking on the currently playing track, toggle pause/play
+    // If this is the currently active track, toggle play/pause
     if (index === currentTrackIndex && audioState !== AUDIO_STATES.IDLE) {
       if (audioState === AUDIO_STATES.PLAYING) {
-        // Pause the current track
+        // Pause current track
         if (soundRef.current) {
-          await soundRef.current.pauseAsync().catch(() => {});
+          await soundRef.current.pauseAsync();
           setAudioState(AUDIO_STATES.PAUSED);
         }
       } else if (audioState === AUDIO_STATES.PAUSED) {
-        // Resume the current track
+        // Resume current track
         if (soundRef.current) {
-          await soundRef.current.playAsync().catch(() => {});
+          await soundRef.current.playAsync();
           setAudioState(AUDIO_STATES.PLAYING);
         }
       }
-    } else {
-      // Start playing a new track
-      setCurrentTrackIndex(index);
-      setIsShuffleMode(false);
-      // Set to single item mode when directly tapping a track
-      setPlaylistMode(false);
-    }
-  };
-
-  // Start playback in normal sequence mode
-  const startPlayback = async () => {
-    // Prevent rapid button presses
-    if (Date.now() - lastActionTimeRef.current < 1000) {
       return;
     }
 
-    lastActionTimeRef.current = Date.now();
+    // Otherwise, start playing the selected track
+    setCurrentTrackIndex(index);
+    setIsShuffleMode(false);
+    setPlaylistMode(false);
+  };
 
+  // Start playback of all tracks in order
+  const startPlayback = async () => {
     // Check if we have a playlist
     if (!readingList || readingList.length === 0) {
       return;
     }
 
-    setIsShuffleMode(false);
+    // Start from the beginning
     setCurrentTrackIndex(0);
+    setIsShuffleMode(false);
+
     // Set to playlist mode
     setPlaylistMode(true);
   };
 
   // Stop all playback
   const stopPlayback = async () => {
-    // Prevent rapid button presses
-    if (Date.now() - lastActionTimeRef.current < 1000) {
-      return;
-    }
-
-    lastActionTimeRef.current = Date.now();
-
+    // Stop and clean up
     await cleanupAudio();
 
+    // Reset state
     setAudioState(AUDIO_STATES.IDLE);
     setCurrentTrackIndex(-1);
     setPlaybackProgress(0);
     setPlaylistMode(false);
   };
 
-  // Start playback in shuffle mode
+  // Start shuffle playback
   const startShufflePlayback = async () => {
-    // Prevent rapid button presses
-    if (Date.now() - lastActionTimeRef.current < 1000) {
-      return;
-    }
-
-    lastActionTimeRef.current = Date.now();
-
     // Check if we have a playlist
     if (!readingList || readingList.length === 0) {
       return;
@@ -665,18 +640,21 @@ export default function PlaylistScreen() {
     if (!shuffled[0]?.article?.audio_url) {
       const validIndex = shuffled.findIndex(item => !!item?.article?.audio_url);
       if (validIndex > 0) {
+        // Swap with first item
         [shuffled[0], shuffled[validIndex]] = [shuffled[validIndex], shuffled[0]];
       }
     }
 
+    // Update state
     setShuffledList(shuffled);
-    setIsShuffleMode(true);
     setCurrentTrackIndex(0);
+    setIsShuffleMode(true);
+
     // Set to playlist mode
     setPlaylistMode(true);
   };
 
-  // Play the next track in the sequence
+  // Play next track in playlist
   const playNextTrack = async () => {
     // If not in playlist mode or at the end of playlist, stop playback
     if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
@@ -688,12 +666,12 @@ export default function PlaylistScreen() {
     setCurrentTrackIndex(prev => prev + 1);
   };
 
-  // Play the previous track in the sequence
+  // Play previous track in playlist
   const playPreviousTrack = async () => {
+    // If at beginning of playlist, restart current track
     if (currentTrackIndex <= 0) {
-      // Beginning of playlist, restart current track
       if (soundRef.current) {
-        await soundRef.current.setPositionAsync(0).catch(() => {});
+        await soundRef.current.setPositionAsync(0);
       }
       return;
     }
@@ -748,55 +726,31 @@ export default function PlaylistScreen() {
   useEffect(() => {
     if (currentTrackIndex >= 0 && activePlaylist && currentTrackIndex < activePlaylist.length) {
       const track = activePlaylist[currentTrackIndex];
-      const audioUrl = track?.article?.audio_url;
-
-      if (audioUrl) {
-        // Load and play the audio
-        loadAndPlayAudio(audioUrl);
-      } else {
-        // Try to skip to next track if this one has no audio
-        playNextTrack();
+      if (track?.article?.audio_url) {
+        loadAndPlayAudio(track.article.audio_url);
       }
     }
   }, [currentTrackIndex, activePlaylist]);
 
-  // Create dynamic styles that depend on colors
-  const dynamicStyles = useMemo(
-    () => ({
-      progressIndicator: {
-        backgroundColor: colors.textOverlay,
-      },
-    }),
-    [colors]
-  );
-
-  // Loading screen
+  // Show loading screen
   if (isLoading) {
-    return (
-      <ThemedView style={styles.container}>
-        <LoadingScreen />
-      </ThemedView>
-    );
+    return <LoadingScreen />;
   }
 
-  // Not logged in
+  // Not signed in
   if (!user) {
     return (
       <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Audio Playlist</ThemedText>
+            <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
           </View>
           <View style={styles.emptyStateContainer}>
             <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
             <ThemedText style={styles.emptyStateMessage}>
-              Please sign in to view and manage your audio playlist
+              Please sign in to view and manage your bookmarks
             </ThemedText>
-            <ThemedButton
-              title="Go to Profile"
-              icon="person-circle"
-              onPress={() => router.push('/(tabs)/profile' as any)}
-            />
+            <ThemedButton title="Sign In" icon="log-in" onPress={() => router.push('/account')} />
           </View>
         </ThemedView>
       </Animated.View>
@@ -809,12 +763,12 @@ export default function PlaylistScreen() {
       <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Audio Playlist</ThemedText>
+            <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
           </View>
           <View style={styles.emptyStateContainer}>
-            <ThemedText style={styles.emptyStateTitle}>Your Audio Playlist is Empty</ThemedText>
+            <ThemedText style={styles.emptyStateTitle}>Your Bookmarks List is Empty</ThemedText>
             <ThemedText style={styles.emptyStateMessage}>
-              Save articles to your playlist to listen to them later
+              Save articles to your bookmarks to read them later
             </ThemedText>
             <ThemedButton
               title="Browse Articles"
@@ -833,7 +787,7 @@ export default function PlaylistScreen() {
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Clean header */}
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Audio Playlist</ThemedText>
+          <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
         </View>
 
         <FlatList
@@ -853,7 +807,7 @@ export default function PlaylistScreen() {
                 (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
 
             return (
-              <PlaylistItem
+              <BookmarkItem
                 title={item.article.title}
                 author={item.article.author.name}
                 isPlaying={isItemPlaying}
