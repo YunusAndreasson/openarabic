@@ -6,6 +6,8 @@ interface WordReviewUpdate {
   next_review_at: string;
   review_count: number;
   lapses: number;
+  stability: number;
+  previous_interval: number;
 }
 
 // Define an options interface for getStudyWords
