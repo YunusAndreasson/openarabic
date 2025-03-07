@@ -96,6 +96,292 @@ interface UseSpacedRepetitionReturn {
   getSrsStats: () => SrsStats; // Added function to get SRS statistics
 }
 
+// Session configuration - extracted for testability
+export const SESSION_CONFIG = {
+  REQUIRED_CONSECUTIVE_SUCCESSES: 2, // Number of consecutive successes needed for failed words
+  NEW_WORD_MINIMUM_REVIEWS: 2, // Minimum number of times to show new words
+  REQUEUE_DELAY_MIN: 2, // Minimum number of other cards before reshowing a failed word
+  REQUEUE_DELAY_MAX: 5, // Maximum number of other cards before reshowing a failed word
+  NEW_WORD_THRESHOLD: 1, // Words with review_count <= this are considered new
+};
+
+// SRS algorithm constants - extracted for testability
+export const SRS_CONSTANTS = {
+  STABILITY_GROWTH_FACTOR: 0.5, // Controls stability growth rate
+  MAX_STABILITY: 90, // Maximum stability value to prevent DB overflow
+  FAILURE_STABILITY_REDUCTION: 0.6, // How much stability is retained after failure
+  SPACING_EFFECT_STRENGTH: 0.1, // Strength of the spacing effect bonus
+  LAPSE_PENALTY_FACTOR: 0.05, // Penalty per lapse
+  MIN_STABILITY: 1, // Minimum stability value
+  MAX_EASE_FACTOR: 2.5, // Maximum ease factor
+  EASE_INCREASE: 0.1, // Ease factor increase on success
+  EASE_DECREASE: 0.2, // Ease factor decrease on failure
+  DB_MAX_PRECISION: 99.99, // Maximum value for database fields with (4,2) precision
+};
+
+// PURE FUNCTION: Calculate next review data based on a success/failure response
+// Extracted for testability
+export function calculateNextReview(
+  word: StudyWord,
+  success: boolean,
+  constants = SRS_CONSTANTS
+): {
+  newStability: number;
+  newInterval: number;
+  newEaseFactor: number;
+  nextReviewDate: string;
+  previousInterval: number;
+} {
+  const previousInterval = word.interval_days;
+
+  // Handle potential missing values for existing records
+  const currentStability = word.stability ?? constants.MIN_STABILITY;
+  const currentPreviousInterval = word.previous_interval ?? 0;
+
+  let newStability: number;
+  let newInterval: number;
+  let newEaseFactor: number;
+
+  if (success) {
+    // If successful, increase stability based on current stability and ease factor
+    const stabilityIncrease =
+      currentStability * constants.STABILITY_GROWTH_FACTOR * word.ease_factor;
+
+    // Apply an upper bound to stability to prevent excessive growth
+    newStability = Math.min(constants.MAX_STABILITY, currentStability + stabilityIncrease);
+
+    // Make sure stability fits in the database precision (4,2)
+    newStability = Math.min(constants.DB_MAX_PRECISION, newStability);
+
+    // Calculate new interval based on stability
+    newInterval = Math.round(newStability);
+
+    // Adjust ease factor - successful recall slightly increases ease
+    newEaseFactor = Math.min(constants.MAX_EASE_FACTOR, word.ease_factor + constants.EASE_INCREASE);
+
+    // Make sure ease_factor fits in the database precision (4,2)
+    newEaseFactor = Math.min(constants.DB_MAX_PRECISION, newEaseFactor);
+
+    // Apply spacing effect - longer previous intervals lead to better retention
+    if (currentPreviousInterval > 0) {
+      const spacingBonus = Math.sqrt(currentPreviousInterval) * constants.SPACING_EFFECT_STRENGTH;
+      const spacingMultiplier = 1 + spacingBonus;
+      newInterval = Math.max(newInterval, Math.round(newInterval * spacingMultiplier));
+    }
+  } else {
+    // If failed, decrease stability significantly
+    newStability = Math.max(
+      constants.MIN_STABILITY,
+      currentStability * constants.FAILURE_STABILITY_REDUCTION
+    );
+
+    // Reset interval to a small value
+    newInterval = 1;
+
+    // Adjust ease factor - failed recall decreases ease
+    newEaseFactor = Math.max(1.3, word.ease_factor - constants.EASE_DECREASE);
+  }
+
+  // Apply recovery penalty for words that have lapsed frequently
+  if (word.lapses > 2) {
+    const lapseCount = word.lapses;
+    const recoveryPenalty = 1 - lapseCount * constants.LAPSE_PENALTY_FACTOR;
+    newInterval = Math.max(1, Math.round(newInterval * recoveryPenalty));
+  }
+
+  // Cap the interval to prevent date overflow errors
+  const cappedInterval = Math.min(newInterval, 365 * 30); // Cap at 30 years
+
+  // Calculate next review date
+  const nextReview = new Date();
+  nextReview.setDate(nextReview.getDate() + cappedInterval);
+
+  // Validate the date is within reasonable bounds
+  const now = new Date();
+  const maxDate = new Date(now);
+  maxDate.setFullYear(now.getFullYear() + 30); // Max 30 years in the future
+
+  const finalNextReview = nextReview > maxDate ? maxDate : nextReview;
+
+  return {
+    newStability,
+    newInterval: cappedInterval,
+    newEaseFactor,
+    nextReviewDate: finalNextReview.toISOString(),
+    previousInterval,
+  };
+}
+
+// PURE FUNCTION: Determine if a word needs to be requeued
+// Extracted for testability
+export function shouldRequeueWord(
+  word: StudyWord,
+  success: boolean,
+  config = SESSION_CONFIG
+): boolean {
+  // Word needs requeuing if:
+  // 1. It was failed (success = false)
+  // 2. It's a new word that needs more reviews
+  // 3. It was previously failed and needs more consecutive successes
+
+  return (
+    !success ||
+    (word.sessionData?.isNew === true && (word.sessionData?.remainingReviewsNeeded || 0) > 0) ||
+    (word.sessionData?.failedInSession === true &&
+      (word.sessionData?.consecutiveSuccesses || 0) < config.REQUIRED_CONSECUTIVE_SUCCESSES)
+  );
+}
+
+// PURE FUNCTION: Calculate position to reinsert a word
+// Extracted for testability
+export function calculateReinsertPosition(
+  word: StudyWord,
+  currentPosition: number,
+  remainingWords: number,
+  success: boolean,
+  config = SESSION_CONFIG
+): number {
+  let reinsertDelay = 0;
+
+  if (!success) {
+    // For failed words, add some space before reshowing
+    reinsertDelay = Math.min(
+      remainingWords,
+      Math.floor(Math.random() * (config.REQUEUE_DELAY_MAX - config.REQUEUE_DELAY_MIN + 1)) +
+        config.REQUEUE_DELAY_MIN
+    );
+  } else if (word.sessionData?.isNew) {
+    // For new words needing more reviews, add more space
+    reinsertDelay = Math.min(remainingWords, Math.floor(remainingWords / 2));
+  } else if (word.sessionData?.failedInSession) {
+    // For previously failed words needing more successes, add moderate space
+    reinsertDelay = Math.min(remainingWords, Math.floor(remainingWords / 3));
+  }
+
+  // Calculate final position and ensure it's not beyond the queue
+  return currentPosition + 1 + reinsertDelay;
+}
+
+// PURE FUNCTION: Calculate progress percentage
+// Extracted for testability
+export function calculateProgress(
+  currentIndex: number,
+  wordsInQueue: number,
+  failedWordsCount: number
+): number {
+  // If no words, progress is 0
+  if (wordsInQueue === 0) {
+    return 0;
+  }
+
+  // Total words = current words + failed words waiting to be reshown
+  const totalWordsToReview = wordsInQueue + failedWordsCount;
+
+  // Completed words = current position
+  const completedWords = currentIndex;
+
+  // Calculate progress percentage
+  const progress = (completedWords / Math.max(1, totalWordsToReview)) * 100;
+
+  // Ensure it's between 0-100
+  return Math.min(100, Math.max(0, Math.round(progress)));
+}
+
+// PURE FUNCTION: Check if review is complete
+// Extracted for testability
+export function isReviewComplete(
+  currentIndex: number,
+  wordsCount: number,
+  failedWordsCount: number,
+  hasWords: boolean,
+  wordsLoaded: boolean
+): boolean {
+  // If words haven't been loaded, review is not complete
+  if (!wordsLoaded) {
+    return false;
+  }
+
+  // Review is complete when:
+  // 1. We've reached the end of the queue
+  // 2. There are no failed words left to review
+  // 3. There were words to review in the first place
+  // 4. Words have been properly processed
+
+  const atEnd = currentIndex >= wordsCount;
+  const noFailedWords = failedWordsCount === 0;
+  const hasProcessedWords = wordsCount > 0;
+
+  return atEnd && noFailedWords && hasWords && hasProcessedWords;
+}
+
+// PURE FUNCTION: Get SRS statistics
+// Extracted for testability
+export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: number): SrsStats {
+  if (words.length === 0) {
+    return {
+      totalWords: 0,
+      averageInterval: 0,
+      averageStability: 0,
+      averageEaseFactor: 0,
+      successRate: 0,
+      masteredCount: 0,
+      learningCount: 0,
+      averageLapses: 0,
+      failedWordsRemaining: 0,
+      newWordsCount: 0,
+      failedInSessionCount: 0,
+    };
+  }
+
+  // Calculate statistics from the words array
+  let totalInterval = 0;
+  let totalStability = 0;
+  let totalEaseFactor = 0;
+  let totalSuccesses = 0;
+  let totalLapses = 0;
+  let masteredCount = 0;
+
+  words.forEach(word => {
+    totalInterval += word.interval_days;
+    totalStability += word.stability ?? 1;
+    totalEaseFactor += word.ease_factor;
+    totalSuccesses += word.review_count - word.lapses;
+    totalLapses += word.lapses;
+
+    // Consider a word "mastered" if its interval is over 30 days
+    if (word.interval_days >= 30) {
+      masteredCount++;
+    }
+  });
+
+  const totalWords = words.length;
+  const averageInterval = totalInterval / totalWords;
+  const averageStability = totalStability / totalWords;
+  const averageEaseFactor = totalEaseFactor / totalWords;
+  const totalReviews = words.reduce((sum, word) => sum + word.review_count, 0);
+  const successRate = totalReviews > 0 ? (totalSuccesses / totalReviews) * 100 : 0;
+  const learningCount = totalWords - masteredCount;
+  const averageLapses = totalLapses / totalWords;
+
+  // Count new words and failed in session
+  const newWordsCount = words.filter(w => w.sessionData?.isNew).length;
+  const failedInSessionCount = words.filter(w => w.sessionData?.failedInSession).length;
+
+  return {
+    totalWords,
+    averageInterval,
+    averageStability,
+    averageEaseFactor,
+    successRate,
+    masteredCount,
+    learningCount,
+    averageLapses,
+    failedWordsRemaining: failedWordsCount,
+    newWordsCount,
+    failedInSessionCount,
+  };
+}
+
 /**
  * Custom hook for managing spaced repetition logic
  */
@@ -106,26 +392,17 @@ export function useSpacedRepetition({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
   const [transitionType, setTransitionType] = useState<'fade' | 'slide'>('fade');
-  const [wordsLoaded, setWordsLoaded] = useState(false); // Track if words have been loaded
+  const [wordsLoaded, setWordsLoaded] = useState(false);
   const wordsRef = useRef<StudyWord[]>([]);
-  const failedWordsRef = useRef<StudyWord[]>([]); // Keep track of failed words to requeue
+  const failedWordsRef = useRef<StudyWord[]>([]);
   const mountedRef = useRef(true);
   const hasUpdatedWords = useRef(false);
   const queryClient = useQueryClient();
 
-  // Session-specific configuration
-  const SESSION_CONFIG = {
-    REQUIRED_CONSECUTIVE_SUCCESSES: 2, // Number of consecutive successes needed for failed words
-    NEW_WORD_MINIMUM_REVIEWS: 2, // Minimum number of times to show new words
-    REQUEUE_DELAY_MIN: 2, // Minimum number of other cards before reshowing a failed word
-    REQUEUE_DELAY_MAX: 5, // Maximum number of other cards before reshowing a failed word
-    NEW_WORD_THRESHOLD: 1, // Words with review_count <= this are considered new
-  };
-
   // Add state for tracking total words processed and seen count
-  const totalWordsToReviewRef = useRef(0); // Total unique words in the review session
-  const uniqueWordsSeenRef = useRef(new Set<string>()); // Track unique words seen
-  const wordReviewCountsRef = useRef<Record<string, number>>({}); // Track how many times each word was reviewed
+  const totalWordsToReviewRef = useRef(0);
+  const uniqueWordsSeenRef = useRef(new Set<string>());
+  const wordReviewCountsRef = useRef<Record<string, number>>({});
 
   console.log('[DEBUG-SR] Hook initialized - currentIndex:', currentIndex);
 
@@ -142,7 +419,6 @@ export function useSpacedRepetition({
   // Function to invalidate queries
   const invalidateQueries = useCallback(() => {
     console.log('[DEBUG-SR] Invalidating queries');
-    // More targeted invalidation by using exact query keys
     queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
     queryClient.invalidateQueries({ queryKey: ['userProgress'] });
@@ -181,7 +457,6 @@ export function useSpacedRepetition({
   });
 
   // Immediately initialize wordsRef when dueWords changes
-  // This ensures wordsRef is populated as soon as possible
   useEffect(() => {
     // Only process if dueWords is valid and wordsRef is empty
     if (
@@ -210,76 +485,6 @@ export function useSpacedRepetition({
       wordsRef.current = processedWords;
     }
   }, [dueWords]);
-
-  // Get current word with safety check to prevent "error loading word"
-  const currentWord = useMemo(() => {
-    // Try to get the word from wordsRef
-    let word = null;
-
-    if (wordsRef.current.length > 0) {
-      // Use wordsRef when it's populated
-      word = currentIndex < wordsRef.current.length ? wordsRef.current[currentIndex] : undefined;
-    } else if (dueWords.length > 0) {
-      // Fall back to dueWords if wordsRef is empty
-      word = currentIndex < dueWords.length ? dueWords[currentIndex] : undefined;
-      console.log('[DEBUG-SR] Using dueWords fallback for currentWord', word?.sentence_word_id);
-    }
-
-    // Track word as seen if it exists
-    if (word?.sentence_word_id) {
-      uniqueWordsSeenRef.current.add(word.sentence_word_id);
-    }
-
-    console.log(
-      '[DEBUG-SR] Current word updated:',
-      word?.sentence_word_id,
-      'at index:',
-      currentIndex,
-      'of',
-      wordsRef.current.length,
-      'words'
-    );
-    return word;
-  }, [currentIndex, wordsRef, dueWords]);
-
-  // Calculate if review is complete
-  const isComplete = useMemo(() => {
-    // If words haven't been loaded yet, never mark as complete
-    if (!wordsLoaded) {
-      console.log('[DEBUG-SR] Words not loaded yet, cannot be complete');
-      return false;
-    }
-
-    const atEnd = currentIndex >= wordsRef.current.length;
-    const noFailedWords = failedWordsRef.current.length === 0;
-    const hasWords = dueWords.length > 0;
-    const hasProcessedWords = wordsRef.current.length > 0; // Check if we have processed words
-
-    // Only consider complete if we've processed words AND reached the end
-    const complete = atEnd && noFailedWords && hasWords && hasProcessedWords;
-
-    console.log('[DEBUG-SR] Completion check:', {
-      wordsLoaded,
-      atEnd,
-      noFailedWords,
-      hasWords,
-      hasProcessedWords,
-      currentIndex,
-      wordsRefLength: wordsRef.current.length,
-      dueWordsLength: dueWords.length,
-      complete,
-    });
-
-    if (atEnd && !noFailedWords) {
-      console.log(
-        '[DEBUG-SR] At end but still have',
-        failedWordsRef.current.length,
-        'failed words to review'
-      );
-    }
-
-    return complete;
-  }, [currentIndex, dueWords.length, failedWordsRef, wordsRef, wordsLoaded]);
 
   // Process the words once they're loaded
   useEffect(() => {
@@ -351,43 +556,57 @@ export function useSpacedRepetition({
     }
   }, [dueWords, currentIndex]);
 
-  // Update also isLoading to consider wordsLoaded state
-  const isActuallyLoading = isLoading || !wordsLoaded;
+  // Get current word with safety check to prevent "error loading word"
+  const currentWord = useMemo(() => {
+    // Try to get the word from wordsRef
+    let word = null;
+
+    if (wordsRef.current.length > 0) {
+      // Use wordsRef when it's populated
+      word = currentIndex < wordsRef.current.length ? wordsRef.current[currentIndex] : undefined;
+    } else if (dueWords.length > 0) {
+      // Fall back to dueWords if wordsRef is empty
+      word = currentIndex < dueWords.length ? dueWords[currentIndex] : undefined;
+      console.log('[DEBUG-SR] Using dueWords fallback for currentWord', word?.sentence_word_id);
+    }
+
+    // Track word as seen if it exists
+    if (word?.sentence_word_id) {
+      uniqueWordsSeenRef.current.add(word.sentence_word_id);
+    }
+
+    console.log(
+      '[DEBUG-SR] Current word updated:',
+      word?.sentence_word_id,
+      'at index:',
+      currentIndex,
+      'of',
+      wordsRef.current.length,
+      'words'
+    );
+    return word;
+  }, [currentIndex, wordsRef, dueWords]);
 
   // Calculate progress based on completed words vs. total words to review
   const progress = useMemo(() => {
-    // If no words loaded, progress is 0
-    if (!wordsLoaded || wordsRef.current.length === 0) {
-      return 0;
-    }
-
-    // Get the total number of words in the current review session
-    // This includes original words plus any requeued words that haven't been reviewed yet
-    const totalWordsToReview = wordsRef.current.length + failedWordsRef.current.length;
-
-    // Calculate how many words have been completed
-    // Current index represents how many words we've gone through
-    const completedWords = currentIndex;
-
-    // Simple progress calculation: words completed / total words
-    const simpleProgress = (completedWords / Math.max(1, totalWordsToReview)) * 100;
-
-    // Ensure progress is between 0-100 and rounded to nearest integer
-    const calculatedProgress = Math.min(100, Math.max(0, simpleProgress));
-
-    console.log('[DEBUG-SR] Progress calculation:', {
-      completedWords,
-      totalWordsToReview,
-      remainingWords: totalWordsToReview - completedWords,
-      simpleProgress,
-      calculatedProgress,
-      currentIndex,
-      wordsRefLength: wordsRef.current.length,
-      failedWordsCount: failedWordsRef.current.length,
-    });
-
-    return Math.round(calculatedProgress);
+    // Use the extracted pure function for testability
+    return calculateProgress(currentIndex, wordsRef.current.length, failedWordsRef.current.length);
   }, [currentIndex, failedWordsRef, wordsRef, wordsLoaded]);
+
+  // Check if review is complete
+  const isComplete = useMemo(() => {
+    // Use the extracted pure function for testability
+    return isReviewComplete(
+      currentIndex,
+      wordsRef.current.length,
+      failedWordsRef.current.length,
+      dueWords.length > 0,
+      wordsLoaded
+    );
+  }, [currentIndex, dueWords.length, failedWordsRef, wordsRef, wordsLoaded]);
+
+  // Update also isLoading to consider wordsLoaded state
+  const isActuallyLoading = isLoading || !wordsLoaded;
 
   // Word update mutation
   const updateWordMutation = useMutation({
@@ -429,13 +648,7 @@ export function useSpacedRepetition({
       }
 
       // Check if this word needs to be requeued
-      const needsRequeue =
-        !success ||
-        (wordToUpdate.sessionData?.isNew &&
-          (wordToUpdate.sessionData?.remainingReviewsNeeded || 0) > 0) ||
-        (wordToUpdate.sessionData?.failedInSession &&
-          (wordToUpdate.sessionData?.consecutiveSuccesses || 0) <
-            SESSION_CONFIG.REQUIRED_CONSECUTIVE_SUCCESSES);
+      const needsRequeue = shouldRequeueWord(wordToUpdate, success);
 
       if (needsRequeue) {
         console.log(
@@ -444,41 +657,22 @@ export function useSpacedRepetition({
         );
 
         // Calculate position to reinsert the word
-        // For failed words, reinsert after a few cards
-        // For new words or previously failed words needing more successes, reinsert farther back
         const currentPosition = currentIndex;
         const remainingWords = Math.max(0, wordsRef.current.length - currentPosition - 1);
 
-        let reinsertDelay = 0;
-        if (!success) {
-          // For failed words, add some space before reshowing
-          reinsertDelay = Math.min(
-            remainingWords,
-            Math.floor(
-              Math.random() *
-                (SESSION_CONFIG.REQUEUE_DELAY_MAX - SESSION_CONFIG.REQUEUE_DELAY_MIN + 1)
-            ) + SESSION_CONFIG.REQUEUE_DELAY_MIN
-          );
-        } else if (wordToUpdate.sessionData?.isNew) {
-          // For new words needing more reviews, add more space
-          reinsertDelay = Math.min(remainingWords, Math.floor(remainingWords / 2));
-        } else if (wordToUpdate.sessionData?.failedInSession) {
-          // For previously failed words needing more successes, add moderate space
-          reinsertDelay = Math.min(remainingWords, Math.floor(remainingWords / 3));
-        }
-
-        const reinsertPosition = Math.min(
-          currentPosition + 1 + reinsertDelay,
-          wordsRef.current.length
+        // Calculate the reinsert position using the pure function
+        const reinsertPosition = calculateReinsertPosition(
+          wordToUpdate,
+          currentPosition,
+          remainingWords,
+          success
         );
 
         console.log(
           '[DEBUG-SR] Will requeue word at position:',
           reinsertPosition,
           'current position:',
-          currentPosition,
-          'delay:',
-          reinsertDelay
+          currentPosition
         );
 
         // Clone the word to reinsert it
@@ -493,156 +687,34 @@ export function useSpacedRepetition({
         }
       }
 
-      // Store the current interval as previous_interval before calculating the new one
-      const previousInterval = wordToUpdate.interval_days;
-
-      // Handle potential missing values for existing records
-      const currentStability = wordToUpdate.stability ?? 1; // Default to 1 if undefined
-      const currentPreviousInterval = wordToUpdate.previous_interval ?? 0; // Default to 0 if undefined
-
-      // SRS constants - could be moved to configuration in the future
-      const STABILITY_GROWTH_FACTOR = 0.5; // Controls stability growth rate
-      const MAX_STABILITY = 90; // Maximum stability value to prevent DB overflow (reduced from 1000)
-      const FAILURE_STABILITY_REDUCTION = 0.6; // How much stability is retained after failure
-      const SPACING_EFFECT_STRENGTH = 0.1; // Strength of the spacing effect bonus
-      const LAPSE_PENALTY_FACTOR = 0.05; // Penalty per lapse
-      const MIN_STABILITY = 1; // Minimum stability value
-      const MAX_EASE_FACTOR = 2.5; // Maximum ease factor
-      const EASE_INCREASE = 0.1; // Ease factor increase on success
-      const EASE_DECREASE = 0.2; // Ease factor decrease on failure
-
-      console.log(
-        '[DEBUG-SR] Current values - Stability:',
-        currentStability,
-        'Previous interval:',
-        currentPreviousInterval,
-        'Ease factor:',
-        wordToUpdate.ease_factor
-      );
-
-      // Enhanced SRS algorithm using stability and previous_interval
-      let newStability: number;
-      let newInterval: number;
-      let newEaseFactor: number;
-
-      if (success) {
-        // If successful, increase stability based on current stability and ease factor
-        // This is based on research showing that memory stability increases more for items
-        // that are already stable
-        const stabilityIncrease =
-          currentStability * STABILITY_GROWTH_FACTOR * wordToUpdate.ease_factor;
-
-        // Apply an upper bound to stability to prevent excessive growth
-        newStability = Math.min(MAX_STABILITY, currentStability + stabilityIncrease);
-
-        // IMPORTANT FIX: Make sure stability fits in the database precision (4,2)
-        // This means the maximum value is 99.99
-        newStability = Math.min(99.99, newStability);
-
-        // Calculate new interval based on stability
-        // More stable items get longer intervals
-        newInterval = Math.round(newStability);
-
-        // Adjust ease factor - successful recall slightly increases ease
-        // Apply upper bound to ease factor
-        newEaseFactor = Math.min(MAX_EASE_FACTOR, wordToUpdate.ease_factor + EASE_INCREASE);
-
-        // IMPORTANT FIX: Make sure ease_factor fits in the database precision (4,2)
-        newEaseFactor = Math.min(99.99, newEaseFactor);
-
-        console.log('[DEBUG-SR] Success recall - Stability increase:', stabilityIncrease);
-      } else {
-        // If failed, decrease stability significantly
-        // Failed items need more frequent review
-        newStability = Math.max(MIN_STABILITY, currentStability * FAILURE_STABILITY_REDUCTION);
-
-        // Reset interval to a small value based on reduced stability
-        newInterval = 1;
-
-        // Adjust ease factor - failed recall decreases ease more significantly
-        newEaseFactor = Math.max(1.3, wordToUpdate.ease_factor - EASE_DECREASE);
-
-        console.log('[DEBUG-SR] Failed recall - New stability:', newStability);
-      }
-
-      // Apply spacing effect - longer previous intervals lead to better retention
-      // This rewards words that have been successfully remembered for longer periods
-      if (success && currentPreviousInterval > 0) {
-        const spacingBonus = Math.sqrt(currentPreviousInterval) * SPACING_EFFECT_STRENGTH;
-        const spacingMultiplier = 1 + spacingBonus;
-        newInterval = Math.max(newInterval, Math.round(newInterval * spacingMultiplier));
-
-        console.log(
-          '[DEBUG-SR] Spacing effect - Bonus:',
-          spacingBonus,
-          'Multiplier:',
-          spacingMultiplier,
-          'New interval after spacing:',
-          newInterval
-        );
-      }
-
-      // Apply recovery penalty for words that have lapsed frequently
-      if (wordToUpdate.lapses > 2) {
-        const lapseCount = wordToUpdate.lapses;
-        const recoveryPenalty = 1 - lapseCount * LAPSE_PENALTY_FACTOR;
-        const previousInterval = newInterval;
-        newInterval = Math.max(1, Math.round(newInterval * recoveryPenalty));
-
-        console.log(
-          '[DEBUG-SR] Recovery penalty - Lapses:',
-          lapseCount,
-          'Penalty:',
-          recoveryPenalty,
-          'Interval before/after:',
-          previousInterval,
-          newInterval
-        );
-      }
-
-      // IMPORTANT FIX: Cap the interval to prevent date overflow errors
-      // PostgreSQL can only handle dates up to 5874897 AD
-      const cappedInterval = Math.min(newInterval, 365 * 30); // Cap at 30 years
-
-      // Log if capping was applied
-      if (cappedInterval < newInterval) {
-        console.log('[DEBUG-SR] Interval capped from', newInterval, 'to', cappedInterval);
-      }
-
-      const nextReview = new Date();
-      nextReview.setDate(nextReview.getDate() + cappedInterval);
-
-      // Validate the date is within reasonable bounds
-      const now = new Date();
-      const maxDate = new Date(now);
-      maxDate.setFullYear(now.getFullYear() + 30); // Max 30 years in the future
-
-      const finalNextReview = nextReview > maxDate ? maxDate : nextReview;
+      // Calculate the next review data using the pure function
+      const nextReviewData = calculateNextReview(wordToUpdate, success);
 
       console.log(
         '[DEBUG-SR] Final values - New stability:',
-        newStability,
+        nextReviewData.newStability,
         'New interval:',
-        cappedInterval,
+        nextReviewData.newInterval,
         'New ease factor:',
-        newEaseFactor,
+        nextReviewData.newEaseFactor,
         'Next review:',
-        finalNextReview.toISOString()
+        nextReviewData.nextReviewDate
       );
 
       // Prepare update payload
       const updatedWord = {
-        interval_days: cappedInterval, // Use capped interval
-        ease_factor: newEaseFactor,
-        next_review_at: finalNextReview.toISOString(),
+        interval_days: nextReviewData.newInterval,
+        ease_factor: nextReviewData.newEaseFactor,
+        next_review_at: nextReviewData.nextReviewDate,
         review_count: wordToUpdate.review_count + 1,
         lapses: success ? wordToUpdate.lapses : wordToUpdate.lapses + 1,
-        stability: newStability,
-        previous_interval: previousInterval,
+        stability: nextReviewData.newStability,
+        previous_interval: nextReviewData.previousInterval,
       };
       console.log('[DEBUG-SR] Updated word data:', updatedWord);
 
       // OPTIMIZATION: Update the currentIndex immediately before the API call
+      // This allows the UI to show the next word faster while the API call happens in the background
       if (mountedRef.current) {
         // Instead of simply incrementing, we now need to handle requeued words
         const nextWordIndex = getNextWordIndex();
@@ -880,86 +952,21 @@ export function useSpacedRepetition({
 
   // Function to calculate and return SRS statistics
   const getSrsStats = useCallback((): SrsStats => {
-    const totalWords = wordsRef.current.length;
-
-    if (totalWords === 0) {
-      return {
-        totalWords: 0,
-        averageInterval: 0,
-        averageStability: 0,
-        averageEaseFactor: 0,
-        successRate: 0,
-        masteredCount: 0,
-        learningCount: 0,
-        averageLapses: 0,
-        failedWordsRemaining: 0,
-        newWordsCount: 0,
-        failedInSessionCount: 0,
-      };
-    }
-
-    // Calculate statistics from the words array
-    let totalInterval = 0;
-    let totalStability = 0;
-    let totalEaseFactor = 0;
-    let totalSuccesses = 0;
-    let totalLapses = 0;
-    let masteredCount = 0;
-
-    wordsRef.current.forEach(word => {
-      totalInterval += word.interval_days;
-      totalStability += word.stability ?? 1; // Use default if not available
-      totalEaseFactor += word.ease_factor;
-      totalSuccesses += word.review_count - word.lapses;
-      totalLapses += word.lapses;
-
-      // Consider a word "mastered" if its interval is over 30 days
-      if (word.interval_days >= 30) {
-        masteredCount++;
-      }
-    });
-
-    const averageInterval = totalInterval / totalWords;
-    const averageStability = totalStability / totalWords;
-    const averageEaseFactor = totalEaseFactor / totalWords;
-    const totalReviews = wordsRef.current.reduce((sum, word) => sum + word.review_count, 0);
-    const successRate = totalReviews > 0 ? (totalSuccesses / totalReviews) * 100 : 0;
-    const learningCount = totalWords - masteredCount;
-    const averageLapses = totalLapses / totalWords;
-
-    // Add these calculations to the existing getSrsStats function
-    const failedWordsCount = failedWordsRef.current.length;
-    const newWordsCount = wordsRef.current.filter(w => w.sessionData?.isNew).length;
-    const failedInSessionCount = wordsRef.current.filter(
-      w => w.sessionData?.failedInSession
-    ).length;
-
-    return {
-      totalWords,
-      averageInterval,
-      averageStability,
-      averageEaseFactor,
-      successRate,
-      masteredCount,
-      learningCount,
-      averageLapses,
-      failedWordsRemaining: failedWordsCount,
-      newWordsCount,
-      failedInSessionCount,
-    };
+    // Use the extracted pure function
+    return getSrsStatsFromWords(wordsRef.current, failedWordsRef.current.length);
   }, [wordsRef, failedWordsRef]);
 
   return {
     dueWords,
     currentIndex,
     currentWord,
-    isLoading: isActuallyLoading, // Use the enhanced loading state
+    isLoading: isActuallyLoading,
     isUpdating,
     updateWord,
     progress,
     isComplete,
     invalidateQueries,
-    transitionType, // Make sure we export transitionType
-    getSrsStats, // Add the stats function to the return value
+    transitionType,
+    getSrsStats,
   };
 }
