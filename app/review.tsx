@@ -8,6 +8,7 @@ import Animated, {
   runOnJS,
   FadeIn,
   FadeOut,
+  useAnimatedReaction,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -223,14 +224,40 @@ export default function ReviewScreen() {
     'idle' | 'transitioning-out' | 'updating-word' | 'transitioning-in'
   >('idle');
 
-  const { currentWord, isLoading, updateWord, progress, isComplete, invalidateQueries, dueWords } =
-    useSpacedRepetition({
-      userId: user?.id,
-    });
+  // Track if this is the first render
+  const isFirstRender = useRef(true);
+
+  console.log('[DEBUG] Initial render - animationState:', animationState);
+
+  const {
+    currentWord,
+    isLoading,
+    updateWord,
+    progress,
+    isComplete,
+    invalidateQueries,
+    dueWords,
+    currentIndex,
+  } = useSpacedRepetition({
+    userId: user?.id,
+  });
 
   // Animation values
   const translateX = useSharedValue(0);
   const opacity = useSharedValue(1);
+
+  // Use useAnimatedReaction to safely track opacity value changes
+  // This avoids the warning about reading shared values during render
+  useAnimatedReaction(
+    () => opacity.value,
+    (currentOpacity, previousOpacity) => {
+      if (currentOpacity === 0 && previousOpacity !== 0) {
+        // When opacity reaches 0, update the current sentence
+        runOnJS(setCurrentSentence)(nextSentence);
+      }
+    },
+    [nextSentence]
+  );
 
   // Clean up timeouts when component unmounts
   useEffect(() => {
@@ -245,29 +272,48 @@ export default function ReviewScreen() {
   // Update current sentence when currentWord changes
   useEffect(() => {
     if (currentWord) {
+      console.log('[DEBUG] currentWord changed:', currentWord.sentence_word_id);
+
       const sentence = currentWord.sentence_word.sentence?.arabic || '';
       const wordForm = currentWord.sentence_word.word_form;
 
       // For RTL languages like Arabic, we need special handling
       // to ensure proper word placement in the sentence
       const wordIndex = sentence.indexOf(wordForm);
+      console.log('[DEBUG] Word index in sentence:', wordIndex, 'Word:', wordForm);
 
       // In RTL, the "before" actually comes after the word visually
       // and "after" comes before the word visually
       const beforeWord = wordIndex >= 0 ? sentence.substring(wordIndex + wordForm.length) : '';
       const afterWord = wordIndex > 0 ? sentence.substring(0, wordIndex) : '';
 
-      setNextSentence({ beforeWord, wordForm, afterWord });
+      console.log(
+        '[DEBUG] Setting nextSentence - beforeWord:',
+        beforeWord.length,
+        'wordForm:',
+        wordForm,
+        'afterWord:',
+        afterWord.length
+      );
 
-      if (animationState === 'idle' && opacity.value === 1) {
-        setCurrentSentence({ beforeWord, wordForm, afterWord });
+      // Store the next sentence for animation
+      const newSentence = { beforeWord, wordForm, afterWord };
+      setNextSentence(newSentence);
+
+      // Only set currentSentence immediately on first load
+      if (isFirstRender.current) {
+        console.log('[DEBUG] Setting currentSentence immediately - first render');
+        setCurrentSentence(newSentence);
+        isFirstRender.current = false;
       }
     }
-  }, [currentWord, animationState, opacity.value]);
+  }, [currentWord]);
 
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
     (success: boolean) => {
+      console.log('[DEBUG] handleWordUpdate called - success:', success);
+
       // Add haptic feedback only when swiping left (don't know the word)
       if (!success) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -292,48 +338,60 @@ export default function ReviewScreen() {
       }
 
       const updateWordAndAnimate = () => {
+        console.log('[DEBUG] updateWordAndAnimate called');
+
         if (currentWord?.sentence_word_id) {
           try {
             // Update animation state to reflect that we're transitioning out
+            console.log('[DEBUG] Setting animationState to transitioning-out');
             setAnimationState('transitioning-out');
 
             // First update the word in the database
+            console.log('[DEBUG] Calling updateWord with ID:', currentWord.sentence_word_id);
             updateWord(currentWord.sentence_word_id, success);
 
             // Reset position immediately
             translateX.value = 0;
+            console.log('[DEBUG] Reset translateX to 0');
 
             // Set opacity to 0 immediately
             opacity.value = 0;
+            console.log('[DEBUG] Set opacity to 0');
 
             // Move to next state - we're now updating the word
+            console.log('[DEBUG] Setting animationState to updating-word');
             setAnimationState('updating-word');
 
             // For "knew the word" (success), use a quicker transition
-            const animationDelay = success ? 30 : 80;
-            const animationDuration = success ? FADE_DURATION : 200;
+            const animationDelay = success ? 10 : 30; // Reduced from 30/80
+            const animationDuration = success ? FADE_DURATION : 150; // Reduced from 200
+            console.log('[DEBUG] Animation delay:', animationDelay, 'duration:', animationDuration);
 
             // Use a small delay to ensure the new word is loaded before fading in
             // Store the timeout reference for cleanup
+            console.log('[DEBUG] Setting fadeInTimeoutRef with delay:', animationDelay);
             fadeInTimeoutRef.current = setTimeout(() => {
               // Clear the reference once executed
               fadeInTimeoutRef.current = undefined;
-
-              // Update the current sentence with the pre-loaded next sentence
-              // This happens while opacity is 0, so the user won't see any glitch
-              setCurrentSentence(nextSentence);
+              console.log('[DEBUG] Inside fadeInTimeout callback');
 
               // Update state to transitioning in
+              console.log('[DEBUG] Setting animationState to transitioning-in');
               setAnimationState('transitioning-in');
 
               // Fade in immediately without additional delay
+              console.log(
+                '[DEBUG] Starting opacity animation to 1 with duration:',
+                animationDuration
+              );
               opacity.value = withTiming(1, { duration: animationDuration }, () => {
                 // Use the animation completion callback to safely reset the state
+                console.log('[DEBUG] Opacity animation complete, setting animationState to idle');
                 runOnJS(setAnimationState)('idle');
               });
             }, animationDelay);
           } catch (error) {
-            console.error('Error updating word:', error);
+            console.error('[DEBUG] Error updating word:', error);
             // Fallback animation in case of error
             translateX.value = withSpring(0, ANIMATION_CONFIG);
             opacity.value = withTiming(1, { duration: 200 });
@@ -344,19 +402,23 @@ export default function ReviewScreen() {
 
       // If the user doesn't know the word, show the meaning
       if (!success) {
+        console.log('[DEBUG] Showing meaning overlay');
         // Fade in the meaning overlay
         setShowMeaningOverlay(true);
 
         // Hide the meaning after a delay
+        console.log('[DEBUG] Setting meaningTimeoutRef with delay: 1500ms');
         meaningTimeoutRef.current = setTimeout(() => {
           // Clear the reference once executed
           meaningTimeoutRef.current = undefined;
+          console.log('[DEBUG] Inside meaningTimeout callback, hiding meaning overlay');
 
           setShowMeaningOverlay(false);
           // Update the word status after showing the meaning
           updateWordAndAnimate();
         }, 1500); // Shorter display time for faster progression
       } else {
+        console.log('[DEBUG] Success case, calling updateWordAndAnimate immediately');
         // Update the word status immediately for success
         updateWordAndAnimate();
       }
@@ -373,18 +435,30 @@ export default function ReviewScreen() {
       translateX.value = event.translationX;
     })
     .onEnd(event => {
+      console.log(
+        '[DEBUG] Pan gesture ended - translationX:',
+        event.translationX,
+        'threshold:',
+        SWIPE_THRESHOLD
+      );
+
       if (event.translationX > SWIPE_THRESHOLD) {
         // Swipe right - success
+        console.log('[DEBUG] Swipe right detected (success)');
         translateX.value = withSpring(SCREEN_WIDTH, ANIMATION_CONFIG, () => {
+          console.log('[DEBUG] Swipe right animation complete, calling handleWordUpdate(true)');
           runOnJS(handleWordUpdate)(true);
         });
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         // Swipe left - failure
+        console.log('[DEBUG] Swipe left detected (failure)');
         translateX.value = withSpring(-SCREEN_WIDTH, ANIMATION_CONFIG, () => {
+          console.log('[DEBUG] Swipe left animation complete, calling handleWordUpdate(false)');
           runOnJS(handleWordUpdate)(false);
         });
       } else {
         // Return to center if not swiped far enough
+        console.log('[DEBUG] Swipe not far enough, returning to center');
         translateX.value = withSpring(0, ANIMATION_CONFIG);
       }
     });
@@ -433,13 +507,45 @@ export default function ReviewScreen() {
     [colors]
   );
 
-  // Create animated styles
+  // Create animated styles - memoize to prevent unnecessary recalculations
   const cardStyle = useAnimatedStyle(() => {
     return {
       transform: [{ translateX: translateX.value }],
       opacity: opacity.value,
     };
-  });
+  }, []);
+
+  // Extract word parts for display - use the state version instead of direct calculation
+  const { beforeWord, wordForm, afterWord } = currentSentence;
+
+  // Don't add spaces as they're handled by natural Arabic text flow
+  // Arabic spaces are handled differently than English
+  const spacedBeforeWord = beforeWord;
+  const spacedAfterWord = afterWord;
+
+  // Memoize the sentence content to prevent unnecessary re-renders
+  const sentenceContent = useMemo(
+    () => (
+      <ThemedText style={baseStyles.sentence} skipDefaultColor>
+        <ThemedText
+          style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
+          skipDefaultColor
+        >
+          {spacedAfterWord}
+        </ThemedText>
+        <ThemedText style={[baseStyles.studyWord, { color: colors.tint }]} skipDefaultColor>
+          {wordForm}
+        </ThemedText>
+        <ThemedText
+          style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
+          skipDefaultColor
+        >
+          {spacedBeforeWord}
+        </ThemedText>
+      </ThemedText>
+    ),
+    [spacedAfterWord, wordForm, spacedBeforeWord, colors.englishText, colors.tint]
+  );
 
   // Render loading state
   if (isLoading) {
@@ -495,13 +601,7 @@ export default function ReviewScreen() {
     );
   }
 
-  // Extract word parts for display - use the state version instead of direct calculation
-  const { beforeWord, wordForm, afterWord } = currentSentence;
-
-  // Don't add spaces as they're handled by natural Arabic text flow
-  // Arabic spaces are handled differently than English
-  const spacedBeforeWord = beforeWord;
-  const spacedAfterWord = afterWord;
+  console.log('[DEBUG] Current animationState:', animationState);
 
   return (
     <ThemedView style={baseStyles.container}>
@@ -515,27 +615,11 @@ export default function ReviewScreen() {
 
           <GestureDetector gesture={panGesture}>
             <View style={baseStyles.textContainer}>
-              <Animated.View style={[cardStyle, baseStyles.sentenceContainer]}>
-                <ThemedText style={baseStyles.sentence} skipDefaultColor>
-                  <ThemedText
-                    style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
-                    skipDefaultColor
-                  >
-                    {spacedAfterWord}
-                  </ThemedText>
-                  <ThemedText
-                    style={[baseStyles.studyWord, { color: colors.tint }]}
-                    skipDefaultColor
-                  >
-                    {wordForm}
-                  </ThemedText>
-                  <ThemedText
-                    style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
-                    skipDefaultColor
-                  >
-                    {spacedBeforeWord}
-                  </ThemedText>
-                </ThemedText>
+              <Animated.View
+                key={`sentence-${currentWord?.sentence_word_id || 'initial'}`}
+                style={[cardStyle, baseStyles.sentenceContainer]}
+              >
+                {sentenceContent}
               </Animated.View>
             </View>
           </GestureDetector>
