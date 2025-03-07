@@ -131,8 +131,17 @@ export function useSpacedRepetition({
       '[DEBUG-SR] Current word updated:',
       word?.sentence_word_id,
       'at index:',
-      currentIndex
+      currentIndex,
+      'of',
+      dueWords.length,
+      'words'
     );
+
+    // IMPORTANT FIX: Log when we've reached the end of the review
+    if (currentIndex >= dueWords.length && dueWords.length > 0) {
+      console.log('[DEBUG-SR] Reached end of review - isComplete should be true');
+    }
+
     return word;
   }, [currentIndex, dueWords]);
 
@@ -191,6 +200,26 @@ export function useSpacedRepetition({
         lapses: success ? wordToUpdate.lapses : wordToUpdate.lapses + 1,
       };
       console.log('[DEBUG-SR] Updated word data:', updatedWord);
+
+      // OPTIMIZATION: Update the currentIndex immediately before the API call
+      // This allows the UI to show the next word faster while the API call happens in the background
+      if (mountedRef.current) {
+        const newIndex = Math.min(currentIndex + 1, dueWords.length);
+        console.log(
+          '[DEBUG-SR] Updating currentIndex immediately from',
+          currentIndex,
+          'to',
+          newIndex
+        );
+
+        // IMPORTANT FIX: Check if this update will complete the review
+        const willComplete = newIndex >= dueWords.length && dueWords.length > 0;
+        if (willComplete) {
+          console.log('[DEBUG-SR] This update will complete the review');
+        }
+
+        setCurrentIndex(newIndex);
+      }
 
       // Apply optimistic update to cache
       queryClient.setQueryData(['dueWords', userId], (oldData: StudyWord[] | undefined) => {
@@ -255,11 +284,11 @@ export function useSpacedRepetition({
       }
     },
     onSuccess: () => {
+      // OPTIMIZATION: We already updated the currentIndex in the mutationFn
+      // So we don't need to do it again here, just log for debugging
       if (mountedRef.current) {
-        // Always use function form to ensure latest value
-        const newIndex = Math.min(currentIndex + 1, dueWords.length);
-        console.log('[DEBUG-SR] Updating currentIndex from', currentIndex, 'to', newIndex);
-        setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
+        console.log('[DEBUG-SR] onSuccess called - currentIndex already updated');
+        // No need to update currentIndex again
       }
     },
     onError: () => {
@@ -291,6 +320,12 @@ export function useSpacedRepetition({
       // Prevent updates if component is unmounted
       if (!mountedRef.current) {
         console.log('[DEBUG-SR] Component unmounted, skipping update');
+        return;
+      }
+
+      // IMPORTANT FIX: Check if we're already at the end of the review
+      if (currentIndex >= dueWords.length) {
+        console.log('[DEBUG-SR] Already at end of review, no more words to update');
         return;
       }
 
@@ -327,14 +362,16 @@ export function useSpacedRepetition({
         wordToUpdate,
       });
     },
-    [currentIndex, updateWordMutation, determineTransitionType]
+    [currentIndex, updateWordMutation, determineTransitionType, dueWords.length]
   );
 
   // Check if review is completed and invalidate relevant queries
   useEffect(() => {
     if (isComplete) {
+      console.log('[DEBUG-SR] Review is complete, invalidating queries');
       invalidateQueries();
       if (onComplete) {
+        console.log('[DEBUG-SR] Calling onComplete callback');
         onComplete();
       }
     }

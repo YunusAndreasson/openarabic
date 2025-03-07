@@ -28,8 +28,8 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 const BASE_FONT_SIZE = 20;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
-const ANIMATION_CONFIG = { damping: 15, stiffness: 150 }; // Smooth animation
-const FADE_DURATION = 150; // Quick but noticeable fade duration
+const ANIMATION_CONFIG = { damping: 15, stiffness: 200 }; // Increased stiffness for faster animation
+const FADE_DURATION = 100; // Reduced from 150 for quicker fade
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
@@ -198,6 +198,9 @@ const baseStyles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
   },
+  completionIconContainer: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
 });
 
 export default function ReviewScreen() {
@@ -223,6 +226,7 @@ export default function ReviewScreen() {
   const [animationState, setAnimationState] = useState<
     'idle' | 'transitioning-out' | 'updating-word' | 'transitioning-in'
   >('idle');
+  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
 
   // Track if this is the first render
   const isFirstRender = useRef(true);
@@ -362,24 +366,23 @@ export default function ReviewScreen() {
             console.log('[DEBUG] Setting animationState to updating-word');
             setAnimationState('updating-word');
 
-            // For "knew the word" (success), use a quicker transition
-            const animationDelay = success ? 10 : 30; // Reduced from 30/80
-            const animationDuration = success ? FADE_DURATION : 150; // Reduced from 200
+            // OPTIMIZATION: Reduce animation delays to show next word faster
+            // For "knew the word" (success), use an even quicker transition
+            const animationDelay = success ? 0 : 10; // Reduced from 10/30
+            const animationDuration = success ? FADE_DURATION : 100; // Reduced from 150
             console.log('[DEBUG] Animation delay:', animationDelay, 'duration:', animationDuration);
 
             // Use a small delay to ensure the new word is loaded before fading in
             // Store the timeout reference for cleanup
             console.log('[DEBUG] Setting fadeInTimeoutRef with delay:', animationDelay);
-            fadeInTimeoutRef.current = setTimeout(() => {
-              // Clear the reference once executed
-              fadeInTimeoutRef.current = undefined;
-              console.log('[DEBUG] Inside fadeInTimeout callback');
 
-              // Update state to transitioning in
-              console.log('[DEBUG] Setting animationState to transitioning-in');
+            // OPTIMIZATION: For success case, skip the timeout completely
+            if (success) {
+              // Update state to transitioning in immediately
+              console.log('[DEBUG] Success case - transitioning in immediately');
               setAnimationState('transitioning-in');
 
-              // Fade in immediately without additional delay
+              // Fade in immediately without any delay
               console.log(
                 '[DEBUG] Starting opacity animation to 1 with duration:',
                 animationDuration
@@ -389,7 +392,29 @@ export default function ReviewScreen() {
                 console.log('[DEBUG] Opacity animation complete, setting animationState to idle');
                 runOnJS(setAnimationState)('idle');
               });
-            }, animationDelay);
+            } else {
+              // For failure case, still use a small delay
+              fadeInTimeoutRef.current = setTimeout(() => {
+                // Clear the reference once executed
+                fadeInTimeoutRef.current = undefined;
+                console.log('[DEBUG] Inside fadeInTimeout callback');
+
+                // Update state to transitioning in
+                console.log('[DEBUG] Setting animationState to transitioning-in');
+                setAnimationState('transitioning-in');
+
+                // Fade in immediately without additional delay
+                console.log(
+                  '[DEBUG] Starting opacity animation to 1 with duration:',
+                  animationDuration
+                );
+                opacity.value = withTiming(1, { duration: animationDuration }, () => {
+                  // Use the animation completion callback to safely reset the state
+                  console.log('[DEBUG] Opacity animation complete, setting animationState to idle');
+                  runOnJS(setAnimationState)('idle');
+                });
+              }, animationDelay);
+            }
           } catch (error) {
             console.error('[DEBUG] Error updating word:', error);
             // Fallback animation in case of error
@@ -407,7 +432,9 @@ export default function ReviewScreen() {
         setShowMeaningOverlay(true);
 
         // Hide the meaning after a delay
-        console.log('[DEBUG] Setting meaningTimeoutRef with delay: 1500ms');
+        // OPTIMIZATION: Reduce the meaning display time for faster progression
+        const meaningDisplayTime = 1000; // Reduced from 1500ms
+        console.log('[DEBUG] Setting meaningTimeoutRef with delay:', meaningDisplayTime, 'ms');
         meaningTimeoutRef.current = setTimeout(() => {
           // Clear the reference once executed
           meaningTimeoutRef.current = undefined;
@@ -416,7 +443,7 @@ export default function ReviewScreen() {
           setShowMeaningOverlay(false);
           // Update the word status after showing the meaning
           updateWordAndAnimate();
-        }, 1500); // Shorter display time for faster progression
+        }, meaningDisplayTime);
       } else {
         console.log('[DEBUG] Success case, calling updateWordAndAnimate immediately');
         // Update the word status immediately for success
@@ -445,7 +472,8 @@ export default function ReviewScreen() {
       if (event.translationX > SWIPE_THRESHOLD) {
         // Swipe right - success
         console.log('[DEBUG] Swipe right detected (success)');
-        translateX.value = withSpring(SCREEN_WIDTH, ANIMATION_CONFIG, () => {
+        // OPTIMIZATION: Faster spring animation for success case
+        translateX.value = withSpring(SCREEN_WIDTH, { damping: 12, stiffness: 250 }, () => {
           console.log('[DEBUG] Swipe right animation complete, calling handleWordUpdate(true)');
           runOnJS(handleWordUpdate)(true);
         });
@@ -547,6 +575,23 @@ export default function ReviewScreen() {
     [spacedAfterWord, wordForm, spacedBeforeWord, colors.englishText, colors.tint]
   );
 
+  // Check for completion and show animation
+  useEffect(() => {
+    if (isComplete && !showCompletionAnimation) {
+      console.log('[DEBUG] Review complete, showing completion animation');
+      setShowCompletionAnimation(true);
+
+      // Hide completion animation after a delay and show the completion screen
+      const completionDelay = 1000; // 1 second
+      const completionTimer = setTimeout(() => {
+        console.log('[DEBUG] Completion animation finished');
+        // The isComplete condition in the render function will now show the completion screen
+      }, completionDelay);
+
+      return () => clearTimeout(completionTimer);
+    }
+  }, [isComplete, showCompletionAnimation]);
+
   // Render loading state
   if (isLoading) {
     return (
@@ -575,6 +620,21 @@ export default function ReviewScreen() {
 
   // Render error state
   if (!currentWord?.sentence_word?.word_form && !isLoading && dueWords.length > 0) {
+    // IMPORTANT FIX: Don't show error if we're at the end of the review
+    // This prevents the error from flashing before showing the completion state
+    if (isComplete) {
+      return (
+        <ThemedView style={baseStyles.container}>
+          <View style={baseStyles.completionContainer}>
+            <ThemedText style={baseStyles.completionText}>
+              You've completed all your reviews for now!
+            </ThemedText>
+            <ThemedButton title="Back to Home" onPress={handleClose} />
+          </View>
+        </ThemedView>
+      );
+    }
+
     return (
       <ThemedView style={baseStyles.container}>
         <View style={baseStyles.errorContainer}>
@@ -592,10 +652,17 @@ export default function ReviewScreen() {
     return (
       <ThemedView style={baseStyles.container}>
         <View style={baseStyles.completionContainer}>
-          <ThemedText style={baseStyles.completionText}>
-            You've completed all your reviews for now!
-          </ThemedText>
-          <ThemedButton title="Back to Home" onPress={handleClose} />
+          <Animated.View entering={FadeIn.duration(400)} style={baseStyles.completionIconContainer}>
+            <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
+          </Animated.View>
+          <Animated.View entering={FadeIn.duration(400).delay(200)}>
+            <ThemedText style={baseStyles.completionText}>
+              You've completed all your reviews for now!
+            </ThemedText>
+          </Animated.View>
+          <Animated.View entering={FadeIn.duration(400).delay(400)}>
+            <ThemedButton title="Back to Home" onPress={handleClose} />
+          </Animated.View>
         </View>
       </ThemedView>
     );
