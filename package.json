@@ -12,6 +12,8 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "start": "expo start",
     "test": "jest --watchAll",
+    "test:ci": "jest --ci",
+    "test:srs": "jest useSpacedRepetition --verbose",
     "validate": "npm run lint && npm run format:check",
     "expoupgrade": "npx expo install --check",
     "web": "expo start --web",
@@ -23,7 +25,14 @@
     "knip:islands": "knip --include files --no-config-hints"
   },
   "jest": {
-    "preset": "jest-expo"
+    "preset": "jest-expo",
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
+    ],
+    "setupFilesAfterEnv": [
+      "./jest.setup.js"
+    ],
+    "testEnvironment": "jsdom"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
@@ -66,20 +75,27 @@
   "devDependencies": {
     "@babel/core": "^7.26.8",
     "@dev-plugins/react-query": "^0.1.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
+    "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.14",
     "@types/react": "~18.3.18",
     "@types/react-test-renderer": "^18.3.1",
     "eslint": "^8.57.1",
     "eslint-config-expo": "~8.0.1",
     "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-jest": "^28.11.0",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react-native": "^5.0.0",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "jest-expo": "~52.0.3",
     "knip": "^5.45.0",
     "prettier": "^3.5.0",
     "react-test-renderer": "18.3.1",
     "redux-devtools-expo-dev-plugin": "^1.0.0",
+    "ts-jest": "^29.2.6",
     "typescript": "^5.7.3"
   },
   "private": true,

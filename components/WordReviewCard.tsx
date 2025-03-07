@@ -110,7 +110,21 @@ export const WordReviewCard = React.memo(
       >
         <View style={styles.wordContainer}>
           <Animated.Text
-            style={[styles.arabicWord, { color: colors.arabicText }]}
+            style={[
+              styles.arabicWord,
+              {
+                color: colors.arabicText,
+                backgroundColor: `${colors.tint}08`, // Very subtle tint-based background
+                borderWidth: 1,
+                borderColor: `${colors.tint}15`,
+                // Add a subtle shadow for depth
+                shadowColor: colors.tint,
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 1, // For Android
+              },
+            ]}
             entering={FadeIn.delay(150).duration(300)}
           >
             {word.sentence_word.word_form}
@@ -126,7 +140,12 @@ export const WordReviewCard = React.memo(
               entering={FadeIn.delay(300).duration(400)}
             >
               <ThemedText
-                style={[styles.arabicSentence, { color: `${colors.arabicText}CC` }]}
+                style={[
+                  styles.arabicSentence,
+                  {
+                    color: `${colors.arabicText}CC`,
+                  },
+                ]}
                 skipDefaultColor
               >
                 {word.sentence_word.sentence.arabic}
@@ -160,6 +179,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: 'NotoNaskhArabic',
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    includeFontPadding: true,
+    writingDirection: 'rtl',
   },
   englishWord: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -178,5 +202,8 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontFamily: 'NotoNaskhArabic',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.8,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    writingDirection: 'rtl',
+    includeFontPadding: false,
   },
 });

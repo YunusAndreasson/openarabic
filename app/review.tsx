@@ -71,8 +71,9 @@ const baseStyles = StyleSheet.create({
   },
   sentenceContainer: {
     width: '100%',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   sentence: {
     textAlign: 'right',
@@ -554,23 +555,54 @@ export default function ReviewScreen() {
   // Memoize the sentence content to prevent unnecessary re-renders
   const sentenceContent = useMemo(
     () => (
-      <ThemedText style={baseStyles.sentence} skipDefaultColor>
-        <ThemedText
-          style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
-          skipDefaultColor
-        >
-          {spacedAfterWord}
+      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
+        <ThemedText style={baseStyles.sentence} skipDefaultColor>
+          <ThemedText
+            style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
+            skipDefaultColor
+          >
+            {spacedAfterWord}
+          </ThemedText>
+          <ThemedText style={{ opacity: 0 }}>{'\u00A0'}</ThemedText>
+          <ThemedText
+            style={[
+              baseStyles.studyWord,
+              {
+                color: colors.tint,
+                backgroundColor: `${colors.tint}15`, // Add faint background color (15% opacity)
+                paddingHorizontal: 12, // Add horizontal padding
+                paddingVertical: 5, // Add vertical padding
+                borderRadius: 5, // Add rounded corners
+                marginHorizontal: 8, // Add margin for spacing between words
+                borderWidth: 1, // Add a subtle border
+                borderColor: `${colors.tint}30`, // Border color with 30% opacity
+                // Add a subtle shadow for depth
+                shadowColor: colors.tint,
+                shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.1,
+                shadowRadius: 1,
+                elevation: 1, // For Android
+              },
+            ]}
+            skipDefaultColor
+          >
+            {wordForm}
+          </ThemedText>
+          <ThemedText style={{ opacity: 0 }}>{'\u00A0'}</ThemedText>
+          <ThemedText
+            style={[
+              baseStyles.dimmedText,
+              {
+                color: colors.englishText,
+                opacity: 0.7,
+              },
+            ]}
+            skipDefaultColor
+          >
+            {spacedBeforeWord}
+          </ThemedText>
         </ThemedText>
-        <ThemedText style={[baseStyles.studyWord, { color: colors.tint }]} skipDefaultColor>
-          {wordForm}
-        </ThemedText>
-        <ThemedText
-          style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
-          skipDefaultColor
-        >
-          {spacedBeforeWord}
-        </ThemedText>
-      </ThemedText>
+      </View>
     ),
     [spacedAfterWord, wordForm, spacedBeforeWord, colors.englishText, colors.tint]
   );

@@ -132,11 +132,42 @@ export function calculateNextReview(
   nextReviewDate: string;
   previousInterval: number;
 } {
-  const previousInterval = word.interval_days;
+  // Input validation
+  if (!word) {
+    throw new Error('Invalid parameter: word is required');
+  }
 
-  // Handle potential missing values for existing records
-  const currentStability = word.stability ?? constants.MIN_STABILITY;
-  const currentPreviousInterval = word.previous_interval ?? 0;
+  if (typeof success !== 'boolean') {
+    throw new Error('Invalid parameter: success must be a boolean');
+  }
+
+  // Validate and provide fallbacks for essential properties
+  const currentStability =
+    typeof word.stability === 'number' && !isNaN(word.stability)
+      ? word.stability
+      : constants.MIN_STABILITY;
+
+  const currentEaseFactor =
+    typeof word.ease_factor === 'number' && !isNaN(word.ease_factor) && word.ease_factor >= 1.3
+      ? word.ease_factor
+      : 2.5; // Default ease factor
+
+  const currentInterval =
+    typeof word.interval_days === 'number' && !isNaN(word.interval_days) && word.interval_days >= 0
+      ? word.interval_days
+      : 1; // Default interval
+
+  const currentPreviousInterval =
+    typeof word.previous_interval === 'number' &&
+    !isNaN(word.previous_interval) &&
+    word.previous_interval >= 0
+      ? word.previous_interval
+      : 0; // Default previous interval
+
+  const currentLapses =
+    typeof word.lapses === 'number' && !isNaN(word.lapses) && word.lapses >= 0 ? word.lapses : 0; // Default lapses
+
+  const previousInterval = currentInterval;
 
   let newStability: number;
   let newInterval: number;
@@ -145,7 +176,7 @@ export function calculateNextReview(
   if (success) {
     // If successful, increase stability based on current stability and ease factor
     const stabilityIncrease =
-      currentStability * constants.STABILITY_GROWTH_FACTOR * word.ease_factor;
+      currentStability * constants.STABILITY_GROWTH_FACTOR * currentEaseFactor;
 
     // Apply an upper bound to stability to prevent excessive growth
     newStability = Math.min(constants.MAX_STABILITY, currentStability + stabilityIncrease);
@@ -157,7 +188,10 @@ export function calculateNextReview(
     newInterval = Math.round(newStability);
 
     // Adjust ease factor - successful recall slightly increases ease
-    newEaseFactor = Math.min(constants.MAX_EASE_FACTOR, word.ease_factor + constants.EASE_INCREASE);
+    newEaseFactor = Math.min(
+      constants.MAX_EASE_FACTOR,
+      currentEaseFactor + constants.EASE_INCREASE
+    );
 
     // Make sure ease_factor fits in the database precision (4,2)
     newEaseFactor = Math.min(constants.DB_MAX_PRECISION, newEaseFactor);
@@ -179,12 +213,12 @@ export function calculateNextReview(
     newInterval = 1;
 
     // Adjust ease factor - failed recall decreases ease
-    newEaseFactor = Math.max(1.3, word.ease_factor - constants.EASE_DECREASE);
+    newEaseFactor = Math.max(1.3, currentEaseFactor - constants.EASE_DECREASE);
   }
 
   // Apply recovery penalty for words that have lapsed frequently
-  if (word.lapses > 2) {
-    const lapseCount = word.lapses;
+  if (currentLapses > 2) {
+    const lapseCount = currentLapses;
     const recoveryPenalty = 1 - lapseCount * constants.LAPSE_PENALTY_FACTOR;
     newInterval = Math.max(1, Math.round(newInterval * recoveryPenalty));
   }
@@ -379,6 +413,32 @@ export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: numbe
     failedWordsRemaining: failedWordsCount,
     newWordsCount,
     failedInSessionCount,
+  };
+}
+
+// Memoization utility for the progress calculator
+export function createMemoizedProgressCalculator() {
+  const cache = new Map<string, number>();
+
+  return (currentIndex: number, wordsInQueue: number, failedWordsCount: number): number => {
+    const cacheKey = `${currentIndex}-${wordsInQueue}-${failedWordsCount}`;
+
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey)!;
+    }
+
+    const result = calculateProgress(currentIndex, wordsInQueue, failedWordsCount);
+    cache.set(cacheKey, result);
+
+    // Keep cache from growing too large
+    if (cache.size > 1000) {
+      const firstKey = cache.keys().next().value;
+      if (firstKey) {
+        cache.delete(firstKey);
+      }
+    }
+
+    return result;
   };
 }
 
@@ -587,11 +647,18 @@ export function useSpacedRepetition({
     return word;
   }, [currentIndex, wordsRef, dueWords]);
 
+  // Create a memoized progress calculator for this instance of the hook
+  const memoizedProgressCalculator = useMemo(() => createMemoizedProgressCalculator(), []);
+
   // Calculate progress based on completed words vs. total words to review
   const progress = useMemo(() => {
-    // Use the extracted pure function for testability
-    return calculateProgress(currentIndex, wordsRef.current.length, failedWordsRef.current.length);
-  }, [currentIndex, failedWordsRef, wordsRef, wordsLoaded]);
+    // Use the memoized calculator for better performance
+    return memoizedProgressCalculator(
+      currentIndex,
+      wordsRef.current.length,
+      failedWordsRef.current.length
+    );
+  }, [currentIndex, failedWordsRef, wordsRef, wordsLoaded, memoizedProgressCalculator]);
 
   // Check if review is complete
   const isComplete = useMemo(() => {
