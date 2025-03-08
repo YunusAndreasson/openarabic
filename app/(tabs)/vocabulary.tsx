@@ -307,7 +307,6 @@ export default function VocabularyScreen() {
           <Animated.View entering={FadeIn.duration(300)}>
             {/* Dashboard Section */}
             <View style={styles.sectionContainer}>
-              <ThemedText style={styles.sectionTitle}>Overview</ThemedText>
               <VocabularyDashboard
                 totalWords={stats.totalWords}
                 masteredWords={stats.masteredWords}
@@ -320,7 +319,6 @@ export default function VocabularyScreen() {
 
             {/* Graph Section */}
             <View style={styles.sectionContainer}>
-              <ThemedText style={styles.sectionTitle}>Weekly Progress</ThemedText>
               <View style={styles.graphContainer}>
                 <VocabularyGraph data={weeklyProgressData} />
               </View>

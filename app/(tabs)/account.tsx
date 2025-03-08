@@ -361,20 +361,16 @@ export default function AccountScreen() {
                 contentContainerStyle={buttonStyles.contentContainer}
               />
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={styles.signOutContainer}>
-                <ThemedButton
-                  variant="outlined"
-                  title="Sign Out"
-                  onPress={signOut}
-                  icon="log-out"
-                  style={[
-                    styles.actionButton,
-                    styles.signOutButton,
-                    { backgroundColor: colors.cardBackground },
-                  ]}
-                  innerContainerStyle={buttonStyles.innerContainer}
-                  contentContainerStyle={buttonStyles.contentContainer}
-                />
+              <ThemedButton
+                variant="outlined"
+                title="Sign Out"
+                onPress={signOut}
+                icon="log-out"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
+              <View style={styles.accountInfoContainer}>
                 <ThemedText style={styles.signedInLabel}>Signed in as:</ThemedText>
                 <ThemedText style={styles.signedInEmail} numberOfLines={1} ellipsizeMode="tail">
                   {session.user.email}
@@ -500,16 +496,14 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  signOutContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  signOutButton: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  accountInfoContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
   signedInLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: 0.7,
-    marginTop: LAYOUT.SPACING.TINY,
   },
   signedInEmail: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

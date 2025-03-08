@@ -70,5 +70,40 @@ describe('settingsSlice', () => {
       expect(updatedState.settings.fontScale).toBe(1.5); // Should remain unchanged
       expect(updatedState.settings.showEnglish).toBe(false);
     });
+
+    // Add a parameterized test for testing multiple settings
+    it.each<{
+      actionCreator: (payload: any) => any;
+      value: number | boolean;
+      expectedKey: keyof SettingsState;
+      expectedValue: number | boolean;
+    }>([
+      { actionCreator: setFontScale, value: 1.2, expectedKey: 'fontScale', expectedValue: 1.2 },
+      { actionCreator: setFontScale, value: 0.8, expectedKey: 'fontScale', expectedValue: 0.8 },
+      {
+        actionCreator: setShowEnglish,
+        value: true,
+        expectedKey: 'showEnglish',
+        expectedValue: true,
+      },
+      {
+        actionCreator: setShowEnglish,
+        value: false,
+        expectedKey: 'showEnglish',
+        expectedValue: false,
+      },
+    ])(
+      'should update $expectedKey to $expectedValue',
+      ({ actionCreator, value, expectedKey, expectedValue }) => {
+        // Dispatch the action with the value
+        store.dispatch(actionCreator(value));
+
+        // Get the updated state
+        const updatedState = store.getState() as RootState;
+
+        // Assert that the setting was updated correctly
+        expect(updatedState.settings[expectedKey]).toEqual(expectedValue);
+      }
+    );
   });
 });
