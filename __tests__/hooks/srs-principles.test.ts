@@ -1,3 +1,27 @@
+/**
+ * SRS Principles Test Suite
+ *
+ * This test suite validates that our spaced repetition system (SRS) correctly
+ * implements the core scientific principles that make spaced repetition effective.
+ *
+ * Unlike implementation-focused tests, these tests focus on validating that the
+ * algorithm behaves according to established learning science principles, regardless
+ * of the specific implementation details.
+ *
+ * Core principles tested:
+ *
+ * 1. Exponential interval growth - Intervals should grow exponentially with successful reviews
+ * 2. Forgetting curve reset - When a word is forgotten, intervals reset but some memory remains
+ * 3. Ease factor personalization - The algorithm adapts to individual word difficulty
+ * 4. Spacing effect - Longer previous intervals lead to better retention and larger boosts
+ * 5. Lapse penalty - Words forgotten multiple times receive shorter intervals
+ * 6. Learning efficiency - New and failed words are requeued optimally for learning
+ * 7. Long-term memory formation - Consistent success leads to very long intervals
+ *
+ * These tests serve as both validation and documentation of the SRS algorithm's
+ * behavior, ensuring that future changes maintain adherence to these principles.
+ */
+
 import {
   calculateNextReview,
   shouldRequeueWord,
@@ -32,6 +56,18 @@ function createMockWord(overrides: Partial<StudyWord> = {}): StudyWord {
 // Tests specifically for validating SRS principles
 describe('Spaced Repetition System Principles', () => {
   describe('Exponential interval growth', () => {
+    /**
+     * This test validates that the SRS algorithm implements exponential interval growth,
+     * which is a fundamental principle in spaced repetition systems.
+     *
+     * Exponential growth means that intervals increase by a multiplier rather than
+     * by a fixed amount, leading to increasingly longer intervals between reviews.
+     *
+     * Key principles being tested:
+     * 1. Intervals should increase exponentially, not linearly
+     * 2. The rate of increase should be influenced by the ease factor
+     * 3. The growth pattern should be sustainable for long-term learning
+     */
     it('should increase intervals exponentially with subsequent successful reviews', () => {
       // Create a word with baseline values
       let word = createMockWord({
@@ -78,6 +114,18 @@ describe('Spaced Repetition System Principles', () => {
   });
 
   describe('Forgetting curve reset', () => {
+    /**
+     * This test validates that the SRS algorithm properly implements forgetting curve reset,
+     * which is a fundamental principle in spaced repetition systems.
+     *
+     * When a word is forgotten, the algorithm should reset the interval but retain some
+     * memory of the previous learning (not starting completely from scratch).
+     *
+     * Key principles being tested:
+     * 1. Intervals should reset to a small value when a word is forgotten
+     * 2. Stability should decrease but not to zero (some memory is retained)
+     * 3. Ease factor should decrease to make future reviews more frequent
+     */
     it('should reset intervals when a word is forgotten', () => {
       // Start with a word that has been successfully reviewed many times
       const word = createMockWord({
@@ -100,10 +148,56 @@ describe('Spaced Repetition System Principles', () => {
 
       // Verify ease factor decreases
       expect(result.newEaseFactor).toBeLessThan(word.ease_factor);
+
+      // Verify recovery after failure
+      // Create a word that has just been failed
+      let recoveryWord = createMockWord({
+        interval_days: 1, // Reset interval
+        ease_factor: 2.3, // Reduced ease factor
+        stability: 10, // Reduced stability
+        review_count: 6,
+        lapses: 1, // Has one lapse
+      });
+
+      // Simulate successful reviews after the failure
+      const successfulReviews = 3;
+      const intervals = [recoveryWord.interval_days];
+
+      for (let i = 0; i < successfulReviews; i++) {
+        const recoveryResult = calculateNextReview(recoveryWord, true);
+        recoveryWord = {
+          ...recoveryWord,
+          interval_days: recoveryResult.newInterval,
+          ease_factor: recoveryResult.newEaseFactor,
+          stability: recoveryResult.newStability,
+          review_count: recoveryWord.review_count + 1,
+        };
+        intervals.push(recoveryWord.interval_days);
+      }
+
+      // Verify recovery shows exponential growth again
+      for (let i = 1; i < intervals.length; i++) {
+        expect(intervals[i]).toBeGreaterThan(intervals[i - 1]);
+      }
+
+      // Verify the word can eventually recover to longer intervals
+      expect(intervals[intervals.length - 1]).toBeGreaterThan(1);
     });
   });
 
   describe('Ease factor personalization', () => {
+    /**
+     * This test validates that the SRS algorithm properly personalizes the ease factor
+     * based on a user's performance history with a word.
+     *
+     * Key principles being tested:
+     * 1. Words that are frequently forgotten should become "harder" (lower ease factor)
+     * 2. Words that are consistently remembered should become "easier" (higher ease factor)
+     * 3. The ease factor directly impacts interval growth
+     *
+     * Note: We start with an ease factor of 2.3 (below MAX_EASE_FACTOR of 2.5)
+     * to ensure we can test both increase and decrease scenarios.
+     */
     it('should adjust ease factor based on performance history', () => {
       // Start with a new word with ease factor below the maximum
       // The default MAX_EASE_FACTOR is 2.5, so we need to start lower
@@ -160,10 +254,26 @@ describe('Spaced Repetition System Principles', () => {
 
       // The intervals should reflect the difference in ease
       expect(difficultWord.interval_days).toBeLessThan(easyWord.interval_days);
+
+      // Verify that the difficult word's ease factor is significantly lower
+      // This ensures the algorithm is making meaningful adjustments
+      expect(difficultWord.ease_factor).toBeLessThanOrEqual(easyWord.ease_factor - 0.3);
     });
   });
 
   describe('Spacing effect', () => {
+    /**
+     * This test validates that the SRS algorithm properly implements the spacing effect,
+     * which is a fundamental principle in spaced repetition systems.
+     *
+     * The spacing effect states that items reviewed after longer intervals should receive
+     * a larger boost to their next interval compared to items reviewed after shorter intervals.
+     *
+     * Key principles being tested:
+     * 1. Words with longer previous intervals should get larger interval boosts
+     * 2. The boost should be proportional to the previous interval
+     * 3. This effect should be present even when other factors are identical
+     */
     it('should apply the spacing effect for longer previous intervals', () => {
       // Create two words with identical properties except previous_interval
       const wordWithShortPrevious = createMockWord({
@@ -186,6 +296,37 @@ describe('Spaced Repetition System Principles', () => {
 
       // The word with longer previous interval should get a larger interval boost
       expect(resultLong.newInterval).toBeGreaterThan(resultShort.newInterval);
+
+      // Calculate the spacing boost ratio
+      const spacingBoost = resultLong.newInterval / resultShort.newInterval;
+
+      // The spacing boost should be significant but not excessive
+      // These bounds are based on the algorithm's SPACING_EFFECT_STRENGTH
+      expect(spacingBoost).toBeGreaterThan(1.1); // At least 10% longer
+      expect(spacingBoost).toBeLessThan(2.0); // But not more than double
+
+      // Test with a range of previous intervals to ensure consistent behavior
+      const intervals = [1, 5, 10, 30, 60];
+      let lastInterval = 0;
+
+      // Each successive interval should produce a larger next interval
+      for (const prevInterval of intervals) {
+        const testWord = createMockWord({
+          stability: 10,
+          interval_days: 10,
+          previous_interval: prevInterval,
+          ease_factor: 2.5,
+        });
+
+        const result = calculateNextReview(testWord, true);
+
+        if (lastInterval > 0) {
+          // Each increase in previous interval should result in a larger new interval
+          expect(result.newInterval).toBeGreaterThan(lastInterval);
+        }
+
+        lastInterval = result.newInterval;
+      }
     });
   });
 
@@ -216,6 +357,20 @@ describe('Spaced Repetition System Principles', () => {
   });
 
   describe('Learning efficiency', () => {
+    /**
+     * This test validates that the SRS algorithm implements efficient learning strategies,
+     * particularly for new words and words that have been failed.
+     *
+     * Efficient learning requires:
+     * 1. Multiple exposures to new words within a session
+     * 2. Requiring consecutive successes for failed words
+     * 3. Optimal spacing of requeued words (not too soon, not too late)
+     *
+     * These principles are based on research showing that:
+     * - New information requires multiple exposures to form initial memory
+     * - Failed items need successful retrieval to strengthen memory
+     * - Optimal spacing improves long-term retention
+     */
     it('should optimize learning through appropriate requeuing strategies', () => {
       // New words should be shown multiple times in a session
       const newWord = createMockWord({
@@ -251,6 +406,20 @@ describe('Spaced Repetition System Principles', () => {
       expect(shouldRequeueWord(successfulWord, true)).toBe(false);
     });
 
+    /**
+     * This test validates that the SRS algorithm positions requeued words optimally
+     * for effective learning, following principles of interleaving and spacing.
+     *
+     * Optimal positioning means:
+     * 1. Failed words should not be shown immediately (too soon)
+     * 2. Failed words should not be delayed too long (forgetting)
+     * 3. New words should be spaced appropriately for initial learning
+     *
+     * These principles ensure that:
+     * - Learning is efficient (not wasting time on too-frequent reviews)
+     * - Memory formation is optimized (spacing effect)
+     * - Difficult words receive appropriate attention
+     */
     it('should position requeued words optimally for learning', () => {
       // The algorithm should ensure we don't review the same word
       // immediately after failing it, but also not too far away
@@ -302,6 +471,20 @@ describe('Spaced Repetition System Principles', () => {
   });
 
   describe('Long-term memory formation', () => {
+    /**
+     * This test validates that the SRS algorithm effectively promotes long-term memory formation,
+     * which is the ultimate goal of any spaced repetition system.
+     *
+     * Long-term memory formation requires:
+     * 1. Gradually increasing intervals between reviews
+     * 2. Eventually reaching very long intervals (months/years)
+     * 3. Stable ease factors for well-learned items
+     *
+     * These principles ensure that:
+     * - Well-learned words are not reviewed unnecessarily (efficiency)
+     * - The system scales to support years of learning (sustainability)
+     * - The ultimate goal of permanent retention is achieved
+     */
     it('should lead to long-term intervals with consistent success', () => {
       let word = createMockWord();
 
