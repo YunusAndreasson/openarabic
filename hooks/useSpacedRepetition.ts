@@ -456,6 +456,18 @@ export function createMemoizedProgressCalculator() {
   };
 }
 
+// PURE FUNCTION: Helper to safely compare word IDs as strings
+// This prevents bugs from mismatched types and standardizes ID comparisons
+export function isSameWordId(
+  id1: string | number | undefined,
+  id2: string | number | undefined
+): boolean {
+  if (id1 === undefined || id2 === undefined) {
+    return false;
+  }
+  return String(id1) === String(id2);
+}
+
 /**
  * Custom hook for managing spaced repetition logic
  */
@@ -529,44 +541,8 @@ export function useSpacedRepetition({
     if (dueWords && Array.isArray(dueWords)) {
       // FIXED: Only process if we have words to process
       if (dueWords.length > 0) {
-        // Process words to mark new words and initialize session data
-        const processedWords = dueWords.map(word => ({
-          ...word,
-          sessionData: {
-            isNew: word.review_count <= SESSION_CONFIG.NEW_WORD_THRESHOLD,
-            failedInSession: false,
-            consecutiveSuccesses: 0,
-            remainingReviewsNeeded:
-              word.review_count <= SESSION_CONFIG.NEW_WORD_THRESHOLD
-                ? SESSION_CONFIG.NEW_WORD_MINIMUM_REVIEWS
-                : 1,
-          },
-        }));
-
-        // IMPORTANT FIX: Only reset wordsRef if it's currently empty
-        // This prevents resetting the state during an active review session
-        if (wordsRef.current.length === 0) {
-          wordsRef.current = processedWords;
-          failedWordsRef.current = []; // Reset failed words queue
-
-          // Reset progress tracking
-          totalWordsToReviewRef.current = processedWords.length;
-          uniqueWordsSeenRef.current = new Set<string>();
-          wordReviewCountsRef.current = {};
-
-          // Initialize word review counts
-          processedWords.forEach(word => {
-            if (word.sentence_word_id) {
-              wordReviewCountsRef.current[word.sentence_word_id] = 1;
-            }
-          });
-
-          // FIXED: Only set wordsLoaded to true after wordsRef has been populated
-          // This ensures isComplete won't be true until words are ready
-          if (processedWords.length > 0) {
-            setWordsLoaded(true);
-          }
-        }
+        // Initialize the words queue if it's empty
+        initializeWordsQueue(dueWords);
       } else {
         // If there are no due words, still set wordsLoaded to true
         // This allows the empty state to be displayed properly
@@ -574,6 +550,48 @@ export function useSpacedRepetition({
       }
     }
   }, [dueWords, currentIndex]);
+
+  // Helper function to initialize the words queue
+  const initializeWordsQueue = useCallback((words: StudyWord[]) => {
+    // Only reset wordsRef if it's currently empty
+    // This prevents resetting the state during an active review session
+    if (wordsRef.current.length === 0) {
+      // Process words to mark new words and initialize session data
+      const processedWords = words.map(word => ({
+        ...word,
+        sessionData: {
+          isNew: word.review_count <= SESSION_CONFIG.NEW_WORD_THRESHOLD,
+          failedInSession: false,
+          consecutiveSuccesses: 0,
+          remainingReviewsNeeded:
+            word.review_count <= SESSION_CONFIG.NEW_WORD_THRESHOLD
+              ? SESSION_CONFIG.NEW_WORD_MINIMUM_REVIEWS
+              : 1,
+        },
+      }));
+
+      wordsRef.current = processedWords;
+      failedWordsRef.current = []; // Reset failed words queue
+
+      // Reset progress tracking
+      totalWordsToReviewRef.current = processedWords.length;
+      uniqueWordsSeenRef.current = new Set<string>();
+      wordReviewCountsRef.current = {};
+
+      // Initialize word review counts
+      processedWords.forEach(word => {
+        if (word.sentence_word_id) {
+          wordReviewCountsRef.current[word.sentence_word_id] = 1;
+        }
+      });
+
+      // FIXED: Only set wordsLoaded to true after wordsRef has been populated
+      // This ensures isComplete won't be true until words are ready
+      if (processedWords.length > 0) {
+        setWordsLoaded(true);
+      }
+    }
+  }, []);
 
   // Get current word with safety check to prevent "error loading word"
   const currentWord = useMemo(() => {
@@ -629,6 +647,38 @@ export function useSpacedRepetition({
 
   // Update also isLoading to consider wordsLoaded state
   const isActuallyLoading = isLoading || !wordsLoaded;
+
+  // Function to handle failed date-related errors with a safe fallback
+  const handleDateError = useCallback(async (error: unknown, wordId: string, updatedWord: any) => {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isDateError =
+      errorMessage &&
+      (errorMessage.includes('time zone') ||
+        errorMessage.includes('date') ||
+        errorMessage.includes('timestamp'));
+
+    if (isDateError) {
+      try {
+        // Use a very conservative approach - just 1 year in the future
+        const safeDate = new Date();
+        safeDate.setFullYear(safeDate.getFullYear() + 1);
+
+        const safeUpdatedWord = {
+          ...updatedWord,
+          interval_days: Math.min(updatedWord.interval_days, 365),
+          next_review_at: safeDate.toISOString(),
+        };
+
+        await studyWordsService.updateWordReview(Number(wordId), safeUpdatedWord);
+        return { wordId, success: true, updatedWord: safeUpdatedWord };
+      } catch (fallbackError) {
+        console.error('Fallback update also failed:', fallbackError);
+      }
+    }
+
+    // Rethrow the original error if fallback fails or it's not a date error
+    throw error;
+  }, []);
 
   // Word update mutation
   const updateWordMutation = useMutation({
@@ -755,7 +805,7 @@ export function useSpacedRepetition({
         if (!oldData) return oldData;
         // Create a new array with the updated word
         return oldData.map(word =>
-          String(word.sentence_word_id) === String(wordId) ? { ...word, ...updatedWord } : word
+          isSameWordId(word.sentence_word_id, wordId) ? { ...word, ...updatedWord } : word
         );
       });
 
@@ -774,35 +824,8 @@ export function useSpacedRepetition({
           });
         }
 
-        // Try a fallback approach with a more conservative date if this was a date-related error
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (
-          errorMessage &&
-          (errorMessage.includes('time zone') ||
-            errorMessage.includes('date') ||
-            errorMessage.includes('timestamp'))
-        ) {
-          try {
-            // Use a very conservative approach - just 1 year in the future
-            const safeDate = new Date();
-            safeDate.setFullYear(safeDate.getFullYear() + 1);
-
-            const safeUpdatedWord = {
-              ...updatedWord,
-              interval_days: Math.min(updatedWord.interval_days, 365),
-              next_review_at: safeDate.toISOString(),
-            };
-
-            await studyWordsService.updateWordReview(Number(wordId), safeUpdatedWord);
-            return { wordId, success, updatedWord: safeUpdatedWord };
-          } catch (fallbackError) {
-            console.error('Fallback update also failed:', fallbackError);
-          }
-        }
-
-        // Invalidate cache on error to ensure it's up to date
-        invalidateQueries();
-        throw error;
+        // Try to handle date-related errors with a fallback strategy
+        return handleDateError(error, wordId, updatedWord);
       }
     },
     onSuccess: () => {
@@ -826,6 +849,77 @@ export function useSpacedRepetition({
     return success ? 'fade' : 'slide';
   }, []);
 
+  // Function to determine the next word index, considering requeued words
+  const getNextWordIndex = useCallback(() => {
+    // Current position and next position in the review
+    const currentPos = currentIndex;
+    const nextPos = currentPos + 1;
+    const wordsQueueLength = wordsRef.current.length;
+
+    // Safety check for empty queue
+    if (wordsQueueLength === 0) {
+      return 0;
+    }
+
+    // First check: are there any failed words that should be shown at this position?
+    const wordToReinsert = failedWordsRef.current.find(w => w.reinsertPosition === nextPos);
+
+    if (wordToReinsert && wordToReinsert.sentence_word_id) {
+      // Remove this word from the failed words queue safely
+      failedWordsRef.current = failedWordsRef.current.filter(
+        w => !isSameWordId(w.sentence_word_id, wordToReinsert.sentence_word_id)
+      );
+
+      // Insert the word at the next position
+      wordsRef.current.splice(nextPos, 0, wordToReinsert);
+    }
+
+    // Now check if we've reached the end of the queue
+    const isAtEnd = nextPos >= wordsQueueLength;
+    const hasRemainingFailedWords = failedWordsRef.current.length > 0;
+
+    // If at the end but still have failed words to review,
+    // we need to reset to handle the remaining failed words
+    if (isAtEnd && hasRemainingFailedWords) {
+      // Add safety check to prevent infinite loops
+      const maxFailedWordProcessingAttempts = 3;
+
+      // Process all failed words and add them to the queue at their proper positions
+      const failedWordsToAdd = [...failedWordsRef.current];
+      failedWordsRef.current = []; // Clear the failed words queue
+
+      // Track if we've added any words
+      let addedWords = false;
+
+      // Add all failed words to the review queue, with safety checks
+      failedWordsToAdd.forEach(word => {
+        // Skip words without an ID
+        if (!word.sentence_word_id) return;
+
+        // Add attempt tracking to prevent infinite loops
+        if (!word.sessionData) {
+          word.sessionData = {};
+        }
+
+        word.sessionData.processingAttempts = (word.sessionData.processingAttempts || 0) + 1;
+
+        // Only requeue words that haven't exceeded the max attempts
+        if (word.sessionData.processingAttempts <= maxFailedWordProcessingAttempts) {
+          const position = Math.min(word.reinsertPosition || 0, wordsQueueLength);
+          wordsRef.current.splice(position, 0, word);
+          addedWords = true;
+        }
+      });
+
+      // If we've added words, reset to the beginning to handle them
+      // Otherwise, just continue to the end
+      return addedWords ? 0 : nextPos;
+    }
+
+    // Return the next position, capped at the array length
+    return Math.min(nextPos, wordsQueueLength);
+  }, [currentIndex, failedWordsRef, wordsRef]);
+
   // Update word function
   const updateWord = useCallback(
     async (wordId: string, success: boolean) => {
@@ -834,13 +928,15 @@ export function useSpacedRepetition({
         return;
       }
 
-      // FIXED: Compare against wordsRef instead of dueWords and add safety check
-      if (wordsRef.current.length === 0) {
+      const wordsQueueLength = wordsRef.current.length;
+
+      // Safety check: No words to process
+      if (wordsQueueLength === 0) {
         return;
       }
 
-      // FIXED: Only check if index is valid, not if we're at the end
-      if (currentIndex >= wordsRef.current.length) {
+      // Safety check: Index out of bounds
+      if (currentIndex >= wordsQueueLength) {
         return;
       }
 
@@ -850,27 +946,27 @@ export function useSpacedRepetition({
       }
 
       // Ensure we're comparing the correct IDs (both as strings)
-      if (String(wordToUpdate.sentence_word_id) !== String(wordId)) {
+      if (!isSameWordId(wordToUpdate.sentence_word_id, wordId)) {
         // Try to find the word in the array
-        const wordIndex = wordsRef.current.findIndex(
-          w => String(w.sentence_word_id) === String(wordId)
-        );
-        if (wordIndex !== -1) {
-          setCurrentIndex(wordIndex);
-          // Use the correct word
-          const correctWord = wordsRef.current[wordIndex];
+        const wordIndex = wordsRef.current.findIndex(w => isSameWordId(w.sentence_word_id, wordId));
 
-          // Set transition type and update the word
-          setTransitionType(determineTransitionType(success));
-          await updateWordMutation.mutate({
-            wordId,
-            success,
-            wordToUpdate: correctWord,
-          });
+        // Safety check: Word ID not found in queue
+        if (wordIndex === -1) {
           return;
         }
 
-        // If we can't find the word, return
+        setCurrentIndex(wordIndex);
+
+        // Use the correct word
+        const correctWord = wordsRef.current[wordIndex];
+
+        // Set transition type and update the word
+        setTransitionType(determineTransitionType(success));
+        await updateWordMutation.mutate({
+          wordId,
+          success,
+          wordToUpdate: correctWord,
+        });
         return;
       }
 
@@ -887,7 +983,7 @@ export function useSpacedRepetition({
         console.error('Error in updateWord:', error);
 
         // Try to recover by moving to the next word
-        setCurrentIndex(prev => Math.min(prev + 1, wordsRef.current.length));
+        setCurrentIndex(prev => Math.min(prev + 1, wordsQueueLength));
       }
     },
     [currentIndex, updateWordMutation, determineTransitionType, setCurrentIndex, wordsRef]
@@ -895,11 +991,11 @@ export function useSpacedRepetition({
 
   // Check if review is completed and invalidate relevant queries
   useEffect(() => {
-    if (isComplete) {
+    if (isComplete && onComplete && typeof onComplete === 'function') {
       invalidateQueries();
-      if (onComplete) {
-        onComplete();
-      }
+      onComplete();
+    } else if (isComplete) {
+      invalidateQueries();
     }
   }, [isComplete, onComplete, invalidateQueries]);
 
@@ -913,76 +1009,6 @@ export function useSpacedRepetition({
       }
     };
   }, [invalidateQueries]);
-
-  // Function to determine the next word index, considering requeued words
-  const getNextWordIndex = useCallback(() => {
-    // Current position and next position in the review
-    const currentPos = currentIndex;
-    const nextPos = currentPos + 1;
-
-    // First check: are there any failed words that should be shown at this position?
-    const wordToReinsert = failedWordsRef.current.find(w => w.reinsertPosition === nextPos);
-
-    if (wordToReinsert) {
-      // Remove this word from the failed words queue
-      failedWordsRef.current = failedWordsRef.current.filter(
-        w => w.sentence_word_id !== wordToReinsert.sentence_word_id
-      );
-
-      // Insert the word at the next position
-      wordsRef.current.splice(nextPos, 0, wordToReinsert);
-    }
-
-    // Now check if we've reached the end of the queue
-    const isAtEnd = nextPos >= wordsRef.current.length;
-
-    // If at the end but still have failed words to review,
-    // we need to reset to handle the remaining failed words
-    if (isAtEnd && failedWordsRef.current.length > 0) {
-      // Add safety check to prevent infinite loops
-      // If we've been processing the same failed words for too long, clear them
-      const maxFailedWordProcessingAttempts = 3;
-
-      // Process all failed words and add them to the wordsRef at their proper positions
-      const failedWordsToAdd = [...failedWordsRef.current];
-      failedWordsRef.current = []; // Clear the failed words queue
-
-      // Track if we've added any words
-      let addedWords = false;
-
-      // Add all failed words to the review queue, with safety checks
-      failedWordsToAdd.forEach(word => {
-        // Add attempt tracking to prevent infinite loops
-        if (!word.sessionData) {
-          word.sessionData = {};
-        }
-        word.sessionData.processingAttempts = (word.sessionData.processingAttempts || 0) + 1;
-
-        // Only requeue words that haven't exceeded the max attempts
-        if (word.sessionData.processingAttempts <= maxFailedWordProcessingAttempts) {
-          const position = Math.min(word.reinsertPosition || 0, wordsRef.current.length);
-          wordsRef.current.splice(position, 0, word);
-          addedWords = true;
-        }
-      });
-
-      // If we've added words, reset to the beginning to handle them
-      // Otherwise, just continue to the end
-      if (addedWords) {
-        return 0;
-      } else {
-        return nextPos;
-      }
-    }
-
-    // Add safety check for empty queue
-    if (wordsRef.current.length === 0) {
-      return 0;
-    }
-
-    // Return the next position, capped at the array length
-    return Math.min(nextPos, wordsRef.current.length);
-  }, [currentIndex, failedWordsRef, wordsRef]);
 
   // Function to calculate and return SRS statistics
   const getSrsStats = useCallback((): SrsStats => {
