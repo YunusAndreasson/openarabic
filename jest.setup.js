@@ -2,6 +2,8 @@
  * @jest-environment node
  */
 
+/* global jest */
+
 // eslint-disable-next-line no-undef
 if (typeof global.jest === 'undefined') {
   global.jest = require('@jest/globals').jest;
@@ -30,11 +32,38 @@ jest.mock('expo-haptics', () => ({
 }));
 
 // Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => {
-  const Reanimated = require('react-native-reanimated/mock');
-  Reanimated.default.call = () => {};
-  return Reanimated;
-});
+jest.mock('react-native-reanimated', () => ({
+  FadeIn: {
+    duration: () => ({
+      delay: () => ({}),
+    }),
+  },
+  FadeOut: {
+    duration: () => ({
+      delay: () => ({}),
+    }),
+  },
+  Layout: {
+    duration: () => ({}),
+  },
+  SlideInRight: {
+    duration: () => ({
+      delay: () => ({}),
+    }),
+  },
+  default: {
+    View: 'View',
+    Text: 'Text',
+    Image: 'Image',
+    ScrollView: 'ScrollView',
+    createAnimatedComponent: component => component,
+    call: () => {},
+    addWhitelistedNativeProps: () => {},
+    Value: jest.fn(() => ({
+      setValue: jest.fn(),
+    })),
+  },
+}));
 
 // Mock React Native
 jest.mock('react-native', () => {
@@ -54,6 +83,7 @@ jest.mock('react-native', () => {
     },
     StyleSheet: {
       create: jest.fn(styles => styles),
+      flatten: jest.fn(style => style),
     },
     Animated: {
       Value: jest.fn(() => ({
@@ -139,3 +169,25 @@ if (typeof TextEncoder === 'undefined') {
 if (typeof TextDecoder === 'undefined') {
   global.TextDecoder = require('util').TextDecoder;
 }
+
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => ({
+  SafeAreaView: 'SafeAreaView',
+  SafeAreaProvider: 'SafeAreaProvider',
+  useSafeAreaInsets: jest.fn().mockReturnValue({
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  }),
+  SafeAreaConsumer: ({ children }) => children({ top: 0, right: 0, bottom: 0, left: 0 }),
+  Edge: {
+    top: 'top',
+    right: 'right',
+    bottom: 'bottom',
+    left: 'left',
+  },
+}));
+
+// Increase the default timeout for all tests
+jest.setTimeout(30000);
