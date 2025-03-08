@@ -13,7 +13,7 @@
     "start": "expo start",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
-    "test:srs": "jest useSpacedRepetition --verbose",
+    "test:srs": "jest \"(useSpacedRepetition|srs-principles|ease-factor-test)\" --verbose --no-watch --testPathIgnorePatterns=memoization-demo.js",
     "validate": "npm run lint && npm run format:check",
     "expoupgrade": "npx expo install --check",
     "web": "expo start --web",

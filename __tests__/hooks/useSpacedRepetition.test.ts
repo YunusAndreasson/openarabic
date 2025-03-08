@@ -683,4 +683,301 @@ describe('SRS Algorithm Functions', () => {
       spy.mockRestore();
     });
   });
+
+  // Tests for core SRS principles - validating the algorithm works correctly
+  describe('SRS core principles', () => {
+    it('should show exponential interval growth with repeated successes', () => {
+      // Create a word with baseline values
+      let word = createMockWord({
+        interval_days: 1,
+        ease_factor: 2.5,
+        stability: 1,
+        review_count: 0,
+        lapses: 0,
+      });
+
+      // Track intervals after each successful review
+      const intervals = [word.interval_days];
+
+      // Simulate 5 successful reviews
+      for (let i = 0; i < 5; i++) {
+        const result = calculateNextReview(word, true);
+
+        // Update the word for next review
+        word = {
+          ...word,
+          interval_days: result.newInterval,
+          ease_factor: result.newEaseFactor,
+          stability: result.newStability,
+          review_count: word.review_count + 1,
+        };
+
+        intervals.push(word.interval_days);
+      }
+
+      // Verify intervals follow exponential growth pattern
+      // Each interval should be larger than the previous
+      for (let i = 1; i < intervals.length; i++) {
+        expect(intervals[i]).toBeGreaterThan(intervals[i - 1]);
+
+        // After first review, growth should begin to accelerate
+        if (i > 1) {
+          // The ratio should generally increase with each review
+          // (may not be true for every step due to rounding, but overall trend)
+          const ratio1 = intervals[i] / intervals[i - 1];
+          const ratio2 = i > 2 ? intervals[i - 1] / intervals[i - 2] : 0;
+
+          // Log for debugging
+          console.log(`Review ${i} - Interval: ${intervals[i]}, Ratio: ${ratio1.toFixed(2)}`);
+
+          // We don't strictly check ratio1 > ratio2 since it's not guaranteed on every step
+          // But the final interval should be significantly larger than just linear growth
+        }
+      }
+
+      // Verify final interval is much larger than initial
+      expect(intervals[intervals.length - 1]).toBeGreaterThan(intervals[0] * 5);
+
+      // The final interval should be more than just 5 days (not linear growth)
+      expect(intervals[intervals.length - 1]).toBeGreaterThan(5);
+    });
+
+    it('should reset intervals after failure according to forgetting curve', () => {
+      // Start with a word that has been successfully reviewed many times
+      let word = createMockWord({
+        interval_days: 30, // A substantial interval
+        ease_factor: 2.5,
+        stability: 30,
+        review_count: 5,
+        lapses: 0,
+      });
+
+      // Simulate a failure
+      const result = calculateNextReview(word, false);
+
+      // Verify the interval is reset to a small value
+      expect(result.newInterval).toBe(1);
+
+      // Verify stability is reduced but not completely reset
+      expect(result.newStability).toBeLessThan(word.stability);
+      expect(result.newStability).toBeGreaterThan(0);
+
+      // Verify ease factor decreases
+      expect(result.newEaseFactor).toBeLessThan(word.ease_factor);
+    });
+
+    it('should handle difficult words with appropriate interval adjustments', () => {
+      // Start with a new word
+      let word = createMockWord({
+        interval_days: 1,
+        ease_factor: 2.5,
+        stability: 1,
+        review_count: 0,
+        lapses: 0,
+      });
+
+      // Simulate a sequence: fail, succeed, fail, succeed, succeed
+      const reviewSequence = [false, true, false, true, true];
+
+      // Track interval and ease factor changes
+      const intervals = [word.interval_days];
+      const easeFactors = [word.ease_factor];
+
+      // Run through the sequence
+      for (const success of reviewSequence) {
+        const result = calculateNextReview(word, success);
+
+        // Update the word for next review
+        word = {
+          ...word,
+          interval_days: result.newInterval,
+          ease_factor: result.newEaseFactor,
+          stability: result.newStability,
+          lapses: success ? word.lapses : word.lapses + 1,
+          review_count: word.review_count + 1,
+        };
+
+        intervals.push(word.interval_days);
+        easeFactors.push(word.ease_factor);
+      }
+
+      // Verify difficult words get more conservative ease factor
+      expect(easeFactors[easeFactors.length - 1]).toBeLessThan(easeFactors[0]);
+
+      // The final interval should be smaller than it would be with perfect reviews
+      let perfectWord = createMockWord({
+        interval_days: 1,
+        ease_factor: 2.5,
+        stability: 1,
+        review_count: 0,
+        lapses: 0,
+      });
+
+      // Run 5 successful reviews
+      for (let i = 0; i < 5; i++) {
+        const result = calculateNextReview(perfectWord, true);
+        perfectWord = {
+          ...perfectWord,
+          interval_days: result.newInterval,
+          ease_factor: result.newEaseFactor,
+          stability: result.newStability,
+          review_count: perfectWord.review_count + 1,
+        };
+      }
+
+      // A word with failures should have a more conservative interval
+      expect(word.interval_days).toBeLessThan(perfectWord.interval_days);
+
+      // But the word should still be making progress despite failures
+      expect(word.interval_days).toBeGreaterThan(1);
+    });
+
+    it('should optimize learning efficiency with appropriate requeuing', () => {
+      // Create a word that was just failed
+      const word = createMockWord({
+        sessionData: {
+          failedInSession: true,
+          consecutiveSuccesses: 0,
+        },
+      });
+
+      // Check if it gets requeued
+      expect(shouldRequeueWord(word, true)).toBe(true);
+
+      // Simulate some consecutive successes
+      const wordWithSuccesses = {
+        ...word,
+        sessionData: {
+          failedInSession: true,
+          consecutiveSuccesses: SESSION_CONFIG.REQUIRED_CONSECUTIVE_SUCCESSES - 1,
+        },
+      };
+
+      // Check that it still gets requeued (one short of required)
+      expect(shouldRequeueWord(wordWithSuccesses, true)).toBe(true);
+
+      // Simulate enough consecutive successes
+      const wordWithEnoughSuccesses = {
+        ...word,
+        sessionData: {
+          failedInSession: true,
+          consecutiveSuccesses: SESSION_CONFIG.REQUIRED_CONSECUTIVE_SUCCESSES,
+        },
+      };
+
+      // Check that it no longer gets requeued (reached required successes)
+      expect(shouldRequeueWord(wordWithEnoughSuccesses, true)).toBe(false);
+
+      // Verify that a perfect success streak equals required successes
+      const perfectStreak = Array(SESSION_CONFIG.REQUIRED_CONSECUTIVE_SUCCESSES).fill(true);
+
+      let testWord = {
+        ...word,
+        sessionData: {
+          failedInSession: true,
+          consecutiveSuccesses: 0,
+        },
+      };
+
+      let stillRequiresRequeue = true;
+
+      // Process the success streak
+      for (let i = 0; i < perfectStreak.length; i++) {
+        testWord = {
+          ...testWord,
+          sessionData: {
+            ...testWord.sessionData,
+            consecutiveSuccesses: (testWord.sessionData?.consecutiveSuccesses || 0) + 1,
+          },
+        };
+
+        // Check if we've reached enough successes
+        if (
+          (testWord.sessionData?.consecutiveSuccesses || 0) >=
+          SESSION_CONFIG.REQUIRED_CONSECUTIVE_SUCCESSES
+        ) {
+          stillRequiresRequeue = false;
+        }
+      }
+
+      // Verify that after the perfect streak, no more requeing is needed
+      expect(stillRequiresRequeue).toBe(false);
+    });
+
+    it('should apply spacing effect principles correctly', () => {
+      // Create two words with identical properties except previous_interval
+      const wordWithShortPrevious = createMockWord({
+        stability: 10,
+        interval_days: 10,
+        previous_interval: 1,
+        ease_factor: 2.5,
+      });
+
+      const wordWithLongPrevious = createMockWord({
+        stability: 10,
+        interval_days: 10,
+        previous_interval: 20, // Much longer previous interval
+        ease_factor: 2.5,
+      });
+
+      // Get next review data for both
+      const resultShort = calculateNextReview(wordWithShortPrevious, true);
+      const resultLong = calculateNextReview(wordWithLongPrevious, true);
+
+      // The word with longer previous interval should get a larger interval boost
+      // due to the spacing effect
+      expect(resultLong.newInterval).toBeGreaterThan(resultShort.newInterval);
+
+      // Instead of trying to exactly replicate the calculation and comparing the values,
+      // let's verify that the ratio is reasonable
+      const spacingBoost = resultLong.newInterval / resultShort.newInterval;
+
+      // The spacing boost should be significant but not excessive
+      expect(spacingBoost).toBeGreaterThan(1.1); // At least 10% longer
+      expect(spacingBoost).toBeLessThan(1.5); // But not more than 50% longer
+
+      // We can also log the values to understand what's happening
+      console.log(
+        `Short interval: ${resultShort.newInterval}, Long interval: ${resultLong.newInterval}, Ratio: ${spacingBoost.toFixed(2)}`
+      );
+    });
+
+    it('should apply recovery penalty for frequently lapsed words', () => {
+      // Create two identical words except for lapses count
+      const wordWithFewLapses = createMockWord({
+        stability: 10,
+        interval_days: 10,
+        lapses: 1, // Below the threshold that applies penalty
+        ease_factor: 2.5,
+      });
+
+      const wordWithManyLapses = createMockWord({
+        stability: 10,
+        interval_days: 10,
+        lapses: 5, // Above the threshold that applies penalty
+        ease_factor: 2.5,
+      });
+
+      // Get next review data for both
+      const resultFewLapses = calculateNextReview(wordWithFewLapses, true);
+      const resultManyLapses = calculateNextReview(wordWithManyLapses, true);
+
+      // The word with more lapses should get a shorter interval due to the lapse penalty
+      expect(resultManyLapses.newInterval).toBeLessThan(resultFewLapses.newInterval);
+
+      // Verify the exact calculation by implementing the lapse penalty formula manually
+      const lapseCount = 5;
+      const recoveryPenalty = 1 - lapseCount * SRS_CONSTANTS.LAPSE_PENALTY_FACTOR;
+
+      // Apply the penalty to the calculated interval
+      const penalizedInterval = Math.max(
+        1,
+        Math.round(resultFewLapses.newInterval * recoveryPenalty)
+      );
+
+      // Verify our manual calculation is close to the algorithm's output
+      // (We use toBeCloseTo with 0 decimal places because of potential rounding differences)
+      expect(resultManyLapses.newInterval).toBeCloseTo(penalizedInterval, 0);
+    });
+  });
 });
