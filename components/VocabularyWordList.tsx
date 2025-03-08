@@ -5,18 +5,9 @@ import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactThemedCard } from './CompactThemedCard';
-import type { Tables } from '@/types/database.types';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useWordStatus } from '@/hooks/useWordStatus';
-
-type StudyWord = Tables<'study_words'> & {
-  sentence_word:
-    | (Tables<'sentence_words'> & {
-        root: Tables<'roots'> | null;
-        word_type: Tables<'word_types'> | null;
-      })
-    | null;
-};
+import { StudyWord } from '@/types/vocabulary.types';
 
 interface VocabularyWordListProps {
   title: string;

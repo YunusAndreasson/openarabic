@@ -2,7 +2,7 @@ import React, { useState, memo, useMemo, useCallback } from 'react';
 import { StyleSheet, TouchableOpacity, View, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
-import type { Tables } from '@/types/database.types';
+import { SentenceWord } from '@/types/vocabulary.types';
 import { WordDetailsModal } from './WordDetailsModal';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -15,15 +15,10 @@ import Animated, {
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 
-type WordWithDetails = Tables<'sentence_words'> & {
-  root: Tables<'roots'> | null;
-  word_type: Tables<'word_types'> | null;
-};
-
 interface ArabicWordProps {
-  word: WordWithDetails;
+  word: SentenceWord;
   isSelected: boolean;
-  onPress: (word: Tables<'sentence_words'>) => void;
+  onPress: (word: SentenceWord) => void;
   scale?: number;
   baseSize?: number;
 }

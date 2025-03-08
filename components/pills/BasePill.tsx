@@ -3,17 +3,7 @@ import { StyleSheet, Platform, ViewStyle, TextStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { LAYOUT } from '@/constants/layout';
-
-export interface BasePillStyleProps {
-  isSelected?: boolean;
-  isDarkMode: boolean;
-  colors: ReturnType<typeof useColors>;
-}
-
-export interface BasePillStyles {
-  container: ViewStyle;
-  text: TextStyle;
-}
+import { BasePillStyleProps, BasePillStyles } from '../../types/ui.types';
 
 export const createBasePillStyles = ({
   isSelected = false,

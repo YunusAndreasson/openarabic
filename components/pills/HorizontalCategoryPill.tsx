@@ -4,13 +4,7 @@ import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { createBasePillStyles } from './BasePill';
-import type { Tables } from '../../types/database.types';
-
-interface HorizontalCategoryPillProps {
-  category: Tables<'categories'> | null;
-  isSelected: boolean;
-  onPress: () => void;
-}
+import { HorizontalCategoryPillProps } from '../../types/ui.types';
 
 function HorizontalCategoryPillComponent({
   category,

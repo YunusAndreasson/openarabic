@@ -10,13 +10,14 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { VocabularyStats } from '@/types/vocabulary.types';
 
-interface VocabularyDashboardProps {
-  totalWords: number;
-  dueWords: number;
-  masteredWords: number;
-  learningWords: number;
-  streak: number;
+// Using subset of properties from the VocabularyStats type for this component
+interface VocabularyDashboardProps
+  extends Pick<
+    VocabularyStats,
+    'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords' | 'streak'
+  > {
   colors: any;
 }
 

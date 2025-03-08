@@ -1,6 +1,12 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studyWordsService } from '../services/study_words';
+import {
+  StudyWord,
+  SrsStats,
+  UseSpacedRepetitionProps,
+  UseSpacedRepetitionReturn,
+} from '../types/vocabulary.types';
 
 /**
  * Enhanced Spaced Repetition System (SRS)
@@ -35,67 +41,6 @@ import { studyWordsService } from '../services/study_words';
  *   - Focusing more attention on difficult words
  *   - Optimizing intervals based on memory research
  */
-
-// Types for study words
-export interface StudyWord {
-  sentence_word_id: string;
-  sentence_word: {
-    word_form: string;
-    english: string;
-    sentence?: {
-      arabic: string;
-    };
-  };
-  interval_days: number;
-  ease_factor: number;
-  next_review_at: string;
-  review_count: number;
-  lapses: number;
-  stability: number; // Memory stability - how well the item is remembered
-  previous_interval: number; // The interval before the current one
-  // Session-specific properties (not stored in database)
-  sessionData?: {
-    isNew?: boolean; // Is this a new word (review_count <= 1)
-    failedInSession?: boolean; // Was this word failed in the current session
-    consecutiveSuccesses?: number; // How many consecutive successes since last failure
-    remainingReviewsNeeded?: number; // How many more reviews this word needs in the session
-    processingAttempts?: number; // Attempts to process this word
-  };
-  reinsertPosition?: number; // Position where this word should be reinserted in the queue
-}
-
-interface SrsStats {
-  totalWords: number;
-  averageInterval: number;
-  averageStability: number;
-  averageEaseFactor: number;
-  successRate: number;
-  masteredCount: number;
-  learningCount: number;
-  averageLapses: number;
-  failedWordsRemaining: number;
-  newWordsCount: number;
-  failedInSessionCount: number;
-}
-
-interface UseSpacedRepetitionProps {
-  userId: string | undefined;
-  onComplete?: () => void;
-}
-
-interface UseSpacedRepetitionReturn {
-  dueWords: StudyWord[];
-  currentIndex: number;
-  currentWord: StudyWord | undefined;
-  isLoading: boolean;
-  isUpdating: boolean;
-  updateWord: (wordId: string, success: boolean) => Promise<void>;
-  progress: number;
-  isComplete: boolean;
-  invalidateQueries: () => void;
-  transitionType: 'fade' | 'slide'; // Ensure transitionType is properly exported
-  getSrsStats: () => SrsStats; // Added function to get SRS statistics
-}
 
 // Session configuration - extracted for testability
 export const SESSION_CONFIG = {

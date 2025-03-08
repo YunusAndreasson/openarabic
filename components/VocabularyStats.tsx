@@ -8,14 +8,13 @@ import { Loader, LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/useComponentAnimation';
 import { useProgressAnimation } from '@/hooks/useProgressAnimation';
 import { createArcPath } from '@/utils/graphUtils';
+import { VocabularyStats as VocabularyStatsType } from '@/types/vocabulary.types';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
-interface VocabularyStatsProps {
-  totalWords: number;
-  dueWords: number;
-  masteredWords: number;
-  learningWords: number;
+// Using subset of properties from the VocabularyStats type for this component
+interface VocabularyStatsProps
+  extends Pick<VocabularyStatsType, 'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords'> {
   isLoading?: boolean;
 }
 

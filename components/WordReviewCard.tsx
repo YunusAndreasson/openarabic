@@ -15,7 +15,7 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
-import type { StudyWord } from '../hooks/useSpacedRepetition';
+import { StudyWord } from '../types/vocabulary.types';
 
 // Define transition types
 export type TransitionType = 'fade' | 'slide';

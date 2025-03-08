@@ -5,7 +5,7 @@ import {
   calculateWeeklyProgressData,
   calculateVocabularyStats,
 } from '../../utils/vocabulary-stats';
-import { StudyWord } from '../../hooks/useSpacedRepetition';
+import { StudyWord } from '../../types/vocabulary.types';
 
 // Use a fixed date for consistent testing
 const TEST_DATE = new Date('2023-06-15T12:00:00Z'); // This is a Thursday

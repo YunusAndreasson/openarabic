@@ -7,42 +7,13 @@ import type { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import { CategoryPill } from './CategoryPill';
 import { Ionicons } from '@expo/vector-icons';
-
-interface CompactArticleCardProps {
-  article: Article;
-  onPress?: () => void;
-  showTimeAgo?: boolean;
-}
+import { CompactArticleCardProps } from '../types/ui.types';
+import { formatTimeAgo } from '../utils/dateUtils';
 
 // TimeAgo component to show when an article was published
 const TimeAgo = ({ date }: { date: string }) => {
   const colors = useColors();
-
-  const timeAgoText = useMemo(() => {
-    const articleDate = new Date(date);
-    const now = new Date();
-    const diffInMillis = now.getTime() - articleDate.getTime();
-    const diffInSeconds = Math.floor(diffInMillis / 1000);
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    const diffInDays = Math.floor(diffInHours / 24);
-    const diffInWeeks = Math.floor(diffInDays / 7);
-    const diffInMonths = Math.floor(diffInDays / 30);
-
-    if (diffInSeconds < 60) {
-      return 'Just now';
-    } else if (diffInMinutes < 60) {
-      return `${diffInMinutes}m ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`;
-    } else if (diffInDays < 7) {
-      return `${diffInDays}d ago`;
-    } else if (diffInWeeks < 4) {
-      return `${diffInWeeks}w ago`;
-    } else {
-      return `${diffInMonths}mo ago`;
-    }
-  }, [date]);
+  const timeAgoText = formatTimeAgo(date);
 
   return (
     <View style={styles.timeAgoContainer}>

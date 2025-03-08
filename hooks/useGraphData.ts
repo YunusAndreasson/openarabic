@@ -1,25 +1,5 @@
 import { useMemo } from 'react';
-
-interface GraphDataPoint {
-  date: string;
-  wordsLearned: number;
-}
-
-interface ProcessedPoint {
-  x: number;
-  y: number;
-  value: number;
-  label: string;
-}
-
-interface GraphPaths {
-  points: ProcessedPoint[];
-  areaPath: string;
-  linePath: string;
-  totalWordsLearned: number;
-  dailyAverage: number;
-  maxValue: number;
-}
+import { WeeklyProgressData, GraphPaths, GraphProcessedPoint } from '@/types/vocabulary.types';
 
 /**
  * Hook to process graph data and generate path strings for SVG
@@ -29,7 +9,7 @@ interface GraphPaths {
  * @returns Processed graph data including points and paths
  */
 export function useGraphData(
-  data: GraphDataPoint[],
+  data: WeeklyProgressData[],
   graphWidth: number,
   graphHeight: number
 ): GraphPaths {
@@ -41,13 +21,13 @@ export function useGraphData(
   }, [data]);
 
   // Create points for the graph
-  const points = useMemo(() => {
+  const points = useMemo<GraphProcessedPoint[]>(() => {
     if (data.length <= 1) {
       // Handle edge case of 0 or 1 data points
       if (data.length === 0) return [];
 
       // If only one data point, create a flat line
-      const point = {
+      const point: GraphProcessedPoint = {
         x: graphWidth / 2,
         y: graphHeight - (data[0].wordsLearned / maxValue) * graphHeight,
         value: data[0].wordsLearned,
@@ -62,7 +42,12 @@ export function useGraphData(
       const x = index * segmentWidth;
       // Invert Y coordinate (0 is at top in canvas)
       const y = graphHeight - (item.wordsLearned / maxValue) * graphHeight;
-      return { x, y, value: item.wordsLearned, label: item.date };
+      return {
+        x,
+        y,
+        value: item.wordsLearned,
+        label: item.date,
+      } as GraphProcessedPoint;
     });
   }, [data, graphWidth, graphHeight, maxValue]);
 

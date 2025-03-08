@@ -12,21 +12,11 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
-import { ArticleSkeleton, ArticleSkeletonRow } from './ArticleSkeleton';
+import { ArticleSkeletonRow } from './ArticleSkeleton';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import EndMessage from './EndMessage';
 import { CopyrightFooter } from './CopyrightFooter';
-
-interface ArticleListProps {
-  articles: Article[];
-  isLoading: boolean;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  onArticlePress: (article: Article) => void;
-  ListHeaderComponent?: React.ReactElement;
-  ListEmptyComponent?: React.ReactElement;
-  contentContainerStyle?: any;
-}
+import { ArticleListProps } from '../types/ui.types';
 
 const ITEM_HEIGHT = 360; // Approximate height of each article card
 

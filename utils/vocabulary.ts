@@ -1,9 +1,2 @@
-export interface StudyWord {
-  sentence_word?: {
-    word: string;
-    translation: string;
-  } | null;
-  next_review_at: string;
-  interval_days: number;
-  review_count: number;
-}
+// Re-export the StudyWord type from the types directory
+export { StudyWord } from '../types/vocabulary.types';

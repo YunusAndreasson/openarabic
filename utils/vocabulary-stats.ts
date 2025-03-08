@@ -1,21 +1,9 @@
-import { StudyWord } from '../hooks/useSpacedRepetition';
-
-/**
- * Calculate vocabulary statistics from a list of study words
- */
-export interface VocabularyStats {
-  totalWords: number;
-  dueWords: number;
-  masteredWords: number;
-  learningWords: number;
-  streak: number;
-  successRate: number;
-  averageInterval: number;
-  averageEaseFactor: number;
-  averageLapses: number;
-  newWordsCount: number;
-  failedInSessionCount: number;
-}
+import {
+  StudyWord,
+  SrsStats,
+  VocabularyStats,
+  WeeklyProgressData,
+} from '../types/vocabulary.types';
 
 /**
  * Determine if a word is considered "mastered" based on its interval
@@ -116,13 +104,9 @@ export function calculateStreak(words: StudyWord[]): number {
 }
 
 /**
- * Calculate weekly progress data (words learned per day for the last 7 days)
- * @param words The list of study words to analyze
- * @returns The weekly progress data
+ * Calculate weekly progress data for the last 7 days
  */
-export function calculateWeeklyProgressData(
-  words: StudyWord[]
-): { date: string; wordsLearned: number }[] {
+export function calculateWeeklyProgressData(words: StudyWord[]): WeeklyProgressData[] {
   if (words.length === 0)
     return Array(7)
       .fill(0)

@@ -1,19 +1,13 @@
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
-import type { Tables } from '../../types/database.types';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HorizontalCategoryPill } from './HorizontalCategoryPill';
 import Animated, { useAnimatedStyle, SharedValue, interpolate } from 'react-native-reanimated';
-
-interface CategoryPillsContainerProps {
-  categories: Tables<'categories'>[];
-  selectedCategory: Tables<'categories'> | null;
-  onSelectCategory: (category: Tables<'categories'> | null) => void;
-  visible: SharedValue<number>;
-}
+import { CategoryPillsContainerProps } from '../../types/ui.types';
+import type { Tables } from '../../types/database.types';
 
 function CategoryPillsContainerComponent({
   categories,

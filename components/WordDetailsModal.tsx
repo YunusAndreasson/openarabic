@@ -4,7 +4,7 @@ import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
-import type { Tables } from '@/types/database.types';
+import { SentenceWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ThemedModal } from './ThemedModal';
 import { ThemedButton } from './ThemedButton';
@@ -12,10 +12,7 @@ import { ThemedButton } from './ThemedButton';
 interface WordDetailsModalProps {
   visible: boolean;
   onClose: () => void;
-  word: Tables<'sentence_words'> & {
-    root: Tables<'roots'> | null;
-    word_type: Tables<'word_types'> | null;
-  };
+  word: SentenceWord;
   isSelected: boolean;
   onStudyPress?: () => void;
 }

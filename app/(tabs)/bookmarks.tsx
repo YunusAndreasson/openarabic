@@ -13,7 +13,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
-import { CompactThemedCard } from '@/components/CompactThemedCard';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 // ====== AUDIO PLAYER CONSTANTS ======
@@ -309,7 +308,6 @@ export default function BookmarksScreen() {
   const {
     data: readingList,
     isLoading: isDataLoading,
-    isFetching,
     status,
     refetch,
   } = useQuery({
@@ -420,19 +418,6 @@ export default function BookmarksScreen() {
   const activePlaylist = useMemo(() => {
     return isShuffleMode ? shuffledList : readingList || [];
   }, [isShuffleMode, shuffledList, readingList]);
-
-  // Get current track
-  const currentTrack = useMemo(() => {
-    if (currentTrackIndex < 0 || !activePlaylist || currentTrackIndex >= activePlaylist.length) {
-      return null;
-    }
-    return activePlaylist[currentTrackIndex];
-  }, [currentTrackIndex, activePlaylist]);
-
-  // Get current audio URL
-  const currentAudioUrl = useMemo(() => {
-    return currentTrack?.article?.audio_url || null;
-  }, [currentTrack]);
 
   // Check if something is currently playing
   const isCurrentlyPlaying = useMemo(() => {
@@ -575,30 +560,6 @@ export default function BookmarksScreen() {
   };
 
   // Toggle track playback
-  const toggleTrack = async (index: number) => {
-    // If this is the currently active track, toggle play/pause
-    if (index === currentTrackIndex && audioState !== AUDIO_STATES.IDLE) {
-      if (audioState === AUDIO_STATES.PLAYING) {
-        // Pause current track
-        if (soundRef.current) {
-          await soundRef.current.pauseAsync();
-          setAudioState(AUDIO_STATES.PAUSED);
-        }
-      } else if (audioState === AUDIO_STATES.PAUSED) {
-        // Resume current track
-        if (soundRef.current) {
-          await soundRef.current.playAsync();
-          setAudioState(AUDIO_STATES.PLAYING);
-        }
-      }
-      return;
-    }
-
-    // Otherwise, start playing the selected track
-    setCurrentTrackIndex(index);
-    setIsShuffleMode(false);
-    setPlaylistMode(false);
-  };
 
   // Start playback of all tracks in order
   const startPlayback = async () => {
@@ -668,18 +629,6 @@ export default function BookmarksScreen() {
   };
 
   // Play previous track in playlist
-  const playPreviousTrack = async () => {
-    // If at beginning of playlist, restart current track
-    if (currentTrackIndex <= 0) {
-      if (soundRef.current) {
-        await soundRef.current.setPositionAsync(0);
-      }
-      return;
-    }
-
-    // Move to previous track
-    setCurrentTrackIndex(prev => prev - 1);
-  };
 
   // Handle component focus and cleanup
   useFocusEffect(
@@ -788,7 +737,7 @@ export default function BookmarksScreen() {
           ref={flatListRef}
           data={readingList}
           keyExtractor={item => `${item.article_id}`}
-          renderItem={({ item, index }) => {
+          renderItem={({ item }) => {
             // Determine if this item is currently playing
             const isItemPlaying =
               audioState === AUDIO_STATES.PLAYING &&

@@ -3,11 +3,12 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
+import { SentenceWord } from '@/types/vocabulary.types';
 
 export interface ArticleSentenceProps {
   sentence: Tables<'article_sentences'>;
-  words: Tables<'sentence_words'>[];
-  renderWord: (word: Tables<'sentence_words'>) => React.ReactNode;
+  words: SentenceWord[];
+  renderWord: (word: SentenceWord) => React.ReactNode;
   settings: {
     showEnglish: boolean;
     fontScale: number;

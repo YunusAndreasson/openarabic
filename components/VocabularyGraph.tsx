@@ -24,13 +24,11 @@ import Animated, {
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import { WeeklyProgressData } from '@/types/vocabulary.types';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
-  data: {
-    date: string; // Format: "Mon", "Tue", etc.
-    wordsLearned: number;
-  }[];
+  data: WeeklyProgressData[];
   title?: string;
   isLoading?: boolean;
 }

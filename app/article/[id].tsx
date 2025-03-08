@@ -8,8 +8,6 @@ import {
   TouchableOpacity,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  ScrollView,
-  RefreshControl,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/ThemedView';
@@ -41,6 +39,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   container: {
@@ -83,11 +82,6 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     alignSelf: 'center',
-  },
-  backButtonContainer: {
-    position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
-    left: 15,
   },
   // Article header styles
   articleHeaderContainer: {
@@ -144,11 +138,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
     letterSpacing: 0.3,
-  },
-  divider: {
-    height: 1,
-    marginVertical: LAYOUT.SPACING.SMALL,
-    width: '100%',
   },
   summaryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -615,7 +604,7 @@ export default function ArticleScreen() {
 
     // Capitalize first letter of category
     const categoryName = article.category?.name
-      ? article.category.name.charAt(0).toUpperCase() + article.category.name.slice(1)
+      ? capitalizeFirstLetter(article.category.name)
       : 'Uncategorized';
 
     return (

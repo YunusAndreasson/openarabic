@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useRef, useState } from 'react';
-import { StyleSheet, View, ScrollView, Platform, Pressable } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
@@ -14,19 +14,17 @@ import { router, useNavigation } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
-import { StudyWord } from '@/utils/vocabulary';
+import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { FadeIn } from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
-import { Ionicons } from '@expo/vector-icons';
 
 // Create a memoized component for the review button
 const ReviewButton = React.memo(
   ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => {
-    const colors = useColors();
     return (
       <View style={styles.reviewButtonContainer}>
         <ThemedButton
@@ -42,21 +40,18 @@ const ReviewButton = React.memo(
   }
 );
 
-ReviewButton.displayName = 'ReviewButton';
-
 // Create a memoized component for the disabled review button
 const DisabledReviewButton = React.memo(() => {
-  const colors = useColors();
-
   return (
     <View style={styles.reviewButtonContainer}>
       <ThemedButton
-        title="No words due for review"
-        icon="checkmark-circle"
+        title="No words to review"
+        icon="time"
         iconSize={24}
-        disabled={true}
+        onPress={() => {}}
         variant="outlined"
         style={styles.reviewButton}
+        disabled
       />
     </View>
   );
@@ -64,22 +59,7 @@ const DisabledReviewButton = React.memo(() => {
 
 DisabledReviewButton.displayName = 'DisabledReviewButton';
 
-// Helper function to estimate the last review date for a word
-const estimateLastReviewDate = (word: StudyWord, currentTime: Date): Date | null => {
-  if (word.review_count === 0) return null;
-
-  // The next review date is scheduled as last review date + interval days
-  const reviewDate = new Date(word.next_review_at);
-
-  // If the word has been reviewed, subtract interval days to get the approximate last review date
-  reviewDate.setDate(reviewDate.getDate() - word.interval_days);
-
-  // Ensure we don't return future dates for last review
-  if (reviewDate > currentTime) return new Date(currentTime);
-
-  return reviewDate;
-};
-
+// Remove the local implementation and use the imported function instead
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
@@ -96,7 +76,6 @@ export default function VocabularyScreen() {
     isFetching,
     status,
     error,
-    refetch,
   } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id, { forStats: false }),
@@ -219,12 +198,12 @@ export default function VocabularyScreen() {
   }, [user, isContentLoading, validStudyWords.length]);
 
   // Use the vocabulary-stats utility to calculate stats
-  const stats = useMemo(() => {
+  const stats = useMemo<VocabularyStats>(() => {
     return calculateVocabularyStats(validStudyWords, dueWordsData);
   }, [validStudyWords, dueWordsData]);
 
   // Generate weekly progress data based on actual review history using the utility
-  const weeklyProgressData = useMemo(() => {
+  const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
     return calculateWeeklyProgressData(validStudyWords);
   }, [validStudyWords]);
 
@@ -360,11 +339,6 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  sectionTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
   messageContainer: {
     flex: 1,

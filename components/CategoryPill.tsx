@@ -5,20 +5,20 @@ import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { LAYOUT } from '@/constants/layout';
 import { createBasePillStyles, basePillStyles } from './pills/BasePill';
+import { CategoryPillBaseProps } from '../types/ui.types';
+import { capitalizeFirstLetter } from '../utils/stringUtils';
 
-interface CategoryPillProps {
-  category: string;
-  absolute?: boolean;
-}
-
-export function CategoryPill({ category, absolute = true }: CategoryPillProps): React.JSX.Element {
+export function CategoryPill({
+  category,
+  absolute = true,
+}: CategoryPillBaseProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
   // Capitalize the first letter of the category
   const displayCategory = useMemo(() => {
     if (!category) return '';
-    return category.charAt(0).toUpperCase() + category.slice(1);
+    return capitalizeFirstLetter(category);
   }, [category]);
 
   // Use the shared base pill styles with isSelected=true since CategoryPill is always "selected" in terms of styling

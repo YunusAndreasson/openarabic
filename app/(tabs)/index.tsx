@@ -1,16 +1,5 @@
-import {
-  StyleSheet,
-  FlatList,
-  ListRenderItem,
-  Platform,
-  View,
-  RefreshControl,
-  ScrollView,
-  Pressable,
-} from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { router } from 'expo-router';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '@/services/articles';
@@ -21,33 +10,32 @@ import { Article } from '@/types/articles.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
-import { Theme } from '@/constants/Colors';
 import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import type { Tables } from '@/types/database.types';
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  SlideInRight,
-  useAnimatedScrollHandler,
-  useSharedValue,
-} from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
-import type { CategoryItem } from '@/components/CategorySelector';
-import { Image } from 'expo-image';
 import SectionTitle from '@/components/SectionTitle';
-import EndMessage from '@/components/EndMessage';
 import ArticleList from '@/components/ArticleList';
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
 import { useAuth } from '@/hooks/useAuth';
+import { getDayOfYear } from '@/utils/dateUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import {
+  filterArticles,
+  getRecentArticles,
+  getLatestArticles,
+  getFeaturedArticles,
+  getBeginnerArticles,
+  getDailyPickArticle,
+} from '@/utils/articleUtils';
+import { FlatList } from 'react-native';
 
 // Constants
-const ITEM_HEIGHT = 360;
 
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -67,16 +55,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
   },
-  articleItemContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  articleCard: {
-    width: '100%',
-  },
-  itemSeparator: {
-    height: LAYOUT.SPACING.MEDIUM,
-  },
+
   categorySection: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
@@ -88,36 +67,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: 0,
   },
-  sectionTitleContainer: {
-    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  sectionTitleText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    letterSpacing: -0.3,
-  },
-  sectionHeaderWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    marginRight: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  progressIndicator: {
-    backgroundColor: '#FF9500',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressText: {
-    color: 'white',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '700',
-  },
   horizontalList: {
     paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
     paddingRight: LAYOUT.SPACING.SMALL,
@@ -128,68 +77,23 @@ const styles = StyleSheet.create({
   dailyPickCard: {
     width: '100%',
   },
-  welcomeContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  welcomeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: '700',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  dateText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: 0.7,
-  },
-  authorContainer: {
-    marginRight: LAYOUT.SPACING.SMALL,
-    width: 220,
-  },
-  authorName: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
-  },
   authorListContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
-  authorListHeaderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    marginRight: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  clearFilterButton: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
   clearFilterText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
   },
-  authorItem: {
+  clearFilterButton: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    minWidth: 60,
     alignItems: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    width: 80,
-  },
-  authorAvatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  authorAvatarSelected: {
-    borderWidth: 3,
+    justifyContent: 'center',
   },
   authorPill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -211,12 +115,6 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     letterSpacing: 0.3,
   },
-  authorNameText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
   filterNoticeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -224,7 +122,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     marginVertical: LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
   },
   filterNoticeText: {
@@ -245,7 +142,6 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
     minHeight: 44,
   },
   backButtonText: {
@@ -258,32 +154,36 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
-  endMessageContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.LARGE,
+  paddingHorizontal: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    marginBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.XLARGE : LAYOUT.SPACING.LARGE,
   },
-  endMessageText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
-    fontWeight: '400',
-    letterSpacing: 0.3,
+  featuredItemMargin: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  horizontalListWithPadding: {
+    paddingBottom: LAYOUT.SPACING.TINY,
+  },
+  authorFilterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginRight: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  boldText: {
+    fontWeight: '600',
+  },
+  backArrow: {
+    fontSize: 16,
   },
 });
 
 // Empty state components
-const EmptyState = React.memo(() => (
-  <View style={styles.emptyContainer}>{/* Empty state without any message */}</View>
-));
-
 const ErrorState = React.memo(({ message }: { message: string }) => (
   <View style={styles.emptyContainer}>
     <ThemedText style={styles.emptyText}>{message}</ThemedText>
   </View>
 ));
+ErrorState.displayName = 'ErrorState';
 
 // Daily Pick Component
 const DailyPick = React.memo(
@@ -294,19 +194,9 @@ const DailyPick = React.memo(
     articles: Article[];
     onArticlePress: (article: Article) => void;
   }) => {
-    const colors = useColors();
-
     // Get daily pick based on date (changes daily but same for all users)
     const dailyPick = useMemo(() => {
-      if (articles.length === 0) return null;
-
-      const today = new Date();
-      const dayOfYear = Math.floor(
-        (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000
-      );
-      const pickIndex = dayOfYear % articles.length;
-
-      return articles[pickIndex];
+      return getDailyPickArticle(articles, getDayOfYear());
     }, [articles]);
 
     if (!dailyPick) return null;
@@ -314,7 +204,7 @@ const DailyPick = React.memo(
     return (
       <Animated.View style={styles.dailyPickSection} entering={FadeIn.duration(600)}>
         <SectionTitle title="Daily Pick" />
-        <View style={{ paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING }}>
+        <View style={styles.paddingHorizontal}>
           <ThemedCard
             imageUrl={dailyPick.image_url || 'https://picsum.photos/800/400'}
             title={dailyPick.title}
@@ -328,6 +218,7 @@ const DailyPick = React.memo(
     );
   }
 );
+DailyPick.displayName = 'DailyPick';
 
 // Category Section Component
 const CategorySection = React.memo(
@@ -344,44 +235,40 @@ const CategorySection = React.memo(
     delay?: number;
     showTimeAgo?: boolean;
   }) => {
-    const scrollX = useSharedValue(0);
-    const scrollHandler = useAnimatedScrollHandler(event => {
-      scrollX.value = event.contentOffset.x;
-    });
-
-    if (articles.length === 0) return null;
-
     // Capitalize the first letter of each word in a title
     const displayTitle = title
       .split(' ')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
 
+    if (articles.length === 0) return null;
+
     return (
       <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(delay)}>
         <SectionTitle title={displayTitle} />
-        <Animated.ScrollView
+        <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          removeClippedSubviews={true}
-          entering={FadeIn.duration(400).delay(delay + 100)}
-        >
-          {articles.map(article => (
+          data={articles}
+          keyExtractor={article => `article-${article.id}`}
+          renderItem={({ item }) => (
             <CompactArticleCard
-              key={`article-${article.id}`}
-              article={article}
-              onPress={() => onArticlePress(article)}
+              article={item}
+              onPress={() => onArticlePress(item)}
               showTimeAgo={showTimeAgo}
             />
-          ))}
-        </Animated.ScrollView>
+          )}
+          removeClippedSubviews={true}
+          initialNumToRender={5}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
       </Animated.View>
     );
   }
 );
+CategorySection.displayName = 'CategorySection';
 
 // Featured Articles Component
 const FeaturedArticles = React.memo(
@@ -397,11 +284,11 @@ const FeaturedArticles = React.memo(
     return (
       <Animated.View style={styles.featuredSection} entering={FadeIn.duration(500).delay(300)}>
         <SectionTitle title="Featured Articles" />
-        <View style={{ paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING }}>
+        <View style={styles.paddingHorizontal}>
           {articles.map((article, index) => (
             <Animated.View
               key={`featured-${article.id}`}
-              style={{ marginBottom: index < articles.length - 1 ? LAYOUT.SPACING.MEDIUM : 0 }}
+              style={index < articles.length - 1 ? styles.featuredItemMargin : undefined}
               entering={FadeIn.duration(400).delay(300 + index * 100)}
             >
               <ThemedCard
@@ -419,6 +306,7 @@ const FeaturedArticles = React.memo(
     );
   }
 );
+FeaturedArticles.displayName = 'FeaturedArticles';
 
 // Continue Reading Section Component
 const ContinueReadingSection = React.memo(
@@ -435,25 +323,25 @@ const ContinueReadingSection = React.memo(
     return (
       <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(100)}>
         <SectionTitle title="Continue Reading" />
-        <Animated.ScrollView
+        <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
+          data={articles}
+          keyExtractor={article => `reading-${article.id}`}
+          renderItem={({ item }) => (
+            <CompactArticleCard article={item} onPress={() => onArticlePress(item)} />
+          )}
           removeClippedSubviews={true}
-          entering={FadeIn.duration(400).delay(200)}
-        >
-          {articles.map(article => (
-            <CompactArticleCard
-              key={`reading-${article.id}`}
-              article={article}
-              onPress={() => onArticlePress(article)}
-            />
-          ))}
-        </Animated.ScrollView>
+          initialNumToRender={5}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+        />
       </Animated.View>
     );
   }
 );
+ContinueReadingSection.displayName = 'ContinueReadingSection';
 
 // Author Filter List Component
 const AuthorFilterList = React.memo(
@@ -470,6 +358,59 @@ const AuthorFilterList = React.memo(
   }) => {
     const colors = useColors();
 
+    // Get styles for author pill based on selection state
+    const getAuthorPillStyle = useCallback(
+      (isSelected: boolean, pressed: boolean) => [
+        styles.authorPill,
+        {
+          backgroundColor: isSelected
+            ? colors.textOverlay
+            : pressed
+              ? colors.background
+              : colors.cardBackground,
+        },
+        isSelected && styles.authorPillSelected,
+      ],
+      [colors.textOverlay, colors.background, colors.cardBackground]
+    );
+
+    // Get styles for author pill text based on selection state
+    const getAuthorPillTextStyle = useCallback(
+      (isSelected: boolean) => [
+        styles.authorPillText,
+        isSelected && [{ color: colors.tint }, styles.boldText],
+      ],
+      [colors.tint]
+    );
+
+    // Render an author pill
+    const renderAuthorItem = useCallback(
+      ({ item }: { item: Tables<'authors'> }) => {
+        const isSelected = selectedAuthorId === item.id;
+        return (
+          <Animated.View
+            key={`author-pill-${item.id}`}
+            entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(650)}
+          >
+            <Pressable
+              style={({ pressed }) => getAuthorPillStyle(isSelected, pressed)}
+              onPress={() => onSelectAuthor(item.id)}
+            >
+              <ThemedText
+                style={getAuthorPillTextStyle(isSelected)}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                skipDefaultColor={isSelected}
+              >
+                {item.name}
+              </ThemedText>
+            </Pressable>
+          </Animated.View>
+        );
+      },
+      [selectedAuthorId, onSelectAuthor, getAuthorPillStyle, getAuthorPillTextStyle]
+    );
+
     // Skip rendering if no authors
     if (authors.length === 0) return null;
 
@@ -479,14 +420,7 @@ const AuthorFilterList = React.memo(
         style={[styles.authorListContainer]}
         entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(600)}
       >
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginRight: LAYOUT.SCREEN_EDGE_PADDING,
-          }}
-        >
+        <View style={styles.authorFilterHeader}>
           <SectionTitle title="Browse by Author" />
           {selectedAuthorId !== null && (
             <Pressable
@@ -499,53 +433,23 @@ const AuthorFilterList = React.memo(
             </Pressable>
           )}
         </View>
-        <ScrollView
+        <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.horizontalList, { paddingBottom: LAYOUT.SPACING.TINY }]}
+          contentContainerStyle={[styles.horizontalList, styles.horizontalListWithPadding]}
+          data={authors}
+          keyExtractor={author => `author-${author.id}`}
+          renderItem={renderAuthorItem}
           removeClippedSubviews={true}
-        >
-          {authors.map(author => {
-            const isSelected = selectedAuthorId === author.id;
-            return (
-              <Animated.View
-                key={`author-pill-${author.id}`}
-                entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(650)}
-              >
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.authorPill,
-                    {
-                      backgroundColor: isSelected
-                        ? colors.textOverlay
-                        : pressed
-                          ? colors.background
-                          : colors.cardBackground,
-                    },
-                    isSelected && styles.authorPillSelected,
-                  ]}
-                  onPress={() => onSelectAuthor(author.id)}
-                >
-                  <ThemedText
-                    style={[
-                      styles.authorPillText,
-                      isSelected && { color: colors.tint, fontWeight: '600' },
-                    ]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    skipDefaultColor={isSelected}
-                  >
-                    {author.name}
-                  </ThemedText>
-                </Pressable>
-              </Animated.View>
-            );
-          })}
-        </ScrollView>
+          initialNumToRender={10}
+          maxToRenderPerBatch={20}
+          windowSize={5}
+        />
       </Animated.View>
     );
   }
 );
+AuthorFilterList.displayName = 'AuthorFilterList';
 
 // Filter Notice Component
 const FilterNotice = React.memo(({ type, name }: { type: 'author' | 'category'; name: string }) => {
@@ -555,13 +459,14 @@ const FilterNotice = React.memo(({ type, name }: { type: 'author' | 'category'; 
     <View style={[styles.filterNoticeContainer, { backgroundColor: colors.textOverlay }]}>
       <ThemedText style={styles.filterNoticeText}>
         Showing articles from {type === 'author' ? 'author' : 'category'}{' '}
-        <ThemedText style={{ fontWeight: '600', color: colors.tint }} skipDefaultColor>
+        <ThemedText style={[styles.boldText, { color: colors.tint }]} skipDefaultColor>
           {name}
         </ThemedText>
       </ThemedText>
     </View>
   );
 });
+FilterNotice.displayName = 'FilterNotice';
 
 // Back Button Component
 const BackButton = React.memo(({ onPress }: { onPress: () => void }) => {
@@ -586,7 +491,7 @@ const BackButton = React.memo(({ onPress }: { onPress: () => void }) => {
         accessibilityRole="button"
         accessibilityLabel="Back to home"
       >
-        <ThemedText style={[{ color: colors.tint, fontSize: 16 }]} skipDefaultColor>
+        <ThemedText style={[styles.backArrow, { color: colors.tint }]} skipDefaultColor>
           ←
         </ThemedText>
         <ThemedText style={[styles.backButtonText, { color: colors.tint }]} skipDefaultColor>
@@ -596,6 +501,7 @@ const BackButton = React.memo(({ onPress }: { onPress: () => void }) => {
     </View>
   );
 });
+BackButton.displayName = 'BackButton';
 
 // Category Filter List Component
 const CategoryFilterList = React.memo(
@@ -610,6 +516,59 @@ const CategoryFilterList = React.memo(
   }) => {
     const colors = useColors();
 
+    // Get styles for category pill based on selection state
+    const getCategoryPillStyle = useCallback(
+      (isSelected: boolean, pressed: boolean) => [
+        styles.authorPill,
+        {
+          backgroundColor: isSelected
+            ? colors.textOverlay
+            : pressed
+              ? colors.background
+              : colors.cardBackground,
+        },
+        isSelected && styles.authorPillSelected,
+      ],
+      [colors.textOverlay, colors.background, colors.cardBackground]
+    );
+
+    // Get styles for category pill text based on selection state
+    const getCategoryPillTextStyle = useCallback(
+      (isSelected: boolean) => [
+        styles.authorPillText,
+        isSelected && [{ color: colors.tint }, styles.boldText],
+      ],
+      [colors.tint]
+    );
+
+    // Render a category pill
+    const renderCategoryItem = useCallback(
+      ({ item }: { item: Tables<'categories'> }) => {
+        const isSelected = selectedCategoryId === item.id;
+        return (
+          <Animated.View
+            key={`category-pill-${item.id}`}
+            entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(750)}
+          >
+            <Pressable
+              style={({ pressed }) => getCategoryPillStyle(isSelected, pressed)}
+              onPress={() => onSelectCategory(item.id)}
+            >
+              <ThemedText
+                style={getCategoryPillTextStyle(isSelected)}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                skipDefaultColor={isSelected}
+              >
+                {capitalizeFirstLetter(item.name)}
+              </ThemedText>
+            </Pressable>
+          </Animated.View>
+        );
+      },
+      [selectedCategoryId, onSelectCategory, getCategoryPillStyle, getCategoryPillTextStyle]
+    );
+
     // Skip rendering if no categories
     if (categories.length === 0) return null;
 
@@ -620,64 +579,32 @@ const CategoryFilterList = React.memo(
         entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(700)}
       >
         <SectionTitle title="Browse by Category" />
-        <ScrollView
+        <FlatList
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.horizontalList, { paddingBottom: LAYOUT.SPACING.TINY }]}
+          contentContainerStyle={[styles.horizontalList, styles.horizontalListWithPadding]}
+          data={categories}
+          keyExtractor={category => `category-${category.id}`}
+          renderItem={renderCategoryItem}
           removeClippedSubviews={true}
-        >
-          {categories.map(category => {
-            const isSelected = selectedCategoryId === category.id;
-            return (
-              <Animated.View
-                key={`category-pill-${category.id}`}
-                entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(750)}
-              >
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.authorPill,
-                    {
-                      backgroundColor: isSelected
-                        ? colors.textOverlay
-                        : pressed
-                          ? colors.background
-                          : colors.cardBackground,
-                    },
-                    isSelected && styles.authorPillSelected,
-                  ]}
-                  onPress={() => onSelectCategory(category.id)}
-                >
-                  <ThemedText
-                    style={[
-                      styles.authorPillText,
-                      isSelected && { color: colors.tint, fontWeight: '600' },
-                    ]}
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    skipDefaultColor={isSelected}
-                  >
-                    {category.name.charAt(0).toUpperCase() + category.name.slice(1)}
-                  </ThemedText>
-                </Pressable>
-              </Animated.View>
-            );
-          })}
-        </ScrollView>
+          initialNumToRender={10}
+          maxToRenderPerBatch={20}
+          windowSize={5}
+        />
       </Animated.View>
     );
   }
 );
+CategoryFilterList.displayName = 'CategoryFilterList';
 
 export default function ArticlesScreen() {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const { session } = useAuth();
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const isInitialMount = useRef(true);
-  const loadingStartTime = useRef<number | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
   const dataLoadedRef = useRef(false);
 
@@ -697,24 +624,19 @@ export default function ArticlesScreen() {
 
   // Define fetchAuthors and fetchCategories functions
   const fetchAuthors = useCallback(async () => {
-    console.log('Fetching authors...');
     try {
       const { data } = await supabase.from('authors').select('*');
-      console.log('Authors fetched:', data?.length);
       setAuthors(data || []);
-    } catch (err) {
-      console.error('Failed to fetch authors:', err);
+    } catch (_err) {
+      // Error handling is silent as it's not critical
     }
   }, []);
 
   const fetchCategories = useCallback(async () => {
-    console.log('Fetching categories...');
     try {
       const categoriesData = await categoriesService.getCategories();
-      console.log('Categories fetched:', categoriesData.length);
       setCategories(categoriesData);
-    } catch (err) {
-      console.error('Failed to fetch categories:', err);
+    } catch (_err) {
       // Don't set error state here, as it's not critical
     }
   }, []);
@@ -753,66 +675,14 @@ export default function ArticlesScreen() {
 
   // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
-    if (selectedAuthorId !== null) {
-      return articles.filter(article => article.author_id === selectedAuthorId);
-    } else if (selectedCategoryId !== null) {
-      return articles.filter(article => article.category_id === selectedCategoryId);
-    }
-    return articles;
+    return filterArticles(articles, selectedAuthorId, selectedCategoryId);
   }, [articles, selectedAuthorId, selectedCategoryId]);
 
   // Organized articles by category
-  const articlesByCategory = useMemo(() => {
-    const result: Record<number, Article[]> = {};
-
-    // Initialize categories
-    categories.forEach(category => {
-      result[category.id] = [];
-    });
-
-    // Group articles by category (using filtered articles if an author is selected)
-    filteredArticles.forEach(article => {
-      if (article.category_id && result[article.category_id]) {
-        result[article.category_id].push(article);
-      }
-    });
-
-    return result;
-  }, [filteredArticles, categories]);
-
-  // Recent articles (last 30 days)
-  const recentArticles = useMemo(() => {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    return filteredArticles
-      .filter(article => {
-        const articleDate = new Date(article.created_at);
-        return articleDate >= thirtyDaysAgo;
-      })
-      .slice(0, 10);
-  }, [filteredArticles]);
-
-  // Latest articles - strictly sorted by creation date
-  const latestArticles = useMemo(() => {
-    return [...filteredArticles]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-      .slice(0, 10);
-  }, [filteredArticles]);
-
-  // Featured articles (highest difficulty level)
-  const featuredArticles = useMemo(() => {
-    return [...filteredArticles]
-      .sort((a, b) => b.difficulty_level - a.difficulty_level)
-      .slice(0, 5);
-  }, [filteredArticles]);
-
-  // Beginner-friendly articles (lowest difficulty level)
-  const beginnerArticles = useMemo(() => {
-    return [...filteredArticles]
-      .sort((a, b) => a.difficulty_level - b.difficulty_level)
-      .slice(0, 10);
-  }, [filteredArticles]);
+  const recentArticles = useMemo(() => getRecentArticles(filteredArticles), [filteredArticles]);
+  const latestArticles = useMemo(() => getLatestArticles(filteredArticles), [filteredArticles]);
+  const featuredArticles = useMemo(() => getFeaturedArticles(filteredArticles), [filteredArticles]);
+  const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
 
   // Refined content container style for consistent spacing
   const contentContainerStyle = useMemo(
@@ -838,6 +708,9 @@ export default function ArticlesScreen() {
       const fetchedArticles = await articlesService.getArticles(categoryId, authorId);
       setArticles(fetchedArticles);
 
+      // Mark data as loaded
+      dataLoadedRef.current = true;
+
       // Fetch authors and categories if they haven't been fetched yet
       if (authors.length === 0) {
         fetchAuthors();
@@ -849,7 +722,7 @@ export default function ArticlesScreen() {
 
       // Dispatch fetchInProgressArticles after fetching articles
       dispatch(fetchInProgressArticles());
-    } catch (err) {
+    } catch (_err) {
       setError('Failed to load articles');
     } finally {
       setIsLoading(false);
@@ -885,7 +758,7 @@ export default function ArticlesScreen() {
       // Add to reading list
       dispatch(addToReadingList(article.id));
     },
-    [dispatch, router, session?.user]
+    [dispatch, session?.user]
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
@@ -942,6 +815,7 @@ export default function ArticlesScreen() {
         }
       }
 
+      // Clean up any pending timeouts
       return () => {
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
@@ -950,41 +824,8 @@ export default function ArticlesScreen() {
     }, [fetchArticles, forceUpdate, isLoading])
   );
 
-  // Add scroll animation
-  const scrollY = useSharedValue(0);
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: event => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
-
-  // Generate random ordering for categories each day to keep UI fresh
-  const shuffledCategories = useMemo(() => {
-    const now = new Date();
-    const dayOfYear = Math.floor(
-      (now.getTime() - new Date(now.getFullYear(), 0, 0).getTime()) / 86400000
-    );
-
-    // Create a copy of categories
-    const catCopy = [...categories];
-
-    // Use Fisher-Yates shuffle algorithm with day of year as seed
-    for (let i = catCopy.length - 1; i > 0; i--) {
-      // Use day of year to create a deterministic but changing shuffle
-      const j = (i + dayOfYear) % (i + 1);
-      [catCopy[i], catCopy[j]] = [catCopy[j], catCopy[i]];
-    }
-
-    return catCopy;
-  }, [categories]);
-
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {
-    // Debug logs
-    console.log('Authors length:', authors.length);
-    console.log('Categories length:', categories.length);
-
     if (isInFilteredView) {
       return (
         <>

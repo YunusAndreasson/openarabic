@@ -11,13 +11,13 @@ import Animated, {
   Layout,
 } from 'react-native-reanimated';
 import { createBasePillStyles } from './pills/BasePill';
-import type { Tables } from '../types/database.types';
+import { Category } from '../types/articles.types';
 
 // Define a type for our category item (including the "All" option)
-export type CategoryItem = Tables<'categories'>;
+export type CategoryItem = Category;
 
 export interface CategorySelectorProps {
-  categories: CategoryItem[];
+  categories: Category[];
   selectedCategoryId: number | null;
   onSelectCategory: (categoryId: number | null) => void;
 }

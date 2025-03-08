@@ -4,13 +4,12 @@ import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { createBasePillStyles, basePillStyles } from './BasePill';
+import { CategoryPillBaseProps } from '../../types/ui.types';
 
-interface CategoryPillProps {
-  category: string;
-  absolute?: boolean;
-}
-
-export function CategoryPill({ category, absolute = true }: CategoryPillProps): React.JSX.Element {
+export function CategoryPill({
+  category,
+  absolute = true,
+}: CategoryPillBaseProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
