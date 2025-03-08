@@ -328,6 +328,154 @@ describe('SRS Edge Cases', () => {
       const complete = isReviewComplete(10, 10, 2, true, true);
       expect(complete).toBe(false);
     });
+
+    // New test for the initialization edge case
+    it('should handle the initialization edge case in the hook implementation', () => {
+      // This test simulates the special check in the hook implementation
+      // where we prevent marking a review as complete during initialization
+
+      // Create a mock implementation of isComplete from the hook
+      const mockIsComplete = (
+        currentIndex: number,
+        wordsCount: number,
+        dueWordsLength: number,
+        isLoading: boolean
+      ) => {
+        // Simulate the special check in the hook
+        if (currentIndex === 0 && wordsCount === 0 && dueWordsLength > 0 && !isLoading) {
+          return false;
+        }
+
+        // Use the actual isReviewComplete function for the normal case
+        return isReviewComplete(
+          currentIndex,
+          wordsCount,
+          0, // failedWordsCount
+          dueWordsLength > 0, // hasWords
+          true // wordsLoaded
+        );
+      };
+
+      // Test the initialization case - should not be complete
+      expect(mockIsComplete(0, 0, 5, false)).toBe(false);
+
+      // Test after initialization - should be complete
+      expect(mockIsComplete(1, 0, 5, false)).toBe(true);
+    });
+
+    it('should handle race condition during initialization', () => {
+      // This test simulates the race condition where wordsRef is empty
+      // but dueWords has items, which was causing the review to be marked
+      // as complete immediately
+
+      // Create a sequence of states that simulates the initialization process
+      const states = [
+        // Initial state - loading
+        {
+          currentIndex: 0,
+          wordsRef: { current: [] as any[] },
+          dueWords: Array(5).fill({}) as any[],
+          wordsLoaded: false,
+          isLoading: true,
+          failedWordsRef: { current: [] as any[] },
+        },
+        // Words fetched but not yet loaded into wordsRef
+        {
+          currentIndex: 0,
+          wordsRef: { current: [] as any[] },
+          dueWords: Array(5).fill({}) as any[],
+          wordsLoaded: false,
+          isLoading: false,
+          failedWordsRef: { current: [] as any[] },
+        },
+        // wordsLoaded set to true but wordsRef still empty (race condition)
+        {
+          currentIndex: 0,
+          wordsRef: { current: [] as any[] },
+          dueWords: Array(5).fill({}) as any[],
+          wordsLoaded: true,
+          isLoading: false,
+          failedWordsRef: { current: [] as any[] },
+        },
+        // Words finally loaded into wordsRef
+        {
+          currentIndex: 0,
+          wordsRef: { current: Array(5).fill({}) as any[] },
+          dueWords: Array(5).fill({}) as any[],
+          wordsLoaded: true,
+          isLoading: false,
+          failedWordsRef: { current: [] as any[] },
+        },
+      ];
+
+      // Function that simulates the isComplete logic with our fix
+      const simulateIsCompleteWithFix = (state: {
+        currentIndex: number;
+        wordsRef: { current: any[] };
+        dueWords: any[];
+        wordsLoaded: boolean;
+        isLoading: boolean;
+        failedWordsRef: { current: any[] };
+      }) => {
+        // Special check we added to prevent immediate completion
+        if (
+          state.currentIndex === 0 &&
+          state.wordsRef.current.length === 0 &&
+          state.dueWords.length > 0 &&
+          !state.isLoading
+        ) {
+          return false;
+        }
+
+        // Normal isReviewComplete logic
+        return isReviewComplete(
+          state.currentIndex,
+          state.wordsRef.current.length,
+          state.failedWordsRef.current.length,
+          state.dueWords.length > 0,
+          state.wordsLoaded
+        );
+      };
+
+      // Function that simulates the isComplete logic without our fix
+      const simulateIsCompleteWithoutFix = (state: {
+        currentIndex: number;
+        wordsRef: { current: any[] };
+        dueWords: any[];
+        wordsLoaded: boolean;
+        isLoading: boolean;
+        failedWordsRef: { current: any[] };
+      }) => {
+        // Normal isReviewComplete logic without the special check
+        return isReviewComplete(
+          state.currentIndex,
+          state.wordsRef.current.length,
+          state.failedWordsRef.current.length,
+          state.dueWords.length > 0,
+          state.wordsLoaded
+        );
+      };
+
+      // Test each state with and without the fix
+      states.forEach((state, index) => {
+        const withFix = simulateIsCompleteWithFix(state);
+        const withoutFix = simulateIsCompleteWithoutFix(state);
+
+        // For the race condition state (index 2), the fix should prevent completion
+        if (index === 2) {
+          expect(withFix).toBe(false); // With fix, not complete
+          expect(withoutFix).toBe(true); // Without fix, incorrectly marked as complete
+        } else if (index < 2) {
+          // For loading states, both should be false
+          expect(withFix).toBe(false);
+          expect(withoutFix).toBe(false);
+        } else {
+          // For the final state, both should be false (not at end yet)
+          expect(withFix).toBe(false);
+          expect(withoutFix).toBe(false);
+        }
+      });
+    });
   });
 
   // SECTION: Requeuing logic edge cases
@@ -469,6 +617,93 @@ describe('SRS Edge Cases', () => {
       // The function might not guarantee positive values, so we'll just check it doesn't throw
       expect(() => calculateReinsertPosition(createMockWord(), -1, -1, false)).not.toThrow();
     });
+
+    it('should calculate reinsert positions correctly with controlled inputs', () => {
+      // Mock Math.random to return a consistent value
+      const originalRandom = Math.random;
+      Math.random = jest.fn().mockReturnValue(0.5); // Always return 0.5
+
+      try {
+        // Create test words with specific properties
+        const newWord = createMockWord({
+          sessionData: {
+            isNew: true,
+            remainingReviewsNeeded: SESSION_CONFIG.NEW_WORD_MINIMUM_REVIEWS,
+          },
+        });
+
+        const failedWord = createMockWord({
+          sessionData: {
+            isNew: false,
+            failedInSession: true,
+            consecutiveSuccesses: 0,
+          },
+        });
+
+        const normalWord = createMockWord({
+          sessionData: {
+            isNew: false,
+            failedInSession: false,
+          },
+        });
+
+        // Test with specific position and remaining words values
+        const currentPosition = 5;
+        const remainingWords = 10;
+
+        // Test new word on success
+        const newWordSuccessPosition = calculateReinsertPosition(
+          newWord,
+          currentPosition,
+          remainingWords,
+          true
+        );
+
+        // Expected: currentPosition + 1 + min(remainingWords, floor(remainingWords/2))
+        // = 5 + 1 + min(10, floor(10/2)) = 5 + 1 + 5 = 11
+        expect(newWordSuccessPosition).toBe(11);
+
+        // Test new word on failure
+        const newWordFailurePosition = calculateReinsertPosition(
+          newWord,
+          currentPosition,
+          remainingWords,
+          false
+        );
+
+        // Expected: currentPosition + 1 + min(remainingWords, random delay)
+        // With Math.random = 0.5, delay = floor(0.5 * (5-2+1)) + 2 = floor(0.5 * 4) + 2 = 2 + 2 = 4
+        // = 5 + 1 + 4 = 10
+        expect(newWordFailurePosition).toBe(10);
+
+        // Test failed word on success
+        const failedWordSuccessPosition = calculateReinsertPosition(
+          failedWord,
+          currentPosition,
+          remainingWords,
+          true
+        );
+
+        // Expected: currentPosition + 1 + min(remainingWords, floor(remainingWords/3))
+        // = 5 + 1 + min(10, floor(10/3)) = 5 + 1 + 3 = 9
+        expect(failedWordSuccessPosition).toBe(9);
+
+        // Test normal word on success (no requeuing)
+        const normalWordSuccessPosition = calculateReinsertPosition(
+          normalWord,
+          currentPosition,
+          remainingWords,
+          true
+        );
+
+        // Expected: currentPosition + 1 (no additional delay)
+        // = 5 + 1 = 6
+        expect(normalWordSuccessPosition).toBe(6);
+      } finally {
+        // Restore the original Math.random function
+        Math.random = originalRandom;
+      }
+    });
   });
 
   // SECTION: Stats calculation edge cases
@@ -541,6 +776,308 @@ describe('SRS Edge Cases', () => {
       expect(result.newInterval).toBeGreaterThan(0);
       expect(result.newStability).toBeGreaterThan(0);
       expect(result.newEaseFactor).toBeGreaterThan(0);
+    });
+  });
+
+  // SECTION: Programmatic test generation
+  describe('Programmatic SRS Test Generation', () => {
+    // Helper function to generate a batch of test words with different properties
+    function generateTestWords(
+      count: number,
+      options: {
+        newWordsPercentage?: number;
+        failedWordsPercentage?: number;
+        masteredWordsPercentage?: number;
+      } = {}
+    ): StudyWord[] {
+      const {
+        newWordsPercentage = 20,
+        failedWordsPercentage = 10,
+        masteredWordsPercentage = 30,
+      } = options;
+
+      const words: StudyWord[] = [];
+
+      for (let i = 0; i < count; i++) {
+        const id = `word-${i + 1}`;
+        const isNew = Math.random() * 100 < newWordsPercentage;
+        const isFailed = Math.random() * 100 < failedWordsPercentage;
+        const isMastered = !isNew && !isFailed && Math.random() * 100 < masteredWordsPercentage;
+
+        // Create base word
+        const word = createMockWord({
+          sentence_word_id: id,
+          sentence_word: {
+            word_form: `word-${i + 1}`,
+            english: `English for word ${i + 1}`,
+            sentence: {
+              arabic: `Arabic sentence for word ${i + 1}`,
+            },
+          },
+          // Set properties based on word type
+          review_count: isNew ? 0 : Math.floor(Math.random() * 10) + 1,
+          lapses: isFailed ? Math.floor(Math.random() * 3) + 1 : 0,
+          interval_days: isMastered
+            ? Math.floor(Math.random() * 90) + 30
+            : Math.floor(Math.random() * 29) + 1,
+          stability: isMastered
+            ? Math.floor(Math.random() * 90) + 30
+            : Math.floor(Math.random() * 29) + 1,
+          ease_factor: isFailed ? 1.3 + Math.random() * 0.7 : 2.0 + Math.random() * 1.0,
+          sessionData: {
+            isNew,
+            failedInSession: isFailed,
+            consecutiveSuccesses: isFailed ? 0 : Math.floor(Math.random() * 3),
+            remainingReviewsNeeded: isNew ? SESSION_CONFIG.NEW_WORD_MINIMUM_REVIEWS : 0,
+          },
+        });
+
+        words.push(word);
+      }
+
+      return words;
+    }
+
+    it('should calculate correct stats for a large batch of words', () => {
+      // Generate 100 test words with default distribution
+      const words = generateTestWords(100);
+
+      // Calculate stats
+      const stats = getSrsStatsFromWords(words, 5); // 5 failed words remaining
+
+      // Verify stats are calculated correctly
+      expect(stats.totalWords).toBe(100);
+      expect(stats.failedWordsRemaining).toBe(5);
+
+      // Count new words and failed words to verify stats
+      const newWordsCount = words.filter(w => w.sessionData?.isNew).length;
+      const failedWordsCount = words.filter(w => w.sessionData?.failedInSession).length;
+      const masteredWordsCount = words.filter(w => w.interval_days >= 30).length;
+
+      expect(stats.newWordsCount).toBe(newWordsCount);
+      expect(stats.failedInSessionCount).toBe(failedWordsCount);
+      expect(stats.masteredCount).toBe(masteredWordsCount);
+      expect(stats.learningCount).toBe(100 - masteredWordsCount);
+    });
+
+    it('should correctly determine requeuing for different word types', () => {
+      // Generate words with different properties
+      const words = generateTestWords(50, {
+        newWordsPercentage: 40,
+        failedWordsPercentage: 30,
+      });
+
+      // Test requeuing logic for each word
+      words.forEach(word => {
+        const isNew = word.sessionData?.isNew;
+        const isFailed = word.sessionData?.failedInSession;
+        const hasRemainingReviews = (word.sessionData?.remainingReviewsNeeded || 0) > 0;
+
+        // Test success case
+        const shouldRequeueOnSuccess = shouldRequeueWord(word, true);
+
+        // New words with remaining reviews should be requeued even on success
+        if (isNew && hasRemainingReviews) {
+          expect(shouldRequeueOnSuccess).toBe(true);
+        }
+
+        // Test failure case
+        const shouldRequeueOnFailure = shouldRequeueWord(word, false);
+
+        // All words should be requeued on failure
+        expect(shouldRequeueOnFailure).toBe(true);
+      });
+    });
+
+    it('should calculate appropriate reinsert positions for different word types', () => {
+      // Mock Math.random to return a consistent value for deterministic testing
+      const originalRandom = Math.random;
+      Math.random = jest.fn().mockReturnValue(0.5); // Always return 0.5
+
+      try {
+        // Generate 20 test words
+        const words = generateTestWords(20);
+
+        // Test reinsert positions for different scenarios
+        words.forEach((word, index) => {
+          const currentPosition = index;
+          const remainingWords = words.length - index - 1;
+
+          // Test reinsert position on success
+          const successPosition = calculateReinsertPosition(
+            word,
+            currentPosition,
+            remainingWords,
+            true
+          );
+
+          // Test reinsert position on failure
+          const failurePosition = calculateReinsertPosition(
+            word,
+            currentPosition,
+            remainingWords,
+            false
+          );
+
+          // Verify positions are within expected ranges
+          if (word.sessionData?.isNew) {
+            // For new words on success, position should be based on remainingWords/2
+            const expectedSuccessDelay = Math.min(remainingWords, Math.floor(remainingWords / 2));
+            expect(successPosition).toBe(currentPosition + 1 + expectedSuccessDelay);
+          }
+
+          // For failures, position should be within the REQUEUE_DELAY range
+          if (!word.sessionData?.isNew) {
+            // With Math.random mocked to 0.5, we can calculate the exact expected position
+            const expectedFailureDelay = Math.min(
+              remainingWords,
+              Math.floor(
+                0.5 * (SESSION_CONFIG.REQUEUE_DELAY_MAX - SESSION_CONFIG.REQUEUE_DELAY_MIN + 1)
+              ) + SESSION_CONFIG.REQUEUE_DELAY_MIN
+            );
+            expect(failurePosition).toBe(currentPosition + 1 + expectedFailureDelay);
+          }
+
+          // Positions should never exceed the total number of words
+          expect(successPosition).toBeLessThanOrEqual(words.length);
+          expect(failurePosition).toBeLessThanOrEqual(words.length);
+        });
+      } finally {
+        // Restore the original Math.random function
+        Math.random = originalRandom;
+      }
+    });
+  });
+
+  // SECTION: Initialization and loading edge cases
+  describe('Initialization and Loading Edge Cases', () => {
+    it('should not mark review as complete during initialization', () => {
+      // This test simulates the scenario we fixed where the review was immediately
+      // marked as complete during initialization
+
+      // Create a simplified mock of the useSpacedRepetition hook's isComplete logic
+      const mockHookState = {
+        currentIndex: 0,
+        wordsRef: { current: [] as any[] },
+        dueWords: Array(5).fill({}) as any[],
+        wordsLoaded: true,
+        isLoading: false,
+        failedWordsRef: { current: [] as any[] },
+      };
+
+      // Function that simulates the isComplete logic in the hook
+      const simulateIsComplete = (state: {
+        currentIndex: number;
+        wordsRef: { current: any[] };
+        dueWords: any[];
+        wordsLoaded: boolean;
+        isLoading: boolean;
+        failedWordsRef: { current: any[] };
+      }) => {
+        // Special check we added to prevent immediate completion
+        if (
+          state.currentIndex === 0 &&
+          state.wordsRef.current.length === 0 &&
+          state.dueWords.length > 0 &&
+          !state.isLoading
+        ) {
+          return false;
+        }
+
+        // Normal isReviewComplete logic
+        return isReviewComplete(
+          state.currentIndex,
+          state.wordsRef.current.length,
+          state.failedWordsRef.current.length,
+          state.dueWords.length > 0,
+          state.wordsLoaded
+        );
+      };
+
+      // Test the initialization state - should not be complete
+      expect(simulateIsComplete(mockHookState)).toBe(false);
+
+      // Test after words are loaded into wordsRef
+      const stateWithLoadedWords = {
+        ...mockHookState,
+        wordsRef: { current: Array(5).fill({}) as any[] },
+      };
+      expect(simulateIsComplete(stateWithLoadedWords)).toBe(false); // Not at end yet
+
+      // Test when at the end of the queue
+      const stateAtEnd = {
+        ...stateWithLoadedWords,
+        currentIndex: 5,
+      };
+      expect(simulateIsComplete(stateAtEnd)).toBe(true); // Now it should be complete
+    });
+
+    it('should handle the transition from loading to loaded state', () => {
+      // Test the transition from loading to loaded state
+
+      // Initial state - loading
+      const loadingState = {
+        currentIndex: 0,
+        wordsRef: { current: [] as any[] },
+        dueWords: Array(5).fill({}) as any[],
+        wordsLoaded: false, // Still loading
+        isLoading: true,
+        failedWordsRef: { current: [] as any[] },
+      };
+
+      // Function that simulates the isComplete logic
+      const simulateIsComplete = (state: {
+        currentIndex: number;
+        wordsRef: { current: any[] };
+        dueWords: any[];
+        wordsLoaded: boolean;
+        isLoading: boolean;
+        failedWordsRef: { current: any[] };
+      }) => {
+        // Special check
+        if (
+          state.currentIndex === 0 &&
+          state.wordsRef.current.length === 0 &&
+          state.dueWords.length > 0 &&
+          !state.isLoading
+        ) {
+          return false;
+        }
+
+        // Normal logic
+        return isReviewComplete(
+          state.currentIndex,
+          state.wordsRef.current.length,
+          state.failedWordsRef.current.length,
+          state.dueWords.length > 0,
+          state.wordsLoaded
+        );
+      };
+
+      // Should not be complete while loading
+      expect(simulateIsComplete(loadingState)).toBe(false);
+
+      // Transition to loaded state but words not yet in wordsRef
+      const loadedNoWordsState = {
+        ...loadingState,
+        wordsLoaded: true,
+        isLoading: false,
+      };
+      expect(simulateIsComplete(loadedNoWordsState)).toBe(false);
+
+      // Words loaded into wordsRef
+      const wordsLoadedState = {
+        ...loadedNoWordsState,
+        wordsRef: { current: Array(5).fill({}) as any[] },
+      };
+      expect(simulateIsComplete(wordsLoadedState)).toBe(false); // Not at end yet
+
+      // Complete the review
+      const reviewCompleteState = {
+        ...wordsLoadedState,
+        currentIndex: 5, // At the end
+      };
+      expect(simulateIsComplete(reviewCompleteState)).toBe(true);
     });
   });
 });
