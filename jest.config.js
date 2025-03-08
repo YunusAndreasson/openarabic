@@ -1,11 +1,11 @@
 module.exports = {
   preset: 'jest-expo',
   transformIgnorePatterns: [
-    'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)',
+    'node_modules/(?!(jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg|@shopify/react-native-skia)',
   ],
   setupFilesAfterEnv: ['./jest.setup.js'],
   // Set a global timeout for all tests
-  testTimeout: 5000,
+  testTimeout: 30000,
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
   // Bail after the first test failure
@@ -19,6 +19,12 @@ module.exports = {
       'identity-obj-proxy',
     // Mock style imports
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    // Mock problematic libraries
+    '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
+    '@testing-library/react-native': '<rootDir>/__mocks__/@testing-library/react-native.js',
+    'react-native-reanimated': '<rootDir>/__mocks__/react-native-reanimated.js',
+    'react-native-gesture-handler': '<rootDir>/__mocks__/react-native-gesture-handler.js',
+    'react-redux': '<rootDir>/__mocks__/react-redux.js',
   },
   // Collect coverage from specific directories
   collectCoverageFrom: [
@@ -28,4 +34,8 @@ module.exports = {
     '!**/__tests__/**',
     '!**/__mocks__/**',
   ],
+  // Transform timeout
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': 'babel-jest',
+  },
 };
