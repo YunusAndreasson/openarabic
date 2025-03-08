@@ -7,6 +7,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
+import { SignInRequired } from '@/components/SignInRequired';
 import { Audio } from 'expo-av';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -740,20 +741,13 @@ export default function BookmarksScreen() {
   // Not signed in
   if (!user) {
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
-          </View>
-          <View style={styles.emptyStateContainer}>
-            <ThemedText style={styles.emptyStateTitle}>Sign In Required</ThemedText>
-            <ThemedText style={styles.emptyStateMessage}>
-              Please sign in to view and manage your bookmarks
-            </ThemedText>
-            <ThemedButton title="Sign In" icon="log-in" onPress={() => router.push('/account')} />
-          </View>
-        </ThemedView>
-      </Animated.View>
+      <SignInRequired
+        headerTitle="Bookmarks"
+        colors={colors}
+        message="Please sign in to view and manage your bookmarks"
+        benefitTitle="Benefits of Bookmarks"
+        benefitDescription="Sign in to save articles for later and listen to them on the go. Perfect for practicing your listening skills anywhere."
+      />
     );
   }
 
@@ -768,12 +762,12 @@ export default function BookmarksScreen() {
           <View style={styles.emptyStateContainer}>
             <ThemedText style={styles.emptyStateTitle}>Your Bookmarks List is Empty</ThemedText>
             <ThemedText style={styles.emptyStateMessage}>
-              Save articles to your bookmarks to read them later
+              Bookmark articles to listen to them later or save them for reference.
             </ThemedText>
             <ThemedButton
               title="Browse Articles"
               icon="book"
-              onPress={() => router.push('/(tabs)/' as any)}
+              onPress={() => router.push('/(tabs)')}
             />
           </View>
         </ThemedView>

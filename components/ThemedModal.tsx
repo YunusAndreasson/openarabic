@@ -357,5 +357,3 @@ const styles = StyleSheet.create({
 // Memoize the entire component
 export const ThemedModal = React.memo(ThemedModalComponent);
 ThemedModal.displayName = 'ThemedModal';
-
-export default ThemedModal;

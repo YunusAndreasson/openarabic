@@ -6,6 +6,7 @@ import { VocabularyGraph } from '@/components/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/VocabularyDashboard';
 import { ThemedButton } from '@/components/ThemedButton';
 import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
+import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
@@ -20,20 +21,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { FadeIn } from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
-
-// Create a memoized component for the sign-in message
-const SignInMessage = React.memo(() => (
-  <View
-    style={[
-      styles.messageContainer,
-      { marginTop: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.MEDIUM },
-    ]}
-  >
-    <ThemedText style={styles.message}>Please sign in to view your vocabulary.</ThemedText>
-  </View>
-));
-
-SignInMessage.displayName = 'SignInMessage';
 
 // Create a memoized component for the review button
 const ReviewButton = React.memo(
@@ -249,93 +236,85 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, [router, queryClient, user]);
 
-  // Show loader while authentication is being checked OR while data is loading
+  // Show loading screen
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  // Only proceed after loading is complete
+  // Show sign-in message if not authenticated
   if (!user) {
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-          </View>
-          <SignInMessage />
-        </ThemedView>
-      </Animated.View>
+      <SignInRequired
+        headerTitle="Vocabulary"
+        colors={colors}
+        message="Please sign in to view and manage your vocabulary"
+        benefitTitle="Benefits of Vocabulary Tracking"
+        benefitDescription="Sign in to learn and review words with spaced repetition, track your progress, and build your vocabulary over time."
+      />
     );
   }
 
-  // Show error state if data fetching failed
+  // Show error message if there was an error loading data
   if (error) {
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-          </View>
-          <ErrorMessage />
-        </ThemedView>
-      </Animated.View>
+      <ThemedView style={styles.container}>
+        <ErrorMessage />
+      </ThemedView>
     );
   }
 
-  if (!validStudyWords.length) {
+  // Show empty state if no words
+  if (!isContentLoading && validStudyWords.length === 0) {
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-          </View>
-          <VocabularyEmptyState colors={colors} />
-        </ThemedView>
-      </Animated.View>
+      <ThemedView style={styles.container}>
+        <VocabularyEmptyState colors={colors} />
+      </ThemedView>
     );
   }
 
+  // Main content
   return (
-    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+    <ThemedView style={styles.container}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.headerContainer}>
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
+
         {isContentLoading ? (
-          <LoadingContainer size="large" height={300} />
+          <LoadingContainer style={styles.loadingContainer} />
         ) : (
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={[styles.scrollContent, { paddingTop: LAYOUT.SPACING.MEDIUM }]}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Vocabulary Dashboard */}
+          <Animated.View entering={FadeIn.duration(300)}>
             <VocabularyDashboard
               totalWords={stats.totalWords}
               masteredWords={stats.masteredWords}
-              dueWords={stats.dueWords}
               learningWords={stats.learningWords}
+              dueWords={stats.dueWords}
               streak={stats.streak}
               colors={colors}
             />
 
-            {/* Weekly Progress */}
-            <VocabularyGraph
-              title="Weekly Progress"
-              data={weeklyProgressData}
-              isLoading={!isDataReady}
-            />
-
-            {/* Review Button - always show either enabled or disabled version */}
-            {stats.dueWords > 0 ? (
-              <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
-            ) : (
-              <DisabledReviewButton />
-            )}
-          </ScrollView>
+            <View style={styles.graphContainer}>
+              <ThemedText style={styles.graphTitle}>Weekly Progress</ThemedText>
+              <VocabularyGraph data={weeklyProgressData} />
+            </View>
+          </Animated.View>
         )}
-      </ThemedView>
-    </Animated.View>
+      </ScrollView>
+
+      {isDataReady && (
+        <View style={styles.bottomContainer}>
+          {stats.dueWords > 0 ? (
+            <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+          ) : (
+            <DisabledReviewButton />
+          )}
+        </View>
+      )}
+    </ThemedView>
   );
 }
 
@@ -346,27 +325,8 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  message: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  messageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reviewButtonContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-  reviewButton: {
-    width: '100%',
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
+  scrollViewContent: {
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + 100,
   },
   headerContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -375,12 +335,45 @@ const styles = StyleSheet.create({
       android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
     }),
     paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
+  },
+  messageContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  message: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    textAlign: 'center',
+  },
+  graphContainer: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  graphTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  bottomContainer: {
+    position: 'absolute',
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  reviewButtonContainer: {
+    width: '90%',
+    maxWidth: 400,
+  },
+  reviewButton: {
+    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+  },
+  loadingContainer: {
+    marginTop: LAYOUT.SPACING.XLARGE * 2,
   },
 });

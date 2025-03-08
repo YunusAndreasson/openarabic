@@ -59,24 +59,6 @@ export const addToReadingList = createAsyncThunk(
   }
 );
 
-export const markAsCompleted = createAsyncThunk(
-  'readingList/markAsCompleted',
-  async (articleId: number, { dispatch, rejectWithValue }) => {
-    try {
-      // Check if user is authenticated first
-      await checkUserAuthenticated();
-
-      await readingListService.markAsCompleted(articleId);
-
-      // Refresh the list after marking as completed
-      dispatch(fetchInProgressArticles());
-      return articleId;
-    } catch (error) {
-      return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
-    }
-  }
-);
-
 export const incrementReadCount = createAsyncThunk(
   'readingList/incrementReadCount',
   async (articleId: number, { dispatch, rejectWithValue }) => {

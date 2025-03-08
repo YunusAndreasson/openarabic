@@ -123,5 +123,3 @@ const styles = StyleSheet.create({
 
 // Memoize the component to prevent unnecessary re-renders
 export const ProgressBar = React.memo(ProgressBarComponent);
-
-export default ProgressBar;
