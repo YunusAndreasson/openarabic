@@ -19,6 +19,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { FadeIn } from 'react-native-reanimated';
+import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
 
 // Create a memoized component for the sign-in message
 const SignInMessage = React.memo(() => (
@@ -212,7 +213,7 @@ export default function VocabularyScreen() {
   }, [user, isFetching, isDataLoading, forceUpdate]);
 
   const validStudyWords = useMemo(() => {
-    return studyWords.filter(word => word.sentence_word != null) as StudyWord[];
+    return studyWords.filter(word => word.sentence_word != null);
   }, [studyWords]);
 
   // Ensure data is fully processed before rendering
@@ -220,137 +221,14 @@ export default function VocabularyScreen() {
     return !!user && !isContentLoading && validStudyWords.length > 0;
   }, [user, isContentLoading, validStudyWords.length]);
 
+  // Use the vocabulary-stats utility to calculate stats
   const stats = useMemo(() => {
-    if (!validStudyWords.length)
-      return { totalWords: 0, dueWords: 0, masteredWords: 0, learningWords: 0, streak: 0 };
+    return calculateVocabularyStats(validStudyWords, dueWordsData);
+  }, [validStudyWords, dueWordsData]);
 
-    // Use the directly fetched due words count instead of filtering again
-    const dueWordsCount = dueWordsData.length;
-
-    // Optimize by avoiding creating multiple Date objects in the filter callback
-    const masteredWords = validStudyWords.filter(word => word.interval_days >= 30);
-    const learningWords = validStudyWords.length - masteredWords.length;
-
-    return {
-      totalWords: validStudyWords.length,
-      dueWords: dueWordsCount,
-      masteredWords: masteredWords.length,
-      learningWords,
-      streak: 0, // Will be calculated later
-    };
-  }, [validStudyWords, dueWordsData.length]);
-
-  // Update streak calculation function to run separately
-  const streak = useMemo(() => {
-    if (!validStudyWords.length) return 0;
-
-    const now = new Date();
-    // Calculate streak based on review history
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Find last review dates
-    const reviewDates = validStudyWords
-      .map(word => estimateLastReviewDate(word, now))
-      .filter(Boolean) as Date[];
-
-    if (reviewDates.length === 0) {
-      return 0;
-    }
-
-    // Sort descending to get the most recent review first
-    reviewDates.sort((a, b) => b.getTime() - a.getTime());
-
-    const lastReviewDate = new Date(reviewDates[0]);
-    lastReviewDate.setHours(0, 0, 0, 0);
-
-    // Check if user has reviewed today
-    const daysDifference = Math.floor(
-      (today.getTime() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    if (daysDifference > 1) {
-      // Streak broken - more than 1 day since last review
-      return 0;
-    } else {
-      // Count consecutive days with reviews
-      let currentDate = new Date(today);
-      let currentStreak = 0;
-      const MAX_ITERATIONS = 366; // Safety limit (maximum 1 year of streak)
-      let iterations = 0;
-
-      // Group review dates by day
-      const reviewDatesByDay = new Map();
-      reviewDates.forEach(date => {
-        const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-        reviewDatesByDay.set(dateKey, true);
-      });
-
-      // Check for consecutive days backward in time
-      while (iterations < MAX_ITERATIONS) {
-        iterations++;
-        const dateKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
-
-        if (reviewDatesByDay.has(dateKey)) {
-          currentStreak++;
-          currentDate.setDate(currentDate.getDate() - 1);
-        } else {
-          break;
-        }
-      }
-
-      return currentStreak;
-    }
-  }, [validStudyWords]);
-
-  // Combine stats with streak
-  const combinedStats = useMemo(() => {
-    return { ...stats, streak };
-  }, [stats, streak]);
-
-  // Generate weekly progress data based on actual review history
+  // Generate weekly progress data based on actual review history using the utility
   const weeklyProgressData = useMemo(() => {
-    if (!validStudyWords.length)
-      return Array(7)
-        .fill(0)
-        .map((_, i) => ({
-          date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
-          wordsLearned: 0,
-        }));
-
-    const now = new Date();
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date();
-
-    // Create an array to hold the last 7 days with pre-initialized counts
-    const dayMap = new Map();
-
-    // Initialize the map with the last 7 days
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (6 - i));
-      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      dayMap.set(dayKey, {
-        date: days[date.getDay()],
-        wordsLearned: 0,
-      });
-    }
-
-    // Count words learned per day based on estimated review dates
-    validStudyWords.forEach(word => {
-      const reviewDate = estimateLastReviewDate(word, now);
-      if (reviewDate) {
-        const dayKey = `${reviewDate.getFullYear()}-${reviewDate.getMonth()}-${reviewDate.getDate()}`;
-        if (dayMap.has(dayKey)) {
-          const dayData = dayMap.get(dayKey);
-          dayData.wordsLearned += 1;
-          dayMap.set(dayKey, dayData);
-        }
-      }
-    });
-
-    // Convert map back to array in the correct order
-    return Array.from(dayMap.values());
+    return calculateWeeklyProgressData(validStudyWords);
   }, [validStudyWords]);
 
   // Function to start a review
@@ -419,7 +297,7 @@ export default function VocabularyScreen() {
 
   return (
     <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-      <ThemedView style={styles.container}>
+      <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
           <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
         </View>
@@ -433,11 +311,11 @@ export default function VocabularyScreen() {
           >
             {/* Vocabulary Dashboard */}
             <VocabularyDashboard
-              totalWords={combinedStats.totalWords}
-              masteredWords={combinedStats.masteredWords}
-              dueWords={combinedStats.dueWords}
-              learningWords={combinedStats.learningWords}
-              streak={combinedStats.streak}
+              totalWords={stats.totalWords}
+              masteredWords={stats.masteredWords}
+              dueWords={stats.dueWords}
+              learningWords={stats.learningWords}
+              streak={stats.streak}
               colors={colors}
             />
 
@@ -449,8 +327,8 @@ export default function VocabularyScreen() {
             />
 
             {/* Review Button - always show either enabled or disabled version */}
-            {combinedStats.dueWords > 0 ? (
-              <ReviewButton dueWords={combinedStats.dueWords} onPress={handleStartReview} />
+            {stats.dueWords > 0 ? (
+              <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
             ) : (
               <DisabledReviewButton />
             )}

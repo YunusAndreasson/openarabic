@@ -59,6 +59,7 @@ export interface StudyWord {
     failedInSession?: boolean; // Was this word failed in the current session
     consecutiveSuccesses?: number; // How many consecutive successes since last failure
     remainingReviewsNeeded?: number; // How many more reviews this word needs in the session
+    processingAttempts?: number; // Attempts to process this word
   };
   reinsertPosition?: number; // Position where this word should be reinserted in the queue
 }
@@ -335,6 +336,13 @@ export function isReviewComplete(
     return false;
   }
 
+  // Safety check for empty queue
+  if (wordsCount === 0 && hasWords) {
+    // If we have words in dueWords but none in the queue,
+    // it means all words have been processed
+    return true;
+  }
+
   // Review is complete when:
   // 1. We've reached the end of the queue
   // 2. There are no failed words left to review
@@ -345,6 +353,8 @@ export function isReviewComplete(
   const noFailedWords = failedWordsCount === 0;
   const hasProcessedWords = wordsCount > 0;
 
+  // For test compatibility, we need to maintain the behavior that
+  // the review is not complete if there are failed words
   return atEnd && noFailedWords && hasWords && hasProcessedWords;
 }
 
@@ -780,13 +790,53 @@ export function useSpacedRepetition({
       };
       console.log('[DEBUG-SR] Updated word data:', updatedWord);
 
-      // OPTIMIZATION: Update the currentIndex immediately before the API call
-      // This allows the UI to show the next word faster while the API call happens in the background
+      // FIXED: Add safety check before updating index
       if (mountedRef.current) {
-        // Instead of simply incrementing, we now need to handle requeued words
-        const nextWordIndex = getNextWordIndex();
-        console.log('[DEBUG-SR] Moving to next word, index:', nextWordIndex);
-        setCurrentIndex(nextWordIndex);
+        try {
+          // Get the next word index
+          const nextWordIndex = getNextWordIndex();
+          console.log('[DEBUG-SR] Moving to next word, index:', nextWordIndex);
+
+          // Check if we're at the end of the review
+          const isAtEnd = nextWordIndex >= wordsRef.current.length;
+          const noMoreFailedWords = failedWordsRef.current.length === 0;
+
+          // FIXED: Handle failed words at the end of the queue
+          if (isAtEnd && !noMoreFailedWords) {
+            // We're at the end but still have failed words
+            // Check if we've been stuck in a loop
+            const maxLoopCount = 3;
+            const loopCount = wordToUpdate.sessionData?.processingAttempts || 0;
+
+            if (loopCount >= maxLoopCount) {
+              console.log(
+                '[DEBUG-SR] Detected potential loop with failed words, forcing completion'
+              );
+              // Force completion by setting currentIndex to the end
+              setCurrentIndex(wordsRef.current.length);
+
+              // Clear failed words to prevent further processing
+              failedWordsRef.current = [];
+            } else {
+              // Not stuck in a loop yet, continue normal processing
+              console.log('[DEBUG-SR] At end with failed words, continuing normal processing');
+              setCurrentIndex(nextWordIndex);
+            }
+          } else if (isAtEnd && noMoreFailedWords) {
+            console.log(
+              '[DEBUG-SR] Reached end of review with no more failed words, completing review'
+            );
+            // Normal completion
+            setCurrentIndex(wordsRef.current.length);
+          } else {
+            // Normal case - update to next index
+            setCurrentIndex(nextWordIndex);
+          }
+        } catch (error) {
+          console.error('[DEBUG-SR] Error updating index:', error);
+          // Fallback - just increment the index
+          setCurrentIndex(prev => Math.min(prev + 1, wordsRef.current.length));
+        }
       }
 
       // Apply optimistic update to cache
@@ -891,13 +941,13 @@ export function useSpacedRepetition({
         return;
       }
 
-      // IMPORTANT FIX: Check if we're already at the end of the review
-      if (currentIndex >= dueWords.length) {
-        console.log('[DEBUG-SR] Already at end of review, no more words to update');
+      // FIXED: Compare against wordsRef instead of dueWords and add safety check
+      if (wordsRef.current.length === 0) {
+        console.log('[DEBUG-SR] No words in queue, skipping update');
         return;
       }
 
-      // Guard against updating past the end of the array
+      // FIXED: Only check if index is valid, not if we're at the end
       if (currentIndex >= wordsRef.current.length) {
         console.log('[DEBUG-SR] currentIndex out of bounds, skipping update');
         return;
@@ -930,7 +980,7 @@ export function useSpacedRepetition({
         wordToUpdate,
       });
     },
-    [currentIndex, updateWordMutation, determineTransitionType, dueWords.length]
+    [currentIndex, updateWordMutation, determineTransitionType]
   );
 
   // Check if review is completed and invalidate relevant queries
@@ -989,18 +1039,52 @@ export function useSpacedRepetition({
         'failed words. Processing them...'
       );
 
+      // Add safety check to prevent infinite loops
+      // If we've been processing the same failed words for too long, clear them
+      const maxFailedWordProcessingAttempts = 3;
+
       // Process all failed words and add them to the wordsRef at their proper positions
       const failedWordsToAdd = [...failedWordsRef.current];
       failedWordsRef.current = []; // Clear the failed words queue
 
-      // Add all failed words to the review queue
+      // Track if we've added any words
+      let addedWords = false;
+
+      // Add all failed words to the review queue, with safety checks
       failedWordsToAdd.forEach(word => {
-        const position = Math.min(word.reinsertPosition || 0, wordsRef.current.length);
-        wordsRef.current.splice(position, 0, word);
+        // Add attempt tracking to prevent infinite loops
+        if (!word.sessionData) {
+          word.sessionData = {};
+        }
+        word.sessionData.processingAttempts = (word.sessionData.processingAttempts || 0) + 1;
+
+        // Only requeue words that haven't exceeded the max attempts
+        if (word.sessionData.processingAttempts <= maxFailedWordProcessingAttempts) {
+          const position = Math.min(word.reinsertPosition || 0, wordsRef.current.length);
+          wordsRef.current.splice(position, 0, word);
+          addedWords = true;
+        } else {
+          console.log(
+            '[DEBUG-SR] Word exceeded max processing attempts, skipping:',
+            word.sentence_word_id
+          );
+        }
       });
 
-      // Reset to the beginning to handle all words
-      console.log('[DEBUG-SR] Processed failed words, resetting to beginning');
+      // If we've added words, reset to the beginning to handle them
+      // Otherwise, just continue to the end
+      if (addedWords) {
+        console.log('[DEBUG-SR] Processed failed words, resetting to beginning');
+        return 0;
+      } else {
+        console.log('[DEBUG-SR] No words added after processing failed words, continuing to end');
+        return nextPos;
+      }
+    }
+
+    // Add safety check for empty queue
+    if (wordsRef.current.length === 0) {
+      console.log('[DEBUG-SR] Words queue is empty, returning 0');
       return 0;
     }
 
