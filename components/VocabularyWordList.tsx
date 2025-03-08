@@ -6,7 +6,7 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactThemedCard } from './CompactThemedCard';
 import type { Tables } from '@/types/database.types';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useWordStatus } from '@/hooks/useWordStatus';
 
 type StudyWord = Tables<'study_words'> & {
@@ -147,9 +147,9 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.SMALL,
   },
   arabicWord: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontFamily: 'NotoNaskhArabic',
-    marginBottom: LAYOUT.SPACING.TINY,
+    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
+      marginBottom: LAYOUT.SPACING.TINY,
+    }),
   },
   translation: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

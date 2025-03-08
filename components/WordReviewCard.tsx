@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Dimensions, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT, getArabicTextStyle } from '../constants/layout';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -140,12 +140,13 @@ export const WordReviewCard = React.memo(
               entering={FadeIn.delay(300).duration(400)}
             >
               <ThemedText
-                style={[
-                  styles.arabicSentence,
-                  {
-                    color: `${colors.arabicText}CC`,
-                  },
-                ]}
+                type="arabic"
+                arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
+                style={{
+                  color: `${colors.arabicText}CC`,
+                  textAlign: 'right',
+                  paddingHorizontal: LAYOUT.SPACING.SMALL,
+                }}
                 skipDefaultColor
               >
                 {word.sentence_word.sentence.arabic}
@@ -175,15 +176,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   arabicWord: {
-    fontSize: 42,
-    textAlign: 'center',
-    fontFamily: 'NotoNaskhArabic',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    includeFontPadding: true,
-    writingDirection: 'rtl',
+    ...getArabicTextStyle(42, {
+      textAlign: 'center',
+      marginBottom: LAYOUT.SPACING.MEDIUM,
+      paddingHorizontal: 24,
+      paddingVertical: 16,
+      borderRadius: 12,
+    }),
   },
   englishWord: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -196,14 +195,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#00000020',
     paddingTop: LAYOUT.SPACING.MEDIUM,
     width: '100%',
+    alignItems: 'flex-end',
   },
   arabicSentence: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'right',
-    fontFamily: 'NotoNaskhArabic',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.8,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    writingDirection: 'rtl',
-    includeFontPadding: false,
+    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.LARGE, {
+      textAlign: 'right',
+      paddingHorizontal: LAYOUT.SPACING.SMALL,
+      width: '100%',
+    }),
   },
 });

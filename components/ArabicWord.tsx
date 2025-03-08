@@ -4,9 +4,14 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import type { Tables } from '@/types/database.types';
 import { WordDetailsModal } from './WordDetailsModal';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -70,14 +75,13 @@ function ArabicWordComponent({
   // Memoize the text style to prevent unnecessary re-renders
   const textStyle = useMemo(
     () => ({
-      ...styles.arabicText,
-      color: textColor,
-      fontSize: baseSize * scale,
-      lineHeight: Math.round(baseSize * scale * 1.5),
-      fontWeight: isSelected ? '600' : ('normal' as TextStyle['fontWeight']),
-      textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
-      textShadowRadius: isSelected ? 1 : 0,
-      textShadowOffset: { width: 0, height: 0 },
+      ...getArabicTextStyle(baseSize * scale, {
+        color: textColor,
+        fontWeight: isSelected ? '600' : ('normal' as TextStyle['fontWeight']),
+        textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
+        textShadowRadius: isSelected ? 1 : 0,
+        textShadowOffset: { width: 0, height: 0 },
+      }),
     }),
     [textColor, baseSize, scale, isSelected, colors.textShadowLight]
   );

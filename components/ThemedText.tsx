@@ -1,17 +1,19 @@
 import { Text, type TextProps, StyleSheet } from 'react-native';
 import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import React, { useMemo } from 'react';
 
 export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link';
+  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link' | 'arabic';
   skipDefaultColor?: boolean;
+  arabicFontSize?: number;
 };
 
 function ThemedTextComponent({
   style,
   type = 'default',
   skipDefaultColor = false,
+  arabicFontSize = LAYOUT.TYPOGRAPHY.SCALE.LARGE,
   ...rest
 }: ThemedTextProps) {
   const colors = useColors();
@@ -24,10 +26,11 @@ function ThemedTextComponent({
       type === 'defaultSemiBold' ? styles.defaultSemiBold : undefined,
       type === 'subtitle' ? styles.subtitle : undefined,
       type === 'link' ? [styles.link, { color: colors.link }] : undefined,
+      type === 'arabic' ? getArabicTextStyle(arabicFontSize) : undefined,
       !skipDefaultColor ? { color: colors.text } : undefined,
       style,
     ],
-    [colors, skipDefaultColor, style, type]
+    [colors, skipDefaultColor, style, type, arabicFontSize]
   );
 
   return <Text style={textStyle} {...rest} />;

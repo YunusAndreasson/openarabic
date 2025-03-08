@@ -3,7 +3,7 @@ import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native'
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ThemedModal } from './ThemedModal';
@@ -226,13 +226,11 @@ const styles = StyleSheet.create({
     gap: LAYOUT.SPACING.LARGE,
   },
   arabicWord: {
-    fontFamily: 'NotoNaskhArabic',
-    textAlign: 'center',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 2,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3, {
+      textAlign: 'center',
+      paddingVertical: LAYOUT.SPACING.MEDIUM,
+      textAlignVertical: 'center',
+    }),
   },
   translation: {
     textAlign: 'center',
@@ -278,10 +276,10 @@ const styles = StyleSheet.create({
     }),
   },
   rootText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontFamily: 'NotoNaskhArabic',
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.4,
+    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
+      textAlign: 'center',
+      marginBottom: LAYOUT.SPACING.MEDIUM,
+    }),
   },
   rootMeaning: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

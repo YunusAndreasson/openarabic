@@ -19,7 +19,7 @@ import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
+import { SCREEN_WIDTH, LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';
@@ -74,30 +74,26 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    minHeight: 120,
   },
   sentence: {
-    textAlign: 'right',
-    fontSize: BASE_FONT_SIZE * 1.5,
-    lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.5),
-    fontFamily: 'NotoNaskhArabic',
-    writingDirection: 'rtl',
-    includeFontPadding: false,
-    padding: 0,
-    margin: 0,
+    ...getArabicTextStyle(BASE_FONT_SIZE * 1.5, {
+      textAlign: 'right',
+      margin: 0,
+    }),
   },
   studyWord: {
-    fontWeight: '700',
-    fontSize: BASE_FONT_SIZE * 1.5,
-    lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.5),
-    writingDirection: 'rtl',
-    includeFontPadding: false,
+    ...getArabicTextStyle(BASE_FONT_SIZE * 1.5, {
+      fontWeight: '700',
+      paddingVertical: LAYOUT.SPACING.MEDIUM,
+      marginVertical: LAYOUT.SPACING.TINY,
+    }),
   },
   dimmedText: {
-    fontWeight: '400',
-    fontSize: BASE_FONT_SIZE * 1.5,
-    lineHeight: Math.round(BASE_FONT_SIZE * 1.5 * 2.5),
-    writingDirection: 'rtl',
-    includeFontPadding: false,
+    ...getArabicTextStyle(BASE_FONT_SIZE * 1.5, {
+      fontWeight: '400',
+    }),
   },
   meaningOverlay: {
     position: 'absolute',
@@ -201,6 +197,14 @@ const baseStyles = StyleSheet.create({
   },
   completionIconContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  sentenceTextContainer: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 });
 
@@ -555,43 +559,40 @@ export default function ReviewScreen() {
   // Memoize the sentence content to prevent unnecessary re-renders
   const sentenceContent = useMemo(
     () => (
-      <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center' }}>
-        <ThemedText style={baseStyles.sentence} skipDefaultColor>
+      <View style={{ width: '100%', alignItems: 'flex-end' }}>
+        {/* Use a container with proper RTL direction */}
+        <View style={baseStyles.sentenceTextContainer}>
           <ThemedText
-            style={[baseStyles.dimmedText, { color: colors.englishText, opacity: 0.7 }]}
+            type="arabic"
+            arabicFontSize={BASE_FONT_SIZE * 1.5}
+            style={{ color: colors.englishText, opacity: 0.7 }}
             skipDefaultColor
           >
             {spacedAfterWord}
           </ThemedText>
-          <ThemedText style={{ opacity: 0 }}>{'\u00A0'}</ThemedText>
+
           <ThemedText
+            type="arabic"
+            arabicFontSize={BASE_FONT_SIZE * 1.5}
             style={[
-              baseStyles.studyWord,
               {
                 color: colors.tint,
-                backgroundColor: `${colors.tint}15`, // Add faint background color (15% opacity)
-                paddingHorizontal: 12, // Add horizontal padding
-                paddingVertical: 5, // Add vertical padding
-                borderRadius: 5, // Add rounded corners
-                marginHorizontal: 8, // Add margin for spacing between words
-                borderWidth: 1, // Add a subtle border
-                borderColor: `${colors.tint}30`, // Border color with 30% opacity
-                // Add a subtle shadow for depth
-                shadowColor: colors.tint,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.1,
-                shadowRadius: 1,
-                elevation: 1, // For Android
+                fontWeight: '700',
+                backgroundColor: `${colors.tint}08`, // Reduced background opacity
+                paddingHorizontal: 8, // Reduced horizontal padding
+                paddingVertical: 4, // Reduced vertical padding
+                borderRadius: 4, // Reduced border radius
               },
             ]}
             skipDefaultColor
           >
             {wordForm}
           </ThemedText>
-          <ThemedText style={{ opacity: 0 }}>{'\u00A0'}</ThemedText>
+
           <ThemedText
+            type="arabic"
+            arabicFontSize={BASE_FONT_SIZE * 1.5}
             style={[
-              baseStyles.dimmedText,
               {
                 color: colors.englishText,
                 opacity: 0.7,
@@ -601,7 +602,7 @@ export default function ReviewScreen() {
           >
             {spacedBeforeWord}
           </ThemedText>
-        </ThemedText>
+        </View>
       </View>
     ),
     [spacedAfterWord, wordForm, spacedBeforeWord, colors.englishText, colors.tint]

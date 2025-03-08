@@ -104,6 +104,7 @@ export const LAYOUT = {
       TIGHT: 1.2,
       NORMAL: 1.5,
       LOOSE: 1.8,
+      ARABIC: 2.2, // Specific multiplier for Arabic text to prevent clipping
     },
   },
 
@@ -197,4 +198,20 @@ export const LAYOUT = {
     NAV_HEIGHT: Platform.OS === 'ios' ? 44 : 56,
     NAV_HEADER_HEIGHT: Platform.OS === 'ios' ? 100 : 80,
   },
+};
+
+// Helper function to generate consistent Arabic text styles
+export const getArabicTextStyle = (fontSize: number, additionalStyles: any = {}) => {
+  return {
+    fontFamily: 'NotoNaskhArabic',
+    fontSize,
+    lineHeight: Math.round(fontSize * 2.0), // Further reduced line height multiplier
+    writingDirection: 'rtl',
+    textAlign: 'right',
+    includeFontPadding: true,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingHorizontal: 0, // Remove horizontal padding to maintain natural spacing
+    textAlignVertical: 'center',
+    ...additionalStyles,
+  };
 };
