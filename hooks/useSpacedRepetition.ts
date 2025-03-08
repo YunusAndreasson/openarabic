@@ -478,8 +478,6 @@ export function useSpacedRepetition({
   const uniqueWordsSeenRef = useRef(new Set<string>());
   const wordReviewCountsRef = useRef<Record<string, number>>({});
 
-  console.log('[DEBUG-SR] Hook initialized - currentIndex:', currentIndex);
-
   // Cleanup on unmount
   useEffect(() => {
     // Reset mounted flag to prevent state updates after unmount
@@ -492,7 +490,6 @@ export function useSpacedRepetition({
 
   // Function to invalidate queries
   const invalidateQueries = useCallback(() => {
-    console.log('[DEBUG-SR] Invalidating queries');
     queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
     queryClient.invalidateQueries({ queryKey: ['userProgress'] });
@@ -503,11 +500,9 @@ export function useSpacedRepetition({
   const { data: dueWords = [], isLoading } = useQuery({
     queryKey: ['dueWords', userId],
     queryFn: async () => {
-      console.log('[DEBUG-SR] Fetching due words for user:', userId);
       if (!userId) throw new Error('User ID is required');
       // Use the onlyDue option to filter on the server side
       const words = await studyWordsService.getStudyWords(userId, { onlyDue: true });
-      console.log('[DEBUG-SR] Fetched', words.length, 'due words');
 
       // Server already filtered for due words, so we just need to sort
       if (words.length > 1) {
@@ -517,7 +512,6 @@ export function useSpacedRepetition({
           const dateB = new Date(b.next_review_at).getTime();
           return dateA - dateB;
         });
-        console.log('[DEBUG-SR] Sorted words by review date');
       }
 
       return words;
@@ -533,13 +527,6 @@ export function useSpacedRepetition({
   // Process the words once they're loaded
   useEffect(() => {
     if (dueWords && Array.isArray(dueWords)) {
-      console.log(
-        '[DEBUG-SR] Updating wordsRef with',
-        dueWords.length,
-        'words, currentIndex:',
-        currentIndex
-      );
-
       // FIXED: Only process if we have words to process
       if (dueWords.length > 0) {
         // Process words to mark new words and initialize session data
@@ -555,11 +542,6 @@ export function useSpacedRepetition({
                 : 1,
           },
         }));
-
-        console.log(
-          '[DEBUG-SR] New words count:',
-          processedWords.filter(w => w.sessionData?.isNew).length
-        );
 
         // IMPORTANT FIX: Only reset wordsRef if it's currently empty
         // This prevents resetting the state during an active review session
@@ -582,27 +564,12 @@ export function useSpacedRepetition({
           // FIXED: Only set wordsLoaded to true after wordsRef has been populated
           // This ensures isComplete won't be true until words are ready
           if (processedWords.length > 0) {
-            console.log(
-              '[DEBUG-SR] Setting wordsLoaded to true with',
-              processedWords.length,
-              'words'
-            );
             setWordsLoaded(true);
           }
-        } else {
-          console.log('[DEBUG-SR] Not resetting wordsRef - active review session in progress');
         }
-
-        // Calculate expected reviews
-        const expectedReviews = processedWords.reduce(
-          (total, word) => total + (word.sessionData?.remainingReviewsNeeded || 1),
-          0
-        );
-        console.log('[DEBUG-SR] Initial expected reviews:', expectedReviews);
       } else {
         // If there are no due words, still set wordsLoaded to true
         // This allows the empty state to be displayed properly
-        console.log('[DEBUG-SR] No due words, setting wordsLoaded to true');
         setWordsLoaded(true);
       }
     }
@@ -619,7 +586,6 @@ export function useSpacedRepetition({
     } else if (dueWords.length > 0) {
       // Fall back to dueWords if wordsRef is empty
       word = currentIndex < dueWords.length ? dueWords[currentIndex] : undefined;
-      console.log('[DEBUG-SR] Using dueWords fallback for currentWord', word?.sentence_word_id);
     }
 
     // Track word as seen if it exists
@@ -627,15 +593,6 @@ export function useSpacedRepetition({
       uniqueWordsSeenRef.current.add(word.sentence_word_id);
     }
 
-    console.log(
-      '[DEBUG-SR] Current word updated:',
-      word?.sentence_word_id,
-      'at index:',
-      currentIndex,
-      'of',
-      wordsRef.current.length,
-      'words'
-    );
     return word;
   }, [currentIndex, wordsRef, dueWords]);
 
@@ -657,41 +614,17 @@ export function useSpacedRepetition({
     // FIXED: During initialization, don't mark as complete if we haven't processed any words yet
     // This prevents the review from being marked as complete before any words are shown
     if (currentIndex === 0 && wordsRef.current.length === 0 && dueWords.length > 0 && !isLoading) {
-      console.log(
-        '[DEBUG-SR] Preventing completion during initialization - dueWords:',
-        dueWords.length,
-        'wordsRef:',
-        wordsRef.current.length
-      );
       return false;
     }
 
     // Use the extracted pure function for testability
-    const complete = isReviewComplete(
+    return isReviewComplete(
       currentIndex,
       wordsRef.current.length,
       failedWordsRef.current.length,
       dueWords.length > 0,
       wordsLoaded
     );
-
-    // ADDED: More detailed logging for debugging
-    if (complete) {
-      console.log(
-        '[DEBUG-SR] Review marked as complete - currentIndex:',
-        currentIndex,
-        'wordsCount:',
-        wordsRef.current.length,
-        'failedWordsCount:',
-        failedWordsRef.current.length,
-        'hasWords:',
-        dueWords.length > 0,
-        'wordsLoaded:',
-        wordsLoaded
-      );
-    }
-
-    return complete;
   }, [currentIndex, dueWords.length, failedWordsRef, wordsRef, wordsLoaded, isLoading]);
 
   // Update also isLoading to consider wordsLoaded state
@@ -708,7 +641,6 @@ export function useSpacedRepetition({
       success: boolean;
       wordToUpdate: StudyWord;
     }) => {
-      console.log('[DEBUG-SR] Updating word:', wordId, 'success:', success);
       setIsUpdating(true);
       hasUpdatedWords.current = true;
 
@@ -740,11 +672,6 @@ export function useSpacedRepetition({
       const needsRequeue = shouldRequeueWord(wordToUpdate, success);
 
       if (needsRequeue) {
-        console.log(
-          '[DEBUG-SR] Word needs to be requeued:',
-          success ? 'new word needs more reviews' : 'word was failed'
-        );
-
         // Calculate position to reinsert the word
         const currentPosition = currentIndex;
         const remainingWords = Math.max(0, wordsRef.current.length - currentPosition - 1);
@@ -755,13 +682,6 @@ export function useSpacedRepetition({
           currentPosition,
           remainingWords,
           success
-        );
-
-        console.log(
-          '[DEBUG-SR] Will requeue word at position:',
-          reinsertPosition,
-          'current position:',
-          currentPosition
         );
 
         // Clone the word to reinsert it
@@ -779,17 +699,6 @@ export function useSpacedRepetition({
       // Calculate the next review data using the pure function
       const nextReviewData = calculateNextReview(wordToUpdate, success);
 
-      console.log(
-        '[DEBUG-SR] Final values - New stability:',
-        nextReviewData.newStability,
-        'New interval:',
-        nextReviewData.newInterval,
-        'New ease factor:',
-        nextReviewData.newEaseFactor,
-        'Next review:',
-        nextReviewData.nextReviewDate
-      );
-
       // Prepare update payload
       const updatedWord = {
         interval_days: nextReviewData.newInterval,
@@ -800,14 +709,12 @@ export function useSpacedRepetition({
         stability: nextReviewData.newStability,
         previous_interval: nextReviewData.previousInterval,
       };
-      console.log('[DEBUG-SR] Updated word data:', updatedWord);
 
       // FIXED: Add safety check before updating index
       if (mountedRef.current) {
         try {
           // Get the next word index
           const nextWordIndex = getNextWordIndex();
-          console.log('[DEBUG-SR] Moving to next word, index:', nextWordIndex);
 
           // Check if we're at the end of the review
           const isAtEnd = nextWordIndex >= wordsRef.current.length;
@@ -821,9 +728,6 @@ export function useSpacedRepetition({
             const loopCount = wordToUpdate.sessionData?.processingAttempts || 0;
 
             if (loopCount >= maxLoopCount) {
-              console.log(
-                '[DEBUG-SR] Detected potential loop with failed words, forcing completion'
-              );
               // Force completion by setting currentIndex to the end
               setCurrentIndex(wordsRef.current.length);
 
@@ -831,13 +735,9 @@ export function useSpacedRepetition({
               failedWordsRef.current = [];
             } else {
               // Not stuck in a loop yet, continue normal processing
-              console.log('[DEBUG-SR] At end with failed words, continuing normal processing');
               setCurrentIndex(nextWordIndex);
             }
           } else if (isAtEnd && noMoreFailedWords) {
-            console.log(
-              '[DEBUG-SR] Reached end of review with no more failed words, completing review'
-            );
             // Normal completion
             setCurrentIndex(wordsRef.current.length);
           } else {
@@ -845,7 +745,6 @@ export function useSpacedRepetition({
             setCurrentIndex(nextWordIndex);
           }
         } catch (error) {
-          console.error('[DEBUG-SR] Error updating index:', error);
           // Fallback - just increment the index
           setCurrentIndex(prev => Math.min(prev + 1, wordsRef.current.length));
         }
@@ -859,19 +758,15 @@ export function useSpacedRepetition({
           String(word.sentence_word_id) === String(wordId) ? { ...word, ...updatedWord } : word
         );
       });
-      console.log('[DEBUG-SR] Applied optimistic update to cache');
 
       try {
         // Convert wordId to number as required by the service
         await studyWordsService.updateWordReview(Number(wordId), updatedWord);
-        console.log('[DEBUG-SR] Successfully updated word in database');
         return { wordId, success, updatedWord };
       } catch (error: unknown) {
-        console.error('[DEBUG-SR] Error updating word review:', error);
-
         // Add more detailed error logging
         if (error instanceof Error) {
-          console.error('[DEBUG-SR] Error details:', {
+          console.error('Error updating word review:', {
             message: error.message,
             stack: error.stack,
             wordId,
@@ -887,7 +782,6 @@ export function useSpacedRepetition({
             errorMessage.includes('date') ||
             errorMessage.includes('timestamp'))
         ) {
-          console.log('[DEBUG-SR] Attempting fallback with conservative date');
           try {
             // Use a very conservative approach - just 1 year in the future
             const safeDate = new Date();
@@ -899,12 +793,10 @@ export function useSpacedRepetition({
               next_review_at: safeDate.toISOString(),
             };
 
-            console.log('[DEBUG-SR] Fallback update with safe date:', safeUpdatedWord);
             await studyWordsService.updateWordReview(Number(wordId), safeUpdatedWord);
-            console.log('[DEBUG-SR] Fallback update successful');
             return { wordId, success, updatedWord: safeUpdatedWord };
           } catch (fallbackError) {
-            console.error('[DEBUG-SR] Fallback update also failed:', fallbackError);
+            console.error('Fallback update also failed:', fallbackError);
           }
         }
 
@@ -915,77 +807,55 @@ export function useSpacedRepetition({
     },
     onSuccess: () => {
       // OPTIMIZATION: We already updated the currentIndex in the mutationFn
-      // So we don't need to do it again here, just log for debugging
-      if (mountedRef.current) {
-        console.log('[DEBUG-SR] onSuccess called - currentIndex already updated');
-        // No need to update currentIndex again
-      }
+      // So we don't need to do it again here
     },
     onError: () => {
       // Continue to next word even if there's an error
       if (mountedRef.current) {
-        console.log('[DEBUG-SR] Error occurred, still advancing to next word');
         setCurrentIndex(prev => Math.min(prev + 1, dueWords.length));
       }
     },
     onSettled: () => {
       if (mountedRef.current) {
-        console.log('[DEBUG-SR] Setting isUpdating to false');
         setIsUpdating(false);
       }
     },
   });
 
   const determineTransitionType = useCallback((success: boolean) => {
-    const type = success ? 'fade' : 'slide';
-    console.log('[DEBUG-SR] Determined transition type:', type, 'for success:', success);
-    return type;
+    return success ? 'fade' : 'slide';
   }, []);
 
   // Update word function
   const updateWord = useCallback(
     async (wordId: string, success: boolean) => {
-      console.log('[DEBUG-SR] updateWord called with wordId:', wordId, 'success:', success);
-
       // Prevent updates if component is unmounted
       if (!mountedRef.current) {
-        console.log('[DEBUG-SR] Component unmounted, skipping update');
         return;
       }
 
       // FIXED: Compare against wordsRef instead of dueWords and add safety check
       if (wordsRef.current.length === 0) {
-        console.log('[DEBUG-SR] No words in queue, skipping update');
         return;
       }
 
       // FIXED: Only check if index is valid, not if we're at the end
       if (currentIndex >= wordsRef.current.length) {
-        console.log('[DEBUG-SR] currentIndex out of bounds, skipping update');
         return;
       }
 
       const wordToUpdate = wordsRef.current[currentIndex];
       if (!wordToUpdate?.sentence_word_id) {
-        console.log('[DEBUG-SR] No word to update, skipping');
         return;
       }
 
       // Ensure we're comparing the correct IDs (both as strings)
       if (String(wordToUpdate.sentence_word_id) !== String(wordId)) {
-        console.error('[DEBUG-SR] Word ID mismatch in updateWord', {
-          expected: wordToUpdate.sentence_word_id,
-          received: wordId,
-          currentIndex,
-          wordsLength: wordsRef.current.length,
-        });
-
         // Try to find the word in the array
         const wordIndex = wordsRef.current.findIndex(
           w => String(w.sentence_word_id) === String(wordId)
         );
         if (wordIndex !== -1) {
-          console.log('[DEBUG-SR] Found word at index:', wordIndex, 'updating currentIndex');
           setCurrentIndex(wordIndex);
           // Use the correct word
           const correctWord = wordsRef.current[wordIndex];
@@ -1000,30 +870,23 @@ export function useSpacedRepetition({
           return;
         }
 
-        // If we can't find the word, log an error and return
-        console.error('[DEBUG-SR] Word not found in wordsRef, skipping update');
+        // If we can't find the word, return
         return;
       }
 
       // Set transition type immediately before the animation starts
-      console.log('[DEBUG-SR] Setting transition type before animation');
       setTransitionType(determineTransitionType(success));
 
       try {
-        console.log('[DEBUG-SR] Calling updateWordMutation.mutate');
         await updateWordMutation.mutate({
           wordId,
           success,
           wordToUpdate,
         });
-
-        // Log success for debugging
-        console.log('[DEBUG-SR] Word update successful for wordId:', wordId, 'success:', success);
       } catch (error) {
-        console.error('[DEBUG-SR] Error in updateWord:', error);
+        console.error('Error in updateWord:', error);
 
         // Try to recover by moving to the next word
-        console.log('[DEBUG-SR] Attempting to recover by moving to next word');
         setCurrentIndex(prev => Math.min(prev + 1, wordsRef.current.length));
       }
     },
@@ -1033,10 +896,8 @@ export function useSpacedRepetition({
   // Check if review is completed and invalidate relevant queries
   useEffect(() => {
     if (isComplete) {
-      console.log('[DEBUG-SR] Review is complete, invalidating queries');
       invalidateQueries();
       if (onComplete) {
-        console.log('[DEBUG-SR] Calling onComplete callback');
         onComplete();
       }
     }
@@ -1070,8 +931,6 @@ export function useSpacedRepetition({
 
       // Insert the word at the next position
       wordsRef.current.splice(nextPos, 0, wordToReinsert);
-
-      console.log('[DEBUG-SR] Reinserted failed word at position:', nextPos);
     }
 
     // Now check if we've reached the end of the queue
@@ -1080,12 +939,6 @@ export function useSpacedRepetition({
     // If at the end but still have failed words to review,
     // we need to reset to handle the remaining failed words
     if (isAtEnd && failedWordsRef.current.length > 0) {
-      console.log(
-        '[DEBUG-SR] At end but still have',
-        failedWordsRef.current.length,
-        'failed words. Processing them...'
-      );
-
       // Add safety check to prevent infinite loops
       // If we've been processing the same failed words for too long, clear them
       const maxFailedWordProcessingAttempts = 3;
@@ -1110,42 +963,25 @@ export function useSpacedRepetition({
           const position = Math.min(word.reinsertPosition || 0, wordsRef.current.length);
           wordsRef.current.splice(position, 0, word);
           addedWords = true;
-        } else {
-          console.log(
-            '[DEBUG-SR] Word exceeded max processing attempts, skipping:',
-            word.sentence_word_id
-          );
         }
       });
 
       // If we've added words, reset to the beginning to handle them
       // Otherwise, just continue to the end
       if (addedWords) {
-        console.log('[DEBUG-SR] Processed failed words, resetting to beginning');
         return 0;
       } else {
-        console.log('[DEBUG-SR] No words added after processing failed words, continuing to end');
         return nextPos;
       }
     }
 
     // Add safety check for empty queue
     if (wordsRef.current.length === 0) {
-      console.log('[DEBUG-SR] Words queue is empty, returning 0');
       return 0;
     }
 
     // Return the next position, capped at the array length
-    const finalNextPos = Math.min(nextPos, wordsRef.current.length);
-    console.log(
-      '[DEBUG-SR] Next index:',
-      finalNextPos,
-      'isAtEnd:',
-      isAtEnd,
-      'failedWordsCount:',
-      failedWordsRef.current.length
-    );
-    return finalNextPos;
+    return Math.min(nextPos, wordsRef.current.length);
   }, [currentIndex, failedWordsRef, wordsRef]);
 
   // Function to calculate and return SRS statistics

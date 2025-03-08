@@ -237,8 +237,6 @@ export default function ReviewScreen() {
   // Track if this is the first render
   const isFirstRender = useRef(true);
 
-  console.log('[DEBUG] Initial render - animationState:', animationState);
-
   const {
     currentWord,
     isLoading,
@@ -248,7 +246,6 @@ export default function ReviewScreen() {
     invalidateQueries,
     dueWords,
     currentIndex,
-    error: srsError,
     transitionType,
   } = useSpacedRepetition({
     userId: user?.id,
@@ -284,29 +281,17 @@ export default function ReviewScreen() {
   // Update current sentence when currentWord changes
   useEffect(() => {
     if (currentWord) {
-      console.log('[DEBUG] currentWord changed:', currentWord.sentence_word_id);
-
       const sentence = currentWord.sentence_word.sentence?.arabic || '';
       const wordForm = currentWord.sentence_word.word_form;
 
       // For RTL languages like Arabic, we need special handling
       // to ensure proper word placement in the sentence
       const wordIndex = sentence.indexOf(wordForm);
-      console.log('[DEBUG] Word index in sentence:', wordIndex, 'Word:', wordForm);
 
       // In RTL, the "before" actually comes after the word visually
       // and "after" comes before the word visually
       const beforeWord = wordIndex >= 0 ? sentence.substring(wordIndex + wordForm.length) : '';
       const afterWord = wordIndex > 0 ? sentence.substring(0, wordIndex) : '';
-
-      console.log(
-        '[DEBUG] Setting nextSentence - beforeWord:',
-        beforeWord.length,
-        'wordForm:',
-        wordForm,
-        'afterWord:',
-        afterWord.length
-      );
 
       // Store the next sentence for animation
       const newSentence = { beforeWord, wordForm, afterWord };
@@ -314,30 +299,15 @@ export default function ReviewScreen() {
 
       // Only set currentSentence immediately on first load
       if (isFirstRender.current) {
-        console.log('[DEBUG] Setting currentSentence immediately - first render');
         setCurrentSentence(newSentence);
         isFirstRender.current = false;
       }
     }
   }, [currentWord]);
 
-  // Show error toast if there's an error from the SRS hook
-  useEffect(() => {
-    if (srsError) {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'There was a problem updating your progress. Please try again.',
-        position: 'bottom',
-      });
-    }
-  }, [srsError]);
-
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
     (success: boolean) => {
-      console.log('[DEBUG] handleWordUpdate called - success:', success);
-
       // Add haptic feedback only when swiping left (don't know the word)
       if (!success) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -362,57 +332,36 @@ export default function ReviewScreen() {
       }
 
       const updateWordAndAnimate = () => {
-        console.log('[DEBUG] updateWordAndAnimate called');
-
         if (currentWord?.sentence_word_id) {
           try {
             // Update animation state to reflect that we're transitioning out
-            console.log('[DEBUG] Setting animationState to transitioning-out');
             setAnimationState('transitioning-out');
 
             // First update the word in the database
-            console.log('[DEBUG] Calling updateWord with ID:', currentWord.sentence_word_id);
             updateWord(currentWord.sentence_word_id, success)
               .then(() => {
                 // Reset position immediately
                 translateX.value = 0;
-                console.log('[DEBUG] Reset translateX to 0');
 
                 // Set opacity to 0 immediately
                 opacity.value = 0;
-                console.log('[DEBUG] Set opacity to 0');
 
                 // Move to next state - we're now updating the word
-                console.log('[DEBUG] Setting animationState to updating-word');
                 setAnimationState('updating-word');
 
                 // OPTIMIZATION: Reduce animation delays to show next word faster
                 // For "knew the word" (success), use an even quicker transition
                 const animationDelay = success ? 0 : 10; // Reduced from 10/30
                 const animationDuration = success ? FADE_DURATION : 100; // Reduced from 150
-                console.log(
-                  '[DEBUG] Animation delay:',
-                  animationDelay,
-                  'duration:',
-                  animationDuration
-                );
 
                 // OPTIMIZATION: For success case, skip the timeout completely
                 if (success) {
                   // Update state to transitioning in immediately
-                  console.log('[DEBUG] Success case - transitioning in immediately');
                   setAnimationState('transitioning-in');
 
                   // Fade in immediately without any delay
-                  console.log(
-                    '[DEBUG] Starting opacity animation to 1 with duration:',
-                    animationDuration
-                  );
                   opacity.value = withTiming(1, { duration: animationDuration }, () => {
                     // Use the animation completion callback to safely reset the state
-                    console.log(
-                      '[DEBUG] Opacity animation complete, setting animationState to idle'
-                    );
                     runOnJS(setAnimationState)('idle');
                   });
                 } else {
@@ -420,29 +369,20 @@ export default function ReviewScreen() {
                   fadeInTimeoutRef.current = setTimeout(() => {
                     // Clear the reference once executed
                     fadeInTimeoutRef.current = undefined;
-                    console.log('[DEBUG] Inside fadeInTimeout callback');
 
                     // Update state to transitioning in
-                    console.log('[DEBUG] Setting animationState to transitioning-in');
                     setAnimationState('transitioning-in');
 
                     // Fade in immediately without additional delay
-                    console.log(
-                      '[DEBUG] Starting opacity animation to 1 with duration:',
-                      animationDuration
-                    );
                     opacity.value = withTiming(1, { duration: animationDuration }, () => {
                       // Use the animation completion callback to safely reset the state
-                      console.log(
-                        '[DEBUG] Opacity animation complete, setting animationState to idle'
-                      );
                       runOnJS(setAnimationState)('idle');
                     });
                   }, animationDelay);
                 }
               })
               .catch(error => {
-                console.error('[DEBUG] Error updating word:', error);
+                console.error('Error updating word:', error);
                 // Show toast for error
                 Toast.show({
                   type: 'error',
@@ -457,7 +397,7 @@ export default function ReviewScreen() {
                 translateX.value = 0;
               });
           } catch (error) {
-            console.error('[DEBUG] Error updating word:', error);
+            console.error('Error updating word:', error);
             // Show toast for error
             Toast.show({
               type: 'error',
@@ -476,25 +416,20 @@ export default function ReviewScreen() {
 
       // If the user doesn't know the word, show the meaning
       if (!success) {
-        console.log('[DEBUG] Showing meaning overlay');
         // Fade in the meaning overlay
         setShowMeaningOverlay(true);
 
         // Hide the meaning after a delay
         // OPTIMIZATION: Reduce the meaning display time for faster progression
         const meaningDisplayTime = 1000; // Reduced from 1500ms
-        console.log('[DEBUG] Setting meaningTimeoutRef with delay:', meaningDisplayTime, 'ms');
         meaningTimeoutRef.current = setTimeout(() => {
           // Clear the reference once executed
           meaningTimeoutRef.current = undefined;
-          console.log('[DEBUG] Inside meaningTimeout callback, hiding meaning overlay');
-
           setShowMeaningOverlay(false);
           // Update the word status after showing the meaning
           updateWordAndAnimate();
         }, meaningDisplayTime);
       } else {
-        console.log('[DEBUG] Success case, calling updateWordAndAnimate immediately');
         // Update the word status immediately for success
         updateWordAndAnimate();
       }
@@ -511,31 +446,19 @@ export default function ReviewScreen() {
       translateX.value = event.translationX;
     })
     .onEnd(event => {
-      console.log(
-        '[DEBUG] Pan gesture ended - translationX:',
-        event.translationX,
-        'threshold:',
-        SWIPE_THRESHOLD
-      );
-
       if (event.translationX > SWIPE_THRESHOLD) {
         // Swipe right - success
-        console.log('[DEBUG] Swipe right detected (success)');
         // OPTIMIZATION: Faster spring animation for success case
         translateX.value = withSpring(SCREEN_WIDTH, { damping: 12, stiffness: 250 }, () => {
-          console.log('[DEBUG] Swipe right animation complete, calling handleWordUpdate(true)');
           runOnJS(handleWordUpdate)(true);
         });
       } else if (event.translationX < -SWIPE_THRESHOLD) {
         // Swipe left - failure
-        console.log('[DEBUG] Swipe left detected (failure)');
         translateX.value = withSpring(-SCREEN_WIDTH, ANIMATION_CONFIG, () => {
-          console.log('[DEBUG] Swipe left animation complete, calling handleWordUpdate(false)');
           runOnJS(handleWordUpdate)(false);
         });
       } else {
         // Return to center if not swiped far enough
-        console.log('[DEBUG] Swipe not far enough, returning to center');
         translateX.value = withSpring(0, ANIMATION_CONFIG);
       }
     });
@@ -655,13 +578,11 @@ export default function ReviewScreen() {
   // Check for completion and show animation
   useEffect(() => {
     if (isComplete && !showCompletionAnimation) {
-      console.log('[DEBUG] Review complete, showing completion animation');
       setShowCompletionAnimation(true);
 
       // Hide completion animation after a delay and show the completion screen
       const completionDelay = 1000; // 1 second
       const completionTimer = setTimeout(() => {
-        console.log('[DEBUG] Completion animation finished');
         // The isComplete condition in the render function will now show the completion screen
       }, completionDelay);
 
@@ -744,8 +665,6 @@ export default function ReviewScreen() {
       </ThemedView>
     );
   }
-
-  console.log('[DEBUG] Current animationState:', animationState);
 
   return (
     <ThemedView style={baseStyles.container}>
