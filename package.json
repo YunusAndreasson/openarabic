@@ -11,16 +11,18 @@
     "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "start": "expo start",
-    "test": "jest --watchAll",
-    "test:ci": "jest --ci",
-    "test:all": "jest --no-watch \"__tests__/simple.test.js|__tests__/services/articles.test.ts|__tests__/services/categories.test.ts|__tests__/services/study_words.test.ts|__tests__/services/supabase.test.ts|__tests__/store/readingListSlice.test.ts|__tests__/store/themeSlice.test.ts|__tests__/store/settingsSlice.test.ts|__tests__/hooks/srs-principles.test.ts|__tests__/hooks/ease-factor-test.js|__tests__/hooks/srs-edge-cases.test.ts|__tests__/hooks/srs-loop-prevention.test.ts|__tests__/hooks/useSpacedRepetition.test.ts|__tests__/utils/vocabulary-stats.test.ts|__tests__/hooks/useSpacedRepetitionHook.test.tsx|__tests__/hooks/memoization-demo.js\"",
-    "test:coverage": "jest --coverage --no-watch \"__tests__/simple.test.js|__tests__/services/articles.test.ts|__tests__/services/categories.test.ts|__tests__/services/study_words.test.ts|__tests__/services/supabase.test.ts|__tests__/store/readingListSlice.test.ts|__tests__/store/themeSlice.test.ts|__tests__/store/settingsSlice.test.ts|__tests__/hooks/srs-principles.test.ts|__tests__/hooks/ease-factor-test.js|__tests__/hooks/srs-edge-cases.test.ts|__tests__/hooks/srs-loop-prevention.test.ts|__tests__/hooks/useSpacedRepetition.test.ts|__tests__/utils/vocabulary-stats.test.ts|__tests__/hooks/useSpacedRepetitionHook.test.tsx|__tests__/hooks/memoization-demo.js\"",
-    "test:srs": "jest \"(useSpacedRepetition|srs-principles|ease-factor-test|srs-edge-cases|srs-loop-prevention|vocabulary-stats)\" --verbose --no-watch --testPathIgnorePatterns=memoization-demo.js",
-    "test:srs:coverage": "jest \"(useSpacedRepetition|srs-principles|ease-factor-test|srs-edge-cases|srs-loop-prevention|vocabulary-stats)\" --verbose --no-watch --coverage --testPathIgnorePatterns=memoization-demo.js",
-    "test:srs-principles": "jest srs-principles.test.ts --verbose --no-watch",
-    "test:srs-edge-cases": "jest srs-edge-cases.test.ts --verbose --no-watch",
-    "test:srs-loop-prevention": "jest srs-loop-prevention.test.ts --verbose --no-watch",
-    "test:vocabulary-stats": "jest vocabulary-stats.test.ts --verbose --no-watch",
+    "test": "jest --watchAll --testTimeout=1000",
+    "test:ci": "jest --ci --testTimeout=1000",
+    "test:all": "jest --no-watch --testTimeout=1000 \"__tests__/simple.test.js|__tests__/services/articles.test.ts|__tests__/services/categories.test.ts|__tests__/services/study_words.test.ts|__tests__/services/supabase.test.ts|__tests__/store/readingListSlice.test.ts|__tests__/store/themeSlice.test.ts|__tests__/store/settingsSlice.test.ts|__tests__/hooks/srs-principles.test.ts|__tests__/hooks/ease-factor-test.js|__tests__/hooks/srs-edge-cases.test.ts|__tests__/hooks/srs-loop-prevention.test.ts|__tests__/hooks/useSpacedRepetition.test.ts|__tests__/utils/vocabulary-stats.test.ts|__tests__/hooks/useSpacedRepetitionHook.test.tsx|__tests__/hooks/memoization-demo.js\"",
+    "test:coverage": "jest --coverage --no-watch --testTimeout=1000 \"__tests__/simple.test.js|__tests__/services/articles.test.ts|__tests__/services/categories.test.ts|__tests__/services/study_words.test.ts|__tests__/services/supabase.test.ts|__tests__/store/readingListSlice.test.ts|__tests__/store/themeSlice.test.ts|__tests__/store/settingsSlice.test.ts|__tests__/hooks/srs-principles.test.ts|__tests__/hooks/ease-factor-test.js|__tests__/hooks/srs-edge-cases.test.ts|__tests__/hooks/srs-loop-prevention.test.ts|__tests__/hooks/useSpacedRepetition.test.ts|__tests__/utils/vocabulary-stats.test.ts|__tests__/hooks/useSpacedRepetitionHook.test.tsx|__tests__/hooks/memoization-demo.js\"",
+    "test:srs": "jest \"(useSpacedRepetition|srs-principles|ease-factor-test|srs-edge-cases|srs-loop-prevention|vocabulary-stats)\" --verbose --no-watch --testTimeout=1000 --testPathIgnorePatterns=memoization-demo.js",
+    "test:srs:coverage": "jest \"(useSpacedRepetition|srs-principles|ease-factor-test|srs-edge-cases|srs-loop-prevention|vocabulary-stats)\" --verbose --no-watch --coverage --testTimeout=1000 --testPathIgnorePatterns=memoization-demo.js",
+    "test:srs-principles": "jest srs-principles.test.ts --verbose --no-watch --testTimeout=1000",
+    "test:srs-edge-cases": "jest srs-edge-cases.test.ts --verbose --no-watch --testTimeout=1000",
+    "test:srs-loop-prevention": "jest srs-loop-prevention.test.ts --verbose --no-watch --testTimeout=1000",
+    "test:vocabulary-stats": "jest vocabulary-stats.test.ts --verbose --no-watch --testTimeout=1000",
+    "test:quick": "jest --no-watch --testTimeout=500",
+    "test:file": "node scripts/run-test-with-timeout.js",
     "validate": "npm run lint && npm run format:check",
     "expoupgrade": "npx expo install --check",
     "web": "expo start --web",
@@ -30,16 +32,6 @@
     "knip:files": "knip --include files",
     "knip:files:verbose": "knip --include files --verbose",
     "knip:islands": "knip --include files --no-config-hints"
-  },
-  "jest": {
-    "preset": "jest-expo",
-    "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
-    ],
-    "setupFilesAfterEnv": [
-      "./jest.setup.js"
-    ],
-    "testEnvironment": "jsdom"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",

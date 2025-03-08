@@ -189,5 +189,43 @@ jest.mock('react-native-safe-area-context', () => ({
   },
 }));
 
-// Increase the default timeout for all tests
-jest.setTimeout(30000);
+// Reduce the default timeout from 5000ms to 1000ms
+jest.setTimeout(10000);
+
+// Mock expo-av for audio tests
+jest.mock('expo-av', () => {
+  const mockSound = {
+    playAsync: jest.fn().mockResolvedValue({}),
+    pauseAsync: jest.fn().mockResolvedValue({}),
+    stopAsync: jest.fn().mockResolvedValue({}),
+    unloadAsync: jest.fn().mockResolvedValue({}),
+    setPositionAsync: jest.fn().mockResolvedValue({}),
+    getStatusAsync: jest.fn().mockResolvedValue({
+      isLoaded: true,
+      isPlaying: false,
+      positionMillis: 0,
+      durationMillis: 100000,
+      isBuffering: false,
+      didJustFinish: false,
+    }),
+  };
+
+  return {
+    Audio: {
+      Sound: {
+        createAsync: jest.fn().mockResolvedValue({
+          sound: mockSound,
+          status: {
+            isLoaded: true,
+          },
+        }),
+      },
+      setAudioModeAsync: jest.fn().mockResolvedValue({}),
+    },
+  };
+});
+
+// Mock for static file imports
+jest.mock('react-native/Libraries/Image/resolveAssetSource', () => () => ({
+  uri: 'test-file-stub',
+}));
