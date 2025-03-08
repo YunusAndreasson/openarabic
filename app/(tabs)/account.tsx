@@ -152,10 +152,22 @@ export default function AccountScreen() {
     Linking.openURL(url);
   };
 
+  // Override styles with theme-specific colors
+  const themedStyles = useMemo(
+    () => ({
+      ...styles,
+      previewScroller: {
+        ...styles.previewScroller,
+        backgroundColor: colors.textOverlay,
+      },
+    }),
+    [colors]
+  );
+
   // Show loading screen while session is being fetched
   if (isLoading) {
     return (
-      <ThemedView style={styles.container}>
+      <ThemedView style={themedStyles.container}>
         <LoadingScreen />
       </ThemedView>
     );
@@ -164,15 +176,15 @@ export default function AccountScreen() {
   if (!session) {
     return (
       <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-        <ThemedView style={styles.container}>
-          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Account</ThemedText>
+        <ThemedView style={themedStyles.container}>
+          <View style={[themedStyles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+            <ThemedText style={themedStyles.headerTitle}>Account</ThemedText>
           </View>
-          <View style={styles.authContainer}>
-            <ThemedText type="title" style={styles.welcomeTitle}>
+          <View style={themedStyles.authContainer}>
+            <ThemedText type="title" style={themedStyles.welcomeTitle}>
               Welcome
             </ThemedText>
-            <ThemedText style={styles.subtitle}>Sign in to access your account</ThemedText>
+            <ThemedText style={themedStyles.subtitle}>Sign in to access your account</ThemedText>
             <Auth />
           </View>
         </ThemedView>
@@ -182,10 +194,10 @@ export default function AccountScreen() {
 
   return (
     <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
+      <ThemedView style={themedStyles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Account</ThemedText>
+        <View style={[themedStyles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText style={themedStyles.headerTitle}>Account</ThemedText>
         </View>
 
         {/* Scrollable content */}
@@ -199,11 +211,11 @@ export default function AccountScreen() {
             paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           }}
         >
-          <View style={styles.content}>
+          <View style={themedStyles.content}>
             {/* Preferences Section */}
             <View
               style={[
-                styles.settingsContainer,
+                themedStyles.settingsContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
@@ -211,33 +223,33 @@ export default function AccountScreen() {
                 LAYOUT.SHADOW.MEDIUM,
               ]}
             >
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
+              <View style={themedStyles.settingRow}>
+                <View style={themedStyles.settingLabelContainer}>
                   <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+                  <ThemedText style={themedStyles.settingLabel}>Dark Mode</ThemedText>
                 </View>
                 <ThemeToggle />
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
+              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={themedStyles.settingRow}>
+                <View style={themedStyles.settingLabelContainer}>
                   <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>Show English</ThemedText>
+                  <ThemedText style={themedStyles.settingLabel}>Show English</ThemedText>
                 </View>
                 <Toggle
                   value={settings.showEnglish}
                   onValueChange={value => dispatch(setShowEnglish(value))}
                 />
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
+              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={themedStyles.settingRow}>
+                <View style={themedStyles.settingLabelContainer}>
                   <Ionicons name="text" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
+                  <ThemedText style={themedStyles.settingLabel}>Text Size</ThemedText>
                 </View>
-                <View style={styles.sliderContainer}>
+                <View style={themedStyles.sliderContainer}>
                   <ThemedText
-                    style={[styles.scaleText, { color: colors.tabIconDefault }]}
+                    style={[themedStyles.scaleText, { color: colors.tabIconDefault }]}
                     skipDefaultColor
                   >
                     {Math.round(settings.fontScale * 100)}%
@@ -248,17 +260,17 @@ export default function AccountScreen() {
                     minimumValue={0.8}
                     maximumValue={1.3}
                     step={0.1}
-                    style={styles.slider}
+                    style={themedStyles.slider}
                   />
                 </View>
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={styles.previewContainer}>
-                <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
-                <View style={[styles.previewScroller]}>
+              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={themedStyles.previewContainer}>
+                <ThemedText style={themedStyles.previewLabel}>Article Text Preview</ThemedText>
+                <View style={themedStyles.previewScroller}>
                   <ThemedText
                     style={[
-                      styles.arabicPreviewText,
+                      themedStyles.arabicPreviewText,
                       {
                         fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
                         lineHeight: Math.round(
@@ -276,7 +288,7 @@ export default function AccountScreen() {
                   {settings.showEnglish && (
                     <ThemedText
                       style={[
-                        styles.englishPreviewText,
+                        themedStyles.englishPreviewText,
                         {
                           fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
                           lineHeight: Math.round(
@@ -299,7 +311,7 @@ export default function AccountScreen() {
             {/* Connect Section */}
             <View
               style={[
-                styles.connectContainer,
+                themedStyles.connectContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
@@ -313,27 +325,27 @@ export default function AccountScreen() {
                 title="Twitter"
                 onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
                 icon="logo-twitter"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Instagram"
                 onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
                 icon="logo-instagram"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Facebook"
                 onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
                 icon="logo-facebook"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
@@ -342,7 +354,7 @@ export default function AccountScreen() {
             {/* Support & Account Section */}
             <View
               style={[
-                styles.actionsContainer,
+                themedStyles.actionsContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
@@ -356,23 +368,27 @@ export default function AccountScreen() {
                 title="Contact Support"
                 onPress={handleSupport}
                 icon="mail"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Sign Out"
                 onPress={signOut}
                 icon="log-out"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={styles.accountInfoContainer}>
-                <ThemedText style={styles.signedInLabel}>Signed in as:</ThemedText>
-                <ThemedText style={styles.signedInEmail} numberOfLines={1} ellipsizeMode="tail">
+              <View style={themedStyles.accountInfoContainer}>
+                <ThemedText style={themedStyles.signedInLabel}>Signed in as:</ThemedText>
+                <ThemedText
+                  style={themedStyles.signedInEmail}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {session.user.email}
                 </ThemedText>
               </View>
@@ -470,7 +486,6 @@ const styles = StyleSheet.create({
   previewScroller: {
     padding: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
-    backgroundColor: 'rgba(0,0,0,0.03)',
   },
   arabicPreviewText: {
     textAlign: 'right',

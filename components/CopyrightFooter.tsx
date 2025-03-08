@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
   },
   copyrightText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.DIMMED - 0.1,
     textAlign: 'center',
     fontWeight: '400',
     letterSpacing: 0.3,

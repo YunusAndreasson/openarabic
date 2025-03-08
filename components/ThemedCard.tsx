@@ -87,11 +87,11 @@ function ThemedCardComponent({
     const createCardGradient = () => {
       // For iOS light mode, we need to create a custom gradient that matches the card background
       if (Platform.OS === 'ios' && !isDarkMode) {
-        // Use white color to match the iosLightModeCard style
+        // Use colors from the theme instead of hardcoded values
         return [
-          'rgba(255, 255, 255, 0)', // Start with transparent
-          'rgba(255, 255, 255, 0.95)', // Mid-fade with high opacity
-          'white', // End with pure white to match iosLightModeCard
+          colors.gradientStart, // Start with transparent
+          colors.gradientMiddle, // Mid-fade with high opacity
+          colors.cardBackground, // End with card background color
         ] as readonly [string, string, string];
       }
 
@@ -104,10 +104,20 @@ function ThemedCardComponent({
     };
 
     return {
+      container: {
+        overflow: 'visible',
+      },
+      pressable: {
+        overflow: 'visible',
+      },
       card: {
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
-        shadowColor: colors.cardShadow,
+        shadowColor: colors.shadow,
+        borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+        overflow: 'hidden',
+        ...LAYOUT.SHADOW.MEDIUM,
       },
       loadingContainer: {
         backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay,
@@ -122,7 +132,7 @@ function ThemedCardComponent({
         backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
       },
     };
-  }, [colors, isDarkMode]);
+  }, [colors, isDarkMode, style]);
 
   // Apply different styles based on platform and theme to fix light mode artifacts
   const cardStyle = useMemo(() => {

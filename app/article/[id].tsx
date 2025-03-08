@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
-    opacity: 0.9,
   },
   buttonIcon: {
     alignSelf: 'center',
@@ -390,11 +389,25 @@ export default function ArticleScreen() {
     };
   });
 
+  // Create themed styles with LAYOUT.OPACITY constants
+  const themedStyles = useMemo(
+    () => ({
+      ...styles,
+      buttonBlur: {
+        ...styles.buttonBlur,
+        opacity: LAYOUT.OPACITY.HOVER,
+      },
+    }),
+    []
+  );
+
   // Memoize the back button component to match playlist button implementation
   const BackButton = useMemo(() => {
     const buttonStyle = {
-      ...styles.buttonBlur,
-      backgroundColor: isDarkMode ? 'rgba(40, 40, 40, 0.8)' : 'rgba(240, 240, 240, 0.8)',
+      ...themedStyles.buttonBlur,
+      backgroundColor: isDarkMode
+        ? `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`
+        : `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`,
     };
 
     return (
@@ -414,27 +427,29 @@ export default function ArticleScreen() {
             <Ionicons
               name="chevron-back"
               size={24}
-              color={isDarkMode ? '#FFFFFF' : '#000000'}
+              color={isDarkMode ? colors.white : colors.black}
               style={styles.buttonIcon}
             />
           </BlurView>
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [insets.top, isDarkMode, backButtonAnimatedStyle]);
+  }, [insets.top, isDarkMode, backButtonAnimatedStyle, colors]);
 
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
     if (!user) return null;
 
     const buttonStyle = {
-      ...styles.buttonBlur,
-      backgroundColor: isDarkMode ? 'rgba(40, 40, 40, 0.8)' : 'rgba(240, 240, 240, 0.8)',
+      ...themedStyles.buttonBlur,
+      backgroundColor: isDarkMode
+        ? `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`
+        : `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`,
     };
 
     // Use the default color for the headset icon
-    const activeIconColor = isDarkMode ? '#FFFFFF' : '#000000';
-    const inactiveIconColor = isDarkMode ? '#FFFFFF' : '#000000';
+    const activeIconColor = isDarkMode ? colors.white : colors.black;
+    const inactiveIconColor = isDarkMode ? colors.white : colors.black;
 
     return (
       <Animated.View
@@ -467,6 +482,7 @@ export default function ArticleScreen() {
     handleToggleReadingList,
     user,
     playlistButtonAnimatedStyle,
+    colors,
   ]);
 
   // Optimize enhanceWord function - restore required properties for type compatibility

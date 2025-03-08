@@ -110,39 +110,45 @@ export const LAYOUT = {
 
   // Shadow configurations for different elevations
   SHADOW: {
-    SMALL: Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-    MEDIUM: Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 4,
-      },
-    }),
-    LARGE: Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.2,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
+    SMALL: {
+      ...Platform.select({
+        ios: {
+          // shadowColor will be set by the component using colors.black or colors.shadow
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1, // Fixed value to avoid circular reference
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 2,
+        },
+      }),
+    },
+    MEDIUM: {
+      ...Platform.select({
+        ios: {
+          // shadowColor will be set by the component using colors.black or colors.shadow
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.15, // Fixed value to avoid circular reference
+          shadowRadius: 8,
+        },
+        android: {
+          elevation: 4,
+        },
+      }),
+    },
+    LARGE: {
+      ...Platform.select({
+        ios: {
+          // shadowColor will be set by the component using colors.black or colors.shadow
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.2, // Fixed value to avoid circular reference
+          shadowRadius: 12,
+        },
+        android: {
+          elevation: 8,
+        },
+      }),
+    },
   },
 
   // Opacity levels for various UI states

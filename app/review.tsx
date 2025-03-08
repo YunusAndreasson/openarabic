@@ -212,6 +212,36 @@ const baseStyles = StyleSheet.create({
 export default function ReviewScreen() {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+
+  // Override the overlay style with the proper color from the theme
+  const styles = useMemo(
+    () => ({
+      ...baseStyles,
+      meaningOverlay: {
+        ...baseStyles.meaningOverlay,
+        backgroundColor: colors.textOverlay,
+      },
+      actionButton: {
+        ...baseStyles.actionButton,
+        ...Platform.select({
+          ios: {
+            shadowColor: colors.black,
+          },
+        }),
+      },
+      modalContent: {
+        ...baseStyles.modalContent,
+        ...Platform.select({
+          ios: {
+            shadowColor: colors.black,
+          },
+        }),
+      },
+      // Add any other style overrides here
+    }),
+    [colors]
+  );
+
   const { user } = useAuth();
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -532,7 +562,7 @@ export default function ReviewScreen() {
           <ThemedText
             type="arabic"
             arabicFontSize={BASE_FONT_SIZE * 1.5}
-            style={{ color: colors.englishText, opacity: 0.7 }}
+            style={{ color: colors.englishText, opacity: LAYOUT.OPACITY.DIMMED }}
             skipDefaultColor
           >
             {spacedAfterWord}
@@ -562,7 +592,7 @@ export default function ReviewScreen() {
             style={[
               {
                 color: colors.englishText,
-                opacity: 0.7,
+                opacity: LAYOUT.OPACITY.DIMMED,
               },
             ]}
             skipDefaultColor

@@ -131,18 +131,20 @@ export default function VocabularyScreen() {
   );
 
   // Create a memoized error message component
-  const ErrorMessage = React.memo(() => (
-    <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
-      <ThemedText style={[styles.message, { color: '#FF3B30' }]}>
-        Error loading your vocabulary data. Please try again later.
-      </ThemedText>
-      <ThemedButton
-        title="Retry"
-        onPress={() => navigation.navigate('vocabulary')}
-        style={{ marginTop: LAYOUT.SPACING.LARGE }}
-      />
-    </View>
-  ));
+  const ErrorMessage = React.memo(() => {
+    return (
+      <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
+        <ThemedText style={[styles.message, { color: colors.warning }]}>
+          Error loading your vocabulary data. Please try again later.
+        </ThemedText>
+        <ThemedButton
+          title="Retry"
+          onPress={() => navigation.navigate('vocabulary')}
+          style={{ marginTop: LAYOUT.SPACING.LARGE }}
+        />
+      </View>
+    );
+  });
   ErrorMessage.displayName = 'ErrorMessage';
 
   // Enhanced loading state detection with minimum duration

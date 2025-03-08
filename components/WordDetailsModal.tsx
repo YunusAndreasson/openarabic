@@ -32,6 +32,127 @@ function WordDetailsModalComponent({
     onStudyPress?.();
   }, [onStudyPress]);
 
+  // Memoize styles to prevent unnecessary rerenders
+  const styles = useMemo(() => {
+    const { width } = Dimensions.get('window');
+    const maxWidth = Math.min(width * 0.9, 400);
+
+    return StyleSheet.create({
+      modalContent: {
+        width: maxWidth,
+        padding: 0,
+        borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE * 1.5,
+        overflow: 'hidden',
+        ...Platform.select({
+          ios: {
+            shadowColor: 'black',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.2,
+            shadowRadius: 16,
+          },
+          android: {
+            elevation: 12,
+          },
+        }),
+      },
+      contentWrapper: {
+        width: '100%',
+        gap: LAYOUT.SPACING.XLARGE,
+        paddingTop: LAYOUT.SPACING.XLARGE,
+        paddingBottom: LAYOUT.SPACING.XLARGE,
+        paddingHorizontal: LAYOUT.SPACING.XLARGE,
+      },
+      header: {
+        alignItems: 'center',
+        width: '100%',
+        gap: LAYOUT.SPACING.LARGE,
+      },
+      arabicWord: {
+        ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3, {
+          textAlign: 'center',
+          paddingVertical: LAYOUT.SPACING.MEDIUM,
+          textAlignVertical: 'center',
+        }),
+      },
+      translation: {
+        textAlign: 'center',
+        fontWeight: '600',
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+        paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+        opacity: 0.9,
+      },
+      detailsContainer: {
+        gap: LAYOUT.SPACING.LARGE,
+        width: '100%',
+      },
+      detailRow: {
+        gap: LAYOUT.SPACING.SMALL,
+        width: '100%',
+        marginHorizontal: LAYOUT.SPACING.XLARGE,
+      },
+      label: {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+        fontWeight: '600',
+        opacity: LAYOUT.OPACITY.DIMMED,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+      },
+      pill: {
+        borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+        padding: LAYOUT.SPACING.LARGE,
+        marginHorizontal: -LAYOUT.SPACING.XLARGE,
+        marginVertical: 0,
+        width: 'auto',
+        alignSelf: 'stretch',
+        ...Platform.select({
+          ios: {
+            shadowColor: 'black',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+          },
+          android: {
+            elevation: 1,
+          },
+        }),
+      },
+      rootText: {
+        ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
+          textAlign: 'center',
+          marginBottom: LAYOUT.SPACING.MEDIUM,
+        }),
+      },
+      rootMeaning: {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+        marginTop: LAYOUT.SPACING.MEDIUM,
+        textAlign: 'center',
+        opacity: LAYOUT.OPACITY.DIMMED,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+      },
+      typeText: {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+        textAlign: 'center',
+        fontWeight: '500',
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
+      },
+      grammarNote: {
+        gap: LAYOUT.SPACING.SMALL,
+        width: '100%',
+        marginHorizontal: LAYOUT.SPACING.XLARGE,
+      },
+      noteText: {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+      },
+      studyButton: {
+        alignSelf: 'center',
+        minWidth: 240,
+        marginTop: LAYOUT.SPACING.MEDIUM,
+      },
+    });
+  }, []);
+
   // Memoize styles to prevent new object creation on each render
   const arabicWordStyle = useMemo(
     () => [
@@ -188,121 +309,3 @@ function WordDetailsModalComponent({
 
 // Memoize the component to prevent unnecessary rerenders
 export const WordDetailsModal = React.memo(WordDetailsModalComponent);
-
-const { width } = Dimensions.get('window');
-const maxWidth = Math.min(width * 0.9, 400);
-
-const styles = StyleSheet.create({
-  modalContent: {
-    width: maxWidth,
-    padding: 0,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE * 1.5,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
-  },
-  contentWrapper: {
-    width: '100%',
-    gap: LAYOUT.SPACING.XLARGE,
-    paddingTop: LAYOUT.SPACING.XLARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-  },
-  header: {
-    alignItems: 'center',
-    width: '100%',
-    gap: LAYOUT.SPACING.LARGE,
-  },
-  arabicWord: {
-    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3, {
-      textAlign: 'center',
-      paddingVertical: LAYOUT.SPACING.MEDIUM,
-      textAlignVertical: 'center',
-    }),
-  },
-  translation: {
-    textAlign: 'center',
-    fontWeight: '600',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
-    opacity: 0.9,
-  },
-  detailsContainer: {
-    gap: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
-  detailRow: {
-    gap: LAYOUT.SPACING.SMALL,
-    width: '100%',
-    marginHorizontal: LAYOUT.SPACING.XLARGE,
-  },
-  label: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    opacity: LAYOUT.OPACITY.DIMMED,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  pill: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.SPACING.LARGE,
-    marginHorizontal: -LAYOUT.SPACING.XLARGE,
-    marginVertical: 0,
-    width: 'auto',
-    alignSelf: 'stretch',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 1,
-      },
-    }),
-  },
-  rootText: {
-    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
-      textAlign: 'center',
-      marginBottom: LAYOUT.SPACING.MEDIUM,
-    }),
-  },
-  rootMeaning: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-  },
-  typeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
-    fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
-  },
-  grammarNote: {
-    gap: LAYOUT.SPACING.SMALL,
-    width: '100%',
-    marginHorizontal: LAYOUT.SPACING.XLARGE,
-  },
-  noteText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-  },
-  studyButton: {
-    alignSelf: 'center',
-    minWidth: 240,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
-});

@@ -141,6 +141,76 @@ export function AudioPlayer({
     );
   };
 
+  // Create styles with the colors
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+          borderRadius: 8,
+          overflow: 'hidden',
+          marginBottom: LAYOUT.SPACING.MEDIUM,
+        },
+        playerContent: {
+          padding: LAYOUT.SPACING.MEDIUM,
+        },
+        trackInfo: {
+          marginBottom: LAYOUT.SPACING.MEDIUM,
+        },
+        trackTitle: {
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+          fontWeight: '600',
+          marginBottom: LAYOUT.SPACING.SMALL,
+        },
+        progressContainer: {
+          flexDirection: 'row',
+          alignItems: 'center',
+        },
+        progressBar: {
+          flex: 1,
+          height: 40,
+        },
+        timeText: {
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+          width: 50,
+          textAlign: 'center',
+        },
+        controls: {
+          flexDirection: 'row',
+          justifyContent: 'space-around',
+          alignItems: 'center',
+        },
+        controlButton: {
+          padding: LAYOUT.SPACING.SMALL,
+        },
+        playlist: {
+          borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+          padding: LAYOUT.SPACING.MEDIUM,
+        },
+        playlistTitle: {
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+          fontWeight: '600',
+          marginBottom: LAYOUT.SPACING.SMALL,
+        },
+        playlistItem: {
+          paddingVertical: LAYOUT.SPACING.SMALL,
+          paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+          borderRadius: 4,
+          marginBottom: LAYOUT.SPACING.SMALL,
+        },
+        playlistItemActive: {
+          backgroundColor: colors.textOverlay,
+        },
+        playlistItemText: {
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+        },
+        playlistItemTextActive: {
+          fontWeight: '600',
+        },
+      }),
+    [colors]
+  );
+
   return (
     <View style={[styles.container, { borderColor: colors.tabIconDefault }]}>
       <View style={styles.playerContent}>
@@ -188,68 +258,3 @@ export function AudioPlayer({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  playerContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  trackInfo: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  trackTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  progressBar: {
-    flex: 1,
-    height: 40,
-  },
-  timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    width: 50,
-    textAlign: 'center',
-  },
-  controls: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  controlButton: {
-    padding: LAYOUT.SPACING.SMALL,
-  },
-  playlist: {
-    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  playlistTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  playlistItem: {
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderRadius: 4,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  playlistItemActive: {
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  playlistItemText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-  },
-  playlistItemTextActive: {
-    fontWeight: '600',
-  },
-});

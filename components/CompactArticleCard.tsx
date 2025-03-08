@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   difficultyLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.85,
     marginBottom: 2,
-    opacity: 0.8,
+    opacity: LAYOUT.OPACITY.PRESSED,
   },
   starsContainer: {
     flexDirection: 'row',

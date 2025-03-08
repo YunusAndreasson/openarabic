@@ -199,10 +199,10 @@ function ThemedModalComponent({
     () => [
       styles.modalContainer,
       {
-        backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})`,
+        backgroundColor: colors.modalOverlay,
       },
     ],
-    [overlayOpacity]
+    [colors.modalOverlay]
   );
 
   const defaultContentStyle = useMemo(

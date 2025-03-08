@@ -24,7 +24,7 @@ export const ArticleSkeleton: React.FC<ArticleSkeletonProps> = ({ style, type = 
   const opacity = useSharedValue(0.5);
 
   // Use a light gray color for skeleton background
-  const skeletonColor = 'rgba(0, 0, 0, 0.1)';
+  const skeletonColor = colors.textOverlay;
 
   // Set up the shimmer animation
   React.useEffect(() => {
