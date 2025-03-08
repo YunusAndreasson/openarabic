@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useRef, useState } from 'react';
-import { StyleSheet, View, ScrollView, Platform } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform, Pressable } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
@@ -21,36 +21,46 @@ import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { FadeIn } from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
+import { Ionicons } from '@expo/vector-icons';
 
 // Create a memoized component for the review button
 const ReviewButton = React.memo(
-  ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => (
-    <View style={styles.reviewButtonContainer}>
-      <ThemedButton
-        title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
-        icon="play-circle"
-        onPress={onPress}
-        variant="filled"
-        style={styles.reviewButton}
-      />
-    </View>
-  )
+  ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => {
+    const colors = useColors();
+    return (
+      <View style={styles.reviewButtonContainer}>
+        <ThemedButton
+          title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
+          icon="play-circle"
+          iconSize={24}
+          onPress={onPress}
+          variant="filled"
+          style={styles.reviewButton}
+        />
+      </View>
+    );
+  }
 );
 
 ReviewButton.displayName = 'ReviewButton';
 
-// Create a disabled review button for when there are no words to review
-const DisabledReviewButton = React.memo(() => (
-  <View style={styles.reviewButtonContainer}>
-    <ThemedButton
-      title="No words to review"
-      icon="checkmark-circle"
-      disabled={true}
-      variant="outlined"
-      style={styles.reviewButton}
-    />
-  </View>
-));
+// Create a memoized component for the disabled review button
+const DisabledReviewButton = React.memo(() => {
+  const colors = useColors();
+
+  return (
+    <View style={styles.reviewButtonContainer}>
+      <ThemedButton
+        title="No words due for review"
+        icon="checkmark-circle"
+        iconSize={24}
+        disabled={true}
+        variant="outlined"
+        style={styles.reviewButton}
+      />
+    </View>
+  );
+});
 
 DisabledReviewButton.displayName = 'DisabledReviewButton';
 
@@ -274,45 +284,60 @@ export default function VocabularyScreen() {
 
   // Main content
   return (
-    <ThemedView style={styles.container}>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollViewContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.headerContainer}>
-          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-        </View>
+    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
+      {/* Fixed header */}
+      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+        <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+      </View>
 
-        {isContentLoading ? (
-          <LoadingContainer style={styles.loadingContainer} />
-        ) : (
+      {/* Scrollable content */}
+      {isContentLoading ? (
+        <LoadingContainer style={styles.loadingContainer} />
+      ) : (
+        <ThemedView
+          scrollable={true}
+          useSafeArea={false}
+          includeBottomInset={false}
+          contentContainerStyle={{
+            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+            paddingTop: LAYOUT.SPACING.MEDIUM,
+            paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+          }}
+        >
           <Animated.View entering={FadeIn.duration(300)}>
-            <VocabularyDashboard
-              totalWords={stats.totalWords}
-              masteredWords={stats.masteredWords}
-              learningWords={stats.learningWords}
-              dueWords={stats.dueWords}
-              streak={stats.streak}
-              colors={colors}
-            />
-
-            <View style={styles.graphContainer}>
-              <ThemedText style={styles.graphTitle}>Weekly Progress</ThemedText>
-              <VocabularyGraph data={weeklyProgressData} />
+            {/* Dashboard Section */}
+            <View style={styles.sectionContainer}>
+              <ThemedText style={styles.sectionTitle}>Overview</ThemedText>
+              <VocabularyDashboard
+                totalWords={stats.totalWords}
+                masteredWords={stats.masteredWords}
+                learningWords={stats.learningWords}
+                dueWords={stats.dueWords}
+                streak={stats.streak}
+                colors={colors}
+              />
             </View>
-          </Animated.View>
-        )}
-      </ScrollView>
 
-      {isDataReady && (
-        <View style={styles.bottomContainer}>
-          {stats.dueWords > 0 ? (
-            <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
-          ) : (
-            <DisabledReviewButton />
-          )}
-        </View>
+            {/* Graph Section */}
+            <View style={styles.sectionContainer}>
+              <ThemedText style={styles.sectionTitle}>Weekly Progress</ThemedText>
+              <View style={styles.graphContainer}>
+                <VocabularyGraph data={weeklyProgressData} />
+              </View>
+            </View>
+
+            {/* Review Button Section */}
+            {isDataReady && (
+              <View style={styles.reviewButtonWrapper}>
+                {stats.dueWords > 0 ? (
+                  <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+                ) : (
+                  <DisabledReviewButton />
+                )}
+              </View>
+            )}
+          </Animated.View>
+        </ThemedView>
       )}
     </ThemedView>
   );
@@ -322,12 +347,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollViewContent: {
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + 100,
-  },
   headerContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: Platform.select({
@@ -335,45 +354,48 @@ const styles = StyleSheet.create({
       android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
     }),
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
   },
+  sectionContainer: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  sectionTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
   messageContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
   },
   graphContainer: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  graphTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  bottomContainer: {
-    position: 'absolute',
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    left: 0,
-    right: 0,
+  reviewButtonWrapper: {
+    width: '100%',
     alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   reviewButtonContainer: {
-    width: '90%',
+    width: '100%',
     maxWidth: 400,
   },
   reviewButton: {
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    width: '100%',
   },
   loadingContainer: {
-    marginTop: LAYOUT.SPACING.XLARGE * 2,
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
