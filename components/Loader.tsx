@@ -3,8 +3,15 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated from 'react-native-reanimated';
-import { usePulseAnimation, useFadeInAnimation } from '@/hooks/animations';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  withSequence,
+  Easing,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -13,70 +20,106 @@ interface LoaderProps {
 }
 
 /**
- * A simple pulsating circle loader
+ * A simple pulsating circle loader with dramatic zoom animation
  */
 export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) => {
   const colors = useColors();
-  // Use provided color or default to text color (which will be white in dark mode, black in light mode)
   const loaderColor = color || colors.text;
 
-  // Use standardized pulse animation
-  const { animatedStyle: pulseAnimatedStyle, pulse } = usePulseAnimation(1.1);
-  const { animatedStyle: opacityAnimatedStyle, startAnimation: startFadeIn } = useFadeInAnimation(
-    0,
-    300
-  );
+  // Animation values
+  const scale = useSharedValue(0.3);
+  const opacity = useSharedValue(0.5);
 
-  // Use our custom fade-in animation hook
-  const { animatedStyle: fadeAnimatedStyle, startAnimation } = useFadeInAnimation(0, 300);
-
+  // Start animation immediately
   useEffect(() => {
-    // Start animations
-    startFadeIn();
-    pulse();
-    startAnimation();
+    const startAnimation = () => {
+      // Animate scale with dramatic zoom effect
+      scale.value = withSequence(
+        withTiming(0.7, {
+          duration: 200,
+          easing: Easing.out(Easing.quad),
+        }),
+        withTiming(1.25, {
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+        }),
+        withDelay(
+          150,
+          withTiming(0.3, {
+            duration: 500,
+            easing: Easing.inOut(Easing.cubic),
+          })
+        ),
+        withDelay(200, withTiming(0.3, { duration: 0 }))
+      );
 
-    // Set up pulse interval
-    const intervalId = setInterval(() => {
-      pulse();
-    }, 1400); // Slightly faster than the animation duration for a continuous effect
+      // Animate opacity in sync with scale
+      opacity.value = withSequence(
+        withTiming(0.8, {
+          duration: 200,
+          easing: Easing.out(Easing.quad),
+        }),
+        withTiming(1, {
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
+        }),
+        withDelay(
+          150,
+          withTiming(0.5, {
+            duration: 500,
+            easing: Easing.inOut(Easing.cubic),
+          })
+        ),
+        withDelay(200, withTiming(0.5, { duration: 0 }))
+      );
+    };
+
+    // Start the animation cycle
+    const intervalId = setInterval(startAnimation, 1350);
+    startAnimation();
 
     return () => {
       clearInterval(intervalId);
+      cancelAnimation(scale);
+      cancelAnimation(opacity);
     };
-  }, [pulse, startFadeIn, startAnimation]);
+  }, [scale, opacity]);
 
   // Size configuration
-  const circleSize = size === 'large' ? 40 : 20;
+  const circleSize = size === 'large' ? 52 : 28;
   const borderWidth = size === 'large' ? 4 : 2;
 
-  // Combine all animated styles
-  const combinedAnimatedStyle = useMemo(() => {
-    return [
-      pulseAnimatedStyle,
-      opacityAnimatedStyle,
-      fadeAnimatedStyle,
-      {
-        width: circleSize,
-        height: circleSize,
-        borderRadius: circleSize / 2,
-        borderWidth: borderWidth,
-        borderColor: loaderColor,
-        backgroundColor: 'transparent',
-      },
-    ];
-  }, [
-    pulseAnimatedStyle,
-    opacityAnimatedStyle,
-    fadeAnimatedStyle,
-    circleSize,
-    borderWidth,
-    loaderColor,
-  ]);
+  // Dynamic styles based on animation values
+  const animatedStyle = useAnimatedStyle(() => {
+    const scaleProgress = (scale.value - 0.3) / 0.95; // Normalized progress (0.3 to 1.25 range)
+
+    return {
+      transform: [{ scale: scale.value }],
+      opacity: opacity.value,
+      borderWidth: borderWidth * (0.6 + scaleProgress * 0.8),
+      shadowRadius: 4 + scaleProgress * 15,
+      shadowOpacity: 0.2 + scaleProgress * 0.5,
+      elevation: Math.round(4 + scaleProgress * 15),
+    };
+  });
+
+  // Base circle styles
+  const circleStyle = useMemo(
+    () => ({
+      width: circleSize,
+      height: circleSize,
+      borderRadius: circleSize / 2,
+      borderColor: loaderColor,
+      backgroundColor: 'transparent',
+      shadowColor: loaderColor,
+      shadowOffset: { width: 0, height: 0 },
+    }),
+    [circleSize, loaderColor]
+  );
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View style={[styles.circle, combinedAnimatedStyle]} />
+      <Animated.View style={[styles.circle, circleStyle, animatedStyle]} />
     </View>
   );
 };
@@ -87,27 +130,43 @@ interface LoadingScreenProps {
 
 /**
  * A full-screen loading component that uses ThemedView for consistent styling
- * and automatically handles background colors.
  */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
+  const containerOpacity = useSharedValue(0);
+  const loaderOpacity = useSharedValue(0);
 
-  // Use our custom fade-in animation hooks
-  const { animatedStyle: containerStyle, startAnimation: startContainerAnimation } =
-    useFadeInAnimation(0, 400);
-  const { animatedStyle: loaderStyle, startAnimation: startLoaderAnimation } = useFadeInAnimation(
-    0,
-    500
-  );
-
-  // Start animations when component mounts
   useEffect(() => {
-    startContainerAnimation();
-    startLoaderAnimation();
-  }, [startContainerAnimation, startLoaderAnimation]);
+    containerOpacity.value = withTiming(1, {
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+    });
+
+    loaderOpacity.value = withDelay(
+      50,
+      withTiming(1, {
+        duration: 300,
+        easing: Easing.out(Easing.ease),
+      })
+    );
+
+    return () => {
+      cancelAnimation(containerOpacity);
+      cancelAnimation(loaderOpacity);
+    };
+  }, [containerOpacity, loaderOpacity]);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    opacity: containerOpacity.value,
+    flex: 1,
+  }));
+
+  const loaderStyle = useAnimatedStyle(() => ({
+    opacity: loaderOpacity.value,
+  }));
 
   return (
-    <Animated.View style={[{ flex: 1 }, containerStyle]}>
+    <Animated.View style={containerStyle}>
       <ThemedView style={styles.fullScreen}>
         <Animated.View style={[styles.loaderContainer, loaderStyle]}>
           <Loader size="large" color={color || colors.tint} />
@@ -134,14 +193,22 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
   height = 160,
 }) => {
   const colors = useColors();
+  const opacity = useSharedValue(0);
 
-  // Use our custom fade-in animation hook
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
-
-  // Start animation when component mounts
   useEffect(() => {
-    startAnimation();
-  }, [startAnimation]);
+    opacity.value = withTiming(1, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
+
+    return () => {
+      cancelAnimation(opacity);
+    };
+  }, [opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   return (
     <Animated.View style={[styles.componentLoader, { height }, style, animatedStyle]}>
@@ -150,6 +217,7 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
   );
 };
 
+// Component display names for debugging
 Loader.displayName = 'Loader';
 LoadingScreen.displayName = 'LoadingScreen';
 LoadingContainer.displayName = 'LoadingContainer';
@@ -158,12 +226,12 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 50,
-    minHeight: 50,
+    minWidth: 64,
+    minHeight: 64,
     padding: LAYOUT.SPACING.SMALL,
   },
   circle: {
-    opacity: 0.8,
+    // Base styles only - specific styles moved to circleStyle for better memoization
   },
   fullScreen: {
     flex: 1,
