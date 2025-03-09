@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
+import { capitalizeFirstLetter } from '../utils/stringUtils';
 
 interface CategorySelectorProps {
   categories: { id: number; name: string }[];
@@ -26,7 +27,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
           style={[styles.categoryItem, selectedCategory === category.id && styles.selectedCategory]}
           onTouchEnd={() => onSelectCategory(category.id)}
         >
-          <ThemedText>{category.name}</ThemedText>
+          <ThemedText>{capitalizeFirstLetter(category.name.toLowerCase())}</ThemedText>
         </View>
       ))}
     </View>

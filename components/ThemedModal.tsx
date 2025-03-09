@@ -15,7 +15,7 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useFadeInAnimation, useScaleAnimation } from '@/hooks/animations';
 
 interface ThemedModalProps {
@@ -99,6 +99,72 @@ interface ThemedModalProps {
    */
   overlayOpacity?: number;
 }
+
+// Create a component for the modal content with animations
+const AnimatedModalContent = ({
+  children,
+  contentStyle,
+  animationDuration,
+  showCloseButton,
+  title,
+  titleStyle,
+  handleBackdropPress,
+  isDarkMode,
+  colors,
+}: {
+  children: ReactNode;
+  contentStyle: any;
+  animationDuration: number;
+  showCloseButton: boolean;
+  title?: string;
+  titleStyle?: TextStyle;
+  handleBackdropPress: () => void;
+  isDarkMode: boolean;
+  colors: any;
+}) => {
+  // Use our custom fade-in animation hooks
+  const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
+    useFadeInAnimation(0, animationDuration);
+  const { animatedStyle: childrenAnimatedStyle, startAnimation: startChildrenAnimation } =
+    useFadeInAnimation(0, 300);
+
+  // Start animations when component mounts
+  useEffect(() => {
+    startContentAnimation();
+    // Delay the children animation slightly
+    setTimeout(() => {
+      startChildrenAnimation();
+    }, 100);
+  }, [startContentAnimation, startChildrenAnimation]);
+
+  return (
+    <Animated.View style={[contentStyle, contentAnimatedStyle]}>
+      <Pressable onPress={e => e.stopPropagation()}>
+        {showCloseButton && (
+          <View style={styles.closeButtonContainer}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={handleBackdropPress}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            >
+              <Ionicons
+                name="close-circle"
+                size={28}
+                color={isDarkMode ? colors.tabIconDefault : colors.icon}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+        {title && (
+          <ThemedText style={[styles.modalTitle, titleStyle]} skipDefaultColor={!!titleStyle}>
+            {title}
+          </ThemedText>
+        )}
+        <Animated.View style={childrenAnimatedStyle}>{children}</Animated.View>
+      </Pressable>
+    </Animated.View>
+  );
+};
 
 /**
  * A reusable modal component that adapts to the current theme
@@ -209,13 +275,14 @@ function ThemedModalComponent({
     };
   }, [animated, fadeAnimatedStyle, scaleAnimatedStyle]);
 
+  // Use the AnimatedModalContent component for both blur and non-blur cases
   return (
     <Modal
-      animationType={animationType}
-      transparent={true}
+      transparent
       visible={visible}
       onRequestClose={handleBackdropPress}
-      statusBarTranslucent={true}
+      animationType="none"
+      statusBarTranslucent
     >
       {useBlur ? (
         <BlurView
@@ -224,71 +291,34 @@ function ThemedModalComponent({
           tint={isDarkMode ? 'dark' : 'light'}
         >
           <Pressable style={containerStyle} onPress={handleBackdropPress}>
-            <Animated.View
-              style={[defaultContentStyle, combinedAnimatedStyle]}
-              entering={FadeIn.duration(animationDuration)}
-              exiting={FadeOut.duration(150)}
+            <AnimatedModalContent
+              contentStyle={[defaultContentStyle, combinedAnimatedStyle]}
+              animationDuration={animationDuration}
+              showCloseButton={showCloseButton}
+              title={title}
+              titleStyle={titleStyle}
+              handleBackdropPress={handleBackdropPress}
+              isDarkMode={isDarkMode}
+              colors={colors}
             >
-              <Pressable onPress={e => e.stopPropagation()}>
-                {showCloseButton && (
-                  <View style={styles.closeButtonContainer}>
-                    <TouchableOpacity
-                      style={styles.closeButton}
-                      onPress={handleBackdropPress}
-                      hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                    >
-                      <Ionicons
-                        name="close-circle"
-                        size={28}
-                        color={isDarkMode ? colors.tabIconDefault : colors.icon}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                )}
-                {title && (
-                  <ThemedText
-                    style={[styles.modalTitle, titleStyle]}
-                    skipDefaultColor={!!titleStyle}
-                  >
-                    {title}
-                  </ThemedText>
-                )}
-                <Animated.View entering={FadeIn.delay(100).duration(300)}>{children}</Animated.View>
-              </Pressable>
-            </Animated.View>
+              {children}
+            </AnimatedModalContent>
           </Pressable>
         </BlurView>
       ) : (
         <Pressable style={containerStyle} onPress={handleBackdropPress}>
-          <Animated.View
-            style={[defaultContentStyle, combinedAnimatedStyle]}
-            entering={FadeIn.duration(animationDuration)}
-            exiting={FadeOut.duration(150)}
+          <AnimatedModalContent
+            contentStyle={[defaultContentStyle, combinedAnimatedStyle]}
+            animationDuration={animationDuration}
+            showCloseButton={showCloseButton}
+            title={title}
+            titleStyle={titleStyle}
+            handleBackdropPress={handleBackdropPress}
+            isDarkMode={isDarkMode}
+            colors={colors}
           >
-            <Pressable onPress={e => e.stopPropagation()}>
-              {showCloseButton && (
-                <View style={styles.closeButtonContainer}>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={handleBackdropPress}
-                    hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
-                  >
-                    <Ionicons
-                      name="close-circle"
-                      size={28}
-                      color={isDarkMode ? colors.tabIconDefault : colors.icon}
-                    />
-                  </TouchableOpacity>
-                </View>
-              )}
-              {title && (
-                <ThemedText style={[styles.modalTitle, titleStyle]} skipDefaultColor={!!titleStyle}>
-                  {title}
-                </ThemedText>
-              )}
-              <Animated.View entering={FadeIn.delay(100).duration(300)}>{children}</Animated.View>
-            </Pressable>
-          </Animated.View>
+            {children}
+          </AnimatedModalContent>
         </Pressable>
       )}
     </Modal>

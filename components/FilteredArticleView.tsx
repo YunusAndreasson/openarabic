@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, RefreshControl, View, TouchableOpacity } from 'react-native';
+import React, { useEffect } from 'react';
+import { ScrollView, StyleSheet, RefreshControl, View } from 'react-native';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
@@ -7,9 +7,8 @@ import { useColors } from '../hooks/useColors';
 import { CopyrightFooter } from './CopyrightFooter';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from './ThemedText';
 import { Tables } from '../types/database.types';
+import { capitalizeFirstLetter } from '../utils/stringUtils';
 
 interface FilteredArticleViewProps {
   /**
@@ -69,9 +68,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   onRefresh,
   onArticlePress,
   ListHeaderComponent,
-  selectedAuthor,
-  selectedCategory,
-  onClearFilter,
 }) => {
   const colors = useColors();
 
@@ -107,7 +103,11 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
           <ThemedCard
             imageUrl={article.image_url || ''}
             title={article.title}
-            category={article.category?.name || 'Uncategorized'}
+            category={
+              article.category?.name
+                ? capitalizeFirstLetter(article.category.name.toLowerCase())
+                : 'Uncategorized'
+            }
             author={article.author?.name || 'Anonymous'}
             onPress={() => onArticlePress?.(article)}
             isLoading={isLoading}

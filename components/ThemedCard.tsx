@@ -110,7 +110,7 @@ function ThemedCardComponent({
         shadowColor: colors.shadow,
         borderRadius: isCompact ? LAYOUT.BORDER_RADIUS.LARGE : LAYOUT.BORDER_RADIUS.MEDIUM,
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        overflow: 'hidden',
+        overflow: 'visible',
         ...LAYOUT.SHADOW.MEDIUM,
       },
       loadingContainer: {
@@ -174,9 +174,14 @@ function ThemedCardComponent({
               end={{ x: 0.5, y: 1 }}
             />
           </View>
-
-          {category && <Pill id={category} label={category} variant="category" absolute />}
         </View>
+
+        {/* Render the category pill outside the imageContainer */}
+        {category && (
+          <View style={styles.pillContainer}>
+            <Pill id={category} label={category} variant="category" />
+          </View>
+        )}
 
         <View style={styles.contentContainer}>
           <ThemedText style={styles.title} numberOfLines={2}>
@@ -254,7 +259,7 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    overflow: 'hidden',
+    overflow: 'visible',
     ...LAYOUT.SHADOW.MEDIUM,
   },
   compactCard: {
@@ -267,7 +272,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 220,
     backgroundColor: 'transparent',
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   imageOverlayContainer: {
     position: 'absolute',
@@ -275,7 +280,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    overflow: 'hidden',
+    overflow: 'visible',
   },
   image: {
     width: '100%',
@@ -316,5 +321,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     overflow: 'hidden',
+  },
+  pillContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    maxWidth: '90%',
   },
 });

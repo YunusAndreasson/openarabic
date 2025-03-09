@@ -220,6 +220,76 @@ const baseStyles = StyleSheet.create({
   } as ViewStyle,
 });
 
+// Create a component for the meaning overlay with proper animation
+const MeaningOverlay = ({ visible, meaning }: { visible: boolean; meaning: string }) => {
+  const colors = useColors();
+  const { animatedStyle, startAnimation, reverseAnimation } = useFadeInAnimation(0, 150);
+
+  useEffect(() => {
+    if (visible) {
+      startAnimation();
+    } else {
+      reverseAnimation();
+    }
+  }, [visible, startAnimation, reverseAnimation]);
+
+  if (!visible) return null;
+
+  return (
+    <Animated.View style={[baseStyles.meaningOverlay, animatedStyle]}>
+      <ThemedText style={[baseStyles.meaningText, { color: colors.tint } as TextStyle]}>
+        {meaning || 'No translation available'}
+      </ThemedText>
+    </Animated.View>
+  );
+};
+
+// Create a component for animated completion items
+const AnimatedCompletionItem = ({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) => {
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 400);
+
+  useEffect(() => {
+    setTimeout(() => {
+      startAnimation();
+    }, delay);
+  }, [startAnimation, delay]);
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
+};
+
+// Create a component for the completion screen
+const CompletionScreen = ({ onClose }: { onClose: () => void }) => {
+  const colors = useColors();
+
+  return (
+    <ThemedView style={baseStyles.container as any}>
+      <View style={baseStyles.completionContainer as any}>
+        <AnimatedCompletionItem>
+          <View style={baseStyles.completionIconContainer as any}>
+            <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
+          </View>
+        </AnimatedCompletionItem>
+
+        <AnimatedCompletionItem delay={200}>
+          <ThemedText style={baseStyles.completionText as any}>
+            You've completed all your reviews for now!
+          </ThemedText>
+        </AnimatedCompletionItem>
+
+        <AnimatedCompletionItem delay={400}>
+          <ThemedButton title="Back to Home" onPress={onClose} />
+        </AnimatedCompletionItem>
+      </View>
+    </ThemedView>
+  );
+};
+
 export default function ReviewScreen() {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -659,26 +729,7 @@ export default function ReviewScreen() {
 
   // Show completion screen if all words are reviewed
   if (isComplete) {
-    return (
-      <ThemedView style={baseStyles.container as any}>
-        <View style={baseStyles.completionContainer as any}>
-          <Animated.View
-            entering={FadeIn.duration(400)}
-            style={baseStyles.completionIconContainer as any}
-          >
-            <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
-          </Animated.View>
-          <Animated.View entering={FadeIn.duration(400).delay(200)}>
-            <ThemedText style={baseStyles.completionText as any}>
-              You've completed all your reviews for now!
-            </ThemedText>
-          </Animated.View>
-          <Animated.View entering={FadeIn.duration(400).delay(400)}>
-            <ThemedButton title="Back to Home" onPress={handleClose} />
-          </Animated.View>
-        </View>
-      </ThemedView>
-    );
+    return <CompletionScreen onClose={handleClose} />;
   }
 
   // Return the main content with entrance animation
@@ -704,17 +755,10 @@ export default function ReviewScreen() {
               </View>
             </GestureDetector>
 
-            {showMeaningOverlay && (
-              <Animated.View
-                style={themedStyles.meaningOverlay}
-                entering={FadeIn.duration(150)}
-                exiting={FadeOut.duration(150)}
-              >
-                <ThemedText style={[baseStyles.meaningText, { color: colors.tint } as TextStyle]}>
-                  {currentWord?.sentence_word?.english || 'No translation available'}
-                </ThemedText>
-              </Animated.View>
-            )}
+            <MeaningOverlay
+              visible={showMeaningOverlay}
+              meaning={currentWord?.sentence_word?.english || ''}
+            />
 
             <View style={baseStyles.footer}>
               <Pressable

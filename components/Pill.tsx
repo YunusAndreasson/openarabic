@@ -7,6 +7,7 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { ThemedText } from './ThemedText';
+import { capitalizeFirstLetter } from '../utils/stringUtils';
 
 /**
  * Props for the Pill component
@@ -175,7 +176,7 @@ const Pill = React.memo(
             : colors.titleText; // Unselected text in light mode - using titleText for better contrast
         style.fontSize = LAYOUT.TYPOGRAPHY.SCALE.TINY + 1;
         style.fontWeight = isSelected ? '700' : '500'; // Slightly lighter weight for unselected
-        style.letterSpacing = 0.5;
+        style.letterSpacing = 0.3; // Reduced from 0.5 to allow more characters
         style.lineHeight = 16;
         style.textAlign = 'center';
       } else {
@@ -217,7 +218,7 @@ const Pill = React.memo(
             ]}
           >
             <ThemedText style={textStyle} skipDefaultColor numberOfLines={1} ellipsizeMode="tail">
-              {label.toUpperCase()}
+              {capitalizeFirstLetter(label.toLowerCase())}
             </ThemedText>
           </View>
         </Animated.View>
@@ -227,7 +228,7 @@ const Pill = React.memo(
     // For interactive pills
     return (
       <Animated.View style={animatedStyle}>
-        <Animated.View style={scaleStyle}>
+        <Animated.View style={[scaleStyle, absolute && styles.absoluteContainer]}>
           <Pressable
             style={({ pressed: isPressedState }) => [
               styles.pill,
@@ -237,7 +238,6 @@ const Pill = React.memo(
                   backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
                 },
               isSelected && styles.pillSelected,
-              isCategory && absolute && styles.absoluteContainer,
             ]}
             onPress={handlePress}
             onPressIn={() => {
@@ -263,7 +263,7 @@ const Pill = React.memo(
               numberOfLines={1}
               ellipsizeMode="tail"
             >
-              {isCategory ? label.toUpperCase() : label}
+              {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label}
             </ThemedText>
           </Pressable>
         </Animated.View>
@@ -274,18 +274,19 @@ const Pill = React.memo(
 
 const styles = StyleSheet.create({
   container: {
-    maxWidth: '70%',
-    zIndex: 15,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    minWidth: 50,
   },
   absoluteContainer: {
     position: 'absolute',
     top: LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SPACING.MEDIUM,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
   },
   pill: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL - 1, // Slightly reduced vertical padding for better proportions
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Match card border radius
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.SMALL - 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginRight: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
@@ -293,7 +294,8 @@ const styles = StyleSheet.create({
     borderWidth: 0.5, // Thinner border for cleaner look
   },
   pillText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9, // Slightly smaller font size
+    fontWeight: '500', // Add medium font weight for better readability
   },
 });
 

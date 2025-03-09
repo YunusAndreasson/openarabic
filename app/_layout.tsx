@@ -22,11 +22,21 @@ import Toast, { BaseToast, BaseToastProps } from 'react-native-toast-message';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { configureReanimatedLogger } from 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient({});
+// Configure Reanimated logger to disable strict mode
+// This will suppress warnings about property "opacity" being overwritten by a layout animation
+configureReanimatedLogger({
+  strict: false,
+});
+
+// Create a new QueryClient instance
+const queryClient = new QueryClient();
 
 function AppContent() {
   const colorScheme = useColorScheme();

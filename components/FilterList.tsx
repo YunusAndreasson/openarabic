@@ -1,11 +1,13 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { View, FlatList, Pressable, StyleSheet } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import SectionTitle from './SectionTitle';
 import { ThemedText } from './ThemedText';
 import Pill from './Pill';
+import { capitalizeFirstLetter } from '../utils/stringUtils';
+import { useFadeInAnimation } from '../hooks/animations';
 
 interface FilterItem {
   id: number;
@@ -64,15 +66,31 @@ function FilterList<T extends FilterItem>({
 }: FilterListProps<T>) {
   const colors = useColors();
 
+  // Use our custom fade-in animation hook instead of Reanimated's FadeIn
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, LAYOUT.ANIMATION.DURATION.NORMAL);
+
+  // Start the animation when the component mounts
+  useEffect(() => {
+    startAnimation(animationDelay);
+  }, [startAnimation, animationDelay]);
+
+  // Determine if this is a category filter based on the title
+  const isCategory = title.toLowerCase().includes('category');
+
   // Render item function
   const renderItem = useCallback(
     ({ item }: { item: T }) => {
       const isSelected = selectedId === item.id;
+      // Format the label based on whether this is a category filter
+      const formattedLabel = isCategory
+        ? capitalizeFirstLetter(item.name.toLowerCase())
+        : item.name;
+
       return (
         <Pill
           key={`filter-pill-${item.id}`}
           id={item.id}
-          label={item.name}
+          label={formattedLabel}
           isSelected={isSelected}
           onSelect={id => onSelect(Number(id))}
           animationDelay={itemAnimationDelay}
@@ -80,17 +98,14 @@ function FilterList<T extends FilterItem>({
         />
       );
     },
-    [selectedId, onSelect, itemAnimationDelay]
+    [selectedId, onSelect, itemAnimationDelay, isCategory]
   );
 
   // Skip rendering if no items
   if (items.length === 0) return null;
 
   return (
-    <Animated.View
-      style={styles.container}
-      entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(animationDelay)}
-    >
+    <Animated.View style={[styles.container, animatedStyle]}>
       <View style={styles.headerContainer}>
         <SectionTitle title={title} />
         {selectedId !== null && onClearFilter && (

@@ -3,7 +3,7 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { usePulseAnimation, useFadeInAnimation } from '@/hooks/animations';
 
 interface LoaderProps {
@@ -27,10 +27,14 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
     300
   );
 
+  // Use our custom fade-in animation hook
+  const { animatedStyle: fadeAnimatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+
   useEffect(() => {
     // Start animations
     startFadeIn();
     pulse();
+    startAnimation();
 
     // Set up pulse interval
     const intervalId = setInterval(() => {
@@ -40,17 +44,18 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
     return () => {
       clearInterval(intervalId);
     };
-  }, [pulse, startFadeIn]);
+  }, [pulse, startFadeIn, startAnimation]);
 
   // Size configuration
   const circleSize = size === 'large' ? 40 : 20;
   const borderWidth = size === 'large' ? 4 : 2;
 
-  // Combine animated styles
+  // Combine all animated styles
   const combinedAnimatedStyle = useMemo(() => {
     return [
       pulseAnimatedStyle,
       opacityAnimatedStyle,
+      fadeAnimatedStyle,
       {
         width: circleSize,
         height: circleSize,
@@ -60,15 +65,18 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
         backgroundColor: 'transparent',
       },
     ];
-  }, [pulseAnimatedStyle, opacityAnimatedStyle, circleSize, borderWidth, loaderColor]);
+  }, [
+    pulseAnimatedStyle,
+    opacityAnimatedStyle,
+    fadeAnimatedStyle,
+    circleSize,
+    borderWidth,
+    loaderColor,
+  ]);
 
   return (
     <View style={[styles.container, style]}>
-      <Animated.View
-        style={[styles.circle, combinedAnimatedStyle]}
-        entering={FadeIn.duration(300)}
-        exiting={FadeOut.duration(200)}
-      />
+      <Animated.View style={[styles.circle, combinedAnimatedStyle]} />
     </View>
   );
 };
@@ -84,10 +92,24 @@ interface LoadingScreenProps {
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
 
+  // Use our custom fade-in animation hooks
+  const { animatedStyle: containerStyle, startAnimation: startContainerAnimation } =
+    useFadeInAnimation(0, 400);
+  const { animatedStyle: loaderStyle, startAnimation: startLoaderAnimation } = useFadeInAnimation(
+    0,
+    500
+  );
+
+  // Start animations when component mounts
+  useEffect(() => {
+    startContainerAnimation();
+    startLoaderAnimation();
+  }, [startContainerAnimation, startLoaderAnimation]);
+
   return (
-    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(400)}>
+    <Animated.View style={[{ flex: 1 }, containerStyle]}>
       <ThemedView style={styles.fullScreen}>
-        <Animated.View style={styles.loaderContainer} entering={FadeIn.duration(500)}>
+        <Animated.View style={[styles.loaderContainer, loaderStyle]}>
           <Loader size="large" color={color || colors.tint} />
         </Animated.View>
       </ThemedView>
@@ -113,11 +135,16 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
 }) => {
   const colors = useColors();
 
+  // Use our custom fade-in animation hook
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+
+  // Start animation when component mounts
+  useEffect(() => {
+    startAnimation();
+  }, [startAnimation]);
+
   return (
-    <Animated.View
-      style={[styles.componentLoader, { height }, style]}
-      entering={FadeIn.duration(300)}
-    >
+    <Animated.View style={[styles.componentLoader, { height }, style, animatedStyle]}>
       <Loader size={size} color={color || colors.tint} />
     </Animated.View>
   );

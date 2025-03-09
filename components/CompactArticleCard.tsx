@@ -111,15 +111,15 @@ function CompactArticleCardComponent({
               showLoadingIndicator={true}
               transition={300}
             />
-            {article.category && (
-              <Pill
-                id={article.category.id}
-                label={article.category.name}
-                variant="category"
-                absolute
-              />
-            )}
           </View>
+
+          {/* Render the category pill outside the imageContainer */}
+          {article.category && (
+            <View style={styles.pillContainer}>
+              <Pill id={article.category.id} label={article.category.name} variant="category" />
+            </View>
+          )}
+
           <View style={styles.contentContainer}>
             <ThemedText style={styles.title} numberOfLines={2}>
               {article.title}
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    overflow: 'hidden',
+    overflow: 'visible',
     ...LAYOUT.SHADOW.MEDIUM,
   },
   imageContainer: {
@@ -168,6 +168,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 130,
     zIndex: LAYOUT.Z_INDEX.BASE,
+    overflow: 'visible',
   },
   image: {
     width: '100%',
@@ -221,5 +222,12 @@ const styles = StyleSheet.create({
   timeAgoText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
+  },
+  pillContainer: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    maxWidth: '90%',
   },
 });

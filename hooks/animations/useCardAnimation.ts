@@ -3,7 +3,7 @@ import {
   useAnimatedStyle,
   withSpring,
   interpolate,
-  Extrapolate,
+  Extrapolation,
 } from 'react-native-reanimated';
 import { SPRING_CONFIG } from './animationConfigs';
 
@@ -17,8 +17,8 @@ export const useCardAnimation = (scaleAmount = 0.985, opacityAmount = 0.97) => {
   const pressed = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(pressed.value, [0, 1], [1, scaleAmount], Extrapolate.CLAMP);
-    const opacity = interpolate(pressed.value, [0, 1], [1, opacityAmount], Extrapolate.CLAMP);
+    const scale = interpolate(pressed.value, [0, 1], [1, scaleAmount], Extrapolation.CLAMP);
+    const opacity = interpolate(pressed.value, [0, 1], [1, opacityAmount], Extrapolation.CLAMP);
 
     return {
       transform: [{ scale }],

@@ -3,7 +3,7 @@ import {
   useAnimatedStyle,
   withSpring,
   interpolate,
-  Extrapolate,
+  Extrapolation,
 } from 'react-native-reanimated';
 import { SPRING_CONFIG } from './animationConfigs';
 
@@ -16,7 +16,7 @@ export const useButtonAnimation = (scaleAmount = 0.97) => {
   const pressed = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(pressed.value, [0, 1], [1, scaleAmount], Extrapolate.CLAMP);
+    const scale = interpolate(pressed.value, [0, 1], [1, scaleAmount], Extrapolation.CLAMP);
 
     return {
       transform: [{ scale }],

@@ -8,6 +8,7 @@ import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import Pill from './Pill';
 import Animated, { SharedValue } from 'react-native-reanimated';
+import { capitalizeFirstLetter } from '../utils/stringUtils';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];
@@ -56,7 +57,7 @@ function CategoryPillsComponent({
         >
           <Pill
             id="all"
-            label="ALL"
+            label="All"
             isSelected={selectedCategory === null}
             onSelect={() => createPressHandler(null)()}
             variant="horizontal-category"
@@ -66,7 +67,7 @@ function CategoryPillsComponent({
             <Pill
               key={category.id}
               id={category.id}
-              label={category.name}
+              label={capitalizeFirstLetter(category.name.toLowerCase())}
               isSelected={selectedCategory?.id === category.id}
               onSelect={() => createPressHandler(category)()}
               variant="horizontal-category"

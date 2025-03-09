@@ -8,6 +8,7 @@ import Pill from '../Pill';
 import Animated, { useAnimatedStyle, interpolate } from 'react-native-reanimated';
 import { CategoryPillsContainerProps } from '../../types/ui.types';
 import type { Tables } from '../../types/database.types';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
 
 function CategoryPillsContainerComponent({
   categories,
@@ -52,7 +53,7 @@ function CategoryPillsContainerComponent({
         >
           <Pill
             id="all"
-            label="ALL"
+            label="All"
             isSelected={selectedCategory === null}
             onSelect={() => createPressHandler(null)()}
             variant="horizontal-category"
@@ -62,7 +63,7 @@ function CategoryPillsContainerComponent({
             <Pill
               key={category.id}
               id={category.id}
-              label={category.name}
+              label={capitalizeFirstLetter(category.name.toLowerCase())}
               isSelected={selectedCategory?.id === category.id}
               onSelect={() => createPressHandler(category)()}
               variant="horizontal-category"

@@ -1,11 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-  runOnJS,
-} from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 
 /**
@@ -14,10 +8,7 @@ import { TIMING_CONFIG } from './animationConfigs';
  * @param duration - Duration of animation in ms
  * @returns Object with animated style and function to update the progress
  */
-export const useProgressAnimation = (
-  initialPercentage = 0,
-  duration = TIMING_CONFIG.SLOW.duration
-) => {
+export const useProgressAnimation = (duration = TIMING_CONFIG.SLOW.duration) => {
   // Store the progress value as a shared value for animations
   const progress = useSharedValue(0);
 

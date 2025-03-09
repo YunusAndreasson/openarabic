@@ -3,7 +3,7 @@ import { StyleSheet, Dimensions, View, TextStyle, ViewStyle } from 'react-native
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
-import Animated, { Layout } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { StudyWord } from '../types/vocabulary.types';
 import { useFadeInAnimation } from '@/hooks/animations';
 import { useSlideAnimation } from '../hooks/animations/useSlideAnimation';
@@ -17,73 +17,40 @@ interface WordReviewCardProps {
   isVisible: boolean;
 }
 
-Dimensions.get('window');
-
+/**
+ * A card component for displaying a word during review
+ */
 export function WordReviewCard({ word, transitionType = 'fade', isVisible }: WordReviewCardProps) {
   const colors = useColors();
 
-  // Use our custom fade animation hook
+  // Use appropriate animation based on transition type
   const { animatedStyle: fadeAnimatedStyle, startAnimation: startFadeAnimation } =
     useFadeInAnimation(0, 300);
+  const { animatedStyle: slideAnimatedStyle } = useSlideAnimation();
 
-  // Use fade animations
-  const { animatedStyle: arabicStyle, startAnimation: startArabicAnimation } = useFadeInAnimation(
-    0,
-    300
-  );
+  // Combine animations
+  const containerAnimatedStyle = useMemo(() => {
+    if (transitionType === 'fade') {
+      return fadeAnimatedStyle;
+    } else {
+      return slideAnimatedStyle;
+    }
+  }, [transitionType, fadeAnimatedStyle, slideAnimatedStyle]);
 
-  const { animatedStyle: translationStyle, startAnimation: startTranslationAnimation } =
-    useFadeInAnimation(150, 300);
-
-  const { animatedStyle: exampleStyle, startAnimation: startExampleAnimation } = useFadeInAnimation(
-    200,
-    300
-  );
-
-  const { animatedStyle: actionButtonsStyle, startAnimation: startButtonsAnimation } =
-    useFadeInAnimation(300, 400);
-
-  // Use our custom slide animation hook
-  const { animatedStyle: slideAnimatedStyle, startAnimation: startSlideAnimation } =
-    useSlideAnimation(0, 20, 100, 'right');
-
-  // Run animation when word changes or becomes visible
+  // Start animations when component becomes visible
   useEffect(() => {
-    if (word && isVisible) {
-      // Reset animations to initial state
+    if (isVisible) {
       if (transitionType === 'fade') {
         startFadeAnimation();
-        startArabicAnimation();
-        startTranslationAnimation();
-        startExampleAnimation();
-        startButtonsAnimation();
-      } else {
-        startSlideAnimation();
       }
     }
-  }, [
-    word,
-    isVisible,
-    transitionType,
-    startFadeAnimation,
-    startArabicAnimation,
-    startTranslationAnimation,
-    startExampleAnimation,
-    startButtonsAnimation,
-    startSlideAnimation,
-  ]);
+  }, [isVisible, transitionType, startFadeAnimation]);
 
-  // Apply the appropriate animation style based on transition type
-  const containerAnimatedStyle = transitionType === 'fade' ? fadeAnimatedStyle : slideAnimatedStyle;
-
-  // Create styles with the colors
-  const themedStyles = useMemo(() => {
-    return {
+  // Themed styles
+  const themedStyles = useMemo(
+    () => ({
       cardBackground: {
         backgroundColor: colors.cardBackground,
-      },
-      cardBorder: {
-        borderColor: colors.cardBorder,
       },
       arabicText: {
         color: colors.text,
@@ -91,11 +58,9 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
       englishText: {
         color: colors.text,
       },
-      textSecondary: {
-        color: colors.tabIconDefault || '#888888',
-      },
-    };
-  }, [colors]);
+    }),
+    [colors]
+  );
 
   if (!word) return null;
 
@@ -109,7 +74,6 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
         } as ViewStyle,
         containerAnimatedStyle,
       ]}
-      layout={Layout.springify()}
     >
       <View style={styles.contentContainer}>
         <View style={styles.wordContainer}>
@@ -120,32 +84,11 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
                 ...getArabicTextStyle(24),
                 color: colors.text,
               } as TextStyle,
-              arabicStyle,
             ]}
           >
-            {word.sentence_word.word_form}
-          </Animated.Text>
-
-          <Animated.Text style={[styles.englishWord, exampleStyle]}>
-            {word.sentence_word.english}
+            {word.sentence_word?.word_form || ''}
           </Animated.Text>
         </View>
-
-        {word.sentence_word.sentence?.arabic && (
-          <Animated.View style={[styles.sentenceContainer, actionButtonsStyle]}>
-            <ThemedText style={[styles.sentenceLabel, themedStyles.textSecondary]}>
-              Example sentence:
-            </ThemedText>
-            <ThemedText
-              style={[
-                styles.sentenceText,
-                { ...getArabicTextStyle(18), textAlign: 'right' } as TextStyle,
-              ]}
-            >
-              {word.sentence_word.sentence.arabic}
-            </ThemedText>
-          </Animated.View>
-        )}
       </View>
     </Animated.View>
   );
