@@ -176,30 +176,23 @@ export const VocabularyGraph = React.memo(
       [GRAPH_HEIGHT, GRAPH_WIDTH, colors.text]
     );
 
-    // Show loading state
-    if (isLoading || !isReady) {
+    // If no data or loading, show placeholder with exact same dimensions
+    if (isLoading || data.length === 0) {
       return (
-        <View style={cardStyle}>
-          {cardHeader}
-          <LoadingContainer height={GRAPH_HEIGHT} />
-        </View>
-      );
-    }
-
-    // Show empty state with message when no data is available
-    if (data.length === 0) {
-      return (
-        <View style={cardStyle}>
+        <Animated.View style={[cardStyle, { height: 250 }]}>
           {cardHeader}
           <View style={styles.loadingContainer}>
-            <ThemedText style={styles.loadingText}>No data available yet</ThemedText>
+            <LoadingContainer size="small" />
+            <ThemedText style={styles.loadingText}>
+              {data.length === 0 ? 'No data available' : 'Loading data...'}
+            </ThemedText>
           </View>
-        </View>
+        </Animated.View>
       );
     }
 
     return (
-      <Animated.View style={[cardStyle, animatedStyle]}>
+      <Animated.View style={[cardStyle, animatedStyle, { height: 250 }]}>
         {cardHeader}
 
         <View style={styles.graphContainer}>
@@ -296,13 +289,14 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    height: 250, // Fixed height to prevent any layout changes
     ...LAYOUT.SHADOW.MEDIUM,
   },
   header: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.SMALL,
+    height: 50, // Fixed height for header
   },
   titleRow: {
     flexDirection: 'row',
@@ -323,12 +317,12 @@ const styles = StyleSheet.create({
   },
   graphContainer: {
     paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
-    height: 160, // Includes space for labels
+    height: 160, // Fixed height for graph container
     position: 'relative',
   },
   canvas: {
     width: '100%',
-    height: 120, // Match GRAPH_HEIGHT
+    height: 120, // Fixed height matching GRAPH_HEIGHT
   },
   xAxisLabels: {
     position: 'absolute',
@@ -357,6 +351,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL,
     borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
+    height: 40, // Fixed height for footer
   },
   footerContent: {
     flexDirection: 'row',
@@ -373,7 +368,7 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DISABLED,
   },
   loadingContainer: {
-    height: 160,
+    height: 160, // Fixed height to match graphContainer
     justifyContent: 'center',
     alignItems: 'center',
   },

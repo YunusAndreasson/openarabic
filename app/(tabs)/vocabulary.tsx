@@ -71,7 +71,18 @@ export default function VocabularyScreen() {
 
   // Animation state
   const [animationsTriggered, setAnimationsTriggered] = useState(false);
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 200);
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 400);
+
+  // Layout ready state to prevent jumping
+  const [isLayoutReady, setIsLayoutReady] = useState(false);
+
+  // Set layout ready after first render
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure layout is calculated
+    requestAnimationFrame(() => {
+      setIsLayoutReady(true);
+    });
+  }, []);
 
   // Query for study words
   const {
@@ -190,14 +201,12 @@ export default function VocabularyScreen() {
 
   // Trigger animations when data is ready
   useEffect(() => {
-    if (isDataReady && !animationsTriggered && !isContentLoading) {
-      // Start animations with a small delay
-      setTimeout(() => {
-        startFadeIn();
-        setAnimationsTriggered(true);
-      }, 100);
+    if (isDataReady && !animationsTriggered && !isContentLoading && isLayoutReady) {
+      // Start animations immediately without delay
+      startFadeIn();
+      setAnimationsTriggered(true);
     }
-  }, [isDataReady, animationsTriggered, isContentLoading, startFadeIn]);
+  }, [isDataReady, animationsTriggered, isContentLoading, startFadeIn, isLayoutReady]);
 
   // Show loading screen for initial load
   if (isLoading) {
@@ -252,7 +261,7 @@ export default function VocabularyScreen() {
           </View>
         )}
 
-        {/* Content */}
+        {/* Content - initially invisible until animation starts */}
         <ThemedView
           scrollable={true}
           useSafeArea={false}
@@ -263,45 +272,50 @@ export default function VocabularyScreen() {
             paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           }}
         >
-          <Animated.View style={[{ width: '100%' }, fadeInStyle]}>
-            {/* Dashboard Section */}
-            <View style={styles.dashboardWrapper}>
-              <VocabularyDashboard
-                totalWords={stats.totalWords}
-                masteredWords={stats.masteredWords}
-                learningWords={stats.learningWords}
-                dueWords={stats.dueWords}
-                streak={stats.streak}
-                colors={colors}
-                animationTriggered={animationsTriggered}
-              />
-            </View>
-
-            {/* Graph Section */}
-            <View
-              style={[
-                styles.graphWrapper,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.cardBorder,
-                },
-                LAYOUT.SHADOW.MEDIUM,
-              ]}
-            >
-              <VocabularyGraph data={weeklyProgressData} animationTriggered={animationsTriggered} />
-            </View>
-
-            {/* Review Button Section */}
-            {isDataReady && (
-              <View style={styles.reviewButtonWrapper}>
-                {stats.dueWords > 0 ? (
-                  <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
-                ) : (
-                  <DisabledReviewButton />
-                )}
+          {isLayoutReady && (
+            <Animated.View style={[{ width: '100%', opacity: 0 }, fadeInStyle]}>
+              {/* Dashboard Section */}
+              <View style={styles.dashboardWrapper}>
+                <VocabularyDashboard
+                  totalWords={stats.totalWords}
+                  masteredWords={stats.masteredWords}
+                  learningWords={stats.learningWords}
+                  dueWords={stats.dueWords}
+                  streak={stats.streak}
+                  colors={colors}
+                  animationTriggered={animationsTriggered}
+                />
               </View>
-            )}
-          </Animated.View>
+
+              {/* Graph Section */}
+              <View
+                style={[
+                  styles.graphWrapper,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.cardBorder,
+                  },
+                  LAYOUT.SHADOW.MEDIUM,
+                ]}
+              >
+                <VocabularyGraph
+                  data={weeklyProgressData}
+                  animationTriggered={animationsTriggered}
+                />
+              </View>
+
+              {/* Review Button Section */}
+              {isDataReady && (
+                <View style={styles.reviewButtonWrapper}>
+                  {stats.dueWords > 0 ? (
+                    <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+                  ) : (
+                    <DisabledReviewButton />
+                  )}
+                </View>
+              )}
+            </Animated.View>
+          )}
         </ThemedView>
       </View>
     </ThemedView>
@@ -359,6 +373,7 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    height: 250,
   },
   reviewButtonWrapper: {
     width: '100%',
