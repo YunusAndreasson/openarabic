@@ -9,10 +9,12 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
+import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '../constants/layout';
 import * as Haptics from 'expo-haptics';
+import Animated from 'react-native-reanimated';
+import { useButtonAnimation } from '../utils/animations';
 
 interface ThemedButtonProps extends TouchableOpacityProps {
   variant?: 'filled' | 'outlined';
@@ -42,6 +44,7 @@ export function ThemedButton({
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
+  const { animatedStyle, handlePressIn, handlePressOut } = useButtonAnimation(0.95);
 
   // Handle press with haptic feedback
   const handlePress = (event: GestureResponderEvent) => {
@@ -78,30 +81,34 @@ export function ThemedButton({
   ];
 
   return (
-    <TouchableOpacity
-      style={buttonStyles}
-      disabled={disabled || loading}
-      activeOpacity={LAYOUT.OPACITY.PRESSED}
-      onPress={handlePress}
-      {...props}
-    >
-      <View style={[styles.innerContainer, innerContainerStyle]}>
-        {iconComponent ? (
-          <View style={styles.iconContainer}>{iconComponent}</View>
-        ) : icon ? (
-          <View style={styles.iconContainer}>
-            <Ionicons name={icon as any} size={iconSize} color={iconColor} />
-          </View>
-        ) : null}
+    <Animated.View style={animatedStyle}>
+      <TouchableOpacity
+        style={buttonStyles}
+        disabled={disabled || loading}
+        activeOpacity={1} // We're handling the opacity animation ourselves
+        onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        {...props}
+      >
+        <View style={[styles.innerContainer, innerContainerStyle]}>
+          {iconComponent ? (
+            <View style={styles.iconContainer}>{iconComponent}</View>
+          ) : icon ? (
+            <View style={styles.iconContainer}>
+              <Ionicons name={icon as any} size={iconSize} color={iconColor} />
+            </View>
+          ) : null}
 
-        <View style={[styles.contentContainer, contentContainerStyle]}>
-          <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
-            {title}
-          </ThemedText>
-          {children}
+          <View style={[styles.contentContainer, contentContainerStyle]}>
+            <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
+              {title}
+            </ThemedText>
+            {children}
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 }
 

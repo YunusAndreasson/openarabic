@@ -8,7 +8,6 @@ import {
   Dimensions,
   ViewStyle,
   TextStyle,
-  Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useColors } from '../hooks/useColors';
@@ -123,13 +122,11 @@ function ThemedModalComponent({
   contentStyle,
   titleStyle,
   closeOnBackdropPress = true,
-  useHaptics = true,
   widthPercentage = 0.85,
   maxWidth = 400,
   animationDuration = LAYOUT.ANIMATION.DURATION.NORMAL,
   blurIntensity = 80,
   animationType = 'fade',
-  overlayOpacity = 0.8,
 }: ThemedModalProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();

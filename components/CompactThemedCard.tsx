@@ -1,7 +1,9 @@
 import React from 'react';
 import { StyleSheet, Pressable, View } from 'react-native';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
+import { useColors } from '../hooks/useColors';
+import { LAYOUT } from '../constants/layout';
+import Animated from 'react-native-reanimated';
+import { useCardAnimation } from '../utils/animations';
 
 interface CompactThemedCardProps {
   children: React.ReactNode;
@@ -11,22 +13,26 @@ interface CompactThemedCardProps {
 
 export function CompactThemedCard({ children, onPress, style }: CompactThemedCardProps) {
   const colors = useColors();
+  const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.container,
-        {
-          shadowColor: colors.cardShadow,
-          borderColor: colors.cardBorder,
-        },
-        style,
-        pressed && styles.pressed,
-      ]}
-    >
-      <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>{children}</View>
-    </Pressable>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[
+          styles.container,
+          {
+            shadowColor: colors.cardShadow,
+            borderColor: colors.cardBorder,
+          },
+          style,
+        ]}
+      >
+        <View style={[styles.card, { backgroundColor: colors.cardBackground }]}>{children}</View>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -42,9 +48,5 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     padding: LAYOUT.CARD.PADDING.SMALL,
-  },
-  pressed: {
-    opacity: LAYOUT.OPACITY.PRESSED,
-    transform: [{ scale: 0.98 }],
   },
 });

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { VocabularyStats } from '@/types/vocabulary.types';
+import { useColors } from '../hooks/useColors';
+import AnimatedThemedText from './AnimatedThemedText';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
@@ -27,18 +29,25 @@ interface StatItemProps {
   icon: string;
   iconColor: string;
   bgColor: string;
+  animateValue: boolean;
 }
 
 // Separate StatItem component for better reusability and memoization
-const StatItem = React.memo(({ value, label, icon, iconColor, bgColor }: StatItemProps) => (
-  <View style={styles.statItem}>
-    <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
-      <Ionicons name={icon as any} size={18} color={iconColor} />
-    </View>
-    <ThemedText style={styles.statValue}>{value}</ThemedText>
-    <ThemedText style={styles.statLabel}>{label}</ThemedText>
-  </View>
-));
+const StatItem = React.memo(
+  ({ value, label, icon, iconColor, bgColor, animateValue }: StatItemProps) => {
+    return (
+      <View style={styles.statItem}>
+        <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
+          <Ionicons name={icon as any} size={18} color={iconColor} />
+        </View>
+        <AnimatedThemedText style={styles.statValue} animate={animateValue}>
+          {value}
+        </AnimatedThemedText>
+        <ThemedText style={styles.statLabel}>{label}</ThemedText>
+      </View>
+    );
+  }
+);
 
 StatItem.displayName = 'StatItem';
 
@@ -105,7 +114,14 @@ const MasteryHeader = React.memo(({ percentage }: { percentage: number }) => (
 MasteryHeader.displayName = 'MasteryHeader';
 
 export const VocabularyDashboard = React.memo(
-  ({ totalWords, masteredWords, learningWords, streak, colors }: VocabularyDashboardProps) => {
+  ({
+    totalWords,
+    masteredWords,
+    learningWords,
+    dueWords,
+    streak,
+    colors,
+  }: VocabularyDashboardProps) => {
     // Calculate mastery percentage
     const masteryPercentage = useMemo(
       () => (totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0),
@@ -121,6 +137,7 @@ export const VocabularyDashboard = React.memo(
         textColor: colors.text || '#000000',
         cardBackground: colors.cardBackground || '#ffffff',
         cardBorder: colors.cardBorder || '#e0e0e0',
+        dueWordsColor: colors.info || '#4299e1',
       }),
       [colors]
     );
@@ -130,34 +147,38 @@ export const VocabularyDashboard = React.memo(
       () => [
         {
           value: totalWords,
-          label: 'Total',
-          icon: 'book-outline',
+          label: 'Total Words',
+          icon: 'book',
           iconColor: safeColors.textColor,
           bgColor: safeColors.textColor + '15',
+          animateValue: true,
         },
         {
           value: masteredWords,
           label: 'Mastered',
-          icon: 'checkmark-circle-outline',
+          icon: 'checkmark-circle',
           iconColor: safeColors.successColor,
           bgColor: safeColors.successColor + '15',
+          animateValue: true,
         },
         {
           value: learningWords,
           label: 'Learning',
-          icon: 'school-outline',
+          icon: 'school',
           iconColor: safeColors.primaryColor,
           bgColor: safeColors.primaryColor + '20',
+          animateValue: true,
         },
         {
-          value: streak,
-          label: 'Streak',
-          icon: 'flame',
-          iconColor: safeColors.accentColor,
-          bgColor: safeColors.accentColor + '20',
+          value: dueWords,
+          label: 'Due Today',
+          icon: 'timer',
+          iconColor: safeColors.dueWordsColor,
+          bgColor: safeColors.dueWordsColor + '20',
+          animateValue: true,
         },
       ],
-      [totalWords, masteredWords, learningWords, streak, safeColors]
+      [totalWords, masteredWords, learningWords, dueWords, safeColors]
     );
 
     return (
@@ -180,6 +201,7 @@ export const VocabularyDashboard = React.memo(
               icon={item.icon}
               iconColor={item.iconColor}
               bgColor={item.bgColor}
+              animateValue={item.animateValue}
             />
           ))}
         </View>

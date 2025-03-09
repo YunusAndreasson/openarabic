@@ -1,6 +1,16 @@
-import { StyleSheet, View, Pressable } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  RefreshControl,
+  ActivityIndicator,
+  Platform,
+  FlatList,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { router } from 'expo-router';
+import { router, Link } from 'expo-router';
 import ThemedCard from '@/components/ThemedCard';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
@@ -17,14 +27,15 @@ import React from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import type { Tables } from '@/types/database.types';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { StatusBar } from 'expo-status-bar';
+import { EnhancedImage } from '../../components/EnhancedImage';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
-import SectionTitle from '@/components/SectionTitle';
-import ArticleList from '@/components/ArticleList';
-import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
-import { useAuth } from '@/hooks/useAuth';
-import { getDayOfYear } from '@/utils/dateUtils';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { useFadeInAnimation } from '../../hooks/animations/useFadeInAnimation';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import SectionTitle from '../../components/SectionTitle';
+import * as Haptics from 'expo-haptics';
+import { useAuth } from '../../hooks/useAuth';
+import ArticleList from '../../components/ArticleList';
 import {
   filterArticles,
   getRecentArticles,
@@ -32,8 +43,9 @@ import {
   getFeaturedArticles,
   getBeginnerArticles,
   getDailyPickArticle,
-} from '@/utils/articleUtils';
-import { FlatList } from 'react-native';
+} from '../../utils/articleUtils';
+import { getDayOfYear } from '../../utils/dateUtils';
+import { fetchInProgressArticles, addToReadingList } from '../../store/readingListSlice';
 
 // Constants
 
@@ -49,11 +61,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   emptyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
+    opacity: 0.7,
   },
 
   categorySection: {
@@ -68,8 +81,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   horizontalList: {
-    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
   featuredCard: {
     width: '100%',
@@ -175,6 +188,48 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 16,
   },
+  featuredArticleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  featuredArticleImageContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
+  },
+  featuredArticleImage: {
+    width: '100%',
+    height: '100%',
+  },
+  featuredArticleContentContainer: {
+    flex: 1,
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  featuredArticleCategory: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '500',
+    color: 'rgba(0, 0, 0, 0.6)',
+  },
+  featuredArticleTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: '600',
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  featuredArticleDescription: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    color: 'rgba(0, 0, 0, 0.6)',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+  },
+  compactCard: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    width: 200,
+  },
 });
 
 // Empty state components
@@ -199,10 +254,17 @@ const DailyPick = React.memo(
       return getDailyPickArticle(articles, getDayOfYear());
     }, [articles]);
 
+    // Use our custom fade-in animation
+    const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 600);
+
+    useEffect(() => {
+      startFadeIn();
+    }, [startFadeIn]);
+
     if (!dailyPick) return null;
 
     return (
-      <Animated.View style={styles.dailyPickSection} entering={FadeIn.duration(600)}>
+      <Animated.View style={[styles.dailyPickSection, fadeInStyle]}>
         <SectionTitle title="Daily Pick" />
         <View style={styles.paddingHorizontal}>
           <ThemedCard
@@ -241,10 +303,18 @@ const CategorySection = React.memo(
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
 
+    // Add our fade-in animation hook
+    const { animatedStyle, startAnimation } = useFadeInAnimation(delay, 500);
+
+    // Start the animation
+    useEffect(() => {
+      startAnimation();
+    }, [startAnimation]);
+
     if (articles.length === 0) return null;
 
     return (
-      <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(delay)}>
+      <Animated.View style={[styles.categorySection, animatedStyle]}>
         <SectionTitle title={displayTitle} />
         <FlatList
           horizontal
@@ -262,13 +332,50 @@ const CategorySection = React.memo(
           removeClippedSubviews={true}
           initialNumToRender={5}
           maxToRenderPerBatch={10}
-          windowSize={5}
         />
       </Animated.View>
     );
   }
 );
 CategorySection.displayName = 'CategorySection';
+
+// Create a separate FeaturedArticleItem component to handle individual animations
+const FeaturedArticleItem = React.memo(
+  ({
+    article,
+    index,
+    totalCount,
+    onArticlePress,
+  }: {
+    article: Article;
+    index: number;
+    totalCount: number;
+    onArticlePress: (article: Article) => void;
+  }) => {
+    // Use our custom animation hook with the appropriate delay
+    const { animatedStyle, startAnimation } = useFadeInAnimation(300 + index * 100, 400);
+
+    // Start the animation when the component mounts
+    useEffect(() => {
+      startAnimation();
+    }, [startAnimation]);
+
+    return (
+      <Animated.View
+        style={[index < totalCount - 1 ? styles.featuredItemMargin : undefined, animatedStyle]}
+      >
+        <ThemedCard
+          imageUrl={article.image_url || 'https://picsum.photos/800/400'}
+          title={article.title}
+          category={article.category?.name ?? 'Uncategorized'}
+          author={article.author?.name ?? 'Anonymous'}
+          onPress={() => onArticlePress(article)}
+          style={styles.featuredCard}
+        />
+      </Animated.View>
+    );
+  }
+);
 
 // Featured Articles Component
 const FeaturedArticles = React.memo(
@@ -279,27 +386,28 @@ const FeaturedArticles = React.memo(
     articles: Article[];
     onArticlePress: (article: Article) => void;
   }) => {
+    // Use our custom fade-in animation
+    const { animatedStyle: sectionFadeIn, startAnimation: startSectionAnimation } =
+      useFadeInAnimation(300, 500);
+
+    useEffect(() => {
+      startSectionAnimation();
+    }, [startSectionAnimation]);
+
     if (articles.length === 0) return null;
 
     return (
-      <Animated.View style={styles.featuredSection} entering={FadeIn.duration(500).delay(300)}>
+      <Animated.View style={[styles.featuredSection, sectionFadeIn]}>
         <SectionTitle title="Featured Articles" />
         <View style={styles.paddingHorizontal}>
           {articles.map((article, index) => (
-            <Animated.View
+            <FeaturedArticleItem
               key={`featured-${article.id}`}
-              style={index < articles.length - 1 ? styles.featuredItemMargin : undefined}
-              entering={FadeIn.duration(400).delay(300 + index * 100)}
-            >
-              <ThemedCard
-                imageUrl={article.image_url || 'https://picsum.photos/800/400'}
-                title={article.title}
-                category={article.category?.name ?? 'Uncategorized'}
-                author={article.author?.name ?? 'Anonymous'}
-                onPress={() => onArticlePress(article)}
-                style={styles.featuredCard}
-              />
-            </Animated.View>
+              article={article}
+              index={index}
+              totalCount={articles.length}
+              onArticlePress={onArticlePress}
+            />
           ))}
         </View>
       </Animated.View>
@@ -309,39 +417,94 @@ const FeaturedArticles = React.memo(
 FeaturedArticles.displayName = 'FeaturedArticles';
 
 // Continue Reading Section Component
-const ContinueReadingSection = React.memo(
+const ContinueReadingSection = React.memo(() => {
+  const colors = useColors();
+  const inProgressArticles = useAppSelectorMemo(state => state.readingList.inProgressArticles);
+  const { animatedStyle, startAnimation } = useFadeInAnimation(100, 500);
+
+  useEffect(() => {
+    startAnimation();
+  }, [startAnimation]);
+
+  if (!inProgressArticles || inProgressArticles.length === 0) {
+    return (
+      <Animated.View style={[styles.categorySection, animatedStyle]}>
+        <SectionTitle title="Continue Reading" />
+        <View style={styles.emptyContainer}>
+          <ThemedText style={styles.emptyText}>
+            No articles in progress. Start reading to see them here!
+          </ThemedText>
+        </View>
+      </Animated.View>
+    );
+  }
+
+  return (
+    <Animated.View style={[styles.categorySection, animatedStyle]}>
+      <SectionTitle title="Continue Reading" />
+      <FlatList
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        data={inProgressArticles}
+        keyExtractor={item => `continue-${item.id}`}
+        contentContainerStyle={styles.horizontalList}
+        renderItem={({ item }) => (
+          <CompactArticleCard
+            article={item}
+            onPress={() => router.push(`/article/${item.id}`)}
+            showTimeAgo={true}
+          />
+        )}
+      />
+    </Animated.View>
+  );
+});
+ContinueReadingSection.displayName = 'ContinueReadingSection';
+
+// Create an AnimatedPill component for reuse with authors and categories
+const AnimatedPill = React.memo(
   ({
-    articles,
-    onArticlePress,
+    item,
+    onPress,
+    isSelected,
+    styleGetter,
+    textStyleGetter,
+    delay = 0,
+    label,
   }: {
-    articles: Article[];
-    onArticlePress: (article: Article) => void;
+    item: any;
+    onPress: () => void;
+    isSelected: boolean;
+    styleGetter: (isSelected: boolean, pressed: boolean) => any;
+    textStyleGetter: (isSelected: boolean) => any;
+    delay?: number;
+    label: string;
   }) => {
-    // Don't render the section if there are no articles
-    if (articles.length === 0) return null;
+    const { animatedStyle, startAnimation } = useFadeInAnimation(
+      delay,
+      LAYOUT.ANIMATION.DURATION.FAST
+    );
+
+    useEffect(() => {
+      startAnimation();
+    }, [startAnimation]);
 
     return (
-      <Animated.View style={styles.categorySection} entering={FadeIn.duration(500).delay(100)}>
-        <SectionTitle title="Continue Reading" />
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-          data={articles}
-          keyExtractor={article => `reading-${article.id}`}
-          renderItem={({ item }) => (
-            <CompactArticleCard article={item} onPress={() => onArticlePress(item)} />
-          )}
-          removeClippedSubviews={true}
-          initialNumToRender={5}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-        />
+      <Animated.View style={animatedStyle}>
+        <Pressable style={({ pressed }) => styleGetter(isSelected, pressed)} onPress={onPress}>
+          <ThemedText
+            style={textStyleGetter(isSelected)}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            skipDefaultColor={isSelected}
+          >
+            {label}
+          </ThemedText>
+        </Pressable>
       </Animated.View>
     );
   }
 );
-ContinueReadingSection.displayName = 'ContinueReadingSection';
 
 // Author Filter List Component
 const AuthorFilterList = React.memo(
@@ -383,29 +546,21 @@ const AuthorFilterList = React.memo(
       [colors.tint]
     );
 
-    // Render an author pill
+    // Then update the renderAuthorItem function to use this component
     const renderAuthorItem = useCallback(
       ({ item }: { item: Tables<'authors'> }) => {
         const isSelected = selectedAuthorId === item.id;
         return (
-          <Animated.View
+          <AnimatedPill
             key={`author-pill-${item.id}`}
-            entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(650)}
-          >
-            <Pressable
-              style={({ pressed }) => getAuthorPillStyle(isSelected, pressed)}
-              onPress={() => onSelectAuthor(item.id)}
-            >
-              <ThemedText
-                style={getAuthorPillTextStyle(isSelected)}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                skipDefaultColor={isSelected}
-              >
-                {item.name}
-              </ThemedText>
-            </Pressable>
-          </Animated.View>
+            item={item}
+            onPress={() => onSelectAuthor(item.id)}
+            isSelected={isSelected}
+            styleGetter={getAuthorPillStyle}
+            textStyleGetter={getAuthorPillTextStyle}
+            delay={650}
+            label={item.name}
+          />
         );
       },
       [selectedAuthorId, onSelectAuthor, getAuthorPillStyle, getAuthorPillTextStyle]
@@ -541,29 +696,21 @@ const CategoryFilterList = React.memo(
       [colors.tint]
     );
 
-    // Render a category pill
+    // And update the renderCategoryItem function similarly
     const renderCategoryItem = useCallback(
       ({ item }: { item: Tables<'categories'> }) => {
         const isSelected = selectedCategoryId === item.id;
         return (
-          <Animated.View
+          <AnimatedPill
             key={`category-pill-${item.id}`}
-            entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.FAST).delay(750)}
-          >
-            <Pressable
-              style={({ pressed }) => getCategoryPillStyle(isSelected, pressed)}
-              onPress={() => onSelectCategory(item.id)}
-            >
-              <ThemedText
-                style={getCategoryPillTextStyle(isSelected)}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                skipDefaultColor={isSelected}
-              >
-                {capitalizeFirstLetter(item.name)}
-              </ThemedText>
-            </Pressable>
-          </Animated.View>
+            item={item}
+            onPress={() => onSelectCategory(item.id)}
+            isSelected={isSelected}
+            styleGetter={getCategoryPillStyle}
+            textStyleGetter={getCategoryPillTextStyle}
+            delay={750}
+            label={item.name}
+          />
         );
       },
       [selectedCategoryId, onSelectCategory, getCategoryPillStyle, getCategoryPillTextStyle]
@@ -597,10 +744,102 @@ const CategoryFilterList = React.memo(
 );
 CategoryFilterList.displayName = 'CategoryFilterList';
 
+// Properly wrap useAuth to avoid conditional hook calls
+const useSafeAuth = () => {
+  // Always call the hook regardless of availability
+  let authResult: { session: any } = { session: null };
+
+  // Try to get the session but safely handle errors
+  try {
+    const authData = useAuth();
+    if (authData && authData.session) {
+      authResult.session = authData.session;
+    }
+  } catch (e) {
+    // If useAuth is not available, just return null session
+    console.warn('useAuth not available or threw an error');
+  }
+
+  return authResult;
+};
+
+// Fix the FeaturedArticle component to use EnhancedImage correctly
+const FeaturedArticle = React.memo(() => {
+  const colors = useColors();
+  const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { animatedStyle, startAnimation } = useFadeInAnimation(
+    200,
+    LAYOUT.ANIMATION.DURATION.NORMAL
+  );
+
+  // Fetch the featured article
+  useEffect(() => {
+    setIsLoading(true);
+    articlesService
+      .getArticles()
+      .then(articles => {
+        if (articles && articles.length > 0) {
+          setFeaturedArticle(articles[0]);
+        }
+        setIsLoading(false);
+      })
+      .catch(error => {
+        console.error('Error fetching featured article:', error);
+        setIsLoading(false);
+      });
+
+    startAnimation();
+  }, [startAnimation]);
+
+  return (
+    <Animated.View style={animatedStyle}>
+      {isLoading ? (
+        <View style={[styles.featuredArticleCard, styles.loadingContainer]}>
+          <ActivityIndicator size="large" color={colors.tint} />
+        </View>
+      ) : featuredArticle ? (
+        <Pressable
+          style={styles.featuredArticleCard}
+          onPress={() => router.push(`/article/${featuredArticle.id}`)}
+        >
+          <View style={styles.featuredArticleImageContainer}>
+            {/* The source needs to be a string, not an object with uri */}
+            <EnhancedImage
+              source={featuredArticle.cover_image || ''}
+              style={styles.featuredArticleImage}
+              contentFit="cover"
+            />
+          </View>
+          <View style={styles.featuredArticleContentContainer}>
+            <ThemedText style={styles.featuredArticleCategory}>
+              {capitalizeFirstLetter(featuredArticle.category?.name ?? '')}
+            </ThemedText>
+            <ThemedText style={styles.featuredArticleTitle} numberOfLines={2} ellipsizeMode="tail">
+              {featuredArticle.title}
+            </ThemedText>
+            <ThemedText
+              style={styles.featuredArticleDescription}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {featuredArticle.description || ''}
+            </ThemedText>
+          </View>
+        </Pressable>
+      ) : (
+        <View style={styles.featuredArticleCard}>
+          <ThemedText>No articles available</ThemedText>
+        </View>
+      )}
+    </Animated.View>
+  );
+});
+
 export default function ArticlesScreen() {
   const colors = useColors();
   const dispatch = useAppDispatch();
-  const { session } = useAuth();
+  const { session } = useSafeAuth();
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
@@ -840,7 +1079,7 @@ export default function ArticlesScreen() {
       <>
         <DailyPick articles={articles} onArticlePress={handleArticlePress} />
 
-        <ContinueReadingSection articles={inProgressArticles} onArticlePress={handleArticlePress} />
+        <ContinueReadingSection />
 
         {latestArticles.length > 0 && (
           <CategorySection

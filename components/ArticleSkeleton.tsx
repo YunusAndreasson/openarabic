@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
@@ -10,6 +10,7 @@ import Animated, {
   withSequence,
   FadeIn,
 } from 'react-native-reanimated';
+import { useFadeInAnimation } from '../utils/animations';
 
 interface ArticleSkeletonProps {
   style?: ViewStyle;
@@ -22,6 +23,13 @@ interface ArticleSkeletonProps {
 export const ArticleSkeleton: React.FC<ArticleSkeletonProps> = ({ style, type = 'card' }) => {
   const colors = useColors();
   const opacity = useSharedValue(0.5);
+
+  // Use our custom fade-in animation
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+
+  useEffect(() => {
+    startFadeIn();
+  }, [startFadeIn]);
 
   // Use a light gray color for skeleton background
   const skeletonColor = colors.textOverlay;
@@ -68,7 +76,7 @@ export const ArticleSkeleton: React.FC<ArticleSkeletonProps> = ({ style, type = 
   const skeletonStyles = getSkeletonStyles();
 
   return (
-    <Animated.View style={[skeletonStyles.container, style]} entering={FadeIn.duration(300)}>
+    <Animated.View style={[skeletonStyles.container, style, fadeInStyle]}>
       <Animated.View style={[skeletonStyles.image, shimmerStyle]} />
       <View style={styles.content}>
         <Animated.View style={[skeletonStyles.title, shimmerStyle]} />

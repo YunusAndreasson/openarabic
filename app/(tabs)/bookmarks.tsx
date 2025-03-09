@@ -13,7 +13,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useFadeInAnimation } from '@/utils/animations';
 
 // ====== AUDIO PLAYER CONSTANTS ======
 const AUDIO_STATES = {
@@ -117,12 +118,15 @@ const styles = StyleSheet.create({
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
     backgroundColor: 'transparent',
+    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.SPACING.MEDIUM,
     backgroundColor: 'transparent',
+    overflow: 'hidden',
+    width: '100%',
   },
   controlsTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -132,8 +136,9 @@ const styles = StyleSheet.create({
   },
   actionButtonsRow: {
     flexDirection: 'row',
-    gap: LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
   },
   shuffleButton: {
     borderWidth: 1,
@@ -270,20 +275,24 @@ const BottomControls = React.memo(
         >
           <ThemedText style={styles.controlsTitle}>PLAYBACK CONTROLS</ThemedText>
           <View style={styles.actionButtonsRow}>
-            <ThemedButton
-              title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
-              icon={isPlaying && !isShuffleMode ? 'stop-circle' : 'play-circle'}
-              onPress={onPlayAll}
-              variant="filled"
-              style={{ flex: 1 }}
-            />
-            <ThemedButton
-              title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
-              icon={isPlaying && isShuffleMode ? 'stop-circle' : 'shuffle'}
-              onPress={onShuffle}
-              variant="outlined"
-              style={[{ flex: 1 }, styles.shuffleButton, { borderColor: colors.tint }]}
-            />
+            <View style={{ width: '48%' }}>
+              <ThemedButton
+                title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
+                icon={isPlaying && !isShuffleMode ? 'stop-circle' : 'play-circle'}
+                onPress={onPlayAll}
+                variant="filled"
+                style={{ width: '100%' }}
+              />
+            </View>
+            <View style={{ width: '48%' }}>
+              <ThemedButton
+                title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
+                icon={isPlaying && isShuffleMode ? 'stop-circle' : 'shuffle'}
+                onPress={onShuffle}
+                variant="outlined"
+                style={[styles.shuffleButton, { width: '100%', borderColor: colors.tint }]}
+              />
+            </View>
           </View>
         </View>
       </View>
@@ -682,12 +691,21 @@ export default function BookmarksScreen() {
     }
   }, [currentTrackIndex, activePlaylist]);
 
+  // Add at the beginning of the component
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+
+  useEffect(() => {
+    if (!isLoading) {
+      startFadeIn();
+    }
+  }, [isLoading, startFadeIn]);
+
   // Show loading screen
   if (isLoading) {
     return <LoadingScreen />;
   }
 
-  // Not signed in
+  // Require sign in
   if (!user) {
     return (
       <SignInRequired
@@ -703,7 +721,7 @@ export default function BookmarksScreen() {
   // Empty reading list
   if (!readingList || readingList.length === 0) {
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+      <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
             <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
@@ -726,7 +744,7 @@ export default function BookmarksScreen() {
 
   // Normal display with playlist
   return (
-    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+    <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Clean header */}
         <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>

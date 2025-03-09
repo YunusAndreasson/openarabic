@@ -3,21 +3,22 @@ import { Session } from '@supabase/supabase-js';
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { ThemedButton } from '@/components/ThemedButton';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { CustomSlider } from '@/components/Slider';
-import { Toggle } from '@/components/Toggle';
-import { supabase } from '@/services/supabase';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
-import Auth from '@/components/Auth';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
-import { LoadingScreen } from '@/components/Loader';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedView } from '../../components/ThemedView';
+import { ThemedButton } from '../../components/ThemedButton';
+import { ThemeToggle } from '../../components/ThemeToggle';
+import { CustomSlider } from '../../components/Slider';
+import { Toggle } from '../../components/Toggle';
+import { supabase } from '../../services/supabase';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
+import Auth from '../../components/Auth';
+import { useColors } from '../../hooks/useColors';
+import { LAYOUT } from '../../constants/layout';
+import { LoadingScreen } from '../../components/Loader';
+import { useFadeInAnimation } from '../../utils/animations';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
@@ -28,6 +29,16 @@ export default function AccountScreen() {
   const loadingStartTime = useRef<number | null>(null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
   const dataLoadedRef = useRef(false);
+
+  // Add animation hooks
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+
+  // Start the animation when the component mounts or when isLoading changes
+  useEffect(() => {
+    if (!isLoading) {
+      startFadeIn();
+    }
+  }, [isLoading, startFadeIn]);
 
   // Custom button styles to ensure left alignment
   const buttonStyles = useMemo(
@@ -175,7 +186,7 @@ export default function AccountScreen() {
 
   if (!session) {
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+      <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
         <ThemedView style={themedStyles.container}>
           <View style={[themedStyles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
             <ThemedText style={themedStyles.headerTitle}>Account</ThemedText>
@@ -193,7 +204,7 @@ export default function AccountScreen() {
   }
 
   return (
-    <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+    <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
       <ThemedView style={themedStyles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
         <View style={[themedStyles.headerContainer, { borderBottomColor: colors.cardBorder }]}>

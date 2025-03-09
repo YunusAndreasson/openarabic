@@ -8,13 +8,9 @@ import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
 import { LoadingContainer } from './Loader';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  interpolate,
-  Extrapolate,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useCardAnimation } from '../utils/animations';
+import { EnhancedImage } from './EnhancedImage';
 
 /**
  * ThemedCard is a reusable card component that displays an image with title, category, and author.
@@ -50,48 +46,17 @@ function ThemedCardComponent({
 }: ThemedCardProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
-  const [imageReady, setImageReady] = useState(false);
 
-  // Animation shared values
-  const pressed = useSharedValue(0);
+  // Use our animation utility hook instead of manual animation setup
+  const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
 
-  // Image loading handlers
-  const handleLoadStart = useCallback(() => {
-    setImageLoading(true);
-    setImageReady(false);
-  }, []);
-
-  const handleLoadEnd = useCallback(() => {
-    setImageLoading(false);
-    setImageReady(true);
-  }, []);
-
-  const handleError = useCallback(() => {
-    setImageLoading(false);
-    setImageError(true);
-    setImageReady(true);
-  }, []);
-
-  // Handle press without haptic feedback
+  // Handle press
   const handlePress = useCallback(() => {
     if (onPress) {
       onPress();
     }
   }, [onPress]);
-
-  // Animated styles for the card
-  const animatedCardStyle = useAnimatedStyle(() => {
-    const scale = interpolate(pressed.value, [0, 1], [1, 0.985], Extrapolate.CLAMP);
-
-    const opacity = interpolate(pressed.value, [0, 1], [1, 0.97], Extrapolate.CLAMP);
-
-    return {
-      transform: [{ scale }],
-      opacity,
-    };
-  });
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(() => {
@@ -157,36 +122,12 @@ function ThemedCardComponent({
     };
   }, [colors, isDarkMode, style]);
 
-  // Apply different styles based on platform and theme to fix light mode artifacts
-  const cardStyle = useMemo(() => {
-    const baseStyle = [
-      styles.card,
-      {
-        backgroundColor: themedStyles.card.backgroundColor,
-        borderColor: themedStyles.card.borderColor,
-      },
-      isLoading && styles.cardLoading,
-    ];
-
-    // Add platform-specific styles to fix light mode artifacts
-    if (Platform.OS === 'ios' && !isDarkMode) {
-      baseStyle.push(styles.iosLightModeCard as any);
-    }
-
-    return baseStyle;
-  }, [themedStyles.card, isLoading, isDarkMode]);
-
-  // Memoize the card content to prevent unnecessary re-renders
-  const cardContent = useMemo(() => {
+  // Component rendering - update the card wrapper with animation
+  const renderContent = () => {
     if (isLoading) {
       return (
-        <View
-          style={[
-            styles.loadingCardContainer,
-            { backgroundColor: themedStyles.card.backgroundColor },
-          ]}
-        >
-          <LoadingContainer size="small" height={300} />
+        <View style={styles.loadingComponentContainer}>
+          <LoadingContainer size="small" />
         </View>
       );
     }
@@ -194,54 +135,23 @@ function ThemedCardComponent({
     return (
       <>
         <View style={styles.imageContainer}>
-          {/* Loading container */}
-          {imageLoading && (
-            <View
+          {/* Replace the Image component with our EnhancedImage */}
+          <EnhancedImage source={imageUrl} style={styles.image} contentFit="cover" />
+
+          {/* Image overlay content - keep this as is */}
+          <View style={styles.imageOverlayContainer} pointerEvents="none">
+            <LinearGradient
+              colors={themedStyles.gradient.colors}
               style={[
-                styles.loadingContainer,
-                { backgroundColor: themedStyles.loadingContainer.backgroundColor },
+                styles.gradient,
+                Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
               ]}
-            >
-              <LoadingContainer size="small" />
-            </View>
-          )}
-
-          {/* Image */}
-          <Image
-            source={{ uri: imageUrl }}
-            style={[styles.image, themedStyles.image]}
-            contentFit="cover"
-            transition={300}
-            onLoadStart={handleLoadStart}
-            onLoadEnd={handleLoadEnd}
-            onError={handleError}
-            cachePolicy="memory-disk"
-            placeholder={{ color: themedStyles.loadingContainer.backgroundColor }}
-            recyclingKey={imageUrl}
-          />
-
-          {/* Image overlay content */}
-          {imageReady && (
-            <View style={styles.imageOverlayContainer} pointerEvents="none">
-              {imageError ? (
-                <View style={[styles.errorContainer, { backgroundColor: colors.cardBackground }]}>
-                  <ThemedText style={styles.errorText}>Image not available</ThemedText>
-                </View>
-              ) : (
-                <LinearGradient
-                  colors={themedStyles.gradient.colors}
-                  style={[
-                    styles.gradient,
-                    Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
-                  ]}
-                  locations={Platform.OS === 'ios' && !isDarkMode ? [0, 0.85, 0.98] : [0, 0.5, 1]}
-                  start={{ x: 0.5, y: 0 }}
-                  end={{ x: 0.5, y: 1 }}
-                />
-              )}
-              <CategoryPill category={category} />
-            </View>
-          )}
+              locations={Platform.OS === 'ios' && !isDarkMode ? [0, 0.85, 0.98] : [0, 0.5, 1]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+            />
+            <CategoryPill category={category} />
+          </View>
         </View>
 
         <View style={styles.contentContainer}>
@@ -259,54 +169,32 @@ function ThemedCardComponent({
         </View>
       </>
     );
-  }, [
-    isLoading,
-    imageError,
-    imageLoading,
-    imageReady,
-    imageUrl,
-    title,
-    author,
-    category,
-    colors,
-    themedStyles,
-  ]);
+  };
 
   return (
     <View style={styles.container}>
-      <Pressable
-        onPress={handlePress}
-        onPressIn={() => {
-          pressed.value = withSpring(1, {
-            mass: 0.8,
-            damping: 15,
-            stiffness: 150,
-            overshootClamping: false,
-            restDisplacementThreshold: 0.001,
-            restSpeedThreshold: 0.001,
-          });
-        }}
-        onPressOut={() => {
-          pressed.value = withSpring(0, {
-            mass: 0.5,
-            damping: 12,
-            stiffness: 120,
-            overshootClamping: false,
-            restDisplacementThreshold: 0.001,
-            restSpeedThreshold: 0.001,
-          });
-        }}
-        style={[styles.pressable, style]}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel={`${category} article: ${title} by ${author}`}
-        accessibilityHint="Opens the article details"
-        disabled={isLoading || !imageReady}
-        android_ripple={{ color: colors.tint, borderless: false, radius: -5 }}
-        pressRetentionOffset={{ top: 20, left: 20, right: 20, bottom: 20 }}
-      >
-        <Animated.View style={[cardStyle, animatedCardStyle]}>{cardContent}</Animated.View>
-      </Pressable>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          style={styles.pressable}
+        >
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: themedStyles.card.backgroundColor,
+                borderColor: themedStyles.card.borderColor,
+                shadowColor: themedStyles.card.shadowColor,
+              },
+              style,
+            ]}
+          >
+            {renderContent()}
+          </View>
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -416,5 +304,12 @@ const styles = StyleSheet.create({
     bottom: -8,
     height: 240,
     zIndex: 1,
+  },
+  loadingComponentContainer: {
+    height: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    overflow: 'hidden',
   },
 });

@@ -8,6 +8,9 @@ import { CategoryPill } from './CategoryPill';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactArticleCardProps } from '../types/ui.types';
 import { formatTimeAgo } from '../utils/dateUtils';
+import { EnhancedImage } from './EnhancedImage';
+import Animated from 'react-native-reanimated';
+import { useCardAnimation } from '../utils/animations';
 
 // TimeAgo component to show when an article was published
 const TimeAgo = ({ date }: { date: string }) => {
@@ -73,67 +76,65 @@ function CompactArticleCardComponent({
   showTimeAgo = false,
 }: CompactArticleCardProps) {
   const colors = useColors();
+  const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
 
-  // Memoize styles that depend on colors
+  // Dynamically generated styles based on theme
   const dynamicStyles = useMemo(
     () => ({
-      pressable: {
-        shadowColor: colors.shadow,
-      },
       card: {
         backgroundColor: colors.cardBackground,
+        borderColor: colors.cardBorder,
+        shadowColor: colors.cardShadow,
       },
       authorText: {
-        color: `${colors.text}80`,
+        color: colors.authorText,
       },
     }),
-    [colors.shadow, colors.cardBackground, colors.text]
+    [colors]
   );
 
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        styles.pressable,
-        pressed && styles.pressed,
-        dynamicStyles.pressable,
-      ]}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[styles.pressable]}
     >
-      <View style={[styles.card, dynamicStyles.card]}>
-        <View style={styles.imageContainer}>
-          <Image
-            source={article.image_url || 'https://picsum.photos/800/400'}
-            style={styles.image}
-            contentFit="cover"
-            transition={300}
-            cachePolicy="memory-disk"
-          />
-          {article.category && <CategoryPill category={article.category.name} />}
-        </View>
-        <View style={styles.contentContainer}>
-          <ThemedText style={styles.title} numberOfLines={2}>
-            {article.title}
-          </ThemedText>
-
-          {article.author && (
-            <ThemedText
-              style={[styles.authorText, dynamicStyles.authorText]}
-              numberOfLines={1}
-              skipDefaultColor
-            >
-              By {article.author.name}
+      <Animated.View style={animatedStyle}>
+        <View style={[styles.card, dynamicStyles.card]}>
+          <View style={styles.imageContainer}>
+            <EnhancedImage
+              source={article.image_url || 'https://picsum.photos/800/400'}
+              style={styles.image}
+              contentFit="cover"
+            />
+            {article.category && <CategoryPill category={article.category.name} />}
+          </View>
+          <View style={styles.contentContainer}>
+            <ThemedText style={styles.title} numberOfLines={2}>
+              {article.title}
             </ThemedText>
-          )}
 
-          <View style={styles.cardFooter}>
-            {showTimeAgo ? (
-              <TimeAgo date={article.created_at} />
-            ) : (
-              <DifficultyIndicator level={article.difficulty_level} />
+            {article.author && (
+              <ThemedText
+                style={[styles.authorText, dynamicStyles.authorText]}
+                numberOfLines={1}
+                skipDefaultColor
+              >
+                By {article.author.name}
+              </ThemedText>
             )}
+
+            <View style={styles.cardFooter}>
+              {showTimeAgo ? (
+                <TimeAgo date={article.created_at} />
+              ) : (
+                <DifficultyIndicator level={article.difficulty_level} />
+              )}
+            </View>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }

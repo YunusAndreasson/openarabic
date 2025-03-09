@@ -2,40 +2,47 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '../constants/layout';
+import AnimatedThemedText from './AnimatedThemedText';
 
 interface StatCardProps {
   label: string;
   value: number;
   icon: string;
   colors: any;
+  /** Whether to animate the value with a pulse effect (useful for changes) */
+  animateValue?: boolean;
 }
 
-export const StatCard = React.memo(({ label, value, icon, colors }: StatCardProps) => {
-  return (
-    <View
-      style={[
-        styles.statCard,
-        { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-      ]}
-    >
-      <View style={styles.statContent}>
-        <View style={styles.statTextContainer}>
-          <ThemedText style={styles.statValue}>{value}</ThemedText>
-          <ThemedText style={styles.statLabel}>{label}</ThemedText>
-        </View>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
-          ]}
-        >
-          <Ionicons name={icon as any} size={24} color={colors.icon} />
+export const StatCard = React.memo(
+  ({ label, value, icon, colors, animateValue = false }: StatCardProps) => {
+    return (
+      <View
+        style={[
+          styles.statCard,
+          { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+        ]}
+      >
+        <View style={styles.statContent}>
+          <View style={styles.statTextContainer}>
+            <AnimatedThemedText style={styles.statValue} animate={animateValue}>
+              {value}
+            </AnimatedThemedText>
+            <ThemedText style={styles.statLabel}>{label}</ThemedText>
+          </View>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
+            ]}
+          >
+            <Ionicons name={icon as any} size={24} color={colors.icon} />
+          </View>
         </View>
       </View>
-    </View>
-  );
-});
+    );
+  }
+);
 
 StatCard.displayName = 'StatCard';
 

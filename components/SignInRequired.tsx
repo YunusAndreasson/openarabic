@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedButton } from './ThemedButton';
@@ -6,7 +6,8 @@ import { ThemedView } from './ThemedView';
 import { LAYOUT } from '../constants/layout';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useFadeInAnimation } from '../hooks/animations/useFadeInAnimation';
 
 interface SignInRequiredProps {
   title?: string;
@@ -26,8 +27,15 @@ export const SignInRequired = React.memo(
     colors,
     headerTitle,
   }: SignInRequiredProps) => {
+    // Use our custom animation hook instead of direct Reanimated FadeIn
+    const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+
+    useEffect(() => {
+      startAnimation();
+    }, [startAnimation]);
+
     return (
-      <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
+      <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           {headerTitle && (
             <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>

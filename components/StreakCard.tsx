@@ -2,38 +2,57 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT } from '../constants/layout';
+import Animated from 'react-native-reanimated';
+import { usePulseAnimation } from '../utils/animations';
+import AnimatedThemedText from './AnimatedThemedText';
 
 interface StreakCardProps {
   streak?: number;
   colors: any;
+  /** Whether to animate when the streak changes */
+  animateChange?: boolean;
 }
 
-export const StreakCard = React.memo(({ streak = 5, colors }: StreakCardProps) => {
-  return (
-    <View
-      style={[
-        styles.statCard,
-        { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-      ]}
-    >
-      <View style={styles.statContent}>
-        <View style={styles.statTextContainer}>
-          <ThemedText style={styles.statValue}>{streak}</ThemedText>
-          <ThemedText style={styles.statLabel}>Day Streak</ThemedText>
-        </View>
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
-          ]}
-        >
-          <Ionicons name="flame" size={24} color={colors.icon} />
+export const StreakCard = React.memo(
+  ({ streak = 5, colors, animateChange = false }: StreakCardProps) => {
+    const { animatedStyle, pulse } = usePulseAnimation(1.1);
+
+    // We'll keep the flame animation but use AnimatedThemedText for the text
+    React.useEffect(() => {
+      if (animateChange) {
+        pulse();
+      }
+    }, [streak, animateChange, pulse]);
+
+    return (
+      <View
+        style={[
+          styles.statCard,
+          { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+        ]}
+      >
+        <View style={styles.statContent}>
+          <View style={styles.statTextContainer}>
+            <AnimatedThemedText style={styles.statValue} animate={animateChange}>
+              {streak}
+            </AnimatedThemedText>
+            <ThemedText style={styles.statLabel}>Day Streak</ThemedText>
+          </View>
+          <Animated.View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
+              animateChange ? animatedStyle : undefined,
+            ]}
+          >
+            <Ionicons name="flame" size={24} color={colors.icon} />
+          </Animated.View>
         </View>
       </View>
-    </View>
-  );
-});
+    );
+  }
+);
 
 StreakCard.displayName = 'StreakCard';
 

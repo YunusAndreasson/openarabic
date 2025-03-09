@@ -1,8 +1,9 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { ThemedText } from './ThemedText';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useFadeInAnimation } from '../utils/animations';
 
 /**
  * A component that displays a copyright notice with the current Hijri year
@@ -24,9 +25,14 @@ export const CopyrightFooter = React.memo(() => {
   };
 
   const hijriYear = getHijriYear();
+  const { animatedStyle, startAnimation } = useFadeInAnimation(300, 400);
+
+  useEffect(() => {
+    startAnimation();
+  }, [startAnimation]);
 
   return (
-    <Animated.View style={styles.container} entering={FadeIn.duration(400).delay(300)}>
+    <Animated.View style={[styles.container, animatedStyle]}>
       <ThemedText style={styles.copyrightText}>
         © {new Date().getFullYear()} OpenArabic • {hijriYear} هـ
       </ThemedText>

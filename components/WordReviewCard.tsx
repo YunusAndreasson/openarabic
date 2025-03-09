@@ -3,18 +3,10 @@ import { StyleSheet, Dimensions, View, TextStyle, ViewStyle } from 'react-native
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  FadeIn,
-  FadeOut,
-  SlideInRight,
-  Layout,
-  Easing,
-} from 'react-native-reanimated';
+import Animated, { Layout, Easing } from 'react-native-reanimated';
 import { StudyWord } from '../types/vocabulary.types';
+import { useFadeInAnimation } from '../hooks/animations/useFadeInAnimation';
+import { useSlideAnimation } from '../hooks/animations/useSlideAnimation';
 
 // Define transition types
 export type TransitionType = 'fade' | 'slide';
@@ -30,170 +22,114 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 export function WordReviewCard({ word, transitionType = 'fade', isVisible }: WordReviewCardProps) {
   const colors = useColors();
 
-  // Animation values using Reanimated shared values
-  const fadeOpacity = useSharedValue(0);
-  const slidePosition = useSharedValue(SCREEN_WIDTH);
+  // Use our custom fade animation hook
+  const { animatedStyle: fadeAnimatedStyle, startAnimation: startFadeAnimation } =
+    useFadeInAnimation(0, 300);
+
+  // For word content animations
+  const { animatedStyle: arabicAnimatedStyle, startAnimation: startArabicAnimation } =
+    useFadeInAnimation(150, 300);
+  const { animatedStyle: englishAnimatedStyle, startAnimation: startEnglishAnimation } =
+    useFadeInAnimation(200, 300);
+  const { animatedStyle: sentenceAnimatedStyle, startAnimation: startSentenceAnimation } =
+    useFadeInAnimation(300, 400);
+
+  // Use our custom slide animation hook
+  const { animatedStyle: slideAnimatedStyle, startAnimation: startSlideAnimation } =
+    useSlideAnimation(0, 20, 100, 'right');
 
   // Run animation when word changes or becomes visible
   useEffect(() => {
     if (word && isVisible) {
       // Reset animations to initial state
       if (transitionType === 'fade') {
-        fadeOpacity.value = 0;
-        fadeOpacity.value = withTiming(1, {
-          duration: 300,
-          easing: Easing.out(Easing.cubic), // Smoother easing for fade-in
-        });
+        startFadeAnimation();
+        startArabicAnimation();
+        startEnglishAnimation();
+        startSentenceAnimation();
       } else {
-        slidePosition.value = SCREEN_WIDTH;
-        slidePosition.value = withSpring(0, {
-          damping: 20, // Increased damping for less bouncy behavior
-          stiffness: 100, // Increased stiffness for faster movement
-          mass: 0.8, // Lower mass for quicker response
-          overshootClamping: false,
-        });
-      }
-    } else {
-      // Animate out when not visible
-      if (transitionType === 'fade') {
-        fadeOpacity.value = withTiming(0, { duration: 200 });
-      } else {
-        slidePosition.value = withTiming(-SCREEN_WIDTH, { duration: 300 });
+        startSlideAnimation();
       }
     }
-  }, [word, isVisible, transitionType, fadeOpacity, slidePosition]);
+  }, [
+    word,
+    isVisible,
+    transitionType,
+    startFadeAnimation,
+    startArabicAnimation,
+    startEnglishAnimation,
+    startSentenceAnimation,
+    startSlideAnimation,
+  ]);
+
+  // Apply the appropriate animation style based on transition type
+  const containerAnimatedStyle = transitionType === 'fade' ? fadeAnimatedStyle : slideAnimatedStyle;
 
   // Create styles with the colors
-  const styles = useMemo(() => {
-    // Create properly typed Arabic text styles
-    const arabicWordStyle: TextStyle = {
-      fontFamily: 'NotoNaskhArabic',
-      fontSize: 42,
-      lineHeight: Math.round(42 * 2.0),
-      writingDirection: 'rtl' as 'rtl',
-      textAlign: 'center' as 'center',
-      includeFontPadding: true,
-      textAlignVertical: 'center',
-      // Custom styles that override defaults
-      paddingVertical: LAYOUT.SPACING.LARGE,
-      paddingHorizontal: LAYOUT.SPACING.XXLARGE,
-      marginBottom: LAYOUT.SPACING.MEDIUM,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  const themedStyles = useMemo(() => {
+    return {
+      cardBackground: {
+        backgroundColor: colors.cardBackground,
+      },
+      cardBorder: {
+        borderColor: colors.cardBorder,
+      },
+      arabicText: {
+        color: colors.text,
+      },
+      englishText: {
+        color: colors.text,
+      },
+      textSecondary: {
+        color: colors.tabIconDefault || '#888888',
+      },
     };
-
-    const arabicSentenceStyle: TextStyle = {
-      fontFamily: 'NotoNaskhArabic',
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-      lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.LARGE * 2.0),
-      writingDirection: 'rtl' as 'rtl',
-      textAlign: 'right' as 'right',
-      includeFontPadding: true,
-      textAlignVertical: 'center',
-      // Custom styles
-      paddingVertical: LAYOUT.SPACING.TINY,
-      paddingHorizontal: LAYOUT.SPACING.SMALL,
-      width: '100%',
-    };
-
-    return StyleSheet.create({
-      container: {
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        margin: LAYOUT.SPACING.MEDIUM,
-        padding: LAYOUT.CARD.PADDING.MEDIUM,
-        minHeight: 200,
-        ...LAYOUT.SHADOW.MEDIUM,
-      } as ViewStyle,
-      wordContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-      } as ViewStyle,
-      arabicWord: arabicWordStyle,
-      englishWord: {
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-        textAlign: 'center' as 'center',
-        marginBottom: LAYOUT.SPACING.XLARGE,
-      } as TextStyle,
-      sentenceContainer: {
-        marginTop: LAYOUT.SPACING.LARGE,
-        borderTopWidth: 1,
-        borderTopColor: colors.borderOverlay,
-        paddingTop: LAYOUT.SPACING.MEDIUM,
-        width: '100%',
-        alignItems: 'flex-end',
-      } as ViewStyle,
-      arabicSentence: arabicSentenceStyle,
-    });
   }, [colors]);
 
-  if (!word || !word.sentence_word) {
-    return null;
-  }
-
-  // Determine which entry animation to use
-  const getEntryAnimation = () => {
-    if (transitionType === 'fade') {
-      return FadeIn.duration(300).easing(Easing.out(Easing.cubic));
-    } else {
-      return SlideInRight.springify().damping(20).stiffness(100).mass(0.8);
-    }
-  };
+  if (!word) return null;
 
   return (
     <Animated.View
       style={[
-        styles.container,
+        styles.card,
+        themedStyles.cardBackground,
         {
-          backgroundColor: colors.cardBackground,
           borderColor: colors.cardBorder,
         } as ViewStyle,
+        containerAnimatedStyle,
       ]}
-      // Add Reanimated layout animations
-      entering={getEntryAnimation()}
-      exiting={FadeOut.duration(200)}
-      layout={Layout.springify().damping(20)}
+      layout={Layout.springify()}
     >
-      <View style={styles.wordContainer}>
-        <Animated.Text
-          style={[
-            styles.arabicWord,
-            {
-              color: colors.arabicText,
-              backgroundColor: `${colors.tint}08`, // Very subtle tint-based background
-              borderWidth: 1,
-              borderColor: `${colors.tint}15`,
-              // Add a subtle shadow for depth
-              shadowColor: colors.tint,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: LAYOUT.OPACITY.OVERLAY / 4,
-              shadowRadius: 2,
-              elevation: 1, // For Android
-            } as TextStyle,
-          ]}
-          entering={FadeIn.delay(150).duration(300)}
-        >
-          {word.sentence_word.word_form}
-        </Animated.Text>
+      <View style={styles.contentContainer}>
+        <View style={styles.wordContainer}>
+          <Animated.Text
+            style={[
+              styles.arabicWord,
+              {
+                ...getArabicTextStyle(24),
+                color: colors.text,
+              } as TextStyle,
+              arabicAnimatedStyle,
+            ]}
+          >
+            {word.sentence_word.word_form}
+          </Animated.Text>
 
-        <Animated.Text style={styles.englishWord} entering={FadeIn.delay(200).duration(300)}>
-          {word.sentence_word.english}
-        </Animated.Text>
+          <Animated.Text style={[styles.englishWord, englishAnimatedStyle]}>
+            {word.sentence_word.english}
+          </Animated.Text>
+        </View>
 
         {word.sentence_word.sentence?.arabic && (
-          <Animated.View
-            style={styles.sentenceContainer}
-            entering={FadeIn.delay(300).duration(400)}
-          >
+          <Animated.View style={[styles.sentenceContainer, sentenceAnimatedStyle]}>
+            <ThemedText style={[styles.sentenceLabel, themedStyles.textSecondary]}>
+              Example sentence:
+            </ThemedText>
             <ThemedText
-              type="arabic"
-              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
-              style={{
-                color: `${colors.arabicText}CC`,
-                textAlign: 'right' as 'right',
-                paddingHorizontal: LAYOUT.SPACING.SMALL,
-              }}
-              skipDefaultColor
+              style={[
+                styles.sentenceText,
+                { ...getArabicTextStyle(18), textAlign: 'right' } as TextStyle,
+              ]}
             >
               {word.sentence_word.sentence.arabic}
             </ThemedText>
@@ -203,5 +139,54 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
     </Animated.View>
   );
 }
+
+// Define styles
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    margin: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    minHeight: 200,
+    ...LAYOUT.SHADOW.MEDIUM,
+  },
+  contentContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wordContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arabicWord: {
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  englishWord: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    textAlign: 'center',
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  sentenceContainer: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    borderTopWidth: 1,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
+    alignItems: 'flex-end',
+  },
+  sentenceLabel: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  sentenceText: {
+    width: '100%',
+    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+  },
+});
 
 WordReviewCard.displayName = 'WordReviewCard';

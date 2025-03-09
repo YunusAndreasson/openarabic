@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useRef, useState } from 'react';
+import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -19,7 +19,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { FadeIn } from 'react-native-reanimated';
+import { useFadeInAnimation } from '@/utils/animations';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
 
 // Create a memoized component for the review button
@@ -227,6 +227,16 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, [router, queryClient, user]);
 
+  // Add these animation hooks at the top of the component,
+  // before any conditional returns
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+
+  useEffect(() => {
+    if (isDataReady) {
+      startFadeIn();
+    }
+  }, [isDataReady, startFadeIn]);
+
   // Show loading screen
   if (isLoading) {
     return <LoadingScreen />;
@@ -285,7 +295,7 @@ export default function VocabularyScreen() {
             paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           }}
         >
-          <Animated.View entering={FadeIn.duration(300)}>
+          <Animated.View style={[{ width: '100%' }, fadeInStyle]}>
             {/* Dashboard Section */}
             <View style={styles.sectionContainer}>
               <VocabularyDashboard

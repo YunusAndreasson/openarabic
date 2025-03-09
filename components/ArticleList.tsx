@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect } from 'react';
 import {
   StyleSheet,
   FlatList,
@@ -7,16 +7,18 @@ import {
   View,
   ViewToken,
   ViewabilityConfig,
+  ActivityIndicator,
 } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { ArticleSkeletonRow } from './ArticleSkeleton';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import EndMessage from './EndMessage';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
+import { useFadeInAnimation } from '../utils/animations';
 
 const ITEM_HEIGHT = 360; // Approximate height of each article card
 
@@ -66,16 +68,28 @@ const ArticleList: React.FC<ArticleListProps> = ({
     []
   );
 
-  // Memoize the render item function for better performance
-  const renderItem: ListRenderItem<Article> = useCallback(
-    ({ item, index }) => {
-      const isViewable = viewableItems.some(viewable => viewable.item?.id === item.id);
+  // Create a functional component for the animated article item
+  const AnimatedArticleItem = React.memo(
+    ({
+      item,
+      index,
+      onArticlePress,
+      isViewable,
+    }: {
+      item: Article;
+      index: number;
+      onArticlePress: (article: Article) => void;
+      isViewable: boolean;
+    }) => {
+      const { animatedStyle, startAnimation } = useFadeInAnimation(index * 50, 300);
+
+      // Start the animation when the component mounts
+      useEffect(() => {
+        startAnimation();
+      }, [startAnimation]);
 
       return (
-        <Animated.View
-          style={styles.articleItemContainer}
-          entering={FadeIn.duration(300).delay(index * 50)}
-        >
+        <Animated.View style={[styles.articleItemContainer, animatedStyle]}>
           <ThemedCard
             imageUrl={item.image_url || 'https://picsum.photos/800/400'}
             title={item.title}
@@ -87,8 +101,24 @@ const ArticleList: React.FC<ArticleListProps> = ({
           />
         </Animated.View>
       );
+    }
+  );
+
+  // Then update the renderItem function to use our new component
+  const renderItem: ListRenderItem<Article> = useCallback(
+    ({ item, index }) => {
+      const isViewable = viewableItems.some(viewable => viewable.item?.id === item.id);
+
+      return (
+        <AnimatedArticleItem
+          item={item}
+          index={index}
+          onArticlePress={onArticlePress}
+          isViewable={isViewable}
+        />
+      );
     },
-    [onArticlePress, viewableItems]
+    [viewableItems, onArticlePress]
   );
 
   // Render the loading skeleton when loading
