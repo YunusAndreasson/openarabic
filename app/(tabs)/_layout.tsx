@@ -17,8 +17,8 @@ const TAB_SCREENS = [
   {
     name: 'vocabulary',
     title: 'Vocabulary',
-    iconOutline: 'document-text-outline',
-    iconFilled: 'document-text',
+    iconOutline: 'receipt-outline',
+    iconFilled: 'receipt',
   },
   {
     name: 'bookmarks',
