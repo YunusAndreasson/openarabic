@@ -38,6 +38,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   Easing,
+  withSequence,
 } from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -160,6 +161,11 @@ export default function ArticleScreen() {
   const isDarkMode = useIsDarkMode();
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
+  const flatListRef = useRef<FlatList<ArticleSentence>>(null);
+
+  // Animation for content transitions
+  const contentOpacity = useSharedValue(1);
+  const contentTranslateY = useSharedValue(0);
 
   // Animation values for back button using Reanimated
   const backButtonAnim = useSharedValue(0);
@@ -173,6 +179,14 @@ export default function ArticleScreen() {
     if (!id) return undefined;
     return parseInt(id) || undefined;
   }, [id]);
+
+  // Content animation style
+  const contentAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: contentOpacity.value,
+      transform: [{ translateY: contentTranslateY.value }],
+    };
+  });
 
   // Fetch article data
   const { data: article, isLoading: isLoadingArticle } = useQuery({
@@ -353,13 +367,44 @@ export default function ArticleScreen() {
     return wordsMap;
   }, [sortedSentences]);
 
-  // Handle article press
-  const handleArticlePress = useCallback((articleId: number) => {
-    router.push({
-      pathname: '/article/[id]',
-      params: { id: articleId },
-    });
-  }, []);
+  // Handle article press with smooth transition animation
+  const handleArticlePress = useCallback(
+    (articleId: number) => {
+      // Apply a smooth fade out and slide up animation
+      contentOpacity.value = withTiming(0.85, { duration: LAYOUT.ANIMATION.DURATION.NORMAL });
+      contentTranslateY.value = withTiming(-20, { duration: LAYOUT.ANIMATION.DURATION.NORMAL });
+
+      // Navigate to the new article
+      router.push({
+        pathname: '/article/[id]',
+        params: { id: articleId },
+      });
+    },
+    [contentOpacity, contentTranslateY]
+  );
+
+  // Reset animation and scroll to top when article ID changes
+  useEffect(() => {
+    // Use a short timeout to ensure the component is fully mounted
+    const timer = setTimeout(() => {
+      // Scroll to top with animation
+      if (flatListRef.current) {
+        flatListRef.current.scrollToOffset({
+          offset: 0,
+          animated: true,
+        });
+      }
+
+      // Fade in and slide down animation for new content
+      contentOpacity.value = withTiming(1, { duration: LAYOUT.ANIMATION.DURATION.LONG });
+      contentTranslateY.value = withSequence(
+        withTiming(10, { duration: 0 }), // Start slightly below
+        withTiming(0, { duration: LAYOUT.ANIMATION.DURATION.LONG }) // Animate to normal position
+      );
+    }, LAYOUT.ANIMATION.DELAY.SHORT);
+
+    return () => clearTimeout(timer);
+  }, [id, contentOpacity, contentTranslateY]);
 
   // Render article card
   const renderArticleCard = useCallback(
@@ -702,31 +747,34 @@ export default function ArticleScreen() {
       {/* Animated playlist button */}
       {PlaylistButton}
 
-      {/* Article content */}
-      <FlatList
-        data={sortedSentences}
-        renderItem={renderSentenceItem}
-        keyExtractor={item => item.id.toString()}
-        style={styles.content}
-        contentContainerStyle={[styles.sentenceList, contentPadding]}
-        showsVerticalScrollIndicator={true}
-        indicatorStyle={isDarkMode ? 'white' : 'black'}
-        removeClippedSubviews={true}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        updateCellsBatchingPeriod={50}
-        windowSize={5}
-        getItemLayout={(_data, index) => ({
-          length: 150, // increased approximate height of each item to account for larger spacing
-          offset: 150 * index,
-          index,
-        })}
-        ListHeaderComponent={ArticleHeader}
-        ListFooterComponent={ListFooterComponent}
-        onEndReachedThreshold={0.5}
-        scrollEventThrottle={16}
-        onScroll={handleScroll}
-      />
+      {/* Article content with animated wrapper */}
+      <Animated.View style={contentAnimatedStyle}>
+        <FlatList
+          ref={flatListRef}
+          data={sortedSentences}
+          renderItem={renderSentenceItem}
+          keyExtractor={item => item.id.toString()}
+          style={styles.content}
+          contentContainerStyle={[styles.sentenceList, contentPadding]}
+          showsVerticalScrollIndicator={true}
+          indicatorStyle={isDarkMode ? 'white' : 'black'}
+          removeClippedSubviews={true}
+          initialNumToRender={5}
+          maxToRenderPerBatch={5}
+          updateCellsBatchingPeriod={50}
+          windowSize={5}
+          getItemLayout={(_data, index) => ({
+            length: 150, // increased approximate height of each item to account for larger spacing
+            offset: 150 * index,
+            index,
+          })}
+          ListHeaderComponent={ArticleHeader}
+          ListFooterComponent={ListFooterComponent}
+          onEndReachedThreshold={0.5}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
+        />
+      </Animated.View>
     </ThemedView>
   );
 }
