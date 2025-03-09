@@ -20,20 +20,37 @@ import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
 import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
+import { usePulseAnimation } from '@/hooks/animations';
 
 // Create a memoized component for the review button
 const ReviewButton = React.memo(
   ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => {
+    const colors = useColors();
+    // Use the existing pulse animation hook
+    const { pulse, animatedStyle } = usePulseAnimation(1.05);
+
+    const handlePress = useCallback(() => {
+      // Trigger the pulse animation
+      pulse();
+
+      // Call onPress after a short delay to allow the animation to be visible
+      setTimeout(() => {
+        onPress();
+      }, 150);
+    }, [pulse, onPress]);
+
     return (
       <View style={styles.reviewButtonContainer}>
-        <ThemedButton
-          title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
-          icon="play-circle"
-          iconSize={24}
-          onPress={onPress}
-          variant="filled"
-          style={styles.reviewButton}
-        />
+        <Animated.View style={animatedStyle}>
+          <ThemedButton
+            title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
+            icon="play-circle"
+            iconSize={24}
+            onPress={handlePress}
+            variant="filled"
+            style={[styles.reviewButton, { backgroundColor: colors.tint }]}
+          />
+        </Animated.View>
       </View>
     );
   }
@@ -63,8 +80,9 @@ export default function VocabularyScreen() {
   const colors = useColors();
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const queryClient = useQueryClient();
+  const [isNavigating, setIsNavigating] = useState(false);
 
-  // Use the new loading state hook
+  // Use the loading state hook with a standard delay
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500, true);
 
   // Query for study words
@@ -91,7 +109,7 @@ export default function VocabularyScreen() {
     gcTime: 60000, // 1 minute
   });
 
-  // Use the new screen focus refresh hook
+  // Use the screen focus refresh hook
   useScreenFocusRefresh(
     queryClient,
     'dueWords',
@@ -130,20 +148,40 @@ export default function VocabularyScreen() {
 
   // Handle starting a review
   const handleStartReview = useCallback(() => {
-    if (!user) return;
-    queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-    router.push('/review');
-  }, [router, queryClient, user]);
+    if (!user || isNavigating) return;
 
-  // Use the new screen animation hook
-  const { isLayoutReady, animationsTriggered, fadeInStyle, shouldRenderAnimatedContent } =
-    useScreenAnimation(
-      isDataReady,
-      isLoadingState || isDataLoading,
-      400, // Animation duration
-      0, // Layout delay
-      0 // Animation delay
-    );
+    // Set navigating state to prevent multiple clicks
+    setIsNavigating(true);
+
+    // Invalidate due words query to refresh after review
+    queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+
+    // Prefetch the review data to avoid the "no words" flash
+    queryClient.prefetchQuery({
+      queryKey: ['dueWords', user.id, 'review'],
+      queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
+    });
+
+    // Simple navigation without animations
+    router.push({
+      pathname: '/review',
+      params: { fromVocabulary: 'true' },
+    });
+
+    // Reset navigation state after a delay
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 300);
+  }, [router, queryClient, user, isNavigating]);
+
+  // Use the screen animation hook
+  const { fadeInStyle } = useScreenAnimation(
+    isDataReady,
+    isLoadingState || isDataLoading,
+    300, // Animation duration
+    0, // Layout delay
+    0 // Animation delay
+  );
 
   // Update loading state based on data loading
   useEffect(() => {
@@ -153,6 +191,11 @@ export default function VocabularyScreen() {
       stopLoading();
     }
   }, [isAuthLoading, user, status, startLoading, stopLoading]);
+
+  // Content loading state
+  const isContentLoading = useMemo(() => {
+    return !!user && (isFetching || isDataLoading);
+  }, [user, isFetching, isDataLoading]);
 
   // Create a memoized error message component
   const ErrorMessage = React.memo(() => {
@@ -170,11 +213,6 @@ export default function VocabularyScreen() {
     );
   });
   ErrorMessage.displayName = 'ErrorMessage';
-
-  // Content loading state
-  const isContentLoading = useMemo(() => {
-    return !!user && (isFetching || isDataLoading);
-  }, [user, isFetching, isDataLoading]);
 
   // Show loading screen for initial load
   if (isLoadingState) {
@@ -214,79 +252,74 @@ export default function VocabularyScreen() {
 
   // Main content
   return (
-    <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-      {/* Fixed header */}
-      <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-        <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-      </View>
+    <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
+        {/* Fixed header */}
+        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
+          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
+        </View>
 
-      {/* Content area */}
-      <View style={styles.contentContainer}>
-        {/* Show loader when loading */}
-        {isContentLoading && (
-          <View style={[styles.fullscreenLoader, { backgroundColor: colors.background }]}>
-            <LoadingContainer size="large" color={colors.tint} />
-          </View>
-        )}
-
-        {/* Content - initially invisible until animation starts */}
-        <ThemedView
-          scrollable={true}
-          useSafeArea={false}
-          includeBottomInset={false}
-          contentContainerStyle={{
-            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: LAYOUT.SPACING.MEDIUM,
-            paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-          }}
-        >
-          {isLayoutReady && (
-            <Animated.View style={[{ width: '100%' }, fadeInStyle]}>
-              {/* Dashboard Section */}
-              <View style={styles.dashboardWrapper}>
-                <VocabularyDashboard
-                  totalWords={stats.totalWords}
-                  masteredWords={stats.masteredWords}
-                  learningWords={stats.learningWords}
-                  dueWords={stats.dueWords}
-                  streak={stats.streak}
-                  colors={colors}
-                  animationTriggered={animationsTriggered}
-                />
-              </View>
-
-              {/* Graph Section */}
-              <View
-                style={[
-                  styles.graphWrapper,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    borderColor: colors.cardBorder,
-                  },
-                  LAYOUT.SHADOW.MEDIUM,
-                ]}
-              >
-                <VocabularyGraph
-                  data={weeklyProgressData}
-                  animationTriggered={animationsTriggered}
-                />
-              </View>
-
-              {/* Review Button Section */}
-              {isDataReady && (
-                <View style={styles.reviewButtonWrapper}>
-                  {stats.dueWords > 0 ? (
-                    <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
-                  ) : (
-                    <DisabledReviewButton />
-                  )}
-                </View>
-              )}
-            </Animated.View>
+        {/* Content area */}
+        <View style={styles.contentContainer}>
+          {/* Show loader when loading */}
+          {isContentLoading && (
+            <View style={[styles.fullscreenLoader, { backgroundColor: colors.background }]}>
+              <LoadingContainer size="large" color={colors.tint} />
+            </View>
           )}
-        </ThemedView>
-      </View>
-    </ThemedView>
+
+          {/* Content */}
+          <ThemedView
+            scrollable={true}
+            useSafeArea={false}
+            includeBottomInset={false}
+            contentContainerStyle={{
+              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+              paddingTop: LAYOUT.SPACING.MEDIUM,
+              paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+            }}
+          >
+            {/* Dashboard Section */}
+            <View style={styles.dashboardWrapper}>
+              <VocabularyDashboard
+                totalWords={stats.totalWords}
+                masteredWords={stats.masteredWords}
+                learningWords={stats.learningWords}
+                dueWords={stats.dueWords}
+                streak={stats.streak}
+                colors={colors}
+                animationTriggered={true}
+              />
+            </View>
+
+            {/* Graph Section */}
+            <View
+              style={[
+                styles.graphWrapper,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.cardBorder,
+                },
+                LAYOUT.SHADOW.MEDIUM,
+              ]}
+            >
+              <VocabularyGraph data={weeklyProgressData} animationTriggered={true} />
+            </View>
+
+            {/* Review Button Section */}
+            {isDataReady && (
+              <View style={styles.reviewButtonWrapper}>
+                {stats.dueWords > 0 ? (
+                  <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+                ) : (
+                  <DisabledReviewButton />
+                )}
+              </View>
+            )}
+          </ThemedView>
+        </View>
+      </ThemedView>
+    </Animated.View>
   );
 }
 

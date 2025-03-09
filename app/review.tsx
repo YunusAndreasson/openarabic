@@ -7,6 +7,7 @@ import {
   Dimensions,
   TextStyle,
   ViewStyle,
+  Animated as RNAnimated,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -17,6 +18,7 @@ import Animated, {
   FadeIn,
   FadeOut,
   useAnimatedReaction,
+  Easing,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -24,7 +26,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
 import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
@@ -34,6 +36,7 @@ import { ThemedModal } from '@/components/ThemedModal';
 import { Loader } from '@/components/Loader';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Toast from 'react-native-toast-message';
+import { useFadeInAnimation, useSlideAnimation, TIMING_CONFIG } from '@/hooks/animations';
 
 const BASE_FONT_SIZE = 20;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
@@ -42,6 +45,24 @@ const FADE_DURATION = 100; // Reduced from 150 for quicker fade
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
+
+// Create an entrance animation component using the existing animation hooks
+const EntranceAnimation = ({ children }: { children: React.ReactNode }) => {
+  // Use the existing fade in animation hook
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, TIMING_CONFIG.MEDIUM.duration);
+
+  // Start animations when component mounts
+  useEffect(() => {
+    // Start the animation with a slight delay
+    setTimeout(() => {
+      startAnimation(0);
+    }, 50);
+  }, [startAnimation]);
+
+  return (
+    <Animated.View style={[{ flex: 1, width: '100%' }, animatedStyle]}>{children}</Animated.View>
+  );
+};
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -202,6 +223,9 @@ const baseStyles = StyleSheet.create({
 export default function ReviewScreen() {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const params = useLocalSearchParams();
+  const fromVocabulary = params.fromVocabulary === 'true';
+  const initialLoadRef = useRef(true);
 
   // Create themed styles using StyleSheet.create for better performance
   const themedStyles = useMemo(
@@ -260,6 +284,20 @@ export default function ReviewScreen() {
     useSpacedRepetition({
       userId: user?.id,
     });
+
+  // Show loading state during initial load to prevent "no words" flash
+  const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
+
+  // Hide initial loading after a short delay
+  useEffect(() => {
+    if (showInitialLoading) {
+      const timer = setTimeout(() => {
+        setShowInitialLoading(false);
+      }, 300); // Enough time for data to load
+
+      return () => clearTimeout(timer);
+    }
+  }, [showInitialLoading]);
 
   // Animation values
   const translateX = useSharedValue(0);
@@ -606,62 +644,20 @@ export default function ReviewScreen() {
   // Define error state
   const [error, setError] = useState<Error | null>(null);
 
-  // Render loading state
-  if (isLoading) {
+  // Show loading screen during initial load
+  if ((isLoading && initialLoadRef.current) || showInitialLoading) {
+    initialLoadRef.current = false;
     return (
-      <ThemedView style={baseStyles.container as any}>
-        <Loader size="large" />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.LARGE }}>
-          Loading your review words...
-        </ThemedText>
+      <ThemedView
+        style={[baseStyles.container, { justifyContent: 'center', alignItems: 'center' }]}
+        useSafeArea={true}
+      >
+        <Loader size="large" color={colors.tint} />
       </ThemedView>
     );
   }
 
-  // Render empty state when there are no due words
-  if (!isLoading && dueWords.length === 0) {
-    return (
-      <ThemedView style={baseStyles.container as any}>
-        <View style={baseStyles.completionContainer as any}>
-          <ThemedText style={baseStyles.completionText as any}>
-            You don't have any words due for review right now.
-          </ThemedText>
-          <ThemedButton title="Back to Home" onPress={handleClose} />
-        </View>
-      </ThemedView>
-    );
-  }
-
-  // Render error state
-  if (!currentWord?.sentence_word?.word_form && !isLoading && dueWords.length > 0) {
-    // IMPORTANT FIX: Don't show error if we're at the end of the review
-    // This prevents the error from flashing before showing the completion state
-    if (isComplete) {
-      return (
-        <ThemedView style={baseStyles.container as any}>
-          <View style={baseStyles.completionContainer as any}>
-            <ThemedText style={baseStyles.completionText as any}>
-              You've completed all your reviews for now!
-            </ThemedText>
-            <ThemedButton title="Back to Home" onPress={handleClose} />
-          </View>
-        </ThemedView>
-      );
-    }
-
-    return (
-      <ThemedView style={baseStyles.container as any}>
-        <View style={baseStyles.errorContainer as any}>
-          <ThemedText style={baseStyles.errorText as any}>
-            There was an error loading your review words.
-          </ThemedText>
-          <ThemedButton title="Try Again" onPress={handleRetry} />
-        </View>
-      </ThemedView>
-    );
-  }
-
-  // Render completion state
+  // Show completion screen if all words are reviewed
   if (isComplete) {
     return (
       <ThemedView style={baseStyles.container as any}>
@@ -685,113 +681,113 @@ export default function ReviewScreen() {
     );
   }
 
+  // Return the main content with entrance animation
   return (
-    <ThemedView style={baseStyles.container as any}>
-      <GestureHandlerRootView style={baseStyles.gestureRoot as any}>
-        <View style={baseStyles.contentContainer as any}>
-          <View style={baseStyles.header as any}>
-            <View style={baseStyles.progressContainer as any}>
-              <ProgressBar progress={Math.round(progress)} />
+    <ThemedView style={baseStyles.container} useSafeArea={true}>
+      <EntranceAnimation>
+        <GestureHandlerRootView style={baseStyles.gestureRoot}>
+          <View style={baseStyles.contentContainer}>
+            <View style={baseStyles.header}>
+              <View style={baseStyles.progressContainer}>
+                <ProgressBar progress={Math.round(progress)} />
+              </View>
             </View>
-          </View>
 
-          <GestureDetector gesture={panGesture}>
-            <View style={baseStyles.textContainer as any}>
+            <GestureDetector gesture={panGesture}>
+              <View style={baseStyles.textContainer}>
+                <Animated.View
+                  key={`sentence-${currentWord?.sentence_word_id || 'initial'}`}
+                  style={[cardStyle, baseStyles.sentenceContainer]}
+                >
+                  {sentenceContent}
+                </Animated.View>
+              </View>
+            </GestureDetector>
+
+            {showMeaningOverlay && (
               <Animated.View
-                key={`sentence-${currentWord?.sentence_word_id || 'initial'}`}
-                style={[cardStyle, baseStyles.sentenceContainer as any]}
+                style={themedStyles.meaningOverlay}
+                entering={FadeIn.duration(150)}
+                exiting={FadeOut.duration(150)}
               >
-                {sentenceContent}
+                <ThemedText style={[baseStyles.meaningText, { color: colors.tint } as TextStyle]}>
+                  {currentWord?.sentence_word?.english || 'No translation available'}
+                </ThemedText>
               </Animated.View>
+            )}
+
+            <View style={baseStyles.footer}>
+              <Pressable
+                onPress={handleClose}
+                style={({ pressed }) => [
+                  themedStyles.actionButton,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    opacity: pressed ? 0.8 : 1,
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                  } as ViewStyle,
+                ]}
+              >
+                <Ionicons name="close" size={28} color={colors.englishText} />
+              </Pressable>
+              <Pressable
+                onPress={handleInfoPress}
+                style={({ pressed }) => [
+                  themedStyles.actionButton,
+                  {
+                    backgroundColor: colors.cardBackground,
+                    opacity: pressed ? 0.8 : 1,
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                  } as ViewStyle,
+                ]}
+              >
+                <Ionicons name="information-circle-outline" size={28} color={colors.englishText} />
+              </Pressable>
             </View>
-          </GestureDetector>
-
-          {showMeaningOverlay && (
-            <Animated.View
-              style={themedStyles.meaningOverlay as any}
-              entering={FadeIn.duration(150)}
-              exiting={FadeOut.duration(150)}
-            >
-              <ThemedText style={[baseStyles.meaningText, { color: colors.tint } as TextStyle]}>
-                {currentWord?.sentence_word?.english || 'No translation available'}
-              </ThemedText>
-            </Animated.View>
-          )}
-
-          <View style={baseStyles.footer as any}>
-            <Pressable
-              onPress={handleClose}
-              style={({ pressed }) => [
-                themedStyles.actionButton,
-                {
-                  backgroundColor: colors.cardBackground,
-                  opacity: pressed ? 0.8 : 1,
-                  transform: [{ scale: pressed ? 0.95 : 1 }],
-                } as ViewStyle,
-              ]}
-            >
-              <Ionicons name="close" size={28} color={colors.englishText} />
-            </Pressable>
-            <Pressable
-              onPress={handleInfoPress}
-              style={({ pressed }) => [
-                themedStyles.actionButton,
-                {
-                  backgroundColor: colors.cardBackground,
-                  opacity: pressed ? 0.8 : 1,
-                  transform: [{ scale: pressed ? 0.95 : 1 }],
-                } as ViewStyle,
-              ]}
-            >
-              <Ionicons name="information-circle-outline" size={28} color={colors.englishText} />
-            </Pressable>
           </View>
-        </View>
 
-        <ThemedModal
-          visible={showInstructions}
-          onClose={() => setShowInstructions(false)}
-          useBlur={true}
-          blurIntensity={isDarkMode ? 15 : 30}
-          contentStyle={themedStyles.modalContent as any}
-          useHaptics={true}
-          animationDuration={250}
-          showCloseButton={false}
-          overlayOpacity={0.15}
-        >
-          <View
-            style={[
-              baseStyles.modalInnerContent as any,
-              { backgroundColor: colors.cardBackground },
-            ]}
+          <ThemedModal
+            visible={showInstructions}
+            onClose={() => setShowInstructions(false)}
+            useBlur={true}
+            blurIntensity={isDarkMode ? 15 : 30}
+            contentStyle={themedStyles.modalContent}
+            useHaptics={true}
+            animationDuration={250}
+            showCloseButton={false}
+            overlayOpacity={0.15}
           >
             <View
-              style={[
-                baseStyles.modalInstructionRow as any,
-                {
-                  marginBottom: LAYOUT.SPACING.MEDIUM,
-                  justifyContent: 'center',
-                },
-              ]}
+              style={[baseStyles.modalInnerContent, { backgroundColor: colors.cardBackground }]}
             >
-              <View style={colorStyles.modalIconContainer}>
-                <Ionicons name="arrow-back" size={24} color={colors.tint} />
+              <View
+                style={[
+                  baseStyles.modalInstructionRow,
+                  {
+                    marginBottom: LAYOUT.SPACING.MEDIUM,
+                    justifyContent: 'center',
+                  },
+                ]}
+              >
+                <View style={colorStyles.modalIconContainer}>
+                  <Ionicons name="arrow-back" size={24} color={colors.tint} />
+                </View>
+                <ThemedText style={baseStyles.modalText}>
+                  Swipe left if you don't know the word
+                </ThemedText>
               </View>
-              <ThemedText style={baseStyles.modalText as any}>
-                Swipe left if you don't know the word
-              </ThemedText>
-            </View>
-            <View style={[baseStyles.modalInstructionRow as any, { justifyContent: 'center' }]}>
-              <View style={colorStyles.modalIconContainer}>
-                <Ionicons name="arrow-forward" size={24} color={colors.tint} />
+              <View style={[baseStyles.modalInstructionRow, { justifyContent: 'center' }]}>
+                <View style={colorStyles.modalIconContainer}>
+                  <Ionicons name="arrow-forward" size={24} color={colors.tint} />
+                </View>
+                <ThemedText style={baseStyles.modalText}>
+                  Swipe right if you know the word
+                </ThemedText>
               </View>
-              <ThemedText style={baseStyles.modalText as any}>
-                Swipe right if you know the word
-              </ThemedText>
             </View>
-          </View>
-        </ThemedModal>
-      </GestureHandlerRootView>
+          </ThemedModal>
+        </GestureHandlerRootView>
+      </EntranceAnimation>
     </ThemedView>
   );
 }
