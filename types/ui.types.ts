@@ -68,4 +68,5 @@ export interface CompactArticleCardProps {
   article: Article;
   onPress?: () => void;
   showTimeAgo?: boolean;
+  style?: ViewStyle;
 }

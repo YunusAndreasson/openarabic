@@ -10,7 +10,7 @@ import { CompactArticleCardProps } from '../types/ui.types';
 import { formatTimeAgo } from '../utils/dateUtils';
 import { EnhancedImage } from './EnhancedImage';
 import Animated from 'react-native-reanimated';
-import { useCardAnimation } from '@/hooks/animations';
+import { useCardAnimation } from '../hooks/animations';
 
 // TimeAgo component to show when an article was published
 const TimeAgo = ({ date }: { date: string }) => {

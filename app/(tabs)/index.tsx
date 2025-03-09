@@ -1,35 +1,18 @@
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  RefreshControl,
-  ActivityIndicator,
-  Platform,
-  FlatList,
-  ScrollView,
-  useWindowDimensions,
-} from 'react-native';
+import { StyleSheet } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { router, Link } from 'expo-router';
+import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 
 // Components
-import ThemedCard from '@/components/ThemedCard';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
 import { LoadingScreen } from '@/components/Loader';
-import { EnhancedImage } from '@/components/EnhancedImage';
-import { CompactArticleCard } from '@/components/CompactArticleCard';
-import SectionTitle from '@/components/SectionTitle';
 import ArticleList from '@/components/ArticleList';
 
 // Hooks and Services
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
-import { useFadeInAnimation } from '@/hooks/animations';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
@@ -50,13 +33,19 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 // Types
 import { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 
-// Constants
+// Import the extracted components
+import ArticleSection from '../../components/ArticleSection';
+import FeaturedArticleSection from '../../components/FeaturedArticleSection';
+import FilterList from '../../components/FilterList';
+import DailyPickSection from '../../components/DailyPickSection';
+import BackButton from '../../components/BackButton';
+import FilterNotice from '../../components/FilterNotice';
+import ErrorState from '../../components/ErrorState';
 
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -66,617 +55,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
-  emptyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-    opacity: 0.7,
-  },
-
-  categorySection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  featuredSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: 0,
-  },
-  dailyPickSection: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: 0,
-  },
-  horizontalList: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.MEDIUM,
-  },
-  featuredCard: {
-    width: '100%',
-  },
-  dailyPickCard: {
-    width: '100%',
-  },
-  authorListContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  clearFilterText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-  },
-  clearFilterButton: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minWidth: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  authorPill: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginRight: LAYOUT.SPACING.SMALL,
-    minWidth: 100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...LAYOUT.SHADOW.SMALL,
-  },
-  authorPillSelected: {
-    ...LAYOUT.SHADOW.MEDIUM,
-    transform: [{ scale: 1.02 }],
-  },
-  authorPillText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    fontWeight: '400',
-    letterSpacing: 0.3,
-  },
-  filterNoticeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.MEDIUM,
-    marginVertical: LAYOUT.SPACING.MEDIUM,
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  filterNoticeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  backButtonContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    minHeight: 44,
-  },
-  backButtonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginLeft: LAYOUT.SPACING.TINY,
-    fontWeight: '500',
-  },
-  categoryListContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  paddingHorizontal: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  featuredItemMargin: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  horizontalListWithPadding: {
-    paddingBottom: LAYOUT.SPACING.TINY,
-  },
-  authorFilterHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginRight: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  boldText: {
-    fontWeight: '600',
-  },
-  backArrow: {
-    fontSize: 16,
-  },
 });
-
-// Empty state components
-const ErrorState = React.memo(({ message }: { message: string }) => (
-  <View style={styles.emptyContainer}>
-    <ThemedText style={styles.emptyText}>{message}</ThemedText>
-  </View>
-));
-ErrorState.displayName = 'ErrorState';
-
-// Add this memoized component near the top of the file, before ArticlesScreen
-const DailyPickSection = React.memo(
-  ({ dailyPick, onPress }: { dailyPick: Article | null; onPress: (article: Article) => void }) => {
-    const colors = useColors();
-
-    // Use our custom fade-in animation with standardized duration
-    const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(
-      0,
-      LAYOUT.ANIMATION.DURATION.SLOW
-    );
-
-    useEffect(() => {
-      startFadeIn();
-    }, [startFadeIn]);
-
-    if (!dailyPick) return null;
-
-    return (
-      <Animated.View style={[styles.dailyPickSection, fadeInStyle]}>
-        <SectionTitle title="Daily Pick" />
-        <View style={styles.paddingHorizontal}>
-          <ThemedCard
-            imageUrl={dailyPick.image_url || ''}
-            title={dailyPick.title}
-            category={dailyPick.category?.name || 'General'}
-            author={dailyPick.author?.name || 'Unknown'}
-            onPress={() => onPress(dailyPick)}
-          />
-        </View>
-      </Animated.View>
-    );
-  }
-);
-
-// Category Section Component
-const CategorySection = React.memo(
-  ({
-    title,
-    articles,
-    onArticlePress,
-    delay = 0,
-    showTimeAgo = false,
-  }: {
-    title: string;
-    articles: Article[];
-    onArticlePress: (article: Article) => void;
-    delay?: number;
-    showTimeAgo?: boolean;
-  }) => {
-    // Capitalize the first letter of each word in a title
-    const displayTitle = title
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-
-    // Add our fade-in animation hook with standardized duration
-    const { animatedStyle, startAnimation } = useFadeInAnimation(
-      delay,
-      LAYOUT.ANIMATION.DURATION.NORMAL
-    );
-
-    // Start the animation
-    useEffect(() => {
-      startAnimation();
-    }, [startAnimation]);
-
-    if (articles.length === 0) return null;
-
-    return (
-      <Animated.View style={[styles.categorySection, animatedStyle]}>
-        <SectionTitle title={displayTitle} />
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-          data={articles}
-          keyExtractor={article => `article-${article.id}`}
-          renderItem={({ item }) => (
-            <CompactArticleCard
-              article={item}
-              onPress={() => onArticlePress(item)}
-              showTimeAgo={showTimeAgo}
-            />
-          )}
-          removeClippedSubviews={true}
-          initialNumToRender={5}
-          maxToRenderPerBatch={10}
-        />
-      </Animated.View>
-    );
-  }
-);
-CategorySection.displayName = 'CategorySection';
-
-// Create a separate FeaturedArticleItem component to handle individual animations
-const FeaturedArticleItem = React.memo(
-  ({
-    article,
-    index,
-    totalCount,
-    onArticlePress,
-  }: {
-    article: Article;
-    index: number;
-    totalCount: number;
-    onArticlePress: (article: Article) => void;
-  }) => {
-    // Use our custom animation hook with standardized duration
-    const { animatedStyle, startAnimation } = useFadeInAnimation(
-      300 + index * 100,
-      LAYOUT.ANIMATION.DURATION.NORMAL
-    );
-
-    // Start the animation when the component mounts
-    useEffect(() => {
-      startAnimation();
-    }, [startAnimation]);
-
-    return (
-      <Animated.View
-        style={[index < totalCount - 1 ? styles.featuredItemMargin : undefined, animatedStyle]}
-      >
-        <ThemedCard
-          imageUrl={article.image_url || 'https://picsum.photos/800/400'}
-          title={article.title}
-          category={article.category?.name ?? 'Uncategorized'}
-          author={article.author?.name ?? 'Anonymous'}
-          onPress={() => onArticlePress(article)}
-          style={styles.featuredCard}
-        />
-      </Animated.View>
-    );
-  }
-);
-
-// Featured Articles Component
-const FeaturedArticles = React.memo(
-  ({
-    articles,
-    onArticlePress,
-  }: {
-    articles: Article[];
-    onArticlePress: (article: Article) => void;
-  }) => {
-    // Use our custom fade-in animation with standardized duration
-    const { animatedStyle: sectionFadeIn, startAnimation: startSectionAnimation } =
-      useFadeInAnimation(300, LAYOUT.ANIMATION.DURATION.NORMAL);
-
-    useEffect(() => {
-      startSectionAnimation();
-    }, [startSectionAnimation]);
-
-    if (articles.length === 0) return null;
-
-    return (
-      <Animated.View style={[styles.featuredSection, sectionFadeIn]}>
-        <SectionTitle title="Featured Articles" />
-        <View style={styles.paddingHorizontal}>
-          {articles.map((article, index) => (
-            <FeaturedArticleItem
-              key={`featured-${article.id}`}
-              article={article}
-              index={index}
-              totalCount={articles.length}
-              onArticlePress={onArticlePress}
-            />
-          ))}
-        </View>
-      </Animated.View>
-    );
-  }
-);
-FeaturedArticles.displayName = 'FeaturedArticles';
-
-// Continue Reading Section Component
-const ContinueReadingSection = React.memo(() => {
-  const inProgressArticles = useAppSelectorMemo(state => state.readingList.inProgressArticles);
-  const { animatedStyle, startAnimation } = useFadeInAnimation(
-    100,
-    LAYOUT.ANIMATION.DURATION.NORMAL
-  );
-
-  useEffect(() => {
-    startAnimation();
-  }, [startAnimation]);
-
-  if (!inProgressArticles || inProgressArticles.length === 0) {
-    return (
-      <Animated.View style={[styles.categorySection, animatedStyle]}>
-        <SectionTitle title="Continue Reading" />
-        <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>
-            No articles in progress. Start reading to see them here!
-          </ThemedText>
-        </View>
-      </Animated.View>
-    );
-  }
-
-  return (
-    <Animated.View style={[styles.categorySection, animatedStyle]}>
-      <SectionTitle title="Continue Reading" />
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        data={inProgressArticles}
-        keyExtractor={item => `continue-${item.id}`}
-        contentContainerStyle={styles.horizontalList}
-        renderItem={({ item }) => (
-          <CompactArticleCard
-            article={item}
-            onPress={() => router.push(`/article/${item.id}`)}
-            showTimeAgo={true}
-          />
-        )}
-      />
-    </Animated.View>
-  );
-});
-ContinueReadingSection.displayName = 'ContinueReadingSection';
-
-// Create an AnimatedPill component for reuse with authors and categories
-const AnimatedPill = React.memo(
-  ({
-    item,
-    isSelected,
-    onSelect,
-    label,
-    delay,
-  }: {
-    item: string;
-    isSelected?: boolean;
-    onSelect: (value: string) => void;
-    label: string;
-    delay: number;
-  }) => {
-    const colors = useColors();
-
-    // Use consistent animation timing from LAYOUT constants
-    const { animatedStyle, startAnimation } = useFadeInAnimation(
-      delay,
-      LAYOUT.ANIMATION.DURATION.FAST
-    );
-
-    // Memoize the press handler to avoid recreating it on each render
-    const handlePress = useCallback(() => {
-      onSelect(item);
-      // Optional: Add haptic feedback for better UX
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }, [item, onSelect]);
-
-    // Memoize styles to avoid recalculating on each render
-    const pillStyle = useCallback(
-      ({ pressed }: { pressed: boolean }) => [
-        styles.authorPill,
-        {
-          backgroundColor: isSelected
-            ? colors.textOverlay
-            : pressed
-              ? colors.background
-              : colors.cardBackground,
-        },
-        isSelected && styles.authorPillSelected,
-      ],
-      [colors, isSelected]
-    );
-
-    // Memoize text style
-    const textStyle = useMemo(
-      () => [styles.authorPillText, isSelected && [{ color: colors.tint }, styles.boldText]],
-      [colors.tint, isSelected]
-    );
-
-    useEffect(() => {
-      startAnimation();
-    }, [startAnimation]);
-
-    return (
-      <Animated.View style={animatedStyle}>
-        <Pressable style={pillStyle} onPress={handlePress}>
-          <ThemedText style={textStyle} numberOfLines={1} ellipsizeMode="tail">
-            {label}
-          </ThemedText>
-        </Pressable>
-      </Animated.View>
-    );
-  }
-);
-
-// Author Filter List Component
-const AuthorFilterList = React.memo(
-  ({
-    authors,
-    selectedAuthorId,
-    onSelectAuthor,
-    onClearFilter,
-  }: {
-    authors: Tables<'authors'>[];
-    selectedAuthorId: number | null;
-    onSelectAuthor: (authorId: number) => void;
-    onClearFilter: () => void;
-  }) => {
-    const colors = useColors();
-
-    // Then update the renderAuthorItem function to use this component
-    const renderAuthorItem = useCallback(
-      ({ item }: { item: Tables<'authors'> }) => {
-        const isSelected = selectedAuthorId === item.id;
-        return (
-          <AnimatedPill
-            key={`author-pill-${item.id}`}
-            item={item.id.toString()}
-            isSelected={isSelected}
-            onSelect={value => onSelectAuthor(Number(value))}
-            label={item.name}
-            delay={650}
-          />
-        );
-      },
-      [selectedAuthorId, onSelectAuthor]
-    );
-
-    // Skip rendering if no authors
-    if (authors.length === 0) return null;
-
-    // Use pills for authors
-    return (
-      <Animated.View
-        style={[styles.authorListContainer]}
-        entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(600)}
-      >
-        <View style={styles.authorFilterHeader}>
-          <SectionTitle title="Browse by Author" />
-          {selectedAuthorId !== null && (
-            <Pressable
-              style={[styles.clearFilterButton, { backgroundColor: colors.textOverlay }]}
-              onPress={onClearFilter}
-            >
-              <ThemedText style={[styles.clearFilterText, { color: colors.tint }]} skipDefaultColor>
-                Clear
-              </ThemedText>
-            </Pressable>
-          )}
-        </View>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.horizontalList, styles.horizontalListWithPadding]}
-          data={authors}
-          keyExtractor={author => `author-${author.id}`}
-          renderItem={renderAuthorItem}
-          removeClippedSubviews={true}
-          initialNumToRender={10}
-          maxToRenderPerBatch={20}
-          windowSize={5}
-        />
-      </Animated.View>
-    );
-  }
-);
-AuthorFilterList.displayName = 'AuthorFilterList';
-
-// Filter Notice Component
-const FilterNotice = React.memo(({ type, name }: { type: 'author' | 'category'; name: string }) => {
-  const colors = useColors();
-
-  return (
-    <View style={[styles.filterNoticeContainer, { backgroundColor: colors.textOverlay }]}>
-      <ThemedText style={styles.filterNoticeText}>
-        Showing articles from {type === 'author' ? 'author' : 'category'}{' '}
-        <ThemedText style={[styles.boldText, { color: colors.tint }]} skipDefaultColor>
-          {name}
-        </ThemedText>
-      </ThemedText>
-    </View>
-  );
-});
-FilterNotice.displayName = 'FilterNotice';
-
-// Back Button Component
-const BackButton = React.memo(({ onPress }: { onPress: () => void }) => {
-  const colors = useColors();
-
-  const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onPress();
-  }, [onPress]);
-
-  return (
-    <View style={styles.backButtonContainer}>
-      <Pressable
-        style={({ pressed }) => [
-          styles.backButton,
-          {
-            backgroundColor: colors.textOverlay,
-            opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
-          },
-        ]}
-        onPress={handlePress}
-        accessibilityRole="button"
-        accessibilityLabel="Back to home"
-      >
-        <ThemedText style={[styles.backArrow, { color: colors.tint }]} skipDefaultColor>
-          ←
-        </ThemedText>
-        <ThemedText style={[styles.backButtonText, { color: colors.tint }]} skipDefaultColor>
-          Back to home
-        </ThemedText>
-      </Pressable>
-    </View>
-  );
-});
-BackButton.displayName = 'BackButton';
-
-// Category Filter List Component
-const CategoryFilterList = React.memo(
-  ({
-    categories,
-    selectedCategoryId,
-    onSelectCategory,
-  }: {
-    categories: Tables<'categories'>[];
-    selectedCategoryId: number | null;
-    onSelectCategory: (categoryId: number) => void;
-  }) => {
-    // And update the renderCategoryItem function similarly
-    const renderCategoryItem = useCallback(
-      ({ item }: { item: Tables<'categories'> }) => {
-        const isSelected = selectedCategoryId === item.id;
-        return (
-          <AnimatedPill
-            key={`category-pill-${item.id}`}
-            item={item.id.toString()}
-            isSelected={isSelected}
-            onSelect={value => onSelectCategory(Number(value))}
-            label={item.name}
-            delay={750}
-          />
-        );
-      },
-      [selectedCategoryId, onSelectCategory]
-    );
-
-    // Skip rendering if no categories
-    if (categories.length === 0) return null;
-
-    // Use pills for categories
-    return (
-      <Animated.View
-        style={[styles.categoryListContainer]}
-        entering={FadeIn.duration(LAYOUT.ANIMATION.DURATION.NORMAL).delay(700)}
-      >
-        <SectionTitle title="Browse by Category" />
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.horizontalList, styles.horizontalListWithPadding]}
-          data={categories}
-          keyExtractor={category => `category-${category.id}`}
-          renderItem={renderCategoryItem}
-          removeClippedSubviews={true}
-          initialNumToRender={10}
-          maxToRenderPerBatch={20}
-          windowSize={5}
-        />
-      </Animated.View>
-    );
-  }
-);
-CategoryFilterList.displayName = 'CategoryFilterList';
 
 // Properly wrap useAuth to avoid conditional hook calls
 const useSafeAuth = () => {
@@ -697,12 +76,7 @@ const useSafeAuth = () => {
   return authResult;
 };
 
-// Fix the FeaturedArticle component to use EnhancedImage correctly
-
-// Remove the custom components
-
 // Memoized article item renderer for better performance
-const MemoizedCompactArticleCard = React.memo(CompactArticleCard);
 
 export default function ArticlesScreen() {
   const colors = useColors();
@@ -946,14 +320,21 @@ export default function ArticlesScreen() {
     return (
       <>
         <DailyPickSection
-          dailyPick={getDailyPickArticle(articles, getDayOfYear())}
+          article={getDailyPickArticle(articles, getDayOfYear())}
           onPress={handleArticlePress}
         />
 
-        <ContinueReadingSection />
+        <ArticleSection
+          title="Continue Reading"
+          articles={inProgressArticles}
+          onArticlePress={article => router.push(`/article/${article.id}`)}
+          delay={100}
+          showTimeAgo={true}
+          emptyStateMessage="No articles in progress. Start reading to see them here!"
+        />
 
         {latestArticles.length > 0 && (
-          <CategorySection
+          <ArticleSection
             title="Latest Articles"
             articles={latestArticles}
             onArticlePress={handleArticlePress}
@@ -963,11 +344,16 @@ export default function ArticlesScreen() {
         )}
 
         {featuredArticles.length > 0 && (
-          <FeaturedArticles articles={featuredArticles} onArticlePress={handleArticlePress} />
+          <FeaturedArticleSection
+            title="Featured Articles"
+            articles={featuredArticles}
+            onArticlePress={handleArticlePress}
+            delay={300}
+          />
         )}
 
         {recentArticles.length > 0 && (
-          <CategorySection
+          <ArticleSection
             title="Recently Added"
             articles={recentArticles}
             onArticlePress={handleArticlePress}
@@ -976,7 +362,7 @@ export default function ArticlesScreen() {
         )}
 
         {beginnerArticles.length > 0 && (
-          <CategorySection
+          <ArticleSection
             title="Beginner Friendly"
             articles={beginnerArticles}
             onArticlePress={handleArticlePress}
@@ -985,38 +371,45 @@ export default function ArticlesScreen() {
         )}
 
         {/* Author filter list */}
-        <AuthorFilterList
-          authors={authors}
-          selectedAuthorId={selectedAuthorId}
-          onSelectAuthor={handleSelectAuthor}
+        <FilterList
+          title="Browse by Author"
+          items={authors}
+          selectedId={selectedAuthorId}
+          onSelect={handleSelectAuthor}
           onClearFilter={handleClearFilters}
+          animationDelay={600}
+          itemAnimationDelay={650}
         />
 
         {/* Category filter list */}
-        <CategoryFilterList
-          categories={categories}
-          selectedCategoryId={selectedCategoryId}
-          onSelectCategory={handleSelectCategory}
+        <FilterList
+          title="Browse by Category"
+          items={categories}
+          selectedId={selectedCategoryId}
+          onSelect={handleSelectCategory}
+          animationDelay={700}
+          itemAnimationDelay={750}
         />
       </>
     );
   }, [
     isInFilteredView,
-    selectedAuthor,
-    selectedCategory,
     articles,
+    handleArticlePress,
+    inProgressArticles,
     latestArticles,
     featuredArticles,
     recentArticles,
     beginnerArticles,
     authors,
-    categories,
     selectedAuthorId,
-    selectedCategoryId,
-    handleClearFilters,
-    handleArticlePress,
     handleSelectAuthor,
+    handleClearFilters,
+    categories,
+    selectedCategoryId,
     handleSelectCategory,
+    selectedAuthor,
+    selectedCategory,
   ]);
 
   // Create an empty state component
