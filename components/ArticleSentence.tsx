@@ -19,6 +19,7 @@ export interface ArticleSentenceProps {
     authorText: string;
     [key: string]: any;
   };
+  containerStyle?: any;
 }
 
 const styles = StyleSheet.create({
@@ -26,6 +27,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.XXLARGE,
+    backgroundColor: 'transparent',
   },
   arabicSentence: {
     flexDirection: 'row-reverse',
@@ -58,7 +60,7 @@ const getEnglishTextStyle = (
 
 // Memoized sentence component for better list performance
 export const ArticleSentence = React.memo(
-  ({ sentence, words, renderWord, settings, colors }: ArticleSentenceProps) => {
+  ({ sentence, words, renderWord, settings, colors, containerStyle }: ArticleSentenceProps) => {
     // Memoize dynamic styles
     const englishTextStyle = React.useMemo(
       () => getEnglishTextStyle(settings, colors),
@@ -71,7 +73,7 @@ export const ArticleSentence = React.memo(
     const textColor = { color: colors.authorText };
 
     return (
-      <View style={styles.sentenceContainer}>
+      <View style={[styles.sentenceContainer, containerStyle]}>
         <View style={styles.arabicSentence}>{words.map(renderWord)}</View>
         {settings.showEnglish && (
           <ThemedText style={[styles.englishText, englishTextStyle, textColor]} skipDefaultColor>

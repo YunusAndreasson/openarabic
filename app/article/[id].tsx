@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Text,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/ThemedView';
@@ -45,17 +46,14 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
   },
   content: {
     flex: 1,
+    backgroundColor: 'transparent', // Ensure no background color
   },
   sentenceList: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
+    backgroundColor: 'transparent', // Ensure no background color
   },
   relatedArticlesContainer: {
     paddingTop: LAYOUT.SPACING.LARGE,
@@ -161,11 +159,11 @@ export default function ArticleScreen() {
   const isDarkMode = useIsDarkMode();
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
-  const flatListRef = useRef<FlatList<ArticleSentence>>(null);
+  const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
 
   // Animation for content transitions
-  const contentOpacity = useSharedValue(1);
-  const contentTranslateY = useSharedValue(0);
+  const contentOpacity = useSharedValue(1); // Start fully visible
+  const contentTranslateY = useSharedValue(0); // Start at position 0
 
   // Animation values for back button using Reanimated
   const backButtonAnim = useSharedValue(0);
@@ -185,6 +183,8 @@ export default function ArticleScreen() {
     return {
       opacity: contentOpacity.value,
       transform: [{ translateY: contentTranslateY.value }],
+      flex: 1,
+      backgroundColor: 'transparent', // Ensure no background color
     };
   });
 
@@ -368,42 +368,27 @@ export default function ArticleScreen() {
   }, [sortedSentences]);
 
   // Handle article press with smooth transition animation
-  const handleArticlePress = useCallback(
-    (articleId: number) => {
-      // Apply a smooth fade out and slide up animation
-      contentOpacity.value = withTiming(0.85, { duration: LAYOUT.ANIMATION.DURATION.NORMAL });
-      contentTranslateY.value = withTiming(-20, { duration: LAYOUT.ANIMATION.DURATION.NORMAL });
-
-      // Navigate to the new article
-      router.push({
-        pathname: '/article/[id]',
-        params: { id: articleId },
-      });
-    },
-    [contentOpacity, contentTranslateY]
-  );
+  const handleArticlePress = useCallback((articleId: number) => {
+    // Navigate to the new article without animations
+    router.push({
+      pathname: '/article/[id]',
+      params: { id: articleId },
+    });
+  }, []);
 
   // Reset animation and scroll to top when article ID changes
   useEffect(() => {
-    // Use a short timeout to ensure the component is fully mounted
-    const timer = setTimeout(() => {
-      // Scroll to top with animation
-      if (flatListRef.current) {
-        flatListRef.current.scrollToOffset({
-          offset: 0,
-          animated: true,
-        });
-      }
+    // Immediately set content to fully visible without animation
+    contentOpacity.value = 1;
+    contentTranslateY.value = 0;
 
-      // Fade in and slide down animation for new content
-      contentOpacity.value = withTiming(1, { duration: LAYOUT.ANIMATION.DURATION.LONG });
-      contentTranslateY.value = withSequence(
-        withTiming(10, { duration: 0 }), // Start slightly below
-        withTiming(0, { duration: LAYOUT.ANIMATION.DURATION.LONG }) // Animate to normal position
-      );
-    }, LAYOUT.ANIMATION.DELAY.SHORT);
-
-    return () => clearTimeout(timer);
+    // Scroll to top without animation for immediate response
+    if (flatListRef.current) {
+      flatListRef.current.scrollToOffset({
+        offset: 0,
+        animated: false,
+      });
+    }
   }, [id, contentOpacity, contentTranslateY]);
 
   // Render article card
@@ -563,6 +548,12 @@ export default function ArticleScreen() {
   const renderSentenceItem = useCallback(
     ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
       const words = sentenceWordsMap.get(sentence.id) || [];
+
+      // Create a custom style for the sentence container
+      const sentenceContainerStyle = {
+        backgroundColor: 'transparent', // Ensure no background color
+      };
+
       return (
         <ArticleSentence
           key={sentence.id}
@@ -571,6 +562,7 @@ export default function ArticleScreen() {
           renderWord={renderWord}
           settings={settings}
           colors={colors}
+          containerStyle={sentenceContainerStyle}
         />
       );
     },
@@ -607,6 +599,7 @@ export default function ArticleScreen() {
     () => ({
       paddingTop: insets.top + (Platform.OS === 'ios' ? 70 : 65),
       paddingBottom: 4,
+      backgroundColor: 'transparent', // Ensure no background color
     }),
     [insets.top]
   );
@@ -739,7 +732,7 @@ export default function ArticleScreen() {
   // Render article screen
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
-      <StatusBar hidden />
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Animated back button */}
       {BackButton}
@@ -748,33 +741,38 @@ export default function ArticleScreen() {
       {PlaylistButton}
 
       {/* Article content with animated wrapper */}
-      <Animated.View style={contentAnimatedStyle}>
-        <FlatList
-          ref={flatListRef}
-          data={sortedSentences}
-          renderItem={renderSentenceItem}
-          keyExtractor={item => item.id.toString()}
-          style={styles.content}
-          contentContainerStyle={[styles.sentenceList, contentPadding]}
-          showsVerticalScrollIndicator={true}
-          indicatorStyle={isDarkMode ? 'white' : 'black'}
-          removeClippedSubviews={true}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          updateCellsBatchingPeriod={50}
-          windowSize={5}
-          getItemLayout={(_data, index) => ({
-            length: 150, // increased approximate height of each item to account for larger spacing
-            offset: 150 * index,
-            index,
-          })}
-          ListHeaderComponent={ArticleHeader}
-          ListFooterComponent={ListFooterComponent}
-          onEndReachedThreshold={0.5}
-          scrollEventThrottle={16}
-          onScroll={handleScroll}
-        />
-      </Animated.View>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <Animated.View style={contentAnimatedStyle}>
+          <FlatList
+            key={`article-${id}`}
+            ref={flatListRef}
+            data={sortedSentences}
+            renderItem={renderSentenceItem}
+            keyExtractor={item => item.id.toString()}
+            style={[styles.content, { backgroundColor: colors.background }]}
+            contentContainerStyle={[styles.sentenceList, contentPadding]}
+            showsVerticalScrollIndicator={true}
+            indicatorStyle={isDarkMode ? 'white' : 'black'}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            updateCellsBatchingPeriod={50}
+            windowSize={5}
+            getItemLayout={(_data, index) => ({
+              length: 150, // increased approximate height of each item to account for larger spacing
+              offset: 150 * index,
+              index,
+            })}
+            ListHeaderComponent={ArticleHeader}
+            ListFooterComponent={ListFooterComponent}
+            onEndReachedThreshold={0.5}
+            scrollEventThrottle={16}
+            onScroll={handleScroll}
+            disableIntervalMomentum={true}
+            disableScrollViewPanResponder={true}
+          />
+        </Animated.View>
+      </View>
     </ThemedView>
   );
 }

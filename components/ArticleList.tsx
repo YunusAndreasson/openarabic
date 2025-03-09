@@ -7,7 +7,6 @@ import {
   View,
   ViewToken,
   ViewabilityConfig,
-  ActivityIndicator,
 } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
