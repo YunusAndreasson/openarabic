@@ -138,6 +138,9 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     paddingTop: LAYOUT.SPACING.SMALL,
   },
+  contentContainer: {
+    flex: 1,
+  },
 });
 
 // Threshold for scroll direction detection
@@ -178,7 +181,6 @@ export default function ArticleScreen() {
   const combinedContentStyle = useAnimatedStyle(() => {
     return {
       opacity: contentAnimatedStyle.opacity,
-      transform: contentAnimatedStyle.transform,
       flex: 1,
       backgroundColor: 'transparent', // Ensure no background color
     };
@@ -422,6 +424,21 @@ export default function ArticleScreen() {
     []
   );
 
+  // Create combined animated styles for buttons with opacity
+  const combinedBackButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: backButtonAnimatedStyle.transform,
+      opacity: buttonsOpacity.value,
+    };
+  });
+
+  const combinedPlaylistButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: playlistButtonAnimatedStyle.transform,
+      opacity: buttonsOpacity.value,
+    };
+  });
+
   // Memoize the back button component
   const BackButton = useMemo(() => {
     const buttonStyle = {
@@ -461,7 +478,7 @@ export default function ArticleScreen() {
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [insets.top, isDarkMode, combinedBackButtonStyle, colors, router]);
+  }, [insets.top, isDarkMode, colors, router]);
 
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
@@ -508,15 +525,7 @@ export default function ArticleScreen() {
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [
-    user,
-    insets.top,
-    isDarkMode,
-    combinedPlaylistButtonStyle,
-    handleToggleReadingList,
-    isInReadingList,
-    colors,
-  ]);
+  }, [user, insets.top, isDarkMode, handleToggleReadingList, isInReadingList, colors]);
 
   // Optimize enhanceWord function - restore required properties for type compatibility
   const enhanceWord = useCallback((word: Tables<'sentence_words'>) => {
@@ -643,7 +652,7 @@ export default function ArticleScreen() {
             dispatch(addToReadingList(articleId));
             dispatch(incrementReadCount(articleId));
           }
-        } catch (error) {
+        } catch (_error) {
           // Silently handle errors
         }
       }
@@ -718,21 +727,6 @@ export default function ArticleScreen() {
     );
   }, [article, colors]);
 
-  // Create combined animated styles for buttons with opacity
-  const combinedBackButtonStyle = useAnimatedStyle(() => {
-    return {
-      transform: backButtonAnimatedStyle.transform,
-      opacity: buttonsOpacity.value,
-    };
-  });
-
-  const combinedPlaylistButtonStyle = useAnimatedStyle(() => {
-    return {
-      transform: playlistButtonAnimatedStyle.transform,
-      opacity: buttonsOpacity.value,
-    };
-  });
-
   // Render loading screen
   if (isLoading) {
     return <LoadingScreen />;
@@ -759,7 +753,7 @@ export default function ArticleScreen() {
       {PlaylistButton}
 
       {/* Article content with animated wrapper */}
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
         <Animated.View style={combinedContentStyle}>
           <FlatList
             key={`article-${id}`}
