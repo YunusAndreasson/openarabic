@@ -26,6 +26,7 @@ import {
 } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
+import { TIMING_CONFIG } from '@/hooks/animations/animationConfigs';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -89,8 +90,8 @@ export const VocabularyGraph = React.memo(
         const timeout = setTimeout(() => {
           // Run the animation
           animationProgress.value = withTiming(1, {
-            duration: 1200,
-            easing: Easing.bezier(0.34, 1.56, 0.64, 1), // Elastic-like curve
+            duration: 1000,
+            easing: TIMING_CONFIG.SLOW.easing,
           });
         }, 100);
 

@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react';
-import { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import { TIMING_CONFIG } from './animationConfigs';
 
 /**
  * Hook to create a progress animation for progress bars
@@ -7,19 +8,23 @@ import { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-nati
  * @param duration - Duration of animation in ms
  * @returns Object with animated style and function to update the progress
  */
-export const useProgressAnimation = (initialPercentage = 0, duration = 1000) => {
+export const useProgressAnimation = (
+  initialPercentage = 0,
+  duration = TIMING_CONFIG.SLOW.duration
+) => {
   const percentage = useSharedValue(initialPercentage);
   const isInitialMount = useRef(true);
 
   const updateProgress = useCallback(
     (newPercentage: number, animationDelay = 0) => {
+      'worklet';
       // Small delay to ensure the component is fully rendered on initial mount
       const delay = isInitialMount.current ? Math.max(100, animationDelay) : animationDelay;
 
       const animationTimeout = setTimeout(() => {
         percentage.value = withTiming(newPercentage, {
           duration,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          easing: TIMING_CONFIG.SLOW.easing,
         });
         isInitialMount.current = false;
       }, delay);

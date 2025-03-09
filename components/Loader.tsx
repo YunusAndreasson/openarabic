@@ -3,14 +3,9 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated, {
-  useSharedValue,
-  withTiming,
-  Easing,
-  FadeIn,
-  FadeOut,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, withTiming, FadeIn, FadeOut } from 'react-native-reanimated';
 import { usePulseAnimation, useFadeInAnimation } from '@/hooks/animations';
+import { SafeEasing } from '@/hooks/animations/animationConfigs';
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -72,7 +67,7 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
     <View style={[styles.container, style]}>
       <Animated.View
         style={[styles.circle, combinedAnimatedStyle]}
-        entering={FadeIn.duration(300).easing(Easing.out(Easing.cubic))}
+        entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(200)}
       />
     </View>

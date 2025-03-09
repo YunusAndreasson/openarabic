@@ -30,7 +30,7 @@ export default function AccountScreen() {
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
   const dataLoadedRef = useRef(false);
 
-  // Add animation hooks
+  // Use fade in animation
   const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
 
   // Start the animation when the component mounts or when isLoading changes

@@ -5,16 +5,7 @@ import {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-
-// Default spring configuration for consistent feel across the app
-export const springConfig = {
-  damping: 15,
-  stiffness: 150,
-  mass: 1,
-  overshootClamping: false,
-  restDisplacementThreshold: 0.01,
-  restSpeedThreshold: 0.01,
-};
+import { SPRING_CONFIG } from './animationConfigs';
 
 /**
  * Hook for button press animation with scale effect
@@ -33,16 +24,19 @@ export const useButtonAnimation = (scaleAmount = 0.97) => {
   });
 
   const handlePressIn = () => {
-    pressed.value = withSpring(1, springConfig);
+    'worklet';
+    pressed.value = withSpring(1, SPRING_CONFIG.BUTTON);
   };
 
   const handlePressOut = () => {
-    pressed.value = withSpring(0, springConfig);
+    'worklet';
+    pressed.value = withSpring(0, SPRING_CONFIG.BUTTON);
   };
 
   return {
     animatedStyle,
     handlePressIn,
     handlePressOut,
+    pressed,
   };
 };

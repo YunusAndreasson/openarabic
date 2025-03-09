@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import { TIMING_CONFIG } from './animationConfigs';
 
 /**
  * Hook to create a scale animation
@@ -8,24 +9,53 @@ import { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-nati
  * @param duration - Duration of animation in ms
  * @returns Object with animated style and functions to control the animation
  */
-export const useScaleAnimation = (initialScale = 0.95, targetScale = 1, duration = 300) => {
+export const useScaleAnimation = (
+  initialScale = 0.95,
+  targetScale = 1,
+  duration = TIMING_CONFIG.MEDIUM.duration
+) => {
   const scale = useSharedValue(initialScale);
 
-  const startAnimation = useCallback(() => {
-    scale.value = withTiming(targetScale, {
-      duration,
-      easing: Easing.out(Easing.cubic),
-    });
-  }, [scale, targetScale, duration]);
+  const startAnimation = useCallback(
+    (onComplete?: () => void) => {
+      'worklet';
+      scale.value = withTiming(
+        targetScale,
+        {
+          duration,
+          easing: TIMING_CONFIG.MEDIUM.easing,
+        },
+        () => {
+          if (onComplete && runOnJS) {
+            runOnJS(onComplete)();
+          }
+        }
+      );
+    },
+    [scale, targetScale, duration]
+  );
 
-  const reverseAnimation = useCallback(() => {
-    scale.value = withTiming(initialScale, {
-      duration,
-      easing: Easing.in(Easing.cubic),
-    });
-  }, [scale, initialScale, duration]);
+  const reverseAnimation = useCallback(
+    (onComplete?: () => void) => {
+      'worklet';
+      scale.value = withTiming(
+        initialScale,
+        {
+          duration,
+          easing: TIMING_CONFIG.MEDIUM.easing,
+        },
+        () => {
+          if (onComplete && runOnJS) {
+            runOnJS(onComplete)();
+          }
+        }
+      );
+    },
+    [scale, initialScale, duration]
+  );
 
   const reset = useCallback(() => {
+    'worklet';
     scale.value = initialScale;
   }, [scale, initialScale]);
 

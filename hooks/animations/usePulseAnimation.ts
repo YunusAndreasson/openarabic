@@ -1,4 +1,5 @@
 import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { TIMING_CONFIG } from './animationConfigs';
 
 /**
  * Hook for creating a pulse animation effect
@@ -15,9 +16,10 @@ export const usePulseAnimation = (pulseMagnitude = 1.1) => {
   });
 
   const pulse = () => {
+    'worklet';
     scale.value = 1;
-    scale.value = withTiming(pulseMagnitude, { duration: 150 }, () => {
-      scale.value = withTiming(1, { duration: 150 });
+    scale.value = withTiming(pulseMagnitude, { duration: TIMING_CONFIG.FAST.duration }, () => {
+      scale.value = withTiming(1, { duration: TIMING_CONFIG.FAST.duration });
     });
   };
 

@@ -235,9 +235,8 @@ function ThemedModalComponent({
           <Pressable style={containerStyle} onPress={handleBackdropPress}>
             <Animated.View
               style={[defaultContentStyle, combinedAnimatedStyle]}
-              entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
+              entering={FadeIn.duration(animationDuration)}
               exiting={FadeOut.duration(150)}
-              layout={Layout.springify().damping(20).stiffness(300)}
             >
               <Pressable onPress={e => e.stopPropagation()}>
                 {showCloseButton && (
@@ -272,9 +271,8 @@ function ThemedModalComponent({
         <Pressable style={containerStyle} onPress={handleBackdropPress}>
           <Animated.View
             style={[defaultContentStyle, combinedAnimatedStyle]}
-            entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
+            entering={FadeIn.duration(animationDuration)}
             exiting={FadeOut.duration(150)}
-            layout={Layout.springify().damping(20).stiffness(300)}
           >
             <Pressable onPress={e => e.stopPropagation()}>
               {showCloseButton && (

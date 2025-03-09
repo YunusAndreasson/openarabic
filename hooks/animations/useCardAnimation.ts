@@ -5,7 +5,7 @@ import {
   interpolate,
   Extrapolate,
 } from 'react-native-reanimated';
-import { springConfig } from './useButtonAnimation';
+import { SPRING_CONFIG } from './animationConfigs';
 
 /**
  * Hook for card press animation with scale and opacity effect
@@ -27,11 +27,13 @@ export const useCardAnimation = (scaleAmount = 0.985, opacityAmount = 0.97) => {
   });
 
   const handlePressIn = () => {
-    pressed.value = withSpring(1, springConfig);
+    'worklet';
+    pressed.value = withSpring(1, SPRING_CONFIG.CARD);
   };
 
   const handlePressOut = () => {
-    pressed.value = withSpring(0, springConfig);
+    'worklet';
+    pressed.value = withSpring(0, SPRING_CONFIG.CARD);
   };
 
   return {

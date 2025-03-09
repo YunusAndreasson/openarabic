@@ -30,7 +30,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { StatusBar } from 'expo-status-bar';
 import { EnhancedImage } from '../../components/EnhancedImage';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
-import { useFadeInAnimation } from '../../hooks/animations/useFadeInAnimation';
+import { useFadeInAnimation } from '@/hooks/animations';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
 import SectionTitle from '../../components/SectionTitle';
 import * as Haptics from 'expo-haptics';

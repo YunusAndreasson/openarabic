@@ -80,6 +80,7 @@ const ArticleList: React.FC<ArticleListProps> = ({
       onArticlePress: (article: Article) => void;
       isViewable: boolean;
     }) => {
+      // Use fade in animation
       const { animatedStyle, startAnimation } = useFadeInAnimation(index * 50, 300);
 
       // Start the animation when the component mounts

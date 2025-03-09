@@ -5,9 +5,8 @@ import {
   withSpring,
   withTiming,
   withSequence,
-  Easing,
 } from 'react-native-reanimated';
-import { springConfig } from './useButtonAnimation';
+import { SPRING_CONFIG, TIMING_CONFIG } from './animationConfigs';
 
 /**
  * Hook for toggle component animations with translation and scale effects
@@ -22,17 +21,18 @@ export const useToggleAnimation = (isActive: boolean, travelDistance: number) =>
   // Update animation when value changes
   useEffect(() => {
     // Use spring for smoother, more natural movement
-    translateX.value = withSpring(isActive ? travelDistance : 0, {
-      ...springConfig,
-      mass: 0.5, // Lower mass for quicker response
-      damping: 15, // Slightly higher damping for less bounce
-      stiffness: 120, // Increased stiffness for faster animation
-    });
+    translateX.value = withSpring(isActive ? travelDistance : 0, SPRING_CONFIG.TOGGLE);
 
     // Add subtle scale animation for better feedback
     toggleScale.value = withSequence(
-      withTiming(0.95, { duration: 100, easing: Easing.inOut(Easing.quad) }),
-      withTiming(1, { duration: 150, easing: Easing.inOut(Easing.quad) })
+      withTiming(0.95, {
+        duration: TIMING_CONFIG.FAST.duration,
+        easing: TIMING_CONFIG.FAST.easing,
+      }),
+      withTiming(1, {
+        duration: TIMING_CONFIG.FAST.duration,
+        easing: TIMING_CONFIG.FAST.easing,
+      })
     );
   }, [isActive, translateX, travelDistance, toggleScale]);
 
@@ -51,5 +51,7 @@ export const useToggleAnimation = (isActive: boolean, travelDistance: number) =>
   return {
     containerAnimatedStyle,
     handleAnimatedStyle,
+    translateX,
+    toggleScale,
   };
 };

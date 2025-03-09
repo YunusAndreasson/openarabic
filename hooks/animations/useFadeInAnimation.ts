@@ -1,27 +1,65 @@
 import { useCallback } from 'react';
-import { useSharedValue, withTiming, useAnimatedStyle, withDelay } from 'react-native-reanimated';
+import {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  withDelay,
+  runOnJS,
+} from 'react-native-reanimated';
+import { TIMING_CONFIG } from './animationConfigs';
 
 /**
- * Hook to create a fade-in animation with a subtle rise effect
- * @param delay - Delay before animation starts in ms
- * @param duration - Duration of animation in ms
- * @returns Object with animated style and function to start animation
+ * Hook to create a simple fade-in animation
+ * @param initialOpacity - Initial opacity value (default 0)
+ * @param duration - Duration of animation in ms (default from TIMING_CONFIG.MEDIUM)
+ * @returns Object with animated style and functions to control animation
  */
-export const useFadeInAnimation = (delay = 0, duration = 300) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(15);
+export const useFadeInAnimation = (
+  initialOpacity = 0,
+  duration = TIMING_CONFIG.MEDIUM.duration
+) => {
+  const opacity = useSharedValue(initialOpacity);
 
-  const startAnimation = useCallback(() => {
-    opacity.value = withDelay(delay, withTiming(1, { duration }));
-    translateY.value = withDelay(delay, withTiming(0, { duration: duration + 50 }));
-  }, [opacity, translateY, delay, duration]);
+  const startAnimation = useCallback(
+    (delay = 0, onComplete?: () => void) => {
+      'worklet';
+      opacity.value = withDelay(
+        delay,
+        withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing }, () => {
+          if (onComplete && runOnJS) {
+            runOnJS(onComplete)();
+          }
+        })
+      );
+    },
+    [opacity, duration]
+  );
+
+  const reverseAnimation = useCallback(
+    (delay = 0, onComplete?: () => void) => {
+      'worklet';
+      opacity.value = withDelay(
+        delay,
+        withTiming(initialOpacity, { duration, easing: TIMING_CONFIG.MEDIUM.easing }, () => {
+          if (onComplete && runOnJS) {
+            runOnJS(onComplete)();
+          }
+        })
+      );
+    },
+    [opacity, initialOpacity, duration]
+  );
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
     };
   });
 
-  return { animatedStyle, startAnimation };
+  return {
+    animatedStyle,
+    startAnimation,
+    reverseAnimation,
+    opacity,
+  };
 };
