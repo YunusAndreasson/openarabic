@@ -16,6 +16,7 @@ export interface ArticleSentenceProps {
   };
   colors: {
     englishText: string;
+    authorText: string;
     [key: string]: any;
   };
 }
@@ -23,6 +24,7 @@ export interface ArticleSentenceProps {
 const styles = StyleSheet.create({
   sentenceContainer: {
     paddingHorizontal: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   arabicSentence: {
@@ -30,13 +32,14 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,
   },
   englishText: {
     writingDirection: 'ltr',
     fontFamily: 'Philosopher',
     textAlign: 'left',
+    paddingLeft: LAYOUT.SPACING.SMALL,
   },
 });
 
@@ -46,7 +49,6 @@ const getEnglishTextStyle = (
   colors: ArticleSentenceProps['colors']
 ) => {
   return {
-    color: colors.englishText,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
     lineHeight: Math.round(
       LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
@@ -63,11 +65,18 @@ export const ArticleSentence = React.memo(
       [settings.fontScale, colors.englishText]
     );
 
+    // Use a less prominent color for English text
+    // In dark mode, englishText is already '#CCCCCC' which is less white than the main text
+    // In light mode, we'll use authorText which is '#666666' (less black than the main text)
+    const textColor = { color: colors.authorText };
+
     return (
       <View style={styles.sentenceContainer}>
         <View style={styles.arabicSentence}>{words.map(renderWord)}</View>
         {settings.showEnglish && (
-          <ThemedText style={[styles.englishText, englishTextStyle]}>{sentence.english}</ThemedText>
+          <ThemedText style={[styles.englishText, englishTextStyle, textColor]} skipDefaultColor>
+            {sentence.english}
+          </ThemedText>
         )}
       </View>
     );

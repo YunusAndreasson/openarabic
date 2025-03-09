@@ -1,5 +1,13 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, Pressable, Platform, Dimensions } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Pressable,
+  Platform,
+  Dimensions,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -40,28 +48,28 @@ const baseStyles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   gestureRoot: {
     flex: 1,
     width: '100%',
-  },
+  } as ViewStyle,
   contentContainer: {
     flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   header: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
-  },
+  } as ViewStyle,
   progressContainer: {
     flex: 1,
     marginVertical: LAYOUT.SPACING.MEDIUM,
-  },
+  } as ViewStyle,
   textContainer: {
     flex: 1,
     width: '100%',
@@ -69,7 +77,7 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
+  } as ViewStyle,
   sentenceContainer: {
     width: '100%',
     alignItems: 'center',
@@ -77,25 +85,7 @@ const baseStyles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.LARGE,
     minHeight: 120,
-  },
-  sentence: {
-    ...getArabicTextStyle(BASE_FONT_SIZE * 1.5, {
-      textAlign: 'right',
-      margin: 0,
-    }),
-  },
-  studyWord: {
-    ...getArabicTextStyle(BASE_FONT_SIZE * 1.5, {
-      fontWeight: '700',
-      paddingVertical: LAYOUT.SPACING.MEDIUM,
-      marginVertical: LAYOUT.SPACING.TINY,
-    }),
-  },
-  dimmedText: {
-    ...getArabicTextStyle(BASE_FONT_SIZE * 1.5, {
-      fontWeight: '400',
-    }),
-  },
+  } as ViewStyle,
   meaningOverlay: {
     position: 'absolute',
     top: 0,
@@ -106,14 +96,14 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
     backgroundColor: 'rgba(0,0,0,0.1)',
-  },
+  } as ViewStyle,
   meaningText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     textAlign: 'center',
     fontWeight: '700',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
     padding: LAYOUT.SPACING.LARGE,
-  },
+  } as TextStyle,
   footer: {
     width: '100%',
     flexDirection: 'row',
@@ -123,7 +113,7 @@ const baseStyles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
     gap: LAYOUT.SPACING.MEDIUM,
     marginTop: 'auto',
-  },
+  } as ViewStyle,
   actionButton: {
     width: 56,
     height: 56,
@@ -141,7 +131,7 @@ const baseStyles = StyleSheet.create({
         elevation: 2,
       },
     }),
-  },
+  } as ViewStyle,
   modalContent: {
     width: maxWidth,
     padding: 0,
@@ -158,47 +148,47 @@ const baseStyles = StyleSheet.create({
         elevation: 12,
       },
     }),
-  },
+  } as ViewStyle,
   modalInnerContent: {
     width: '100%',
     paddingHorizontal: LAYOUT.SPACING.XLARGE,
     paddingTop: LAYOUT.SPACING.XXLARGE,
     paddingBottom: LAYOUT.SPACING.XLARGE,
     gap: LAYOUT.SPACING.MEDIUM,
-  },
+  } as ViewStyle,
   modalInstructionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
+  } as ViewStyle,
   modalText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
     flex: 1,
-  },
+  } as TextStyle,
   completionContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: LAYOUT.SPACING.XLARGE,
-  },
+  } as ViewStyle,
   completionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '700',
     marginBottom: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
-  },
+  } as TextStyle,
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: LAYOUT.SPACING.XLARGE,
-  },
+  } as ViewStyle,
   errorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     marginBottom: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
-  },
+  } as TextStyle,
   completionIconContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
+  } as ViewStyle,
   sentenceTextContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
@@ -206,7 +196,7 @@ const baseStyles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
+  } as ViewStyle,
 });
 
 export default function ReviewScreen() {
@@ -220,7 +210,7 @@ export default function ReviewScreen() {
         meaningOverlay: {
           ...baseStyles.meaningOverlay,
           backgroundColor: colors.textOverlay,
-        },
+        } as ViewStyle,
         actionButton: {
           ...baseStyles.actionButton,
           ...Platform.select({
@@ -228,7 +218,7 @@ export default function ReviewScreen() {
               shadowColor: colors.shadow,
             },
           }),
-        },
+        } as ViewStyle,
         modalContent: {
           ...baseStyles.modalContent,
           ...Platform.select({
@@ -236,20 +226,9 @@ export default function ReviewScreen() {
               shadowColor: colors.shadow,
             },
           }),
-        },
+        } as ViewStyle,
       }),
     [colors]
-  );
-
-  // Use a combination of base styles and themed styles
-  const styles = useMemo(
-    () => ({
-      ...baseStyles,
-      meaningOverlay: themedStyles.meaningOverlay,
-      actionButton: themedStyles.actionButton,
-      modalContent: themedStyles.modalContent,
-    }),
-    [themedStyles]
   );
 
   const { user } = useAuth();
@@ -277,19 +256,10 @@ export default function ReviewScreen() {
   // Track if this is the first render
   const isFirstRender = useRef(true);
 
-  const {
-    currentWord,
-    isLoading,
-    updateWord,
-    progress,
-    isComplete,
-    invalidateQueries,
-    dueWords,
-    currentIndex,
-    transitionType,
-  } = useSpacedRepetition({
-    userId: user?.id,
-  });
+  const { dueWords, currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } =
+    useSpacedRepetition({
+      userId: user?.id,
+    });
 
   // Animation values
   const translateX = useSharedValue(0);
@@ -527,10 +497,10 @@ export default function ReviewScreen() {
     () => ({
       cardContainer: {
         backgroundColor: colors.cardBackground,
-      },
+      } as ViewStyle,
       modalContent: {
         backgroundColor: colors.cardBackground,
-      },
+      } as ViewStyle,
       modalIconContainer: {
         width: 40,
         height: 40,
@@ -542,7 +512,7 @@ export default function ReviewScreen() {
         paddingRight: 0,
         paddingTop: 0,
         paddingBottom: 0,
-      },
+      } as ViewStyle,
     }),
     [colors]
   );
@@ -626,14 +596,20 @@ export default function ReviewScreen() {
         // The isComplete condition in the render function will now show the completion screen
       }, completionDelay);
 
-      return () => clearTimeout(completionTimer);
+      return () => {
+        clearTimeout(completionTimer);
+      };
     }
+    return undefined;
   }, [isComplete, showCompletionAnimation]);
+
+  // Define error state
+  const [error, setError] = useState<Error | null>(null);
 
   // Render loading state
   if (isLoading) {
     return (
-      <ThemedView style={baseStyles.container}>
+      <ThemedView style={baseStyles.container as any}>
         <Loader size="large" />
         <ThemedText style={{ marginTop: LAYOUT.SPACING.LARGE }}>
           Loading your review words...
@@ -645,9 +621,9 @@ export default function ReviewScreen() {
   // Render empty state when there are no due words
   if (!isLoading && dueWords.length === 0) {
     return (
-      <ThemedView style={baseStyles.container}>
-        <View style={baseStyles.completionContainer}>
-          <ThemedText style={baseStyles.completionText}>
+      <ThemedView style={baseStyles.container as any}>
+        <View style={baseStyles.completionContainer as any}>
+          <ThemedText style={baseStyles.completionText as any}>
             You don't have any words due for review right now.
           </ThemedText>
           <ThemedButton title="Back to Home" onPress={handleClose} />
@@ -662,9 +638,9 @@ export default function ReviewScreen() {
     // This prevents the error from flashing before showing the completion state
     if (isComplete) {
       return (
-        <ThemedView style={baseStyles.container}>
-          <View style={baseStyles.completionContainer}>
-            <ThemedText style={baseStyles.completionText}>
+        <ThemedView style={baseStyles.container as any}>
+          <View style={baseStyles.completionContainer as any}>
+            <ThemedText style={baseStyles.completionText as any}>
               You've completed all your reviews for now!
             </ThemedText>
             <ThemedButton title="Back to Home" onPress={handleClose} />
@@ -674,9 +650,9 @@ export default function ReviewScreen() {
     }
 
     return (
-      <ThemedView style={baseStyles.container}>
-        <View style={baseStyles.errorContainer}>
-          <ThemedText style={baseStyles.errorText}>
+      <ThemedView style={baseStyles.container as any}>
+        <View style={baseStyles.errorContainer as any}>
+          <ThemedText style={baseStyles.errorText as any}>
             There was an error loading your review words.
           </ThemedText>
           <ThemedButton title="Try Again" onPress={handleRetry} />
@@ -688,13 +664,16 @@ export default function ReviewScreen() {
   // Render completion state
   if (isComplete) {
     return (
-      <ThemedView style={baseStyles.container}>
-        <View style={baseStyles.completionContainer}>
-          <Animated.View entering={FadeIn.duration(400)} style={baseStyles.completionIconContainer}>
+      <ThemedView style={baseStyles.container as any}>
+        <View style={baseStyles.completionContainer as any}>
+          <Animated.View
+            entering={FadeIn.duration(400)}
+            style={baseStyles.completionIconContainer as any}
+          >
             <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
           </Animated.View>
           <Animated.View entering={FadeIn.duration(400).delay(200)}>
-            <ThemedText style={baseStyles.completionText}>
+            <ThemedText style={baseStyles.completionText as any}>
               You've completed all your reviews for now!
             </ThemedText>
           </Animated.View>
@@ -707,20 +686,20 @@ export default function ReviewScreen() {
   }
 
   return (
-    <ThemedView style={baseStyles.container}>
-      <GestureHandlerRootView style={baseStyles.gestureRoot}>
-        <View style={baseStyles.contentContainer}>
-          <View style={baseStyles.header}>
-            <View style={baseStyles.progressContainer}>
+    <ThemedView style={baseStyles.container as any}>
+      <GestureHandlerRootView style={baseStyles.gestureRoot as any}>
+        <View style={baseStyles.contentContainer as any}>
+          <View style={baseStyles.header as any}>
+            <View style={baseStyles.progressContainer as any}>
               <ProgressBar progress={Math.round(progress)} />
             </View>
           </View>
 
           <GestureDetector gesture={panGesture}>
-            <View style={baseStyles.textContainer}>
+            <View style={baseStyles.textContainer as any}>
               <Animated.View
                 key={`sentence-${currentWord?.sentence_word_id || 'initial'}`}
-                style={[cardStyle, baseStyles.sentenceContainer]}
+                style={[cardStyle, baseStyles.sentenceContainer as any]}
               >
                 {sentenceContent}
               </Animated.View>
@@ -729,26 +708,26 @@ export default function ReviewScreen() {
 
           {showMeaningOverlay && (
             <Animated.View
-              style={baseStyles.meaningOverlay}
+              style={themedStyles.meaningOverlay as any}
               entering={FadeIn.duration(150)}
               exiting={FadeOut.duration(150)}
             >
-              <ThemedText style={[baseStyles.meaningText, { color: colors.tint }]}>
+              <ThemedText style={[baseStyles.meaningText, { color: colors.tint } as TextStyle]}>
                 {currentWord?.sentence_word?.english || 'No translation available'}
               </ThemedText>
             </Animated.View>
           )}
 
-          <View style={baseStyles.footer}>
+          <View style={baseStyles.footer as any}>
             <Pressable
               onPress={handleClose}
               style={({ pressed }) => [
-                baseStyles.actionButton,
+                themedStyles.actionButton,
                 {
                   backgroundColor: colors.cardBackground,
                   opacity: pressed ? 0.8 : 1,
                   transform: [{ scale: pressed ? 0.95 : 1 }],
-                },
+                } as ViewStyle,
               ]}
             >
               <Ionicons name="close" size={28} color={colors.englishText} />
@@ -756,12 +735,12 @@ export default function ReviewScreen() {
             <Pressable
               onPress={handleInfoPress}
               style={({ pressed }) => [
-                baseStyles.actionButton,
+                themedStyles.actionButton,
                 {
                   backgroundColor: colors.cardBackground,
                   opacity: pressed ? 0.8 : 1,
                   transform: [{ scale: pressed ? 0.95 : 1 }],
-                },
+                } as ViewStyle,
               ]}
             >
               <Ionicons name="information-circle-outline" size={28} color={colors.englishText} />
@@ -772,20 +751,23 @@ export default function ReviewScreen() {
         <ThemedModal
           visible={showInstructions}
           onClose={() => setShowInstructions(false)}
-          title="How to Review"
-          animationType="fade"
           useBlur={true}
           blurIntensity={isDarkMode ? 15 : 30}
-          contentStyle={baseStyles.modalContent}
+          contentStyle={themedStyles.modalContent as any}
           useHaptics={true}
           animationDuration={250}
           showCloseButton={false}
           overlayOpacity={0.15}
         >
-          <View style={[baseStyles.modalInnerContent, { backgroundColor: colors.cardBackground }]}>
+          <View
+            style={[
+              baseStyles.modalInnerContent as any,
+              { backgroundColor: colors.cardBackground },
+            ]}
+          >
             <View
               style={[
-                baseStyles.modalInstructionRow,
+                baseStyles.modalInstructionRow as any,
                 {
                   marginBottom: LAYOUT.SPACING.MEDIUM,
                   justifyContent: 'center',
@@ -795,15 +777,17 @@ export default function ReviewScreen() {
               <View style={colorStyles.modalIconContainer}>
                 <Ionicons name="arrow-back" size={24} color={colors.tint} />
               </View>
-              <ThemedText style={baseStyles.modalText}>
+              <ThemedText style={baseStyles.modalText as any}>
                 Swipe left if you don't know the word
               </ThemedText>
             </View>
-            <View style={[baseStyles.modalInstructionRow, { justifyContent: 'center' }]}>
+            <View style={[baseStyles.modalInstructionRow as any, { justifyContent: 'center' }]}>
               <View style={colorStyles.modalIconContainer}>
                 <Ionicons name="arrow-forward" size={24} color={colors.tint} />
               </View>
-              <ThemedText style={baseStyles.modalText}>Swipe right if you know the word</ThemedText>
+              <ThemedText style={baseStyles.modalText as any}>
+                Swipe right if you know the word
+              </ThemedText>
             </View>
           </View>
         </ThemedModal>

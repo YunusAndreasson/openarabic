@@ -717,8 +717,8 @@ export default function ArticleScreen() {
         updateCellsBatchingPeriod={50}
         windowSize={5}
         getItemLayout={(_data, index) => ({
-          length: 80, // approximate height of each item
-          offset: 80 * index,
+          length: 150, // increased approximate height of each item to account for larger spacing
+          offset: 150 * index,
           index,
         })}
         ListHeaderComponent={ArticleHeader}

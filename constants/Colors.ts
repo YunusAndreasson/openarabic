@@ -1,85 +1,83 @@
 /* eslint-disable no-unused-vars */
 export const Colors = {
   light: {
-    // Subtle blue tint for a modern tech feel
-    text: '#010203', // Very dark gray with slight blue tint
-    background: '#F8F9FF', // Very light blue-tinted background
-    tint: '#333337', // Dark gray with blue tint for accents
-    icon: '#66666A', // Medium gray with blue tint
-    tabIconDefault: '#99999D', // Light gray with blue tint
-    tabIconSelected: '#010203', // Dark tinted gray for active tabs
-    link: '#333337', // Tinted link color
-    cardBackground: '#F2F2F7', // Light gray with blue tint for cards
-    cardBorder: '#CCCCCF', // Medium gray with tint for borders
-    cardShadow: '#99999D', // Shadow with subtle tint
-    categoryText: '#010203', // Tinted text for categories
-    authorText: '#66666A', // Medium tinted gray for authors
-    arabicText: '#010203', // Tinted Arabic text
-    highlightedArabicText: '#333337', // Highlight with tint
-    englishText: '#333337', // Tinted English text
-    titleText: '#010203', // Tinted title text
+    text: '#000000',
+    background: '#FAFAFA',
+    tint: '#333333',
+    icon: '#666666',
+    tabIconDefault: '#888888',
+    tabIconSelected: '#000000',
+    link: '#333333',
+    cardBackground: '#F0F0F0',
+    cardBorder: '#CCCCCC',
+    cardShadow: '#999999',
+    categoryText: '#000000',
+    authorText: '#666666',
+    arabicText: '#000000',
+    highlightedArabicText: '#333333',
+    englishText: '#333333',
+    titleText: '#000000',
     white: '#FFFFFF',
-    success: '#2B8A3E', // Retained green for success
-    warning: '#E67700', // Retained orange for warning
-    error: '#D32F2F', // Red for error messages
-    info: '#1864AB', // Retained blue for info
-    shadow: '#99999D', // Tinted shadow
-    overlay: 'rgba(248, 249, 255, 0.5)', // Light overlay with tint
-    successOverlay: 'rgba(43, 138, 62, 0.2)', // Success overlay
-    warningOverlay: 'rgba(230, 119, 0, 0.2)', // Warning overlay
-    textOverlay: 'rgba(1, 2, 3, 0.1)', // Subtle tinted text overlay
-    borderOverlay: 'rgba(1, 2, 3, 0.2)', // Tinted border overlay
-    gradientStart: 'rgba(248, 249, 255, 0)', // Transparent tinted gradient
-    gradientMiddle: 'rgba(242, 242, 247, 0.7)', // Tinted gradient middle
-    gradientEnd: 'rgba(242, 242, 247, 1)', // Solid tinted gradient end
-    elevation1: '#F2F2F7', // Tinted elevation level 1
-    elevation2: '#E6E6EA', // Tinted elevation level 2
-    elevation3: '#D9D9DD', // Tinted elevation level 3
-    imagePlaceholder: 'rgba(1, 2, 3, 0.05)', // Subtle tinted placeholder
-    textShadowLight: 'rgba(1, 2, 3, 0.2)', // Light tinted shadow
-    textShadowDark: 'rgba(1, 2, 3, 0.5)', // Dark tinted shadow
-    modalOverlay: 'rgba(1, 2, 3, 0.5)', // Tinted modal overlay
+    success: '#2B8A3E',
+    warning: '#E67700',
+    error: '#D32F2F',
+    info: '#1864AB',
+    shadow: '#999999',
+    overlay: 'rgba(0, 0, 0, 0.05)',
+    successOverlay: 'rgba(43, 138, 62, 0.2)',
+    warningOverlay: 'rgba(230, 119, 0, 0.2)',
+    textOverlay: 'rgba(0, 0, 0, 0.1)',
+    borderOverlay: 'rgba(0, 0, 0, 0.2)',
+    gradientStart: 'rgba(250, 250, 250, 0)',
+    gradientMiddle: 'rgba(240, 240, 240, 0.7)',
+    gradientEnd: 'rgba(240, 240, 240, 1)',
+    elevation1: '#F0F0F0',
+    elevation2: '#E0E0E0',
+    elevation3: '#D0D0D0',
+    imagePlaceholder: 'rgba(0, 0, 0, 0.05)',
+    textShadowLight: 'rgba(0, 0, 0, 0.2)',
+    textShadowDark: 'rgba(0, 0, 0, 0.5)',
+    modalOverlay: 'rgba(0, 0, 0, 0.5)',
     black: '#000000',
   },
   dark: {
-    // Subtle green tint for a modern tech feel in dark mode
-    text: '#FEFEFF', // Very light gray with blue tint
-    background: '#010102', // Very dark gray with green tint
-    tint: '#CCCFCC', // Light gray with green tint for accents
-    icon: '#99999D', // Medium gray with tint
-    tabIconDefault: '#66666A', // Dark gray with tint
-    tabIconSelected: '#FEFEFF', // Light tinted gray for active tabs
-    link: '#CCCFCC', // Tinted link color
-    cardBackground: '#1A1A1F', // Dark gray with blue tint for cards
-    cardBorder: '#333337', // Dark gray with tint for borders
-    cardShadow: '#010102', // Shadow with tint
-    categoryText: '#FEFEFF', // Tinted category text
-    authorText: '#99999D', // Medium tinted gray for authors
-    arabicText: '#FEFEFF', // Tinted Arabic text
-    highlightedArabicText: '#CCCFCC', // Highlight with tint
-    englishText: '#99999D', // Tinted English text
-    titleText: '#FEFEFF', // Tinted title text
+    text: '#FFFFFF',
+    background: '#121212',
+    tint: '#CCCCCC',
+    icon: '#BBBBBB',
+    tabIconDefault: '#888888',
+    tabIconSelected: '#FFFFFF',
+    link: '#CCCCCC',
+    cardBackground: '#1E1E1E',
+    cardBorder: '#333333',
+    cardShadow: '#000000',
+    categoryText: '#FFFFFF',
+    authorText: '#BBBBBB',
+    arabicText: '#FFFFFF',
+    highlightedArabicText: '#CCCCCC',
+    englishText: '#CCCCCC',
+    titleText: '#FFFFFF',
     white: '#FFFFFF',
-    success: '#40C057', // Retained brighter green for dark mode
-    warning: '#FCC419', // Retained brighter yellow/orange
-    error: '#EF5350', // Brighter red for error messages in dark mode
-    info: '#339AF0', // Retained brighter blue
-    shadow: '#010102', // Tinted shadow
-    overlay: 'rgba(1, 1, 2, 0.5)', // Dark overlay with tint
-    successOverlay: 'rgba(64, 192, 87, 0.2)', // Success overlay
-    warningOverlay: 'rgba(252, 196, 25, 0.2)', // Warning overlay
-    textOverlay: 'rgba(254, 254, 255, 0.1)', // Subtle tinted text overlay
-    borderOverlay: 'rgba(254, 254, 255, 0.2)', // Tinted border overlay
-    gradientStart: 'rgba(1, 1, 2, 0)', // Transparent tinted gradient
-    gradientMiddle: 'rgba(26, 26, 31, 0.7)', // Tinted gradient middle
-    gradientEnd: 'rgba(26, 26, 31, 1)', // Solid tinted gradient end
-    elevation1: '#1A1A1F', // Tinted elevation level 1
-    elevation2: '#26262A', // Tinted elevation level 2
-    elevation3: '#333337', // Tinted elevation level 3
-    imagePlaceholder: 'rgba(254, 254, 255, 0.05)', // Subtle tinted placeholder
-    textShadowLight: 'rgba(254, 254, 255, 0.2)', // Light tinted shadow
-    textShadowDark: 'rgba(254, 254, 255, 0.5)', // Dark tinted shadow
-    modalOverlay: 'rgba(1, 1, 2, 0.8)', // Darker tinted modal overlay
+    success: '#40C057',
+    warning: '#FCC419',
+    error: '#EF5350',
+    info: '#339AF0',
+    shadow: '#000000',
+    overlay: 'rgba(255, 255, 255, 0.05)',
+    successOverlay: 'rgba(64, 192, 87, 0.2)',
+    warningOverlay: 'rgba(252, 196, 25, 0.2)',
+    textOverlay: 'rgba(255, 255, 255, 0.1)',
+    borderOverlay: 'rgba(255, 255, 255, 0.2)',
+    gradientStart: 'rgba(18, 18, 18, 0)',
+    gradientMiddle: 'rgba(30, 30, 30, 0.7)',
+    gradientEnd: 'rgba(30, 30, 30, 1)',
+    elevation1: '#1E1E1E',
+    elevation2: '#2C2C2C',
+    elevation3: '#3A3A3A',
+    imagePlaceholder: 'rgba(255, 255, 255, 0.05)',
+    textShadowLight: 'rgba(255, 255, 255, 0.2)',
+    textShadowDark: 'rgba(255, 255, 255, 0.5)',
+    modalOverlay: 'rgba(0, 0, 0, 0.8)',
     black: '#000000',
   },
 } as const;

@@ -229,7 +229,10 @@ export const LAYOUT = {
 };
 
 // Helper function to generate consistent Arabic text styles
-export const getArabicTextStyle = (fontSize: number, additionalStyles: TextStyle = {}) => {
+export const getArabicTextStyle = (
+  fontSize: number,
+  additionalStyles: TextStyle = {}
+): TextStyle => {
   return {
     fontFamily: 'NotoNaskhArabic',
     fontSize,
