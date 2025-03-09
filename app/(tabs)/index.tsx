@@ -9,33 +9,38 @@ import {
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router, Link } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+
+// Components
 import ThemedCard from '@/components/ThemedCard';
-import { articlesService } from '@/services/articles';
-import { categoriesService } from '@/services/categories';
-import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { Article } from '@/types/articles.types';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
-import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
-import React from 'react';
-import { useFocusEffect } from '@react-navigation/native';
-import type { Tables } from '@/types/database.types';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { StatusBar } from 'expo-status-bar';
-import { EnhancedImage } from '../../components/EnhancedImage';
+import { EnhancedImage } from '@/components/EnhancedImage';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
+import SectionTitle from '@/components/SectionTitle';
+import ArticleList from '@/components/ArticleList';
+
+// Hooks and Services
+import { useColors } from '@/hooks/useColors';
+import { useAuth } from '@/hooks/useAuth';
 import { useFadeInAnimation } from '@/hooks/animations';
-import { capitalizeFirstLetter } from '../../utils/stringUtils';
-import SectionTitle from '../../components/SectionTitle';
-import * as Haptics from 'expo-haptics';
-import { useAuth } from '../../hooks/useAuth';
-import ArticleList from '../../components/ArticleList';
+import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
+import { articlesService } from '@/services/articles';
+import { categoriesService } from '@/services/categories';
+
+// Store
+import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
+
+// Utils and Constants
+import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
+import { LAYOUT } from '@/constants/layout';
 import {
   filterArticles,
   getRecentArticles,
@@ -43,9 +48,13 @@ import {
   getFeaturedArticles,
   getBeginnerArticles,
   getDailyPickArticle,
-} from '../../utils/articleUtils';
-import { getDayOfYear } from '../../utils/dateUtils';
-import { fetchInProgressArticles, addToReadingList } from '../../store/readingListSlice';
+} from '@/utils/articleUtils';
+import { getDayOfYear } from '@/utils/dateUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
+
+// Types
+import { Article } from '@/types/articles.types';
+import type { Tables } from '@/types/database.types';
 
 // Constants
 
@@ -188,48 +197,6 @@ const styles = StyleSheet.create({
   backArrow: {
     fontSize: 16,
   },
-  featuredArticleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  featuredArticleImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
-  },
-  featuredArticleImage: {
-    width: '100%',
-    height: '100%',
-  },
-  featuredArticleContentContainer: {
-    flex: 1,
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  featuredArticleCategory: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    color: 'rgba(0, 0, 0, 0.6)',
-  },
-  featuredArticleTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-  featuredArticleDescription: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    color: 'rgba(0, 0, 0, 0.6)',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: 200,
-  },
-  compactCard: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    width: 200,
-  },
 });
 
 // Empty state components
@@ -240,22 +207,16 @@ const ErrorState = React.memo(({ message }: { message: string }) => (
 ));
 ErrorState.displayName = 'ErrorState';
 
-// Daily Pick Component
-const DailyPick = React.memo(
-  ({
-    articles,
-    onArticlePress,
-  }: {
-    articles: Article[];
-    onArticlePress: (article: Article) => void;
-  }) => {
-    // Get daily pick based on date (changes daily but same for all users)
-    const dailyPick = useMemo(() => {
-      return getDailyPickArticle(articles, getDayOfYear());
-    }, [articles]);
+// Add this memoized component near the top of the file, before ArticlesScreen
+const DailyPickSection = React.memo(
+  ({ dailyPick, onPress }: { dailyPick: Article | null; onPress: (article: Article) => void }) => {
+    const colors = useColors();
 
-    // Use our custom fade-in animation
-    const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 600);
+    // Use our custom fade-in animation with standardized duration
+    const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(
+      0,
+      LAYOUT.ANIMATION.DURATION.SLOW
+    );
 
     useEffect(() => {
       startFadeIn();
@@ -268,19 +229,17 @@ const DailyPick = React.memo(
         <SectionTitle title="Daily Pick" />
         <View style={styles.paddingHorizontal}>
           <ThemedCard
-            imageUrl={dailyPick.image_url || 'https://picsum.photos/800/400'}
+            imageUrl={dailyPick.image_url || ''}
             title={dailyPick.title}
-            category={dailyPick.category?.name ?? 'Uncategorized'}
-            author={dailyPick.author?.name ?? 'Anonymous'}
-            onPress={() => onArticlePress(dailyPick)}
-            style={styles.dailyPickCard}
+            category={dailyPick.category?.name || 'General'}
+            author={dailyPick.author?.name || 'Unknown'}
+            onPress={() => onPress(dailyPick)}
           />
         </View>
       </Animated.View>
     );
   }
 );
-DailyPick.displayName = 'DailyPick';
 
 // Category Section Component
 const CategorySection = React.memo(
@@ -303,8 +262,11 @@ const CategorySection = React.memo(
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
 
-    // Add our fade-in animation hook
-    const { animatedStyle, startAnimation } = useFadeInAnimation(delay, 500);
+    // Add our fade-in animation hook with standardized duration
+    const { animatedStyle, startAnimation } = useFadeInAnimation(
+      delay,
+      LAYOUT.ANIMATION.DURATION.NORMAL
+    );
 
     // Start the animation
     useEffect(() => {
@@ -352,8 +314,11 @@ const FeaturedArticleItem = React.memo(
     totalCount: number;
     onArticlePress: (article: Article) => void;
   }) => {
-    // Use our custom animation hook with the appropriate delay
-    const { animatedStyle, startAnimation } = useFadeInAnimation(300 + index * 100, 400);
+    // Use our custom animation hook with standardized duration
+    const { animatedStyle, startAnimation } = useFadeInAnimation(
+      300 + index * 100,
+      LAYOUT.ANIMATION.DURATION.NORMAL
+    );
 
     // Start the animation when the component mounts
     useEffect(() => {
@@ -386,9 +351,9 @@ const FeaturedArticles = React.memo(
     articles: Article[];
     onArticlePress: (article: Article) => void;
   }) => {
-    // Use our custom fade-in animation
+    // Use our custom fade-in animation with standardized duration
     const { animatedStyle: sectionFadeIn, startAnimation: startSectionAnimation } =
-      useFadeInAnimation(300, 500);
+      useFadeInAnimation(300, LAYOUT.ANIMATION.DURATION.NORMAL);
 
     useEffect(() => {
       startSectionAnimation();
@@ -418,9 +383,11 @@ FeaturedArticles.displayName = 'FeaturedArticles';
 
 // Continue Reading Section Component
 const ContinueReadingSection = React.memo(() => {
-  const colors = useColors();
   const inProgressArticles = useAppSelectorMemo(state => state.readingList.inProgressArticles);
-  const { animatedStyle, startAnimation } = useFadeInAnimation(100, 500);
+  const { animatedStyle, startAnimation } = useFadeInAnimation(
+    100,
+    LAYOUT.ANIMATION.DURATION.NORMAL
+  );
 
   useEffect(() => {
     startAnimation();
@@ -465,24 +432,52 @@ ContinueReadingSection.displayName = 'ContinueReadingSection';
 const AnimatedPill = React.memo(
   ({
     item,
-    onPress,
     isSelected,
-    styleGetter,
-    textStyleGetter,
-    delay = 0,
+    onSelect,
     label,
+    delay,
   }: {
-    item: any;
-    onPress: () => void;
-    isSelected: boolean;
-    styleGetter: (isSelected: boolean, pressed: boolean) => any;
-    textStyleGetter: (isSelected: boolean) => any;
-    delay?: number;
+    item: string;
+    isSelected?: boolean;
+    onSelect: (value: string) => void;
     label: string;
+    delay: number;
   }) => {
+    const colors = useColors();
+
+    // Use consistent animation timing from LAYOUT constants
     const { animatedStyle, startAnimation } = useFadeInAnimation(
       delay,
       LAYOUT.ANIMATION.DURATION.FAST
+    );
+
+    // Memoize the press handler to avoid recreating it on each render
+    const handlePress = useCallback(() => {
+      onSelect(item);
+      // Optional: Add haptic feedback for better UX
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }, [item, onSelect]);
+
+    // Memoize styles to avoid recalculating on each render
+    const pillStyle = useCallback(
+      ({ pressed }: { pressed: boolean }) => [
+        styles.authorPill,
+        {
+          backgroundColor: isSelected
+            ? colors.textOverlay
+            : pressed
+              ? colors.background
+              : colors.cardBackground,
+        },
+        isSelected && styles.authorPillSelected,
+      ],
+      [colors, isSelected]
+    );
+
+    // Memoize text style
+    const textStyle = useMemo(
+      () => [styles.authorPillText, isSelected && [{ color: colors.tint }, styles.boldText]],
+      [colors.tint, isSelected]
     );
 
     useEffect(() => {
@@ -491,13 +486,8 @@ const AnimatedPill = React.memo(
 
     return (
       <Animated.View style={animatedStyle}>
-        <Pressable style={({ pressed }) => styleGetter(isSelected, pressed)} onPress={onPress}>
-          <ThemedText
-            style={textStyleGetter(isSelected)}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-            skipDefaultColor={isSelected}
-          >
+        <Pressable style={pillStyle} onPress={handlePress}>
+          <ThemedText style={textStyle} numberOfLines={1} ellipsizeMode="tail">
             {label}
           </ThemedText>
         </Pressable>
@@ -521,31 +511,6 @@ const AuthorFilterList = React.memo(
   }) => {
     const colors = useColors();
 
-    // Get styles for author pill based on selection state
-    const getAuthorPillStyle = useCallback(
-      (isSelected: boolean, pressed: boolean) => [
-        styles.authorPill,
-        {
-          backgroundColor: isSelected
-            ? colors.textOverlay
-            : pressed
-              ? colors.background
-              : colors.cardBackground,
-        },
-        isSelected && styles.authorPillSelected,
-      ],
-      [colors.textOverlay, colors.background, colors.cardBackground]
-    );
-
-    // Get styles for author pill text based on selection state
-    const getAuthorPillTextStyle = useCallback(
-      (isSelected: boolean) => [
-        styles.authorPillText,
-        isSelected && [{ color: colors.tint }, styles.boldText],
-      ],
-      [colors.tint]
-    );
-
     // Then update the renderAuthorItem function to use this component
     const renderAuthorItem = useCallback(
       ({ item }: { item: Tables<'authors'> }) => {
@@ -553,17 +518,15 @@ const AuthorFilterList = React.memo(
         return (
           <AnimatedPill
             key={`author-pill-${item.id}`}
-            item={item}
-            onPress={() => onSelectAuthor(item.id)}
+            item={item.id.toString()}
             isSelected={isSelected}
-            styleGetter={getAuthorPillStyle}
-            textStyleGetter={getAuthorPillTextStyle}
-            delay={650}
+            onSelect={value => onSelectAuthor(Number(value))}
             label={item.name}
+            delay={650}
           />
         );
       },
-      [selectedAuthorId, onSelectAuthor, getAuthorPillStyle, getAuthorPillTextStyle]
+      [selectedAuthorId, onSelectAuthor]
     );
 
     // Skip rendering if no authors
@@ -669,33 +632,6 @@ const CategoryFilterList = React.memo(
     selectedCategoryId: number | null;
     onSelectCategory: (categoryId: number) => void;
   }) => {
-    const colors = useColors();
-
-    // Get styles for category pill based on selection state
-    const getCategoryPillStyle = useCallback(
-      (isSelected: boolean, pressed: boolean) => [
-        styles.authorPill,
-        {
-          backgroundColor: isSelected
-            ? colors.textOverlay
-            : pressed
-              ? colors.background
-              : colors.cardBackground,
-        },
-        isSelected && styles.authorPillSelected,
-      ],
-      [colors.textOverlay, colors.background, colors.cardBackground]
-    );
-
-    // Get styles for category pill text based on selection state
-    const getCategoryPillTextStyle = useCallback(
-      (isSelected: boolean) => [
-        styles.authorPillText,
-        isSelected && [{ color: colors.tint }, styles.boldText],
-      ],
-      [colors.tint]
-    );
-
     // And update the renderCategoryItem function similarly
     const renderCategoryItem = useCallback(
       ({ item }: { item: Tables<'categories'> }) => {
@@ -703,17 +639,15 @@ const CategoryFilterList = React.memo(
         return (
           <AnimatedPill
             key={`category-pill-${item.id}`}
-            item={item}
-            onPress={() => onSelectCategory(item.id)}
+            item={item.id.toString()}
             isSelected={isSelected}
-            styleGetter={getCategoryPillStyle}
-            textStyleGetter={getCategoryPillTextStyle}
-            delay={750}
+            onSelect={value => onSelectCategory(Number(value))}
             label={item.name}
+            delay={750}
           />
         );
       },
-      [selectedCategoryId, onSelectCategory, getCategoryPillStyle, getCategoryPillTextStyle]
+      [selectedCategoryId, onSelectCategory]
     );
 
     // Skip rendering if no categories
@@ -764,77 +698,11 @@ const useSafeAuth = () => {
 };
 
 // Fix the FeaturedArticle component to use EnhancedImage correctly
-const FeaturedArticle = React.memo(() => {
-  const colors = useColors();
-  const [featuredArticle, setFeaturedArticle] = useState<Article | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { animatedStyle, startAnimation } = useFadeInAnimation(
-    200,
-    LAYOUT.ANIMATION.DURATION.NORMAL
-  );
 
-  // Fetch the featured article
-  useEffect(() => {
-    setIsLoading(true);
-    articlesService
-      .getArticles()
-      .then(articles => {
-        if (articles && articles.length > 0) {
-          setFeaturedArticle(articles[0]);
-        }
-        setIsLoading(false);
-      })
-      .catch(error => {
-        console.error('Error fetching featured article:', error);
-        setIsLoading(false);
-      });
+// Remove the custom components
 
-    startAnimation();
-  }, [startAnimation]);
-
-  return (
-    <Animated.View style={animatedStyle}>
-      {isLoading ? (
-        <View style={[styles.featuredArticleCard, styles.loadingContainer]}>
-          <ActivityIndicator size="large" color={colors.tint} />
-        </View>
-      ) : featuredArticle ? (
-        <Pressable
-          style={styles.featuredArticleCard}
-          onPress={() => router.push(`/article/${featuredArticle.id}`)}
-        >
-          <View style={styles.featuredArticleImageContainer}>
-            {/* The source needs to be a string, not an object with uri */}
-            <EnhancedImage
-              source={featuredArticle.cover_image || ''}
-              style={styles.featuredArticleImage}
-              contentFit="cover"
-            />
-          </View>
-          <View style={styles.featuredArticleContentContainer}>
-            <ThemedText style={styles.featuredArticleCategory}>
-              {capitalizeFirstLetter(featuredArticle.category?.name ?? '')}
-            </ThemedText>
-            <ThemedText style={styles.featuredArticleTitle} numberOfLines={2} ellipsizeMode="tail">
-              {featuredArticle.title}
-            </ThemedText>
-            <ThemedText
-              style={styles.featuredArticleDescription}
-              numberOfLines={2}
-              ellipsizeMode="tail"
-            >
-              {featuredArticle.description || ''}
-            </ThemedText>
-          </View>
-        </Pressable>
-      ) : (
-        <View style={styles.featuredArticleCard}>
-          <ThemedText>No articles available</ThemedText>
-        </View>
-      )}
-    </Animated.View>
-  );
-});
+// Memoized article item renderer for better performance
+const MemoizedCompactArticleCard = React.memo(CompactArticleCard);
 
 export default function ArticlesScreen() {
   const colors = useColors();
@@ -1077,7 +945,10 @@ export default function ArticlesScreen() {
 
     return (
       <>
-        <DailyPick articles={articles} onArticlePress={handleArticlePress} />
+        <DailyPickSection
+          dailyPick={getDailyPickArticle(articles, getDayOfYear())}
+          onPress={handleArticlePress}
+        />
 
         <ContinueReadingSection />
 
@@ -1134,7 +1005,6 @@ export default function ArticlesScreen() {
     selectedAuthor,
     selectedCategory,
     articles,
-    inProgressArticles,
     latestArticles,
     featuredArticles,
     recentArticles,
