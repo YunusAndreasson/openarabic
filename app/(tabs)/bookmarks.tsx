@@ -14,7 +14,7 @@ import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 // ====== AUDIO PLAYER CONSTANTS ======
 const AUDIO_STATES = {

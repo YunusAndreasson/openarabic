@@ -1,0 +1,34 @@
+import { useCallback } from 'react';
+import { useSharedValue, withTiming, useAnimatedStyle, withDelay } from 'react-native-reanimated';
+
+/**
+ * Hook for managing component animation states with delayed readiness
+ * @param delay - Delay in ms before component is considered ready
+ * @returns Object with animation state and animated style
+ */
+export const useComponentAnimation = (delay = 300) => {
+  const opacity = useSharedValue(0);
+
+  // Start animation function that can be called when component mounts
+  const startAnimation = useCallback(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 200 }));
+  }, [opacity, delay]);
+
+  // Reset animation function
+  const resetAnimation = useCallback(() => {
+    opacity.value = 0;
+  }, [opacity]);
+
+  // Create animated style for opacity
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  });
+
+  return {
+    animatedStyle,
+    startAnimation,
+    resetAnimation,
+  };
+};

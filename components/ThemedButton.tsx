@@ -14,7 +14,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
-import { useButtonAnimation } from '../utils/animations';
+import { useButtonAnimation } from '@/hooks/animations';
 
 interface ThemedButtonProps extends TouchableOpacityProps {
   variant?: 'filled' | 'outlined';

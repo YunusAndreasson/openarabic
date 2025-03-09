@@ -3,7 +3,7 @@ import { StyleSheet, Pressable, View } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import Animated from 'react-native-reanimated';
-import { useCardAnimation } from '../utils/animations';
+import { useCardAnimation } from '@/hooks/animations';
 
 interface CompactThemedCardProps {
   children: React.ReactNode;

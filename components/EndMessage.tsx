@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 /**
  * A spacer component displayed at the bottom of scrollable content

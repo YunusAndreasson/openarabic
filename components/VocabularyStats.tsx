@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingContainer } from './Loader';
-import { useComponentAnimation } from '@/hooks/useComponentAnimation';
+import { useComponentAnimation } from '@/hooks/animations';
 import { useProgressAnimation } from '@/hooks/useProgressAnimation';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStats as VocabularyStatsType } from '@/types/vocabulary.types';
@@ -22,7 +23,19 @@ function VocabularyStatsComponent({
   isLoading = false,
 }: VocabularyStatsProps) {
   const colors = useColors();
-  const { isReady } = useComponentAnimation();
+  const { animatedStyle, startAnimation } = useComponentAnimation();
+  const [isReady, setIsReady] = React.useState(false);
+
+  // Start animation when component mounts
+  React.useEffect(() => {
+    startAnimation();
+    // Set component as ready after a delay
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 400); // Slightly longer than the animation delay
+
+    return () => clearTimeout(timer);
+  }, [startAnimation]);
 
   // Calculate progress as a percentage - protect against division by zero
   const progress = useMemo(
@@ -58,7 +71,7 @@ function VocabularyStatsComponent({
   }
 
   return (
-    <View style={progressCardStyle}>
+    <Animated.View style={[progressCardStyle, animatedStyle]}>
       <View style={styles.progressContent}>
         <View style={styles.progressRow}>
           <View style={styles.progressTextContainer}>
@@ -97,7 +110,7 @@ function VocabularyStatsComponent({
           </View>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

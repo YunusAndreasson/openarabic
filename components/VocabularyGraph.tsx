@@ -15,15 +15,16 @@ import {
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingContainer } from './Loader';
-import { useComponentAnimation } from '@/hooks/useComponentAnimation';
+import { useComponentAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
 import {
-  useSharedValue,
   useAnimatedReaction,
+  useSharedValue,
   withTiming,
   Easing,
   runOnJS,
 } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 
 interface VocabularyGraphProps {
@@ -36,7 +37,8 @@ interface VocabularyGraphProps {
 export const VocabularyGraph = React.memo(
   ({ data = [], title = 'Weekly Progress', isLoading = false }: VocabularyGraphProps) => {
     const colors = useColors();
-    const { isReady } = useComponentAnimation(500); // Increased delay for better stability
+    const { animatedStyle, startAnimation } = useComponentAnimation(500); // Increased delay for better stability
+    const [isReady, setIsReady] = React.useState(false);
 
     // Canvas dimensions
     const PADDING = 16;
@@ -57,6 +59,17 @@ export const VocabularyGraph = React.memo(
     const [skiaProgress, setSkiaProgress] = React.useState(0);
     // Track if animation has started to avoid restarting
     const hasAnimationStarted = React.useRef(false);
+
+    // Start animation when component mounts
+    React.useEffect(() => {
+      startAnimation();
+      // Set component as ready after a delay
+      const timer = setTimeout(() => {
+        setIsReady(true);
+      }, 600); // Slightly longer than the animation delay
+
+      return () => clearTimeout(timer);
+    }, [startAnimation]);
 
     // Start the animation when the component is ready and data is loaded
     React.useEffect(() => {
@@ -157,7 +170,7 @@ export const VocabularyGraph = React.memo(
       return (
         <View style={cardStyle}>
           {cardHeader}
-          <LoadingContainer height={160} />
+          <LoadingContainer height={GRAPH_HEIGHT} />
         </View>
       );
     }
@@ -175,7 +188,7 @@ export const VocabularyGraph = React.memo(
     }
 
     return (
-      <View style={cardStyle}>
+      <Animated.View style={[cardStyle, animatedStyle]}>
         {cardHeader}
 
         <View style={styles.graphContainer}>
@@ -260,7 +273,7 @@ export const VocabularyGraph = React.memo(
             </ThemedText>
           </View>
         </View>
-      </View>
+      </Animated.View>
     );
   }
 );

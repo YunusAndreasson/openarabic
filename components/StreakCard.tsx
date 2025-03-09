@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import Animated from 'react-native-reanimated';
-import { usePulseAnimation } from '../utils/animations';
+import { usePulseAnimation } from '@/hooks/animations';
 import AnimatedThemedText from './AnimatedThemedText';
 
 interface StreakCardProps {

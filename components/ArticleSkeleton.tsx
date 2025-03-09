@@ -10,7 +10,7 @@ import Animated, {
   withSequence,
   FadeIn,
 } from 'react-native-reanimated';
-import { useFadeInAnimation } from '../utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 interface ArticleSkeletonProps {
   style?: ViewStyle;

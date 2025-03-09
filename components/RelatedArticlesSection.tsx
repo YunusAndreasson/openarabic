@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import Animated from 'react-native-reanimated';
 import type { Article } from '@/types/articles.types';
-import { useFadeInAnimation } from '../utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 export interface RelatedArticlesSectionProps {
   title: string;

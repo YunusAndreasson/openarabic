@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleProp, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import Animated from 'react-native-reanimated';
-import { usePulseAnimation } from '../utils/animations';
+import { usePulseAnimation } from '@/hooks/animations';
 
 interface AnimatedThemedTextProps {
   /** Text content to display */

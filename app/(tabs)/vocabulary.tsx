@@ -19,7 +19,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
 
 // Create a memoized component for the review button

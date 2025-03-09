@@ -17,7 +17,7 @@ import Animated from 'react-native-reanimated';
 import EndMessage from './EndMessage';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
-import { useFadeInAnimation } from '../utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 const ITEM_HEIGHT = 360; // Approximate height of each article card
 

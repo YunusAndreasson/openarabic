@@ -9,7 +9,7 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
 import { LoadingContainer } from './Loader';
 import Animated from 'react-native-reanimated';
-import { useCardAnimation } from '../utils/animations';
+import { useCardAnimation } from '@/hooks/animations';
 import { EnhancedImage } from './EnhancedImage';
 
 /**

@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { ThemedText } from './ThemedText';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 /**
  * A component that displays a copyright notice with the current Hijri year

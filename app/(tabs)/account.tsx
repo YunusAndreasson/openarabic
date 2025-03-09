@@ -18,7 +18,7 @@ import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { LoadingScreen } from '../../components/Loader';
-import { useFadeInAnimation } from '../../utils/animations';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
