@@ -1,5 +1,5 @@
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useCallback, useEffect, memo, useMemo } from 'react';
+import { useCallback, memo, useMemo } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';

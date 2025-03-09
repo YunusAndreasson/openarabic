@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 /**
  * Return type for useAnimationTrigger hook
@@ -31,6 +31,8 @@ export const useAnimationTrigger = (
   delay = 0
 ): AnimationTriggerResult => {
   const [animationsTriggered, setAnimationsTriggered] = useState(false);
+  const animationTimeoutRef = useRef<NodeJS.Timeout>();
+  const resetRef = useRef(false);
 
   // Reset animations when data changes
   useEffect(() => {
@@ -41,19 +43,37 @@ export const useAnimationTrigger = (
 
   // Trigger animations when data and layout are ready
   useEffect(() => {
+    // Clear any existing timeouts
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = undefined;
+    }
+
+    // Don't trigger animations if reset was called
+    if (resetRef.current) {
+      resetRef.current = false;
+      return;
+    }
+
     if (isDataReady && !animationsTriggered && !isLoading && isLayoutReady) {
       if (delay > 0) {
-        const timeoutId = setTimeout(() => {
+        animationTimeoutRef.current = setTimeout(() => {
           startAnimation();
           setAnimationsTriggered(true);
         }, delay);
-
-        return () => clearTimeout(timeoutId);
       } else {
         startAnimation();
         setAnimationsTriggered(true);
       }
     }
+
+    // Cleanup function
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+        animationTimeoutRef.current = undefined;
+      }
+    };
   }, [isDataReady, animationsTriggered, isLoading, isLayoutReady, startAnimation, delay]);
 
   // Function to manually trigger animations
@@ -66,6 +86,16 @@ export const useAnimationTrigger = (
 
   // Function to reset animation state
   const resetAnimations = useCallback(() => {
+    // Clear any existing timeouts
+    if (animationTimeoutRef.current) {
+      clearTimeout(animationTimeoutRef.current);
+      animationTimeoutRef.current = undefined;
+    }
+
+    // Set reset flag to prevent immediate re-triggering
+    resetRef.current = true;
+
+    // Force state update to ensure it's reflected immediately
     setAnimationsTriggered(false);
   }, []);
 

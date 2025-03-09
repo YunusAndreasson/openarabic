@@ -10,9 +10,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
  */
 export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true) => {
   const [isLoading, setIsLoading] = useState(initialLoadingState);
-  const loadingStartTime = useRef<number | null>(null);
+  const [dataLoaded, setDataLoadedState] = useState(false);
+  const loadingStartTime = useRef<number | null>(initialLoadingState ? Date.now() : null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  const dataLoadedRef = useRef(false);
+  const dataLoadedButWaitingRef = useRef(false);
 
   // Start loading with minimum display time
   const startLoading = useCallback(() => {
@@ -22,15 +23,16 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
       loadingTimeoutRef.current = undefined;
     }
 
+    dataLoadedButWaitingRef.current = false;
     setIsLoading(true);
+    setDataLoadedState(false);
     loadingStartTime.current = Date.now();
-    dataLoadedRef.current = false;
   }, []);
 
   // Stop loading with minimum display time guarantee
   const stopLoading = useCallback(() => {
     // Mark data as loaded
-    dataLoadedRef.current = true;
+    setDataLoadedState(true);
 
     // If loading hasn't started, just stop
     if (loadingStartTime.current === null) {
@@ -45,19 +47,30 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
     if (timeElapsed >= minLoadingTime) {
       setIsLoading(false);
       loadingStartTime.current = null;
+      dataLoadedButWaitingRef.current = false;
     } else {
       // Otherwise, set a timeout to stop loading after minimum time
+      dataLoadedButWaitingRef.current = true;
       loadingTimeoutRef.current = setTimeout(() => {
         setIsLoading(false);
         loadingStartTime.current = null;
+        dataLoadedButWaitingRef.current = false;
       }, minLoadingTime - timeElapsed);
     }
   }, [minLoadingTime]);
 
   // Set data loaded state
-  const setDataLoaded = useCallback((loaded: boolean) => {
-    dataLoadedRef.current = loaded;
-  }, []);
+  const setDataLoaded = useCallback(
+    (loaded: boolean) => {
+      setDataLoadedState(loaded);
+      if (loaded) {
+        stopLoading();
+      } else {
+        startLoading();
+      }
+    },
+    [startLoading, stopLoading]
+  );
 
   // Reset the entire loading state
   const reset = useCallback(() => {
@@ -65,8 +78,9 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
       clearTimeout(loadingTimeoutRef.current);
       loadingTimeoutRef.current = undefined;
     }
-    loadingStartTime.current = null;
-    dataLoadedRef.current = false;
+    dataLoadedButWaitingRef.current = false;
+    loadingStartTime.current = initialLoadingState ? Date.now() : null;
+    setDataLoadedState(false);
     setIsLoading(initialLoadingState);
   }, [initialLoadingState]);
 
@@ -84,7 +98,7 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
     startLoading,
     stopLoading,
     reset,
-    dataLoaded: dataLoadedRef.current,
+    dataLoaded,
     setDataLoaded,
   };
 };

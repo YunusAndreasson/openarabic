@@ -1,7 +1,4 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Platform, ViewStyle, TextStyle } from 'react-native';
-import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { StyleSheet, Platform } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { BasePillStyleProps, BasePillStyles } from '../../types/ui.types';
 
