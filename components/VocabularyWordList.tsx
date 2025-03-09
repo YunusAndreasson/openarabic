@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, FlatList, ListRenderItem } from 'react-native';
+import { StyleSheet, View, FlatList, ListRenderItem, TextStyle, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
@@ -118,59 +118,60 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
   );
 }
 
+// Define the styles with proper TypeScript types
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginBottom: LAYOUT.SPACING.XXLARGE,
-  },
+  } as ViewStyle,
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
+  } as TextStyle,
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     gap: LAYOUT.SPACING.MEDIUM,
-  },
+  } as ViewStyle,
   wordInfo: {
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
-  },
+  } as ViewStyle,
   arabicWord: {
     ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
       marginBottom: LAYOUT.SPACING.TINY,
     }),
-  },
+  } as TextStyle,
   translation: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: 0.8,
-  },
+  } as TextStyle,
   statusContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-  },
+  } as ViewStyle,
   statusPill: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
+  } as ViewStyle,
   statusBackground: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL - 2,
     gap: LAYOUT.SPACING.SMALL - 2,
-  },
+  } as ViewStyle,
   statusText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '600',
-  },
+  } as TextStyle,
   emptyContainer: {
     padding: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
-  },
+  } as ViewStyle,
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: LAYOUT.OPACITY.DISABLED,
-  },
+  } as TextStyle,
 });

@@ -481,7 +481,7 @@ const styles = StyleSheet.create({
   previewLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   previewScroller: {
     padding: LAYOUT.SPACING.MEDIUM,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
   },
   englishPreviewText: {
     textAlign: 'left',
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   connectContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
   },
   signedInLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   signedInEmail: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

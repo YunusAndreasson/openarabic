@@ -5,7 +5,6 @@ import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LAYOUT } from '@/constants/layout';
-import * as Haptics from 'expo-haptics';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { CategoryPill } from './CategoryPill';
 import { LoadingContainer } from './Loader';
@@ -17,13 +16,26 @@ import Animated, {
   Extrapolate,
 } from 'react-native-reanimated';
 
+/**
+ * ThemedCard is a reusable card component that displays an image with title, category, and author.
+ * It supports both light and dark themes, handles loading states, and provides smooth animations.
+ *
+ * The component is optimized for performance with memoization and proper image loading handling.
+ */
 interface ThemedCardProps {
+  /** URL of the image to display in the card */
   imageUrl: string;
+  /** Title text to display in the card */
   title: string;
+  /** Category text to display in a pill on the card */
   category: string;
+  /** Author name to display in the card */
   author: string;
+  /** Optional callback function when the card is pressed */
   onPress?: () => void;
+  /** Optional style to apply to the card container */
   style?: StyleProp<ViewStyle>;
+  /** Whether the card is in a loading state */
   isLoading?: boolean;
 }
 
@@ -83,24 +95,35 @@ function ThemedCardComponent({
 
   // Memoize styles to prevent new object creation on each render
   const themedStyles = useMemo(() => {
-    // Helper function to create a gradient with the card background color
+    /**
+     * Creates a platform and theme-aware gradient for card overlays
+     *
+     * iOS light mode requires a special gradient that ends with the card background color
+     * to ensure proper visual integration with the card.
+     *
+     * Other platforms/themes use the standard gradient colors from the theme.
+     */
     const createCardGradient = () => {
-      // For iOS light mode, we need to create a custom gradient that matches the card background
+      // Define gradient types as readonly arrays for type safety
+      type GradientColors = readonly [string, string, string];
+
+      // For iOS light mode, we need a custom gradient that matches the card background
       if (Platform.OS === 'ios' && !isDarkMode) {
-        // Use colors from the theme instead of hardcoded values
-        return [
+        const iosLightGradient: GradientColors = [
           colors.gradientStart, // Start with transparent
           colors.gradientMiddle, // Mid-fade with high opacity
           colors.cardBackground, // End with card background color
-        ] as readonly [string, string, string];
+        ];
+        return iosLightGradient;
       }
 
       // For other platforms/themes, use the default gradient colors
-      return [colors.gradientStart, colors.gradientMiddle, colors.gradientEnd] as readonly [
-        string,
-        string,
-        string,
+      const defaultGradient: GradientColors = [
+        colors.gradientStart,
+        colors.gradientMiddle,
+        colors.gradientEnd,
       ];
+      return defaultGradient;
     };
 
     return {

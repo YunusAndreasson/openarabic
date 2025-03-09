@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, Dimensions, View } from 'react-native';
+import { StyleSheet, Dimensions, View, TextStyle, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
@@ -13,7 +13,6 @@ import Animated, {
   SlideInRight,
   Layout,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import { StudyWord } from '../types/vocabulary.types';
 
@@ -34,19 +33,6 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
   // Animation values using Reanimated shared values
   const fadeOpacity = useSharedValue(0);
   const slidePosition = useSharedValue(SCREEN_WIDTH);
-
-  // Create animated styles using Reanimated
-  const animatedStyle = useAnimatedStyle(() => {
-    if (transitionType === 'fade') {
-      return {
-        opacity: fadeOpacity.value,
-      };
-    } else {
-      return {
-        transform: [{ translateX: slidePosition.value }],
-      };
-    }
-  });
 
   // Run animation when word changes or becomes visible
   useEffect(() => {
@@ -78,54 +64,68 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
   }, [word, isVisible, transitionType, fadeOpacity, slidePosition]);
 
   // Create styles with the colors
-  const styles = useMemo(
-    () =>
-      StyleSheet.create({
-        container: {
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-          margin: LAYOUT.SPACING.MEDIUM,
-          padding: LAYOUT.CARD.PADDING.MEDIUM,
-          minHeight: 200,
-          ...LAYOUT.SHADOW.MEDIUM,
-        },
-        wordContainer: {
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        arabicWord: {
-          ...getArabicTextStyle(42, {
-            textAlign: 'center',
-            marginBottom: LAYOUT.SPACING.MEDIUM,
-            paddingHorizontal: LAYOUT.SPACING.XXLARGE,
-            paddingVertical: LAYOUT.SPACING.LARGE,
-            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          }),
-        },
-        englishWord: {
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-          textAlign: 'center',
-          marginBottom: LAYOUT.SPACING.XLARGE,
-        },
-        sentenceContainer: {
-          marginTop: LAYOUT.SPACING.LARGE,
-          borderTopWidth: 1,
-          borderTopColor: colors.borderOverlay,
-          paddingTop: LAYOUT.SPACING.MEDIUM,
-          width: '100%',
-          alignItems: 'flex-end',
-        },
-        arabicSentence: {
-          ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.LARGE, {
-            textAlign: 'right',
-            paddingHorizontal: LAYOUT.SPACING.SMALL,
-            width: '100%',
-          }),
-        },
-      }),
-    [colors]
-  );
+  const styles = useMemo(() => {
+    // Create properly typed Arabic text styles
+    const arabicWordStyle: TextStyle = {
+      fontFamily: 'NotoNaskhArabic',
+      fontSize: 42,
+      lineHeight: Math.round(42 * 2.0),
+      writingDirection: 'rtl' as 'rtl',
+      textAlign: 'center' as 'center',
+      includeFontPadding: true,
+      textAlignVertical: 'center',
+      // Custom styles that override defaults
+      paddingVertical: LAYOUT.SPACING.LARGE,
+      paddingHorizontal: LAYOUT.SPACING.XXLARGE,
+      marginBottom: LAYOUT.SPACING.MEDIUM,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    };
+
+    const arabicSentenceStyle: TextStyle = {
+      fontFamily: 'NotoNaskhArabic',
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+      lineHeight: Math.round(LAYOUT.TYPOGRAPHY.SCALE.LARGE * 2.0),
+      writingDirection: 'rtl' as 'rtl',
+      textAlign: 'right' as 'right',
+      includeFontPadding: true,
+      textAlignVertical: 'center',
+      // Custom styles
+      paddingVertical: LAYOUT.SPACING.TINY,
+      paddingHorizontal: LAYOUT.SPACING.SMALL,
+      width: '100%',
+    };
+
+    return StyleSheet.create({
+      container: {
+        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+        margin: LAYOUT.SPACING.MEDIUM,
+        padding: LAYOUT.CARD.PADDING.MEDIUM,
+        minHeight: 200,
+        ...LAYOUT.SHADOW.MEDIUM,
+      } as ViewStyle,
+      wordContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      } as ViewStyle,
+      arabicWord: arabicWordStyle,
+      englishWord: {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+        textAlign: 'center' as 'center',
+        marginBottom: LAYOUT.SPACING.XLARGE,
+      } as TextStyle,
+      sentenceContainer: {
+        marginTop: LAYOUT.SPACING.LARGE,
+        borderTopWidth: 1,
+        borderTopColor: colors.borderOverlay,
+        paddingTop: LAYOUT.SPACING.MEDIUM,
+        width: '100%',
+        alignItems: 'flex-end',
+      } as ViewStyle,
+      arabicSentence: arabicSentenceStyle,
+    });
+  }, [colors]);
 
   if (!word || !word.sentence_word) {
     return null;
@@ -147,9 +147,7 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
         {
           backgroundColor: colors.cardBackground,
           borderColor: colors.cardBorder,
-        },
-        // We can remove this since we're using entry animations
-        // animatedStyle,
+        } as ViewStyle,
       ]}
       // Add Reanimated layout animations
       entering={getEntryAnimation()}
@@ -171,7 +169,7 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
               shadowOpacity: LAYOUT.OPACITY.OVERLAY / 4,
               shadowRadius: 2,
               elevation: 1, // For Android
-            },
+            } as TextStyle,
           ]}
           entering={FadeIn.delay(150).duration(300)}
         >
@@ -192,7 +190,7 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
               arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.LARGE}
               style={{
                 color: `${colors.arabicText}CC`,
-                textAlign: 'right',
+                textAlign: 'right' as 'right',
                 paddingHorizontal: LAYOUT.SPACING.SMALL,
               }}
               skipDefaultColor

@@ -1,4 +1,5 @@
 import { Dimensions, Platform } from 'react-native';
+import { TextStyle } from 'react-native';
 
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -26,6 +27,31 @@ export const LAYOUT = {
     LARGE: 16,
     XLARGE: 20,
     XXLARGE: 24,
+  },
+
+  /**
+   * Standardized opacity values for consistent visual appearance
+   *
+   * General purpose opacity values (XLIGHT through FULL) should be used for
+   * static visual elements, while UI state opacities (DISABLED, HOVER, etc.)
+   * should be used for interactive elements in different states.
+   */
+  OPACITY: {
+    // General purpose opacity values
+    XLIGHT: 0.1,
+    LIGHT: 0.3,
+    MEDIUM: 0.5,
+    MEDIUM_HIGH: 0.7,
+    HIGH: 0.85,
+    XHIGH: 0.95,
+    FULL: 1.0,
+    // UI state opacities
+    DISABLED: 0.5,
+    DIMMED: 0.7,
+    HOVER: 0.9,
+    PRESSED: 0.8,
+    OVERLAY: 0.4,
+    ACTIVE: 1,
   },
 
   // Specific component heights
@@ -157,16 +183,6 @@ export const LAYOUT = {
     },
   },
 
-  // Opacity levels for various UI states
-  OPACITY: {
-    DISABLED: 0.5,
-    DIMMED: 0.7,
-    OVERLAY: 0.4,
-    PRESSED: 0.8,
-    HOVER: 0.9,
-    ACTIVE: 1,
-  },
-
   // Z-index and elevation levels for layering
   Z_INDEX: {
     BASE: 0,
@@ -213,7 +229,7 @@ export const LAYOUT = {
 };
 
 // Helper function to generate consistent Arabic text styles
-export const getArabicTextStyle = (fontSize: number, additionalStyles: any = {}) => {
+export const getArabicTextStyle = (fontSize: number, additionalStyles: TextStyle = {}) => {
   return {
     fontFamily: 'NotoNaskhArabic',
     fontSize,

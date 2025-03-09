@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
-import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import { SentenceWord } from '@/types/vocabulary.types';
 

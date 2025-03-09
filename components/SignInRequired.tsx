@@ -40,7 +40,7 @@ export const SignInRequired = React.memo(
                 name="log-in-outline"
                 size={48}
                 color={colors.text}
-                style={{ opacity: LAYOUT.OPACITY.DIMMED }}
+                style={{ opacity: LAYOUT.OPACITY.MEDIUM_HIGH }}
               />
             </View>
             <ThemedText style={styles.emptyStateTitle}>{title}</ThemedText>
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   emptyStateMessage: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   benefitContainer: {
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   },
   benefitDescription: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   signInButton: {

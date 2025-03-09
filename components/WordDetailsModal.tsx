@@ -1,8 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
+import { StyleSheet, View, Dimensions, Platform, ViewStyle, TextStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
-import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { SentenceWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -54,50 +53,50 @@ function WordDetailsModalComponent({
             elevation: 12,
           },
         }),
-      },
+      } as ViewStyle,
       contentWrapper: {
         width: '100%',
         gap: LAYOUT.SPACING.XLARGE,
         paddingTop: LAYOUT.SPACING.XLARGE,
         paddingBottom: LAYOUT.SPACING.XLARGE,
         paddingHorizontal: LAYOUT.SPACING.XLARGE,
-      },
+      } as ViewStyle,
       header: {
         alignItems: 'center',
         width: '100%',
         gap: LAYOUT.SPACING.LARGE,
-      },
+      } as ViewStyle,
       arabicWord: {
         ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.3, {
-          textAlign: 'center',
+          textAlign: 'center' as const,
           paddingVertical: LAYOUT.SPACING.MEDIUM,
-          textAlignVertical: 'center',
+          textAlignVertical: 'center' as const,
         }),
-      },
+      } as TextStyle,
       translation: {
-        textAlign: 'center',
+        textAlign: 'center' as const,
         fontWeight: '600',
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
         paddingHorizontal: LAYOUT.SPACING.MEDIUM,
         lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
         opacity: 0.9,
-      },
+      } as TextStyle,
       detailsContainer: {
         gap: LAYOUT.SPACING.LARGE,
         width: '100%',
-      },
+      } as ViewStyle,
       detailRow: {
         gap: LAYOUT.SPACING.SMALL,
         width: '100%',
         marginHorizontal: LAYOUT.SPACING.XLARGE,
-      },
+      } as ViewStyle,
       label: {
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
         fontWeight: '600',
         opacity: LAYOUT.OPACITY.DIMMED,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
-      },
+      } as TextStyle,
       pill: {
         borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
         padding: LAYOUT.SPACING.LARGE,
@@ -116,40 +115,40 @@ function WordDetailsModalComponent({
             elevation: 1,
           },
         }),
-      },
+      } as ViewStyle,
       rootText: {
         ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
-          textAlign: 'center',
+          textAlign: 'center' as const,
           marginBottom: LAYOUT.SPACING.MEDIUM,
         }),
-      },
+      } as TextStyle,
       rootMeaning: {
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
         marginTop: LAYOUT.SPACING.MEDIUM,
-        textAlign: 'center',
+        textAlign: 'center' as const,
         opacity: LAYOUT.OPACITY.DIMMED,
         lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-      },
+      } as TextStyle,
       typeText: {
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-        textAlign: 'center',
+        textAlign: 'center' as const,
         fontWeight: '500',
         lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.4,
-      },
+      } as TextStyle,
       grammarNote: {
         gap: LAYOUT.SPACING.SMALL,
         width: '100%',
         marginHorizontal: LAYOUT.SPACING.XLARGE,
-      },
+      } as ViewStyle,
       noteText: {
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
         lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
-      },
+      } as TextStyle,
       studyButton: {
         alignSelf: 'center',
         minWidth: 240,
         marginTop: LAYOUT.SPACING.MEDIUM,
-      },
+      } as ViewStyle,
     });
   }, []);
 
@@ -163,46 +162,50 @@ function WordDetailsModalComponent({
         textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
         textShadowRadius: isSelected ? 0.5 : 0,
         textShadowOffset: { width: 0, height: 0 },
-      },
+      } as TextStyle,
     ],
-    [colors.arabicText, colors.tint, colors.textShadowLight, isSelected]
+    [colors.arabicText, colors.tint, colors.textShadowLight, isSelected, styles.arabicWord]
   );
 
   const translationStyle = useMemo(
-    () => [styles.translation, { color: colors.titleText }],
-    [colors.titleText]
+    () => [styles.translation, { color: colors.titleText } as TextStyle],
+    [colors.titleText, styles.translation]
   );
 
-  const labelStyle = useMemo(() => [styles.label, { color: colors.titleText }], [colors.titleText]);
+  const labelStyle = useMemo(
+    () => [styles.label, { color: colors.titleText } as TextStyle],
+    [colors.titleText, styles.label]
+  );
 
   const pillStyle = useMemo(
-    () => ({
-      ...styles.pill,
-      backgroundColor: colors.textOverlay,
-      borderColor: colors.borderOverlay,
-      borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    }),
-    [colors.textOverlay, colors.borderOverlay]
+    () =>
+      ({
+        ...styles.pill,
+        backgroundColor: colors.textOverlay,
+        borderColor: colors.borderOverlay,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+      }) as ViewStyle,
+    [colors.textOverlay, colors.borderOverlay, styles.pill]
   );
 
   const rootTextStyle = useMemo(
-    () => [styles.rootText, { color: colors.arabicText }],
-    [colors.arabicText]
+    () => [styles.rootText, { color: colors.arabicText } as TextStyle],
+    [colors.arabicText, styles.rootText]
   );
 
   const rootMeaningStyle = useMemo(
-    () => [styles.rootMeaning, { color: colors.titleText }],
-    [colors.titleText]
+    () => [styles.rootMeaning, { color: colors.titleText } as TextStyle],
+    [colors.titleText, styles.rootMeaning]
   );
 
   const typeTextStyle = useMemo(
-    () => [styles.typeText, { color: colors.titleText }],
-    [colors.titleText]
+    () => [styles.typeText, { color: colors.titleText } as TextStyle],
+    [colors.titleText, styles.typeText]
   );
 
   const noteTextStyle = useMemo(
-    () => [styles.noteText, { color: colors.titleText }],
-    [colors.titleText]
+    () => [styles.noteText, { color: colors.titleText } as TextStyle],
+    [colors.titleText, styles.noteText]
   );
 
   // Custom button style for selected state to ensure border is visible
@@ -211,17 +214,18 @@ function WordDetailsModalComponent({
       ...styles.studyButton,
       borderWidth: isSelected ? 1 : 0,
       borderColor: isSelected ? colors.tint : 'transparent',
-    };
-  }, [isSelected, colors.tint]);
+    } as ViewStyle;
+  }, [isSelected, colors.tint, styles.studyButton]);
 
   // Modal content style with dynamic background color
   const modalContentStyle = useMemo(
-    (): ViewStyle => ({
-      ...styles.modalContent,
-      backgroundColor: colors.cardBackground,
-      maxHeight: '85%',
-    }),
-    [colors.cardBackground]
+    (): ViewStyle =>
+      ({
+        ...styles.modalContent,
+        backgroundColor: colors.cardBackground,
+        maxHeight: '85%',
+      }) as ViewStyle,
+    [colors.cardBackground, styles.modalContent]
   );
 
   return (

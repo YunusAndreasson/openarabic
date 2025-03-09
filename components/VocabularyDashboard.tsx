@@ -105,14 +105,7 @@ const MasteryHeader = React.memo(({ percentage }: { percentage: number }) => (
 MasteryHeader.displayName = 'MasteryHeader';
 
 export const VocabularyDashboard = React.memo(
-  ({
-    totalWords,
-    dueWords,
-    masteredWords,
-    learningWords,
-    streak,
-    colors,
-  }: VocabularyDashboardProps) => {
+  ({ totalWords, masteredWords, learningWords, streak, colors }: VocabularyDashboardProps) => {
     // Calculate mastery percentage
     const masteryPercentage = useMemo(
       () => (totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0),

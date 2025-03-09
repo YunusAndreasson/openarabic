@@ -134,7 +134,7 @@ export default function VocabularyScreen() {
   const ErrorMessage = React.memo(() => {
     return (
       <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
-        <ThemedText style={[styles.message, { color: colors.warning }]}>
+        <ThemedText style={[styles.message, { color: colors.error }]}>
           Error loading your vocabulary data. Please try again later.
         </ThemedText>
         <ThemedButton
@@ -371,5 +371,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  articleInfoText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginLeft: LAYOUT.SPACING.TINY,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
 });

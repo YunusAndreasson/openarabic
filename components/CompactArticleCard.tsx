@@ -3,7 +3,6 @@ import { StyleSheet, View, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
-import type { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import { CategoryPill } from './CategoryPill';
 import { Ionicons } from '@expo/vector-icons';

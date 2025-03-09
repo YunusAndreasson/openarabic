@@ -21,6 +21,7 @@ export const Colors = {
     white: '#FFFFFF',
     success: '#2B8A3E', // Retained green for success
     warning: '#E67700', // Retained orange for warning
+    error: '#D32F2F', // Red for error messages
     info: '#1864AB', // Retained blue for info
     shadow: '#99999D', // Tinted shadow
     overlay: 'rgba(248, 249, 255, 0.5)', // Light overlay with tint
@@ -61,6 +62,7 @@ export const Colors = {
     white: '#FFFFFF',
     success: '#40C057', // Retained brighter green for dark mode
     warning: '#FCC419', // Retained brighter yellow/orange
+    error: '#EF5350', // Brighter red for error messages in dark mode
     info: '#339AF0', // Retained brighter blue
     shadow: '#010102', // Tinted shadow
     overlay: 'rgba(1, 1, 2, 0.5)', // Dark overlay with tint

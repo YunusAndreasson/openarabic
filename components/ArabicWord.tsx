@@ -6,12 +6,7 @@ import { SentenceWord } from '@/types/vocabulary.types';
 import { WordDetailsModal } from './WordDetailsModal';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -134,9 +129,6 @@ const styles = StyleSheet.create({
   wordWrapper: {
     position: 'relative',
     alignItems: 'center',
-  },
-  arabicText: {
-    fontFamily: 'NotoNaskhArabic',
   },
   underline: {
     height: 1.5,

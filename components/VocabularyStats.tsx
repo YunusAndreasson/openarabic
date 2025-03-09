@@ -1,16 +1,14 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
-import { Loader, LoadingContainer } from './Loader';
+import { LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/useComponentAnimation';
 import { useProgressAnimation } from '@/hooks/useProgressAnimation';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStats as VocabularyStatsType } from '@/types/vocabulary.types';
-
-const SCREEN_WIDTH = Dimensions.get('window').width;
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyStatsProps
@@ -20,9 +18,7 @@ interface VocabularyStatsProps
 
 function VocabularyStatsComponent({
   totalWords,
-  dueWords,
   masteredWords,
-  learningWords,
   isLoading = false,
 }: VocabularyStatsProps) {
   const colors = useColors();
@@ -156,15 +152,5 @@ const styles = StyleSheet.create({
   circleCanvas: {
     width: 80,
     height: 80,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
   },
 });

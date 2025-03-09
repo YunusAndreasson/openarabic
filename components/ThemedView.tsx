@@ -4,14 +4,19 @@ import {
   type ViewProps,
   type StyleProp,
   ViewStyle,
-  Platform,
   View,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 
-// Extend ViewProps to add optional scrollable behavior and a content container style.
+/**
+ * ThemedView is a flexible container component that automatically applies theme colors
+ * and provides options for scrollable content, safe area insets, and more.
+ *
+ * It serves as the foundation for most screens in the app, ensuring consistent
+ * theming and behavior across the application.
+ */
 export interface ThemedViewProps extends ViewProps {
   /** Determines whether the view should be scrollable */
   scrollable?: boolean;
@@ -61,7 +66,9 @@ function ThemedViewComponent({
     }
 
     // Otherwise, determine based on includeBottomInset
-    return includeBottomInset ? undefined : (['top', 'left', 'right'] as Edge[]);
+    // When includeBottomInset is true, return undefined to apply all edges
+    // When false, exclude the bottom edge
+    return includeBottomInset ? undefined : ['top', 'left', 'right'];
   }, [includeBottomInset, safeAreaEdges]);
 
   // Use useMemo to prevent unnecessary rerenders when props don't change

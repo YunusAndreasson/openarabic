@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-unused-styles */
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, View, Platform } from 'react-native';
+import { StyleSheet, ScrollView, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -9,7 +9,7 @@ import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import { createBasePillStyles } from './pills/BasePill';
-import Animated, { useAnimatedStyle, SharedValue } from 'react-native-reanimated';
+import Animated, { SharedValue } from 'react-native-reanimated';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];
@@ -57,7 +57,6 @@ function CategoryPillsComponent({
   categories,
   selectedCategory,
   onSelectCategory,
-  visible,
 }: CategoryPillsProps) {
   const colors = useColors();
 

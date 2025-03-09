@@ -14,10 +14,10 @@ import {
 } from '@shopify/react-native-skia';
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
-import { Loader, LoadingContainer } from './Loader';
+import { LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/useComponentAnimation';
 import { useGraphData } from '@/hooks/useGraphData';
-import Animated, {
+import {
   useSharedValue,
   useAnimatedReaction,
   withTiming,
@@ -45,7 +45,7 @@ export const VocabularyGraph = React.memo(
       Dimensions.get('window').width - LAYOUT.SCREEN_EDGE_PADDING * 2 - PADDING * 2;
 
     // Use the graph data hook to process data
-    const { points, areaPath, linePath, totalWordsLearned, dailyAverage, maxValue } = useGraphData(
+    const { points, areaPath, linePath, totalWordsLearned, dailyAverage } = useGraphData(
       data,
       GRAPH_WIDTH,
       GRAPH_HEIGHT

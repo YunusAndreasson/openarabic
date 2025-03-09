@@ -213,33 +213,43 @@ export default function ReviewScreen() {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Override the overlay style with the proper color from the theme
+  // Create themed styles using StyleSheet.create for better performance
+  const themedStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        meaningOverlay: {
+          ...baseStyles.meaningOverlay,
+          backgroundColor: colors.textOverlay,
+        },
+        actionButton: {
+          ...baseStyles.actionButton,
+          ...Platform.select({
+            ios: {
+              shadowColor: colors.shadow,
+            },
+          }),
+        },
+        modalContent: {
+          ...baseStyles.modalContent,
+          ...Platform.select({
+            ios: {
+              shadowColor: colors.shadow,
+            },
+          }),
+        },
+      }),
+    [colors]
+  );
+
+  // Use a combination of base styles and themed styles
   const styles = useMemo(
     () => ({
       ...baseStyles,
-      meaningOverlay: {
-        ...baseStyles.meaningOverlay,
-        backgroundColor: colors.textOverlay,
-      },
-      actionButton: {
-        ...baseStyles.actionButton,
-        ...Platform.select({
-          ios: {
-            shadowColor: colors.black,
-          },
-        }),
-      },
-      modalContent: {
-        ...baseStyles.modalContent,
-        ...Platform.select({
-          ios: {
-            shadowColor: colors.black,
-          },
-        }),
-      },
-      // Add any other style overrides here
+      meaningOverlay: themedStyles.meaningOverlay,
+      actionButton: themedStyles.actionButton,
+      modalContent: themedStyles.modalContent,
     }),
-    [colors]
+    [themedStyles]
   );
 
   const { user } = useAuth();

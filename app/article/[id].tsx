@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   articleInfoText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     marginLeft: LAYOUT.SPACING.TINY,
-    opacity: 0.7,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   categoryContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   summaryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
-    opacity: 0.85,
+    opacity: LAYOUT.OPACITY.HIGH,
     fontStyle: 'italic',
     paddingTop: LAYOUT.SPACING.SMALL,
   },

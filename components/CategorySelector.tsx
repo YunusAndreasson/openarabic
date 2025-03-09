@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Pressable, FlatList, ListRenderItem, Platform } from 'react-native';
+import { StyleSheet, View, Pressable, FlatList, ListRenderItem } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -10,7 +10,6 @@ import Animated, {
   interpolateColor,
   Layout,
 } from 'react-native-reanimated';
-import { createBasePillStyles } from './pills/BasePill';
 import { Category } from '../types/articles.types';
 
 // Define a type for our category item (including the "All" option)
@@ -23,15 +22,12 @@ export interface CategorySelectorProps {
 }
 
 // Create the animated components
-const AnimatedFlatList =
-  Animated.createAnimatedComponent<React.ComponentProps<typeof FlatList<CategoryItem>>>(FlatList);
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 // Extract CategoryPill as a separate component to use hooks
 const CategoryPill = React.memo(function CategoryPill({
   item,
-  index,
   isSelected,
   onPress,
   isDarkMode,
