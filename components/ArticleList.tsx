@@ -12,7 +12,6 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
-import { ArticleSkeletonRow } from './ArticleSkeleton';
 import Animated from 'react-native-reanimated';
 import EndMessage from './EndMessage';
 import { CopyrightFooter } from './CopyrightFooter';
@@ -121,17 +120,6 @@ const ArticleList: React.FC<ArticleListProps> = ({
     [viewableItems, onArticlePress]
   );
 
-  // Render the loading skeleton when loading
-  const renderLoading = () => {
-    if (!isLoading || isRefreshing || articles.length > 0) return null;
-
-    return (
-      <View style={styles.loadingContainer}>
-        <ArticleSkeletonRow count={3} type="card" horizontal={false} />
-      </View>
-    );
-  };
-
   // Render the footer component
   const renderFooter = () => {
     if (isLoading && articles.length === 0) return null;
@@ -143,11 +131,6 @@ const ArticleList: React.FC<ArticleListProps> = ({
       </>
     );
   };
-
-  // If loading and no articles, show skeleton loading
-  if (isLoading && !isRefreshing && articles.length === 0) {
-    return renderLoading();
-  }
 
   return (
     <FlatList
@@ -191,9 +174,5 @@ const styles = StyleSheet.create({
   },
   articleCard: {
     width: '100%',
-  },
-  loadingContainer: {
-    flex: 1,
-    paddingTop: LAYOUT.SPACING.LARGE,
   },
 });
