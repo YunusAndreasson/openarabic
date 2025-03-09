@@ -82,7 +82,7 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
     () =>
       StyleSheet.create({
         container: {
-          borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           borderWidth: LAYOUT.BORDER.WIDTH.THIN,
           margin: LAYOUT.SPACING.MEDIUM,
           padding: LAYOUT.CARD.PADDING.MEDIUM,
@@ -98,9 +98,9 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
           ...getArabicTextStyle(42, {
             textAlign: 'center',
             marginBottom: LAYOUT.SPACING.MEDIUM,
-            paddingHorizontal: 24,
-            paddingVertical: 16,
-            borderRadius: 12,
+            paddingHorizontal: LAYOUT.SPACING.XXLARGE,
+            paddingVertical: LAYOUT.SPACING.LARGE,
+            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           }),
         },
         englishWord: {

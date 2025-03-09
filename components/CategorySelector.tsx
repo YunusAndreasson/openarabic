@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   categoryPill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL - 2,
-    borderRadius: 18,
+    borderRadius: 34 / 2, // Half of height for pill shape
     marginRight: LAYOUT.SPACING.SMALL,
     height: 34,
     minWidth: 50,

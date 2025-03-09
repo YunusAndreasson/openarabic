@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   clearFilterButton: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minWidth: 60,
     alignItems: 'center',
     justifyContent: 'center',
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   authorPill: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginRight: LAYOUT.SPACING.SMALL,
     minWidth: 100,
     alignItems: 'center',
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     marginVertical: LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   filterNoticeText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     minHeight: 44,
   },
   backButtonText: {

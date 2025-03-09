@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   reviewButton: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: '100%',
   },
   loadingContainer: {

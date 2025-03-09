@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   buttonBlur: {
     padding: LAYOUT.SPACING.SMALL,
-    borderRadius: 20,
+    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   categoryContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: 16,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },

@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 100,
     height: 100,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: LAYOUT.SPACING.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   benefitTitle: {

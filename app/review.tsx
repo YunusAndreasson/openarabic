@@ -127,7 +127,7 @@ const baseStyles = StyleSheet.create({
   actionButton: {
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: 56 / 2,
     justifyContent: 'center',
     alignItems: 'center',
     ...Platform.select({
@@ -145,7 +145,7 @@ const baseStyles = StyleSheet.create({
   modalContent: {
     width: maxWidth,
     padding: 0,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE * 1.5,
+    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
     overflow: 'hidden',
     ...Platform.select({
       ios: {
@@ -524,7 +524,7 @@ export default function ReviewScreen() {
       modalIconContainer: {
         width: 40,
         height: 40,
-        borderRadius: 20,
+        borderRadius: 40 / 2,
         backgroundColor: colors.textOverlay,
         justifyContent: 'center' as const,
         alignItems: 'center' as const,
@@ -576,9 +576,9 @@ export default function ReviewScreen() {
                 color: colors.tint,
                 fontWeight: '700',
                 backgroundColor: `${colors.tint}08`, // Reduced background opacity
-                paddingHorizontal: 8, // Reduced horizontal padding
-                paddingVertical: 4, // Reduced vertical padding
-                borderRadius: 4, // Reduced border radius
+                paddingHorizontal: LAYOUT.SPACING.SMALL, // Using LAYOUT constant
+                paddingVertical: LAYOUT.SPACING.TINY, // Using LAYOUT constant
+                borderRadius: LAYOUT.BORDER_RADIUS.XSMALL, // Using LAYOUT constant
               },
             ]}
             skipDefaultColor

@@ -47,7 +47,7 @@ function AppContent() {
           borderLeftColor: colors.tint,
           backgroundColor: colors.cardBackground,
           borderColor: colors.cardBorder,
-          borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           width: '90%',
           height: 'auto',
         }}

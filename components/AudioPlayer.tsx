@@ -147,7 +147,7 @@ export function AudioPlayer({
       StyleSheet.create({
         container: {
           borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-          borderRadius: 8,
+          borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
           overflow: 'hidden',
           marginBottom: LAYOUT.SPACING.MEDIUM,
         },
@@ -195,7 +195,7 @@ export function AudioPlayer({
         playlistItem: {
           paddingVertical: LAYOUT.SPACING.SMALL,
           paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-          borderRadius: 4,
+          borderRadius: LAYOUT.BORDER_RADIUS.XSMALL,
           marginBottom: LAYOUT.SPACING.SMALL,
         },
         playlistItemActive: {

@@ -24,7 +24,7 @@ export const createBasePillStyles = ({
           ? `${colors.tint}50` // Selected in dark mode (tint with 50% opacity)
           : colors.cardBorder, // Default border color
       borderWidth: isSelected && isDarkMode ? 1 : 0.5,
-      borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
       paddingHorizontal: LAYOUT.SPACING.MEDIUM,
       paddingVertical: LAYOUT.SPACING.TINY + 2,
       // Enhanced shadow for better visibility against any background

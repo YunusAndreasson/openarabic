@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
   },

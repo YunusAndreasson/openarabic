@@ -110,7 +110,7 @@ export const VocabularyStats = React.memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
   progressCard: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 130,
     overflow: 'hidden',
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,

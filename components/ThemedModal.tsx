@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
   },
   modalContent: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.LARGE,
     shadowOffset: {
       width: 0,

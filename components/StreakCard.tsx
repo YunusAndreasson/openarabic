@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   statCard: {
     width: '48%',
     height: 90,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 40,
     height: 40,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: LAYOUT.SPACING.MEDIUM,

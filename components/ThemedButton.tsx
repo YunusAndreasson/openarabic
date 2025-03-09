@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
     paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minWidth: 160,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
   },

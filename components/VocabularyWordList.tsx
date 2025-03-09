@@ -147,11 +147,11 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   statusContainer: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
   statusPill: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   statusBackground: {
     flexDirection: 'row',

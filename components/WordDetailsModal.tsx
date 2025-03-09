@@ -41,7 +41,7 @@ function WordDetailsModalComponent({
       modalContent: {
         width: maxWidth,
         padding: 0,
-        borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE * 1.5,
+        borderRadius: LAYOUT.BORDER_RADIUS.LARGE * 1.5,
         overflow: 'hidden',
         ...Platform.select({
           ios: {
@@ -99,7 +99,7 @@ function WordDetailsModalComponent({
         letterSpacing: 0.5,
       },
       pill: {
-        borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+        borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
         padding: LAYOUT.SPACING.LARGE,
         marginHorizontal: -LAYOUT.SPACING.XLARGE,
         marginVertical: 0,

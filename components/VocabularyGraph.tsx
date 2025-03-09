@@ -270,7 +270,7 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 28,
     height: 28,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
   },

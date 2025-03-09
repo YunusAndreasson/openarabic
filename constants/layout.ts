@@ -34,6 +34,17 @@ export const LAYOUT = {
     MARGIN: 12, // Tighter margin for bottom elements
   },
 
+  // Unified border radius system
+  BORDER_RADIUS: {
+    NONE: 0,
+    XSMALL: 4, // For small UI elements like text placeholders
+    SMALL: 8, // For inputs, small buttons, cards
+    MEDIUM: 12, // Standard radius for most components
+    LARGE: 16, // For featured cards and containers
+    XLARGE: 24, // For more pronounced rounding
+    PILL: 9999, // For pill-shaped elements (or use width/2 for circular)
+  },
+
   // Card dimensions
   CARD: {
     PADDING: {
@@ -46,17 +57,12 @@ export const LAYOUT = {
       MEDIUM: 8, // Standard margin
       LARGE: 12, // Spacious margin for featured cards
     },
-    BORDER_RADIUS: {
-      SMALL: 8, // Subtle rounded corners
-      MEDIUM: 12, // Standard rounded corners
-      LARGE: 16, // More pronounced rounded corners
-    },
   },
 
   // Input and form elements
   INPUT: {
     HEIGHT: 52, // Standard input height
-    BORDER_RADIUS: 8, // Consistent with small card radius
+    BORDER_RADIUS: 8, // Same as BORDER_RADIUS.SMALL
     BORDER_WIDTH: {
       DEFAULT: 1.5,
       FOCUSED: 2,
@@ -71,9 +77,9 @@ export const LAYOUT = {
       LARGE: 52,
     },
     BORDER_RADIUS: {
-      SMALL: 8,
-      MEDIUM: 12,
-      LARGE: 30,
+      SMALL: 8, // Same as BORDER_RADIUS.SMALL
+      MEDIUM: 12, // Same as BORDER_RADIUS.MEDIUM
+      LARGE: 24, // Same as BORDER_RADIUS.XLARGE
     },
     PADDING: {
       HORIZONTAL: {

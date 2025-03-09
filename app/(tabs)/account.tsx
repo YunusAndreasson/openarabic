@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   settingsContainer: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
@@ -485,7 +485,7 @@ const styles = StyleSheet.create({
   },
   previewScroller: {
     padding: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
   arabicPreviewText: {
     textAlign: 'right',
@@ -496,18 +496,18 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   connectContainer: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
   actionsContainer: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
   actionButton: {
     borderWidth: 0,
-    borderRadius: 0,
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },

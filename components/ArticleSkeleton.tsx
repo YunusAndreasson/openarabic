@@ -102,9 +102,12 @@ export const ArticleSkeletonRow: React.FC<{
   );
 };
 
+// Define a constant for the small border radius to use throughout the component
+const SKELETON_BORDER_RADIUS = 4;
+
 const styles = StyleSheet.create({
   container: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     marginBottom: LAYOUT.SPACING.MEDIUM,
     ...LAYOUT.SHADOW.SMALL,
@@ -112,14 +115,14 @@ const styles = StyleSheet.create({
   compactContainer: {
     width: 220,
     height: 220,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.SMALL,
   },
   featuredContainer: {
     width: '100%',
     height: 280,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.SMALL,
   },
@@ -140,41 +143,41 @@ const styles = StyleSheet.create({
   },
   title: {
     height: 20,
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   compactTitle: {
     height: 16,
     width: '90%',
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   featuredTitle: {
     height: 24,
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   subtitle: {
     height: 16,
     width: '70%',
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   compactSubtitle: {
     height: 14,
     width: '60%',
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
   },
   featuredSubtitle: {
     height: 18,
     width: '80%',
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   meta: {
     height: 14,
     width: '40%',
-    borderRadius: 4,
+    borderRadius: SKELETON_BORDER_RADIUS,
     marginTop: LAYOUT.SPACING.SMALL,
   },
   horizontalRow: {

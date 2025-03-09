@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   emptyIconContainer: {
     width: 100,
     height: 100,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    borderRadius: LAYOUT.BUTTON.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
   },
   emptyActionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

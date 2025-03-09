@@ -32,7 +32,7 @@ export function CompactThemedCard({ children, onPress, style }: CompactThemedCar
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
     elevation: 3,
     ...LAYOUT.SHADOW.MEDIUM,
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     padding: LAYOUT.CARD.PADDING.SMALL,
   },
   pressed: {

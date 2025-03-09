@@ -114,7 +114,7 @@ function ThemedCardComponent({
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
         shadowColor: colors.shadow,
-        borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         overflow: 'hidden',
         ...LAYOUT.SHADOW.MEDIUM,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     overflow: 'visible',
   },
   card: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,

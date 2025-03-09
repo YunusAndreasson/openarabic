@@ -210,7 +210,7 @@ VocabularyDashboard.displayName = 'VocabularyDashboard';
 const styles = StyleSheet.create({
   mainCard: {
     width: '100%',
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
   },
   iconWrapper: {
     backgroundColor: Colors.light.cardBackground,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.SMALL,
   },
   statValue: {
@@ -258,11 +258,11 @@ const styles = StyleSheet.create({
   },
   progressBarBg: {
     height: 8,
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });

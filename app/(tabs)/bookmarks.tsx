@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   controlsCard: {
-    borderRadius: LAYOUT.CARD.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.SPACING.MEDIUM,
     backgroundColor: 'transparent',

@@ -3,6 +3,7 @@ import { render } from '@testing-library/react-native';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { View, Text, TextStyle } from 'react-native';
+import { LAYOUT } from '../../constants/layout';
 
 // Import components after mocks
 import { ThemedText } from '../../components/ThemedText';
@@ -88,7 +89,7 @@ describe('Component Snapshots', () => {
   describe('View Component', () => {
     it('should render a simple View component', () => {
       const { toJSON } = renderWithRedux(
-        <View style={{ padding: 20, backgroundColor: '#F5F5F5' }}>
+        <View style={{ padding: LAYOUT.SPACING.XLARGE, backgroundColor: '#F5F5F5' }}>
           <Text>Card Content</Text>
         </View>
       );
@@ -97,7 +98,14 @@ describe('Component Snapshots', () => {
 
     it('should render with custom styling', () => {
       const { toJSON } = renderWithRedux(
-        <View style={{ margin: 20, padding: 15, borderRadius: 8, backgroundColor: '#FFFFFF' }}>
+        <View
+          style={{
+            margin: LAYOUT.SPACING.XLARGE,
+            padding: LAYOUT.SPACING.LARGE,
+            borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+            backgroundColor: '#FFFFFF',
+          }}
+        >
           <Text>Custom Card</Text>
         </View>
       );
