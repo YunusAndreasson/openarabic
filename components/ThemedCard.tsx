@@ -136,7 +136,14 @@ function ThemedCardComponent({
       <>
         <View style={styles.imageContainer}>
           {/* Replace the Image component with our EnhancedImage */}
-          <EnhancedImage source={imageUrl} style={styles.image} contentFit="cover" />
+          <EnhancedImage
+            source={imageUrl}
+            style={styles.image}
+            contentFit="cover"
+            alt={`Image for article: ${title}`}
+            onError={() => setImageError(true)}
+            showLoadingIndicator={true}
+          />
 
           {/* Image overlay content - keep this as is */}
           <View style={styles.imageOverlayContainer} pointerEvents="none">

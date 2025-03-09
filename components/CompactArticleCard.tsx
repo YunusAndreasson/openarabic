@@ -107,6 +107,9 @@ function CompactArticleCardComponent({
               source={article.image_url || 'https://picsum.photos/800/400'}
               style={styles.image}
               contentFit="cover"
+              alt={`Image for article: ${article.title}`}
+              onError={() => console.log(`Failed to load image for article: ${article.id}`)}
+              showLoadingIndicator={true}
             />
             {article.category && <CategoryPill category={article.category.name} />}
           </View>

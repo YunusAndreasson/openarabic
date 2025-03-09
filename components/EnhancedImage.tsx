@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -37,6 +37,7 @@ interface EnhancedImageProps {
  * - Error handling with fallback
  * - Optimized image loading and caching
  * - Accessibility support
+ * - Memory-efficient with memoization
  */
 export function EnhancedImage({
   source,
@@ -63,9 +64,19 @@ export function EnhancedImage({
   const loadingOpacity = useSharedValue(1);
   const loadingAnimatedStyle = { opacity: loadingOpacity };
 
-  // Get optimized image source
-  const optimizedSource = !disableOptimization ? getOptimizedImageUrl(source) : source;
-  const placeholderColor = getPlaceholderColor(isDarkMode);
+  // Memoize these values to prevent unnecessary recalculations
+  const optimizedSource = useMemo(
+    () => (!disableOptimization && source ? getOptimizedImageUrl(source) : source),
+    [source, disableOptimization]
+  );
+
+  const placeholderColor = useMemo(() => getPlaceholderColor(isDarkMode), [isDarkMode]);
+
+  // Memoize container styles
+  const containerStyle = useMemo(
+    () => [styles.container, { backgroundColor: placeholderColor }, style],
+    [placeholderColor, style]
+  );
 
   // Handle image load success
   const handleImageLoad = useCallback(() => {
@@ -93,13 +104,15 @@ export function EnhancedImage({
     if (onError) onError();
   }, [loadingOpacity, onError]);
 
+  // Don't render anything if source is empty
+  if (!source) {
+    return null;
+  }
+
   return (
-    <View
-      style={[styles.container, { backgroundColor: placeholderColor }, style]}
-      accessibilityLabel={alt}
-    >
+    <View style={containerStyle} accessibilityLabel={alt}>
       {/* Loading indicator */}
-      {showLoadingIndicator && (
+      {showLoadingIndicator && isLoading && (
         <Animated.View style={[styles.loadingContainer, loadingAnimatedStyle]} pointerEvents="none">
           <LoadingContainer size="small" />
         </Animated.View>
@@ -115,7 +128,7 @@ export function EnhancedImage({
           onLoad={handleImageLoad}
           onError={handleError}
           cachePolicy="memory-disk"
-          accessible={true}
+          accessible={!!alt}
           accessibilityLabel={alt}
         />
       </Animated.View>
