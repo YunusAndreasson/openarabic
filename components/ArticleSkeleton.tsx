@@ -1,88 +1,63 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withSequence,
-  FadeIn,
-} from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useShimmerAnimation } from '@/hooks/animations';
 
 interface ArticleSkeletonProps {
   style?: ViewStyle;
   type?: 'card' | 'compact' | 'featured';
 }
 
+// Define a constant for the small border radius to use throughout the component
+const SKELETON_BORDER_RADIUS = 4;
+
 /**
  * A skeleton loading component for articles
  */
 export const ArticleSkeleton: React.FC<ArticleSkeletonProps> = ({ style, type = 'card' }) => {
   const colors = useColors();
-  const opacity = useSharedValue(0.5);
-
-  // Use our custom fade-in animation
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+  const { animatedStyle, startAnimation } = useShimmerAnimation(600, 0.5, 0.8);
 
   useEffect(() => {
-    startFadeIn();
-  }, [startFadeIn]);
+    startAnimation();
+  }, [startAnimation]);
 
   // Use a light gray color for skeleton background
   const skeletonColor = colors.textOverlay;
 
-  // Set up the shimmer animation
-  React.useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(withTiming(0.8, { duration: 600 }), withTiming(0.5, { duration: 600 })),
-      -1,
-      true
-    );
-  }, [opacity]);
+  // Determine which styles to use based on type
+  let containerStyle, imageStyle, titleStyle, subtitleStyle;
 
-  const shimmerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
-  const getSkeletonStyles = () => {
-    switch (type) {
-      case 'compact':
-        return {
-          container: [styles.compactContainer, { backgroundColor: colors.cardBackground }],
-          image: [styles.compactImage, { backgroundColor: skeletonColor }],
-          title: [styles.compactTitle, { backgroundColor: skeletonColor }],
-          subtitle: [styles.compactSubtitle, { backgroundColor: skeletonColor }],
-        };
-      case 'featured':
-        return {
-          container: [styles.featuredContainer, { backgroundColor: colors.cardBackground }],
-          image: [styles.featuredImage, { backgroundColor: skeletonColor }],
-          title: [styles.featuredTitle, { backgroundColor: skeletonColor }],
-          subtitle: [styles.featuredSubtitle, { backgroundColor: skeletonColor }],
-        };
-      default:
-        return {
-          container: [styles.container, { backgroundColor: colors.cardBackground }],
-          image: [styles.image, { backgroundColor: skeletonColor }],
-          title: [styles.title, { backgroundColor: skeletonColor }],
-          subtitle: [styles.subtitle, { backgroundColor: skeletonColor }],
-        };
-    }
-  };
-
-  const skeletonStyles = getSkeletonStyles();
+  switch (type) {
+    case 'compact':
+      containerStyle = [styles.compactContainer, { backgroundColor: colors.cardBackground }];
+      imageStyle = [styles.compactImage, { backgroundColor: skeletonColor }];
+      titleStyle = [styles.compactTitle, { backgroundColor: skeletonColor }];
+      subtitleStyle = [styles.compactSubtitle, { backgroundColor: skeletonColor }];
+      break;
+    case 'featured':
+      containerStyle = [styles.featuredContainer, { backgroundColor: colors.cardBackground }];
+      imageStyle = [styles.featuredImage, { backgroundColor: skeletonColor }];
+      titleStyle = [styles.featuredTitle, { backgroundColor: skeletonColor }];
+      subtitleStyle = [styles.featuredSubtitle, { backgroundColor: skeletonColor }];
+      break;
+    default:
+      containerStyle = [styles.container, { backgroundColor: colors.cardBackground }];
+      imageStyle = [styles.image, { backgroundColor: skeletonColor }];
+      titleStyle = [styles.title, { backgroundColor: skeletonColor }];
+      subtitleStyle = [styles.subtitle, { backgroundColor: skeletonColor }];
+  }
 
   return (
-    <Animated.View style={[skeletonStyles.container, style, fadeInStyle]}>
-      <Animated.View style={[skeletonStyles.image, shimmerStyle]} />
+    <Animated.View style={[containerStyle, style]} entering={FadeIn.duration(300)}>
+      <Animated.View style={[imageStyle, animatedStyle]} />
       <View style={styles.content}>
-        <Animated.View style={[skeletonStyles.title, shimmerStyle]} />
-        <Animated.View style={[skeletonStyles.subtitle, shimmerStyle]} />
+        <Animated.View style={[titleStyle, animatedStyle]} />
+        <Animated.View style={[subtitleStyle, animatedStyle]} />
         {type !== 'compact' && (
-          <Animated.View style={[styles.meta, shimmerStyle, { backgroundColor: skeletonColor }]} />
+          <Animated.View style={[styles.meta, { backgroundColor: skeletonColor }, animatedStyle]} />
         )}
       </View>
     </Animated.View>
@@ -109,9 +84,6 @@ export const ArticleSkeletonRow: React.FC<{
     </View>
   );
 };
-
-// Define a constant for the small border radius to use throughout the component
-const SKELETON_BORDER_RADIUS = 4;
 
 const styles = StyleSheet.create({
   container: {

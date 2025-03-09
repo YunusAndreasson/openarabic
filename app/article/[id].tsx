@@ -42,6 +42,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { useFadeInAnimation, useSlideAnimation } from '@/hooks/animations';
 
 const styles = StyleSheet.create({
   container: {
@@ -161,32 +162,40 @@ export default function ArticleScreen() {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
 
-  // Animation for content transitions
-  const contentOpacity = useSharedValue(1); // Start fully visible
-  const contentTranslateY = useSharedValue(0); // Start at position 0
-
-  // Animation values for back button using Reanimated
-  const backButtonAnim = useSharedValue(0);
-  const playlistButtonAnim = useSharedValue(0);
-  const buttonsOpacity = useSharedValue(1); // Add opacity shared value
+  // Animation value for button opacity
+  const buttonsOpacity = useSharedValue(1);
   const [isButtonsVisible, setIsButtonsVisible] = useState(true);
   const prevScrollYValue = useRef(0);
+
+  // Use standardized animation hooks for content and buttons
+  const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
+    useFadeInAnimation(0, 300);
+  const {
+    animatedStyle: backButtonAnimatedStyle,
+    startAnimation: startBackButtonAnimation,
+    reset: resetBackButtonAnimation,
+  } = useSlideAnimation(0, 20, 100, 'left');
+  const {
+    animatedStyle: playlistButtonAnimatedStyle,
+    startAnimation: startPlaylistButtonAnimation,
+    reset: resetPlaylistButtonAnimation,
+  } = useSlideAnimation(0, 20, 100, 'left');
+
+  // Content animation style
+  const combinedContentStyle = useAnimatedStyle(() => {
+    return {
+      opacity: contentAnimatedStyle.opacity,
+      transform: contentAnimatedStyle.transform,
+      flex: 1,
+      backgroundColor: 'transparent', // Ensure no background color
+    };
+  });
 
   // Parse article ID once
   const articleId = useMemo(() => {
     if (!id) return undefined;
     return parseInt(id) || undefined;
   }, [id]);
-
-  // Content animation style
-  const contentAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: contentOpacity.value,
-      transform: [{ translateY: contentTranslateY.value }],
-      flex: 1,
-      backgroundColor: 'transparent', // Ensure no background color
-    };
-  });
 
   // Fetch article data
   const { data: article, isLoading: isLoadingArticle } = useQuery({
@@ -259,27 +268,33 @@ export default function ArticleScreen() {
     }
   }, [user, articleId, isInReadingList, addToReadingListMutation, removeFromReadingListMutation]);
 
-  // Update animation when visibility changes using Reanimated
+  // Update animation when visibility changes
   useEffect(() => {
-    // Use the same animation configuration for both buttons
-    const config = {
-      duration: 300,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    };
+    if (isButtonsVisible) {
+      startBackButtonAnimation();
+      startPlaylistButtonAnimation();
+      buttonsOpacity.value = withTiming(1, { duration: 300 });
+    } else {
+      resetBackButtonAnimation();
+      resetPlaylistButtonAnimation();
+      buttonsOpacity.value = withTiming(0, { duration: 300 });
+    }
+  }, [
+    isButtonsVisible,
+    startBackButtonAnimation,
+    startPlaylistButtonAnimation,
+    resetBackButtonAnimation,
+    resetPlaylistButtonAnimation,
+    buttonsOpacity,
+  ]);
 
-    // Move buttons completely off-screen when not visible
-    // Use negative value that's larger than the button height to ensure it's completely hidden
-    backButtonAnim.value = withTiming(isButtonsVisible ? 0 : -100, config);
-    playlistButtonAnim.value = withTiming(isButtonsVisible ? 0 : -100, config);
-    buttonsOpacity.value = withTiming(isButtonsVisible ? 1 : 0, config);
-  }, [isButtonsVisible, backButtonAnim, playlistButtonAnim, buttonsOpacity]);
-
-  // Set loading state based on article loading
+  // Start content animation when article loads
   useEffect(() => {
     if (!isLoadingArticle && article) {
       setIsLoading(false);
+      startContentAnimation();
     }
-  }, [isLoadingArticle, article]);
+  }, [isLoadingArticle, article, startContentAnimation]);
 
   // Fetch study words
   const { data: studyWords = [] } = useQuery({
@@ -376,11 +391,10 @@ export default function ArticleScreen() {
     });
   }, []);
 
-  // Reset animation and scroll to top when article ID changes
+  // Reset content animation when ID changes
   useEffect(() => {
     // Immediately set content to fully visible without animation
-    contentOpacity.value = 1;
-    contentTranslateY.value = 0;
+    // No need to manipulate contentAnimatedStyle directly
 
     // Scroll to top without animation for immediate response
     if (flatListRef.current) {
@@ -389,7 +403,7 @@ export default function ArticleScreen() {
         animated: false,
       });
     }
-  }, [id, contentOpacity, contentTranslateY]);
+  }, [id]);
 
   // Render article card
   const renderArticleCard = useCallback(
@@ -403,22 +417,6 @@ export default function ArticleScreen() {
     [handleArticlePress]
   );
 
-  // Create animated style for back button
-  const backButtonAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: backButtonAnim.value }],
-      opacity: buttonsOpacity.value,
-    };
-  });
-
-  // Create animated style for playlist button
-  const playlistButtonAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: playlistButtonAnim.value }],
-      opacity: buttonsOpacity.value,
-    };
-  });
-
   // Create themed styles with LAYOUT.OPACITY constants
   const themedStyles = useMemo(
     () => ({
@@ -431,13 +429,19 @@ export default function ArticleScreen() {
     []
   );
 
-  // Memoize the back button component to match playlist button implementation
+  // Memoize the back button component
   const BackButton = useMemo(() => {
     const buttonStyle = {
       ...themedStyles.buttonBlur,
       backgroundColor: isDarkMode
-        ? `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`
-        : `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`,
+        ? `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(
+            colors.background.slice(3, 5),
+            16
+          )}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`
+        : `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(
+            colors.background.slice(3, 5),
+            16
+          )}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`,
     };
 
     return (
@@ -445,7 +449,7 @@ export default function ArticleScreen() {
         style={[
           styles.backButton,
           { top: insets.top + LAYOUT.SPACING.MEDIUM },
-          backButtonAnimatedStyle,
+          combinedBackButtonStyle,
         ]}
       >
         <TouchableOpacity
@@ -464,7 +468,7 @@ export default function ArticleScreen() {
         </TouchableOpacity>
       </Animated.View>
     );
-  }, [insets.top, isDarkMode, backButtonAnimatedStyle, colors]);
+  }, [insets.top, isDarkMode, combinedBackButtonStyle, colors, router]);
 
   // Memoize the playlist button component
   const PlaylistButton = useMemo(() => {
@@ -473,8 +477,14 @@ export default function ArticleScreen() {
     const buttonStyle = {
       ...themedStyles.buttonBlur,
       backgroundColor: isDarkMode
-        ? `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`
-        : `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(colors.background.slice(3, 5), 16)}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`,
+        ? `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(
+            colors.background.slice(3, 5),
+            16
+          )}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`
+        : `rgba(${parseInt(colors.background.slice(1, 3), 16)}, ${parseInt(
+            colors.background.slice(3, 5),
+            16
+          )}, ${parseInt(colors.background.slice(5, 7), 16)}, 0.8)`,
     };
 
     // Use the default color for the headset icon
@@ -486,7 +496,7 @@ export default function ArticleScreen() {
         style={[
           styles.playlistButton,
           { top: insets.top + LAYOUT.SPACING.MEDIUM },
-          playlistButtonAnimatedStyle,
+          combinedPlaylistButtonStyle,
         ]}
       >
         <TouchableOpacity
@@ -506,12 +516,12 @@ export default function ArticleScreen() {
       </Animated.View>
     );
   }, [
+    user,
     insets.top,
     isDarkMode,
-    isInReadingList,
+    combinedPlaylistButtonStyle,
     handleToggleReadingList,
-    user,
-    playlistButtonAnimatedStyle,
+    isInReadingList,
     colors,
   ]);
 
@@ -715,6 +725,21 @@ export default function ArticleScreen() {
     );
   }, [article, colors]);
 
+  // Create combined animated styles for buttons with opacity
+  const combinedBackButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: backButtonAnimatedStyle.transform,
+      opacity: buttonsOpacity.value,
+    };
+  });
+
+  const combinedPlaylistButtonStyle = useAnimatedStyle(() => {
+    return {
+      transform: playlistButtonAnimatedStyle.transform,
+      opacity: buttonsOpacity.value,
+    };
+  });
+
   // Render loading screen
   if (isLoading) {
     return <LoadingScreen />;
@@ -742,7 +767,7 @@ export default function ArticleScreen() {
 
       {/* Article content with animated wrapper */}
       <View style={{ flex: 1, backgroundColor: colors.background }}>
-        <Animated.View style={contentAnimatedStyle}>
+        <Animated.View style={combinedContentStyle}>
           <FlatList
             key={`article-${id}`}
             ref={flatListRef}

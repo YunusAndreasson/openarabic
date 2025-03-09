@@ -5,15 +5,12 @@ import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
 import Animated, {
   useSharedValue,
-  useAnimatedStyle,
   withTiming,
-  withRepeat,
   Easing,
-  withSequence,
-  WithTimingConfig,
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
+import { usePulseAnimation, useFadeInAnimation } from '@/hooks/animations';
 
 interface LoaderProps {
   size?: 'small' | 'large';
@@ -29,66 +26,52 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   // Use provided color or default to text color (which will be white in dark mode, black in light mode)
   const loaderColor = color || colors.text;
 
-  // Animation for pulsating effect using Reanimated shared value
-  const pulseAnim = useSharedValue(0.8);
-  const opacityAnim = useSharedValue(0);
-
-  // Animation configuration with improved easing
-  const animationConfig: WithTimingConfig = useMemo(
-    () => ({
-      duration: 700, // Slightly faster animation
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Improved easing curve for smoother animation
-    }),
-    []
+  // Use standardized pulse animation
+  const { animatedStyle: pulseAnimatedStyle, pulse } = usePulseAnimation(1.1);
+  const { animatedStyle: opacityAnimatedStyle, startAnimation: startFadeIn } = useFadeInAnimation(
+    0,
+    300
   );
 
   useEffect(() => {
-    // Fade in the loader
-    opacityAnim.value = withTiming(1, {
-      duration: 300,
-      easing: Easing.out(Easing.cubic),
-    });
+    // Start animations
+    startFadeIn();
+    pulse();
 
-    // Create a pulsating animation with Reanimated
-    pulseAnim.value = withRepeat(
-      withSequence(
-        withTiming(1.1, animationConfig), // Slightly smaller maximum scale for more subtle effect
-        withTiming(0.85, animationConfig) // Slightly larger minimum scale
-      ),
-      -1, // Infinite repetitions
-      true // Reverse the animation for smoother transitions
-    );
+    // Set up pulse interval
+    const intervalId = setInterval(() => {
+      pulse();
+    }, 1400); // Slightly faster than the animation duration for a continuous effect
 
     return () => {
-      // Cleanup animation by setting to initial value
-      pulseAnim.value = 0.8;
-      opacityAnim.value = withTiming(0, { duration: 200 });
+      clearInterval(intervalId);
     };
-  }, [animationConfig, pulseAnim, opacityAnim]);
+  }, [pulse, startFadeIn]);
 
   // Size configuration
   const circleSize = size === 'large' ? 40 : 20;
   const borderWidth = size === 'large' ? 4 : 2;
 
-  // Create animated style using Reanimated
-  const animatedCircleStyle = useAnimatedStyle(
-    () => ({
-      width: circleSize,
-      height: circleSize,
-      borderRadius: circleSize / 2,
-      borderWidth: borderWidth,
-      borderColor: loaderColor,
-      backgroundColor: 'transparent',
-      transform: [{ scale: pulseAnim.value }],
-      opacity: opacityAnim.value,
-    }),
-    [circleSize, borderWidth, loaderColor]
-  );
+  // Combine animated styles
+  const combinedAnimatedStyle = useMemo(() => {
+    return [
+      pulseAnimatedStyle,
+      opacityAnimatedStyle,
+      {
+        width: circleSize,
+        height: circleSize,
+        borderRadius: circleSize / 2,
+        borderWidth: borderWidth,
+        borderColor: loaderColor,
+        backgroundColor: 'transparent',
+      },
+    ];
+  }, [pulseAnimatedStyle, opacityAnimatedStyle, circleSize, borderWidth, loaderColor]);
 
   return (
     <View style={[styles.container, style]}>
       <Animated.View
-        style={[styles.circle, animatedCircleStyle]}
+        style={[styles.circle, combinedAnimatedStyle]}
         entering={FadeIn.duration(300).easing(Easing.out(Easing.cubic))}
         exiting={FadeOut.duration(200)}
       />

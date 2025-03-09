@@ -25,6 +25,7 @@ import Animated, {
   Layout,
   Easing,
 } from 'react-native-reanimated';
+import { useFadeInAnimation, useScaleAnimation } from '@/hooks/animations';
 
 interface ThemedModalProps {
   /**
@@ -130,32 +131,29 @@ function ThemedModalComponent({
 }: ThemedModalProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const fadeAnim = useSharedValue(0);
-  const scaleAnim = useSharedValue(0.95);
 
-  // Run animations when visibility changes
+  // Use standardized animation hooks
+  const {
+    animatedStyle: fadeAnimatedStyle,
+    startAnimation: startFadeAnimation,
+    reverseAnimation: reverseFadeAnimation,
+  } = useFadeInAnimation(0, animationDuration);
+  const {
+    animatedStyle: scaleAnimatedStyle,
+    startAnimation: startScaleAnimation,
+    reverseAnimation: reverseScaleAnimation,
+  } = useScaleAnimation(0.95, 1, animationDuration);
+
+  // Start animations when modal becomes visible
   useEffect(() => {
-    if (visible) {
-      // Reset animation to initial values
-      fadeAnim.value = 0;
-      scaleAnim.value = 0.95;
-
-      // Start animations with optimized timing
-      fadeAnim.value = withTiming(1, {
-        duration: animationDuration,
-        easing: Easing.out(Easing.cubic),
-      });
-
-      scaleAnim.value = withTiming(1, {
-        duration: animationDuration,
-        easing: Easing.out(Easing.cubic),
-      });
+    if (visible && animated) {
+      startFadeAnimation();
+      startScaleAnimation();
     }
-  }, [visible, fadeAnim, scaleAnim, animationDuration]);
+  }, [visible, animated, startFadeAnimation, startScaleAnimation]);
 
   // Function to close without haptic feedback
   const triggerClose = useCallback(() => {
-    // Removed haptic feedback
     onClose();
   }, [onClose]);
 
@@ -164,26 +162,18 @@ function ThemedModalComponent({
     if (!closeOnBackdropPress) return;
 
     if (animated) {
-      // Run exit animation using Reanimated
-      fadeAnim.value = withTiming(
-        0,
-        {
-          duration: LAYOUT.ANIMATION.DURATION.FAST,
-          easing: Easing.in(Easing.cubic),
-        },
-        () => {
-          runOnJS(triggerClose)();
-        }
-      );
+      // Run exit animations
+      reverseFadeAnimation();
+      reverseScaleAnimation();
 
-      scaleAnim.value = withTiming(0.95, {
-        duration: LAYOUT.ANIMATION.DURATION.FAST,
-        easing: Easing.in(Easing.cubic),
-      });
+      // Delay the actual close to allow animations to complete
+      setTimeout(() => {
+        triggerClose();
+      }, LAYOUT.ANIMATION.DURATION.FAST);
     } else {
       triggerClose();
     }
-  }, [closeOnBackdropPress, animated, fadeAnim, scaleAnim, triggerClose]);
+  }, [closeOnBackdropPress, animated, reverseFadeAnimation, reverseScaleAnimation, triggerClose]);
 
   // Calculate modal width
   const modalWidth = useMemo(() => {
@@ -216,14 +206,17 @@ function ThemedModalComponent({
     [colors.cardBackground, colors.shadow, colors.cardBorder, modalWidth, contentStyle]
   );
 
-  // Create animated style with Reanimated
-  const animatedContentStyle = useAnimatedStyle(
-    () => ({
-      opacity: animated ? fadeAnim.value : 1,
-      transform: [{ scale: animated ? scaleAnim.value : 1 }],
-    }),
-    [animated]
-  );
+  // Create combined animated style
+  const combinedAnimatedStyle = useMemo(() => {
+    if (!animated) {
+      return {};
+    }
+
+    return {
+      opacity: fadeAnimatedStyle.opacity,
+      transform: scaleAnimatedStyle.transform,
+    };
+  }, [animated, fadeAnimatedStyle, scaleAnimatedStyle]);
 
   return (
     <Modal
@@ -241,7 +234,7 @@ function ThemedModalComponent({
         >
           <Pressable style={containerStyle} onPress={handleBackdropPress}>
             <Animated.View
-              style={[defaultContentStyle, animatedContentStyle]}
+              style={[defaultContentStyle, combinedAnimatedStyle]}
               entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
               exiting={FadeOut.duration(150)}
               layout={Layout.springify().damping(20).stiffness(300)}
@@ -278,7 +271,7 @@ function ThemedModalComponent({
       ) : (
         <Pressable style={containerStyle} onPress={handleBackdropPress}>
           <Animated.View
-            style={[defaultContentStyle, animatedContentStyle]}
+            style={[defaultContentStyle, combinedAnimatedStyle]}
             entering={FadeIn.duration(animationDuration).easing(Easing.out(Easing.cubic))}
             exiting={FadeOut.duration(150)}
             layout={Layout.springify().damping(20).stiffness(300)}

@@ -13,6 +13,7 @@ import Animated, {
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
+import { useProgressAnimation } from '@/hooks/animations';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
@@ -62,40 +63,27 @@ const ProgressBar = React.memo(
     backgroundColor: string;
     fillColor: string;
   }) => {
-    // Create a shared value for the width percentage
-    const widthPercentage = useSharedValue(0);
+    // Use standardized progress animation
+    const { animatedStyle, updateProgress } = useProgressAnimation(0, 1000);
 
-    // Track if this is the initial mount
-    const isInitialMount = React.useRef(true);
-
-    // Animate the width percentage when the component mounts or percentage changes
+    // Update progress when percentage changes
     React.useEffect(() => {
-      // Small delay to ensure the component is fully rendered
-      const animationDelay = isInitialMount.current ? 100 : 0;
+      const cleanup = updateProgress(percentage);
+      return cleanup;
+    }, [percentage, updateProgress]);
 
-      const animationTimeout = setTimeout(() => {
-        widthPercentage.value = withTiming(percentage, {
-          duration: 1000,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        });
-        isInitialMount.current = false;
-      }, animationDelay);
-
-      return () => clearTimeout(animationTimeout);
-    }, [percentage]);
-
-    // Create an animated style for the fill - memoized to avoid unnecessary recalculations
-    const animatedStyle = useAnimatedStyle(
+    // Create a combined style with the background color
+    const combinedStyle = React.useMemo(
       () => ({
-        width: `${widthPercentage.value}%`,
+        ...animatedStyle,
         backgroundColor: fillColor,
       }),
-      [fillColor]
+      [animatedStyle, fillColor]
     );
 
     return (
       <View style={[styles.progressBarBg, { backgroundColor }]}>
-        <Animated.View style={[styles.progressBarFill, animatedStyle]} />
+        <Animated.View style={[styles.progressBarFill, combinedStyle]} />
       </View>
     );
   }

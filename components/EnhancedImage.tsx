@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -6,8 +6,9 @@ import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
 import { getPlaceholderColor, getOptimizedImageUrl } from '../utils/imageOptimization';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 interface EnhancedImageProps {
   /** Source URL of the image */
@@ -54,9 +55,13 @@ export function EnhancedImage({
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
-  // Animation values
-  const imageOpacity = useSharedValue(0);
+  // Use standardized fade in animation for the image
+  const { animatedStyle: imageAnimatedStyle, startAnimation: startImageAnimation } =
+    useFadeInAnimation(0, 300);
+
+  // For the loading indicator, we need more control to hide it
   const loadingOpacity = useSharedValue(1);
+  const loadingAnimatedStyle = { opacity: loadingOpacity };
 
   // Get optimized image source
   const optimizedSource = !disableOptimization ? getOptimizedImageUrl(source) : source;
@@ -66,36 +71,27 @@ export function EnhancedImage({
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
 
-    // Animate the image in
-    imageOpacity.value = withTiming(1, { duration: 300 });
+    // Start image fade-in animation
+    startImageAnimation();
 
     // Fade out loading indicator
     loadingOpacity.value = withTiming(0, { duration: 200 });
 
     // Trigger custom onLoad callback if provided
     if (onLoad) onLoad();
-  }, [imageOpacity, loadingOpacity, onLoad]);
+  }, [startImageAnimation, loadingOpacity, onLoad]);
 
   // Handle load error
   const handleError = useCallback(() => {
     setIsLoading(false);
     setIsError(true);
 
-    // Fade out loading
+    // Fade out loading indicator
     loadingOpacity.value = withTiming(0, { duration: 150 });
 
     // Trigger custom onError callback if provided
     if (onError) onError();
   }, [loadingOpacity, onError]);
-
-  // Animated styles
-  const imageAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: imageOpacity.value,
-  }));
-
-  const loadingContainerStyle = useAnimatedStyle(() => ({
-    opacity: loadingOpacity.value,
-  }));
 
   return (
     <View
@@ -104,10 +100,7 @@ export function EnhancedImage({
     >
       {/* Loading indicator */}
       {showLoadingIndicator && (
-        <Animated.View
-          style={[styles.loadingContainer, loadingContainerStyle]}
-          pointerEvents="none"
-        >
+        <Animated.View style={[styles.loadingContainer, loadingAnimatedStyle]} pointerEvents="none">
           <LoadingContainer size="small" />
         </Animated.View>
       )}

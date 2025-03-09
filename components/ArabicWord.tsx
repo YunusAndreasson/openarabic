@@ -1,4 +1,4 @@
-import React, { useState, memo, useMemo, useCallback } from 'react';
+import React, { useState, memo, useMemo, useCallback, useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -6,9 +6,10 @@ import { SentenceWord } from '@/types/vocabulary.types';
 import { WordDetailsModal } from './WordDetailsModal';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
+import { useCardAnimation } from '@/hooks/animations';
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -31,16 +32,14 @@ function ArabicWordComponent({
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Create a shared value for the scale effect
-  const scaleAnim = useSharedValue(1);
+  // Use standardized card animation with custom scale values
+  const { animatedStyle, pressed } = useCardAnimation(1, 1);
 
-  // Apply scale animation when isSelected changes
-  React.useEffect(() => {
-    scaleAnim.value = withSpring(isSelected ? 1.02 : 1, {
-      damping: 8,
-      stiffness: 40,
-    });
-  }, [isSelected, scaleAnim]);
+  // Update the pressed value based on isSelected
+  useEffect(() => {
+    // Set pressed value to 1 when selected, 0 when not
+    pressed.value = isSelected ? 1 : 0;
+  }, [isSelected, pressed]);
 
   const handlePress = useCallback(() => {
     setModalVisible(true);
@@ -88,17 +87,10 @@ function ArabicWordComponent({
     [isDarkMode, colors.borderOverlay, colors.textOverlay, word.word_form.length]
   );
 
-  // Create animated container style with scale transform
-  const animatedContainerStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: scaleAnim.value }],
-    };
-  });
-
   return (
     <>
       <TouchableOpacity onPress={handlePress} style={styles.wordContainer}>
-        <Animated.View style={[styles.wordWrapper, animatedContainerStyle]}>
+        <Animated.View style={[styles.container, animatedStyle]}>
           <ThemedText style={textStyle} skipDefaultColor>
             {word.word_form}
           </ThemedText>
@@ -126,7 +118,7 @@ const styles = StyleSheet.create({
     marginHorizontal: LAYOUT.SPACING.TINY / 2,
     marginVertical: LAYOUT.SPACING.TINY / 2,
   },
-  wordWrapper: {
+  container: {
     position: 'relative',
     alignItems: 'center',
   },

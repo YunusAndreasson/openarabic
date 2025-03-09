@@ -10,3 +10,8 @@ export { useButtonAnimation, springConfig } from './useButtonAnimation';
 export { useCardAnimation } from './useCardAnimation';
 export { usePulseAnimation } from './usePulseAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
+export { useShimmerAnimation } from './useShimmerAnimation';
+export { useToggleAnimation } from './useToggleAnimation';
+export { useScaleAnimation } from './useScaleAnimation';
+export { useProgressAnimation } from './useProgressAnimation';
+export { useSwipeAnimation } from './useSwipeAnimation';

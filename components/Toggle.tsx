@@ -3,15 +3,9 @@ import { useCallback, useEffect, memo, useMemo } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withSequence,
-  Easing,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useToggleAnimation } from '@/hooks/animations';
 
 interface ToggleProps {
   value: boolean;
@@ -44,26 +38,11 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = dimensions;
 
-  // Use Reanimated shared values instead of Animated.Value
-  const translateX = useSharedValue(value ? TRAVEL_DISTANCE : 0);
-  const toggleScale = useSharedValue(1);
-
-  // Update animation when value changes with improved timing
-  useEffect(() => {
-    // Use spring for smoother, more natural movement
-    translateX.value = withSpring(value ? TRAVEL_DISTANCE : 0, {
-      mass: 0.5, // Lower mass for quicker response
-      damping: 15, // Slightly higher damping for less bounce
-      stiffness: 120, // Increased stiffness for faster animation
-      overshootClamping: false,
-    });
-
-    // Add subtle scale animation for better feedback
-    toggleScale.value = withSequence(
-      withTiming(0.95, { duration: 100, easing: Easing.inOut(Easing.quad) }),
-      withTiming(1, { duration: 150, easing: Easing.inOut(Easing.quad) })
-    );
-  }, [value, translateX, TRAVEL_DISTANCE, toggleScale]);
+  // Use the standardized toggle animation hook
+  const { containerAnimatedStyle, handleAnimatedStyle } = useToggleAnimation(
+    value,
+    TRAVEL_DISTANCE
+  );
 
   // Handle press with haptic feedback
   const handlePress = useCallback(() => {
@@ -72,19 +51,15 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     onValueChange(!value);
   }, [onValueChange, value]);
 
-  // Background color animation
-  const containerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      backgroundColor: value ? colors.tint : isDarkMode ? colors.elevation2 : colors.icon,
-      transform: [{ scale: toggleScale.value }],
-    };
-  }, [value, colors.tint, colors.elevation2, colors.icon, isDarkMode]);
-
-  const handleAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-    };
-  });
+  // Background color animation - combine with containerAnimatedStyle
+  const combinedContainerStyle = useMemo(() => {
+    return [
+      containerAnimatedStyle,
+      {
+        backgroundColor: value ? colors.tint : isDarkMode ? colors.elevation2 : colors.icon,
+      },
+    ];
+  }, [containerAnimatedStyle, value, colors.tint, colors.elevation2, colors.icon, isDarkMode]);
 
   // Memoize static styles to prevent new object creation on each render
   const containerStyle = useMemo(
@@ -124,7 +99,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
 
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={1}>
-      <Animated.View style={[containerStyle, containerAnimatedStyle]}>
+      <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
           <Animated.View style={[handleStyle, handleAnimatedStyle]} />
         </View>
