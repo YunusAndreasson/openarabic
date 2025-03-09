@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { View, FlatList, Pressable, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
@@ -65,22 +65,33 @@ function FilterList<T extends FilterItem>({
   itemAnimationDelay = 650,
 }: FilterListProps<T>) {
   const colors = useColors();
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
 
-  // Use our custom fade-in animation hook instead of Reanimated's FadeIn
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, LAYOUT.ANIMATION.DURATION.NORMAL);
+  // Memoize styles that use colors to prevent new object creation on each render
+  const clearButtonStyle = useMemo(
+    () => ({ backgroundColor: colors.textOverlay }),
+    [colors.textOverlay]
+  );
 
-  // Start the animation when the component mounts
+  const tintTextStyle = useMemo(() => ({ color: colors.tint }), [colors.tint]);
+
+  // Start animation when component mounts
   useEffect(() => {
-    startAnimation(animationDelay);
+    const timer = setTimeout(() => {
+      startAnimation(animationDelay);
+    }, 0);
+
+    return () => clearTimeout(timer);
   }, [startAnimation, animationDelay]);
 
   // Determine if this is a category filter based on the title
   const isCategory = title.toLowerCase().includes('category');
 
-  // Render item function
+  // Render each filter item with staggered animation
   const renderItem = useCallback(
-    ({ item }: { item: T }) => {
+    ({ item, index }: { item: T; index: number }) => {
       const isSelected = selectedId === item.id;
+      const delay = itemAnimationDelay + index * 50; // Stagger the animations
       // Format the label based on whether this is a category filter
       const formattedLabel = isCategory
         ? capitalizeFirstLetter(item.name.toLowerCase())
@@ -93,7 +104,7 @@ function FilterList<T extends FilterItem>({
           label={formattedLabel}
           isSelected={isSelected}
           onSelect={id => onSelect(Number(id))}
-          animationDelay={itemAnimationDelay}
+          animationDelay={delay}
           variant="filter"
         />
       );
@@ -109,11 +120,8 @@ function FilterList<T extends FilterItem>({
       <View style={styles.headerContainer}>
         <SectionTitle title={title} />
         {selectedId !== null && onClearFilter && (
-          <Pressable
-            style={[styles.clearButton, { backgroundColor: colors.textOverlay }]}
-            onPress={onClearFilter}
-          >
-            <ThemedText style={[styles.clearButtonText, { color: colors.tint }]} skipDefaultColor>
+          <Pressable style={[styles.clearButton, clearButtonStyle]} onPress={onClearFilter}>
+            <ThemedText style={[styles.clearButtonText, tintTextStyle]} skipDefaultColor>
               Clear
             </ThemedText>
           </Pressable>

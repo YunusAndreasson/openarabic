@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import React, { useMemo, useEffect, useRef } from 'react';
+import { StyleSheet, View, ViewStyle, Animated } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { LAYOUT } from '../constants/layout';
@@ -32,6 +32,16 @@ interface ProgressBarProps {
    * If not provided, uses theme's tint color
    */
   fillColor?: string;
+  /**
+   * Whether to animate the progress bar
+   * @default false
+   */
+  animationTriggered?: boolean;
+  /**
+   * Duration of the animation in milliseconds
+   * @default 2000
+   */
+  animationDuration?: number;
 }
 
 /**
@@ -45,9 +55,17 @@ function ProgressBarComponent({
   fillStyle,
   backgroundColor,
   fillColor,
+  animationTriggered = false,
+  animationDuration = 2000,
 }: ProgressBarProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+
+  // Create an animated value for width percentage
+  const widthAnim = useRef(new Animated.Value(0)).current;
+
+  // Flag to prevent multiple animations
+  const hasAnimated = useRef(false);
 
   // Ensure progress is within valid range (0-100)
   const normalizedProgress = useMemo(() => {
@@ -55,6 +73,38 @@ function ProgressBarComponent({
     if (isNaN(progress)) return 0;
     return Math.max(0, Math.min(100, progress));
   }, [progress]);
+
+  // Effect to handle animation when triggered
+  useEffect(() => {
+    if (animationTriggered && !hasAnimated.current) {
+      // Mark that we've animated
+      hasAnimated.current = true;
+
+      // Reset to 0 first
+      widthAnim.setValue(0);
+
+      // Then animate to target percentage
+      Animated.timing(widthAnim, {
+        toValue: normalizedProgress,
+        duration: animationDuration,
+        useNativeDriver: false, // width changes can't use native driver
+      }).start();
+    }
+
+    // Reset animation state when trigger changes
+    if (!animationTriggered) {
+      hasAnimated.current = false;
+      // Set to actual percentage without animation
+      widthAnim.setValue(normalizedProgress);
+    }
+  }, [widthAnim, normalizedProgress, animationTriggered, animationDuration]);
+
+  // Convert the animated value to a percentage string for width
+  const widthInterpolated = widthAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: ['0%', '100%'],
+    extrapolate: 'clamp', // prevent values outside of range
+  });
 
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {
@@ -89,14 +139,13 @@ function ProgressBarComponent({
           },
         ]}
       >
-        <View
+        <Animated.View
           style={[
             styles.fill,
             {
               backgroundColor: progressFillColor,
               borderRadius: height / 2,
-              // Use flex basis instead of width
-              flexBasis: `${normalizedProgress}%`,
+              width: widthInterpolated,
             },
             fillStyle,
           ]}

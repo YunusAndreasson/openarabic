@@ -17,65 +17,27 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { SignInRequired } from '@/components/SignInRequired';
 import { Audio } from 'expo-av';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getPlatformTopPadding } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation, useButtonAnimation } from '@/hooks/animations';
 import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
-
-// ====== AUDIO PLAYER CONSTANTS ======
-const AUDIO_STATES = {
-  IDLE: 'idle', // Not playing anything
-  LOADING: 'loading', // Loading audio
-  PLAYING: 'playing', // Playing audio
-  PAUSED: 'paused', // Audio loaded but paused
-  ERROR: 'error', // Error occurred
-};
+import { useRouter } from 'expo-router';
+import EmptyState from '@/components/EmptyState';
+import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
+import PageHeader from '@/components/PageHeader';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: Platform.select({
-      ios: LAYOUT.CONTENT_SPACING.TOP,
-      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-    }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
   },
   // Content area
   listContent: {
     paddingHorizontal: 0,
     paddingTop: 0,
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM * 5,
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  emptyStateTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  emptyStateMessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.DIMMED,
-    marginBottom: LAYOUT.SPACING.LARGE,
   },
   // List item styling
   itemContainer: {
@@ -695,20 +657,14 @@ export default function BookmarksScreen() {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-          <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
-          </View>
-          <View style={styles.emptyStateContainer}>
-            <ThemedText style={styles.emptyStateTitle}>Your Bookmarks List is Empty</ThemedText>
-            <ThemedText style={styles.emptyStateMessage}>
-              Bookmark articles to listen to them later or save them for reference.
-            </ThemedText>
-            <ThemedButton
-              title="Browse Articles"
-              icon="book"
-              onPress={() => router.push('/(tabs)')}
-            />
-          </View>
+          <PageHeader title="Bookmarks" />
+          <EmptyState
+            title="Your Bookmarks List is Empty"
+            message="Bookmark articles to listen to them later or save them for reference."
+            buttonTitle="Browse Articles"
+            buttonIcon="book"
+            onButtonPress={() => router.push('/(tabs)')}
+          />
         </ThemedView>
       </Animated.View>
     );
@@ -718,10 +674,7 @@ export default function BookmarksScreen() {
   return (
     <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        {/* Clean header */}
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Bookmarks</ThemedText>
-        </View>
+        <PageHeader title="Bookmarks" />
 
         <FlatList
           ref={flatListRef}

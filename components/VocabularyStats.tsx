@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
@@ -7,7 +7,6 @@ import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/animations';
-import { useProgressAnimation } from '@/hooks/useProgressAnimation';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStats as VocabularyStatsType } from '@/types/vocabulary.types';
 
@@ -42,6 +41,42 @@ function VocabularyStatsComponent({
     () => (totalWords > 0 ? (masteredWords / totalWords) * 100 : 0),
     [totalWords, masteredWords]
   );
+
+  // Custom hook to animate progress value
+  const useProgressAnimation = (targetValue: number, duration = 1000, isReady = true) => {
+    const [animatedValue, setAnimatedValue] = useState(0);
+
+    useEffect(() => {
+      if (!isReady) return;
+
+      let startTimestamp: number | null = null;
+      let animationFrameId: number;
+
+      const animate = (timestamp: number) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const elapsed = timestamp - startTimestamp;
+
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+
+        setAnimatedValue(targetValue * easedProgress);
+
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(animate);
+        }
+      };
+
+      animationFrameId = requestAnimationFrame(animate);
+
+      return () => {
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      };
+    }, [targetValue, duration, isReady]);
+
+    return animatedValue;
+  };
 
   // Use the animation hook to animate the progress
   const animatedProgress = useProgressAnimation(progress, 1000, isReady);

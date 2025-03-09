@@ -1,6 +1,16 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle, withTiming, SharedValue } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
+
+/**
+ * Result type for the useProgressAnimation hook
+ */
+export interface ProgressAnimationResult {
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  updateProgress: (newPercentage: number) => () => void;
+  progress: SharedValue<number>;
+  hasAnimated: () => boolean;
+}
 
 /**
  * Hook to create a progress animation for progress bars
@@ -8,7 +18,9 @@ import { TIMING_CONFIG } from './animationConfigs';
  * @param duration - Duration of animation in ms
  * @returns Object with animated style and function to update the progress
  */
-export const useProgressAnimation = (duration = TIMING_CONFIG.SLOW.duration) => {
+export const useProgressAnimation = (
+  duration = TIMING_CONFIG.SLOW.duration
+): ProgressAnimationResult => {
   // Store the progress value as a shared value for animations
   const progress = useSharedValue(0);
 

@@ -12,7 +12,7 @@ import Animated from 'react-native-reanimated';
 import { useCardAnimation } from '../hooks/animations';
 
 // TimeAgo component to show when an article was published
-const TimeAgo = ({ date }: { date: string }) => {
+const TimeAgo = React.memo(({ date }: { date: string }) => {
   const colors = useColors();
   const timeAgoText = formatTimeAgo(date);
 
@@ -24,10 +24,10 @@ const TimeAgo = ({ date }: { date: string }) => {
       </ThemedText>
     </View>
   );
-};
+});
 
 // DifficultyIndicator component
-const DifficultyIndicator = ({ level }: { level: number }) => {
+const DifficultyIndicator = React.memo(({ level }: { level: number }) => {
   const colors = useColors();
 
   // Normalize level to be between 1-5
@@ -39,7 +39,7 @@ const DifficultyIndicator = ({ level }: { level: number }) => {
       case 1:
         return 'Beginner';
       case 2:
-        return 'Easy';
+        return 'Elementary';
       case 3:
         return 'Intermediate';
       case 4:
@@ -53,21 +53,21 @@ const DifficultyIndicator = ({ level }: { level: number }) => {
 
   return (
     <View style={styles.difficultyContainer}>
-      <ThemedText style={styles.difficultyLabel}>{difficultyLabel}</ThemedText>
       <View style={styles.starsContainer}>
         {[1, 2, 3, 4, 5].map(star => (
           <Ionicons
-            key={`star-${star}`}
+            key={star}
             name="star"
-            size={10}
+            size={12}
             color={star <= normalizedLevel ? colors.tint : colors.cardBorder}
             style={styles.starIcon}
           />
         ))}
       </View>
+      <ThemedText style={styles.difficultyText}>{difficultyLabel}</ThemedText>
     </View>
   );
-};
+});
 
 function CompactArticleCardComponent({
   article,
@@ -106,10 +106,11 @@ function CompactArticleCardComponent({
               source={article.image_url || 'https://picsum.photos/800/400'}
               style={styles.image}
               contentFit="cover"
-              alt={`Image for article: ${article.title}`}
-              onError={() => console.log(`Failed to load image for article: ${article.id}`)}
               showLoadingIndicator={true}
               transition={300}
+              onError={() => {
+                /* Handle image load error silently */
+              }}
             />
           </View>
 
@@ -197,7 +198,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
-  difficultyLabel: {
+  difficultyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.85,
     marginBottom: 2,
     opacity: LAYOUT.OPACITY.PRESSED,

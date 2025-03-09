@@ -37,6 +37,8 @@ import { Loader } from '@/components/Loader';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Toast from 'react-native-toast-message';
 import { useFadeInAnimation, useSlideAnimation, TIMING_CONFIG } from '@/hooks/animations';
+import EntranceAnimation from '@/components/EntranceAnimation';
+import AnimatedItem from '@/components/AnimatedItem';
 
 const BASE_FONT_SIZE = 20;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
@@ -46,22 +48,23 @@ const FADE_DURATION = 100; // Reduced from 150 for quicker fade
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
 
-// Create an entrance animation component using the existing animation hooks
-const EntranceAnimation = ({ children }: { children: React.ReactNode }) => {
-  // Use the existing fade in animation hook
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, TIMING_CONFIG.MEDIUM.duration);
+// Create an AnimatedCompletionItem component for the completion screen
+const AnimatedCompletionItem = ({
+  children,
+  delay = 0,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+}) => {
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 400);
 
-  // Start animations when component mounts
   useEffect(() => {
-    // Start the animation with a slight delay
     setTimeout(() => {
-      startAnimation(0);
-    }, 50);
-  }, [startAnimation]);
+      startAnimation();
+    }, delay);
+  }, [startAnimation, delay]);
 
-  return (
-    <Animated.View style={[{ flex: 1, width: '100%' }, animatedStyle]}>{children}</Animated.View>
-  );
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 };
 
 const baseStyles = StyleSheet.create({
@@ -138,37 +141,17 @@ const baseStyles = StyleSheet.create({
   actionButton: {
     width: 56,
     height: 56,
-    borderRadius: 56 / 2,
+    borderRadius: 28, // width/2 for circular shape
     justifyContent: 'center',
     alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    ...LAYOUT.SHADOW.SMALL,
   } as ViewStyle,
   modalContent: {
     width: maxWidth,
     padding: 0,
     borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
     overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.2,
-        shadowRadius: 16,
-      },
-      android: {
-        elevation: 12,
-      },
-    }),
+    ...LAYOUT.SHADOW.LARGE,
   } as ViewStyle,
   modalInnerContent: {
     width: '100%',
@@ -221,7 +204,7 @@ const baseStyles = StyleSheet.create({
 });
 
 // Create a component for the meaning overlay with proper animation
-const MeaningOverlay = ({ visible, meaning }: { visible: boolean; meaning: string }) => {
+const MeaningOverlay = React.memo(({ visible, meaning }: { visible: boolean; meaning: string }) => {
   const colors = useColors();
   const { animatedStyle, startAnimation, reverseAnimation } = useFadeInAnimation(0, 150);
 
@@ -242,53 +225,34 @@ const MeaningOverlay = ({ visible, meaning }: { visible: boolean; meaning: strin
       </ThemedText>
     </Animated.View>
   );
-};
-
-// Create a component for animated completion items
-const AnimatedCompletionItem = ({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) => {
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 400);
-
-  useEffect(() => {
-    setTimeout(() => {
-      startAnimation();
-    }, delay);
-  }, [startAnimation, delay]);
-
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
-};
+});
 
 // Create a component for the completion screen
-const CompletionScreen = ({ onClose }: { onClose: () => void }) => {
+const CompletionScreen = React.memo(({ onClose }: { onClose: () => void }) => {
   const colors = useColors();
 
   return (
-    <ThemedView style={baseStyles.container as any}>
-      <View style={baseStyles.completionContainer as any}>
-        <AnimatedCompletionItem>
-          <View style={baseStyles.completionIconContainer as any}>
-            <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
-          </View>
-        </AnimatedCompletionItem>
+    <View style={[baseStyles.completionContainer, { backgroundColor: colors.background }]}>
+      <AnimatedItem delay={100}>
+        <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
+      </AnimatedItem>
 
-        <AnimatedCompletionItem delay={200}>
-          <ThemedText style={baseStyles.completionText as any}>
-            You've completed all your reviews for now!
-          </ThemedText>
-        </AnimatedCompletionItem>
+      <AnimatedItem delay={300}>
+        <ThemedText style={baseStyles.completionText}>Great job!</ThemedText>
+      </AnimatedItem>
 
-        <AnimatedCompletionItem delay={400}>
-          <ThemedButton title="Back to Home" onPress={onClose} />
-        </AnimatedCompletionItem>
-      </View>
-    </ThemedView>
+      <AnimatedItem delay={500}>
+        <ThemedText style={baseStyles.completionText}>
+          You've completed your review session.
+        </ThemedText>
+      </AnimatedItem>
+
+      <AnimatedItem delay={700}>
+        <ThemedButton title="Done" onPress={onClose} style={{ marginTop: LAYOUT.SPACING.LARGE }} />
+      </AnimatedItem>
+    </View>
   );
-};
+});
 
 export default function ReviewScreen() {
   const colors = useColors();
@@ -612,7 +576,7 @@ export default function ReviewScreen() {
       modalIconContainer: {
         width: 40,
         height: 40,
-        borderRadius: 40 / 2,
+        borderRadius: 20, // width/2 for circular shape
         backgroundColor: colors.textOverlay,
         justifyContent: 'center' as const,
         alignItems: 'center' as const,
@@ -740,7 +704,11 @@ export default function ReviewScreen() {
           <View style={baseStyles.contentContainer}>
             <View style={baseStyles.header}>
               <View style={baseStyles.progressContainer}>
-                <ProgressBar progress={Math.round(progress)} />
+                <ProgressBar
+                  progress={Math.round(progress)}
+                  animationTriggered={true}
+                  animationDuration={1000}
+                />
               </View>
             </View>
 

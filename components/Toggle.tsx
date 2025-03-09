@@ -2,10 +2,10 @@ import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useCallback, memo, useMemo } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-import { Colors } from '@/constants/Colors';
 import Animated from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useToggleAnimation } from '@/hooks/animations';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 interface ToggleProps {
   value: boolean;
@@ -14,10 +14,7 @@ interface ToggleProps {
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
-  const isDarkMode = useMemo(
-    () => colors.background === Colors.dark.background,
-    [colors.background]
-  );
+  const isDarkMode = useIsDarkMode();
 
   // Memoize dimensions to prevent recalculation on each render
   const dimensions = useMemo(() => {

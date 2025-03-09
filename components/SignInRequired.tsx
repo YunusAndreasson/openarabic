@@ -8,6 +8,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations/useFadeInAnimation';
+import PageHeader from './PageHeader';
 
 interface SignInRequiredProps {
   title?: string;
@@ -37,19 +38,10 @@ export const SignInRequired = React.memo(
     return (
       <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
-          {headerTitle && (
-            <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-              <ThemedText style={styles.headerTitle}>{headerTitle}</ThemedText>
-            </View>
-          )}
+          {headerTitle && <PageHeader title={headerTitle} />}
           <View style={styles.emptyStateContainer}>
             <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
-              <Ionicons
-                name="log-in-outline"
-                size={48}
-                color={colors.text}
-                style={{ opacity: LAYOUT.OPACITY.MEDIUM_HIGH }}
-              />
+              <Ionicons name="log-in-outline" size={48} color={colors.text} />
             </View>
             <ThemedText style={styles.emptyStateTitle}>{title}</ThemedText>
             <ThemedText style={styles.emptyStateMessage}>{message}</ThemedText>

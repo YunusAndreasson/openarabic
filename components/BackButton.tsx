@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
@@ -28,6 +28,9 @@ const BackButton = React.memo(({ onPress, text = 'Back to home' }: BackButtonPro
     onPress();
   }, [onPress]);
 
+  // Memoize styles that use colors to prevent new object creation on each render
+  const tintTextStyle = useMemo(() => ({ color: colors.tint }), [colors.tint]);
+
   return (
     <View style={styles.container}>
       <Pressable
@@ -42,10 +45,10 @@ const BackButton = React.memo(({ onPress, text = 'Back to home' }: BackButtonPro
         accessibilityRole="button"
         accessibilityLabel={text}
       >
-        <ThemedText style={[styles.arrow, { color: colors.tint }]} skipDefaultColor>
+        <ThemedText style={[styles.arrow, tintTextStyle]} skipDefaultColor>
           ←
         </ThemedText>
-        <ThemedText style={[styles.text, { color: colors.tint }]} skipDefaultColor>
+        <ThemedText style={[styles.text, tintTextStyle]} skipDefaultColor>
           {text}
         </ThemedText>
       </Pressable>

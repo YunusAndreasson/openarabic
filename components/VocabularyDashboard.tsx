@@ -8,6 +8,7 @@ import { VocabularyStats } from '@/types/vocabulary.types';
 import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
 import { useProgressAnimation } from '@/hooks/animations';
+import { ProgressBar } from './ProgressBar';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
@@ -47,75 +48,6 @@ const StatItem = React.memo(
 );
 
 StatItem.displayName = 'StatItem';
-
-// Separate ProgressBar component using React Native's built-in Animated API
-const ProgressBar = React.memo(
-  ({
-    percentage,
-    backgroundColor,
-    fillColor,
-    animationTriggered,
-  }: {
-    percentage: number;
-    backgroundColor: string;
-    fillColor: string;
-    animationTriggered?: boolean;
-  }) => {
-    // Create an animated value for width percentage
-    const widthAnim = useRef(new Animated.Value(0)).current;
-
-    // Flag to prevent multiple animations
-    const hasAnimated = useRef(false);
-
-    // Effect to handle animation when triggered
-    useEffect(() => {
-      if (animationTriggered && !hasAnimated.current) {
-        // Mark that we've animated
-        hasAnimated.current = true;
-
-        // Reset to 0 first
-        widthAnim.setValue(0);
-
-        // Then animate to target percentage
-        Animated.timing(widthAnim, {
-          toValue: percentage,
-          duration: 2000,
-          useNativeDriver: false, // width changes can't use native driver
-        }).start();
-      }
-
-      // Reset animation state when trigger changes
-      if (!animationTriggered) {
-        hasAnimated.current = false;
-        // Set to actual percentage without animation
-        widthAnim.setValue(percentage);
-      }
-    }, [widthAnim, percentage, animationTriggered]);
-
-    // Convert the animated value to a percentage string for width
-    const widthInterpolated = widthAnim.interpolate({
-      inputRange: [0, 100],
-      outputRange: ['0%', '100%'],
-      extrapolate: 'clamp', // prevent values outside of range
-    });
-
-    return (
-      <View style={[styles.progressBarBg, { backgroundColor }]}>
-        <Animated.View
-          style={[
-            styles.progressBarFill,
-            {
-              width: widthInterpolated,
-              backgroundColor: fillColor,
-            },
-          ]}
-        />
-      </View>
-    );
-  }
-);
-
-ProgressBar.displayName = 'ProgressBar';
 
 // Separate MasteryHeader component for better reusability and memoization
 const MasteryHeader = React.memo(({ percentage }: { percentage: number }) => (
@@ -225,9 +157,10 @@ export const VocabularyDashboard = React.memo(
         <View style={styles.masteryContainer}>
           <MasteryHeader percentage={masteryPercentage} />
           <ProgressBar
-            percentage={masteryPercentage}
+            progress={masteryPercentage}
             backgroundColor={safeColors.cardBorder + '40'}
             fillColor={safeColors.successColor}
+            height={8}
             animationTriggered={animationTriggered}
           />
         </View>
@@ -255,7 +188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconWrapper: {
-    backgroundColor: Colors.light.cardBackground,
+    backgroundColor: 'transparent',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.SMALL,
   },
@@ -285,14 +218,5 @@ const styles = StyleSheet.create({
   masteryPercentage: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '700',
-  },
-  progressBarBg: {
-    height: 8,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });

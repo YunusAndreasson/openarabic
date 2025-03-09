@@ -1,9 +1,10 @@
 import { StyleSheet, Alert, Linking, View, Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
-import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -19,6 +20,7 @@ import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { LoadingScreen } from '../../components/Loader';
 import { useLoadingState, useScreenAnimation } from '@/hooks';
+import PageHeader from '@/components/PageHeader';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
@@ -131,6 +133,23 @@ export default function AccountScreen() {
     [colors]
   );
 
+  // Handle font scale change with haptic feedback
+  const handleFontScaleChange = useCallback(
+    (value: number) => {
+      // Get the previous scale value
+      const previousScale = settings.fontScale;
+
+      // Check if the value has actually changed to a different step
+      if (Math.abs(value - previousScale) >= 0.1) {
+        // Trigger haptic feedback for every increment
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
+      dispatch(setFontScale(value));
+    },
+    [settings.fontScale, dispatch]
+  );
+
   // Show loading screen
   if (isLoadingState) {
     return <LoadingScreen />;
@@ -140,9 +159,7 @@ export default function AccountScreen() {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
         <ThemedView style={themedStyles.container}>
-          <View style={[themedStyles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-            <ThemedText style={themedStyles.headerTitle}>Account</ThemedText>
-          </View>
+          <PageHeader title="Account" />
           <View style={themedStyles.authContainer}>
             <ThemedText type="title" style={themedStyles.welcomeTitle}>
               Welcome
@@ -159,9 +176,7 @@ export default function AccountScreen() {
     <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
       <ThemedView style={themedStyles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
-        <View style={[themedStyles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={themedStyles.headerTitle}>Account</ThemedText>
-        </View>
+        <PageHeader title="Account" />
 
         {/* Scrollable content */}
         <ThemedView
@@ -219,7 +234,7 @@ export default function AccountScreen() {
                   </ThemedText>
                   <CustomSlider
                     value={settings.fontScale}
-                    onValueChange={value => dispatch(setFontScale(value))}
+                    onValueChange={handleFontScaleChange}
                     minimumValue={0.8}
                     maximumValue={1.3}
                     step={0.1}
@@ -383,19 +398,6 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  headerContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: Platform.select({
-      ios: LAYOUT.CONTENT_SPACING.TOP,
-      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-    }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
-  headerTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
   },
   content: {
     flex: 1,

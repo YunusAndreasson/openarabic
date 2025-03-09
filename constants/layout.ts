@@ -246,3 +246,12 @@ export const getArabicTextStyle = (
     ...additionalStyles,
   };
 };
+
+// Utility function for platform-specific top padding
+export const getPlatformTopPadding = () => {
+  return Platform.select({
+    ios: LAYOUT.CONTENT_SPACING.TOP,
+    android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
+    default: LAYOUT.CONTENT_SPACING.TOP,
+  });
+};

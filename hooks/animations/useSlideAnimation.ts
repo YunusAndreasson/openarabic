@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { useSharedValue, withSpring, useAnimatedStyle, runOnJS } from 'react-native-reanimated';
-import { Dimensions } from 'react-native';
+import { SCREEN_WIDTH } from '../../constants/layout';
 import { SPRING_CONFIG } from './animationConfigs';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
  * Hook to create a slide-in animation

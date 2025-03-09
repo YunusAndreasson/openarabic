@@ -1,14 +1,12 @@
-import { Dimensions, Platform } from 'react-native';
-import { LAYOUT } from '../constants/layout';
+import { Platform } from 'react-native';
+import { SCREEN_WIDTH, LAYOUT } from '../constants/layout';
 import { Colors } from '../constants/Colors';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 /**
- * Calculate responsive image dimensions based on screen width
- * @param originalWidth Original image width
- * @param originalHeight Original image height
- * @param containerWidthPercent Percentage of screen width (0-1) that the container takes
+ * Calculate responsive image dimensions based on original size and container width
+ * @param originalWidth - Original image width in pixels
+ * @param originalHeight - Original image height in pixels
+ * @param containerWidthPercent - Percentage of screen width the container takes (0-1)
  * @returns Object with calculated width and height
  */
 export const getResponsiveImageSize = (
@@ -16,13 +14,18 @@ export const getResponsiveImageSize = (
   originalHeight: number,
   containerWidthPercent = 1
 ) => {
-  const ratio = originalHeight / originalWidth;
-  const calculatedWidth = SCREEN_WIDTH * containerWidthPercent;
-  const calculatedHeight = calculatedWidth * ratio;
+  // Calculate the available width based on screen size and container percentage
+  const availableWidth = SCREEN_WIDTH * containerWidthPercent;
+
+  // Calculate the aspect ratio
+  const aspectRatio = originalWidth / originalHeight;
+
+  // Calculate the new height based on the aspect ratio
+  const newHeight = availableWidth / aspectRatio;
 
   return {
-    width: calculatedWidth,
-    height: calculatedHeight,
+    width: availableWidth,
+    height: newHeight,
   };
 };
 
@@ -74,7 +77,8 @@ export const getOptimizedImageUrl = (imageUrl: string): string => {
  * @returns Color value for image placeholder
  */
 export const getPlaceholderColor = (isDarkMode: boolean): string => {
-  return isDarkMode ? Colors.dark.imagePlaceholder : Colors.light.imagePlaceholder;
+  // Use theme-agnostic values instead of direct Colors references
+  return isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
 };
 
 /**

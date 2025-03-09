@@ -21,6 +21,7 @@ import Animated from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
 import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
 import { usePulseAnimation } from '@/hooks/animations';
+import PageHeader from '@/components/PageHeader';
 
 // Create a memoized component for the review button
 const ReviewButton = React.memo(
@@ -255,9 +256,7 @@ export default function VocabularyScreen() {
     <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
-        <View style={[styles.headerContainer, { borderBottomColor: colors.cardBorder }]}>
-          <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
-        </View>
+        <PageHeader title="Vocabulary" />
 
         {/* Content area */}
         <View style={styles.contentContainer}>

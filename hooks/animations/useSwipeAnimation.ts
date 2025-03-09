@@ -6,10 +6,8 @@ import {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { Dimensions } from 'react-native';
+import { SCREEN_WIDTH } from '../../constants/layout';
 import { SPRING_CONFIG, TIMING_CONFIG } from './animationConfigs';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface SwipeConfig {
   damping?: number;
