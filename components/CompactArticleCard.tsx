@@ -150,10 +150,6 @@ const styles = StyleSheet.create({
     width: 220,
     marginLeft: 0,
   },
-  pressed: {
-    opacity: LAYOUT.OPACITY.PRESSED,
-    transform: [{ scale: 0.98 }],
-  },
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     overflow: 'hidden',

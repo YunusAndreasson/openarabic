@@ -1,15 +1,9 @@
-import React, { useMemo, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useMemo, useEffect, useRef } from 'react';
+import { StyleSheet, View, Animated } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { Colors } from '../constants/Colors';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
@@ -22,6 +16,8 @@ interface VocabularyDashboardProps
     'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords' | 'streak'
   > {
   colors: any;
+  /** Flag to trigger animations when parent component is ready */
+  animationTriggered?: boolean;
 }
 
 interface StatItemProps {
@@ -52,38 +48,68 @@ const StatItem = React.memo(
 
 StatItem.displayName = 'StatItem';
 
-// Separate ProgressBar component for better reusability and memoization
+// Separate ProgressBar component using React Native's built-in Animated API
 const ProgressBar = React.memo(
   ({
     percentage,
     backgroundColor,
     fillColor,
+    animationTriggered,
   }: {
     percentage: number;
     backgroundColor: string;
     fillColor: string;
+    animationTriggered?: boolean;
   }) => {
-    // Use standardized progress animation
-    const { animatedStyle, updateProgress } = useProgressAnimation(0, 1000);
+    // Create an animated value for width percentage
+    const widthAnim = useRef(new Animated.Value(0)).current;
 
-    // Update progress when percentage changes
-    React.useEffect(() => {
-      const cleanup = updateProgress(percentage);
-      return cleanup;
-    }, [percentage, updateProgress]);
+    // Flag to prevent multiple animations
+    const hasAnimated = useRef(false);
 
-    // Create a combined style with the background color
-    const combinedStyle = React.useMemo(
-      () => ({
-        ...animatedStyle,
-        backgroundColor: fillColor,
-      }),
-      [animatedStyle, fillColor]
-    );
+    // Effect to handle animation when triggered
+    useEffect(() => {
+      if (animationTriggered && !hasAnimated.current) {
+        // Mark that we've animated
+        hasAnimated.current = true;
+
+        // Reset to 0 first
+        widthAnim.setValue(0);
+
+        // Then animate to target percentage
+        Animated.timing(widthAnim, {
+          toValue: percentage,
+          duration: 2000,
+          useNativeDriver: false, // width changes can't use native driver
+        }).start();
+      }
+
+      // Reset animation state when trigger changes
+      if (!animationTriggered) {
+        hasAnimated.current = false;
+        // Set to actual percentage without animation
+        widthAnim.setValue(percentage);
+      }
+    }, [widthAnim, percentage, animationTriggered]);
+
+    // Convert the animated value to a percentage string for width
+    const widthInterpolated = widthAnim.interpolate({
+      inputRange: [0, 100],
+      outputRange: ['0%', '100%'],
+      extrapolate: 'clamp', // prevent values outside of range
+    });
 
     return (
       <View style={[styles.progressBarBg, { backgroundColor }]}>
-        <Animated.View style={[styles.progressBarFill, combinedStyle]} />
+        <Animated.View
+          style={[
+            styles.progressBarFill,
+            {
+              width: widthInterpolated,
+              backgroundColor: fillColor,
+            },
+          ]}
+        />
       </View>
     );
   }
@@ -109,6 +135,7 @@ export const VocabularyDashboard = React.memo(
     dueWords,
     streak,
     colors,
+    animationTriggered = false,
   }: VocabularyDashboardProps) => {
     // Calculate mastery percentage
     const masteryPercentage = useMemo(
@@ -139,7 +166,7 @@ export const VocabularyDashboard = React.memo(
           icon: 'book',
           iconColor: safeColors.textColor,
           bgColor: safeColors.textColor + '15',
-          animateValue: true,
+          animateValue: animationTriggered,
         },
         {
           value: masteredWords,
@@ -147,7 +174,7 @@ export const VocabularyDashboard = React.memo(
           icon: 'checkmark-circle',
           iconColor: safeColors.successColor,
           bgColor: safeColors.successColor + '15',
-          animateValue: true,
+          animateValue: animationTriggered,
         },
         {
           value: learningWords,
@@ -155,7 +182,7 @@ export const VocabularyDashboard = React.memo(
           icon: 'school',
           iconColor: safeColors.primaryColor,
           bgColor: safeColors.primaryColor + '20',
-          animateValue: true,
+          animateValue: animationTriggered,
         },
         {
           value: dueWords,
@@ -163,10 +190,10 @@ export const VocabularyDashboard = React.memo(
           icon: 'alarm',
           iconColor: safeColors.dueWordsColor,
           bgColor: safeColors.dueWordsColor + '20',
-          animateValue: true,
+          animateValue: animationTriggered,
         },
       ],
-      [totalWords, masteredWords, learningWords, dueWords, safeColors]
+      [totalWords, masteredWords, learningWords, dueWords, safeColors, animationTriggered]
     );
 
     return (
@@ -201,6 +228,7 @@ export const VocabularyDashboard = React.memo(
             percentage={masteryPercentage}
             backgroundColor={safeColors.cardBorder + '40'}
             fillColor={safeColors.successColor}
+            animationTriggered={animationTriggered}
           />
         </View>
       </View>

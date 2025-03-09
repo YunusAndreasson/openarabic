@@ -19,7 +19,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useFadeInAnimation, useComponentAnimation } from '@/hooks/animations';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
 
 // Create a memoized component for the review button
@@ -59,7 +59,6 @@ const DisabledReviewButton = React.memo(() => {
 
 DisabledReviewButton.displayName = 'DisabledReviewButton';
 
-// Remove the local implementation and use the imported function instead
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
@@ -70,6 +69,11 @@ export default function VocabularyScreen() {
   const [forceUpdate, setForceUpdate] = useState(false);
   const queryClient = useQueryClient();
 
+  // Animation state
+  const [animationsTriggered, setAnimationsTriggered] = useState(false);
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 200);
+
+  // Query for study words
   const {
     data: studyWords = [],
     isLoading: isDataLoading,
@@ -84,7 +88,7 @@ export default function VocabularyScreen() {
     refetchOnWindowFocus: false,
   });
 
-  // Add a separate query just for due words count
+  // Query for due words
   const { data: dueWordsData = [] } = useQuery({
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
@@ -147,99 +151,57 @@ export default function VocabularyScreen() {
   });
   ErrorMessage.displayName = 'ErrorMessage';
 
-  // Enhanced loading state detection with minimum duration
+  // Initial loading state
   const isLoading = useMemo(() => {
-    const isCurrentlyLoading = isAuthLoading || (!!user && (isDataLoading || status === 'pending'));
+    return isAuthLoading || (!!user && status === 'pending');
+  }, [isAuthLoading, user, status]);
 
-    // Start tracking loading time
-    if (isCurrentlyLoading && loadingStartTime.current === null) {
-      loadingStartTime.current = Date.now();
-    }
-
-    // If not actually loading anymore, check if minimum time elapsed
-    if (!isCurrentlyLoading && loadingStartTime.current !== null) {
-      const timeElapsed = Date.now() - loadingStartTime.current;
-      if (timeElapsed < 500) {
-        // Clear any existing timeout
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-        }
-
-        // Set a timeout to update after minimum time
-        loadingTimeoutRef.current = setTimeout(() => {
-          loadingStartTime.current = null;
-          isInitialMount.current = false;
-          setForceUpdate(prev => !prev);
-        }, 500 - timeElapsed);
-
-        return true;
-      }
-      // Reset timer and mark initial mount as done
-      loadingStartTime.current = null;
-      isInitialMount.current = false;
-    }
-
-    return isCurrentlyLoading;
-  }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
-
-  // Separate loading state for content that can show a loading indicator
+  // Content loading state
   const isContentLoading = useMemo(() => {
-    // Consider content loading if:
-    // 1. User exists and data is being fetched
-    // 2. OR if we're in the initial data loading phase
-    return (!!user && isFetching) || (!!user && isDataLoading);
-  }, [user, isFetching, isDataLoading, forceUpdate]);
+    return !!user && (isFetching || isDataLoading);
+  }, [user, isFetching, isDataLoading]);
 
+  // Filter valid study words
   const validStudyWords = useMemo(() => {
     return studyWords.filter(word => word.sentence_word != null);
   }, [studyWords]);
 
-  // Ensure data is fully processed before rendering
+  // Check if data is ready to display
   const isDataReady = useMemo(() => {
     return !!user && !isContentLoading && validStudyWords.length > 0;
   }, [user, isContentLoading, validStudyWords.length]);
 
-  // Use the vocabulary-stats utility to calculate stats
+  // Calculate stats
   const stats = useMemo<VocabularyStats>(() => {
     return calculateVocabularyStats(validStudyWords, dueWordsData);
   }, [validStudyWords, dueWordsData]);
 
-  // Generate weekly progress data based on actual review history using the utility
+  // Calculate weekly progress data
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
     return calculateWeeklyProgressData(validStudyWords);
   }, [validStudyWords]);
 
-  // Function to start a review
+  // Handle starting a review
   const handleStartReview = useCallback(() => {
     if (!user) return;
-
-    // Invalidate the dueWords query first to ensure we get the freshest data
     queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-
-    // Prefetch data before navigation for faster rendering
-    queryClient.prefetchQuery({
-      queryKey: ['dueWords', user.id],
-      queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
-      staleTime: 0, // Ensure we get the freshest data
-    });
-
-    // Navigate immediately to improve perceived performance
     router.push('/review');
   }, [router, queryClient, user]);
 
-  // Add these animation hooks at the top of the component,
-  // before any conditional returns
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
-
+  // Trigger animations when data is ready
   useEffect(() => {
-    if (isDataReady) {
-      startFadeIn();
+    if (isDataReady && !animationsTriggered && !isContentLoading) {
+      // Start animations with a small delay
+      setTimeout(() => {
+        startFadeIn();
+        setAnimationsTriggered(true);
+      }, 100);
     }
-  }, [isDataReady, startFadeIn]);
+  }, [isDataReady, animationsTriggered, isContentLoading, startFadeIn]);
 
-  // Show loading screen
+  // Show loading screen for initial load
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen color={colors.tint} />;
   }
 
   // Show sign-in message if not authenticated
@@ -281,10 +243,16 @@ export default function VocabularyScreen() {
         <ThemedText style={styles.headerTitle}>Vocabulary</ThemedText>
       </View>
 
-      {/* Scrollable content */}
-      {isContentLoading ? (
-        <LoadingContainer style={styles.loadingContainer} />
-      ) : (
+      {/* Content area */}
+      <View style={styles.contentContainer}>
+        {/* Show loader when loading */}
+        {isContentLoading && (
+          <View style={[styles.fullscreenLoader, { backgroundColor: colors.background }]}>
+            <LoadingContainer size="large" color={colors.tint} />
+          </View>
+        )}
+
+        {/* Content */}
         <ThemedView
           scrollable={true}
           useSafeArea={false}
@@ -296,7 +264,7 @@ export default function VocabularyScreen() {
           }}
         >
           <Animated.View style={[{ width: '100%' }, fadeInStyle]}>
-            {/* Dashboard Section - Add a View wrapper with marginBottom */}
+            {/* Dashboard Section */}
             <View style={styles.dashboardWrapper}>
               <VocabularyDashboard
                 totalWords={stats.totalWords}
@@ -305,6 +273,7 @@ export default function VocabularyScreen() {
                 dueWords={stats.dueWords}
                 streak={stats.streak}
                 colors={colors}
+                animationTriggered={animationsTriggered}
               />
             </View>
 
@@ -319,7 +288,7 @@ export default function VocabularyScreen() {
                 LAYOUT.SHADOW.MEDIUM,
               ]}
             >
-              <VocabularyGraph data={weeklyProgressData} />
+              <VocabularyGraph data={weeklyProgressData} animationTriggered={animationsTriggered} />
             </View>
 
             {/* Review Button Section */}
@@ -334,7 +303,7 @@ export default function VocabularyScreen() {
             )}
           </Animated.View>
         </ThemedView>
-      )}
+      </View>
     </ThemedView>
   );
 }
@@ -355,6 +324,20 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
+  },
+  contentContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  fullscreenLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   sectionContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -394,6 +377,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: LAYOUT.SPACING.LARGE,
   },
   articleInfoText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -401,6 +385,6 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   dashboardWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Add consistent spacing
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

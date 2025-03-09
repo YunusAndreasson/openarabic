@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, Pressable, StyleProp, ViewStyle, Platform } from 'react-native';
-import { Image } from 'expo-image';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -226,11 +225,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
   },
-  iosLightModeCard: {
-    backgroundColor: 'white',
-    shadowOpacity: LAYOUT.OPACITY.OVERLAY,
-    shadowRadius: 8,
-  },
   imageContainer: {
     position: 'relative',
     width: '100%',
@@ -249,17 +243,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
-  },
-  loadingContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-    overflow: 'hidden',
   },
   gradient: {
     position: 'absolute',
@@ -284,32 +267,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: LAYOUT.OPACITY.DIMMED,
     letterSpacing: 0.2,
-  },
-  loadingCardContainer: {
-    height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    overflow: 'hidden',
-  },
-  cardLoading: {
-    opacity: LAYOUT.OPACITY.DIMMED,
-    minHeight: 300,
-  },
-  errorContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1,
-  },
-  errorText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    opacity: LAYOUT.OPACITY.DIMMED,
   },
   iosLightModeGradient: {
     bottom: -8,

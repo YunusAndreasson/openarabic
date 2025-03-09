@@ -27,7 +27,7 @@ import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { SCREEN_WIDTH, LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { ThemedModal } from '@/components/ThemedModal';

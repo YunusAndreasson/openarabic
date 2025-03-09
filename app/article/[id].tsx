@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Text,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ThemedView } from '@/components/ThemedView';
@@ -34,13 +33,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readingListService } from '@/services/reading_list';
 import { addToReadingList, incrementReadCount } from '@/store/readingListSlice';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-  withSequence,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { useFadeInAnimation, useSlideAnimation } from '@/hooks/animations';
 

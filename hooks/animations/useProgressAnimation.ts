@@ -1,5 +1,11 @@
-import { useCallback, useRef } from 'react';
-import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import { useCallback, useRef, useEffect } from 'react';
+import {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  runOnJS,
+} from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 
 /**
@@ -12,37 +18,55 @@ export const useProgressAnimation = (
   initialPercentage = 0,
   duration = TIMING_CONFIG.SLOW.duration
 ) => {
-  const percentage = useSharedValue(initialPercentage);
-  const isInitialMount = useRef(true);
+  // Store the progress value as a shared value for animations
+  const progress = useSharedValue(0);
 
+  // This tracks whether the animation has been triggered
+  const hasAnimated = useRef(false);
+
+  // Simple function to update the progress value with animation
   const updateProgress = useCallback(
-    (newPercentage: number, animationDelay = 0) => {
-      'worklet';
-      // Small delay to ensure the component is fully rendered on initial mount
-      const delay = isInitialMount.current ? Math.max(100, animationDelay) : animationDelay;
+    (newPercentage: number) => {
+      // Mark that animation has been requested
+      hasAnimated.current = true;
 
-      const animationTimeout = setTimeout(() => {
-        percentage.value = withTiming(newPercentage, {
-          duration,
+      // Force value to 0 first, then animate
+      progress.value = 0;
+
+      // Animate to the new percentage
+      setTimeout(() => {
+        progress.value = withTiming(newPercentage, {
+          duration: duration,
           easing: TIMING_CONFIG.SLOW.easing,
         });
-        isInitialMount.current = false;
-      }, delay);
+      }, 50);
 
-      return () => clearTimeout(animationTimeout);
+      // Return cleanup function
+      return () => {
+        // No action needed for cleanup
+      };
     },
-    [percentage, duration]
+    [progress, duration]
   );
 
+  // Create animated style based on the progress value
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      width: `${percentage.value}%`,
+      width: `${progress.value}%`,
     };
   });
+
+  // Reset animation state on unmount
+  useEffect(() => {
+    return () => {
+      hasAnimated.current = false;
+    };
+  }, []);
 
   return {
     animatedStyle,
     updateProgress,
-    percentage,
+    progress,
+    hasAnimated: () => hasAnimated.current,
   };
 };

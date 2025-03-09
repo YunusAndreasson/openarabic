@@ -27,10 +27,17 @@ interface VocabularyGraphProps {
   data: WeeklyProgressData[];
   title?: string;
   isLoading?: boolean;
+  // Flag to trigger animations when parent component is ready
+  animationTriggered?: boolean;
 }
 
 export const VocabularyGraph = React.memo(
-  ({ data = [], title = 'Weekly Progress', isLoading = false }: VocabularyGraphProps) => {
+  ({
+    data = [],
+    title = 'Weekly Progress',
+    isLoading = false,
+    animationTriggered = false,
+  }: VocabularyGraphProps) => {
     const colors = useColors();
     const { animatedStyle, startAnimation } = useComponentAnimation(500); // Increased delay for better stability
     const [isReady, setIsReady] = React.useState(false);
@@ -66,41 +73,50 @@ export const VocabularyGraph = React.memo(
       return () => clearTimeout(timer);
     }, [startAnimation]);
 
-    // Start the animation when the component is ready and data is loaded
+    // Debug logs
+    React.useEffect(() => {
+      // Debug logs removed for production
+    }, [animationTriggered, isReady, isLoading, points.length]);
+
+    // Start the animation when the component is ready and parent signals animation
     React.useEffect(() => {
       // Only start animation if:
       // 1. Component is ready (mounted and visible)
       // 2. Not in loading state
       // 3. We have data points
-      // 4. Animation hasn't already started
-      if (isReady && !isLoading && points.length > 0 && !hasAnimationStarted.current) {
+      // 4. Parent has triggered animations
+      // 5. Animation hasn't already started
+      if (
+        isReady &&
+        !isLoading &&
+        points.length > 0 &&
+        animationTriggered &&
+        !hasAnimationStarted.current
+      ) {
         // Mark animation as started
         hasAnimationStarted.current = true;
 
-        // Reset animation value first
+        // Reset animation value
         animationProgress.value = 0;
+        setSkiaProgress(0);
 
-        // Small delay to ensure everything is ready
-        const timeout = setTimeout(() => {
-          // Run the animation
+        // Use setTimeout to ensure synchronization with mastery bar
+        setTimeout(() => {
+          // Run the animation with matching duration
           animationProgress.value = withTiming(1, {
-            duration: 1000,
+            duration: 2000, // Match mastery bar duration
             easing: TIMING_CONFIG.SLOW.easing,
           });
-        }, 100);
-
-        return () => clearTimeout(timeout);
+        }, 50);
       }
-    }, [isReady, isLoading, points.length, animationProgress]);
 
-    // Reset animation state when data changes
-    React.useEffect(() => {
-      // Reset the animation flag when data changes
-      hasAnimationStarted.current = false;
-      // Reset progress values
-      animationProgress.value = 0;
-      setSkiaProgress(0);
-    }, [data]);
+      // Reset animation state when parent animation trigger is turned off
+      if (!animationTriggered && hasAnimationStarted.current) {
+        hasAnimationStarted.current = false;
+        animationProgress.value = 0;
+        setSkiaProgress(0);
+      }
+    }, [isReady, isLoading, points.length, animationProgress, animationTriggered]);
 
     // Use animated reaction to update Skia canvas when animation progresses
     useAnimatedReaction(
