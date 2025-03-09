@@ -167,10 +167,6 @@ export default function AccountScreen() {
   const themedStyles = useMemo(
     () => ({
       ...styles,
-      previewScroller: {
-        ...styles.previewScroller,
-        backgroundColor: colors.textOverlay,
-      },
     }),
     [colors]
   );
@@ -278,44 +274,61 @@ export default function AccountScreen() {
               <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
               <View style={themedStyles.previewContainer}>
                 <ThemedText style={themedStyles.previewLabel}>Article Text Preview</ThemedText>
-                <View style={themedStyles.previewScroller}>
+                <ThemedText
+                  style={[
+                    themedStyles.arabicPreviewText,
+                    {
+                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
+                      lineHeight: Math.round(
+                        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+                          LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                          settings.fontScale
+                      ),
+                      color: colors.arabicText,
+                      fontFamily: 'NotoNaskhArabic',
+                    },
+                  ]}
+                  skipDefaultColor
+                >
+                  مرحباً بك في اللغة العربية
+                </ThemedText>
+                {settings.showEnglish ? (
                   <ThemedText
                     style={[
-                      themedStyles.arabicPreviewText,
+                      themedStyles.englishPreviewText,
                       {
-                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
+                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
                         lineHeight: Math.round(
-                          LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+                          LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
                             LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
                             settings.fontScale
                         ),
-                        color: colors.arabicText,
+                        color: colors.text,
+                        fontFamily: 'Philosopher-Regular',
                       },
                     ]}
                     skipDefaultColor
                   >
-                    مرحباً بك في اللغة العربية
+                    Welcome to the Arabic language
                   </ThemedText>
-                  {settings.showEnglish && (
-                    <ThemedText
-                      style={[
-                        themedStyles.englishPreviewText,
-                        {
-                          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-                          lineHeight: Math.round(
-                            LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                              LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                              settings.fontScale
-                          ),
-                          color: colors.text,
-                        },
-                      ]}
-                      skipDefaultColor
-                    >
-                      Welcome to the Arabic language
-                    </ThemedText>
-                  )}
-                </View>
+                ) : (
+                  <ThemedText
+                    style={[
+                      themedStyles.englishPreviewText,
+                      {
+                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                        lineHeight: Math.round(
+                          LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                            LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                            settings.fontScale
+                        ),
+                        opacity: 0,
+                      },
+                    ]}
+                  >
+                    Welcome to the Arabic language
+                  </ThemedText>
+                )}
               </View>
             </View>
 
@@ -482,9 +495,10 @@ const styles = StyleSheet.create({
     height: 40,
   },
   scaleText: {
-    width: 40,
+    width: 45,
     textAlign: 'right',
     marginRight: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   previewContainer: {
     padding: LAYOUT.SPACING.MEDIUM,
@@ -494,17 +508,15 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
-  previewScroller: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-  },
   arabicPreviewText: {
     textAlign: 'right',
     marginBottom: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   englishPreviewText: {
     textAlign: 'left',
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   connectContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,

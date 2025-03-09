@@ -137,7 +137,7 @@ export const VocabularyDashboard = React.memo(
         textColor: colors.text || '#000000',
         cardBackground: colors.cardBackground || '#ffffff',
         cardBorder: colors.cardBorder || '#e0e0e0',
-        dueWordsColor: colors.info || '#4299e1',
+        dueWordsColor: colors.warning || '#FCC419',
       }),
       [colors]
     );
@@ -172,7 +172,7 @@ export const VocabularyDashboard = React.memo(
         {
           value: dueWords,
           label: 'Due Today',
-          icon: 'timer',
+          icon: 'alarm',
           iconColor: safeColors.dueWordsColor,
           bgColor: safeColors.dueWordsColor + '20',
           animateValue: true,
@@ -228,7 +228,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
     ...LAYOUT.SHADOW.MEDIUM,
   },
   statsRow: {

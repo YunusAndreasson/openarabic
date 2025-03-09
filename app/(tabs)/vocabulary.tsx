@@ -296,8 +296,8 @@ export default function VocabularyScreen() {
           }}
         >
           <Animated.View style={[{ width: '100%' }, fadeInStyle]}>
-            {/* Dashboard Section */}
-            <View style={styles.sectionContainer}>
+            {/* Dashboard Section - Add a View wrapper with marginBottom */}
+            <View style={styles.dashboardWrapper}>
               <VocabularyDashboard
                 totalWords={stats.totalWords}
                 masteredWords={stats.masteredWords}
@@ -309,10 +309,17 @@ export default function VocabularyScreen() {
             </View>
 
             {/* Graph Section */}
-            <View style={styles.sectionContainer}>
-              <View style={styles.graphContainer}>
-                <VocabularyGraph data={weeklyProgressData} />
-              </View>
+            <View
+              style={[
+                styles.graphWrapper,
+                {
+                  backgroundColor: colors.cardBackground,
+                  borderColor: colors.cardBorder,
+                },
+                LAYOUT.SHADOW.MEDIUM,
+              ]}
+            >
+              <VocabularyGraph data={weeklyProgressData} />
             </View>
 
             {/* Review Button Section */}
@@ -350,7 +357,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   sectionContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   messageContainer: {
     flex: 1,
@@ -362,12 +369,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   graphContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: 0,
+  },
+  graphWrapper: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    overflow: 'hidden',
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   reviewButtonWrapper: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   reviewButtonContainer: {
     width: '100%',
@@ -386,5 +399,8 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     marginLeft: LAYOUT.SPACING.TINY,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  dashboardWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Add consistent spacing
   },
 });
