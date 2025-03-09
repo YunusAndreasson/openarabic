@@ -27,6 +27,14 @@ interface EnhancedImageProps {
   onError?: () => void;
   /** For testing/debugging - disable optimizations */
   disableOptimization?: boolean;
+  /** Image transition duration in ms */
+  transition?: number;
+  /** Caching policy */
+  cachePolicy?: 'memory' | 'disk' | 'memory-disk' | 'none';
+  /** Blur radius for progressive loading */
+  blurRadius?: number;
+  /** Loading priority */
+  priority?: 'low' | 'normal' | 'high';
 }
 
 /**
@@ -48,97 +56,73 @@ export function EnhancedImage({
   onLoad,
   onError,
   disableOptimization = false,
+  transition = 300,
+  cachePolicy = 'memory-disk',
+  blurRadius,
+  priority = 'normal',
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
-
-  // Image loading states
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
-  // Use standardized fade in animation for the image
-  const { animatedStyle: imageAnimatedStyle, startAnimation: startImageAnimation } =
-    useFadeInAnimation(0, 300);
+  // Optimize source URL if needed
+  const optimizedSource = useMemo(() => {
+    return disableOptimization ? source : getOptimizedImageUrl(source);
+  }, [source, disableOptimization]);
 
-  // For the loading indicator, we need more control to hide it
-  const loadingOpacity = useSharedValue(1);
-  const loadingAnimatedStyle = { opacity: loadingOpacity };
+  // Get placeholder color
+  const placeholderColor = useMemo(() => {
+    return getPlaceholderColor(isDarkMode);
+  }, [isDarkMode]);
 
-  // Memoize these values to prevent unnecessary recalculations
-  const optimizedSource = useMemo(
-    () => (!disableOptimization && source ? getOptimizedImageUrl(source) : source),
-    [source, disableOptimization]
-  );
+  // Use fade-in animation for the image
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
 
-  const placeholderColor = useMemo(() => getPlaceholderColor(isDarkMode), [isDarkMode]);
-
-  // Memoize container styles
-  const containerStyle = useMemo(
-    () => [styles.container, { backgroundColor: placeholderColor }, style],
-    [placeholderColor, style]
-  );
-
-  // Handle image load success
+  // Handle successful image load
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
+    startAnimation();
+    onLoad?.();
+  }, [onLoad, startAnimation]);
 
-    // Start image fade-in animation
-    startImageAnimation();
-
-    // Fade out loading indicator
-    loadingOpacity.value = withTiming(0, { duration: 200 });
-
-    // Trigger custom onLoad callback if provided
-    if (onLoad) onLoad();
-  }, [startImageAnimation, loadingOpacity, onLoad]);
-
-  // Handle load error
+  // Handle image error
   const handleError = useCallback(() => {
     setIsLoading(false);
     setIsError(true);
-
-    // Fade out loading indicator
-    loadingOpacity.value = withTiming(0, { duration: 150 });
-
-    // Trigger custom onError callback if provided
-    if (onError) onError();
-  }, [loadingOpacity, onError]);
-
-  // Don't render anything if source is empty
-  if (!source) {
-    return null;
-  }
+    onError?.();
+  }, [onError]);
 
   return (
-    <View style={containerStyle} accessibilityLabel={alt}>
+    <View style={[styles.container, style]}>
       {/* Loading indicator */}
-      {showLoadingIndicator && isLoading && (
-        <Animated.View style={[styles.loadingContainer, loadingAnimatedStyle]} pointerEvents="none">
+      {isLoading && showLoadingIndicator && (
+        <View style={[styles.loadingContainer, { backgroundColor: placeholderColor }]}>
           <LoadingContainer size="small" />
-        </Animated.View>
+        </View>
       )}
 
-      {/* Main image */}
-      <Animated.View style={[styles.imageContainer, imageAnimatedStyle]}>
+      {/* Actual image */}
+      <Animated.View style={[styles.imageContainer, animatedStyle]}>
         <Image
           source={{ uri: optimizedSource }}
           style={styles.image}
           contentFit={contentFit}
-          transition={300}
+          transition={transition}
           onLoad={handleImageLoad}
           onError={handleError}
-          cachePolicy="memory-disk"
+          cachePolicy={cachePolicy}
           accessible={!!alt}
           accessibilityLabel={alt}
+          blurRadius={isLoading ? blurRadius : undefined}
+          priority={priority}
         />
       </Animated.View>
 
       {/* Error state */}
       {isError && (
-        <View style={styles.errorContainer}>
-          <View style={[styles.errorFallback, { backgroundColor: colors.cardBackground }]}>
-            <Ionicons name="image-outline" size={48} color={colors.icon} style={styles.errorIcon} />
-          </View>
+        <View style={[styles.errorContainer, { backgroundColor: placeholderColor }]}>
+          <Ionicons name="alert-circle-outline" size={24} color={isDarkMode ? '#fff' : '#000'} />
         </View>
       )}
     </View>

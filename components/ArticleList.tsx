@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   FlatList,
@@ -16,7 +16,7 @@ import Animated from 'react-native-reanimated';
 import EndMessage from './EndMessage';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useFadeInAnimation } from '../hooks/animations';
 
 const ITEM_HEIGHT = 360; // Approximate height of each article card
 
@@ -35,6 +35,9 @@ const ArticleList: React.FC<ArticleListProps> = ({
 }) => {
   const colors = useColors();
   const [viewableItems, setViewableItems] = useState<ViewToken[]>([]);
+
+  // Keep a ref to the FlatList
+  const flatListRef = useRef<FlatList>(null);
 
   // Memoize the key extractor for better performance
   const keyExtractor = useCallback((item: Article) => `article-${item.id}`, []);
@@ -79,13 +82,15 @@ const ArticleList: React.FC<ArticleListProps> = ({
       onArticlePress: (article: Article) => void;
       isViewable: boolean;
     }) => {
-      // Use fade in animation
+      // Use animation with fixed delay based on index
       const { animatedStyle, startAnimation } = useFadeInAnimation(index * 50, 300);
 
-      // Start the animation when the component mounts
+      // Start the animation when the component mounts or becomes visible
       useEffect(() => {
-        startAnimation();
-      }, [startAnimation]);
+        if (isViewable) {
+          startAnimation();
+        }
+      }, [isViewable, startAnimation]);
 
       return (
         <Animated.View style={[styles.articleItemContainer, animatedStyle]}>
@@ -102,6 +107,8 @@ const ArticleList: React.FC<ArticleListProps> = ({
       );
     }
   );
+
+  AnimatedArticleItem.displayName = 'AnimatedArticleItem';
 
   // Then update the renderItem function to use our new component
   const renderItem: ListRenderItem<Article> = useCallback(
@@ -121,7 +128,7 @@ const ArticleList: React.FC<ArticleListProps> = ({
   );
 
   // Render the footer component
-  const renderFooter = () => {
+  const renderFooter = useCallback(() => {
     if (isLoading && articles.length === 0) return null;
 
     return (
@@ -130,49 +137,60 @@ const ArticleList: React.FC<ArticleListProps> = ({
         <CopyrightFooter />
       </>
     );
-  };
+  }, [isLoading, articles.length]);
 
   return (
     <FlatList
+      ref={flatListRef}
       data={articles}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       getItemLayout={getItemLayout}
       initialNumToRender={5}
-      maxToRenderPerBatch={10}
+      maxToRenderPerBatch={5}
       windowSize={5}
-      removeClippedSubviews={true}
+      removeClippedSubviews={false} // Don't remove items when they're not visible
       viewabilityConfig={viewabilityConfig}
       onViewableItemsChanged={onViewableItemsChanged}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[styles.listContent, contentContainerStyle]}
       ListHeaderComponent={ListHeaderComponent}
       ListEmptyComponent={isLoading ? null : ListEmptyComponent}
-      ListFooterComponent={renderFooter}
+      ListFooterComponent={renderFooter()}
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={onRefresh}
-          progressBackgroundColor={colors.cardBackground}
           colors={[colors.tint]}
           tintColor={colors.tint}
         />
       }
+      // Use safer optimization settings
+      maintainVisibleContentPosition={{
+        minIndexForVisible: 0,
+      }}
+      scrollEventThrottle={16}
+      // DO NOT disable virtualization
+      disableVirtualization={false}
+      // DO NOT force persist scrollbar (causes issues)
+      persistentScrollbar={false}
+      // Use moderate update batching period
+      updateCellsBatchingPeriod={50}
     />
   );
 };
 
-export default React.memo(ArticleList);
-
 const styles = StyleSheet.create({
   listContent: {
-    paddingBottom: LAYOUT.SPACING.XLARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
   articleItemContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   articleCard: {
     width: '100%',
   },
 });
+
+export default React.memo(ArticleList);

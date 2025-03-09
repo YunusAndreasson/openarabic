@@ -47,6 +47,9 @@ import BackButton from '../../components/BackButton';
 import FilterNotice from '../../components/FilterNotice';
 import ErrorState from '../../components/ErrorState';
 
+// Import the specialized filtered view component
+import FilteredArticleView from '../../components/FilteredArticleView';
+
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -433,9 +436,20 @@ export default function ArticlesScreen() {
     >
       {error ? (
         <ErrorState message={error} />
+      ) : isInFilteredView ? (
+        // Use our specialized component for filtered views
+        <FilteredArticleView
+          articles={filteredArticles}
+          isLoading={isLoading}
+          isRefreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          onArticlePress={handleArticlePress}
+          ListHeaderComponent={ListHeaderComponent()}
+        />
       ) : (
+        // Use the normal ArticleList for non-filtered views
         <ArticleList
-          articles={isInFilteredView ? filteredArticles : []}
+          articles={[]} // Empty array since the content is in the header
           isLoading={isLoading}
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}

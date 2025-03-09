@@ -140,9 +140,13 @@ function ThemedCardComponent({
             source={imageUrl}
             style={styles.image}
             contentFit="cover"
-            alt={`Image for article: ${title}`}
+            transition={500}
+            cachePolicy="memory-disk"
             onError={() => setImageError(true)}
             showLoadingIndicator={true}
+            blurRadius={5}
+            priority="high"
+            alt={`Image for ${title}`}
           />
 
           {/* Image overlay content - keep this as is */}
