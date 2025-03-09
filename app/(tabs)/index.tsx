@@ -17,7 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -88,14 +88,18 @@ export default function ArticlesScreen() {
   const dispatch = useAppDispatch();
   const { session } = useSafeAuth();
 
-  // Animation
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+  // Use the new loading state hook
+  const {
+    isLoading: isLoadingState,
+    startLoading,
+    stopLoading,
+    setDataLoaded,
+  } = useLoadingState(500, true);
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const isInitialMount = useRef(true);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  const dataLoadedRef = useRef(false);
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
@@ -103,10 +107,8 @@ export default function ArticlesScreen() {
   const [authors, setAuthors] = useState<Tables<'authors'>[]>([]);
   const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [forceUpdate, setForceUpdate] = useState(false);
 
   // Get inProgressArticles from Redux
   const { inProgressArticles } = useAppSelectorMemo(state => state.readingList);
@@ -186,7 +188,7 @@ export default function ArticlesScreen() {
 
   // Fetch data function
   const fetchArticles = useCallback(async () => {
-    setIsLoading(true);
+    startLoading();
     setError(null);
 
     try {
@@ -198,7 +200,7 @@ export default function ArticlesScreen() {
       setArticles(fetchedArticles);
 
       // Mark data as loaded
-      dataLoadedRef.current = true;
+      setDataLoaded(true);
 
       // Fetch authors and categories if they haven't been fetched yet
       if (authors.length === 0) {
@@ -211,10 +213,11 @@ export default function ArticlesScreen() {
 
       // Dispatch fetchInProgressArticles after fetching articles
       dispatch(fetchInProgressArticles());
-    } catch (_err) {
-      setError('Failed to load articles');
+    } catch (err) {
+      console.error('Error fetching articles:', err);
+      setError('Failed to load articles. Please try again later.');
     } finally {
-      setIsLoading(false);
+      stopLoading();
       setIsRefreshing(false);
     }
   }, [
@@ -225,11 +228,13 @@ export default function ArticlesScreen() {
     categories.length,
     fetchAuthors,
     fetchCategories,
+    startLoading,
+    stopLoading,
+    setDataLoaded,
   ]);
 
   const handleRefresh = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setForceUpdate(true);
     fetchArticles();
   }, [fetchArticles]);
 
@@ -289,18 +294,13 @@ export default function ArticlesScreen() {
   useFocusEffect(
     useCallback(() => {
       // Always fetch on first mount, then only when force update is requested
-      if (isInitialMount.current || forceUpdate) {
+      if (isInitialMount.current) {
         fetchArticles();
-        if (forceUpdate) {
-          setForceUpdate(false);
-        }
-        if (isInitialMount.current) {
-          isInitialMount.current = false;
-        }
+        isInitialMount.current = false;
       } else {
         // If we already have data but are still showing loading, make sure to hide it
-        if (dataLoadedRef.current && isLoading) {
-          setIsLoading(false);
+        if (articles.length > 0 && isLoadingState) {
+          stopLoading();
         }
       }
 
@@ -310,15 +310,22 @@ export default function ArticlesScreen() {
           clearTimeout(loadingTimeoutRef.current);
         }
       };
-    }, [fetchArticles, forceUpdate, isLoading])
+    }, [fetchArticles, isLoadingState, stopLoading, articles.length])
   );
 
-  // Start the animation when the component mounts or when isLoading changes
-  useEffect(() => {
-    if (!isLoading && !isRefreshing) {
-      startFadeIn();
-    }
-  }, [isLoading, isRefreshing, startFadeIn]);
+  // Check if data is ready to display
+  const isDataReady = useMemo(() => {
+    return articles.length > 0 || error !== null;
+  }, [articles.length, error]);
+
+  // Use the new screen animation hook
+  const { fadeInStyle } = useScreenAnimation(
+    isDataReady,
+    isLoadingState,
+    300, // Animation duration
+    0, // Layout delay
+    0 // Animation delay
+  );
 
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {
@@ -433,12 +440,46 @@ export default function ArticlesScreen() {
     return <></>;
   }, []);
 
-  // Show loading screen if no data yet
-  if (isLoading && !isRefreshing && articles.length === 0) {
+  // Return null if loading
+  if (isLoadingState && !isRefreshing) {
     return <LoadingScreen />;
   }
 
-  // Wrap the original return statement in an Animated.View
+  // Return error state if there's an error
+  if (error && !isRefreshing) {
+    return (
+      <ErrorState
+        message={error}
+        onRetry={() => {
+          fetchArticles();
+        }}
+      />
+    );
+  }
+
+  // Return FilteredArticleView when in filtered view
+  if (isInFilteredView) {
+    return (
+      <Animated.View style={[styles.container, fadeInStyle]}>
+        <FilteredArticleView
+          articles={filteredArticles}
+          isLoading={isLoadingState}
+          isRefreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          onArticlePress={handleArticlePress}
+          selectedAuthor={selectedAuthor}
+          selectedCategory={selectedCategory}
+          onClearFilter={() => {
+            setSelectedAuthorId(null);
+            setSelectedCategoryId(null);
+          }}
+          ListHeaderComponent={ListHeaderComponent()}
+        />
+      </Animated.View>
+    );
+  }
+
+  // Main content view
   return (
     <Animated.View style={[styles.container, fadeInStyle]}>
       <ThemedView
@@ -448,31 +489,16 @@ export default function ArticlesScreen() {
         accessibilityLabel="Articles browse screen"
         accessibilityRole="scrollbar"
       >
-        {error ? (
-          <ErrorState message={error} />
-        ) : isInFilteredView ? (
-          // Use our specialized component for filtered views
-          <FilteredArticleView
-            articles={filteredArticles}
-            isLoading={isLoading}
-            isRefreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            onArticlePress={handleArticlePress}
-            ListHeaderComponent={ListHeaderComponent()}
-          />
-        ) : (
-          // Use the normal ArticleList for non-filtered views
-          <ArticleList
-            articles={[]} // Empty array since the content is in the header
-            isLoading={isLoading}
-            isRefreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            onArticlePress={handleArticlePress}
-            ListHeaderComponent={ListHeaderComponent()}
-            ListEmptyComponent={EmptyStateComponent()}
-            contentContainerStyle={contentContainerStyle}
-          />
-        )}
+        <ArticleList
+          articles={[]} // Empty array since the content is in the header
+          isLoading={isLoadingState}
+          isRefreshing={isRefreshing}
+          onRefresh={handleRefresh}
+          onArticlePress={handleArticlePress}
+          ListHeaderComponent={ListHeaderComponent()}
+          ListEmptyComponent={EmptyStateComponent()}
+          contentContainerStyle={contentContainerStyle}
+        />
       </ThemedView>
     </Animated.View>
   );

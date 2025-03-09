@@ -1,0 +1,77 @@
+import { useState, useEffect, useCallback } from 'react';
+
+/**
+ * Return type for useAnimationTrigger hook
+ */
+interface AnimationTriggerResult {
+  /** Whether animations have been triggered */
+  animationsTriggered: boolean;
+  /** Function to manually trigger animations */
+  triggerAnimations: () => void;
+  /** Function to reset animation state */
+  resetAnimations: () => void;
+}
+
+/**
+ * Hook to manage animation triggers based on data and layout readiness
+ * Ensures animations only start when both data and layout are ready
+ *
+ * @param isDataReady - Boolean indicating if data is ready
+ * @param isLayoutReady - Boolean indicating if layout is ready (default: true)
+ * @param isLoading - Boolean indicating if loading is in progress (default: false)
+ * @param startAnimation - Function to start the animation
+ * @param delay - Delay in ms before starting animation (default: 0)
+ * @returns Object with animation state and control functions
+ */
+export const useAnimationTrigger = (
+  isDataReady: boolean,
+  isLayoutReady = true,
+  isLoading = false,
+  startAnimation: () => void,
+  delay = 0
+): AnimationTriggerResult => {
+  const [animationsTriggered, setAnimationsTriggered] = useState(false);
+
+  // Reset animations when data changes
+  useEffect(() => {
+    if (!isDataReady || isLoading) {
+      setAnimationsTriggered(false);
+    }
+  }, [isDataReady, isLoading]);
+
+  // Trigger animations when data and layout are ready
+  useEffect(() => {
+    if (isDataReady && !animationsTriggered && !isLoading && isLayoutReady) {
+      if (delay > 0) {
+        const timeoutId = setTimeout(() => {
+          startAnimation();
+          setAnimationsTriggered(true);
+        }, delay);
+
+        return () => clearTimeout(timeoutId);
+      } else {
+        startAnimation();
+        setAnimationsTriggered(true);
+      }
+    }
+  }, [isDataReady, animationsTriggered, isLoading, isLayoutReady, startAnimation, delay]);
+
+  // Function to manually trigger animations
+  const triggerAnimations = useCallback(() => {
+    if (!animationsTriggered) {
+      startAnimation();
+      setAnimationsTriggered(true);
+    }
+  }, [animationsTriggered, startAnimation]);
+
+  // Function to reset animation state
+  const resetAnimations = useCallback(() => {
+    setAnimationsTriggered(false);
+  }, []);
+
+  return {
+    animationsTriggered,
+    triggerAnimations,
+    resetAnimations,
+  };
+};

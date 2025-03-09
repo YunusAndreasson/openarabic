@@ -18,27 +18,60 @@ import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { LoadingScreen } from '../../components/Loader';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useLoadingState, useScreenAnimation } from '@/hooks';
 
 export default function AccountScreen() {
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
-  const loadingStartTime = useRef<number | null>(null);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  const dataLoadedRef = useRef(false);
 
-  // Use fade in animation
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
+  // Use the new loading state hook
+  const {
+    isLoading: isLoadingState,
+    startLoading,
+    stopLoading,
+    setDataLoaded,
+  } = useLoadingState(500, true);
 
-  // Start the animation when the component mounts or when isLoading changes
-  useEffect(() => {
-    if (!isLoading) {
-      startFadeIn();
+  // Check if data is ready to display
+  const isDataReady = useMemo(() => {
+    return session !== null || session === null;
+  }, [session]);
+
+  // Use the new screen animation hook
+  const { fadeInStyle } = useScreenAnimation(
+    isDataReady,
+    isLoadingState,
+    300, // Animation duration
+    0, // Layout delay
+    0 // Animation delay
+  );
+
+  const loadSession = useCallback(async () => {
+    // Skip if data is already loaded
+    if (session) {
+      return;
     }
-  }, [isLoading, startFadeIn]);
+
+    startLoading();
+    try {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setDataLoaded(true);
+    } catch (error) {
+      console.error('Error fetching session:', error);
+    } finally {
+      stopLoading();
+    }
+  }, [session, startLoading, stopLoading, setDataLoaded]);
+
+  // Use focus effect to only load session when tab is focused and data isn't loaded yet
+  useFocusEffect(
+    useCallback(() => {
+      loadSession();
+    }, [loadSession])
+  );
 
   // Custom button styles to ensure left alignment
   const buttonStyles = useMemo(
@@ -55,104 +88,31 @@ export default function AccountScreen() {
     []
   );
 
-  const loadSession = useCallback(async () => {
-    // Skip if data is already loaded
-    if (dataLoadedRef.current && session) {
-      return;
-    }
-
-    // Clear any existing timeouts to prevent potential issues
-    if (loadingTimeoutRef.current) {
-      clearTimeout(loadingTimeoutRef.current);
-      loadingTimeoutRef.current = undefined;
-    }
-
-    setIsLoading(true);
-    loadingStartTime.current = Date.now();
-    try {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      dataLoadedRef.current = true;
-    } catch (error) {
-      console.error('Error fetching session:', error);
-    } finally {
-      // Ensure loader shows for at least 500ms
-      const timeElapsed = Date.now() - (loadingStartTime.current || 0);
-      if (timeElapsed < 500) {
-        loadingTimeoutRef.current = setTimeout(() => {
-          setIsLoading(false);
-          loadingStartTime.current = null;
-        }, 500 - timeElapsed);
-      } else {
-        setIsLoading(false);
-        loadingStartTime.current = null;
-      }
-    }
-  }, [session]);
-
-  // Use focus effect to only load session when tab is focused and data isn't loaded yet
-  useFocusEffect(
-    useCallback(() => {
-      if (!dataLoadedRef.current) {
-        loadSession();
-      }
-    }, [loadSession])
-  );
-
-  useEffect(() => {
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-      // Clean up any pending timeouts
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = undefined;
-      }
-      // Reset loading state
-      loadingStartTime.current = null;
-    };
-  }, []);
-
   async function signOut() {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      {
-        text: 'Cancel',
-        style: 'cancel',
-      },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          // Clear any existing timeouts
-          if (loadingTimeoutRef.current) {
-            clearTimeout(loadingTimeoutRef.current);
-            loadingTimeoutRef.current = undefined;
-          }
-
-          setIsLoading(true);
-          loadingStartTime.current = Date.now();
-          try {
-            const { error } = await supabase.auth.signOut();
-            if (error) Alert.alert('Error', error.message);
-          } finally {
-            // Ensure loader shows for at least 500ms
-            const timeElapsed = Date.now() - (loadingStartTime.current || 0);
-            if (timeElapsed < 500) {
-              loadingTimeoutRef.current = setTimeout(() => {
-                setIsLoading(false);
-                loadingStartTime.current = null;
-              }, 500 - timeElapsed);
-            } else {
-              setIsLoading(false);
-              loadingStartTime.current = null;
-            }
-          }
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
         },
-      },
-    ]);
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            startLoading();
+            try {
+              const { error } = await supabase.auth.signOut();
+              if (error) Alert.alert('Error', error.message);
+            } finally {
+              stopLoading();
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   }
 
   const handleSupport = () => {
@@ -171,13 +131,9 @@ export default function AccountScreen() {
     [colors]
   );
 
-  // Show loading screen while session is being fetched
-  if (isLoading) {
-    return (
-      <ThemedView style={themedStyles.container}>
-        <LoadingScreen />
-      </ThemedView>
-    );
+  // Show loading screen
+  if (isLoadingState) {
+    return <LoadingScreen />;
   }
 
   if (!session) {

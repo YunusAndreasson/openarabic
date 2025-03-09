@@ -16,11 +16,10 @@ import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation, useComponentAnimation } from '@/hooks/animations';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
+import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
 
 // Create a memoized component for the review button
 const ReviewButton = React.memo(
@@ -63,26 +62,10 @@ export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
-  const loadingStartTime = useRef<number | null>(null);
-  const isInitialMount = useRef(true);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  const [forceUpdate, setForceUpdate] = useState(false);
   const queryClient = useQueryClient();
 
-  // Animation state
-  const [animationsTriggered, setAnimationsTriggered] = useState(false);
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 400);
-
-  // Layout ready state to prevent jumping
-  const [isLayoutReady, setIsLayoutReady] = useState(false);
-
-  // Set layout ready after first render
-  useEffect(() => {
-    // Use requestAnimationFrame to ensure layout is calculated
-    requestAnimationFrame(() => {
-      setIsLayoutReady(true);
-    });
-  }, []);
+  // Use the new loading state hook
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500, true);
 
   // Query for study words
   const {
@@ -108,69 +91,22 @@ export default function VocabularyScreen() {
     gcTime: 60000, // 1 minute
   });
 
-  // Refetch data when the screen comes into focus
-  useFocusEffect(
-    useCallback(() => {
-      // Only refetch if we have a user and this isn't the initial focus
-      if (user && !isInitialMount.current) {
-        // Always refetch dueWords to ensure we have the latest data
-        queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-
-        // Check if studyWords data is stale before refetching
-        const studyWordsQueryData = queryClient.getQueryState(['studyWords', user?.id]);
-
-        const isStudyWordsStale = studyWordsQueryData?.dataUpdatedAt
-          ? Date.now() - studyWordsQueryData.dataUpdatedAt > 60000 // 1 minute
-          : true;
-
-        // Only refetch studyWords if data is stale
-        if (isStudyWordsStale) {
-          queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
-        }
-      }
-
-      // Mark initial mount as completed after first render
-      if (isInitialMount.current && user) {
-        isInitialMount.current = false;
-      }
-
-      return () => {
-        // Clean up any pending timeouts
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = undefined;
-        }
-        loadingStartTime.current = null;
-      };
-    }, [user, queryClient])
+  // Use the new screen focus refresh hook
+  useScreenFocusRefresh(
+    queryClient,
+    'dueWords',
+    user?.id,
+    0, // Always refresh due words
+    true
   );
 
-  // Create a memoized error message component
-  const ErrorMessage = React.memo(() => {
-    return (
-      <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
-        <ThemedText style={[styles.message, { color: colors.error }]}>
-          Error loading your vocabulary data. Please try again later.
-        </ThemedText>
-        <ThemedButton
-          title="Retry"
-          onPress={() => navigation.navigate('vocabulary')}
-          style={{ marginTop: LAYOUT.SPACING.LARGE }}
-        />
-      </View>
-    );
-  });
-  ErrorMessage.displayName = 'ErrorMessage';
-
-  // Initial loading state
-  const isLoading = useMemo(() => {
-    return isAuthLoading || (!!user && status === 'pending');
-  }, [isAuthLoading, user, status]);
-
-  // Content loading state
-  const isContentLoading = useMemo(() => {
-    return !!user && (isFetching || isDataLoading);
-  }, [user, isFetching, isDataLoading]);
+  useScreenFocusRefresh(
+    queryClient,
+    'studyWords',
+    user?.id,
+    60000, // 1 minute stale time
+    true
+  );
 
   // Filter valid study words
   const validStudyWords = useMemo(() => {
@@ -179,8 +115,8 @@ export default function VocabularyScreen() {
 
   // Check if data is ready to display
   const isDataReady = useMemo(() => {
-    return !!user && !isContentLoading && validStudyWords.length > 0;
-  }, [user, isContentLoading, validStudyWords.length]);
+    return !!user && !isDataLoading && validStudyWords.length > 0;
+  }, [user, isDataLoading, validStudyWords.length]);
 
   // Calculate stats
   const stats = useMemo<VocabularyStats>(() => {
@@ -199,17 +135,49 @@ export default function VocabularyScreen() {
     router.push('/review');
   }, [router, queryClient, user]);
 
-  // Trigger animations when data is ready
+  // Use the new screen animation hook
+  const { isLayoutReady, animationsTriggered, fadeInStyle, shouldRenderAnimatedContent } =
+    useScreenAnimation(
+      isDataReady,
+      isLoadingState || isDataLoading,
+      400, // Animation duration
+      0, // Layout delay
+      0 // Animation delay
+    );
+
+  // Update loading state based on data loading
   useEffect(() => {
-    if (isDataReady && !animationsTriggered && !isContentLoading && isLayoutReady) {
-      // Start animations immediately without delay
-      startFadeIn();
-      setAnimationsTriggered(true);
+    if (isAuthLoading || (!!user && status === 'pending')) {
+      startLoading();
+    } else {
+      stopLoading();
     }
-  }, [isDataReady, animationsTriggered, isContentLoading, startFadeIn, isLayoutReady]);
+  }, [isAuthLoading, user, status, startLoading, stopLoading]);
+
+  // Create a memoized error message component
+  const ErrorMessage = React.memo(() => {
+    return (
+      <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
+        <ThemedText style={[styles.message, { color: colors.error }]}>
+          Error loading your vocabulary data. Please try again later.
+        </ThemedText>
+        <ThemedButton
+          title="Retry"
+          onPress={() => navigation.navigate('vocabulary')}
+          style={{ marginTop: LAYOUT.SPACING.LARGE }}
+        />
+      </View>
+    );
+  });
+  ErrorMessage.displayName = 'ErrorMessage';
+
+  // Content loading state
+  const isContentLoading = useMemo(() => {
+    return !!user && (isFetching || isDataLoading);
+  }, [user, isFetching, isDataLoading]);
 
   // Show loading screen for initial load
-  if (isLoading) {
+  if (isLoadingState) {
     return <LoadingScreen color={colors.tint} />;
   }
 
@@ -273,7 +241,7 @@ export default function VocabularyScreen() {
           }}
         >
           {isLayoutReady && (
-            <Animated.View style={[{ width: '100%', opacity: 0 }, fadeInStyle]}>
+            <Animated.View style={[{ width: '100%' }, fadeInStyle]}>
               {/* Dashboard Section */}
               <View style={styles.dashboardWrapper}>
                 <VocabularyDashboard

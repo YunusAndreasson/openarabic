@@ -23,6 +23,7 @@ import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation, useButtonAnimation } from '@/hooks/animations';
+import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
 
 // ====== AUDIO PLAYER CONSTANTS ======
 const AUDIO_STATES = {
@@ -329,12 +330,13 @@ export default function BookmarksScreen() {
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList<any>>(null);
 
-  // Loading state management (similar to Vocabulary screen)
-  const loadingStartTime = useRef<number | null>(null);
-  const isInitialMount = useRef(true);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-  const dataLoadedRef = useRef(false);
-  const [forceUpdate, setForceUpdate] = useState(false);
+  // Use the new loading state hook
+  const {
+    isLoading: isLoadingState,
+    startLoading,
+    stopLoading,
+    setDataLoaded,
+  } = useLoadingState(500, true);
 
   // Query for reading list
   const {
@@ -349,12 +351,21 @@ export default function BookmarksScreen() {
     staleTime: 60000, // 1 minute
   });
 
+  // Use the new screen focus refresh hook
+  useScreenFocusRefresh(
+    queryClient,
+    'readingList',
+    user?.id,
+    60000, // 1 minute stale time
+    true
+  );
+
   // Mark data as loaded when we get results
   useEffect(() => {
     if (readingList && readingList.length >= 0) {
-      dataLoadedRef.current = true;
+      setDataLoaded(true);
     }
-  }, [readingList]);
+  }, [readingList, setDataLoaded]);
 
   // Simple audio state management
   const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
@@ -370,81 +381,28 @@ export default function BookmarksScreen() {
   const isMountedRef = useRef(true);
   const lastActionTimeRef = useRef(Date.now());
 
-  // Enhanced loading state detection with minimum duration (like Vocabulary screen)
-  const isLoading = useMemo(() => {
-    const isCurrentlyLoading = isAuthLoading || (!!user && (isDataLoading || status === 'pending'));
+  // Check if data is ready to display
+  const isDataReady = useMemo(() => {
+    return !!user && !isDataLoading && !!readingList;
+  }, [user, isDataLoading, readingList]);
 
-    // Start tracking loading time
-    if (isCurrentlyLoading && loadingStartTime.current === null) {
-      loadingStartTime.current = Date.now();
-    }
-
-    // If not actually loading anymore, check if minimum time elapsed
-    if (!isCurrentlyLoading && loadingStartTime.current !== null) {
-      const timeElapsed = Date.now() - loadingStartTime.current;
-
-      // Ensure loading shows for at least 500ms to avoid flashes
-      if (timeElapsed < 500) {
-        // Clear any existing timeout
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-        }
-
-        // Set a timeout to update after minimum time
-        loadingTimeoutRef.current = setTimeout(() => {
-          loadingStartTime.current = null;
-          isInitialMount.current = false;
-          // Force a re-render to update the loading state
-          setForceUpdate(prev => !prev);
-        }, 500 - timeElapsed);
-
-        // Haven't shown loader for 500ms yet, so keep showing
-        return true;
-      }
-
-      // Reset timer and mark initial mount as done
-      loadingStartTime.current = null;
-      isInitialMount.current = false;
-    }
-
-    return isCurrentlyLoading;
-  }, [isAuthLoading, user, isDataLoading, status, forceUpdate]);
-
-  // Clean up loading timeouts on focus change and conditionally refetch data
-  useFocusEffect(
-    useCallback(() => {
-      // Only refetch if we have a user and this isn't the initial focus
-      // Also check if data is stale before refetching
-      if (user?.id && !isInitialMount.current) {
-        // Check if data is stale before refetching
-        const readingListQueryData = queryClient.getQueryState(['readingList', user?.id]);
-
-        const isReadingListStale = readingListQueryData?.dataUpdatedAt
-          ? Date.now() - readingListQueryData.dataUpdatedAt > 60000 // 1 minute
-          : true;
-
-        // Only refetch if data is stale
-        if (isReadingListStale) {
-          refetch();
-        }
-      }
-
-      // Mark initial mount as completed after first render
-      if (isInitialMount.current && user) {
-        isInitialMount.current = false;
-      }
-
-      return () => {
-        // Clear any pending timeouts when screen loses focus
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
-          loadingTimeoutRef.current = undefined;
-        }
-        // Reset loading state when unmounting
-        loadingStartTime.current = null;
-      };
-    }, [user, refetch, queryClient])
+  // Use the new screen animation hook
+  const { fadeInStyle, animationsTriggered } = useScreenAnimation(
+    isDataReady,
+    isLoadingState || isDataLoading,
+    300, // Animation duration
+    0, // Layout delay
+    0 // Animation delay
   );
+
+  // Update loading state based on data loading
+  useEffect(() => {
+    if (isAuthLoading || (!!user && (isDataLoading || status === 'pending'))) {
+      startLoading();
+    } else {
+      stopLoading();
+    }
+  }, [isAuthLoading, user, isDataLoading, status, startLoading, stopLoading]);
 
   // Get active playlist based on mode
   const activePlaylist = useMemo(() => {
@@ -714,17 +672,8 @@ export default function BookmarksScreen() {
     }
   }, [currentTrackIndex, activePlaylist]);
 
-  // Add at the beginning of the component
-  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
-
-  useEffect(() => {
-    if (!isLoading) {
-      startFadeIn();
-    }
-  }, [isLoading, startFadeIn]);
-
   // Show loading screen
-  if (isLoading) {
+  if (isLoadingState) {
     return <LoadingScreen />;
   }
 
