@@ -21,16 +21,19 @@ module.exports = {
         paths: [
           {
             name: '../utils/animations',
-            message: 'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md'
+            message:
+              'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md',
           },
           {
             name: '../../utils/animations',
-            message: 'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md'
+            message:
+              'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md',
           },
           {
             name: '@/utils/animations',
-            message: 'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md'
-          }
+            message:
+              'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md',
+          },
         ],
       },
     ],

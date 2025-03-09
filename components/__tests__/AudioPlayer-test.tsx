@@ -4,4 +4,4 @@ describe('AudioPlayer', () => {
     // This is a placeholder test that always passes
     expect(true).toBe(true);
   });
-}); 
+});

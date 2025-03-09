@@ -17,13 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
-import {
-  useAnimatedReaction,
-  useSharedValue,
-  withTiming,
-  Easing,
-  runOnJS,
-} from 'react-native-reanimated';
+import { useAnimatedReaction, useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import { TIMING_CONFIG } from '@/hooks/animations/animationConfigs';

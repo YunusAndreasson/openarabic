@@ -2,11 +2,10 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { getPlaceholderColor, getOptimizedImageUrl } from '../utils/imageOptimization';
 import { useFadeInAnimation } from '@/hooks/animations';
 
@@ -62,7 +61,6 @@ export function EnhancedImage({
   priority = 'normal',
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
-  const colors = useColors();
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
 
@@ -154,14 +152,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 2,
-  },
-  errorFallback: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorIcon: {
-    opacity: 0.6,
   },
 });

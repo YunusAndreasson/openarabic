@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import ThemedCard from './ThemedCard';

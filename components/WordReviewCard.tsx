@@ -3,7 +3,7 @@ import { StyleSheet, Dimensions, View, TextStyle, ViewStyle } from 'react-native
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
-import Animated, { Layout, Easing } from 'react-native-reanimated';
+import Animated, { Layout } from 'react-native-reanimated';
 import { StudyWord } from '../types/vocabulary.types';
 import { useFadeInAnimation } from '@/hooks/animations';
 import { useSlideAnimation } from '../hooks/animations/useSlideAnimation';
@@ -17,7 +17,7 @@ interface WordReviewCardProps {
   isVisible: boolean;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+Dimensions.get('window');
 
 export function WordReviewCard({ word, transitionType = 'fade', isVisible }: WordReviewCardProps) {
   const colors = useColors();

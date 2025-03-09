@@ -15,16 +15,7 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  runOnJS,
-  FadeIn,
-  FadeOut,
-  Layout,
-  Easing,
-} from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useFadeInAnimation, useScaleAnimation } from '@/hooks/animations';
 
 interface ThemedModalProps {

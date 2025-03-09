@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View, Pressable } from 'react-native';
-import { Image } from 'expo-image';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';

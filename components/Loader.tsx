@@ -3,9 +3,8 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated, { useSharedValue, withTiming, FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { usePulseAnimation, useFadeInAnimation } from '@/hooks/animations';
-import { SafeEasing } from '@/hooks/animations/animationConfigs';
 
 interface LoaderProps {
   size?: 'small' | 'large';
