@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, FlatList, View, Platform, AppState, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  FlatList,
+  View,
+  Platform,
+  AppState,
+  TouchableOpacity,
+  Pressable,
+} from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/reading_list';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +22,7 @@ import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useFadeInAnimation, useButtonAnimation } from '@/hooks/animations';
 
 // ====== AUDIO PLAYER CONSTANTS ======
 const AUDIO_STATES = {
@@ -121,7 +129,7 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.SPACING.MEDIUM,
     backgroundColor: 'transparent',
@@ -143,41 +151,56 @@ const styles = StyleSheet.create({
   shuffleButton: {
     borderWidth: 1,
   },
+  playButton: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderBottomRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    backgroundColor: 'transparent',
+  },
 });
 
-// Playlist Item Component - redesigned as simple list item with just progress indicator
-const BookmarkItem = React.memo(
+// Memory-optimized component for reading list items
+const ReadingListItem = React.memo(
   ({
     title,
     author,
+    progress,
     isPlaying,
     isPaused,
-    progress,
     articleId,
   }: {
     title: string;
     author: string;
+    progress: number;
     isPlaying: boolean;
     isPaused: boolean;
-    progress: number;
     articleId: number;
   }) => {
     const colors = useColors();
     const isActive = isPlaying || isPaused;
+    const { animatedStyle, handlePressIn, handlePressOut } = useButtonAnimation();
 
     return (
-      <TouchableOpacity
+      <Pressable
         style={styles.itemContainer}
         onPress={() => router.push(`/article/${articleId}`)}
-        activeOpacity={0.7}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
       >
-        <View
+        <Animated.View
           style={[
             styles.listItem,
             {
               borderBottomColor: colors.cardBorder,
               backgroundColor: isActive ? `${colors.tint}08` : 'transparent',
             },
+            animatedStyle,
           ]}
         >
           <View style={styles.itemContentContainer}>
@@ -219,7 +242,7 @@ const BookmarkItem = React.memo(
               style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
             />
           )}
-        </View>
+        </Animated.View>
 
         {/* Progress indicator at bottom of the item */}
         <View style={styles.progressContainer}>
@@ -242,7 +265,7 @@ const BookmarkItem = React.memo(
             )}
           </View>
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   }
 );
@@ -768,12 +791,12 @@ export default function BookmarksScreen() {
                 (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
 
             return (
-              <BookmarkItem
+              <ReadingListItem
                 title={item.article.title}
                 author={item.article.author.name}
+                progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
                 isPlaying={isItemPlaying}
                 isPaused={isItemPaused}
-                progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
                 articleId={item.article_id}
               />
             );

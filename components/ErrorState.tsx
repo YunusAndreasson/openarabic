@@ -2,34 +2,47 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
+import { ThemedButton } from './ThemedButton';
 
 interface ErrorStateProps {
   /**
    * Error message to display
    */
   message: string;
+
+  /**
+   * Optional callback when retry button is pressed
+   */
+  onRetry?: () => void;
 }
 
 /**
  * A component for displaying error messages
  */
-const ErrorState = React.memo(({ message }: ErrorStateProps) => (
+const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => (
   <View style={styles.container}>
     <ThemedText style={styles.text}>{message}</ThemedText>
+    {onRetry && (
+      <View style={styles.buttonContainer}>
+        <ThemedButton title="Try Again" onPress={onRetry} variant="filled" icon="refresh" />
+      </View>
+    )}
   </View>
 ));
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.LARGE,
   },
   text: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-    opacity: LAYOUT.OPACITY.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  buttonContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
 

@@ -138,17 +138,13 @@ const Pill = React.memo(
       return {
         backgroundColor: isSelected
           ? isDarkMode
-            ? `${colors.elevation2}` // Selected, dark mode - using elevation2 for subtle contrast
-            : `${colors.elevation1}` // Selected, light mode - using elevation1 for subtle contrast
-          : isDarkMode
-            ? colors.cardBackground // Unselected, dark mode - card background
-            : colors.background, // Unselected, light mode - page background for subtle contrast
-        borderWidth: 0.5, // Thinner border for cleaner look
+            ? `${colors.tint}15` // Selected, dark mode - subtle tint background
+            : `${colors.tint}10` // Selected, light mode - very subtle tint background
+          : colors.cardBackground, // Unselected - use cardBackground for consistency with cards
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Match card border width for consistency
         borderColor: isSelected
-          ? `${colors.tint}60` // Selected - subtle tint border
-          : isDarkMode
-            ? colors.elevation3 // Unselected dark mode - subtle border
-            : colors.cardBorder, // Unselected light mode - default border
+          ? colors.tint // Selected - use tint color for border to make selection obvious
+          : colors.cardBorder, // Unselected - use cardBorder for consistency with cards
         borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Match card border radius
         // Add shadow for better visibility
         ...Platform.select({
@@ -189,14 +185,8 @@ const Pill = React.memo(
 
         if (isSelected) {
           style.color = colors.tint; // Use tint color for selected state
-          // Add subtle text shadow for selected pills in dark mode
-          if (isDarkMode) {
-            style.textShadowColor = colors.textShadowLight;
-            style.textShadowOffset = { width: 0, height: 0.5 };
-            style.textShadowRadius = 1;
-          }
         } else {
-          style.color = isDarkMode ? colors.text : colors.titleText; // Better contrast in light mode
+          style.color = colors.text; // Use standard text color for unselected state
         }
       }
 

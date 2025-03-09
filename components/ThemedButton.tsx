@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -7,6 +7,7 @@ import {
   Platform,
   GestureResponderEvent,
   ViewStyle,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
@@ -17,68 +18,96 @@ import Animated from 'react-native-reanimated';
 import { useButtonAnimation } from '@/hooks/animations';
 
 interface ThemedButtonProps extends TouchableOpacityProps {
+  /** Visual style variant of the button */
   variant?: 'filled' | 'outlined';
+  /** Text displayed on the button */
   title: string;
+  /** Optional Ionicons icon name to display before the title */
   icon?: string;
+  /** Optional custom icon component (overrides icon prop if both are provided) */
   iconComponent?: React.ReactNode;
+  /** Whether the button is in a loading state */
   loading?: boolean;
+  /** Additional content to render inside the button */
   children?: React.ReactNode;
+  /** Size of the icon in pixels */
   iconSize?: number;
+  /** Optional style to apply to the content container */
   contentContainerStyle?: ViewStyle;
+  /** Optional style to apply to the inner container */
   innerContainerStyle?: ViewStyle;
+  /** Optional custom scale amount for the press animation (default is 0.95) */
+  scaleAmount?: number;
 }
 
+/**
+ * A themed button component that supports different visual styles,
+ * icons, loading states, and press animations.
+ */
 export function ThemedButton({
   variant = 'filled',
   title,
   icon,
   iconComponent,
-  loading,
+  loading = false,
   style,
-  disabled,
+  disabled = false,
   children,
   iconSize = 24,
   onPress,
   contentContainerStyle,
   innerContainerStyle,
+  scaleAmount = 0.95,
+  accessibilityLabel,
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = useButtonAnimation(0.95);
+  const { animatedStyle, handlePressIn, handlePressOut } = useButtonAnimation(scaleAmount);
 
   // Handle press with haptic feedback
   const handlePress = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !loading) {
+      // Only attempt haptic feedback if the button is interactive
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       onPress(event);
     }
   };
 
-  // Determine colors based on variant
-  const isFilled = variant === 'filled';
-  const backgroundColor = isFilled ? colors.tint : 'transparent';
-  const textColor = isFilled ? colors.background : colors.tint;
-  const iconColor = isFilled ? colors.background : colors.tint;
+  // Memoize derived styles to avoid recalculation on every render
+  const buttonStyles = useMemo(() => {
+    // Determine colors based on variant
+    const isFilled = variant === 'filled';
+    const backgroundColor = isFilled ? colors.tint : 'transparent';
+    const textColor = isFilled ? colors.background : colors.tint;
 
-  // Only apply border for filled variant on Android
-  // iOS uses shadows instead
-  const borderWidth = Platform.OS === 'android' ? (isFilled ? 0 : 1) : 0;
+    // Only apply border for outlined variant on Android
+    // iOS uses shadows instead
+    const borderWidth = Platform.OS === 'android' ? (isFilled ? 0 : 1) : 0;
 
-  // Apply styles in correct order to allow overrides
-  const buttonStyles = [
-    styles.button,
-    {
-      backgroundColor,
-      borderWidth,
-      borderColor: colors.tint,
-      shadowColor: colors.cardShadow,
-    },
-    isFilled && Platform.OS === 'ios' && styles.iosShadow,
-    disabled && styles.buttonDisabled,
-    // Platform specific elevation
-    Platform.OS === 'android' && isFilled && { elevation: 4 },
-    style, // User style comes last to override default styles
-  ];
+    return [
+      styles.button,
+      {
+        backgroundColor,
+        borderWidth,
+        borderColor: colors.tint,
+        shadowColor: colors.cardShadow,
+      },
+      isFilled && Platform.OS === 'ios' && styles.iosShadow,
+      (disabled || loading) && styles.buttonDisabled,
+      // Platform specific elevation
+      Platform.OS === 'android' && isFilled && { elevation: 4 },
+      style, // User style comes last to override default styles
+    ];
+  }, [variant, colors, disabled, loading, style]);
+
+  // Default accessibility label to the title if not provided
+  const finalAccessibilityLabel = accessibilityLabel || title;
+
+  // Add loading/disabled state to accessibility label if needed
+  const accessibilityState = {
+    disabled: disabled || loading,
+    busy: loading,
+  };
 
   return (
     <Animated.View style={animatedStyle}>
@@ -89,19 +118,39 @@ export function ThemedButton({
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
+        accessibilityRole="button"
+        accessibilityLabel={finalAccessibilityLabel}
+        accessibilityState={accessibilityState}
         {...props}
       >
         <View style={[styles.innerContainer, innerContainerStyle]}>
-          {iconComponent ? (
+          {loading ? (
+            <View style={styles.iconContainer}>
+              <ActivityIndicator
+                size="small"
+                color={variant === 'filled' ? colors.background : colors.tint}
+              />
+            </View>
+          ) : iconComponent ? (
             <View style={styles.iconContainer}>{iconComponent}</View>
           ) : icon ? (
             <View style={styles.iconContainer}>
-              <Ionicons name={icon as any} size={iconSize} color={iconColor} />
+              <Ionicons
+                name={icon as any}
+                size={iconSize}
+                color={variant === 'filled' ? colors.background : colors.tint}
+              />
             </View>
           ) : null}
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
-            <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
+            <ThemedText
+              style={[
+                styles.buttonText,
+                { color: variant === 'filled' ? colors.background : colors.tint },
+              ]}
+              skipDefaultColor
+            >
               {title}
             </ThemedText>
             {children}

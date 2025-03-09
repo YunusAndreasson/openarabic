@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { RefreshControl } from 'react-native';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -16,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
+import { useFadeInAnimation } from '@/hooks/animations';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -85,6 +87,9 @@ export default function ArticlesScreen() {
   const colors = useColors();
   const dispatch = useAppDispatch();
   const { session } = useSafeAuth();
+
+  // Animation
+  const { animatedStyle: fadeInStyle, startAnimation: startFadeIn } = useFadeInAnimation(0, 300);
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
@@ -308,6 +313,13 @@ export default function ArticlesScreen() {
     }, [fetchArticles, forceUpdate, isLoading])
   );
 
+  // Start the animation when the component mounts or when isLoading changes
+  useEffect(() => {
+    if (!isLoading && !isRefreshing) {
+      startFadeIn();
+    }
+  }, [isLoading, isRefreshing, startFadeIn]);
+
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {
     if (isInFilteredView) {
@@ -426,39 +438,42 @@ export default function ArticlesScreen() {
     return <LoadingScreen />;
   }
 
+  // Wrap the original return statement in an Animated.View
   return (
-    <ThemedView
-      style={styles.container}
-      includeBottomInset={false}
-      safeAreaEdges={['top', 'left', 'right']}
-      accessibilityLabel="Articles browse screen"
-      accessibilityRole="scrollbar"
-    >
-      {error ? (
-        <ErrorState message={error} />
-      ) : isInFilteredView ? (
-        // Use our specialized component for filtered views
-        <FilteredArticleView
-          articles={filteredArticles}
-          isLoading={isLoading}
-          isRefreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          onArticlePress={handleArticlePress}
-          ListHeaderComponent={ListHeaderComponent()}
-        />
-      ) : (
-        // Use the normal ArticleList for non-filtered views
-        <ArticleList
-          articles={[]} // Empty array since the content is in the header
-          isLoading={isLoading}
-          isRefreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          onArticlePress={handleArticlePress}
-          ListHeaderComponent={ListHeaderComponent()}
-          ListEmptyComponent={EmptyStateComponent()}
-          contentContainerStyle={contentContainerStyle}
-        />
-      )}
-    </ThemedView>
+    <Animated.View style={[styles.container, fadeInStyle]}>
+      <ThemedView
+        style={styles.container}
+        includeBottomInset={false}
+        safeAreaEdges={['top', 'left', 'right']}
+        accessibilityLabel="Articles browse screen"
+        accessibilityRole="scrollbar"
+      >
+        {error ? (
+          <ErrorState message={error} />
+        ) : isInFilteredView ? (
+          // Use our specialized component for filtered views
+          <FilteredArticleView
+            articles={filteredArticles}
+            isLoading={isLoading}
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            onArticlePress={handleArticlePress}
+            ListHeaderComponent={ListHeaderComponent()}
+          />
+        ) : (
+          // Use the normal ArticleList for non-filtered views
+          <ArticleList
+            articles={[]} // Empty array since the content is in the header
+            isLoading={isLoading}
+            isRefreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            onArticlePress={handleArticlePress}
+            ListHeaderComponent={ListHeaderComponent()}
+            ListEmptyComponent={EmptyStateComponent()}
+            contentContainerStyle={contentContainerStyle}
+          />
+        )}
+      </ThemedView>
+    </Animated.View>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, RefreshControl, View } from 'react-native';
+import { ScrollView, StyleSheet, RefreshControl, View, TouchableOpacity } from 'react-native';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
@@ -7,6 +7,9 @@ import { useColors } from '../hooks/useColors';
 import { CopyrightFooter } from './CopyrightFooter';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations';
+import { Ionicons } from '@expo/vector-icons';
+import { ThemedText } from './ThemedText';
+import { Tables } from '../types/database.types';
 
 interface FilteredArticleViewProps {
   /**
@@ -17,7 +20,7 @@ interface FilteredArticleViewProps {
   /**
    * Whether the view is in a loading state
    */
-  isLoading: boolean;
+  isLoading?: boolean;
 
   /**
    * Whether the view is in a refreshing state
@@ -32,12 +35,27 @@ interface FilteredArticleViewProps {
   /**
    * Callback when an article is pressed
    */
-  onArticlePress: (article: Article) => void;
+  onArticlePress?: (article: Article) => void;
 
   /**
    * Header component to display at the top of the view
    */
-  ListHeaderComponent: React.ReactNode;
+  ListHeaderComponent?: React.ReactNode;
+
+  /**
+   * Selected author (if filtering by author)
+   */
+  selectedAuthor?: Tables<'authors'> | null;
+
+  /**
+   * Selected category (if filtering by category)
+   */
+  selectedCategory?: Tables<'categories'> | null;
+
+  /**
+   * Callback to clear the current filter
+   */
+  onClearFilter?: () => void;
 }
 
 /**
@@ -51,6 +69,9 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   onRefresh,
   onArticlePress,
   ListHeaderComponent,
+  selectedAuthor,
+  selectedCategory,
+  onClearFilter,
 }) => {
   const colors = useColors();
 
@@ -88,7 +109,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
             title={article.title}
             category={article.category?.name || 'Uncategorized'}
             author={article.author?.name || 'Anonymous'}
-            onPress={() => onArticlePress(article)}
+            onPress={() => onArticlePress?.(article)}
             isLoading={isLoading}
           />
         </View>
