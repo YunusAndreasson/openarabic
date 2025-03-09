@@ -3,7 +3,7 @@ import { StyleSheet, View, Pressable } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
-import { CategoryPill } from './CategoryPill';
+import Pill from './Pill';
 import { Ionicons } from '@expo/vector-icons';
 import { CompactArticleCardProps } from '../types/ui.types';
 import { formatTimeAgo } from '../utils/dateUtils';
@@ -109,8 +109,16 @@ function CompactArticleCardComponent({
               alt={`Image for article: ${article.title}`}
               onError={() => console.log(`Failed to load image for article: ${article.id}`)}
               showLoadingIndicator={true}
+              transition={300}
             />
-            {article.category && <CategoryPill category={article.category.name} />}
+            {article.category && (
+              <Pill
+                id={article.category.id}
+                label={article.category.name}
+                variant="category"
+                absolute
+              />
+            )}
           </View>
           <View style={styles.contentContainer}>
             <ThemedText style={styles.title} numberOfLines={2}>

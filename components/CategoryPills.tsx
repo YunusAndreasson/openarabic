@@ -1,14 +1,12 @@
 /* eslint-disable react-native/no-unused-styles */
 import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, TouchableOpacity, View } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { Tables } from '../types/database.types';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
-import { createBasePillStyles } from './pills/BasePill';
+import Pill from './Pill';
 import Animated, { SharedValue } from 'react-native-reanimated';
 
 interface CategoryPillsProps {
@@ -18,45 +16,11 @@ interface CategoryPillsProps {
   visible: SharedValue<number>;
 }
 
-// Create a memoized category pill component for the horizontal list
-const HorizontalCategoryPill = React.memo(
-  ({
-    category,
-    isSelected,
-    onPress,
-  }: {
-    category: Tables<'categories'> | null;
-    isSelected: boolean;
-    onPress: () => void;
-  }) => {
-    const colors = useColors();
-    const isDarkMode = useIsDarkMode();
-    const displayText = category ? category.name.toUpperCase() : 'ALL';
-
-    // Use the shared base pill styles
-    const pillStyles = useMemo(() => {
-      return createBasePillStyles({
-        isSelected,
-        isDarkMode,
-        colors,
-      });
-    }, [isSelected, colors, isDarkMode]);
-
-    return (
-      <TouchableOpacity style={pillStyles.container} onPress={onPress} activeOpacity={0.7}>
-        <ThemedText style={pillStyles.text} skipDefaultColor>
-          {displayText}
-        </ThemedText>
-      </TouchableOpacity>
-    );
-  }
-);
-HorizontalCategoryPill.displayName = 'HorizontalCategoryPill';
-
 function CategoryPillsComponent({
   categories,
   selectedCategory,
   onSelectCategory,
+  visible,
 }: CategoryPillsProps) {
   const colors = useColors();
 
@@ -90,18 +54,22 @@ function CategoryPillsComponent({
           contentContainerStyle={styles.scrollContent}
           removeClippedSubviews={true}
         >
-          <HorizontalCategoryPill
-            category={null}
+          <Pill
+            id="all"
+            label="ALL"
             isSelected={selectedCategory === null}
-            onPress={createPressHandler(null)}
+            onSelect={() => createPressHandler(null)()}
+            variant="horizontal-category"
           />
 
           {categories.map(category => (
-            <HorizontalCategoryPill
+            <Pill
               key={category.id}
-              category={category}
+              id={category.id}
+              label={category.name}
               isSelected={selectedCategory?.id === category.id}
-              onPress={createPressHandler(category)}
+              onSelect={() => createPressHandler(category)()}
+              variant="horizontal-category"
             />
           ))}
         </ScrollView>

@@ -4,16 +4,17 @@ import {
   FlatList,
   ListRenderItem,
   RefreshControl,
-  View,
   ViewToken,
   ViewabilityConfig,
+  View,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
-import Animated from 'react-native-reanimated';
-import EndMessage from './EndMessage';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
 import { useFadeInAnimation } from '../hooks/animations';
@@ -127,17 +128,26 @@ const ArticleList: React.FC<ArticleListProps> = ({
     [viewableItems, onArticlePress]
   );
 
+  // Add the endMessageAnimatedStyle
+  const { animatedStyle: endMessageAnimatedStyle, startAnimation: startEndMessageAnimation } =
+    useFadeInAnimation(800, 400);
+
+  // Start the end message animation when the component mounts
+  React.useEffect(() => {
+    startEndMessageAnimation();
+  }, [startEndMessageAnimation]);
+
   // Render the footer component
   const renderFooter = useCallback(() => {
     if (isLoading && articles.length === 0) return null;
 
     return (
       <>
-        <EndMessage />
+        <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle]} />
         <CopyrightFooter />
       </>
     );
-  }, [isLoading, articles.length]);
+  }, [isLoading, articles.length, endMessageAnimatedStyle]);
 
   return (
     <FlatList
@@ -190,6 +200,9 @@ const styles = StyleSheet.create({
   },
   articleCard: {
     width: '100%',
+  },
+  endMessageContainer: {
+    height: LAYOUT.SPACING.MEDIUM,
   },
 });
 

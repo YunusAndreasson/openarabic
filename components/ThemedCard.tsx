@@ -5,33 +5,37 @@ import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { CategoryPill } from './CategoryPill';
+import Pill from './Pill';
 import { LoadingContainer } from './Loader';
 import Animated from 'react-native-reanimated';
 import { useCardAnimation } from '@/hooks/animations';
 import { EnhancedImage } from './EnhancedImage';
 
 /**
- * ThemedCard is a reusable card component that displays an image with title, category, and author.
+ * ThemedCard is a reusable card component that can display content in different variants.
  * It supports both light and dark themes, handles loading states, and provides smooth animations.
  *
  * The component is optimized for performance with memoization and proper image loading handling.
  */
 interface ThemedCardProps {
-  /** URL of the image to display in the card */
-  imageUrl: string;
-  /** Title text to display in the card */
-  title: string;
-  /** Category text to display in a pill on the card */
-  category: string;
-  /** Author name to display in the card */
-  author: string;
+  /** URL of the image to display in the card (for article variant) */
+  imageUrl?: string;
+  /** Title text to display in the card (for article variant) */
+  title?: string;
+  /** Category text to display in a pill on the card (for article variant) */
+  category?: string;
+  /** Author name to display in the card (for article variant) */
+  author?: string;
   /** Optional callback function when the card is pressed */
   onPress?: () => void;
   /** Optional style to apply to the card container */
   style?: StyleProp<ViewStyle>;
   /** Whether the card is in a loading state */
   isLoading?: boolean;
+  /** Children to render inside the card (for compact variant) */
+  children?: React.ReactNode;
+  /** Variant of the card */
+  variant?: 'article' | 'compact';
 }
 
 function ThemedCardComponent({
@@ -42,10 +46,13 @@ function ThemedCardComponent({
   onPress,
   style,
   isLoading = false,
+  children,
+  variant = 'article',
 }: ThemedCardProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const [imageError, setImageError] = useState(false);
+  const isCompact = variant === 'compact';
 
   // Use our animation utility hook instead of manual animation setup
   const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
@@ -101,7 +108,7 @@ function ThemedCardComponent({
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
         shadowColor: colors.shadow,
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+        borderRadius: isCompact ? LAYOUT.BORDER_RADIUS.LARGE : LAYOUT.BORDER_RADIUS.MEDIUM,
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         overflow: 'hidden',
         ...LAYOUT.SHADOW.MEDIUM,
@@ -119,37 +126,43 @@ function ThemedCardComponent({
         backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
       },
     };
-  }, [colors, isDarkMode, style]);
+  }, [colors, isDarkMode, isCompact]);
 
-  // Component rendering - update the card wrapper with animation
-  const renderContent = () => {
+  // Render loading state
+  const renderLoading = () => {
+    return (
+      <View style={[styles.loadingComponentContainer, themedStyles.loadingContainer]}>
+        <LoadingContainer />
+      </View>
+    );
+  };
+
+  // Render article content
+  const renderArticleContent = () => {
     if (isLoading) {
-      return (
-        <View style={styles.loadingComponentContainer}>
-          <LoadingContainer size="small" />
-        </View>
-      );
+      return renderLoading();
+    }
+
+    if (!imageUrl || !title || !category) {
+      console.warn('ThemedCard: Missing required props for article variant');
+      return null;
     }
 
     return (
       <>
         <View style={styles.imageContainer}>
-          {/* Replace the Image component with our EnhancedImage */}
           <EnhancedImage
             source={imageUrl}
-            style={styles.image}
+            style={[styles.image, themedStyles.image]}
+            onError={() => setImageError(true)}
             contentFit="cover"
             transition={500}
-            cachePolicy="memory-disk"
-            onError={() => setImageError(true)}
             showLoadingIndicator={true}
-            blurRadius={5}
-            priority="high"
+            cachePolicy="memory-disk"
             alt={`Image for ${title}`}
           />
 
-          {/* Image overlay content - keep this as is */}
-          <View style={styles.imageOverlayContainer} pointerEvents="none">
+          <View style={styles.imageOverlayContainer}>
             <LinearGradient
               colors={themedStyles.gradient.colors}
               style={[
@@ -160,25 +173,41 @@ function ThemedCardComponent({
               start={{ x: 0.5, y: 0 }}
               end={{ x: 0.5, y: 1 }}
             />
-            <CategoryPill category={category} />
           </View>
+
+          {category && <Pill id={category} label={category} variant="category" absolute />}
         </View>
 
         <View style={styles.contentContainer}>
-          <ThemedText style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+          <ThemedText style={styles.title} numberOfLines={2}>
             {title}
           </ThemedText>
-          <ThemedText
-            style={[styles.author, { color: themedStyles.author.color }]}
-            skipDefaultColor
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {author}
-          </ThemedText>
+
+          {author && (
+            <ThemedText style={[styles.author, themedStyles.author]} numberOfLines={1}>
+              By {author}
+            </ThemedText>
+          )}
         </View>
       </>
     );
+  };
+
+  // Render compact content
+  const renderCompactContent = () => {
+    if (isLoading) {
+      return renderLoading();
+    }
+
+    return children;
+  };
+
+  // Render the appropriate content based on variant
+  const renderContent = () => {
+    if (isCompact) {
+      return renderCompactContent();
+    }
+    return renderArticleContent();
   };
 
   return (
@@ -197,7 +226,9 @@ function ThemedCardComponent({
                 backgroundColor: themedStyles.card.backgroundColor,
                 borderColor: themedStyles.card.borderColor,
                 shadowColor: themedStyles.card.shadowColor,
+                borderRadius: themedStyles.card.borderRadius,
               },
+              isCompact && styles.compactCard,
               style,
             ]}
           >
@@ -209,8 +240,9 @@ function ThemedCardComponent({
   );
 }
 
-// Memoize the component to prevent unnecessary rerenders
-export default React.memo(ThemedCardComponent);
+// Use memo to prevent unnecessary re-renders
+const ThemedCard = React.memo(ThemedCardComponent);
+export default ThemedCard;
 
 const styles = StyleSheet.create({
   container: {
@@ -224,6 +256,11 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
+  },
+  compactCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.CARD.PADDING.SMALL,
+    elevation: 3,
   },
   imageContainer: {
     position: 'relative',

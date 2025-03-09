@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { CompactThemedCard } from './CompactThemedCard';
+import ThemedCard from './ThemedCard';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import { useWordStatus } from '@/hooks/useWordStatus';
 import { StudyWord } from '@/types/vocabulary.types';
@@ -28,7 +28,7 @@ const WordItem = React.memo(
     if (!word) return null;
 
     return (
-      <CompactThemedCard onPress={onPress}>
+      <ThemedCard onPress={onPress} variant="compact">
         <View style={styles.wordInfo}>
           <ThemedText
             style={[
@@ -67,7 +67,7 @@ const WordItem = React.memo(
             </View>
           </BlurView>
         </View>
-      </CompactThemedCard>
+      </ThemedCard>
     );
   }
 );

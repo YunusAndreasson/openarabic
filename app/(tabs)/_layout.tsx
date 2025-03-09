@@ -4,7 +4,8 @@ import { Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
-import { HapticTab } from '@/components/HapticTab';
+import { PlatformPressable } from '@react-navigation/elements';
+import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 
 const TAB_SCREENS = [
   {
@@ -76,7 +77,14 @@ export default function TabLayout() {
             },
           }),
         },
-        tabBarButton: props => <HapticTab {...props} />,
+        tabBarButton: (props: BottomTabBarButtonProps) => (
+          <PlatformPressable
+            {...props}
+            onPressIn={ev => {
+              props.onPressIn?.(ev);
+            }}
+          />
+        ),
         tabBarIconStyle: Platform.OS === 'ios' ? { marginTop: LAYOUT.SPACING.TINY } : undefined,
       }}
     >

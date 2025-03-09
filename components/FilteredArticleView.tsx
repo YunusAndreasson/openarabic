@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, RefreshControl, View } from 'react-native';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
-import EndMessage from './EndMessage';
 import { CopyrightFooter } from './CopyrightFooter';
+import Animated from 'react-native-reanimated';
+import { useFadeInAnimation } from '../hooks/animations';
 
 interface FilteredArticleViewProps {
   /**
@@ -53,6 +54,15 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 }) => {
   const colors = useColors();
 
+  // Add the endMessageAnimatedStyle
+  const { animatedStyle: endMessageAnimatedStyle, startAnimation: startEndMessageAnimation } =
+    useFadeInAnimation(800, 400);
+
+  // Start the end message animation when the component mounts
+  useEffect(() => {
+    startEndMessageAnimation();
+  }, [startEndMessageAnimation]);
+
   return (
     <ScrollView
       style={styles.container}
@@ -87,7 +97,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       {/* Footer */}
       {articles.length > 0 && (
         <>
-          <EndMessage />
+          <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle]} />
           <CopyrightFooter />
         </>
       )}
@@ -105,6 +115,9 @@ const styles = StyleSheet.create({
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  endMessageContainer: {
+    height: LAYOUT.SPACING.MEDIUM,
   },
 });
 

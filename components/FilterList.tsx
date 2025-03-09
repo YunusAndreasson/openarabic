@@ -5,7 +5,7 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import SectionTitle from './SectionTitle';
 import { ThemedText } from './ThemedText';
-import FilterPill from './FilterPill';
+import Pill from './Pill';
 
 interface FilterItem {
   id: number;
@@ -69,13 +69,14 @@ function FilterList<T extends FilterItem>({
     ({ item }: { item: T }) => {
       const isSelected = selectedId === item.id;
       return (
-        <FilterPill
+        <Pill
           key={`filter-pill-${item.id}`}
           id={item.id}
           label={item.name}
           isSelected={isSelected}
           onSelect={id => onSelect(Number(id))}
           animationDelay={itemAnimationDelay}
+          variant="filter"
         />
       );
     },

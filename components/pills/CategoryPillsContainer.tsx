@@ -4,7 +4,7 @@ import { useColors } from '@/hooks/useColors';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
-import { HorizontalCategoryPill } from './HorizontalCategoryPill';
+import Pill from '../Pill';
 import Animated, { useAnimatedStyle, interpolate } from 'react-native-reanimated';
 import { CategoryPillsContainerProps } from '../../types/ui.types';
 import type { Tables } from '../../types/database.types';
@@ -50,18 +50,22 @@ function CategoryPillsContainerComponent({
           contentContainerStyle={styles.scrollContent}
           removeClippedSubviews={true}
         >
-          <HorizontalCategoryPill
-            category={null}
+          <Pill
+            id="all"
+            label="ALL"
             isSelected={selectedCategory === null}
-            onPress={createPressHandler(null)}
+            onSelect={() => createPressHandler(null)()}
+            variant="horizontal-category"
           />
 
           {categories.map(category => (
-            <HorizontalCategoryPill
+            <Pill
               key={category.id}
-              category={category}
+              id={category.id}
+              label={category.name}
               isSelected={selectedCategory?.id === category.id}
-              onPress={createPressHandler(category)}
+              onSelect={() => createPressHandler(category)()}
+              variant="horizontal-category"
             />
           ))}
         </ScrollView>
