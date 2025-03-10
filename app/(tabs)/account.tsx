@@ -36,14 +36,9 @@ export default function AccountScreen() {
     setDataLoaded,
   } = useLoadingState(500, true);
 
-  // Check if data is ready to display
-  const isDataReady = useMemo(() => {
-    return session !== null || session === null;
-  }, [session]);
-
   // Use the new screen animation hook
   const { fadeInStyle } = useScreenAnimation(
-    isDataReady,
+    true, // Always ready to display
     isLoadingState,
     300, // Animation duration
     0, // Layout delay
@@ -90,6 +85,39 @@ export default function AccountScreen() {
     []
   );
 
+  // Memoize text preview styles to avoid recalculation on each render
+  const previewTextStyles = useMemo(() => {
+    const arabicFontSize = LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale;
+    const arabicLineHeight = Math.round(
+      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
+    );
+
+    const englishFontSize = LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale;
+    const englishLineHeight = Math.round(
+      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
+    );
+
+    return {
+      arabic: {
+        fontSize: arabicFontSize,
+        lineHeight: arabicLineHeight,
+        color: colors.arabicText,
+        fontFamily: 'NotoNaskhArabic',
+      },
+      english: {
+        fontSize: englishFontSize,
+        lineHeight: englishLineHeight,
+        color: colors.text,
+        fontFamily: 'Philosopher-Regular',
+      },
+      hiddenEnglish: {
+        fontSize: englishFontSize,
+        lineHeight: englishLineHeight,
+        opacity: 0,
+      },
+    };
+  }, [settings.fontScale, colors.arabicText, colors.text]);
+
   async function signOut() {
     Alert.alert(
       'Sign Out',
@@ -125,14 +153,6 @@ export default function AccountScreen() {
     Linking.openURL(url);
   };
 
-  // Override styles with theme-specific colors
-  const themedStyles = useMemo(
-    () => ({
-      ...styles,
-    }),
-    [colors]
-  );
-
   // Handle font scale change with haptic feedback
   const handleFontScaleChange = useCallback(
     (value: number) => {
@@ -158,13 +178,13 @@ export default function AccountScreen() {
   if (!session) {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
-        <ThemedView style={themedStyles.container}>
+        <ThemedView style={styles.container}>
           <PageHeader title="Account" />
-          <View style={themedStyles.authContainer}>
-            <ThemedText type="title" style={themedStyles.welcomeTitle}>
+          <View style={styles.authContainer}>
+            <ThemedText type="title" style={styles.welcomeTitle}>
               Welcome
             </ThemedText>
-            <ThemedText style={themedStyles.subtitle}>Sign in to access your account</ThemedText>
+            <ThemedText style={styles.subtitle}>Sign in to access your account</ThemedText>
             <Auth />
           </View>
         </ThemedView>
@@ -174,7 +194,7 @@ export default function AccountScreen() {
 
   return (
     <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
-      <ThemedView style={themedStyles.container} useSafeArea={true} includeBottomInset={false}>
+      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
         <PageHeader title="Account" />
 
@@ -189,11 +209,11 @@ export default function AccountScreen() {
             paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           }}
         >
-          <View style={themedStyles.content}>
+          <View style={styles.content}>
             {/* Preferences Section */}
             <View
               style={[
-                themedStyles.settingsContainer,
+                styles.settingsContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
@@ -201,33 +221,33 @@ export default function AccountScreen() {
                 LAYOUT.SHADOW.MEDIUM,
               ]}
             >
-              <View style={themedStyles.settingRow}>
-                <View style={themedStyles.settingLabelContainer}>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
                   <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={themedStyles.settingLabel}>Dark Mode</ThemedText>
+                  <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
                 </View>
                 <ThemeToggle />
               </View>
-              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={themedStyles.settingRow}>
-                <View style={themedStyles.settingLabelContainer}>
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
                   <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={themedStyles.settingLabel}>Show English</ThemedText>
+                  <ThemedText style={styles.settingLabel}>Show English</ThemedText>
                 </View>
                 <Toggle
                   value={settings.showEnglish}
                   onValueChange={value => dispatch(setShowEnglish(value))}
                 />
               </View>
-              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={themedStyles.settingRow}>
-                <View style={themedStyles.settingLabelContainer}>
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.settingRow}>
+                <View style={styles.settingLabelContainer}>
                   <Ionicons name="text" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={themedStyles.settingLabel}>Text Size</ThemedText>
+                  <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
                 </View>
-                <View style={themedStyles.sliderContainer}>
+                <View style={styles.sliderContainer}>
                   <ThemedText
-                    style={[themedStyles.scaleText, { color: colors.tabIconDefault }]}
+                    style={[styles.scaleText, { color: colors.tabIconDefault }]}
                     skipDefaultColor
                   >
                     {Math.round(settings.fontScale * 100)}%
@@ -238,66 +258,31 @@ export default function AccountScreen() {
                     minimumValue={0.8}
                     maximumValue={1.3}
                     step={0.1}
-                    style={themedStyles.slider}
+                    style={styles.slider}
                   />
                 </View>
               </View>
-              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
-              <View style={themedStyles.previewContainer}>
-                <ThemedText style={themedStyles.previewLabel}>Article Text Preview</ThemedText>
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={styles.previewContainer}>
+                <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
                 <View style={{ height: 100, overflow: 'hidden' }}>
                   <View style={{ position: 'absolute', width: '100%', top: 0 }}>
                     <ThemedText
-                      style={[
-                        themedStyles.arabicPreviewText,
-                        {
-                          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
-                          lineHeight: Math.round(
-                            LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
-                              LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                              settings.fontScale
-                          ),
-                          color: colors.arabicText,
-                          fontFamily: 'NotoNaskhArabic',
-                        },
-                      ]}
+                      style={[styles.arabicPreviewText, previewTextStyles.arabic]}
                       skipDefaultColor
                     >
                       مرحباً بك في اللغة العربية
                     </ThemedText>
                     {settings.showEnglish ? (
                       <ThemedText
-                        style={[
-                          themedStyles.englishPreviewText,
-                          {
-                            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-                            lineHeight: Math.round(
-                              LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                                LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                                settings.fontScale
-                            ),
-                            color: colors.text,
-                            fontFamily: 'Philosopher-Regular',
-                          },
-                        ]}
+                        style={[styles.englishPreviewText, previewTextStyles.english]}
                         skipDefaultColor
                       >
                         Welcome to the Arabic language
                       </ThemedText>
                     ) : (
                       <ThemedText
-                        style={[
-                          themedStyles.englishPreviewText,
-                          {
-                            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-                            lineHeight: Math.round(
-                              LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                                LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                                settings.fontScale
-                            ),
-                            opacity: 0,
-                          },
-                        ]}
+                        style={[styles.englishPreviewText, previewTextStyles.hiddenEnglish]}
                       >
                         Welcome to the Arabic language
                       </ThemedText>
@@ -310,7 +295,7 @@ export default function AccountScreen() {
             {/* Connect Section */}
             <View
               style={[
-                themedStyles.connectContainer,
+                styles.connectContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
@@ -324,27 +309,27 @@ export default function AccountScreen() {
                 title="Twitter"
                 onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
                 icon="logo-twitter"
-                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Instagram"
                 onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
                 icon="logo-instagram"
-                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Facebook"
                 onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
                 icon="logo-facebook"
-                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
@@ -353,7 +338,7 @@ export default function AccountScreen() {
             {/* Support & Account Section */}
             <View
               style={[
-                themedStyles.actionsContainer,
+                styles.actionsContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
@@ -367,27 +352,23 @@ export default function AccountScreen() {
                 title="Contact Support"
                 onPress={handleSupport}
                 icon="mail"
-                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Sign Out"
                 onPress={signOut}
                 icon="log-out"
-                style={[themedStyles.actionButton, { backgroundColor: colors.cardBackground }]}
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={themedStyles.accountInfoContainer}>
-                <ThemedText style={themedStyles.signedInLabel}>Signed in as:</ThemedText>
-                <ThemedText
-                  style={themedStyles.signedInEmail}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
+              <View style={styles.accountInfoContainer}>
+                <ThemedText style={styles.signedInLabel}>Signed in as:</ThemedText>
+                <ThemedText style={styles.signedInEmail} numberOfLines={1} ellipsizeMode="tail">
                   {session.user.email}
                 </ThemedText>
               </View>
