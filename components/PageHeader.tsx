@@ -1,8 +1,7 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT, getPlatformTopPadding } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
 
 interface PageHeaderProps {
   /**
@@ -26,7 +25,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: getPlatformTopPadding(),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.TINY,
     flexDirection: 'row',
     alignItems: 'center',
   },

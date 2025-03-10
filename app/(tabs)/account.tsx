@@ -205,7 +205,7 @@ export default function AccountScreen() {
           includeBottomInset={false}
           contentContainerStyle={{
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: LAYOUT.SPACING.MEDIUM,
+            paddingTop: LAYOUT.SPACING.SMALL,
             paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           }}
         >
