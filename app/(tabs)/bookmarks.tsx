@@ -676,38 +676,44 @@ export default function BookmarksScreen() {
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         <PageHeader title="Bookmarks" />
 
-        <FlatList
-          ref={flatListRef}
-          data={readingList}
-          keyExtractor={item => `${item.article_id}`}
-          renderItem={({ item }) => {
-            // Determine if this item is currently playing
-            const isItemPlaying =
-              audioState === AUDIO_STATES.PLAYING &&
-              ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-                (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+        <ThemedView useSafeArea={false} includeBottomInset={false} style={{ flex: 1 }}>
+          <FlatList
+            ref={flatListRef}
+            data={readingList}
+            keyExtractor={item => `${item.article_id}`}
+            renderItem={({ item }) => {
+              // Determine if this item is currently playing
+              const isItemPlaying =
+                audioState === AUDIO_STATES.PLAYING &&
+                ((isShuffleMode &&
+                  shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+                  (!isShuffleMode &&
+                    readingList[currentTrackIndex]?.article_id === item.article_id));
 
-            const isItemPaused =
-              audioState === AUDIO_STATES.PAUSED &&
-              ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-                (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+              const isItemPaused =
+                audioState === AUDIO_STATES.PAUSED &&
+                ((isShuffleMode &&
+                  shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+                  (!isShuffleMode &&
+                    readingList[currentTrackIndex]?.article_id === item.article_id));
 
-            return (
-              <ReadingListItem
-                title={item.article.title}
-                author={item.article.author.name}
-                progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
-                isPlaying={isItemPlaying}
-                isPaused={isItemPaused}
-                articleId={item.article_id}
-              />
-            );
-          }}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          removeClippedSubviews={true}
-          initialNumToRender={10}
-        />
+              return (
+                <ReadingListItem
+                  title={item.article.title}
+                  author={item.article.author.name}
+                  progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
+                  isPlaying={isItemPlaying}
+                  isPaused={isItemPaused}
+                  articleId={item.article_id}
+                />
+              );
+            }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+            removeClippedSubviews={true}
+            initialNumToRender={10}
+          />
+        </ThemedView>
 
         {/* Bottom Action Buttons - similar to vocabulary screen */}
         <BottomControls

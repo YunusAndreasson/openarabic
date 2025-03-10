@@ -205,12 +205,12 @@ export default function AccountScreen() {
           includeBottomInset={false}
           contentContainerStyle={{
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: LAYOUT.SPACING.SMALL,
+            paddingTop: LAYOUT.SPACING.MEDIUM,
             paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           }}
         >
-          <View style={styles.content}>
-            {/* Preferences Section */}
+          {/* Preferences Section */}
+          <View style={styles.settingsWrapper}>
             <View
               style={[
                 styles.settingsContainer,
@@ -291,15 +291,16 @@ export default function AccountScreen() {
                 </View>
               </View>
             </View>
+          </View>
 
-            {/* Connect Section */}
+          {/* Connect Section */}
+          <View style={styles.connectWrapper}>
             <View
               style={[
                 styles.connectContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
-                  marginTop: LAYOUT.SPACING.MEDIUM,
                 },
                 LAYOUT.SHADOW.MEDIUM,
               ]}
@@ -334,15 +335,16 @@ export default function AccountScreen() {
                 contentContainerStyle={buttonStyles.contentContainer}
               />
             </View>
+          </View>
 
-            {/* Support & Account Section */}
+          {/* Support & Account Section */}
+          <View style={styles.actionsWrapper}>
             <View
               style={[
                 styles.actionsContainer,
                 {
                   backgroundColor: colors.cardBackground,
                   borderColor: colors.cardBorder,
-                  marginTop: LAYOUT.SPACING.MEDIUM,
                 },
                 LAYOUT.SHADOW.MEDIUM,
               ]}
@@ -384,9 +386,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-  },
   authContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -403,6 +402,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     marginBottom: LAYOUT.SPACING.XLARGE,
     textAlign: 'center',
+  },
+  settingsWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   settingsContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -463,10 +465,16 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY,
     flexShrink: 0,
   },
+  connectWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
   connectContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
+  },
+  actionsWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   actionsContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,

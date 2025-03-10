@@ -258,8 +258,17 @@ export default function VocabularyScreen() {
         {/* Fixed header */}
         <PageHeader title="Vocabulary" />
 
-        {/* Content area */}
-        <View style={styles.contentContainer}>
+        {/* Content */}
+        <ThemedView
+          scrollable={true}
+          useSafeArea={false}
+          includeBottomInset={false}
+          contentContainerStyle={{
+            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+            paddingTop: LAYOUT.SPACING.MEDIUM,
+            paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+          }}
+        >
           {/* Show loader when loading */}
           {isContentLoading && (
             <View style={[styles.fullscreenLoader, { backgroundColor: colors.background }]}>
@@ -267,56 +276,44 @@ export default function VocabularyScreen() {
             </View>
           )}
 
-          {/* Content */}
-          <ThemedView
-            scrollable={true}
-            useSafeArea={false}
-            includeBottomInset={false}
-            contentContainerStyle={{
-              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-              paddingTop: LAYOUT.SPACING.MEDIUM,
-              paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-            }}
+          {/* Dashboard Section */}
+          <View style={styles.dashboardWrapper}>
+            <VocabularyDashboard
+              totalWords={stats.totalWords}
+              masteredWords={stats.masteredWords}
+              learningWords={stats.learningWords}
+              dueWords={stats.dueWords}
+              streak={stats.streak}
+              colors={colors}
+              animationTriggered={true}
+            />
+          </View>
+
+          {/* Graph Section */}
+          <View
+            style={[
+              styles.graphWrapper,
+              {
+                backgroundColor: colors.cardBackground,
+                borderColor: colors.cardBorder,
+              },
+              LAYOUT.SHADOW.MEDIUM,
+            ]}
           >
-            {/* Dashboard Section */}
-            <View style={styles.dashboardWrapper}>
-              <VocabularyDashboard
-                totalWords={stats.totalWords}
-                masteredWords={stats.masteredWords}
-                learningWords={stats.learningWords}
-                dueWords={stats.dueWords}
-                streak={stats.streak}
-                colors={colors}
-                animationTriggered={true}
-              />
-            </View>
+            <VocabularyGraph data={weeklyProgressData} animationTriggered={true} />
+          </View>
 
-            {/* Graph Section */}
-            <View
-              style={[
-                styles.graphWrapper,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.cardBorder,
-                },
-                LAYOUT.SHADOW.MEDIUM,
-              ]}
-            >
-              <VocabularyGraph data={weeklyProgressData} animationTriggered={true} />
+          {/* Review Button Section */}
+          {isDataReady && (
+            <View style={styles.reviewButtonWrapper}>
+              {stats.dueWords > 0 ? (
+                <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+              ) : (
+                <DisabledReviewButton />
+              )}
             </View>
-
-            {/* Review Button Section */}
-            {isDataReady && (
-              <View style={styles.reviewButtonWrapper}>
-                {stats.dueWords > 0 ? (
-                  <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
-                ) : (
-                  <DisabledReviewButton />
-                )}
-              </View>
-            )}
-          </ThemedView>
-        </View>
+          )}
+        </ThemedView>
       </ThemedView>
     </Animated.View>
   );
@@ -338,10 +335,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
-  },
-  contentContainer: {
-    flex: 1,
-    position: 'relative',
   },
   fullscreenLoader: {
     position: 'absolute',
