@@ -111,7 +111,9 @@ export default function ArticlesScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // Get inProgressArticles from Redux
-  const { inProgressArticles } = useAppSelectorMemo(state => state.readingList);
+  const { inProgressArticles, lastOpenedArticles = {} } = useAppSelectorMemo(
+    state => state.readingList
+  );
 
   // Define fetchAuthors and fetchCategories functions
   const fetchAuthors = useCallback(async () => {
@@ -185,6 +187,25 @@ export default function ArticlesScreen() {
     }),
     [colors.background]
   );
+
+  // Sort in-progress articles by last opened time
+  const sortedInProgressArticles = useMemo(() => {
+    if (!inProgressArticles.length) return [];
+
+    return [...inProgressArticles].sort((a, b) => {
+      const aTime =
+        lastOpenedArticles && lastOpenedArticles[a.id]
+          ? new Date(lastOpenedArticles[a.id]).getTime()
+          : 0;
+      const bTime =
+        lastOpenedArticles && lastOpenedArticles[b.id]
+          ? new Date(lastOpenedArticles[b.id]).getTime()
+          : 0;
+
+      // Sort by last opened time (most recent first)
+      return bTime - aTime;
+    });
+  }, [inProgressArticles, lastOpenedArticles]);
 
   // Fetch data function
   const fetchArticles = useCallback(async () => {
@@ -348,10 +369,11 @@ export default function ArticlesScreen() {
 
         <ArticleSection
           title="Continue Reading"
-          articles={inProgressArticles}
+          articles={sortedInProgressArticles}
           onArticlePress={article => router.push(`/article/${article.id}`)}
           delay={100}
           showTimeAgo={true}
+          getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
           emptyStateMessage="No articles in progress. Start reading to see them here!"
         />
 
@@ -389,6 +411,7 @@ export default function ArticlesScreen() {
             articles={beginnerArticles}
             onArticlePress={handleArticlePress}
             delay={400}
+            hideDifficulty={true}
           />
         )}
 
@@ -418,7 +441,7 @@ export default function ArticlesScreen() {
     isInFilteredView,
     articles,
     handleArticlePress,
-    inProgressArticles,
+    sortedInProgressArticles,
     latestArticles,
     featuredArticles,
     recentArticles,
@@ -432,6 +455,7 @@ export default function ArticlesScreen() {
     handleSelectCategory,
     selectedAuthor,
     selectedCategory,
+    lastOpenedArticles,
   ]);
 
   // Create an empty state component

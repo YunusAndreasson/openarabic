@@ -32,7 +32,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { readingListService } from '@/services/reading_list';
-import { addToReadingList, incrementReadCount } from '@/store/readingListSlice';
+import {
+  addToReadingList,
+  incrementReadCount,
+  updateLastOpenedArticle,
+} from '@/store/readingListSlice';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { useFadeInAnimation, useSlideAnimation } from '@/hooks/animations';
@@ -658,6 +662,13 @@ export default function ArticleScreen() {
       }
     }
   }, [id, dispatch, user]);
+
+  // Update last opened timestamp when article loads
+  useEffect(() => {
+    if (articleId) {
+      dispatch(updateLastOpenedArticle(articleId));
+    }
+  }, [articleId, dispatch]);
 
   // Article Header Component
   const ArticleHeader = useMemo(() => {

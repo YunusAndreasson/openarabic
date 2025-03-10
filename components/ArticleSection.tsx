@@ -46,6 +46,21 @@ interface ArticleSectionProps {
    * Message to display when there are no articles
    */
   emptyStateMessage?: string;
+
+  /**
+   * Whether to hide the difficulty label text
+   */
+  hideDifficultyLabel?: boolean;
+
+  /**
+   * Whether to completely hide the difficulty indicator
+   */
+  hideDifficulty?: boolean;
+
+  /**
+   * Function to get the last opened timestamp for an article
+   */
+  getLastOpenedAt?: (articleId: number) => string | undefined;
 }
 
 /**
@@ -61,19 +76,30 @@ const ArticleSection = React.memo(
     vertical = false,
     maxItems,
     emptyStateMessage,
+    hideDifficultyLabel = false,
+    hideDifficulty = false,
+    getLastOpenedAt,
   }: ArticleSectionProps) => {
     // Memoize the render item function
     const renderItem = useCallback(
-      ({ item }: { item: Article }) => (
-        <View style={vertical ? styles.verticalCard : undefined}>
-          <CompactArticleCard
-            article={item}
-            onPress={() => onArticlePress(item)}
-            showTimeAgo={showTimeAgo}
-          />
-        </View>
-      ),
-      [onArticlePress, showTimeAgo, vertical]
+      ({ item }: { item: Article }) => {
+        // Safely get the last opened timestamp
+        const lastOpenedAt = getLastOpenedAt ? getLastOpenedAt(item.id) : undefined;
+
+        return (
+          <View style={vertical ? styles.verticalCard : undefined}>
+            <CompactArticleCard
+              article={item}
+              onPress={() => onArticlePress(item)}
+              showTimeAgo={showTimeAgo}
+              hideDifficultyLabel={hideDifficultyLabel}
+              hideDifficulty={hideDifficulty}
+              lastOpenedAt={lastOpenedAt}
+            />
+          </View>
+        );
+      },
+      [onArticlePress, showTimeAgo, vertical, hideDifficultyLabel, hideDifficulty, getLastOpenedAt]
     );
 
     // Limit the number of articles if maxItems is specified

@@ -15,6 +15,7 @@ export type Article = Tables<'articles'> & {
   author: Tables<'authors'> | null;
   article_sentences: ArticleSentence[];
   audio_url: string | null;
+  last_opened_at?: string;
 };
 
 /**

@@ -11,68 +11,78 @@ import { EnhancedImage } from './EnhancedImage';
 import Animated from 'react-native-reanimated';
 import { useCardAnimation } from '../hooks/animations';
 
-// TimeAgo component to show when an article was published
-const TimeAgo = React.memo(({ date }: { date: string }) => {
-  const colors = useColors();
-  const timeAgoText = formatTimeAgo(date);
+// TimeAgo component to show when an article was published or last opened
+const TimeAgo = React.memo(
+  ({ date, isLastOpened = false }: { date: string; isLastOpened?: boolean }) => {
+    const colors = useColors();
 
-  return (
-    <View style={styles.timeAgoContainer}>
-      <Ionicons name="time-outline" size={14} color={colors.tint} style={styles.timeIcon} />
-      <ThemedText style={[styles.timeAgoText, { color: colors.tint }]} skipDefaultColor>
-        {timeAgoText}
-      </ThemedText>
-    </View>
-  );
-});
+    // Ensure we have a valid date
+    const validDate = date ? date : new Date().toISOString();
+    const timeAgoText = formatTimeAgo(validDate);
+
+    return (
+      <View style={styles.timeAgoContainer}>
+        <Ionicons name="time-outline" size={14} color={colors.tint} style={styles.timeIcon} />
+        <ThemedText style={[styles.timeAgoText, { color: colors.tint }]} skipDefaultColor>
+          {timeAgoText}
+        </ThemedText>
+      </View>
+    );
+  }
+);
 
 // DifficultyIndicator component
-const DifficultyIndicator = React.memo(({ level }: { level: number }) => {
-  const colors = useColors();
+const DifficultyIndicator = React.memo(
+  ({ level, hideLabel = false }: { level: number; hideLabel?: boolean }) => {
+    const colors = useColors();
 
-  // Normalize level to be between 1-5
-  const normalizedLevel = Math.max(1, Math.min(5, level));
+    // Normalize level to be between 1-5
+    const normalizedLevel = Math.max(1, Math.min(5, level));
 
-  // Get difficulty label based on level
-  const difficultyLabel = useMemo(() => {
-    switch (normalizedLevel) {
-      case 1:
-        return 'Beginner';
-      case 2:
-        return 'Elementary';
-      case 3:
-        return 'Intermediate';
-      case 4:
-        return 'Advanced';
-      case 5:
-        return 'Expert';
-      default:
-        return 'Intermediate';
-    }
-  }, [normalizedLevel]);
+    // Get difficulty label based on level
+    const difficultyLabel = useMemo(() => {
+      switch (normalizedLevel) {
+        case 1:
+          return 'Beginner';
+        case 2:
+          return 'Elementary';
+        case 3:
+          return 'Intermediate';
+        case 4:
+          return 'Advanced';
+        case 5:
+          return 'Expert';
+        default:
+          return 'Intermediate';
+      }
+    }, [normalizedLevel]);
 
-  return (
-    <View style={styles.difficultyContainer}>
-      <View style={styles.starsContainer}>
-        {[1, 2, 3, 4, 5].map(star => (
-          <Ionicons
-            key={star}
-            name="star"
-            size={12}
-            color={star <= normalizedLevel ? colors.tint : colors.cardBorder}
-            style={styles.starIcon}
-          />
-        ))}
+    return (
+      <View style={styles.difficultyContainer}>
+        <View style={styles.starsContainer}>
+          {[1, 2, 3, 4, 5].map(star => (
+            <Ionicons
+              key={star}
+              name="star"
+              size={12}
+              color={star <= normalizedLevel ? colors.tint : colors.cardBorder}
+              style={styles.starIcon}
+            />
+          ))}
+        </View>
+        {!hideLabel && <ThemedText style={styles.difficultyText}>{difficultyLabel}</ThemedText>}
       </View>
-      <ThemedText style={styles.difficultyText}>{difficultyLabel}</ThemedText>
-    </View>
-  );
-});
+    );
+  }
+);
 
 function CompactArticleCardComponent({
   article,
   onPress,
   showTimeAgo = false,
+  hideDifficultyLabel = false,
+  hideDifficulty = false,
+  lastOpenedAt,
 }: CompactArticleCardProps) {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
@@ -138,9 +148,12 @@ function CompactArticleCardComponent({
 
             <View style={styles.cardFooter}>
               {showTimeAgo ? (
-                <TimeAgo date={article.created_at} />
-              ) : (
-                <DifficultyIndicator level={article.difficulty_level} />
+                <TimeAgo date={lastOpenedAt || article.created_at} isLastOpened={!!lastOpenedAt} />
+              ) : hideDifficulty ? null : (
+                <DifficultyIndicator
+                  level={article.difficulty_level}
+                  hideLabel={hideDifficultyLabel}
+                />
               )}
             </View>
           </View>
