@@ -245,61 +245,65 @@ export default function AccountScreen() {
               <View style={[themedStyles.divider, { backgroundColor: colors.cardBorder }]} />
               <View style={themedStyles.previewContainer}>
                 <ThemedText style={themedStyles.previewLabel}>Article Text Preview</ThemedText>
-                <ThemedText
-                  style={[
-                    themedStyles.arabicPreviewText,
-                    {
-                      fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
-                      lineHeight: Math.round(
-                        LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
-                          LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                          settings.fontScale
-                      ),
-                      color: colors.arabicText,
-                      fontFamily: 'NotoNaskhArabic',
-                    },
-                  ]}
-                  skipDefaultColor
-                >
-                  مرحباً بك في اللغة العربية
-                </ThemedText>
-                {settings.showEnglish ? (
-                  <ThemedText
-                    style={[
-                      themedStyles.englishPreviewText,
-                      {
-                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-                        lineHeight: Math.round(
-                          LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                            LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                            settings.fontScale
-                        ),
-                        color: colors.text,
-                        fontFamily: 'Philosopher-Regular',
-                      },
-                    ]}
-                    skipDefaultColor
-                  >
-                    Welcome to the Arabic language
-                  </ThemedText>
-                ) : (
-                  <ThemedText
-                    style={[
-                      themedStyles.englishPreviewText,
-                      {
-                        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-                        lineHeight: Math.round(
-                          LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                            LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                            settings.fontScale
-                        ),
-                        opacity: 0,
-                      },
-                    ]}
-                  >
-                    Welcome to the Arabic language
-                  </ThemedText>
-                )}
+                <View style={{ height: 100, overflow: 'hidden' }}>
+                  <View style={{ position: 'absolute', width: '100%', top: 0 }}>
+                    <ThemedText
+                      style={[
+                        themedStyles.arabicPreviewText,
+                        {
+                          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale,
+                          lineHeight: Math.round(
+                            LAYOUT.TYPOGRAPHY.SCALE.XXLARGE *
+                              LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                              settings.fontScale
+                          ),
+                          color: colors.arabicText,
+                          fontFamily: 'NotoNaskhArabic',
+                        },
+                      ]}
+                      skipDefaultColor
+                    >
+                      مرحباً بك في اللغة العربية
+                    </ThemedText>
+                    {settings.showEnglish ? (
+                      <ThemedText
+                        style={[
+                          themedStyles.englishPreviewText,
+                          {
+                            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                            lineHeight: Math.round(
+                              LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                                LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                                settings.fontScale
+                            ),
+                            color: colors.text,
+                            fontFamily: 'Philosopher-Regular',
+                          },
+                        ]}
+                        skipDefaultColor
+                      >
+                        Welcome to the Arabic language
+                      </ThemedText>
+                    ) : (
+                      <ThemedText
+                        style={[
+                          themedStyles.englishPreviewText,
+                          {
+                            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                            lineHeight: Math.round(
+                              LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                                LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                                settings.fontScale
+                            ),
+                            opacity: 0,
+                          },
+                        ]}
+                      >
+                        Welcome to the Arabic language
+                      </ThemedText>
+                    )}
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -459,7 +463,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   previewContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL,
   },
   previewLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -468,13 +472,15 @@ const styles = StyleSheet.create({
   },
   arabicPreviewText: {
     textAlign: 'right',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    flexShrink: 0,
   },
   englishPreviewText: {
     textAlign: 'left',
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    flexShrink: 0,
   },
   connectContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
