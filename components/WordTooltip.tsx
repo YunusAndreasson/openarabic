@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, TextStyle, LayoutRectangle, Dimensions, Text } from 'react-native';
+import { StyleSheet, View, LayoutRectangle, Dimensions, Text } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
@@ -20,7 +20,6 @@ interface WordTooltipProps {
  * and an arrow pointing to the word's center
  */
 export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout, onClose }) => {
-  const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const { width: screenWidth } = Dimensions.get('window');
   const [textWidth, setTextWidth] = useState(0);
@@ -63,10 +62,10 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
 
   if (!visible || !layout) return null;
 
-  // Get colors based on theme with improved contrast
-  const backgroundColor = isDarkMode ? 'rgba(22, 22, 26, 0.96)' : 'rgba(255, 255, 255, 0.98)';
-  const textColor = isDarkMode ? colors.white : colors.black;
-  const borderColor = isDarkMode ? 'rgba(80, 80, 80, 0.6)' : 'rgba(210, 210, 210, 0.9)';
+  // Get colors based on theme with improved contrast and visual hierarchy
+  const backgroundColor = isDarkMode ? 'rgba(28, 28, 33, 0.97)' : 'rgba(255, 255, 255, 0.98)';
+  const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)';
+  const borderColor = isDarkMode ? 'rgba(100, 100, 100, 0.3)' : 'rgba(210, 210, 210, 0.7)';
 
   // Size and position calculations - adaptive width
   const HORIZONTAL_PADDING = LAYOUT.SPACING.MEDIUM * 2.2;
@@ -81,8 +80,8 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
 
   // Fixed tooltip height for stability
   const TOOLTIP_HEIGHT = 50;
-  const ARROW_SIZE = 8;
-  const TOOLTIP_MARGIN = 14;
+  const ARROW_SIZE = 10; // Slightly larger arrow for better visibility
+  const TOOLTIP_MARGIN = 12;
 
   // Calculate the word's center point
   const wordCenterX = layout.x + layout.width / 2;
@@ -129,13 +128,27 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
         {text}
       </ThemedText>
 
-      {/* Arrow pointing down to the word */}
+      {/* Arrow pointing down to the word - more prominent */}
       <View
         style={[
           styles.arrow,
           {
             left: Math.max(16, Math.min(arrowPosition, tooltipWidth - 16)),
             borderTopColor: backgroundColor,
+            borderLeftWidth: ARROW_SIZE,
+            borderRightWidth: ARROW_SIZE,
+            borderTopWidth: ARROW_SIZE,
+          },
+        ]}
+      />
+
+      {/* Subtle connecting line for better visual connection */}
+      <View
+        style={[
+          styles.connector,
+          {
+            left: Math.max(16, Math.min(arrowPosition, tooltipWidth - 16)) + ARROW_SIZE - 0.5,
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
           },
         ]}
       />
@@ -149,10 +162,10 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 0.5,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 8,
     zIndex: 9999,
   },
   tooltipText: {
@@ -171,13 +184,17 @@ const styles = StyleSheet.create({
   },
   arrow: {
     position: 'absolute',
-    bottom: -8,
+    bottom: -10, // Match arrow size
     width: 0,
     height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 8,
-    borderTopWidth: 8,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
+  },
+  connector: {
+    position: 'absolute',
+    bottom: -LAYOUT.SPACING.MEDIUM - 10, // Extend below arrow
+    width: 1,
+    height: LAYOUT.SPACING.MEDIUM,
+    opacity: 0.5,
   },
 });
