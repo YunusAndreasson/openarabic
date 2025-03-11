@@ -1,24 +1,12 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import {
-  StyleSheet,
-  View,
-  Pressable,
-  Platform,
-  Dimensions,
-  TextStyle,
-  ViewStyle,
-  Animated as RNAnimated,
-} from 'react-native';
+import { StyleSheet, View, Platform, Dimensions, TextStyle, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
   runOnJS,
-  FadeIn,
-  FadeOut,
   useAnimatedReaction,
-  Easing,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -36,11 +24,16 @@ import { ThemedModal } from '@/components/ThemedModal';
 import { Loader } from '@/components/Loader';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Toast from 'react-native-toast-message';
-import { useFadeInAnimation, useSlideAnimation, TIMING_CONFIG } from '@/hooks/animations';
 import EntranceAnimation from '@/components/EntranceAnimation';
 import AnimatedItem from '@/components/AnimatedItem';
 
-const BASE_FONT_SIZE = 20;
+// Import our new components
+import CloseButton from '../components/CloseButton';
+import WordDisplay from '../components/review/WordDisplay';
+import InstructionFooter from '../components/review/InstructionFooter';
+import { default as MeaningOverlayComponent } from '../components/review/MeaningOverlay';
+import { useWordSizing } from '../hooks/useWordSizing';
+
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
 const ANIMATION_CONFIG = { damping: 15, stiffness: 200 }; // Increased stiffness for faster animation
 const FADE_DURATION = 100; // Reduced from 150 for quicker fade
@@ -49,23 +42,6 @@ const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
 
 // Create an AnimatedCompletionItem component for the completion screen
-const AnimatedCompletionItem = ({
-  children,
-  delay = 0,
-}: {
-  children: React.ReactNode;
-  delay?: number;
-}) => {
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 400);
-
-  useEffect(() => {
-    setTimeout(() => {
-      startAnimation();
-    }, delay);
-  }, [startAnimation, delay]);
-
-  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
-};
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -82,76 +58,53 @@ const baseStyles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 0, // Remove top padding
+    paddingBottom: 0, // Remove bottom padding
   } as ViewStyle,
   header: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    height: 50, // Fixed height to minimize space taken
+    marginBottom: -10, // Reduce space between header and content
   } as ViewStyle,
   progressContainer: {
     flex: 1,
     marginVertical: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.MEDIUM, // Add margin to separate from close button
   } as ViewStyle,
   textContainer: {
     flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    padding: 0, // Removed all padding
   } as ViewStyle,
   sentenceContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.LARGE,
+    padding: 0, // Removed all padding
     minHeight: 120,
   } as ViewStyle,
-  meaningOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
+  wordContainer: {
+    width: '100%',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    padding: 0, // Removed all padding
+    minHeight: 320, // Increased from 280 to accommodate even larger text
   } as ViewStyle,
-  meaningText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    textAlign: 'center',
-    fontWeight: '700',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
-    padding: LAYOUT.SPACING.LARGE,
-  } as TextStyle,
   footer: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    gap: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
     marginTop: 'auto',
-  } as ViewStyle,
-  actionButton: {
-    width: 56,
-    height: 56,
-    borderRadius: 28, // width/2 for circular shape
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...LAYOUT.SHADOW.SMALL,
-  } as ViewStyle,
-  modalContent: {
-    width: maxWidth,
-    padding: 0,
-    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
-    overflow: 'hidden',
-    ...LAYOUT.SHADOW.LARGE,
+    height: 80, // Increased for better spacing
   } as ViewStyle,
   modalInnerContent: {
     width: '100%',
@@ -180,51 +133,6 @@ const baseStyles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
   } as TextStyle,
-  errorContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
-  } as ViewStyle,
-  errorText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    textAlign: 'center',
-  } as TextStyle,
-  completionIconContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-  } as ViewStyle,
-  sentenceTextContainer: {
-    flexDirection: 'row-reverse',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    flexWrap: 'wrap',
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  } as ViewStyle,
-});
-
-// Create a component for the meaning overlay with proper animation
-const MeaningOverlay = React.memo(({ visible, meaning }: { visible: boolean; meaning: string }) => {
-  const colors = useColors();
-  const { animatedStyle, startAnimation, reverseAnimation } = useFadeInAnimation(0, 150);
-
-  useEffect(() => {
-    if (visible) {
-      startAnimation();
-    } else {
-      reverseAnimation();
-    }
-  }, [visible, startAnimation, reverseAnimation]);
-
-  if (!visible) return null;
-
-  return (
-    <Animated.View style={[baseStyles.meaningOverlay, animatedStyle]}>
-      <ThemedText style={[baseStyles.meaningText, { color: colors.tint } as TextStyle]}>
-        {meaning || 'No translation available'}
-      </ThemedText>
-    </Animated.View>
-  );
 });
 
 // Create a component for the completion screen
@@ -261,34 +169,6 @@ export default function ReviewScreen() {
   const fromVocabulary = params.fromVocabulary === 'true';
   const initialLoadRef = useRef(true);
 
-  // Create themed styles using StyleSheet.create for better performance
-  const themedStyles = useMemo(
-    () =>
-      StyleSheet.create({
-        meaningOverlay: {
-          ...baseStyles.meaningOverlay,
-          backgroundColor: colors.textOverlay,
-        } as ViewStyle,
-        actionButton: {
-          ...baseStyles.actionButton,
-          ...Platform.select({
-            ios: {
-              shadowColor: colors.shadow,
-            },
-          }),
-        } as ViewStyle,
-        modalContent: {
-          ...baseStyles.modalContent,
-          ...Platform.select({
-            ios: {
-              shadowColor: colors.shadow,
-            },
-          }),
-        } as ViewStyle,
-      }),
-    [colors]
-  );
-
   const { user } = useAuth();
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -297,14 +177,10 @@ export default function ReviewScreen() {
   const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
   const resetTransitionRef = useRef<NodeJS.Timeout>();
   const [currentSentence, setCurrentSentence] = useState({
-    beforeWord: '',
     wordForm: '',
-    afterWord: '',
   });
   const [nextSentence, setNextSentence] = useState({
-    beforeWord: '',
     wordForm: '',
-    afterWord: '',
   });
   const [animationState, setAnimationState] = useState<
     'idle' | 'transitioning-out' | 'updating-word' | 'transitioning-in'
@@ -314,10 +190,13 @@ export default function ReviewScreen() {
   // Track if this is the first render
   const isFirstRender = useRef(true);
 
-  const { dueWords, currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } =
+  const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } =
     useSpacedRepetition({
       userId: user?.id,
     });
+
+  // Use our custom hook for word sizing
+  const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form);
 
   // Show loading state during initial load to prevent "no words" flash
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
@@ -338,7 +217,6 @@ export default function ReviewScreen() {
   const opacity = useSharedValue(1);
 
   // Use useAnimatedReaction to safely track opacity value changes
-  // This avoids the warning about reading shared values during render
   useAnimatedReaction(
     () => opacity.value,
     (currentOpacity, previousOpacity) => {
@@ -363,20 +241,8 @@ export default function ReviewScreen() {
   // Update current sentence when currentWord changes
   useEffect(() => {
     if (currentWord) {
-      const sentence = currentWord.sentence_word.sentence?.arabic || '';
       const wordForm = currentWord.sentence_word.word_form;
-
-      // For RTL languages like Arabic, we need special handling
-      // to ensure proper word placement in the sentence
-      const wordIndex = sentence.indexOf(wordForm);
-
-      // In RTL, the "before" actually comes after the word visually
-      // and "after" comes before the word visually
-      const beforeWord = wordIndex >= 0 ? sentence.substring(wordIndex + wordForm.length) : '';
-      const afterWord = wordIndex > 0 ? sentence.substring(0, wordIndex) : '';
-
-      // Store the next sentence for animation
-      const newSentence = { beforeWord, wordForm, afterWord };
+      const newSentence = { wordForm };
       setNextSentence(newSentence);
 
       // Only set currentSentence immediately on first load
@@ -547,22 +413,13 @@ export default function ReviewScreen() {
 
   // Handle close button press
   const handleClose = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    invalidateQueries();
-    router.back();
+    console.log('Close button pressed!'); // Add debug log
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Stronger haptic feedback
+    setTimeout(() => {
+      invalidateQueries();
+      router.back();
+    }, 100); // Small delay to ensure haptic feedback is felt
   }, [invalidateQueries]);
-
-  // Handle retry button press
-  const handleRetry = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    invalidateQueries();
-  }, [invalidateQueries]);
-
-  // Handle info button press
-  const handleInfoPress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setShowInstructions(true);
-  }, []);
 
   // Memoize color-dependent styles
   const colorStyles = useMemo(
@@ -597,64 +454,13 @@ export default function ReviewScreen() {
     };
   }, []);
 
-  // Extract word parts for display - use the state version instead of direct calculation
-  const { beforeWord, wordForm, afterWord } = currentSentence;
+  // Extract word for display - use the state version instead of direct calculation
+  const { wordForm } = currentSentence;
 
-  // Don't add spaces as they're handled by natural Arabic text flow
-  // Arabic spaces are handled differently than English
-  const spacedBeforeWord = beforeWord;
-  const spacedAfterWord = afterWord;
-
-  // Memoize the sentence content to prevent unnecessary re-renders
-  const sentenceContent = useMemo(
-    () => (
-      <View style={{ width: '100%', alignItems: 'flex-end' }}>
-        {/* Use a container with proper RTL direction */}
-        <View style={baseStyles.sentenceTextContainer}>
-          <ThemedText
-            type="arabic"
-            arabicFontSize={BASE_FONT_SIZE * 1.5}
-            style={{ color: colors.englishText, opacity: LAYOUT.OPACITY.DIMMED }}
-            skipDefaultColor
-          >
-            {spacedAfterWord}
-          </ThemedText>
-
-          <ThemedText
-            type="arabic"
-            arabicFontSize={BASE_FONT_SIZE * 1.5}
-            style={[
-              {
-                color: colors.tint,
-                fontWeight: '700',
-                backgroundColor: `${colors.tint}08`, // Reduced background opacity
-                paddingHorizontal: LAYOUT.SPACING.SMALL, // Using LAYOUT constant
-                paddingVertical: LAYOUT.SPACING.TINY, // Using LAYOUT constant
-                borderRadius: LAYOUT.BORDER_RADIUS.XSMALL, // Using LAYOUT constant
-              },
-            ]}
-            skipDefaultColor
-          >
-            {wordForm}
-          </ThemedText>
-
-          <ThemedText
-            type="arabic"
-            arabicFontSize={BASE_FONT_SIZE * 1.5}
-            style={[
-              {
-                color: colors.englishText,
-                opacity: LAYOUT.OPACITY.DIMMED,
-              },
-            ]}
-            skipDefaultColor
-          >
-            {spacedBeforeWord}
-          </ThemedText>
-        </View>
-      </View>
-    ),
-    [spacedAfterWord, wordForm, spacedBeforeWord, colors.englishText, colors.tint]
+  // Memoize the word content to prevent unnecessary re-renders
+  const wordContent = useMemo(
+    () => <WordDisplay word={wordForm} fontSize={wordFontSize} style={baseStyles.wordContainer} />,
+    [wordForm, wordFontSize]
   );
 
   // Check for completion and show animation
@@ -674,9 +480,6 @@ export default function ReviewScreen() {
     }
     return undefined;
   }, [isComplete, showCompletionAnimation]);
-
-  // Define error state
-  const [error, setError] = useState<Error | null>(null);
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {
@@ -702,59 +505,51 @@ export default function ReviewScreen() {
       <EntranceAnimation>
         <GestureHandlerRootView style={baseStyles.gestureRoot}>
           <View style={baseStyles.contentContainer}>
-            <View style={baseStyles.header}>
-              <View style={baseStyles.progressContainer}>
+            <View
+              style={[
+                baseStyles.header,
+                {
+                  zIndex: 999,
+                  alignItems: 'center',
+                  height: 44,
+                },
+              ]}
+            >
+              <View
+                style={[
+                  baseStyles.progressContainer,
+                  {
+                    marginRight: LAYOUT.SPACING.SMALL,
+                  },
+                ]}
+              >
                 <ProgressBar
                   progress={Math.round(progress)}
                   animationTriggered={true}
                   animationDuration={1000}
                 />
               </View>
+              <CloseButton onPress={handleClose} />
             </View>
 
             <GestureDetector gesture={panGesture}>
-              <View style={baseStyles.textContainer}>
+              <View style={[baseStyles.textContainer, { flex: 1, marginTop: -20 }]}>
                 <Animated.View
-                  key={`sentence-${currentWord?.sentence_word_id || 'initial'}`}
+                  key={`word-${currentWord?.sentence_word_id || 'initial'}`}
                   style={[cardStyle, baseStyles.sentenceContainer]}
                 >
-                  {sentenceContent}
+                  {wordContent}
                 </Animated.View>
               </View>
             </GestureDetector>
 
-            <MeaningOverlay
+            <MeaningOverlayComponent
               visible={showMeaningOverlay}
               meaning={currentWord?.sentence_word?.english || ''}
             />
 
             <View style={baseStyles.footer}>
-              <Pressable
-                onPress={handleClose}
-                style={({ pressed }) => [
-                  themedStyles.actionButton,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    opacity: pressed ? 0.8 : 1,
-                    transform: [{ scale: pressed ? 0.95 : 1 }],
-                  } as ViewStyle,
-                ]}
-              >
-                <Ionicons name="close" size={28} color={colors.englishText} />
-              </Pressable>
-              <Pressable
-                onPress={handleInfoPress}
-                style={({ pressed }) => [
-                  themedStyles.actionButton,
-                  {
-                    backgroundColor: colors.cardBackground,
-                    opacity: pressed ? 0.8 : 1,
-                    transform: [{ scale: pressed ? 0.95 : 1 }],
-                  } as ViewStyle,
-                ]}
-              >
-                <Ionicons name="information-circle-outline" size={28} color={colors.englishText} />
-              </Pressable>
+              <InstructionFooter />
             </View>
           </View>
 
@@ -763,7 +558,7 @@ export default function ReviewScreen() {
             onClose={() => setShowInstructions(false)}
             useBlur={true}
             blurIntensity={isDarkMode ? 15 : 30}
-            contentStyle={themedStyles.modalContent}
+            contentStyle={colorStyles.modalContent}
             useHaptics={true}
             animationDuration={250}
             showCloseButton={false}
