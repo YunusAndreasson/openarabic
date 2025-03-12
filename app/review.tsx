@@ -46,6 +46,12 @@ const FAST_SPRING_CONFIG = {
 // Use a very fast fade duration for quick transitions
 const FADE_DURATION = 80;
 
+// Create a reusable animation config for consistent usage
+const FAST_ANIMATION_CONFIG = {
+  duration: FADE_DURATION,
+  easing: TIMING_CONFIG.FAST.easing,
+};
+
 const baseStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -206,6 +212,7 @@ export default function ReviewScreen() {
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const meaningTimeoutRef = useRef<NodeJS.Timeout>();
   const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
+  const [currentMeaning, setCurrentMeaning] = useState('');
   const [currentSentence, setCurrentSentence] = useState({
     wordForm: '',
   });
@@ -276,8 +283,14 @@ export default function ReviewScreen() {
   // Clean up timeouts when component unmounts
   useEffect(() => {
     return () => {
-      if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
-      if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
+      if (meaningTimeoutRef.current) {
+        clearTimeout(meaningTimeoutRef.current);
+        meaningTimeoutRef.current = undefined;
+      }
+      if (fadeInTimeoutRef.current) {
+        clearTimeout(fadeInTimeoutRef.current);
+        fadeInTimeoutRef.current = undefined;
+      }
     };
   }, []);
 
@@ -320,6 +333,22 @@ export default function ReviewScreen() {
         fadeInTimeoutRef.current = undefined;
       }
 
+      // Handle errors in word update process
+      const handleUpdateError = (error: any) => {
+        console.error('Error updating word:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to update word. Please try again.',
+          position: 'bottom',
+        });
+
+        // Reset animation state
+        setAnimationState('idle');
+        opacity.value = 1;
+        translateX.value = 0;
+      };
+
       const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
           try {
@@ -339,56 +368,32 @@ export default function ReviewScreen() {
                 // Move to next state - we're now updating the word
                 setAnimationState('updating-word');
 
-                // Use FAST timing configuration for quicker animations
-                const animationDuration = FADE_DURATION;
-                const animationConfig = {
-                  duration: animationDuration,
-                  easing: TIMING_CONFIG.FAST.easing,
-                };
-
                 // Add a tiny delay before showing the next word
                 // This ensures the DOM has time to update with the new word content
                 setTimeout(() => {
                   // For both success and failure cases, use immediate fade-in
                   setAnimationState('transitioning-in');
-                  opacity.value = withTiming(1, animationConfig, () => {
+                  opacity.value = withTiming(1, FAST_ANIMATION_CONFIG, () => {
                     runOnJS(setAnimationState)('idle');
                   });
                 }, 16); // One frame delay at 60fps to ensure clean transition
               })
-              .catch(error => {
-                console.error('Error updating word:', error);
-                Toast.show({
-                  type: 'error',
-                  text1: 'Error',
-                  text2: 'Failed to update word. Please try again.',
-                  position: 'bottom',
-                });
-
-                // Reset animation state
-                setAnimationState('idle');
-                opacity.value = 1;
-                translateX.value = 0;
-              });
+              .catch(handleUpdateError);
           } catch (error) {
-            console.error('Error updating word:', error);
-            Toast.show({
-              type: 'error',
-              text1: 'Error',
-              text2: 'Failed to update word. Please try again.',
-              position: 'bottom',
-            });
-
-            // Reset animation state
-            setAnimationState('idle');
-            opacity.value = 1;
-            translateX.value = 0;
+            handleUpdateError(error);
           }
         }
       };
 
       // If the user doesn't know the word, show the meaning
       if (!success) {
+        // Store the current word's meaning before updating
+        if (currentWord?.sentence_word?.english) {
+          setCurrentMeaning(currentWord.sentence_word.english);
+        } else {
+          setCurrentMeaning('No translation available');
+        }
+
         // Fade in the meaning overlay
         setShowMeaningOverlay(true);
 
@@ -441,16 +446,6 @@ export default function ReviewScreen() {
       router.back();
     }, 100); // Small delay to ensure haptic feedback is felt
   }, [invalidateQueries]);
-
-  // Memoize color-dependent styles
-  const colorStyles = useMemo(
-    () => ({
-      cardContainer: {
-        backgroundColor: colors.cardBackground,
-      } as ViewStyle,
-    }),
-    [colors]
-  );
 
   // Create animated styles - memoize to prevent unnecessary recalculations
   const cardStyle = useAnimatedStyle(() => {
@@ -547,7 +542,8 @@ export default function ReviewScreen() {
           {/* Position MeaningOverlay at the root level for proper overlay */}
           <MeaningOverlayComponent
             visible={showMeaningOverlay}
-            meaning={currentWord?.sentence_word?.english || ''}
+            meaning={currentMeaning}
+            isWarning={true}
           />
         </GestureHandlerRootView>
       </EntranceAnimation>
