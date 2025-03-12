@@ -21,9 +21,6 @@ const WordDisplay: React.FC<WordDisplayProps> = React.memo(({ word, fontSize, st
       color: colors.tint,
       fontWeight: '700',
       textAlign: 'center',
-      // Fixed letter spacing for consistent appearance
-      letterSpacing: 0,
-      // Add a slight padding to ensure vertical centering
       paddingBottom: 5,
       ...Platform.select({
         ios: {
@@ -54,11 +51,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 0,
     minHeight: 280,
-    // Ensure the container is perfectly centered
-    display: 'flex',
-    flexDirection: 'column',
   },
 });
 

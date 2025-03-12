@@ -25,6 +25,7 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Toast from 'react-native-toast-message';
 import EntranceAnimation from '@/components/EntranceAnimation';
 import AnimatedItem from '@/components/AnimatedItem';
+import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations';
 
 // Import our new components
 import CloseButton from '../components/CloseButton';
@@ -34,8 +35,16 @@ import { default as MeaningOverlayComponent } from '../components/review/Meaning
 import { useWordSizing } from '../hooks/useWordSizing';
 
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
-const ANIMATION_CONFIG = { damping: 15, stiffness: 200 }; // Increased stiffness for faster animation
-const FADE_DURATION = 100; // Reduced from 150 for quicker fade
+
+// Use faster spring animation for swipes
+const FAST_SPRING_CONFIG = {
+  ...SPRING_CONFIG.CARD,
+  stiffness: 250, // Higher stiffness for faster movement
+  damping: 20, // Higher damping for less bounce
+};
+
+// Use a very fast fade duration for quick transitions
+const FADE_DURATION = 80;
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -196,9 +205,7 @@ export default function ReviewScreen() {
   const { user } = useAuth();
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const meaningTimeoutRef = useRef<NodeJS.Timeout>();
-  const animationTimeoutRef = useRef<NodeJS.Timeout>();
   const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
-  const resetTransitionRef = useRef<NodeJS.Timeout>();
   const [currentSentence, setCurrentSentence] = useState({
     wordForm: '',
   });
@@ -269,9 +276,7 @@ export default function ReviewScreen() {
   useEffect(() => {
     return () => {
       if (meaningTimeoutRef.current) clearTimeout(meaningTimeoutRef.current);
-      if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
       if (fadeInTimeoutRef.current) clearTimeout(fadeInTimeoutRef.current);
-      if (resetTransitionRef.current) clearTimeout(resetTransitionRef.current);
     };
   }, []);
 
@@ -309,17 +314,9 @@ export default function ReviewScreen() {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = undefined;
       }
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-        animationTimeoutRef.current = undefined;
-      }
       if (fadeInTimeoutRef.current) {
         clearTimeout(fadeInTimeoutRef.current);
         fadeInTimeoutRef.current = undefined;
-      }
-      if (resetTransitionRef.current) {
-        clearTimeout(resetTransitionRef.current);
-        resetTransitionRef.current = undefined;
       }
 
       const updateWordAndAnimate = () => {
@@ -340,41 +337,22 @@ export default function ReviewScreen() {
                 // Move to next state - we're now updating the word
                 setAnimationState('updating-word');
 
-                // OPTIMIZATION: Reduce animation delays to show next word faster
-                // For "knew the word" (success), use an even quicker transition
-                const animationDelay = success ? 0 : 10; // Reduced from 10/30
-                const animationDuration = success ? FADE_DURATION : 100; // Reduced from 150
+                // Use FAST timing configuration for quicker animations
+                const animationDuration = FADE_DURATION;
+                const animationConfig = {
+                  duration: animationDuration,
+                  easing: TIMING_CONFIG.FAST.easing,
+                };
 
-                // OPTIMIZATION: For success case, skip the timeout completely
-                if (success) {
-                  // Update state to transitioning in immediately
-                  setAnimationState('transitioning-in');
-
-                  // Fade in immediately without any delay
-                  opacity.value = withTiming(1, { duration: animationDuration }, () => {
-                    // Use the animation completion callback to safely reset the state
-                    runOnJS(setAnimationState)('idle');
-                  });
-                } else {
-                  // For failure case, still use a small delay
-                  fadeInTimeoutRef.current = setTimeout(() => {
-                    // Clear the reference once executed
-                    fadeInTimeoutRef.current = undefined;
-
-                    // Update state to transitioning in
-                    setAnimationState('transitioning-in');
-
-                    // Fade in immediately without additional delay
-                    opacity.value = withTiming(1, { duration: animationDuration }, () => {
-                      // Use the animation completion callback to safely reset the state
-                      runOnJS(setAnimationState)('idle');
-                    });
-                  }, animationDelay);
-                }
+                // For both success and failure cases, use immediate fade-in
+                // No delay for either case to make it appear instantly
+                setAnimationState('transitioning-in');
+                opacity.value = withTiming(1, animationConfig, () => {
+                  runOnJS(setAnimationState)('idle');
+                });
               })
               .catch(error => {
                 console.error('Error updating word:', error);
-                // Show toast for error
                 Toast.show({
                   type: 'error',
                   text1: 'Error',
@@ -389,7 +367,6 @@ export default function ReviewScreen() {
               });
           } catch (error) {
             console.error('Error updating word:', error);
-            // Show toast for error
             Toast.show({
               type: 'error',
               text1: 'Error',
@@ -410,11 +387,9 @@ export default function ReviewScreen() {
         // Fade in the meaning overlay
         setShowMeaningOverlay(true);
 
-        // Hide the meaning after a delay
-        // OPTIMIZATION: Reduce the meaning display time for faster progression
-        const meaningDisplayTime = 1000; // Reduced from 1500ms
+        // Hide the meaning after a delay - keep this the same
+        const meaningDisplayTime = 1000;
         meaningTimeoutRef.current = setTimeout(() => {
-          // Clear the reference once executed
           clearTimeout(meaningTimeoutRef.current);
           meaningTimeoutRef.current = undefined;
           setShowMeaningOverlay(false);
@@ -431,27 +406,25 @@ export default function ReviewScreen() {
 
   // Create a pan gesture handler for the entire screen
   const panGesture = Gesture.Pan()
-    .activateAfterLongPress(0) // Activate immediately
-    .minDistance(1) // Minimal movement to detect swipe
+    .activateAfterLongPress(0)
+    .minDistance(1)
     .onUpdate(event => {
-      // Update the horizontal position based on the gesture
       translateX.value = event.translationX;
     })
     .onEnd(event => {
       if (event.translationX > SWIPE_THRESHOLD) {
-        // Swipe right - success
-        // OPTIMIZATION: Faster spring animation for success case
-        translateX.value = withSpring(SCREEN_WIDTH, { damping: 12, stiffness: 250 }, () => {
+        // Swipe right - success - use faster spring animation
+        translateX.value = withSpring(SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
           runOnJS(handleWordUpdate)(true);
         });
       } else if (event.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left - failure
-        translateX.value = withSpring(-SCREEN_WIDTH, ANIMATION_CONFIG, () => {
+        // Swipe left - failure - use faster spring animation
+        translateX.value = withSpring(-SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
           runOnJS(handleWordUpdate)(false);
         });
       } else {
-        // Return to center if not swiped far enough
-        translateX.value = withSpring(0, ANIMATION_CONFIG);
+        // Return to center if not swiped far enough - use faster spring animation
+        translateX.value = withSpring(0, FAST_SPRING_CONFIG);
       }
     });
 

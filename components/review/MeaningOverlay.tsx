@@ -13,6 +13,7 @@ interface MeaningOverlayProps {
 
 /**
  * Component that displays the meaning of a word with a fade animation
+ * without changing the background brightness
  */
 const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(({ visible, meaning }) => {
   const colors = useColors();
@@ -29,7 +30,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(({ visible, mea
   if (!visible) return null;
 
   return (
-    <Animated.View style={[styles.overlay, { backgroundColor: colors.textOverlay }, animatedStyle]}>
+    <Animated.View style={[styles.overlay, animatedStyle]}>
       <ThemedText style={[styles.text, { color: colors.tint } as TextStyle]}>
         {meaning || 'No translation available'}
       </ThemedText>
@@ -48,7 +49,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
-    backgroundColor: 'rgba(0,0,0,0.1)',
   } as ViewStyle,
   text: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,

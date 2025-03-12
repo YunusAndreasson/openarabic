@@ -27,6 +27,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     return () => clearTimeout(timer);
   }, [startAnimation]);
 
+  // Create themed styles
   const themedStyles = {
     instructionIcon: {
       ...styles.instructionIcon,
