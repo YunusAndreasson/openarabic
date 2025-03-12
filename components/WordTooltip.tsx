@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, LayoutRectangle, Dimensions, Text } from 'react-native';
 import { ThemedText } from './ThemedText';
-import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';

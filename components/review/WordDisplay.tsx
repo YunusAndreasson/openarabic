@@ -11,40 +11,59 @@ interface WordDisplayProps {
 
 /**
  * Component to display a word with optimal styling and sizing
+ * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
-const WordDisplay: React.FC<WordDisplayProps> = React.memo(({ word, fontSize, style }) => {
-  const colors = useColors();
+const WordDisplay = React.memo(
+  ({ word, fontSize, style }: WordDisplayProps) => {
+    const colors = useColors();
 
-  // Memoize the text style to prevent unnecessary re-renders
-  const textStyle = useMemo(
-    (): TextStyle => ({
-      color: colors.tint,
-      fontWeight: '700',
-      textAlign: 'center',
-      paddingBottom: 5,
-      ...Platform.select({
-        ios: {
-          shadowColor: colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 3,
-        },
+    // Memoize the text style to prevent unnecessary re-renders
+    const textStyle = useMemo(
+      (): TextStyle => ({
+        color: colors.tint,
+        fontWeight: '700',
+        textAlign: 'center',
+        paddingBottom: 5,
+        ...Platform.select({
+          ios: {
+            shadowColor: colors.shadow,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+          },
+          android: {
+            elevation: 3,
+          },
+        }),
       }),
-    }),
-    [colors]
-  );
+      [colors]
+    );
 
-  return (
-    <View style={[styles.container, style]}>
-      <ThemedText type="arabic" arabicFontSize={fontSize} style={textStyle} skipDefaultColor>
-        {word}
-      </ThemedText>
-    </View>
-  );
-});
+    // Use a key based on the word to ensure React completely replaces the component
+    // when the word changes, preventing any visual glitches during transitions
+    return (
+      <View style={[styles.container, style]}>
+        <ThemedText
+          key={`word-${word}`}
+          type="arabic"
+          arabicFontSize={fontSize}
+          style={textStyle}
+          skipDefaultColor
+        >
+          {word}
+        </ThemedText>
+      </View>
+    );
+  },
+  // Custom comparison function to ensure component only re-renders when props actually change
+  (prevProps, nextProps) => {
+    return (
+      prevProps.word === nextProps.word &&
+      prevProps.fontSize === nextProps.fontSize &&
+      prevProps.style === nextProps.style
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   container: {

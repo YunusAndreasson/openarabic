@@ -264,8 +264,9 @@ export default function ReviewScreen() {
   useAnimatedReaction(
     () => opacity.value,
     (currentOpacity, previousOpacity) => {
+      // Only update the current sentence when opacity is exactly 0
+      // This ensures the previous word is completely invisible before showing the new one
       if (currentOpacity === 0 && previousOpacity !== 0) {
-        // When opacity reaches 0, update the current sentence
         runOnJS(setCurrentSentence)(nextSentence);
       }
     },
@@ -331,7 +332,8 @@ export default function ReviewScreen() {
                 // Reset position immediately
                 translateX.value = 0;
 
-                // Set opacity to 0 immediately
+                // Ensure opacity is exactly 0 before proceeding
+                // This guarantees the current word is completely invisible
                 opacity.value = 0;
 
                 // Move to next state - we're now updating the word
@@ -344,12 +346,15 @@ export default function ReviewScreen() {
                   easing: TIMING_CONFIG.FAST.easing,
                 };
 
-                // For both success and failure cases, use immediate fade-in
-                // No delay for either case to make it appear instantly
-                setAnimationState('transitioning-in');
-                opacity.value = withTiming(1, animationConfig, () => {
-                  runOnJS(setAnimationState)('idle');
-                });
+                // Add a tiny delay before showing the next word
+                // This ensures the DOM has time to update with the new word content
+                setTimeout(() => {
+                  // For both success and failure cases, use immediate fade-in
+                  setAnimationState('transitioning-in');
+                  opacity.value = withTiming(1, animationConfig, () => {
+                    runOnJS(setAnimationState)('idle');
+                  });
+                }, 16); // One frame delay at 60fps to ensure clean transition
               })
               .catch(error => {
                 console.error('Error updating word:', error);
@@ -525,7 +530,7 @@ export default function ReviewScreen() {
               <GestureDetector gesture={panGesture}>
                 <View style={[baseStyles.textContainer, { marginTop: 0 }]}>
                   <Animated.View
-                    key={`word-${currentWord?.sentence_word_id || 'initial'}`}
+                    key={`word-container-${currentWord?.sentence_word_id || 'initial'}`}
                     style={[cardStyle, baseStyles.sentenceContainer]}
                   >
                     {wordContent}
