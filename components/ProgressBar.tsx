@@ -64,8 +64,10 @@ function ProgressBarComponent({
   // Create an animated value for width percentage
   const widthAnim = useRef(new Animated.Value(0)).current;
 
-  // Flag to prevent multiple animations
-  const hasAnimated = useRef(false);
+  // Track the previous progress value to animate from
+  const prevProgressRef = useRef(0);
+  // Track if this is the first render
+  const isFirstRender = useRef(true);
 
   // Ensure progress is within valid range (0-100)
   const normalizedProgress = useMemo(() => {
@@ -74,30 +76,38 @@ function ProgressBarComponent({
     return Math.max(0, Math.min(100, progress));
   }, [progress]);
 
+  // Initialize the animated value on mount
+  useEffect(() => {
+    if (isFirstRender.current) {
+      widthAnim.setValue(normalizedProgress);
+      prevProgressRef.current = normalizedProgress;
+      isFirstRender.current = false;
+    }
+  }, [normalizedProgress, widthAnim]);
+
   // Effect to handle animation when triggered
   useEffect(() => {
-    if (animationTriggered && !hasAnimated.current) {
-      // Mark that we've animated
-      hasAnimated.current = true;
-
-      // Reset to 0 first
-      widthAnim.setValue(0);
-
-      // Then animate to target percentage
+    // Skip animation on first render since we've already set the initial value
+    if (
+      !isFirstRender.current &&
+      animationTriggered &&
+      prevProgressRef.current !== normalizedProgress
+    ) {
+      // Animate to target percentage from the previous value
       Animated.timing(widthAnim, {
         toValue: normalizedProgress,
         duration: animationDuration,
         useNativeDriver: false, // width changes can't use native driver
       }).start();
-    }
 
-    // Reset animation state when trigger changes
-    if (!animationTriggered) {
-      hasAnimated.current = false;
+      // Update the previous progress value
+      prevProgressRef.current = normalizedProgress;
+    } else if (!animationTriggered) {
       // Set to actual percentage without animation
       widthAnim.setValue(normalizedProgress);
+      prevProgressRef.current = normalizedProgress;
     }
-  }, [widthAnim, normalizedProgress, animationTriggered, animationDuration]);
+  }, [widthAnim, normalizedProgress, animationTriggered, animationDuration, isFirstRender]);
 
   // Convert the animated value to a percentage string for width
   const widthInterpolated = widthAnim.interpolate({

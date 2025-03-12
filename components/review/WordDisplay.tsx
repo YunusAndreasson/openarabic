@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, ViewStyle, Platform, StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, ViewStyle, Platform, StyleSheet, TextStyle } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 
@@ -12,56 +12,42 @@ interface WordDisplayProps {
 /**
  * Component to display a word with optimal styling and sizing
  */
-const WordDisplay: React.FC<WordDisplayProps> = ({ word, fontSize, style }) => {
+const WordDisplay: React.FC<WordDisplayProps> = React.memo(({ word, fontSize, style }) => {
   const colors = useColors();
 
-  // Calculate letter spacing based on font size
-  const letterSpacing =
-    fontSize > 180
-      ? -5
-      : fontSize > 140
-        ? -4
-        : fontSize > 100
-          ? -3
-          : fontSize > 80
-            ? -2
-            : fontSize > 60
-              ? -1
-              : 0;
+  // Memoize the text style to prevent unnecessary re-renders
+  const textStyle = useMemo(
+    (): TextStyle => ({
+      color: colors.tint,
+      fontWeight: '700',
+      textAlign: 'center',
+      // Fixed letter spacing for consistent appearance
+      letterSpacing: 0,
+      // Add a slight padding to ensure vertical centering
+      paddingBottom: 5,
+      ...Platform.select({
+        ios: {
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: 3,
+        },
+      }),
+    }),
+    [colors]
+  );
 
   return (
     <View style={[styles.container, style]}>
-      <ThemedText
-        type="arabic"
-        arabicFontSize={fontSize}
-        style={[
-          {
-            color: colors.tint,
-            fontWeight: '900',
-            textAlign: 'center',
-            letterSpacing,
-            transform: [{ scale: 1.05 }],
-            marginHorizontal: -10,
-            ...Platform.select({
-              ios: {
-                shadowColor: colors.shadow,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.35,
-                shadowRadius: 8,
-              },
-              android: {
-                elevation: 5,
-              },
-            }),
-          },
-        ]}
-        skipDefaultColor
-      >
+      <ThemedText type="arabic" arabicFontSize={fontSize} style={textStyle} skipDefaultColor>
         {word}
       </ThemedText>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -69,7 +55,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 0,
-    minHeight: 320,
+    minHeight: 280,
+    // Ensure the container is perfectly centered
+    display: 'flex',
+    flexDirection: 'column',
   },
 });
 

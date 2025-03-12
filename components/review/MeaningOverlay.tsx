@@ -40,6 +40,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(({ visible, mea
 const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
+    zIndex: 1000,
     top: 0,
     left: 0,
     right: 0,

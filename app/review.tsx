@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, Platform, Dimensions, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, View, Platform, TextStyle, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -20,7 +20,6 @@ import * as Haptics from 'expo-haptics';
 import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
-import { ThemedModal } from '@/components/ThemedModal';
 import { Loader } from '@/components/Loader';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Toast from 'react-native-toast-message';
@@ -38,11 +37,6 @@ const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
 const ANIMATION_CONFIG = { damping: 15, stiffness: 200 }; // Increased stiffness for faster animation
 const FADE_DURATION = 100; // Reduced from 150 for quicker fade
 
-const { width } = Dimensions.get('window');
-const maxWidth = Math.min(width * 0.9, 400);
-
-// Create an AnimatedCompletionItem component for the completion screen
-
 const baseStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -56,10 +50,10 @@ const baseStyles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     width: '100%',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 0, // Remove top padding
-    paddingBottom: 0, // Remove bottom padding
+    paddingTop: 0,
+    paddingBottom: 0,
   } as ViewStyle,
   header: {
     width: '100%',
@@ -67,34 +61,34 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    height: 50, // Fixed height to minimize space taken
-    marginBottom: -10, // Reduce space between header and content
+    height: 50,
+    marginBottom: 0,
   } as ViewStyle,
   progressContainer: {
     flex: 1,
     marginVertical: LAYOUT.SPACING.MEDIUM,
-    marginRight: LAYOUT.SPACING.MEDIUM, // Add margin to separate from close button
+    marginRight: LAYOUT.SPACING.MEDIUM,
   } as ViewStyle,
   textContainer: {
     flex: 1,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 0, // Removed all padding
+    padding: 0,
   } as ViewStyle,
   sentenceContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 0, // Removed all padding
+    padding: 0,
     minHeight: 120,
   } as ViewStyle,
   wordContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 0, // Removed all padding
-    minHeight: 320, // Increased from 280 to accommodate even larger text
+    padding: 0,
+    minHeight: 280,
   } as ViewStyle,
   footer: {
     width: '100%',
@@ -104,24 +98,8 @@ const baseStyles = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     marginTop: 'auto',
-    height: 80, // Increased for better spacing
+    height: 80,
   } as ViewStyle,
-  modalInnerContent: {
-    width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.XLARGE,
-    paddingTop: LAYOUT.SPACING.XXLARGE,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
-    gap: LAYOUT.SPACING.MEDIUM,
-  } as ViewStyle,
-  modalInstructionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  } as ViewStyle,
-  modalText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
-    flex: 1,
-  } as TextStyle,
   completionContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -133,6 +111,16 @@ const baseStyles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     textAlign: 'center',
   } as TextStyle,
+  emptyStateContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.XLARGE,
+  } as ViewStyle,
+  emptyStateText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    textAlign: 'center',
+    marginTop: LAYOUT.SPACING.LARGE,
+  } as TextStyle,
 });
 
 // Create a component for the completion screen
@@ -140,25 +128,61 @@ const CompletionScreen = React.memo(({ onClose }: { onClose: () => void }) => {
   const colors = useColors();
 
   return (
-    <View style={[baseStyles.completionContainer, { backgroundColor: colors.background }]}>
-      <AnimatedItem delay={100}>
-        <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
-      </AnimatedItem>
+    <View
+      style={[
+        baseStyles.container,
+        baseStyles.completionContainer,
+        {
+          backgroundColor: colors.background,
+          // Ensure perfect vertical centering
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+      ]}
+    >
+      <View style={{ alignItems: 'center' }}>
+        <AnimatedItem delay={100}>
+          <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
+        </AnimatedItem>
 
-      <AnimatedItem delay={300}>
-        <ThemedText style={baseStyles.completionText}>Great job!</ThemedText>
-      </AnimatedItem>
+        <AnimatedItem delay={300}>
+          <ThemedText style={baseStyles.completionText}>Great job!</ThemedText>
+        </AnimatedItem>
 
-      <AnimatedItem delay={500}>
-        <ThemedText style={baseStyles.completionText}>
-          You've completed your review session.
-        </ThemedText>
-      </AnimatedItem>
+        <AnimatedItem delay={500}>
+          <ThemedText style={baseStyles.completionText}>
+            You've completed your review session.
+          </ThemedText>
+        </AnimatedItem>
 
-      <AnimatedItem delay={700}>
-        <ThemedButton title="Done" onPress={onClose} style={{ marginTop: LAYOUT.SPACING.LARGE }} />
-      </AnimatedItem>
+        <AnimatedItem delay={700}>
+          <ThemedButton
+            title="Done"
+            onPress={onClose}
+            style={{ marginTop: LAYOUT.SPACING.LARGE }}
+          />
+        </AnimatedItem>
+      </View>
     </View>
+  );
+});
+
+// Create a component for the empty state
+const EmptyStateScreen = React.memo(({ onClose }: { onClose: () => void }) => {
+  const colors = useColors();
+
+  return (
+    <ThemedView style={baseStyles.container} useSafeArea={true}>
+      <View style={baseStyles.emptyStateContainer}>
+        <Ionicons name="information-circle-outline" size={60} color={colors.tint} />
+        <ThemedText style={baseStyles.emptyStateText}>No words to review at this time.</ThemedText>
+        <ThemedButton
+          title="Go Back"
+          onPress={onClose}
+          style={{ marginTop: LAYOUT.SPACING.XLARGE }}
+        />
+      </View>
+    </ThemedView>
   );
 });
 
@@ -171,7 +195,6 @@ export default function ReviewScreen() {
 
   const { user } = useAuth();
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
   const meaningTimeoutRef = useRef<NodeJS.Timeout>();
   const animationTimeoutRef = useRef<NodeJS.Timeout>();
   const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
@@ -185,7 +208,11 @@ export default function ReviewScreen() {
   const [animationState, setAnimationState] = useState<
     'idle' | 'transitioning-out' | 'updating-word' | 'transitioning-in'
   >('idle');
-  const [showCompletionAnimation, setShowCompletionAnimation] = useState(false);
+
+  // Add state to control progress bar animation
+  const [progressAnimationKey, setProgressAnimationKey] = useState(0);
+  // Track the previous progress value to avoid unnecessary animations
+  const prevProgressRef = useRef(0);
 
   // Track if this is the first render
   const isFirstRender = useRef(true);
@@ -195,8 +222,18 @@ export default function ReviewScreen() {
       userId: user?.id,
     });
 
-  // Use our custom hook for word sizing
-  const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form);
+  // Use our custom hook for word sizing with simplified approach
+  const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, {
+    minFontSize: 50,
+    maxFontSize: 100, // Fixed font size for most words
+  });
+
+  // Initialize prevProgressRef with the initial progress value
+  useEffect(() => {
+    if (!isLoading && progress !== undefined) {
+      prevProgressRef.current = progress;
+    }
+  }, [isLoading, progress]);
 
   // Show loading state during initial load to prevent "no words" flash
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
@@ -259,6 +296,12 @@ export default function ReviewScreen() {
       // Add haptic feedback only when swiping left (don't know the word)
       if (!success) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+
+      // Only trigger progress bar animation if progress has changed
+      if (progress !== prevProgressRef.current) {
+        setProgressAnimationKey(prev => prev + 1);
+        prevProgressRef.current = progress;
       }
 
       // Clear any existing timeouts to prevent memory leaks
@@ -372,6 +415,7 @@ export default function ReviewScreen() {
         const meaningDisplayTime = 1000; // Reduced from 1500ms
         meaningTimeoutRef.current = setTimeout(() => {
           // Clear the reference once executed
+          clearTimeout(meaningTimeoutRef.current);
           meaningTimeoutRef.current = undefined;
           setShowMeaningOverlay(false);
           // Update the word status after showing the meaning
@@ -382,7 +426,7 @@ export default function ReviewScreen() {
         updateWordAndAnimate();
       }
     },
-    [currentWord, updateWord, opacity, translateX, nextSentence]
+    [currentWord, updateWord, opacity, translateX, nextSentence, progress]
   );
 
   // Create a pan gesture handler for the entire screen
@@ -413,7 +457,6 @@ export default function ReviewScreen() {
 
   // Handle close button press
   const handleClose = useCallback(() => {
-    console.log('Close button pressed!'); // Add debug log
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Stronger haptic feedback
     setTimeout(() => {
       invalidateQueries();
@@ -426,21 +469,6 @@ export default function ReviewScreen() {
     () => ({
       cardContainer: {
         backgroundColor: colors.cardBackground,
-      } as ViewStyle,
-      modalContent: {
-        backgroundColor: colors.cardBackground,
-      } as ViewStyle,
-      modalIconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20, // width/2 for circular shape
-        backgroundColor: colors.textOverlay,
-        justifyContent: 'center' as const,
-        alignItems: 'center' as const,
-        paddingLeft: 0,
-        paddingRight: 0,
-        paddingTop: 0,
-        paddingBottom: 0,
       } as ViewStyle,
     }),
     [colors]
@@ -463,24 +491,6 @@ export default function ReviewScreen() {
     [wordForm, wordFontSize]
   );
 
-  // Check for completion and show animation
-  useEffect(() => {
-    if (isComplete && !showCompletionAnimation) {
-      setShowCompletionAnimation(true);
-
-      // Hide completion animation after a delay and show the completion screen
-      const completionDelay = 1000; // 1 second
-      const completionTimer = setTimeout(() => {
-        // The isComplete condition in the render function will now show the completion screen
-      }, completionDelay);
-
-      return () => {
-        clearTimeout(completionTimer);
-      };
-    }
-    return undefined;
-  }, [isComplete, showCompletionAnimation]);
-
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {
     initialLoadRef.current = false;
@@ -492,6 +502,11 @@ export default function ReviewScreen() {
         <Loader size="large" color={colors.tint} />
       </ThemedView>
     );
+  }
+
+  // Show empty state if there are no words to review and not complete
+  if (!isLoading && !currentWord && !isComplete) {
+    return <EmptyStateScreen onClose={handleClose} />;
   }
 
   // Show completion screen if all words are reviewed
@@ -526,73 +541,36 @@ export default function ReviewScreen() {
                 <ProgressBar
                   progress={Math.round(progress)}
                   animationTriggered={true}
+                  key={progressAnimationKey}
                   animationDuration={1000}
                 />
               </View>
               <CloseButton onPress={handleClose} />
             </View>
 
-            <GestureDetector gesture={panGesture}>
-              <View style={[baseStyles.textContainer, { flex: 1, marginTop: -20 }]}>
-                <Animated.View
-                  key={`word-${currentWord?.sentence_word_id || 'initial'}`}
-                  style={[cardStyle, baseStyles.sentenceContainer]}
-                >
-                  {wordContent}
-                </Animated.View>
-              </View>
-            </GestureDetector>
-
-            <MeaningOverlayComponent
-              visible={showMeaningOverlay}
-              meaning={currentWord?.sentence_word?.english || ''}
-            />
+            <View style={{ flex: 1, justifyContent: 'center', width: '100%' }}>
+              <GestureDetector gesture={panGesture}>
+                <View style={[baseStyles.textContainer, { marginTop: 0 }]}>
+                  <Animated.View
+                    key={`word-${currentWord?.sentence_word_id || 'initial'}`}
+                    style={[cardStyle, baseStyles.sentenceContainer]}
+                  >
+                    {wordContent}
+                  </Animated.View>
+                </View>
+              </GestureDetector>
+            </View>
 
             <View style={baseStyles.footer}>
               <InstructionFooter />
             </View>
           </View>
 
-          <ThemedModal
-            visible={showInstructions}
-            onClose={() => setShowInstructions(false)}
-            useBlur={true}
-            blurIntensity={isDarkMode ? 15 : 30}
-            contentStyle={colorStyles.modalContent}
-            useHaptics={true}
-            animationDuration={250}
-            showCloseButton={false}
-            overlayOpacity={0.15}
-          >
-            <View
-              style={[baseStyles.modalInnerContent, { backgroundColor: colors.cardBackground }]}
-            >
-              <View
-                style={[
-                  baseStyles.modalInstructionRow,
-                  {
-                    marginBottom: LAYOUT.SPACING.MEDIUM,
-                    justifyContent: 'center',
-                  },
-                ]}
-              >
-                <View style={colorStyles.modalIconContainer}>
-                  <Ionicons name="arrow-back" size={24} color={colors.tint} />
-                </View>
-                <ThemedText style={baseStyles.modalText}>
-                  Swipe left if you don't know the word
-                </ThemedText>
-              </View>
-              <View style={[baseStyles.modalInstructionRow, { justifyContent: 'center' }]}>
-                <View style={colorStyles.modalIconContainer}>
-                  <Ionicons name="arrow-forward" size={24} color={colors.tint} />
-                </View>
-                <ThemedText style={baseStyles.modalText}>
-                  Swipe right if you know the word
-                </ThemedText>
-              </View>
-            </View>
-          </ThemedModal>
+          {/* Position MeaningOverlay at the root level for proper overlay */}
+          <MeaningOverlayComponent
+            visible={showMeaningOverlay}
+            meaning={currentWord?.sentence_word?.english || ''}
+          />
         </GestureHandlerRootView>
       </EntranceAnimation>
     </ThemedView>
