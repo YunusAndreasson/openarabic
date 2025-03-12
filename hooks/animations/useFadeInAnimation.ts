@@ -5,6 +5,8 @@ import {
   useAnimatedStyle,
   withDelay,
   runOnJS,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 
@@ -19,6 +21,10 @@ export const useFadeInAnimation = (
   duration = TIMING_CONFIG.MEDIUM.duration
 ) => {
   const opacity = useSharedValue(initialOpacity);
+
+  // Create optimized entering and exiting animations using Reanimated 3 built-ins
+  const entering = FadeIn.duration(duration);
+  const exiting = FadeOut.duration(duration);
 
   const startAnimation = useCallback(
     (delay = 0, onComplete?: () => void) => {
@@ -61,5 +67,8 @@ export const useFadeInAnimation = (
     startAnimation,
     reverseAnimation,
     opacity,
+    // Export the built-in animations for direct use with Animated.View
+    entering,
+    exiting,
   };
 };

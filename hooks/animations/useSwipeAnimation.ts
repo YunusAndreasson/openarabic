@@ -5,6 +5,12 @@ import {
   withSpring,
   withTiming,
   runOnJS,
+  SlideInRight,
+  SlideInLeft,
+  SlideOutRight,
+  SlideOutLeft,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import { SCREEN_WIDTH } from '../../constants/layout';
 import { SPRING_CONFIG, TIMING_CONFIG } from './animationConfigs';
@@ -27,6 +33,30 @@ export const useSwipeAnimation = (initialX = 0, threshold = 0.05, config: SwipeC
   const opacity = useSharedValue(1);
 
   const swipeThreshold = SCREEN_WIDTH * threshold;
+
+  // Create optimized entering and exiting animations using Reanimated 3 built-ins
+  const enteringRight = SlideInRight.springify()
+    .damping(config.damping || SPRING_CONFIG.CARD.damping)
+    .stiffness(config.stiffness || SPRING_CONFIG.CARD.stiffness)
+    .mass(config.mass || SPRING_CONFIG.CARD.mass);
+
+  const enteringLeft = SlideInLeft.springify()
+    .damping(config.damping || SPRING_CONFIG.CARD.damping)
+    .stiffness(config.stiffness || SPRING_CONFIG.CARD.stiffness)
+    .mass(config.mass || SPRING_CONFIG.CARD.mass);
+
+  const exitingRight = SlideOutRight.springify()
+    .damping(config.damping || SPRING_CONFIG.CARD.damping)
+    .stiffness(config.stiffness || SPRING_CONFIG.CARD.stiffness)
+    .mass(config.mass || SPRING_CONFIG.CARD.mass);
+
+  const exitingLeft = SlideOutLeft.springify()
+    .damping(config.damping || SPRING_CONFIG.CARD.damping)
+    .stiffness(config.stiffness || SPRING_CONFIG.CARD.stiffness)
+    .mass(config.mass || SPRING_CONFIG.CARD.mass);
+
+  const fadeInAnim = FadeIn.duration(TIMING_CONFIG.MEDIUM.duration);
+  const fadeOutAnim = FadeOut.duration(TIMING_CONFIG.MEDIUM.duration);
 
   const swipeRight = useCallback(
     (onComplete?: () => void) => {
@@ -117,5 +147,12 @@ export const useSwipeAnimation = (initialX = 0, threshold = 0.05, config: SwipeC
     fadeIn,
     fadeOut,
     swipeThreshold,
+    // Export the built-in animations for direct use with Animated.View
+    enteringRight,
+    enteringLeft,
+    exitingRight,
+    exitingLeft,
+    fadeInAnim,
+    fadeOutAnim,
   };
 };

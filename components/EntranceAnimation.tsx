@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../hooks/animations';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { TIMING_CONFIG } from '../hooks/animations';
 
 interface EntranceAnimationProps {
@@ -32,6 +31,8 @@ interface EntranceAnimationProps {
  * A reusable entrance animation component that fades in content
  * with configurable timing. Use this for consistent entrance animations
  * across the app.
+ *
+ * This component uses Reanimated 3's built-in FadeIn animation for optimal performance.
  */
 const EntranceAnimation = React.memo(
   ({
@@ -40,19 +41,12 @@ const EntranceAnimation = React.memo(
     duration = TIMING_CONFIG.MEDIUM.duration,
     style,
   }: EntranceAnimationProps) => {
-    // Use the existing fade in animation hook
-    const { animatedStyle, startAnimation } = useFadeInAnimation(0, duration);
-
-    // Start animations when component mounts
-    useEffect(() => {
-      // Start the animation with the specified delay
-      setTimeout(() => {
-        startAnimation(0);
-      }, delay);
-    }, [startAnimation, delay]);
-
+    // Use Reanimated 3's built-in FadeIn animation
     return (
-      <Animated.View style={[{ flex: 1, width: '100%' }, style, animatedStyle]}>
+      <Animated.View
+        style={[{ flex: 1, width: '100%' }, style]}
+        entering={FadeIn.duration(duration).delay(delay)}
+      >
         {children}
       </Animated.View>
     );

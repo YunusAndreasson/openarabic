@@ -1,5 +1,12 @@
 import { useCallback } from 'react';
-import { useSharedValue, useAnimatedStyle, withTiming, runOnJS } from 'react-native-reanimated';
+import {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  runOnJS,
+  ZoomIn,
+  ZoomOut,
+} from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 
 /**
@@ -15,6 +22,10 @@ export const useScaleAnimation = (
   duration = TIMING_CONFIG.MEDIUM.duration
 ) => {
   const scale = useSharedValue(initialScale);
+
+  // Create optimized entering and exiting animations using Reanimated 3 built-ins
+  const entering = ZoomIn.duration(duration).springify();
+  const exiting = ZoomOut.duration(duration).springify();
 
   const startAnimation = useCallback(
     (onComplete?: () => void) => {
@@ -71,5 +82,8 @@ export const useScaleAnimation = (
     reverseAnimation,
     reset,
     scale,
+    // Export the built-in animations for direct use with Animated.View
+    entering,
+    exiting,
   };
 };

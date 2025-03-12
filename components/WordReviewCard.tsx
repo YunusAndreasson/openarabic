@@ -1,12 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Dimensions, View, TextStyle, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
 import Animated from 'react-native-reanimated';
 import { StudyWord } from '../types/vocabulary.types';
-import { useFadeInAnimation } from '@/hooks/animations';
-import { useSlideAnimation } from '../hooks/animations/useSlideAnimation';
+import { useFadeInAnimation, useSlideAnimation, useLayoutAnimation } from '@/hooks/animations';
 
 // Define transition types
 export type TransitionType = 'fade' | 'slide';
@@ -19,32 +18,27 @@ interface WordReviewCardProps {
 
 /**
  * A card component for displaying a word during review
+ *
+ * This component uses Reanimated 3's built-in animations for optimal performance.
  */
 export function WordReviewCard({ word, transitionType = 'fade', isVisible }: WordReviewCardProps) {
   const colors = useColors();
 
-  // Use appropriate animation based on transition type
-  const { animatedStyle: fadeAnimatedStyle, startAnimation: startFadeAnimation } =
-    useFadeInAnimation(0, 300);
-  const { animatedStyle: slideAnimatedStyle } = useSlideAnimation();
+  // Get animations from hooks
+  const { entering: fadeEntering } = useFadeInAnimation(0, 300);
+  const { entering: slideEntering } = useSlideAnimation();
 
-  // Combine animations
-  const containerAnimatedStyle = useMemo(() => {
-    if (transitionType === 'fade') {
-      return fadeAnimatedStyle;
-    } else {
-      return slideAnimatedStyle;
-    }
-  }, [transitionType, fadeAnimatedStyle, slideAnimatedStyle]);
+  // Use the layout animation hook with LinearTransition
+  const { layout } = useLayoutAnimation({
+    type: 'linear',
+    duration: 300,
+  });
 
-  // Start animations when component becomes visible
-  useEffect(() => {
-    if (isVisible) {
-      if (transitionType === 'fade') {
-        startFadeAnimation();
-      }
-    }
-  }, [isVisible, transitionType, startFadeAnimation]);
+  // Determine which animation to use
+  const entering = useMemo(() => {
+    if (!isVisible) return undefined;
+    return transitionType === 'fade' ? fadeEntering : slideEntering;
+  }, [transitionType, fadeEntering, slideEntering, isVisible]);
 
   // Themed styles
   const themedStyles = useMemo(
@@ -72,8 +66,9 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
         {
           borderColor: colors.cardBorder,
         } as ViewStyle,
-        containerAnimatedStyle,
       ]}
+      entering={entering}
+      layout={layout}
     >
       <View style={styles.contentContainer}>
         <View style={styles.wordContainer}>

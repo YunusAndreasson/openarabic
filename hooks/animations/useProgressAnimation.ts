@@ -1,5 +1,12 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useSharedValue, useAnimatedStyle, withTiming, SharedValue } from 'react-native-reanimated';
+import {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  SharedValue,
+  withDelay,
+  runOnJS,
+} from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 
 /**
@@ -27,22 +34,23 @@ export const useProgressAnimation = (
   // This tracks whether the animation has been triggered
   const hasAnimated = useRef(false);
 
-  // Simple function to update the progress value with animation
+  // Improved function to update the progress value with animation
   const updateProgress = useCallback(
     (newPercentage: number) => {
       // Mark that animation has been requested
       hasAnimated.current = true;
 
-      // Force value to 0 first, then animate
+      // Reset to 0 first
       progress.value = 0;
 
-      // Animate to the new percentage
-      setTimeout(() => {
-        progress.value = withTiming(newPercentage, {
+      // Use withDelay for more reliable sequencing
+      progress.value = withDelay(
+        50, // Small delay for visual effect
+        withTiming(newPercentage, {
           duration: duration,
           easing: TIMING_CONFIG.SLOW.easing,
-        });
-      }, 50);
+        })
+      );
 
       // Return cleanup function
       return () => {

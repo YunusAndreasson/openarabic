@@ -1,7 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../hooks/animations';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface AnimatedItemProps {
   /**
@@ -31,20 +30,17 @@ interface AnimatedItemProps {
  * A reusable animated item component that fades in with configurable timing.
  * Useful for list items, completion items, or any element that needs to
  * appear with a fade-in animation.
+ *
+ * This component uses Reanimated 3's built-in FadeIn animation for optimal performance.
  */
 const AnimatedItem = React.memo(
   ({ children, delay = 0, duration = 400, style }: AnimatedItemProps) => {
-    // Use the existing fade in animation hook
-    const { animatedStyle, startAnimation } = useFadeInAnimation(0, duration);
-
-    // Start animations when component mounts
-    useEffect(() => {
-      setTimeout(() => {
-        startAnimation();
-      }, delay);
-    }, [startAnimation, delay]);
-
-    return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
+    // Use Reanimated 3's built-in FadeIn animation
+    return (
+      <Animated.View style={style} entering={FadeIn.duration(duration).delay(delay)}>
+        {children}
+      </Animated.View>
+    );
   }
 );
 

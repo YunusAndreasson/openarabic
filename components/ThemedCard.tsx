@@ -7,8 +7,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Pill from './Pill';
 import { LoadingContainer } from './Loader';
-import Animated from 'react-native-reanimated';
-import { useCardAnimation } from '@/hooks/animations';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useCardAnimation, useLayoutAnimation } from '@/hooks/animations';
 import { EnhancedImage } from './EnhancedImage';
 
 /**
@@ -16,6 +16,7 @@ import { EnhancedImage } from './EnhancedImage';
  * It supports both light and dark themes, handles loading states, and provides smooth animations.
  *
  * The component is optimized for performance with memoization and proper image loading handling.
+ * It uses Reanimated 3's built-in animations for optimal performance.
  */
 interface ThemedCardProps {
   /** URL of the image to display in the card (for article variant) */
@@ -54,8 +55,14 @@ function ThemedCardComponent({
   const [imageError, setImageError] = useState(false);
   const isCompact = variant === 'compact';
 
-  // Use our animation utility hook instead of manual animation setup
+  // Use our animation utility hook
   const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
+
+  // Use the layout animation hook with LinearTransition
+  const { layout } = useLayoutAnimation({
+    type: 'linear',
+    duration: 300,
+  });
 
   // Handle press
   const handlePress = useCallback(() => {
@@ -217,7 +224,7 @@ function ThemedCardComponent({
 
   return (
     <View style={styles.container}>
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={animatedStyle} entering={FadeIn.duration(300)} layout={layout}>
         <Pressable
           onPress={handlePress}
           onPressIn={handlePressIn}

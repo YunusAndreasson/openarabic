@@ -68,6 +68,8 @@ function ProgressBarComponent({
   const prevProgressRef = useRef(0);
   // Track if this is the first render
   const isFirstRender = useRef(true);
+  // Track the previous animation triggered state
+  const prevAnimationTriggeredRef = useRef(animationTriggered);
 
   // Ensure progress is within valid range (0-100)
   const normalizedProgress = useMemo(() => {
@@ -79,11 +81,33 @@ function ProgressBarComponent({
   // Initialize the animated value on mount
   useEffect(() => {
     if (isFirstRender.current) {
-      widthAnim.setValue(normalizedProgress);
-      prevProgressRef.current = normalizedProgress;
+      widthAnim.setValue(0); // Start from 0 instead of normalizedProgress
+      prevProgressRef.current = 0; // Start from 0 to ensure animation
       isFirstRender.current = false;
     }
   }, [normalizedProgress, widthAnim]);
+
+  // Effect to detect changes in animationTriggered
+  useEffect(() => {
+    // If animation is newly triggered (changed from false to true)
+    if (animationTriggered && !prevAnimationTriggeredRef.current) {
+      // Reset to 0 to ensure animation happens
+      widthAnim.setValue(0);
+      prevProgressRef.current = 0;
+
+      // Animate to target percentage with a small delay to sync with other animations
+      setTimeout(() => {
+        Animated.timing(widthAnim, {
+          toValue: normalizedProgress,
+          duration: animationDuration,
+          useNativeDriver: false, // width changes can't use native driver
+        }).start();
+      }, 50);
+    }
+
+    // Update the previous animation triggered state
+    prevAnimationTriggeredRef.current = animationTriggered;
+  }, [animationTriggered, normalizedProgress, animationDuration, widthAnim]);
 
   // Effect to handle animation when triggered
   useEffect(() => {

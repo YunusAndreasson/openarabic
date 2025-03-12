@@ -1,5 +1,14 @@
 import { useCallback } from 'react';
-import { useSharedValue, withSpring, useAnimatedStyle, runOnJS } from 'react-native-reanimated';
+import {
+  useSharedValue,
+  withSpring,
+  useAnimatedStyle,
+  runOnJS,
+  SlideInRight,
+  SlideInLeft,
+  SlideOutRight,
+  SlideOutLeft,
+} from 'react-native-reanimated';
 import { SCREEN_WIDTH } from '../../constants/layout';
 import { SPRING_CONFIG } from './animationConfigs';
 
@@ -19,6 +28,17 @@ export const useSlideAnimation = (
 ) => {
   const startPosition = direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH;
   const position = useSharedValue(startPosition);
+
+  // Create optimized entering and exiting animations using Reanimated 3 built-ins
+  const entering =
+    direction === 'right'
+      ? SlideInRight.duration(300).delay(delay).springify()
+      : SlideInLeft.duration(300).delay(delay).springify();
+
+  const exiting =
+    direction === 'right'
+      ? SlideOutRight.duration(300).springify()
+      : SlideOutLeft.duration(300).springify();
 
   const startAnimation = useCallback(
     (onComplete?: () => void) => {
@@ -54,5 +74,13 @@ export const useSlideAnimation = (
     };
   });
 
-  return { animatedStyle, startAnimation, reset, position };
+  return {
+    animatedStyle,
+    startAnimation,
+    reset,
+    position,
+    // Export the built-in animations for direct use with Animated.View
+    entering,
+    exiting,
+  };
 };
