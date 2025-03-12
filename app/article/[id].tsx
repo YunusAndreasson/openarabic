@@ -89,12 +89,12 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     fontWeight: '700',
     marginBottom: LAYOUT.SPACING.LARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   articleMetaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   authorContainer: {
     flexDirection: 'row',
@@ -105,18 +105,19 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
     marginLeft: LAYOUT.SPACING.TINY,
+    opacity: LAYOUT.OPACITY.HIGH,
   },
   articleInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   articleInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   articleInfoText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.TINY,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   categoryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -137,10 +138,10 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     opacity: LAYOUT.OPACITY.HIGH,
     fontStyle: 'italic',
-    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   contentContainer: {
     flex: 1,
@@ -690,7 +691,12 @@ export default function ArticleScreen() {
 
         <View style={styles.articleMetaContainer}>
           <View style={styles.authorContainer}>
-            <Ionicons name="person-circle-outline" size={20} color={colors.text} />
+            <Ionicons
+              name="person-circle-outline"
+              size={20}
+              color={colors.text}
+              style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            />
             <ThemedText style={styles.authorName}>
               {article.author?.name || 'Unknown Author'}
             </ThemedText>
@@ -702,13 +708,11 @@ export default function ArticleScreen() {
             style={[
               styles.categoryContainer,
               {
-                backgroundColor: `${colors.tint}15`,
+                backgroundColor: `${colors.tint}${isDarkMode ? '30' : '15'}`,
                 ...Platform.select({
                   ios: {
+                    ...LAYOUT.SHADOW.SMALL,
                     shadowColor: colors.shadow,
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 2,
                   },
                   android: {
                     elevation: 2,
@@ -717,26 +721,49 @@ export default function ArticleScreen() {
               },
             ]}
           >
-            <ThemedText style={[styles.categoryText, { color: colors.tint }]}>
+            <ThemedText style={[styles.categoryText, { color: colors.tint }]} skipDefaultColor>
               {categoryName}
             </ThemedText>
           </View>
 
           <View style={styles.articleInfoItem}>
-            <Ionicons name="time-outline" size={16} color={colors.text} />
+            <Ionicons
+              name="time-outline"
+              size={16}
+              color={colors.text}
+              style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            />
             <ThemedText style={styles.articleInfoText}>{readingTime} min read</ThemedText>
           </View>
 
           <View style={styles.articleInfoItem}>
-            <Ionicons name="stats-chart-outline" size={16} color={colors.text} />
+            <Ionicons
+              name="stats-chart-outline"
+              size={16}
+              color={colors.text}
+              style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            />
             <ThemedText style={styles.articleInfoText}>Level {article.difficulty_level}</ThemedText>
           </View>
         </View>
 
-        {article.summary && <ThemedText style={styles.summaryText}>{article.summary}</ThemedText>}
+        {article.summary && (
+          <ThemedText
+            style={[
+              styles.summaryText,
+              {
+                borderLeftWidth: LAYOUT.BORDER.WIDTH.THIN,
+                borderLeftColor: `${colors.text}${isDarkMode ? '30' : '20'}`,
+                paddingLeft: LAYOUT.SPACING.MEDIUM,
+              },
+            ]}
+          >
+            {article.summary}
+          </ThemedText>
+        )}
       </View>
     );
-  }, [article, colors]);
+  }, [article, colors, isDarkMode]);
 
   // Render loading screen
   if (isLoading) {
