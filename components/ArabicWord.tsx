@@ -16,7 +16,6 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
-import { useCardAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import * as Haptics from 'expo-haptics';
 
@@ -54,89 +53,72 @@ function ArabicWordComponent({
         }
       : null;
 
-  // Use standardized card animation with custom scale values
-  const { animatedStyle, pressed } = useCardAnimation(1, 1);
-
-  // Update the pressed value based on isSelected
-  useEffect(() => {
-    pressed.value = isSelected ? 1 : 0;
-  }, [isSelected, pressed]);
-
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    // Capture the layout of the word element to position the tooltip properly
     setLayout(event.nativeEvent.layout);
 
-    // Get page absolute position for tooltip positioning
-    // This is important for ensuring the tooltip appears in the correct position
     if (Platform.OS === 'web') {
       setPageLayout({ x: window.pageXOffset, y: window.pageYOffset });
     } else {
-      // On native platforms, pageLayout is already accounted for in the layout measurements
       setPageLayout({ x: 0, y: 0 });
     }
   }, []);
 
-  // Show tooltip on quick press with subtle feedback
+  // Show tooltip on quick press
   const handlePress = useCallback(() => {
     if (!layout) return;
-
-    // Show tooltip without haptic feedback
     setTooltipVisible(true);
   }, [layout]);
 
-  // Add to study list on long press
+  // Handle long press with immediate feedback
   const handleLongPress = useCallback(() => {
-    // Set visual feedback
-    setIsLongPressed(true);
+    // Trigger haptic feedback first for immediate tactile response
+    // Using the light impact style for a subtle, quick feedback
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    // Add to study list
+    // Update selection state through the parent component
     onPress(word);
 
-    // Provide gentle haptic feedback using the app's standard pattern
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {
-      // Silently fail if haptics aren't available
-    });
+    // Visual feedback for the press action
+    setIsLongPressed(true);
 
-    // Invalidate the dueWords query to refresh the vocabulary screen
+    // Invalidate queries after the immediate feedback
     if (user) {
       queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
     }
 
-    // Reset visual state after a delay
+    // Reset the visual pressed state after a short delay
     setTimeout(() => {
       setIsLongPressed(false);
-    }, 300);
-  }, [onPress, word, queryClient, user]);
+    }, 200); // Reduced from 300ms for faster reset
+  }, [onPress, word, user, queryClient]);
 
   // Handle tooltip close
   const handleTooltipClose = useCallback(() => {
     setTooltipVisible(false);
   }, []);
 
-  // Determine the text color based on whether the word is selected for study
+  // Determine text color based on selection state - direct application
   const textColor = isSelected ? colors.tint : colors.text;
 
-  // Apply highlight for long-pressed state
+  // Apply highlight for long-pressed state - immediate visual feedback
   const longPressedStyle = isLongPressed
     ? {
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)',
-        borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
       }
-    : null;
+    : undefined;
 
-  // Visual feedback for tooltip visibility - more subtle
+  // Visual feedback for tooltip visibility - subtle
   const tooltipVisibleStyle = tooltipVisible
     ? {
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
-        borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
       }
-    : null;
+    : undefined;
 
   // Combine visual feedback styles
-  const combinedStyle = tooltipVisibleStyle || longPressedStyle;
+  const combinedStyle = longPressedStyle || tooltipVisibleStyle;
 
-  // Memoize the text style to prevent unnecessary re-renders
+  // Memoize the text style for optimal performance
   const textStyle = useMemo(
     () => ({
       ...getArabicTextStyle(baseSize * scale, {
@@ -167,9 +149,9 @@ function ArabicWordComponent({
       <TouchableOpacity
         onPress={handlePress}
         onLongPress={handleLongPress}
-        delayLongPress={500}
+        delayLongPress={250} // Reduced for faster response
         style={[styles.wordContainer, combinedStyle]}
-        activeOpacity={0.6}
+        activeOpacity={0.7} // Slightly increased for better visual feedback
         onLayout={handleLayout}
         accessibilityLabel={`Arabic word: ${word.word_form}. ${
           isSelected
@@ -177,17 +159,17 @@ function ArabicWordComponent({
             : 'Tap to see translation, long press to add to study list.'
         }`}
       >
-        <Animated.View style={[styles.container, animatedStyle]}>
+        <View style={styles.container}>
           <ThemedText style={textStyle} skipDefaultColor>
             {word.word_form}
           </ThemedText>
 
-          {/* Enhanced underline for selected words */}
+          {/* Underline for selected words */}
           {isSelected && <View style={underlineStyle} />}
-        </Animated.View>
+        </View>
       </TouchableOpacity>
 
-      {/* The tooltip positioned in the app's root level */}
+      {/* Tooltip */}
       <WordTooltip
         visible={tooltipVisible}
         text={word.english}
