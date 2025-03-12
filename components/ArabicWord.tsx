@@ -16,6 +16,7 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
+import { useCardAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import * as Haptics from 'expo-haptics';
 
@@ -53,6 +54,14 @@ function ArabicWordComponent({
         }
       : null;
 
+  // Use standardized card animation with custom scale values
+  const { animatedStyle, pressed } = useCardAnimation(1, 1);
+
+  // Update the pressed value based on isSelected - direct assignment for immediate effect
+  useEffect(() => {
+    pressed.value = isSelected ? 1 : 0;
+  }, [isSelected, pressed]);
+
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setLayout(event.nativeEvent.layout);
@@ -67,13 +76,19 @@ function ArabicWordComponent({
   // Show tooltip on quick press
   const handlePress = useCallback(() => {
     if (!layout) return;
-    setTooltipVisible(true);
+
+    // Hide any existing tooltip first to ensure clean state
+    setTooltipVisible(false);
+
+    // Show tooltip after a minimal delay to ensure clean transition
+    setTimeout(() => {
+      setTooltipVisible(true);
+    }, 10);
   }, [layout]);
 
-  // Handle long press with immediate feedback
+  // Add to study list on long press
   const handleLongPress = useCallback(() => {
-    // Trigger haptic feedback first for immediate tactile response
-    // Using the light impact style for a subtle, quick feedback
+    // Trigger haptic feedback immediately
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     // Update selection state through the parent component
@@ -82,43 +97,46 @@ function ArabicWordComponent({
     // Visual feedback for the press action
     setIsLongPressed(true);
 
-    // Invalidate queries after the immediate feedback
+    // Invalidate the dueWords query to refresh the vocabulary screen
     if (user) {
       queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
     }
 
-    // Reset the visual pressed state after a short delay
+    // Reset visual state after a delay
     setTimeout(() => {
       setIsLongPressed(false);
-    }, 200); // Reduced from 300ms for faster reset
-  }, [onPress, word, user, queryClient]);
+    }, 300);
+  }, [onPress, word, queryClient, user]);
 
   // Handle tooltip close
   const handleTooltipClose = useCallback(() => {
     setTooltipVisible(false);
   }, []);
 
-  // Determine text color based on selection state - direct application
+  // Determine the text color based on whether the word is selected for study
   const textColor = isSelected ? colors.tint : colors.text;
 
-  // Apply highlight for long-pressed state - immediate visual feedback
+  // Apply highlight for long-pressed state
   const longPressedStyle = isLongPressed
     ? {
         backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)',
+        borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
       }
     : undefined;
 
   // Visual feedback for tooltip visibility - subtle
   const tooltipVisibleStyle = tooltipVisible
     ? {
-        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+        backgroundColor: isDarkMode
+          ? 'rgba(255, 255, 255, 0.03)' // More subtle in dark mode
+          : 'rgba(0, 0, 0, 0.01)', // More subtle in light mode
       }
     : undefined;
 
   // Combine visual feedback styles
   const combinedStyle = longPressedStyle || tooltipVisibleStyle;
 
-  // Memoize the text style for optimal performance
+  // Memoize the text style to prevent unnecessary re-renders
   const textStyle = useMemo(
     () => ({
       ...getArabicTextStyle(baseSize * scale, {
@@ -159,14 +177,14 @@ function ArabicWordComponent({
             : 'Tap to see translation, long press to add to study list.'
         }`}
       >
-        <View style={styles.container}>
+        <Animated.View style={[styles.container, animatedStyle]}>
           <ThemedText style={textStyle} skipDefaultColor>
             {word.word_form}
           </ThemedText>
 
           {/* Underline for selected words */}
           {isSelected && <View style={underlineStyle} />}
-        </View>
+        </Animated.View>
       </TouchableOpacity>
 
       {/* Tooltip */}
