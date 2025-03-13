@@ -22,22 +22,37 @@ export const useLayoutReady = (
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout | undefined;
+    let frameId: number | undefined;
 
-    // Use requestAnimationFrame to ensure layout is calculated
-    const frameId = requestAnimationFrame(() => {
+    // Check if requestAnimationFrame is available (it's not in some test environments)
+    if (typeof requestAnimationFrame === 'function') {
+      // Use requestAnimationFrame to ensure layout is calculated
+      frameId = requestAnimationFrame(() => {
+        if (delay > 0) {
+          // Add optional delay if needed
+          timeoutId = setTimeout(() => {
+            setIsLayoutReady(true);
+          }, delay);
+        } else {
+          setIsLayoutReady(true);
+        }
+      });
+    } else {
+      // Fallback for test environments
       if (delay > 0) {
-        // Add optional delay if needed
         timeoutId = setTimeout(() => {
           setIsLayoutReady(true);
         }, delay);
       } else {
         setIsLayoutReady(true);
       }
-    });
+    }
 
     return () => {
       // Clean up
-      cancelAnimationFrame(frameId);
+      if (typeof cancelAnimationFrame === 'function' && frameId !== undefined) {
+        cancelAnimationFrame(frameId);
+      }
       if (timeoutId) {
         clearTimeout(timeoutId);
       }

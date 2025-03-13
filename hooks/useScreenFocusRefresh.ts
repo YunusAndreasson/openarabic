@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { QueryClient, QueryKey } from '@tanstack/react-query';
 
@@ -20,7 +20,12 @@ export const useScreenFocusRefresh = (
   staleTime = 60000,
   skipInitialFocus = true
 ): { refreshData: () => void } => {
-  const isInitialMount = useRef(skipInitialFocus);
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
+
+  // Store the previous query key and userId to detect changes
+  const prevQueryKey = useRef(queryKey);
+  const prevUserId = useRef(userId);
 
   // Create the full query key
   const fullQueryKey: QueryKey = [queryKey, userId];
@@ -49,17 +54,44 @@ export const useScreenFocusRefresh = (
     }
   }, [queryClient, fullQueryKey, userId]);
 
-  useFocusEffect(
-    useCallback(() => {
-      // Skip refresh on initial focus if requested
-      if (isInitialMount.current && skipInitialFocus) {
-        isInitialMount.current = false;
-        return;
-      }
+  // Check if queryKey or userId has changed
+  useEffect(() => {
+    // Skip on initial mount
+    if (isInitialMount.current) {
+      return;
+    }
 
+    // If queryKey or userId changed, check if we need to refresh
+    if (prevQueryKey.current !== queryKey || prevUserId.current !== userId) {
       checkAndRefreshData();
-    }, [checkAndRefreshData, skipInitialFocus])
-  );
+
+      // Update refs with new values
+      prevQueryKey.current = queryKey;
+      prevUserId.current = userId;
+    }
+  }, [queryKey, userId, checkAndRefreshData]);
+
+  // Use a separate callback for the focus effect to ensure proper dependency tracking
+  const handleFocusEffect = useCallback(() => {
+    // Skip refresh on initial focus if requested
+    if (isInitialMount.current && skipInitialFocus) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Check if data needs refreshing
+    checkAndRefreshData();
+
+    // Mark as not initial mount after first focus
+    isInitialMount.current = false;
+
+    // Update refs with current values
+    prevQueryKey.current = queryKey;
+    prevUserId.current = userId;
+  }, [checkAndRefreshData, skipInitialFocus, queryKey, userId]);
+
+  // Register the focus effect
+  useFocusEffect(handleFocusEffect);
 
   return { refreshData };
 };

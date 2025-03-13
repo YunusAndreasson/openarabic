@@ -6,6 +6,7 @@ import {
   SharedValue,
   withDelay,
   runOnJS,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 
@@ -17,6 +18,7 @@ export interface ProgressAnimationResult {
   updateProgress: (newPercentage: number) => () => void;
   progress: SharedValue<number>;
   hasAnimated: () => boolean;
+  reset: () => void;
 }
 
 /**
@@ -26,10 +28,11 @@ export interface ProgressAnimationResult {
  * @returns Object with animated style and function to update the progress
  */
 export const useProgressAnimation = (
+  initialPercentage: number = 0,
   duration = TIMING_CONFIG.SLOW.duration
 ): ProgressAnimationResult => {
   // Store the progress value as a shared value for animations
-  const progress = useSharedValue(0);
+  const progress = useSharedValue(initialPercentage);
 
   // This tracks whether the animation has been triggered
   const hasAnimated = useRef(false);
@@ -37,13 +40,17 @@ export const useProgressAnimation = (
   // Improved function to update the progress value with animation
   const updateProgress = useCallback(
     (newPercentage: number) => {
+      // Validate input to ensure it's a number
+      if (typeof newPercentage !== 'number') {
+        console.warn('useProgressAnimation: newPercentage must be a number');
+        return () => {}; // Return empty cleanup function
+      }
+
       // Mark that animation has been requested
       hasAnimated.current = true;
 
-      // Reset to 0 first
-      progress.value = 0;
-
-      // Use withDelay for more reliable sequencing
+      // Animate directly to the new value without resetting to 0 first
+      // This prevents the progress bar from briefly disappearing
       progress.value = withDelay(
         50, // Small delay for visual effect
         withTiming(newPercentage, {
@@ -52,32 +59,42 @@ export const useProgressAnimation = (
         })
       );
 
-      // Return cleanup function
+      // Return cleanup function that cancels the animation if needed
       return () => {
-        // No action needed for cleanup
+        cancelAnimation(progress);
       };
     },
     [progress, duration]
   );
 
+  // Function to reset progress to initial value
+  const reset = useCallback(() => {
+    cancelAnimation(progress);
+    progress.value = initialPercentage;
+    hasAnimated.current = false;
+  }, [progress, initialPercentage]);
+
   // Create animated style based on the progress value
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      width: `${progress.value}%`,
+      width: `${Math.max(0, Math.min(100, progress.value))}%`,
     };
   });
 
   // Reset animation state on unmount
   useEffect(() => {
     return () => {
+      // Cancel any ongoing animations to prevent memory leaks
+      cancelAnimation(progress);
       hasAnimated.current = false;
     };
-  }, []);
+  }, [progress]);
 
   return {
     animatedStyle,
     updateProgress,
     progress,
     hasAnimated: () => hasAnimated.current,
+    reset,
   };
 };

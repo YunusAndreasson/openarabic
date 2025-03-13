@@ -12,6 +12,8 @@ module.exports = {
   bail: false,
   // Use a more realistic test environment for React Native components
   testEnvironment: 'jsdom',
+  // Ignore specific paths for tests
+  testPathIgnorePatterns: ['/node_modules/', '__mocks__'],
   // Mock modules that cause issues
   moduleNameMapper: {
     // Mock static file imports

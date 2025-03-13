@@ -9,6 +9,15 @@ if (typeof global.jest === 'undefined') {
   global.jest = require('@jest/globals').jest;
 }
 
+// Mock requestAnimationFrame and cancelAnimationFrame
+global.requestAnimationFrame = function (callback) {
+  return setTimeout(callback, 0);
+};
+
+global.cancelAnimationFrame = function (id) {
+  clearTimeout(id);
+};
+
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
