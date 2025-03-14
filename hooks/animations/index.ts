@@ -17,6 +17,7 @@ export { useProgressAnimation } from './useProgressAnimation';
 export { useSwipeAnimation } from './useSwipeAnimation';
 export { useLayoutAnimation } from './useLayoutAnimation';
 export { useSharedTransition } from './useSharedTransition';
+export { useOpacityAnimation } from './useOpacityAnimation';
 
 // Export standardized animation configurations
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
