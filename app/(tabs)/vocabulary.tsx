@@ -175,6 +175,18 @@ export default function VocabularyScreen() {
     }, 300);
   }, [router, queryClient, user, isNavigating]);
 
+  // Handle stat press events
+  const handleStatPress = useCallback(
+    (category: 'total' | 'mastered' | 'learning' | 'due') => {
+      // Navigate to the word list with the selected category
+      router.push({
+        pathname: '/wordList',
+        params: { category },
+      });
+    },
+    [router]
+  );
+
   // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
@@ -286,6 +298,7 @@ export default function VocabularyScreen() {
               streak={stats.streak}
               colors={colors}
               animationTriggered={true}
+              onStatPress={handleStatPress}
             />
           </View>
 

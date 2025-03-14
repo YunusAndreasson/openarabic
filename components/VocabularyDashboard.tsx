@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated } from 'react-native';
+import { StyleSheet, View, Animated, TouchableOpacity } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
@@ -7,8 +7,11 @@ import { Colors } from '../constants/Colors';
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
-import { useProgressAnimation } from '@/hooks/animations';
+import { useProgressAnimation, useCardAnimation } from '@/hooks/animations';
 import { ProgressBar } from './ProgressBar';
+import * as Haptics from 'expo-haptics';
+import Animated2, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { SPRING_CONFIG } from '@/hooks/animations';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
@@ -19,6 +22,8 @@ interface VocabularyDashboardProps
   colors: any;
   /** Flag to trigger animations when parent component is ready */
   animationTriggered?: boolean;
+  /** Callback for when a stat item is pressed */
+  onStatPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
 }
 
 interface StatItemProps {
@@ -28,21 +33,59 @@ interface StatItemProps {
   iconColor: string;
   bgColor: string;
   animateValue: boolean;
+  category: 'total' | 'mastered' | 'learning' | 'due';
+  onPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
 }
 
 // Separate StatItem component for better reusability and memoization
 const StatItem = React.memo(
-  ({ value, label, icon, iconColor, bgColor, animateValue }: StatItemProps) => {
+  ({ value, label, icon, iconColor, bgColor, animateValue, category, onPress }: StatItemProps) => {
+    // Use pressed animation state
+    const pressed = useSharedValue(0);
+
+    // Create animated style for press effect
+    const animatedStyle = useAnimatedStyle(() => {
+      return {
+        transform: [{ scale: withSpring(pressed.value ? 0.95 : 1, SPRING_CONFIG.CARD) }],
+      };
+    });
+
+    const handlePress = () => {
+      // Provide haptic feedback
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // Call the onPress callback if provided
+      if (onPress) {
+        onPress(category);
+      }
+    };
+
+    const handlePressIn = () => {
+      pressed.value = 1;
+    };
+
+    const handlePressOut = () => {
+      pressed.value = 0;
+    };
+
     return (
-      <View style={styles.statItem}>
-        <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
-          <Ionicons name={icon as any} size={18} color={iconColor} />
-        </View>
-        <AnimatedThemedText style={styles.statValue} animate={animateValue}>
-          {value}
-        </AnimatedThemedText>
-        <ThemedText style={styles.statLabel}>{label}</ThemedText>
-      </View>
+      <Animated2.View style={animatedStyle}>
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={handlePress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={0.7}
+          disabled={!onPress}
+        >
+          <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
+            <Ionicons name={icon as any} size={18} color={iconColor} />
+          </View>
+          <AnimatedThemedText style={styles.statValue} animate={animateValue}>
+            {value}
+          </AnimatedThemedText>
+          <ThemedText style={styles.statLabel}>{label}</ThemedText>
+        </TouchableOpacity>
+      </Animated2.View>
     );
   }
 );
@@ -68,6 +111,7 @@ export const VocabularyDashboard = React.memo(
     streak,
     colors,
     animationTriggered = false,
+    onStatPress,
   }: VocabularyDashboardProps) => {
     // Calculate mastery percentage
     const masteryPercentage = useMemo(
@@ -99,6 +143,7 @@ export const VocabularyDashboard = React.memo(
           iconColor: safeColors.textColor,
           bgColor: safeColors.textColor + '15',
           animateValue: animationTriggered,
+          category: 'total' as const,
         },
         {
           value: masteredWords,
@@ -107,6 +152,7 @@ export const VocabularyDashboard = React.memo(
           iconColor: safeColors.successColor,
           bgColor: safeColors.successColor + '15',
           animateValue: animationTriggered,
+          category: 'mastered' as const,
         },
         {
           value: learningWords,
@@ -115,6 +161,7 @@ export const VocabularyDashboard = React.memo(
           iconColor: safeColors.primaryColor,
           bgColor: safeColors.primaryColor + '20',
           animateValue: animationTriggered,
+          category: 'learning' as const,
         },
         {
           value: dueWords,
@@ -123,6 +170,7 @@ export const VocabularyDashboard = React.memo(
           iconColor: safeColors.dueWordsColor,
           bgColor: safeColors.dueWordsColor + '20',
           animateValue: animationTriggered,
+          category: 'due' as const,
         },
       ],
       [totalWords, masteredWords, learningWords, dueWords, safeColors, animationTriggered]
@@ -149,6 +197,8 @@ export const VocabularyDashboard = React.memo(
               iconColor={item.iconColor}
               bgColor={item.bgColor}
               animateValue={item.animateValue}
+              category={item.category}
+              onPress={onStatPress}
             />
           ))}
         </View>
