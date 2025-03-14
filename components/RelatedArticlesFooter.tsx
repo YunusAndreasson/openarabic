@@ -13,12 +13,12 @@ import type { Article } from '@/types/articles.types';
 interface RelatedArticlesFooterProps {
   otherArticles: Article[];
   otherCategoryArticles: Article[];
-  article: Article;
+  article: Article | null;
   renderArticleCard: (article: Article) => React.ReactNode;
 }
 
 const styles = StyleSheet.create({
-  relatedArticlesContainer: {
+  container: {
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
   },
@@ -33,7 +33,7 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
   if (!otherArticles.length && !otherCategoryArticles.length) return null;
 
   return (
-    <View style={styles.relatedArticlesContainer}>
+    <View style={styles.container}>
       {otherArticles.length > 0 && (
         <RelatedArticlesSection
           title={`More from ${article?.author?.name}`}

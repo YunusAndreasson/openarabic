@@ -10,9 +10,8 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Toast from 'react-native-toast-message';
+import Animated from 'react-native-reanimated';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -21,21 +20,19 @@ import { ArabicWord } from '@/components/ArabicWord';
 import { CompactArticleCard } from '@/components/CompactArticleCard';
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleSentence } from '@/components/ArticleSentence';
-import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
 import ArticleHeader from '@/components/ArticleHeader';
 import FloatingButton from '@/components/FloatingButton';
+import RelatedArticlesFooter from '@/components/RelatedArticlesFooter';
 
 // Hooks
 import { useColors } from '@/hooks/useColors';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { useFadeInAnimation, useSlideAnimation, useOpacityAnimation } from '@/hooks/animations';
-
-// Services
-import { articlesService } from '@/services/articles';
-import { studyWordsService } from '@/services/study_words';
-import { readingListService } from '@/services/reading_list';
+import { useFadeInAnimation, useFloatingButtonAnimation } from '@/hooks/animations';
+import { useArticleData } from '@/hooks/useArticleData';
+import { useArticleMutations } from '@/hooks/useArticleMutations';
+import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 
 // Store
 import {
@@ -49,7 +46,7 @@ import { LAYOUT } from '@/constants/layout';
 
 // Types
 import type { Tables } from '@/types/database.types';
-import type { Article } from '@/types/articles.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 
 const styles = StyleSheet.create({
   container: {
@@ -63,27 +60,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     backgroundColor: 'transparent',
   },
-  relatedArticlesContainer: {
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 20,
-  },
   contentContainer: {
     flex: 1,
   },
-});
-
-// Helper function to enhance word data
-const enhanceWord = (word: Tables<'sentence_words'>) => ({
-  ...word,
-  root: null,
-  word_type: null,
 });
 
 export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
@@ -102,170 +87,42 @@ export default function ArticleScreen() {
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
-  // Fetch article data
-  const { data: article, isLoading: isLoadingArticle } = useQuery({
-    queryKey: ['article', articleId],
-    queryFn: () => articlesService.getArticleById(articleId!),
-    enabled: !!articleId,
-  });
+  // Use the custom article data hook
+  const {
+    article,
+    isLoadingArticle,
+    isInReadingList,
+    refetchReadingListStatus,
+    studyWords,
+    selectedWordIds,
+    sortedSentences,
+    sentenceWordsMap,
+    otherArticles,
+    otherCategoryArticles,
+  } = useArticleData(articleId, user?.id);
 
-  // Check if article is in reading list
-  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
-    queryKey: ['isInReadingList', user?.id, articleId],
-    queryFn: () => readingListService.isInReadingList(user!.id, articleId!),
-    enabled: !!user && !!articleId,
-  });
+  // Use the custom article mutations hook
+  const { handleToggleReadingList, handleWordPress } = useArticleMutations(
+    user?.id,
+    refetchReadingListStatus
+  );
 
-  // Fetch study words
-  const { data: studyWords = [] } = useQuery({
-    queryKey: ['studyWords', user?.id],
-    queryFn: () => studyWordsService.getStudyWords(user!.id, { forStats: false }),
-    enabled: !!user,
-    staleTime: 60000, // 1 minute cache
-  });
-
-  // Fetch more articles by the same author
-  const { data: moreArticles = [] } = useQuery({
-    queryKey: ['articles', 'author', article?.author?.id],
-    queryFn: () => articlesService.getArticles(undefined, article!.author!.id),
-    enabled: !!article?.author?.id,
-  });
-
-  // Fetch more articles in the same category
-  const { data: categoryArticles = [] } = useQuery({
-    queryKey: ['articles', 'category', article?.category?.id],
-    queryFn: () => articlesService.getArticles(article!.category!.id),
-    enabled: !!article?.category?.id,
-  });
-
-  // Mutations
-  const addToReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
-      readingListService.addToReadingList(userId, articleId),
-    onSuccess: () => {
-      Toast.show({
-        type: 'success',
-        text1: 'Added to bookmarks',
-        position: 'bottom',
-      });
-      refetchReadingListStatus();
-      queryClient.invalidateQueries({ queryKey: ['readingList'] });
-    },
-    onError: () => {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to add to bookmarks',
-        position: 'bottom',
-      });
-    },
-  });
-
-  const removeFromReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
-      readingListService.removeFromReadingList(userId, articleId),
-    onSuccess: () => {
-      Toast.show({
-        type: 'success',
-        text1: 'Removed from bookmarks',
-        position: 'bottom',
-      });
-      refetchReadingListStatus();
-      queryClient.invalidateQueries({ queryKey: ['readingList'] });
-    },
-    onError: () => {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to remove from bookmarks',
-        position: 'bottom',
-      });
-    },
-  });
-
-  const toggleWordMutation = useMutation({
-    mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
-      studyWordsService.toggleStudyWord(userId, wordId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['studyWords', user?.id] });
-    },
-    onError: () => {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to update word status',
-      });
-    },
-  });
+  // Use the custom article renderers hook
+  const { prepareWord, handleArticlePress, getWordsForSentence } = useArticleRenderers(
+    settings,
+    colors,
+    selectedWordIds,
+    sentenceWordsMap,
+    (word: Tables<'sentence_words'>) => handleWordPress(word.id)
+  );
 
   // Animation hooks
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
     useFadeInAnimation(0, 300);
 
-  const {
-    animatedStyle: backButtonAnimatedStyle,
-    startAnimation: startBackButtonAnimation,
-    reset: resetBackButtonAnimation,
-  } = useSlideAnimation(0, 20, 100, 'left');
-
-  const {
-    animatedStyle: playlistButtonAnimatedStyle,
-    startAnimation: startPlaylistButtonAnimation,
-    reset: resetPlaylistButtonAnimation,
-  } = useSlideAnimation(0, 20, 100, 'left');
-
-  const { opacity: buttonsOpacity } = useOpacityAnimation(1, 200);
-
-  // Combined animated styles
-  const combinedBackButtonStyle = useAnimatedStyle(
-    () => ({
-      transform: [...(backButtonAnimatedStyle.transform || [])],
-      opacity: buttonsOpacity.value,
-    }),
-    [backButtonAnimatedStyle, buttonsOpacity]
-  );
-
-  const combinedPlaylistButtonStyle = useAnimatedStyle(
-    () => ({
-      transform: [...(playlistButtonAnimatedStyle.transform || [])],
-      opacity: buttonsOpacity.value,
-    }),
-    [playlistButtonAnimatedStyle, buttonsOpacity]
-  );
-
-  // Derived state
-  const selectedWordIds = useMemo(
-    () => new Set(studyWords.map(w => w.sentence_word_id)),
-    [studyWords]
-  );
-
-  const sortedSentences = useMemo(() => {
-    if (!article?.article_sentences) return [];
-    return [...article.article_sentences].sort((a, b) => a.position - b.position);
-  }, [article?.article_sentences]);
-
-  const sentenceWordsMap = useMemo(() => {
-    if (!sortedSentences.length) return new Map();
-
-    const wordsMap = new Map();
-    sortedSentences.forEach(sentence => {
-      wordsMap.set(
-        sentence.id,
-        [...sentence.sentence_words].sort((a, b) => a.position - b.position)
-      );
-    });
-    return wordsMap;
-  }, [sortedSentences]);
-
-  const otherArticles = useMemo(
-    () => moreArticles.filter(a => a.id !== article?.id),
-    [moreArticles, article?.id]
-  );
-
-  const otherCategoryArticles = useMemo(
-    () => categoryArticles.filter(a => a.id !== article?.id),
-    [categoryArticles, article?.id]
-  );
+  // Use the floating button animation hook from animations directory
+  const { combinedBackButtonStyle, combinedBookmarkButtonStyle } =
+    useFloatingButtonAnimation(isButtonsVisible);
 
   // Animation styles - these are now directly from the hooks
   const contentPadding = useMemo(
@@ -276,32 +133,6 @@ export default function ArticleScreen() {
     }),
     [insets.top]
   );
-
-  // Event handlers
-  const handleToggleReadingList = useCallback(() => {
-    if (!user || !articleId) return;
-
-    if (isInReadingList) {
-      removeFromReadingListMutation.mutate({ userId: user.id, articleId });
-    } else {
-      addToReadingListMutation.mutate({ userId: user.id, articleId });
-    }
-  }, [user, articleId, isInReadingList, addToReadingListMutation, removeFromReadingListMutation]);
-
-  const handleWordPress = useCallback(
-    (word: Tables<'sentence_words'>) => {
-      if (!user) return;
-      toggleWordMutation.mutate({ userId: user.id, wordId: word.id });
-    },
-    [user, toggleWordMutation]
-  );
-
-  const handleArticlePress = useCallback((articleId: number) => {
-    router.push({
-      pathname: '/article/[id]',
-      params: { id: articleId },
-    });
-  }, []);
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -325,32 +156,40 @@ export default function ArticleScreen() {
 
   // Component renderers
   const renderWord = useCallback(
-    (word: Tables<'sentence_words'>) => {
-      const enhancedWord = enhanceWord(word);
-      const isSelected = selectedWordIds.has(word.id);
-
+    (
+      word: Tables<'sentence_words'> & {
+        root: Tables<'roots'> | null;
+        word_type: Tables<'word_types'> | null;
+      }
+    ) => {
+      const props = prepareWord(word);
       return (
         <ArabicWord
-          key={word.id}
-          word={enhancedWord}
-          isSelected={isSelected}
-          onPress={handleWordPress}
-          scale={settings.fontScale}
-          baseSize={24}
+          key={props.key}
+          word={props.word}
+          isSelected={props.isSelected}
+          onPress={props.onPress}
+          scale={props.scale}
+          baseSize={props.baseSize}
         />
       );
     },
-    [handleWordPress, selectedWordIds, settings.fontScale]
+    [prepareWord]
   );
 
   const renderSentenceItem = useCallback(
     ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
-      const words = sentenceWordsMap.get(sentence.id) || [];
+      const words = getWordsForSentence(sentence.id);
       return (
         <ArticleSentence
           key={sentence.id}
           sentence={sentence}
-          words={words}
+          words={
+            words as (Tables<'sentence_words'> & {
+              root: Tables<'roots'> | null;
+              word_type: Tables<'word_types'> | null;
+            })[]
+          }
           renderWord={renderWord}
           settings={settings}
           colors={colors}
@@ -358,11 +197,11 @@ export default function ArticleScreen() {
         />
       );
     },
-    [sentenceWordsMap, renderWord, settings, colors]
+    [getWordsForSentence, renderWord, settings, colors]
   );
 
   const renderArticleCard = useCallback(
-    (articleData: Article) => (
+    (articleData: any) => (
       <CompactArticleCard
         key={articleData.id}
         article={articleData}
@@ -372,31 +211,6 @@ export default function ArticleScreen() {
     [handleArticlePress]
   );
 
-  // Render related articles footer
-  const renderRelatedArticlesFooter = useCallback(() => {
-    if (!otherArticles.length && !otherCategoryArticles.length) return null;
-
-    return (
-      <View style={styles.relatedArticlesContainer}>
-        {otherArticles.length > 0 && (
-          <RelatedArticlesSection
-            title={`More from ${article?.author?.name}`}
-            articles={otherArticles}
-            renderArticleCard={renderArticleCard}
-          />
-        )}
-
-        {otherCategoryArticles.length > 0 && (
-          <RelatedArticlesSection
-            title={`More from ${article?.category?.name}`}
-            articles={otherCategoryArticles}
-            renderArticleCard={renderArticleCard}
-          />
-        )}
-      </View>
-    );
-  }, [otherArticles, otherCategoryArticles, article, renderArticleCard]);
-
   // Effects
   // Content animation when article is loaded
   useEffect(() => {
@@ -405,30 +219,6 @@ export default function ArticleScreen() {
       startContentAnimation();
     }
   }, [isLoadingArticle, article, startContentAnimation]);
-
-  // Button animations based on visibility state
-  useEffect(() => {
-    // Simple fade animation
-    buttonsOpacity.value = withTiming(isButtonsVisible ? 1 : 0, {
-      duration: 200,
-    });
-
-    // Position animations
-    if (isButtonsVisible) {
-      startBackButtonAnimation();
-      startPlaylistButtonAnimation();
-    } else {
-      resetBackButtonAnimation();
-      resetPlaylistButtonAnimation();
-    }
-  }, [
-    isButtonsVisible,
-    buttonsOpacity,
-    startBackButtonAnimation,
-    startPlaylistButtonAnimation,
-    resetBackButtonAnimation,
-    resetPlaylistButtonAnimation,
-  ]);
 
   // Reset scroll position when article ID changes
   useEffect(() => {
@@ -509,8 +299,8 @@ export default function ArticleScreen() {
         <FloatingButton
           position="right"
           top={insets.top + LAYOUT.SPACING.MEDIUM}
-          animatedStyle={combinedPlaylistButtonStyle}
-          onPress={handleToggleReadingList}
+          animatedStyle={combinedBookmarkButtonStyle}
+          onPress={() => handleToggleReadingList(articleId, isInReadingList)}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
           accessibilityLabel={isInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'}
           colors={colors}
@@ -535,7 +325,14 @@ export default function ArticleScreen() {
             ListHeaderComponent={
               <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
             }
-            ListFooterComponent={renderRelatedArticlesFooter}
+            ListFooterComponent={
+              <RelatedArticlesFooter
+                otherArticles={otherArticles}
+                otherCategoryArticles={otherCategoryArticles}
+                article={article}
+                renderArticleCard={renderArticleCard}
+              />
+            }
             {...flatListConfig}
           />
         </Animated.View>
