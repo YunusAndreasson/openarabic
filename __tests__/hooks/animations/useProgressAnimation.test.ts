@@ -15,10 +15,6 @@ jest.mock('react-native-reanimated', () => {
     return toValue;
   };
 
-  const mockWithDelay = (delay: number, animation: any) => {
-    return animation;
-  };
-
   const mockUseAnimatedStyle = (styleCreator: () => any) => {
     return styleCreator();
   };
@@ -29,7 +25,6 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: jest.fn(mockSharedValue),
     useAnimatedStyle: jest.fn(mockUseAnimatedStyle),
     withTiming: jest.fn(mockWithTiming),
-    withDelay: jest.fn(mockWithDelay),
     runOnJS: jest.fn((fn: any) => fn),
     cancelAnimation: mockCancelAnimation,
   };
@@ -89,7 +84,7 @@ describe('useProgressAnimation', () => {
     expect(result.current.hasAnimated()).toBe(true);
   });
 
-  it('should use withDelay and withTiming for animation', () => {
+  it('should use withTiming with callback for animation', () => {
     const reanimated = require('react-native-reanimated');
     const { result } = renderHook(() => useProgressAnimation());
 
@@ -98,14 +93,16 @@ describe('useProgressAnimation', () => {
       cleanup();
     });
 
-    // Should use withDelay with a small delay
-    expect(reanimated.withDelay).toHaveBeenCalledWith(50, expect.anything());
-
-    // Should use withTiming with the correct duration and easing
-    expect(reanimated.withTiming).toHaveBeenCalledWith(75, {
-      duration: TIMING_CONFIG.SLOW.duration,
-      easing: TIMING_CONFIG.SLOW.easing,
-    });
+    // No longer using withDelay, directly using withTiming
+    // Should use withTiming with the correct duration, easing, and a callback function
+    expect(reanimated.withTiming).toHaveBeenCalledWith(
+      75,
+      {
+        duration: TIMING_CONFIG.SLOW.duration,
+        easing: TIMING_CONFIG.SLOW.easing,
+      },
+      expect.any(Function) // Callback function
+    );
   });
 
   it('should use custom duration when provided', () => {
@@ -118,11 +115,15 @@ describe('useProgressAnimation', () => {
       cleanup();
     });
 
-    // Should use withTiming with the custom duration
-    expect(reanimated.withTiming).toHaveBeenCalledWith(25, {
-      duration: customDuration,
-      easing: TIMING_CONFIG.SLOW.easing,
-    });
+    // Should use withTiming with the custom duration and a callback
+    expect(reanimated.withTiming).toHaveBeenCalledWith(
+      25,
+      {
+        duration: customDuration,
+        easing: TIMING_CONFIG.SLOW.easing,
+      },
+      expect.any(Function)
+    );
   });
 
   it('should animate directly to new value without resetting to 0', () => {
@@ -278,34 +279,45 @@ describe('useProgressAnimation', () => {
 
   it('should handle zero duration gracefully', () => {
     const reanimated = require('react-native-reanimated');
-    const { result } = renderHook(() => useProgressAnimation(0, 0));
+    const zeroDuration = 0;
+    const { result } = renderHook(() => useProgressAnimation(0, zeroDuration));
 
     act(() => {
       const cleanup = result.current.updateProgress(50);
       cleanup();
     });
 
-    // Should still use withTiming with zero duration
-    expect(reanimated.withTiming).toHaveBeenCalledWith(50, {
-      duration: 0,
-      easing: TIMING_CONFIG.SLOW.easing,
-    });
+    // Should still use withTiming with zero duration and a callback
+    expect(reanimated.withTiming).toHaveBeenCalledWith(
+      50,
+      {
+        duration: 0,
+        easing: TIMING_CONFIG.SLOW.easing,
+      },
+      expect.any(Function)
+    );
   });
 
   it('should handle negative duration as a positive value', () => {
     const reanimated = require('react-native-reanimated');
-    const { result } = renderHook(() => useProgressAnimation(0, -100));
+    const negativeDuration = -100;
+    const { result } = renderHook(() => useProgressAnimation(0, negativeDuration));
 
     act(() => {
       const cleanup = result.current.updateProgress(50);
       cleanup();
     });
 
-    // Should use withTiming with the absolute value of the duration
-    expect(reanimated.withTiming).toHaveBeenCalledWith(50, {
-      duration: -100, // The hook should handle this internally or document the behavior
-      easing: TIMING_CONFIG.SLOW.easing,
-    });
+    // Should use withTiming with the provided negative duration and a callback
+    expect(reanimated.withTiming).toHaveBeenCalledWith(
+      50,
+      {
+        // The hook should handle negative duration appropriately
+        duration: negativeDuration,
+        easing: TIMING_CONFIG.SLOW.easing,
+      },
+      expect.any(Function)
+    );
   });
 
   it('should handle errors in animation callbacks gracefully', () => {
@@ -369,7 +381,7 @@ describe('useProgressAnimation', () => {
 
   it('should handle extremely large values for duration', () => {
     const reanimated = require('react-native-reanimated');
-    const veryLargeDuration = Number.MAX_SAFE_INTEGER;
+    const veryLargeDuration = Number.MAX_SAFE_INTEGER; // 9007199254740991
     const { result } = renderHook(() => useProgressAnimation(0, veryLargeDuration));
 
     act(() => {
@@ -377,10 +389,14 @@ describe('useProgressAnimation', () => {
       cleanup();
     });
 
-    // Should use withTiming with the very large duration
-    expect(reanimated.withTiming).toHaveBeenCalledWith(50, {
-      duration: veryLargeDuration,
-      easing: TIMING_CONFIG.SLOW.easing,
-    });
+    // Should use withTiming with the very large duration and a callback
+    expect(reanimated.withTiming).toHaveBeenCalledWith(
+      50,
+      {
+        duration: veryLargeDuration,
+        easing: TIMING_CONFIG.SLOW.easing,
+      },
+      expect.any(Function)
+    );
   });
 });

@@ -1,9 +1,9 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { LAYOUT } from '../constants/layout';
-import Animated from 'react-native-reanimated';
+import Animated, { cancelAnimation } from 'react-native-reanimated';
 import type { AnimatedStyleProp } from '@/hooks/animations/types';
 import { useProgressAnimation } from '../hooks/animations';
 import { ProgressBarProps } from '@/types/ui.types';
@@ -31,6 +31,9 @@ function ProgressBarComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
+  // Store the previous progress value to avoid unnecessary animations
+  const prevProgressRef = useRef(progress);
+
   // Ensure progress is within valid range (0-100)
   const normalizedProgress = useMemo(() => {
     // Handle invalid inputs gracefully
@@ -39,22 +42,38 @@ function ProgressBarComponent({
   }, [progress]);
 
   // Use the standardized progress animation hook
-  const { animatedStyle, updateProgress, reset } = useProgressAnimation(
-    animationTriggered ? 0 : normalizedProgress,
+  const {
+    animatedStyle,
+    updateProgress,
+    progress: animatedProgress,
+  } = useProgressAnimation(
+    normalizedProgress, // Always initialize with current progress to avoid flashing
     animationDuration
   );
 
-  // Effect to handle animation when triggered
+  // Effect to handle animation when triggered or when progress changes
   useEffect(() => {
-    if (animationTriggered) {
-      // Start animation from 0 to the target progress
+    // Determine if animation should be immediate or animated
+    const shouldAnimate = animationTriggered && prevProgressRef.current !== normalizedProgress;
+
+    // Only animate if progress is actually changing
+    if (shouldAnimate) {
+      // Animate to the new target value
       updateProgress(normalizedProgress);
     } else {
-      // Set to actual percentage without animation
-      reset();
-      updateProgress(normalizedProgress);
+      // Direct update without animation - ensures we're always showing the correct value
+      cancelAnimation(animatedProgress);
+      animatedProgress.value = normalizedProgress;
     }
-  }, [normalizedProgress, animationTriggered, updateProgress, reset]);
+
+    // Update the previous progress ref for the next comparison
+    prevProgressRef.current = normalizedProgress;
+
+    // Clean up animation when component unmounts or key changes
+    return () => {
+      cancelAnimation(animatedProgress);
+    };
+  }, [normalizedProgress, animationTriggered, updateProgress, animatedProgress]);
 
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {

@@ -25,6 +25,7 @@ import Toast from 'react-native-toast-message';
 import EntranceAnimation from '@/components/EntranceAnimation';
 import AnimatedItem from '@/components/AnimatedItem';
 import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Import our new components
 import CloseButton from '../components/CloseButton';
@@ -140,6 +141,21 @@ const baseStyles = StyleSheet.create({
 // Create a component for the completion screen
 const CompletionScreen = React.memo(({ onClose }: { onClose: () => void }) => {
   const colors = useColors();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
+
+  // Ensure queries are invalidated when the component mounts
+  useEffect(() => {
+    if (user?.id) {
+      // Force immediate invalidation of all relevant queries
+      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+
+      // Remove any cached data to force a fresh fetch
+      queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
+    }
+  }, [user?.id, queryClient]);
 
   return (
     <View
@@ -216,8 +232,12 @@ export default function ReviewScreen() {
 
   // Add state to control progress bar animation
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
+
   // Track the previous progress value to avoid unnecessary animations
   const prevProgressRef = useRef(0);
+
+  // Track maximum progress seen to avoid regression
+  const maxProgressRef = useRef(0);
 
   // Track if this is the first render
   const isFirstRender = useRef(true);
@@ -233,10 +253,11 @@ export default function ReviewScreen() {
     maxFontSize: 100, // Fixed font size for most words
   });
 
-  // Initialize prevProgressRef with the initial progress value
+  // Initialize prevProgressRef and maxProgressRef with the initial progress value
   useEffect(() => {
     if (!isLoading && progress !== undefined) {
       prevProgressRef.current = progress;
+      maxProgressRef.current = Math.max(maxProgressRef.current, progress);
     }
   }, [isLoading, progress]);
 
@@ -321,10 +342,19 @@ export default function ReviewScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
 
-      // Only trigger progress bar animation if progress has changed
+      // Update progress tracking and trigger animation only when progress actually changes
+      // or when marking a word as incorrect (failure case)
       if (progress !== prevProgressRef.current) {
+        // Update max progress seen to prevent regression
+        maxProgressRef.current = Math.max(maxProgressRef.current, progress);
+        // Increment animation key to trigger a re-render with animation
         setProgressAnimationKey(prev => prev + 1);
+        // Save current progress for next comparison
         prevProgressRef.current = progress;
+      } else if (!success) {
+        // For failures, always update animation key even if progress doesn't change
+        // This ensures the animation is triggered for feedback
+        setProgressAnimationKey(prev => prev + 1);
       }
 
       // Clear any existing timeouts to prevent memory leaks
@@ -347,6 +377,9 @@ export default function ReviewScreen() {
         setAnimationState('idle');
         opacity.value = 1;
         translateX.value = 0;
+
+        // Force progress bar to reset only on error
+        setProgressAnimationKey(prev => prev + 1);
       };
 
       const updateWordAndAnimate = () => {
@@ -435,13 +468,29 @@ export default function ReviewScreen() {
     });
 
   // Handle close button press
+  const queryClient = useQueryClient();
   const handleClose = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Stronger haptic feedback
+
+    // First invalidate the queries to ensure the vocabulary screen gets updated data
+    invalidateQueries();
+
+    // Force immediate invalidation of the dueWords query to ensure it's refetched
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+
+      // Also invalidate the studyWords query to ensure all stats are updated
+      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+
+      // Remove any cached data to force a fresh fetch
+      queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
+    }
+
+    // Add a small delay to ensure the queries are invalidated before navigating back
     setTimeout(() => {
-      invalidateQueries();
       router.back();
-    }, 100); // Small delay to ensure haptic feedback is felt
-  }, [invalidateQueries]);
+    }, 100); // Small delay to ensure haptic feedback is felt and queries are invalidated
+  }, [invalidateQueries, user?.id, queryClient]);
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {
@@ -491,10 +540,10 @@ export default function ReviewScreen() {
                 ]}
               >
                 <ProgressBar
-                  progress={Math.round(progress)}
-                  animationTriggered={true}
+                  progress={Math.max(Math.round(progress), maxProgressRef.current)}
+                  animationTriggered={progressAnimationKey > 1}
                   key={progressAnimationKey}
-                  animationDuration={1000}
+                  animationDuration={500}
                 />
               </View>
               <CloseButton onPress={handleClose} />

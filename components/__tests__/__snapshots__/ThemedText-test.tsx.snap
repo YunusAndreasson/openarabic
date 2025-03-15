@@ -14,7 +14,7 @@ exports[`renders correctly 1`] = `
       undefined,
       undefined,
       {
-        "color": "#000000",
+        "color": "#212121",
       },
       undefined,
     ]

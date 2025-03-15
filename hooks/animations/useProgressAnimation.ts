@@ -18,6 +18,7 @@ export interface ProgressAnimationResult {
   updateProgress: (newPercentage: number) => () => void;
   progress: SharedValue<number>;
   hasAnimated: () => boolean;
+  isAnimating: () => boolean;
   reset: () => void;
 }
 
@@ -37,6 +38,9 @@ export const useProgressAnimation = (
   // This tracks whether the animation has been triggered
   const hasAnimated = useRef(false);
 
+  // This tracks whether an animation is currently in progress
+  const isAnimating = useRef(false);
+
   // Improved function to update the progress value with animation
   const updateProgress = useCallback(
     (newPercentage: number) => {
@@ -46,21 +50,36 @@ export const useProgressAnimation = (
         return () => {}; // Return empty cleanup function
       }
 
-      // Mark that animation has been requested
-      hasAnimated.current = true;
+      // Skip animation if value isn't changing significantly
+      if (Math.abs(progress.value - newPercentage) < 0.5) {
+        return () => {};
+      }
 
-      // Animate directly to the new value without resetting to 0 first
-      // This prevents the progress bar from briefly disappearing
-      progress.value = withDelay(
-        50, // Small delay for visual effect
-        withTiming(newPercentage, {
+      // Cancel any ongoing animations before starting a new one
+      cancelAnimation(progress);
+
+      // Mark that animation has been requested and is in progress
+      hasAnimated.current = true;
+      isAnimating.current = true;
+
+      // Use withTiming for smooth animation to the new value
+      progress.value = withTiming(
+        newPercentage,
+        {
           duration: duration,
           easing: TIMING_CONFIG.SLOW.easing,
-        })
+        },
+        finished => {
+          // Animation is complete
+          if (finished) {
+            isAnimating.current = false;
+          }
+        }
       );
 
       // Return cleanup function that cancels the animation if needed
       return () => {
+        isAnimating.current = false;
         cancelAnimation(progress);
       };
     },
@@ -69,9 +88,11 @@ export const useProgressAnimation = (
 
   // Function to reset progress to initial value
   const reset = useCallback(() => {
+    // Cancel any in-progress animations before resetting
     cancelAnimation(progress);
     progress.value = initialPercentage;
     hasAnimated.current = false;
+    isAnimating.current = false;
   }, [progress, initialPercentage]);
 
   // Create animated style based on the progress value
@@ -87,6 +108,7 @@ export const useProgressAnimation = (
       // Cancel any ongoing animations to prevent memory leaks
       cancelAnimation(progress);
       hasAnimated.current = false;
+      isAnimating.current = false;
     };
   }, [progress]);
 
@@ -95,6 +117,7 @@ export const useProgressAnimation = (
     updateProgress,
     progress,
     hasAnimated: () => hasAnimated.current,
+    isAnimating: () => isAnimating.current,
     reset,
   };
 };

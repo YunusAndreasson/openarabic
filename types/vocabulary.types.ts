@@ -15,11 +15,12 @@ export interface SentenceWord extends Tables<'sentence_words'> {
  */
 export interface StudyWord {
   sentence_word_id: string;
-  sentence_word: Partial<SentenceWord> & {
+  sentence_word: {
     word_form: string;
     english: string;
     sentence?: {
-      arabic: string;
+      arabic?: string;
+      english?: string;
     };
   };
   interval_days: number;
@@ -29,15 +30,21 @@ export interface StudyWord {
   lapses: number;
   stability: number; // Memory stability - how well the item is remembered
   previous_interval: number; // The interval before the current one
-  // Session-specific properties (not stored in database)
+
+  // Performance history tracking fields
+  difficulty?: number; // Item-specific difficulty rating (0-1)
+  success_streak?: number; // Count of consecutive successful reviews
+  failure_streak?: number; // Count of consecutive failed reviews
+
+  // Session-specific data
   sessionData?: {
     isNew?: boolean; // Is this a new word (review_count <= 1)
     failedInSession?: boolean; // Was this word failed in the current session
     consecutiveSuccesses?: number; // How many consecutive successes since last failure
     remainingReviewsNeeded?: number; // How many more reviews this word needs in the session
     processingAttempts?: number; // Attempts to process this word
+    reinsertPosition?: number; // Position where this word should be reinserted in the queue
   };
-  reinsertPosition?: number; // Position where this word should be reinserted in the queue
 }
 
 /**
@@ -110,7 +117,9 @@ export interface SrsStats {
  * Props for the useSpacedRepetition hook
  */
 export interface UseSpacedRepetitionProps {
+  /** User ID for fetching vocabulary words */
   userId: string | undefined;
+  /** Callback function that will be called when the review session is completed */
   onComplete?: () => void;
 }
 
@@ -118,15 +127,24 @@ export interface UseSpacedRepetitionProps {
  * Return type for the useSpacedRepetition hook
  */
 export interface UseSpacedRepetitionReturn {
+  /** Array of words due for review */
   dueWords: StudyWord[];
+  /** Current position in the review queue */
   currentIndex: number;
+  /** The word currently being reviewed */
   currentWord: StudyWord | undefined;
+  /** Whether words are currently being loaded */
   isLoading: boolean;
-  isUpdating: boolean;
+  /** Function to update a word's review status (success/failure) */
   updateWord: (wordId: string, success: boolean) => Promise<void>;
+  /** Current progress through the review session (0-100) */
   progress: number;
+  /** Whether the review session is complete */
   isComplete: boolean;
+  /** Function to invalidate cached queries and refresh data */
   invalidateQueries: () => void;
+  /** Animation type for word transitions */
   transitionType: 'fade' | 'slide';
+  /** Function to get statistics about the spaced repetition system */
   getSrsStats: () => SrsStats;
 }
