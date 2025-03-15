@@ -1,5 +1,7 @@
 import { useCallback } from 'react';
 import { router } from 'expo-router';
+import { useNavigationWithDebounce } from './useNavigationWithDebounce';
+import { Platform } from 'react-native';
 
 // Types
 import type { Tables } from '@/types/database.types';
@@ -28,6 +30,9 @@ export const useArticleRenderers = (
   sentenceWordsMap: Map<number, Tables<'sentence_words'>[]>,
   handleWordPress: (word: Tables<'sentence_words'>) => void
 ) => {
+  // Use the navigation with debounce hook
+  const { navigateTo } = useNavigationWithDebounce();
+
   // Prepare word for rendering
   const prepareWord = useCallback(
     (word: Tables<'sentence_words'>) => {
@@ -45,13 +50,40 @@ export const useArticleRenderers = (
     [handleWordPress, selectedWordIds, settings.fontScale]
   );
 
-  // Navigate to an article
-  const handleArticlePress = useCallback((articleId: number) => {
-    router.push({
-      pathname: '/article/[id]',
-      params: { id: articleId },
-    });
-  }, []);
+  /**
+   * Navigate to an article with debounce protection and smooth transition
+   * @param articleId - ID of the article to navigate to
+   * @param isRelatedArticle - Whether this is a navigation between related articles
+   */
+  const handleArticlePress = useCallback(
+    (articleId: number, isRelatedArticle = false) => {
+      // For all article navigation, use a simple approach without transitions
+      // This is more stable and less likely to cause crashes
+      try {
+        // Use replace for related articles to avoid building up the navigation stack
+        if (isRelatedArticle) {
+          // @ts-ignore - Using router.replace directly for maximum stability
+          router.replace({
+            pathname: '/article/[id]',
+            params: {
+              id: articleId.toString(),
+            },
+          });
+        } else {
+          // For normal navigation, use the debounce hook
+          navigateTo({
+            pathname: '/article/[id]',
+            params: { id: articleId.toString() },
+          });
+        }
+      } catch (error) {
+        console.error('Navigation error:', error);
+        // Fallback to most basic navigation if all else fails
+        router.push(`/article/${articleId}`);
+      }
+    },
+    [navigateTo]
+  );
 
   return {
     prepareWord,

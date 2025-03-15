@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Pressable } from 'react-native';
+import { StyleSheet, View, Pressable, Platform } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
@@ -76,20 +76,19 @@ const DifficultyIndicator = React.memo(
   }
 );
 
-function CompactArticleCardComponent({
+const CompactArticleCardComponent: React.FC<CompactArticleCardProps> = ({
   article,
   onPress,
   showTimeAgo = false,
   hideDifficultyLabel = false,
   hideDifficulty = false,
   lastOpenedAt,
-}: CompactArticleCardProps) {
+}) => {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
   });
 
-  // Dynamically generated styles based on theme
   const dynamicStyles = useMemo(
     () => ({
       card: {
@@ -111,8 +110,8 @@ function CompactArticleCardComponent({
       onPressOut={handlePressOut}
       style={[styles.pressable]}
     >
-      <Animated.View style={animatedStyle}>
-        <View style={[styles.card, dynamicStyles.card]}>
+      <Animated.View style={animatedStyle as any}>
+        <View style={[styles.container, dynamicStyles.card]}>
           <View style={styles.imageContainer}>
             <EnhancedImage
               source={article.image_url || 'https://picsum.photos/800/400'}
@@ -163,21 +162,33 @@ function CompactArticleCardComponent({
       </Animated.View>
     </Pressable>
   );
-}
+};
 
 // Memoize the component to prevent unnecessary rerenders
 export const CompactArticleCard = React.memo(CompactArticleCardComponent);
 
 const styles = StyleSheet.create({
   pressable: {
-    marginRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.MEDIUM,
     width: 220,
     marginLeft: 0,
   },
-  card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    overflow: 'visible',
-    ...LAYOUT.SHADOW.MEDIUM,
+  container: {
+    width: 220,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   imageContainer: {
     position: 'relative',

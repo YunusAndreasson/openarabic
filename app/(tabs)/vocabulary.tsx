@@ -1,16 +1,15 @@
-import React, { useMemo, useCallback, useRef, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/VocabularyDashboard';
-import { ThemedButton } from '@/components/ThemedButton';
 import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
 import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/study_words';
-import { router, useNavigation } from 'expo-router';
+import { useNavigation } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
@@ -19,72 +18,24 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
-import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
-import { usePulseAnimation } from '@/hooks/animations';
+import {
+  useLoadingState,
+  useScreenFocusRefresh,
+  useScreenAnimation,
+  useNavigationWithDebounce,
+} from '@/hooks';
 import PageHeader from '@/components/PageHeader';
-
-// Create a memoized component for the review button
-const ReviewButton = React.memo(
-  ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => {
-    const colors = useColors();
-    // Use the existing pulse animation hook
-    const { pulse, animatedStyle } = usePulseAnimation({
-      pulseMagnitude: 1.05,
-      style: 'standard',
-    });
-
-    const handlePress = useCallback(() => {
-      // Trigger the pulse animation
-      pulse();
-
-      // Call onPress after a short delay to allow the animation to be visible
-      setTimeout(() => {
-        onPress();
-      }, 150);
-    }, [pulse, onPress]);
-
-    return (
-      <View style={styles.reviewButtonContainer}>
-        <Animated.View style={animatedStyle as any}>
-          <ThemedButton
-            title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
-            icon="play-circle"
-            iconSize={24}
-            onPress={handlePress}
-            variant="filled"
-            style={[styles.reviewButton, { backgroundColor: colors.tint }]}
-          />
-        </Animated.View>
-      </View>
-    );
-  }
-);
-
-// Create a memoized component for the disabled review button
-const DisabledReviewButton = React.memo(() => {
-  return (
-    <View style={styles.reviewButtonContainer}>
-      <ThemedButton
-        title="No words to review"
-        icon="time"
-        iconSize={24}
-        onPress={() => {}}
-        variant="outlined"
-        style={styles.reviewButton}
-        disabled
-      />
-    </View>
-  );
-});
-
-DisabledReviewButton.displayName = 'DisabledReviewButton';
+import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
+import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const queryClient = useQueryClient();
-  const [isNavigating, setIsNavigating] = useState(false);
+
+  // Use the navigation with debounce hook
+  const { navigateTo } = useNavigationWithDebounce();
 
   // Use the loading state hook with a standard delay
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500, true);
@@ -151,11 +102,8 @@ export default function VocabularyScreen() {
   }, [validStudyWords]);
 
   // Handle starting a review
-  const handleStartReview = useCallback(() => {
-    if (!user || isNavigating) return;
-
-    // Set navigating state to prevent multiple clicks
-    setIsNavigating(true);
+  const handleStartReview = () => {
+    if (!user) return;
 
     // Invalidate due words query to refresh after review
     queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
@@ -166,37 +114,21 @@ export default function VocabularyScreen() {
       queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
     });
 
-    // Simple navigation without animations
-    router.push({
+    // Navigate to review screen
+    navigateTo({
       pathname: '/review',
       params: { fromVocabulary: 'true' },
     });
-
-    // Reset navigation state after a delay
-    setTimeout(() => {
-      setIsNavigating(false);
-    }, 300);
-  }, [router, queryClient, user, isNavigating]);
+  };
 
   // Handle stat press events
-  const handleStatPress = useCallback(
-    (category: 'total' | 'mastered' | 'learning' | 'due') => {
-      // Set navigating state to prevent multiple clicks
-      setIsNavigating(true);
-
-      // Navigate to the word list with the selected category
-      router.push({
-        pathname: '/wordList',
-        params: { category },
-      });
-
-      // Reset navigation state after a delay
-      setTimeout(() => {
-        setIsNavigating(false);
-      }, 300);
-    },
-    [router]
-  );
+  const handleStatPress = (category: 'total' | 'mastered' | 'learning' | 'due') => {
+    // Navigate to the word list with the selected category
+    navigateTo({
+      pathname: '/wordList',
+      params: { category },
+    });
+  };
 
   // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(
@@ -216,27 +148,8 @@ export default function VocabularyScreen() {
     }
   }, [isAuthLoading, user, status, startLoading, stopLoading]);
 
-  // Content loading state
-  const isContentLoading = useMemo(() => {
-    return !!user && (isFetching || isDataLoading);
-  }, [user, isFetching, isDataLoading]);
-
-  // Create a memoized error message component
-  const ErrorMessage = React.memo(() => {
-    return (
-      <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
-        <ThemedText style={[styles.message, { color: colors.error }]}>
-          Error loading your vocabulary data. Please try again later.
-        </ThemedText>
-        <ThemedButton
-          title="Retry"
-          onPress={() => navigation.navigate('vocabulary')}
-          style={{ marginTop: LAYOUT.SPACING.LARGE }}
-        />
-      </View>
-    );
-  });
-  ErrorMessage.displayName = 'ErrorMessage';
+  // Content loading state - simplified from a useMemo to a direct calculation
+  const isContentLoading = !!user && (isFetching || isDataLoading);
 
   // Show loading screen for initial load
   if (isLoadingState) {
@@ -276,7 +189,7 @@ export default function VocabularyScreen() {
 
   // Main content
   return (
-    <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
+    <Animated.View style={[styles.flexContainer, fadeInStyle]}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
         <PageHeader title="Vocabulary" />
@@ -286,11 +199,7 @@ export default function VocabularyScreen() {
           scrollable={true}
           useSafeArea={false}
           includeBottomInset={false}
-          contentContainerStyle={{
-            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: LAYOUT.SPACING.MEDIUM,
-            paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-          }}
+          contentContainerStyle={styles.contentContainer}
         >
           {/* Show loader when loading */}
           {isContentLoading && (
@@ -347,18 +256,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: Platform.select({
-      ios: LAYOUT.CONTENT_SPACING.TOP,
-      android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
-    }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+  flexContainer: {
+    flex: 1,
   },
-  headerTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
+  contentContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   fullscreenLoader: {
     position: 'absolute',
@@ -370,9 +274,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  sectionContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
   messageContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -381,9 +282,6 @@ const styles = StyleSheet.create({
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
-  },
-  graphContainer: {
-    marginBottom: 0,
   },
   graphWrapper: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -396,25 +294,6 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  reviewButtonContainer: {
-    width: '100%',
-    maxWidth: 400,
-  },
-  reviewButton: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: '100%',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  articleInfoText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginLeft: LAYOUT.SPACING.TINY,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   dashboardWrapper: {
     marginBottom: LAYOUT.SPACING.MEDIUM,

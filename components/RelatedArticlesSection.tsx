@@ -15,16 +15,17 @@ export interface RelatedArticlesSectionProps {
 const styles = StyleSheet.create({
   container: {
     marginTop: LAYOUT.SPACING.XXLARGE,
+    marginHorizontal: -LAYOUT.SPACING.LARGE,
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
     fontWeight: '600',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   horizontalList: {
-    paddingLeft: 0,
-    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
-    marginHorizontal: 0,
+    paddingLeft: LAYOUT.SPACING.LARGE,
+    paddingRight: LAYOUT.SPACING.LARGE,
   },
 });
 
@@ -45,7 +46,7 @@ export const RelatedArticlesSection = React.memo(
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
           removeClippedSubviews={true}
-          style={animatedStyle}
+          style={animatedStyle as any}
         >
           {articles.map(renderArticleCard)}
         </Animated.ScrollView>

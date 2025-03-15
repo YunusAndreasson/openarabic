@@ -16,6 +16,9 @@ export * from './useSpacedRepetition';
 // Media hooks
 export * from './useAudioPlayer';
 
+// Navigation hooks
+export * from './useNavigationWithDebounce';
+
 // New utility hooks
 export * from './useLoadingState';
 export * from './useLayoutReady';

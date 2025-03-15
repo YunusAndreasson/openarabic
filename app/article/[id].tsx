@@ -29,10 +29,15 @@ import { useColors } from '@/hooks/useColors';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { useFadeInAnimation, useFloatingButtonAnimation } from '@/hooks/animations';
+import {
+  useFadeInAnimation,
+  useFloatingButtonAnimation,
+  useOpacityAnimation,
+} from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
+import { useNavigationWithDebounce } from '@/hooks';
 
 // Store
 import {
@@ -75,6 +80,9 @@ export default function ArticleScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
+
+  // Track component mounted state
+  const isMountedRef = useRef(true);
 
   // Animation state
   const [isButtonsVisible, setIsButtonsVisible] = useState(true);
@@ -120,6 +128,12 @@ export default function ArticleScreen() {
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
     useFadeInAnimation(0, 300);
 
+  const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
+    useFadeInAnimation(200, 500);
+
+  const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
+    useFadeInAnimation(300, 500);
+
   // Use the floating button animation hook from animations directory
   const { combinedBackButtonStyle, combinedBookmarkButtonStyle } =
     useFloatingButtonAnimation(isButtonsVisible);
@@ -133,6 +147,9 @@ export default function ArticleScreen() {
     }),
     [insets.top]
   );
+
+  // Use the navigation with debounce hook
+  const { navigateTo, cleanup: cleanupNavigation } = useNavigationWithDebounce();
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -205,7 +222,7 @@ export default function ArticleScreen() {
       <CompactArticleCard
         key={articleData.id}
         article={articleData}
-        onPress={() => handleArticlePress(articleData.id)}
+        onPress={() => handleArticlePress(articleData.id, true)} // Pass true to indicate this is a related article
       />
     ),
     [handleArticlePress]
@@ -217,16 +234,28 @@ export default function ArticleScreen() {
     if (!isLoadingArticle && article) {
       setIsLoading(false);
       startContentAnimation();
+      startHeaderAnimation();
+      startFooterAnimation();
     }
-  }, [isLoadingArticle, article, startContentAnimation]);
+  }, [
+    isLoadingArticle,
+    article,
+    startContentAnimation,
+    startHeaderAnimation,
+    startFooterAnimation,
+  ]);
 
   // Reset scroll position when article ID changes
   useEffect(() => {
     if (flatListRef.current && id) {
-      flatListRef.current.scrollToOffset({
-        offset: 0,
-        animated: false,
-      });
+      try {
+        flatListRef.current.scrollToOffset({
+          offset: 0,
+          animated: false,
+        });
+      } catch (error) {
+        console.log('Scroll reset error (safe to ignore):', error);
+      }
     }
   }, [id]);
 
@@ -263,12 +292,33 @@ export default function ArticleScreen() {
     [isDarkMode]
   );
 
-  // Render loading screen
-  if (isLoading) {
+  // Handle back button press with debounce
+  const handleBackPress = useCallback(() => {
+    navigateTo('..', () => {
+      // Any cleanup before navigation if needed
+    });
+  }, [navigateTo]);
+
+  // Handle bookmark toggle with debounce for UI consistency
+  const handleBookmarkPress = useCallback(() => {
+    if (articleId) {
+      handleToggleReadingList(articleId, isInReadingList);
+    }
+  }, [articleId, isInReadingList, handleToggleReadingList]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      cleanupNavigation();
+    };
+  }, [cleanupNavigation]);
+
+  // Main render
+  if (isLoading || isLoadingArticle) {
     return <LoadingScreen />;
   }
 
-  // Render article not found
   if (!article) {
     return (
       <ThemedView style={styles.container}>
@@ -277,7 +327,6 @@ export default function ArticleScreen() {
     );
   }
 
-  // Render article screen
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
@@ -287,7 +336,7 @@ export default function ArticleScreen() {
         position="left"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={combinedBackButtonStyle}
-        onPress={() => router.back()}
+        onPress={handleBackPress}
         iconName="chevron-back"
         accessibilityLabel="Go back"
         colors={colors}
@@ -300,7 +349,7 @@ export default function ArticleScreen() {
           position="right"
           top={insets.top + LAYOUT.SPACING.MEDIUM}
           animatedStyle={combinedBookmarkButtonStyle}
-          onPress={() => handleToggleReadingList(articleId, isInReadingList)}
+          onPress={handleBookmarkPress}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
           accessibilityLabel={isInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'}
           colors={colors}
@@ -310,31 +359,40 @@ export default function ArticleScreen() {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }, contentAnimatedStyle]}>
-          <FlatList
-            key={`article-${id}`}
-            ref={flatListRef}
-            data={sortedSentences}
-            renderItem={renderSentenceItem}
-            keyExtractor={item => item.id.toString()}
-            style={[styles.content, { backgroundColor: colors.background }]}
-            contentContainerStyle={[styles.sentenceList, contentPadding]}
-            scrollEventThrottle={16}
-            onScroll={handleScroll}
-            onEndReachedThreshold={0.5}
-            ListHeaderComponent={
-              <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
-            }
-            ListFooterComponent={
-              <RelatedArticlesFooter
-                otherArticles={otherArticles}
-                otherCategoryArticles={otherCategoryArticles}
-                article={article}
-                renderArticleCard={renderArticleCard}
-              />
-            }
-            {...flatListConfig}
-          />
+        <Animated.View
+          style={[{ flex: 1, backgroundColor: 'transparent' }, contentAnimatedStyle as any]}
+        >
+          {/* Only render FlatList if we have data */}
+          {sortedSentences && sortedSentences.length > 0 && (
+            <FlatList
+              key={`article-${id}`}
+              ref={flatListRef}
+              data={sortedSentences}
+              renderItem={renderSentenceItem}
+              keyExtractor={item => item.id.toString()}
+              style={[styles.content, { backgroundColor: colors.background }]}
+              contentContainerStyle={[styles.sentenceList, contentPadding]}
+              scrollEventThrottle={16}
+              onScroll={handleScroll}
+              onEndReachedThreshold={0.5}
+              ListHeaderComponent={
+                <Animated.View style={headerAnimatedStyle as any}>
+                  <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
+                </Animated.View>
+              }
+              ListFooterComponent={
+                <Animated.View style={footerAnimatedStyle as any}>
+                  <RelatedArticlesFooter
+                    otherArticles={otherArticles}
+                    otherCategoryArticles={otherCategoryArticles}
+                    article={article}
+                    renderArticleCard={renderArticleCard}
+                  />
+                </Animated.View>
+              }
+              {...flatListConfig}
+            />
+          )}
         </Animated.View>
       </View>
     </ThemedView>

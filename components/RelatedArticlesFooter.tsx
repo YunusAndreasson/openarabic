@@ -21,6 +21,8 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: Platform.OS === 'ios' ? 30 : 20,
+    marginHorizontal: 0,
+    width: '100%',
   },
 });
 

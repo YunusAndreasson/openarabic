@@ -17,7 +17,12 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
+import {
+  useLoadingState,
+  useScreenFocusRefresh,
+  useScreenAnimation,
+  useNavigationWithDebounce,
+} from '@/hooks';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -259,21 +264,20 @@ export default function ArticlesScreen() {
     fetchArticles();
   }, [fetchArticles]);
 
+  // Use the navigation with debounce hook
+  const { navigateTo } = useNavigationWithDebounce();
+
   const handleArticlePress = useCallback(
     (article: Article) => {
-      // Navigate to article detail
-      router.push(`/article/${article.id}`);
-
-      // Add to reading list if authenticated
-      if (!session?.user) {
-        // Skip adding to reading list if not authenticated
-        return;
-      }
-
-      // Add to reading list
-      dispatch(addToReadingList(article.id));
+      // Navigate to article detail with debounce protection
+      navigateTo(`/article/${article.id}`, () => {
+        // Add to reading list if authenticated (this runs before navigation)
+        if (session?.user) {
+          dispatch(addToReadingList(article.id));
+        }
+      });
     },
-    [dispatch, session?.user]
+    [dispatch, session?.user, navigateTo]
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
