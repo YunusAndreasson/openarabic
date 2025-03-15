@@ -15,20 +15,45 @@ const createDefaultEasing = () => {
       };
     }
   } catch (e) {
-    // Ignore errors
+    // Log error but continue with fallbacks
+    console.warn('Failed to load Reanimated easing functions, using fallbacks:', e);
   }
 
+  console.info('Using fallback animation easings - animations may not be smooth');
+
   // Fallback implementation for tests
+  // These properly type and implement easing functions that return proper easing functions
   const identity = (x: number) => x;
-  const composableIdentity = (x: any) => identity;
+
+  // Correctly typed composable functions that return an easing function
+  const composableOut = (easingFn: (t: number) => number) => (t: number) => {
+    return 1 - easingFn(1 - t);
+  };
+
+  const composableIn = (easingFn: (t: number) => number) => (t: number) => {
+    return easingFn(t);
+  };
+
+  const composableInOut = (easingFn: (t: number) => number) => (t: number) => {
+    return t < 0.5 ? easingFn(t * 2) / 2 : 1 - easingFn((1 - t) * 2) / 2;
+  };
+
+  const quadFallback = (t: number) => t * t;
+  const cubicFallback = (t: number) => t * t * t;
+  const bezierFallback = (x1: number, y1: number, x2: number, y2: number) => {
+    return (t: number) => {
+      // Very basic bezier implementation, not accurate but safe for testing
+      return t;
+    };
+  };
 
   return {
-    quad: identity,
-    cubic: identity,
-    bezier: () => identity,
-    out: composableIdentity,
-    inOut: composableIdentity,
-    in: composableIdentity,
+    quad: quadFallback,
+    cubic: cubicFallback,
+    bezier: bezierFallback,
+    out: composableOut,
+    inOut: composableInOut,
+    in: composableIn,
   };
 };
 

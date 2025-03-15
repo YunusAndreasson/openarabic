@@ -7,6 +7,7 @@ import {
 } from 'react-native-reanimated';
 import { SPRING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
+import { useCallback, useEffect, useRef } from 'react';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 
@@ -76,6 +77,7 @@ export interface PressAnimationResult {
  */
 export const usePressAnimation = (options: PressAnimationOptions = {}): PressAnimationResult => {
   const { type = 'button', scaleAmount, opacityAmount, includeOpacity, springConfig } = options;
+  const isMountedRef = useRef(true);
 
   // Set defaults based on type
   const defaultScaleAmount = type === 'card' ? 0.985 : 0.97;
@@ -93,6 +95,21 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   // Animation value
   const pressed = useSharedValue(0);
+
+  // Track mounted state and cleanup
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      try {
+        // Ensure we reset the animation on unmount to prevent memory issues
+        pressed.value = 0;
+      } catch (error) {
+        // Silently handle errors during cleanup
+      }
+    };
+  }, [pressed]);
 
   // Create animated style with or without opacity
   const animatedStyle = useAnimatedStyle(() => {
@@ -117,15 +134,29 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   });
 
   // Press handlers
-  const handlePressIn = () => {
-    'worklet';
-    pressed.value = withSpring(1, finalSpringConfig);
-  };
+  const handlePressIn = useCallback(() => {
+    if (!isMountedRef.current) return;
 
-  const handlePressOut = () => {
-    'worklet';
-    pressed.value = withSpring(0, finalSpringConfig);
-  };
+    try {
+      pressed.value = withSpring(1, finalSpringConfig);
+    } catch (error) {
+      console.error('Press in animation error:', error);
+      // Fallback to immediate value change on error
+      pressed.value = 1;
+    }
+  }, [pressed, finalSpringConfig]);
+
+  const handlePressOut = useCallback(() => {
+    if (!isMountedRef.current) return;
+
+    try {
+      pressed.value = withSpring(0, finalSpringConfig);
+    } catch (error) {
+      console.error('Press out animation error:', error);
+      // Fallback to immediate value change on error
+      pressed.value = 0;
+    }
+  }, [pressed, finalSpringConfig]);
 
   return {
     animatedStyle,

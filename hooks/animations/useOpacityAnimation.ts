@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   useSharedValue,
   withTiming,
@@ -45,6 +45,13 @@ export interface FadeAnimationOptions {
    * @default 0
    */
   delay?: number;
+
+  /**
+   * Additional delay to wait for layout stabilization
+   * Helps prevent jumps when layout changes during animation
+   * @default 0
+   */
+  layoutStabilizationDelay?: number;
 }
 
 export interface FadeAnimationResult {
@@ -117,124 +124,224 @@ export interface FadeAnimationResult {
 export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAnimationResult => {
   const {
     initialOpacity = 1,
-    duration = TIMING_CONFIG.MEDIUM.duration,
+    duration: rawDuration = TIMING_CONFIG.MEDIUM.duration,
     style = 'standard',
     autoStart = false,
-    delay = 0,
+    delay: rawDelay = 0,
+    layoutStabilizationDelay = 0,
   } = options;
 
+  // Validate parameters
+  const duration = Math.max(0, rawDuration);
+  const delay = Math.max(0, rawDelay);
+  const validInitialOpacity = Math.max(0, Math.min(1, initialOpacity));
+
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
-  const entering = FadeIn.duration(duration).delay(delay);
-  const exiting = FadeOut.duration(duration);
+  // Make sure duration is valid to avoid issues with built-in animations
+  const safeDuration = Math.max(1, duration); // Minimum 1ms to avoid division by zero in Reanimated
+  const entering = FadeIn.duration(safeDuration).delay(delay);
+  const exiting = FadeOut.duration(safeDuration);
+
+  // Track if component is mounted to prevent callbacks after unmount
+  const isMountedRef = useRef(true);
 
   // Always create the shared value and all animation functions
-  const opacity = useSharedValue(initialOpacity);
+  const opacity = useSharedValue(validInitialOpacity);
+
+  // Cleanup shared animation values on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+      // Cancel any pending animations by setting to the target value immediately
+      try {
+        opacity.value = validInitialOpacity;
+      } catch (error) {
+        // Handle potential errors during cleanup silently
+      }
+    };
+  }, [opacity, validInitialOpacity]);
+
+  // Safe callback runner that checks if component is still mounted
+  const safeRunCallback = useCallback((callback?: () => void) => {
+    if (callback && isMountedRef.current) {
+      callback();
+    }
+  }, []);
 
   const fadeIn = useCallback(
     (onComplete?: () => void) => {
-      'worklet';
-      opacity.value = withTiming(
-        1,
-        {
-          duration,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        },
-        () => {
-          if (onComplete && runOnJS) {
-            runOnJS(onComplete)();
+      try {
+        opacity.value = withTiming(
+          1,
+          {
+            duration,
+            easing: TIMING_CONFIG.MEDIUM.easing,
+          },
+          finished => {
+            if (finished && onComplete && runOnJS) {
+              runOnJS(safeRunCallback)(onComplete);
+            }
           }
+        );
+      } catch (error) {
+        console.error('Fade in animation error:', error);
+        if (onComplete && runOnJS) {
+          runOnJS(safeRunCallback)(onComplete);
         }
-      );
+      }
     },
-    [opacity, duration]
+    [opacity, duration, safeRunCallback]
   );
 
   const fadeOut = useCallback(
     (onComplete?: () => void) => {
-      'worklet';
-      opacity.value = withTiming(
-        0,
-        {
-          duration,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        },
-        () => {
-          if (onComplete && runOnJS) {
-            runOnJS(onComplete)();
+      try {
+        opacity.value = withTiming(
+          0,
+          {
+            duration,
+            easing: TIMING_CONFIG.MEDIUM.easing,
+          },
+          finished => {
+            if (finished && onComplete && runOnJS) {
+              runOnJS(safeRunCallback)(onComplete);
+            }
           }
+        );
+      } catch (error) {
+        console.error('Fade out animation error:', error);
+        if (onComplete && runOnJS) {
+          runOnJS(safeRunCallback)(onComplete);
         }
-      );
+      }
     },
-    [opacity, duration]
+    [opacity, duration, safeRunCallback]
   );
 
   const setOpacity = useCallback(
     (value: number, onComplete?: () => void) => {
-      'worklet';
-      opacity.value = withTiming(
-        value,
-        {
-          duration,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        },
-        () => {
-          if (onComplete && runOnJS) {
-            runOnJS(onComplete)();
+      // Ensure opacity value is between 0 and 1
+      const safeValue = Math.max(0, Math.min(1, value));
+
+      try {
+        opacity.value = withTiming(
+          safeValue,
+          {
+            duration,
+            easing: TIMING_CONFIG.MEDIUM.easing,
+          },
+          finished => {
+            if (finished && onComplete && runOnJS) {
+              runOnJS(safeRunCallback)(onComplete);
+            }
           }
+        );
+      } catch (error) {
+        console.error('Set opacity animation error:', error);
+        if (onComplete && runOnJS) {
+          runOnJS(safeRunCallback)(onComplete);
         }
-      );
+      }
     },
-    [opacity, duration]
+    [opacity, duration, safeRunCallback]
   );
 
   const reset = useCallback(() => {
-    'worklet';
-    opacity.value = initialOpacity;
-  }, [opacity, initialOpacity]);
+    try {
+      opacity.value = validInitialOpacity;
+    } catch (error) {
+      console.error('Reset opacity error:', error);
+    }
+  }, [opacity, validInitialOpacity]);
 
   // These functions match the useFadeInAnimation API
   const startAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
-      'worklet';
-      opacity.value = withDelay(
-        startDelay,
-        withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing }, () => {
-          if (onComplete && runOnJS) {
-            runOnJS(onComplete)();
-          }
-        })
-      );
+      // Ensure delay is not negative
+      const safeDelay = Math.max(0, startDelay);
+
+      try {
+        opacity.value = withDelay(
+          safeDelay,
+          withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing }, finished => {
+            if (finished && onComplete && runOnJS) {
+              runOnJS(safeRunCallback)(onComplete);
+            }
+          })
+        );
+      } catch (error) {
+        console.error('Start animation error:', error);
+        if (onComplete && runOnJS) {
+          runOnJS(safeRunCallback)(onComplete);
+        }
+      }
     },
-    [opacity, duration, delay]
+    [opacity, duration, delay, safeRunCallback]
   );
 
   const reverseAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
-      'worklet';
-      opacity.value = withDelay(
-        startDelay,
-        withTiming(initialOpacity, { duration, easing: TIMING_CONFIG.MEDIUM.easing }, () => {
-          if (onComplete && runOnJS) {
-            runOnJS(onComplete)();
-          }
-        })
-      );
+      // Ensure delay is not negative
+      const safeDelay = Math.max(0, startDelay);
+
+      try {
+        opacity.value = withDelay(
+          safeDelay,
+          withTiming(
+            validInitialOpacity,
+            { duration, easing: TIMING_CONFIG.MEDIUM.easing },
+            finished => {
+              if (finished && onComplete && runOnJS) {
+                runOnJS(safeRunCallback)(onComplete);
+              }
+            }
+          )
+        );
+      } catch (error) {
+        console.error('Reverse animation error:', error);
+        if (onComplete && runOnJS) {
+          runOnJS(safeRunCallback)(onComplete);
+        }
+      }
     },
-    [opacity, initialOpacity, duration, delay]
+    [opacity, validInitialOpacity, duration, delay, safeRunCallback]
   );
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
+  const animatedStyle = useAnimatedStyle(
+    () => {
+      return {
+        opacity: opacity.value,
+      };
+    },
+    // Dependencies array for useAnimatedStyle - improving performance
+    [opacity]
+  );
 
   // Auto-start animation if enabled
   useEffect(() => {
-    if (autoStart) {
-      startAnimation();
+    if (autoStart && isMountedRef.current) {
+      // Ensure we're at the starting opacity before beginning the animation
+      // This prevents jumps when transitioning from initial value to the animated state
+      if (validInitialOpacity !== 1) {
+        opacity.value = validInitialOpacity;
+      }
+
+      // Wait for layout to stabilize to prevent jumps
+      const totalDelay = Math.max(0, 10 + layoutStabilizationDelay);
+
+      // Use a small delay to ensure we've rendered at the initial state first
+      // This is key to smooth entrance animations
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          startAnimation();
+        }
+      }, totalDelay);
+
+      return () => clearTimeout(timer);
     }
-  }, [autoStart, startAnimation]);
+  }, [autoStart, startAnimation, validInitialOpacity, opacity, layoutStabilizationDelay]);
 
   // For entrance-only style, we still return all functions but they won't be used
   return {

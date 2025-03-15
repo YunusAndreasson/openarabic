@@ -39,6 +39,8 @@ export { useSharedTransition } from './useSharedTransition';
 export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useGraphAnimation } from './useGraphAnimation';
 export { useReviewAnimation } from './useReviewAnimation';
+export { useAnimationTrigger } from './useAnimationTrigger';
+export { useScreenAnimation } from './useScreenAnimation';
 
 // Export standardized animation configurations
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
@@ -63,6 +65,8 @@ export type {
   ReviewAnimationOptions,
   ReviewAnimationResult,
 } from './useReviewAnimation';
+export type { AnimationTriggerResult } from './useAnimationTrigger';
+export type { ScreenAnimationResult } from './useScreenAnimation';
 
 // Create aliases for old hook names
 export const useFadeInAnimation = (delay = 0, duration = 300) =>
