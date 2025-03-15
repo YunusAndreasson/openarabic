@@ -242,10 +242,8 @@ export const VocabularyGraph = React.memo(
 
         <View style={[styles.footer, { borderTopColor: colors.cardBorder + '40' }]}>
           <View style={styles.footerContent}>
-            <ThemedText style={styles.footerText}>{totalWordsLearned} words learned</ThemedText>
-            <ThemedText style={styles.footerSubtext}>
-              {dailyAverage} words per day on average
-            </ThemedText>
+            <ThemedText style={styles.footerText}>{totalWordsLearned} words</ThemedText>
+            <ThemedText style={styles.footerSubtext}>{dailyAverage} words/day</ThemedText>
           </View>
         </View>
       </Animated.View>

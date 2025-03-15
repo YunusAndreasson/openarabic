@@ -24,9 +24,13 @@ const FilterNotice = React.memo(({ type, name }: FilterNoticeProps) => {
   const tintTextStyle = useMemo(() => ({ color: colors.tint }), [colors.tint]);
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View
+      style={[styles.container, containerStyle]}
+      accessibilityRole="text"
+      accessibilityLabel={`Filtered by ${type}: ${formattedName}`}
+    >
       <ThemedText style={styles.text}>
-        From {type}:{' '}
+        Showing {type}:{' '}
         <ThemedText style={[styles.boldText, tintTextStyle]} skipDefaultColor>
           {formattedName}
         </ThemedText>

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, RefreshControl, View } from 'react-native';
+import { ScrollView, StyleSheet, RefreshControl, View, Text } from 'react-native';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
@@ -9,6 +9,7 @@ import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations';
 import { Tables } from '../types/database.types';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
+import { ThemedText } from './ThemedText';
 
 interface FilteredArticleViewProps {
   /**
@@ -85,6 +86,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
+      accessibilityLabel="Filtered articles list"
       refreshControl={
         <RefreshControl
           refreshing={isRefreshing}
@@ -115,6 +117,18 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         </View>
       ))}
 
+      {/* No results message */}
+      {articles.length === 0 && !isLoading && (
+        <View style={styles.noResultsContainer}>
+          <ThemedText
+            style={styles.noResultsText}
+            accessibilityLabel="No articles found with the current filter"
+          >
+            No articles found
+          </ThemedText>
+        </View>
+      )}
+
       {/* Footer */}
       {articles.length > 0 && (
         <>
@@ -139,6 +153,15 @@ const styles = StyleSheet.create({
   },
   endMessageContainer: {
     height: LAYOUT.SPACING.MEDIUM,
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noResultsText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

@@ -76,7 +76,9 @@ StatItem.displayName = 'StatItem';
 // Separate MasteryHeader component for better reusability and memoization
 const MasteryHeader = React.memo(({ percentage }: { percentage: number }) => (
   <View style={styles.masteryLabelRow}>
-    <ThemedText style={styles.masteryLabel}>Mastery</ThemedText>
+    <ThemedText style={styles.masteryLabel} accessibilityLabel={`Words mastery: ${percentage}%`}>
+      Mastery
+    </ThemedText>
     <ThemedText style={styles.masteryPercentage}>{percentage}%</ThemedText>
   </View>
 ));
@@ -118,7 +120,7 @@ export const VocabularyDashboard = React.memo(
       () => [
         {
           value: totalWords,
-          label: 'Words',
+          label: 'Total',
           icon: 'book',
           iconColor: safeColors.textColor,
           bgColor: safeColors.textColor + '15',

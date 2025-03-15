@@ -19,16 +19,23 @@ export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyState
           size={48}
           color={colors.text}
           style={{ opacity: LAYOUT.OPACITY.DIMMED }}
+          accessibilityLabel="Empty words list"
         />
       </View>
-      <ThemedText style={styles.emptyTitle}>Build Vocabulary</ThemedText>
-      <ThemedText style={styles.emptyMessage}>No words in your study list yet.</ThemedText>
-      <ThemedText style={styles.emptySubmessage}>Tap words while reading to add them.</ThemedText>
+      <ThemedText style={styles.emptyTitle} accessibilityRole="header">
+        Begin Words Journey
+      </ThemedText>
+      <ThemedText style={styles.emptyMessage}>No saved words</ThemedText>
+      <ThemedText style={styles.emptySubmessage}>
+        Tap words while reading to add to your study list
+      </ThemedText>
       <TouchableOpacity
         style={[styles.emptyActionButton, { backgroundColor: colors.text + '10' }]}
         onPress={handleBrowseArticles}
+        accessibilityLabel="Go to articles to build words"
+        accessibilityRole="button"
       >
-        <ThemedText style={styles.emptyActionText}>Browse Articles</ThemedText>
+        <ThemedText style={styles.emptyActionText}>Articles</ThemedText>
         <Ionicons name="arrow-forward" size={16} color={colors.text} />
       </TouchableOpacity>
     </View>

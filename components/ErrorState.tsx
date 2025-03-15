@@ -9,11 +9,19 @@ import { ErrorStateProps } from '@/types/ui.types';
  * A component for displaying error messages
  */
 const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => (
-  <View style={styles.container}>
-    <ThemedText style={styles.text}>{message}</ThemedText>
+  <View style={styles.container} accessibilityRole="alert">
+    <ThemedText style={styles.text} accessibilityLabel={`Error: ${message}`}>
+      {message}
+    </ThemedText>
     {onRetry && (
       <View style={styles.buttonContainer}>
-        <ThemedButton title="Try Again" onPress={onRetry} variant="filled" icon="refresh" />
+        <ThemedButton
+          title="Try Again"
+          onPress={onRetry}
+          variant="filled"
+          icon="refresh"
+          accessibilityLabel="Attempt to reload content"
+        />
       </View>
     )}
   </View>

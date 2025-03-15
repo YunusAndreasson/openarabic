@@ -55,7 +55,7 @@ export const SignInRequired = React.memo(
             <ThemedButton
               title="Sign In"
               icon="log-in"
-              onPress={() => router.push('/account')}
+              onPress={() => router.navigate('/(tabs)/settings')}
               style={styles.signInButton}
             />
           </View>

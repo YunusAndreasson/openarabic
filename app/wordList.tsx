@@ -48,31 +48,31 @@ export default function WordListScreen() {
     switch (category) {
       case 'total':
         return {
-          title: 'Words',
+          title: 'All Words',
           icon: 'book',
           description: 'Sorted by mastery level',
         };
       case 'mastered':
         return {
-          title: 'Mastered',
+          title: 'Mastered Words',
           icon: 'checkmark-circle',
           description: 'Words with 21+ days interval',
         };
       case 'learning':
         return {
-          title: 'Learning',
+          title: 'Learning Words',
           icon: 'school',
           description: 'Words with < 21 days interval',
         };
       case 'due':
         return {
-          title: 'Due',
+          title: 'Due Words',
           icon: 'alarm',
           description: 'Words to practice today',
         };
       default:
         return {
-          title: 'Words',
+          title: 'All Words',
           icon: 'book',
           description: 'Sorted by mastery level',
         };

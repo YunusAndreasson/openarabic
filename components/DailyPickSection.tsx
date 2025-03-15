@@ -20,6 +20,7 @@ const DailyPickSection = React.memo(({ article, onPress, delay = 0 }: DailyPickS
       duration={LAYOUT.ANIMATION.DURATION.SLOW}
       style={styles.section}
       paddingHorizontal={true}
+      accessibilityLabel="Today's recommended article"
     >
       <ThemedCard
         imageUrl={article.image_url || ''}
@@ -28,6 +29,7 @@ const DailyPickSection = React.memo(({ article, onPress, delay = 0 }: DailyPickS
         author={article.author?.name || 'Unknown'}
         summary={article.summary || undefined}
         onPress={() => onPress(article)}
+        accessibilityLabel={`Daily recommended article: ${article.title} by ${article.author?.name || 'Unknown'}`}
       />
     </AnimatedSection>
   );

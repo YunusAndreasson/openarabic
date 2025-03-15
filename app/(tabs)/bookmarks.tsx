@@ -1,13 +1,5 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import {
-  StyleSheet,
-  FlatList,
-  View,
-  Platform,
-  AppState,
-  TouchableOpacity,
-  Pressable,
-} from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { StyleSheet, FlatList, View, AppState, Pressable } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/readingList';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,14 +9,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { SignInRequired } from '@/components/SignInRequired';
 import { Audio } from 'expo-av';
-import { LAYOUT, getPlatformTopPadding } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { useOpacityAnimation, usePressAnimation } from '@/hooks/animations';
+import { usePressAnimation } from '@/hooks/animations';
 import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
-import { useRouter } from 'expo-router';
 import EmptyState from '@/components/EmptyState';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
@@ -261,7 +252,7 @@ const BottomControls = React.memo(
             },
           ]}
         >
-          <ThemedText style={styles.controlsTitle}>PLAYBACK CONTROLS</ThemedText>
+          <ThemedText style={styles.controlsTitle}>AUDIO CONTROLS</ThemedText>
           <View style={styles.actionButtonsRow}>
             <View style={{ width: '48%' }}>
               <ThemedButton
@@ -270,6 +261,9 @@ const BottomControls = React.memo(
                 onPress={onPlayAll}
                 variant="filled"
                 style={{ width: '100%' }}
+                accessibilityLabel={
+                  isPlaying && !isShuffleMode ? 'Stop playback' : 'Play all bookmarked articles'
+                }
               />
             </View>
             <View style={{ width: '48%' }}>
@@ -279,6 +273,11 @@ const BottomControls = React.memo(
                 onPress={onShuffle}
                 variant="outlined"
                 style={[styles.shuffleButton, { width: '100%', borderColor: colors.tint }]}
+                accessibilityLabel={
+                  isPlaying && isShuffleMode
+                    ? 'Stop shuffle playback'
+                    : 'Play bookmarked articles in random order'
+                }
               />
             </View>
           </View>
@@ -647,9 +646,9 @@ export default function BookmarksScreen() {
       <SignInRequired
         headerTitle="Bookmarks"
         colors={colors}
-        message="Please sign in to view and manage your bookmarks"
+        message="Sign in to manage your bookmarked articles"
         benefitTitle="Benefits of Bookmarks"
-        benefitDescription="Sign in to save articles for later and listen to them on the go. Perfect for practicing your listening skills anywhere."
+        benefitDescription="Save articles for later and listen to audio versions on the go."
       />
     );
   }
@@ -661,7 +660,7 @@ export default function BookmarksScreen() {
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           <PageHeader title="Bookmarks" />
           <EmptyState
-            title="Your Bookmarks List is Empty"
+            title="No Bookmarks Found"
             message="Bookmark articles to listen to them later or save them for reference."
             buttonTitle="Browse Articles"
             buttonIcon="book"

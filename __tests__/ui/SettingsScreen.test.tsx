@@ -6,7 +6,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // The component to test
-import AccountScreen from '../../app/(tabs)/account';
+import SettingsScreen from '../../app/(tabs)/settings';
 
 // Mock the Alert directly
 jest.mock('react-native/Libraries/Alert/Alert', () => ({
@@ -136,14 +136,14 @@ const setupTest = () => {
   };
 };
 
-describe('AccountScreen', () => {
+describe('SettingsScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should render user information correctly', () => {
     const { renderWithProviders } = setupTest();
-    const { getByText } = renderWithProviders(<AccountScreen />);
+    const { getByText } = renderWithProviders(<SettingsScreen />);
 
     // User information should be displayed
     expect(getByText(/test@example.com/i)).toBeTruthy();
@@ -151,7 +151,7 @@ describe('AccountScreen', () => {
 
   it('should render sign out button correctly', () => {
     const { renderWithProviders } = setupTest();
-    const { getByText } = renderWithProviders(<AccountScreen />);
+    const { getByText } = renderWithProviders(<SettingsScreen />);
 
     // Sign out button should be visible
     expect(getByText('Sign Out')).toBeTruthy();
@@ -159,7 +159,7 @@ describe('AccountScreen', () => {
 
   it('should render support button correctly', () => {
     const { renderWithProviders } = setupTest();
-    const { getByText } = renderWithProviders(<AccountScreen />);
+    const { getByText } = renderWithProviders(<SettingsScreen />);
 
     // Support button should be visible
     expect(getByText('Contact Support')).toBeTruthy();
@@ -167,7 +167,7 @@ describe('AccountScreen', () => {
 
   it('should render social media buttons correctly', () => {
     const { renderWithProviders } = setupTest();
-    const { getByText } = renderWithProviders(<AccountScreen />);
+    const { getByText } = renderWithProviders(<SettingsScreen />);
 
     // Social media buttons should be visible
     expect(getByText('Twitter')).toBeTruthy();

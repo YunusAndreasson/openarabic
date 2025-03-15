@@ -22,7 +22,7 @@ import { LoadingScreen } from '../../components/Loader';
 import { useLoadingState, useScreenAnimation } from '@/hooks';
 import PageHeader from '@/components/PageHeader';
 
-export default function AccountScreen() {
+export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const colors = useColors();
   const dispatch = useAppDispatch();
@@ -121,7 +121,7 @@ export default function AccountScreen() {
   async function signOut() {
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out?',
+      'Are you sure?',
       [
         {
           text: 'Cancel',
@@ -179,12 +179,12 @@ export default function AccountScreen() {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
         <ThemedView style={styles.container}>
-          <PageHeader title="Account" />
+          <PageHeader title="Settings" />
           <View style={styles.authContainer}>
             <ThemedText type="title" style={styles.welcomeTitle}>
               Welcome
             </ThemedText>
-            <ThemedText style={styles.subtitle}>Sign in to access your account</ThemedText>
+            <ThemedText style={styles.subtitle}>Sign in to continue</ThemedText>
             <Auth />
           </View>
         </ThemedView>
@@ -196,7 +196,7 @@ export default function AccountScreen() {
     <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
-        <PageHeader title="Account" />
+        <PageHeader title="Settings" />
 
         {/* Scrollable content */}
         <ThemedView
@@ -232,7 +232,7 @@ export default function AccountScreen() {
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>Show English</ThemedText>
+                  <ThemedText style={styles.settingLabel}>English Translation</ThemedText>
                 </View>
                 <Toggle
                   value={settings.showEnglish}
@@ -264,7 +264,7 @@ export default function AccountScreen() {
               </View>
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.previewContainer}>
-                <ThemedText style={styles.previewLabel}>Article Text Preview</ThemedText>
+                <ThemedText style={styles.previewLabel}>Preview</ThemedText>
                 <View style={{ height: 100, overflow: 'hidden' }}>
                   <View style={{ position: 'absolute', width: '100%', top: 0 }}>
                     <ThemedText
@@ -351,7 +351,7 @@ export default function AccountScreen() {
             >
               <ThemedButton
                 variant="outlined"
-                title="Contact Support"
+                title="Support"
                 onPress={handleSupport}
                 icon="mail"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
@@ -369,7 +369,7 @@ export default function AccountScreen() {
                 contentContainerStyle={buttonStyles.contentContainer}
               />
               <View style={styles.accountInfoContainer}>
-                <ThemedText style={styles.signedInLabel}>Signed in as:</ThemedText>
+                <ThemedText style={styles.signedInLabel}>Email:</ThemedText>
                 <ThemedText style={styles.signedInEmail} numberOfLines={1} ellipsizeMode="tail">
                   {session.user.email}
                 </ThemedText>

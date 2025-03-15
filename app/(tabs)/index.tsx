@@ -33,7 +33,6 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT } from '@/constants/layout';
 import {
   filterArticles,
-  getRecentArticles,
   getLatestArticles,
   getFeaturedArticles,
   getBeginnerArticles,
@@ -177,7 +176,6 @@ export default function ArticlesScreen() {
   }, [articles, selectedAuthorId, selectedCategoryId]);
 
   // Organized articles by category
-  const recentArticles = useMemo(() => getRecentArticles(filteredArticles), [filteredArticles]);
   const latestArticles = useMemo(() => getLatestArticles(filteredArticles), [filteredArticles]);
   const featuredArticles = useMemo(() => getFeaturedArticles(filteredArticles), [filteredArticles]);
   const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
@@ -378,7 +376,7 @@ export default function ArticlesScreen() {
           delay={100}
           showTimeAgo={true}
           getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
-          emptyStateMessage="No articles in progress. Start reading to see them here!"
+          emptyStateMessage="Start reading to save your progress here"
         />
 
         {latestArticles.length > 0 && (
@@ -400,21 +398,12 @@ export default function ArticlesScreen() {
           />
         )}
 
-        {recentArticles.length > 0 && (
-          <ArticleSection
-            title="Recently Added"
-            articles={recentArticles}
-            onArticlePress={handleArticlePress}
-            delay={300}
-          />
-        )}
-
         {beginnerArticles.length > 0 && (
           <ArticleSection
             title="Beginner Friendly"
             articles={beginnerArticles}
             onArticlePress={handleArticlePress}
-            delay={400}
+            delay={350}
             hideDifficulty={true}
           />
         )}
@@ -426,8 +415,8 @@ export default function ArticlesScreen() {
           selectedId={selectedAuthorId}
           onSelect={handleSelectAuthor}
           onClearFilter={handleClearFilters}
-          animationDelay={600}
-          itemAnimationDelay={650}
+          animationDelay={500}
+          itemAnimationDelay={550}
         />
 
         {/* Category filter list */}
@@ -436,8 +425,8 @@ export default function ArticlesScreen() {
           items={categories}
           selectedId={selectedCategoryId}
           onSelect={handleSelectCategory}
-          animationDelay={700}
-          itemAnimationDelay={750}
+          animationDelay={600}
+          itemAnimationDelay={650}
         />
       </>
     );
@@ -448,7 +437,6 @@ export default function ArticlesScreen() {
     sortedInProgressArticles,
     latestArticles,
     featuredArticles,
-    recentArticles,
     beginnerArticles,
     authors,
     selectedAuthorId,

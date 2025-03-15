@@ -78,9 +78,14 @@ function FilterList<T extends FilterItem>({
       <View style={styles.headerContainer}>
         <SectionTitle title={title} />
         {selectedId !== null && onClearFilter && (
-          <Pressable style={[styles.clearButton, clearButtonStyle]} onPress={onClearFilter}>
+          <Pressable
+            style={[styles.clearButton, clearButtonStyle]}
+            onPress={onClearFilter}
+            accessibilityLabel={`Clear ${title.toLowerCase()} filter`}
+            accessibilityRole="button"
+          >
             <ThemedText style={[styles.clearButtonText, tintTextStyle]} skipDefaultColor>
-              Clear
+              Clear Filter
             </ThemedText>
           </Pressable>
         )}
@@ -96,6 +101,7 @@ function FilterList<T extends FilterItem>({
         initialNumToRender={10}
         maxToRenderPerBatch={20}
         windowSize={5}
+        accessibilityLabel={`List of ${title.toLowerCase()} filters`}
       />
     </Animated.View>
   );

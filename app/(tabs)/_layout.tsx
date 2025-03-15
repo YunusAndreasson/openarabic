@@ -16,7 +16,7 @@ const TAB_SCREENS = [
   },
   {
     name: 'vocabulary',
-    title: 'Vocabulary',
+    title: 'Words',
     iconOutline: 'receipt-outline',
     iconFilled: 'receipt',
   },
@@ -27,10 +27,10 @@ const TAB_SCREENS = [
     iconFilled: 'bookmark',
   },
   {
-    name: 'account',
-    title: 'Account',
-    iconOutline: 'person-outline',
-    iconFilled: 'person',
+    name: 'settings',
+    title: 'Settings',
+    iconOutline: 'settings-outline',
+    iconFilled: 'settings',
   },
 ] as const;
 

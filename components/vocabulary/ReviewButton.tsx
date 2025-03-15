@@ -8,7 +8,7 @@ import { LAYOUT } from '../../constants/layout';
 import { ReviewButtonProps } from '../../types/ui.types';
 
 /**
- * Button for initiating a vocabulary review
+ * Button for initiating a words review
  */
 const ReviewButton = React.memo(({ dueWords, onPress }: ReviewButtonProps) => {
   const colors = useColors();
@@ -32,12 +32,13 @@ const ReviewButton = React.memo(({ dueWords, onPress }: ReviewButtonProps) => {
     <View style={styles.reviewButtonContainer}>
       <Animated.View style={animatedStyle as any}>
         <ThemedButton
-          title={`Review ${dueWords} ${dueWords === 1 ? 'word' : ''}`}
+          title={`${dueWords} ${dueWords === 1 ? 'Word' : 'Words'}`}
           icon="play-circle"
           iconSize={24}
           onPress={handlePress}
           variant="filled"
           style={[styles.reviewButton, { backgroundColor: colors.tint }]}
+          accessibilityLabel={`Start review with ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
         />
       </Animated.View>
     </View>
@@ -58,6 +59,7 @@ const DisabledReviewButton = React.memo(() => {
         variant="outlined"
         style={styles.reviewButton}
         disabled
+        accessibilityLabel="No words due for review"
       />
     </View>
   );

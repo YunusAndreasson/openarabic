@@ -338,7 +338,7 @@ export default function ArticleScreen() {
         animatedStyle={combinedBackButtonStyle}
         onPress={handleBackPress}
         iconName="chevron-back"
-        accessibilityLabel="Go back"
+        accessibilityLabel="Return to previous screen"
         colors={colors}
         isDarkMode={isDarkMode}
       />
@@ -351,7 +351,9 @@ export default function ArticleScreen() {
           animatedStyle={combinedBookmarkButtonStyle}
           onPress={handleBookmarkPress}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
-          accessibilityLabel={isInReadingList ? 'Remove from bookmarks' : 'Add to bookmarks'}
+          accessibilityLabel={
+            isInReadingList ? 'Remove article from bookmarks' : 'Save article to bookmarks'
+          }
           colors={colors}
           isDarkMode={isDarkMode}
         />

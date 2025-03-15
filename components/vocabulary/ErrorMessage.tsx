@@ -13,19 +13,29 @@ import { ErrorMessageProps } from '../../types/ui.types';
  */
 const ErrorMessage = React.memo(
   ({
-    screenName = 'vocabulary',
-    customMessage = 'Error loading vocabulary data. Try again later.',
+    screenName = 'words',
+    customMessage = 'Unable to load data. Please try again.',
   }: ErrorMessageProps) => {
     const colors = useColors();
     const navigation = useNavigation<BottomTabNavigationProp<any>>();
 
     return (
-      <View style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}>
-        <ThemedText style={[styles.message, { color: colors.error }]}>{customMessage}</ThemedText>
+      <View
+        style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}
+        accessibilityRole="alert"
+      >
+        <ThemedText
+          style={[styles.message, { color: colors.error }]}
+          accessibilityLabel={`Error: ${customMessage}`}
+        >
+          {customMessage}
+        </ThemedText>
         <ThemedButton
-          title="Retry"
+          title="Try Again"
           onPress={() => navigation.navigate(screenName as never)}
           style={{ marginTop: LAYOUT.SPACING.LARGE }}
+          accessibilityLabel="Reload this screen"
+          icon="refresh"
         />
       </View>
     );

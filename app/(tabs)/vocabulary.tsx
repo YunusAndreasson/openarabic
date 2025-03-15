@@ -176,11 +176,11 @@ export default function VocabularyScreen() {
   if (!user) {
     return (
       <SignInRequired
-        headerTitle="Vocabulary"
+        headerTitle="Words"
         colors={colors}
-        message="Sign in to view and manage vocabulary"
-        benefitTitle="Benefits of Tracking"
-        benefitDescription="Track words with spaced repetition and build vocabulary over time."
+        message="Sign in to track"
+        benefitTitle="Build Words"
+        benefitDescription="Learn through spaced repetition."
       />
     );
   }
@@ -208,7 +208,7 @@ export default function VocabularyScreen() {
     <Animated.View style={[styles.flexContainer, fadeInStyle]}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
-        <PageHeader title="Vocabulary" />
+        <PageHeader title="Words" />
 
         {/* Content */}
         <ThemedView
@@ -241,7 +241,6 @@ export default function VocabularyScreen() {
               masteredWords={stats.masteredWords}
               learningWords={stats.learningWords}
               dueWords={stats.dueWords}
-              streak={stats.streak}
               colors={colors}
               animationTriggered={true}
               onStatPress={handleStatPress}

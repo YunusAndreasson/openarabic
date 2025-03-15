@@ -80,11 +80,16 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
 
   return (
     <View style={styles.articleHeaderContainer}>
-      <ThemedText style={styles.articleTitle}>{article.title}</ThemedText>
+      <ThemedText style={styles.articleTitle} accessibilityRole="header">
+        {article.title}
+      </ThemedText>
 
       <View style={styles.articleMetaContainer}>
         <View style={styles.authorContainer}>
-          <ThemedText style={styles.authorName}>
+          <ThemedText
+            style={styles.authorName}
+            accessibilityLabel={`Written by ${article.author?.name || 'Unknown Author'}`}
+          >
             {article.author?.name || 'Unknown Author'}
           </ThemedText>
         </View>
@@ -97,8 +102,14 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             size={16}
             color={colors.text}
             style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            accessibilityLabel="Category"
           />
-          <ThemedText style={styles.articleInfoText}>{categoryName}</ThemedText>
+          <ThemedText
+            style={styles.articleInfoText}
+            accessibilityLabel={`Category: ${categoryName}`}
+          >
+            {categoryName}
+          </ThemedText>
         </View>
 
         <View style={styles.articleInfoItem}>
@@ -107,8 +118,14 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             size={16}
             color={colors.text}
             style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            accessibilityLabel="Reading time"
           />
-          <ThemedText style={styles.articleInfoText}>{readingTime} min read</ThemedText>
+          <ThemedText
+            style={styles.articleInfoText}
+            accessibilityLabel={`Reading time: ${readingTime} minutes`}
+          >
+            {readingTime} min read
+          </ThemedText>
         </View>
 
         <View style={styles.articleInfoItem}>
@@ -117,12 +134,25 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             size={16}
             color={colors.text}
             style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            accessibilityLabel="Difficulty level"
           />
-          <ThemedText style={styles.articleInfoText}>Level {article.difficulty_level}</ThemedText>
+          <ThemedText
+            style={styles.articleInfoText}
+            accessibilityLabel={`Difficulty level: ${article.difficulty_level}`}
+          >
+            Level {article.difficulty_level}
+          </ThemedText>
         </View>
       </View>
 
-      {article.summary && <ThemedText style={styles.summaryText}>{article.summary}</ThemedText>}
+      {article.summary && (
+        <ThemedText
+          style={styles.summaryText}
+          accessibilityLabel={`Article summary: ${article.summary}`}
+        >
+          {article.summary}
+        </ThemedText>
+      )}
     </View>
   );
 };
