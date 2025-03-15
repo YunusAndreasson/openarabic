@@ -41,15 +41,14 @@ function WordDetailsModalComponent({
         width: maxWidth,
         padding: 0,
         borderRadius: LAYOUT.BORDER_RADIUS.LARGE * 1.5,
+        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         overflow: 'hidden',
         ...LAYOUT.SHADOW.LARGE,
       } as ViewStyle,
       contentWrapper: {
         width: '100%',
         gap: LAYOUT.SPACING.XLARGE,
-        paddingTop: LAYOUT.SPACING.XLARGE,
-        paddingBottom: LAYOUT.SPACING.XLARGE,
-        paddingHorizontal: LAYOUT.SPACING.XLARGE,
+        padding: LAYOUT.CARD.PADDING.MEDIUM,
       } as ViewStyle,
       header: {
         alignItems: 'center',

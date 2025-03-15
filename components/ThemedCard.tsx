@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     maxWidth: '70%', // Added to match CompactArticleCard
   },
   contentContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   },
   loadingComponentContainer: {
     width: '100%',
-    height: 200,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'center',
   },

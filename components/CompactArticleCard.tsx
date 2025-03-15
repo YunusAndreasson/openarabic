@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     width: '100%',
-    height: 130,
+    height: 120,
     zIndex: LAYOUT.Z_INDEX.BASE,
     overflow: 'visible',
   },
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   contentContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
