@@ -27,6 +27,8 @@ interface ThemedCardProps {
   category?: string;
   /** Author name to display in the card (for article variant) */
   author?: string;
+  /** Summary text to display in the card (for article variant) */
+  summary?: string;
   /** Optional callback function when the card is pressed */
   onPress?: () => void;
   /** Optional style to apply to the card container */
@@ -44,6 +46,7 @@ function ThemedCardComponent({
   title,
   category,
   author,
+  summary,
   onPress,
   style,
   isLoading = false,
@@ -138,6 +141,9 @@ function ThemedCardComponent({
       author: {
         color: colors.authorText,
       },
+      summary: {
+        color: colors.authorText, // Using authorText for summary as it's a secondary text color
+      },
       image: {
         backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
       },
@@ -204,6 +210,16 @@ function ThemedCardComponent({
             {title}
           </ThemedText>
 
+          {summary && (
+            <ThemedText
+              style={[styles.summary, themedStyles.summary]}
+              numberOfLines={3}
+              skipDefaultColor
+            >
+              {summary}
+            </ThemedText>
+          )}
+
           {author && (
             <ThemedText style={[styles.author, themedStyles.author]} numberOfLines={1}>
               By {author}
@@ -248,8 +264,8 @@ function ThemedCardComponent({
                 borderColor: themedStyles.card.borderColor,
                 shadowColor: themedStyles.card.shadowColor,
                 borderRadius: themedStyles.card.borderRadius,
+                borderWidth: themedStyles.card.borderWidth,
               },
-              isCompact && styles.compactCard,
               style,
             ]}
           >
@@ -261,88 +277,70 @@ function ThemedCardComponent({
   );
 }
 
-// Use memo to prevent unnecessary re-renders
-const ThemedCard = React.memo(ThemedCardComponent);
-export default ThemedCard;
-
+// Styles
 const styles = StyleSheet.create({
   container: {
-    overflow: 'visible',
+    width: '100%',
   },
   pressable: {
-    overflow: 'visible',
+    width: '100%',
   },
   card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    overflow: 'visible',
-    ...LAYOUT.SHADOW.MEDIUM,
-  },
-  compactCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    padding: LAYOUT.CARD.PADDING.SMALL,
-    elevation: 3,
+    width: '100%',
+    overflow: 'hidden',
   },
   imageContainer: {
-    position: 'relative',
     width: '100%',
-    height: 220,
-    backgroundColor: 'transparent',
-    overflow: 'visible',
-  },
-  imageOverlayContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    overflow: 'visible',
+    height: 180,
+    position: 'relative',
   },
   image: {
     width: '100%',
     height: '100%',
   },
-  gradient: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: -1,
-    height: 160,
+  imageOverlayContainer: {
+    ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
-  contentContainer: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.XXLARGE,
-  },
-  title: {
-    marginBottom: LAYOUT.SPACING.TINY,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  author: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    letterSpacing: 0.2,
+  gradient: {
+    ...StyleSheet.absoluteFillObject,
   },
   iosLightModeGradient: {
-    bottom: -8,
-    height: 240,
-    zIndex: 1,
-  },
-  loadingComponentContainer: {
-    height: 300,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    overflow: 'hidden',
+    // Special case for iOS light mode
   },
   pillContainer: {
     position: 'absolute',
-    top: 10,
-    left: 10,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-    maxWidth: '90%',
+    top: LAYOUT.SPACING.SMALL,
+    left: LAYOUT.SPACING.SMALL,
+    zIndex: 2,
+  },
+  contentContainer: {
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  title: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: 'bold',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  summary: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  },
+  author: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  loadingComponentContainer: {
+    width: '100%',
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
+
+// Use memo to prevent unnecessary re-renders
+const ThemedCard = React.memo(ThemedCardComponent);
+
+// Export the component
+export default ThemedCard;

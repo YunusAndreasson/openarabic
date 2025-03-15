@@ -38,6 +38,7 @@ const FeaturedArticleItem = React.memo(
           title={article.title}
           category={article.category?.name || 'Uncategorized'}
           author={article.author?.name || 'Anonymous'}
+          summary={article.summary || undefined}
           onPress={() => onPress(article)}
           style={styles.card}
         />

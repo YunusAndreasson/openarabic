@@ -42,6 +42,7 @@ const DailyPickSection = React.memo(({ article, onPress, delay = 0 }: DailyPickS
         title={article.title}
         category={article.category?.name || 'General'}
         author={article.author?.name || 'Unknown'}
+        summary={article.summary || undefined}
         onPress={() => onPress(article)}
       />
     </AnimatedSection>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 // Components
@@ -23,7 +23,7 @@ interface ArticleHeaderProps {
 
 const styles = StyleSheet.create({
   articleHeaderContainer: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: 15,
     paddingVertical: LAYOUT.SPACING.XLARGE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
@@ -66,17 +66,10 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.TINY,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
-  categoryContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
   categoryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
-    letterSpacing: 0.3,
+    marginLeft: LAYOUT.SPACING.TINY,
   },
   summaryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -117,23 +110,13 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors, i
       </View>
 
       <View style={styles.articleInfoContainer}>
-        <View
-          style={[
-            styles.categoryContainer,
-            {
-              backgroundColor: `${colors.tint}${isDarkMode ? '30' : '15'}`,
-              ...Platform.select({
-                ios: {
-                  ...LAYOUT.SHADOW.SMALL,
-                  shadowColor: colors.shadow,
-                },
-                android: {
-                  elevation: 2,
-                },
-              }),
-            },
-          ]}
-        >
+        <View style={styles.articleInfoItem}>
+          <Ionicons
+            name="folder-outline"
+            size={16}
+            color={colors.tint}
+            style={{ opacity: LAYOUT.OPACITY.HIGH }}
+          />
           <ThemedText style={[styles.categoryText, { color: colors.tint }]} skipDefaultColor>
             {categoryName}
           </ThemedText>
