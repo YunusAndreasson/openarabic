@@ -45,8 +45,6 @@ const StatItem = React.memo(
     });
 
     const handlePress = () => {
-      // Provide haptic feedback
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       // Call the onPress callback if provided
       if (onPress) {
         onPress(category);
@@ -54,7 +52,7 @@ const StatItem = React.memo(
     };
 
     return (
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={animatedStyle as any}>
         <TouchableOpacity
           style={styles.statItem}
           onPress={handlePress}
@@ -124,7 +122,7 @@ export const VocabularyDashboard = React.memo(
       () => [
         {
           value: totalWords,
-          label: 'Total Words',
+          label: 'All Words',
           icon: 'book',
           iconColor: safeColors.textColor,
           bgColor: safeColors.textColor + '15',
@@ -151,7 +149,7 @@ export const VocabularyDashboard = React.memo(
         },
         {
           value: dueWords,
-          label: 'Due Today',
+          label: 'Due for Review',
           icon: 'alarm',
           iconColor: safeColors.dueWordsColor,
           bgColor: safeColors.dueWordsColor + '20',

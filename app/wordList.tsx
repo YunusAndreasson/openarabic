@@ -240,9 +240,16 @@ export default function WordListScreen() {
               contentContainerStyle={styles.listContent}
               ListEmptyComponent={renderEmptyComponent}
               showsVerticalScrollIndicator={false}
-              initialNumToRender={10}
-              maxToRenderPerBatch={10}
-              windowSize={10}
+              initialNumToRender={8}
+              maxToRenderPerBatch={5}
+              windowSize={5}
+              removeClippedSubviews={true}
+              updateCellsBatchingPeriod={50}
+              getItemLayout={(data, index) => ({
+                length: 80, // Approximate height of each item
+                offset: 80 * index,
+                index,
+              })}
             />
           )}
         </EntranceAnimation>

@@ -11,13 +11,13 @@ interface EntranceAnimationProps {
 
   /**
    * Delay before starting the animation (in ms)
-   * @default 50
+   * @default 0
    */
   delay?: number;
 
   /**
    * Duration of the animation (in ms)
-   * @default TIMING_CONFIG.MEDIUM.duration
+   * @default TIMING_CONFIG.FAST.duration
    */
   duration?: number;
 
@@ -37,8 +37,8 @@ interface EntranceAnimationProps {
 const EntranceAnimation = React.memo(
   ({
     children,
-    delay = 50,
-    duration = TIMING_CONFIG.MEDIUM.duration,
+    delay = 0,
+    duration = TIMING_CONFIG.FAST.duration,
     style,
   }: EntranceAnimationProps) => {
     // Use our standardized animation hook

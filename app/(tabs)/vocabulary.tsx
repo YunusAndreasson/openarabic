@@ -28,7 +28,10 @@ const ReviewButton = React.memo(
   ({ dueWords, onPress }: { dueWords: number; onPress: () => void }) => {
     const colors = useColors();
     // Use the existing pulse animation hook
-    const { pulse, animatedStyle } = usePulseAnimation(1.05);
+    const { pulse, animatedStyle } = usePulseAnimation({
+      pulseMagnitude: 1.05,
+      style: 'standard',
+    });
 
     const handlePress = useCallback(() => {
       // Trigger the pulse animation
@@ -42,7 +45,7 @@ const ReviewButton = React.memo(
 
     return (
       <View style={styles.reviewButtonContainer}>
-        <Animated.View style={animatedStyle}>
+        <Animated.View style={animatedStyle as any}>
           <ThemedButton
             title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
             icon="play-circle"
@@ -178,11 +181,19 @@ export default function VocabularyScreen() {
   // Handle stat press events
   const handleStatPress = useCallback(
     (category: 'total' | 'mastered' | 'learning' | 'due') => {
+      // Set navigating state to prevent multiple clicks
+      setIsNavigating(true);
+
       // Navigate to the word list with the selected category
       router.push({
         pathname: '/wordList',
         params: { category },
       });
+
+      // Reset navigation state after a delay
+      setTimeout(() => {
+        setIsNavigating(false);
+      }, 300);
     },
     [router]
   );
