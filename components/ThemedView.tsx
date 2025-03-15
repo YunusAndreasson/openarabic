@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { ThemedViewProps } from '@/types/ui.types';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -17,21 +18,6 @@ import { useColors } from '@/hooks/useColors';
  * It serves as the foundation for most screens in the app, ensuring consistent
  * theming and behavior across the application.
  */
-export interface ThemedViewProps extends ViewProps {
-  /** Determines whether the view should be scrollable */
-  scrollable?: boolean;
-  /** Optional style for the ScrollView content container when scrollable */
-  contentContainerStyle?: StyleProp<ViewStyle>;
-  /** Whether to use SafeAreaView (default: true) */
-  useSafeArea?: boolean;
-  /** Whether to include bottom insets in safe area (default: true) */
-  includeBottomInset?: boolean;
-  /** Specific edges to apply safe area insets to (overrides includeBottomInset) */
-  safeAreaEdges?: Edge[];
-  /** Optional ScrollView props */
-  scrollViewProps?: Omit<React.ComponentProps<typeof ScrollView>, 'children'>;
-  children?: React.ReactNode;
-}
 
 function ThemedViewComponent({
   children,

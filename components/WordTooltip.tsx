@@ -5,13 +5,7 @@ import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations';
-
-interface WordTooltipProps {
-  visible: boolean;
-  text: string;
-  layout: LayoutRectangle | null;
-  onClose: () => void;
-}
+import { WordTooltipProps } from '@/types/ui.types';
 
 /**
  * A tooltip component that displays above an Arabic word

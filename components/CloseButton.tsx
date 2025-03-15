@@ -4,15 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import * as Haptics from 'expo-haptics';
-
-interface CloseButtonProps {
-  onPress: () => void;
-  size?: number;
-  iconSize?: number;
-  color?: string;
-  style?: ViewStyle;
-  hapticFeedback?: boolean;
-}
+import { CloseButtonProps } from '@/types/ui.types';
 
 /**
  * A reusable close button component with proper styling and haptic feedback

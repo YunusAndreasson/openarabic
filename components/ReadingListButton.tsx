@@ -6,11 +6,7 @@ import * as Haptics from 'expo-haptics';
 import Toast from 'react-native-toast-message';
 import { LAYOUT } from '../constants/layout';
 import { ThemedButton } from './ThemedButton';
-
-interface ReadingListButtonProps {
-  articleId: number;
-  style?: StyleProp<ViewStyle>;
-}
+import { ReadingListButtonProps } from '@/types/ui.types';
 
 export function ReadingListButton({ articleId }: ReadingListButtonProps) {
   const [isInReadingList, setIsInReadingList] = useState(false);

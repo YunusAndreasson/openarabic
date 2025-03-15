@@ -3,19 +3,7 @@ import { StyleProp, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import Animated from 'react-native-reanimated';
 import { usePulseAnimation } from '@/hooks/animations';
-
-interface AnimatedThemedTextProps {
-  /** Text content to display */
-  children: React.ReactNode;
-  /** Style for the text */
-  style?: StyleProp<TextStyle>;
-  /** Whether to animate when the content changes */
-  animate?: boolean;
-  /** Animation magnitude (how much to scale) */
-  magnitude?: number;
-  /** Any additional ThemedText props */
-  [key: string]: any;
-}
+import { AnimatedThemedTextProps } from '@/types/ui.types';
 
 /**
  * AnimatedThemedText combines ThemedText with animation capabilities.
@@ -29,7 +17,10 @@ export function AnimatedThemedText({
   magnitude = 1.05,
   ...rest
 }: AnimatedThemedTextProps) {
-  const { animatedStyle, pulse } = usePulseAnimation(magnitude);
+  const { animatedStyle, pulse } = usePulseAnimation({
+    style: 'standard',
+    pulseMagnitude: magnitude,
+  });
 
   // Trigger animation when children or animate prop changes
   useEffect(() => {

@@ -2,10 +2,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
-
-interface SectionTitleProps {
-  title: string;
-}
+import { SectionTitleProps } from '@/types/ui.types';
 
 /**
  * A consistent section title component used across the app

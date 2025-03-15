@@ -9,13 +9,7 @@ import { LAYOUT } from '@/constants/layout';
 
 // Types
 import type { Article } from '@/types/articles.types';
-
-interface RelatedArticlesFooterProps {
-  otherArticles: Article[];
-  otherCategoryArticles: Article[];
-  article: Article | null;
-  renderArticleCard: (article: Article) => React.ReactNode;
-}
+import { RelatedArticlesFooterProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({
   container: {

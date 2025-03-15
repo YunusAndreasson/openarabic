@@ -10,13 +10,7 @@ import Pill from './Pill';
 import Animated from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
 import type { SharedValue } from '@/hooks/animations/types';
-
-interface CategoryPillsProps {
-  categories: Tables<'categories'>[];
-  selectedCategory: Tables<'categories'> | null;
-  onSelectCategory: (category: Tables<'categories'> | null) => void;
-  visible: SharedValue<number>;
-}
+import { CategoryPillsProps } from '@/types/ui.types';
 
 function CategoryPillsComponent({
   categories,

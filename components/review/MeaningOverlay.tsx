@@ -5,12 +5,7 @@ import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { useFadeInAnimation } from '../../hooks/animations';
-
-interface MeaningOverlayProps {
-  visible: boolean;
-  meaning: string;
-  isWarning?: boolean;
-}
+import { MeaningOverlayProps } from '../../types/ui.types';
 
 /**
  * Component that displays the meaning of a word with a fade animation

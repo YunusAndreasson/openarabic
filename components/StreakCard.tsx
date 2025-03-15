@@ -6,13 +6,7 @@ import { LAYOUT } from '../constants/layout';
 import Animated from 'react-native-reanimated';
 import { usePulseAnimation } from '@/hooks/animations';
 import AnimatedThemedText from './AnimatedThemedText';
-
-interface StreakCardProps {
-  streak?: number;
-  colors: any;
-  /** Whether to animate when the streak changes */
-  animateChange?: boolean;
-}
+import { StreakCardProps } from '@/types/ui.types';
 
 export const StreakCard = React.memo(
   ({ streak = 5, colors, animateChange = false }: StreakCardProps) => {

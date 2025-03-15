@@ -4,18 +4,7 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import * as Haptics from 'expo-haptics';
-
-interface BackButtonProps {
-  /**
-   * Callback when the back button is pressed
-   */
-  onPress: () => void;
-
-  /**
-   * Optional button text, defaults to "Back to home"
-   */
-  text?: string;
-}
+import { BackButtonProps } from '@/types/ui.types';
 
 /**
  * A stylized back button component with haptic feedback

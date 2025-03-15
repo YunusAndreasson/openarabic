@@ -19,14 +19,7 @@ import { useAuth } from '../hooks/useAuth';
 import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import * as Haptics from 'expo-haptics';
-
-interface ArabicWordProps {
-  word: SentenceWord;
-  isSelected: boolean;
-  onPress: (word: SentenceWord) => void;
-  scale?: number;
-  baseSize?: number;
-}
+import { ArabicWordProps } from '@/types/ui.types';
 
 function ArabicWordComponent({
   word,

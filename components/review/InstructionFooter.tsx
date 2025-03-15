@@ -6,10 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../../constants/layout';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../../hooks/animations';
-
-interface InstructionFooterProps {
-  style?: ViewStyle;
-}
+import { InstructionFooterProps } from '../../types/ui.types';
 
 /**
  * Footer component that displays swipe instructions

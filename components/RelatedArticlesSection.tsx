@@ -5,12 +5,9 @@ import { LAYOUT } from '@/constants/layout';
 import Animated from 'react-native-reanimated';
 import type { Article } from '@/types/articles.types';
 import { useFadeInAnimation } from '@/hooks/animations';
+import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui.types';
 
-export interface RelatedArticlesSectionProps {
-  title: string;
-  articles: Article[];
-  renderArticleCard: (article: Article) => React.ReactNode;
-}
+export interface RelatedArticlesSectionProps extends RelatedArticlesSectionPropsType {}
 
 const styles = StyleSheet.create({
   container: {

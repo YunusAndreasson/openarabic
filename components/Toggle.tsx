@@ -6,11 +6,7 @@ import Animated from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-
-interface ToggleProps {
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-}
+import { ToggleProps } from '@/types/ui.types';
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();

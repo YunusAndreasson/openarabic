@@ -4,19 +4,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT, getPlatformTopPadding } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
-
-interface PageHeaderProps {
-  /**
-   * Title text for the header
-   */
-  title: string;
-
-  /**
-   * Optional callback for when the back button is pressed
-   * If provided, a back button will be shown
-   */
-  onBackPress?: () => void;
-}
+import { PageHeaderProps } from '@/types/ui.types';
 
 /**
  * A reusable page header component with consistent styling

@@ -3,18 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import { ThemedButton } from './ThemedButton';
-
-interface ErrorStateProps {
-  /**
-   * Error message to display
-   */
-  message: string;
-
-  /**
-   * Optional callback when retry button is pressed
-   */
-  onRetry?: () => void;
-}
+import { ErrorStateProps } from '@/types/ui.types';
 
 /**
  * A component for displaying error messages

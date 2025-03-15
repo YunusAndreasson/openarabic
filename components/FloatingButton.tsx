@@ -4,20 +4,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated from 'react-native-reanimated';
 import type { AnimatedStyleProp } from '@/hooks/animations/types';
+import { FloatingButtonProps } from '@/types/ui.types';
 
 // Constants
 import { LAYOUT } from '@/constants/layout';
-
-interface FloatingButtonProps {
-  position: 'left' | 'right';
-  top: number;
-  animatedStyle: AnimatedStyleProp<ViewStyle>;
-  onPress: () => void;
-  iconName: React.ComponentProps<typeof Ionicons>['name'];
-  accessibilityLabel: string;
-  colors: Record<string, string>;
-  isDarkMode: boolean;
-}
 
 const styles = StyleSheet.create({
   backButton: {

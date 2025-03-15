@@ -5,11 +5,7 @@ import { useColors } from '../../hooks/useColors';
 import { usePulseAnimation } from '../../hooks/animations';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../../constants/layout';
-
-interface ReviewButtonProps {
-  dueWords: number;
-  onPress: () => void;
-}
+import { ReviewButtonProps } from '../../types/ui.types';
 
 /**
  * Button for initiating a vocabulary review

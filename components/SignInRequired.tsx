@@ -9,15 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { useOpacityAnimation } from '../hooks/animations';
 import PageHeader from './PageHeader';
-
-interface SignInRequiredProps {
-  title?: string;
-  message?: string;
-  benefitTitle?: string;
-  benefitDescription?: string;
-  colors: any;
-  headerTitle?: string;
-}
+import { SignInRequiredProps } from '@/types/ui.types';
 
 export const SignInRequired = React.memo(
   ({

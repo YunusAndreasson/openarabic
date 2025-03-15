@@ -4,14 +4,7 @@ import { useColors } from '@/hooks/useColors';
 import { useState } from 'react';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-
-interface ThemedInputProps extends TextInputProps {
-  icon?: string;
-  rightIcon?: string;
-  onRightIconPress?: () => void;
-  error?: string;
-  hint?: string;
-}
+import { ThemedInputProps } from '@/types/ui.types';
 
 export function ThemedInput({
   icon,

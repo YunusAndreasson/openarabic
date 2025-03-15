@@ -2,12 +2,7 @@ import React, { useMemo } from 'react';
 import { View, ViewStyle, Platform, StyleSheet, TextStyle } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
-
-interface WordDisplayProps {
-  word: string;
-  fontSize: number;
-  style?: ViewStyle;
-}
+import { WordDisplayProps } from '../../types/ui.types';
 
 /**
  * Component to display a word with optimal styling and sizing

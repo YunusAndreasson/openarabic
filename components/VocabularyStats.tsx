@@ -9,12 +9,7 @@ import { LoadingContainer } from './Loader';
 import { useComponentAnimation } from '@/hooks/animations';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStats as VocabularyStatsType } from '@/types/vocabulary.types';
-
-// Using subset of properties from the VocabularyStats type for this component
-interface VocabularyStatsProps
-  extends Pick<VocabularyStatsType, 'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords'> {
-  isLoading?: boolean;
-}
+import { VocabularyStatsProps } from '@/types/ui.types';
 
 function VocabularyStatsComponent({
   totalWords,

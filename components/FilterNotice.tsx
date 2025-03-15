@@ -4,18 +4,7 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-
-interface FilterNoticeProps {
-  /**
-   * Type of filter being applied
-   */
-  type: 'author' | 'category';
-
-  /**
-   * Name of the selected filter
-   */
-  name: string;
-}
+import { FilterNoticeProps } from '@/types/ui.types';
 
 /**
  * A component that displays what filter is currently applied

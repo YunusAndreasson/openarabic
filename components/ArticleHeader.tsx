@@ -13,13 +13,7 @@ import { LAYOUT } from '@/constants/layout';
 
 // Types
 import type { Article } from '@/types/articles.types';
-
-// Component interfaces
-interface ArticleHeaderProps {
-  article: Article;
-  colors: Record<string, string>;
-  isDarkMode: boolean;
-}
+import { ArticleHeaderProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({
   articleHeaderContainer: {

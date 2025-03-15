@@ -17,88 +17,13 @@ import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
 import { useFadeInAnimation, useScaleAnimation } from '@/hooks/animations';
+import { ThemedModalProps } from '@/types/ui.types';
 
-interface ThemedModalProps {
-  /**
-   * Whether the modal is visible
-   */
-  visible: boolean;
-  /**
-   * Function to call when the modal is closed
-   */
-  onClose: () => void;
-  /**
-   * The content to display in the modal
-   */
-  children: ReactNode;
-  /**
-   * Optional title for the modal
-   */
-  title?: string;
-  /**
-   * Whether to use a blur effect for the backdrop
-   * @default true
-   */
-  useBlur?: boolean;
-  /**
-   * Whether to show a close button
-   * @default true
-   */
-  showCloseButton?: boolean;
-  /**
-   * Whether to animate the modal
-   * @default true
-   */
-  animated?: boolean;
-  /**
-   * Custom style for the modal content container
-   */
-  contentStyle?: ViewStyle;
-  /**
-   * Custom style for the modal title
-   */
-  titleStyle?: TextStyle;
-  /**
-   * Whether to close the modal when tapping the backdrop
-   * @default true
-   */
-  closeOnBackdropPress?: boolean;
-  /**
-   * Whether to use haptic feedback when closing
-   * @default true
-   */
-  useHaptics?: boolean;
-  /**
-   * Custom width for the modal (percentage of screen width)
-   * @default 0.85
-   */
-  widthPercentage?: number;
-  /**
-   * Maximum width for the modal
-   * @default 400
-   */
-  maxWidth?: number;
-  /**
-   * Animation duration in milliseconds
-   * @default LAYOUT.ANIMATION.DURATION.NORMAL
-   */
-  animationDuration?: number;
-  /**
-   * Blur intensity for the backdrop
-   * @default 80
-   */
-  blurIntensity?: number;
-  /**
-   * Animation type for the modal
-   * @default 'fade'
-   */
-  animationType?: 'fade' | 'slide' | 'none';
-  /**
-   * Opacity of the modal overlay
-   * @default 0.8
-   */
-  overlayOpacity?: number;
-}
+/**
+ * A themed modal component with optional blur background, animation, and close button.
+ * This component handles various common modal patterns and provides a consistent UI
+ * across the application.
+ */
 
 // Create a component for the modal content with animations
 const AnimatedModalContent = ({

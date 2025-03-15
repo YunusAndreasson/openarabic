@@ -4,17 +4,8 @@ import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
 import Animated from 'react-native-reanimated';
-import { StudyWord } from '../types/vocabulary.types';
 import { useFadeInAnimation, useSlideAnimation, useLayoutAnimation } from '@/hooks/animations';
-
-// Define transition types
-export type TransitionType = 'fade' | 'slide';
-
-interface WordReviewCardProps {
-  word?: StudyWord;
-  transitionType?: TransitionType;
-  isVisible: boolean;
-}
+import { WordReviewCardProps, TransitionType } from '@/types/ui.types';
 
 /**
  * A card component for displaying a word during review

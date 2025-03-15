@@ -2,12 +2,7 @@ import { Text, type TextProps, StyleSheet } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import React, { useMemo } from 'react';
-
-export type ThemedTextProps = TextProps & {
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link' | 'arabic';
-  skipDefaultColor?: boolean;
-  arabicFontSize?: number;
-};
+import { ThemedTextProps } from '@/types/ui.types';
 
 function ThemedTextComponent({
   style,

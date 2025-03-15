@@ -10,6 +10,7 @@ import { LoadingContainer } from './Loader';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation, useLayoutAnimation, useOpacityAnimation } from '@/hooks/animations';
 import { EnhancedImage } from './EnhancedImage';
+import { ThemedCardProps } from '@/types/ui.types';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -18,28 +19,6 @@ import { EnhancedImage } from './EnhancedImage';
  * The component is optimized for performance with memoization and proper image loading handling.
  * It uses Reanimated 3's built-in animations for optimal performance.
  */
-interface ThemedCardProps {
-  /** URL of the image to display in the card (for article variant) */
-  imageUrl?: string;
-  /** Title text to display in the card (for article variant) */
-  title?: string;
-  /** Category text to display in a pill on the card (for article variant) */
-  category?: string;
-  /** Author name to display in the card (for article variant) */
-  author?: string;
-  /** Summary text to display in the card (for article variant) */
-  summary?: string;
-  /** Optional callback function when the card is pressed */
-  onPress?: () => void;
-  /** Optional style to apply to the card container */
-  style?: StyleProp<ViewStyle>;
-  /** Whether the card is in a loading state */
-  isLoading?: boolean;
-  /** Children to render inside the card (for compact variant) */
-  children?: React.ReactNode;
-  /** Variant of the card */
-  variant?: 'article' | 'compact';
-}
 
 function ThemedCardComponent({
   imageUrl,

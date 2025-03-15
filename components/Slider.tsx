@@ -3,15 +3,7 @@ import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-
-interface CustomSliderProps {
-  value: number;
-  onValueChange: (value: number) => void;
-  minimumValue?: number;
-  maximumValue?: number;
-  step?: number;
-  style?: ViewStyle;
-}
+import { CustomSliderProps } from '@/types/ui.types';
 
 export function CustomSlider({
   value,

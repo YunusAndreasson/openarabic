@@ -4,15 +4,7 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import AnimatedThemedText from './AnimatedThemedText';
-
-interface StatCardProps {
-  label: string;
-  value: number;
-  icon: string;
-  colors: any;
-  /** Whether to animate the value with a pulse effect (useful for changes) */
-  animateValue?: boolean;
-}
+import { StatCardProps } from '@/types/ui.types';
 
 export const StatCard = React.memo(
   ({ label, value, icon, colors, animateValue = false }: StatCardProps) => {

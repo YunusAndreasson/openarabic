@@ -16,29 +16,7 @@ import { LAYOUT } from '../constants/layout';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
-
-interface ThemedButtonProps extends TouchableOpacityProps {
-  /** Visual style variant of the button */
-  variant?: 'filled' | 'outlined';
-  /** Text displayed on the button */
-  title: string;
-  /** Optional Ionicons icon name to display before the title */
-  icon?: string;
-  /** Optional custom icon component (overrides icon prop if both are provided) */
-  iconComponent?: React.ReactNode;
-  /** Whether the button is in a loading state */
-  loading?: boolean;
-  /** Additional content to render inside the button */
-  children?: React.ReactNode;
-  /** Size of the icon in pixels */
-  iconSize?: number;
-  /** Optional style to apply to the content container */
-  contentContainerStyle?: ViewStyle;
-  /** Optional style to apply to the inner container */
-  innerContainerStyle?: ViewStyle;
-  /** Optional custom scale amount for the press animation (default is 0.95) */
-  scaleAmount?: number;
-}
+import { ThemedButtonProps } from '@/types/ui.types';
 
 /**
  * A themed button component that supports different visual styles,

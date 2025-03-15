@@ -3,14 +3,9 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyle } from 'react-native-reanimated';
 import { useOpacityAnimation, usePulseAnimation } from '../hooks/animations';
-
-interface LoaderProps {
-  size?: number | 'small' | 'large';
-  color?: string;
-  style?: ViewStyle;
-}
+import { LoaderProps, LoadingScreenProps, LoadingContainerProps } from '@/types/ui.types';
 
 /**
  * Loader component that displays a pulsating circle
@@ -58,10 +53,6 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   );
 };
 
-interface LoadingScreenProps {
-  color?: string;
-}
-
 /**
  * A full-screen loading component that uses ThemedView for consistent styling
  */
@@ -91,13 +82,6 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
     </Animated.View>
   );
 };
-
-interface LoadingContainerProps {
-  size?: 'small' | 'large';
-  color?: string;
-  style?: ViewStyle;
-  height?: number;
-}
 
 /**
  * A component-level loading container for consistent styling

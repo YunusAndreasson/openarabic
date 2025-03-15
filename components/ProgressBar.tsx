@@ -6,50 +6,17 @@ import { LAYOUT } from '../constants/layout';
 import Animated from 'react-native-reanimated';
 import type { AnimatedStyleProp } from '@/hooks/animations/types';
 import { useProgressAnimation } from '../hooks/animations';
-
-interface ProgressBarProps {
-  /**
-   * Progress value between 0 and 100
-   */
-  progress: number;
-  /**
-   * Height of the progress bar
-   * @default LAYOUT.SPACING.SMALL
-   */
-  height?: number;
-  /**
-   * Custom style for the container
-   */
-  style?: ViewStyle;
-  /**
-   * Custom style for the progress fill
-   */
-  fillStyle?: ViewStyle;
-  /**
-   * Custom background color for the progress bar
-   * If not provided, uses theme-based color
-   */
-  backgroundColor?: string;
-  /**
-   * Custom fill color for the progress bar
-   * If not provided, uses theme's tint color
-   */
-  fillColor?: string;
-  /**
-   * Whether to animate the progress bar
-   * @default false
-   */
-  animationTriggered?: boolean;
-  /**
-   * Duration of the animation in milliseconds
-   * @default 2000
-   */
-  animationDuration?: number;
-}
+import { ProgressBarProps } from '@/types/ui.types';
 
 /**
- * A reusable progress bar component that adapts to the current theme
- * and handles edge cases gracefully.
+ * A customizable progress bar component that can be used to display the
+ * progress of an action or process.
+ *
+ * Features:
+ * - Theme integration with light/dark mode
+ * - Customizable colors and dimensions
+ * - Smooth animation support
+ * - Optional shadow effects based on platform
  */
 function ProgressBarComponent({
   progress,

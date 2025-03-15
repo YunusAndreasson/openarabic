@@ -4,23 +4,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import type { Tables } from '@/types/database.types';
 import { SentenceWord } from '@/types/vocabulary.types';
-
-export interface ArticleSentenceProps {
-  sentence: Tables<'article_sentences'>;
-  words: SentenceWord[];
-  renderWord: (word: SentenceWord) => React.ReactNode;
-  settings: {
-    showEnglish: boolean;
-    fontScale: number;
-    [key: string]: any;
-  };
-  colors: {
-    englishText: string;
-    authorText: string;
-    [key: string]: any;
-  };
-  containerStyle?: any;
-}
+import { ArticleSentenceProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({
   sentenceContainer: {

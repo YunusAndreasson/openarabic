@@ -8,49 +8,7 @@ import { ThemedText } from './ThemedText';
 import Pill from './Pill';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
 import { useFadeInAnimation } from '../hooks/animations';
-
-interface FilterItem {
-  id: number;
-  name: string;
-  [key: string]: any; // Allow for additional properties
-}
-
-interface FilterListProps<T extends FilterItem> {
-  /**
-   * Title for the filter section
-   */
-  title: string;
-
-  /**
-   * Array of items to display in the filter list
-   */
-  items: T[];
-
-  /**
-   * ID of the currently selected item
-   */
-  selectedId: number | null;
-
-  /**
-   * Callback when an item is selected
-   */
-  onSelect: (id: number) => void;
-
-  /**
-   * Callback when filters are cleared
-   */
-  onClearFilter?: () => void;
-
-  /**
-   * Animation delay in milliseconds
-   */
-  animationDelay?: number;
-
-  /**
-   * Base animation delay for individual items
-   */
-  itemAnimationDelay?: number;
-}
+import { FilterItem, FilterListProps } from '@/types/ui.types';
 
 /**
  * A generic filter list component that can be used for both author and category filters

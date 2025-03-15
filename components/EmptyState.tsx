@@ -3,33 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedButton } from './ThemedButton';
 import { LAYOUT } from '../constants/layout';
-
-interface EmptyStateProps {
-  /**
-   * Title text for the empty state
-   */
-  title: string;
-
-  /**
-   * Message text for the empty state
-   */
-  message: string;
-
-  /**
-   * Button title (optional)
-   */
-  buttonTitle?: string;
-
-  /**
-   * Button icon name (optional)
-   */
-  buttonIcon?: string;
-
-  /**
-   * Button press handler (optional)
-   */
-  onButtonPress?: () => void;
-}
+import { EmptyStateProps } from '@/types/ui.types';
 
 /**
  * A reusable empty state component that displays a title, message, and optional action button

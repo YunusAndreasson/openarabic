@@ -8,49 +8,7 @@ import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { ThemedText } from './ThemedText';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-
-/**
- * Props for the Pill component
- */
-interface PillProps {
-  /**
-   * Unique identifier for the item
-   */
-  id: string | number;
-
-  /**
-   * Label text to display in the pill
-   */
-  label: string;
-
-  /**
-   * Whether the pill is currently selected
-   */
-  isSelected?: boolean;
-
-  /**
-   * Callback when the pill is selected
-   */
-  onSelect?: (id: string | number) => void;
-
-  /**
-   * Animation delay in milliseconds
-   */
-  animationDelay?: number;
-
-  /**
-   * Whether the pill should be positioned absolutely
-   */
-  absolute?: boolean;
-
-  /**
-   * Variant of the pill
-   * - 'filter': Used for filter lists
-   * - 'category': Used for category display
-   * - 'horizontal-category': Used in horizontal category lists
-   */
-  variant?: 'filter' | 'category' | 'horizontal-category';
-}
+import { PillProps } from '@/types/ui.types';
 
 /**
  * A unified pill component that can be used for filters, categories, and other selectable items

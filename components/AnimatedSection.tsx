@@ -4,43 +4,7 @@ import Animated from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import SectionTitle from './SectionTitle';
-
-interface AnimatedSectionProps {
-  /**
-   * Title to display at the top of the section
-   */
-  title?: string;
-
-  /**
-   * Delay before starting the animation (in ms)
-   */
-  delay?: number;
-
-  /**
-   * Duration of the animation (in ms)
-   */
-  duration?: number;
-
-  /**
-   * Children to render inside the section
-   */
-  children: React.ReactNode;
-
-  /**
-   * Additional styles to apply to the section container
-   */
-  style?: StyleProp<ViewStyle>;
-
-  /**
-   * Whether to show the section title
-   */
-  showTitle?: boolean;
-
-  /**
-   * Whether to add horizontal padding to the content
-   */
-  paddingHorizontal?: boolean;
-}
+import { AnimatedSectionProps } from '@/types/ui.types';
 
 /**
  * A generic animated section component that fades in with configurable timing

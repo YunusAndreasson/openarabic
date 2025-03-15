@@ -8,33 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { getPlaceholderColor, getOptimizedImageUrl } from '../utils/imageOptimization';
 import { useFadeInAnimation } from '@/hooks/animations';
-
-interface EnhancedImageProps {
-  /** Source URL of the image */
-  source: string;
-  /** Custom styles to apply to the container */
-  style?: StyleProp<ViewStyle>;
-  /** Content fit mode */
-  contentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
-  /** Whether to show loading indicator */
-  showLoadingIndicator?: boolean;
-  /** Alt text for accessibility */
-  alt?: string;
-  /** Callback when image loads successfully */
-  onLoad?: () => void;
-  /** Callback when image fails to load */
-  onError?: () => void;
-  /** For testing/debugging - disable optimizations */
-  disableOptimization?: boolean;
-  /** Image transition duration in ms */
-  transition?: number;
-  /** Caching policy */
-  cachePolicy?: 'memory' | 'disk' | 'memory-disk' | 'none';
-  /** Blur radius for progressive loading */
-  blurRadius?: number;
-  /** Loading priority */
-  priority?: 'low' | 'normal' | 'high';
-}
+import { EnhancedImageProps } from '@/types/ui.types';
 
 /**
  * EnhancedImage component with loading animations and optimizations

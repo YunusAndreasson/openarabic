@@ -4,23 +4,7 @@ import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import ThemedCard from './ThemedCard';
 import AnimatedSection from './AnimatedSection';
-
-interface DailyPickSectionProps {
-  /**
-   * The daily pick article to display
-   */
-  article: Article | null;
-
-  /**
-   * Callback when the article is pressed
-   */
-  onPress: (article: Article) => void;
-
-  /**
-   * Animation delay in milliseconds
-   */
-  delay?: number;
-}
+import { DailyPickSectionProps } from '@/types/ui.types';
 
 /**
  * A section displaying the daily pick article
