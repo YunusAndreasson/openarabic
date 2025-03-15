@@ -4,7 +4,7 @@ import {
   calculateStreak,
   calculateWeeklyProgressData,
   calculateVocabularyStats,
-} from '../../utils/vocabulary-stats';
+} from '../../utils/vocabularyStats';
 import { StudyWord } from '../../types/vocabulary.types';
 
 // Use a fixed date for consistent testing

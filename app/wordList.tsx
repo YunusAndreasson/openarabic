@@ -7,7 +7,7 @@ import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
-import { studyWordsService } from '../services/study_words';
+import { studyWordsService } from '../services/studyWords';
 import { Loader } from '../components/Loader';
 import PageHeader from '../components/PageHeader';
 import { Ionicons } from '@expo/vector-icons';

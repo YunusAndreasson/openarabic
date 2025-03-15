@@ -2,6 +2,9 @@ import { supabase } from './supabase';
 import { Article } from '../types/articles.types';
 
 export const readingListService = {
+  /**
+   * Gets articles that the user has started but not completed
+   */
   async getInProgressArticles(): Promise<Article[]> {
     try {
       // Get the current user ID
@@ -49,6 +52,9 @@ export const readingListService = {
     }
   },
 
+  /**
+   * Gets articles that the user has completed
+   */
   async getCompletedArticles(): Promise<(Article & { completed_at: string })[]> {
     try {
       // Get the current user ID
@@ -100,25 +106,44 @@ export const readingListService = {
     }
   },
 
-  async addToReadingList(articleId: number): Promise<void> {
+  /**
+   * Adds an article to the reading list
+   * - Can be called with just articleId (gets user from session)
+   * - Can be called with userId and articleId explicitly
+   */
+  async addToReadingList(
+    articleIdOrUserId: number | string,
+    maybeArticleId?: number
+  ): Promise<void> {
     try {
-      // Get the current user ID
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+      // Handle both function signatures
+      let userId: string;
+      let articleId: number;
 
-      if (authError) throw authError;
+      if (maybeArticleId !== undefined) {
+        // Called as addToReadingList(userId, articleId)
+        userId = articleIdOrUserId as string;
+        articleId = maybeArticleId;
+      } else {
+        // Called as addToReadingList(articleId)
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
 
-      if (!user) {
-        throw new Error('User must be logged in to add to reading list');
+        if (authError) throw authError;
+        if (!user) throw new Error('User not authenticated');
+
+        userId = user.id;
+        articleId = articleIdOrUserId as number;
       }
 
+      // Now use userId and articleId for the rest of the function
       // Get the current highest position
       const { data: positionData, error: positionError } = await supabase
         .from('reading_list')
         .select('position')
-        .match({ user_id: user.id })
+        .match({ user_id: userId })
         .order('position', { ascending: false })
         .limit(1);
 
@@ -130,7 +155,7 @@ export const readingListService = {
 
       // Use upsert to add or update the article in the reading list
       const insertData = {
-        user_id: user.id,
+        user_id: userId,
         article_id: articleId,
         position: nextPosition,
         completed: false,
@@ -144,10 +169,31 @@ export const readingListService = {
 
       if (error) throw error;
     } catch (error) {
+      console.error('Error adding to reading list:', error);
       throw error;
     }
   },
 
+  /**
+   * Removes an article from the reading list
+   */
+  async removeFromReadingList(userId: string, articleId: number): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('reading_list')
+        .delete()
+        .match({ user_id: userId, article_id: articleId });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error removing from reading list:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Deletes an article from the reading list
+   */
   async deleteFromReadingList(articleId: number): Promise<void> {
     try {
       // Get the current user ID
@@ -174,6 +220,51 @@ export const readingListService = {
     }
   },
 
+  /**
+   * Checks if an article is in the user's reading list
+   */
+  async isInReadingList(userId: string, articleId: number): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from('reading_list')
+        .select('article_id')
+        .match({ user_id: userId, article_id: articleId })
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error('Error checking reading list status:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Gets the user's reading list
+   */
+  async getReadingList(userId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('reading_list')
+        .select('*, articles(*)')
+        .match({ user_id: userId })
+        .order('position', { ascending: true });
+
+      if (error) throw error;
+
+      return data || [];
+    } catch (error) {
+      console.error('Error getting reading list:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Marks an article as completed
+   */
   async markAsCompleted(articleId: number): Promise<void> {
     try {
       // Get the current user ID
@@ -204,6 +295,9 @@ export const readingListService = {
     }
   },
 
+  /**
+   * Increments the read count for an article
+   */
   async incrementReadCount(articleId: number): Promise<void> {
     try {
       // Get the current user ID

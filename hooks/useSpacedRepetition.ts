@@ -1,12 +1,15 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studyWordsService } from '../services/study_words';
+import { studyWordsService } from '../services/studyWords';
 import {
   StudyWord,
   SrsStats,
   UseSpacedRepetitionProps,
   UseSpacedRepetitionReturn,
 } from '../types/vocabulary.types';
+
+// Re-export StudyWord for tests
+export type { StudyWord };
 
 /**
  * Enhanced Spaced Repetition System (SRS)

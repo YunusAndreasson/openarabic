@@ -79,7 +79,7 @@ jest.mock('../../../services/articles', () => ({
   },
 }));
 
-jest.mock('../../../services/reading_list', () => ({
+jest.mock('../../../services/readingList', () => ({
   readingListService: {
     isInReadingList: jest.fn(),
     addToReadingList: jest.fn(),
@@ -87,7 +87,7 @@ jest.mock('../../../services/reading_list', () => ({
   },
 }));
 
-jest.mock('../../../services/study_words', () => ({
+jest.mock('../../../services/studyWords', () => ({
   studyWordsService: {
     getStudyWords: jest.fn(),
     toggleStudyWord: jest.fn(),
@@ -224,12 +224,12 @@ describe('Article Hooks Integration', () => {
     const articlesService = require('../../../services/articles').articlesService;
     articlesService.getArticleById.mockResolvedValue(mockArticle);
 
-    const readingListService = require('../../../services/reading_list').readingListService;
+    const readingListService = require('../../../services/readingList').readingListService;
     readingListService.isInReadingList.mockResolvedValue(true);
     readingListService.addToReadingList.mockResolvedValue({ success: true });
     readingListService.removeFromReadingList.mockResolvedValue({ success: true });
 
-    const studyWordsService = require('../../../services/study_words').studyWordsService;
+    const studyWordsService = require('../../../services/studyWords').studyWordsService;
     studyWordsService.getStudyWords.mockResolvedValue(mockStudyWords);
     studyWordsService.toggleStudyWord.mockResolvedValue({ success: true });
   });
@@ -238,8 +238,8 @@ describe('Article Hooks Integration', () => {
   // To run it, remove the .skip and increase the test timeout in jest.config.js
   it.skip('hooks work together to handle article data and interactions', async () => {
     // Setup service mocks
-    const readingListService = require('../../../services/reading_list').readingListService;
-    const studyWordsService = require('../../../services/study_words').studyWordsService;
+    const readingListService = require('../../../services/readingList').readingListService;
+    const studyWordsService = require('../../../services/studyWords').studyWordsService;
     const router = require('expo-router').router;
 
     // First, render the useArticleData hook
@@ -316,7 +316,7 @@ describe('Article Hooks Integration', () => {
     const mockWordId = 11;
 
     // Mock study words service to throw an error
-    const studyWordsService = require('../../../services/study_words').studyWordsService;
+    const studyWordsService = require('../../../services/studyWords').studyWordsService;
     studyWordsService.toggleStudyWord.mockRejectedValueOnce(new Error('Network error'));
 
     // Render the component
@@ -368,8 +368,8 @@ describe('Article Hooks Integration', () => {
     });
 
     // Check that the services were not called
-    const readingListService = require('../../../services/reading_list').readingListService;
-    const studyWordsService = require('../../../services/study_words').studyWordsService;
+    const readingListService = require('../../../services/readingList').readingListService;
+    const studyWordsService = require('../../../services/studyWords').studyWordsService;
 
     expect(readingListService.addToReadingList).not.toHaveBeenCalled();
     expect(studyWordsService.toggleStudyWord).not.toHaveBeenCalled();

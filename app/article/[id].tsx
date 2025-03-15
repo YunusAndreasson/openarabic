@@ -126,10 +126,10 @@ export default function ArticleScreen() {
 
   // Animation hooks
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
-    useFadeInAnimation(0, 300);
+    useFadeInAnimation(100, 300);
 
   const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
-    useFadeInAnimation(200, 500);
+    useFadeInAnimation(100, 300);
 
   const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
     useFadeInAnimation(300, 500);

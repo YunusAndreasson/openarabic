@@ -44,13 +44,13 @@ jest.mock('@/services/articles', () => ({
   },
 }));
 
-jest.mock('@/services/reading_list', () => ({
+jest.mock('@/services/readingList', () => ({
   readingListService: {
     isInReadingList: jest.fn(),
   },
 }));
 
-jest.mock('@/services/study_words', () => ({
+jest.mock('@/services/studyWords', () => ({
   studyWordsService: {
     getStudyWords: jest.fn(),
   },

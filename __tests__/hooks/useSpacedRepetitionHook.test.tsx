@@ -10,8 +10,8 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
   multiRemove: jest.fn(() => Promise.resolve()),
 }));
 
-// Mock services/study_words directly
-jest.mock('../../services/study_words', () => ({
+// Mock services/studyWords directly
+jest.mock('../../services/studyWords', () => ({
   studyWordsService: {
     updateWordReview: jest.fn(() => Promise.resolve({})),
     getDueWords: jest.fn(() =>

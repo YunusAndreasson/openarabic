@@ -46,13 +46,13 @@ jest.mock('react-native-toast-message', () => ({
 }));
 
 // Mock services
-jest.mock('../../services/study_words', () => ({
+jest.mock('../../services/studyWords', () => ({
   studyWordsService: {
     toggleStudyWord: jest.fn().mockImplementation(() => Promise.resolve({ success: true })),
   },
 }));
 
-jest.mock('../../services/reading_list', () => ({
+jest.mock('../../services/readingList', () => ({
   readingListService: {
     addToReadingList: jest.fn().mockImplementation(() => Promise.resolve({ success: true })),
     removeFromReadingList: jest.fn().mockImplementation(() => Promise.resolve({ success: true })),
@@ -98,7 +98,7 @@ describe('useArticleMutations', () => {
 
   it('adds an article to reading list when not already in list', async () => {
     // Setup mocks
-    const readingListService = require('../../services/reading_list').readingListService;
+    const readingListService = require('../../services/readingList').readingListService;
 
     const { result } = renderHook(
       () => useArticleMutations(mockUserId, mockRefetchReadingListStatus),
@@ -129,7 +129,7 @@ describe('useArticleMutations', () => {
 
   it('removes an article from reading list when already in list', async () => {
     // Setup mocks
-    const readingListService = require('../../services/reading_list').readingListService;
+    const readingListService = require('../../services/readingList').readingListService;
 
     const { result } = renderHook(
       () => useArticleMutations(mockUserId, mockRefetchReadingListStatus),
@@ -174,8 +174,8 @@ describe('useArticleMutations', () => {
     });
 
     // Check that the services were not called
-    const readingListService = require('../../services/reading_list').readingListService;
-    const studyWordsService = require('../../services/study_words').studyWordsService;
+    const readingListService = require('../../services/readingList').readingListService;
+    const studyWordsService = require('../../services/studyWords').studyWordsService;
 
     expect(readingListService.addToReadingList).not.toHaveBeenCalled();
     expect(readingListService.removeFromReadingList).not.toHaveBeenCalled();
@@ -194,7 +194,7 @@ describe('useArticleMutations', () => {
     });
 
     // Check that the services were not called
-    const readingListService = require('../../services/reading_list').readingListService;
+    const readingListService = require('../../services/readingList').readingListService;
 
     expect(readingListService.addToReadingList).not.toHaveBeenCalled();
     expect(readingListService.removeFromReadingList).not.toHaveBeenCalled();
@@ -202,7 +202,7 @@ describe('useArticleMutations', () => {
 
   it('toggles a word study status', async () => {
     // Setup mocks
-    const studyWordsService = require('../../services/study_words').studyWordsService;
+    const studyWordsService = require('../../services/studyWords').studyWordsService;
 
     const { result } = renderHook(
       () => useArticleMutations(mockUserId, mockRefetchReadingListStatus),

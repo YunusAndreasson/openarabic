@@ -11,7 +11,7 @@ import VocabularyScreen from '../../app/(tabs)/vocabulary';
 import ReviewScreen from '../../app/review';
 
 // Import services
-import { studyWordsService } from '../../services/study_words';
+import { studyWordsService } from '../../services/studyWords';
 
 // Mock the @shopify/react-native-skia package
 jest.mock('@shopify/react-native-skia', () => ({
@@ -108,7 +108,7 @@ jest.mock('../../hooks/useThemeDetection', () => ({
 }));
 
 // Mock the studyWordsService
-jest.mock('../../services/study_words', () => ({
+jest.mock('../../services/studyWords', () => ({
   studyWordsService: {
     getStudyWords: jest.fn(),
     updateWordReview: jest.fn().mockResolvedValue({}),

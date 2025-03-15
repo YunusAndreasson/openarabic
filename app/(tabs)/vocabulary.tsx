@@ -8,7 +8,7 @@ import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
 import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
-import { studyWordsService } from '@/services/study_words';
+import { studyWordsService } from '@/services/studyWords';
 import { useNavigation } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
@@ -17,7 +17,7 @@ import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabulary-stats';
+import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
 import {
   useLoadingState,
   useScreenFocusRefresh,

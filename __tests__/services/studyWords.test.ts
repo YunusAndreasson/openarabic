@@ -1,4 +1,4 @@
-import { studyWordsService } from '../../services/study_words';
+import { studyWordsService } from '../../services/studyWords';
 import { supabase } from '../../services/supabase';
 
 // Mock Supabase

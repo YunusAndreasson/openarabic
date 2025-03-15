@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 
 // Services
 import { articlesService } from '@/services/articles';
-import { readingListService } from '@/services/reading_list';
-import { studyWordsService } from '@/services/study_words';
+import { readingListService } from '@/services/readingList';
+import { studyWordsService } from '@/services/studyWords';
 
 // Types
 import type { Article } from '@/types/articles.types';

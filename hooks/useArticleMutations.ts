@@ -3,8 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
 // Services
-import { studyWordsService } from '@/services/study_words';
-import { readingListService } from '@/services/reading_list';
+import { studyWordsService } from '@/services/studyWords';
+import { readingListService } from '@/services/readingList';
 
 /**
  * Hook for article-related mutations

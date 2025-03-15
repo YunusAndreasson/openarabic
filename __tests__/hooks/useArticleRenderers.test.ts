@@ -174,7 +174,7 @@ describe('useArticleRenderers', () => {
     // Check that router.push was called with the correct parameters
     expect(require('expo-router').router.push).toHaveBeenCalledWith({
       pathname: '/article/[id]',
-      params: { id: 123 },
+      params: { id: '123' },
     });
   });
 

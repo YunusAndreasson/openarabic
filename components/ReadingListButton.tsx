@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
-import { readingListService } from '../services/reading_list';
+import { readingListService } from '../services/readingList';
 import { useAuth } from '../hooks/useAuth';
 import * as Haptics from 'expo-haptics';
 import Toast from 'react-native-toast-message';

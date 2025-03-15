@@ -9,7 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { readingListService } from '@/services/reading_list';
+import { readingListService } from '@/services/readingList';
 import { useAuth } from '@/hooks/useAuth';
 import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
@@ -553,8 +553,8 @@ export default function BookmarksScreen() {
     const shuffled = [...readingList].sort(() => Math.random() - 0.5);
 
     // Make sure the first item has a valid audio URL
-    if (!shuffled[0]?.article?.audio_url) {
-      const validIndex = shuffled.findIndex(item => !!item?.article?.audio_url);
+    if (!shuffled[0]?.articles?.audio_url) {
+      const validIndex = shuffled.findIndex(item => !!item?.articles?.audio_url);
       if (validIndex > 0) {
         // Swap with first item
         [shuffled[0], shuffled[validIndex]] = [shuffled[validIndex], shuffled[0]];
@@ -630,8 +630,8 @@ export default function BookmarksScreen() {
   useEffect(() => {
     if (currentTrackIndex >= 0 && activePlaylist && currentTrackIndex < activePlaylist.length) {
       const track = activePlaylist[currentTrackIndex];
-      if (track?.article?.audio_url) {
-        loadAndPlayAudio(track.article.audio_url);
+      if (track?.articles?.audio_url) {
+        loadAndPlayAudio(track.articles.audio_url);
       }
     }
   }, [currentTrackIndex, activePlaylist]);
@@ -701,8 +701,8 @@ export default function BookmarksScreen() {
 
               return (
                 <ReadingListItem
-                  title={item.article.title}
-                  author={item.article.author.name}
+                  title={item.articles?.title || 'Untitled'}
+                  author={item.articles?.author?.name || 'Unknown Author'}
                   progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
                   isPlaying={isItemPlaying}
                   isPaused={isItemPaused}
