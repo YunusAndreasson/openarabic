@@ -77,8 +77,8 @@ export const getOptimizedImageUrl = (imageUrl: string): string => {
  * @returns Color value for image placeholder
  */
 export const getPlaceholderColor = (isDarkMode: boolean): string => {
-  // Use theme-agnostic values instead of direct Colors references
-  return isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+  // Use Colors constants instead of hardcoded values
+  return isDarkMode ? Colors.dark.imagePlaceholder : Colors.light.imagePlaceholder;
 };
 
 /**

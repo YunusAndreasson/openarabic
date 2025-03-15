@@ -1,33 +1,31 @@
-import React from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleSheet, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from '@/hooks/animations/types';
-import { FloatingButtonProps } from '@/types/ui.types';
-
-// Constants
 import { LAYOUT } from '@/constants/layout';
+import { FloatingButtonProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({
   backButton: {
     position: 'absolute',
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
-    left: 15,
+    left: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
     overflow: 'hidden',
   },
   playlistButton: {
     position: 'absolute',
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
-    right: 15,
+    right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
     overflow: 'hidden',
   },
-  buttonBlur: {
+  button: {
     padding: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    minWidth: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   buttonIcon: {
     alignSelf: 'center',
@@ -44,19 +42,18 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
   colors,
   isDarkMode,
 }) => {
-  // Helper function to create rgba from hex color
-  const getBackgroundColor = (hexColor: string) => {
-    const r = parseInt(hexColor.slice(1, 3), 16);
-    const g = parseInt(hexColor.slice(3, 5), 16);
-    const b = parseInt(hexColor.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, 0.8)`;
+  // Simple handler for button press
+  const handlePress = () => {
+    if (onPress) {
+      onPress();
+    }
   };
 
-  const buttonStyle = {
-    ...styles.buttonBlur,
-    backgroundColor: getBackgroundColor(colors.background),
-    opacity: LAYOUT.OPACITY.HOVER,
-  };
+  // Memoize background color to prevent recalculation
+  const buttonBackgroundColor = useMemo(
+    () => (isDarkMode ? colors.textOverlay : `${colors.background}E6`), // E6 = 90% opacity
+    [colors.textOverlay, colors.background, isDarkMode]
+  );
 
   return (
     <Animated.View
@@ -66,21 +63,20 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
         animatedStyle,
       ]}
     >
-      <TouchableOpacity
-        onPress={onPress}
+      <Pressable
+        style={({ pressed }) => [
+          styles.button,
+          {
+            backgroundColor: buttonBackgroundColor,
+            opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
+          },
+        ]}
+        onPress={handlePress}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
-        activeOpacity={0.7}
       >
-        <BlurView intensity={90} tint={isDarkMode ? 'dark' : 'light'} style={buttonStyle}>
-          <Ionicons
-            name={iconName}
-            size={24}
-            color={isDarkMode ? colors.white : colors.black}
-            style={styles.buttonIcon}
-          />
-        </BlurView>
-      </TouchableOpacity>
+        <Ionicons name={iconName} size={24} color={colors.text} style={styles.buttonIcon} />
+      </Pressable>
     </Animated.View>
   );
 };

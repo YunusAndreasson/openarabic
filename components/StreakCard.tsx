@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
   statCard: {
     width: '48%',
     height: 90,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
     elevation: 3,

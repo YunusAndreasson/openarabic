@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, LayoutRectangle, Dimensions, Text } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Dimensions, Text, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
+import { TIMING } from '../constants/ui';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../hooks/animations';
+import { useColors } from '../hooks/useColors';
 import { WordTooltipProps } from '@/types/ui.types';
 
 /**
@@ -13,62 +13,34 @@ import { WordTooltipProps } from '@/types/ui.types';
  */
 export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout, onClose }) => {
   const isDarkMode = useIsDarkMode();
-  const { width: screenWidth } = Dimensions.get('window');
-  const [textWidth, setTextWidth] = useState(0);
+  const colors = useColors();
 
-  // Use fade animation hook for smooth appearance/disappearance
-  const {
-    animatedStyle: fadeStyle,
-    startAnimation: startFade,
-    reverseAnimation: reverseFade,
-  } = useFadeInAnimation(0, 100);
-
-  // Animate tooltip visibility
-  useEffect(() => {
-    if (visible) {
-      startFade(0);
-    } else {
-      reverseFade(0);
-    }
-  }, [visible, startFade, reverseFade]);
-
-  // Auto-close tooltip after delay
+  // Auto-close tooltip after standardized delay
   useEffect(() => {
     if (visible) {
       const timer = setTimeout(() => {
         onClose();
-      }, 2000);
+      }, TIMING.INTERACTION.TOOLTIP_DURATION);
       return () => clearTimeout(timer);
     }
   }, [visible, onClose]);
 
-  // Measure text width to adapt tooltip size
-  const onTextLayout = (e: { nativeEvent: { lines: { width: number }[] } }) => {
-    if (e.nativeEvent.lines && e.nativeEvent.lines.length > 0) {
-      const maxWidth = Math.max(...e.nativeEvent.lines.map(line => line.width));
-      setTextWidth(maxWidth + 16);
-    }
-  };
-
   if (!visible || !layout) return null;
 
   // Get colors based on theme
-  const backgroundColor = isDarkMode ? 'rgba(28, 28, 33, 0.95)' : 'rgba(255, 255, 255, 0.97)';
-  const textColor = isDarkMode ? 'rgba(255, 255, 255, 0.97)' : 'rgba(0, 0, 0, 0.9)';
-  const borderColor = isDarkMode ? 'rgba(100, 100, 100, 0.25)' : 'rgba(210, 210, 210, 0.6)';
+  const backgroundColor = isDarkMode
+    ? colors.cardBackground // dark theme background
+    : colors.white; // light theme background
+  const textColor = isDarkMode
+    ? colors.text // dark theme text
+    : colors.titleText; // light theme text
+  const borderColor = isDarkMode
+    ? colors.cardBorder // dark theme border
+    : colors.cardBorder; // light theme border
 
   // Size and position calculations
-  const HORIZONTAL_PADDING = LAYOUT.SPACING.MEDIUM * 2.2;
-  const MIN_TOOLTIP_WIDTH = 100;
-  const MAX_TOOLTIP_WIDTH = Math.min(280, screenWidth * 0.8);
-
-  // Calculate tooltip width based on text width
-  const tooltipWidth = Math.min(
-    Math.max(textWidth + HORIZONTAL_PADDING, MIN_TOOLTIP_WIDTH),
-    MAX_TOOLTIP_WIDTH
-  );
-
-  // Fixed tooltip dimensions
+  const { width: screenWidth } = Dimensions.get('window');
+  const TOOLTIP_WIDTH = Math.min(280, screenWidth * 0.8);
   const TOOLTIP_HEIGHT = 46;
   const ARROW_SIZE = 8;
   const TOOLTIP_MARGIN = 10;
@@ -77,10 +49,10 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
   const wordCenterX = layout.x + layout.width / 2;
 
   // Center the tooltip above the word's center
-  let tooltipLeft = wordCenterX - tooltipWidth / 2;
+  let tooltipLeft = wordCenterX - TOOLTIP_WIDTH / 2;
 
   // Keep tooltip within screen bounds
-  tooltipLeft = Math.max(10, Math.min(tooltipLeft, screenWidth - tooltipWidth - 10));
+  tooltipLeft = Math.max(10, Math.min(tooltipLeft, screenWidth - TOOLTIP_WIDTH - 10));
 
   // Position tooltip directly above the word
   const tooltipTop = layout.y - TOOLTIP_HEIGHT - TOOLTIP_MARGIN;
@@ -89,26 +61,20 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
   const arrowPosition = wordCenterX - tooltipLeft - ARROW_SIZE;
 
   return (
-    <Animated.View
+    <View
       style={[
         styles.tooltip,
-        fadeStyle,
         {
-          position: 'absolute',
-          width: tooltipWidth,
+          width: TOOLTIP_WIDTH,
           left: tooltipLeft,
           top: tooltipTop,
           backgroundColor,
           borderColor,
+          shadowColor: colors.shadow,
         },
       ]}
       pointerEvents="none"
     >
-      {/* Hidden text for measurement */}
-      <Text style={styles.hiddenText} onTextLayout={onTextLayout} numberOfLines={2}>
-        {text}
-      </Text>
-
       <ThemedText
         style={[styles.tooltipText, { color: textColor }]}
         skipDefaultColor
@@ -123,7 +89,7 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
         style={[
           styles.arrow,
           {
-            left: Math.max(16, Math.min(arrowPosition, tooltipWidth - 16)),
+            left: Math.max(16, Math.min(arrowPosition, TOOLTIP_WIDTH - 16)),
             borderTopColor: backgroundColor,
             borderLeftWidth: ARROW_SIZE,
             borderRightWidth: ARROW_SIZE,
@@ -131,34 +97,33 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
           },
         ]}
       />
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   tooltip: {
+    position: 'absolute',
     padding: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: 0.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 }, // Reduced shadow offset
-    shadowOpacity: 0.15, // Reduced shadow opacity
-    shadowRadius: 6, // Reduced shadow radius
-    elevation: 4, // Reduced elevation
-    zIndex: 9999,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    zIndex: LAYOUT.Z_INDEX.TOOLTIP,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   tooltipText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
-  },
-  hiddenText: {
-    opacity: 0,
-    position: 'absolute',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   arrow: {
     position: 'absolute',

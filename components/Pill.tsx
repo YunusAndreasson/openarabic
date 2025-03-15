@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
 import { Pressable, StyleSheet, View, Platform, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { lightFeedback } from '../utils/haptics';
 import { useFadeInAnimation, useScaleAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
@@ -47,7 +47,7 @@ const Pill = React.memo(
     const handlePress = useCallback(() => {
       if (onSelect) {
         onSelect(id);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        lightFeedback();
       }
     }, [id, onSelect]);
 
@@ -83,11 +83,11 @@ const Pill = React.memo(
             ios: {
               shadowColor: isDarkMode ? colors.black : colors.shadow,
               shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDarkMode ? 0.25 : 0.15, // Adjusted shadow opacity
-              shadowRadius: 3,
+              shadowOpacity: isDarkMode ? 0.25 : 0.1,
+              shadowRadius: 4,
             },
             android: {
-              elevation: isSelected ? 3 : 2, // Slightly reduced elevation for subtlety
+              elevation: isSelected ? 3 : 2,
             },
           }),
         };
@@ -100,7 +100,7 @@ const Pill = React.memo(
             ? `${colors.tint}15` // Selected, dark mode - subtle tint background
             : `${colors.tint}10` // Selected, light mode - very subtle tint background
           : colors.cardBackground, // Unselected - use cardBackground for consistency with cards
-        borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Match card border width for consistency
+        borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN, // Use constants
         borderColor: isSelected
           ? colors.tint // Selected - use tint color for border to make selection obvious
           : colors.cardBorder, // Unselected - use cardBorder for consistency with cards
@@ -109,12 +109,12 @@ const Pill = React.memo(
         ...Platform.select({
           ios: {
             shadowColor: isDarkMode ? colors.black : colors.shadow,
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: isDarkMode ? 0.2 : 0.1,
-            shadowRadius: 2,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDarkMode ? 0.25 : 0.1,
+            shadowRadius: 4,
           },
           android: {
-            elevation: isSelected ? 2 : 1,
+            elevation: isSelected ? 3 : 2,
           },
         }),
       };
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   pillSelected: {
-    borderWidth: 0.5, // Thinner border for cleaner look
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Use constant
   },
   pillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9, // Slightly smaller font size

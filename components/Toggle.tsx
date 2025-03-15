@@ -1,9 +1,9 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 import { useCallback, memo, useMemo } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import Animated from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { lightFeedback } from '../utils/haptics';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ToggleProps } from '@/types/ui.types';
@@ -40,7 +40,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   // Handle press with haptic feedback
   const handlePress = useCallback(() => {
     // Add light haptic feedback for better user experience
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    lightFeedback();
     onValueChange(!value);
   }, [onValueChange, value]);
 
@@ -116,12 +116,14 @@ const styles = StyleSheet.create({
   handle: {
     position: 'relative',
   },
-  shadow: {
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowRadius: 2,
-    elevation: 2,
-  },
+  shadow:
+    Platform.OS === 'ios'
+      ? {
+          shadowOffset: { width: 0, height: 2 },
+          shadowRadius: 4,
+          shadowOpacity: 0.1,
+        }
+      : {
+          elevation: 2,
+        },
 });

@@ -3,17 +3,15 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
-import * as Haptics from 'expo-haptics';
 import { BackButtonProps } from '@/types/ui.types';
 
 /**
- * A stylized back button component with haptic feedback
+ * A stylized back button component
  */
 const BackButton = React.memo(({ onPress, text = 'Back to home' }: BackButtonProps) => {
   const colors = useColors();
 
   const handlePress = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   }, [onPress]);
 
@@ -59,10 +57,10 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    minHeight: 44,
+    minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   arrow: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
   },
   text: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

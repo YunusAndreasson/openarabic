@@ -1,0 +1,86 @@
+import * as Haptics from 'expo-haptics';
+
+/**
+ * Standardized haptic feedback patterns for consistent user experience
+ */
+
+/**
+ * Light feedback for subtle interactions like:
+ * - Selection changes
+ * - Toggle switches
+ * - Pills/filters
+ */
+export const lightFeedback = () => {
+  try {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  } catch (error) {
+    // Silently handle errors, haptics failure should not break the app
+  }
+};
+
+/**
+ * Medium feedback for standard interactions like:
+ * - Button presses
+ * - Item selection
+ * - Dialog confirmations
+ */
+export const mediumFeedback = () => {
+  try {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  } catch (error) {
+    // Silently handle errors, haptics failure should not break the app
+  }
+};
+
+/**
+ * Heavy feedback for significant interactions like:
+ * - Important confirmations
+ * - Destructive actions
+ * - Errors
+ */
+export const heavyFeedback = () => {
+  try {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+  } catch (error) {
+    // Silently handle errors, haptics failure should not break the app
+  }
+};
+
+/**
+ * Success feedback for positive outcomes like:
+ * - Successful submissions
+ * - Task completions
+ */
+export const successFeedback = () => {
+  try {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  } catch (error) {
+    // Silently handle errors, haptics failure should not break the app
+  }
+};
+
+/**
+ * Error feedback for negative outcomes like:
+ * - Failed operations
+ * - Input validation errors
+ */
+export const errorFeedback = () => {
+  try {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  } catch (error) {
+    // Silently handle errors, haptics failure should not break the app
+  }
+};
+
+/**
+ * Warning feedback for cautionary situations like:
+ * - Warnings
+ * - Confirmations of potentially disruptive actions
+ */
+export const warningFeedback = () => {
+  try {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+  } catch (error) {
+    // Silently handle errors, haptics failure should not break the app
+  }
+};

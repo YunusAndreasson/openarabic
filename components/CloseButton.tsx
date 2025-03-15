@@ -3,7 +3,9 @@ import { TouchableOpacity, ViewStyle, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
-import * as Haptics from 'expo-haptics';
+import { ELEMENT_SIZES } from '../constants/ui';
+import { mediumFeedback } from '../utils/haptics';
+import { getTouchableProps } from '../utils/accessibility';
 import { CloseButtonProps } from '@/types/ui.types';
 
 /**
@@ -11,8 +13,8 @@ import { CloseButtonProps } from '@/types/ui.types';
  */
 export const CloseButton: React.FC<CloseButtonProps> = ({
   onPress,
-  size = 32,
-  iconSize = 20,
+  size = ELEMENT_SIZES.ICON.LARGE,
+  iconSize = ELEMENT_SIZES.ICON.SMALL,
   color,
   style,
   hapticFeedback = true,
@@ -21,7 +23,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
 
   const handlePress = () => {
     if (hapticFeedback) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      mediumFeedback();
     }
 
     // Small delay to ensure haptic feedback is felt
@@ -32,7 +34,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.7}
-      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+      {...getTouchableProps('Close', 'large')}
       style={[
         {
           width: size,
@@ -42,6 +44,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
           justifyContent: 'center',
           alignItems: 'center',
           ...LAYOUT.SHADOW.SMALL,
+          shadowColor: colors.shadow,
         },
         style,
       ]}

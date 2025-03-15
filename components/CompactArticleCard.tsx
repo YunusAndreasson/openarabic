@@ -94,7 +94,7 @@ const CompactArticleCardComponent: React.FC<CompactArticleCardProps> = ({
       card: {
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
-        shadowColor: colors.cardShadow,
+        shadowColor: colors.shadow,
       },
       authorText: {
         color: colors.authorText,
@@ -178,17 +178,10 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 3,
-      },
-    }),
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderColor: '#0000', // Will be set dynamically
+    backgroundColor: '#0000', // Will be set dynamically
+    ...LAYOUT.SHADOW.MEDIUM,
   },
   imageContainer: {
     position: 'relative',
@@ -252,9 +245,9 @@ const styles = StyleSheet.create({
   },
   pillContainer: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    top: LAYOUT.SPACING.SMALL,
+    left: LAYOUT.SPACING.SMALL,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-    maxWidth: '90%',
+    maxWidth: '70%',
   },
 });

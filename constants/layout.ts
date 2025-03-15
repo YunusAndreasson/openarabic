@@ -203,6 +203,13 @@ export const LAYOUT = {
     },
   },
 
+  // Standard hit slop sizes for better touch targets
+  HIT_SLOP: {
+    SMALL: { top: 8, bottom: 8, left: 8, right: 8 },
+    MEDIUM: { top: 12, bottom: 12, left: 12, right: 12 },
+    LARGE: { top: 20, bottom: 20, left: 20, right: 20 },
+  },
+
   // Border styles
   BORDER: {
     WIDTH: {

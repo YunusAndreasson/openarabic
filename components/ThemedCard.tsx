@@ -106,7 +106,7 @@ function ThemedCardComponent({
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
         shadowColor: colors.shadow,
-        borderRadius: isCompact ? LAYOUT.BORDER_RADIUS.LARGE : LAYOUT.BORDER_RADIUS.MEDIUM,
+        borderRadius: isCompact ? LAYOUT.BORDER_RADIUS.MEDIUM : LAYOUT.BORDER_RADIUS.MEDIUM,
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         overflow: 'visible',
         ...LAYOUT.SHADOW.MEDIUM,
@@ -291,14 +291,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
     left: LAYOUT.SPACING.SMALL,
-    zIndex: 2,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
   },
   contentContainer: {
     padding: LAYOUT.SPACING.MEDIUM,
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: 'bold',
+    fontWeight: '700',
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   summary: {
