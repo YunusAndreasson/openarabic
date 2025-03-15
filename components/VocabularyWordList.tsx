@@ -94,7 +94,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
       <View style={styles.container}>
         <ThemedText style={styles.title}>{title}</ThemedText>
         <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>No words available</ThemedText>
+          <ThemedText style={styles.emptyText}>No words</ThemedText>
         </View>
       </View>
     );

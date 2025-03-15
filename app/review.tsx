@@ -189,12 +189,8 @@ const EmptyStateScreen = React.memo(({ onClose }: { onClose: () => void }) => {
     <ThemedView style={baseStyles.container} useSafeArea={true}>
       <View style={baseStyles.emptyStateContainer}>
         <Ionicons name="information-circle-outline" size={60} color={colors.tint} />
-        <ThemedText style={baseStyles.emptyStateText}>No words to review at this time.</ThemedText>
-        <ThemedButton
-          title="Go Back"
-          onPress={onClose}
-          style={{ marginTop: LAYOUT.SPACING.XLARGE }}
-        />
+        <ThemedText style={baseStyles.emptyStateText}>No words due.</ThemedText>
+        <ThemedButton title="Back" onPress={onClose} style={{ marginTop: LAYOUT.SPACING.XLARGE }} />
       </View>
     </ThemedView>
   );

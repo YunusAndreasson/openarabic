@@ -59,12 +59,10 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
           <View style={themedStyles.instructionIcon}>
             <Ionicons name="arrow-back" size={16} color={colors.tabIconDefault} />
           </View>
-          <ThemedText style={themedStyles.instructionText}>
-            Swipe left{'\n'}if you don't know
-          </ThemedText>
+          <ThemedText style={themedStyles.instructionText}>Swipe left{'\n'}Don't know</ThemedText>
         </View>
         <View style={styles.instructionItem}>
-          <ThemedText style={themedStyles.instructionText}>Swipe right{'\n'}if you know</ThemedText>
+          <ThemedText style={themedStyles.instructionText}>Swipe right{'\n'}Know</ThemedText>
           <View style={themedStyles.instructionIcon}>
             <Ionicons name="arrow-forward" size={16} color={colors.tabIconDefault} />
           </View>

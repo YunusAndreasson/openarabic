@@ -286,7 +286,7 @@ function WordDetailsModalComponent({
           {word.grammar_note && (
             <View style={styles.grammarNote}>
               <ThemedText style={labelStyle} skipDefaultColor>
-                Grammar Notes
+                Grammar
               </ThemedText>
               <View style={pillStyle}>
                 <ThemedText style={noteTextStyle} skipDefaultColor>
@@ -299,7 +299,7 @@ function WordDetailsModalComponent({
 
         {onStudyPress && (
           <ThemedButton
-            title={isSelected ? 'Word added to study list' : 'Study this word'}
+            title={isSelected ? 'Added to study list' : 'Study this word'}
             icon={isSelected ? 'checkmark-circle' : 'school'}
             variant={isSelected ? 'outlined' : 'filled'}
             onPress={handleStudyPress}

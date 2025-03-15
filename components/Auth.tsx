@@ -56,7 +56,7 @@ export default function Auth() {
       !PASSWORD_REQUIREMENTS.hasLowerCase.test(password) ||
       !PASSWORD_REQUIREMENTS.hasNumber.test(password)
     ) {
-      setPasswordError('Must include uppercase, lowercase & number');
+      setPasswordError('Include upper, lower & number');
       return false;
     }
     setPasswordError('');
@@ -153,7 +153,7 @@ export default function Auth() {
           returnKeyType="done"
           autoComplete="password"
           error={passwordError}
-          hint={`${PASSWORD_REQUIREMENTS.minLength}+ chars with uppercase, lowercase & number`}
+          hint={`${PASSWORD_REQUIREMENTS.minLength}+ chars with upper, lower & number`}
         />
       </ThemedView>
 

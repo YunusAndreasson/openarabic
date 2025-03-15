@@ -12,7 +12,6 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { LAYOUT } from '@/constants/layout';
 
 // Types
-import type { Article } from '@/types/articles.types';
 import { ArticleHeaderProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({
@@ -40,7 +39,6 @@ const styles = StyleSheet.create({
   authorName: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    marginLeft: LAYOUT.SPACING.TINY,
     opacity: LAYOUT.OPACITY.HIGH,
   },
   articleInfoContainer: {
@@ -60,11 +58,6 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.TINY,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
-  categoryText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600',
-    marginLeft: LAYOUT.SPACING.TINY,
-  },
   summaryText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
@@ -74,7 +67,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors, isDarkMode }) => {
+export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors }) => {
   if (!article) return null;
 
   const readingTime = article.article_sentences?.length
@@ -91,12 +84,6 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors, i
 
       <View style={styles.articleMetaContainer}>
         <View style={styles.authorContainer}>
-          <Ionicons
-            name="person-circle-outline"
-            size={20}
-            color={colors.text}
-            style={{ opacity: LAYOUT.OPACITY.HIGH }}
-          />
           <ThemedText style={styles.authorName}>
             {article.author?.name || 'Unknown Author'}
           </ThemedText>
@@ -108,12 +95,10 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors, i
           <Ionicons
             name="folder-outline"
             size={16}
-            color={colors.tint}
+            color={colors.text}
             style={{ opacity: LAYOUT.OPACITY.HIGH }}
           />
-          <ThemedText style={[styles.categoryText, { color: colors.tint }]} skipDefaultColor>
-            {categoryName}
-          </ThemedText>
+          <ThemedText style={styles.articleInfoText}>{categoryName}</ThemedText>
         </View>
 
         <View style={styles.articleInfoItem}>
@@ -137,20 +122,7 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors, i
         </View>
       </View>
 
-      {article.summary && (
-        <ThemedText
-          style={[
-            styles.summaryText,
-            {
-              borderLeftWidth: LAYOUT.BORDER.WIDTH.THIN,
-              borderLeftColor: `${colors.text}${isDarkMode ? '30' : '20'}`,
-              paddingLeft: LAYOUT.SPACING.MEDIUM,
-            },
-          ]}
-        >
-          {article.summary}
-        </ThemedText>
-      )}
+      {article.summary && <ThemedText style={styles.summaryText}>{article.summary}</ThemedText>}
     </View>
   );
 };

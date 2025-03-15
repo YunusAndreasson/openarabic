@@ -32,7 +32,7 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
     <View style={styles.container}>
       {otherArticles.length > 0 && (
         <RelatedArticlesSection
-          title={`More from ${article?.author?.name}`}
+          title={`By ${article?.author?.name}`}
           articles={otherArticles}
           renderArticleCard={renderArticleCard}
         />
@@ -40,7 +40,7 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
 
       {otherCategoryArticles.length > 0 && (
         <RelatedArticlesSection
-          title={`More from ${article?.category?.name}`}
+          title={`In ${article?.category?.name}`}
           articles={otherCategoryArticles}
           renderArticleCard={renderArticleCard}
         />

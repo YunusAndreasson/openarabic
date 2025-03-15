@@ -14,7 +14,7 @@ import { ErrorMessageProps } from '../../types/ui.types';
 const ErrorMessage = React.memo(
   ({
     screenName = 'vocabulary',
-    customMessage = 'Error loading your vocabulary data. Please try again later.',
+    customMessage = 'Error loading vocabulary data. Try again later.',
   }: ErrorMessageProps) => {
     const colors = useColors();
     const navigation = useNavigation<BottomTabNavigationProp<any>>();

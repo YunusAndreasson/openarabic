@@ -108,7 +108,7 @@ function VocabularyStatsComponent({
             <ThemedText style={styles.progressLabel}>Progress</ThemedText>
             <ThemedText style={styles.progressValue}>{Math.round(progress)}%</ThemedText>
             <ThemedText style={styles.progressSubtext}>
-              {masteredWords} of {totalWords} words mastered
+              {masteredWords} of {totalWords} mastered
             </ThemedText>
           </View>
 

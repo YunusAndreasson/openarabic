@@ -32,7 +32,7 @@ const ReviewButton = React.memo(({ dueWords, onPress }: ReviewButtonProps) => {
     <View style={styles.reviewButtonContainer}>
       <Animated.View style={animatedStyle as any}>
         <ThemedButton
-          title={`Review ${dueWords} ${dueWords === 1 ? 'word' : 'words'}`}
+          title={`Review ${dueWords} ${dueWords === 1 ? 'word' : ''}`}
           icon="play-circle"
           iconSize={24}
           onPress={handlePress}
@@ -51,7 +51,7 @@ const DisabledReviewButton = React.memo(() => {
   return (
     <View style={styles.reviewButtonContainer}>
       <ThemedButton
-        title="No words to review"
+        title="No words due"
         icon="time"
         iconSize={24}
         onPress={() => {}}

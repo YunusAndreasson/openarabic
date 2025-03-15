@@ -1065,23 +1065,6 @@ export interface ReadingListButtonProps extends BaseStyleProps {
 }
 
 /**
- * Props for the StreakCard component
- */
-export interface StreakCardProps extends BaseThemedProps {
-  /**
-   * Current streak count
-   * @default 5
-   */
-  streak?: number;
-
-  /**
-   * Whether to animate when the streak changes
-   * @default false
-   */
-  animateChange?: boolean;
-}
-
-/**
  * Props for the PageHeader component
  */
 export interface PageHeaderProps {

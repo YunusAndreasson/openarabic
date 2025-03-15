@@ -21,13 +21,9 @@ export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyState
           style={{ opacity: LAYOUT.OPACITY.DIMMED }}
         />
       </View>
-      <ThemedText style={styles.emptyTitle}>Build Your Vocabulary</ThemedText>
-      <ThemedText style={styles.emptyMessage}>
-        You haven't added any words to your study list yet.
-      </ThemedText>
-      <ThemedText style={styles.emptySubmessage}>
-        Start reading articles and tap on words to add them to your vocabulary.
-      </ThemedText>
+      <ThemedText style={styles.emptyTitle}>Build Vocabulary</ThemedText>
+      <ThemedText style={styles.emptyMessage}>No words in your study list yet.</ThemedText>
+      <ThemedText style={styles.emptySubmessage}>Tap words while reading to add them.</ThemedText>
       <TouchableOpacity
         style={[styles.emptyActionButton, { backgroundColor: colors.text + '10' }]}
         onPress={handleBrowseArticles}

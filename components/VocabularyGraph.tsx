@@ -32,7 +32,7 @@ interface VocabularyGraphProps {
 export const VocabularyGraph = React.memo(
   ({
     data = [],
-    title = 'Weekly Progress',
+    title = 'Progress',
     isLoading = false,
     animationTriggered = false,
   }: VocabularyGraphProps) => {

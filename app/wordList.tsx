@@ -48,33 +48,33 @@ export default function WordListScreen() {
     switch (category) {
       case 'total':
         return {
-          title: 'All Words',
+          title: 'Words',
           icon: 'book',
-          description: 'Sorted by mastery level (best known first)',
+          description: 'Sorted by mastery level',
         };
       case 'mastered':
         return {
-          title: 'Mastered Words',
+          title: 'Mastered',
           icon: 'checkmark-circle',
-          description: 'Words you know well (21+ days interval)',
+          description: 'Words with 21+ days interval',
         };
       case 'learning':
         return {
-          title: 'Learning Words',
+          title: 'Learning',
           icon: 'school',
-          description: "Words you're still practicing (< 21 days)",
+          description: 'Words with < 21 days interval',
         };
       case 'due':
         return {
-          title: 'Due for Review',
+          title: 'Due',
           icon: 'alarm',
-          description: 'Words to practice today (sorted by mastery)',
+          description: 'Words to practice today',
         };
       default:
         return {
           title: 'Words',
           icon: 'book',
-          description: 'Vocabulary sorted by mastery level',
+          description: 'Sorted by mastery level',
         };
     }
   }, [category]);
@@ -161,7 +161,7 @@ export default function WordListScreen() {
     return (
       <View style={styles.emptyContainer}>
         <Ionicons name="information-circle-outline" size={60} color={colors.tint} />
-        <ThemedText style={styles.emptyText}>No words in this category.</ThemedText>
+        <ThemedText style={styles.emptyText}>No words found</ThemedText>
       </View>
     );
   }, [isLoading, colors.tint]);
@@ -201,11 +201,7 @@ export default function WordListScreen() {
                 <ThemedText style={styles.descriptionText}>{description}</ThemedText>
               </View>
 
-              {wordCount > 0 && (
-                <ThemedText style={styles.countText}>
-                  {wordCount} {wordCount === 1 ? 'word' : 'words'}
-                </ThemedText>
-              )}
+              {wordCount > 0 && <ThemedText style={styles.countText}>{wordCount}</ThemedText>}
             </View>
 
             {/* Color legend container */}

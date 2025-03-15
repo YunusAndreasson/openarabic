@@ -34,7 +34,7 @@ export const CopyrightFooter = React.memo(() => {
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
       <ThemedText style={styles.copyrightText}>
-        © {new Date().getFullYear()} OpenArabic • {hijriYear} هـ
+        © {new Date().getFullYear()} OpenArabic • {hijriYear}هـ
       </ThemedText>
     </Animated.View>
   );

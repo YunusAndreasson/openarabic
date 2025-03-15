@@ -14,10 +14,7 @@ import Animated from 'react-native-reanimated';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
-  extends Pick<
-    VocabularyStats,
-    'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords' | 'streak'
-  > {
+  extends Pick<VocabularyStats, 'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords'> {
   colors: any;
   /** Flag to trigger animations when parent component is ready */
   animationTriggered?: boolean;
@@ -92,7 +89,6 @@ export const VocabularyDashboard = React.memo(
     masteredWords,
     learningWords,
     dueWords,
-    streak,
     colors,
     animationTriggered = false,
     onStatPress,
@@ -122,7 +118,7 @@ export const VocabularyDashboard = React.memo(
       () => [
         {
           value: totalWords,
-          label: 'All Words',
+          label: 'Words',
           icon: 'book',
           iconColor: safeColors.textColor,
           bgColor: safeColors.textColor + '15',
@@ -149,7 +145,7 @@ export const VocabularyDashboard = React.memo(
         },
         {
           value: dueWords,
-          label: 'Due for Review',
+          label: 'Due',
           icon: 'alarm',
           iconColor: safeColors.dueWordsColor,
           bgColor: safeColors.dueWordsColor + '20',

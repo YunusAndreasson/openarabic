@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
+import { StyleSheet, View, RefreshControl } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/VocabularyDashboard';
@@ -9,14 +8,13 @@ import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/studyWords';
-import { useNavigation } from 'expo-router';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
 import {
   useLoadingState,
@@ -31,8 +29,10 @@ import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
-  const navigation = useNavigation<BottomTabNavigationProp<any>>();
   const queryClient = useQueryClient();
+
+  // Add state for refresh control
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
@@ -47,6 +47,7 @@ export default function VocabularyScreen() {
     isFetching,
     status,
     error,
+    refetch: refetchStudyWords,
   } = useQuery({
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id, { forStats: false }),
@@ -56,13 +57,28 @@ export default function VocabularyScreen() {
   });
 
   // Query for due words
-  const { data: dueWordsData = [] } = useQuery({
+  const { data: dueWordsData = [], refetch: refetchDueWords } = useQuery({
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
     enabled: !!user,
     staleTime: 0, // Always fetch fresh data for due words
     gcTime: 60000, // 1 minute
   });
+
+  // Handler for pull-to-refresh
+  const handleRefresh = async () => {
+    if (!user) return;
+
+    // Provide haptic feedback when refreshing
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
+    setIsRefreshing(true);
+
+    // Refetch both study words and due words
+    await Promise.all([refetchStudyWords(), refetchDueWords()]);
+
+    setIsRefreshing(false);
+  };
 
   // Use the screen focus refresh hook
   useScreenFocusRefresh(
@@ -162,9 +178,9 @@ export default function VocabularyScreen() {
       <SignInRequired
         headerTitle="Vocabulary"
         colors={colors}
-        message="Please sign in to view and manage your vocabulary"
-        benefitTitle="Benefits of Vocabulary Tracking"
-        benefitDescription="Sign in to learn and review words with spaced repetition, track your progress, and build your vocabulary over time."
+        message="Sign in to view and manage vocabulary"
+        benefitTitle="Benefits of Tracking"
+        benefitDescription="Track words with spaced repetition and build vocabulary over time."
       />
     );
   }
@@ -200,6 +216,16 @@ export default function VocabularyScreen() {
           useSafeArea={false}
           includeBottomInset={false}
           contentContainerStyle={styles.contentContainer}
+          scrollViewProps={{
+            refreshControl: (
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={[colors.tint]}
+                tintColor={colors.tint}
+              />
+            ),
+          }}
         >
           {/* Show loader when loading */}
           {isContentLoading && (
@@ -274,15 +300,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-  messageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  message: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
-  },
+
   graphWrapper: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,

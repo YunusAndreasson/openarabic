@@ -26,7 +26,7 @@ const FilterNotice = React.memo(({ type, name }: FilterNoticeProps) => {
   return (
     <View style={[styles.container, containerStyle]}>
       <ThemedText style={styles.text}>
-        Showing articles from {type === 'author' ? 'author' : 'category'}{' '}
+        From {type}:{' '}
         <ThemedText style={[styles.boldText, tintTextStyle]} skipDefaultColor>
           {formattedName}
         </ThemedText>

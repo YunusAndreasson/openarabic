@@ -14,7 +14,7 @@ import { SignInRequiredProps } from '@/types/ui.types';
 export const SignInRequired = React.memo(
   ({
     title = 'Sign In Required',
-    message = 'Please sign in to access this feature',
+    message = 'Sign in to access this feature',
     benefitTitle,
     benefitDescription,
     colors,
