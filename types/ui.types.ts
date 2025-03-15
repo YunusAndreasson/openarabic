@@ -5,7 +5,6 @@ import {
   TouchableOpacityProps,
   TextProps,
   ScrollView,
-  View,
   ViewProps,
   TextInputProps,
   LayoutRectangle,
@@ -17,6 +16,64 @@ import { AnimatedStyle } from 'react-native-reanimated';
 import { Edge } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { VocabularyStats as VocabularyStatsType, StudyWord } from '@/types/vocabulary.types';
+
+/**
+ * Base props for components with style
+ */
+export interface BaseStyleProps {
+  /** Optional style to apply to the component */
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * Base props for components with animated style
+ */
+export interface BaseAnimatedStyleProps {
+  /** Optional style to apply to the component, supporting animated styles */
+  style?: StyleProp<ViewStyle> | StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
+}
+
+/**
+ * Base props for components with theme colors
+ */
+export interface BaseThemedProps {
+  /** Theme colors for styling */
+  colors: ReturnType<typeof useColors>;
+}
+
+/**
+ * Base props for components with press handlers
+ */
+export interface BasePressableProps {
+  /** Callback when the component is pressed */
+  onPress: () => void;
+}
+
+/**
+ * Base props for components with optional press handlers
+ */
+export interface BaseOptionalPressableProps {
+  /** Optional callback when the component is pressed */
+  onPress?: () => void;
+}
+
+/**
+ * Base props for components with children
+ */
+export interface BaseChildrenProps {
+  /** Children to render inside the component */
+  children: React.ReactNode;
+}
+
+/**
+ * Base props for components with animation properties
+ */
+export interface BaseAnimationProps {
+  /** Delay before starting the animation (in ms) */
+  delay?: number;
+  /** Duration of the animation (in ms) */
+  duration?: number;
+}
 
 /**
  * Base props for styling pills
@@ -44,12 +101,155 @@ export interface CategoryPillBaseProps {
 }
 
 /**
- * Props for horizontal category pills
+ * Pill variant types
  */
-export interface HorizontalCategoryPillProps {
+export type PillVariant = 'filter' | 'category' | 'horizontal-category';
+
+/**
+ * Base props for pill components
+ */
+export interface BasePillProps {
+  /**
+   * Unique identifier for the item
+   */
+  id: string | number;
+
+  /**
+   * Label text to display in the pill
+   */
+  label: string;
+
+  /**
+   * Whether the pill is currently selected
+   */
+  isSelected?: boolean;
+
+  /**
+   * Callback when the pill is selected
+   */
+  onSelect?: (id: string | number) => void;
+
+  /**
+   * Animation delay in milliseconds
+   */
+  animationDelay?: number;
+
+  /**
+   * Whether the pill should be positioned absolutely
+   */
+  absolute?: boolean;
+}
+
+/**
+ * Props for filter variant of Pill
+ */
+export interface FilterPillProps extends BasePillProps {
+  /**
+   * Variant of the pill
+   */
+  variant: 'filter';
+}
+
+/**
+ * Props for category variant of Pill
+ */
+export interface CategoryPillProps extends BasePillProps {
+  /**
+   * Variant of the pill
+   */
+  variant: 'category';
+}
+
+/**
+ * Props for horizontal-category variant of Pill
+ */
+export interface HorizontalCategoryPillProps extends BasePillProps {
+  /**
+   * Variant of the pill
+   */
+  variant: 'horizontal-category';
+}
+
+/**
+ * Props for the Pill component
+ */
+export type PillProps =
+  | FilterPillProps
+  | CategoryPillProps
+  | HorizontalCategoryPillProps
+  | (BasePillProps & {
+      /**
+       * Variant of the pill
+       */
+      variant?: PillVariant;
+    });
+
+/**
+ * Interface for filter items
+ */
+export interface FilterItem {
+  /**
+   * Unique identifier for the item
+   */
+  id: number;
+
+  /**
+   * Display name for the item
+   */
+  name: string;
+
+  /**
+   * Allow for additional properties
+   */
+  [key: string]: any;
+}
+
+/**
+ * Props for the FilterList component
+ */
+export interface FilterListProps<T extends FilterItem> {
+  /**
+   * Title for the filter section
+   */
+  title: string;
+
+  /**
+   * Array of items to display in the filter list
+   */
+  items: T[];
+
+  /**
+   * ID of the currently selected item
+   */
+  selectedId: number | null;
+
+  /**
+   * Callback when an item is selected
+   */
+  onSelect: (id: number) => void;
+
+  /**
+   * Callback when filters are cleared
+   */
+  onClearFilter?: () => void;
+
+  /**
+   * Animation delay in milliseconds
+   */
+  animationDelay?: number;
+
+  /**
+   * Base animation delay for individual items
+   */
+  itemAnimationDelay?: number;
+}
+
+/**
+ * Props for horizontal category pill items
+ */
+export interface HorizontalCategoryPillItemProps extends BasePressableProps {
   category: Category | null;
   isSelected: boolean;
-  onPress: () => void;
 }
 
 /**
@@ -65,7 +265,7 @@ export interface CategoryPillsContainerProps {
 /**
  * Props for article list component
  */
-export interface ArticleListProps {
+export interface ArticleListProps extends BaseStyleProps {
   articles: Article[];
   isLoading: boolean;
   isRefreshing: boolean;
@@ -73,69 +273,43 @@ export interface ArticleListProps {
   onArticlePress: (article: Article) => void;
   ListHeaderComponent?: React.ReactElement;
   ListEmptyComponent?: React.ReactElement;
-  contentContainerStyle?: any;
+  contentContainerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
  * Props for compact article card component
  */
-export interface CompactArticleCardProps {
+export interface CompactArticleCardProps extends BaseStyleProps, BaseOptionalPressableProps {
   article: Article;
-  onPress?: () => void;
   showTimeAgo?: boolean;
   hideDifficultyLabel?: boolean;
   hideDifficulty?: boolean;
   lastOpenedAt?: string;
-  style?: ViewStyle;
 }
 
 /**
- * ThemedCard is a reusable card component that can display content in different variants.
- * It supports both light and dark themes, handles loading states, and provides smooth animations.
- *
- * The component is optimized for performance with memoization and proper image loading handling.
- * It uses Reanimated 3's built-in animations for optimal performance.
+ * Base props for card components
  */
-export interface ThemedCardProps {
-  /** URL of the image to display in the card (for article variant) */
-  imageUrl?: string;
-  /** Title text to display in the card (for article variant) */
-  title?: string;
-  /** Category text to display in a pill on the card (for article variant) */
-  category?: string;
-  /** Author name to display in the card (for article variant) */
-  author?: string;
-  /** Summary text to display in the card (for article variant) */
-  summary?: string;
-  /** Optional callback function when the card is pressed */
-  onPress?: () => void;
-  /** Optional style to apply to the card container */
-  style?: StyleProp<ViewStyle> | StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
+export interface BaseCardProps extends BaseAnimatedStyleProps {
   /** Whether the card is in a loading state */
   isLoading?: boolean;
-  /** Children to render inside the card (for compact variant) */
-  children?: React.ReactNode;
-  /** Variant of the card */
-  variant?: 'article' | 'compact';
 }
 
 /**
- * A themed button component that supports different visual styles,
- * icons, loading states, and press animations.
+ * Button variant types
  */
-export interface ThemedButtonProps extends Omit<TouchableOpacityProps, 'style'> {
-  /** Visual style variant of the button */
-  variant?: 'filled' | 'outlined';
+export type ButtonVariant = 'filled' | 'outlined';
+
+/**
+ * Base button props
+ */
+export interface BaseButtonProps
+  extends Omit<TouchableOpacityProps, 'style'>,
+    BaseAnimatedStyleProps {
   /** Text displayed on the button */
   title: string;
-  /** Optional Ionicons icon name to display before the title */
-  icon?: string;
-  /** Optional custom icon component (overrides icon prop if both are provided) */
-  iconComponent?: React.ReactNode;
   /** Whether the button is in a loading state */
   loading?: boolean;
-  /** Additional content to render inside the button */
-  children?: React.ReactNode;
   /** Size of the icon in pixels */
   iconSize?: number;
   /** Optional style to apply to the content container */
@@ -144,9 +318,42 @@ export interface ThemedButtonProps extends Omit<TouchableOpacityProps, 'style'> 
   innerContainerStyle?: ViewStyle;
   /** Optional custom scale amount for the press animation (default is 0.95) */
   scaleAmount?: number;
-  /** Style with support for animated styles */
-  style?: StyleProp<ViewStyle> | StyleProp<AnimatedStyle<StyleProp<ViewStyle>>>;
+  /** Additional content to render inside the button */
+  children?: React.ReactNode;
 }
+
+/**
+ * Props for filled variant of ThemedButton
+ */
+export interface FilledButtonProps extends BaseButtonProps {
+  /** Visual style variant of the button */
+  variant: 'filled';
+  /** Optional Ionicons icon name to display before the title */
+  icon?: string;
+  /** Optional custom icon component (overrides icon prop if both are provided) */
+  iconComponent?: React.ReactNode;
+}
+
+/**
+ * Props for outlined variant of ThemedButton
+ */
+export interface OutlinedButtonProps extends BaseButtonProps {
+  /** Visual style variant of the button */
+  variant: 'outlined';
+  /** Optional Ionicons icon name to display before the title */
+  icon?: string;
+  /** Optional custom icon component (overrides icon prop if both are provided) */
+  iconComponent?: React.ReactNode;
+}
+
+/**
+ * A themed button component that supports different visual styles,
+ * icons, loading states, and press animations.
+ */
+export type ThemedButtonProps =
+  | FilledButtonProps
+  | OutlinedButtonProps
+  | (BaseButtonProps & { variant?: ButtonVariant });
 
 /**
  * Props for ThemedText component
@@ -180,19 +387,18 @@ export interface ThemedViewProps extends ViewProps {
   safeAreaEdges?: Edge[];
   /** Optional ScrollView props */
   scrollViewProps?: Omit<React.ComponentProps<typeof ScrollView>, 'children'>;
+  /** Children to render inside the view */
   children?: React.ReactNode;
 }
 
 /**
  * Props for the Loader component
  */
-export interface LoaderProps {
+export interface LoaderProps extends BaseAnimatedStyleProps {
   /** Size of the loader - small, large, or a specific number */
   size?: number | 'small' | 'large';
   /** Color of the loader (defaults to text color) */
   color?: string;
-  /** Additional styles for the loader container */
-  style?: StyleProp<ViewStyle> | StyleProp<AnimatedStyle<ViewStyle>>;
 }
 
 /**
@@ -206,13 +412,11 @@ export interface LoadingScreenProps {
 /**
  * Props for the LoadingContainer component
  */
-export interface LoadingContainerProps {
+export interface LoadingContainerProps extends BaseAnimatedStyleProps {
   /** Size of the loader - small or large */
   size?: 'small' | 'large';
   /** Color of the loader */
   color?: string;
-  /** Additional styles for the container */
-  style?: StyleProp<ViewStyle> | StyleProp<AnimatedStyle<ViewStyle>>;
   /** Height of the container */
   height?: number;
 }
@@ -220,7 +424,7 @@ export interface LoadingContainerProps {
 /**
  * Props for the ThemedModal component
  */
-export interface ThemedModalProps {
+export interface ThemedModalProps extends BaseChildrenProps {
   /**
    * Whether the modal is visible
    */
@@ -229,10 +433,6 @@ export interface ThemedModalProps {
    * Function to call when the modal is closed
    */
   onClose: () => void;
-  /**
-   * The content to display in the modal
-   */
-  children: React.ReactNode;
   /**
    * Optional title for the modal
    */
@@ -321,7 +521,7 @@ export interface AnimatedThemedTextProps extends Omit<ThemedTextProps, 'style'> 
 /**
  * Props for the ProgressBar component
  */
-export interface ProgressBarProps {
+export interface ProgressBarProps extends BaseStyleProps {
   /**
    * Progress value between 0 and 100
    */
@@ -331,10 +531,6 @@ export interface ProgressBarProps {
    * @default LAYOUT.SPACING.SMALL
    */
   height?: number;
-  /**
-   * Custom style for the container
-   */
-  style?: ViewStyle;
   /**
    * Custom style for the progress fill
    */
@@ -403,10 +599,7 @@ export interface SectionTitleProps {
 /**
  * Props for the VocabularyEmptyState component
  */
-export interface VocabularyEmptyStateProps {
-  /** Theme colors for styling */
-  colors: ReturnType<typeof useColors>;
-}
+export interface VocabularyEmptyStateProps extends BaseThemedProps {}
 
 /**
  * Props for the EmptyState component
@@ -441,21 +634,17 @@ export interface EmptyStateProps {
 /**
  * Props for the FloatingButton component
  */
-export interface FloatingButtonProps {
+export interface FloatingButtonProps extends BasePressableProps, BaseThemedProps {
   /** Position of the button (left or right) */
   position: 'left' | 'right';
   /** Distance from the top of the screen */
   top: number;
   /** Animated style for the button */
   animatedStyle: AnimatedStyleProp<ViewStyle>;
-  /** Callback when the button is pressed */
-  onPress: () => void;
   /** Ionicons icon name */
   iconName: React.ComponentProps<typeof Ionicons>['name'];
   /** Accessibility label for the button */
   accessibilityLabel: string;
-  /** Theme colors */
-  colors: Record<string, string>;
   /** Whether the app is in dark mode */
   isDarkMode: boolean;
 }
@@ -463,12 +652,7 @@ export interface FloatingButtonProps {
 /**
  * Props for the BackButton component
  */
-export interface BackButtonProps {
-  /**
-   * Callback when the back button is pressed
-   */
-  onPress: () => void;
-
+export interface BackButtonProps extends BasePressableProps {
   /**
    * Optional button text, defaults to "Back to home"
    */
@@ -483,125 +667,22 @@ export interface ToggleProps {
   value: boolean;
   /** Callback function when the toggle state changes */
   onValueChange: (value: boolean) => void;
+  /** Optional label for the toggle */
+  label?: string;
 }
 
 /**
  * Props for the StatCard component
  */
-export interface StatCardProps {
+export interface StatCardProps extends BaseThemedProps {
   /** Label text to display below the value */
   label: string;
   /** Numerical value to display */
   value: number;
   /** Icon name from Ionicons */
   icon: string;
-  /** Theme colors for styling */
-  colors: ReturnType<typeof useColors>;
   /** Whether to animate the value with a pulse effect (useful for changes) */
   animateValue?: boolean;
-}
-
-/**
- * Props for the Pill component
- */
-export interface PillProps {
-  /**
-   * Unique identifier for the item
-   */
-  id: string | number;
-
-  /**
-   * Label text to display in the pill
-   */
-  label: string;
-
-  /**
-   * Whether the pill is currently selected
-   */
-  isSelected?: boolean;
-
-  /**
-   * Callback when the pill is selected
-   */
-  onSelect?: (id: string | number) => void;
-
-  /**
-   * Animation delay in milliseconds
-   */
-  animationDelay?: number;
-
-  /**
-   * Whether the pill should be positioned absolutely
-   */
-  absolute?: boolean;
-
-  /**
-   * Variant of the pill
-   * - 'filter': Used for filter lists
-   * - 'category': Used for category display
-   * - 'horizontal-category': Used in horizontal category lists
-   */
-  variant?: 'filter' | 'category' | 'horizontal-category';
-}
-
-/**
- * Interface for filter items
- */
-export interface FilterItem {
-  /**
-   * Unique identifier for the item
-   */
-  id: number;
-
-  /**
-   * Display name for the item
-   */
-  name: string;
-
-  /**
-   * Allow for additional properties
-   */
-  [key: string]: any;
-}
-
-/**
- * Props for the FilterList component
- */
-export interface FilterListProps<T extends FilterItem> {
-  /**
-   * Title for the filter section
-   */
-  title: string;
-
-  /**
-   * Array of items to display in the filter list
-   */
-  items: T[];
-
-  /**
-   * ID of the currently selected item
-   */
-  selectedId: number | null;
-
-  /**
-   * Callback when an item is selected
-   */
-  onSelect: (id: number) => void;
-
-  /**
-   * Callback when filters are cleared
-   */
-  onClearFilter?: () => void;
-
-  /**
-   * Animation delay in milliseconds
-   */
-  animationDelay?: number;
-
-  /**
-   * Base animation delay for individual items
-   */
-  itemAnimationDelay?: number;
 }
 
 /**
@@ -667,7 +748,7 @@ export interface FilterNoticeProps {
 /**
  * Props for the SignInRequired component
  */
-export interface SignInRequiredProps {
+export interface SignInRequiredProps extends BaseThemedProps {
   /**
    * Title text to display
    */
@@ -689,11 +770,6 @@ export interface SignInRequiredProps {
   benefitDescription?: string;
 
   /**
-   * Theme colors
-   */
-  colors: ReturnType<typeof useColors>;
-
-  /**
    * Header title text
    */
   headerTitle?: string;
@@ -702,16 +778,11 @@ export interface SignInRequiredProps {
 /**
  * Props for the ArticleHeader component
  */
-export interface ArticleHeaderProps {
+export interface ArticleHeaderProps extends BaseThemedProps {
   /**
    * Article to display in the header
    */
   article: Article;
-
-  /**
-   * Theme colors
-   */
-  colors: Record<string, string>;
 
   /**
    * Whether the app is in dark mode
@@ -747,34 +818,15 @@ export interface CategoryPillsProps {
 /**
  * Props for the EntranceAnimation component
  */
-export interface EntranceAnimationProps {
-  /**
-   * Children to render inside the animated container
-   */
-  children: React.ReactNode;
-
-  /**
-   * Delay before starting the animation (in ms)
-   * @default 0
-   */
-  delay?: number;
-
-  /**
-   * Duration of the animation (in ms)
-   * @default TIMING_CONFIG.FAST.duration
-   */
-  duration?: number;
-
-  /**
-   * Additional styles to apply to the container
-   */
-  style?: StyleProp<ViewStyle>;
-}
+export interface EntranceAnimationProps
+  extends BaseChildrenProps,
+    BaseAnimationProps,
+    BaseStyleProps {}
 
 /**
  * Props for the CustomSlider component
  */
-export interface CustomSliderProps {
+export interface CustomSliderProps extends BaseStyleProps {
   /**
    * Current value of the slider
    */
@@ -802,11 +854,6 @@ export interface CustomSliderProps {
    * @default 0.1
    */
   step?: number;
-
-  /**
-   * Additional styles to apply to the slider container
-   */
-  style?: ViewStyle;
 }
 
 /**
@@ -844,31 +891,14 @@ export interface ArabicWordProps {
 /**
  * Props for the AnimatedSection component
  */
-export interface AnimatedSectionProps {
+export interface AnimatedSectionProps
+  extends BaseChildrenProps,
+    BaseAnimationProps,
+    BaseStyleProps {
   /**
    * Title to display at the top of the section
    */
   title?: string;
-
-  /**
-   * Delay before starting the animation (in ms)
-   */
-  delay?: number;
-
-  /**
-   * Duration of the animation (in ms)
-   */
-  duration?: number;
-
-  /**
-   * Children to render inside the section
-   */
-  children: React.ReactNode;
-
-  /**
-   * Additional styles to apply to the section container
-   */
-  style?: StyleProp<ViewStyle>;
 
   /**
    * Whether to show the section title
@@ -943,7 +973,7 @@ export interface ArticleSentenceProps {
   /**
    * Additional styles for the container
    */
-  containerStyle?: any;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -994,12 +1024,7 @@ export interface RelatedArticlesSectionProps {
 /**
  * Props for the CloseButton component
  */
-export interface CloseButtonProps {
-  /**
-   * Callback when the button is pressed
-   */
-  onPress: () => void;
-
+export interface CloseButtonProps extends BasePressableProps, BaseStyleProps {
   /**
    * Size of the button container
    * @default 32
@@ -1018,11 +1043,6 @@ export interface CloseButtonProps {
   color?: string;
 
   /**
-   * Additional styles for the button
-   */
-  style?: ViewStyle;
-
-  /**
    * Whether to use haptic feedback when pressed
    * @default true
    */
@@ -1032,59 +1052,27 @@ export interface CloseButtonProps {
 /**
  * Props for the AnimatedItem component
  */
-export interface AnimatedItemProps {
-  /**
-   * Children to render inside the animated container
-   */
-  children: React.ReactNode;
-
-  /**
-   * Delay before starting the animation (in ms)
-   * @default 0
-   */
-  delay?: number;
-
-  /**
-   * Duration of the animation (in ms)
-   * @default 400
-   */
-  duration?: number;
-
-  /**
-   * Additional styles to apply to the container
-   */
-  style?: StyleProp<ViewStyle>;
-}
+export interface AnimatedItemProps extends BaseChildrenProps, BaseAnimationProps, BaseStyleProps {}
 
 /**
  * Props for the ReadingListButton component
  */
-export interface ReadingListButtonProps {
+export interface ReadingListButtonProps extends BaseStyleProps {
   /**
    * ID of the article to add/remove from reading list
    */
   articleId: number;
-
-  /**
-   * Additional styles for the button
-   */
-  style?: StyleProp<ViewStyle>;
 }
 
 /**
  * Props for the StreakCard component
  */
-export interface StreakCardProps {
+export interface StreakCardProps extends BaseThemedProps {
   /**
    * Current streak count
    * @default 5
    */
   streak?: number;
-
-  /**
-   * Theme colors
-   */
-  colors: ReturnType<typeof useColors>;
 
   /**
    * Whether to animate when the streak changes
@@ -1112,12 +1100,9 @@ export interface PageHeaderProps {
 /**
  * Props for the EnhancedImage component
  */
-export interface EnhancedImageProps {
+export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressableProps {
   /** Source URL of the image */
   source: string;
-
-  /** Custom styles to apply to the container */
-  style?: StyleProp<ViewStyle>;
 
   /** Content fit mode */
   contentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
@@ -1170,16 +1155,11 @@ export interface ErrorMessageProps {
 /**
  * Props for the vocabulary ReviewButton component
  */
-export interface ReviewButtonProps {
+export interface ReviewButtonProps extends BasePressableProps {
   /**
    * Number of words due for review
    */
   dueWords: number;
-
-  /**
-   * Callback when the review button is pressed
-   */
-  onPress: () => void;
 }
 
 /**
@@ -1206,7 +1186,7 @@ export interface MeaningOverlayProps {
 /**
  * Props for the WordDisplay component
  */
-export interface WordDisplayProps {
+export interface WordDisplayProps extends BaseStyleProps {
   /**
    * Word text to display
    */
@@ -1216,22 +1196,12 @@ export interface WordDisplayProps {
    * Font size for the word
    */
   fontSize: number;
-
-  /**
-   * Additional styles for the container
-   */
-  style?: ViewStyle;
 }
 
 /**
  * Props for the InstructionFooter component
  */
-export interface InstructionFooterProps {
-  /**
-   * Additional styles for the container
-   */
-  style?: ViewStyle;
-}
+export interface InstructionFooterProps extends BaseStyleProps {}
 
 /**
  * Props for the VocabularyStats component
@@ -1260,3 +1230,64 @@ export interface WordReviewCardProps {
   /** Whether the card is visible */
   isVisible: boolean;
 }
+
+/**
+ * Variant types for ThemedCard
+ */
+export type CardVariant = 'article' | 'compact';
+
+/**
+ * Props for article variant of ThemedCard
+ */
+export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressableProps {
+  /** Variant of the card */
+  variant: 'article';
+  /** URL of the image to display in the card */
+  imageUrl?: string;
+  /** Title text to display in the card */
+  title?: string;
+  /** Category text to display in a pill on the card */
+  category?: string;
+  /** Author name to display in the card */
+  author?: string;
+  /** Summary text to display in the card */
+  summary?: string;
+}
+
+/**
+ * Props for compact variant of ThemedCard
+ */
+export interface CompactCardProps extends BaseCardProps, BaseOptionalPressableProps {
+  /** Variant of the card */
+  variant: 'compact';
+  /** Children to render inside the card */
+  children?: React.ReactNode;
+}
+
+/**
+ * ThemedCard is a reusable card component that can display content in different variants.
+ * It supports both light and dark themes, handles loading states, and provides smooth animations.
+ *
+ * The component is optimized for performance with memoization and proper image loading handling.
+ * It uses Reanimated 3's built-in animations for optimal performance.
+ */
+export type ThemedCardProps =
+  | ArticleCardProps
+  | CompactCardProps
+  | (BaseCardProps &
+      BaseOptionalPressableProps & {
+        /** URL of the image to display in the card (for article variant) */
+        imageUrl?: string;
+        /** Title text to display in the card (for article variant) */
+        title?: string;
+        /** Category text to display in a pill on the card (for article variant) */
+        category?: string;
+        /** Author name to display in the card (for article variant) */
+        author?: string;
+        /** Summary text to display in the card (for article variant) */
+        summary?: string;
+        /** Children to render inside the card (for compact variant) */
+        children?: React.ReactNode;
+        /** Variant of the card */
+        variant?: CardVariant;
+      });
