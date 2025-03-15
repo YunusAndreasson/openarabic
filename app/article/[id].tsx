@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 
@@ -307,10 +307,14 @@ export default function ArticleScreen() {
 
   // Handle back button press with debounce
   const handleBackPress = useCallback(() => {
+    // Navigate back
     navigateTo('..', () => {
       // Any cleanup before navigation if needed
+      if (isPlaying) {
+        stopPlayback();
+      }
     });
-  }, [navigateTo]);
+  }, [navigateTo, isPlaying, stopPlayback]);
 
   // Handle bookmark toggle with debounce for UI consistency
   const handleBookmarkPress = useCallback(() => {

@@ -342,13 +342,20 @@ export default function ArticlesScreen() {
   }, [articles.length, error]);
 
   // Use the new screen animation hook
-  const { fadeInStyle } = useScreenAnimation(
+  const { fadeInStyle, triggerAnimations } = useScreenAnimation(
     isDataReady,
     isLoadingState,
     300, // Animation duration
     0, // Layout delay
     0 // Animation delay
   );
+
+  // Trigger animations when data is ready
+  useEffect(() => {
+    if (isDataReady && !isLoadingState) {
+      triggerAnimations();
+    }
+  }, [isDataReady, isLoadingState, triggerAnimations]);
 
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {

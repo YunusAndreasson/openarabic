@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
@@ -70,17 +70,30 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   onRefresh,
   onArticlePress,
   ListHeaderComponent,
+  onClearFilter,
 }) => {
   const colors = useColors();
+  const isFirstRender = useRef(true);
 
   // Add the endMessageAnimatedStyle
   const { animatedStyle: endMessageAnimatedStyle, startAnimation: startEndMessageAnimation } =
     useFadeInAnimation(800, 400);
 
-  // Start the end message animation when the component mounts
+  // Add header animation
+  const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
+    useFadeInAnimation(300, 300);
+
+  // Start animations when the component mounts
   useEffect(() => {
     startEndMessageAnimation();
-  }, [startEndMessageAnimation]);
+    startHeaderAnimation();
+  }, [startEndMessageAnimation, startHeaderAnimation]);
+
+  // Handle cleanup when component unmounts
+  useEffect(() => {
+    isFirstRender.current = false;
+    // No cleanup needed
+  }, []);
 
   return (
     <ThemedView
@@ -103,10 +116,10 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       }}
     >
       {/* Header Component */}
-      {ListHeaderComponent}
+      <Animated.View style={headerAnimatedStyle as any}>{ListHeaderComponent}</Animated.View>
 
       {/* Articles */}
-      {articles.map(article => (
+      {articles.map((article, index) => (
         <View key={`filtered-article-${article.id}`} style={styles.articleContainer}>
           <ThemedCard
             imageUrl={article.image_url || ''}

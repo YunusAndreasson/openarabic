@@ -51,7 +51,7 @@ export const useNavigationWithDebounce = (options: NavigationOptions = {}) => {
         callback();
       }
 
-      // Navigate to the route
+      // Navigate immediately
       try {
         if (navigateOptions?.replace) {
           // @ts-ignore - Using router.replace with type safety is complex due to route typing
