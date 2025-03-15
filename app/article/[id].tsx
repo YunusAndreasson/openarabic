@@ -141,7 +141,7 @@ export default function ArticleScreen() {
   // Animation styles - these are now directly from the hooks
   const contentPadding = useMemo(
     () => ({
-      paddingTop: insets.top + (Platform.OS === 'ios' ? 70 : 65),
+      paddingTop: insets.top + (Platform.OS === 'ios' ? 20 : 16),
       paddingBottom: 4,
       backgroundColor: 'transparent',
     }),
@@ -338,7 +338,7 @@ export default function ArticleScreen() {
       {/* Back button */}
       <FloatingButton
         position="left"
-        top={LAYOUT.SPACING.MEDIUM}
+        top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={combinedBackButtonStyle}
         onPress={handleBackPress}
         iconName="chevron-back"
@@ -351,7 +351,7 @@ export default function ArticleScreen() {
       {user && (
         <FloatingButton
           position="right"
-          top={LAYOUT.SPACING.MEDIUM}
+          top={insets.top + LAYOUT.SPACING.MEDIUM}
           animatedStyle={combinedBookmarkButtonStyle}
           onPress={handleBookmarkPress}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
