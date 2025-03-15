@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable, ViewStyle, StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const FloatingButton: React.FC<FloatingButtonProps> = ({
+export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<ViewStyle> }> = ({
   position,
   top,
   animatedStyle,
@@ -41,6 +41,7 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
   accessibilityLabel,
   colors,
   isDarkMode,
+  style,
 }) => {
   // Simple handler for button press
   const handlePress = () => {
@@ -61,6 +62,7 @@ export const FloatingButton: React.FC<FloatingButtonProps> = ({
         position === 'left' ? styles.backButton : styles.playlistButton,
         { top },
         animatedStyle,
+        style,
       ]}
     >
       <Pressable

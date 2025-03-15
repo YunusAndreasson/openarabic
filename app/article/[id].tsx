@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Haptics from 'expo-haptics';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -38,6 +39,7 @@ import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 import { useNavigationWithDebounce } from '@/hooks';
+import { useAudioPlayer, AUDIO_STATES } from '@/hooks/useAudioPlayer';
 
 // Store
 import {
@@ -48,6 +50,9 @@ import {
 
 // Constants
 import { LAYOUT } from '@/constants/layout';
+
+// Utils
+import { mediumFeedback, successFeedback } from '@/utils/haptics';
 
 // Types
 import type { Tables } from '@/types/database.types';
@@ -84,9 +89,18 @@ export default function ArticleScreen() {
   // Track component mounted state
   const isMountedRef = useRef(true);
 
+  // Track previous audio state to detect transitions
+  const prevAudioStateRef = useRef(AUDIO_STATES.IDLE);
+
   // Animation state
   const [isButtonsVisible, setIsButtonsVisible] = useState(true);
   const prevScrollYValue = useRef(0);
+
+  // Play/Stop button state
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  // Audio player hook
+  const { audioState, loadAndPlayAudio, stopPlayback } = useAudioPlayer();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -134,8 +148,7 @@ export default function ArticleScreen() {
   const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
     useFadeInAnimation(300, 500);
 
-  // Use the floating button animation hook from animations directory
-  const { combinedBackButtonStyle, combinedBookmarkButtonStyle } =
+  const { combinedBackButtonStyle, combinedBookmarkButtonStyle, combinedPlayButtonStyle } =
     useFloatingButtonAnimation(isButtonsVisible);
 
   // Animation styles - these are now directly from the hooks
@@ -254,7 +267,7 @@ export default function ArticleScreen() {
           animated: false,
         });
       } catch (error) {
-        console.log('Scroll reset error (safe to ignore):', error);
+        // Silently handle errors
       }
     }
   }, [id]);
@@ -306,13 +319,95 @@ export default function ArticleScreen() {
     }
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
+  // Generate audio URL from article content
+  const generateArticleAudio = useCallback(() => {
+    if (!article) return null;
+
+    // Use the article's audio_url if available
+    if (article.audio_url) {
+      return article.audio_url;
+    }
+
+    // Fallback to a sample audio URL for testing
+    return 'https://file-examples.com/storage/fe8c7eef0c6364f6c9504cc/2017/11/file_example_MP3_700KB.mp3';
+  }, [article]);
+
+  // Handle play button press
+  const handlePlayPress = useCallback(async () => {
+    if (isPlaying) {
+      // If already playing, stop playback
+      mediumFeedback(); // Haptic feedback for stopping
+
+      // Update UI immediately for responsive feel
+      setIsPlaying(false);
+      await stopPlayback();
+    } else {
+      // If not playing, start playback
+      const audioUrl = generateArticleAudio();
+
+      if (!audioUrl) {
+        return;
+      }
+
+      // Provide haptic feedback immediately
+      successFeedback();
+
+      // Update UI immediately for responsive feel
+      setIsPlaying(true);
+
+      // Load and play the audio
+      const success = await loadAndPlayAudio(audioUrl);
+
+      if (!success) {
+        setIsPlaying(false);
+        mediumFeedback(); // Haptic feedback for failure
+      }
+    }
+  }, [isPlaying, generateArticleAudio, loadAndPlayAudio, stopPlayback]);
+
+  // Audio state change handler
+  useEffect(() => {
+    // Handle audio state transitions
+    if (audioState === AUDIO_STATES.PLAYING) {
+      // When audio starts playing, show stop button
+      setIsPlaying(true);
+    } else if (
+      audioState === AUDIO_STATES.IDLE ||
+      audioState === AUDIO_STATES.ERROR ||
+      (audioState === AUDIO_STATES.PAUSED && prevAudioStateRef.current === AUDIO_STATES.PLAYING)
+    ) {
+      // Reset to play button when:
+      // 1. Audio is idle or has an error, OR
+      // 2. Audio transitions from playing to paused (which happens when audio completes)
+      setIsPlaying(false);
+
+      // Provide haptic feedback when audio completes
+      if (prevAudioStateRef.current === AUDIO_STATES.PLAYING) {
+        successFeedback();
+      }
+    }
+
+    // Store current state for next comparison
+    prevAudioStateRef.current = audioState;
+  }, [audioState]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
       cleanupNavigation();
+
+      // Stop any audio playback when unmounting
+      try {
+        stopPlayback();
+      } catch (error) {
+        // Silently handle errors
+      }
+
+      // Reset the play button state
+      setIsPlaying(false);
     };
-  }, [cleanupNavigation]);
+  }, [cleanupNavigation, stopPlayback]);
 
   // Main render
   if (isLoading || isLoadingArticle) {
@@ -360,6 +455,23 @@ export default function ArticleScreen() {
           isDarkMode={isDarkMode}
         />
       )}
+
+      {/* Play/Stop button */}
+      <FloatingButton
+        position="right"
+        top={insets.top + LAYOUT.SPACING.MEDIUM}
+        animatedStyle={combinedPlayButtonStyle}
+        iconName={isPlaying ? 'stop' : 'play'}
+        accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
+        onPress={handlePlayPress}
+        colors={colors}
+        isDarkMode={isDarkMode}
+        style={{
+          right: user
+            ? LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM + 10
+            : LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
+        }}
+      />
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>

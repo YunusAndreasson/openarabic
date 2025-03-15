@@ -7,7 +7,7 @@ import { TIMING_CONFIG } from './animationConfigs';
 /**
  * Hook for floating button animations that combines slide and opacity effects
  * @param isVisible - Whether the buttons should be visible
- * @returns Combined animated styles for back and bookmark buttons
+ * @returns Combined animated styles for back, bookmark, and play buttons
  */
 export const useFloatingButtonAnimation = (isVisible: boolean) => {
   // Animation hooks
@@ -15,15 +15,24 @@ export const useFloatingButtonAnimation = (isVisible: boolean) => {
     animatedStyle: backButtonAnimatedStyle,
     startAnimation: startBackButtonAnimation,
     reset: resetBackButtonAnimation,
-  } = useSlideAnimation(0, 20, 100, 'left');
+  } = useSlideAnimation(0, undefined, undefined, 'left');
 
   const {
     animatedStyle: bookmarkButtonAnimatedStyle,
     startAnimation: startBookmarkButtonAnimation,
     reset: resetBookmarkButtonAnimation,
-  } = useSlideAnimation(0, 20, 100, 'left');
+  } = useSlideAnimation(0, undefined, undefined, 'left');
 
-  const { opacity: buttonsOpacity } = useOpacityAnimation(1, TIMING_CONFIG.MEDIUM.duration);
+  const {
+    animatedStyle: playButtonAnimatedStyle,
+    startAnimation: startPlayButtonAnimation,
+    reset: resetPlayButtonAnimation,
+  } = useSlideAnimation(0, undefined, undefined, 'right');
+
+  const { opacity: buttonsOpacity } = useOpacityAnimation({
+    initialOpacity: 1,
+    duration: TIMING_CONFIG.MEDIUM.duration,
+  });
 
   // Combined animated styles
   const combinedBackButtonStyle = useAnimatedStyle(
@@ -42,6 +51,14 @@ export const useFloatingButtonAnimation = (isVisible: boolean) => {
     [bookmarkButtonAnimatedStyle, buttonsOpacity]
   );
 
+  const combinedPlayButtonStyle = useAnimatedStyle(
+    () => ({
+      transform: [...(playButtonAnimatedStyle.transform || [])],
+      opacity: buttonsOpacity.value,
+    }),
+    [playButtonAnimatedStyle, buttonsOpacity]
+  );
+
   // Update animations based on visibility
   useEffect(() => {
     // Simple fade animation
@@ -53,22 +70,27 @@ export const useFloatingButtonAnimation = (isVisible: boolean) => {
     if (isVisible) {
       startBackButtonAnimation();
       startBookmarkButtonAnimation();
+      startPlayButtonAnimation();
     } else {
       resetBackButtonAnimation();
       resetBookmarkButtonAnimation();
+      resetPlayButtonAnimation();
     }
   }, [
     isVisible,
     buttonsOpacity,
     startBackButtonAnimation,
     startBookmarkButtonAnimation,
+    startPlayButtonAnimation,
     resetBackButtonAnimation,
     resetBookmarkButtonAnimation,
+    resetPlayButtonAnimation,
   ]);
 
   return {
     combinedBackButtonStyle,
     combinedBookmarkButtonStyle,
+    combinedPlayButtonStyle,
   };
 };
 
