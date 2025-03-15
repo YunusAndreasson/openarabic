@@ -1,8 +1,8 @@
 import { useLayoutReady } from './useLayoutReady';
-import { useFadeInAnimation } from './animations';
+import { useOpacityAnimation } from './animations';
 import { useAnimationTrigger } from './useAnimationTrigger';
 import { useCallback } from 'react';
-import { AnimatedStyle } from 'react-native-reanimated';
+import { AnimatedStyle } from '@/hooks/animations/types';
 
 /**
  * Return type for useScreenAnimation hook
@@ -50,7 +50,10 @@ export const useScreenAnimation = (
     animatedStyle: fadeInStyle,
     startAnimation: startFadeIn,
     opacity,
-  } = useFadeInAnimation(0, animationDuration);
+  } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: animationDuration,
+  });
 
   // Get animation trigger
   const { animationsTriggered, triggerAnimations, resetAnimations } = useAnimationTrigger(

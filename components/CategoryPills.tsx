@@ -7,8 +7,9 @@ import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import Pill from './Pill';
-import Animated, { SharedValue } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
+import type { SharedValue } from '@/hooks/animations/types';
 
 interface CategoryPillsProps {
   categories: Tables<'categories'>[];

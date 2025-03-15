@@ -15,12 +15,10 @@ import {
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { LoadingContainer } from './Loader';
-import { useComponentAnimation } from '@/hooks/animations';
+import { useComponentAnimation, useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
-import { useAnimatedReaction, useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
-import { TIMING_CONFIG } from '@/hooks/animations/animationConfigs';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -55,12 +53,12 @@ export const VocabularyGraph = React.memo(
       GRAPH_HEIGHT
     );
 
-    // Animation progress value for the graph (0 to 1)
-    const animationProgress = useSharedValue(0);
-    // State to store the current animation value for Skia
-    const [skiaProgress, setSkiaProgress] = React.useState(0);
-    // Track if animation has started to avoid restarting
-    const hasAnimationStarted = React.useRef(false);
+    // Use our custom graph animation hook
+    const {
+      skiaProgress,
+      startAnimation: startGraphAnimation,
+      resetAnimation,
+    } = useGraphAnimation(2000);
 
     // Start animation when component mounts
     React.useEffect(() => {
@@ -73,11 +71,6 @@ export const VocabularyGraph = React.memo(
       return () => clearTimeout(timer);
     }, [startAnimation]);
 
-    // Debug logs
-    React.useEffect(() => {
-      // Debug logs removed for production
-    }, [animationTriggered, isReady, isLoading, points.length]);
-
     // Start the animation when the component is ready and parent signals animation
     React.useEffect(() => {
       // Only start animation if:
@@ -85,47 +78,25 @@ export const VocabularyGraph = React.memo(
       // 2. Not in loading state
       // 3. We have data points
       // 4. Parent has triggered animations
-      // 5. Animation hasn't already started
-      if (
-        isReady &&
-        !isLoading &&
-        points.length > 0 &&
-        animationTriggered &&
-        !hasAnimationStarted.current
-      ) {
-        // Mark animation as started
-        hasAnimationStarted.current = true;
-
-        // Reset animation value
-        animationProgress.value = 0;
-        setSkiaProgress(0);
-
+      if (isReady && !isLoading && points.length > 0 && animationTriggered) {
         // Use setTimeout to ensure synchronization with mastery bar
         setTimeout(() => {
-          // Run the animation with matching duration
-          animationProgress.value = withTiming(1, {
-            duration: 2000, // Match mastery bar duration
-            easing: TIMING_CONFIG.SLOW.easing,
-          });
+          startGraphAnimation();
         }, 50);
       }
 
       // Reset animation state when parent animation trigger is turned off
-      if (!animationTriggered && hasAnimationStarted.current) {
-        hasAnimationStarted.current = false;
-        animationProgress.value = 0;
-        setSkiaProgress(0);
+      if (!animationTriggered) {
+        resetAnimation();
       }
-    }, [isReady, isLoading, points.length, animationProgress, animationTriggered]);
-
-    // Use animated reaction to update Skia canvas when animation progresses
-    useAnimatedReaction(
-      () => animationProgress.value,
-      currentValue => {
-        runOnJS(setSkiaProgress)(currentValue);
-      },
-      [animationProgress]
-    );
+    }, [
+      isReady,
+      isLoading,
+      points.length,
+      animationTriggered,
+      startGraphAnimation,
+      resetAnimation,
+    ]);
 
     // Card style with theme colors
     const cardStyle = useMemo(

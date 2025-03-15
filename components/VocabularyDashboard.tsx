@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, Animated, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
@@ -7,11 +7,10 @@ import { Colors } from '../constants/Colors';
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
-import { useProgressAnimation, useCardAnimation } from '@/hooks/animations';
+import { useProgressAnimation, usePressAnimation } from '@/hooks/animations';
 import { ProgressBar } from './ProgressBar';
 import * as Haptics from 'expo-haptics';
-import Animated2, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { SPRING_CONFIG } from '@/hooks/animations';
+import Animated from 'react-native-reanimated';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
@@ -40,14 +39,9 @@ interface StatItemProps {
 // Separate StatItem component for better reusability and memoization
 const StatItem = React.memo(
   ({ value, label, icon, iconColor, bgColor, animateValue, category, onPress }: StatItemProps) => {
-    // Use pressed animation state
-    const pressed = useSharedValue(0);
-
-    // Create animated style for press effect
-    const animatedStyle = useAnimatedStyle(() => {
-      return {
-        transform: [{ scale: withSpring(pressed.value ? 0.95 : 1, SPRING_CONFIG.CARD) }],
-      };
+    // Use the standard press animation hook
+    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+      type: 'card',
     });
 
     const handlePress = () => {
@@ -59,16 +53,8 @@ const StatItem = React.memo(
       }
     };
 
-    const handlePressIn = () => {
-      pressed.value = 1;
-    };
-
-    const handlePressOut = () => {
-      pressed.value = 0;
-    };
-
     return (
-      <Animated2.View style={animatedStyle}>
+      <Animated.View style={animatedStyle}>
         <TouchableOpacity
           style={styles.statItem}
           onPress={handlePress}
@@ -85,7 +71,7 @@ const StatItem = React.memo(
           </AnimatedThemedText>
           <ThemedText style={styles.statLabel}>{label}</ThemedText>
         </TouchableOpacity>
-      </Animated2.View>
+      </Animated.View>
     );
   }
 );

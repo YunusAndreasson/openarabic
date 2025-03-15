@@ -22,7 +22,7 @@ import { useColors } from '@/hooks/useColors';
 import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation, useButtonAnimation } from '@/hooks/animations';
+import { useOpacityAnimation, usePressAnimation } from '@/hooks/animations';
 import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
 import { useRouter } from 'expo-router';
 import EmptyState from '@/components/EmptyState';
@@ -147,7 +147,9 @@ const ReadingListItem = React.memo(
   }) => {
     const colors = useColors();
     const isActive = isPlaying || isPaused;
-    const { animatedStyle, handlePressIn, handlePressOut } = useButtonAnimation();
+    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+      type: 'button',
+    });
 
     return (
       <Pressable

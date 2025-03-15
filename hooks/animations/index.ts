@@ -1,13 +1,32 @@
 /**
  * Centralized exports for all animation hooks
  * This allows importing from a single location:
- * import { useFadeInAnimation, useButtonAnimation } from '@/hooks/animations';
+ * import { useOpacityAnimation, usePressAnimation, useReviewAnimation } from '@/hooks/animations';
  */
 
-export { useFadeInAnimation } from './useFadeInAnimation';
+/**
+ * MIGRATION GUIDE
+ *
+ * The following hooks have been consolidated into unified hooks:
+ *
+ * - useButtonAnimation → usePressAnimation({ type: 'button' })
+ * - useCardAnimation → usePressAnimation({ type: 'card' })
+ * - useReviewCardAnimation → useReviewAnimation({ type: 'card' })
+ * - useReviewScreenAnimation → useReviewAnimation({ type: 'screen', trackOpacityZero: true })
+ * - useFadeInAnimation → useOpacityAnimation({ initialOpacity: 0 })
+ * - useFadeInEntrance → useOpacityAnimation({ style: 'entrance-only' })
+ * - useDramaticPulseAnimation → usePulseAnimation({ style: 'dramatic' })
+ */
+
+// Backward compatibility aliases
+import { useOpacityAnimation } from './useOpacityAnimation';
+import { usePressAnimation } from './usePressAnimation';
+import { useReviewAnimation } from './useReviewAnimation';
+import { usePulseAnimation } from './usePulseAnimation';
+
+export { useOpacityAnimation } from './useOpacityAnimation';
 export { useSlideAnimation } from './useSlideAnimation';
-export { useButtonAnimation } from './useButtonAnimation';
-export { useCardAnimation } from './useCardAnimation';
+export { usePressAnimation } from './usePressAnimation';
 export { usePulseAnimation } from './usePulseAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
 export { useShimmerAnimation } from './useShimmerAnimation';
@@ -17,8 +36,50 @@ export { useProgressAnimation } from './useProgressAnimation';
 export { useSwipeAnimation } from './useSwipeAnimation';
 export { useLayoutAnimation } from './useLayoutAnimation';
 export { useSharedTransition } from './useSharedTransition';
-export { useOpacityAnimation } from './useOpacityAnimation';
 export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
+export { useGraphAnimation } from './useGraphAnimation';
+export { useReviewAnimation } from './useReviewAnimation';
 
 // Export standardized animation configurations
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
+
+// Export animation types
+export * from './types';
+
+// Export type definitions from hooks
+export type { PulseStyle, PulseAnimationOptions, PulseAnimationResult } from './usePulseAnimation';
+export type {
+  FadeAnimationStyle,
+  FadeAnimationOptions,
+  FadeAnimationResult,
+} from './useOpacityAnimation';
+export type {
+  PressAnimationType,
+  PressAnimationOptions,
+  PressAnimationResult,
+} from './usePressAnimation';
+export type {
+  ReviewAnimationType,
+  ReviewAnimationOptions,
+  ReviewAnimationResult,
+} from './useReviewAnimation';
+
+// Create aliases for old hook names
+export const useFadeInAnimation = (delay = 0, duration = 300) =>
+  useOpacityAnimation({ initialOpacity: 0, delay, duration });
+
+export const useFadeInEntrance = (delay = 0, duration = 300) =>
+  useOpacityAnimation({ style: 'entrance-only', delay, duration });
+
+export const useButtonAnimation = (scaleAmount?: number) =>
+  usePressAnimation({ type: 'button', scaleAmount });
+
+export const useCardAnimation = (scaleAmount?: number, opacityAmount?: number) =>
+  usePressAnimation({ type: 'card', scaleAmount, opacityAmount });
+
+export const useReviewCardAnimation = () => useReviewAnimation({ type: 'card' });
+
+export const useReviewScreenAnimation = (trackOpacityZero = true) =>
+  useReviewAnimation({ type: 'screen', trackOpacityZero });
+
+export const useDramaticPulseAnimation = () => usePulseAnimation({ style: 'dramatic' });

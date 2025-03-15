@@ -1,14 +1,15 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import * as Haptics from 'expo-haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import Pill from '../Pill';
-import Animated, { useAnimatedStyle, interpolate } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { CategoryPillsContainerProps } from '../../types/ui.types';
 import type { Tables } from '../../types/database.types';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import { useSlideAnimation } from '@/hooks/animations';
 
 function CategoryPillsContainerComponent({
   categories,
@@ -18,18 +19,22 @@ function CategoryPillsContainerComponent({
 }: CategoryPillsContainerProps): React.JSX.Element {
   const colors = useColors();
 
-  // Memoize the animated style using Reanimated
-  const containerAnimatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        {
-          translateY: interpolate(visible.value, [0, 1], [-100, 0]),
-        },
-      ],
-      opacity: visible.value,
-      marginBottom: -LAYOUT.SPACING.XLARGE,
-    };
-  });
+  // Use the standard slide animation hook for vertical slide
+  const { animatedStyle, startAnimation, reset } = useSlideAnimation(
+    0, // No delay
+    undefined, // Default damping
+    undefined, // Default stiffness
+    'left' // Slide from left
+  );
+
+  // Start or reset animation based on visibility
+  useEffect(() => {
+    if (visible.value === 1) {
+      startAnimation();
+    } else {
+      reset();
+    }
+  }, [visible.value, startAnimation, reset]);
 
   // Memoize the press handler factory
   const createPressHandler = useCallback(
@@ -42,7 +47,12 @@ function CategoryPillsContainerComponent({
 
   return (
     <Animated.View
-      style={[styles.container, { backgroundColor: colors.background }, containerAnimatedStyle]}
+      style={[
+        styles.container,
+        { backgroundColor: colors.background },
+        animatedStyle,
+        { marginBottom: -LAYOUT.SPACING.XLARGE },
+      ]}
     >
       <View style={styles.scrollContainer}>
         <ScrollView

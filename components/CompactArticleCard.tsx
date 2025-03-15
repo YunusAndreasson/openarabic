@@ -9,7 +9,7 @@ import { CompactArticleCardProps } from '../types/ui.types';
 import { formatTimeAgo } from '../utils/dateUtils';
 import { EnhancedImage } from './EnhancedImage';
 import Animated from 'react-native-reanimated';
-import { useCardAnimation } from '../hooks/animations';
+import { usePressAnimation } from '../hooks/animations';
 
 // TimeAgo component to show when an article was published or last opened
 const TimeAgo = React.memo(
@@ -85,7 +85,9 @@ function CompactArticleCardComponent({
   lastOpenedAt,
 }: CompactArticleCardProps) {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'card',
+  });
 
   // Dynamically generated styles based on theme
   const dynamicStyles = useMemo(

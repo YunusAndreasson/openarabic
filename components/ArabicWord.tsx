@@ -16,7 +16,7 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
-import { useCardAnimation } from '../hooks/animations';
+import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import * as Haptics from 'expo-haptics';
 
@@ -54,8 +54,12 @@ function ArabicWordComponent({
         }
       : null;
 
-  // Use standardized card animation with custom scale values
-  const { animatedStyle, pressed } = useCardAnimation(1, 1);
+  // Use standardized press animation with custom scale values
+  const { animatedStyle, pressed } = usePressAnimation({
+    type: 'card',
+    scaleAmount: 1,
+    opacityAmount: 1,
+  });
 
   // Update the pressed value based on isSelected - direct assignment for immediate effect
   useEffect(() => {

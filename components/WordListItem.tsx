@@ -5,7 +5,7 @@ import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
 import { StudyWord } from '../types/vocabulary.types';
 import Animated from 'react-native-reanimated';
-import { useCardAnimation } from '../hooks/animations';
+import { usePressAnimation } from '../hooks/animations';
 
 interface WordListItemProps {
   word: StudyWord;
@@ -16,8 +16,12 @@ interface WordListItemProps {
 export default function WordListItem({ word, onPress, masteryScore }: WordListItemProps) {
   const colors = useColors();
 
-  // Use card animation for press effect
-  const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation(0.97, 0.95);
+  // Use press animation for press effect
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'card',
+    scaleAmount: 0.97,
+    opacityAmount: 0.95,
+  });
 
   // Get the actual word data
   const { word_form, english } = word.sentence_word || {};

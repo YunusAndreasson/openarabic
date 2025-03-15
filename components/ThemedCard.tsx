@@ -7,8 +7,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Pill from './Pill';
 import { LoadingContainer } from './Loader';
-import Animated, { FadeIn } from 'react-native-reanimated';
-import { useCardAnimation, useLayoutAnimation } from '@/hooks/animations';
+import Animated from 'react-native-reanimated';
+import { usePressAnimation, useLayoutAnimation, useOpacityAnimation } from '@/hooks/animations';
 import { EnhancedImage } from './EnhancedImage';
 
 /**
@@ -56,11 +56,20 @@ function ThemedCardComponent({
   const isCompact = variant === 'compact';
 
   // Use our animation utility hook
-  const { animatedStyle, handlePressIn, handlePressOut } = useCardAnimation();
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'card',
+  });
 
   // Use the layout animation hook with LinearTransition
   const { layout } = useLayoutAnimation({
     type: 'linear',
+    duration: 300,
+  });
+
+  // Use our standardized fade-in entrance animation
+  const { entering } = useOpacityAnimation({
+    style: 'entrance-only',
+    delay: 0,
     duration: 300,
   });
 
@@ -224,7 +233,7 @@ function ThemedCardComponent({
 
   return (
     <View style={styles.container}>
-      <Animated.View style={animatedStyle} entering={FadeIn.duration(300)} layout={layout}>
+      <Animated.View style={animatedStyle} entering={entering} layout={layout}>
         <Pressable
           onPress={handlePress}
           onPressIn={handlePressIn}

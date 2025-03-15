@@ -2,7 +2,8 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/hooks/animations/types';
 
 // Constants
 import { LAYOUT } from '@/constants/layout';

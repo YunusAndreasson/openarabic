@@ -1,6 +1,6 @@
 import { ViewStyle, TextStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
-import { SharedValue } from 'react-native-reanimated';
+import { SharedValue } from '@/hooks/animations/types';
 import { Category, Article } from './articles.types';
 
 /**

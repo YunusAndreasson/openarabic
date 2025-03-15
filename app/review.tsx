@@ -21,7 +21,6 @@ import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Loader } from '@/components/Loader';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Toast from 'react-native-toast-message';
 import EntranceAnimation from '@/components/EntranceAnimation';
 import AnimatedItem from '@/components/AnimatedItem';
@@ -203,7 +202,6 @@ const EmptyStateScreen = React.memo(({ onClose }: { onClose: () => void }) => {
 
 export default function ReviewScreen() {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const params = useLocalSearchParams();
   const fromVocabulary = params.fromVocabulary === 'true';
   const initialLoadRef = useRef(true);
@@ -211,7 +209,6 @@ export default function ReviewScreen() {
   const { user } = useAuth();
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const meaningTimeoutRef = useRef<NodeJS.Timeout>();
-  const fadeInTimeoutRef = useRef<NodeJS.Timeout>();
   const [currentMeaning, setCurrentMeaning] = useState('');
   const [currentSentence, setCurrentSentence] = useState({
     wordForm: '',
@@ -219,9 +216,7 @@ export default function ReviewScreen() {
   const [nextSentence, setNextSentence] = useState({
     wordForm: '',
   });
-  const [animationState, setAnimationState] = useState<
-    'idle' | 'transitioning-out' | 'updating-word' | 'transitioning-in'
-  >('idle');
+  const [animationState, setAnimationState] = useState<'idle' | 'animating'>('idle');
 
   // Add state to control progress bar animation
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
@@ -280,16 +275,29 @@ export default function ReviewScreen() {
     [nextSentence]
   );
 
+  // Extract word for display - use the state version instead of direct calculation
+  const { wordForm } = currentSentence;
+
+  // Create animated styles - memoize to prevent unnecessary recalculations
+  const cardStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+      opacity: opacity.value,
+    };
+  }, []);
+
+  // Memoize the word content to prevent unnecessary re-renders
+  const wordContent = useMemo(
+    () => <WordDisplay word={wordForm} fontSize={wordFontSize} style={baseStyles.wordContainer} />,
+    [wordForm, wordFontSize]
+  );
+
   // Clean up timeouts when component unmounts
   useEffect(() => {
     return () => {
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = undefined;
-      }
-      if (fadeInTimeoutRef.current) {
-        clearTimeout(fadeInTimeoutRef.current);
-        fadeInTimeoutRef.current = undefined;
       }
     };
   }, []);
@@ -328,10 +336,6 @@ export default function ReviewScreen() {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = undefined;
       }
-      if (fadeInTimeoutRef.current) {
-        clearTimeout(fadeInTimeoutRef.current);
-        fadeInTimeoutRef.current = undefined;
-      }
 
       // Handle errors in word update process
       const handleUpdateError = (error: any) => {
@@ -343,7 +347,7 @@ export default function ReviewScreen() {
           position: 'bottom',
         });
 
-        // Reset animation state
+        // Reset animation state and values
         setAnimationState('idle');
         opacity.value = 1;
         translateX.value = 0;
@@ -352,8 +356,8 @@ export default function ReviewScreen() {
       const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
           try {
-            // Update animation state to reflect that we're transitioning out
-            setAnimationState('transitioning-out');
+            // Update animation state
+            setAnimationState('animating');
 
             // First update the word in the database
             updateWord(currentWord.sentence_word_id, success)
@@ -365,14 +369,10 @@ export default function ReviewScreen() {
                 // This guarantees the current word is completely invisible
                 opacity.value = 0;
 
-                // Move to next state - we're now updating the word
-                setAnimationState('updating-word');
-
                 // Add a tiny delay before showing the next word
                 // This ensures the DOM has time to update with the new word content
                 setTimeout(() => {
                   // For both success and failure cases, use immediate fade-in
-                  setAnimationState('transitioning-in');
                   opacity.value = withTiming(1, FAST_ANIMATION_CONFIG, () => {
                     runOnJS(setAnimationState)('idle');
                   });
@@ -411,7 +411,7 @@ export default function ReviewScreen() {
         updateWordAndAnimate();
       }
     },
-    [currentWord, updateWord, opacity, translateX, nextSentence, progress]
+    [currentWord, updateWord, opacity, translateX, progress]
   );
 
   // Create a pan gesture handler for the entire screen
@@ -446,23 +446,6 @@ export default function ReviewScreen() {
       router.back();
     }, 100); // Small delay to ensure haptic feedback is felt
   }, [invalidateQueries]);
-
-  // Create animated styles - memoize to prevent unnecessary recalculations
-  const cardStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-      opacity: opacity.value,
-    };
-  }, []);
-
-  // Extract word for display - use the state version instead of direct calculation
-  const { wordForm } = currentSentence;
-
-  // Memoize the word content to prevent unnecessary re-renders
-  const wordContent = useMemo(
-    () => <WordDisplay word={wordForm} fontSize={wordFontSize} style={baseStyles.wordContainer} />,
-    [wordForm, wordFontSize]
-  );
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {

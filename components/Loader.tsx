@@ -1,120 +1,54 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withDelay,
-  withSequence,
-  Easing,
-  cancelAnimation,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useOpacityAnimation, usePulseAnimation } from '../hooks/animations';
 
 interface LoaderProps {
-  size?: 'small' | 'large';
+  size?: number | 'small' | 'large';
   color?: string;
   style?: ViewStyle;
 }
 
 /**
- * A simple pulsating circle loader with dramatic zoom animation
+ * Loader component that displays a pulsating circle
  */
 export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) => {
   const colors = useColors();
   const loaderColor = color || colors.text;
 
-  // Animation values
-  const scale = useSharedValue(0.3);
-  const opacity = useSharedValue(0.5);
-
-  // Start animation immediately
-  useEffect(() => {
-    const startAnimation = () => {
-      // Animate scale with dramatic zoom effect
-      scale.value = withSequence(
-        withTiming(0.7, {
-          duration: 200,
-          easing: Easing.out(Easing.quad),
-        }),
-        withTiming(1.25, {
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
-        }),
-        withDelay(
-          150,
-          withTiming(0.3, {
-            duration: 500,
-            easing: Easing.inOut(Easing.cubic),
-          })
-        ),
-        withDelay(200, withTiming(0.3, { duration: 0 }))
-      );
-
-      // Animate opacity in sync with scale
-      opacity.value = withSequence(
-        withTiming(0.8, {
-          duration: 200,
-          easing: Easing.out(Easing.quad),
-        }),
-        withTiming(1, {
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
-        }),
-        withDelay(
-          150,
-          withTiming(0.5, {
-            duration: 500,
-            easing: Easing.inOut(Easing.cubic),
-          })
-        ),
-        withDelay(200, withTiming(0.5, { duration: 0 }))
-      );
-    };
-
-    // Start the animation cycle
-    const intervalId = setInterval(startAnimation, 1350);
-    startAnimation();
-
-    return () => {
-      clearInterval(intervalId);
-      cancelAnimation(scale);
-      cancelAnimation(opacity);
-    };
-  }, [scale, opacity]);
-
-  // Size configuration
-  const circleSize = size === 'large' ? 52 : 28;
-  const borderWidth = size === 'large' ? 4 : 2;
-
-  // Dynamic styles based on animation values
-  const animatedStyle = useAnimatedStyle(() => {
-    const scaleProgress = (scale.value - 0.3) / 0.95; // Normalized progress (0.3 to 1.25 range)
-
-    return {
-      transform: [{ scale: scale.value }],
-      opacity: opacity.value,
-      borderWidth: borderWidth * (0.6 + scaleProgress * 0.8),
-      shadowRadius: 4 + scaleProgress * 15,
-      shadowOpacity: 0.2 + scaleProgress * 0.5,
-      elevation: Math.round(4 + scaleProgress * 15),
-    };
+  // Use the dramatic pulse animation style with autoStart
+  const { animatedStyle, stopAnimation } = usePulseAnimation({
+    style: 'dramatic',
+    autoStart: true,
   });
 
-  // Base circle styles
+  // Clean up animation on unmount
+  useEffect(() => {
+    return () => {
+      stopAnimation();
+    };
+  }, [stopAnimation]);
+
+  // Size configuration
+  const circleSize = typeof size === 'number' ? size : size === 'large' ? 52 : 28;
+  const borderWidth = typeof size === 'number' ? 4 : size === 'large' ? 4 : 2;
+
+  // Base circle style
   const circleStyle = useMemo(
     () => ({
       width: circleSize,
       height: circleSize,
       borderRadius: circleSize / 2,
-      borderColor: loaderColor,
       backgroundColor: 'transparent',
+      borderColor: loaderColor,
+      borderWidth,
       shadowColor: loaderColor,
       shadowOffset: { width: 0, height: 0 },
     }),
-    [circleSize, loaderColor]
+    [circleSize, loaderColor, borderWidth]
   );
 
   return (
@@ -133,40 +67,22 @@ interface LoadingScreenProps {
  */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
-  const containerOpacity = useSharedValue(0);
-  const loaderOpacity = useSharedValue(0);
 
-  useEffect(() => {
-    containerOpacity.value = withTiming(1, {
-      duration: 300,
-      easing: Easing.out(Easing.ease),
-    });
+  // Use opacity animation hooks with auto-start
+  const { animatedStyle: containerStyle } = useOpacityAnimation({
+    initialOpacity: 0,
+    autoStart: true,
+    delay: 0,
+  });
 
-    loaderOpacity.value = withDelay(
-      50,
-      withTiming(1, {
-        duration: 300,
-        easing: Easing.out(Easing.ease),
-      })
-    );
-
-    return () => {
-      cancelAnimation(containerOpacity);
-      cancelAnimation(loaderOpacity);
-    };
-  }, [containerOpacity, loaderOpacity]);
-
-  const containerStyle = useAnimatedStyle(() => ({
-    opacity: containerOpacity.value,
-    flex: 1,
-  }));
-
-  const loaderStyle = useAnimatedStyle(() => ({
-    opacity: loaderOpacity.value,
-  }));
+  const { animatedStyle: loaderStyle } = useOpacityAnimation({
+    initialOpacity: 0,
+    autoStart: true,
+    delay: 50,
+  });
 
   return (
-    <Animated.View style={containerStyle}>
+    <Animated.View style={[{ flex: 1 }, containerStyle]}>
       <ThemedView style={styles.fullScreen}>
         <Animated.View style={[styles.loaderContainer, loaderStyle]}>
           <Loader size="large" color={color || colors.tint} />
@@ -193,22 +109,13 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
   height = 160,
 }) => {
   const colors = useColors();
-  const opacity = useSharedValue(0);
 
-  useEffect(() => {
-    opacity.value = withTiming(1, {
-      duration: 200,
-      easing: Easing.out(Easing.ease),
-    });
-
-    return () => {
-      cancelAnimation(opacity);
-    };
-  }, [opacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
+  // Use opacity animation hook with auto-start
+  const { animatedStyle } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 200,
+    autoStart: true,
+  });
 
   return (
     <Animated.View style={[styles.componentLoader, { height }, style, animatedStyle]}>
@@ -232,6 +139,9 @@ const styles = StyleSheet.create({
   },
   circle: {
     // Base styles only - specific styles moved to circleStyle for better memoization
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 8,
   },
   fullScreen: {
     flex: 1,

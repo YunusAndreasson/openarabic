@@ -12,7 +12,7 @@ jest.mock('../../hooks/useLayoutReady', () => ({
 }));
 
 jest.mock('../../hooks/animations', () => ({
-  useFadeInAnimation: jest.fn(() => ({
+  useOpacityAnimation: jest.fn(() => ({
     animatedStyle: { opacity: 1 },
     startAnimation: mockStartAnimation,
     opacity: { value: 0 },
@@ -39,7 +39,7 @@ describe('useScreenAnimation', () => {
       resetLayout: mockResetLayout,
     }));
 
-    require('../../hooks/animations').useFadeInAnimation.mockImplementation(() => ({
+    require('../../hooks/animations').useOpacityAnimation.mockImplementation(() => ({
       animatedStyle: { opacity: 1 },
       startAnimation: mockStartAnimation,
       opacity: { value: 0 },
@@ -79,11 +79,11 @@ describe('useScreenAnimation', () => {
     // Check useLayoutReady was called with correct delay
     expect(require('../../hooks/useLayoutReady').useLayoutReady).toHaveBeenCalledWith(layoutDelay);
 
-    // Check useFadeInAnimation was called with correct duration
-    expect(require('../../hooks/animations').useFadeInAnimation).toHaveBeenCalledWith(
-      0,
-      animationDuration
-    );
+    // Check useOpacityAnimation was called with correct parameters
+    expect(require('../../hooks/animations').useOpacityAnimation).toHaveBeenCalledWith({
+      initialOpacity: 0,
+      duration: animationDuration,
+    });
 
     // Check useAnimationTrigger was called with correct parameters
     expect(require('../../hooks/useAnimationTrigger').useAnimationTrigger).toHaveBeenCalledWith(
@@ -98,12 +98,10 @@ describe('useScreenAnimation', () => {
   test('should calculate shouldRenderAnimatedContent correctly when animations triggered', () => {
     const { result } = renderHook(() => useScreenAnimation(true));
 
-    // When isLayoutReady is true and animationsTriggered is true
     expect(result.current.shouldRenderAnimatedContent).toBe(true);
   });
 
   test('should calculate shouldRenderAnimatedContent correctly when data ready but animations not triggered', () => {
-    // Override the animationsTriggered value for this test
     require('../../hooks/useAnimationTrigger').useAnimationTrigger.mockImplementation(() => ({
       animationsTriggered: false,
       triggerAnimations: mockTriggerAnimations,
@@ -112,12 +110,10 @@ describe('useScreenAnimation', () => {
 
     const { result } = renderHook(() => useScreenAnimation(true));
 
-    // When isLayoutReady is true, animationsTriggered is false, but isDataReady is true
     expect(result.current.shouldRenderAnimatedContent).toBe(true);
   });
 
   test('should calculate shouldRenderAnimatedContent correctly when layout not ready', () => {
-    // Override the isLayoutReady value for this test
     require('../../hooks/useLayoutReady').useLayoutReady.mockImplementation(() => ({
       isLayoutReady: false,
       resetLayout: mockResetLayout,
@@ -125,46 +121,39 @@ describe('useScreenAnimation', () => {
 
     const { result } = renderHook(() => useScreenAnimation(true));
 
-    // When isLayoutReady is false, shouldRenderAnimatedContent should be false
     expect(result.current.shouldRenderAnimatedContent).toBe(false);
   });
 
   test('should reset all animation states when reset is called', () => {
-    const mockOpacity = { value: 0.5 };
+    const mockOpacityValue = { value: 1 };
 
-    // Override the opacity value for this test
-    require('../../hooks/animations').useFadeInAnimation.mockImplementation(() => ({
+    require('../../hooks/animations').useOpacityAnimation.mockImplementation(() => ({
       animatedStyle: { opacity: 1 },
       startAnimation: mockStartAnimation,
-      opacity: mockOpacity,
+      opacity: mockOpacityValue,
       entering: { duration: 300 },
       exiting: { duration: 300 },
     }));
 
     const { result } = renderHook(() => useScreenAnimation(true));
 
-    // Call the reset function
     act(() => {
       result.current.reset();
     });
 
-    // Verify all reset functions were called
     expect(mockResetLayout).toHaveBeenCalled();
     expect(mockResetAnimations).toHaveBeenCalled();
-
-    // Verify opacity was reset
-    expect(mockOpacity.value).toBe(0);
+    expect(mockOpacityValue.value).toBe(0);
   });
 
   test('should handle loading state correctly', () => {
-    // Test with loading state
-    renderHook(() => useScreenAnimation(true, true));
+    const isLoading = true;
+    renderHook(() => useScreenAnimation(true, isLoading));
 
-    // Verify useAnimationTrigger was called with isLoading=true
     expect(require('../../hooks/useAnimationTrigger').useAnimationTrigger).toHaveBeenCalledWith(
       true, // isDataReady
       true, // isLayoutReady
-      true, // isLoading
+      isLoading,
       expect.any(Function),
       0 // default animationDelay
     );

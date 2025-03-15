@@ -7,7 +7,7 @@ import { LAYOUT } from '../constants/layout';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../hooks/animations/useFadeInAnimation';
+import { useOpacityAnimation } from '../hooks/animations';
 import PageHeader from './PageHeader';
 
 interface SignInRequiredProps {
@@ -29,7 +29,10 @@ export const SignInRequired = React.memo(
     headerTitle,
   }: SignInRequiredProps) => {
     // Use our custom animation hook instead of direct Reanimated FadeIn
-    const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+    const { animatedStyle, startAnimation } = useOpacityAnimation({
+      initialOpacity: 0,
+      duration: 300,
+    });
 
     useEffect(() => {
       startAnimation();

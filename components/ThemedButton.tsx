@@ -15,7 +15,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
-import { useButtonAnimation } from '@/hooks/animations';
+import { usePressAnimation } from '@/hooks/animations';
 
 interface ThemedButtonProps extends TouchableOpacityProps {
   /** Visual style variant of the button */
@@ -62,7 +62,10 @@ export function ThemedButton({
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = useButtonAnimation(scaleAmount);
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'button',
+    scaleAmount,
+  });
 
   // Handle press with haptic feedback
   const handlePress = (event: GestureResponderEvent) => {
