@@ -328,13 +328,17 @@ export default function ArticleScreen() {
   }
 
   return (
-    <ThemedView style={styles.container} useSafeArea={false}>
+    <ThemedView
+      style={styles.container}
+      useSafeArea={true}
+      safeAreaEdges={['top', 'left', 'right']}
+    >
       <StatusBar style={isDarkMode ? 'light' : 'dark'} />
 
       {/* Back button */}
       <FloatingButton
         position="left"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
+        top={LAYOUT.SPACING.MEDIUM}
         animatedStyle={combinedBackButtonStyle}
         onPress={handleBackPress}
         iconName="chevron-back"
@@ -347,13 +351,11 @@ export default function ArticleScreen() {
       {user && (
         <FloatingButton
           position="right"
-          top={insets.top + LAYOUT.SPACING.MEDIUM}
+          top={LAYOUT.SPACING.MEDIUM}
           animatedStyle={combinedBookmarkButtonStyle}
           onPress={handleBookmarkPress}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
-          accessibilityLabel={
-            isInReadingList ? 'Remove article from bookmarks' : 'Save article to bookmarks'
-          }
+          accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
           colors={colors}
           isDarkMode={isDarkMode}
         />

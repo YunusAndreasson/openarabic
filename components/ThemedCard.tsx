@@ -10,7 +10,7 @@ import { LoadingContainer } from './Loader';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation, useLayoutAnimation, useOpacityAnimation } from '@/hooks/animations';
 import { EnhancedImage } from './EnhancedImage';
-import { ThemedCardProps } from '@/types/ui.types';
+import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui.types';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -20,18 +20,18 @@ import { ThemedCardProps } from '@/types/ui.types';
  * It uses Reanimated 3's built-in animations for optimal performance.
  */
 
-function ThemedCardComponent({
-  imageUrl,
-  title,
-  category,
-  author,
-  summary,
-  onPress,
-  style,
-  isLoading = false,
-  children,
-  variant = 'article',
-}: ThemedCardProps): React.JSX.Element {
+function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
+  // Extract common props
+  const { onPress, style, isLoading = false, variant = 'article' } = props;
+
+  // Extract variant-specific props
+  const imageUrl = 'imageUrl' in props ? props.imageUrl : undefined;
+  const title = 'title' in props ? props.title : undefined;
+  const category = 'category' in props ? props.category : undefined;
+  const author = 'author' in props ? props.author : undefined;
+  const summary = 'summary' in props ? props.summary : undefined;
+  const children = 'children' in props ? props.children : undefined;
+
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const [imageError, setImageError] = useState(false);
@@ -106,7 +106,7 @@ function ThemedCardComponent({
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
         shadowColor: colors.shadow,
-        borderRadius: isCompact ? LAYOUT.BORDER_RADIUS.MEDIUM : LAYOUT.BORDER_RADIUS.MEDIUM,
+        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Consistent border radius for both variants
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         overflow: 'visible',
         ...LAYOUT.SHADOW.MEDIUM,
@@ -127,7 +127,7 @@ function ThemedCardComponent({
         backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
       },
     };
-  }, [colors, isDarkMode, isCompact]);
+  }, [colors, isDarkMode]);
 
   // Render loading state
   const renderLoading = () => {
@@ -154,7 +154,7 @@ function ThemedCardComponent({
         <View style={styles.imageContainer}>
           <EnhancedImage
             source={imageUrl}
-            style={[styles.image, themedStyles.image]}
+            style={styles.image}
             onError={() => setImageError(true)}
             contentFit="cover"
             transition={500}
@@ -292,6 +292,7 @@ const styles = StyleSheet.create({
     top: LAYOUT.SPACING.SMALL,
     left: LAYOUT.SPACING.SMALL,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    maxWidth: '70%', // Added to match CompactArticleCard
   },
   contentContainer: {
     padding: LAYOUT.SPACING.MEDIUM,

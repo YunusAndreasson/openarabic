@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StudyWord } from '../types/vocabulary.types';
 import WordListItem from '../components/WordListItem';
 import EntranceAnimation from '../components/EntranceAnimation';
+import Animated from 'react-native-reanimated';
 
 // Enhanced study word with mastery score
 interface EnhancedStudyWord extends StudyWord {
@@ -182,74 +183,85 @@ export default function WordListScreen() {
       {/* Disable the native header */}
       <Stack.Screen options={{ headerShown: false }} />
 
-      <ThemedView style={styles.container} useSafeArea={true}>
-        {/* Page header with title and back button */}
-        <PageHeader title={title} onBackPress={handleBackPress} />
+      {/* Use Animated.View wrapper like in vocabulary screen */}
+      <Animated.View style={styles.flexContainer}>
+        <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
+          {/* Page header with title and back button - exactly matching vocabulary screen */}
+          <PageHeader title={title} onBackPress={handleBackPress} />
 
-        {/* Category description */}
-        {!isLoading && (
-          <View style={styles.headerContainer}>
-            {/* Description with info */}
-            <View style={styles.infoContainer}>
-              <View style={styles.descriptionContainer}>
-                <Ionicons
-                  name={icon as any}
-                  size={16}
-                  color={colors.tint}
-                  style={styles.headerIcon}
-                />
-                <ThemedText style={styles.descriptionText}>{description}</ThemedText>
-              </View>
+          {/* Content container - using scrollable like in vocabulary screen */}
+          <ThemedView
+            scrollable={true}
+            useSafeArea={false}
+            includeBottomInset={false}
+            contentContainerStyle={styles.contentContainer}
+          >
+            {/* Category description */}
+            {!isLoading && (
+              <View style={styles.headerContainer}>
+                {/* Description with info */}
+                <View style={styles.infoContainer}>
+                  <View style={styles.descriptionContainer}>
+                    <Ionicons
+                      name={icon as any}
+                      size={16}
+                      color={colors.tint}
+                      style={styles.headerIcon}
+                    />
+                    <ThemedText style={styles.descriptionText}>{description}</ThemedText>
+                  </View>
 
-              {wordCount > 0 && <ThemedText style={styles.countText}>{wordCount}</ThemedText>}
-            </View>
-
-            {/* Color legend container */}
-            {wordCount > 0 && (
-              <View style={styles.legendContainer}>
-                <View style={styles.legendBar}>
-                  <View style={[styles.legendSegment, { backgroundColor: colors.error }]} />
-                  <View style={[styles.legendSegment, { backgroundColor: '#f7941d' }]} />
-                  <View style={[styles.legendSegment, { backgroundColor: '#ebb434' }]} />
-                  <View style={[styles.legendSegment, { backgroundColor: '#63a744' }]} />
-                  <View style={[styles.legendSegment, { backgroundColor: colors.success }]} />
+                  {wordCount > 0 && <ThemedText style={styles.countText}>{wordCount}</ThemedText>}
                 </View>
-                <View style={styles.legendLabels}>
-                  <ThemedText style={styles.legendText}>New</ThemedText>
-                  <ThemedText style={styles.legendText}>Mastered</ThemedText>
-                </View>
+
+                {/* Color legend container */}
+                {wordCount > 0 && (
+                  <View style={styles.legendContainer}>
+                    <View style={styles.legendBar}>
+                      <View style={[styles.legendSegment, { backgroundColor: colors.error }]} />
+                      <View style={[styles.legendSegment, { backgroundColor: '#f7941d' }]} />
+                      <View style={[styles.legendSegment, { backgroundColor: '#ebb434' }]} />
+                      <View style={[styles.legendSegment, { backgroundColor: '#63a744' }]} />
+                      <View style={[styles.legendSegment, { backgroundColor: colors.success }]} />
+                    </View>
+                    <View style={styles.legendLabels}>
+                      <ThemedText style={styles.legendText}>New</ThemedText>
+                      <ThemedText style={styles.legendText}>Mastered</ThemedText>
+                    </View>
+                  </View>
+                )}
               </View>
             )}
-          </View>
-        )}
 
-        <EntranceAnimation>
-          {isLoading ? (
-            <View style={styles.loaderContainer}>
-              <Loader size="large" color={colors.tint} />
-            </View>
-          ) : (
-            <FlatList
-              data={sortedWords || []}
-              renderItem={renderItem}
-              keyExtractor={item => item.sentence_word_id.toString()}
-              contentContainerStyle={styles.listContent}
-              ListEmptyComponent={renderEmptyComponent}
-              showsVerticalScrollIndicator={false}
-              initialNumToRender={8}
-              maxToRenderPerBatch={5}
-              windowSize={5}
-              removeClippedSubviews={true}
-              updateCellsBatchingPeriod={50}
-              getItemLayout={(data, index) => ({
-                length: 80, // Approximate height of each item
-                offset: 80 * index,
-                index,
-              })}
-            />
-          )}
-        </EntranceAnimation>
-      </ThemedView>
+            <EntranceAnimation>
+              {isLoading ? (
+                <View style={styles.loaderContainer}>
+                  <Loader size="large" color={colors.tint} />
+                </View>
+              ) : (
+                <FlatList
+                  data={sortedWords || []}
+                  renderItem={renderItem}
+                  keyExtractor={item => item.sentence_word_id.toString()}
+                  contentContainerStyle={styles.listContent}
+                  ListEmptyComponent={renderEmptyComponent}
+                  showsVerticalScrollIndicator={false}
+                  initialNumToRender={8}
+                  maxToRenderPerBatch={5}
+                  windowSize={5}
+                  removeClippedSubviews={true}
+                  updateCellsBatchingPeriod={50}
+                  getItemLayout={(data, index) => ({
+                    length: 80, // Approximate height of each item
+                    offset: 80 * index,
+                    index,
+                  })}
+                />
+              )}
+            </EntranceAnimation>
+          </ThemedView>
+        </ThemedView>
+      </Animated.View>
     </>
   );
 }
@@ -258,8 +270,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerContainer: {
+  flexContainer: {
+    flex: 1,
+  },
+  contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+  },
+  headerContainer: {
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   infoContainer: {
@@ -308,7 +327,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     gap: LAYOUT.SPACING.SMALL,
   },

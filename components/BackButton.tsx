@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },

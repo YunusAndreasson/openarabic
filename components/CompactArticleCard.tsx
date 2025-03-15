@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   contentContainer: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

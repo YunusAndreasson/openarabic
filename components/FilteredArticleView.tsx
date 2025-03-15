@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ScrollView, StyleSheet, RefreshControl, View, Text } from 'react-native';
+import { StyleSheet, RefreshControl, View } from 'react-native';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
@@ -10,6 +10,7 @@ import { useFadeInAnimation } from '../hooks/animations';
 import { Tables } from '../types/database.types';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
 import { ThemedText } from './ThemedText';
+import { ThemedView } from './ThemedView';
 
 interface FilteredArticleViewProps {
   /**
@@ -82,19 +83,24 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   }, [startEndMessageAnimation]);
 
   return (
-    <ScrollView
+    <ThemedView
       style={styles.container}
+      scrollable={true}
       contentContainerStyle={styles.contentContainer}
-      showsVerticalScrollIndicator={false}
-      accessibilityLabel="Filtered articles list"
-      refreshControl={
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={onRefresh}
-          colors={[colors.tint]}
-          tintColor={colors.tint}
-        />
-      }
+      useSafeArea={true}
+      safeAreaEdges={['top', 'left', 'right']}
+      scrollViewProps={{
+        showsVerticalScrollIndicator: false,
+        accessibilityLabel: 'Filtered articles list',
+        refreshControl: (
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.tint]}
+            tintColor={colors.tint}
+          />
+        ),
+      }}
     >
       {/* Header Component */}
       {ListHeaderComponent}
@@ -132,11 +138,11 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       {/* Footer */}
       {articles.length > 0 && (
         <>
-          <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle]} />
+          <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle as any]} />
           <CopyrightFooter />
         </>
       )}
-    </ScrollView>
+    </ThemedView>
   );
 };
 

@@ -476,22 +476,20 @@ export default function ArticlesScreen() {
   // Return FilteredArticleView when in filtered view
   if (isInFilteredView) {
     return (
-      <Animated.View style={[styles.container, fadeInStyle]}>
-        <FilteredArticleView
-          articles={filteredArticles}
-          isLoading={isLoadingState}
-          isRefreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          onArticlePress={handleArticlePress}
-          selectedAuthor={selectedAuthor}
-          selectedCategory={selectedCategory}
-          onClearFilter={() => {
-            setSelectedAuthorId(null);
-            setSelectedCategoryId(null);
-          }}
-          ListHeaderComponent={ListHeaderComponent()}
-        />
-      </Animated.View>
+      <FilteredArticleView
+        articles={filteredArticles}
+        isLoading={isLoadingState}
+        isRefreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        onArticlePress={handleArticlePress}
+        selectedAuthor={selectedAuthor}
+        selectedCategory={selectedCategory}
+        onClearFilter={() => {
+          setSelectedAuthorId(null);
+          setSelectedCategoryId(null);
+        }}
+        ListHeaderComponent={ListHeaderComponent()}
+      />
     );
   }
 
