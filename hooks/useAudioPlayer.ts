@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import { AppState } from 'react-native';
 
 // Audio player states
@@ -32,6 +32,9 @@ export function useAudioPlayer() {
   const lastActionTimeRef = useRef<number>(0);
   const appStateRef = useRef(AppState.currentState);
 
+  // Forward declaration for functions that have circular dependencies
+  const playNextTrackRef = useRef<(tracks?: AudioTrack[]) => Promise<boolean>>(async () => false);
+
   // Clean up all audio resources
   const cleanupAudio = useCallback(async () => {
     // Clear any timers
@@ -43,11 +46,12 @@ export function useAudioPlayer() {
     // Unload sound if it exists
     if (soundRef.current) {
       try {
-        await soundRef.current.stopAsync().catch(() => {});
-        await soundRef.current.unloadAsync().catch(() => {});
-        soundRef.current = null;
+        await soundRef.current.stopAsync().catch(e => console.warn('Error stopping audio:', e));
+        await soundRef.current.unloadAsync().catch(e => console.warn('Error unloading audio:', e));
       } catch (error) {
-        // Error during cleanup
+        console.error('Audio cleanup error:', error);
+      } finally {
+        soundRef.current = null;
       }
     }
   }, []);
@@ -92,7 +96,7 @@ export function useAudioPlayer() {
 
   // Handle playback status updates
   const onPlaybackStatusUpdate = useCallback(
-    (status: any) => {
+    (status: AVPlaybackStatus) => {
       if (!status.isLoaded) {
         if (status.error) {
           setAudioState(AUDIO_STATES.ERROR);
@@ -120,7 +124,7 @@ export function useAudioPlayer() {
           setProgress(0);
         } else {
           // In playlist mode, proceed to next track
-          playNextTrack();
+          playNextTrackRef.current();
         }
       }
     },
@@ -314,6 +318,11 @@ export function useAudioPlayer() {
       cleanupAudio();
     };
   }, [initAudioSession, cleanupAudio]);
+
+  // Update the ref with the latest implementation
+  useEffect(() => {
+    playNextTrackRef.current = playNextTrack;
+  }, [playNextTrack]);
 
   return {
     audioState,

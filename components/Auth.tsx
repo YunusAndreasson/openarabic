@@ -90,9 +90,11 @@ export default function Auth() {
 
   // Authentication handlers
   const signInWithEmail = useCallback(async () => {
+    // Run both validations and store results
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
 
+    // Only proceed if both validations pass
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);
@@ -106,9 +108,11 @@ export default function Auth() {
   }, [email, password, validateEmail, validatePassword]);
 
   const signUpWithEmail = useCallback(async () => {
+    // Run both validations and store results
     const isEmailValid = validateEmail(email);
     const isPasswordValid = validatePassword(password);
 
+    // Only proceed if both validations pass
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);

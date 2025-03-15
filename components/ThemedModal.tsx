@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, ReactNode } from 'react';
+import React, { useCallback, useEffect, useMemo, ReactNode, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -57,9 +57,12 @@ const AnimatedModalContent = ({
   useEffect(() => {
     startContentAnimation();
     // Delay the children animation slightly
-    setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       startChildrenAnimation();
     }, 100);
+
+    // Clean up timeout when component unmounts
+    return () => clearTimeout(timeoutId);
   }, [startContentAnimation, startChildrenAnimation]);
 
   return (
@@ -113,6 +116,7 @@ function ThemedModalComponent({
 }: ThemedModalProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Use standardized animation hooks
   const {
@@ -134,6 +138,16 @@ function ThemedModalComponent({
     }
   }, [visible, animated, startFadeAnimation, startScaleAnimation]);
 
+  // Clean up any pending timeouts when component unmounts or modal closes
+  useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   // Function to close without haptic feedback
   const triggerClose = useCallback(() => {
     onClose();
@@ -148,9 +162,15 @@ function ThemedModalComponent({
       reverseFadeAnimation();
       reverseScaleAnimation();
 
+      // Clear any existing timeout
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current);
+      }
+
       // Delay the actual close to allow animations to complete
-      setTimeout(() => {
+      closeTimeoutRef.current = setTimeout(() => {
         triggerClose();
+        closeTimeoutRef.current = null;
       }, LAYOUT.ANIMATION.DURATION.FAST);
     } else {
       triggerClose();
