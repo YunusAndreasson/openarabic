@@ -42,17 +42,7 @@ function WordDetailsModalComponent({
         padding: 0,
         borderRadius: LAYOUT.BORDER_RADIUS.LARGE * 1.5,
         overflow: 'hidden',
-        ...Platform.select({
-          ios: {
-            shadowColor: 'black',
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.2,
-            shadowRadius: 16,
-          },
-          android: {
-            elevation: 12,
-          },
-        }),
+        ...LAYOUT.SHADOW.LARGE,
       } as ViewStyle,
       contentWrapper: {
         width: '100%',
@@ -104,17 +94,7 @@ function WordDetailsModalComponent({
         marginVertical: 0,
         width: 'auto',
         alignSelf: 'stretch',
-        ...Platform.select({
-          ios: {
-            shadowColor: 'black',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-          },
-          android: {
-            elevation: 1,
-          },
-        }),
+        ...LAYOUT.SHADOW.MEDIUM,
       } as ViewStyle,
       rootText: {
         ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {

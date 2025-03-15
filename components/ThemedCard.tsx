@@ -106,7 +106,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         backgroundColor: colors.cardBackground,
         borderColor: colors.cardBorder,
         shadowColor: colors.shadow,
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Consistent border radius for both variants
+        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
         borderWidth: LAYOUT.BORDER.WIDTH.THIN,
         overflow: 'visible',
         ...LAYOUT.SHADOW.MEDIUM,

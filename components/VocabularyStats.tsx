@@ -154,7 +154,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
   },
   progressContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,

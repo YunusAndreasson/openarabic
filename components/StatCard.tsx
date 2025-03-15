@@ -46,7 +46,6 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     ...LAYOUT.SHADOW.MEDIUM,
-    elevation: 3,
   },
   statContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,

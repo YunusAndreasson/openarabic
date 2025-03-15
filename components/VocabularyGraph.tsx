@@ -257,6 +257,7 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
     marginBottom: LAYOUT.SPACING.MEDIUM,
     height: 250, // Fixed height to prevent any layout changes
