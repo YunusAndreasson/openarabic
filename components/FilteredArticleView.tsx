@@ -5,12 +5,13 @@ import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { CopyrightFooter } from './CopyrightFooter';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useFadeInAnimation } from '../hooks/animations';
 import { Tables } from '../types/database.types';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
+import PageHeader from './PageHeader';
 
 interface FilteredArticleViewProps {
   /**
@@ -39,11 +40,6 @@ interface FilteredArticleViewProps {
   onArticlePress?: (article: Article) => void;
 
   /**
-   * Header component to display at the top of the view
-   */
-  ListHeaderComponent?: React.ReactNode;
-
-  /**
    * Selected author (if filtering by author)
    */
   selectedAuthor?: Tables<'authors'> | null;
@@ -69,7 +65,8 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   isRefreshing,
   onRefresh,
   onArticlePress,
-  ListHeaderComponent,
+  selectedAuthor,
+  selectedCategory,
   onClearFilter,
 }) => {
   const colors = useColors();
@@ -82,6 +79,13 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   // Add header animation
   const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
     useFadeInAnimation(300, 300);
+
+  // Determine the header title based on selected filters
+  const headerTitle = selectedAuthor
+    ? selectedAuthor.name
+    : selectedCategory
+      ? capitalizeFirstLetter(selectedCategory.name.toLowerCase())
+      : 'Filtered Articles';
 
   // Start animations when the component mounts
   useEffect(() => {
@@ -96,79 +100,105 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   }, []);
 
   return (
-    <ThemedView
-      style={styles.container}
-      scrollable={true}
-      contentContainerStyle={styles.contentContainer}
-      useSafeArea={true}
-      safeAreaEdges={['top', 'left', 'right']}
-      scrollViewProps={{
-        showsVerticalScrollIndicator: false,
-        accessibilityLabel: 'Filtered articles list',
-        refreshControl: (
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            colors={[colors.tint]}
-            tintColor={colors.tint}
-          />
-        ),
-      }}
+    <Animated.View
+      style={styles.animatedContainer}
+      entering={FadeIn.duration(300).springify().damping(14).stiffness(100)}
     >
-      {/* Header Component */}
-      <Animated.View style={headerAnimatedStyle as any}>{ListHeaderComponent}</Animated.View>
+      <ThemedView
+        style={styles.container}
+        useSafeArea={true}
+        safeAreaEdges={['top', 'left', 'right']}
+      >
+        {/* Standard Page Header with back button */}
+        <Animated.View style={headerAnimatedStyle as any}>
+          <PageHeader title={headerTitle} onBackPress={onClearFilter} />
+        </Animated.View>
 
-      {/* Articles */}
-      {articles.map((article, index) => (
-        <View key={`filtered-article-${article.id}`} style={styles.articleContainer}>
-          <ThemedCard
-            imageUrl={article.image_url || ''}
-            title={article.title}
-            category={
-              article.category?.name
-                ? capitalizeFirstLetter(article.category.name.toLowerCase())
-                : 'Uncategorized'
-            }
-            author={article.author?.name || 'Anonymous'}
-            onPress={() => onArticlePress?.(article)}
-            isLoading={isLoading}
-          />
-        </View>
-      ))}
+        {/* Scrollable content */}
+        <ThemedView
+          style={styles.scrollContainer}
+          scrollable={true}
+          contentContainerStyle={styles.contentContainer}
+          useSafeArea={false}
+          scrollViewProps={{
+            showsVerticalScrollIndicator: false,
+            accessibilityLabel: 'Filtered articles list',
+            refreshControl: (
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                colors={[colors.tint]}
+                tintColor={colors.tint}
+              />
+            ),
+          }}
+        >
+          {/* Articles */}
+          {articles.map((article, index) => (
+            <Animated.View
+              key={`filtered-article-${article.id}`}
+              style={styles.articleContainer}
+              entering={FadeIn.delay(50 + index * 30).duration(200)}
+            >
+              <ThemedCard
+                imageUrl={article.image_url || ''}
+                title={article.title}
+                category={
+                  article.category?.name
+                    ? capitalizeFirstLetter(article.category.name.toLowerCase())
+                    : 'Uncategorized'
+                }
+                author={article.author?.name || 'Anonymous'}
+                onPress={() => onArticlePress?.(article)}
+                isLoading={isLoading}
+              />
+            </Animated.View>
+          ))}
 
-      {/* No results message */}
-      {articles.length === 0 && !isLoading && (
-        <View style={styles.noResultsContainer}>
-          <ThemedText
-            style={styles.noResultsText}
-            accessibilityLabel="No articles found with the current filter"
-          >
-            No articles found
-          </ThemedText>
-        </View>
-      )}
+          {/* No results message */}
+          {articles.length === 0 && !isLoading && (
+            <View style={styles.noResultsContainer}>
+              <ThemedText
+                style={styles.noResultsText}
+                accessibilityLabel="No articles found with the current filter"
+              >
+                No articles found
+              </ThemedText>
+            </View>
+          )}
 
-      {/* Footer */}
-      {articles.length > 0 && (
-        <>
-          <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle as any]} />
-          <CopyrightFooter />
-        </>
-      )}
-    </ThemedView>
+          {/* Footer */}
+          {articles.length > 0 && (
+            <>
+              <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle as any]} />
+              <CopyrightFooter />
+            </>
+          )}
+        </ThemedView>
+      </ThemedView>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
+  animatedContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
   container: {
     flex: 1,
   },
+  scrollContainer: {
+    flex: 1,
+  },
   contentContainer: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   endMessageContainer: {
     height: LAYOUT.SPACING.MEDIUM,
@@ -177,6 +207,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.XLARGE,
   },
   noResultsText: {
     fontSize: 16,

@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { RefreshControl } from 'react-native';
 
@@ -49,8 +49,6 @@ import ArticleSection from '../../components/ArticleSection';
 import FeaturedArticleSection from '../../components/FeaturedArticleSection';
 import FilterList from '../../components/FilterList';
 import DailyPickSection from '../../components/DailyPickSection';
-import BackButton from '../../components/BackButton';
-import FilterNotice from '../../components/FilterNotice';
 import ErrorState from '../../components/ErrorState';
 
 // Import the specialized filtered view component
@@ -359,16 +357,7 @@ export default function ArticlesScreen() {
 
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {
-    if (isInFilteredView) {
-      return (
-        <>
-          <BackButton onPress={handleClearFilters} />
-          {selectedAuthor && <FilterNotice type="author" name={selectedAuthor.name} />}
-          {selectedCategory && <FilterNotice type="category" name={selectedCategory.name} />}
-        </>
-      );
-    }
-
+    // We no longer need to handle filtered view here as it's handled by FilteredArticleView
     return (
       <>
         <DailyPickSection
@@ -438,7 +427,6 @@ export default function ArticlesScreen() {
       </>
     );
   }, [
-    isInFilteredView,
     articles,
     handleArticlePress,
     sortedInProgressArticles,
@@ -452,8 +440,6 @@ export default function ArticlesScreen() {
     categories,
     selectedCategoryId,
     handleSelectCategory,
-    selectedAuthor,
-    selectedCategory,
     lastOpenedArticles,
   ]);
 
@@ -491,18 +477,17 @@ export default function ArticlesScreen() {
         onArticlePress={handleArticlePress}
         selectedAuthor={selectedAuthor}
         selectedCategory={selectedCategory}
-        onClearFilter={() => {
-          setSelectedAuthorId(null);
-          setSelectedCategoryId(null);
-        }}
-        ListHeaderComponent={ListHeaderComponent()}
+        onClearFilter={handleClearFilters}
       />
     );
   }
 
   // Main content view
   return (
-    <Animated.View style={[styles.container, fadeInStyle]}>
+    <Animated.View
+      style={[styles.container, fadeInStyle]}
+      entering={FadeIn.duration(300).springify().damping(14).stiffness(100)}
+    >
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
