@@ -2,17 +2,15 @@ import React, { useMemo } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
-  TouchableOpacityProps,
   View,
   Platform,
   GestureResponderEvent,
-  ViewStyle,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '../hooks/useColors';
+import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
@@ -21,6 +19,12 @@ import { ThemedButtonProps } from '@/types/ui.types';
 /**
  * A themed button component that supports different visual styles,
  * icons, loading states, and press animations.
+ *
+ * This component follows the design system using:
+ * - Colors from colors.ts via useColors hook
+ * - Layout constants from layout.ts
+ * - Types from ui.types.ts
+ * - Animations from hooks/animations
  */
 export function ThemedButton({
   variant = 'filled',
@@ -40,6 +44,8 @@ export function ThemedButton({
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
+
+  // Use the standardized press animation hook from animations
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'button',
     scaleAmount,
@@ -59,11 +65,10 @@ export function ThemedButton({
     // Determine colors based on variant
     const isFilled = variant === 'filled';
     const backgroundColor = isFilled ? colors.tint : 'transparent';
-    const textColor = isFilled ? colors.background : colors.tint;
 
-    // Only apply border for outlined variant on Android
-    // iOS uses shadows instead
-    const borderWidth = Platform.OS === 'android' ? (isFilled ? 0 : 1) : 0;
+    // Apply border for outlined variant consistently across platforms
+    // This matches the ThemedCard border style
+    const borderWidth = isFilled ? 0 : LAYOUT.BORDER.WIDTH.THIN;
 
     return [
       styles.button,
@@ -73,13 +78,17 @@ export function ThemedButton({
         borderColor: colors.tint,
         shadowColor: colors.cardShadow,
       },
-      isFilled && Platform.OS === 'ios' && styles.iosShadow,
+      // Apply shadow consistently with ThemedCard
+      isFilled && styles.buttonShadow,
       (disabled || loading) && styles.buttonDisabled,
       // Platform specific elevation
       Platform.OS === 'android' && isFilled && { elevation: 4 },
       style, // User style comes last to override default styles
     ];
   }, [variant, colors, disabled, loading, style]);
+
+  // Determine text color based on variant
+  const textColor = variant === 'filled' ? colors.background : colors.tint;
 
   // Default accessibility label to the title if not provided
   const finalAccessibilityLabel = accessibilityLabel || title;
@@ -90,48 +99,43 @@ export function ThemedButton({
     busy: loading,
   };
 
+  // Add accessibility hint for screen readers
+  const accessibilityHint = disabled
+    ? 'This button is currently disabled'
+    : loading
+      ? 'This button is currently loading'
+      : undefined;
+
   return (
-    <Animated.View style={animatedStyle}>
+    <Animated.View style={animatedStyle as any}>
       <TouchableOpacity
-        style={buttonStyles}
+        style={buttonStyles as any}
         disabled={disabled || loading}
-        activeOpacity={1} // We're handling the opacity animation ourselves
+        activeOpacity={LAYOUT.OPACITY.PRESSED} // Use standardized opacity from LAYOUT
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         accessibilityRole="button"
         accessibilityLabel={finalAccessibilityLabel}
         accessibilityState={accessibilityState}
+        accessibilityHint={accessibilityHint}
         {...props}
       >
         <View style={[styles.innerContainer, innerContainerStyle]}>
           {loading ? (
             <View style={styles.iconContainer}>
-              <ActivityIndicator
-                size="small"
-                color={variant === 'filled' ? colors.background : colors.tint}
-              />
+              <ActivityIndicator size="small" color={textColor} />
             </View>
           ) : iconComponent ? (
             <View style={styles.iconContainer}>{iconComponent}</View>
           ) : icon ? (
             <View style={styles.iconContainer}>
-              <Ionicons
-                name={icon as any}
-                size={iconSize}
-                color={variant === 'filled' ? colors.background : colors.tint}
-              />
+              <Ionicons name={icon as any} size={iconSize} color={textColor} />
             </View>
           ) : null}
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
-            <ThemedText
-              style={[
-                styles.buttonText,
-                { color: variant === 'filled' ? colors.background : colors.tint },
-              ]}
-              skipDefaultColor
-            >
+            <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
               {title}
             </ThemedText>
             {children}
@@ -152,9 +156,12 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     minWidth: 160,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
+    overflow: 'hidden', // Match ThemedCard overflow handling
   },
-  iosShadow: {
-    shadowOffset: { width: 0, height: 4 },
+  buttonShadow: {
+    // Match ThemedCard shadow style for consistency
+    ...LAYOUT.SHADOW.MEDIUM,
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
   },

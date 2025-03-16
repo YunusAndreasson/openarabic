@@ -353,7 +353,13 @@ export interface OutlinedButtonProps extends BaseButtonProps {
 export type ThemedButtonProps =
   | FilledButtonProps
   | OutlinedButtonProps
-  | (BaseButtonProps & { variant?: ButtonVariant });
+  | (BaseButtonProps & {
+      variant?: ButtonVariant;
+      /** Optional Ionicons icon name to display before the title */
+      icon?: string;
+      /** Optional custom icon component (overrides icon prop if both are provided) */
+      iconComponent?: React.ReactNode;
+    });
 
 /**
  * Props for ThemedText component
