@@ -32,7 +32,7 @@ const ReviewButton = React.memo(({ dueWords, onPress }: ReviewButtonProps) => {
     <View style={styles.reviewButtonContainer}>
       <Animated.View style={animatedStyle as any}>
         <ThemedButton
-          title={`${dueWords} ${dueWords === 1 ? 'Word' : 'Words'}`}
+          title={`Review ${dueWords} ${dueWords === 1 ? 'Word' : 'Words'}`}
           icon="play-circle"
           iconSize={24}
           onPress={handlePress}
@@ -49,6 +49,8 @@ const ReviewButton = React.memo(({ dueWords, onPress }: ReviewButtonProps) => {
  * Button shown when no words are available for review
  */
 const DisabledReviewButton = React.memo(() => {
+  const colors = useColors();
+
   return (
     <View style={styles.reviewButtonContainer}>
       <ThemedButton
@@ -57,7 +59,7 @@ const DisabledReviewButton = React.memo(() => {
         iconSize={24}
         onPress={() => {}}
         variant="outlined"
-        style={styles.reviewButton}
+        style={[styles.reviewButton, { borderColor: colors.cardBorder }]}
         disabled
         accessibilityLabel="No words due for review"
       />
@@ -73,6 +75,8 @@ const styles = StyleSheet.create({
   reviewButton: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     width: '100%',
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    ...LAYOUT.SHADOW.SMALL,
   },
 });
 

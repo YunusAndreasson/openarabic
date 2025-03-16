@@ -150,21 +150,18 @@ export const VocabularyGraph = React.memo(
     );
 
     // Memoize gradient colors
-    const gradientColors = useMemo(() => [`${colors.text}15`, `${colors.text}05`], [colors.text]);
+    const gradientColors = useMemo(() => [`${colors.text}20`, `${colors.text}08`], [colors.text]);
 
-    // Card header with title and icon - reused in both loading and loaded states
+    // Card header with title - reused in both loading and loaded states
     const cardHeader = useMemo(
       () => (
         <View style={styles.header}>
           <View style={styles.titleRow}>
             <ThemedText style={styles.title}>{title}</ThemedText>
-            <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
-              <Ionicons name="trending-up" size={16} color={colors.icon} />
-            </View>
           </View>
         </View>
       ),
-      [title, colors.text, colors.icon]
+      [title]
     );
 
     // Memoize the grid lines to avoid recreating them on each render
@@ -177,7 +174,7 @@ export const VocabularyGraph = React.memo(
               key={index}
               p1={{ x: 0, y }}
               p2={{ x: GRAPH_WIDTH, y }}
-              color={`${colors.text}10`}
+              color={`${colors.text}15`}
               strokeWidth={1}
             />
           );
@@ -228,8 +225,8 @@ export const VocabularyGraph = React.memo(
                 <Path
                   path={linePath}
                   style="stroke"
-                  strokeWidth={1.8}
-                  color={`${colors.text}60`}
+                  strokeWidth={2.5}
+                  color={`${colors.text}70`}
                   strokeJoin="round"
                   strokeCap="round"
                   start={0}
@@ -248,9 +245,9 @@ export const VocabularyGraph = React.memo(
                 return (
                   <Group key={index} opacity={animationProgress.value >= pointPosition ? 1 : 0}>
                     {/* Outer circle */}
-                    <Circle cx={point.x} cy={point.y} r={4} color={colors.cardBackground} />
+                    <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
                     {/* Inner circle */}
-                    <Circle cx={point.x} cy={point.y} r={2} color={`${colors.text}80`} />
+                    <Circle cx={point.x} cy={point.y} r={2.5} color={`${colors.text}90`} />
                   </Group>
                 );
               })}
@@ -308,20 +305,12 @@ const styles = StyleSheet.create({
   },
   titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'center', // Changed from space-between to center for better alignment
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  iconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   graphContainer: {
     paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
@@ -381,7 +370,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: LAYOUT.OPACITY.DIMMED,
   },

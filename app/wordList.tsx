@@ -15,6 +15,7 @@ import { StudyWord } from '../types/vocabulary.types';
 import WordListItem from '../components/WordListItem';
 import EntranceAnimation from '../components/EntranceAnimation';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
 
 // Enhanced study word with mastery score
 interface EnhancedStudyWord extends StudyWord {
@@ -49,7 +50,7 @@ export default function WordListScreen() {
     switch (category) {
       case 'total':
         return {
-          title: 'All Words',
+          title: 'Total Words',
           icon: 'book',
           description: 'Sorted by mastery level',
         };
@@ -57,23 +58,23 @@ export default function WordListScreen() {
         return {
           title: 'Mastered Words',
           icon: 'checkmark-circle',
-          description: 'Words with 21+ days interval',
+          description: 'Words with long intervals',
         };
       case 'learning':
         return {
           title: 'Learning Words',
           icon: 'school',
-          description: 'Words with < 21 days interval',
+          description: 'Words with short intervals',
         };
       case 'due':
         return {
-          title: 'Due Words',
+          title: 'Review Words',
           icon: 'alarm',
-          description: 'Words to practice today',
+          description: 'Words due today',
         };
       default:
         return {
-          title: 'All Words',
+          title: 'Word List',
           icon: 'book',
           description: 'Sorted by mastery level',
         };
@@ -175,22 +176,20 @@ export default function WordListScreen() {
   // Get the word count for display
   const wordCount = useMemo(() => sortedWords?.length || 0, [sortedWords]);
 
-  // List header component - simplified without the legend
+  // List header component with category info card
   const ListHeaderComponent = useCallback(() => {
-    return !isLoading ? (
-      <View style={styles.headerContainer}>
-        {/* Description with info */}
-        <View style={styles.infoContainer}>
-          <View style={styles.descriptionContainer}>
-            <Ionicons name={icon as any} size={16} color={colors.tint} style={styles.headerIcon} />
-            <ThemedText style={styles.descriptionText}>{description}</ThemedText>
-          </View>
+    if (isLoading) return null;
 
-          {wordCount > 0 && <ThemedText style={styles.countText}>{wordCount}</ThemedText>}
-        </View>
+    return (
+      <View style={styles.headerContainer}>
+        {/* Category Info Card */}
+        <CategoryInfoCard
+          category={category as 'total' | 'mastered' | 'learning' | 'due'}
+          hideTitle={true}
+        />
       </View>
-    ) : null;
-  }, [isLoading, icon, colors.tint, description, wordCount]);
+    );
+  }, [isLoading, category]);
 
   return (
     <>
@@ -221,7 +220,7 @@ export default function WordListScreen() {
                 renderItem={renderItem}
                 keyExtractor={item => item.sentence_word_id.toString()}
                 contentContainerStyle={styles.listContent}
-                ListHeaderComponent={null}
+                ListHeaderComponent={ListHeaderComponent}
                 ListEmptyComponent={renderEmptyComponent}
                 showsVerticalScrollIndicator={false}
                 initialNumToRender={8}
@@ -231,7 +230,7 @@ export default function WordListScreen() {
                 updateCellsBatchingPeriod={50}
                 getItemLayout={(data, index) => ({
                   length: 70, // Adjusted height to match tighter card
-                  offset: 70 * index,
+                  offset: 70 * index + (category ? 150 : 0), // Adjusted for CategoryInfoCard height
                   index,
                 })}
               />
@@ -255,31 +254,12 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-    gap: LAYOUT.SPACING.SMALL - 2, // Reduced gap between items
+    gap: LAYOUT.SPACING.SMALL, // Slightly increased gap for better visual separation
   },
   headerContainer: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
-  },
-  infoContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  descriptionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  headerIcon: {
-    marginRight: LAYOUT.SPACING.TINY,
-  },
-  descriptionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  countText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: LAYOUT.OPACITY.DIMMED,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   loaderContainer: {
     flex: 1,
@@ -290,10 +270,11 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: LAYOUT.SPACING.XLARGE, // Added top margin for better vertical centering
   },
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DISABLED,
+    opacity: LAYOUT.OPACITY.DIMMED,
     marginTop: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
   },

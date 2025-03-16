@@ -235,7 +235,7 @@ export default function VocabularyScreen() {
   if (!user) {
     return (
       <SignInRequired
-        headerTitle="Words"
+        headerTitle=""
         colors={colors}
         message="Sign in to track"
         benefitTitle="Build Words"
@@ -360,8 +360,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingTop: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better spacing from header
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM, // Added extra padding at bottom for better scroll experience
   },
   fullscreenLoader: {
     position: 'absolute',
@@ -371,21 +371,21 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY, // Use Z_INDEX constant instead of hardcoded value
   },
   graphWrapper: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better visual separation
     height: 250,
   },
   reviewButtonWrapper: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better bottom spacing
   },
   dashboardWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better visual separation
   },
 });

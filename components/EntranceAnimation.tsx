@@ -1,5 +1,4 @@
 import React from 'react';
-import { StyleProp, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { TIMING_CONFIG, useFadeInEntrance } from '../hooks/animations';
 import { EntranceAnimationProps } from '@/types/ui.types';
