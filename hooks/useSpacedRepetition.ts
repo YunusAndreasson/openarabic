@@ -72,6 +72,7 @@ export const SESSION_CONFIG = {
   REQUEUE_DELAY_MIN: 2, // Minimum number of other cards before reshowing a failed word
   REQUEUE_DELAY_MAX: 5, // Maximum number of other cards before reshowing a failed word
   NEW_WORD_THRESHOLD: 1, // Words with review_count <= this are considered new
+  MAX_PROCESSING_ATTEMPTS: 10, // Maximum processing attempts to prevent infinite sessions
 };
 
 // SRS algorithm constants - extracted for testability
@@ -479,32 +480,29 @@ export function shouldRequeueWord(
   success: boolean,
   config = SESSION_CONFIG
 ): boolean {
-  // Word needs requeuing if:
-  // 1. It was failed (success = false)
-  // 2. It's a new word that needs more reviews
-  // 3. It was previously failed and needs more consecutive successes
+  // Check for maximum requeue limit to prevent infinite sessions
+  const processingAttempts = word.sessionData?.processingAttempts || 0;
+  if (processingAttempts >= config.MAX_PROCESSING_ATTEMPTS) {
+    return false;
+  }
 
-  // BUG FIX: Check each condition independently to ensure all conditions are properly evaluated
-  // This ensures words that are both new and failed in the session are handled correctly
-
-  // Immediate failure
+  // Always requeue on failure (unless max attempts reached, which we checked above)
   if (!success) {
     return true;
   }
 
-  // New word that needs more reviews
-  if (word.sessionData?.isNew === true && (word.sessionData?.remainingReviewsNeeded || 0) > 0) {
+  // For new words, requeue if they still have remaining reviews needed
+  if (word.sessionData?.isNew && (word.sessionData?.remainingReviewsNeeded || 0) > 0) {
     return true;
   }
 
-  // Previously failed word that needs more consecutive successes
-  if (
-    word.sessionData?.failedInSession === true &&
-    (word.sessionData?.consecutiveSuccesses || 0) < config.REQUIRED_CONSECUTIVE_SUCCESSES
-  ) {
-    return true;
+  // For words that failed in the session, requeue until they have enough consecutive successes
+  if (word.sessionData?.failedInSession) {
+    const consecutiveSuccesses = word.sessionData?.consecutiveSuccesses || 0;
+    return consecutiveSuccesses < config.REQUIRED_CONSECUTIVE_SUCCESSES;
   }
 
+  // Otherwise, don't requeue
   return false;
 }
 
@@ -596,7 +594,9 @@ export function calculateProgress(
 
     // Ensure progress doesn't decrease
     const result = baseProgress + failedWordProgress;
-    return Math.min(99, Math.round(result)); // Cap at 99% until actually complete
+
+    // FIXED: Cap at 99% until actually complete to avoid confusion
+    return Math.min(99, Math.round(result));
   }
 
   // Standard calculation for normal cases - adjusted to show incremental progress
@@ -612,7 +612,8 @@ export function calculateProgress(
   const progress = (completedWords / Math.max(1, totalWordsToReview)) * 100 + failedWordsProgress;
 
   // Ensure it's between 0-100
-  return Math.min(99, Math.max(0, Math.round(progress))); // Cap at 99% until actually complete
+  // FIXED: Cap at 99% until actually complete to avoid confusion
+  return Math.min(99, Math.max(0, Math.round(progress)));
 }
 
 // PURE FUNCTION: Check if review is complete
@@ -634,7 +635,6 @@ export function isReviewComplete(
   // This prevents endless loops when the user can't get certain words right
   const MAX_REVIEWS_MULTIPLIER = 3;
   if (wordsCount > 0 && reviewCount > wordsCount * MAX_REVIEWS_MULTIPLIER) {
-    console.log('Force completing due to excessive review count');
     return true;
   }
 
@@ -806,7 +806,6 @@ export function getNextWordIndex(
   // Safety: prevent infinite recursion
   const MAX_ATTEMPTS = 3; // Increased from 2 to 3
   if (attemptCount > MAX_ATTEMPTS) {
-    console.log('Max attempts reached in getNextWordIndex, forcing end position');
     return totalWords; // Force return end position to avoid infinite recursion
   }
 
@@ -818,10 +817,6 @@ export function getNextWordIndex(
   // IMPROVED FIX: If we've seen all unique words, don't bother with reinserting failed words
   // Just return the end position to complete the session
   if (uniqueWordsSeen && totalUniqueWords && uniqueWordsSeen.size >= totalUniqueWords) {
-    console.log(
-      `All ${uniqueWordsSeen.size}/${totalUniqueWords} unique words seen - bypassing reinsertion and completing`
-    );
-    // Just mark words as processed and do quick completion (without actually showing more cards)
     failedWords.splice(0, failedWords.length); // Clear entire failed words queue
     return totalWords; // Skip to end
   }
@@ -833,7 +828,6 @@ export function getNextWordIndex(
 
   if (isNearEnd && failedWords.length > 0 && currentPosition < totalWords - 1) {
     // Skip ahead to the end to trigger failed word processing
-    console.log(`Near the end with ${failedWords.length} failed words - skipping to end`);
     return totalWords - 1;
   }
 
@@ -1557,6 +1551,10 @@ export function useSpacedRepetition({
             // Set failedInSession flag
             failedWord.sessionData.failedInSession = true;
 
+            // Track processing attempts to prevent infinite loops
+            failedWord.sessionData.processingAttempts =
+              (failedWord.sessionData.processingAttempts || 0) + 1;
+
             // Set reinsert position
             // IMPROVED FIX: Never reinsert at the beginning or at positions we've already passed
             // Always insert at current position + offset to avoid re-swiping
@@ -1576,6 +1574,9 @@ export function useSpacedRepetition({
             failedWordsRef.current[existingIndex].sessionData = {
               ...failedWordsRef.current[existingIndex].sessionData,
               failedInSession: true,
+              // Increment processing attempts
+              processingAttempts:
+                (failedWordsRef.current[existingIndex].sessionData?.processingAttempts || 0) + 1,
             };
           }
         }
