@@ -7,9 +7,7 @@ import { Colors } from '../constants/Colors';
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
-import { useProgressAnimation, usePressAnimation } from '@/hooks/animations';
-import { ProgressBar } from './ProgressBar';
-import * as Haptics from 'expo-haptics';
+import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';
 
 // Using subset of properties from the VocabularyStats type for this component
@@ -79,18 +77,6 @@ const StatItem = React.memo(
 
 StatItem.displayName = 'StatItem';
 
-// Separate MasteryHeader component for better reusability and memoization
-const MasteryHeader = React.memo(({ percentage }: { percentage: number }) => (
-  <View style={styles.masteryLabelRow}>
-    <ThemedText style={styles.masteryLabel} accessibilityLabel={`Words mastery: ${percentage}%`}>
-      Mastery
-    </ThemedText>
-    <ThemedText style={styles.masteryPercentage}>{percentage}%</ThemedText>
-  </View>
-));
-
-MasteryHeader.displayName = 'MasteryHeader';
-
 export const VocabularyDashboard = React.memo(
   ({
     totalWords,
@@ -102,12 +88,6 @@ export const VocabularyDashboard = React.memo(
     onStatPress,
     streakStats,
   }: VocabularyDashboardProps) => {
-    // Calculate mastery percentage
-    const masteryPercentage = useMemo(
-      () => (totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0),
-      [totalWords, masteredWords]
-    );
-
     // Ensure colors are bright enough for dark mode with fallbacks
     const safeColors = useMemo(
       () => ({
@@ -175,7 +155,7 @@ export const VocabularyDashboard = React.memo(
           },
         ]}
       >
-        {/* Top Stats Row */}
+        {/* Stats Row */}
         <View style={styles.statsRow}>
           {statItems.map((item, index) => (
             <StatItem
@@ -190,18 +170,6 @@ export const VocabularyDashboard = React.memo(
               onPress={onStatPress}
             />
           ))}
-        </View>
-
-        {/* Mastery Progress */}
-        <View style={styles.masteryContainer}>
-          <MasteryHeader percentage={masteryPercentage} />
-          <ProgressBar
-            progress={masteryPercentage}
-            backgroundColor={safeColors.cardBorder + '40'}
-            fillColor={safeColors.successColor}
-            height={8}
-            animationTriggered={animationTriggered}
-          />
         </View>
       </View>
     );
@@ -221,7 +189,6 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   statItem: {
     alignItems: 'center',
@@ -240,22 +207,5 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  masteryContainer: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-  masteryLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  masteryLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600',
-  },
-  masteryPercentage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '700',
   },
 });

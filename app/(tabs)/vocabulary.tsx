@@ -22,6 +22,7 @@ import {
   useScreenAnimation,
   useNavigationWithDebounce,
 } from '@/hooks';
+import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import PageHeader from '@/components/PageHeader';
 import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
@@ -157,19 +158,29 @@ export default function VocabularyScreen() {
     });
   };
 
-  // Use the screen animation hook
+  // Content loading state - simplified from a useMemo to a direct calculation
+  const isContentLoading = !!user && (isFetching || isDataLoading);
+
+  // Use opacity animation for the loader
+  const { animatedStyle: loaderAnimatedStyle, setOpacity: setLoaderOpacity } = useOpacityAnimation({
+    initialOpacity: 1,
+    duration: 300,
+  });
+
+  // Use the screen animation hook for content
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
     isLoadingState || isDataLoading,
     300, // Animation duration
-    0, // Layout delay
+    100, // Add a small layout delay to ensure stable layout
     0 // Animation delay
   );
 
-  // Update loading state based on data loading
+  // Update loading state and loader opacity based on data loading
   useEffect(() => {
     if (isAuthLoading || (!!user && status === 'pending' && isFetching)) {
       startLoading();
+      setLoaderOpacity(1);
 
       // Clear any existing timeout
       if (loadingTimeoutRef.current) {
@@ -179,10 +190,16 @@ export default function VocabularyScreen() {
       // Set a maximum loading time of 5 seconds
       loadingTimeoutRef.current = setTimeout(() => {
         stopLoading();
+        setLoaderOpacity(0);
         loadingTimeoutRef.current = null;
       }, 5000);
     } else {
       stopLoading();
+
+      // Fade out the loader when data is ready
+      if (isDataReady) {
+        setLoaderOpacity(0);
+      }
 
       // Clear timeout when loading is explicitly stopped
       if (loadingTimeoutRef.current) {
@@ -198,10 +215,16 @@ export default function VocabularyScreen() {
         loadingTimeoutRef.current = null;
       }
     };
-  }, [isAuthLoading, user, status, isFetching, startLoading, stopLoading]);
-
-  // Content loading state - simplified from a useMemo to a direct calculation
-  const isContentLoading = !!user && (isFetching || isDataLoading);
+  }, [
+    isAuthLoading,
+    user,
+    status,
+    isFetching,
+    isDataReady,
+    startLoading,
+    stopLoading,
+    setLoaderOpacity,
+  ]);
 
   // Show loading screen for initial load
   if (isLoadingState) {
@@ -263,14 +286,20 @@ export default function VocabularyScreen() {
             ),
           }}
         >
-          {/* Show loader when loading */}
-          {isContentLoading && (
-            <View style={[styles.fullscreenLoader, { backgroundColor: colors.background }]}>
-              <LoadingContainer size="large" color={colors.tint} />
-            </View>
-          )}
+          {/* Always render loader but control visibility with opacity */}
+          <Animated.View
+            style={[
+              styles.fullscreenLoader,
+              { backgroundColor: colors.background },
+              // @ts-ignore - Animated style from useOpacityAnimation
+              loaderAnimatedStyle,
+            ]}
+            pointerEvents={isContentLoading ? 'auto' : 'none'}
+          >
+            <LoadingContainer size="large" color={colors.tint} />
+          </Animated.View>
 
-          {/* Dashboard Section */}
+          {/* Stats Dashboard */}
           <View style={styles.dashboardWrapper}>
             <VocabularyDashboard
               totalWords={stats.totalWords}
@@ -288,7 +317,7 @@ export default function VocabularyScreen() {
             />
           </View>
 
-          {/* Graph Section */}
+          {/* Weekly Progress Graph */}
           <View
             style={[
               styles.graphWrapper,
@@ -299,7 +328,11 @@ export default function VocabularyScreen() {
               LAYOUT.SHADOW.MEDIUM,
             ]}
           >
-            <VocabularyGraph data={weeklyProgressData} animationTriggered={true} />
+            <VocabularyGraph
+              data={weeklyProgressData}
+              animationTriggered={true}
+              title="Weekly Progress"
+            />
           </View>
 
           {/* Review Button Section */}
@@ -340,7 +373,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 10,
   },
-
   graphWrapper: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
