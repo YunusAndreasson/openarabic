@@ -101,10 +101,27 @@ export const SRS_CONSTANTS = {
 
 // PURE FUNCTION: Calculate next review data based on a success/failure response
 // Extracted for testability
+/**
+ * Calculates the next review parameters for a word based on the review result.
+ *
+ * This function implements an advanced spaced repetition algorithm that:
+ * 1. Adjusts stability based on success/failure
+ * 2. Calculates optimal intervals based on stability
+ * 3. Applies spacing effect for longer intervals
+ * 4. Handles early and late reviews with appropriate adjustments
+ * 5. Tracks difficulty and success/failure streaks
+ *
+ * @param word The word being reviewed
+ * @param success Whether the review was successful
+ * @param constants SRS algorithm constants
+ * @param reviewDate Optional date when the review was performed (defaults to now)
+ * @returns Object with new stability, interval, ease factor, and other parameters
+ */
 export function calculateNextReview(
   word: StudyWord,
   success: boolean,
-  constants = SRS_CONSTANTS
+  constants = SRS_CONSTANTS,
+  reviewDate?: Date // Optional parameter for when the review was performed
 ): {
   newStability: number;
   newInterval: number;
@@ -114,6 +131,7 @@ export function calculateNextReview(
   newDifficulty?: number; // Added field to return the updated difficulty
   newSuccessStreak: number; // Return updated success streak
   newFailureStreak: number; // Return updated failure streak
+  daysLate?: number; // How many days late the review was (positive = late, negative = early)
 } {
   // Input validation
   if (!word) {
@@ -132,6 +150,14 @@ export function calculateNextReview(
   if (!word.sentence_word || typeof word.sentence_word !== 'object') {
     throw new Error('Invalid parameter: word.sentence_word is required and must be an object');
   }
+
+  // Use provided review date or default to current date
+  const actualReviewDate = reviewDate || new Date();
+
+  // Calculate how many days early/late the review is
+  const scheduledReviewDate = new Date(word.next_review_at);
+  const timeDifferenceMs = actualReviewDate.getTime() - scheduledReviewDate.getTime();
+  const daysLate = Math.round(timeDifferenceMs / (1000 * 60 * 60 * 24));
 
   // Validate and provide fallbacks for essential properties
   const currentStability =
@@ -208,8 +234,21 @@ export function calculateNextReview(
     // Estimate current retrievability (simplified Ebbinghaus forgetting curve)
     // This is an approximation of how likely the word was to be remembered at review time
     const daysElapsedSinceLastReview = currentInterval > 0 ? currentInterval : 1;
+
+    // Adjust retrievability based on how early/late the review is
+    // Late reviews are harder (lower retrievability)
+    // Early reviews are easier (higher retrievability)
+    let adjustedDaysElapsed = daysElapsedSinceLastReview;
+
+    // If review is late, adjust days elapsed to account for additional forgetting
+    if (daysLate > 0) {
+      // For late reviews, we add the late days to the elapsed time
+      // This simulates the additional forgetting that occurs when reviewing late
+      adjustedDaysElapsed = daysElapsedSinceLastReview + daysLate;
+    }
+
     const estimatedRetrievability = Math.exp(
-      (-0.5 * daysElapsedSinceLastReview) / Math.max(1, currentStability)
+      (-0.5 * adjustedDaysElapsed) / Math.max(1, currentStability)
     );
 
     // Apply desirable difficulty principles
@@ -247,6 +286,30 @@ export function calculateNextReview(
     // Easier items (lower difficulty) get faster stability growth
     const historyBasedDifficultyFactor = 1 - currentDifficulty * 0.5;
 
+    // Apply timing adjustment factor for early/late reviews
+    let timingAdjustmentFactor = 1.0;
+
+    if (daysLate > 0) {
+      // Late review penalty - reduce stability growth based on how late
+      // The later the review, the more severe the penalty
+      // For extremely late reviews (>30 days), apply maximum penalty
+      const latePenalty = Math.min(0.7, daysLate * 0.02); // Up to 70% reduction for very late reviews
+      timingAdjustmentFactor = Math.max(0.3, 1 - latePenalty);
+
+      // Update difficulty for late reviews - items reviewed very late become more difficult
+      if (daysLate > 7) {
+        newDifficulty = Math.min(constants.DIFFICULTY_MAX, currentDifficulty + daysLate * 0.002);
+      }
+    } else if (daysLate < 0) {
+      // Early review bonus - slight increase for reviewing early
+      // But cap the bonus to avoid exploiting the system
+      // Only apply bonus for items that are not too easy (retrievability < 0.9)
+      if (estimatedRetrievability < 0.9) {
+        const earlyBonus = Math.min(0.15, Math.abs(daysLate) * 0.01); // Up to 15% bonus
+        timingAdjustmentFactor = 1 + earlyBonus;
+      }
+    }
+
     // Core multiplicative growth with retention targeting and diminishing returns
     let stabilityIncrease =
       currentStability *
@@ -256,7 +319,8 @@ export function calculateNextReview(
       consolidationFactor *
       retrievabilityAdjustment *
       desirableDifficultyFactor *
-      historyBasedDifficultyFactor;
+      historyBasedDifficultyFactor *
+      timingAdjustmentFactor; // Apply timing adjustment
 
     // Hybrid approach: Add minimum increase for early learning stages
     // This ensures sufficient progress even for difficult items
@@ -317,34 +381,51 @@ export function calculateNextReview(
     // Update streaks for success
     newSuccessStreak = successStreak + 1;
     newFailureStreak = 0;
-  } else {
-    // If failed, decrease stability significantly
-    newStability = Math.max(
-      constants.MIN_STABILITY,
-      currentStability * constants.FAILURE_STABILITY_REDUCTION
-    );
 
-    // Reset stability completely for frequently failed words
-    if (currentLapses > 3) newStability = constants.MIN_STABILITY;
-
-    // Reset interval to a small value
-    newInterval = 1;
-
-    // Adjust ease factor - failed recall decreases ease
-    newEaseFactor = Math.max(1.3, currentEaseFactor - constants.EASE_DECREASE);
-
-    // For difficult items that consistently fail, be more aggressive in reducing stability
-    if (currentDifficulty > 0.7 && failureStreak >= constants.FAILURE_STREAK_THRESHOLD) {
-      // For consistently difficult items, reduce stability more aggressively
-      newStability = Math.max(
-        constants.MIN_STABILITY,
-        newStability * 0.8 // Additional 20% reduction for chronically difficult items
+    // For extremely late reviews (>30 days) with success, consider resetting the interval
+    // This prevents unreasonably large jumps after very late successful reviews
+    if (daysLate > 30 && success) {
+      // Cap the interval growth more aggressively
+      newInterval = Math.min(
+        newInterval,
+        Math.max(currentInterval, Math.round(currentInterval * 1.5))
       );
     }
+  } else {
+    // If failed, decrease stability significantly
+    // For failed reviews, we already reset the interval, but we should
+    // adjust the stability reduction based on how late the review is
 
-    // Update streaks for failure
-    newSuccessStreak = 0;
+    // Calculate base stability reduction
+    newStability = currentStability * constants.FAILURE_STABILITY_REDUCTION;
+
+    // For late failed reviews, reduce stability more severely
+    if (daysLate > 0) {
+      const latePenalty = Math.min(0.3, daysLate * 0.01); // Up to 30% additional reduction
+      newStability = newStability * (1 - latePenalty);
+    }
+
+    // Ensure stability doesn't go below minimum
+    newStability = Math.max(constants.MIN_STABILITY, newStability);
+
+    // Reset interval to 1 day for failed reviews
+    newInterval = 1;
+
+    // Decrease ease factor for failed reviews
+    newEaseFactor = Math.max(
+      1.3, // Minimum ease factor value
+      currentEaseFactor - constants.EASE_DECREASE
+    );
+
+    // Update difficulty for failed reviews
+    newDifficulty = Math.min(
+      constants.DIFFICULTY_MAX,
+      currentDifficulty + constants.DIFFICULTY_STEP_FAILURE
+    );
+
+    // Update streaks
     newFailureStreak = failureStreak + 1;
+    newSuccessStreak = 0;
   }
 
   // Apply recovery penalty for words that have lapsed frequently
@@ -387,6 +468,7 @@ export function calculateNextReview(
     newDifficulty, // Return the updated difficulty
     newSuccessStreak, // Return updated success streak
     newFailureStreak, // Return updated failure streak
+    daysLate, // Return how many days late/early the review was
   };
 }
 

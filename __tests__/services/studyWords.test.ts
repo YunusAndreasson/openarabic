@@ -145,7 +145,7 @@ describe('studyWordsService', () => {
 
       // Should select only the fields needed for stats
       expect(supabase.from('study_words').select).toHaveBeenCalledWith(
-        'interval_days, next_review_at, review_count, created_at, sentence_word_id'
+        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak'
       );
     });
 

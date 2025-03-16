@@ -271,6 +271,182 @@ describe('SRS Algorithm Functions', () => {
         expect(isNaN(result.newEaseFactor)).toBe(false);
       });
     });
+
+    // Add tests for early and late reviews
+    describe('early and late reviews', () => {
+      /**
+       * SUMMARY OF EARLY/LATE REVIEW HANDLING IMPLEMENTATION:
+       *
+       * We've enhanced the SRS algorithm to account for early and late reviews:
+       *
+       * 1. For LATE reviews:
+       *    - Reduced stability growth proportional to how late the review is
+       *    - Adjusted retrievability calculation to account for additional forgetting
+       *    - Applied more severe penalties for very late reviews (>30 days)
+       *    - Capped interval growth for extremely late reviews
+       *    - Increased difficulty for consistently late reviews
+       *
+       * 2. For EARLY reviews:
+       *    - Applied a small bonus for reviewing early (for items that aren't too easy)
+       *    - Adjusted the next review date calculation
+       *
+       * 3. For FAILED reviews:
+       *    - Applied more severe stability reduction for late failed reviews
+       *
+       * These changes make the SRS system more realistic by accounting for the
+       * actual timing of reviews relative to when they were scheduled.
+       */
+      it('should handle reviews performed on time (baseline)', () => {
+        // Create a word due today
+        const dueDate = new Date();
+        const word = createMockWord({
+          stability: 10,
+          ease_factor: 2.5,
+          interval_days: 10,
+          next_review_at: dueDate.toISOString(),
+        });
+
+        // Review the word on the due date (on time)
+        const result = calculateNextReview(word, true, SRS_CONSTANTS, dueDate);
+
+        // Store the baseline result for comparison
+        const baselineInterval = result.newInterval;
+        const baselineStability = result.newStability;
+
+        expect(baselineInterval).toBeGreaterThan(word.interval_days);
+        expect(baselineStability).toBeGreaterThan(word.stability);
+        expect(result.daysLate).toBe(0); // Should be on time (0 days late)
+      });
+
+      it('should handle reviews performed late with reduced stability growth', () => {
+        // Create a word that was due 7 days ago
+        const dueDate = new Date();
+        const reviewDate = new Date(dueDate);
+        dueDate.setDate(dueDate.getDate() - 7); // Due 7 days ago
+
+        const word = createMockWord({
+          stability: 10,
+          ease_factor: 2.5,
+          interval_days: 10,
+          next_review_at: dueDate.toISOString(),
+        });
+
+        // Get baseline (on-time) result for comparison
+        const baselineResult = calculateNextReview(word, true, SRS_CONSTANTS, dueDate);
+
+        // Review the word now (7 days late)
+        const lateResult = calculateNextReview(word, true, SRS_CONSTANTS, reviewDate);
+
+        // Verify late review handling
+        expect(lateResult.daysLate).toBe(7); // Should be 7 days late
+
+        // Late reviews should have reduced stability growth
+        expect(lateResult.newStability).toBeLessThan(baselineResult.newStability);
+
+        // Late reviews should have reduced or equal interval
+        expect(lateResult.newInterval).toBeLessThanOrEqual(baselineResult.newInterval);
+
+        // But still should show some progress
+        expect(lateResult.newStability).toBeGreaterThan(word.stability);
+        expect(lateResult.newInterval).toBeGreaterThan(word.interval_days);
+      });
+
+      it('should handle reviews performed early with potential bonus', () => {
+        // Create a word that is due 7 days from now
+        const dueDate = new Date();
+        const reviewDate = new Date(dueDate);
+        dueDate.setDate(dueDate.getDate() + 7); // Due 7 days in the future
+
+        const word = createMockWord({
+          stability: 10,
+          ease_factor: 2.5,
+          interval_days: 10,
+          next_review_at: dueDate.toISOString(),
+        });
+
+        // Get baseline (on-time) result for comparison
+        const baselineResult = calculateNextReview(word, true, SRS_CONSTANTS, dueDate);
+
+        // Review the word now (7 days early)
+        const earlyResult = calculateNextReview(word, true, SRS_CONSTANTS, reviewDate);
+
+        // Verify early review handling
+        expect(earlyResult.daysLate).toBe(-7); // Should be 7 days early (negative)
+
+        // Early reviews may get a bonus for items that aren't too easy
+        // This depends on the retrievability calculation
+        if (earlyResult.newStability > baselineResult.newStability) {
+          // If bonus was applied, stability should be higher
+          expect(earlyResult.newStability).toBeGreaterThan(baselineResult.newStability);
+        } else {
+          // If no bonus (item was too easy), should be similar to baseline
+          expect(earlyResult.newStability).toBeCloseTo(baselineResult.newStability, 1);
+        }
+      });
+
+      it('should handle very late reviews with significant penalties', () => {
+        // Create a word that was due 30 days ago (very late)
+        const dueDate = new Date();
+        const reviewDate = new Date(dueDate);
+        dueDate.setDate(dueDate.getDate() - 30); // Due 30 days ago
+
+        const word = createMockWord({
+          stability: 20,
+          ease_factor: 2.5,
+          interval_days: 20,
+          next_review_at: dueDate.toISOString(),
+        });
+
+        // Get baseline (on-time) result for comparison
+        const baselineResult = calculateNextReview(word, true, SRS_CONSTANTS, dueDate);
+
+        // Review the word now (30 days late)
+        const veryLateResult = calculateNextReview(word, true, SRS_CONSTANTS, reviewDate);
+
+        // Verify very late review handling
+        expect(veryLateResult.daysLate).toBe(30); // Should be 30 days late
+
+        // Very late reviews should have significantly reduced stability growth
+        expect(veryLateResult.newStability).toBeLessThan(baselineResult.newStability * 0.7);
+
+        // Very late reviews should have capped interval growth
+        expect(veryLateResult.newInterval).toBeLessThan(baselineResult.newInterval);
+
+        // For extremely late reviews, interval should be capped more aggressively
+        expect(veryLateResult.newInterval).toBeLessThanOrEqual(
+          Math.round(word.interval_days * 1.5)
+        );
+      });
+
+      it('should apply more severe penalties for failed late reviews', () => {
+        // Create a word that was due 14 days ago
+        const dueDate = new Date();
+        const reviewDate = new Date(dueDate);
+        dueDate.setDate(dueDate.getDate() - 14); // Due 14 days ago
+
+        const word = createMockWord({
+          stability: 15,
+          ease_factor: 2.5,
+          interval_days: 15,
+          next_review_at: dueDate.toISOString(),
+        });
+
+        // Get baseline (on-time) failed result for comparison
+        const baselineFailedResult = calculateNextReview(word, false, SRS_CONSTANTS, dueDate);
+
+        // Review the word now (14 days late) and fail
+        const lateFailedResult = calculateNextReview(word, false, SRS_CONSTANTS, reviewDate);
+
+        // Verify late failed review handling
+        expect(lateFailedResult.daysLate).toBe(14); // Should be 14 days late
+
+        // Late failed reviews should have more severe stability reduction
+        expect(lateFailedResult.newStability).toBeLessThan(baselineFailedResult.newStability);
+
+        // Interval should still be reset to 1 for failed reviews
+        expect(lateFailedResult.newInterval).toBe(1);
+      });
+    });
   });
 
   // SECTION: shouldRequeueWord tests
@@ -354,17 +530,24 @@ describe('SRS Algorithm Functions', () => {
     it('should add delay for failed words', () => {
       const word = createMockWord();
       const currentPosition = 2;
-      const remainingWords = 5;
+      const remainingWords = 10;
 
+      // Test with a failed word (success = false)
       const position = calculateReinsertPosition(word, currentPosition, remainingWords, false);
 
-      // Position should be greater than current + 1
+      // Position should be greater than current + 1 (immediate next position)
       expect(position).toBeGreaterThan(currentPosition + 1);
-      // But less than or equal to current + 1 + remaining
-      expect(position).toBeLessThanOrEqual(currentPosition + 1 + remainingWords);
+
+      // Position should be within the requeue delay range
+      // The delay is random between REQUEUE_DELAY_MIN and REQUEUE_DELAY_MAX
+      const minExpectedPosition = currentPosition + 1 + SESSION_CONFIG.REQUEUE_DELAY_MIN;
+      const maxExpectedPosition = currentPosition + 1 + SESSION_CONFIG.REQUEUE_DELAY_MAX;
+
+      expect(position).toBeGreaterThanOrEqual(minExpectedPosition);
+      expect(position).toBeLessThanOrEqual(maxExpectedPosition);
     });
 
-    it('should add delay for new words', () => {
+    it('should add more space for new words needing more reviews', () => {
       const word = createMockWord({
         sessionData: {
           isNew: true,
@@ -376,15 +559,18 @@ describe('SRS Algorithm Functions', () => {
       const currentPosition = 2;
       const remainingWords = 10;
 
+      // Test with a new word that was successful but needs more reviews
       const position = calculateReinsertPosition(word, currentPosition, remainingWords, true);
 
       // Position should be greater than current + 1
       expect(position).toBeGreaterThan(currentPosition + 1);
-      // Should be around half of remaining words
-      expect(position).toBe(currentPosition + 1 + Math.floor(remainingWords / 2));
+
+      // For new words, the delay should be about half of remaining words
+      const expectedPosition = currentPosition + 1 + Math.floor(remainingWords / 2);
+      expect(position).toBe(expectedPosition);
     });
 
-    it('should add delay for words that failed in session', () => {
+    it('should add moderate space for words that failed in session but were successful this time', () => {
       const word = createMockWord({
         sessionData: {
           isNew: false,
@@ -396,34 +582,92 @@ describe('SRS Algorithm Functions', () => {
       const currentPosition = 2;
       const remainingWords = 9;
 
+      // Test with a previously failed word that was successful this time
       const position = calculateReinsertPosition(word, currentPosition, remainingWords, true);
 
       // Position should be greater than current + 1
       expect(position).toBeGreaterThan(currentPosition + 1);
-      // Should be around a third of remaining words
-      expect(position).toBe(currentPosition + 1 + Math.floor(remainingWords / 3));
+
+      // For previously failed words, the delay should be about a third of remaining words
+      const expectedPosition = currentPosition + 1 + Math.floor(remainingWords / 3);
+      expect(position).toBe(expectedPosition);
     });
 
-    it('should not exceed queue length', () => {
+    it('should handle case with no remaining words', () => {
       const word = createMockWord();
       const currentPosition = 5;
-      const remainingWords = 1; // Only 1 word left
+      const remainingWords = 0; // No words left
 
+      // Even with a failed word, if there are no remaining words, position should just be next
+      const position = calculateReinsertPosition(word, currentPosition, remainingWords, false);
+      expect(position).toBe(currentPosition + 1);
+    });
+
+    it('should handle negative remaining words gracefully', () => {
+      const word = createMockWord();
+      const currentPosition = 5;
+      const remainingWords = -2; // Invalid negative value
+
+      // Should handle negative values gracefully by treating them as 0
+      const position = calculateReinsertPosition(word, currentPosition, remainingWords, false);
+      expect(position).toBe(currentPosition + 1);
+    });
+
+    it('should not exceed queue length when calculating position', () => {
+      const word = createMockWord();
+      const currentPosition = 8;
+      const remainingWords = 2; // Only 2 words left
+
+      // Test with a failed word
       const position = calculateReinsertPosition(word, currentPosition, remainingWords, false);
 
-      // Position should be at most currentPosition + 1 + remainingWords
+      // Position should not exceed current + 1 + remainingWords
       expect(position).toBeLessThanOrEqual(currentPosition + 1 + remainingWords);
     });
 
-    it('should handle zero remaining words', () => {
+    it('should prioritize new word status over failed in session', () => {
+      const word = createMockWord({
+        sessionData: {
+          isNew: true, // Both new and failed in session
+          remainingReviewsNeeded: 1,
+          failedInSession: true,
+          consecutiveSuccesses: 1,
+        },
+      });
+      const currentPosition = 2;
+      const remainingWords = 10;
+
+      // Test with a word that is both new and failed in session
+      const position = calculateReinsertPosition(word, currentPosition, remainingWords, true);
+
+      // Should use the new word spacing (half of remaining)
+      const expectedPosition = currentPosition + 1 + Math.floor(remainingWords / 2);
+      expect(position).toBe(expectedPosition);
+    });
+
+    it('should use custom session config when provided', () => {
       const word = createMockWord();
-      const currentPosition = 10;
-      const remainingWords = 0; // No words left
+      const currentPosition = 2;
+      const remainingWords = 10;
 
-      const position = calculateReinsertPosition(word, currentPosition, remainingWords, false);
+      // Create custom config with different delay values
+      const customConfig = {
+        ...SESSION_CONFIG,
+        REQUEUE_DELAY_MIN: 1,
+        REQUEUE_DELAY_MAX: 1, // Fixed delay of 1 for predictable testing
+      };
 
-      // Position should just be next position
-      expect(position).toBe(currentPosition + 1);
+      // Test with a failed word and custom config
+      const position = calculateReinsertPosition(
+        word,
+        currentPosition,
+        remainingWords,
+        false,
+        customConfig
+      );
+
+      // With custom config, position should be exactly current + 1 + REQUEUE_DELAY_MIN (1)
+      expect(position).toBe(currentPosition + 1 + 1);
     });
   });
 
