@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { StyleSheet, View, Dimensions, Text, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
@@ -40,74 +40,92 @@ export const WordTooltip: React.FC<WordTooltipProps> = ({ visible, text, layout,
 
   // Size and position calculations
   const { width: screenWidth } = Dimensions.get('window');
-  const TOOLTIP_WIDTH = Math.min(280, screenWidth * 0.8);
-  const TOOLTIP_HEIGHT = 46;
+  const MAX_TOOLTIP_WIDTH = screenWidth * 0.7; // Maximum 70% of screen width
   const ARROW_SIZE = 8;
   const TOOLTIP_MARGIN = 10;
 
   // Calculate the word's center point
   const wordCenterX = layout.x + layout.width / 2;
 
-  // Center the tooltip above the word's center
-  let tooltipLeft = wordCenterX - TOOLTIP_WIDTH / 2;
-
-  // Keep tooltip within screen bounds
-  tooltipLeft = Math.max(10, Math.min(tooltipLeft, screenWidth - TOOLTIP_WIDTH - 10));
-
   // Position tooltip directly above the word
-  const tooltipTop = layout.y - TOOLTIP_HEIGHT - TOOLTIP_MARGIN;
-
-  // Calculate arrow position to align with word center
-  const arrowPosition = wordCenterX - tooltipLeft - ARROW_SIZE;
+  const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - 30; // Increased height for better visibility
 
   return (
     <View
       style={[
-        styles.tooltip,
+        styles.tooltipContainer,
         {
-          width: TOOLTIP_WIDTH,
-          left: tooltipLeft,
           top: tooltipTop,
-          backgroundColor,
-          borderColor,
-          shadowColor: colors.shadow,
+          left: 0,
+          right: 0,
+          alignItems: 'center',
         },
       ]}
       pointerEvents="none"
     >
-      <ThemedText
-        style={[styles.tooltipText, { color: textColor }]}
-        skipDefaultColor
-        numberOfLines={2}
-        ellipsizeMode="tail"
-      >
-        {text}
-      </ThemedText>
-
-      {/* Arrow pointing to the word */}
       <View
         style={[
-          styles.arrow,
+          styles.tooltipWrapper,
           {
-            left: Math.max(16, Math.min(arrowPosition, TOOLTIP_WIDTH - 16)),
-            borderTopColor: backgroundColor,
-            borderLeftWidth: ARROW_SIZE,
-            borderRightWidth: ARROW_SIZE,
-            borderTopWidth: ARROW_SIZE,
+            left: wordCenterX,
           },
         ]}
-      />
+      >
+        <View
+          style={[
+            styles.tooltip,
+            {
+              maxWidth: MAX_TOOLTIP_WIDTH,
+              backgroundColor,
+              borderColor,
+              shadowColor: colors.shadow,
+              transform: [{ translateX: '-50%' }],
+            },
+          ]}
+        >
+          <ThemedText
+            style={[styles.tooltipText, { color: textColor }]}
+            skipDefaultColor
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {text}
+          </ThemedText>
+
+          {/* Arrow pointing to the word */}
+          <View
+            style={[
+              styles.arrow,
+              {
+                borderTopColor: backgroundColor,
+                borderLeftWidth: ARROW_SIZE,
+                borderRightWidth: ARROW_SIZE,
+                borderTopWidth: ARROW_SIZE,
+              },
+            ]}
+          />
+        </View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  tooltip: {
+  tooltipContainer: {
     position: 'absolute',
-    padding: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
+    zIndex: LAYOUT.Z_INDEX.TOOLTIP,
+  },
+  tooltipWrapper: {
+    position: 'absolute',
+  },
+  tooltip: {
+    position: 'relative',
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    zIndex: LAYOUT.Z_INDEX.TOOLTIP,
+    alignSelf: 'flex-start', // Allow content to determine width
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },
@@ -128,6 +146,8 @@ const styles = StyleSheet.create({
   arrow: {
     position: 'absolute',
     bottom: -8, // Match arrow size
+    left: '50%', // Center the arrow
+    marginLeft: -8, // Half of arrow width
     width: 0,
     height: 0,
     borderLeftColor: 'transparent',

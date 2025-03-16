@@ -161,6 +161,9 @@ export default function ArticleScreen() {
     [insets.top]
   );
 
+  // Pre-calculate the layout dimensions to prevent jumping
+  const [layoutReady, setLayoutReady] = useState(false);
+
   // Use the navigation with debounce hook
   const { navigateTo, cleanup: cleanupNavigation } = useNavigationWithDebounce();
 
@@ -245,10 +248,20 @@ export default function ArticleScreen() {
   // Content animation when article is loaded
   useEffect(() => {
     if (!isLoadingArticle && article) {
-      setIsLoading(false);
-      startContentAnimation();
-      startHeaderAnimation();
-      startFooterAnimation();
+      // Set layout ready first to ensure dimensions are calculated
+      setLayoutReady(true);
+
+      // Use a small timeout to ensure layout is stable before animations start
+      const timer = setTimeout(() => {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          startContentAnimation();
+          startHeaderAnimation();
+          startFooterAnimation();
+        }
+      }, 50);
+
+      return () => clearTimeout(timer);
     }
   }, [
     isLoadingArticle,
@@ -415,7 +428,15 @@ export default function ArticleScreen() {
 
   // Main render
   if (isLoading || isLoadingArticle) {
-    return <LoadingScreen />;
+    return (
+      <ThemedView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        useSafeArea={true}
+        safeAreaEdges={['top', 'left', 'right']}
+      >
+        <LoadingScreen />
+      </ThemedView>
+    );
   }
 
   if (!article) {
@@ -495,6 +516,7 @@ export default function ArticleScreen() {
               scrollEventThrottle={16}
               onScroll={handleScroll}
               onEndReachedThreshold={0.5}
+              initialNumToRender={5} // Reduce initial render batch for smoother loading
               ListHeaderComponent={
                 <Animated.View style={headerAnimatedStyle as any}>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
