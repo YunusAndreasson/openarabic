@@ -29,9 +29,6 @@ export const useScreenFocusRefresh = (
   const prevQueryKey = useRef(queryKey);
   const prevUserId = useRef(userId);
 
-  // Add a ref to track last focus time
-  const lastFocusTimeRef = useRef(0);
-
   // Create the full query key
   const fullQueryKey: QueryKey = [queryKey, userId];
 
@@ -42,22 +39,17 @@ export const useScreenFocusRefresh = (
 
     // Check if data is stale before refreshing
     const queryData = queryClient.getQueryState(fullQueryKey);
-    const isDataStale = queryData?.dataUpdatedAt
-      ? Date.now() - queryData.dataUpdatedAt > staleTime
-      : true;
+
+    // Consider data stale if:
+    // 1. queryData is null (query doesn't exist)
+    // 2. dataUpdatedAt is undefined
+    // 3. dataUpdatedAt is older than staleTime
+    const isDataStale =
+      !queryData || !queryData.dataUpdatedAt || Date.now() - queryData.dataUpdatedAt > staleTime;
 
     // Force refresh if requested or if data is stale
     if (forceRefreshOnFocus || isDataStale) {
-      // If forcing refresh, set a short debounce to prevent duplicate refreshes
-      const currentTime = Date.now();
-      const timeSinceLastFocus = currentTime - lastFocusTimeRef.current;
-
-      // Only refresh if it's been more than 300ms since last focus
-      // This prevents multiple rapid refreshes
-      if (timeSinceLastFocus > 300 || lastFocusTimeRef.current === 0) {
-        queryClient.invalidateQueries({ queryKey: fullQueryKey });
-        lastFocusTimeRef.current = currentTime;
-      }
+      queryClient.invalidateQueries({ queryKey: fullQueryKey });
     }
   }, [queryClient, fullQueryKey, userId, staleTime, forceRefreshOnFocus]);
 
@@ -65,7 +57,6 @@ export const useScreenFocusRefresh = (
   const refreshData = useCallback(() => {
     if (userId) {
       queryClient.invalidateQueries({ queryKey: fullQueryKey });
-      lastFocusTimeRef.current = Date.now();
     }
   }, [queryClient, fullQueryKey, userId]);
 
@@ -78,13 +69,18 @@ export const useScreenFocusRefresh = (
 
     // If queryKey or userId changed, check if we need to refresh
     if (prevQueryKey.current !== queryKey || prevUserId.current !== userId) {
-      checkAndRefreshData();
+      // Only refresh if we have a userId
+      if (userId) {
+        // Create the new query key with the updated values
+        const newQueryKey: QueryKey = [queryKey, userId];
+        queryClient.invalidateQueries({ queryKey: newQueryKey });
+      }
 
       // Update refs with new values
       prevQueryKey.current = queryKey;
       prevUserId.current = userId;
     }
-  }, [queryKey, userId, checkAndRefreshData]);
+  }, [queryKey, userId, queryClient]);
 
   // Use a separate callback for the focus effect to ensure proper dependency tracking
   const handleFocusEffect = useCallback(() => {
