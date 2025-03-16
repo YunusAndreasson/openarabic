@@ -577,22 +577,42 @@ export function calculateProgress(
   if (currentIndex >= wordsInQueue && failedWordsCount > 0) {
     // Calculate progress as if we've done all original words, plus a percentage of failed words
     // This ensures progress keeps increasing and doesn't get stuck
-    // We assume 90% completion with remaining 10% spread across failed words
-    const result =
-      90 + 10 * (1 - failedWordsCount / Math.max(failedWordsCount + 1, totalWordsToReview));
-    // Round to nearest whole number to make tests more predictable
-    return Math.round(result);
+
+    // FIXED: Reduce base progress to 85% to leave more room for reinserted words
+    // This helps prevent the progress bar from looking stuck
+    const baseProgress = 85;
+
+    // For remaining 15%, distribute evenly across failed words (adjusted from 10%)
+    const estimatedFailedWordsProcessed = Math.max(
+      0,
+      totalWordsToReview - wordsInQueue - failedWordsCount
+    );
+    const failedWordProgress =
+      failedWordsCount > 0
+        ? 15 *
+          (estimatedFailedWordsProcessed /
+            Math.max(1, estimatedFailedWordsProcessed + failedWordsCount))
+        : 15;
+
+    // Ensure progress doesn't decrease
+    const result = baseProgress + failedWordProgress;
+    return Math.min(99, Math.round(result)); // Cap at 99% until actually complete
   }
 
-  // Standard calculation for normal cases
-  // Completed words = current position
+  // Standard calculation for normal cases - adjusted to show incremental progress
+  // Each word in the main queue represents (1/totalWordsToReview) of the total progress
   const completedWords = currentIndex;
 
-  // Calculate progress percentage
-  const progress = (completedWords / Math.max(1, totalWordsToReview)) * 100;
+  // FIXED: More weight for failed words in progress calculation
+  // This ensures progress continues to increase as we process failed words
+  const failedWordsProgress =
+    failedWordsCount > 0 ? ((failedWordsCount * 0.8) / totalWordsToReview) * 100 : 0;
+
+  // Calculate progress percentage - main words plus partial credit for failed words
+  const progress = (completedWords / Math.max(1, totalWordsToReview)) * 100 + failedWordsProgress;
 
   // Ensure it's between 0-100
-  return Math.min(100, Math.max(0, Math.round(progress)));
+  return Math.min(99, Math.max(0, Math.round(progress))); // Cap at 99% until actually complete
 }
 
 // PURE FUNCTION: Check if review is complete
@@ -602,11 +622,20 @@ export function isReviewComplete(
   wordsCount: number,
   failedWordsCount: number,
   hasWords: boolean,
-  wordsLoaded: boolean
+  wordsLoaded: boolean,
+  reviewCount: number = 0 // Add optional parameter to track total reviews
 ): boolean {
   // If words haven't been loaded, review is not complete
   if (!wordsLoaded) {
     return false;
+  }
+
+  // Safety check: If we've done too many reviews (3x more than words), force completion
+  // This prevents endless loops when the user can't get certain words right
+  const MAX_REVIEWS_MULTIPLIER = 3;
+  if (wordsCount > 0 && reviewCount > wordsCount * MAX_REVIEWS_MULTIPLIER) {
+    console.log('Force completing due to excessive review count');
+    return true;
   }
 
   // BUG FIX: Always check for failed words, even when the queue is empty
@@ -770,10 +799,12 @@ export function getNextWordIndex(
   currentPosition: number,
   totalWords: number,
   failedWords: StudyWord[],
-  attemptCount: number = 0
+  attemptCount: number = 0,
+  uniqueWordsSeen?: Set<string>, // Optional param to track unique words seen
+  totalUniqueWords?: number // Optional param for total unique words count
 ): number {
   // Safety: prevent infinite recursion
-  const MAX_ATTEMPTS = 2;
+  const MAX_ATTEMPTS = 3; // Increased from 2 to 3
   if (attemptCount > MAX_ATTEMPTS) {
     console.log('Max attempts reached in getNextWordIndex, forcing end position');
     return totalWords; // Force return end position to avoid infinite recursion
@@ -784,21 +815,73 @@ export function getNextWordIndex(
     return totalWords;
   }
 
+  // IMPROVED FIX: If we've seen all unique words, don't bother with reinserting failed words
+  // Just return the end position to complete the session
+  if (uniqueWordsSeen && totalUniqueWords && uniqueWordsSeen.size >= totalUniqueWords) {
+    console.log(
+      `All ${uniqueWordsSeen.size}/${totalUniqueWords} unique words seen - bypassing reinsertion and completing`
+    );
+    // Just mark words as processed and do quick completion (without actually showing more cards)
+    failedWords.splice(0, failedWords.length); // Clear entire failed words queue
+    return totalWords; // Skip to end
+  }
+
+  // CRITICAL FIX: If we're near the end of the session (last 25% of words)
+  // and there are failed words, fast-forward to those failed words
+  // This prevents users from having to swipe through many cards after reaching a high progress
+  const isNearEnd = currentPosition >= Math.floor(totalWords * 0.75);
+
+  if (isNearEnd && failedWords.length > 0 && currentPosition < totalWords - 1) {
+    // Skip ahead to the end to trigger failed word processing
+    console.log(`Near the end with ${failedWords.length} failed words - skipping to end`);
+    return totalWords - 1;
+  }
+
   // If we're at the end but have failed words to process
   if (currentPosition >= totalWords - 1 && failedWords.length > 0) {
+    console.log(`At end with ${failedWords.length} failed words to process`);
+
+    // Make sure failed words have valid reinsert positions
     const firstFailedWord = failedWords[0];
 
-    // Prevent inserting at the exact same position we're currently at
-    let insertPosition = firstFailedWord.sessionData?.reinsertPosition || 0;
-    if (insertPosition === currentPosition) {
-      // Move position forward or wrap to beginning
-      insertPosition = (insertPosition + 1) % Math.max(1, totalWords);
+    // If there's an issue with the first failed word, try to recover
+    if (!firstFailedWord || !firstFailedWord.sessionData) {
+      console.warn('Found invalid failed word, removing it');
+      // Remove the invalid failed word
+      failedWords.splice(0, 1);
+      // Try again with the fixed array
+      return getNextWordIndex(
+        currentPosition,
+        totalWords,
+        failedWords,
+        attemptCount + 1,
+        uniqueWordsSeen,
+        totalUniqueWords
+      );
     }
 
-    // If this position would exceed the bounds, return the end position to trigger completion
-    if (insertPosition >= totalWords) {
+    // MUCH IMPROVED: Don't reinsert at beginning or random position
+    // Instead, if we've seen more than 50% of unique words, just complete the session
+    // This avoids making the user swipe through cards they've already seen
+    if (uniqueWordsSeen && totalUniqueWords && uniqueWordsSeen.size > totalUniqueWords * 0.5) {
+      console.log(`Over 50% of unique words seen - clearing failed queue and completing session`);
+      // Clear failed queue and complete session
+      failedWords.splice(0, failedWords.length);
       return totalWords;
     }
+
+    // For remaining cases, get reinsert position - but prioritize positions after current position
+    let insertPosition = firstFailedWord.sessionData?.reinsertPosition;
+
+    // FIX: Instead of reinserting at beginning, insert at current position + small offset
+    // This avoids making the user re-swipe through all cards they've already seen
+    const smallOffset = Math.min(3, Math.floor(totalWords * 0.2)); // Max 20% of total words or 3, whichever is smaller
+    insertPosition = Math.min(currentPosition + smallOffset, totalWords - 1);
+    console.log(`Inserting failed word at position near current: ${insertPosition}`);
+
+    // CRITICAL FIX: We need to clearly remove the word from the failed queue
+    console.log(`Removing word from failed queue and reinserting at position ${insertPosition}`);
+    failedWords.splice(0, 1);
 
     return insertPosition;
   }
@@ -1027,13 +1110,46 @@ export function useSpacedRepetition({
 
   // Calculate progress based on completed words vs. total words to review
   const progress = useMemo(() => {
-    // Use the memoized calculator for better performance
-    return memoizedProgressCalculator(
-      currentIndex,
-      wordsRef.current.length,
-      failedWordsRef.current.length
+    // If we have no words in the queue, progress is 0
+    if (wordsRef.current.length === 0) {
+      return 0;
+    }
+
+    // IMPROVED FIX: Instead of using current position, use the count of unique words seen
+    // This prevents progress from dropping when a word is reinserted in the queue
+    const uniqueWordsSeen = uniqueWordsSeenRef.current.size;
+    const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
+
+    // Base progress is the percentage of unique words seen
+    let baseProgress = Math.min(
+      99,
+      Math.floor((uniqueWordsSeen / Math.max(1, totalUniqueWords)) * 100)
     );
-  }, [currentIndex, failedWordsRef, wordsRef, wordsLoaded, memoizedProgressCalculator]);
+
+    // If we've seen at least 90% of unique words, consider it nearly complete
+    if (uniqueWordsSeen >= totalUniqueWords * 0.9) {
+      return 99; // Show 99% progress to indicate it's nearly done
+    }
+
+    // If all unique words have been seen but there are still failed words,
+    // cap progress at 99% until all failed words are successfully processed
+    if (uniqueWordsSeen >= totalUniqueWords && failedWordsRef.current.length > 0) {
+      return 99;
+    }
+
+    // If we've seen all unique words and there are no failed words, we're done
+    if (uniqueWordsSeen >= totalUniqueWords && failedWordsRef.current.length === 0) {
+      return 100;
+    }
+
+    // Final safety check - if we've seen all words but somehow have a low calculated progress,
+    // ensure progress is at least 90% to prevent confusion
+    if (uniqueWordsSeen >= totalUniqueWords && baseProgress < 90) {
+      baseProgress = 90;
+    }
+
+    return baseProgress;
+  }, [wordsRef, failedWordsRef, uniqueWordsSeenRef.current.size]);
 
   // Check if review is complete
   const isReviewDone = useMemo(() => {
@@ -1049,9 +1165,18 @@ export function useSpacedRepetition({
       wordsRef.current.length,
       failedWordsRef.current.length,
       dueWords.length > 0,
-      wordsLoaded
+      wordsLoaded,
+      reviewCount
     );
-  }, [currentIndex, dueWords.length, failedWordsRef, wordsRef, wordsLoaded, isLoading]);
+  }, [
+    currentIndex,
+    dueWords.length,
+    failedWordsRef,
+    wordsRef,
+    wordsLoaded,
+    isLoading,
+    reviewCount,
+  ]);
 
   // Update also isLoading to consider wordsLoaded state
   const isActuallyLoading = isLoading || !wordsLoaded;
@@ -1107,6 +1232,61 @@ export function useSpacedRepetition({
   const determineTransitionType = useCallback((success: boolean) => {
     return success ? 'fade' : 'slide';
   }, []);
+
+  // Helper function to complete the session
+  const completeSession = useCallback(() => {
+    setCurrentIndex(wordsRef.current.length);
+
+    // Call onComplete callback if provided
+    if (onComplete && typeof onComplete === 'function') {
+      onComplete();
+    }
+
+    // Set isComplete after a small delay to allow for animation
+    setTimeout(() => {
+      if (mountedRef.current) {
+        setIsComplete(true);
+      }
+    }, 50);
+
+    // Invalidate queries when review is completed
+    invalidateQueries();
+  }, [onComplete, invalidateQueries]);
+
+  // Immediately complete session if progress is 100% but not yet marked complete
+  useEffect(() => {
+    // Skip this during initial loading
+    if (!wordsLoaded || isLoading) return;
+
+    // If progress is 100% but session not yet complete, auto-complete it
+    if (progress >= 100 && !isReviewDone && dueWords.length > 0) {
+      console.log('Auto-completing session based on 100% progress');
+      completeSession();
+    }
+
+    // IMPORTANT: If we've seen all unique words, complete session regardless of failed words
+    // This prevents requiring unnecessary swipes when all unique content has been seen
+    const uniqueWordsSeen = uniqueWordsSeenRef.current.size;
+    const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
+
+    if (uniqueWordsSeen >= totalUniqueWords && !isReviewDone && dueWords.length > 0) {
+      console.log(
+        `Auto-completing: seen all ${uniqueWordsSeen} unique words - completing session immediately`
+      );
+      // Clear failed words queue to allow completion
+      failedWordsRef.current = [];
+      completeSession();
+    }
+  }, [
+    progress,
+    isReviewDone,
+    wordsLoaded,
+    isLoading,
+    dueWords.length,
+    completeSession,
+    wordsRef,
+    failedWordsRef,
+  ]);
 
   // Update word mutation - handles API call and state updates
   const updateWordMutation = useMutation({
@@ -1218,12 +1398,53 @@ export function useSpacedRepetition({
         const currentPos = currentIndex;
         const totalWords = wordsRef.current.length;
 
-        // Get next word index using our refactored function
-        const nextWordIndex = getNextWordIndex(currentPos, totalWords, failedWordsRef.current);
+        // Track all unique words for accurate progress calculation
+        // This is crucial for preventing the progress bar from resetting when failed words are reinserted
+        if (wordToUpdate.sentence_word_id) {
+          uniqueWordsSeenRef.current.add(wordToUpdate.sentence_word_id);
+        }
 
-        // Check if we're at the end of the review
-        const isAtEnd = nextWordIndex >= totalWords;
-        const noMoreFailedWords = failedWordsRef.current.length === 0;
+        // Calculate if we've seen all unique words
+        const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
+        const haveSeenAllUniqueWords = uniqueWordsSeenRef.current.size >= totalUniqueWords;
+
+        // MAJOR IMPROVEMENT: If we've seen all unique words, don't require more swipes
+        // Immediately complete the session even if there are failed words
+        if (haveSeenAllUniqueWords) {
+          console.log(
+            'All unique words seen - bypassing failed words and completing session immediately'
+          );
+          failedWordsRef.current = []; // Clear failed words
+          completeSession();
+          return nextReviewData;
+        }
+
+        // Check if this word is already in the failed words queue
+        const failedWordIndex = wordToUpdate.sentence_word_id
+          ? failedWordsRef.current.findIndex(w =>
+              isSameWordId(w.sentence_word_id, wordToUpdate.sentence_word_id)
+            )
+          : -1;
+
+        // CRITICAL FIX: If we're reviewing a failed word and it's successful, remove it from failed queue
+        // This prevents the endless loop where failed words are reprocessed indefinitely
+        if (success && failedWordIndex !== -1) {
+          console.log(
+            `Successful recall of failed word ${wordToUpdate.sentence_word_id} - removing from failed queue immediately`
+          );
+          failedWordsRef.current.splice(failedWordIndex, 1);
+        }
+
+        // Update session data for the current word in the main queue
+        if (wordToUpdate.sessionData) {
+          // If this is a new word, update remaining reviews needed
+          if (wordToUpdate.sessionData.isNew && success) {
+            wordToUpdate.sessionData.remainingReviewsNeeded = Math.max(
+              0,
+              (wordToUpdate.sessionData.remainingReviewsNeeded || 0) - 1
+            );
+          }
+        }
 
         // After updating, if the word was failed, add it to failed words queue
         if (!success) {
@@ -1247,21 +1468,70 @@ export function useSpacedRepetition({
               failedWord.sessionData = {};
             }
 
-            // Set reinsert position
-            failedWord.sessionData.reinsertPosition =
-              idealPosition >= totalWords ? 0 : idealPosition;
+            // Set failedInSession flag
+            failedWord.sessionData.failedInSession = true;
 
-            // Set processing attempts counter
-            failedWord.sessionData.processingAttempts = 0;
+            // Set reinsert position
+            // IMPROVED FIX: Never reinsert at the beginning or at positions we've already passed
+            // Always insert at current position + offset to avoid re-swiping
+            const newPosition = Math.min(currentPos + minSpacing, totalWords - 1);
+            failedWord.sessionData.reinsertPosition = newPosition;
 
             // Add to failed words queue
+            console.log(
+              `Adding word ${failedWord.sentence_word_id} to failed queue at position ${failedWord.sessionData.reinsertPosition}`
+            );
             failedWordsRef.current.push(failedWord);
+          } else {
+            // Word is already in failed queue, update it
+            console.log(
+              `Word ${wordToUpdate.sentence_word_id} already in failed queue - updating its data`
+            );
+            failedWordsRef.current[existingIndex].sessionData = {
+              ...failedWordsRef.current[existingIndex].sessionData,
+              failedInSession: true,
+            };
           }
         }
 
-        // Update loop count to prevent getting stuck
-        const MAX_LOOP_COUNT = 2;
-        loopCountRef.current++;
+        // Logging failed words queue for debugging
+        if (failedWordsRef.current.length > 0) {
+          console.log(
+            `Failed words queue (${failedWordsRef.current.length}):`,
+            failedWordsRef.current
+              .map(w => `${w.sentence_word_id}@pos:${w.sessionData?.reinsertPosition}`)
+              .join(', ')
+          );
+        }
+
+        // Get next word index using our refactored function
+        // Pass uniqueWordsSeen to allow smart completion if all words have been seen
+        const nextWordIndex = getNextWordIndex(
+          currentPos,
+          totalWords,
+          failedWordsRef.current,
+          0,
+          uniqueWordsSeenRef.current,
+          totalUniqueWords
+        );
+
+        // FIXED: Properly detect if we're at the end and there are no more failed words
+        const isAtEnd = nextWordIndex >= totalWords;
+        const noMoreFailedWords = failedWordsRef.current.length === 0;
+
+        // We're now showing a word from the regular queue, not a reinserted failed word
+        // Only increment loop count when we reach the end of the queue
+        if (isAtEnd) {
+          loopCountRef.current++;
+        }
+
+        // COMPLETE FIX: If we've seen all unique words and the next word would reinsert a failed word,
+        // just complete the session instead of requiring more swipes
+        if (haveSeenAllUniqueWords && noMoreFailedWords) {
+          console.log('All unique words seen and no more failed words - completing session');
+          completeSession();
+          return nextReviewData;
+        }
 
         console.log(
           'Loop count:',
@@ -1269,58 +1539,36 @@ export function useSpacedRepetition({
           'Is at end:',
           isAtEnd,
           'No more failed:',
-          noMoreFailedWords
+          noMoreFailedWords,
+          'Failed words count:',
+          failedWordsRef.current.length,
+          'Next word index:',
+          nextWordIndex,
+          'Progress:',
+          uniqueWordsSeenRef.current.size,
+          '/',
+          totalUniqueWords,
+          'unique words seen'
         );
 
-        // Force completion if we've been looping too much
+        // FIXED: Clear completion logic
+        // 1. Force completion if we've been looping too much
+        const MAX_LOOP_COUNT = 3; // Increased to 3 to give more chances
         if (loopCountRef.current > MAX_LOOP_COUNT && isAtEnd) {
           console.log('Force completing due to loop detection');
-          setCurrentIndex(totalWords);
-
-          // Call onComplete callback first if provided
-          if (onComplete && typeof onComplete === 'function') {
-            onComplete();
-          }
-
-          // Set isComplete after a small delay to allow for animation
-          setTimeout(() => {
-            if (mountedRef.current) {
-              setIsComplete(true);
-            }
-          }, 50);
-
-          setProcessingCount(prev => Math.max(0, prev - 1));
-
-          // Invalidate queries when review is completed
-          invalidateQueries();
-
+          completeSession();
           return nextReviewData;
         }
 
-        // Normal case: Review is complete when we reach the end and have no failed words
+        // 2. Normal completion: at the end with no failed words
         if (isAtEnd && noMoreFailedWords) {
-          console.log('Normal completion');
-          setCurrentIndex(totalWords);
-
-          // Call onComplete callback first if provided
-          if (onComplete && typeof onComplete === 'function') {
-            onComplete();
-          }
-
-          // Set isComplete after a small delay to allow for animation
-          setTimeout(() => {
-            if (mountedRef.current) {
-              setIsComplete(true);
-            }
-          }, 50);
-
-          // Invalidate queries when review is completed
-          invalidateQueries();
-        } else {
-          // Otherwise, set to the next word index
-          setCurrentIndex(nextWordIndex);
+          console.log('Normal completion - all words processed, no failed words remain');
+          completeSession();
+          return nextReviewData;
         }
 
+        // Otherwise, just go to the next word
+        setCurrentIndex(nextWordIndex);
         return nextReviewData;
       } catch (error) {
         console.error('Error updating word in SRS:', error);
