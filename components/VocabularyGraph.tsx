@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
@@ -17,8 +17,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { LoadingContainer } from './Loader';
 import { useComponentAnimation, useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
+import * as Haptics from 'expo-haptics';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -40,6 +41,9 @@ export const VocabularyGraph = React.memo(
     const { animatedStyle, startAnimation } = useComponentAnimation(500); // Increased delay for better stability
     const [isReady, setIsReady] = React.useState(false);
 
+    // Track if the last point haptic has been triggered
+    const lastPointTriggered = useRef(false);
+
     // Canvas dimensions
     const PADDING = 16;
     const GRAPH_HEIGHT = 120;
@@ -55,10 +59,41 @@ export const VocabularyGraph = React.memo(
 
     // Use our custom graph animation hook
     const {
-      skiaProgress,
+      animationProgress,
       startAnimation: startGraphAnimation,
       resetAnimation,
     } = useGraphAnimation(2000);
+
+    // Function to trigger haptic feedback safely from the JS thread
+    const triggerHapticFeedback = useCallback(() => {
+      if (lastPointTriggered.current) return;
+      lastPointTriggered.current = true;
+
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      } catch (error) {
+        console.warn('Failed to trigger haptic feedback:', error);
+      }
+    }, []);
+
+    // Reset the last point triggered flag when points change or animation is reset
+    useEffect(() => {
+      lastPointTriggered.current = false;
+    }, [points.length]);
+
+    // Monitor animation progress to trigger haptic feedback only for the last point
+    useAnimatedReaction(
+      () => {
+        if (points.length === 0) return null;
+        return animationProgress.value >= 1;
+      },
+      reachedLastPoint => {
+        if (reachedLastPoint) {
+          runOnJS(triggerHapticFeedback)();
+        }
+      },
+      [points.length, triggerHapticFeedback]
+    );
 
     // Start animation when component mounts
     React.useEffect(() => {
@@ -79,6 +114,9 @@ export const VocabularyGraph = React.memo(
       // 3. We have data points
       // 4. Parent has triggered animations
       if (isReady && !isLoading && points.length > 0 && animationTriggered) {
+        // Reset the last point triggered flag
+        lastPointTriggered.current = false;
+
         // Use setTimeout to ensure synchronization with mastery bar
         setTimeout(() => {
           startGraphAnimation();
@@ -173,7 +211,7 @@ export const VocabularyGraph = React.memo(
 
             {/* Area under the curve with gradient */}
             {points.length > 0 && (
-              <Group opacity={skiaProgress}>
+              <Group opacity={animationProgress}>
                 <LinearGradient
                   start={vec(0, 0)}
                   end={vec(0, GRAPH_HEIGHT)}
@@ -195,7 +233,7 @@ export const VocabularyGraph = React.memo(
                   strokeJoin="round"
                   strokeCap="round"
                   start={0}
-                  end={skiaProgress}
+                  end={animationProgress}
                 />
                 <BlurMask blur={1} style="normal" />
               </Group>
@@ -208,7 +246,7 @@ export const VocabularyGraph = React.memo(
                 const pointPosition = index / (points.length - 1);
 
                 return (
-                  <Group key={index} opacity={skiaProgress >= pointPosition ? 1 : 0}>
+                  <Group key={index} opacity={animationProgress.value >= pointPosition ? 1 : 0}>
                     {/* Outer circle */}
                     <Circle cx={point.x} cy={point.y} r={4} color={colors.cardBackground} />
                     {/* Inner circle */}
