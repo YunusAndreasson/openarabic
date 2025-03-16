@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, RefreshControl } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
@@ -39,6 +39,9 @@ export default function VocabularyScreen() {
 
   // Use the loading state hook with a standard delay
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500, true);
+
+  // Add a timeout ref to prevent indefinite loading
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Query for study words
   const {
@@ -86,7 +89,8 @@ export default function VocabularyScreen() {
     'dueWords',
     user?.id,
     0, // Always refresh due words
-    true
+    true, // Skip initial focus
+    true // Force refresh on focus
   );
 
   useScreenFocusRefresh(
@@ -94,7 +98,8 @@ export default function VocabularyScreen() {
     'studyWords',
     user?.id,
     60000, // 1 minute stale time
-    true
+    true, // Skip initial focus
+    true // Force refresh on focus
   );
 
   // Filter valid study words
@@ -123,6 +128,12 @@ export default function VocabularyScreen() {
 
     // Invalidate due words query to refresh after review
     queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+
+    // Mark study words as stale to ensure refresh when returning
+    queryClient.invalidateQueries({
+      queryKey: ['studyWords', user.id],
+      refetchType: 'none', // Don't refetch now, but mark as stale for when we return
+    });
 
     // Prefetch the review data to avoid the "no words" flash
     queryClient.prefetchQuery({
@@ -157,12 +168,37 @@ export default function VocabularyScreen() {
 
   // Update loading state based on data loading
   useEffect(() => {
-    if (isAuthLoading || (!!user && status === 'pending')) {
+    if (isAuthLoading || (!!user && status === 'pending' && isFetching)) {
       startLoading();
+
+      // Clear any existing timeout
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+
+      // Set a maximum loading time of 5 seconds
+      loadingTimeoutRef.current = setTimeout(() => {
+        stopLoading();
+        loadingTimeoutRef.current = null;
+      }, 5000);
     } else {
       stopLoading();
+
+      // Clear timeout when loading is explicitly stopped
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     }
-  }, [isAuthLoading, user, status, startLoading, stopLoading]);
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    };
+  }, [isAuthLoading, user, status, isFetching, startLoading, stopLoading]);
 
   // Content loading state - simplified from a useMemo to a direct calculation
   const isContentLoading = !!user && (isFetching || isDataLoading);

@@ -20,6 +20,12 @@ interface VocabularyDashboardProps
   animationTriggered?: boolean;
   /** Callback for when a stat item is pressed */
   onStatPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
+  /** Streak and difficulty statistics */
+  streakStats?: {
+    longestSuccessStreak: number;
+    wordsWithStreaks: number;
+    averageDifficulty: number;
+  };
 }
 
 interface StatItemProps {
@@ -94,6 +100,7 @@ export const VocabularyDashboard = React.memo(
     colors,
     animationTriggered = false,
     onStatPress,
+    streakStats,
   }: VocabularyDashboardProps) => {
     // Calculate mastery percentage
     const masteryPercentage = useMemo(

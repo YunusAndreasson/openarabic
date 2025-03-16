@@ -11,6 +11,7 @@ import { QueryClient, QueryKey } from '@tanstack/react-query';
  * @param userId - User ID to include in query key
  * @param staleTime - Time in ms after which data is considered stale (default: 60000ms)
  * @param skipInitialFocus - Whether to skip refresh on initial focus (default: true)
+ * @param forceRefreshOnFocus - Force refresh even if data is not stale (default: false)
  * @returns Object with manual refresh function
  */
 export const useScreenFocusRefresh = (
@@ -18,7 +19,8 @@ export const useScreenFocusRefresh = (
   queryKey: string,
   userId: string | undefined,
   staleTime = 60000,
-  skipInitialFocus = true
+  skipInitialFocus = true,
+  forceRefreshOnFocus = false
 ): { refreshData: () => void } => {
   // Track if this is the initial mount
   const isInitialMount = useRef(true);
@@ -26,6 +28,9 @@ export const useScreenFocusRefresh = (
   // Store the previous query key and userId to detect changes
   const prevQueryKey = useRef(queryKey);
   const prevUserId = useRef(userId);
+
+  // Add a ref to track last focus time
+  const lastFocusTimeRef = useRef(0);
 
   // Create the full query key
   const fullQueryKey: QueryKey = [queryKey, userId];
@@ -41,16 +46,26 @@ export const useScreenFocusRefresh = (
       ? Date.now() - queryData.dataUpdatedAt > staleTime
       : true;
 
-    // Only refresh if data is stale
-    if (isDataStale) {
-      queryClient.invalidateQueries({ queryKey: fullQueryKey });
+    // Force refresh if requested or if data is stale
+    if (forceRefreshOnFocus || isDataStale) {
+      // If forcing refresh, set a short debounce to prevent duplicate refreshes
+      const currentTime = Date.now();
+      const timeSinceLastFocus = currentTime - lastFocusTimeRef.current;
+
+      // Only refresh if it's been more than 300ms since last focus
+      // This prevents multiple rapid refreshes
+      if (timeSinceLastFocus > 300 || lastFocusTimeRef.current === 0) {
+        queryClient.invalidateQueries({ queryKey: fullQueryKey });
+        lastFocusTimeRef.current = currentTime;
+      }
     }
-  }, [queryClient, fullQueryKey, userId, staleTime]);
+  }, [queryClient, fullQueryKey, userId, staleTime, forceRefreshOnFocus]);
 
   // Manual refresh function that bypasses stale check
   const refreshData = useCallback(() => {
     if (userId) {
       queryClient.invalidateQueries({ queryKey: fullQueryKey });
+      lastFocusTimeRef.current = Date.now();
     }
   }, [queryClient, fullQueryKey, userId]);
 
