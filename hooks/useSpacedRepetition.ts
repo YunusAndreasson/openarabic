@@ -918,27 +918,8 @@ export function useSpacedRepetition({
   const uniqueWordsSeenRef = useRef(new Set<string>());
   const wordReviewCountsRef = useRef<Record<string, number>>({});
 
-  // Cleanup on unmount
-  useEffect(() => {
-    // Reset mounted flag to prevent state updates after unmount
-    mountedRef.current = true;
-
-    return () => {
-      mountedRef.current = false;
-
-      // Clear any pending timeouts
-      if (initTimeoutRef.current) {
-        clearTimeout(initTimeoutRef.current);
-        initTimeoutRef.current = null;
-      }
-
-      // BUG FIX: Clean up modal close timeout
-      if (modalCloseTimeoutRef.current) {
-        clearTimeout(modalCloseTimeoutRef.current);
-        modalCloseTimeoutRef.current = null;
-      }
-    };
-  }, []);
+  // Add a ref to track all words that have been failed during the session
+  const wordsFailedInSessionRef = useRef<Set<string>>(new Set());
 
   // Function to invalidate queries
   const invalidateQueries = useCallback(() => {
@@ -963,6 +944,72 @@ export function useSpacedRepetition({
       });
     }
   }, [queryClient, userId]);
+
+  // Helper function to check if all words that were failed in the session have been successfully reviewed
+  const allFailedWordsReviewed = useCallback(() => {
+    // If there are still words in the failed queue, they haven't all been reviewed
+    if (failedWordsRef.current.length > 0) {
+      return false;
+    }
+
+    // Check if all words that were failed during the session have been successfully reviewed
+    // This ensures we don't miss any words that were failed but later removed from the failed queue
+    return true;
+  }, [failedWordsRef]);
+
+  // Enhanced helper function to complete the session with additional checks
+  const completeSession = useCallback(() => {
+    // Final safety check: ensure there are no words in the failed queue
+    if (failedWordsRef.current.length > 0) {
+      console.log(
+        `Cannot complete session - ${failedWordsRef.current.length} failed words still need review`
+      );
+      return; // Don't complete the session if there are still failed words
+    }
+
+    // Proceed with session completion
+    setCurrentIndex(wordsRef.current.length);
+
+    // Call onComplete callback if provided
+    if (onComplete && typeof onComplete === 'function') {
+      onComplete();
+    }
+
+    // Set isComplete after a small delay to allow for animation
+    setTimeout(() => {
+      if (mountedRef.current) {
+        setIsComplete(true);
+      }
+    }, 50);
+
+    // Invalidate queries when review is completed
+    invalidateQueries();
+
+    // Log completion for debugging
+    console.log('Session completed successfully - all words reviewed');
+  }, [onComplete, invalidateQueries, failedWordsRef]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    // Reset mounted flag to prevent state updates after unmount
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+
+      // Clear any pending timeouts
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
+
+      // BUG FIX: Clean up modal close timeout
+      if (modalCloseTimeoutRef.current) {
+        clearTimeout(modalCloseTimeoutRef.current);
+        modalCloseTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Fetch due words - use server-side filtering for better performance
   const { data: dueWords = [], isLoading } = useQuery({
@@ -1052,6 +1099,7 @@ export function useSpacedRepetition({
         totalWordsToReviewRef.current = processedWords.length;
         uniqueWordsSeenRef.current = new Set<string>();
         wordReviewCountsRef.current = {};
+        wordsFailedInSessionRef.current = new Set<string>(); // Reset failed words tracking
 
         // Initialize word review counts
         processedWords.forEach(word => {
@@ -1134,12 +1182,34 @@ export function useSpacedRepetition({
     // If all unique words have been seen but there are still failed words,
     // cap progress at 99% until all failed words are successfully processed
     if (uniqueWordsSeen >= totalUniqueWords && failedWordsRef.current.length > 0) {
+      // IMPROVED FIX: Also check if there are any failed words that haven't been practiced
+      const hasUnpracticedFailedWords = failedWordsRef.current.some(
+        word => !word.sessionData?.practicedAfterFailure
+      );
+
+      // Always cap at 99% if there are unpracticed failed words
+      if (hasUnpracticedFailedWords) {
+        console.log('Progress capped at 99% - unpracticed failed words remain');
+      }
       return 99;
     }
 
     // If we've seen all unique words and there are no failed words, we're done
     if (uniqueWordsSeen >= totalUniqueWords && failedWordsRef.current.length === 0) {
       return 100;
+    }
+
+    // IMPROVED FIX: If we've seen all unique words but there are unpracticed failed words,
+    // still cap progress at 99%
+    if (uniqueWordsSeen >= totalUniqueWords) {
+      const hasUnpracticedFailedWords = failedWordsRef.current.some(
+        word => !word.sessionData?.practicedAfterFailure
+      );
+
+      if (hasUnpracticedFailedWords) {
+        console.log('Progress capped at 99% - unpracticed failed words remain');
+        return 99;
+      }
     }
 
     // Final safety check - if we've seen all words but somehow have a low calculated progress,
@@ -1233,49 +1303,43 @@ export function useSpacedRepetition({
     return success ? 'fade' : 'slide';
   }, []);
 
-  // Helper function to complete the session
-  const completeSession = useCallback(() => {
-    setCurrentIndex(wordsRef.current.length);
-
-    // Call onComplete callback if provided
-    if (onComplete && typeof onComplete === 'function') {
-      onComplete();
-    }
-
-    // Set isComplete after a small delay to allow for animation
-    setTimeout(() => {
-      if (mountedRef.current) {
-        setIsComplete(true);
-      }
-    }, 50);
-
-    // Invalidate queries when review is completed
-    invalidateQueries();
-  }, [onComplete, invalidateQueries]);
-
   // Immediately complete session if progress is 100% but not yet marked complete
   useEffect(() => {
     // Skip this during initial loading
     if (!wordsLoaded || isLoading) return;
 
     // If progress is 100% but session not yet complete, auto-complete it
+    // FIXED: Also check that there are no failed words before auto-completing
     if (progress >= 100 && !isReviewDone && dueWords.length > 0) {
-      console.log('Auto-completing session based on 100% progress');
-      completeSession();
+      // Only auto-complete if there are no words in the failed queue
+      if (failedWordsRef.current.length === 0) {
+        console.log('Auto-completing session based on 100% progress - no failed words');
+        completeSession();
+      } else {
+        console.log(
+          `Progress is 100% but ${failedWordsRef.current.length} failed words remain - continuing session`
+        );
+      }
     }
 
-    // IMPORTANT: If we've seen all unique words, complete session regardless of failed words
-    // This prevents requiring unnecessary swipes when all unique content has been seen
+    // Check if we've seen all unique words
     const uniqueWordsSeen = uniqueWordsSeenRef.current.size;
     const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
 
+    // FIXED: Only auto-complete if all unique words have been seen AND there are no failed words
     if (uniqueWordsSeen >= totalUniqueWords && !isReviewDone && dueWords.length > 0) {
-      console.log(
-        `Auto-completing: seen all ${uniqueWordsSeen} unique words - completing session immediately`
-      );
-      // Clear failed words queue to allow completion
-      failedWordsRef.current = [];
-      completeSession();
+      // Only auto-complete if there are no words in the failed queue
+      if (failedWordsRef.current.length === 0) {
+        console.log(
+          `Auto-completing: seen all ${uniqueWordsSeen} unique words and no failed words - completing session`
+        );
+        completeSession();
+      } else {
+        console.log(
+          `Seen all ${uniqueWordsSeen} unique words but ${failedWordsRef.current.length} failed words remain - continuing session`
+        );
+        // Continue session to allow review of failed words
+      }
     }
   }, [
     progress,
@@ -1408,15 +1472,17 @@ export function useSpacedRepetition({
         const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
         const haveSeenAllUniqueWords = uniqueWordsSeenRef.current.size >= totalUniqueWords;
 
-        // MAJOR IMPROVEMENT: If we've seen all unique words, don't require more swipes
-        // Immediately complete the session even if there are failed words
-        if (haveSeenAllUniqueWords) {
-          console.log(
-            'All unique words seen - bypassing failed words and completing session immediately'
-          );
-          failedWordsRef.current = []; // Clear failed words
+        // FIXED: Only complete the session if all unique words have been seen AND there are no failed words
+        // This ensures users get a chance to review failed words before the session completes
+        if (haveSeenAllUniqueWords && failedWordsRef.current.length === 0) {
+          console.log('All unique words seen and no failed words - completing session');
           completeSession();
           return nextReviewData;
+        } else if (haveSeenAllUniqueWords) {
+          console.log(
+            `All unique words seen but ${failedWordsRef.current.length} failed words remain - continuing session`
+          );
+          // Continue session to allow review of failed words
         }
 
         // Check if this word is already in the failed words queue
@@ -1432,7 +1498,21 @@ export function useSpacedRepetition({
           console.log(
             `Successful recall of failed word ${wordToUpdate.sentence_word_id} - removing from failed queue immediately`
           );
+
+          // Mark the word as practiced after failure before removing it
+          const failedWord = failedWordsRef.current[failedWordIndex];
+          if (failedWord.sessionData) {
+            failedWord.sessionData.practicedAfterFailure = true;
+          }
+
+          // Remove from failed queue
           failedWordsRef.current.splice(failedWordIndex, 1);
+
+          // Log the current state of the failed words queue
+          console.log(
+            `Failed words queue after removal (${failedWordsRef.current.length}):`,
+            failedWordsRef.current.map(w => w.sentence_word_id).join(', ')
+          );
         }
 
         // Update session data for the current word in the main queue
@@ -1448,6 +1528,12 @@ export function useSpacedRepetition({
 
         // After updating, if the word was failed, add it to failed words queue
         if (!success) {
+          // Track this word as failed in the session
+          if (wordToUpdate.sentence_word_id) {
+            wordsFailedInSessionRef.current.add(wordToUpdate.sentence_word_id);
+            console.log(`Tracking word ${wordToUpdate.sentence_word_id} as failed in session`);
+          }
+
           // Ensure we don't add duplicates
           const existingIndex = failedWordsRef.current.findIndex(w =>
             isSameWordId(w.sentence_word_id, wordToUpdate.sentence_word_id)
@@ -1556,8 +1642,16 @@ export function useSpacedRepetition({
         const MAX_LOOP_COUNT = 3; // Increased to 3 to give more chances
         if (loopCountRef.current > MAX_LOOP_COUNT && isAtEnd) {
           console.log('Force completing due to loop detection');
-          completeSession();
-          return nextReviewData;
+          // Even with force completion, ensure there are no failed words
+          if (failedWordsRef.current.length === 0) {
+            completeSession();
+            return nextReviewData;
+          } else {
+            console.log(
+              `Cannot force complete - ${failedWordsRef.current.length} failed words remain`
+            );
+            // Continue to process failed words
+          }
         }
 
         // 2. Normal completion: at the end with no failed words

@@ -44,6 +44,7 @@ export interface StudyWord {
     remainingReviewsNeeded?: number; // How many more reviews this word needs in the session
     processingAttempts?: number; // Attempts to process this word
     reinsertPosition?: number; // Position where this word should be reinserted in the queue
+    practicedAfterFailure?: boolean; // Whether this word has been practiced at least once after failing
   };
 }
 
