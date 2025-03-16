@@ -368,12 +368,6 @@ export default function SettingsScreen() {
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={styles.accountInfoContainer}>
-                <ThemedText style={styles.signedInLabel}>Email:</ThemedText>
-                <ThemedText style={styles.signedInEmail} numberOfLines={1} ellipsizeMode="tail">
-                  {session.user.email}
-                </ThemedText>
-              </View>
             </View>
           </View>
         </ThemedView>
@@ -498,17 +492,5 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  accountInfoContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.SMALL,
-  },
-  signedInLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  signedInEmail: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });
