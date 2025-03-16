@@ -106,6 +106,9 @@ export function ThemedButton({
       ? 'This button is currently loading'
       : undefined;
 
+  // Determine if we need to render an icon container
+  const hasIcon = loading || iconComponent || icon;
+
   return (
     <Animated.View style={animatedStyle as any}>
       <TouchableOpacity
@@ -122,17 +125,17 @@ export function ThemedButton({
         {...props}
       >
         <View style={[styles.innerContainer, innerContainerStyle]}>
-          {loading ? (
+          {hasIcon && (
             <View style={styles.iconContainer}>
-              <ActivityIndicator size="small" color={textColor} />
+              {loading ? (
+                <ActivityIndicator size="small" color={textColor} />
+              ) : iconComponent ? (
+                iconComponent
+              ) : (
+                <Ionicons name={icon as any} size={iconSize} color={textColor} />
+              )}
             </View>
-          ) : iconComponent ? (
-            <View style={styles.iconContainer}>{iconComponent}</View>
-          ) : icon ? (
-            <View style={styles.iconContainer}>
-              <Ionicons name={icon as any} size={iconSize} color={textColor} />
-            </View>
-          ) : null}
+          )}
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
             <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
