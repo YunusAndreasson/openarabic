@@ -173,6 +173,9 @@ export function calculateVocabularyStats(
       averageLapses: 0,
       newWordsCount: 0,
       failedInSessionCount: 0,
+      longestSuccessStreak: 0,
+      wordsWithStreaks: 0,
+      averageDifficulty: 0.3, // Default initial difficulty
     };
   }
 
@@ -188,12 +191,24 @@ export function calculateVocabularyStats(
   let totalEaseFactor = 0;
   let totalSuccesses = 0;
   let totalLapses = 0;
+  let totalDifficulty = 0;
+  let longestSuccessStreak = 0;
+  let wordsWithStreaks = 0;
 
   validStudyWords.forEach(word => {
     totalInterval += word.interval_days;
     totalEaseFactor += word.ease_factor;
     totalSuccesses += word.review_count - word.lapses;
     totalLapses += word.lapses;
+
+    // Track difficulty statistics
+    totalDifficulty += word.difficulty ?? 0.3; // Default to initial difficulty if not present
+
+    // Track success streak statistics
+    if (word.success_streak && word.success_streak > 0) {
+      wordsWithStreaks++;
+      longestSuccessStreak = Math.max(longestSuccessStreak, word.success_streak);
+    }
   });
 
   const totalWords = validStudyWords.length;
@@ -202,6 +217,7 @@ export function calculateVocabularyStats(
   const totalReviews = validStudyWords.reduce((sum, word) => sum + word.review_count, 0);
   const successRate = totalReviews > 0 ? (totalSuccesses / totalReviews) * 100 : 0;
   const averageLapses = totalWords > 0 ? totalLapses / totalWords : 0;
+  const averageDifficulty = totalWords > 0 ? totalDifficulty / totalWords : 0.3;
 
   // Count new words and failed in session
   const newWordsCount = validStudyWords.filter(w => w.sessionData?.isNew).length;
@@ -219,5 +235,8 @@ export function calculateVocabularyStats(
     averageLapses,
     newWordsCount,
     failedInSessionCount,
+    longestSuccessStreak,
+    wordsWithStreaks,
+    averageDifficulty,
   };
 }

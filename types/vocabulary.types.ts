@@ -62,6 +62,9 @@ export interface VocabularyStats {
   averageLapses: number;
   newWordsCount: number;
   failedInSessionCount: number;
+  longestSuccessStreak: number;
+  wordsWithStreaks: number;
+  averageDifficulty: number;
 }
 
 /**
@@ -111,6 +114,9 @@ export interface SrsStats {
   failedWordsRemaining: number;
   newWordsCount: number;
   failedInSessionCount: number;
+  averageDifficulty: number;
+  longestSuccessStreak: number;
+  wordsWithStreaks: number;
 }
 
 /**

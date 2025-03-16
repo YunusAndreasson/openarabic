@@ -8,6 +8,9 @@ interface WordReviewUpdate {
   lapses: number;
   stability: number;
   previous_interval: number;
+  difficulty?: number;
+  success_streak?: number;
+  failure_streak?: number;
 }
 
 // Define an options interface for getStudyWords
@@ -37,7 +40,7 @@ export const studyWordsService = {
     if (options.forStats) {
       // For stats, we only need core fields, not all the relationships
       selectQuery = query.select(
-        'interval_days, next_review_at, review_count, created_at, sentence_word_id'
+        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak'
       );
     } else {
       // Full data with relationships
@@ -158,6 +161,9 @@ export const studyWordsService = {
         lapses: 0,
         review_count: 0,
         previous_interval: 0,
+        difficulty: 0.3, // Default initial difficulty
+        success_streak: 0, // Initial success streak
+        failure_streak: 0, // Initial failure streak
       };
 
       const { error: insertError } = await supabase

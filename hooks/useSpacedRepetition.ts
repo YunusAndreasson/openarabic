@@ -574,6 +574,9 @@ export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: numbe
       failedWordsRemaining: 0,
       newWordsCount: 0,
       failedInSessionCount: 0,
+      averageDifficulty: 0,
+      longestSuccessStreak: 0,
+      wordsWithStreaks: 0,
     };
   }
 
@@ -584,6 +587,9 @@ export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: numbe
   let totalSuccesses = 0;
   let totalLapses = 0;
   let masteredCount = 0;
+  let totalDifficulty = 0;
+  let longestSuccessStreak = 0;
+  let wordsWithStreaks = 0;
 
   words.forEach(word => {
     totalInterval += word.interval_days;
@@ -596,6 +602,15 @@ export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: numbe
     if (word.interval_days >= 30) {
       masteredCount++;
     }
+
+    // Track difficulty statistics
+    totalDifficulty += word.difficulty ?? SRS_CONSTANTS.INITIAL_DIFFICULTY;
+
+    // Track success streak statistics
+    if (word.success_streak && word.success_streak > 0) {
+      wordsWithStreaks++;
+      longestSuccessStreak = Math.max(longestSuccessStreak, word.success_streak);
+    }
   });
 
   const totalWords = words.length;
@@ -606,6 +621,7 @@ export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: numbe
   const successRate = totalReviews > 0 ? (totalSuccesses / totalReviews) * 100 : 0;
   const learningCount = totalWords - masteredCount;
   const averageLapses = totalLapses / totalWords;
+  const averageDifficulty = totalDifficulty / totalWords;
 
   // Count new words and failed in session
   const newWordsCount = words.filter(w => w.sessionData?.isNew).length;
@@ -623,6 +639,9 @@ export function getSrsStatsFromWords(words: StudyWord[], failedWordsCount: numbe
     failedWordsRemaining: failedWordsCount,
     newWordsCount,
     failedInSessionCount,
+    averageDifficulty,
+    longestSuccessStreak,
+    wordsWithStreaks,
   };
 }
 
@@ -766,6 +785,8 @@ export function useSpacedRepetition({
 
     // Remove cached data to force a fresh fetch
     queryClient.removeQueries({ queryKey: ['dueWords', userId] });
+    queryClient.removeQueries({ queryKey: ['studyWords', userId] });
+    queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
 
     // Refetch the dueWords query immediately to ensure it's up to date
     if (userId) {
@@ -1029,44 +1050,87 @@ export function useSpacedRepetition({
         // Original word with necessary session data
         const originalWord = { ...wordToUpdate };
 
-        // Default values for new state
-        let newDifficulty = wordToUpdate.difficulty || 1.0;
+        // Get the current values with fallbacks
+        const currentDifficulty =
+          typeof wordToUpdate.difficulty === 'number' && !isNaN(wordToUpdate.difficulty)
+            ? Math.min(
+                Math.max(wordToUpdate.difficulty, SRS_CONSTANTS.DIFFICULTY_MIN),
+                SRS_CONSTANTS.DIFFICULTY_MAX
+              )
+            : SRS_CONSTANTS.INITIAL_DIFFICULTY;
+
+        const currentSuccessStreak =
+          typeof wordToUpdate.success_streak === 'number' && !isNaN(wordToUpdate.success_streak)
+            ? wordToUpdate.success_streak
+            : 0;
+
+        const currentFailureStreak =
+          typeof wordToUpdate.failure_streak === 'number' && !isNaN(wordToUpdate.failure_streak)
+            ? wordToUpdate.failure_streak
+            : 0;
+
+        // Calculate adaptive difficulty adjustments
+        // More significant changes for consistent patterns (longer streaks)
+        let newDifficulty = currentDifficulty;
         let newSuccessStreak = 0;
         let newFailureStreak = 0;
 
-        // We're about to update streaks, so retrieve current values
         if (success) {
-          newSuccessStreak = (wordToUpdate.success_streak || 0) + 1;
+          // Success case - decrease difficulty
+          // The longer the success streak, the larger the decrease
+          newSuccessStreak = currentSuccessStreak + 1;
           newFailureStreak = 0;
+
+          // Apply a gradually increasing reduction for longer streaks
+          const streakFactor = Math.min(0.5, newSuccessStreak * 0.05); // Cap at 0.5 (10 successes)
+          const difficultyReduction = SRS_CONSTANTS.DIFFICULTY_STEP_SUCCESS * (1 + streakFactor);
+          newDifficulty = Math.max(
+            SRS_CONSTANTS.DIFFICULTY_MIN,
+            currentDifficulty - difficultyReduction
+          );
         } else {
-          newFailureStreak = (wordToUpdate.failure_streak || 0) + 1;
+          // Failure case - increase difficulty
+          // The longer the failure streak, the larger the increase
           newSuccessStreak = 0;
+          newFailureStreak = currentFailureStreak + 1;
+
+          // Apply a gradually increasing penalty for longer failure streaks
+          const streakFactor = Math.min(0.75, newFailureStreak * 0.15); // Cap at 0.75 (5 failures)
+          const difficultyIncrease = SRS_CONSTANTS.DIFFICULTY_STEP_FAILURE * (1 + streakFactor);
+          newDifficulty = Math.min(
+            SRS_CONSTANTS.DIFFICULTY_MAX,
+            currentDifficulty + difficultyIncrease
+          );
         }
 
-        // Update difficulty based on streaks
-        // Difficulty goes down with successes, up with failures
-        const difficultyReduction = 0.05 * Math.min(newSuccessStreak, 5); // Cap at 0.25 reduction
-        const difficultyIncrease = 0.1 * Math.min(newFailureStreak, 3); // Cap at 0.3 increase
-
-        if (success) {
-          newDifficulty = Math.max(0.5, newDifficulty - difficultyReduction);
-        } else {
-          newDifficulty = Math.min(2.0, newDifficulty + difficultyIncrease);
-        }
-
-        // Calculate spacing interval using SRS algorithm
-        const updatedWord = await srsVocabularyApi.updateWordDifficulty(
-          wordId,
-          success,
-          newDifficulty,
-          newSuccessStreak,
-          newFailureStreak
+        // Calculate spacing interval using SRS algorithm with our enhanced values
+        const nextReviewData = calculateNextReview(
+          {
+            ...wordToUpdate,
+            difficulty: newDifficulty,
+            success_streak: newSuccessStreak,
+            failure_streak: newFailureStreak,
+          },
+          success
         );
 
-        // If the operation wasn't successful, handle error
-        if (!updatedWord) {
-          throw new Error('Failed to update word');
-        }
+        // Update the word in the database
+        await studyWordsService.updateWordReview(Number(wordId), {
+          interval_days: nextReviewData.newInterval,
+          ease_factor: nextReviewData.newEaseFactor,
+          next_review_at: nextReviewData.nextReviewDate,
+          review_count: (wordToUpdate.review_count || 0) + 1,
+          lapses: success ? wordToUpdate.lapses : (wordToUpdate.lapses || 0) + 1,
+          stability: nextReviewData.newStability,
+          previous_interval: nextReviewData.previousInterval,
+          difficulty: nextReviewData.newDifficulty,
+          success_streak: nextReviewData.newSuccessStreak,
+          failure_streak: nextReviewData.newFailureStreak,
+        });
+
+        // Invalidate queries after each successful word update
+        // This ensures the vocabulary screen gets updated with the latest data
+        invalidateQueries();
 
         // Determine where we go next
         const currentPos = currentIndex;
@@ -1130,39 +1194,52 @@ export function useSpacedRepetition({
         if (loopCountRef.current > MAX_LOOP_COUNT && isAtEnd) {
           console.log('Force completing due to loop detection');
           setCurrentIndex(totalWords);
-          setIsComplete(true);
+
+          // Call onComplete callback first if provided
+          if (onComplete && typeof onComplete === 'function') {
+            onComplete();
+          }
+
+          // Set isComplete after a small delay to allow for animation
+          setTimeout(() => {
+            if (mountedRef.current) {
+              setIsComplete(true);
+            }
+          }, 50);
+
           setProcessingCount(prev => Math.max(0, prev - 1));
 
           // Invalidate queries when review is completed
           invalidateQueries();
 
-          // Call onComplete callback if provided
-          if (onComplete && typeof onComplete === 'function') {
-            onComplete();
-          }
-
-          return updatedWord;
+          return nextReviewData;
         }
 
         // Normal case: Review is complete when we reach the end and have no failed words
         if (isAtEnd && noMoreFailedWords) {
           console.log('Normal completion');
           setCurrentIndex(totalWords);
-          setIsComplete(true);
 
-          // Invalidate queries when review is completed
-          invalidateQueries();
-
-          // Call onComplete callback if provided
+          // Call onComplete callback first if provided
           if (onComplete && typeof onComplete === 'function') {
             onComplete();
           }
+
+          // Set isComplete after a small delay to allow for animation
+          setTimeout(() => {
+            if (mountedRef.current) {
+              setIsComplete(true);
+            }
+          }, 50);
+
+          // Invalidate queries when review is completed
+          invalidateQueries();
         } else {
           // Otherwise, set to the next word index
           setCurrentIndex(nextWordIndex);
         }
 
-        return updatedWord;
+        return nextReviewData;
       } catch (error) {
         console.error('Error updating word in SRS:', error);
         throw error;

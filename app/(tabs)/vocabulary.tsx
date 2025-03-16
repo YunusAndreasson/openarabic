@@ -244,6 +244,11 @@ export default function VocabularyScreen() {
               colors={colors}
               animationTriggered={true}
               onStatPress={handleStatPress}
+              streakStats={{
+                longestSuccessStreak: stats.longestSuccessStreak || 0,
+                wordsWithStreaks: stats.wordsWithStreaks || 0,
+                averageDifficulty: stats.averageDifficulty || 0,
+              }}
             />
           </View>
 

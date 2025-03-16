@@ -154,6 +154,8 @@ const CompletionScreen = React.memo(({ onClose }: { onClose: () => void }) => {
 
       // Remove any cached data to force a fresh fetch
       queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
+      queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
     }
   }, [user?.id, queryClient]);
 
@@ -197,21 +199,6 @@ const CompletionScreen = React.memo(({ onClose }: { onClose: () => void }) => {
   );
 });
 
-// Create a component for the empty state
-const EmptyStateScreen = React.memo(({ onClose }: { onClose: () => void }) => {
-  const colors = useColors();
-
-  return (
-    <ThemedView style={baseStyles.container} useSafeArea={true}>
-      <View style={baseStyles.emptyStateContainer}>
-        <Ionicons name="information-circle-outline" size={60} color={colors.tint} />
-        <ThemedText style={baseStyles.emptyStateText}>No words due.</ThemedText>
-        <ThemedButton title="Back" onPress={onClose} style={{ marginTop: LAYOUT.SPACING.XLARGE }} />
-      </View>
-    </ThemedView>
-  );
-});
-
 export default function ReviewScreen() {
   const colors = useColors();
   const params = useLocalSearchParams();
@@ -230,6 +217,10 @@ export default function ReviewScreen() {
   });
   const [animationState, setAnimationState] = useState<'idle' | 'animating'>('idle');
 
+  // Add state to track if we're transitioning to completion screen
+  const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
+  const completionTransitionRef = useRef<NodeJS.Timeout>();
+
   // Add state to control progress bar animation
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
 
@@ -245,6 +236,28 @@ export default function ReviewScreen() {
   const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } =
     useSpacedRepetition({
       userId: user?.id,
+      // Add an onComplete callback to handle the transition to completion screen
+      onComplete: () => {
+        // Start the transition to completion screen with a fade-out animation
+        setIsTransitioningToCompletion(true);
+
+        // Clear any existing timeouts
+        if (completionTransitionRef.current) {
+          clearTimeout(completionTransitionRef.current);
+        }
+
+        // Fade out the current screen
+        opacity.value = withTiming(0, {
+          duration: 300, // Slower fade-out for a smoother transition
+          easing: TIMING_CONFIG.MEDIUM.easing,
+        });
+
+        // Wait for the fade-out to complete before showing the completion screen
+        completionTransitionRef.current = setTimeout(() => {
+          // Now we can safely show the completion screen
+          setIsTransitioningToCompletion(false);
+        }, 350); // Slightly longer than the animation duration to ensure it completes
+      },
     });
 
   // Use our custom hook for word sizing with simplified approach
@@ -309,12 +322,17 @@ export default function ReviewScreen() {
     [wordForm, wordFontSize]
   );
 
-  // Clean up timeouts when component unmounts
+  // Clean up all timeouts when component unmounts
   useEffect(() => {
     return () => {
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = undefined;
+      }
+
+      if (completionTransitionRef.current) {
+        clearTimeout(completionTransitionRef.current);
+        completionTransitionRef.current = undefined;
       }
     };
   }, []);
@@ -402,9 +420,12 @@ export default function ReviewScreen() {
                 // This ensures the DOM has time to update with the new word content
                 setTimeout(() => {
                   // For both success and failure cases, use immediate fade-in
-                  opacity.value = withTiming(1, FAST_ANIMATION_CONFIG, () => {
-                    runOnJS(setAnimationState)('idle');
-                  });
+                  // Only fade in if we're not transitioning to completion screen
+                  if (!isTransitioningToCompletion) {
+                    opacity.value = withTiming(1, FAST_ANIMATION_CONFIG, () => {
+                      runOnJS(setAnimationState)('idle');
+                    });
+                  }
                 }, 16); // One frame delay at 60fps to ensure clean transition
               })
               .catch(handleUpdateError);
@@ -440,7 +461,7 @@ export default function ReviewScreen() {
         updateWordAndAnimate();
       }
     },
-    [currentWord, updateWord, opacity, translateX, progress]
+    [currentWord, updateWord, opacity, translateX, progress, isTransitioningToCompletion]
   );
 
   // Create a pan gesture handler for the entire screen
@@ -478,12 +499,13 @@ export default function ReviewScreen() {
     // Force immediate invalidation of the dueWords query to ensure it's refetched
     if (user?.id) {
       queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-
-      // Also invalidate the studyWords query to ensure all stats are updated
       queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
 
       // Remove any cached data to force a fresh fetch
       queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
+      queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
     }
 
     // Add a small delay to ensure the queries are invalidated before navigating back
@@ -505,14 +527,16 @@ export default function ReviewScreen() {
     );
   }
 
-  // Show empty state if there are no words to review and not complete
-  if (!isLoading && !currentWord && !isComplete) {
-    return <EmptyStateScreen onClose={handleClose} />;
-  }
-
-  // Show completion screen if all words are reviewed
-  if (isComplete) {
-    return <CompletionScreen onClose={handleClose} />;
+  // Show completion screen if all words are reviewed or if there are no words to review
+  if (isComplete || (!isLoading && !currentWord)) {
+    // Only continue with the main content during the transition animation
+    if (isComplete && isTransitioningToCompletion) {
+      // The opacity animation will handle the fade out
+      // Continue to the main return below
+    } else {
+      // Otherwise show the completion screen
+      return <CompletionScreen onClose={handleClose} />;
+    }
   }
 
   // Return the main content with entrance animation

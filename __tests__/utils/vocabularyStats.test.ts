@@ -243,6 +243,9 @@ describe('Vocabulary Stats Utilities', () => {
         averageLapses: 0,
         newWordsCount: 0,
         failedInSessionCount: 0,
+        longestSuccessStreak: 0,
+        wordsWithStreaks: 0,
+        averageDifficulty: 0.3,
       });
     });
 
