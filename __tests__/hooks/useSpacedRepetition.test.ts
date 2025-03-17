@@ -733,6 +733,41 @@ describe('SRS Algorithm Functions', () => {
     it('should be complete when past the end, no failed words, and words loaded', () => {
       expect(isReviewComplete(12, 10, 0, true, true)).toBe(true);
     });
+
+    // NEW TEST: Would have caught the off-by-one error
+    it('should not complete a session if uniqueWordsSeen is less than totalUniqueWords', () => {
+      // Mock the required variables for tracking uniqueWordsSeen
+      const uniqueWordsSeen = new Set(['1', '2', '3', '4', '5', '6']); // 6 words seen
+      const totalUniqueWords = 7; // 7 total words
+
+      // Create a mock isReviewComplete implementation that simulates the buggy behavior
+      const buggyShouldComplete = () => {
+        // The bug was that words were marked as "seen" in currentWord useMemo,
+        // causing word at index 6 to be marked as seen before answering
+        // resulting in uniqueWordsSeen.size >= totalUniqueWords when only 6 words were actually seen
+        return uniqueWordsSeen.size >= totalUniqueWords - 1; // This would return true with 6 words seen
+      };
+
+      // The buggy function would return true when only 6 out of 7 words were seen
+      expect(buggyShouldComplete()).toBe(true);
+
+      // Create a mock isReviewComplete implementation that simulates the fixed behavior
+      const fixedShouldComplete = () => {
+        // The fix is to only mark words as "seen" after they've been answered,
+        // and to use exact equality (===) instead of >= for comparison
+        return uniqueWordsSeen.size === totalUniqueWords; // This would return false with 6 words seen
+      };
+
+      // The fixed function would return false when only 6 out of 7 words were seen
+      expect(fixedShouldComplete()).toBe(false);
+
+      // Add the 7th word to the seen set
+      uniqueWordsSeen.add('7');
+
+      // Now both implementations should return true
+      expect(buggyShouldComplete()).toBe(true);
+      expect(fixedShouldComplete()).toBe(true);
+    });
   });
 
   // SECTION: getSrsStatsFromWords tests

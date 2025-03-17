@@ -9,24 +9,6 @@ import {
 } from '../types/vocabulary.types';
 
 // Add a stub for the vocabulary API
-const srsVocabularyApi = {
-  updateWordDifficulty: async (
-    wordId: string,
-    success: boolean,
-    difficulty: number,
-    successStreak: number,
-    failureStreak: number
-  ) => {
-    // This is just a stub that would normally talk to an API
-    // In a real implementation, this would update the word in the database
-    return {
-      id: wordId,
-      difficulty,
-      success_streak: successStreak,
-      failure_streak: failureStreak,
-    };
-  },
-};
 
 // Re-export StudyWord for tests
 export type { StudyWord };
@@ -814,9 +796,10 @@ export function getNextWordIndex(
     return totalWords;
   }
 
-  // IMPROVED FIX: If we've seen all unique words, don't bother with reinserting failed words
-  // Just return the end position to complete the session
-  if (uniqueWordsSeen && totalUniqueWords && uniqueWordsSeen.size >= totalUniqueWords) {
+  // FIXED: Use exact equality instead of >= to be consistent with other fixes
+  // Only consider all unique words seen when the count matches exactly
+  // This prevents the off-by-one error where the session completes too early
+  if (uniqueWordsSeen && totalUniqueWords && uniqueWordsSeen.size === totalUniqueWords) {
     failedWords.splice(0, failedWords.length); // Clear entire failed words queue
     return totalWords; // Skip to end
   }
@@ -859,6 +842,7 @@ export function getNextWordIndex(
     // This avoids making the user swipe through cards they've already seen
     if (uniqueWordsSeen && totalUniqueWords && uniqueWordsSeen.size > totalUniqueWords * 0.5) {
       console.log(`Over 50% of unique words seen - clearing failed queue and completing session`);
+      console.log(`Seen ${uniqueWordsSeen.size} words out of ${totalUniqueWords} unique words`);
       // Clear failed queue and complete session
       failedWords.splice(0, failedWords.length);
       return totalWords;
@@ -940,16 +924,6 @@ export function useSpacedRepetition({
   }, [queryClient, userId]);
 
   // Helper function to check if all words that were failed in the session have been successfully reviewed
-  const allFailedWordsReviewed = useCallback(() => {
-    // If there are still words in the failed queue, they haven't all been reviewed
-    if (failedWordsRef.current.length > 0) {
-      return false;
-    }
-
-    // Check if all words that were failed during the session have been successfully reviewed
-    // This ensures we don't miss any words that were failed but later removed from the failed queue
-    return true;
-  }, [failedWordsRef]);
 
   // Enhanced helper function to complete the session with additional checks
   const completeSession = useCallback(() => {
@@ -1139,16 +1113,14 @@ export function useSpacedRepetition({
       word = currentIndex < dueWords.length ? dueWords[currentIndex] : undefined;
     }
 
-    // Track word as seen if it exists
-    if (word?.sentence_word_id) {
-      uniqueWordsSeenRef.current.add(word.sentence_word_id);
-    }
+    // REMOVED: We no longer track words as "seen" here.
+    // Instead, we'll track them after they've been answered in updateWordMutation
+    // This prevents the off-by-one error where we count a word as seen before showing it to the user
 
     return word;
   }, [currentIndex, wordsRef, dueWords]);
 
   // Create a memoized progress calculator for this instance of the hook
-  const memoizedProgressCalculator = useMemo(() => createMemoizedProgressCalculator(), []);
 
   // Calculate progress based on completed words vs. total words to review
   const progress = useMemo(() => {
@@ -1246,51 +1218,6 @@ export function useSpacedRepetition({
   const isActuallyLoading = isLoading || !wordsLoaded;
 
   // Function to handle failed date-related errors with a safe fallback
-  const handleDateError = useCallback(
-    async (
-      error: unknown,
-      wordId: string,
-      updatedWord: {
-        interval_days: number;
-        ease_factor: number;
-        next_review_at: string;
-        review_count: number;
-        lapses: number;
-        stability: number;
-        previous_interval: number;
-      }
-    ) => {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const isDateError =
-        errorMessage &&
-        (errorMessage.includes('time zone') ||
-          errorMessage.includes('date') ||
-          errorMessage.includes('timestamp'));
-
-      if (isDateError) {
-        try {
-          // Use a very conservative approach - just 1 year in the future
-          const safeDate = new Date();
-          safeDate.setFullYear(safeDate.getFullYear() + 1);
-
-          const safeUpdatedWord = {
-            ...updatedWord,
-            interval_days: Math.min(updatedWord.interval_days, 365),
-            next_review_at: safeDate.toISOString(),
-          };
-
-          await studyWordsService.updateWordReview(Number(wordId), safeUpdatedWord);
-          return { wordId, success: true, updatedWord: safeUpdatedWord };
-        } catch (fallbackError) {
-          console.error('Fallback update also failed:', fallbackError);
-        }
-      }
-
-      // Rethrow the original error if fallback fails or it's not a date error
-      throw error;
-    },
-    []
-  );
 
   // Define the transition type determination function before it's used
   const determineTransitionType = useCallback((success: boolean) => {
@@ -1320,8 +1247,9 @@ export function useSpacedRepetition({
     const uniqueWordsSeen = uniqueWordsSeenRef.current.size;
     const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
 
-    // FIXED: Only auto-complete if all unique words have been seen AND there are no failed words
-    if (uniqueWordsSeen >= totalUniqueWords && !isReviewDone && dueWords.length > 0) {
+    // FIXED: Only auto-complete if we've seen EXACTLY the totalUniqueWords count
+    // This ensures we don't complete too early (with >=) or require impossible conditions (with >)
+    if (uniqueWordsSeen === totalUniqueWords && !isReviewDone && dueWords.length > 0) {
       // Only auto-complete if there are no words in the failed queue
       if (failedWordsRef.current.length === 0) {
         console.log(
@@ -1368,7 +1296,6 @@ export function useSpacedRepetition({
 
       try {
         // Original word with necessary session data
-        const originalWord = { ...wordToUpdate };
 
         // Get the current values with fallbacks
         const currentDifficulty =
@@ -1464,7 +1391,8 @@ export function useSpacedRepetition({
 
         // Calculate if we've seen all unique words
         const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
-        const haveSeenAllUniqueWords = uniqueWordsSeenRef.current.size >= totalUniqueWords;
+        // FIXED: Use exact equality instead of >= to ensure all words are seen, but not prematurely
+        const haveSeenAllUniqueWords = uniqueWordsSeenRef.current.size === totalUniqueWords;
 
         // FIXED: Only complete the session if all unique words have been seen AND there are no failed words
         // This ensures users get a chance to review failed words before the session completes
@@ -1538,7 +1466,6 @@ export function useSpacedRepetition({
             // Calculate reinsert position - at least 3 positions later
             // or at beginning if we're near the end
             const minSpacing = Math.min(3, Math.floor(totalWords / 3));
-            const idealPosition = currentPos + minSpacing;
 
             // Clone the word to avoid reference issues
             const failedWord = JSON.parse(JSON.stringify(wordToUpdate));
@@ -1704,6 +1631,13 @@ export function useSpacedRepetition({
         return;
       }
 
+      // Enhanced debug logging to track progress and catch off-by-one errors
+      const uniqueWordsSeen = uniqueWordsSeenRef.current.size;
+      const totalUniqueWords = new Set(wordsRef.current.map(w => w.sentence_word_id)).size;
+      console.log(
+        `Processing word at index ${currentIndex} (${wordToUpdate.sentence_word_id}), progress: ${uniqueWordsSeen}/${totalUniqueWords} unique words seen`
+      );
+
       // Ensure we're comparing the correct IDs (both as strings)
       if (!isSameWordId(wordToUpdate.sentence_word_id, wordId)) {
         // Try to find the word in the array
@@ -1744,6 +1678,11 @@ export function useSpacedRepetition({
           success,
           wordToUpdate,
         });
+
+        // Log after updating the word to verify uniqueWordsSeen was incremented correctly
+        console.log(
+          `After update: uniqueWordsSeen=${uniqueWordsSeenRef.current.size}/${totalUniqueWords}, nextIndex=${currentIndex}, isComplete=${isReviewDone}`
+        );
       } catch (error) {
         console.error('Error in updateWord:', error);
 
@@ -1751,7 +1690,14 @@ export function useSpacedRepetition({
         setCurrentIndex(prev => Math.min(prev + 1, wordsQueueLength));
       }
     },
-    [currentIndex, updateWordMutation, determineTransitionType, setCurrentIndex, wordsRef]
+    [
+      currentIndex,
+      updateWordMutation,
+      determineTransitionType,
+      setCurrentIndex,
+      wordsRef,
+      isReviewDone,
+    ]
   );
 
   // Function to calculate and return SRS statistics
