@@ -107,8 +107,6 @@ export default function ArticlesScreen() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
   const [authors, setAuthors] = useState<Tables<'authors'>[]>([]);
-  const [selectedAuthorId, setSelectedAuthorId] = useState<number | null>(null);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -150,28 +148,10 @@ export default function ArticlesScreen() {
     fetchCategories();
   }, [fetchCategories]);
 
-  // Is in filtered view (either by author or category)
-  const isInFilteredView = useMemo(
-    () => selectedAuthorId !== null || selectedCategoryId !== null,
-    [selectedAuthorId, selectedCategoryId]
-  );
-
-  // Get selected author name
-  const selectedAuthor = useMemo(() => {
-    if (selectedAuthorId === null) return null;
-    return authors.find(author => author.id === selectedAuthorId) || null;
-  }, [selectedAuthorId, authors]);
-
-  // Get selected category name
-  const selectedCategory = useMemo(() => {
-    if (selectedCategoryId === null) return null;
-    return categories.find(category => category.id === selectedCategoryId) || null;
-  }, [selectedCategoryId, categories]);
-
   // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
-    return filterArticles(articles, selectedAuthorId, selectedCategoryId);
-  }, [articles, selectedAuthorId, selectedCategoryId]);
+    return filterArticles(articles, null, null);
+  }, [articles]);
 
   // Organized articles by category
   const latestArticles = useMemo(() => getLatestArticles(filteredArticles), [filteredArticles]);
@@ -214,11 +194,7 @@ export default function ArticlesScreen() {
     setError(null);
 
     try {
-      // Only pass the ID if it's not null
-      const categoryId = selectedCategoryId !== null ? selectedCategoryId : undefined;
-      const authorId = selectedAuthorId !== null ? selectedAuthorId : undefined;
-
-      const fetchedArticles = await articlesService.getArticles(categoryId, authorId);
+      const fetchedArticles = await articlesService.getArticles();
       setArticles(fetchedArticles);
 
       // Mark data as loaded
@@ -243,8 +219,6 @@ export default function ArticlesScreen() {
       setIsRefreshing(false);
     }
   }, [
-    selectedCategoryId,
-    selectedAuthorId,
     dispatch,
     authors.length,
     categories.length,
@@ -278,32 +252,18 @@ export default function ArticlesScreen() {
 
   const handleSelectAuthor = useCallback((authorId: number) => {
     Haptics.selectionAsync();
-    // Clear any category filter if active
-    setSelectedCategoryId(null);
-    setSelectedAuthorId(authorId);
-
-    // Scroll to top when changing author
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: 0, animated: true });
-    }
+    // Use simple direct URL string for consistent behavior across platforms
+    router.push(`/filter?type=author&id=${authorId}`);
   }, []);
 
   const handleSelectCategory = useCallback((categoryId: number) => {
     Haptics.selectionAsync();
-    // Clear any author filter if active
-    setSelectedAuthorId(null);
-    setSelectedCategoryId(categoryId);
-
-    // Scroll to top when changing category
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: 0, animated: true });
-    }
+    // Use simple direct URL string for consistent behavior across platforms
+    router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
 
   const handleClearFilters = useCallback(() => {
     Haptics.selectionAsync();
-    setSelectedAuthorId(null);
-    setSelectedCategoryId(null);
 
     // Scroll to top when clearing filters
     if (scrollViewRef.current) {
@@ -408,7 +368,7 @@ export default function ArticlesScreen() {
         <FilterList
           title="Browse by Author"
           items={authors}
-          selectedId={selectedAuthorId}
+          selectedId={null}
           onSelect={handleSelectAuthor}
           onClearFilter={handleClearFilters}
           animationDelay={500}
@@ -419,7 +379,7 @@ export default function ArticlesScreen() {
         <FilterList
           title="Browse by Category"
           items={categories}
-          selectedId={selectedCategoryId}
+          selectedId={null}
           onSelect={handleSelectCategory}
           animationDelay={600}
           itemAnimationDelay={650}
@@ -434,11 +394,9 @@ export default function ArticlesScreen() {
     featuredArticles,
     beginnerArticles,
     authors,
-    selectedAuthorId,
     handleSelectAuthor,
     handleClearFilters,
     categories,
-    selectedCategoryId,
     handleSelectCategory,
     lastOpenedArticles,
   ]);
@@ -462,22 +420,6 @@ export default function ArticlesScreen() {
         onRetry={() => {
           fetchArticles();
         }}
-      />
-    );
-  }
-
-  // Return FilteredArticleView when in filtered view
-  if (isInFilteredView) {
-    return (
-      <FilteredArticleView
-        articles={filteredArticles}
-        isLoading={isLoadingState}
-        isRefreshing={isRefreshing}
-        onRefresh={handleRefresh}
-        onArticlePress={handleArticlePress}
-        selectedAuthor={selectedAuthor}
-        selectedCategory={selectedCategory}
-        onClearFilter={handleClearFilters}
       />
     );
   }
