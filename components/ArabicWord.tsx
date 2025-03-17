@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useMemo, useCallback, useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,6 +6,9 @@ import {
   LayoutRectangle,
   NativeSyntheticEvent,
   TargetedEvent,
+  Platform,
+  LayoutChangeEvent,
+  TextStyle,
 } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
