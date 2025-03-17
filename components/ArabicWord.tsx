@@ -1,16 +1,14 @@
 import React, { memo, useMemo, useCallback, useEffect, useState } from 'react';
 import {
   StyleSheet,
-  TouchableOpacity,
   View,
-  TextStyle,
+  TouchableOpacity,
   LayoutRectangle,
-  LayoutChangeEvent,
-  Platform,
+  NativeSyntheticEvent,
+  TargetedEvent,
 } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
-import { SentenceWord } from '../types/vocabulary.types';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
@@ -18,7 +16,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
-import * as Haptics from 'expo-haptics';
+import { lightFeedback } from '@/utils/haptics';
 import { ArabicWordProps } from '@/types/ui.types';
 
 function ArabicWordComponent({
@@ -34,6 +32,7 @@ function ArabicWordComponent({
   const { user } = useAuth();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [isLongPressed, setIsLongPressed] = useState(false);
+  const containerRef = useRef<View>(null);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
 
@@ -86,7 +85,7 @@ function ArabicWordComponent({
   // Add to study list on long press
   const handleLongPress = useCallback(() => {
     // Trigger haptic feedback immediately
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    lightFeedback();
 
     // Update selection state through the parent component
     onPress(word);

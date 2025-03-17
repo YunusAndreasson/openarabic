@@ -1,10 +1,11 @@
 import { StyleSheet, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { ThemedInputProps } from '@/types/ui.types';
+import { errorFeedback } from '../utils/haptics';
 
 export function ThemedInput({
   icon,
@@ -19,6 +20,14 @@ export function ThemedInput({
 }: ThemedInputProps) {
   const colors = useColors();
   const [isFocused, setIsFocused] = useState(false);
+  const [prevError, setPrevError] = useState(error);
+
+  useEffect(() => {
+    if (error && !prevError) {
+      errorFeedback();
+    }
+    setPrevError(error);
+  }, [error, prevError]);
 
   const containerStyles = [
     styles.container,

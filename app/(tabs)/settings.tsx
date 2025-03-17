@@ -4,7 +4,6 @@ import { useState, useMemo, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -21,6 +20,7 @@ import { LAYOUT } from '../../constants/layout';
 import { LoadingScreen } from '../../components/Loader';
 import { useLoadingState, useScreenAnimation } from '../../hooks';
 import PageHeader from '../../components/PageHeader';
+import { lightFeedback } from '@/utils/haptics';
 
 export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null);
@@ -162,7 +162,7 @@ export default function SettingsScreen() {
       // Check if the value has actually changed to a different step
       if (Math.abs(value - previousScale) >= 0.1) {
         // Trigger haptic feedback for every increment
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        lightFeedback();
       }
 
       dispatch(setFontScale(value));

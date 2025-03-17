@@ -3,7 +3,6 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { RefreshControl } from 'react-native';
 
 // Components
@@ -39,6 +38,7 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
+import { mediumFeedback, lightFeedback } from '@/utils/haptics';
 
 // Types
 import { Article } from '@/types/articles.types';
@@ -230,7 +230,7 @@ export default function ArticlesScreen() {
   ]);
 
   const handleRefresh = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    mediumFeedback();
     fetchArticles();
   }, [fetchArticles]);
 
@@ -251,19 +251,19 @@ export default function ArticlesScreen() {
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
-    Haptics.selectionAsync();
+    lightFeedback();
     // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=author&id=${authorId}`);
   }, []);
 
   const handleSelectCategory = useCallback((categoryId: number) => {
-    Haptics.selectionAsync();
+    lightFeedback();
     // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
 
   const handleClearFilters = useCallback(() => {
-    Haptics.selectionAsync();
+    lightFeedback();
 
     // Scroll to top when clearing filters
     if (scrollViewRef.current) {

@@ -56,12 +56,3 @@ export function addDays(date: Date, days: number): Date {
   result.setDate(result.getDate() + days);
   return result;
 }
-
-/**
- * Formats a date as an ISO string
- * @param date - The date to format
- * @returns The date formatted as an ISO string
- */
-export function formatISOString(date: Date = new Date()): string {
-  return date.toISOString();
-}

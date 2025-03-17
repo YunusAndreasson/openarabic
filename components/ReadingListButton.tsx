@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { readingListService } from '../services/readingList';
 import { useAuth } from '../hooks/useAuth';
-import * as Haptics from 'expo-haptics';
+import { successFeedback } from '@/utils/haptics';
 import Toast from 'react-native-toast-message';
 import { LAYOUT } from '../constants/layout';
 import { ThemedButton } from './ThemedButton';
@@ -43,7 +43,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
         await readingListService.removeFromReadingList(user.id, articleId);
       } else {
         await readingListService.addToReadingList(user.id, articleId);
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        successFeedback();
       }
 
       setIsInReadingList(!isInReadingList);

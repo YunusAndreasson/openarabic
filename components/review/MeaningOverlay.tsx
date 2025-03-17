@@ -5,6 +5,7 @@ import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { useFadeInAnimation } from '../../hooks/animations';
+import { warningFeedback } from '../../utils/haptics';
 import { MeaningOverlayProps } from '../../types/ui.types';
 
 /**
@@ -19,10 +20,14 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
     useEffect(() => {
       if (visible) {
         startAnimation();
+        // Provide haptic feedback when showing a warning
+        if (isWarning) {
+          warningFeedback();
+        }
       } else {
         reverseAnimation();
       }
-    }, [visible, startAnimation, reverseAnimation]);
+    }, [visible, startAnimation, reverseAnimation, isWarning]);
 
     if (!visible) return null;
 

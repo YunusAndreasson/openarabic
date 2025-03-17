@@ -16,7 +16,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -26,6 +25,7 @@ import EntranceAnimation from '@/components/EntranceAnimation';
 import AnimatedItem from '@/components/AnimatedItem';
 import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations';
 import { useQueryClient } from '@tanstack/react-query';
+import { lightFeedback, mediumFeedback } from '@/utils/haptics';
 
 // Import our new components
 import CloseButton from '../components/CloseButton';
@@ -357,7 +357,7 @@ export default function ReviewScreen() {
     (success: boolean) => {
       // Add haptic feedback only when swiping left (don't know the word)
       if (!success) {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        lightFeedback();
       }
 
       // Update progress tracking and trigger animation only when progress actually changes
@@ -491,7 +491,7 @@ export default function ReviewScreen() {
   // Handle close button press
   const queryClient = useQueryClient();
   const handleClose = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); // Stronger haptic feedback
+    mediumFeedback(); // Stronger haptic feedback
 
     // First invalidate the queries to ensure the vocabulary screen gets updated data
     invalidateQueries();

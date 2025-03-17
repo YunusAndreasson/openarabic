@@ -19,7 +19,7 @@ import { useComponentAnimation, useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
 import Animated, { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
-import * as Haptics from 'expo-haptics';
+import { lightFeedback } from '@/utils/haptics';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -69,11 +69,7 @@ export const VocabularyGraph = React.memo(
       if (lastPointTriggered.current) return;
       lastPointTriggered.current = true;
 
-      try {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch (error) {
-        console.warn('Failed to trigger haptic feedback:', error);
-      }
+      lightFeedback();
     }, []);
 
     // Reset the last point triggered flag when points change or animation is reset

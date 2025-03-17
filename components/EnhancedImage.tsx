@@ -6,7 +6,13 @@ import { LAYOUT } from '../constants/layout';
 import { LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { getPlaceholderColor, getOptimizedImageUrl } from '../utils/imageOptimization';
+import {
+  getPlaceholderColor,
+  getOptimizedImageUrl,
+  getResponsiveImageSize,
+  generateTinyPreview,
+  getImageLoadPriority,
+} from '../utils/imageOptimization';
 import { useFadeInAnimation } from '@/hooks/animations';
 import { EnhancedImageProps } from '@/types/ui.types';
 
@@ -17,6 +23,9 @@ import { EnhancedImageProps } from '@/types/ui.types';
  * - Loading state with smooth transitions
  * - Error handling with fallback
  * - Optimized image loading and caching
+ * - Responsive sizing based on screen dimensions
+ * - Blur-up loading with tiny preview
+ * - Prioritized loading based on visibility
  * - Accessibility support
  * - Memory-efficient with memoization
  */
@@ -33,6 +42,11 @@ export function EnhancedImage({
   cachePolicy = 'memory-disk',
   blurRadius,
   priority = 'normal',
+  originalWidth,
+  originalHeight,
+  containerWidthPercent = 1,
+  isVisible = true,
+  distanceFromViewport = 0,
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +56,24 @@ export function EnhancedImage({
   const optimizedSource = useMemo(() => {
     return disableOptimization ? source : getOptimizedImageUrl(source);
   }, [source, disableOptimization]);
+
+  // Generate tiny preview for blur-up effect
+  const tinyPreview = useMemo(() => {
+    return disableOptimization ? null : generateTinyPreview(source);
+  }, [source, disableOptimization]);
+
+  // Calculate responsive image dimensions if original dimensions provided
+  const imageDimensions = useMemo(() => {
+    if (originalWidth && originalHeight) {
+      return getResponsiveImageSize(originalWidth, originalHeight, containerWidthPercent);
+    }
+    return null;
+  }, [originalWidth, originalHeight, containerWidthPercent]);
+
+  // Determine loading priority based on visibility
+  const loadPriority = useMemo(() => {
+    return priority === 'normal' ? getImageLoadPriority(isVisible, distanceFromViewport) : priority;
+  }, [priority, isVisible, distanceFromViewport]);
 
   // Get placeholder color
   const placeholderColor = useMemo(() => {
@@ -66,7 +98,25 @@ export function EnhancedImage({
   }, [onError]);
 
   return (
-    <View style={[styles.container, style]}>
+    <View
+      style={[
+        styles.container,
+        style,
+        imageDimensions ? { width: imageDimensions.width, height: imageDimensions.height } : null,
+      ]}
+    >
+      {/* Tiny preview for blur-up effect */}
+      {isLoading && tinyPreview && (
+        <View style={styles.blurPlaceholder}>
+          <Image
+            source={{ uri: tinyPreview }}
+            contentFit={contentFit}
+            blurRadius={5}
+            style={{ width: '100%', height: '100%' }}
+          />
+        </View>
+      )}
+
       {/* Loading indicator */}
       {isLoading && showLoadingIndicator && (
         <View style={[styles.loadingContainer, { backgroundColor: placeholderColor }]}>
@@ -87,7 +137,7 @@ export function EnhancedImage({
           accessible={!!alt}
           accessibilityLabel={alt}
           blurRadius={isLoading ? blurRadius : undefined}
-          priority={priority}
+          priority={loadPriority}
         />
       </Animated.View>
 
@@ -110,6 +160,14 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     ...StyleSheet.absoluteFillObject,
+  },
+  blurPlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
   },
   image: {
     width: '100%',

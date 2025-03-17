@@ -7,6 +7,7 @@ import { SentenceWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { ThemedModal } from './ThemedModal';
 import { ThemedButton } from './ThemedButton';
+import { heavyFeedback } from '../utils/haptics';
 
 interface WordDetailsModalProps {
   visible: boolean;
@@ -28,8 +29,16 @@ function WordDetailsModalComponent({
 
   // Memoize handlers to prevent unnecessary rerenders
   const handleStudyPress = useCallback(() => {
-    onStudyPress?.();
-  }, [onStudyPress]);
+    // If removing from study list, use heavy feedback
+    if (isSelected) {
+      heavyFeedback();
+    }
+
+    // Call the onStudyPress handler
+    if (onStudyPress) {
+      onStudyPress();
+    }
+  }, [isSelected, onStudyPress]);
 
   // Memoize styles to prevent unnecessary rerenders
   const styles = useMemo(() => {

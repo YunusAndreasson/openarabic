@@ -3,7 +3,7 @@ import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import type { Tables } from '../types/database.types';
-import * as Haptics from 'expo-haptics';
+import { lightFeedback } from '../utils/haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import Pill from './Pill';
@@ -32,7 +32,7 @@ function CategoryPillsComponent({
   // Memoize the press handler factory
   const createPressHandler = useCallback(
     (category: Tables<'categories'> | null) => () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      lightFeedback();
       onSelectCategory(category);
     },
     [onSelectCategory]

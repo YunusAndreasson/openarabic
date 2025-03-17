@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import * as Haptics from 'expo-haptics';
+import { lightFeedback } from '@/utils/haptics';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
 import { ThemedButtonProps } from '@/types/ui.types';
@@ -55,7 +55,7 @@ export function ThemedButton({
   const handlePress = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !loading) {
       // Only attempt haptic feedback if the button is interactive
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      lightFeedback();
       onPress(event);
     }
   };

@@ -80,10 +80,3 @@ export const useButtonAnimation = (scaleAmount?: number) =>
 
 export const useCardAnimation = (scaleAmount?: number, opacityAmount?: number) =>
   usePressAnimation({ type: 'card', scaleAmount, opacityAmount });
-
-export const useReviewCardAnimation = () => useReviewAnimation({ type: 'card' });
-
-export const useReviewScreenAnimation = (trackOpacityZero = true) =>
-  useReviewAnimation({ type: 'screen', trackOpacityZero });
-
-export const useDramaticPulseAnimation = () => usePulseAnimation({ style: 'dramatic' });

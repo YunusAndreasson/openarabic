@@ -8,27 +8,6 @@
 import { LAYOUT } from './layout';
 
 /**
- * Standard font weights for typography
- */
-export const FONT_WEIGHTS = {
-  REGULAR: '400',
-  MEDIUM: '500',
-  SEMIBOLD: '600',
-  BOLD: '700',
-} as const;
-
-/**
- * Standard opacity values for various UI states
- */
-export const OPACITY = {
-  ...LAYOUT.OPACITY,
-  // Additional application-specific opacities
-  PLACEHOLDER: 0.4,
-  CAPTION: 0.6,
-  SECONDARY_TEXT: 0.75,
-} as const;
-
-/**
  * Standard animation and interaction timing values
  */
 export const TIMING = {

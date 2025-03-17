@@ -14,7 +14,6 @@ import { LoadingScreen, LoadingContainer } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
 import {
   useLoadingState,
@@ -26,6 +25,7 @@ import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import PageHeader from '@/components/PageHeader';
 import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
+import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -74,7 +74,7 @@ export default function VocabularyScreen() {
     if (!user) return;
 
     // Provide haptic feedback when refreshing
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    mediumFeedback();
 
     setIsRefreshing(true);
 
