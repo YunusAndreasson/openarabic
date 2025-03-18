@@ -10,6 +10,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ThemedView } from '@/components/ThemedView';
 import { LoadingScreen } from '@/components/Loader';
 import ArticleList from '@/components/ArticleList';
+import PageHeader from '@/components/PageHeader';
 
 // Hooks and Services
 import { useColors } from '@/hooks/useColors';
@@ -159,8 +160,9 @@ export default function ArticlesScreen() {
     () => ({
       flexGrow: 1,
       backgroundColor: colors.background,
-      paddingTop: LAYOUT.SPACING.MEDIUM,
-      paddingBottom: 0,
+      paddingTop: LAYOUT.SPACING.LARGE,
+      paddingBottom:
+        LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     }),
     [colors.background]
   );
@@ -343,6 +345,8 @@ export default function ArticlesScreen() {
         <DailyPickSection
           article={getDailyPickArticle(articles, getDayOfYear())}
           onPress={handleArticlePress}
+          delay={0}
+          showTitle={false}
         />
 
         <ArticleSection
@@ -461,6 +465,7 @@ export default function ArticlesScreen() {
         accessibilityLabel="Articles browse screen"
         accessibilityRole="scrollbar"
       >
+        <PageHeader title="Texts" />
         <ArticleList
           articles={[]} // Empty array since the content is in the header
           isLoading={false} // Never show the spinner inside the list
@@ -471,7 +476,7 @@ export default function ArticlesScreen() {
           ListEmptyComponent={EmptyStateComponent()}
           contentContainerStyle={{
             ...contentContainerStyle,
-            paddingTop: 0, // Ensure the list starts exactly at the top
+            paddingTop: LAYOUT.SPACING.LARGE, // Match the spacing used in other tabs
           }}
           // Add optimizations to prevent unexpected scrolling
           initialNumToRender={1}

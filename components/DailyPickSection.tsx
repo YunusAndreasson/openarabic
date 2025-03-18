@@ -11,7 +11,12 @@ import { articlesService } from '@/services/articles';
 /**
  * A section displaying the daily pick article
  */
-const DailyPickSection = React.memo(({ article, onPress, delay = 0 }: DailyPickSectionProps) => {
+const DailyPickSection: React.FC<DailyPickSectionProps> = ({
+  article,
+  onPress,
+  delay = 0,
+  showTitle = true,
+}) => {
   // Use queryClient for prefetching
   const queryClient = useQueryClient();
 
@@ -34,10 +39,9 @@ const DailyPickSection = React.memo(({ article, onPress, delay = 0 }: DailyPickS
 
   return (
     <AnimatedSection
-      title="Daily Pick"
+      title={showTitle ? 'Daily Pick' : undefined}
       delay={delay}
-      duration={LAYOUT.ANIMATION.DURATION.SLOW}
-      style={styles.section}
+      style={styles.container}
       paddingHorizontal={true}
     >
       <ThemedCard
@@ -50,10 +54,10 @@ const DailyPickSection = React.memo(({ article, onPress, delay = 0 }: DailyPickS
       />
     </AnimatedSection>
   );
-});
+};
 
 const styles = StyleSheet.create({
-  section: {
+  container: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

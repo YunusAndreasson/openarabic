@@ -750,6 +750,12 @@ export interface DailyPickSectionProps {
    * Animation delay in milliseconds
    */
   delay?: number;
+
+  /**
+   * Whether to show the section title
+   * @default true
+   */
+  showTitle?: boolean;
 }
 
 /**
