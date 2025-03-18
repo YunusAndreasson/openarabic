@@ -235,8 +235,8 @@ export default function ArticlesScreen() {
   // Add prefetching for first few articles when data is loaded
   useEffect(() => {
     if (articles.length > 0 && !isLoadingState) {
-      // Prefetch first 3 articles in background
-      const articlesToPreload = articles.slice(0, 3);
+      // Prefetch first 10 articles in background
+      const articlesToPreload = articles.slice(0, 10);
       articlesToPreload.forEach(article => {
         queryClient.prefetchQuery({
           queryKey: ['article', article.id],

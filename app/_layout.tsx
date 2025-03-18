@@ -107,16 +107,16 @@ function AppContent() {
           console.warn('Error preloading app data:', e);
         });
 
-        // Don't wait for all data, just enough to show UI (30ms minimum time)
-        await Promise.race([preloadPromise, new Promise(resolve => setTimeout(resolve, 30))]);
+        // Wait a bit longer for smoother animation (100ms instead of 30ms)
+        await Promise.race([preloadPromise, new Promise(resolve => setTimeout(resolve, 100))]);
 
         // Mark app as ready immediately
         setAppReady(true);
 
-        // Hide our custom loader after a minimal transition
+        // Hide our custom loader after a longer transition for smoother animation
         setTimeout(() => {
           setShowAppLoader(false);
-        }, 50); // Reduced from 80ms to 50ms for faster transition
+        }, 150); // Increased from 50ms to 150ms for smoother transition
       }
     } catch (e) {
       console.warn('Error during app initialization:', e);

@@ -11,18 +11,19 @@ import {
 import { TIMING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
 
-export type PulseStyle = 'standard' | 'dramatic';
+export type PulseStyle = 'standard' | 'dramatic' | 'gentle';
 
 export interface PulseAnimationOptions {
   /**
    * Style of pulse animation
    * - 'standard': Simple scale pulse
    * - 'dramatic': More complex pulse with opacity changes
+   * - 'gentle': Smoother, more subtle pulse with longer duration
    */
   style?: PulseStyle;
 
   /**
-   * Maximum scale during pulse (default 1.1 for standard, 1.25 for dramatic)
+   * Maximum scale during pulse (default 1.1 for standard, 1.25 for dramatic, 1.15 for gentle)
    */
   pulseMagnitude?: number;
 
@@ -30,6 +31,16 @@ export interface PulseAnimationOptions {
    * Whether to automatically start the animation on mount
    */
   autoStart?: boolean;
+
+  /**
+   * Animation duration in milliseconds (default depends on style)
+   */
+  duration?: number;
+
+  /**
+   * Minimum opacity for pulse animation (default depends on style)
+   */
+  minOpacity?: number;
 }
 
 export interface PulseAnimationResult {
@@ -73,12 +84,12 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
   const { style = 'standard', pulseMagnitude, autoStart = false } = options;
 
   // Set default magnitude based on style
-  const defaultMagnitude = style === 'dramatic' ? 1.25 : 1.1;
+  const defaultMagnitude = style === 'dramatic' ? 1.25 : style === 'gentle' ? 1.15 : 1.1;
   const magnitude = pulseMagnitude ?? defaultMagnitude;
 
   // Initial values based on style
-  const initialScale = style === 'dramatic' ? 0.3 : 1;
-  const initialOpacity = style === 'dramatic' ? 0.5 : 1;
+  const initialScale = style === 'dramatic' ? 0.3 : style === 'gentle' ? 1 : 1;
+  const initialOpacity = style === 'dramatic' ? 0.5 : style === 'gentle' ? 0.5 : 1;
 
   // Animation values - always create both shared values to avoid conditional hook calls
   const scale = useSharedValue(initialScale);
@@ -153,15 +164,48 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
     );
   }, [scale, opacity, magnitude, initialScale, initialOpacity]);
 
+  // Gentle pulse function - new smoother animation option
+  const gentlePulse = useCallback(() => {
+    'worklet';
+    const pulseDuration = options.duration || 1200;
+    const minOpacity = options.minOpacity || 0.4;
+
+    // Animate scale with gentle, smooth effect
+    scale.value = withSequence(
+      withTiming(magnitude, {
+        duration: pulseDuration * 0.5,
+        easing: TIMING_CONFIG.GENTLE.easing,
+      }),
+      withTiming(1, {
+        duration: pulseDuration * 0.5,
+        easing: TIMING_CONFIG.GENTLE.easing,
+      })
+    );
+
+    // Animate opacity in sync with scale - subtle changes
+    opacity.value = withSequence(
+      withTiming(minOpacity, {
+        duration: pulseDuration * 0.4,
+        easing: TIMING_CONFIG.GENTLE.easing,
+      }),
+      withTiming(1, {
+        duration: pulseDuration * 0.6,
+        easing: TIMING_CONFIG.GENTLE.easing,
+      })
+    );
+  }, [scale, opacity, magnitude, options.duration, options.minOpacity]);
+
   // Unified pulse function that calls the appropriate style
   const pulse = useCallback(() => {
     'worklet';
     if (style === 'dramatic') {
       dramaticPulse();
+    } else if (style === 'gentle') {
+      gentlePulse();
     } else {
       standardPulse();
     }
-  }, [style, dramaticPulse, standardPulse]);
+  }, [style, dramaticPulse, gentlePulse, standardPulse]);
 
   // Start continuous animation
   const startAnimation = useCallback(
@@ -177,6 +221,18 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
 
         // Set up the interval for continuous animation
         intervalRef.current = setInterval(dramaticPulse, 1350);
+      } else if (style === 'gentle') {
+        // Clear any existing interval
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+
+        // Start the animation immediately
+        gentlePulse();
+
+        // Use a longer interval for the gentle animation
+        const pulseDuration = options.duration || 1200;
+        intervalRef.current = setInterval(gentlePulse, pulseDuration);
       } else {
         // For standard style, use withRepeat
         scale.value = 1;
@@ -196,7 +252,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
         );
       }
     },
-    [style, scale, magnitude, dramaticPulse]
+    [style, scale, magnitude, dramaticPulse, gentlePulse, options.duration]
   );
 
   // Stop the animation

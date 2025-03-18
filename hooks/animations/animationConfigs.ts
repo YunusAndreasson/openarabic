@@ -76,6 +76,10 @@ export const TIMING_CONFIG = {
     duration: 150,
     easing: SafeEasing.bezier(0.25, 0.1, 0.25, 1),
   },
+  GENTLE: {
+    duration: 600, // Longer duration for smoother animation
+    easing: SafeEasing.bezier(0.4, 0.0, 0.2, 1), // Material design standard easing
+  },
 };
 
 /**

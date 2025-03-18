@@ -19,10 +19,12 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   const colors = useColors();
   const loaderColor = color || colors.text;
 
-  // Use the dramatic pulse animation style with autoStart
+  // Use the dramatic pulse animation style with autoStart and smoother timing
   const { animatedStyle, stopAnimation } = usePulseAnimation({
-    style: 'dramatic',
+    style: 'gentle',
     autoStart: true,
+    duration: 1200,
+    minOpacity: 0.4,
   });
 
   // Clean up animation on unmount
