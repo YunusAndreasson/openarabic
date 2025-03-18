@@ -39,6 +39,7 @@ import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useAudioPlayer, AUDIO_STATES } from '@/hooks/useAudioPlayer';
+import { useLoadingState } from '@/hooks/useLoadingState';
 
 // Store
 import {
@@ -84,6 +85,7 @@ export default function ArticleScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
+  const queryClient = useQueryClient();
 
   // Track component mounted state
   const isMountedRef = useRef(true);
@@ -108,7 +110,31 @@ export default function ArticleScreen() {
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
-  // Use the custom article data hook
+  // Check if data is already in cache to optimize loading time
+  const isDataPrefetched = useMemo(() => {
+    if (!articleId) return false;
+    // Use a different approach to avoid type errors
+    const cachedData = queryClient.getQueryData(['article', articleId]);
+    return cachedData !== undefined && cachedData !== null;
+  }, [articleId, queryClient]);
+
+  // Use dynamic loading state with optimized timeout
+  const {
+    isLoading: isLoadingState,
+    startLoading,
+    stopLoading,
+    updateMinLoadingTime,
+  } = useLoadingState(isDataPrefetched ? 100 : 500, true);
+
+  // Update minimum loading time when prefetched status changes
+  useEffect(() => {
+    // Make sure the function exists before calling it (defensive coding)
+    if (updateMinLoadingTime) {
+      updateMinLoadingTime(isDataPrefetched ? 100 : 500);
+    }
+  }, [isDataPrefetched, updateMinLoadingTime]);
+
+  // Use the custom article data hook with optimized loading behavior
   const {
     article,
     isLoadingArticle,
@@ -120,7 +146,11 @@ export default function ArticleScreen() {
     sentenceWordsMap,
     otherArticles,
     otherCategoryArticles,
-  } = useArticleData(articleId, user?.id);
+  } = useArticleData(
+    articleId,
+    user?.id,
+    !!isDataPrefetched // Make sure we pass a boolean
+  );
 
   // Use the custom article mutations hook
   const { handleToggleReadingList, handleWordPress } = useArticleMutations(
@@ -251,14 +281,19 @@ export default function ArticleScreen() {
       setLayoutReady(true);
 
       // Use a small timeout to ensure layout is stable before animations start
-      const timer = setTimeout(() => {
-        if (isMountedRef.current) {
-          setIsLoading(false);
-          startContentAnimation();
-          startHeaderAnimation();
-          startFooterAnimation();
-        }
-      }, 50);
+      // Use a shorter timeout when data is prefetched, but always use a small delay to avoid layout issues
+      const timer = setTimeout(
+        () => {
+          if (isMountedRef.current) {
+            setIsLoading(false);
+            // Make sure these functions exist before calling them
+            if (startContentAnimation) startContentAnimation();
+            if (startHeaderAnimation) startHeaderAnimation();
+            if (startFooterAnimation) startFooterAnimation();
+          }
+        },
+        !!isDataPrefetched ? 10 : 50
+      );
 
       return () => clearTimeout(timer);
     }
@@ -268,6 +303,7 @@ export default function ArticleScreen() {
     startContentAnimation,
     startHeaderAnimation,
     startFooterAnimation,
+    isDataPrefetched,
   ]);
 
   // Reset scroll position when article ID changes
@@ -332,7 +368,7 @@ export default function ArticleScreen() {
   const handleBookmarkPress = useCallback(() => {
     if (articleId) {
       lightFeedback(); // Light haptic feedback for bookmark toggle
-      handleToggleReadingList(articleId, isInReadingList);
+      handleToggleReadingList(articleId, Boolean(isInReadingList));
     }
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
@@ -513,26 +549,34 @@ export default function ArticleScreen() {
               keyExtractor={item => item.id.toString()}
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={[styles.sentenceList, contentPadding]}
-              scrollEventThrottle={16}
               onScroll={handleScroll}
-              onEndReachedThreshold={0.5}
-              initialNumToRender={5} // Reduce initial render batch for smoother loading
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={true}
+              initialNumToRender={10}
               ListHeaderComponent={
                 <Animated.View style={headerAnimatedStyle as any}>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
                 </Animated.View>
               }
               ListFooterComponent={
-                <Animated.View style={footerAnimatedStyle as any}>
-                  <RelatedArticlesFooter
-                    otherArticles={otherArticles}
-                    otherCategoryArticles={otherCategoryArticles}
-                    article={article}
-                    renderArticleCard={renderArticleCard}
-                  />
-                </Animated.View>
+                <>
+                  {/* Only render related articles sections if we have data */}
+                  {otherArticles && otherArticles.length > 0 && (
+                    <Animated.View style={footerAnimatedStyle as any}>
+                      <RelatedArticlesFooter
+                        otherArticles={otherArticles}
+                        otherCategoryArticles={otherCategoryArticles || []}
+                        article={article}
+                        renderArticleCard={renderArticleCard}
+                      />
+                    </Animated.View>
+                  )}
+                </>
               }
-              {...flatListConfig}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              removeClippedSubviews={false}
+              indicatorStyle={isDarkMode ? 'white' : 'black'}
             />
           )}
         </Animated.View>

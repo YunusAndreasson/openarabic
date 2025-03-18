@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Services
 import { articlesService } from '@/services/articles';
@@ -9,19 +9,36 @@ import { studyWordsService } from '@/services/studyWords';
 // Types
 import type { Article } from '@/types/articles.types';
 
-export const useArticleData = (articleId: number | undefined, userId: string | undefined) => {
-  // Fetch article data
+export const useArticleData = (
+  articleId: number | undefined,
+  userId: string | undefined,
+  isDataPrefetched: boolean = false
+) => {
+  // Get queryClient for cache access
+  const queryClient = useQueryClient();
+
+  // Fetch article data with optimized staleTime when prefetched
   const { data: article, isLoading: isLoadingArticle } = useQuery({
     queryKey: ['article', articleId],
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
+    // Increase staleTime when data is prefetched to reduce refetching
+    staleTime: isDataPrefetched ? 60000 : 0, // 1 minute cache when prefetched
   });
 
-  // Check if article is in reading list
+  // Get initial reading list data from cache if available
+  const cachedReadingListStatus =
+    isDataPrefetched && userId && articleId
+      ? queryClient.getQueryData(['isInReadingList', userId, articleId])
+      : undefined;
+
+  // Check if article is in reading list with optimized behavior
   const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
     queryKey: ['isInReadingList', userId, articleId],
     queryFn: () => readingListService.isInReadingList(userId!, articleId!),
     enabled: !!userId && !!articleId,
+    // Use cached data when available
+    initialData: cachedReadingListStatus,
   });
 
   // Fetch study words

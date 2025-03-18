@@ -1,11 +1,13 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import { useFadeInAnimation } from '../hooks/animations';
 import SectionTitle from './SectionTitle';
 import ThemedCard from './ThemedCard';
+import { articlesService } from '@/services/articles';
 
 interface FeaturedArticleItemProps {
   article: Article;
@@ -25,6 +27,21 @@ const FeaturedArticleItem = React.memo(
       LAYOUT.ANIMATION.DURATION.NORMAL
     );
 
+    // Add queryClient for prefetching
+    const queryClient = useQueryClient();
+
+    // Create handler with prefetching
+    const handlePress = useCallback(() => {
+      // Prefetch article data
+      queryClient.prefetchQuery({
+        queryKey: ['article', article.id],
+        queryFn: () => articlesService.getArticleById(article.id),
+      });
+
+      // Call the original onPress handler
+      onPress(article);
+    }, [article, onPress, queryClient]);
+
     useEffect(() => {
       startAnimation();
     }, [startAnimation]);
@@ -39,7 +56,7 @@ const FeaturedArticleItem = React.memo(
           category={article.category?.name || 'Uncategorized'}
           author={article.author?.name || 'Anonymous'}
           summary={article.summary || undefined}
-          onPress={() => onPress(article)}
+          onPress={handlePress}
           style={styles.card}
         />
       </Animated.View>

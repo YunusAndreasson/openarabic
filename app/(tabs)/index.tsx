@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { RefreshControl } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -16,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
+import { readingListService } from '@/services/readingList';
 import {
   useLoadingState,
   useScreenFocusRefresh,
@@ -237,17 +239,32 @@ export default function ArticlesScreen() {
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
+  // Add queryClient for prefetching
+  const queryClient = useQueryClient();
+
   const handleArticlePress = useCallback(
     (article: Article) => {
+      // Start prefetching article data immediately when press begins
+      queryClient.prefetchQuery({
+        queryKey: ['article', article.id],
+        queryFn: () => articlesService.getArticleById(article.id),
+      });
+
       // Navigate to article detail with debounce protection
       navigateTo(`/article/${article.id}`, () => {
         // Add to reading list if authenticated (this runs before navigation)
         if (session?.user) {
           dispatch(addToReadingList(article.id));
+
+          // Also prefetch reading list status
+          queryClient.prefetchQuery({
+            queryKey: ['isInReadingList', session.user.id, article.id],
+            queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
+          });
         }
       });
     },
-    [dispatch, session?.user, navigateTo]
+    [dispatch, session?.user, navigateTo, queryClient]
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {

@@ -1,10 +1,12 @@
 import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import { CompactArticleCard } from './CompactArticleCard';
 import AnimatedSection from './AnimatedSection';
 import { ThemedText } from './ThemedText';
+import { articlesService } from '@/services/articles';
 
 interface ArticleSectionProps {
   /**
@@ -80,17 +82,32 @@ const ArticleSection = React.memo(
     hideDifficulty = false,
     getLastOpenedAt,
   }: ArticleSectionProps) => {
+    // Add queryClient for prefetching
+    const queryClient = useQueryClient();
+
     // Memoize the render item function
     const renderItem = useCallback(
       ({ item }: { item: Article }) => {
         // Safely get the last opened timestamp
         const lastOpenedAt = getLastOpenedAt ? getLastOpenedAt(item.id) : undefined;
 
+        // Create handler with prefetching
+        const handlePress = () => {
+          // Prefetch article data
+          queryClient.prefetchQuery({
+            queryKey: ['article', item.id],
+            queryFn: () => articlesService.getArticleById(item.id),
+          });
+
+          // Call the original onPress handler
+          onArticlePress(item);
+        };
+
         return (
           <View style={vertical ? styles.verticalCard : undefined}>
             <CompactArticleCard
               article={item}
-              onPress={() => onArticlePress(item)}
+              onPress={handlePress}
               showTimeAgo={showTimeAgo}
               hideDifficultyLabel={hideDifficultyLabel}
               hideDifficulty={hideDifficulty}
@@ -99,7 +116,15 @@ const ArticleSection = React.memo(
           </View>
         );
       },
-      [onArticlePress, showTimeAgo, vertical, hideDifficultyLabel, hideDifficulty, getLastOpenedAt]
+      [
+        onArticlePress,
+        showTimeAgo,
+        vertical,
+        hideDifficultyLabel,
+        hideDifficulty,
+        getLastOpenedAt,
+        queryClient,
+      ]
     );
 
     // Limit the number of articles if maxItems is specified

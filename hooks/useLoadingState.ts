@@ -14,6 +14,8 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
   const loadingStartTime = useRef<number | null>(initialLoadingState ? Date.now() : null);
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
   const dataLoadedButWaitingRef = useRef(false);
+  // Store the current minimum loading time which can be updated
+  const currentMinLoadingTime = useRef(minLoadingTime);
 
   // Start loading with minimum display time
   const startLoading = useCallback(() => {
@@ -44,7 +46,7 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
     const timeElapsed = Date.now() - loadingStartTime.current;
 
     // If minimum time has passed, stop loading immediately
-    if (timeElapsed >= minLoadingTime) {
+    if (timeElapsed >= currentMinLoadingTime.current) {
       setIsLoading(false);
       loadingStartTime.current = null;
       dataLoadedButWaitingRef.current = false;
@@ -55,9 +57,9 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
         setIsLoading(false);
         loadingStartTime.current = null;
         dataLoadedButWaitingRef.current = false;
-      }, minLoadingTime - timeElapsed);
+      }, currentMinLoadingTime.current - timeElapsed);
     }
-  }, [minLoadingTime]);
+  }, []);
 
   // Set data loaded state
   const setDataLoaded = useCallback(
@@ -84,6 +86,15 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
     setIsLoading(initialLoadingState);
   }, [initialLoadingState]);
 
+  // Allow dynamic updating of minimum loading time
+  const updateMinLoadingTime = useCallback((newMinTime: number) => {
+    // Ensure we have a valid number that's not too small
+    if (typeof newMinTime === 'number' && !isNaN(newMinTime)) {
+      // Enforce a minimum value to prevent instant flashes
+      currentMinLoadingTime.current = Math.max(10, newMinTime);
+    }
+  }, []);
+
   // Clean up timeouts on unmount
   useEffect(() => {
     return () => {
@@ -100,5 +111,6 @@ export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true
     reset,
     dataLoaded,
     setDataLoaded,
+    updateMinLoadingTime,
   };
 };
