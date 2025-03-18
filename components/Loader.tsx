@@ -3,9 +3,14 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated, { AnimatedStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useOpacityAnimation, usePulseAnimation } from '../hooks/animations';
-import { LoaderProps, LoadingScreenProps, LoadingContainerProps } from '@/types/ui.types';
+import {
+  LoaderProps,
+  LoadingScreenProps,
+  LoadingContainerProps,
+  AppLoaderProps,
+} from '@/types/ui.types';
 
 /**
  * Loader component that displays a pulsating circle
@@ -28,7 +33,8 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   }, [stopAnimation]);
 
   // Size configuration
-  const circleSize = typeof size === 'number' ? size : size === 'large' ? 52 : 28;
+  const circleSize =
+    typeof size === 'number' ? size : size === 'large' ? 52 : size === 'medium' ? 40 : 28;
   const borderWidth = typeof size === 'number' ? 4 : size === 'large' ? 4 : 2;
 
   // Base circle style
@@ -47,8 +53,8 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   );
 
   return (
-    <View style={[styles.container, style]}>
-      <Animated.View style={[styles.circle, circleStyle, animatedStyle]} />
+    <View style={[styles.container, style as ViewStyle]}>
+      <Animated.View style={[styles.circle, circleStyle, animatedStyle as any]} />
     </View>
   );
 };
@@ -64,18 +70,20 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
     initialOpacity: 0,
     autoStart: true,
     delay: 0,
+    duration: 80,
   });
 
   const { animatedStyle: loaderStyle } = useOpacityAnimation({
     initialOpacity: 0,
     autoStart: true,
-    delay: 50,
+    delay: 20,
+    duration: 80,
   });
 
   return (
-    <Animated.View style={[{ flex: 1 }, containerStyle]}>
+    <Animated.View style={[{ flex: 1 }, containerStyle as any]}>
       <ThemedView style={styles.fullScreen}>
-        <Animated.View style={[styles.loaderContainer, loaderStyle]}>
+        <Animated.View style={[styles.loaderContainer, loaderStyle as any]}>
           <Loader size="large" color={color || colors.tint} />
         </Animated.View>
       </ThemedView>
@@ -84,27 +92,35 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
 };
 
 /**
- * A component-level loading container for consistent styling
+ * A simple loader container for component-level loading states
  */
 export const LoadingContainer: React.FC<LoadingContainerProps> = ({
-  size = 'small',
+  size = 'medium',
   color,
   style,
-  height = 160,
+  containerStyle,
 }) => {
   const colors = useColors();
 
-  // Use opacity animation hook with auto-start
-  const { animatedStyle } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 200,
-    autoStart: true,
-  });
+  return (
+    <View style={[styles.componentLoader, containerStyle]}>
+      <Loader size={size} color={color || colors.text} style={style} />
+    </View>
+  );
+};
+
+/**
+ * App-wide loader to be used during splash transition
+ * Displays a minimal loading screen with themed background
+ * and can be shown before the full UI is ready
+ */
+export const AppLoader: React.FC<AppLoaderProps> = ({ color }) => {
+  const colors = useColors();
 
   return (
-    <Animated.View style={[styles.componentLoader, { height }, style, animatedStyle]}>
-      <Loader size={size} color={color || colors.tint} />
-    </Animated.View>
+    <View style={[styles.appLoader, { backgroundColor: colors.background }]}>
+      <Loader size="large" color={color || colors.tint} />
+    </View>
   );
 };
 
@@ -112,6 +128,7 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
 Loader.displayName = 'Loader';
 LoadingScreen.displayName = 'LoadingScreen';
 LoadingContainer.displayName = 'LoadingContainer';
+AppLoader.displayName = 'AppLoader';
 
 const styles = StyleSheet.create({
   container: {
@@ -141,5 +158,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+  },
+  appLoader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
 });

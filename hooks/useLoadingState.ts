@@ -4,11 +4,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
  * Hook for managing loading states with a minimum display time
  * to prevent flickering and provide a smoother user experience.
  *
- * @param minLoadingTime - Minimum time in ms to show loading state (default: 500ms)
+ * @param minLoadingTime - Minimum time in ms to show loading state (default: 80ms)
  * @param initialLoadingState - Initial loading state (default: true)
  * @returns Object with loading state and functions to control it
  */
-export const useLoadingState = (minLoadingTime = 500, initialLoadingState = true) => {
+export const useLoadingState = (minLoadingTime = 80, initialLoadingState = true) => {
   const [isLoading, setIsLoading] = useState(initialLoadingState);
   const [dataLoaded, setDataLoadedState] = useState(false);
   const loadingStartTime = useRef<number | null>(initialLoadingState ? Date.now() : null);

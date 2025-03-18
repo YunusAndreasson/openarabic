@@ -274,6 +274,14 @@ export interface ArticleListProps extends BaseStyleProps {
   ListHeaderComponent?: React.ReactElement;
   ListEmptyComponent?: React.ReactElement;
   contentContainerStyle?: StyleProp<ViewStyle>;
+  initialNumToRender?: number;
+  windowSize?: number;
+  maxToRenderPerBatch?: number;
+  updateCellsBatchingPeriod?: number;
+  removeClippedSubviews?: boolean;
+  maintainVisibleContentPosition?: {
+    minIndexForVisible: number;
+  };
 }
 
 /**
@@ -401,8 +409,8 @@ export interface ThemedViewProps extends ViewProps {
  * Props for the Loader component
  */
 export interface LoaderProps extends BaseAnimatedStyleProps {
-  /** Size of the loader - small, large, or a specific number */
-  size?: number | 'small' | 'large';
+  /** Size of the loader - small, large, medium or a specific number */
+  size?: number | 'small' | 'medium' | 'large';
   /** Color of the loader (defaults to text color) */
   color?: string;
 }
@@ -419,12 +427,20 @@ export interface LoadingScreenProps {
  * Props for the LoadingContainer component
  */
 export interface LoadingContainerProps extends BaseAnimatedStyleProps {
-  /** Size of the loader - small or large */
-  size?: 'small' | 'large';
+  /** Size of the loader - small, medium or large */
+  size?: 'small' | 'medium' | 'large';
   /** Color of the loader */
   color?: string;
-  /** Height of the container */
-  height?: number;
+  /** Additional styles for the container */
+  containerStyle?: ViewStyle;
+}
+
+/**
+ * Props for the app-wide loader component
+ */
+export interface AppLoaderProps {
+  /** Color of the loader (defaults to tint color) */
+  color?: string;
 }
 
 /**

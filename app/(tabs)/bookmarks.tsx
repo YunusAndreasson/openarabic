@@ -156,7 +156,7 @@ const ReadingListItem = React.memo(
               borderBottomColor: colors.cardBorder,
               backgroundColor: isActive ? `${colors.tint}08` : 'transparent',
             },
-            animatedStyle,
+            animatedStyle as any,
           ]}
         >
           <View style={styles.itemContentContainer}>
@@ -293,13 +293,8 @@ export default function BookmarksScreen() {
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList<any>>(null);
 
-  // Use the new loading state hook
-  const {
-    isLoading: isLoadingState,
-    startLoading,
-    stopLoading,
-    setDataLoaded,
-  } = useLoadingState(500, true);
+  // Use the new loading state hook with optimized defaults
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
   // Query for reading list
   const {
@@ -314,21 +309,13 @@ export default function BookmarksScreen() {
     staleTime: 60000, // 1 minute
   });
 
-  // Use the new screen focus refresh hook
+  // Use the screen focus refresh hook
   useScreenFocusRefresh(
     queryClient,
     'readingList',
     user?.id,
-    60000, // 1 minute stale time
-    true
+    60000 // 1 minute stale time
   );
-
-  // Mark data as loaded when we get results
-  useEffect(() => {
-    if (readingList && readingList.length >= 0) {
-      setDataLoaded(true);
-    }
-  }, [readingList, setDataLoaded]);
 
   // Simple audio state management
   const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
@@ -349,13 +336,11 @@ export default function BookmarksScreen() {
     return !!user && !isDataLoading && !!readingList;
   }, [user, isDataLoading, readingList]);
 
-  // Use the new screen animation hook
-  const { fadeInStyle, animationsTriggered } = useScreenAnimation(
+  // Use improved screen animation with data-ready check
+  const { fadeInStyle } = useScreenAnimation(
     isDataReady,
-    isLoadingState || isDataLoading,
-    300, // Animation duration
-    0, // Layout delay
-    0 // Animation delay
+    isLoadingState
+    // Using default values for remaining parameters
   );
 
   // Update loading state based on data loading
@@ -635,9 +620,15 @@ export default function BookmarksScreen() {
     }
   }, [currentTrackIndex, activePlaylist]);
 
-  // Show loading screen
-  if (isLoadingState) {
-    return <LoadingScreen />;
+  // Use cached data to render a skeleton while loading instead of the full loading screen
+  if (isLoadingState && !readingList) {
+    return (
+      <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
+        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+          <PageHeader title="Bookmarks" />
+        </ThemedView>
+      </Animated.View>
+    );
   }
 
   // Require sign in

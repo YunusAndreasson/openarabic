@@ -38,11 +38,8 @@ export default function VocabularyScreen() {
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Use the loading state hook with a standard delay
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500, true);
-
-  // Add a timeout ref to prevent indefinite loading
-  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Use the loading state hook with default parameters
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
   // Query for study words
   const {
@@ -108,20 +105,48 @@ export default function VocabularyScreen() {
     return studyWords.filter(word => word.sentence_word != null);
   }, [studyWords]);
 
-  // Check if data is ready to display
+  // Check if study words data is already in cache to optimize loading behavior
+  const studyWordsQuery = queryClient.getQueryState(['studyWords', user?.id]);
+  const isDataCached = studyWordsQuery?.data !== undefined;
+
+  // Check if data is ready to display - include cached data in the check
   const isDataReady = useMemo(() => {
-    return !!user && !isDataLoading && validStudyWords.length > 0;
-  }, [user, isDataLoading, validStudyWords.length]);
+    // Consider data ready if we have valid words OR we have cached data
+    return (!!user && !isDataLoading && validStudyWords.length > 0) || (!!user && isDataCached);
+  }, [user, isDataLoading, validStudyWords.length, isDataCached]);
 
-  // Calculate stats
+  // Calculate stats with safe defaults when data is loading but we're showing UI
   const stats = useMemo<VocabularyStats>(() => {
+    if (isDataCached && validStudyWords.length === 0) {
+      // Return safe defaults when using cached data but actual data isn't loaded yet
+      return {
+        totalWords: 0,
+        masteredWords: 0,
+        learningWords: 0,
+        dueWords: 0,
+        streak: 0,
+        successRate: 0,
+        averageInterval: 0,
+        averageEaseFactor: 0,
+        averageLapses: 0,
+        newWordsCount: 0,
+        failedInSessionCount: 0,
+        longestSuccessStreak: 0,
+        wordsWithStreaks: 0,
+        averageDifficulty: 0.3, // Default initial difficulty
+      };
+    }
     return calculateVocabularyStats(validStudyWords, dueWordsData);
-  }, [validStudyWords, dueWordsData]);
+  }, [validStudyWords, dueWordsData, isDataCached]);
 
-  // Calculate weekly progress data
+  // Calculate weekly progress data with safe defaults
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
+    if (isDataCached && validStudyWords.length === 0) {
+      // Return empty array when using cached data but actual data isn't loaded yet
+      return [];
+    }
     return calculateWeeklyProgressData(validStudyWords);
-  }, [validStudyWords]);
+  }, [validStudyWords, isDataCached]);
 
   // Handle starting a review
   const handleStartReview = () => {
@@ -158,76 +183,49 @@ export default function VocabularyScreen() {
     });
   };
 
-  // Content loading state - simplified from a useMemo to a direct calculation
-  const isContentLoading = !!user && (isFetching || isDataLoading);
+  // Content loading state - take cached data into account to avoid flicker
+  const isContentLoading = !!user && (isFetching || isDataLoading) && !isDataCached;
 
-  // Use opacity animation for the loader
+  // Use opacity animation for the loader - start with opacity 0 if data is cached
   const { animatedStyle: loaderAnimatedStyle, setOpacity: setLoaderOpacity } = useOpacityAnimation({
-    initialOpacity: 1,
+    initialOpacity: isDataCached ? 0 : 1,
     duration: 300,
   });
 
-  // Use the screen animation hook for content
+  // Use the screen animation hook for content - reduce animation delay if data is cached
   const { fadeInStyle } = useScreenAnimation(
-    isDataReady,
-    isLoadingState || isDataLoading,
-    300, // Animation duration
-    100, // Add a small layout delay to ensure stable layout
-    0 // Animation delay
+    isDataReady || isDataCached,
+    (isLoadingState || isDataLoading) && !isDataCached
+    // Using default parameters (80ms)
   );
 
   // Update loading state and loader opacity based on data loading
   useEffect(() => {
-    if (isAuthLoading || (!!user && status === 'pending' && isFetching)) {
+    if (isAuthLoading || (!!user && status === 'pending' && isFetching && !isDataCached)) {
       startLoading();
       setLoaderOpacity(1);
-
-      // Clear any existing timeout
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
-
-      // Set a maximum loading time of 5 seconds
-      loadingTimeoutRef.current = setTimeout(() => {
-        stopLoading();
-        setLoaderOpacity(0);
-        loadingTimeoutRef.current = null;
-      }, 5000);
     } else {
       stopLoading();
 
       // Fade out the loader when data is ready
-      if (isDataReady) {
+      if (isDataReady || isDataCached) {
         setLoaderOpacity(0);
       }
-
-      // Clear timeout when loading is explicitly stopped
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
     }
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-        loadingTimeoutRef.current = null;
-      }
-    };
   }, [
     isAuthLoading,
     user,
     status,
     isFetching,
     isDataReady,
+    isDataCached,
     startLoading,
     stopLoading,
     setLoaderOpacity,
   ]);
 
-  // Show loading screen for initial load
-  if (isLoadingState) {
+  // Show loading screen for initial load only if data is not cached
+  if (isLoadingState && !isDataCached) {
     return <LoadingScreen color={colors.tint} />;
   }
 
@@ -253,8 +251,9 @@ export default function VocabularyScreen() {
     );
   }
 
-  // Show empty state if no words
-  if (!isContentLoading && validStudyWords.length === 0) {
+  // Show empty state only if we have no words AND we're done loading AND there's no cached data
+  // This prevents the empty state from flashing while data is still being processed
+  if (!isContentLoading && !isFetching && validStudyWords.length === 0 && !isDataCached) {
     return (
       <ThemedView style={styles.container}>
         <VocabularyEmptyState colors={colors} />

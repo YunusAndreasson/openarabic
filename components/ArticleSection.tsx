@@ -85,50 +85,48 @@ const ArticleSection = React.memo(
     // Add queryClient for prefetching
     const queryClient = useQueryClient();
 
-    // Memoize the render item function
-    const renderItem = useCallback(
-      ({ item }: { item: Article }) => {
-        // Safely get the last opened timestamp
-        const lastOpenedAt = getLastOpenedAt ? getLastOpenedAt(item.id) : undefined;
+    // Limit the number of articles if maxItems is specified
+    const displayedArticles = maxItems ? articles.slice(0, maxItems) : articles;
 
-        // Create handler with prefetching
-        const handlePress = () => {
-          // Prefetch article data
-          queryClient.prefetchQuery({
-            queryKey: ['article', item.id],
-            queryFn: () => articlesService.getArticleById(item.id),
-          });
-
-          // Call the original onPress handler
-          onArticlePress(item);
-        };
-
-        return (
-          <View style={vertical ? styles.verticalCard : undefined}>
-            <CompactArticleCard
-              article={item}
-              onPress={handlePress}
-              showTimeAgo={showTimeAgo}
-              hideDifficultyLabel={hideDifficultyLabel}
-              hideDifficulty={hideDifficulty}
-              lastOpenedAt={lastOpenedAt}
-            />
-          </View>
-        );
+    // Handle item press
+    const handleItemPress = useCallback(
+      (item: Article) => {
+        onArticlePress(item);
       },
-      [
-        onArticlePress,
-        showTimeAgo,
-        vertical,
-        hideDifficultyLabel,
-        hideDifficulty,
-        getLastOpenedAt,
-        queryClient,
-      ]
+      [onArticlePress]
     );
 
-    // Limit the number of articles if maxItems is specified
-    const displayArticles = maxItems ? articles.slice(0, maxItems) : articles;
+    // Handle viewability change for prefetching
+    const handleViewableItemsChanged = useCallback(
+      ({ viewableItems }: { viewableItems: { item: Article }[] }) => {
+        // Prefetch data for articles that become visible
+        viewableItems.forEach(({ item }) => {
+          if (item && item.id) {
+            queryClient.prefetchQuery({
+              queryKey: ['article', item.id],
+              queryFn: () => articlesService.getArticleById(item.id),
+              staleTime: 60000, // 1 minute cache
+            });
+          }
+        });
+      },
+      [queryClient]
+    );
+
+    // Render each article item
+    const renderItem = useCallback(
+      ({ item }: { item: Article }) => (
+        <CompactArticleCard
+          article={item}
+          onPress={() => handleItemPress(item)}
+          showTimeAgo={showTimeAgo}
+          hideDifficultyLabel={hideDifficultyLabel}
+          hideDifficulty={hideDifficulty}
+          lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(item.id) : undefined}
+        />
+      ),
+      [handleItemPress, showTimeAgo, hideDifficultyLabel, hideDifficulty, getLastOpenedAt]
+    );
 
     // Handle empty state if there are no articles and an empty state message is provided
     if ((!articles || articles.length === 0) && emptyStateMessage) {
@@ -149,13 +147,19 @@ const ArticleSection = React.memo(
         <FlatList
           horizontal={!vertical}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[styles.listContent, vertical && styles.verticalListContent]}
-          data={displayArticles}
-          keyExtractor={article => `article-${article.id}`}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.listContent,
+            vertical ? styles.verticalListContent : styles.horizontalListContent,
+          ]}
+          data={displayedArticles}
+          keyExtractor={item => item.id.toString()}
           renderItem={renderItem}
-          removeClippedSubviews={true}
-          initialNumToRender={5}
-          maxToRenderPerBatch={10}
+          onViewableItemsChanged={handleViewableItemsChanged}
+          viewabilityConfig={{
+            itemVisiblePercentThreshold: 50,
+            minimumViewTime: 300,
+          }}
         />
       </AnimatedSection>
     );
@@ -166,16 +170,15 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  listContent: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
+  horizontalListContent: {
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
   },
   verticalListContent: {
-    flexDirection: 'column',
+    padding: LAYOUT.SPACING.MEDIUM,
   },
-  verticalCard: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
+  listContent: {
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
   emptyContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

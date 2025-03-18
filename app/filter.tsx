@@ -12,6 +12,7 @@ import ErrorState from '../components/ErrorState';
 import { articlesService } from '../services/articles';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import { LAYOUT } from '../constants/layout';
 
 // Animation hooks
 import { useScreenAnimation } from '../hooks/animations';
@@ -72,29 +73,24 @@ function FilterScreenContent() {
     return articles.length > 0 || error !== null;
   }, [articles.length, error]);
 
-  // Use the screen animation hook with single animation control
-  const { fadeInStyle, triggerAnimations } = useScreenAnimation(
+  // Use the screen animation hook
+  const { fadeInStyle } = useScreenAnimation(
     isDataReady,
-    isLoading,
-    300, // Animation duration
-    0, // Layout delay
-    0 // Animation delay
+    isLoading
+    // Using default values for remaining parameters
   );
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Handle initial mount status when data is loaded
-  useEffect(() => {
-    if (isDataReady && !isLoading) {
-      // Only trigger animations if this is indeed the initial mount
-      if (isInitialMount.current) {
-        triggerAnimations();
-        // After first data load, mark as not the initial mount anymore
-        isInitialMount.current = false;
-      }
-    }
-  }, [isDataReady, isLoading, triggerAnimations]);
+  // Memoize content container style
+  const contentContainerStyle = useMemo(() => {
+    return {
+      flexGrow: 1,
+      paddingTop: LAYOUT.SPACING.MEDIUM,
+      paddingBottom: LAYOUT.SPACING.XLARGE + LAYOUT.BOTTOM_BAR.HEIGHT,
+    };
+  }, []);
 
   // Fetch author details
   const fetchAuthor = useCallback(async (authorId: number) => {

@@ -1,5 +1,5 @@
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import {
   StyleSheet,
   View,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Components
@@ -29,11 +29,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import {
-  useFadeInAnimation,
-  useFloatingButtonAnimation,
-  useOpacityAnimation,
-} from '@/hooks/animations';
+import { useFadeInAnimation, useFloatingButtonAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
@@ -52,11 +48,10 @@ import {
 import { LAYOUT } from '@/constants/layout';
 
 // Utils
-import { mediumFeedback, successFeedback, lightFeedback } from '@/utils/haptics';
+import { successFeedback, lightFeedback } from '@/utils/haptics';
 
 // Types
 import type { Tables } from '@/types/database.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
 
 const styles = StyleSheet.create({
   container: {
@@ -113,18 +108,13 @@ export default function ArticleScreen() {
   // Check if data is already in cache to optimize loading time
   const isDataPrefetched = useMemo(() => {
     if (!articleId) return false;
-    // Use a different approach to avoid type errors
+    // Use explicit type checking to avoid TypeScript errors
     const cachedData = queryClient.getQueryData(['article', articleId]);
     return cachedData !== undefined && cachedData !== null;
   }, [articleId, queryClient]);
 
   // Use dynamic loading state with optimized timeout
-  const {
-    isLoading: isLoadingState,
-    startLoading,
-    stopLoading,
-    updateMinLoadingTime,
-  } = useLoadingState(isDataPrefetched ? 100 : 500, true);
+  const { updateMinLoadingTime } = useLoadingState(isDataPrefetched ? 100 : 500);
 
   // Update minimum loading time when prefetched status changes
   useEffect(() => {
@@ -140,7 +130,6 @@ export default function ArticleScreen() {
     isLoadingArticle,
     isInReadingList,
     refetchReadingListStatus,
-    studyWords,
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,
@@ -286,10 +275,16 @@ export default function ArticleScreen() {
         () => {
           if (isMountedRef.current) {
             setIsLoading(false);
-            // Make sure these functions exist before calling them
-            if (startContentAnimation) startContentAnimation();
-            if (startHeaderAnimation) startHeaderAnimation();
-            if (startFooterAnimation) startFooterAnimation();
+
+            // Safely start animations with error handling
+            try {
+              if (typeof startContentAnimation === 'function') startContentAnimation();
+              if (typeof startHeaderAnimation === 'function') startHeaderAnimation();
+              if (typeof startFooterAnimation === 'function') startFooterAnimation();
+            } catch (err) {
+              // Silently handle any animation errors
+              console.warn('Animation error:', err);
+            }
           }
         },
         !!isDataPrefetched ? 10 : 50
@@ -341,17 +336,6 @@ export default function ArticleScreen() {
   }, [articleId, dispatch]);
 
   // FlatList configuration
-  const flatListConfig = useMemo(
-    () => ({
-      initialNumToRender: 10,
-      maxToRenderPerBatch: 10,
-      windowSize: 5,
-      removeClippedSubviews: false,
-      showsVerticalScrollIndicator: true,
-      indicatorStyle: isDarkMode ? 'white' : ('black' as 'white' | 'black'),
-    }),
-    [isDarkMode]
-  );
 
   // Handle back button press with debounce
   const handleBackPress = useCallback(() => {
@@ -462,8 +446,33 @@ export default function ArticleScreen() {
     };
   }, [cleanupNavigation, stopPlayback]);
 
-  // Main render
-  if (isLoading || isLoadingArticle) {
+  // Safely cast animation styles
+  const safeHeaderStyle = headerAnimatedStyle as { opacity?: number; [key: string]: any };
+  const safeContentStyle = contentAnimatedStyle as { opacity?: number; [key: string]: any };
+  const safeFooterStyle = footerAnimatedStyle as { opacity?: number; [key: string]: any };
+
+  // Safely cast floating button animations
+  const safeBackButtonStyle = combinedBackButtonStyle as {
+    transform?: any[];
+    opacity?: number;
+    [key: string]: any;
+  };
+  const safeBookmarkButtonStyle = combinedBookmarkButtonStyle as {
+    transform?: any[];
+    opacity?: number;
+    [key: string]: any;
+  };
+  const safePlayButtonStyle = combinedPlayButtonStyle as {
+    transform?: any[];
+    opacity?: number;
+    [key: string]: any;
+  };
+
+  // Check if we have cached article data to skip showing loading screen
+  const hasCachedData = !!queryClient.getQueryData(['article', articleId]);
+
+  // Main render - Only show loading when no cached data is available
+  if ((isLoading || isLoadingArticle) && !hasCachedData) {
     return (
       <ThemedView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -495,7 +504,7 @@ export default function ArticleScreen() {
       <FloatingButton
         position="left"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={combinedBackButtonStyle}
+        animatedStyle={safeBackButtonStyle}
         onPress={handleBackPress}
         iconName="chevron-back"
         accessibilityLabel="Return to previous screen"
@@ -508,7 +517,7 @@ export default function ArticleScreen() {
         <FloatingButton
           position="right"
           top={insets.top + LAYOUT.SPACING.MEDIUM}
-          animatedStyle={combinedBookmarkButtonStyle}
+          animatedStyle={safeBookmarkButtonStyle}
           onPress={handleBookmarkPress}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
           accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
@@ -521,7 +530,7 @@ export default function ArticleScreen() {
       <FloatingButton
         position="right"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={combinedPlayButtonStyle}
+        animatedStyle={safePlayButtonStyle}
         iconName={isPlaying ? 'stop' : 'play'}
         accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
         onPress={handlePlayPress}
@@ -536,9 +545,7 @@ export default function ArticleScreen() {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View
-          style={[{ flex: 1, backgroundColor: 'transparent' }, contentAnimatedStyle as any]}
-        >
+        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }, safeContentStyle]}>
           {/* Only render FlatList if we have data */}
           {sortedSentences && sortedSentences.length > 0 && (
             <FlatList
@@ -553,8 +560,12 @@ export default function ArticleScreen() {
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={true}
               initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
+              removeClippedSubviews={false}
+              indicatorStyle={isDarkMode ? 'white' : 'black'}
               ListHeaderComponent={
-                <Animated.View style={headerAnimatedStyle as any}>
+                <Animated.View style={safeHeaderStyle}>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
                 </Animated.View>
               }
@@ -562,7 +573,7 @@ export default function ArticleScreen() {
                 <>
                   {/* Only render related articles sections if we have data */}
                   {otherArticles && otherArticles.length > 0 && (
-                    <Animated.View style={footerAnimatedStyle as any}>
+                    <Animated.View style={safeFooterStyle}>
                       <RelatedArticlesFooter
                         otherArticles={otherArticles}
                         otherCategoryArticles={otherCategoryArticles || []}
@@ -573,10 +584,6 @@ export default function ArticleScreen() {
                   )}
                 </>
               }
-              maxToRenderPerBatch={10}
-              windowSize={5}
-              removeClippedSubviews={false}
-              indicatorStyle={isDarkMode ? 'white' : 'black'}
             />
           )}
         </Animated.View>

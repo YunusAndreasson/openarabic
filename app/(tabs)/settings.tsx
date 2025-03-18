@@ -28,21 +28,14 @@ export default function SettingsScreen() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
 
-  // Use the new loading state hook
-  const {
-    isLoading: isLoadingState,
-    startLoading,
-    stopLoading,
-    setDataLoaded,
-  } = useLoadingState(500, true);
+  // Use the new loading state hook with minimal loading time
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(); // Using default values (80ms, true)
 
   // Use the new screen animation hook
   const { fadeInStyle } = useScreenAnimation(
     true, // Always ready to display
-    isLoadingState,
-    300, // Animation duration
-    0, // Layout delay
-    0 // Animation delay
+    isLoadingState
+    // Using default values for remaining parameters
   );
 
   const loadSession = useCallback(async () => {
@@ -55,13 +48,12 @@ export default function SettingsScreen() {
     try {
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
-      setDataLoaded(true);
     } catch (_error) {
       // Error handling removed
     } finally {
       stopLoading();
     }
-  }, [session, startLoading, stopLoading, setDataLoaded]);
+  }, [session, startLoading, stopLoading]);
 
   // Use focus effect to only load session when tab is focused and data isn't loaded yet
   useFocusEffect(
@@ -170,9 +162,15 @@ export default function SettingsScreen() {
     [settings.fontScale, dispatch]
   );
 
-  // Show loading screen
+  // Use cached data to render a skeleton while loading instead of the full loading screen
   if (isLoadingState) {
-    return <LoadingScreen />;
+    return (
+      <Animated.View style={[styles.flexOne, fadeInStyle]}>
+        <ThemedView style={styles.container}>
+          <PageHeader title="Settings" />
+        </ThemedView>
+      </Animated.View>
+    );
   }
 
   if (!session) {
@@ -385,9 +383,9 @@ const styles = StyleSheet.create({
   },
   authContainer: {
     flex: 1,
+    padding: LAYOUT.SCREEN_EDGE_PADDING,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   welcomeTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,

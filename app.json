@@ -8,6 +8,7 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "ios": {
       "supportsTablet": true
     },
@@ -27,10 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#1E1E1E"
         }
       ],
       "expo-font"
@@ -39,8 +37,6 @@
       "typedRoutes": true
     },
     "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
       "backgroundColor": "#1E1E1E"
     }
   }

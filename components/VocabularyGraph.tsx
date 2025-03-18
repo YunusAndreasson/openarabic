@@ -140,6 +140,7 @@ export const VocabularyGraph = React.memo(
           backgroundColor: colors.cardBackground,
           shadowColor: colors.shadow,
           borderColor: colors.cardBorder,
+          padding: PADDING,
         },
       ],
       [colors.cardBackground, colors.shadow, colors.cardBorder]
@@ -178,12 +179,34 @@ export const VocabularyGraph = React.memo(
       [GRAPH_HEIGHT, GRAPH_WIDTH, colors.text]
     );
 
+    // Define styles with dimensions
+    const graphContainerStyle = useMemo(
+      () => [
+        styles.graphContainer,
+        {
+          height: GRAPH_HEIGHT + 20,
+        },
+      ],
+      [GRAPH_HEIGHT]
+    );
+
+    const canvasStyle = useMemo(
+      () => [
+        styles.canvas,
+        {
+          height: GRAPH_HEIGHT,
+          width: GRAPH_WIDTH,
+        },
+      ],
+      [GRAPH_HEIGHT, GRAPH_WIDTH]
+    );
+
     // If no data or loading, show placeholder with exact same dimensions
     if (isLoading || data.length === 0) {
       return (
-        <Animated.View style={[cardStyle, { height: 250 }]}>
+        <Animated.View style={[cardStyle, animatedStyle, { height: 250 }]}>
           {cardHeader}
-          <View style={styles.loadingContainer}>
+          <View style={[graphContainerStyle, styles.loadingContainer]}>
             <LoadingContainer size="small" />
             <ThemedText style={styles.loadingText}>
               {data.length === 0 ? 'No data available' : 'Loading data...'}
@@ -197,8 +220,8 @@ export const VocabularyGraph = React.memo(
       <Animated.View style={[cardStyle, animatedStyle, { height: 250 }]}>
         {cardHeader}
 
-        <View style={styles.graphContainer}>
-          <Canvas style={styles.canvas}>
+        <View style={graphContainerStyle}>
+          <Canvas style={canvasStyle}>
             {/* Grid lines */}
             {gridLines}
 
@@ -287,35 +310,30 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 
 const styles = StyleSheet.create({
   card: {
+    width: '100%',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    height: 250, // Fixed height to prevent any layout changes
     ...LAYOUT.SHADOW.MEDIUM,
   },
   header: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    height: 50, // Fixed height for header
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   titleRow: {
     flexDirection: 'row',
-    alignItems: 'center', // Changed from space-between to center for better alignment
+    alignItems: 'center',
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
-    opacity: LAYOUT.OPACITY.DIMMED,
   },
   graphContainer: {
-    paddingHorizontal: LAYOUT.CARD.PADDING.MEDIUM,
-    height: 160, // Fixed height for graph container
-    position: 'relative',
+    width: '100%',
   },
   canvas: {
-    width: '100%',
-    height: 120, // Fixed height matching GRAPH_HEIGHT
+    // Dimensions are set dynamically in the component
   },
   xAxisLabels: {
     position: 'absolute',
@@ -361,13 +379,12 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DISABLED,
   },
   loadingContainer: {
-    height: 160, // Fixed height to match graphContainer
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
     marginTop: LAYOUT.SPACING.SMALL,
+    opacity: 0.7,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
   },
 });

@@ -9,6 +9,14 @@ import { studyWordsService } from '@/services/studyWords';
 // Types
 import type { Article } from '@/types/articles.types';
 
+/**
+ * Custom hook to fetch and manage article data
+ *
+ * @param articleId - The ID of the article to fetch
+ * @param userId - The current user ID (if authenticated)
+ * @param isDataPrefetched - Whether the article data has been prefetched (optimizes loading)
+ * @returns Object containing article data and related data
+ */
 export const useArticleData = (
   articleId: number | undefined,
   userId: string | undefined,
@@ -17,18 +25,21 @@ export const useArticleData = (
   // Get queryClient for cache access
   const queryClient = useQueryClient();
 
+  // Normalize the isDataPrefetched parameter to ensure it's a boolean
+  const isPrefetched = Boolean(isDataPrefetched);
+
   // Fetch article data with optimized staleTime when prefetched
   const { data: article, isLoading: isLoadingArticle } = useQuery({
     queryKey: ['article', articleId],
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
     // Increase staleTime when data is prefetched to reduce refetching
-    staleTime: isDataPrefetched ? 60000 : 0, // 1 minute cache when prefetched
+    staleTime: isPrefetched ? 60000 : 0, // 1 minute cache when prefetched
   });
 
   // Get initial reading list data from cache if available
   const cachedReadingListStatus =
-    isDataPrefetched && userId && articleId
+    isPrefetched && userId && articleId
       ? queryClient.getQueryData(['isInReadingList', userId, articleId])
       : undefined;
 

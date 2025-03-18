@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
@@ -93,17 +93,11 @@ export default function ArticlesScreen() {
   const { session } = useSafeAuth();
 
   // Use the new loading state hook
-  const {
-    isLoading: isLoadingState,
-    startLoading,
-    stopLoading,
-    setDataLoaded,
-  } = useLoadingState(500, true);
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500);
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const isInitialMount = useRef(true);
-  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
 
   // State
   const [articles, setArticles] = useState<Article[]>([]);
@@ -199,9 +193,6 @@ export default function ArticlesScreen() {
       const fetchedArticles = await articlesService.getArticles();
       setArticles(fetchedArticles);
 
-      // Mark data as loaded
-      setDataLoaded(true);
-
       // Fetch authors and categories if they haven't been fetched yet
       if (authors.length === 0) {
         fetchAuthors();
@@ -228,7 +219,6 @@ export default function ArticlesScreen() {
     fetchCategories,
     startLoading,
     stopLoading,
-    setDataLoaded,
   ]);
 
   const handleRefresh = useCallback(() => {
@@ -241,6 +231,32 @@ export default function ArticlesScreen() {
 
   // Add queryClient for prefetching
   const queryClient = useQueryClient();
+
+  // Add prefetching for first few articles when data is loaded
+  useEffect(() => {
+    if (articles.length > 0 && !isLoadingState) {
+      // Prefetch first 3 articles in background
+      const articlesToPreload = articles.slice(0, 3);
+      articlesToPreload.forEach(article => {
+        queryClient.prefetchQuery({
+          queryKey: ['article', article.id],
+          queryFn: () => articlesService.getArticleById(article.id),
+          staleTime: 60000, // 1 minute cache
+        });
+      });
+
+      // If user is authenticated, also prefetch reading list status
+      if (session?.user) {
+        articlesToPreload.forEach(article => {
+          queryClient.prefetchQuery({
+            queryKey: ['isInReadingList', session.user.id, article.id],
+            queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
+            staleTime: 60000,
+          });
+        });
+      }
+    }
+  }, [articles, isLoadingState, queryClient, session]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -298,12 +314,16 @@ export default function ArticlesScreen() {
         }
       }
 
-      // Clean up any pending timeouts
-      return () => {
-        if (loadingTimeoutRef.current) {
-          clearTimeout(loadingTimeoutRef.current);
+      // Reset scroll position to top
+      if (scrollViewRef.current && typeof scrollViewRef.current.scrollTo === 'function') {
+        try {
+          setTimeout(() => {
+            scrollViewRef.current?.scrollTo?.({ y: 0, animated: false });
+          }, 100);
+        } catch (e) {
+          console.warn('Failed to scroll to top:', e);
         }
-      };
+      }
     }, [fetchArticles, isLoadingState, stopLoading, articles.length])
   );
 
@@ -312,21 +332,8 @@ export default function ArticlesScreen() {
     return articles.length > 0 || error !== null;
   }, [articles.length, error]);
 
-  // Use the new screen animation hook
-  const { fadeInStyle, triggerAnimations } = useScreenAnimation(
-    isDataReady,
-    isLoadingState,
-    300, // Animation duration
-    0, // Layout delay
-    0 // Animation delay
-  );
-
-  // Trigger animations when data is ready
-  useEffect(() => {
-    if (isDataReady && !isLoadingState) {
-      triggerAnimations();
-    }
-  }, [isDataReady, isLoadingState, triggerAnimations]);
+  // Use the screen animation hook
+  const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
 
   // Create a header component for the FlatList
   const ListHeaderComponent = useCallback(() => {
@@ -342,7 +349,7 @@ export default function ArticlesScreen() {
           title="Continue Reading"
           articles={sortedInProgressArticles}
           onArticlePress={article => router.push(`/article/${article.id}`)}
-          delay={100}
+          delay={40}
           showTimeAgo={true}
           getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
           emptyStateMessage="Start reading to save your progress here"
@@ -353,7 +360,7 @@ export default function ArticlesScreen() {
             title="Latest Articles"
             articles={latestArticles}
             onArticlePress={handleArticlePress}
-            delay={150}
+            delay={60}
             showTimeAgo={true}
           />
         )}
@@ -363,7 +370,7 @@ export default function ArticlesScreen() {
             title="Featured Articles"
             articles={featuredArticles}
             onArticlePress={handleArticlePress}
-            delay={300}
+            delay={80}
           />
         )}
 
@@ -372,7 +379,7 @@ export default function ArticlesScreen() {
             title="Beginner Friendly"
             articles={beginnerArticles}
             onArticlePress={handleArticlePress}
-            delay={350}
+            delay={100}
             hideDifficulty={true}
           />
         )}
@@ -384,8 +391,8 @@ export default function ArticlesScreen() {
           selectedId={null}
           onSelect={handleSelectAuthor}
           onClearFilter={handleClearFilters}
-          animationDelay={500}
-          itemAnimationDelay={550}
+          animationDelay={120}
+          itemAnimationDelay={140}
         />
 
         {/* Category filter list */}
@@ -394,8 +401,8 @@ export default function ArticlesScreen() {
           items={categories}
           selectedId={null}
           onSelect={handleSelectCategory}
-          animationDelay={600}
-          itemAnimationDelay={650}
+          animationDelay={150}
+          itemAnimationDelay={170}
         />
       </>
     );
@@ -420,13 +427,17 @@ export default function ArticlesScreen() {
     return <></>;
   }, []);
 
-  // Return null if loading
-  if (isLoadingState && !isRefreshing) {
+  // Check if data is already in cache to optimize loading behavior
+  const articlesQuery = queryClient.getQueryState(['articles']);
+  const isDataCached = articlesQuery?.data !== undefined;
+
+  // If loading and we don't have cached data, show loading screen
+  if (isLoadingState && !isRefreshing && !isDataCached) {
     return <LoadingScreen />;
   }
 
-  // Return error state if there's an error
-  if (error && !isRefreshing) {
+  // Show error state only if there's no cached data
+  if (error && !isRefreshing && !isDataCached) {
     return (
       <ErrorState
         message={error}
@@ -452,13 +463,25 @@ export default function ArticlesScreen() {
       >
         <ArticleList
           articles={[]} // Empty array since the content is in the header
-          isLoading={isLoadingState}
+          isLoading={false} // Never show the spinner inside the list
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
           onArticlePress={handleArticlePress}
           ListHeaderComponent={ListHeaderComponent()}
           ListEmptyComponent={EmptyStateComponent()}
-          contentContainerStyle={contentContainerStyle}
+          contentContainerStyle={{
+            ...contentContainerStyle,
+            paddingTop: 0, // Ensure the list starts exactly at the top
+          }}
+          // Add optimizations to prevent unexpected scrolling
+          initialNumToRender={1}
+          windowSize={3}
+          maxToRenderPerBatch={3}
+          updateCellsBatchingPeriod={50}
+          removeClippedSubviews={Platform.OS === 'android'}
+          maintainVisibleContentPosition={{
+            minIndexForVisible: 0,
+          }}
         />
       </ThemedView>
     </Animated.View>
