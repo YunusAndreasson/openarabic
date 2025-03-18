@@ -17,7 +17,6 @@ import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
 import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
-import { LoadingScreen } from '../../components/Loader';
 import { useLoadingState, useScreenAnimation } from '../../hooks';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';

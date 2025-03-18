@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, RefreshControl } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { StyleSheet, View, RefreshControl, ViewStyle } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/VocabularyDashboard';
@@ -10,17 +10,12 @@ import { useQuery } from '@tanstack/react-query';
 import { studyWordsService } from '@/services/studyWords';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-import { LoadingScreen, LoadingContainer } from '@/components/Loader';
+import { LoadingScreen } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimateProps, WithAnimatedValue } from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
-import {
-  useLoadingState,
-  useScreenFocusRefresh,
-  useScreenAnimation,
-  useNavigationWithDebounce,
-} from '@/hooks';
+import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
 import PageHeader from '@/components/PageHeader';
 import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
@@ -37,9 +32,6 @@ export default function VocabularyScreen() {
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
-
-  // Use the loading state hook with default parameters
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
   // Query for study words
   const {
@@ -148,6 +140,13 @@ export default function VocabularyScreen() {
     return calculateWeeklyProgressData(validStudyWords);
   }, [validStudyWords, isDataCached]);
 
+  // Single fade-in animation for the entire screen
+  const { animatedStyle: fadeInStyle } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 300,
+    autoStart: true,
+  });
+
   // Handle starting a review
   const handleStartReview = () => {
     if (!user) return;
@@ -183,49 +182,8 @@ export default function VocabularyScreen() {
     });
   };
 
-  // Content loading state - take cached data into account to avoid flicker
-  const isContentLoading = !!user && (isFetching || isDataLoading) && !isDataCached;
-
-  // Use opacity animation for the loader - start with opacity 0 if data is cached
-  const { animatedStyle: loaderAnimatedStyle, setOpacity: setLoaderOpacity } = useOpacityAnimation({
-    initialOpacity: isDataCached ? 0 : 1,
-    duration: 300,
-  });
-
-  // Use the screen animation hook for content - reduce animation delay if data is cached
-  const { fadeInStyle } = useScreenAnimation(
-    isDataReady || isDataCached,
-    (isLoadingState || isDataLoading) && !isDataCached
-    // Using default parameters (80ms)
-  );
-
-  // Update loading state and loader opacity based on data loading
-  useEffect(() => {
-    if (isAuthLoading || (!!user && status === 'pending' && isFetching && !isDataCached)) {
-      startLoading();
-      setLoaderOpacity(1);
-    } else {
-      stopLoading();
-
-      // Fade out the loader when data is ready
-      if (isDataReady || isDataCached) {
-        setLoaderOpacity(0);
-      }
-    }
-  }, [
-    isAuthLoading,
-    user,
-    status,
-    isFetching,
-    isDataReady,
-    isDataCached,
-    startLoading,
-    stopLoading,
-    setLoaderOpacity,
-  ]);
-
-  // Show loading screen for initial load only if data is not cached
-  if (isLoadingState && !isDataCached) {
+  // Show loading screen only for initial auth loading
+  if (isAuthLoading) {
     return <LoadingScreen color={colors.tint} />;
   }
 
@@ -252,8 +210,7 @@ export default function VocabularyScreen() {
   }
 
   // Show empty state only if we have no words AND we're done loading AND there's no cached data
-  // This prevents the empty state from flashing while data is still being processed
-  if (!isContentLoading && !isFetching && validStudyWords.length === 0 && !isDataCached) {
+  if (!isFetching && validStudyWords.length === 0 && !isDataCached) {
     return (
       <ThemedView style={styles.container}>
         <VocabularyEmptyState colors={colors} />
@@ -263,7 +220,7 @@ export default function VocabularyScreen() {
 
   // Main content
   return (
-    <Animated.View style={[styles.flexContainer, fadeInStyle]}>
+    <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
       <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
         {/* Fixed header */}
         <PageHeader title="Words" />
@@ -285,19 +242,6 @@ export default function VocabularyScreen() {
             ),
           }}
         >
-          {/* Always render loader but control visibility with opacity */}
-          <Animated.View
-            style={[
-              styles.fullscreenLoader,
-              { backgroundColor: colors.background },
-              // @ts-ignore - Animated style from useOpacityAnimation
-              loaderAnimatedStyle,
-            ]}
-            pointerEvents={isContentLoading ? 'auto' : 'none'}
-          >
-            <LoadingContainer size="large" color={colors.tint} />
-          </Animated.View>
-
           {/* Stats Dashboard */}
           <View style={styles.dashboardWrapper}>
             <VocabularyDashboard
@@ -359,32 +303,22 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better spacing from header
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM, // Added extra padding at bottom for better scroll experience
-  },
-  fullscreenLoader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: LAYOUT.Z_INDEX.OVERLAY, // Use Z_INDEX constant instead of hardcoded value
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
   },
   graphWrapper: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better visual separation
+    marginBottom: LAYOUT.SPACING.LARGE,
     height: 250,
   },
   reviewButtonWrapper: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better bottom spacing
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   dashboardWrapper: {
-    marginBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM to LARGE for better visual separation
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
 });

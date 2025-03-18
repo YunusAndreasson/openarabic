@@ -11,7 +11,6 @@ import { SignInRequired } from '@/components/SignInRequired';
 import { Audio } from 'expo-av';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { LoadingScreen } from '../../components/Loader';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
@@ -257,7 +256,6 @@ const BottomControls = React.memo(
             <View style={{ width: '48%' }}>
               <ThemedButton
                 title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
-                icon={isPlaying && !isShuffleMode ? 'stop-circle' : 'play-circle'}
                 onPress={onPlayAll}
                 variant="filled"
                 style={{ width: '100%' }}
@@ -269,7 +267,6 @@ const BottomControls = React.memo(
             <View style={{ width: '48%' }}>
               <ThemedButton
                 title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
-                icon={isPlaying && isShuffleMode ? 'stop-circle' : 'shuffle'}
                 onPress={onShuffle}
                 variant="outlined"
                 style={[styles.shuffleButton, { width: '100%', borderColor: colors.tint }]}

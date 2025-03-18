@@ -179,9 +179,6 @@ export default function ArticleScreen() {
     [insets.top]
   );
 
-  // Pre-calculate the layout dimensions to prevent jumping
-  const [layoutReady, setLayoutReady] = useState(false);
-
   // Use the navigation with debounce hook
   const { navigateTo, cleanup: cleanupNavigation } = useNavigationWithDebounce();
 
@@ -266,9 +263,6 @@ export default function ArticleScreen() {
   // Content animation when article is loaded
   useEffect(() => {
     if (!isLoadingArticle && article) {
-      // Set layout ready first to ensure dimensions are calculated
-      setLayoutReady(true);
-
       // Use a small timeout to ensure layout is stable before animations start
       // Use a shorter timeout when data is prefetched, but always use a small delay to avoid layout issues
       const timer = setTimeout(
