@@ -35,7 +35,6 @@ const ErrorMessage = React.memo(
           onPress={() => navigation.navigate(screenName as never)}
           style={{ marginTop: LAYOUT.SPACING.LARGE }}
           accessibilityLabel="Reload this screen"
-          icon="refresh"
         />
       </View>
     );

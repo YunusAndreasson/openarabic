@@ -26,7 +26,6 @@ const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => {
             title="Try Again"
             onPress={onRetry}
             variant="filled"
-            icon="refresh"
             accessibilityLabel="Attempt to reload content"
           />
         </View>

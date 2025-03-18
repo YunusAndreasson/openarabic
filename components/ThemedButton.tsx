@@ -157,16 +157,14 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
     paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minWidth: 160,
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
-    overflow: 'hidden', // Match ThemedCard overflow handling
+    overflow: 'hidden',
   },
   buttonShadow: {
-    // Match ThemedCard shadow style for consistency
     ...LAYOUT.SHADOW.MEDIUM,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowRadius: 6,
   },
   buttonDisabled: {
     opacity: LAYOUT.OPACITY.DISABLED,
@@ -184,7 +182,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   iconContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
   },
