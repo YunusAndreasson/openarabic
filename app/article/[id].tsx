@@ -51,7 +51,7 @@ import {
 import { LAYOUT } from '@/constants/layout';
 
 // Utils
-import { mediumFeedback, successFeedback } from '@/utils/haptics';
+import { mediumFeedback, successFeedback, lightFeedback } from '@/utils/haptics';
 
 // Types
 import type { Tables } from '@/types/database.types';
@@ -331,6 +331,7 @@ export default function ArticleScreen() {
   // Handle bookmark toggle with debounce for UI consistency
   const handleBookmarkPress = useCallback(() => {
     if (articleId) {
+      lightFeedback(); // Light haptic feedback for bookmark toggle
       handleToggleReadingList(articleId, isInReadingList);
     }
   }, [articleId, isInReadingList, handleToggleReadingList]);
@@ -352,7 +353,7 @@ export default function ArticleScreen() {
   const handlePlayPress = useCallback(async () => {
     if (isPlaying) {
       // If already playing, stop playback
-      mediumFeedback(); // Haptic feedback for stopping
+      lightFeedback(); // Light haptic feedback for stopping
 
       // Update UI immediately for responsive feel
       setIsPlaying(false);
@@ -366,7 +367,7 @@ export default function ArticleScreen() {
       }
 
       // Provide haptic feedback immediately
-      successFeedback();
+      lightFeedback(); // Light haptic feedback for starting playback
 
       // Update UI immediately for responsive feel
       setIsPlaying(true);
@@ -376,7 +377,7 @@ export default function ArticleScreen() {
 
       if (!success) {
         setIsPlaying(false);
-        mediumFeedback(); // Haptic feedback for failure
+        lightFeedback(); // Light haptic feedback for failure
       }
     }
   }, [isPlaying, generateArticleAudio, loadAndPlayAudio, stopPlayback]);

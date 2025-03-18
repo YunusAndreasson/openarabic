@@ -7,6 +7,9 @@ import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
 // Constants
 import { LAYOUT } from '@/constants/layout';
 
+// Utils
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
+
 // Types
 import type { Article } from '@/types/articles.types';
 import { RelatedArticlesFooterProps } from '@/types/ui.types';
@@ -40,7 +43,7 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
 
       {otherCategoryArticles.length > 0 && (
         <RelatedArticlesSection
-          title={`In ${article?.category?.name}`}
+          title={`In ${article?.category?.name ? capitalizeFirstLetter(article.category.name) : ''}`}
           articles={otherCategoryArticles}
           renderArticleCard={renderArticleCard}
         />

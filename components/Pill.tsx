@@ -47,7 +47,6 @@ const Pill = React.memo(
     const handlePress = useCallback(() => {
       if (onSelect) {
         onSelect(id);
-        lightFeedback();
       }
     }, [id, onSelect]);
 

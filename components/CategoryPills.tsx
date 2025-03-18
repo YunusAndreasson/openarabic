@@ -32,7 +32,6 @@ function CategoryPillsComponent({
   // Memoize the press handler factory
   const createPressHandler = useCallback(
     (category: Tables<'categories'> | null) => () => {
-      lightFeedback();
       onSelectCategory(category);
     },
     [onSelectCategory]

@@ -251,20 +251,16 @@ export default function ArticlesScreen() {
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
-    lightFeedback();
     // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=author&id=${authorId}`);
   }, []);
 
   const handleSelectCategory = useCallback((categoryId: number) => {
-    lightFeedback();
     // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
 
   const handleClearFilters = useCallback(() => {
-    lightFeedback();
-
     // Scroll to top when clearing filters
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ y: 0, animated: true });

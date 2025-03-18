@@ -195,7 +195,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   contentContainer: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL, // Match the top spacing of pill
+    paddingBottom: LAYOUT.SPACING.SMALL, // Reduce bottom padding to match top
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -212,6 +214,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.TINY,
+    marginBottom: 0, // Remove bottom margin since we're controlling space with container padding
   },
   difficultyContainer: {
     flexDirection: 'column',
@@ -246,7 +249,7 @@ const styles = StyleSheet.create({
   pillContainer: {
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
-    left: LAYOUT.SPACING.SMALL,
+    left: LAYOUT.SPACING.MEDIUM, // Match the content padding
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
     maxWidth: '70%',
   },
