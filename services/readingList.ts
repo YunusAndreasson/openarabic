@@ -249,7 +249,15 @@ export const readingListService = {
     try {
       const { data, error } = await supabase
         .from('reading_list')
-        .select('*, articles(*)')
+        .select(
+          `
+          *,
+          articles:article_id(
+            *,
+            author:authors(*)
+          )
+        `
+        )
         .match({ user_id: userId })
         .order('position', { ascending: true });
 

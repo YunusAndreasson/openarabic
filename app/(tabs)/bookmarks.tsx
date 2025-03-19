@@ -18,6 +18,12 @@ import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/ho
 import EmptyState from '@/components/EmptyState';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Helper function to calculate header height
+const getHeaderHeight = (insets: { top: number }) => {
+  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -617,11 +623,17 @@ export default function BookmarksScreen() {
     }
   }, [currentTrackIndex, activePlaylist]);
 
+  const insets = useSafeAreaInsets();
+
   // Use cached data to render a skeleton while loading instead of the full loading screen
   if (isLoadingState && !readingList) {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <ThemedView
+          style={styles.container}
+          includeBottomInset={false}
+          safeAreaEdges={['left', 'right']}
+        >
           <PageHeader title="Bookmarks" />
         </ThemedView>
       </Animated.View>
@@ -645,15 +657,26 @@ export default function BookmarksScreen() {
   if (!readingList || readingList.length === 0) {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <ThemedView
+          style={styles.container}
+          includeBottomInset={false}
+          safeAreaEdges={['left', 'right']}
+        >
+          <ThemedView
+            useSafeArea={false}
+            includeBottomInset={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingTop: getHeaderHeight(insets) }}
+          >
+            <EmptyState
+              title="No Bookmarks Found"
+              message="Bookmark articles to listen to them later or save them for reference."
+              buttonTitle="Browse Articles"
+              buttonIcon="book"
+              onButtonPress={() => router.push('/(tabs)')}
+            />
+          </ThemedView>
           <PageHeader title="Bookmarks" />
-          <EmptyState
-            title="No Bookmarks Found"
-            message="Bookmark articles to listen to them later or save them for reference."
-            buttonTitle="Browse Articles"
-            buttonIcon="book"
-            onButtonPress={() => router.push('/(tabs)')}
-          />
         </ThemedView>
       </Animated.View>
     );
@@ -662,9 +685,11 @@ export default function BookmarksScreen() {
   // Normal display with playlist
   return (
     <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        <PageHeader title="Bookmarks" />
-
+      <ThemedView
+        style={styles.container}
+        includeBottomInset={false}
+        safeAreaEdges={['left', 'right']}
+      >
         <ThemedView useSafeArea={false} includeBottomInset={false} style={{ flex: 1 }}>
           <FlatList
             ref={flatListRef}
@@ -698,7 +723,7 @@ export default function BookmarksScreen() {
               );
             }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
             removeClippedSubviews={true}
             initialNumToRender={10}
           />
@@ -711,6 +736,7 @@ export default function BookmarksScreen() {
           isPlaying={isCurrentlyPlaying}
           isShuffleMode={isShuffleMode}
         />
+        <PageHeader title="Bookmarks" />
       </ThemedView>
     </Animated.View>
   );

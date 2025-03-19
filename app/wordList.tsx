@@ -16,6 +16,7 @@ import WordListItem from '../components/WordListItem';
 import EntranceAnimation from '../components/EntranceAnimation';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Enhanced study word with mastery score
 interface EnhancedStudyWord extends StudyWord {
@@ -40,10 +41,16 @@ const calculateMasteryScore = (word: StudyWord): number => {
   );
 };
 
+// Helper function to calculate header height
+const getHeaderHeight = (insets: { top: number }) => {
+  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
+};
+
 export default function WordListScreen() {
   const { category } = useLocalSearchParams();
   const colors = useColors();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   // Get the title and icon based on the category
   const { title, icon, description } = React.useMemo(() => {
@@ -204,14 +211,19 @@ export default function WordListScreen() {
         style={styles.flexContainer}
         entering={FadeIn.duration(300).springify().damping(14).stiffness(100)}
       >
-        <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-          {/* Page header with title and back button - exactly matching vocabulary screen */}
-          <PageHeader title={title} onBackPress={handleBackPress} />
-
-          {/* Content area */}
+        <ThemedView
+          style={styles.container}
+          includeBottomInset={false}
+          safeAreaEdges={['left', 'right']}
+        >
           <View style={styles.contentWrapper}>
             {isLoading ? (
-              <View style={styles.loaderContainer}>
+              <View
+                style={[
+                  styles.loaderContainer,
+                  { paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.LARGE },
+                ]}
+              >
                 <Loader size="large" color={colors.tint} />
               </View>
             ) : (
@@ -219,7 +231,12 @@ export default function WordListScreen() {
                 data={sortedWords || []}
                 renderItem={renderItem}
                 keyExtractor={item => item.sentence_word_id.toString()}
-                contentContainerStyle={styles.listContent}
+                contentContainerStyle={[
+                  styles.listContent,
+                  {
+                    paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.LARGE,
+                  }, // Extra padding below header
+                ]}
                 ListHeaderComponent={ListHeaderComponent}
                 ListEmptyComponent={renderEmptyComponent}
                 showsVerticalScrollIndicator={false}
@@ -230,12 +247,17 @@ export default function WordListScreen() {
                 updateCellsBatchingPeriod={50}
                 getItemLayout={(data, index) => ({
                   length: 70, // Adjusted height to match tighter card
-                  offset: 70 * index + (category ? 150 : 0), // Adjusted for CategoryInfoCard height
+                  offset:
+                    70 * index +
+                    (category ? 150 : 0) +
+                    getHeaderHeight(insets) +
+                    LAYOUT.SPACING.LARGE, // Include header height and extra padding
                   index,
                 })}
               />
             )}
           </View>
+          <PageHeader title={title} onBackPress={handleBackPress} />
         </ThemedView>
       </Animated.View>
     </>
@@ -254,12 +276,11 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-    gap: LAYOUT.SPACING.SMALL, // Slightly increased gap for better visual separation
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM, // Increased gap for better spacing between items
   },
   headerContainer: {
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.LARGE, // Increased padding
   },
   loaderContainer: {
     flex: 1,
@@ -270,7 +291,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE, // Added top margin for better vertical centering
+    marginTop: LAYOUT.SPACING.XLARGE * 2, // Increased top margin
   },
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

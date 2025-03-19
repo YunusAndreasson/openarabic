@@ -1,16 +1,21 @@
 import React, { useCallback } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
-import { LAYOUT, getPlatformTopPadding } from '../constants/layout';
+import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { PageHeaderProps } from '@/types/ui.types';
+import { BlurView } from 'expo-blur';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
- * A reusable page header component with consistent styling
+ * A reusable page header component with consistent styling and blur effect
  */
 const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
   const colors = useColors();
+  const isDarkMode = colors.background === '#121212';
+  const intensity = Platform.OS === 'ios' ? 80 : 100;
+  const insets = useSafeAreaInsets();
 
   const handleBackPress = useCallback(() => {
     if (onBackPress) {
@@ -19,32 +24,76 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
   }, [onBackPress]);
 
   return (
-    <View style={styles.container}>
-      {onBackPress && (
-        <Pressable
-          onPress={handleBackPress}
-          style={({ pressed }) => [
-            styles.backButton,
+    <View style={styles.wrapper}>
+      <BlurView
+        intensity={intensity}
+        tint={isDarkMode ? 'dark' : 'light'}
+        style={[
+          styles.blurContainer,
+          {
+            backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
+          },
+          Platform.select({
+            ios: {
+              shadowColor: colors.shadow,
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
+              shadowRadius: LAYOUT.SPACING.SMALL / 2,
+            },
+            android: {
+              elevation: 8,
+            },
+          }),
+        ]}
+      >
+        <View
+          style={[
+            styles.container,
             {
-              backgroundColor: pressed ? colors.textOverlay : 'transparent',
-              opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
+              paddingTop: insets.top + LAYOUT.SPACING.TINY,
             },
           ]}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Ionicons name="chevron-back" size={24} color={colors.tint} />
-        </Pressable>
-      )}
-      <ThemedText style={[styles.title, onBackPress && styles.titleWithBack]}>{title}</ThemedText>
+          {onBackPress && (
+            <Pressable
+              onPress={handleBackPress}
+              style={({ pressed }) => [
+                styles.backButton,
+                {
+                  backgroundColor: pressed ? colors.textOverlay : 'transparent',
+                  opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
+                },
+              ]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="chevron-back" size={24} color={colors.tint} />
+            </Pressable>
+          )}
+          <ThemedText style={[styles.title, onBackPress && styles.titleWithBack]}>
+            {title}
+          </ThemedText>
+        </View>
+      </BlurView>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
+  wrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+  },
+  blurContainer: {
+    overflow: 'hidden',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.1)',
+  },
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: getPlatformTopPadding(),
-    paddingBottom: LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
     flexDirection: 'row',
     alignItems: 'center',
   },

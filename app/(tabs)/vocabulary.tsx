@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, View, RefreshControl, ViewStyle } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
@@ -13,7 +13,7 @@ import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
-import Animated, { AnimateProps, WithAnimatedValue } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
 import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
@@ -21,11 +21,18 @@ import PageHeader from '@/components/PageHeader';
 import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { mediumFeedback } from '@/utils/haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Helper function to calculate header height
+const getHeaderHeight = (insets: { top: number }) => {
+  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
+};
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const queryClient = useQueryClient();
+  const insets = useSafeAreaInsets();
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -38,7 +45,6 @@ export default function VocabularyScreen() {
     data: studyWords = [],
     isLoading: isDataLoading,
     isFetching,
-    status,
     error,
     refetch: refetchStudyWords,
   } = useQuery({
@@ -220,17 +226,17 @@ export default function VocabularyScreen() {
 
   // Main content
   return (
-    <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        {/* Fixed header */}
-        <PageHeader title="Words" />
-
-        {/* Content */}
+    <Animated.View style={[styles.flexContainer, fadeInStyle as ViewStyle]} collapsable={false}>
+      <ThemedView
+        style={styles.container}
+        includeBottomInset={false}
+        safeAreaEdges={['left', 'right']}
+      >
         <ThemedView
           scrollable={true}
           useSafeArea={false}
           includeBottomInset={false}
-          contentContainerStyle={styles.contentContainer}
+          contentContainerStyle={[styles.contentContainer, { paddingTop: getHeaderHeight(insets) }]}
           scrollViewProps={{
             refreshControl: (
               <RefreshControl
@@ -289,6 +295,7 @@ export default function VocabularyScreen() {
             </View>
           )}
         </ThemedView>
+        <PageHeader title="Words" />
       </ThemedView>
     </Animated.View>
   );

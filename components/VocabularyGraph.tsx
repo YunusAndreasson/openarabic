@@ -46,15 +46,16 @@ export const VocabularyGraph = React.memo(
 
     // Canvas dimensions
     const PADDING = 16;
+    const TOP_PADDING = 3; // Minimal padding to prevent clipping without excessive space
     const GRAPH_HEIGHT = 120;
     const GRAPH_WIDTH =
       Dimensions.get('window').width - LAYOUT.SCREEN_EDGE_PADDING * 2 - PADDING * 2;
 
     // Use the graph data hook to process data
-    const { points, areaPath, linePath, totalWordsLearned, dailyAverage } = useGraphData(
+    const { points, areaPath, linePath } = useGraphData(
       data,
       GRAPH_WIDTH,
-      GRAPH_HEIGHT
+      GRAPH_HEIGHT - TOP_PADDING // Reserve space for top padding
     );
 
     // Use our custom graph animation hook
@@ -184,7 +185,7 @@ export const VocabularyGraph = React.memo(
       () => [
         styles.graphContainer,
         {
-          height: GRAPH_HEIGHT + 20,
+          height: GRAPH_HEIGHT + 50, // Increase height to accommodate labels
         },
       ],
       [GRAPH_HEIGHT]
@@ -196,6 +197,7 @@ export const VocabularyGraph = React.memo(
         {
           height: GRAPH_HEIGHT,
           width: GRAPH_WIDTH,
+          marginBottom: 10, // Add margin to separate from labels
         },
       ],
       [GRAPH_HEIGHT, GRAPH_WIDTH]
@@ -223,14 +225,25 @@ export const VocabularyGraph = React.memo(
         <View style={graphContainerStyle}>
           <Canvas style={canvasStyle}>
             {/* Grid lines */}
-            {gridLines}
+            {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+              const y = ratio * GRAPH_HEIGHT;
+              return (
+                <Line
+                  key={index}
+                  p1={{ x: 0, y }}
+                  p2={{ x: GRAPH_WIDTH, y }}
+                  color={`${colors.text}15`}
+                  strokeWidth={1}
+                />
+              );
+            })}
 
             {/* Area under the curve with gradient */}
             {points.length > 0 && (
-              <Group opacity={animationProgress}>
+              <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
                 <LinearGradient
                   start={vec(0, 0)}
-                  end={vec(0, GRAPH_HEIGHT)}
+                  end={vec(0, GRAPH_HEIGHT - TOP_PADDING)}
                   colors={gradientColors}
                 />
                 <Path path={areaPath} />
@@ -240,7 +253,7 @@ export const VocabularyGraph = React.memo(
 
             {/* Line for the graph - more subtle */}
             {points.length > 0 && (
-              <Group>
+              <Group transform={[{ translateY: TOP_PADDING }]}>
                 <Path
                   path={linePath}
                   style="stroke"
@@ -262,7 +275,11 @@ export const VocabularyGraph = React.memo(
                 const pointPosition = index / (points.length - 1);
 
                 return (
-                  <Group key={index} opacity={animationProgress.value >= pointPosition ? 1 : 0}>
+                  <Group
+                    key={index}
+                    opacity={animationProgress.value >= pointPosition ? 1 : 0}
+                    transform={[{ translateY: TOP_PADDING }]}
+                  >
                     {/* Outer circle */}
                     <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
                     {/* Inner circle */}
@@ -274,30 +291,12 @@ export const VocabularyGraph = React.memo(
 
           {/* X-axis labels using regular React Native Text */}
           <View style={styles.xAxisLabels}>
-            {data.map((item, index) => {
-              const point = points[index];
-              if (!point) return null;
-
-              return (
-                <View
-                  key={index}
-                  style={[
-                    styles.labelContainer,
-                    { left: point.x - 15 }, // Center the label
-                  ]}
-                >
-                  <ThemedText style={styles.labelText}>{item.date}</ThemedText>
-                  <ThemedText style={styles.valueText}>{item.wordsLearned}</ThemedText>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-
-        <View style={[styles.footer, { borderTopColor: colors.cardBorder + '40' }]}>
-          <View style={styles.footerContent}>
-            <ThemedText style={styles.footerText}>{totalWordsLearned} words</ThemedText>
-            <ThemedText style={styles.footerSubtext}>{dailyAverage} words/day</ThemedText>
+            {data.map((item, index) => (
+              <View key={index} style={styles.labelContainer}>
+                <ThemedText style={styles.labelText}>{item.date}</ThemedText>
+                <ThemedText style={styles.valueText}>{item.wordsLearned}</ThemedText>
+              </View>
+            ))}
           </View>
         </View>
       </Animated.View>
@@ -338,15 +337,17 @@ const styles = StyleSheet.create({
   xAxisLabels: {
     position: 'absolute',
     bottom: 0,
-    left: LAYOUT.CARD.PADDING.MEDIUM,
-    right: LAYOUT.CARD.PADDING.MEDIUM,
+    left: 0,
+    right: 0,
     height: 40,
     flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
   },
   labelContainer: {
-    position: 'absolute',
     width: 30,
     alignItems: 'center',
+    position: 'relative',
   },
   labelText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
@@ -357,26 +358,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     fontWeight: '600',
     opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  footer: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    borderTopWidth: LAYOUT.BORDER.WIDTH.THIN,
-    height: 40, // Fixed height for footer
-  },
-  footerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '600',
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  footerSubtext: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: LAYOUT.OPACITY.DISABLED,
   },
   loadingContainer: {
     justifyContent: 'center',

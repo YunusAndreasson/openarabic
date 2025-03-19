@@ -5,6 +5,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { RefreshControl } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
+import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -32,7 +34,7 @@ import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSl
 // Utils and Constants
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getPlatformTopPadding } from '@/constants/layout';
 import {
   filterArticles,
   getLatestArticles,
@@ -65,6 +67,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  contentWrapper: {
+    flex: 1,
+    marginTop: -1, // To hide the header border when content is at the top
+  },
 });
 
 // Properly wrap useAuth to avoid conditional hook calls
@@ -88,8 +94,14 @@ const useSafeAuth = () => {
 
 // Memoized article item renderer for better performance
 
+// Helper function to calculate header height
+const getHeaderHeight = (insets: { top: number }) => {
+  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE; // Added LAYOUT.SPACING.LARGE
+};
+
 export default function ArticlesScreen() {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const { session } = useSafeAuth();
 
@@ -461,14 +473,13 @@ export default function ArticlesScreen() {
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
-        safeAreaEdges={['top', 'left', 'right']}
+        safeAreaEdges={['left', 'right']}
         accessibilityLabel="Articles browse screen"
         accessibilityRole="scrollbar"
       >
-        <PageHeader title="Texts" />
         <ArticleList
-          articles={[]} // Empty array since the content is in the header
-          isLoading={false} // Never show the spinner inside the list
+          articles={[]}
+          isLoading={false}
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
           onArticlePress={handleArticlePress}
@@ -476,9 +487,8 @@ export default function ArticlesScreen() {
           ListEmptyComponent={EmptyStateComponent()}
           contentContainerStyle={{
             ...contentContainerStyle,
-            paddingTop: LAYOUT.SPACING.LARGE, // Match the spacing used in other tabs
+            paddingTop: getHeaderHeight(insets),
           }}
-          // Add optimizations to prevent unexpected scrolling
           initialNumToRender={1}
           windowSize={3}
           maxToRenderPerBatch={3}
@@ -488,6 +498,7 @@ export default function ArticlesScreen() {
             minIndexForVisible: 0,
           }}
         />
+        <PageHeader title="Texts" />
       </ThemedView>
     </Animated.View>
   );

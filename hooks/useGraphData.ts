@@ -17,7 +17,8 @@ export function useGraphData(
   const maxValue = useMemo(() => {
     if (data.length === 0) return 5;
     const max = Math.max(...data.map(item => item.wordsLearned), 5); // Minimum of 5 for scale
-    return Math.ceil(max / 5) * 5; // Round up to nearest 5
+    // Add minimal 5% padding to the top to prevent cutting off high values
+    return Math.ceil((max * 1.05) / 5) * 5; // Round up to nearest 5 with minimal padding
   }, [data]);
 
   // Create points for the graph

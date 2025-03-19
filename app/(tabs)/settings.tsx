@@ -1,9 +1,10 @@
-import { StyleSheet, Alert, Linking, View } from 'react-native';
+import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { useState, useMemo, useCallback } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '../../components/ThemedText';
 import { ThemedView } from '../../components/ThemedView';
@@ -21,11 +22,17 @@ import { useLoadingState, useScreenAnimation } from '../../hooks';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 
+// Helper function to calculate header height
+const getHeaderHeight = (insets: { top: number }) => {
+  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
+};
+
 export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
+  const insets = useSafeAreaInsets();
 
   // Use the new loading state hook with minimal loading time
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(); // Using default values (80ms, true)
@@ -190,21 +197,22 @@ export default function SettingsScreen() {
   }
 
   return (
-    <Animated.View style={[styles.flexOne, fadeInStyle]}>
-      <ThemedView style={styles.container} useSafeArea={true} includeBottomInset={false}>
-        {/* Fixed header */}
-        <PageHeader title="Settings" />
-
-        {/* Scrollable content */}
-        <ThemedView
-          scrollable={true}
-          useSafeArea={false}
-          includeBottomInset={false}
-          contentContainerStyle={{
-            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: LAYOUT.SPACING.MEDIUM,
-            paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-          }}
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+    >
+      <ThemedView
+        useSafeArea={false}
+        includeBottomInset={false}
+        style={{ flex: 1 }}
+        scrollable={true}
+        contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
+      >
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
         >
           {/* Preferences Section */}
           <View style={styles.settingsWrapper}>
@@ -367,9 +375,10 @@ export default function SettingsScreen() {
               />
             </View>
           </View>
-        </ThemedView>
+        </ScrollView>
       </ThemedView>
-    </Animated.View>
+      <PageHeader title="Settings" />
+    </ThemedView>
   );
 }
 
@@ -489,5 +498,16 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  listContent: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
 });
