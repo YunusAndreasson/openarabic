@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   contentContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL, // Match the top spacing of pill
     paddingBottom: LAYOUT.SPACING.SMALL, // Reduce bottom padding to match top
   },
@@ -203,18 +203,16 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   authorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'flex-start',
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: 0, // Remove bottom margin since we're controlling space with container padding
   },
   difficultyContainer: {
     flexDirection: 'column',
@@ -222,7 +220,7 @@ const styles = StyleSheet.create({
   },
   difficultyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.85,
-    marginBottom: 2,
+    marginBottom: LAYOUT.SPACING.TINY,
     opacity: LAYOUT.OPACITY.PRESSED,
   },
   starsContainer: {
@@ -230,13 +228,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   starIcon: {
-    marginRight: 2,
+    marginRight: LAYOUT.SPACING.TINY,
   },
   // TimeAgo component styles
   timeAgoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.TINY,
     paddingLeft: 0,
   },
   timeIcon: {

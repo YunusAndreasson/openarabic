@@ -15,7 +15,7 @@ import { Provider } from 'react-redux';
 import { store, persistor } from '../store/store';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setTheme } from '../store/themeSlice';
-import { useColorScheme, View, AppState } from 'react-native';
+import { useColorScheme, AppState } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
 import Toast, { BaseToast, BaseToastProps } from 'react-native-toast-message';

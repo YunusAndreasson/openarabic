@@ -228,7 +228,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={animatedStyle} entering={entering} layout={layout}>
+      <Animated.View style={animatedStyle as any} entering={entering} layout={layout}>
         <Pressable
           onPress={handlePress}
           onPressIn={handlePressIn}
@@ -245,7 +245,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
                 borderRadius: themedStyles.card.borderRadius,
                 borderWidth: themedStyles.card.borderWidth,
               },
-              style,
+              style as any,
             ]}
           >
             {renderContent()}
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   pillContainer: {
     position: 'absolute',
     top: LAYOUT.SPACING.SMALL,
-    left: LAYOUT.SPACING.SMALL,
+    left: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
     maxWidth: '70%', // Added to match CompactArticleCard
   },
