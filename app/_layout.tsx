@@ -89,6 +89,12 @@ function AppContent() {
       // When app comes to foreground, make sure splash is hidden
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
         SplashScreen.hideAsync().catch(() => {});
+
+        // Refresh data when coming back to foreground if app was already initialized
+        if (appReady) {
+          // Use a small delay to ensure UI is responsive first
+          setTimeout(() => preloadAppData(), 300);
+        }
       }
       appState.current = nextAppState;
     });
@@ -96,7 +102,7 @@ function AppContent() {
     return () => {
       subscription.remove();
     };
-  }, []);
+  }, [appReady, preloadAppData]);
 
   // Prepare app resources
   const prepareResources = useCallback(async () => {
@@ -107,16 +113,18 @@ function AppContent() {
           console.warn('Error preloading app data:', e);
         });
 
-        // Wait a bit longer for smoother animation (100ms instead of 30ms)
-        await Promise.race([preloadPromise, new Promise(resolve => setTimeout(resolve, 100))]);
+        // Wait a bit longer for preloading to complete (300ms instead of 100ms)
+        await Promise.race([preloadPromise, new Promise(resolve => setTimeout(resolve, 300))]);
 
-        // Mark app as ready immediately
-        setAppReady(true);
-
-        // Hide our custom loader after a longer transition for smoother animation
+        // Set a small delay before marking app as ready for smoother visual transition
         setTimeout(() => {
-          setShowAppLoader(false);
-        }, 150); // Increased from 50ms to 150ms for smoother transition
+          setAppReady(true);
+
+          // Hide our custom loader after a longer transition for smoother animation
+          setTimeout(() => {
+            setShowAppLoader(false);
+          }, 150);
+        }, 50);
       }
     } catch (e) {
       console.warn('Error during app initialization:', e);

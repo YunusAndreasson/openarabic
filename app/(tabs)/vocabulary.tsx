@@ -53,6 +53,8 @@ export default function VocabularyScreen() {
     enabled: !!user,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false,
+    // Initially use data from cache if available
+    initialData: () => queryClient.getQueryData(['studyWords', user?.id]),
   });
 
   // Query for due words
@@ -62,6 +64,8 @@ export default function VocabularyScreen() {
     enabled: !!user,
     staleTime: 0, // Always fetch fresh data for due words
     gcTime: 60000, // 1 minute
+    // Initially use data from cache if available
+    initialData: () => queryClient.getQueryData(['dueWords', user?.id]),
   });
 
   // Handler for pull-to-refresh
@@ -105,23 +109,27 @@ export default function VocabularyScreen() {
 
   // Check if study words data is already in cache to optimize loading behavior
   const studyWordsQuery = queryClient.getQueryState(['studyWords', user?.id]);
-  const isDataCached = studyWordsQuery?.data !== undefined;
+  const dueWordsQuery = queryClient.getQueryState(['dueWords', user?.id]);
+  const isDataCached = studyWordsQuery?.data !== undefined || dueWordsQuery?.data !== undefined;
 
   // Check if data is ready to display - include cached data in the check
   const isDataReady = useMemo(() => {
     // Consider data ready if we have valid words OR we have cached data
-    return (!!user && !isDataLoading && validStudyWords.length > 0) || (!!user && isDataCached);
-  }, [user, isDataLoading, validStudyWords.length, isDataCached]);
+    return (
+      (!!user && !isDataLoading && validStudyWords.length > 0) ||
+      (!!user && isDataCached && !isFetching)
+    );
+  }, [user, isDataLoading, validStudyWords.length, isDataCached, isFetching]);
 
   // Calculate stats with safe defaults when data is loading but we're showing UI
   const stats = useMemo<VocabularyStats>(() => {
     if (isDataCached && validStudyWords.length === 0) {
       // Return safe defaults when using cached data but actual data isn't loaded yet
       return {
-        totalWords: 0,
+        totalWords: studyWordsQuery?.data ? (studyWordsQuery.data as any[]).length : 0,
         masteredWords: 0,
         learningWords: 0,
-        dueWords: 0,
+        dueWords: dueWordsQuery?.data ? (dueWordsQuery.data as any[]).length : 0,
         streak: 0,
         successRate: 0,
         averageInterval: 0,
@@ -135,7 +143,7 @@ export default function VocabularyScreen() {
       };
     }
     return calculateVocabularyStats(validStudyWords, dueWordsData);
-  }, [validStudyWords, dueWordsData, isDataCached]);
+  }, [validStudyWords, dueWordsData, isDataCached, studyWordsQuery, dueWordsQuery]);
 
   // Calculate weekly progress data with safe defaults
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {

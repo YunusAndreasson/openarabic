@@ -51,8 +51,17 @@ export const useAppPreloader = () => {
         preloadPromises.push(
           queryClient.prefetchQuery({
             queryKey: ['studyWords', user.id],
-            queryFn: () => studyWordsService.getStudyWords(user.id, { forStats: true }),
+            queryFn: () => studyWordsService.getStudyWords(user.id, { forStats: false }),
             staleTime: 60000, // 1 minute cache
+          })
+        );
+
+        // Also preload due words for vocabulary screen
+        preloadPromises.push(
+          queryClient.prefetchQuery({
+            queryKey: ['dueWords', user.id],
+            queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
+            staleTime: 0, // Always fetch fresh data for due words
           })
         );
       }
@@ -111,6 +120,7 @@ export const useAppPreloader = () => {
 
     if (user?.id) {
       queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
     }
 
     // Trigger a new preload
