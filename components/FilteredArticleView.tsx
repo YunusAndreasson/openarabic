@@ -11,6 +11,7 @@ import { capitalizeFirstLetter } from '../utils/stringUtils';
 import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import PageHeader from './PageHeader';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Animation hooks
 import { useFadeInAnimation } from '../hooks/animations';
@@ -79,6 +80,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   isFirstRender = false,
 }) => {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   // Using fade in animation for the footer - only animate on first render
   const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
@@ -103,12 +105,12 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       ? capitalizeFirstLetter(selectedCategory.name.toLowerCase())
       : 'Filtered Articles';
 
+  // Calculate header height for content padding
+  const headerHeight =
+    insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM;
+
   return (
-    <ThemedView
-      style={styles.container}
-      useSafeArea={true}
-      safeAreaEdges={['top', 'left', 'right']}
-    >
+    <ThemedView style={styles.container} useSafeArea={false}>
       {/* Standard Page Header with back button */}
       <Animated.View
         style={[isFirstRender ? headerAnimatedStyle : null, styles.headerContainer] as any}
@@ -120,7 +122,10 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       <ThemedView
         style={styles.scrollContainer}
         scrollable={true}
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={[
+          styles.contentContainer,
+          { paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM },
+        ]}
         useSafeArea={false}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
@@ -193,13 +198,14 @@ const styles = StyleSheet.create({
   headerContainer: {
     // Add styles that would otherwise be in the animated style
     opacity: 1,
+    zIndex: 2000, // Higher than PageHeader's z-index (1000)
   },
   scrollContainer: {
     flex: 1,
+    zIndex: 1, // Lower than header z-index
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
   articleContainer: {
