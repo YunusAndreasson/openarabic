@@ -66,10 +66,22 @@ export const useAppPreloader = () => {
         );
       }
 
-      // Wait for all preloading to complete with a timeout
-      const timeoutPromise = new Promise(resolve => setTimeout(resolve, 5000)); // 5 second timeout
-      await Promise.race([Promise.all(preloadPromises), timeoutPromise]);
+      // Add a safety timeout of 8 seconds to prevent infinite waiting
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Preloading timed out')), 8000)
+      );
 
+      // Wait for all preloading to complete OR timeout after 8 seconds
+      await Promise.race([Promise.all(preloadPromises), timeoutPromise]).catch(error => {
+        // Log timeout but continue with app initialization
+        if (error.message === 'Preloading timed out') {
+          console.warn('Data preloading timed out, continuing with partial data');
+        } else {
+          throw error;
+        }
+      });
+
+      // We've either loaded all data or hit the timeout, mark as complete
       setPreloadComplete(true);
     } catch (error) {
       // Fail silently - the app will fall back to regular loading

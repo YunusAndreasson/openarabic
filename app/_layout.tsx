@@ -108,13 +108,10 @@ function AppContent() {
   const prepareResources = useCallback(async () => {
     try {
       if (fontsLoaded) {
-        // Start preloading data in background
-        const preloadPromise = preloadAppData().catch(e => {
+        // Start preloading data and wait for it to complete
+        await preloadAppData().catch(e => {
           console.warn('Error preloading app data:', e);
         });
-
-        // Wait a bit longer for preloading to complete (300ms instead of 100ms)
-        await Promise.race([preloadPromise, new Promise(resolve => setTimeout(resolve, 300))]);
 
         // Set a small delay before marking app as ready for smoother visual transition
         setTimeout(() => {
