@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Article } from '../types/articles.types';
@@ -12,9 +12,6 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import PageHeader from './PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-// Animation hooks
-import { useFadeInAnimation } from '../hooks/animations';
 
 interface FilteredArticleViewProps {
   /**
@@ -82,38 +79,57 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   const colors = useColors();
   const insets = useSafeAreaInsets();
 
-  // Using fade in animation for the footer - only animate on first render
-  const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
-    useFadeInAnimation(800, 400);
+  // Track if component has been mounted before to prevent flickering animations
+  const hasBeenMounted = useRef(false);
+  const shouldAnimate = isFirstRender && !hasBeenMounted.current;
 
-  // Use fade animation for the header - only animate on first render
-  const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
-    useFadeInAnimation(300, 300);
+  // Track header opacity with regular state to avoid type issues
+  const [headerOpacity] = useState(shouldAnimate ? 0 : 1);
 
-  // Start animations only if this is the first render
+  // Set mounted flag after first render
   useEffect(() => {
-    if (isFirstRender) {
-      startFooterAnimation();
-      startHeaderAnimation();
-    }
-  }, [isFirstRender, startFooterAnimation, startHeaderAnimation]);
+    hasBeenMounted.current = true;
+  }, []);
 
   // Determine the header title based on selected filters
-  const headerTitle = selectedAuthor
-    ? selectedAuthor.name
-    : selectedCategory
-      ? capitalizeFirstLetter(selectedCategory.name.toLowerCase())
-      : 'Filtered Articles';
+  const headerTitle = useMemo(() => {
+    if (selectedAuthor) {
+      return selectedAuthor.name;
+    } else if (selectedCategory) {
+      return capitalizeFirstLetter(selectedCategory.name.toLowerCase());
+    } else if (isLoading) {
+      // Show a loading message while data is being fetched
+      return 'Loading...';
+    } else {
+      // Fallback
+      return 'Articles';
+    }
+  }, [selectedAuthor, selectedCategory, isLoading]);
 
   // Calculate header height for content padding
-  const headerHeight =
-    insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM;
+  const headerHeight = useMemo(() => {
+    return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM;
+  }, [insets.top]);
+
+  // Memoize the content padding for better performance
+  const contentPaddingStyle = useMemo(() => {
+    return { paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM };
+  }, [headerHeight]);
+
+  // Create simple style objects to avoid type errors
+  const headerStyle = {
+    ...styles.headerContainer,
+    // When animating, start with opacity from state (0)
+    // Otherwise use the default style opacity (1)
+    opacity: shouldAnimate ? headerOpacity : styles.headerContainer.opacity,
+  };
 
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
       {/* Standard Page Header with back button */}
       <Animated.View
-        style={[isFirstRender ? headerAnimatedStyle : null, styles.headerContainer] as any}
+        style={headerStyle}
+        entering={shouldAnimate ? FadeIn.duration(300) : undefined}
       >
         <PageHeader title={headerTitle} onBackPress={onClearFilter} />
       </Animated.View>
@@ -122,10 +138,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
       <ThemedView
         style={styles.scrollContainer}
         scrollable={true}
-        contentContainerStyle={[
-          styles.contentContainer,
-          { paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM },
-        ]}
+        contentContainerStyle={[styles.contentContainer, contentPaddingStyle]}
         useSafeArea={false}
         scrollViewProps={{
           showsVerticalScrollIndicator: false,
@@ -140,12 +153,12 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
           ),
         }}
       >
-        {/* Articles */}
+        {/* Articles with staggered animations */}
         {articles.map((article, index) => (
           <Animated.View
             key={`filtered-article-${article.id}`}
             style={styles.articleContainer}
-            entering={isFirstRender ? FadeIn.duration(200) : undefined}
+            entering={shouldAnimate ? FadeIn.duration(200).delay(index * 50) : undefined}
           >
             <ThemedCard
               imageUrl={article.image_url || ''}
@@ -179,9 +192,8 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         {articles.length > 0 && (
           <>
             <Animated.View
-              style={
-                [styles.endMessageContainer, isFirstRender ? footerAnimatedStyle : null] as any
-              }
+              style={styles.endMessageContainer}
+              entering={shouldAnimate ? FadeIn.duration(400) : undefined}
             />
             <CopyrightFooter />
           </>
@@ -196,7 +208,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    // Add styles that would otherwise be in the animated style
     opacity: 1,
     zIndex: 2000, // Higher than PageHeader's z-index (1000)
   },
@@ -213,7 +224,6 @@ const styles = StyleSheet.create({
   },
   endMessageContainer: {
     height: LAYOUT.SPACING.MEDIUM,
-    opacity: 1, // Ensure visibility even without animation
   },
   noResultsContainer: {
     flex: 1,

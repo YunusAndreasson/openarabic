@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { useFocusEffect } from '@react-navigation/native';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 
 // Components
 import FilteredArticleView from '../components/FilteredArticleView';
@@ -47,9 +49,43 @@ function FilterScreenContent() {
   const params = useGlobalSearchParams();
   const type = params.type as string;
   const id = params.id as string;
+  const numericId = parseInt(id as string, 10);
 
-  // Track initial render to prevent re-animation on returns
+  // For caching purposes
+  const queryClient = useQueryClient();
+  const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
+
+  // Track whether this is the first mount of the component
   const isInitialMount = useRef(true);
+
+  // Track if we're coming back from another screen
+  const isReturningFromArticle = useRef(false);
+
+  // Use this to track when the screen is actively focused vs. in background
+  const isFocused = useRef(false);
+
+  // Use focus effect to detect when screen is focused after visiting an article
+  useFocusEffect(
+    useCallback(() => {
+      // This screen is now focused
+      isFocused.current = true;
+
+      // If this is not the initial mount and we're returning to this screen,
+      // we should disable animations to prevent flickering
+      if (!isInitialMount.current) {
+        isReturningFromArticle.current = true;
+      }
+
+      // Cleanup function when screen loses focus (going to article)
+      return () => {
+        // Screen lost focus
+        isFocused.current = false;
+
+        // Not the initial mount anymore after first navigation
+        isInitialMount.current = false;
+      };
+    }, [])
+  );
 
   // Debug params
   useEffect(() => {
@@ -61,123 +97,115 @@ function FilterScreenContent() {
   }, [type, id, params]);
 
   // State
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [author, setAuthor] = useState<Tables<'authors'> | null>(null);
-  const [category, setCategory] = useState<Tables<'categories'> | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  // Use React Query for author data with caching
+  const { data: author, isLoading: isAuthorLoading } = useQuery({
+    queryKey: ['author', numericId],
+    queryFn: async () => {
+      try {
+        const { data } = await supabase.from('authors').select('*').eq('id', numericId).single();
+        return data;
+      } catch (err) {
+        console.error('Error fetching author:', err);
+        return null;
+      }
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    enabled: type === 'author' && !isNaN(numericId), // Only run when type is author
+  });
+
+  // Use React Query for category data with caching
+  const { data: category, isLoading: isCategoryLoading } = useQuery({
+    queryKey: ['category', numericId],
+    queryFn: async () => {
+      try {
+        const { data } = await supabase.from('categories').select('*').eq('id', numericId).single();
+        return data;
+      } catch (err) {
+        console.error('Error fetching category:', err);
+        return null;
+      }
+    },
+    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    enabled: type === 'category' || type !== 'author', // Run for categories or when not specified
+  });
+
+  // Use React Query to fetch articles with caching
+  const {
+    data: articles = [],
+    isLoading: isArticlesLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: cacheKey,
+    queryFn: async () => {
+      if (!numericId || isNaN(numericId)) {
+        throw new Error(`Invalid ID provided: ${id}`);
+      }
+
+      // Fetch articles based on filter type
+      let articlesData: Article[] = [];
+      if (type === 'author') {
+        articlesData = await articlesService.getArticles(undefined, numericId);
+      } else if (type === 'category') {
+        articlesData = await articlesService.getArticles(numericId, undefined);
+      } else {
+        // Fallback
+        if (numericId) {
+          articlesData = await articlesService.getArticles(numericId, undefined);
+        } else {
+          throw new Error(`Invalid filter type: "${type}"`);
+        }
+      }
+      return articlesData;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: !isReturningFromArticle.current, // Don't refetch when returning from article
+  });
+
+  // Overall loading state combines all loading states
+  const isLoading =
+    isArticlesLoading ||
+    (type === 'author' && isAuthorLoading) ||
+    (type === 'category' && isCategoryLoading);
 
   // Determine if data is ready for animations
   const isDataReady = useMemo(() => {
-    return articles.length > 0 || error !== null;
-  }, [articles.length, error]);
+    return (articles && articles.length > 0) || error !== null;
+  }, [articles, error]);
 
-  // Use the screen animation hook
+  // Use the screen animation hook with a shorter duration for returning from article
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
-    isLoading
-    // Using default values for remaining parameters
+    isLoading,
+    // Disable animations when returning from an article
+    isReturningFromArticle.current ? 0 : 80
   );
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Memoize content container style
-  const contentContainerStyle = useMemo(() => {
-    return {
-      flexGrow: 1,
-      paddingTop: LAYOUT.SPACING.MEDIUM,
-      paddingBottom: LAYOUT.SPACING.XLARGE + LAYOUT.BOTTOM_BAR.HEIGHT,
-    };
-  }, []);
-
-  // Fetch author details
-  const fetchAuthor = useCallback(async (authorId: number) => {
-    try {
-      const { data } = await supabase.from('authors').select('*').eq('id', authorId).single();
-      setAuthor(data);
-    } catch (err) {
-      console.error('Error fetching author:', err);
-    }
-  }, []);
-
-  // Fetch category details
-  const fetchCategory = useCallback(async (categoryId: number) => {
-    try {
-      const { data } = await supabase.from('categories').select('*').eq('id', categoryId).single();
-      setCategory(data);
-    } catch (err) {
-      console.error('Error fetching category:', err);
-    }
-  }, []);
-
-  // Fetch articles based on filter type and ID
-  const fetchArticles = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // Bail early if we don't have enough information
-      if (!id) {
-        throw new Error('Missing ID parameter');
-      }
-
-      // Defensive type checking with simpler approach
-      const filterType = type ? String(type).toLowerCase().trim() : 'unknown';
-      console.log('Processing filter type:', filterType);
-
-      // Parse ID to number with validation
-      const numericId = parseInt(id as string, 10);
-
-      if (isNaN(numericId)) {
-        throw new Error(`Invalid ID provided: ${id}`);
-      }
-
-      // Fetch articles based on filter type
-      if (filterType === 'author') {
-        console.log('Fetching articles for author:', numericId);
-        const articlesData = await articlesService.getArticles(undefined, numericId);
-        setArticles(articlesData);
-        await fetchAuthor(numericId);
-      } else if (filterType === 'category') {
-        console.log('Fetching articles for category:', numericId);
-        const articlesData = await articlesService.getArticles(numericId, undefined);
-        setArticles(articlesData);
-        await fetchCategory(numericId);
-      } else {
-        // Add a hardcoded fallback to help troubleshoot
-        if (numericId) {
-          console.log('Attempting to fetch as category due to missing type parameter');
-          const articlesData = await articlesService.getArticles(numericId, undefined);
-          setArticles(articlesData);
-          await fetchCategory(numericId);
-        } else {
-          throw new Error(`Invalid filter type: "${filterType}"`);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching filtered articles:', err);
-      setError(`Failed to load articles: ${err instanceof Error ? err.message : 'Unknown error'}`);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [type, id, fetchAuthor, fetchCategory]);
-
   // Refresh handler
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
-    fetchArticles();
-  }, [fetchArticles]);
+    refetch().finally(() => setIsRefreshing(false));
+  }, [refetch]);
 
   // Article press handler - using the same approach as in index.tsx
   const handleArticlePress = useCallback(
     (article: Article) => {
+      // Prefetch article data for smoother transitions
+      queryClient.prefetchQuery({
+        queryKey: ['article', article.id],
+        queryFn: () => articlesService.getArticleById(article.id),
+      });
+
       // Use the navigation with debounce for smoother transitions
       navigateTo(`/article/${article.id}`);
     },
-    [navigateTo]
+    [navigateTo, queryClient]
   );
 
   // Clear filter handler
@@ -185,13 +213,8 @@ function FilterScreenContent() {
     router.back();
   }, []);
 
-  // Load data on mount and when params change
-  useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles, type, id]);
-
-  // Show loading screen
-  if (isLoading && !isRefreshing) {
+  // Show loading screen only on initial load, not when refreshing
+  if (isLoading && !isRefreshing && isInitialMount.current) {
     return <LoadingScreen />;
   }
 
@@ -199,18 +222,22 @@ function FilterScreenContent() {
   if (error && !isRefreshing) {
     return (
       <ErrorState
-        message={error}
+        message={error instanceof Error ? error.message : 'Failed to load articles'}
         onRetry={() => {
-          fetchArticles();
+          refetch();
         }}
       />
     );
   }
 
-  // Main component with simplified animation approach
+  // Main component with improved animation handling
   return (
     <Animated.View
-      style={[styles.container, isInitialMount.current ? fadeInStyle : { opacity: 1 }]}
+      style={[
+        styles.container,
+        // Only animate on initial mount, not when returning from article
+        isInitialMount.current && !isReturningFromArticle.current ? fadeInStyle : { opacity: 1 },
+      ]}
     >
       <FilteredArticleView
         articles={articles}
@@ -221,7 +248,8 @@ function FilterScreenContent() {
         selectedAuthor={type === 'author' ? author : null}
         selectedCategory={type === 'category' ? category : null}
         onClearFilter={handleClearFilter}
-        isFirstRender={isInitialMount.current}
+        // Only allow animations on first render, never when returning from article
+        isFirstRender={isInitialMount.current && !isReturningFromArticle.current}
       />
     </Animated.View>
   );
