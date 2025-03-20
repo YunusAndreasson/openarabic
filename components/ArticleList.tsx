@@ -14,9 +14,6 @@ import {
   RefreshControl,
   ViewToken,
   ViewabilityConfig,
-  View,
-  StyleProp,
-  ViewStyle,
   Platform,
 } from 'react-native';
 import { LAYOUT } from '../constants/layout';

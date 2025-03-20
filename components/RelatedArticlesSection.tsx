@@ -3,7 +3,6 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import Animated from 'react-native-reanimated';
-import type { Article } from '@/types/articles.types';
 import { useFadeInAnimation } from '@/hooks/animations';
 import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui.types';
 

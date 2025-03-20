@@ -374,11 +374,48 @@ export type ThemedButtonProps =
  */
 export type ThemedTextProps = TextProps & {
   /** The type of text to display */
-  type?: 'default' | 'title' | 'defaultSemiBold' | 'subtitle' | 'link' | 'arabic';
+  type?:
+    | 'heading1' // Large heading (formerly 'title')
+    | 'heading2' // Medium heading (formerly 'subtitle')
+    | 'heading3' // Small heading
+    | 'body' // Regular body text (formerly 'default')
+    | 'bodyBold' // Bold body text (formerly 'defaultSemiBold')
+    | 'caption' // Small text for captions
+    | 'label' // Small semi-bold text for labels
+    | 'overline' // Tiny uppercase text
+    | 'link' // Link text
+    | 'arabic'; // Arabic text
   /** Whether to skip applying the default text color */
   skipDefaultColor?: boolean;
   /** Font size for Arabic text */
   arabicFontSize?: number;
+  /** Semantic variant affecting the color */
+  variant?:
+    | 'error'
+    | 'warning'
+    | 'success'
+    | 'info'
+    | 'primary'
+    | 'secondary'
+    | 'subtle'
+    | 'disabled';
+  /** Font weight shorthand */
+  weight?:
+    | 'normal'
+    | 'bold'
+    | '100'
+    | '200'
+    | '300'
+    | '400'
+    | '500'
+    | '600'
+    | '700'
+    | '800'
+    | '900';
+  /** Text alignment shorthand */
+  align?: 'auto' | 'left' | 'right' | 'center' | 'justify';
+  /** Color name from the theme */
+  colorName?: keyof typeof import('../constants/Colors').Colors.light;
 };
 
 /**

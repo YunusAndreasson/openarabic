@@ -1,11 +1,9 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
-import { Colors } from '../constants/Colors';
 import { VocabularyStats } from '@/types/vocabulary.types';
-import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
 import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';

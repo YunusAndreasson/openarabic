@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Dimensions, Text, Platform } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import { TIMING } from '../constants/ui';

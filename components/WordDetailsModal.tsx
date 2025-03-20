@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, Dimensions, Platform, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet, View, Dimensions, ViewStyle, TextStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';

@@ -13,11 +13,10 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 import { LAYOUT } from '../constants/layout';
-import { Ionicons } from '@expo/vector-icons';
 import { LoadingContainer } from './Loader';
 import { useComponentAnimation, useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
-import Animated, { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
+import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from './BaseCard';

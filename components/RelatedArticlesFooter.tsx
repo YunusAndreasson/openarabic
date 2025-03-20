@@ -11,7 +11,6 @@ import { LAYOUT } from '@/constants/layout';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 // Types
-import type { Article } from '@/types/articles.types';
 import { RelatedArticlesFooterProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({

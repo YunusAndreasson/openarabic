@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useCallback } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';

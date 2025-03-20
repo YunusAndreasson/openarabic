@@ -1,4 +1,4 @@
-import { StyleSheet, TextInput, TextInputProps, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useState, useEffect } from 'react';
