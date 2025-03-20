@@ -3,10 +3,10 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
-import { CompactArticleCard } from './CompactArticleCard';
 import AnimatedSection from './AnimatedSection';
 import { ThemedText } from './ThemedText';
 import { articlesService } from '@/services/articles';
+import ThemedCard from './ThemedCard';
 
 interface ArticleSectionProps {
   /**
@@ -116,7 +116,8 @@ const ArticleSection = React.memo(
     // Render each article item
     const renderItem = useCallback(
       ({ item }: { item: Article }) => (
-        <CompactArticleCard
+        <ThemedCard
+          variant="compact"
           article={item}
           onPress={() => handleItemPress(item)}
           showTimeAgo={showTimeAgo}

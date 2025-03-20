@@ -23,6 +23,8 @@ import { ArticleSentence } from '@/components/ArticleSentence';
 import ArticleHeader from '@/components/ArticleHeader';
 import FloatingButton from '@/components/FloatingButton';
 import RelatedArticlesFooter from '@/components/RelatedArticlesFooter';
+import ThemedCard from '@/components/ThemedCard';
+import { ThemedButton } from '@/components/ThemedButton';
 
 // Hooks
 import { useColors } from '@/hooks/useColors';
@@ -250,8 +252,9 @@ export default function ArticleScreen() {
 
   const renderArticleCard = useCallback(
     (articleData: any) => (
-      <CompactArticleCard
+      <ThemedCard
         key={articleData.id}
+        variant="compact"
         article={articleData}
         onPress={() => handleArticlePress(articleData.id, true)} // Pass true to indicate this is a related article
       />

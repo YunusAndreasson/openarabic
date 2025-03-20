@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Pressable, StyleProp, ViewStyle, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
@@ -63,8 +63,8 @@ const BaseCard: React.FC<BaseCardProps> = ({
 }) => {
   const colors = useColors();
 
-  // Define shadow styles based on size
-  const getShadowStyle = () => {
+  // Memoize the shadow style calculation
+  const shadowStyle = useMemo(() => {
     const baseShadow = {
       shadowColor: colors.shadow,
       shadowOffset: { width: 0, height: 2 },
@@ -94,18 +94,21 @@ const BaseCard: React.FC<BaseCardProps> = ({
       default:
         return baseShadow;
     }
-  };
+  }, [colors.shadow, shadowSize]);
 
-  // Apply theme colors and shadow styles
-  const cardStyle = [
-    styles.card,
-    getShadowStyle(),
-    {
-      backgroundColor: colors.cardBackground,
-      borderColor: colors.cardBorder,
-    },
-    style,
-  ];
+  // Memoize the combined card style
+  const cardStyle = useMemo(
+    () => [
+      styles.card,
+      shadowStyle,
+      {
+        backgroundColor: colors.cardBackground,
+        borderColor: colors.cardBorder,
+      },
+      style,
+    ],
+    [shadowStyle, colors.cardBackground, colors.cardBorder, style]
+  );
 
   // Render loading state if needed
   if (isLoading) {

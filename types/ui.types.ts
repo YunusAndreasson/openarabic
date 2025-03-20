@@ -705,6 +705,8 @@ export interface StatCardProps extends BaseThemedProps {
   icon: string;
   /** Whether to animate the value with a pulse effect (useful for changes) */
   animateValue?: boolean;
+  /** Optional callback when the card is pressed */
+  onPress?: () => void;
 }
 
 /**
@@ -1245,14 +1247,10 @@ export type TransitionType = 'fade' | 'slide';
 
 /**
  * Props for the WordReviewCard component
- *
- * This component uses Reanimated 3's built-in animations for optimal performance.
  */
 export interface WordReviewCardProps {
   /** The word to be displayed */
   word?: StudyWord;
-  /** The type of transition animation to use */
-  transitionType?: TransitionType;
   /** Whether the card is visible */
   isVisible: boolean;
 }
@@ -1286,8 +1284,18 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
 export interface CompactCardProps extends BaseCardProps, BaseOptionalPressableProps {
   /** Variant of the card */
   variant: 'compact';
-  /** Children to render inside the card */
+  /** Children to render inside the card (use this OR article data) */
   children?: React.ReactNode;
+  /** Article data to display in the card */
+  article?: Article;
+  /** Show time ago instead of difficulty */
+  showTimeAgo?: boolean;
+  /** Hide the difficulty label */
+  hideDifficultyLabel?: boolean;
+  /** Hide difficulty completely */
+  hideDifficulty?: boolean;
+  /** When the article was last opened */
+  lastOpenedAt?: string;
 }
 
 /**
@@ -1296,6 +1304,8 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
  *
  * The component is optimized for performance with memoization and proper image loading handling.
  * It uses Reanimated 3's built-in animations for optimal performance.
+ *
+ * The 'compact' variant can handle article data directly, removing the need for CompactArticleCard.
  */
 export type ThemedCardProps =
   | ArticleCardProps
@@ -1314,6 +1324,16 @@ export type ThemedCardProps =
         summary?: string;
         /** Children to render inside the card (for compact variant) */
         children?: React.ReactNode;
+        /** Article data to display (for compact variant) */
+        article?: Article;
+        /** Show time ago instead of difficulty (for compact variant) */
+        showTimeAgo?: boolean;
+        /** Hide the difficulty label (for compact variant) */
+        hideDifficultyLabel?: boolean;
+        /** Hide difficulty completely (for compact variant) */
+        hideDifficulty?: boolean;
+        /** When the article was last opened (for compact variant) */
+        lastOpenedAt?: string;
         /** Variant of the card */
         variant?: CardVariant;
       });

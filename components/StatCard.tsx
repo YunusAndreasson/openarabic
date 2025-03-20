@@ -1,75 +1,25 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '../constants/layout';
-import AnimatedThemedText from './AnimatedThemedText';
 import { StatCardProps } from '@/types/ui.types';
-import BaseCard from './BaseCard';
+import InfoCard from './InfoCard';
 
 export const StatCard = React.memo(
-  ({ label, value, icon, colors, animateValue = false }: StatCardProps) => {
+  ({ label, value, icon, colors, animateValue = false, onPress }: StatCardProps) => {
     return (
-      <BaseCard style={styles.statCard} animated={false}>
-        <View
-          style={[
-            styles.statContent,
-            { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-          ]}
-        >
-          <View style={styles.statTextContainer}>
-            <AnimatedThemedText style={styles.statValue} animate={animateValue}>
-              {value}
-            </AnimatedThemedText>
-            <ThemedText style={styles.statLabel}>{label}</ThemedText>
-          </View>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors.text + '10', borderColor: colors.cardBorder + '40' },
-            ]}
-          >
-            <Ionicons name={icon as any} size={24} color={colors.icon} />
-          </View>
-        </View>
-      </BaseCard>
+      <InfoCard
+        title={label}
+        value={value}
+        icon={icon}
+        iconBgColor={colors.text + '10'}
+        iconColor={colors.icon}
+        style={{ width: '48%', height: 90 }}
+        animated={false}
+        shadowSize="small"
+        animateValue={animateValue}
+        layoutMode="row-reversed"
+        onPress={onPress}
+      />
     );
   }
 );
 
 StatCard.displayName = 'StatCard';
-
-const styles = StyleSheet.create({
-  statCard: {
-    width: '48%',
-    height: 90,
-  },
-  statContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-  },
-  statTextContainer: {
-    flex: 1,
-  },
-  statValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  statLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
-});

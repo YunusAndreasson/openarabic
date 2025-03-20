@@ -10,6 +10,7 @@ import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui.types';
+import { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -30,6 +31,13 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const author = 'author' in props ? props.author : undefined;
   const summary = 'summary' in props ? props.summary : undefined;
   const children = 'children' in props ? props.children : undefined;
+
+  // Extract compact article props
+  const article = 'article' in props ? props.article : undefined;
+  const showTimeAgo = 'showTimeAgo' in props ? props.showTimeAgo : false;
+  const hideDifficultyLabel = 'hideDifficultyLabel' in props ? props.hideDifficultyLabel : false;
+  const hideDifficulty = 'hideDifficulty' in props ? props.hideDifficulty : false;
+  const lastOpenedAt = 'lastOpenedAt' in props ? props.lastOpenedAt : undefined;
 
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -157,12 +165,78 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     );
   };
 
+  // Render compact article content
+  const renderCompactArticleContent = () => {
+    if (!article) {
+      console.warn('ThemedCard: Missing article prop for compact article variant');
+      return null;
+    }
+
+    return (
+      <>
+        <View style={styles.compactImageContainer}>
+          <EnhancedImage
+            source={article.image_url || 'https://picsum.photos/800/400'}
+            style={styles.image}
+            contentFit="cover"
+            showLoadingIndicator={true}
+            transition={300}
+            onError={() => {
+              /* Handle image load error silently */
+            }}
+          />
+        </View>
+
+        {/* Render the category pill outside the imageContainer */}
+        {article.category && (
+          <View style={styles.pillContainer}>
+            <Pill id={article.category.id} label={article.category.name} variant="category" />
+          </View>
+        )}
+
+        <View style={styles.contentContainer}>
+          <ThemedText style={styles.compactTitle} numberOfLines={2}>
+            {article.title}
+          </ThemedText>
+
+          {article.author && (
+            <ThemedText
+              style={[styles.authorText, { color: colors.authorText }]}
+              numberOfLines={1}
+              skipDefaultColor
+            >
+              By {article.author.name}
+            </ThemedText>
+          )}
+
+          <View style={styles.cardFooter}>
+            {showTimeAgo ? (
+              <TimeAgo date={lastOpenedAt || article.created_at} isLastOpened={!!lastOpenedAt} />
+            ) : hideDifficulty ? null : (
+              <DifficultyIndicator
+                level={article.difficulty_level}
+                hideLabel={hideDifficultyLabel}
+              />
+            )}
+          </View>
+        </View>
+      </>
+    );
+  };
+
   // Render compact content
   const renderCompactContent = () => {
+    // If article is provided, render compact article layout
+    if (article) {
+      return renderCompactArticleContent();
+    }
+
+    // Otherwise render custom children
     if (!children) {
       console.warn('ThemedCard: Missing children prop for compact variant');
       return null;
     }
+
     return children;
   };
 
@@ -180,7 +254,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <BaseCard
         isLoading={true}
         onPress={onPress}
-        style={style as StyleProp<ViewStyle>}
+        style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
         loadingComponent={renderLoading()}
       >
         <View />
@@ -190,7 +264,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Use the BaseCard with the appropriate content
   return (
-    <BaseCard onPress={onPress} style={style as StyleProp<ViewStyle>}>
+    <BaseCard
+      onPress={onPress}
+      style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+    >
       {renderContent()}
     </BaseCard>
   );
@@ -202,6 +279,17 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
     position: 'relative',
+  },
+  compactContainer: {
+    width: 220,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  compactImageContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 120,
+    zIndex: LAYOUT.Z_INDEX.BASE,
+    overflow: 'visible',
   },
   image: {
     width: '100%',
@@ -226,10 +314,18 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL, // Match the top spacing of pill
+    paddingBottom: LAYOUT.SPACING.SMALL, // Reduce bottom padding to match top
   },
   title: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '700',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  compactTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: '600',
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   summary: {
@@ -240,6 +336,15 @@ const styles = StyleSheet.create({
   author: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     marginTop: LAYOUT.SPACING.SMALL,
+  },
+  authorText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.TINY,
   },
   loadingComponentContainer: {
     width: '100%',

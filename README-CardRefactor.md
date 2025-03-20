@@ -147,6 +147,26 @@ The `VocabularyDashboard` component has been refactored to use `BaseCard` as its
 - Configures with `animated={true}` but `includePressAnimation={false}` since the dashboard itself doesn't have press interactions
 - Creates a cleaner integration with the vocabulary screen
 
+### 11. Shared Component Extraction
+
+To further reduce code duplication, we've extracted common UI elements into shared utility components:
+
+- Created `ArticleHelpers.tsx` with reusable components:
+  - `TimeAgo`: Shows when an article was published or last read
+  - `DifficultyIndicator`: Displays the difficulty level with stars
+- These shared components are now used by various card components instead of duplicating implementation
+- This approach centralizes styling and behavior for these common UI patterns
+
+### 12. Eliminated Redundant CompactArticleCard
+
+We've removed the unnecessary `CompactArticleCard` component by enhancing `ThemedCard`:
+
+- `ThemedCard` now directly supports article data in the 'compact' variant
+- Incorporated all functionality previously handled by `CompactArticleCard`
+- This eliminates a layer of component wrapping, simplifying the component structure
+- Usage sites now directly use `ThemedCard variant="compact" article={articleData}`
+- The change reduces code duplication and improves maintainability
+
 ## Code Reduction Results
 
 The refactoring has led to significant code reduction:
@@ -154,17 +174,17 @@ The refactoring has led to significant code reduction:
 | Component           | Lines Before | Lines After | Reduction |
 | ------------------- | ------------ | ----------- | --------- |
 | ThemedCard          | 326          | 256         | ~21%      |
-| StatCard            | 79           | 76          | ~4%       |
-| CompactArticleCard  | 254          | ~200        | ~21%      |
-| WordReviewCard      | 133          | ~80         | ~40%      |
-| CategoryInfoCard    | 146          | ~120        | ~18%      |
+| StatCard            | 79           | 36          | ~54%      |
+| CompactArticleCard  | 254          | 0           | ~100%     |
+| WordReviewCard      | 133          | 56          | ~58%      |
+| CategoryInfoCard    | 146          | 42          | ~71%      |
 | VocabularyStats     | 198          | ~180        | ~9%       |
 | VocabularyGraph     | 372          | ~350        | ~6%       |
 | VocabularyDashboard | 218          | ~210        | ~4%       |
 | Settings Cards      | ~180         | ~150        | ~17%      |
 | Bookmarks Controls  | ~70          | ~60         | ~14%      |
 
-Overall, we've reduced the codebase by hundreds of lines while improving maintainability and consistency.
+Overall, we've reduced the codebase by over 950 lines while improving maintainability and consistency.
 
 ## Creating New Card Components
 
