@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Pressable, StyleProp, ViewStyle, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { LoadingContainer } from './Loader';
+import { usePressAnimation } from '../hooks/animations/usePressAnimation';
 
 interface BaseCardProps {
   /**
@@ -32,11 +33,6 @@ interface BaseCardProps {
   shadowSize?: 'small' | 'medium' | 'large';
 
   /**
-   * Whether to apply animation effects
-   */
-  animated?: boolean;
-
-  /**
    * Whether to include press animation
    */
   includePressAnimation?: boolean;
@@ -57,11 +53,16 @@ const BaseCard: React.FC<BaseCardProps> = ({
   isLoading = false,
   style,
   shadowSize = 'medium',
-  animated = true,
   includePressAnimation = true,
   loadingComponent,
 }) => {
   const colors = useColors();
+
+  // Use press animation hook for smooth press feedback
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+    type: 'card',
+    includeOpacity: true,
+  });
 
   // Memoize the shadow style calculation
   const shadowStyle = useMemo(() => {
@@ -112,33 +113,20 @@ const BaseCard: React.FC<BaseCardProps> = ({
 
   // Render loading state if needed
   if (isLoading) {
-    return (
-      <Animated.View
-        style={cardStyle}
-        entering={animated ? FadeIn.duration(300).springify() : undefined}
-      >
-        {loadingComponent || <LoadingContainer size="medium" />}
-      </Animated.View>
-    );
+    return <View style={cardStyle}>{loadingComponent || <LoadingContainer size="medium" />}</View>;
   }
 
   // Non-interactive card
   if (!onPress) {
-    return (
-      <Animated.View
-        style={cardStyle}
-        entering={animated ? FadeIn.duration(300).springify() : undefined}
-      >
-        {children}
-      </Animated.View>
-    );
+    return <View style={cardStyle}>{children}</View>;
   }
 
   // Interactive card with press handling
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [cardStyle, includePressAnimation && pressed && styles.pressedCard]}
+      onPressIn={includePressAnimation ? handlePressIn : undefined}
+      onPressOut={includePressAnimation ? handlePressOut : undefined}
       android_ripple={{
         color: colors.textOverlay,
         borderless: false,
@@ -146,10 +134,12 @@ const BaseCard: React.FC<BaseCardProps> = ({
       }}
     >
       <Animated.View
-        entering={animated ? FadeIn.duration(300).springify() : undefined}
-        style={styles.contentContainer}
+        style={[
+          cardStyle,
+          includePressAnimation && (animatedStyle as AnimatedStyleProp<ViewStyle>),
+        ]}
       >
-        {children}
+        <View style={styles.contentContainer}>{children}</View>
       </Animated.View>
     </Pressable>
   );
@@ -160,10 +150,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
-  },
-  pressedCard: {
-    opacity: 0.9,
-    transform: [{ scale: 0.98 }],
   },
   contentContainer: {
     flex: 1,
