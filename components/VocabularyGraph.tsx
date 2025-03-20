@@ -20,6 +20,7 @@ import { useGraphData } from '@/hooks/useGraphData';
 import Animated, { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import { lightFeedback } from '@/utils/haptics';
+import BaseCard from './BaseCard';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -133,20 +134,6 @@ export const VocabularyGraph = React.memo(
       resetAnimation,
     ]);
 
-    // Card style with theme colors
-    const cardStyle = useMemo(
-      () => [
-        styles.card,
-        {
-          backgroundColor: colors.cardBackground,
-          shadowColor: colors.shadow,
-          borderColor: colors.cardBorder,
-          padding: PADDING,
-        },
-      ],
-      [colors.cardBackground, colors.shadow, colors.cardBorder]
-    );
-
     // Memoize gradient colors
     const gradientColors = useMemo(() => [`${colors.text}20`, `${colors.text}08`], [colors.text]);
 
@@ -203,23 +190,25 @@ export const VocabularyGraph = React.memo(
       [GRAPH_HEIGHT, GRAPH_WIDTH]
     );
 
-    // If no data or loading, show placeholder with exact same dimensions
-    if (isLoading || data.length === 0) {
-      return (
-        <Animated.View style={[cardStyle, animatedStyle, { height: 250 }]}>
-          {cardHeader}
-          <View style={[graphContainerStyle, styles.loadingContainer]}>
-            <LoadingContainer size="small" />
-            <ThemedText style={styles.loadingText}>
-              {data.length === 0 ? 'No data available' : 'Loading data...'}
-            </ThemedText>
-          </View>
-        </Animated.View>
-      );
-    }
+    // Custom loading component for the card
+    const loadingComponent = (
+      <View style={[graphContainerStyle, styles.loadingContainer]}>
+        <LoadingContainer size="small" />
+        <ThemedText style={styles.loadingText}>
+          {data.length === 0 ? 'No data available' : 'Loading data...'}
+        </ThemedText>
+      </View>
+    );
 
     return (
-      <Animated.View style={[cardStyle, animatedStyle, { height: 250 }]}>
+      <BaseCard
+        style={styles.card}
+        isLoading={isLoading || data.length === 0}
+        loadingComponent={loadingComponent}
+        animated={true}
+        includePressAnimation={false}
+        shadowSize="medium"
+      >
         {cardHeader}
 
         <View style={graphContainerStyle}>
@@ -299,7 +288,7 @@ export const VocabularyGraph = React.memo(
             ))}
           </View>
         </View>
-      </Animated.View>
+      </BaseCard>
     );
   }
 );
@@ -310,9 +299,9 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    ...LAYOUT.SHADOW.MEDIUM,
+    height: 250,
+    padding: 16,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   header: {
     flexDirection: 'row',

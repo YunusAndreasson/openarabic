@@ -9,6 +9,7 @@ import { useColors } from '../hooks/useColors';
 import AnimatedThemedText from './AnimatedThemedText';
 import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';
+import BaseCard from './BaseCard';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
@@ -147,14 +148,11 @@ export const VocabularyDashboard = React.memo(
     );
 
     return (
-      <View
-        style={[
-          styles.mainCard,
-          {
-            backgroundColor: safeColors.cardBackground,
-            borderColor: safeColors.cardBorder,
-          },
-        ]}
+      <BaseCard
+        style={styles.mainCard}
+        animated={true}
+        includePressAnimation={false}
+        shadowSize="medium"
       >
         {/* Stats Row */}
         <View style={styles.statsRow}>
@@ -172,7 +170,7 @@ export const VocabularyDashboard = React.memo(
             />
           ))}
         </View>
-      </View>
+      </BaseCard>
     );
   }
 );
@@ -182,10 +180,8 @@ VocabularyDashboard.displayName = 'VocabularyDashboard';
 const styles = StyleSheet.create({
   mainCard: {
     width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
-    ...LAYOUT.SHADOW.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   statsRow: {
     flexDirection: 'row',

@@ -10,6 +10,7 @@ import { useComponentAnimation } from '@/hooks/animations';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStats as VocabularyStatsType } from '@/types/vocabulary.types';
 import { VocabularyStatsProps } from '@/types/ui.types';
+import BaseCard from './BaseCard';
 
 function VocabularyStatsComponent({
   totalWords,
@@ -76,32 +77,19 @@ function VocabularyStatsComponent({
   // Use the animation hook to animate the progress
   const animatedProgress = useProgressAnimation(progress, 1000, isReady);
 
-  // Memoize styles to prevent unnecessary re-renders
-  const progressCardStyle = useMemo(
-    () => [
-      styles.progressCard,
-      {
-        backgroundColor: colors.cardBackground,
-        shadowColor: colors.shadow,
-        borderColor: colors.cardBorder,
-      },
-    ],
-    [colors.cardBackground, colors.shadow, colors.cardBorder]
-  );
-
   const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
 
-  // Show loading state
-  if (isLoading || !isReady) {
-    return (
-      <View style={progressCardStyle}>
-        <LoadingContainer height={100} />
-      </View>
-    );
-  }
+  // Custom loading component
+  const loadingComponent = <LoadingContainer />;
 
   return (
-    <Animated.View style={[progressCardStyle, animatedStyle]}>
+    <BaseCard
+      style={styles.progressCard}
+      isLoading={isLoading || !isReady}
+      loadingComponent={loadingComponent}
+      animated={true}
+      includePressAnimation={false}
+    >
       <View style={styles.progressContent}>
         <View style={styles.progressRow}>
           <View style={styles.progressTextContainer}>
@@ -140,7 +128,7 @@ function VocabularyStatsComponent({
           </View>
         </View>
       </View>
-    </Animated.View>
+    </BaseCard>
   );
 }
 
@@ -149,11 +137,7 @@ export const VocabularyStats = React.memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
   progressCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: 130,
-    overflow: 'hidden',
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    ...LAYOUT.SHADOW.MEDIUM,
   },
   progressContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,

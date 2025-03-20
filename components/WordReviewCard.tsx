@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Dimensions, View, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, View, TextStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '../constants/layout';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation, useSlideAnimation, useLayoutAnimation } from '@/hooks/animations';
 import { WordReviewCardProps, TransitionType } from '@/types/ui.types';
+import BaseCard from './BaseCard';
 
 /**
  * A card component for displaying a word during review
@@ -15,52 +15,10 @@ import { WordReviewCardProps, TransitionType } from '@/types/ui.types';
 export function WordReviewCard({ word, transitionType = 'fade', isVisible }: WordReviewCardProps) {
   const colors = useColors();
 
-  // Get animations from hooks
-  const { entering: fadeEntering } = useFadeInAnimation(0, 300);
-  const { entering: slideEntering } = useSlideAnimation();
-
-  // Use the layout animation hook with LinearTransition
-  const { layout } = useLayoutAnimation({
-    type: 'linear',
-    duration: 300,
-  });
-
-  // Determine which animation to use
-  const entering = useMemo(() => {
-    if (!isVisible) return undefined;
-    return transitionType === 'fade' ? fadeEntering : slideEntering;
-  }, [transitionType, fadeEntering, slideEntering, isVisible]);
-
-  // Themed styles
-  const themedStyles = useMemo(
-    () => ({
-      cardBackground: {
-        backgroundColor: colors.cardBackground,
-      },
-      arabicText: {
-        color: colors.text,
-      },
-      englishText: {
-        color: colors.text,
-      },
-    }),
-    [colors]
-  );
-
   if (!word) return null;
 
   return (
-    <Animated.View
-      style={[
-        styles.card,
-        themedStyles.cardBackground,
-        {
-          borderColor: colors.cardBorder,
-        } as ViewStyle,
-      ]}
-      entering={entering}
-      layout={layout}
-    >
+    <BaseCard style={styles.card} animated={isVisible}>
       <View style={styles.contentContainer}>
         <View style={styles.wordContainer}>
           <Animated.Text
@@ -76,19 +34,15 @@ export function WordReviewCard({ word, transitionType = 'fade', isVisible }: Wor
           </Animated.Text>
         </View>
       </View>
-    </Animated.View>
+    </BaseCard>
   );
 }
 
 // Define styles
 const styles = StyleSheet.create({
   card: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     margin: LAYOUT.SPACING.MEDIUM,
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
     minHeight: 200,
-    ...LAYOUT.SHADOW.MEDIUM,
   },
   contentContainer: {
     flex: 1,

@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, Pressable, StyleProp, ViewStyle, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, StyleProp, ViewStyle, Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,8 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Pill from './Pill';
 import { LoadingContainer } from './Loader';
-import Animated from 'react-native-reanimated';
-import { usePressAnimation, useLayoutAnimation, useOpacityAnimation } from '@/hooks/animations';
+import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui.types';
 
@@ -37,102 +36,51 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const [imageError, setImageError] = useState(false);
   const isCompact = variant === 'compact';
 
-  // Use our animation utility hook
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-  });
+  // Handle image errors
+  const handleImageError = () => {
+    setImageError(true);
+  };
 
-  // Use the layout animation hook with LinearTransition
-  const { layout } = useLayoutAnimation({
-    type: 'linear',
-    duration: 300,
-  });
+  /**
+   * Creates a platform and theme-aware gradient for card overlays
+   *
+   * iOS light mode requires a special gradient that ends with the card background color
+   * to ensure proper visual integration with the card.
+   *
+   * Other platforms/themes use the standard gradient colors from the theme.
+   */
+  const createCardGradient = () => {
+    // Define gradient types as readonly arrays for type safety
+    type GradientColors = readonly [string, string, string];
 
-  // Use our standardized fade-in entrance animation
-  const { entering } = useOpacityAnimation({
-    style: 'entrance-only',
-    delay: 0,
-    duration: 300,
-  });
-
-  // Handle press
-  const handlePress = useCallback(() => {
-    if (onPress) {
-      onPress();
-    }
-  }, [onPress]);
-
-  // Memoize styles to prevent new object creation on each render
-  const themedStyles = useMemo(() => {
-    /**
-     * Creates a platform and theme-aware gradient for card overlays
-     *
-     * iOS light mode requires a special gradient that ends with the card background color
-     * to ensure proper visual integration with the card.
-     *
-     * Other platforms/themes use the standard gradient colors from the theme.
-     */
-    const createCardGradient = () => {
-      // Define gradient types as readonly arrays for type safety
-      type GradientColors = readonly [string, string, string];
-
-      // For iOS light mode, we need a custom gradient that matches the card background
-      if (Platform.OS === 'ios' && !isDarkMode) {
-        const iosLightGradient: GradientColors = [
-          colors.gradientStart, // Start with transparent
-          colors.gradientMiddle, // Mid-fade with high opacity
-          colors.cardBackground, // End with card background color
-        ];
-        return iosLightGradient;
-      }
-
-      // For other platforms/themes, use the default gradient colors
-      const defaultGradient: GradientColors = [
-        colors.gradientStart,
-        colors.gradientMiddle,
-        colors.gradientEnd,
+    // For iOS light mode, we need a custom gradient that matches the card background
+    if (Platform.OS === 'ios' && !isDarkMode) {
+      const iosLightGradient: GradientColors = [
+        colors.gradientStart, // Start with transparent
+        colors.gradientMiddle, // Mid-fade with high opacity
+        colors.cardBackground, // End with card background color
       ];
-      return defaultGradient;
-    };
+      return iosLightGradient;
+    }
 
-    return {
-      container: {
-        overflow: 'visible',
-      },
-      pressable: {
-        overflow: 'visible',
-      },
-      card: {
-        backgroundColor: colors.cardBackground,
-        borderColor: colors.cardBorder,
-        shadowColor: colors.shadow,
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-        borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-        overflow: 'visible',
-        ...LAYOUT.SHADOW.MEDIUM,
-      },
-      loadingContainer: {
-        backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay,
-      },
-      gradient: {
-        colors: createCardGradient(),
-      },
-      author: {
-        color: colors.authorText,
-      },
-      summary: {
-        color: colors.authorText, // Using authorText for summary as it's a secondary text color
-      },
-      image: {
-        backgroundColor: isDarkMode ? colors.imagePlaceholder : 'transparent',
-      },
-    };
-  }, [colors, isDarkMode]);
+    // For other platforms/themes, use the default gradient colors
+    const defaultGradient: GradientColors = [
+      colors.gradientStart,
+      colors.gradientMiddle,
+      colors.gradientEnd,
+    ];
+    return defaultGradient;
+  };
 
   // Render loading state
   const renderLoading = () => {
     return (
-      <View style={[styles.loadingComponentContainer, themedStyles.loadingContainer]}>
+      <View
+        style={[
+          styles.loadingComponentContainer,
+          { backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay },
+        ]}
+      >
         <LoadingContainer />
       </View>
     );
@@ -140,10 +88,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Render article content
   const renderArticleContent = () => {
-    if (isLoading) {
-      return renderLoading();
-    }
-
     if (!imageUrl || !title || !category) {
       console.warn('ThemedCard: Missing required props for article variant');
       return null;
@@ -155,7 +99,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <EnhancedImage
             source={imageUrl}
             style={styles.image}
-            onError={() => setImageError(true)}
+            onError={handleImageError}
             contentFit="cover"
             transition={500}
             showLoadingIndicator={true}
@@ -165,7 +109,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           <View style={styles.imageOverlayContainer}>
             <LinearGradient
-              colors={themedStyles.gradient.colors}
+              colors={createCardGradient()}
               style={[
                 styles.gradient,
                 Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
@@ -191,7 +135,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           {summary && (
             <ThemedText
-              style={[styles.summary, themedStyles.summary]}
+              style={[styles.summary, { color: colors.authorText }]}
               numberOfLines={3}
               skipDefaultColor
             >
@@ -200,7 +144,11 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           )}
 
           {author && (
-            <ThemedText style={[styles.author, themedStyles.author]} numberOfLines={1}>
+            <ThemedText
+              style={[styles.author, { color: colors.authorText }]}
+              numberOfLines={1}
+              skipDefaultColor
+            >
               By {author}
             </ThemedText>
           )}
@@ -211,10 +159,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Render compact content
   const renderCompactContent = () => {
-    if (isLoading) {
-      return renderLoading();
+    if (!children) {
+      console.warn('ThemedCard: Missing children prop for compact variant');
+      return null;
     }
-
     return children;
   };
 
@@ -226,48 +174,30 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     return renderArticleContent();
   };
 
+  // If loading, use the BaseCard to show a loading state
+  if (isLoading) {
+    return (
+      <BaseCard
+        isLoading={true}
+        onPress={onPress}
+        style={style as StyleProp<ViewStyle>}
+        loadingComponent={renderLoading()}
+      >
+        <View />
+      </BaseCard>
+    );
+  }
+
+  // Use the BaseCard with the appropriate content
   return (
-    <View style={styles.container}>
-      <Animated.View style={animatedStyle as any} entering={entering} layout={layout}>
-        <Pressable
-          onPress={handlePress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          style={styles.pressable}
-        >
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: themedStyles.card.backgroundColor,
-                borderColor: themedStyles.card.borderColor,
-                shadowColor: themedStyles.card.shadowColor,
-                borderRadius: themedStyles.card.borderRadius,
-                borderWidth: themedStyles.card.borderWidth,
-              },
-              style as any,
-            ]}
-          >
-            {renderContent()}
-          </View>
-        </Pressable>
-      </Animated.View>
-    </View>
+    <BaseCard onPress={onPress} style={style as StyleProp<ViewStyle>}>
+      {renderContent()}
+    </BaseCard>
   );
 }
 
 // Styles
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-  },
-  pressable: {
-    width: '100%',
-  },
-  card: {
-    width: '100%',
-    overflow: 'hidden',
-  },
   imageContainer: {
     width: '100%',
     height: 180,

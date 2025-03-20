@@ -275,22 +275,11 @@ export default function VocabularyScreen() {
           </View>
 
           {/* Weekly Progress Graph */}
-          <View
-            style={[
-              styles.graphWrapper,
-              {
-                backgroundColor: colors.cardBackground,
-                borderColor: colors.cardBorder,
-              },
-              LAYOUT.SHADOW.MEDIUM,
-            ]}
-          >
-            <VocabularyGraph
-              data={weeklyProgressData}
-              animationTriggered={true}
-              title="Weekly Progress"
-            />
-          </View>
+          <VocabularyGraph
+            data={weeklyProgressData}
+            animationTriggered={true}
+            title="Weekly Progress"
+          />
 
           {/* Review Button Section */}
           {isDataReady && (
@@ -320,13 +309,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-  },
-  graphWrapper: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    height: 250,
   },
   reviewButtonWrapper: {
     width: '100%',

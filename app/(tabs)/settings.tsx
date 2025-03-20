@@ -21,6 +21,7 @@ import { LAYOUT } from '../../constants/layout';
 import { useLoadingState, useScreenAnimation } from '../../hooks';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
+import BaseCard from '@/components/BaseCard';
 
 // Helper function to calculate header height
 const getHeaderHeight = (insets: { top: number }) => {
@@ -216,16 +217,7 @@ export default function SettingsScreen() {
         >
           {/* Preferences Section */}
           <View style={styles.settingsWrapper}>
-            <View
-              style={[
-                styles.settingsContainer,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.cardBorder,
-                },
-                LAYOUT.SHADOW.MEDIUM,
-              ]}
-            >
+            <BaseCard style={styles.settingsContainer} shadowSize="small" animated={false}>
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
@@ -295,36 +287,17 @@ export default function SettingsScreen() {
                   </View>
                 </View>
               </View>
-            </View>
+            </BaseCard>
           </View>
 
           {/* Connect Section */}
           <View style={styles.connectWrapper}>
-            <View
-              style={[
-                styles.connectContainer,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.cardBorder,
-                },
-                LAYOUT.SHADOW.MEDIUM,
-              ]}
-            >
+            <BaseCard style={styles.connectContainer} shadowSize="small" animated={false}>
               <ThemedButton
                 variant="outlined"
                 title="Twitter"
-                onPress={() => handleSocialLink('https://twitter.com/openarabicio')}
+                onPress={() => handleSocialLink('https://twitter.com/OpenArabicApp')}
                 icon="logo-twitter"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
-              />
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-              <ThemedButton
-                variant="outlined"
-                title="Instagram"
-                onPress={() => handleSocialLink('https://instagram.com/openarabic.io')}
-                icon="logo-instagram"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
@@ -339,21 +312,12 @@ export default function SettingsScreen() {
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-            </View>
+            </BaseCard>
           </View>
 
           {/* Support & Account Section */}
           <View style={styles.actionsWrapper}>
-            <View
-              style={[
-                styles.actionsContainer,
-                {
-                  backgroundColor: colors.cardBackground,
-                  borderColor: colors.cardBorder,
-                },
-                LAYOUT.SHADOW.MEDIUM,
-              ]}
-            >
+            <BaseCard style={styles.actionsContainer} shadowSize="small" animated={false}>
               <ThemedButton
                 variant="outlined"
                 title="Support"
@@ -373,7 +337,7 @@ export default function SettingsScreen() {
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-            </View>
+            </BaseCard>
           </View>
         </ScrollView>
       </ThemedView>
@@ -410,8 +374,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   settingsContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
   settingRow: {
@@ -481,16 +443,12 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   connectContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
   actionsWrapper: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   actionsContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
   actionButton: {

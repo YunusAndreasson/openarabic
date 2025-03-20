@@ -19,6 +19,7 @@ import EmptyState from '@/components/EmptyState';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import BaseCard from '@/components/BaseCard';
 
 // Helper function to calculate header height
 const getHeaderHeight = (insets: { top: number }) => {
@@ -88,11 +89,7 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.SPACING.MEDIUM,
-    backgroundColor: 'transparent',
-    overflow: 'hidden',
     width: '100%',
   },
   controlsTitle: {
@@ -248,14 +245,11 @@ const BottomControls = React.memo(
 
     return (
       <View style={styles.bottomControlsContainer}>
-        <View
-          style={[
-            styles.controlsCard,
-            {
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.cardBorder,
-            },
-          ]}
+        <BaseCard
+          style={styles.controlsCard}
+          shadowSize="medium"
+          animated={true}
+          includePressAnimation={false}
         >
           <ThemedText style={styles.controlsTitle}>AUDIO CONTROLS</ThemedText>
           <View style={styles.actionButtonsRow}>
@@ -284,7 +278,7 @@ const BottomControls = React.memo(
               />
             </View>
           </View>
-        </View>
+        </BaseCard>
       </View>
     );
   }

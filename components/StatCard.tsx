@@ -5,17 +5,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import AnimatedThemedText from './AnimatedThemedText';
 import { StatCardProps } from '@/types/ui.types';
+import BaseCard from './BaseCard';
 
 export const StatCard = React.memo(
   ({ label, value, icon, colors, animateValue = false }: StatCardProps) => {
     return (
-      <View
-        style={[
-          styles.statCard,
-          { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
-        ]}
-      >
-        <View style={styles.statContent}>
+      <BaseCard style={styles.statCard} animated={false}>
+        <View
+          style={[
+            styles.statContent,
+            { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder },
+          ]}
+        >
           <View style={styles.statTextContainer}>
             <AnimatedThemedText style={styles.statValue} animate={animateValue}>
               {value}
@@ -31,7 +32,7 @@ export const StatCard = React.memo(
             <Ionicons name={icon as any} size={24} color={colors.icon} />
           </View>
         </View>
-      </View>
+      </BaseCard>
     );
   }
 );
@@ -42,17 +43,13 @@ const styles = StyleSheet.create({
   statCard: {
     width: '48%',
     height: 90,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    overflow: 'hidden',
-    ...LAYOUT.SHADOW.MEDIUM,
   },
   statContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   statTextContainer: {
     flex: 1,

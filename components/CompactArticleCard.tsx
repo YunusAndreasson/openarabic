@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Pressable, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
@@ -8,8 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CompactArticleCardProps } from '../types/ui.types';
 import { formatTimeAgo } from '../utils/dateUtils';
 import { EnhancedImage } from './EnhancedImage';
-import Animated from 'react-native-reanimated';
-import { usePressAnimation } from '../hooks/animations';
+import BaseCard from './BaseCard';
 
 // TimeAgo component to show when an article was published or last opened
 const TimeAgo = React.memo(
@@ -85,82 +84,53 @@ const CompactArticleCardComponent: React.FC<CompactArticleCardProps> = ({
   lastOpenedAt,
 }) => {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-  });
-
-  const dynamicStyles = useMemo(
-    () => ({
-      card: {
-        backgroundColor: colors.cardBackground,
-        borderColor: colors.cardBorder,
-        shadowColor: colors.shadow,
-      },
-      authorText: {
-        color: colors.authorText,
-      },
-    }),
-    [colors]
-  );
 
   return (
-    <Pressable
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      style={[styles.pressable]}
-    >
-      <Animated.View style={animatedStyle as any}>
-        <View style={[styles.container, dynamicStyles.card]}>
-          <View style={styles.imageContainer}>
-            <EnhancedImage
-              source={article.image_url || 'https://picsum.photos/800/400'}
-              style={styles.image}
-              contentFit="cover"
-              showLoadingIndicator={true}
-              transition={300}
-              onError={() => {
-                /* Handle image load error silently */
-              }}
-            />
-          </View>
+    <BaseCard onPress={onPress} style={styles.container}>
+      <View style={styles.imageContainer}>
+        <EnhancedImage
+          source={article.image_url || 'https://picsum.photos/800/400'}
+          style={styles.image}
+          contentFit="cover"
+          showLoadingIndicator={true}
+          transition={300}
+          onError={() => {
+            /* Handle image load error silently */
+          }}
+        />
+      </View>
 
-          {/* Render the category pill outside the imageContainer */}
-          {article.category && (
-            <View style={styles.pillContainer}>
-              <Pill id={article.category.id} label={article.category.name} variant="category" />
-            </View>
-          )}
-
-          <View style={styles.contentContainer}>
-            <ThemedText style={styles.title} numberOfLines={2}>
-              {article.title}
-            </ThemedText>
-
-            {article.author && (
-              <ThemedText
-                style={[styles.authorText, dynamicStyles.authorText]}
-                numberOfLines={1}
-                skipDefaultColor
-              >
-                By {article.author.name}
-              </ThemedText>
-            )}
-
-            <View style={styles.cardFooter}>
-              {showTimeAgo ? (
-                <TimeAgo date={lastOpenedAt || article.created_at} isLastOpened={!!lastOpenedAt} />
-              ) : hideDifficulty ? null : (
-                <DifficultyIndicator
-                  level={article.difficulty_level}
-                  hideLabel={hideDifficultyLabel}
-                />
-              )}
-            </View>
-          </View>
+      {/* Render the category pill outside the imageContainer */}
+      {article.category && (
+        <View style={styles.pillContainer}>
+          <Pill id={article.category.id} label={article.category.name} variant="category" />
         </View>
-      </Animated.View>
-    </Pressable>
+      )}
+
+      <View style={styles.contentContainer}>
+        <ThemedText style={styles.title} numberOfLines={2}>
+          {article.title}
+        </ThemedText>
+
+        {article.author && (
+          <ThemedText
+            style={[styles.authorText, { color: colors.authorText }]}
+            numberOfLines={1}
+            skipDefaultColor
+          >
+            By {article.author.name}
+          </ThemedText>
+        )}
+
+        <View style={styles.cardFooter}>
+          {showTimeAgo ? (
+            <TimeAgo date={lastOpenedAt || article.created_at} isLastOpened={!!lastOpenedAt} />
+          ) : hideDifficulty ? null : (
+            <DifficultyIndicator level={article.difficulty_level} hideLabel={hideDifficultyLabel} />
+          )}
+        </View>
+      </View>
+    </BaseCard>
   );
 };
 
@@ -168,20 +138,9 @@ const CompactArticleCardComponent: React.FC<CompactArticleCardProps> = ({
 export const CompactArticleCard = React.memo(CompactArticleCardComponent);
 
 const styles = StyleSheet.create({
-  pressable: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    width: 220,
-    marginLeft: 0,
-  },
   container: {
     width: 220,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderColor: '#0000', // Will be set dynamically
-    backgroundColor: '#0000', // Will be set dynamically
-    ...LAYOUT.SHADOW.MEDIUM,
   },
   imageContainer: {
     position: 'relative',

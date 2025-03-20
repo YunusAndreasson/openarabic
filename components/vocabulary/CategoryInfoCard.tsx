@@ -4,6 +4,7 @@ import { ThemedText } from '../ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
+import BaseCard from '../BaseCard';
 
 interface CategoryInfoCardProps {
   category: 'total' | 'mastered' | 'learning' | 'due';
@@ -70,15 +71,7 @@ const CategoryInfoCard = React.memo(({ category, hideTitle = false }: CategoryIn
   const info = getCategoryInfo();
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.cardBorder,
-        },
-      ]}
-    >
+    <BaseCard style={styles.container} shadowSize="small" animated={false}>
       {!hideTitle && (
         <View style={styles.headerRow}>
           <View style={[styles.iconContainer, { backgroundColor: info.bgColor }]}>
@@ -97,18 +90,15 @@ const CategoryInfoCard = React.memo(({ category, hideTitle = false }: CategoryIn
           {info.description}
         </ThemedText>
       </View>
-    </View>
+    </BaseCard>
   );
 });
 
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    ...LAYOUT.SHADOW.SMALL,
   },
   headerRow: {
     flexDirection: 'row',
