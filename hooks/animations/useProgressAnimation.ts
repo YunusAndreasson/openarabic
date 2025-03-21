@@ -47,7 +47,6 @@ export const useProgressAnimation = (
       'worklet';
       // Validate input to ensure it's a number
       if (typeof newPercentage !== 'number') {
-        console.warn('useProgressAnimation: newPercentage must be a number');
         return () => {}; // Return empty cleanup function
       }
 

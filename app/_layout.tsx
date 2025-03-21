@@ -29,13 +29,12 @@ import { AppLoader } from '@/components/Loader';
 // Immediately hide the splash screen
 SplashScreen.preventAutoHideAsync()
   .then(() => {
-    SplashScreen.hideAsync().catch(e => {
-      console.warn('Error hiding splash screen:', e);
+    SplashScreen.hideAsync().catch(() => {
+      // Error handling without console logging
     });
   })
-  .catch(e => {
-    console.warn('Error with splash screen management:', e);
-    // Try to hide it anyway
+  .catch(() => {
+    // Error handling without console logging
     SplashScreen.hideAsync().catch(() => {});
   });
 
@@ -109,8 +108,8 @@ function AppContent() {
     try {
       if (fontsLoaded) {
         // Start preloading data and wait for it to complete
-        await preloadAppData().catch(e => {
-          console.warn('Error preloading app data:', e);
+        await preloadAppData().catch(() => {
+          // Error handling without console logging
         });
 
         // Set a small delay before marking app as ready for smoother visual transition
@@ -124,7 +123,7 @@ function AppContent() {
         }, 50);
       }
     } catch (e) {
-      console.warn('Error during app initialization:', e);
+      // Error handling without console logging
       setShowAppLoader(false);
     }
   }, [fontsLoaded, preloadAppData]);

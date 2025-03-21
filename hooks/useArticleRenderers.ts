@@ -77,7 +77,6 @@ export const useArticleRenderers = (
           });
         }
       } catch (error) {
-        console.error('Navigation error:', error);
         // Fallback to most basic navigation if all else fails
         router.push(`/article/${articleId}`);
       }

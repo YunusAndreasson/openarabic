@@ -75,7 +75,7 @@ export const useAppPreloader = () => {
       await Promise.race([Promise.all(preloadPromises), timeoutPromise]).catch(error => {
         // Log timeout but continue with app initialization
         if (error.message === 'Preloading timed out') {
-          console.warn('Data preloading timed out, continuing with partial data');
+          // Data preloading timed out, continuing with partial data
         } else {
           throw error;
         }
@@ -85,7 +85,6 @@ export const useAppPreloader = () => {
       setPreloadComplete(true);
     } catch (error) {
       // Fail silently - the app will fall back to regular loading
-      console.warn('Data preloading failed:', error);
       // Still mark preloading as complete to not block the app
       setPreloadComplete(true);
     } finally {
@@ -116,7 +115,7 @@ export const useAppPreloader = () => {
 
       return true;
     } catch (error) {
-      console.warn(`Failed to prefetch article ${articleId}:`, error);
+      // Failed to prefetch article
       return false;
     }
   };

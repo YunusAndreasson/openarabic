@@ -16,10 +16,7 @@ const createDefaultEasing = () => {
     }
   } catch (e) {
     // Log error but continue with fallbacks
-    console.warn('Failed to load Reanimated easing functions, using fallbacks:', e);
   }
-
-  console.info('Using fallback animation easings - animations may not be smooth');
 
   // Fallback implementation for tests
   // These properly type and implement easing functions that return proper easing functions

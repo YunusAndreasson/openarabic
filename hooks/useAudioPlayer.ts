@@ -46,10 +46,10 @@ export function useAudioPlayer() {
     // Unload sound if it exists
     if (soundRef.current) {
       try {
-        await soundRef.current.stopAsync().catch(e => console.warn('Error stopping audio:', e));
-        await soundRef.current.unloadAsync().catch(e => console.warn('Error unloading audio:', e));
+        await soundRef.current.stopAsync().catch(e => {});
+        await soundRef.current.unloadAsync().catch(e => {});
       } catch (error) {
-        console.error('Audio cleanup error:', error);
+        // Audio cleanup error
       } finally {
         soundRef.current = null;
       }

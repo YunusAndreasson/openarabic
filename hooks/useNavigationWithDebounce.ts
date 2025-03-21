@@ -61,7 +61,7 @@ export const useNavigationWithDebounce = (options: NavigationOptions = {}) => {
           router.push(route);
         }
       } catch (error) {
-        console.error('Navigation error:', error);
+        // Navigation error occurred
       }
 
       // Reset navigation state after debounce duration

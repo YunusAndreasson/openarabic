@@ -141,7 +141,6 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     try {
       pressed.value = withSpring(1, finalSpringConfig);
     } catch (error) {
-      console.error('Press in animation error:', error);
       // Fallback to immediate value change on error
       pressed.value = 1;
     }
@@ -154,7 +153,6 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     try {
       pressed.value = withSpring(0, finalSpringConfig);
     } catch (error) {
-      console.error('Press out animation error:', error);
       // Fallback to immediate value change on error
       pressed.value = 0;
     }
