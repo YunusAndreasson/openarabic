@@ -45,8 +45,9 @@ export const VocabularyGraph = React.memo(
     const lastPointTriggered = useRef(false);
 
     // Canvas dimensions
-    const PADDING = 16;
-    const TOP_PADDING = 3; // Minimal padding to prevent clipping without excessive space
+    const PADDING = LAYOUT.SPACING.MEDIUM;
+    const TOP_PADDING = LAYOUT.SPACING.SMALL; // Increase from 3px to prevent top clipping
+    const BOTTOM_PADDING = LAYOUT.SPACING.MEDIUM; // Add bottom padding to prevent floor points from being cut
     const GRAPH_HEIGHT = 120;
     const GRAPH_WIDTH =
       Dimensions.get('window').width - LAYOUT.SCREEN_EDGE_PADDING * 2 - PADDING * 2;
@@ -55,7 +56,7 @@ export const VocabularyGraph = React.memo(
     const { points, areaPath, linePath } = useGraphData(
       data,
       GRAPH_WIDTH,
-      GRAPH_HEIGHT - TOP_PADDING // Reserve space for top padding
+      GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING // Reserve space for both top and bottom padding
     );
 
     // Use our custom graph animation hook
@@ -134,14 +135,20 @@ export const VocabularyGraph = React.memo(
     ]);
 
     // Memoize gradient colors
-    const gradientColors = useMemo(() => [`${colors.text}20`, `${colors.text}08`], [colors.text]);
+    const gradientColors = useMemo(
+      () => [
+        `${colors.text}30`, // Increased from 20 for better contrast
+        `${colors.text}10`, // Increased from 08 for better contrast
+      ],
+      [colors.text]
+    );
 
     // Card header with title - reused in both loading and loaded states
     const cardHeader = useMemo(
       () => (
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <ThemedText type="heading3" variant="primary">
+            <ThemedText type="caption" weight="500" variant="secondary">
               {title}
             </ThemedText>
           </View>
@@ -185,7 +192,7 @@ export const VocabularyGraph = React.memo(
         {
           height: GRAPH_HEIGHT,
           width: GRAPH_WIDTH,
-          marginBottom: 10, // Add margin to separate from labels
+          marginBottom: LAYOUT.SPACING.SMALL, // Use LAYOUT constant instead of hardcoded 10
         },
       ],
       [GRAPH_HEIGHT, GRAPH_WIDTH]
@@ -215,7 +222,7 @@ export const VocabularyGraph = React.memo(
           <Canvas style={canvasStyle}>
             {/* Grid lines */}
             {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-              const y = ratio * GRAPH_HEIGHT;
+              const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
               return (
                 <Line
                   key={index}
@@ -232,7 +239,7 @@ export const VocabularyGraph = React.memo(
               <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
                 <LinearGradient
                   start={vec(0, 0)}
-                  end={vec(0, GRAPH_HEIGHT - TOP_PADDING)}
+                  end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
                   colors={gradientColors}
                 />
                 <Path path={areaPath} />
@@ -279,13 +286,13 @@ export const VocabularyGraph = React.memo(
           </Canvas>
 
           {/* X-axis labels using regular React Native Text */}
-          <View style={styles.xAxisLabels}>
+          <View style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}>
             {data.map((item, index) => (
               <View key={index} style={styles.labelContainer}>
-                <ThemedText type="caption" variant="secondary">
+                <ThemedText type="caption" variant="primary" weight="500">
                   {item.date}
                 </ThemedText>
-                <ThemedText type="label" variant="primary">
+                <ThemedText type="label" variant="primary" weight="600">
                   {item.wordsLearned}
                 </ThemedText>
               </View>
@@ -303,15 +310,14 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    height: 250,
-    padding: 16,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    height: 225, // Increase from 210 to accommodate the new paddings
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Increase from SMALL to give more breathing room
   },
   titleRow: {
     flexDirection: 'row',
@@ -319,6 +325,7 @@ const styles = StyleSheet.create({
   },
   graphContainer: {
     width: '100%',
+    paddingBottom: LAYOUT.SPACING.SMALL, // Add padding at the bottom for better spacing
   },
   canvas: {
     // Dimensions are set dynamically in the component
@@ -328,15 +335,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 40,
+    height: 44, // Increase from 40 for better touch targets
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   labelContainer: {
-    width: 30,
+    width: 32, // Increase from 30 for better text alignment
     alignItems: 'center',
     position: 'relative',
+    paddingVertical: LAYOUT.SPACING.TINY, // Add vertical padding for better touch area
   },
   loadingContainer: {
     justifyContent: 'center',

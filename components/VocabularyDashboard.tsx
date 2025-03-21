@@ -60,11 +60,16 @@ const StatItem = React.memo(
           onPressOut={handlePressOut}
           activeOpacity={0.7}
           disabled={!onPress}
+          accessibilityLabel={`${label}: ${value} words`}
+          accessibilityRole="button"
+          accessibilityHint={`Shows details about ${label.toLowerCase()} words`}
         >
           <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
-            <Ionicons name={icon as any} size={20} color={iconColor} />
+            <Ionicons name={icon as any} size={24} color={iconColor} />
           </View>
-          <AnimatedText type="heading3">{value}</AnimatedText>
+          <AnimatedText type="body" weight="600" style={styles.statValue}>
+            {value}
+          </AnimatedText>
           <ThemedText type="caption" variant="secondary" weight="500">
             {label}
           </ThemedText>
@@ -174,7 +179,7 @@ const styles = StyleSheet.create({
   mainCard: {
     width: '100%',
     padding: LAYOUT.CARD.PADDING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   statsRow: {
     flexDirection: 'row',
@@ -190,13 +195,11 @@ const styles = StyleSheet.create({
   iconWrapper: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   statValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
     marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,

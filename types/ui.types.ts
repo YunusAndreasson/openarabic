@@ -338,6 +338,8 @@ export interface BaseButtonProps
   scaleAmount?: number;
   /** Additional content to render inside the button */
   children?: React.ReactNode;
+  /** Size variant of the button */
+  size?: 'small' | 'medium' | 'large';
 }
 
 /**

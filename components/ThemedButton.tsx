@@ -41,6 +41,7 @@ export function ThemedButton({
   innerContainerStyle,
   scaleAmount = 0.95,
   accessibilityLabel,
+  size = 'medium',
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
@@ -60,6 +61,83 @@ export function ThemedButton({
     }
   };
 
+  // Determine text size based on button size
+  const getTextType = () => {
+    switch (size) {
+      case 'small':
+        return 'label';
+      case 'large':
+        return 'heading3';
+      case 'medium':
+      default:
+        return 'bodyBold';
+    }
+  };
+
+  // Get button dimensions based on size
+  const buttonHeight = useMemo(() => {
+    switch (size) {
+      case 'small':
+        return LAYOUT.BUTTON.HEIGHT.SMALL;
+      case 'large':
+        return LAYOUT.BUTTON.HEIGHT.LARGE;
+      case 'medium':
+      default:
+        return LAYOUT.BUTTON.HEIGHT.MEDIUM;
+    }
+  }, [size]);
+
+  const paddingVertical = useMemo(() => {
+    switch (size) {
+      case 'small':
+        return LAYOUT.BUTTON.PADDING.VERTICAL.SMALL;
+      case 'large':
+        return LAYOUT.BUTTON.PADDING.VERTICAL.LARGE;
+      case 'medium':
+      default:
+        return LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM;
+    }
+  }, [size]);
+
+  const paddingHorizontal = useMemo(() => {
+    switch (size) {
+      case 'small':
+        return LAYOUT.BUTTON.PADDING.HORIZONTAL.SMALL;
+      case 'large':
+        return LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE;
+      case 'medium':
+      default:
+        return LAYOUT.BUTTON.PADDING.HORIZONTAL.MEDIUM;
+    }
+  }, [size]);
+
+  const borderRadius = useMemo(() => {
+    switch (size) {
+      case 'small':
+        return LAYOUT.BUTTON.BORDER_RADIUS.SMALL;
+      case 'large':
+        return LAYOUT.BUTTON.BORDER_RADIUS.LARGE;
+      case 'medium':
+      default:
+        return LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM;
+    }
+  }, [size]);
+
+  // Determine icon size based on button size
+  const actualIconSize = useMemo(() => {
+    if (iconSize !== 24) return iconSize; // User-specified size takes precedence
+
+    switch (size) {
+      case 'small':
+        return 18;
+      case 'large':
+        return 28;
+      case 'medium':
+      default:
+        return 24;
+    }
+  }, [size, iconSize]);
+
   // Memoize derived styles to avoid recalculation on every render
   const buttonStyles = useMemo(() => {
     // Determine colors based on variant
@@ -68,7 +146,7 @@ export function ThemedButton({
 
     // Apply border for outlined variant consistently across platforms
     // This matches the ThemedCard border style
-    const borderWidth = isFilled ? 0 : LAYOUT.BORDER.WIDTH.THIN;
+    const borderWidth = isFilled ? 0 : LAYOUT.BORDER.WIDTH.NORMAL;
 
     return [
       styles.button,
@@ -77,6 +155,10 @@ export function ThemedButton({
         borderWidth,
         borderColor: colors.tint,
         shadowColor: colors.cardShadow,
+        minHeight: buttonHeight,
+        paddingVertical,
+        paddingHorizontal,
+        borderRadius,
       },
       // Apply shadow consistently with ThemedCard
       isFilled && styles.buttonShadow,
@@ -85,7 +167,17 @@ export function ThemedButton({
       Platform.OS === 'android' && isFilled && { elevation: 4 },
       style, // User style comes last to override default styles
     ];
-  }, [variant, colors, disabled, loading, style]);
+  }, [
+    variant,
+    colors,
+    disabled,
+    loading,
+    style,
+    buttonHeight,
+    paddingVertical,
+    paddingHorizontal,
+    borderRadius,
+  ]);
 
   // Determine text color based on variant
   const textColor = variant === 'filled' ? colors.background : colors.tint;
@@ -126,20 +218,22 @@ export function ThemedButton({
       >
         <View style={[styles.innerContainer, innerContainerStyle]}>
           {hasIcon && (
-            <View style={styles.iconContainer}>
+            <View
+              style={[styles.iconContainer, size === 'small' ? styles.iconContainerSmall : null]}
+            >
               {loading ? (
-                <ActivityIndicator size="small" color={textColor} />
+                <ActivityIndicator size={size === 'small' ? 'small' : 'small'} color={textColor} />
               ) : iconComponent ? (
                 iconComponent
               ) : (
-                <Ionicons name={icon as any} size={iconSize} color={textColor} />
+                <Ionicons name={icon as any} size={actualIconSize} color={textColor} />
               )}
             </View>
           )}
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
             <ThemedText
-              type="bodyBold"
+              type={getTextType()}
               colorName={variant === 'filled' ? 'background' : 'tint'}
               skipDefaultColor
             >
@@ -158,10 +252,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM,
-    paddingHorizontal: LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE,
     overflow: 'hidden',
   },
   buttonShadow: {
@@ -183,6 +273,9 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconContainerSmall: {
+    marginRight: LAYOUT.SPACING.TINY,
   },
   contentContainer: {
     flexDirection: 'row',

@@ -22,6 +22,7 @@ import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/Revi
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ThemedText } from '@/components/ThemedText';
 
 // Helper function to calculate header height
 const getHeaderHeight = (insets: { top: number }) => {
@@ -227,7 +228,10 @@ export default function VocabularyScreen() {
   if (!isFetching && validStudyWords.length === 0 && !isDataCached) {
     return (
       <ThemedView style={styles.container}>
-        <VocabularyEmptyState colors={colors} />
+        <PageHeader title="Words" />
+        <ThemedView style={styles.emptyStateContainer}>
+          <VocabularyEmptyState colors={colors} />
+        </ThemedView>
       </ThemedView>
     );
   }
@@ -254,10 +258,11 @@ export default function VocabularyScreen() {
                 tintColor={colors.tint}
               />
             ),
+            showsVerticalScrollIndicator: false,
           }}
         >
           {/* Stats Dashboard */}
-          <View style={styles.dashboardWrapper}>
+          <View style={styles.sectionWrapper}>
             <VocabularyDashboard
               totalWords={stats.totalWords}
               masteredWords={stats.masteredWords}
@@ -275,11 +280,13 @@ export default function VocabularyScreen() {
           </View>
 
           {/* Weekly Progress Graph */}
-          <VocabularyGraph
-            data={weeklyProgressData}
-            animationTriggered={true}
-            title="Weekly Progress"
-          />
+          <View style={styles.sectionWrapper}>
+            <VocabularyGraph
+              data={weeklyProgressData}
+              animationTriggered={true}
+              title="Weekly Progress"
+            />
+          </View>
 
           {/* Review Button Section */}
           {isDataReady && (
@@ -313,9 +320,15 @@ const styles = StyleSheet.create({
   reviewButtonWrapper: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  dashboardWrapper: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+  sectionWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
