@@ -1,10 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
 import { studyWordsService } from '../services/studyWords';
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
+
+// Cache duration constants
+const MINUTE_IN_MS = 60000;
+const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
+const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
+const STALE_TIME_ALWAYS_FRESH = 0;
+const PRELOAD_TIMEOUT_MS = 8000;
 
 /**
  * Hook to preload essential app data during initialization
@@ -34,14 +41,14 @@ export const useAppPreloader = () => {
         queryClient.prefetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
-          staleTime: 60000, // 1 minute cache
+          staleTime: STALE_TIME_SHORT,
         }),
 
         // Preload categories (used in multiple screens)
         queryClient.prefetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
-          staleTime: 300000, // 5 minutes cache
+          staleTime: STALE_TIME_MEDIUM,
         }),
       ];
 
@@ -52,7 +59,7 @@ export const useAppPreloader = () => {
           queryClient.prefetchQuery({
             queryKey: ['studyWords', user.id],
             queryFn: () => studyWordsService.getStudyWords(user.id, { forStats: false }),
-            staleTime: 60000, // 1 minute cache
+            staleTime: STALE_TIME_SHORT,
           })
         );
 
@@ -61,14 +68,14 @@ export const useAppPreloader = () => {
           queryClient.prefetchQuery({
             queryKey: ['dueWords', user.id],
             queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
-            staleTime: 0, // Always fetch fresh data for due words
+            staleTime: STALE_TIME_ALWAYS_FRESH, // Always fetch fresh data for due words
           })
         );
       }
 
       // Add a safety timeout of 8 seconds to prevent infinite waiting
       const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Preloading timed out')), 8000)
+        setTimeout(() => reject(new Error('Preloading timed out')), PRELOAD_TIMEOUT_MS)
       );
 
       // Wait for all preloading to complete OR timeout after 8 seconds
@@ -101,7 +108,7 @@ export const useAppPreloader = () => {
       await queryClient.prefetchQuery({
         queryKey: ['article', articleId],
         queryFn: () => articlesService.getArticleById(articleId),
-        staleTime: 60000, // 1 minute cache
+        staleTime: STALE_TIME_SHORT,
       });
 
       // Prefetch reading list status if user is logged in
@@ -109,7 +116,7 @@ export const useAppPreloader = () => {
         await queryClient.prefetchQuery({
           queryKey: ['isInReadingList', user.id, articleId],
           queryFn: () => readingListService.isInReadingList(user.id, articleId),
-          staleTime: 60000, // 1 minute cache
+          staleTime: STALE_TIME_SHORT,
         });
       }
 
@@ -125,14 +132,22 @@ export const useAppPreloader = () => {
     // Reset state
     setPreloadComplete(false);
 
-    // Invalidate existing queries
-    queryClient.invalidateQueries({ queryKey: ['articles'] });
-    queryClient.invalidateQueries({ queryKey: ['categories'] });
+    // Batch invalidate common queries
+    const queriesToInvalidate = [['articles'], ['categories']];
 
+    // Add user-specific queries if user is logged in
     if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+      queriesToInvalidate.push(['studyWords', user.id], ['dueWords', user.id]);
     }
+
+    // Invalidate all queries in one operation
+    queryClient.invalidateQueries({
+      predicate: query => {
+        return queriesToInvalidate.some(
+          key => query.queryKey[0] === key[0] && (key.length === 1 || query.queryKey[1] === key[1])
+        );
+      },
+    });
 
     // Trigger a new preload
     preloadAppData();
