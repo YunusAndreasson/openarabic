@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
   articleMetaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   authorContainer: {
     flexDirection: 'row',
@@ -78,7 +78,7 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
       <View style={styles.articleMetaContainer}>
         <View style={styles.authorContainer}>
           <ThemedText
-            type="bodyBold"
+            type="label"
             variant="secondary"
             accessibilityLabel={`Written by ${article.author?.name || 'Unknown Author'}`}
           >

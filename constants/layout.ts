@@ -124,13 +124,13 @@ export const LAYOUT = {
   // Typography scale
   TYPOGRAPHY: {
     SCALE: {
-      TINY: 11,
-      SMALL: 13,
-      MEDIUM: 15,
-      LARGE: 17,
-      XLARGE: 20,
-      XXLARGE: 24,
-      HUGE: 32,
+      TINY: 10, // Reduced from 11 for overline text
+      SMALL: 12, // Reduced from 13 for captions and labels
+      MEDIUM: 15, // Unchanged - for body text
+      LARGE: 17, // For emphasized body or small headings
+      XLARGE: 20, // Unchanged - for heading3
+      XXLARGE: 24, // Unchanged - for heading2
+      HUGE: 30, // Reduced from 32 for heading1 (less overwhelming)
     },
     LINE_HEIGHT: {
       TIGHT: 1.2,

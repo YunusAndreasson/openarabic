@@ -134,8 +134,13 @@ export const ThemedText = React.memo(ThemedTextComponent);
 const styles = StyleSheet.create({
   // Base text styles with consistent line height patterns
   body: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  },
+  bodyBold: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: 'bold',
   },
   // Heading styles with consistent weight and line height
   heading1: {
@@ -147,5 +152,31 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
     fontWeight: 'bold',
+  },
+  heading3: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontWeight: '600',
+  },
+  caption: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  },
+  label: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontWeight: '600',
+  },
+  overline: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    fontWeight: '600',
+  },
+  link: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    textDecorationLine: 'underline',
   },
 });

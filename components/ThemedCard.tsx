@@ -144,7 +144,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {/* Author */}
           {author && (
             <View style={styles.authorContainer}>
-              <ThemedText type="caption" variant="secondary" numberOfLines={1}>
+              <ThemedText type="label" variant="secondary" numberOfLines={1}>
                 By {author}
               </ThemedText>
             </View>
@@ -201,7 +201,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           {article.author && (
             <View style={styles.authorContainer}>
-              <ThemedText type="caption" variant="secondary" numberOfLines={1}>
+              <ThemedText type="label" variant="secondary" numberOfLines={1}>
                 By {article.author.name}
               </ThemedText>
             </View>
@@ -323,7 +323,8 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   authorContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   cardFooter: {
     flexDirection: 'row',

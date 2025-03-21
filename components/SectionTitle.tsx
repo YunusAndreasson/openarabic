@@ -10,7 +10,7 @@ import { SectionTitleProps } from '@/types/ui.types';
 const SectionTitle: React.FC<SectionTitleProps> = ({ title }) => {
   return (
     <View style={styles.container}>
-      <ThemedText type="heading3">{title}</ThemedText>
+      <ThemedText type="bodyBold">{title}</ThemedText>
     </View>
   );
 };
@@ -21,7 +21,8 @@ export default React.memo(SectionTitle);
 
 const styles = StyleSheet.create({
   container: {
-    marginLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    marginBottom: 0,
   },
 });
