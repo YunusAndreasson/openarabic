@@ -370,7 +370,7 @@ export default function ArticlesScreen() {
 
         {latestArticles.length > 0 && (
           <ArticleSection
-            title="Latest Articles"
+            title="Latest Texts"
             articles={latestArticles}
             onArticlePress={handleArticlePress}
             delay={60}
@@ -380,7 +380,7 @@ export default function ArticlesScreen() {
 
         {featuredArticles.length > 0 && (
           <FeaturedArticleSection
-            title="Featured Articles"
+            title="Featured Texts"
             articles={featuredArticles}
             onArticlePress={handleArticlePress}
             delay={80}
