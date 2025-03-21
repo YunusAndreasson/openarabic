@@ -355,7 +355,7 @@ export default function ArticlesScreen() {
           article={getDailyPickArticle(articles, getDayOfYear())}
           onPress={handleArticlePress}
           delay={0}
-          showTitle={false}
+          showTitle={true}
         />
 
         <ArticleSection

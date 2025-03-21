@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Pressable, StyleProp, ViewStyle, View } from 'react-native';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { LoadingContainer } from './Loader';
@@ -97,12 +97,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
         foreground: true,
       }}
     >
-      <Animated.View
-        style={[
-          cardStyle,
-          includePressAnimation && (animatedStyle as AnimatedStyleProp<ViewStyle>),
-        ]}
-      >
+      <Animated.View style={[cardStyle, includePressAnimation && animatedStyle]}>
         <View style={styles.contentContainer}>{children}</View>
       </Animated.View>
     </Pressable>

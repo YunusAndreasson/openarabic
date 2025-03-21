@@ -23,6 +23,6 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.TINY,
-    marginBottom: 0,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });

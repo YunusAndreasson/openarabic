@@ -313,18 +313,19 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.SMALL, // Match the top spacing of pill
-    paddingBottom: LAYOUT.SPACING.SMALL, // Reduce bottom padding to match top
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   titleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   summaryContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   authorContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: 0,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   cardFooter: {
     flexDirection: 'row',

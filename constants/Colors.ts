@@ -12,7 +12,7 @@ export const Colors = {
     cardBorder: '#E0E0E0', // Light gray for card borders
     cardShadow: '#999999', // Subtle gray for card shadow
     categoryText: '#212121', // Dark charcoal for category text
-    authorText: '#6E6E6E', // Medium gray for author text
+    authorText: '#606060', // Darker gray for author text (increased contrast)
     arabicText: '#212121', // Dark charcoal for Arabic text
     highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
     englishText: '#212121', // Dark charcoal for English text
@@ -52,7 +52,7 @@ export const Colors = {
     cardBorder: '#333333', // Darker gray for card borders
     cardShadow: '#000000', // Dark shadow for depth
     categoryText: '#E0E0E0', // Light gray for category text
-    authorText: '#BBBBBB', // Light gray for author text
+    authorText: '#CCCCCC', // Lighter gray for author text (improved contrast)
     arabicText: '#E0E0E0', // Light gray for Arabic text
     highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
     englishText: '#E0E0E0', // Light gray for English text

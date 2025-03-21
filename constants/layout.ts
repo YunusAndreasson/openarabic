@@ -49,7 +49,7 @@ export const LAYOUT = {
     DISABLED: 0.5,
     DIMMED: 0.7,
     HOVER: 0.9,
-    PRESSED: 0.8,
+    PRESSED: 0.7,
     OVERLAY: 0.4,
     ACTIVE: 1,
   },
