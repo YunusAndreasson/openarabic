@@ -7,6 +7,7 @@ import {
   runOnJS,
   FadeIn,
   FadeOut,
+  runOnUI,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
@@ -186,7 +187,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
           }
         );
       } catch (error) {
-        console.error('Fade in animation error:', error);
         if (onComplete && runOnJS) {
           runOnJS(safeRunCallback)(onComplete);
         }
@@ -211,7 +211,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
           }
         );
       } catch (error) {
-        console.error('Fade out animation error:', error);
         if (onComplete && runOnJS) {
           runOnJS(safeRunCallback)(onComplete);
         }
@@ -239,7 +238,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
           }
         );
       } catch (error) {
-        console.error('Set opacity animation error:', error);
         if (onComplete && runOnJS) {
           runOnJS(safeRunCallback)(onComplete);
         }
@@ -252,7 +250,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     try {
       opacity.value = validInitialOpacity;
     } catch (error) {
-      console.error('Reset opacity error:', error);
+      // Handle potential errors silently
     }
   }, [opacity, validInitialOpacity]);
 
@@ -272,7 +270,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
           })
         );
       } catch (error) {
-        console.error('Start animation error:', error);
         if (onComplete && runOnJS) {
           runOnJS(safeRunCallback)(onComplete);
         }
@@ -300,7 +297,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
           )
         );
       } catch (error) {
-        console.error('Reverse animation error:', error);
         if (onComplete && runOnJS) {
           runOnJS(safeRunCallback)(onComplete);
         }
@@ -319,29 +315,25 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     [opacity]
   );
 
-  // Auto-start animation if enabled
+  // Auto-start animation if enabled - move to UI thread
   useEffect(() => {
     if (autoStart && isMountedRef.current) {
-      // Ensure we're at the starting opacity before beginning the animation
-      // This prevents jumps when transitioning from initial value to the animated state
-      if (validInitialOpacity !== 1) {
-        opacity.value = validInitialOpacity;
-      }
-
       // Wait for layout to stabilize to prevent jumps
       const totalDelay = Math.max(0, 10 + layoutStabilizationDelay);
 
-      // Use a small delay to ensure we've rendered at the initial state first
-      // This is key to smooth entrance animations
-      const timer = setTimeout(() => {
-        if (isMountedRef.current) {
-          startAnimation();
-        }
-      }, totalDelay);
-
-      return () => clearTimeout(timer);
+      // Schedule animation on the UI thread
+      runOnUI(() => {
+        'worklet';
+        // Ensure we're at the starting opacity
+        opacity.value = validInitialOpacity;
+        // Use withDelay to schedule the animation on the UI thread
+        opacity.value = withDelay(
+          totalDelay,
+          withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing })
+        );
+      })();
     }
-  }, [autoStart, startAnimation, validInitialOpacity, opacity, layoutStabilizationDelay]);
+  }, [autoStart, duration, validInitialOpacity, opacity, layoutStabilizationDelay]);
 
   // For entrance-only style, we still return all functions but they won't be used
   return {
