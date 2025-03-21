@@ -14,7 +14,7 @@ import {
 } from '@shopify/react-native-skia';
 import { LAYOUT } from '../constants/layout';
 import { LoadingContainer } from './Loader';
-import { useComponentAnimation, useGraphAnimation } from '@/hooks/animations';
+import { useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
 import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
@@ -38,7 +38,6 @@ export const VocabularyGraph = React.memo(
     animationTriggered = false,
   }: VocabularyGraphProps) => {
     const colors = useColors();
-    const { animatedStyle, startAnimation } = useComponentAnimation(500); // Increased delay for better stability
     const [isReady, setIsReady] = React.useState(false);
 
     // Track if the last point haptic has been triggered
@@ -93,16 +92,14 @@ export const VocabularyGraph = React.memo(
       [points.length, triggerHapticFeedback]
     );
 
-    // Start animation when component mounts
+    // Set component as ready after a delay
     React.useEffect(() => {
-      startAnimation();
-      // Set component as ready after a delay
       const timer = setTimeout(() => {
         setIsReady(true);
-      }, 600); // Slightly longer than the animation delay
+      }, 600);
 
       return () => clearTimeout(timer);
-    }, [startAnimation]);
+    }, []);
 
     // Start the animation when the component is ready and parent signals animation
     React.useEffect(() => {
@@ -157,24 +154,6 @@ export const VocabularyGraph = React.memo(
       [title]
     );
 
-    // Memoize the grid lines to avoid recreating them on each render
-    const gridLines = useMemo(
-      () =>
-        [0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-          const y = GRAPH_HEIGHT * ratio;
-          return (
-            <Line
-              key={index}
-              p1={{ x: 0, y }}
-              p2={{ x: GRAPH_WIDTH, y }}
-              color={`${colors.text}15`}
-              strokeWidth={1}
-            />
-          );
-        }),
-      [GRAPH_HEIGHT, GRAPH_WIDTH, colors.text]
-    );
-
     // Define styles with dimensions
     const graphContainerStyle = useMemo(
       () => [
@@ -208,98 +187,124 @@ export const VocabularyGraph = React.memo(
       </View>
     );
 
+    const hasData = data.length > 0;
+
     return (
-      <BaseCard
-        style={styles.card}
-        isLoading={isLoading || data.length === 0}
-        loadingComponent={loadingComponent}
-        includePressAnimation={false}
-        shadowSize="medium"
+      <View
+        accessible={true}
+        accessibilityLabel={`Vocabulary progress graph for the last ${data.length} days`}
+        accessibilityHint="Shows your daily word learning progress"
       >
-        {cardHeader}
+        <BaseCard
+          style={styles.card}
+          isLoading={isLoading || !hasData}
+          loadingComponent={loadingComponent}
+          includePressAnimation={false}
+          shadowSize="medium"
+        >
+          {cardHeader}
 
-        <View style={graphContainerStyle}>
-          <Canvas style={canvasStyle}>
-            {/* Grid lines */}
-            {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-              const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
-              return (
-                <Line
-                  key={index}
-                  p1={{ x: 0, y }}
-                  p2={{ x: GRAPH_WIDTH, y }}
-                  color={`${colors.text}15`}
-                  strokeWidth={1}
-                />
-              );
-            })}
-
-            {/* Area under the curve with gradient */}
-            {points.length > 0 && (
-              <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
-                <LinearGradient
-                  start={vec(0, 0)}
-                  end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
-                  colors={gradientColors}
-                />
-                <Path path={areaPath} />
-                <BlurMask blur={5} style="normal" />
-              </Group>
-            )}
-
-            {/* Line for the graph - more subtle */}
-            {points.length > 0 && (
-              <Group transform={[{ translateY: TOP_PADDING }]}>
-                <Path
-                  path={linePath}
-                  style="stroke"
-                  strokeWidth={2.5}
-                  color={`${colors.text}70`}
-                  strokeJoin="round"
-                  strokeCap="round"
-                  start={0}
-                  end={animationProgress}
-                />
-                <BlurMask blur={1} style="normal" />
-              </Group>
-            )}
-
-            {/* Data points */}
-            {points.length > 0 &&
-              points.map((point, index) => {
-                // Calculate the point's position in the animation sequence
-                const pointPosition = index / (points.length - 1);
-
+          <View
+            style={graphContainerStyle}
+            accessible={true}
+            accessibilityLabel="Graph showing vocabulary progress over time"
+          >
+            <Canvas style={canvasStyle}>
+              {/* Grid lines */}
+              {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+                const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
                 return (
-                  <Group
+                  <Line
                     key={index}
-                    opacity={animationProgress.value >= pointPosition ? 1 : 0}
-                    transform={[{ translateY: TOP_PADDING }]}
-                  >
-                    {/* Outer circle */}
-                    <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
-                    {/* Inner circle */}
-                    <Circle cx={point.x} cy={point.y} r={2.5} color={`${colors.text}90`} />
-                  </Group>
+                    p1={{ x: 0, y }}
+                    p2={{ x: GRAPH_WIDTH, y }}
+                    color={`${colors.text}15`}
+                    strokeWidth={1}
+                  />
                 );
               })}
-          </Canvas>
 
-          {/* X-axis labels using regular React Native Text */}
-          <View style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}>
-            {data.map((item, index) => (
-              <View key={index} style={styles.labelContainer}>
-                <ThemedText type="caption" variant="primary" weight="500">
-                  {item.date}
-                </ThemedText>
-                <ThemedText type="label" variant="primary" weight="600">
-                  {item.wordsLearned}
-                </ThemedText>
-              </View>
-            ))}
+              {/* Area under the curve with gradient */}
+              {hasData && (
+                <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
+                  <LinearGradient
+                    start={vec(0, 0)}
+                    end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
+                    colors={gradientColors}
+                  />
+                  <Path path={areaPath} />
+                  <BlurMask blur={5} style="normal" />
+                </Group>
+              )}
+
+              {/* Line for the graph - more subtle */}
+              {hasData && (
+                <Group transform={[{ translateY: TOP_PADDING }]}>
+                  <Path
+                    path={linePath}
+                    style="stroke"
+                    strokeWidth={2.5}
+                    color={`${colors.text}70`}
+                    strokeJoin="round"
+                    strokeCap="round"
+                    start={0}
+                    end={animationProgress}
+                  />
+                  <BlurMask blur={1} style="normal" />
+                </Group>
+              )}
+
+              {/* Data points */}
+              {hasData &&
+                points.map((point, index) => {
+                  // Calculate the point's position in the animation sequence
+                  const pointPosition = index / (points.length - 1);
+
+                  return (
+                    <Group
+                      key={index}
+                      opacity={animationProgress.value >= pointPosition ? 1 : 0}
+                      transform={[{ translateY: TOP_PADDING }]}
+                    >
+                      {/* Outer circle */}
+                      <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
+                      {/* Inner circle */}
+                      <Circle cx={point.x} cy={point.y} r={2.5} color={`${colors.text}90`} />
+                    </Group>
+                  );
+                })}
+            </Canvas>
+
+            {/* X-axis labels using regular React Native Text */}
+            <View
+              style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
+              accessible={true}
+              accessibilityLabel="Date and word count labels"
+            >
+              {data.map((item, index) => (
+                <View
+                  key={index}
+                  style={styles.labelContainer}
+                  accessible={true}
+                  accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}
+                >
+                  <ThemedText type="caption" variant="primary" weight="500">
+                    {item.date}
+                  </ThemedText>
+                  <ThemedText
+                    type="caption"
+                    variant="secondary"
+                    weight="400"
+                    style={styles.wordCountText}
+                  >
+                    {item.wordsLearned}
+                  </ThemedText>
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
-      </BaseCard>
+        </BaseCard>
+      </View>
     );
   }
 );
@@ -310,14 +315,14 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    height: 225, // Increase from 210 to accommodate the new paddings
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM, // Increase from SMALL to give more breathing room
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   titleRow: {
     flexDirection: 'row',
@@ -325,7 +330,7 @@ const styles = StyleSheet.create({
   },
   graphContainer: {
     width: '100%',
-    paddingBottom: LAYOUT.SPACING.SMALL, // Add padding at the bottom for better spacing
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
   canvas: {
     // Dimensions are set dynamically in the component
@@ -335,16 +340,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 44, // Increase from 40 for better touch targets
+    height: 44,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   labelContainer: {
-    width: 32, // Increase from 30 for better text alignment
+    width: 32,
     alignItems: 'center',
     position: 'relative',
-    paddingVertical: LAYOUT.SPACING.TINY, // Add vertical padding for better touch area
+    paddingVertical: LAYOUT.SPACING.TINY,
+  },
+  wordCountText: {
+    fontSize: 10,
+    marginTop: 2,
   },
   loadingContainer: {
     justifyContent: 'center',
