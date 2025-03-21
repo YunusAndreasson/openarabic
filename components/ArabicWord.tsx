@@ -4,8 +4,6 @@ import {
   View,
   TouchableOpacity,
   LayoutRectangle,
-  NativeSyntheticEvent,
-  TargetedEvent,
   Platform,
   LayoutChangeEvent,
   TextStyle,
@@ -112,9 +110,6 @@ function ArabicWordComponent({
     setTooltipVisible(false);
   }, []);
 
-  // Determine the text color based on whether the word is selected for study
-  const textColor = isSelected ? colors.tint : colors.text;
-
   // Apply highlight for long-pressed state
   const longPressedStyle = isLongPressed
     ? {
@@ -135,31 +130,23 @@ function ArabicWordComponent({
   // Combine visual feedback styles
   const combinedStyle = longPressedStyle || tooltipVisibleStyle;
 
-  // Memoize the text style to prevent unnecessary re-renders
-  const textStyle = useMemo(
-    () => ({
-      ...getArabicTextStyle(baseSize * scale, {
-        color: textColor,
-        fontWeight: isSelected ? '600' : ('normal' as TextStyle['fontWeight']),
-        textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
-        textShadowRadius: isSelected ? 1 : 0,
-        textShadowOffset: { width: 0, height: 0 },
-      }),
-    }),
-    [textColor, baseSize, scale, isSelected, colors.textShadowLight]
-  );
-
   // Memoize the underline style
   const underlineStyle = useMemo(
     () => ({
       ...styles.underline,
-      width: `${Math.min(100, word.word_form.length * 90)}%` as any,
+      // Calculate width in pixels based on word length
+      width: Math.min(80, word.word_form.length * 8),
       backgroundColor: isDarkMode
         ? colors.borderOverlay // Use borderOverlay color in dark mode
         : colors.textOverlay, // Use textOverlay color in light mode
     }),
     [isDarkMode, colors.borderOverlay, colors.textOverlay, word.word_form.length]
   );
+
+  // Calculate font size based on scale and base size
+  const fontSize = baseSize * scale;
+  // Calculate font weight based on selection state
+  const fontWeight = isSelected ? '600' : ('normal' as TextStyle['fontWeight']);
 
   return (
     <>
@@ -177,7 +164,19 @@ function ArabicWordComponent({
         }`}
       >
         <Animated.View style={[styles.container, animatedStyle]}>
-          <ThemedText style={textStyle} skipDefaultColor>
+          <ThemedText
+            type="body"
+            variant={isSelected ? 'primary' : undefined}
+            skipDefaultColor
+            colorName={isSelected ? 'tint' : 'text'}
+            style={{
+              fontSize: fontSize,
+              fontWeight: fontWeight,
+              textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
+              textShadowRadius: isSelected ? 1 : 0,
+              textShadowOffset: { width: 0, height: 0 },
+            }}
+          >
             {word.word_form}
           </ThemedText>
 

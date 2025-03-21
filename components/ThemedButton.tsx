@@ -138,7 +138,11 @@ export function ThemedButton({
           )}
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
-            <ThemedText style={[styles.buttonText, { color: textColor }]} skipDefaultColor>
+            <ThemedText
+              type="bodyBold"
+              colorName={variant === 'filled' ? 'background' : 'tint'}
+              skipDefaultColor
+            >
               {title}
             </ThemedText>
             {children}
@@ -174,12 +178,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
-  },
-  buttonText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
-    textAlign: 'center',
-    letterSpacing: 0.3,
   },
   iconContainer: {
     marginRight: LAYOUT.SPACING.SMALL,

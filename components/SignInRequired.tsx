@@ -31,23 +31,39 @@ export const SignInRequired = React.memo(
     }, [startAnimation]);
 
     return (
-      <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+      <Animated.View style={[{ flex: 1 }, animatedStyle as any]}>
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           {headerTitle && <PageHeader title={headerTitle} />}
           <View style={styles.emptyStateContainer}>
             <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
               <Ionicons name="log-in-outline" size={48} color={colors.text} />
             </View>
-            <ThemedText style={styles.emptyStateTitle}>{title}</ThemedText>
-            <ThemedText style={styles.emptyStateMessage}>{message}</ThemedText>
+            <View style={styles.titleContainer}>
+              <ThemedText type="heading2" weight="600" align="center">
+                {title}
+              </ThemedText>
+            </View>
+            <View style={styles.messageContainer}>
+              <ThemedText type="body" align="center" variant="secondary">
+                {message}
+              </ThemedText>
+            </View>
 
             {(benefitTitle || benefitDescription) && (
               <View style={[styles.benefitContainer, { borderColor: colors.cardBorder }]}>
                 {benefitTitle && (
-                  <ThemedText style={styles.benefitTitle}>{benefitTitle}</ThemedText>
+                  <View style={styles.benefitTitleContainer}>
+                    <ThemedText type="body" weight="600">
+                      {benefitTitle}
+                    </ThemedText>
+                  </View>
                 )}
                 {benefitDescription && (
-                  <ThemedText style={styles.benefitDescription}>{benefitDescription}</ThemedText>
+                  <View style={styles.benefitDescriptionContainer}>
+                    <ThemedText type="caption" variant="secondary">
+                      {benefitDescription}
+                    </ThemedText>
+                  </View>
                 )}
               </View>
             )}
@@ -100,16 +116,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  emptyStateTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
-    textAlign: 'center',
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  emptyStateMessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  messageContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   benefitContainer: {
@@ -119,16 +129,10 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  benefitTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
+  benefitTitleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  benefitDescription: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
+  benefitDescriptionContainer: {},
   signInButton: {
     minWidth: 150,
   },

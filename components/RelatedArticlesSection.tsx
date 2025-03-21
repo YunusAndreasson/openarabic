@@ -13,10 +13,8 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.XXLARGE,
     marginHorizontal: -LAYOUT.SPACING.LARGE,
   },
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    fontWeight: '600',
     paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   horizontalList: {
@@ -36,7 +34,9 @@ export const RelatedArticlesSection = React.memo(
 
     return (
       <View style={styles.container}>
-        <ThemedText style={styles.title}>{title}</ThemedText>
+        <View style={styles.titleContainer}>
+          <ThemedText type="heading3">{title}</ThemedText>
+        </View>
         <Animated.ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

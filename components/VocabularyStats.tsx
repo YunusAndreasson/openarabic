@@ -91,9 +91,20 @@ function VocabularyStatsComponent({
       <View style={styles.progressContent}>
         <View style={styles.progressRow}>
           <View style={styles.progressTextContainer}>
-            <ThemedText style={styles.progressLabel}>Progress</ThemedText>
-            <ThemedText style={styles.progressValue}>{Math.round(progress)}%</ThemedText>
-            <ThemedText style={styles.progressSubtext}>
+            <View style={styles.labelContainer}>
+              <ThemedText type="label">Progress</ThemedText>
+            </View>
+            <View style={styles.valueContainer}>
+              <ThemedText type="heading2">{Math.round(progress)}%</ThemedText>
+            </View>
+            <View style={styles.subtextContainer}>
+            <ThemedText type="label" style={styles.progressLabel}>
+              Progress
+            </ThemedText>
+            <ThemedText type="heading2" style={styles.progressValue}>
+              {Math.round(progress)}%
+            </ThemedText>
+            <ThemedText type="caption" variant="subtle" style={styles.progressSubtext}>
               {masteredWords} of {totalWords} mastered
             </ThemedText>
           </View>

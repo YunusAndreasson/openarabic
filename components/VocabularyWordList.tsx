@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, FlatList, ListRenderItem, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, View, FlatList, ListRenderItem, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import ThemedCard from './ThemedCard';
-import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useWordStatus } from '@/hooks/useWordStatus';
 import { StudyWord } from '@/types/vocabulary.types';
 
@@ -31,17 +31,18 @@ const WordItem = React.memo(
       <ThemedCard onPress={onPress} variant="compact">
         <View style={styles.wordInfo}>
           <ThemedText
-            style={[
-              styles.arabicWord,
-              {
-                color: colors.arabicText,
-              },
-            ]}
+            type="arabic"
+            colorName="arabicText"
+            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
             skipDefaultColor
           >
             {word.word_form}
           </ThemedText>
-          <ThemedText style={styles.translation}>{word.english}</ThemedText>
+          <View style={styles.translationContainer}>
+            <ThemedText type="body" variant="secondary">
+              {word.english}
+            </ThemedText>
+          </View>
         </View>
         <View style={styles.statusContainer}>
           <BlurView intensity={10} tint="light" style={styles.statusPill}>
@@ -58,10 +59,7 @@ const WordItem = React.memo(
               ]}
             >
               <Ionicons name={statusIcon} size={16} color={colors.background} />
-              <ThemedText
-                style={[styles.statusText, { color: colors.background }]}
-                skipDefaultColor
-              >
+              <ThemedText type="caption" weight="600" colorName="background" skipDefaultColor>
                 {statusLabel}
               </ThemedText>
             </View>
@@ -92,9 +90,13 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
   if (words.length === 0) {
     return (
       <View style={styles.container}>
-        <ThemedText style={styles.title}>{title}</ThemedText>
+        <View style={styles.titleContainer}>
+          <ThemedText type="heading3">{title}</ThemedText>
+        </View>
         <View style={styles.emptyContainer}>
-          <ThemedText style={styles.emptyText}>No words</ThemedText>
+          <ThemedText type="body" variant="disabled">
+            No words
+          </ThemedText>
         </View>
       </View>
     );
@@ -102,7 +104,9 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
 
   return (
     <View style={styles.container}>
-      <ThemedText style={styles.title}>{title}</ThemedText>
+      <View style={styles.titleContainer}>
+        <ThemedText type="heading3">{title}</ThemedText>
+      </View>
       <FlatList
         data={words}
         renderItem={renderItem}
@@ -124,12 +128,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: LAYOUT.SPACING.XXLARGE,
   } as ViewStyle,
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  } as TextStyle,
+  } as ViewStyle,
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     gap: LAYOUT.SPACING.MEDIUM,
@@ -138,15 +140,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
   } as ViewStyle,
-  arabicWord: {
-    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, {
-      marginBottom: LAYOUT.SPACING.TINY,
-    }),
-  } as TextStyle,
-  translation: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: 0.8,
-  } as TextStyle,
+  translationContainer: {
+    marginTop: LAYOUT.SPACING.TINY,
+  } as ViewStyle,
   statusContainer: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
@@ -161,17 +157,9 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL - 2,
     gap: LAYOUT.SPACING.SMALL - 2,
   } as ViewStyle,
-  statusText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '600',
-  } as TextStyle,
   emptyContainer: {
     padding: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,
-  emptyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DISABLED,
-  } as TextStyle,
 });

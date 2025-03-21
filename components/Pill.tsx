@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
 import { Pressable, StyleSheet, View, Platform, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { lightFeedback } from '../utils/haptics';
 import { useFadeInAnimation, useScaleAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
@@ -174,7 +173,14 @@ const Pill = React.memo(
               },
             ]}
           >
-            <ThemedText style={textStyle} skipDefaultColor numberOfLines={1} ellipsizeMode="tail">
+            <ThemedText
+              type="caption"
+              variant={isSelected ? 'primary' : 'secondary'}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              weight={isSelected ? '700' : '500'}
+              align={isCategory || isHorizontalCategory ? 'center' : undefined}
+            >
               {capitalizeFirstLetter(label.toLowerCase())}
             </ThemedText>
           </View>
@@ -215,10 +221,12 @@ const Pill = React.memo(
             }
           >
             <ThemedText
-              style={[styles.pillText, textStyle]}
-              skipDefaultColor
+              type="caption"
+              variant={isSelected ? 'primary' : 'secondary'}
               numberOfLines={1}
               ellipsizeMode="tail"
+              weight={isSelected ? '600' : '500'}
+              align={isCategory || isHorizontalCategory ? 'center' : undefined}
             >
               {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label}
             </ThemedText>

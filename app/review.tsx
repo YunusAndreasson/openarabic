@@ -178,11 +178,13 @@ const CompletionScreen = React.memo(({ onClose }: { onClose: () => void }) => {
         </AnimatedItem>
 
         <AnimatedItem delay={300}>
-          <ThemedText style={baseStyles.completionText}>Great job!</ThemedText>
+          <ThemedText type="heading2" variant="primary">
+            Great job!
+          </ThemedText>
         </AnimatedItem>
 
         <AnimatedItem delay={500}>
-          <ThemedText style={baseStyles.completionText}>
+          <ThemedText type="heading3" variant="primary">
             You've completed your review session.
           </ThemedText>
         </AnimatedItem>

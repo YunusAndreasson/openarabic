@@ -134,7 +134,9 @@ const ArticleSection = React.memo(
       return (
         <AnimatedSection title={title} delay={delay} style={styles.section}>
           <View style={styles.emptyContainer}>
-            <ThemedText style={styles.emptyText}>{emptyStateMessage}</ThemedText>
+            <ThemedText type="body" variant="subtle">
+              {emptyStateMessage}
+            </ThemedText>
           </View>
         </AnimatedSection>
       );
@@ -186,11 +188,6 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.LARGE,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emptyText: {
-    textAlign: 'center',
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
 });
 

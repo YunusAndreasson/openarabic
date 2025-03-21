@@ -77,7 +77,7 @@ const CategoryInfoCard = React.memo(
         iconBgColor={info.bgColor}
         hideTitle={hideTitle}
         shadowSize="small"
-        animated={false}
+        includePressAnimation={false}
         onPress={onPress}
       />
     );

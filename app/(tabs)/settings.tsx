@@ -186,10 +186,14 @@ export default function SettingsScreen() {
         <ThemedView style={styles.container}>
           <PageHeader title="Settings" />
           <View style={styles.authContainer}>
-            <ThemedText type="title" style={styles.welcomeTitle}>
+            <ThemedText type="heading2" weight="600" align="center">
               Welcome
             </ThemedText>
-            <ThemedText style={styles.subtitle}>Sign in to continue</ThemedText>
+            <View style={styles.subtitleContainer}>
+              <ThemedText type="body" align="center">
+                Sign in to continue
+              </ThemedText>
+            </View>
             <Auth />
           </View>
         </ThemedView>
@@ -217,11 +221,17 @@ export default function SettingsScreen() {
         >
           {/* Preferences Section */}
           <View style={styles.settingsWrapper}>
-            <BaseCard style={styles.settingsContainer} shadowSize="small" animated={false}>
+            <BaseCard
+              style={styles.settingsContainer}
+              shadowSize="small"
+              includePressAnimation={false}
+            >
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>Dark Mode</ThemedText>
+                  <View style={styles.settingLabelTextContainer}>
+                    <ThemedText type="body">Dark Mode</ThemedText>
+                  </View>
                 </View>
                 <ThemeToggle />
               </View>
@@ -229,7 +239,9 @@ export default function SettingsScreen() {
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>English Translation</ThemedText>
+                  <View style={styles.settingLabelTextContainer}>
+                    <ThemedText type="body">English Translation</ThemedText>
+                  </View>
                 </View>
                 <Toggle
                   value={settings.showEnglish}
@@ -240,12 +252,16 @@ export default function SettingsScreen() {
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="text" size={20} color={colors.tabIconDefault} />
-                  <ThemedText style={styles.settingLabel}>Text Size</ThemedText>
+                  <View style={styles.settingLabelTextContainer}>
+                    <ThemedText type="body">Text Size</ThemedText>
+                  </View>
                 </View>
                 <View style={styles.sliderContainer}>
                   <ThemedText
-                    style={[styles.scaleText, { color: colors.tabIconDefault }]}
-                    skipDefaultColor
+                    type="caption"
+                    variant="secondary"
+                    align="right"
+                    style={styles.scaleText}
                   >
                     {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
@@ -261,26 +277,35 @@ export default function SettingsScreen() {
               </View>
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.previewContainer}>
-                <ThemedText style={styles.previewLabel}>Preview</ThemedText>
+                <View style={styles.previewLabelContainer}>
+                  <ThemedText type="caption" variant="secondary">
+                    Preview
+                  </ThemedText>
+                </View>
                 <View style={styles.previewWrapper}>
                   <View style={styles.previewContent}>
                     <ThemedText
-                      style={[styles.arabicPreviewText, previewTextStyles.arabic]}
+                      type="arabic"
+                      arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale}
+                      align="right"
                       skipDefaultColor
+                      colorName="arabicText"
+                      style={styles.arabicPreviewText}
                     >
                       مرحباً بك في اللغة العربية
                     </ThemedText>
                     {settings.showEnglish ? (
                       <ThemedText
-                        style={[styles.englishPreviewText, previewTextStyles.english]}
+                        type="body"
                         skipDefaultColor
+                        colorName="text"
+                        align="left"
+                        style={[styles.englishPreviewText, { opacity: LAYOUT.OPACITY.MEDIUM_HIGH }]}
                       >
                         Welcome to the Arabic language
                       </ThemedText>
                     ) : (
-                      <ThemedText
-                        style={[styles.englishPreviewText, previewTextStyles.hiddenEnglish]}
-                      >
+                      <ThemedText type="body" style={[styles.englishPreviewText, { opacity: 0 }]}>
                         Welcome to the Arabic language
                       </ThemedText>
                     )}
@@ -292,7 +317,11 @@ export default function SettingsScreen() {
 
           {/* Connect Section */}
           <View style={styles.connectWrapper}>
-            <BaseCard style={styles.connectContainer} shadowSize="small" animated={false}>
+            <BaseCard
+              style={styles.connectContainer}
+              shadowSize="small"
+              includePressAnimation={false}
+            >
               <ThemedButton
                 variant="outlined"
                 title="Twitter"
@@ -317,7 +346,11 @@ export default function SettingsScreen() {
 
           {/* Support & Account Section */}
           <View style={styles.actionsWrapper}>
-            <BaseCard style={styles.actionsContainer} shadowSize="small" animated={false}>
+            <BaseCard
+              style={styles.actionsContainer}
+              shadowSize="small"
+              includePressAnimation={false}
+            >
               <ThemedButton
                 variant="outlined"
                 title="Support"
@@ -359,16 +392,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  welcomeTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+  subtitleContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
   },
   settingsWrapper: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -387,9 +412,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  settingLabel: {
+  settingLabelTextContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
   },
   divider: {
     height: LAYOUT.BORDER.WIDTH.THIN,
@@ -406,12 +430,13 @@ const styles = StyleSheet.create({
   },
   scaleText: {
     width: 45,
-    textAlign: 'right',
     marginRight: LAYOUT.SPACING.SMALL,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   previewContainer: {
     padding: LAYOUT.SPACING.SMALL,
+  },
+  previewLabelContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   previewWrapper: {
     height: 100,
@@ -422,20 +447,12 @@ const styles = StyleSheet.create({
     width: '100%',
     top: 0,
   },
-  previewLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
   arabicPreviewText: {
-    textAlign: 'right',
     marginBottom: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.TINY,
     flexShrink: 0,
   },
   englishPreviewText: {
-    textAlign: 'left',
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
     paddingVertical: LAYOUT.SPACING.TINY,
     flexShrink: 0,
   },

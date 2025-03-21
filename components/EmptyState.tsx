@@ -12,8 +12,16 @@ const EmptyState = React.memo(
   ({ title, message, buttonTitle, buttonIcon, onButtonPress }: EmptyStateProps) => {
     return (
       <View style={styles.container}>
-        <ThemedText style={styles.title}>{title}</ThemedText>
-        <ThemedText style={styles.message}>{message}</ThemedText>
+        <View style={styles.titleContainer}>
+          <ThemedText type="heading2" align="center">
+            {title}
+          </ThemedText>
+        </View>
+        <View style={styles.messageContainer}>
+          <ThemedText type="body" variant="subtle" align="center">
+            {message}
+          </ThemedText>
+        </View>
 
         {buttonTitle && onButtonPress && (
           <ThemedButton title={buttonTitle} icon={buttonIcon} onPress={onButtonPress} />
@@ -30,17 +38,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
   },
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  message: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
+  messageContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
-    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });
 

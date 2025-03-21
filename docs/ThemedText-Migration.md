@@ -37,7 +37,7 @@ Use ThemedText:
 import { ThemedText } from '@/components/ThemedText';
 
 function MyComponent() {
-  return <ThemedText>Hello World</ThemedText>;
+  return <ThemedText type="body">Hello World</ThemedText>;
 }
 ```
 

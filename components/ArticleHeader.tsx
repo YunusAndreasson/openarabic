@@ -20,11 +20,8 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.XLARGE,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  articleTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: '700',
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   articleMetaContainer: {
     flexDirection: 'row',
@@ -35,11 +32,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  authorName: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '500',
-    opacity: LAYOUT.OPACITY.HIGH,
   },
   articleInfoContainer: {
     flexDirection: 'row',
@@ -53,16 +45,13 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  articleInfoText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginLeft: LAYOUT.SPACING.TINY,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  summaryText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  infoIcon: {
     opacity: LAYOUT.OPACITY.HIGH,
-    fontStyle: 'italic',
+  },
+  infoTextContainer: {
+    marginLeft: LAYOUT.SPACING.TINY,
+  },
+  summaryContainer: {
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },
 });
@@ -80,14 +69,17 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
 
   return (
     <View style={styles.articleHeaderContainer}>
-      <ThemedText style={styles.articleTitle} accessibilityRole="header">
-        {article.title}
-      </ThemedText>
+      <View style={styles.titleContainer}>
+        <ThemedText type="heading1" accessibilityRole="header">
+          {article.title}
+        </ThemedText>
+      </View>
 
       <View style={styles.articleMetaContainer}>
         <View style={styles.authorContainer}>
           <ThemedText
-            style={styles.authorName}
+            type="bodyBold"
+            variant="secondary"
             accessibilityLabel={`Written by ${article.author?.name || 'Unknown Author'}`}
           >
             {article.author?.name || 'Unknown Author'}
@@ -101,15 +93,18 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             name="folder-outline"
             size={16}
             color={colors.text}
-            style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            style={styles.infoIcon}
             accessibilityLabel="Category"
           />
-          <ThemedText
-            style={styles.articleInfoText}
-            accessibilityLabel={`Category: ${categoryName}`}
-          >
-            {categoryName}
-          </ThemedText>
+          <View style={styles.infoTextContainer}>
+            <ThemedText
+              type="caption"
+              variant="secondary"
+              accessibilityLabel={`Category: ${categoryName}`}
+            >
+              {categoryName}
+            </ThemedText>
+          </View>
         </View>
 
         <View style={styles.articleInfoItem}>
@@ -117,15 +112,18 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             name="time-outline"
             size={16}
             color={colors.text}
-            style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            style={styles.infoIcon}
             accessibilityLabel="Reading time"
           />
-          <ThemedText
-            style={styles.articleInfoText}
-            accessibilityLabel={`Reading time: ${readingTime} minutes`}
-          >
-            {readingTime} min read
-          </ThemedText>
+          <View style={styles.infoTextContainer}>
+            <ThemedText
+              type="caption"
+              variant="secondary"
+              accessibilityLabel={`Reading time: ${readingTime} minutes`}
+            >
+              {readingTime} min read
+            </ThemedText>
+          </View>
         </View>
 
         <View style={styles.articleInfoItem}>
@@ -133,25 +131,31 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             name="stats-chart-outline"
             size={16}
             color={colors.text}
-            style={{ opacity: LAYOUT.OPACITY.HIGH }}
+            style={styles.infoIcon}
             accessibilityLabel="Difficulty level"
           />
-          <ThemedText
-            style={styles.articleInfoText}
-            accessibilityLabel={`Difficulty level: ${article.difficulty_level}`}
-          >
-            Level {article.difficulty_level}
-          </ThemedText>
+          <View style={styles.infoTextContainer}>
+            <ThemedText
+              type="caption"
+              variant="secondary"
+              accessibilityLabel={`Difficulty level: ${article.difficulty_level}`}
+            >
+              Level {article.difficulty_level}
+            </ThemedText>
+          </View>
         </View>
       </View>
 
       {article.summary && (
-        <ThemedText
-          style={styles.summaryText}
-          accessibilityLabel={`Article summary: ${article.summary}`}
-        >
-          {article.summary}
-        </ThemedText>
+        <View style={styles.summaryContainer}>
+          <ThemedText
+            type="body"
+            variant="subtle"
+            accessibilityLabel={`Article summary: ${article.summary}`}
+          >
+            {article.summary}
+          </ThemedText>
+        </View>
       )}
     </View>
   );

@@ -14,6 +14,18 @@ interface WordListItemProps {
   masteryScore?: number; // Optional mastery score from 0-100
 }
 
+// Define variants for ThemedText
+type TextVariant =
+  | 'error'
+  | 'warning'
+  | 'success'
+  | 'info'
+  | 'primary'
+  | 'secondary'
+  | 'subtle'
+  | 'disabled'
+  | undefined;
+
 // Memoize the component to prevent unnecessary re-renders
 const WordListItem = React.memo(function WordListItem({
   word,
@@ -39,18 +51,21 @@ const WordListItem = React.memo(function WordListItem({
         color: colors.success as any,
         iconName: 'star' as any,
         label: 'Mastered',
+        variant: 'success' as TextVariant,
       };
     } else if (masteryScore >= 40) {
       return {
         color: colors.warning as any,
         iconName: 'star-half-outline' as any,
         label: 'Learning',
+        variant: 'warning' as TextVariant,
       };
     } else {
       return {
         color: colors.error as any,
         iconName: 'star-outline' as any,
         label: 'New',
+        variant: 'error' as TextVariant,
       };
     }
   }, [masteryScore, colors]);
@@ -65,6 +80,7 @@ const WordListItem = React.memo(function WordListItem({
         text: 'New',
         color: colors.text,
         icon: 'add-circle-outline' as const,
+        variant: undefined as TextVariant,
       };
 
     if (days === 1)
@@ -72,6 +88,7 @@ const WordListItem = React.memo(function WordListItem({
         text: 'Due today',
         color: colors.warning as any,
         icon: 'time' as const,
+        variant: 'warning' as TextVariant,
       };
 
     if (days === 2)
@@ -79,6 +96,7 @@ const WordListItem = React.memo(function WordListItem({
         text: 'Due tomorrow',
         color: colors.warning as any,
         icon: 'calendar-outline' as const,
+        variant: 'warning' as TextVariant,
       };
 
     if (days <= 7)
@@ -86,6 +104,7 @@ const WordListItem = React.memo(function WordListItem({
         text: `Due in ${days} days`,
         color: colors.text,
         icon: 'calendar-outline' as const,
+        variant: undefined as TextVariant,
       };
 
     // For longer intervals, use weeks
@@ -97,6 +116,7 @@ const WordListItem = React.memo(function WordListItem({
         text: 'Due in 1 week',
         color: colors.text,
         icon: 'calendar-outline' as const,
+        variant: undefined as TextVariant,
       };
 
     if (remainingDays === 0)
@@ -104,18 +124,21 @@ const WordListItem = React.memo(function WordListItem({
         text: `Due in ${weeks} weeks`,
         color: colors.text,
         icon: 'calendar-outline' as const,
+        variant: undefined as TextVariant,
       };
 
     return {
       text: `Due in ${weeks}w ${remainingDays}d`,
       color: colors.text,
       icon: 'calendar-outline' as const,
+      variant: undefined as TextVariant,
     };
   }, [word.interval_days, colors]);
 
   // Get streak information
   const streakCount = word.success_streak || 0;
   const streakColor = streakCount > 0 ? (colors.warning as any) : colors.text;
+  const streakVariant: TextVariant = streakCount > 0 ? 'warning' : undefined;
 
   // Return null early if there's no word data, after all hooks are called
   if (!word_form) return null;
@@ -142,9 +165,11 @@ const WordListItem = React.memo(function WordListItem({
             <View style={styles.textContainer}>
               {/* English translation */}
               <ThemedText
-                style={[styles.englishText, { color: colors.englishText }]}
-                skipDefaultColor
+                type="body"
+                variant="secondary"
+                weight="500"
                 numberOfLines={2}
+                style={styles.englishText}
               >
                 {english || 'No translation available'}
               </ThemedText>
@@ -152,9 +177,18 @@ const WordListItem = React.memo(function WordListItem({
           </View>
 
           {/* Arabic text on the right */}
-          <ThemedText style={[styles.arabicText, { color: colors.arabicText }]} skipDefaultColor>
-            {word_form}
-          </ThemedText>
+          <View style={styles.arabicContainer}>
+            <ThemedText
+              type="arabic"
+              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
+              weight="600"
+              align="right"
+              skipDefaultColor
+              colorName="arabicText"
+            >
+              {word_form}
+            </ThemedText>
+          </View>
         </View>
 
         {/* Status bar at bottom */}
@@ -168,7 +202,12 @@ const WordListItem = React.memo(function WordListItem({
                 color={reviewInfo.color}
                 style={styles.statusIcon}
               />
-              <ThemedText style={[styles.statusText, { color: reviewInfo.color }]} skipDefaultColor>
+              <ThemedText
+                type="caption"
+                variant={reviewInfo.variant}
+                weight="500"
+                style={styles.statusTextBase}
+              >
                 {reviewInfo.text}
               </ThemedText>
             </View>
@@ -184,8 +223,10 @@ const WordListItem = React.memo(function WordListItem({
                 style={styles.statusIcon}
               />
               <ThemedText
-                style={[styles.statusText, { color: masteryInfo.color }]}
-                skipDefaultColor
+                type="caption"
+                variant={masteryInfo.variant}
+                weight="500"
+                style={styles.statusTextBase}
               >
                 {masteryInfo.label}
               </ThemedText>
@@ -196,8 +237,10 @@ const WordListItem = React.memo(function WordListItem({
           <View style={styles.statusItem}>
             <Ionicons name="flame" size={14} color={streakColor} style={styles.statusIcon} />
             <ThemedText
-              style={[styles.statusText, streakCount > 0 ? { color: streakColor } : null]}
-              skipDefaultColor={streakCount > 0}
+              type="caption"
+              variant={streakVariant}
+              weight="500"
+              style={styles.statusTextBase}
             >
               {streakCount} streak
             </ThemedText>
@@ -234,16 +277,11 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-  arabicText: {
-    ...getArabicTextStyle(LAYOUT.TYPOGRAPHY.SCALE.HUGE, {
-      textAlign: 'right',
-      fontWeight: '600',
-    }),
+  arabicContainer: {
     flex: 0.5,
   },
   englishText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
-    fontWeight: '500',
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   statusBar: {
@@ -263,9 +301,8 @@ const styles = StyleSheet.create({
   statusIcon: {
     marginRight: 3,
   },
-  statusText: {
+  statusTextBase: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
-    fontWeight: '500',
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
 });

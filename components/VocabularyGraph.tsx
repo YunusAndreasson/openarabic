@@ -141,7 +141,9 @@ export const VocabularyGraph = React.memo(
       () => (
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <ThemedText style={styles.title}>{title}</ThemedText>
+            <ThemedText type="heading3" variant="primary">
+              {title}
+            </ThemedText>
           </View>
         </View>
       ),
@@ -193,7 +195,7 @@ export const VocabularyGraph = React.memo(
     const loadingComponent = (
       <View style={[graphContainerStyle, styles.loadingContainer]}>
         <LoadingContainer size="small" />
-        <ThemedText style={styles.loadingText}>
+        <ThemedText type="body" variant="secondary">
           {data.length === 0 ? 'No data available' : 'Loading data...'}
         </ThemedText>
       </View>
@@ -204,7 +206,6 @@ export const VocabularyGraph = React.memo(
         style={styles.card}
         isLoading={isLoading || data.length === 0}
         loadingComponent={loadingComponent}
-        animated={true}
         includePressAnimation={false}
         shadowSize="medium"
       >
@@ -281,8 +282,12 @@ export const VocabularyGraph = React.memo(
           <View style={styles.xAxisLabels}>
             {data.map((item, index) => (
               <View key={index} style={styles.labelContainer}>
-                <ThemedText style={styles.labelText}>{item.date}</ThemedText>
-                <ThemedText style={styles.valueText}>{item.wordsLearned}</ThemedText>
+                <ThemedText type="caption" variant="secondary">
+                  {item.date}
+                </ThemedText>
+                <ThemedText type="label" variant="primary">
+                  {item.wordsLearned}
+                </ThemedText>
               </View>
             ))}
           </View>
@@ -312,10 +317,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-  },
   graphContainer: {
     width: '100%',
   },
@@ -337,23 +338,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  labelText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: LAYOUT.OPACITY.DISABLED,
-    marginBottom: 2,
-  },
-  valueText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '600',
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
   loadingContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  loadingText: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    opacity: 0.7,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
 });

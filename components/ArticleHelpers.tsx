@@ -20,7 +20,7 @@ export const TimeAgo = React.memo(
     return (
       <View style={styles.timeAgoContainer}>
         <Ionicons name="time-outline" size={14} color={colors.tint} style={styles.timeIcon} />
-        <ThemedText style={[styles.timeAgoText, { color: colors.tint }]} skipDefaultColor>
+        <ThemedText type="caption" weight="500" colorName="tint" skipDefaultColor>
           {timeAgoText}
         </ThemedText>
       </View>
@@ -69,7 +69,13 @@ export const DifficultyIndicator = React.memo(
             />
           ))}
         </View>
-        {!hideLabel && <ThemedText style={styles.difficultyText}>{difficultyLabel}</ThemedText>}
+        {!hideLabel && (
+          <View style={styles.difficultyTextContainer}>
+            <ThemedText type="caption" variant="subtle" skipDefaultColor>
+              {difficultyLabel}
+            </ThemedText>
+          </View>
+        )}
       </View>
     );
   }
@@ -81,10 +87,8 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
-  difficultyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.85,
+  difficultyTextContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
-    opacity: LAYOUT.OPACITY.PRESSED,
   },
   starsContainer: {
     flexDirection: 'row',
@@ -102,9 +106,5 @@ const styles = StyleSheet.create({
   },
   timeIcon: {
     marginRight: LAYOUT.SPACING.TINY,
-  },
-  timeAgoText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
   },
 });

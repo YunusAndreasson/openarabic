@@ -84,11 +84,11 @@ export function ThemedInput({
         )}
       </View>
       {(error || hint) && (
-        <ThemedText
-          style={[styles.helperText, { color: error ? colors.tabIconSelected : colors.icon }]}
-        >
-          {error || hint}
-        </ThemedText>
+        <View style={styles.helperTextContainer}>
+          <ThemedText type="caption" variant={error ? 'error' : 'secondary'}>
+            {error || hint}
+          </ThemedText>
+        </View>
       )}
     </View>
   );
@@ -128,8 +128,7 @@ const styles = StyleSheet.create({
     left: LAYOUT.SPACING.MEDIUM,
     right: LAYOUT.SPACING.MEDIUM,
   },
-  helperText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  helperTextContainer: {
     marginTop: LAYOUT.SPACING.TINY,
     marginLeft: LAYOUT.SPACING.TINY,
   },

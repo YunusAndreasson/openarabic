@@ -301,6 +301,16 @@ export interface CompactArticleCardProps extends BaseStyleProps, BaseOptionalPre
 export interface BaseCardProps extends BaseAnimatedStyleProps {
   /** Whether the card is in a loading state */
   isLoading?: boolean;
+  /** Children to render inside the card */
+  children?: React.ReactNode;
+  /** Optional callback when card is pressed */
+  onPress?: () => void;
+  /** Shadow size for the card */
+  shadowSize?: 'small' | 'medium' | 'large';
+  /** Whether to include press animation */
+  includePressAnimation?: boolean;
+  /** Custom loading component to use */
+  loadingComponent?: React.ReactNode;
 }
 
 /**
@@ -562,20 +572,28 @@ export interface ThemedModalProps extends BaseChildrenProps {
 }
 
 /**
- * AnimatedThemedText combines ThemedText with animation capabilities.
+ * AnimatedText combines ThemedText with animation capabilities.
  * It provides a convenient way to create text that animates on changes
- * while maintaining the theming system.
+ * while maintaining the theming system and properly separating animation
+ * styling from typography styling.
  */
-export interface AnimatedThemedTextProps extends Omit<ThemedTextProps, 'style'> {
+export interface AnimatedTextProps extends ThemedTextProps {
   /** Text content to display */
   children: React.ReactNode;
   /** Style for the text */
-  style?: StyleProp<TextStyle> | StyleProp<AnimatedStyle<StyleProp<TextStyle>>>;
+  style?: StyleProp<TextStyle>;
   /** Whether to animate when the content changes */
   animate?: boolean;
   /** Animation magnitude (how much to scale) */
   magnitude?: number;
+  /** Style for the animated container view */
+  animatedViewStyle?: StyleProp<AnimatedStyle<StyleProp<any>>>;
 }
+
+/**
+ * Include a type alias for backward compatibility
+ */
+export type AnimatedThemedTextProps = AnimatedTextProps;
 
 /**
  * Props for the ProgressBar component

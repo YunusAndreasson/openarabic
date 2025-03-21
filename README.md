@@ -156,3 +156,71 @@ npm run knip:types
 ```
 
 For detailed information about using Knip in this project, see [KNIP.md](./KNIP.md).
+
+## Typography System
+
+The application uses a consistent typography system based on the `ThemedText` component. This component provides a unified way to style text according to its semantic meaning and ensures consistency across the app.
+
+### ThemedText Refactoring
+
+The codebase has been refactored to use the `ThemedText` component with type and variant props instead of direct styles. This improves:
+
+1. **Consistency** - All text elements now use the same typography system
+2. **Maintainability** - Typography can be updated in a central location
+3. **Semantic meaning** - Text is styled according to its purpose, not just appearance
+4. **Type safety** - Better TypeScript support for text components
+
+### Documentation
+
+- [Component Usage Guidelines](components/README.md) - How to use `ThemedText` and `AnimatedText` components properly
+- [ThemedText Refactoring Summary](docs/ThemedText-Refactoring-Summary.md) - Summary of the refactoring process and challenges
+
+### Key Components
+
+#### ThemedText
+
+The primary component for rendering text with proper styling:
+
+```jsx
+<ThemedText type="heading1" variant="primary">
+  Page Title
+</ThemedText>
+```
+
+#### AnimatedText
+
+For text that needs to be animated:
+
+```jsx
+<AnimatedText type="body" variant="secondary" animatedViewStyle={fadeAnimation}>
+  This text animates correctly
+</AnimatedText>
+```
+
+## Migration from React Native Text
+
+To ensure consistent typography throughout the application, we've implemented a migration plan to replace all instances of React Native's native `Text` component with our `ThemedText` component.
+
+### Current Status
+
+- ✅ All application components now use `ThemedText` instead of native `Text`
+- ✅ Documentation examples updated to use `ThemedText`
+- ⚠️ Test files still use native `Text` and need to be updated
+
+### Migration Tools
+
+We've created several tools to help with the migration:
+
+1. **Migration Script** (`scripts/migrate-test-files.js`) - Automates the process of updating test files
+2. **ESLint Rule** (`eslint-rules/no-direct-text.js`) - Prevents the use of the native `Text` component
+3. **Migration Guidelines** (`docs/ThemedText-TestUpdates.md`) - Provides guidance for updating tests
+
+### Next Steps
+
+To complete the migration:
+
+1. Run the migration script to update test files
+2. Configure the ESLint rule to enforce usage of `ThemedText`
+3. Manually review and fix any complex cases the script couldn't handle
+
+For more details, see [ThemedText Migration Plan](docs/ThemedText-Migration.md).

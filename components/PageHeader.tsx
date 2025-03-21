@@ -69,9 +69,9 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
               <Ionicons name="chevron-back" size={24} color={colors.tint} />
             </Pressable>
           )}
-          <ThemedText style={[styles.title, onBackPress && styles.titleWithBack]}>
-            {title}
-          </ThemedText>
+          <View style={[styles.titleContainer, onBackPress && styles.titleWithBack]}>
+            <ThemedText type="heading3">{title}</ThemedText>
+          </View>
         </View>
       </BlurView>
     </View>
@@ -97,9 +97,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
+  titleContainer: {
+    flexShrink: 1,
   },
   titleWithBack: {
     marginLeft: LAYOUT.SPACING.SMALL,

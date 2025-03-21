@@ -41,9 +41,10 @@ The `BaseCard` component serves as the foundation for all card components in the
 
 ```tsx
 import BaseCard from './components/BaseCard';
+import { ThemedText } from './components/ThemedText';
 
 <BaseCard>
-  <Text>Card Content</Text>
+  <ThemedText>Card Content</ThemedText>
 </BaseCard>;
 ```
 
@@ -51,7 +52,7 @@ import BaseCard from './components/BaseCard';
 
 ```tsx
 <BaseCard onPress={() => handlePress()}>
-  <Text>Tap Me</Text>
+  <ThemedText>Tap Me</ThemedText>
 </BaseCard>
 ```
 
@@ -64,7 +65,7 @@ import BaseCard from './components/BaseCard';
     margin: 10,
   }}
 >
-  <Text>Custom Styled Card</Text>
+  <ThemedText>Custom Styled Card</ThemedText>
 </BaseCard>
 ```
 
@@ -73,7 +74,7 @@ import BaseCard from './components/BaseCard';
 ```tsx
 <BaseCard isLoading={true}>
   {/* This content won't be shown while loading */}
-  <Text>This won't be visible during loading</Text>
+  <ThemedText>This won't be visible during loading</ThemedText>
 </BaseCard>
 ```
 
@@ -81,7 +82,7 @@ import BaseCard from './components/BaseCard';
 
 ```tsx
 <BaseCard isLoading={true} loadingComponent={<CustomLoader />}>
-  <Text>Card Content</Text>
+  <ThemedText>Card Content</ThemedText>
 </BaseCard>
 ```
 
@@ -192,13 +193,14 @@ When creating new card components, extend BaseCard for consistent styling:
 
 ```tsx
 import BaseCard from './components/BaseCard';
+import { ThemedText } from './components/ThemedText';
 
 const MyCustomCard = ({ title, description, onPress }) => {
   return (
     <BaseCard onPress={onPress}>
       <View style={styles.content}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <ThemedText type="heading2">{title}</ThemedText>
+        <ThemedText type="body">{description}</ThemedText>
       </View>
     </BaseCard>
   );

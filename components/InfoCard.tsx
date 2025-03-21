@@ -91,9 +91,9 @@ interface InfoCardProps {
   shadowSize?: 'small' | 'medium' | 'large';
 
   /**
-   * Whether to animate the card
+   * Whether to include press animation
    */
-  animated?: boolean;
+  includePressAnimation?: boolean;
 }
 
 /**
@@ -117,7 +117,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
   children,
   hideTitle = false,
   shadowSize = 'small',
-  animated = false,
+  includePressAnimation = false,
 }) => {
   const colors = useColors();
 
@@ -146,7 +146,9 @@ const InfoCard: React.FC<InfoCardProps> = ({
     return (
       <View style={styles.headerRow}>
         {layoutMode !== 'row-reversed' && renderIcon()}
-        <ThemedText style={[styles.title, titleStyle]}>{title}</ThemedText>
+        <View style={[styles.titleWrapper, titleStyle && { marginLeft: LAYOUT.SPACING.SMALL }]}>
+          <ThemedText type="heading3">{title}</ThemedText>
+        </View>
         {layoutMode === 'row-reversed' && renderIcon()}
       </View>
     );
@@ -178,16 +180,26 @@ const InfoCard: React.FC<InfoCardProps> = ({
           ]}
         >
           {/* Show value for stat cards */}
-          {isStatCard && <ThemedText style={[styles.value, valueStyle]}>{value}</ThemedText>}
+          {isStatCard && (
+            <View style={styles.valueWrapper}>
+              <ThemedText type="heading2">{value}</ThemedText>
+            </View>
+          )}
 
           {/* Show title here if hideTitle is true (for column layout) */}
           {hideTitle && title && layoutMode === 'column' && (
-            <ThemedText style={[styles.contentTitle, titleStyle]}>{title}</ThemedText>
+            <View style={styles.contentTitleWrapper}>
+              <ThemedText type="heading3">{title}</ThemedText>
+            </View>
           )}
 
           {/* Description text */}
           {description && (
-            <ThemedText style={[styles.description, descriptionStyle]}>{description}</ThemedText>
+            <View style={styles.descriptionWrapper}>
+              <ThemedText type="body" variant="subtle">
+                {description}
+              </ThemedText>
+            </View>
           )}
         </View>
 
@@ -202,7 +214,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
       onPress={onPress}
       style={[styles.container, style]}
       shadowSize={shadowSize}
-      animated={animated}
+      includePressAnimation={includePressAnimation}
     >
       {renderTitle()}
       {renderContent()}
@@ -241,25 +253,17 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
+  titleWrapper: {
     flex: 1,
   },
-  contentTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  value: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
+  valueWrapper: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  description: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  contentTitleWrapper: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  descriptionWrapper: {
+    // No additional styles needed for description
   },
 });
 

@@ -245,13 +245,10 @@ const BottomControls = React.memo(
 
     return (
       <View style={styles.bottomControlsContainer}>
-        <BaseCard
-          style={styles.controlsCard}
-          shadowSize="medium"
-          animated={true}
-          includePressAnimation={false}
-        >
-          <ThemedText style={styles.controlsTitle}>AUDIO CONTROLS</ThemedText>
+        <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
+          <ThemedText type="overline" variant="secondary">
+            AUDIO CONTROLS
+          </ThemedText>
           <View style={styles.actionButtonsRow}>
             <View style={{ width: '48%' }}>
               <ThemedButton

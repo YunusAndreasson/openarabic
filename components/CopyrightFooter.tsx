@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { ThemedText } from './ThemedText';
 import Animated from 'react-native-reanimated';
@@ -14,8 +14,6 @@ export const CopyrightFooter = React.memo(() => {
     // Simple calculation for Hijri year (approximate)
     const today = new Date();
     const gregorianYear = today.getFullYear();
-    const gregorianMonth = today.getMonth();
-    const gregorianDay = today.getDate();
 
     // Formula to approximate Hijri year
     // (Gregorian year - 622) * 33/32
@@ -31,11 +29,15 @@ export const CopyrightFooter = React.memo(() => {
     startAnimation();
   }, [startAnimation]);
 
+  const copyrightText = `© ${new Date().getFullYear()} OpenArabic • ${hijriYear}هـ`;
+
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
-      <ThemedText style={styles.copyrightText}>
-        © {new Date().getFullYear()} OpenArabic • {hijriYear}هـ
-      </ThemedText>
+      <View style={styles.textContainer}>
+        <ThemedText type="caption" variant="subtle" align="center">
+          {copyrightText}
+        </ThemedText>
+      </View>
     </Animated.View>
   );
 });
@@ -48,11 +50,8 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  copyrightText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED - 0.1,
-    textAlign: 'center',
-    fontWeight: '400',
-    letterSpacing: 0.3,
+  textContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
 });

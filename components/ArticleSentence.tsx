@@ -2,8 +2,6 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import type { Tables } from '@/types/database.types';
-import { SentenceWord } from '@/types/vocabulary.types';
 import { ArticleSentenceProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({
@@ -60,7 +58,22 @@ export const ArticleSentence = React.memo(
       <View style={[styles.sentenceContainer, containerStyle]}>
         <View style={styles.arabicSentence}>{words.map(renderWord)}</View>
         {settings.showEnglish && (
-          <ThemedText style={[styles.englishText, englishTextStyle, textColor]} skipDefaultColor>
+          <ThemedText
+            type="body"
+            variant="secondary"
+            align="left"
+            style={{
+              writingDirection: 'ltr',
+              fontFamily: 'Philosopher',
+              paddingLeft: LAYOUT.SPACING.SMALL,
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+              lineHeight: Math.round(
+                LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                  LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                  settings.fontScale
+              ),
+            }}
+          >
             {sentence.english}
           </ThemedText>
         )}

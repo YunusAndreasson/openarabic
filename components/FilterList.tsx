@@ -31,8 +31,6 @@ function FilterList<T extends FilterItem>({
     [colors.textOverlay]
   );
 
-  const tintTextStyle = useMemo(() => ({ color: colors.tint }), [colors.tint]);
-
   // Start animation when component mounts
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -84,7 +82,7 @@ function FilterList<T extends FilterItem>({
             accessibilityLabel={`Clear ${title.toLowerCase()} filter`}
             accessibilityRole="button"
           >
-            <ThemedText style={[styles.clearButtonText, tintTextStyle]} skipDefaultColor>
+            <ThemedText type="bodyBold" colorName="tint" skipDefaultColor>
               Clear Filter
             </ThemedText>
           </Pressable>
@@ -125,10 +123,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL / 2,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-  },
-  clearButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
   },
 });
 

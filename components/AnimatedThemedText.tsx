@@ -1,41 +1,57 @@
-import React, { useEffect } from 'react';
-import { StyleProp, TextStyle } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { Animated as RNAnimated, View } from 'react-native';
 import { ThemedText } from './ThemedText';
-import Animated from 'react-native-reanimated';
+import { ThemedTextProps } from '@/types/ui.types';
+import { StyleProp, TextStyle } from 'react-native';
+import { AnimatedStyle } from 'react-native-reanimated';
 import { usePulseAnimation } from '@/hooks/animations';
-import { AnimatedThemedTextProps } from '@/types/ui.types';
 
 /**
- * AnimatedThemedText combines ThemedText with animation capabilities.
+ * AnimatedText combines ThemedText with animation capabilities.
  * It provides a convenient way to create text that animates on changes
  * while maintaining the theming system.
+ *
+ * NOTE: This is the recommended way to animate text content as it properly
+ * separates animation styling from typography styling.
  */
-export function AnimatedThemedText({
+interface AnimatedTextProps extends ThemedTextProps {
+  /** Whether to animate when the content changes */
+  animate?: boolean;
+  /** Animation magnitude (how much to scale) */
+  magnitude?: number;
+  /** Style for the animated container view */
+  animatedViewStyle?: StyleProp<AnimatedStyle<any>>;
+}
+
+export const AnimatedText: React.FC<AnimatedTextProps> = ({
   children,
   style,
   animate = false,
-  magnitude = 1.05,
+  magnitude = 1.2,
+  animatedViewStyle,
   ...rest
-}: AnimatedThemedTextProps) {
-  const { animatedStyle, pulse } = usePulseAnimation({
+}) => {
+  const { animatedStyle, startAnimation } = usePulseAnimation({
     style: 'standard',
     pulseMagnitude: magnitude,
   });
 
-  // Trigger animation when children or animate prop changes
   useEffect(() => {
     if (animate) {
-      pulse();
+      startAnimation();
     }
-  }, [children, animate, pulse]);
+  }, [children, animate, startAnimation]);
 
   return (
-    <Animated.View style={animate ? animatedStyle : undefined}>
-      <ThemedText style={style} {...rest}>
+    <RNAnimated.View style={[animatedStyle, animatedViewStyle]}>
+      <ThemedText {...rest} style={style}>
         {children}
       </ThemedText>
-    </Animated.View>
+    </RNAnimated.View>
   );
-}
+};
 
-export default React.memo(AnimatedThemedText);
+// For backward compatibility
+export const AnimatedThemedText = AnimatedText;
+
+export default AnimatedText;

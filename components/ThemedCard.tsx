@@ -9,7 +9,7 @@ import Pill from './Pill';
 import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
-import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui.types';
+import { ThemedCardProps } from '@/types/ui.types';
 import { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
 
 /**
@@ -115,50 +115,48 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             alt={`Image for ${title}`}
           />
 
-          <View style={styles.imageOverlayContainer}>
-            <LinearGradient
-              colors={createCardGradient()}
-              style={[
-                styles.gradient,
-                Platform.OS === 'ios' && !isDarkMode && styles.iosLightModeGradient,
-              ]}
-              locations={Platform.OS === 'ios' && !isDarkMode ? [0, 0.85, 0.98] : [0, 0.5, 1]}
-              start={{ x: 0.5, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-            />
-          </View>
-        </View>
-
-        {/* Render the category pill outside the imageContainer */}
-        {category && (
-          <View style={styles.pillContainer}>
-            <Pill id={category} label={category} variant="category" />
-          </View>
-        )}
-
-        <View style={styles.contentContainer}>
-          <ThemedText style={styles.title} numberOfLines={2}>
-            {title}
-          </ThemedText>
-
-          {summary && (
-            <ThemedText
-              style={[styles.summary, { color: colors.authorText }]}
-              numberOfLines={3}
-              skipDefaultColor
-            >
-              {summary}
-            </ThemedText>
+          {/* Category pill (moved inside image container) */}
+          {category && (
+            <View style={styles.pillContainer}>
+              <Pill id={category} label={category} variant="category" />
+            </View>
           )}
 
-          {author && (
-            <ThemedText
-              style={[styles.author, { color: colors.authorText }]}
-              numberOfLines={1}
-              skipDefaultColor
-            >
-              By {author}
+          {/* Gradient overlay */}
+          <LinearGradient
+            colors={createCardGradient()}
+            style={styles.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            pointerEvents="none"
+          />
+        </View>
+
+        {/* Content container */}
+        <View style={styles.contentContainer}>
+          {/* Title */}
+          <View style={styles.titleContainer}>
+            <ThemedText type="bodyBold" numberOfLines={2}>
+              {title}
             </ThemedText>
+          </View>
+
+          {/* Author */}
+          {author && (
+            <View style={styles.authorContainer}>
+              <ThemedText type="caption" variant="secondary" numberOfLines={1}>
+                By {author}
+              </ThemedText>
+            </View>
+          )}
+
+          {/* Summary */}
+          {summary && (
+            <View style={styles.summaryContainer}>
+              <ThemedText type="caption" variant="secondary" numberOfLines={3}>
+                {summary}
+              </ThemedText>
+            </View>
           )}
         </View>
       </>
@@ -195,18 +193,18 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         )}
 
         <View style={styles.contentContainer}>
-          <ThemedText style={styles.compactTitle} numberOfLines={2}>
-            {article.title}
-          </ThemedText>
+          <View style={styles.titleContainer}>
+            <ThemedText type="bodyBold" numberOfLines={2}>
+              {article.title}
+            </ThemedText>
+          </View>
 
           {article.author && (
-            <ThemedText
-              style={[styles.authorText, { color: colors.authorText }]}
-              numberOfLines={1}
-              skipDefaultColor
-            >
-              By {article.author.name}
-            </ThemedText>
+            <View style={styles.authorContainer}>
+              <ThemedText type="caption" variant="secondary" numberOfLines={1}>
+                By {article.author.name}
+              </ThemedText>
+            </View>
           )}
 
           <View style={styles.cardFooter}>
@@ -267,6 +265,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     <BaseCard
       onPress={onPress}
       style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+      includePressAnimation={true}
     >
       {renderContent()}
     </BaseCard>
@@ -317,28 +316,14 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.SMALL, // Match the top spacing of pill
     paddingBottom: LAYOUT.SPACING.SMALL, // Reduce bottom padding to match top
   },
-  title: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '700',
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  compactTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-    fontWeight: '600',
+  summaryContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  summary: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
-  author: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  authorContainer: {
     marginTop: LAYOUT.SPACING.SMALL,
-  },
-  authorText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   cardFooter: {
     flexDirection: 'row',

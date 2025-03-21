@@ -22,20 +22,28 @@ export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyState
           accessibilityLabel="Empty words list"
         />
       </View>
-      <ThemedText style={styles.emptyTitle} accessibilityRole="header">
-        Begin Words Journey
-      </ThemedText>
-      <ThemedText style={styles.emptyMessage}>No saved words</ThemedText>
-      <ThemedText style={styles.emptySubmessage}>
-        Tap words while reading to add to your study list
-      </ThemedText>
+      <View style={styles.titleContainer}>
+        <ThemedText type="heading2" accessibilityRole="header">
+          Begin Words Journey
+        </ThemedText>
+      </View>
+      <View style={styles.messageContainer}>
+        <ThemedText type="bodyBold" variant="secondary">
+          No saved words
+        </ThemedText>
+      </View>
+      <View style={styles.submessageContainer}>
+        <ThemedText type="body" variant="subtle">
+          Tap words while reading to add to your study list
+        </ThemedText>
+      </View>
       <TouchableOpacity
         style={[styles.emptyActionButton, { backgroundColor: colors.text + '10' }]}
         onPress={handleBrowseArticles}
         accessibilityLabel="Go to articles to build words"
         accessibilityRole="button"
       >
-        <ThemedText style={styles.emptyActionText}>Articles</ThemedText>
+        <ThemedText type="bodyBold">Articles</ThemedText>
         <Ionicons name="arrow-forward" size={16} color={colors.text} />
       </TouchableOpacity>
     </View>
@@ -60,24 +68,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  emptyTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
+  titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
   },
-  emptyMessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
+  messageContainer: {
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DIMMED,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  emptySubmessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
+  submessageContainer: {
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    opacity: LAYOUT.OPACITY.DISABLED,
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
   emptyActionButton: {
@@ -87,10 +86,5 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
-  },
-  emptyActionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    marginRight: LAYOUT.SPACING.SMALL,
   },
 });

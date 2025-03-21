@@ -5,43 +5,7 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { LoadingContainer } from './Loader';
 import { usePressAnimation } from '../hooks/animations/usePressAnimation';
-
-interface BaseCardProps {
-  /**
-   * Content to render inside the card
-   */
-  children: React.ReactNode;
-
-  /**
-   * Function to call when the card is pressed
-   */
-  onPress?: () => void;
-
-  /**
-   * Whether the card is in a loading state
-   */
-  isLoading?: boolean;
-
-  /**
-   * Additional styles to apply to the card
-   */
-  style?: StyleProp<ViewStyle>;
-
-  /**
-   * Shadow size to apply to the card
-   */
-  shadowSize?: 'small' | 'medium' | 'large';
-
-  /**
-   * Whether to include press animation
-   */
-  includePressAnimation?: boolean;
-
-  /**
-   * Custom loading component to use
-   */
-  loadingComponent?: React.ReactNode;
-}
+import { BaseCardProps } from '@/types/ui.types';
 
 /**
  * BaseCard is a foundational component that provides consistent styling for all card elements

@@ -64,10 +64,12 @@ const StatItem = React.memo(
           <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
             <Ionicons name={icon as any} size={20} color={iconColor} />
           </View>
-          <AnimatedThemedText style={styles.statValue} animate={animateValue}>
+          <AnimatedThemedText type="heading3" animate={animateValue}>
             {value}
           </AnimatedThemedText>
-          <ThemedText style={styles.statLabel}>{label}</ThemedText>
+          <ThemedText type="caption" variant="secondary" weight="500">
+            {label}
+          </ThemedText>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -146,12 +148,7 @@ export const VocabularyDashboard = React.memo(
     );
 
     return (
-      <BaseCard
-        style={styles.mainCard}
-        animated={true}
-        includePressAnimation={false}
-        shadowSize="medium"
-      >
+      <BaseCard style={styles.mainCard} includePressAnimation={false} shadowSize="medium">
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {statItems.map((item, index) => (

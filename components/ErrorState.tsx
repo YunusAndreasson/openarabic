@@ -17,9 +17,16 @@ const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => {
 
   return (
     <View style={styles.container} accessibilityRole="alert">
-      <ThemedText style={styles.text} accessibilityLabel={`Error: ${message}`}>
-        {message}
-      </ThemedText>
+      <View style={styles.textContainer}>
+        <ThemedText
+          type="body"
+          variant="error"
+          align="center"
+          accessibilityLabel={`Error: ${message}`}
+        >
+          {message}
+        </ThemedText>
+      </View>
       {onRetry && (
         <View style={styles.buttonContainer}>
           <ThemedButton
@@ -41,8 +48,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: LAYOUT.SPACING.LARGE,
   },
-  text: {
-    textAlign: 'center',
+  textContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   buttonContainer: {
