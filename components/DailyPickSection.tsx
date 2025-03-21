@@ -1,10 +1,9 @@
 import React, { useCallback } from 'react';
 import { StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
 import ThemedCard from './ThemedCard';
-import AnimatedSection from './AnimatedSection';
+import { AnimatedSection } from './index';
 import { DailyPickSectionProps } from '@/types/ui.types';
 import { articlesService } from '@/services/articles';
 

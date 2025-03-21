@@ -18,7 +18,7 @@ import { setTheme } from '../store/themeSlice';
 import { useColorScheme, AppState } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
-import Toast, { BaseToast, BaseToastProps } from 'react-native-toast-message';
+import Toast, { BaseToast } from 'react-native-toast-message';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -137,7 +137,7 @@ function AppContent() {
   }, [fontsLoaded, fontError, prepareResources]);
 
   const toastConfig = {
-    success: (props: BaseToastProps) => (
+    success: (props: React.ComponentProps<typeof BaseToast>) => (
       <BaseToast
         {...props}
         style={{

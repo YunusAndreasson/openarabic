@@ -17,11 +17,3 @@ export type Article = Tables<'articles'> & {
   audio_url: string | null;
   last_opened_at?: string;
 };
-
-/**
- * Parameters for the article screen route
- */
-export interface ArticleScreenParams {
-  id: string;
-  title?: string;
-}

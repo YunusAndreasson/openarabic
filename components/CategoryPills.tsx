@@ -3,20 +3,17 @@ import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import type { Tables } from '../types/database.types';
-import { lightFeedback } from '../utils/haptics';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import Pill from './Pill';
 import Animated from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-import type { SharedValue } from '@/hooks/animations/types';
 import { CategoryPillsProps } from '@/types/ui.types';
 
 function CategoryPillsComponent({
   categories,
   selectedCategory,
   onSelectCategory,
-  visible,
 }: CategoryPillsProps) {
   const colors = useColors();
 

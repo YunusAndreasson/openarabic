@@ -17,14 +17,12 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ArabicWord } from '@/components/ArabicWord';
-import { CompactArticleCard } from '@/components/CompactArticleCard';
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleSentence } from '@/components/ArticleSentence';
 import ArticleHeader from '@/components/ArticleHeader';
 import FloatingButton from '@/components/FloatingButton';
 import RelatedArticlesFooter from '@/components/RelatedArticlesFooter';
 import ThemedCard from '@/components/ThemedCard';
-import { ThemedButton } from '@/components/ThemedButton';
 
 // Hooks
 import { useColors } from '@/hooks/useColors';

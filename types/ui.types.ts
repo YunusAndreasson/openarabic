@@ -974,29 +974,6 @@ export interface ArabicWordProps {
 }
 
 /**
- * Props for the AnimatedSection component
- */
-export interface AnimatedSectionProps
-  extends BaseChildrenProps,
-    BaseAnimationProps,
-    BaseStyleProps {
-  /**
-   * Title to display at the top of the section
-   */
-  title?: string;
-
-  /**
-   * Whether to show the section title
-   */
-  showTitle?: boolean;
-
-  /**
-   * Whether to add horizontal padding to the content
-   */
-  paddingHorizontal?: boolean;
-}
-
-/**
  * Props for the ArticleSentence component
  */
 export interface ArticleSentenceProps {
@@ -1137,7 +1114,30 @@ export interface CloseButtonProps extends BasePressableProps, BaseStyleProps {
 /**
  * Props for the AnimatedItem component
  */
-export interface AnimatedItemProps extends BaseChildrenProps, BaseAnimationProps, BaseStyleProps {}
+export interface AnimatedItemProps extends BaseChildrenProps, BaseAnimationProps, BaseStyleProps {
+  /**
+   * Whether to use full width/flex styling (for EntranceAnimation mode)
+   * @default false
+   */
+  fullWidth?: boolean;
+
+  /**
+   * Title to display at the top of the section (if used as a section)
+   */
+  title?: string;
+
+  /**
+   * Whether to show the section title
+   * @default true
+   */
+  showTitle?: boolean;
+
+  /**
+   * Whether to add horizontal padding to the content
+   * @default false
+   */
+  paddingHorizontal?: boolean;
+}
 
 /**
  * Props for the ReadingListButton component
@@ -1392,3 +1392,8 @@ export type ThemedCardProps =
         /** Variant of the card */
         variant?: CardVariant;
       });
+
+/**
+ * Props for the AnimatedSection component (alias for AnimatedItem for backward compatibility)
+ */
+export interface AnimatedSectionProps extends AnimatedItemProps {}

@@ -56,9 +56,6 @@ import FilterList from '../../components/FilterList';
 import DailyPickSection from '../../components/DailyPickSection';
 import ErrorState from '../../components/ErrorState';
 
-// Import the specialized filtered view component
-import FilteredArticleView from '../../components/FilteredArticleView';
-
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

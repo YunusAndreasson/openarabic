@@ -33,20 +33,6 @@ export const mediumFeedback = () => {
 };
 
 /**
- * Heavy feedback for significant interactions like:
- * - Important confirmations
- * - Destructive actions
- * - Errors
- */
-export const heavyFeedback = () => {
-  try {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-  } catch (error) {
-    // Silently handle errors, haptics failure should not break the app
-  }
-};
-
-/**
  * Success feedback for positive outcomes like:
  * - Successful submissions
  * - Task completions

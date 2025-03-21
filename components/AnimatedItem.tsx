@@ -1,24 +1,45 @@
 import React from 'react';
-import { StyleProp, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
-import { useFadeInEntrance } from '../hooks/animations';
+import { View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { AnimatedItemProps } from '@/types/ui.types';
+import { LAYOUT } from '@/constants/layout';
+import SectionTitle from './SectionTitle';
 
 /**
  * A reusable animated item component that fades in with configurable timing.
- * Useful for list items, completion items, or any element that needs to
- * appear with a fade-in animation.
  *
- * This component uses the useFadeInEntrance hook for optimal performance.
+ * This is a multi-purpose animation component that can be used for:
+ * - Simple items that need to animate in (default behavior)
+ * - Full width containers (when fullWidth is true - replacing EntranceAnimation)
+ * - Section containers with titles (when title is provided - replacing AnimatedSection)
  */
 const AnimatedItem = React.memo(
-  ({ children, delay = 0, duration = 400, style }: AnimatedItemProps) => {
-    // Use our standardized animation hook
-    const { entering } = useFadeInEntrance(delay, duration);
+  ({
+    children,
+    delay = 0,
+    duration = 300,
+    style,
+    fullWidth = false,
+    title,
+    showTitle = true,
+    paddingHorizontal = false,
+  }: AnimatedItemProps & {
+    fullWidth?: boolean;
+    title?: string;
+    showTitle?: boolean;
+    paddingHorizontal?: boolean;
+  }) => {
+    // Create a custom entry animation with configured delay and duration
+    const entering = FadeIn.delay(delay).duration(duration);
 
     return (
-      <Animated.View style={style} entering={entering}>
-        {children}
+      <Animated.View style={[fullWidth && { flex: 1, width: '100%' }, style]} entering={entering}>
+        {showTitle && title && <SectionTitle title={title} />}
+        {paddingHorizontal ? (
+          <View style={{ paddingHorizontal: LAYOUT.SPACING.MEDIUM }}>{children}</View>
+        ) : (
+          children
+        )}
       </Animated.View>
     );
   }

@@ -119,15 +119,3 @@ export interface ImageOptimizationOptions {
   /** Transition duration in milliseconds */
   transitionDuration?: number;
 }
-
-/**
- * Default image optimization options
- */
-export const defaultImageOptions: ImageOptimizationOptions = {
-  enableBlurUp: true,
-  enableResponsiveSizing: true,
-  enableProgressiveLoading: true,
-  containerWidthPercent: 1,
-  cachePolicy: 'memory-disk',
-  transitionDuration: LAYOUT.ANIMATION.DURATION.NORMAL,
-};

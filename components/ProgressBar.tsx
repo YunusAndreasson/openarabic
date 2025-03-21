@@ -1,10 +1,9 @@
 import React, { useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { LAYOUT } from '../constants/layout';
 import Animated, { cancelAnimation } from 'react-native-reanimated';
-import type { AnimatedStyleProp } from '@/hooks/animations/types';
 import { useProgressAnimation } from '../hooks/animations';
 import { ProgressBarProps } from '@/types/ui.types';
 

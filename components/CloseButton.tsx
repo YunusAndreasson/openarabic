@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, ViewStyle, Platform } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';

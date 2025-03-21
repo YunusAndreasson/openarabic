@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { readingListService } from '../services/readingList';
 import { useAuth } from '../hooks/useAuth';
 import { successFeedback } from '@/utils/haptics';

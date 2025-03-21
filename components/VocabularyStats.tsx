@@ -5,7 +5,7 @@ import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingContainer } from './Loader';
-import { useComponentAnimation } from '@/hooks/animations';
+import { useComponentAnimation, useProgressAnimation } from '@/hooks/animations';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStatsProps } from '@/types/ui.types';
 import BaseCard from './BaseCard';
@@ -36,44 +36,9 @@ function VocabularyStatsComponent({
     [totalWords, masteredWords]
   );
 
-  // Custom hook to animate progress value
-  const useProgressAnimation = (targetValue: number, duration = 1000, isReady = true) => {
-    const [animatedValue, setAnimatedValue] = useState(0);
-
-    useEffect(() => {
-      if (!isReady) return;
-
-      let startTimestamp: number | null = null;
-      let animationFrameId: number;
-
-      const animate = (timestamp: number) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const elapsed = timestamp - startTimestamp;
-
-        const progress = Math.min(elapsed / duration, 1);
-        const easedProgress = 1 - Math.pow(1 - progress, 3);
-
-        setAnimatedValue(targetValue * easedProgress);
-
-        if (progress < 1) {
-          animationFrameId = requestAnimationFrame(animate);
-        }
-      };
-
-      animationFrameId = requestAnimationFrame(animate);
-
-      return () => {
-        if (animationFrameId) {
-          cancelAnimationFrame(animationFrameId);
-        }
-      };
-    }, [targetValue, duration, isReady]);
-
-    return animatedValue;
-  };
-
   // Use the animation hook to animate the progress
-  const animatedProgress = useProgressAnimation(progress, 1000, isReady);
+  const { progress: animatedProgressValue } = useProgressAnimation(progress, 1000);
+  const animatedProgress = animatedProgressValue.value;
 
   const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
 
@@ -85,8 +50,8 @@ function VocabularyStatsComponent({
       style={styles.progressCard}
       isLoading={isLoading || !isReady}
       loadingComponent={loadingComponent}
-      animated={true}
       includePressAnimation={false}
+      {...{ animated: true }}
     >
       <View style={styles.progressContent}>
         <View style={styles.progressRow}>
@@ -98,15 +63,10 @@ function VocabularyStatsComponent({
               <ThemedText type="heading2">{Math.round(progress)}%</ThemedText>
             </View>
             <View style={styles.subtextContainer}>
-            <ThemedText type="label" style={styles.progressLabel}>
-              Progress
-            </ThemedText>
-            <ThemedText type="heading2" style={styles.progressValue}>
-              {Math.round(progress)}%
-            </ThemedText>
-            <ThemedText type="caption" variant="subtle" style={styles.progressSubtext}>
-              {masteredWords} of {totalWords} mastered
-            </ThemedText>
+              <ThemedText type="caption" variant="subtle">
+                {masteredWords} of {totalWords} mastered
+              </ThemedText>
+            </View>
           </View>
 
           {/* Circular Progress */}
@@ -162,22 +122,14 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
-  progressLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    opacity: LAYOUT.OPACITY.DIMMED,
+  labelContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  progressValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontWeight: '700',
-    opacity: LAYOUT.OPACITY.DIMMED,
+  valueContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
-  progressSubtext: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.DISABLED,
+  subtextContainer: {
+    marginTop: LAYOUT.SPACING.TINY,
   },
   circleContainer: {
     justifyContent: 'center',

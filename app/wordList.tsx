@@ -13,7 +13,6 @@ import PageHeader from '../components/PageHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { StudyWord } from '../types/vocabulary.types';
 import WordListItem from '../components/WordListItem';
-import EntranceAnimation from '../components/EntranceAnimation';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -22,13 +22,3 @@ import type {
 export type SharedValue<T> = ReanimatedSharedValue<T>;
 export type AnimatedStyleProp<T> = ReanimatedAnimatedStyleProp<T>;
 export type AnimatedStyle<T> = ReanimatedAnimatedStyle<T>;
-
-// Animation configuration types
-export type TimingConfig = WithTimingConfig;
-export type SpringConfig = WithSpringConfig;
-export type Easing = EasingFunction;
-export type AnimValue = AnimatableValue;
-export type AnimationFunction = Animation<any>;
-export type CompletionCallback = AnimationCallback;
-export type EntryAnimation = EntryExitAnimationFunction;
-export type LayoutAnimation = LayoutAnimationFunction;

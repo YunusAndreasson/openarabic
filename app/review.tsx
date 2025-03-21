@@ -21,7 +21,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Loader } from '@/components/Loader';
 import Toast from 'react-native-toast-message';
-import EntranceAnimation from '@/components/EntranceAnimation';
+import { AnimatedItem as EntranceAnimation } from '@/components/index';
 import AnimatedItem from '@/components/AnimatedItem';
 import { TIMING_CONFIG, SPRING_CONFIG } from '@/hooks/animations';
 import { useQueryClient } from '@tanstack/react-query';
@@ -544,7 +544,7 @@ export default function ReviewScreen() {
   // Return the main content with entrance animation
   return (
     <ThemedView style={baseStyles.container} useSafeArea={true}>
-      <EntranceAnimation>
+      <EntranceAnimation fullWidth>
         <GestureHandlerRootView style={baseStyles.gestureRoot}>
           <View style={baseStyles.contentContainer}>
             <View

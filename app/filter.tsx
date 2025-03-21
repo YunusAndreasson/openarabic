@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
@@ -22,7 +22,6 @@ import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 
 // Types
 import { Article } from '../types/articles.types';
-import type { Tables } from '../types/database.types';
 
 // Create a supabase client for fetching data directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
