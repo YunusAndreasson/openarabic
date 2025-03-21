@@ -14,25 +14,37 @@
  * - useFadeInAnimation → useOpacityAnimation({ initialOpacity: 0 })
  * - useFadeInEntrance → useOpacityAnimation({ style: 'entrance-only' })
  * - useDramaticPulseAnimation → usePulseAnimation({ style: 'dramatic' })
+ * - useScaleAnimation → useTransformAnimation({ type: 'scale' })
+ * - useSlideAnimation → useTransformAnimation({ type: 'slide' })
  */
 
-// Backward compatibility aliases
+// Core animation hooks
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { usePressAnimation } from './usePressAnimation';
 import { usePulseAnimation } from './usePulseAnimation';
 
+// Export main hooks
 export { useOpacityAnimation } from './useOpacityAnimation';
-export { useSlideAnimation } from './useSlideAnimation';
 export { usePressAnimation } from './usePressAnimation';
 export { usePulseAnimation } from './usePulseAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
 export { useToggleAnimation } from './useToggleAnimation';
-export { useScaleAnimation } from './useScaleAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
 export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useGraphAnimation } from './useGraphAnimation';
 export { useAnimationTrigger } from './useAnimationTrigger';
 export { useScreenAnimation } from './useScreenAnimation';
+export { useTransformAnimation } from './useTransformAnimation';
+
+// Export legacy hooks (with deprecation warnings)
+export {
+  useFadeInAnimation,
+  useFadeInEntrance,
+  useButtonAnimation,
+  useCardAnimation,
+  useScaleAnimation,
+  useSlideAnimation,
+} from './compatibility';
 
 // Export standardized animation configurations
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
@@ -54,16 +66,9 @@ export type {
 export type { PulseStyle, PulseAnimationOptions, PulseAnimationResult } from './usePulseAnimation';
 export type { AnimationTriggerResult } from './useAnimationTrigger';
 export type { ScreenAnimationResult } from './useScreenAnimation';
-
-// Create aliases for old hook names
-export const useFadeInAnimation = (delay = 0, duration = 300) =>
-  useOpacityAnimation({ initialOpacity: 0, delay, duration });
-
-export const useFadeInEntrance = (delay = 0, duration = 300) =>
-  useOpacityAnimation({ style: 'entrance-only', delay, duration });
-
-export const useButtonAnimation = (scaleAmount?: number) =>
-  usePressAnimation({ type: 'button', scaleAmount });
-
-export const useCardAnimation = (scaleAmount?: number, opacityAmount?: number) =>
-  usePressAnimation({ type: 'card', scaleAmount, opacityAmount });
+export type {
+  TransformType,
+  SlideDirection,
+  TransformAnimationOptions,
+  TransformAnimationResult,
+} from './useTransformAnimation';

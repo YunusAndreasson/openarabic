@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { useSlideAnimation } from './useSlideAnimation';
+import { useTransformAnimation } from './useTransformAnimation';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { TIMING_CONFIG } from './animationConfigs';
+import { ViewStyle } from 'react-native';
 
 /**
  * Hook for floating button animations that combines slide and opacity effects
@@ -12,22 +13,31 @@ import { TIMING_CONFIG } from './animationConfigs';
 export const useFloatingButtonAnimation = (isVisible: boolean) => {
   // Animation hooks
   const {
-    animatedStyle: backButtonAnimatedStyle,
+    value: backButtonValue,
     startAnimation: startBackButtonAnimation,
     reset: resetBackButtonAnimation,
-  } = useSlideAnimation(0, undefined, undefined, 'left');
+  } = useTransformAnimation({
+    type: 'slide',
+    direction: 'left',
+  });
 
   const {
-    animatedStyle: bookmarkButtonAnimatedStyle,
+    value: bookmarkButtonValue,
     startAnimation: startBookmarkButtonAnimation,
     reset: resetBookmarkButtonAnimation,
-  } = useSlideAnimation(0, undefined, undefined, 'left');
+  } = useTransformAnimation({
+    type: 'slide',
+    direction: 'left',
+  });
 
   const {
-    animatedStyle: playButtonAnimatedStyle,
+    value: playButtonValue,
     startAnimation: startPlayButtonAnimation,
     reset: resetPlayButtonAnimation,
-  } = useSlideAnimation(0, undefined, undefined, 'right');
+  } = useTransformAnimation({
+    type: 'slide',
+    direction: 'right',
+  });
 
   const { opacity: buttonsOpacity } = useOpacityAnimation({
     initialOpacity: 1,
@@ -35,29 +45,26 @@ export const useFloatingButtonAnimation = (isVisible: boolean) => {
   });
 
   // Combined animated styles
-  const combinedBackButtonStyle = useAnimatedStyle(
-    () => ({
-      transform: [...(backButtonAnimatedStyle.transform || [])],
+  const combinedBackButtonStyle = useAnimatedStyle(() => {
+    return {
       opacity: buttonsOpacity.value,
-    }),
-    [backButtonAnimatedStyle, buttonsOpacity]
-  );
+      transform: [{ translateX: backButtonValue.value }],
+    };
+  });
 
-  const combinedBookmarkButtonStyle = useAnimatedStyle(
-    () => ({
-      transform: [...(bookmarkButtonAnimatedStyle.transform || [])],
+  const combinedBookmarkButtonStyle = useAnimatedStyle(() => {
+    return {
       opacity: buttonsOpacity.value,
-    }),
-    [bookmarkButtonAnimatedStyle, buttonsOpacity]
-  );
+      transform: [{ translateX: bookmarkButtonValue.value }],
+    };
+  });
 
-  const combinedPlayButtonStyle = useAnimatedStyle(
-    () => ({
-      transform: [...(playButtonAnimatedStyle.transform || [])],
+  const combinedPlayButtonStyle = useAnimatedStyle(() => {
+    return {
       opacity: buttonsOpacity.value,
-    }),
-    [playButtonAnimatedStyle, buttonsOpacity]
-  );
+      transform: [{ translateX: playButtonValue.value }],
+    };
+  });
 
   // Update animations based on visibility
   useEffect(() => {
