@@ -12,6 +12,7 @@ import {
   SlideOutRight,
   SlideOutLeft,
   AnimatedStyleProp,
+  withDelay,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
 import { SCREEN_WIDTH } from '../../constants/layout';
@@ -169,7 +170,42 @@ export const useTransformAnimation = (
     (onComplete?: () => void) => {
       'worklet';
 
-      const animateWithDelay = () => {
+      if (delay > 0) {
+        if (useSpring) {
+          value.value = withDelay(
+            delay,
+            withSpring(
+              targetValue,
+              {
+                ...SPRING_CONFIG.SLIDE,
+                ...(damping !== undefined ? { damping } : {}),
+                ...(stiffness !== undefined ? { stiffness } : {}),
+              },
+              () => {
+                if (onComplete && runOnJS) {
+                  runOnJS(onComplete)();
+                }
+              }
+            )
+          );
+        } else {
+          value.value = withDelay(
+            delay,
+            withTiming(
+              targetValue,
+              {
+                duration,
+                easing: TIMING_CONFIG.MEDIUM.easing,
+              },
+              () => {
+                if (onComplete && runOnJS) {
+                  runOnJS(onComplete)();
+                }
+              }
+            )
+          );
+        }
+      } else {
         if (useSpring) {
           value.value = withSpring(
             targetValue,
@@ -198,12 +234,6 @@ export const useTransformAnimation = (
             }
           );
         }
-      };
-
-      if (delay > 0) {
-        setTimeout(animateWithDelay, delay);
-      } else {
-        animateWithDelay();
       }
     },
     [value, targetValue, duration, delay, useSpring, damping, stiffness]

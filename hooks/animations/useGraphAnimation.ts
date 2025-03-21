@@ -25,10 +25,11 @@ export const useGraphAnimation = (duration = TIMING_CONFIG.SLOW.duration): Graph
 
   // Start the animation
   const startAnimation = useCallback(() => {
+    'worklet';
     if (hasAnimationStarted.current) return;
 
     hasAnimationStarted.current = true;
-    setIsAnimationComplete(false);
+    runOnJS(setIsAnimationComplete)(false);
 
     // Animate from 0 to 1
     animationProgress.value = withTiming(
@@ -43,14 +44,15 @@ export const useGraphAnimation = (duration = TIMING_CONFIG.SLOW.duration): Graph
         }
       }
     );
-  }, [animationProgress, duration]);
+  }, [animationProgress, duration, setIsAnimationComplete]);
 
   // Reset the animation
   const resetAnimation = useCallback(() => {
+    'worklet';
     hasAnimationStarted.current = false;
     animationProgress.value = 0;
-    setIsAnimationComplete(false);
-  }, [animationProgress]);
+    runOnJS(setIsAnimationComplete)(false);
+  }, [animationProgress, setIsAnimationComplete]);
 
   return {
     animationProgress,

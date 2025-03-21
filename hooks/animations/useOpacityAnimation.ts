@@ -171,13 +171,15 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
 
   // Safe callback runner that checks if component is still mounted
   const safeRunCallback = useCallback((callback?: () => void) => {
-    if (callback && isMountedRef.current) {
-      callback();
+    'worklet';
+    if (callback) {
+      runOnJS(callback)();
     }
   }, []);
 
   const fadeIn = useCallback(
     (onComplete?: () => void) => {
+      'worklet';
       try {
         opacity.value = withTiming(
           1,
@@ -186,22 +188,23 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
             easing: TIMING_CONFIG.MEDIUM.easing,
           },
           finished => {
-            if (finished && onComplete && runOnJS) {
-              runOnJS(safeRunCallback)(onComplete);
+            if (finished && onComplete) {
+              runOnJS(onComplete)();
             }
           }
         );
       } catch (error) {
-        if (onComplete && runOnJS) {
-          runOnJS(safeRunCallback)(onComplete);
+        if (onComplete) {
+          runOnJS(onComplete)();
         }
       }
     },
-    [opacity, duration, safeRunCallback]
+    [opacity, duration]
   );
 
   const fadeOut = useCallback(
     (onComplete?: () => void) => {
+      'worklet';
       try {
         opacity.value = withTiming(
           0,
@@ -210,22 +213,23 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
             easing: TIMING_CONFIG.MEDIUM.easing,
           },
           finished => {
-            if (finished && onComplete && runOnJS) {
-              runOnJS(safeRunCallback)(onComplete);
+            if (finished && onComplete) {
+              runOnJS(onComplete)();
             }
           }
         );
       } catch (error) {
-        if (onComplete && runOnJS) {
-          runOnJS(safeRunCallback)(onComplete);
+        if (onComplete) {
+          runOnJS(onComplete)();
         }
       }
     },
-    [opacity, duration, safeRunCallback]
+    [opacity, duration]
   );
 
   const setOpacity = useCallback(
     (value: number, onComplete?: () => void) => {
+      'worklet';
       // Ensure opacity value is between 0 and 1
       const safeValue = Math.max(0, Math.min(1, value));
 
@@ -237,18 +241,18 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
             easing: TIMING_CONFIG.MEDIUM.easing,
           },
           finished => {
-            if (finished && onComplete && runOnJS) {
-              runOnJS(safeRunCallback)(onComplete);
+            if (finished && onComplete) {
+              runOnJS(onComplete)();
             }
           }
         );
       } catch (error) {
-        if (onComplete && runOnJS) {
-          runOnJS(safeRunCallback)(onComplete);
+        if (onComplete) {
+          runOnJS(onComplete)();
         }
       }
     },
-    [opacity, duration, safeRunCallback]
+    [opacity, duration]
   );
 
   const reset = useCallback(() => {

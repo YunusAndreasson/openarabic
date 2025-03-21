@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { runOnUI } from 'react-native-reanimated';
 
 /**
  * Return type for useAnimationTrigger hook
@@ -80,10 +81,16 @@ export const useAnimationTrigger = (
     }
   }, [isDataReady, isLoading, clearAnimationTimeout]);
 
-  // Safe animation starter that checks for mounted state
+  // Safe animation starter that checks for mounted state and runs on UI thread when possible
   const safeStartAnimation = useCallback(() => {
     if (isMountedRef.current && startAnimation) {
-      startAnimation();
+      try {
+        // Attempt to run the animation on the UI thread for better performance
+        runOnUI(startAnimation)();
+      } catch (e) {
+        // Fallback to regular JS thread if the animation function isn't a worklet
+        startAnimation();
+      }
     }
   }, [startAnimation]);
 

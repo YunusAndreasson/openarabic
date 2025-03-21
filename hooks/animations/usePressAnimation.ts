@@ -135,6 +135,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   // Press handlers
   const handlePressIn = useCallback(() => {
+    'worklet';
     if (!isMountedRef.current) return;
 
     try {
@@ -147,6 +148,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   }, [pressed, finalSpringConfig]);
 
   const handlePressOut = useCallback(() => {
+    'worklet';
     if (!isMountedRef.current) return;
 
     try {

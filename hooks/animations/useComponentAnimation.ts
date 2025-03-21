@@ -34,8 +34,8 @@ export const useComponentAnimation = (delay = 300) => {
             duration: TIMING_CONFIG.FAST.duration,
             easing: TIMING_CONFIG.FAST.easing,
           },
-          () => {
-            if (onComplete && runOnJS) {
+          finished => {
+            if (finished && onComplete) {
               runOnJS(onComplete)();
             }
           }

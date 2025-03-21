@@ -97,6 +97,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
 
   // Stop the animation - defined first to avoid reference issues
   const stopAnimation = useCallback(() => {
+    'worklet';
     // Cancel any ongoing animations
     cancelAnimation(scale);
     cancelAnimation(opacity);
@@ -215,6 +216,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
 
   // Calculate animation cycle duration for each style
   const getDurationForStyle = useCallback(() => {
+    'worklet';
     if (style === 'dramatic') {
       return 1350; // Total duration of dramatic animation cycle
     } else if (style === 'gentle') {
@@ -227,6 +229,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
   // Start continuous animation
   const startAnimation = useCallback(
     (repetitions?: number) => {
+      'worklet';
       // Stop any existing animations first
       stopAnimation();
 

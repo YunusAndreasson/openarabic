@@ -47,7 +47,6 @@ export const useScreenAnimation = (
 
   // Setup opacity animation (starts at 0)
   const {
-    opacity,
     animatedStyle: fadeInStyle,
     setOpacity,
     reset: resetOpacity,
@@ -58,6 +57,7 @@ export const useScreenAnimation = (
 
   // Function to start the fade-in animation
   const startFadeInAnimation = useCallback(() => {
+    'worklet';
     setOpacity(1);
   }, [setOpacity]);
 

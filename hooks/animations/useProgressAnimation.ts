@@ -44,6 +44,7 @@ export const useProgressAnimation = (
   // Improved function to update the progress value with animation
   const updateProgress = useCallback(
     (newPercentage: number) => {
+      'worklet';
       // Validate input to ensure it's a number
       if (typeof newPercentage !== 'number') {
         console.warn('useProgressAnimation: newPercentage must be a number');
@@ -72,7 +73,9 @@ export const useProgressAnimation = (
         finished => {
           // Animation is complete
           if (finished) {
-            isAnimating.current = false;
+            runOnJS(() => {
+              isAnimating.current = false;
+            })();
           }
         }
       );
@@ -88,6 +91,7 @@ export const useProgressAnimation = (
 
   // Function to reset progress to initial value
   const reset = useCallback(() => {
+    'worklet';
     // Cancel any in-progress animations before resetting
     cancelAnimation(progress);
     progress.value = initialPercentage;

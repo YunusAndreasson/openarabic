@@ -5,6 +5,7 @@ import {
   withSpring,
   withTiming,
   withSequence,
+  runOnUI,
 } from 'react-native-reanimated';
 import { SPRING_CONFIG, TIMING_CONFIG } from './animationConfigs';
 
@@ -18,10 +19,12 @@ export const useToggleAnimation = (isActive: boolean, travelDistance: number) =>
   const translateX = useSharedValue(isActive ? travelDistance : 0);
   const toggleScale = useSharedValue(1);
 
-  // Update animation when value changes
-  useEffect(() => {
+  // Create animation worklet that can run on UI thread
+  const animateToggle = (toActive: boolean, distance: number) => {
+    'worklet';
+
     // Use spring for smoother, more natural movement
-    translateX.value = withSpring(isActive ? travelDistance : 0, SPRING_CONFIG.TOGGLE);
+    translateX.value = withSpring(toActive ? distance : 0, SPRING_CONFIG.TOGGLE);
 
     // Add subtle scale animation for better feedback
     toggleScale.value = withSequence(
@@ -34,7 +37,13 @@ export const useToggleAnimation = (isActive: boolean, travelDistance: number) =>
         easing: TIMING_CONFIG.FAST.easing,
       })
     );
-  }, [isActive, translateX, travelDistance, toggleScale]);
+  };
+
+  // Update animation when value changes
+  useEffect(() => {
+    // Run animation on UI thread
+    runOnUI(animateToggle)(isActive, travelDistance);
+  }, [isActive, travelDistance]);
 
   const containerAnimatedStyle = useAnimatedStyle(() => {
     return {

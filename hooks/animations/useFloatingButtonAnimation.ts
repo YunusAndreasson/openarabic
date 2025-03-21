@@ -68,6 +68,7 @@ export const useFloatingButtonAnimation = (isVisible: boolean) => {
 
   // Update animations based on visibility
   useEffect(() => {
+    'worklet';
     // Simple fade animation
     buttonsOpacity.value = withTiming(isVisible ? 1 : 0, {
       duration: 200,
