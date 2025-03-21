@@ -1,24 +1,35 @@
-import React, { memo, useMemo, useCallback, useEffect, useState, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import {
   StyleSheet,
-  View,
   TouchableOpacity,
   LayoutRectangle,
   Platform,
   LayoutChangeEvent,
-  TextStyle,
 } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
-import { LAYOUT, getArabicTextStyle } from '../constants/layout';
+import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  interpolateColor,
+  Easing,
+  runOnJS,
+  cancelAnimation,
+} from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
 import { ArabicWordProps } from '@/types/ui.types';
+
+// Type for animated styles to fix TypeScript errors
+type AnimatedStyles = {
+  [key: string]: any;
+};
 
 function ArabicWordComponent({
   word,
@@ -32,20 +43,25 @@ function ArabicWordComponent({
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [tooltipVisible, setTooltipVisible] = useState(false);
-  const [isLongPressed, setIsLongPressed] = useState(false);
-  const containerRef = useRef<View>(null);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
 
-  // Calculate absolute position considering page scroll
-  const absoluteLayout =
-    layout && pageLayout
-      ? {
-          ...layout,
-          x: layout.x + pageLayout.x,
-          y: layout.y + pageLayout.y,
-        }
-      : null;
+  // Animated values for long press feedback
+  const longPressProgress = useSharedValue(0);
+  const borderOpacity = useSharedValue(isSelected ? 1 : 0);
+
+  // Calculate absolute position considering page scroll - memoized for performance
+  const absoluteLayout = useMemo(
+    () =>
+      layout && pageLayout
+        ? {
+            ...layout,
+            x: layout.x + pageLayout.x,
+            y: layout.y + pageLayout.y,
+          }
+        : null,
+    [layout, pageLayout]
+  );
 
   // Use standardized press animation with custom scale values
   const { animatedStyle, pressed } = usePressAnimation({
@@ -57,7 +73,35 @@ function ArabicWordComponent({
   // Update the pressed value based on isSelected - direct assignment for immediate effect
   useEffect(() => {
     pressed.value = isSelected ? 1 : 0;
-  }, [isSelected, pressed]);
+    // Animate border opacity to avoid layout shifts
+    borderOpacity.value = withTiming(isSelected ? 1 : 0, { duration: 150 });
+  }, [isSelected, pressed, borderOpacity]);
+
+  // Animated style for long press feedback
+  const longPressStyle = useAnimatedStyle(() => {
+    const backgroundColor = interpolateColor(
+      longPressProgress.value,
+      [0, 1],
+      ['transparent', isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)']
+    );
+
+    return {
+      backgroundColor,
+      borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    };
+  }, [isDarkMode]);
+
+  // Animated border style - always present but opacity changes
+  const borderStyle = useAnimatedStyle(() => {
+    return {
+      borderBottomWidth: 1.5,
+      borderBottomColor: interpolateColor(
+        borderOpacity.value,
+        [0, 1],
+        ['transparent', isDarkMode ? colors.borderOverlay : colors.textOverlay]
+      ),
+    };
+  }, [isDarkMode, colors.borderOverlay, colors.textOverlay]);
 
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -73,125 +117,146 @@ function ArabicWordComponent({
   // Show tooltip on quick press
   const handlePress = useCallback(() => {
     if (!layout) return;
-
-    // Hide any existing tooltip first to ensure clean state
-    setTooltipVisible(false);
-
-    // Show tooltip after a minimal delay to ensure clean transition
-    setTimeout(() => {
-      setTooltipVisible(true);
-    }, 10);
+    setTooltipVisible(true);
   }, [layout]);
 
-  // Add to study list on long press
+  // Reset animation for cleanup
+  const cleanupAnimation = useCallback(() => {
+    // Cancel any pending animations to avoid conflicts
+    cancelAnimation(longPressProgress);
+    // Ensure value is properly reset
+    longPressProgress.value = withTiming(0, { duration: 200 });
+  }, [longPressProgress]);
+
+  // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
+    // Cancel any ongoing animations to prevent conflicts
+    cancelAnimation(longPressProgress);
+
     // Trigger haptic feedback immediately
     lightFeedback();
 
     // Update selection state through the parent component
     onPress(word);
 
-    // Visual feedback for the press action
-    setIsLongPressed(true);
+    // Animate the long press feedback - faster entry with bounce
+    longPressProgress.value = withTiming(1, {
+      duration: 80,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+    });
+
+    // Automatically reset the animation with better reliability
+    setTimeout(() => {
+      if (longPressProgress) {
+        cancelAnimation(longPressProgress);
+        longPressProgress.value = withTiming(
+          0,
+          {
+            duration: 250,
+            easing: Easing.bezier(0.34, 1.56, 0.64, 1), // Bouncy easing
+          },
+          finished => {
+            if (finished) {
+              // Ensure value is completely reset
+              runOnJS(cleanupAnimation)();
+            }
+          }
+        );
+      }
+    }, 300);
 
     // Invalidate the dueWords query to refresh the vocabulary screen
     if (user) {
       queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
     }
+  }, [onPress, word, queryClient, user, longPressProgress, cleanupAnimation]);
 
-    // Reset visual state after a delay
-    setTimeout(() => {
-      setIsLongPressed(false);
-    }, 300);
-  }, [onPress, word, queryClient, user]);
+  // Consolidated visual properties - calculate multiple derived values in a single pass
+  // This reduces overhead from multiple hooks and ensures consistent generation
+  const { textProps, wordStyle, accessibilityLabel } = useMemo(() => {
+    // Calculate font size once
+    const calculatedFontSize = baseSize * scale;
 
-  // Handle tooltip close
-  const handleTooltipClose = useCallback(() => {
-    setTooltipVisible(false);
-  }, []);
+    // Build text props
+    const calculatedTextProps = {
+      type: 'arabic' as const,
+      variant: isSelected ? ('primary' as const) : undefined,
+      skipDefaultColor: true,
+      colorName: isSelected ? ('tint' as const) : ('text' as const),
+      arabicFontSize: calculatedFontSize,
+      weight: isSelected ? ('600' as const) : ('normal' as const),
+      style: {
+        paddingVertical: 0,
+        marginBottom: 0,
+      },
+    };
 
-  // Apply highlight for long-pressed state
-  const longPressedStyle = isLongPressed
-    ? {
-        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)',
-        borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    // Build word styles
+    const baseStyles = [styles.wordContainer] as const;
+    const styleObjects: any[] = [];
+
+    // Add tooltip feedback style
+    if (tooltipVisible) {
+      styleObjects.push({
+        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.01)',
+      });
+    }
+
+    // Build accessibility label
+    const label = `Arabic word: ${word.word_form}. ${
+      isSelected
+        ? 'Added to study list.'
+        : 'Tap to see translation, long press to add to study list.'
+    }`;
+
+    return {
+      fontSize: calculatedFontSize,
+      textProps: calculatedTextProps,
+      wordStyle: [...baseStyles, ...styleObjects],
+      accessibilityLabel: label,
+    };
+  }, [baseSize, scale, isSelected, tooltipVisible, isDarkMode, word.word_form]);
+
+  // Reset animation when component unmounts
+  useEffect(() => {
+    return () => {
+      if (longPressProgress) {
+        cancelAnimation(longPressProgress);
       }
-    : undefined;
-
-  // Visual feedback for tooltip visibility - subtle
-  const tooltipVisibleStyle = tooltipVisible
-    ? {
-        backgroundColor: isDarkMode
-          ? 'rgba(255, 255, 255, 0.03)' // More subtle in dark mode
-          : 'rgba(0, 0, 0, 0.01)', // More subtle in light mode
-      }
-    : undefined;
-
-  // Combine visual feedback styles
-  const combinedStyle = longPressedStyle || tooltipVisibleStyle;
-
-  // Memoize the underline style
-  const underlineStyle = useMemo(
-    () => ({
-      ...styles.underline,
-      // Calculate width in pixels based on word length
-      width: Math.min(80, word.word_form.length * 8),
-      backgroundColor: isDarkMode
-        ? colors.borderOverlay // Use borderOverlay color in dark mode
-        : colors.textOverlay, // Use textOverlay color in light mode
-    }),
-    [isDarkMode, colors.borderOverlay, colors.textOverlay, word.word_form.length]
-  );
-
-  // Calculate font size based on scale and base size
-  const fontSize = baseSize * scale;
-  // Calculate font weight based on selection state
-  const fontWeight = isSelected ? '600' : ('normal' as TextStyle['fontWeight']);
+    };
+  }, [longPressProgress]);
 
   return (
     <>
       <TouchableOpacity
         onPress={handlePress}
         onLongPress={handleLongPress}
-        delayLongPress={250} // Reduced for faster response
-        style={[styles.wordContainer, combinedStyle]}
-        activeOpacity={0.7} // Slightly increased for better visual feedback
+        delayLongPress={250}
+        style={wordStyle}
+        activeOpacity={0.7}
         onLayout={handleLayout}
-        accessibilityLabel={`Arabic word: ${word.word_form}. ${
-          isSelected
-            ? 'Added to study list.'
-            : 'Tap to see translation, long press to add to study list.'
-        }`}
+        accessibilityLabel={accessibilityLabel}
       >
-        <Animated.View style={[styles.container, animatedStyle]}>
-          <ThemedText
-            type="body"
-            variant={isSelected ? 'primary' : undefined}
-            skipDefaultColor
-            colorName={isSelected ? 'tint' : 'text'}
-            style={{
-              fontSize: fontSize,
-              fontWeight: fontWeight,
-              textShadowColor: isSelected ? colors.textShadowLight : 'transparent',
-              textShadowRadius: isSelected ? 1 : 0,
-              textShadowOffset: { width: 0, height: 0 },
-            }}
-          >
-            {word.word_form}
-          </ThemedText>
-
-          {/* Underline for selected words */}
-          {isSelected && <View style={underlineStyle} />}
+        <Animated.View
+          style={[
+            styles.container,
+            animatedStyle as AnimatedStyles,
+            longPressStyle as AnimatedStyles,
+            borderStyle as AnimatedStyles,
+          ]}
+        >
+          <ThemedText {...textProps}>{word.word_form}</ThemedText>
         </Animated.View>
       </TouchableOpacity>
 
-      {/* Tooltip */}
-      <WordTooltip
-        visible={tooltipVisible}
-        text={word.english}
-        layout={absoluteLayout}
-        onClose={handleTooltipClose}
-      />
+      {layout && (
+        <WordTooltip
+          visible={tooltipVisible}
+          text={word.english}
+          layout={absoluteLayout}
+          onClose={() => setTooltipVisible(false)}
+        />
+      )}
     </>
   );
 }
@@ -201,21 +266,20 @@ export const ArabicWord = memo(ArabicWordComponent);
 
 const styles = StyleSheet.create({
   wordContainer: {
-    marginHorizontal: LAYOUT.SPACING.TINY / 2,
+    marginHorizontal: 1, // Reduced for tighter word spacing
     marginVertical: LAYOUT.SPACING.TINY / 2,
-    paddingHorizontal: 1,
-    paddingVertical: 2,
+    paddingHorizontal: 3, // Reduced for tighter word spacing
+    paddingVertical: 3,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    flexShrink: 0, // Prevent shrinking
+    flexGrow: 0, // Prevent growing
+    alignSelf: 'flex-start', // Allow natural width
+    maxWidth: 150, // Prevent extremely long words from causing layout issues
+    // Prevent layout shifts by reserving space
+    height: undefined, // Allow height to be determined by content
   },
   container: {
-    position: 'relative',
     alignItems: 'center',
-  },
-  underline: {
-    height: 1.5,
-    position: 'absolute',
-    bottom: -1.5,
-    alignSelf: 'center',
-    borderRadius: LAYOUT.SPACING.TINY,
+    justifyContent: 'center',
   },
 });

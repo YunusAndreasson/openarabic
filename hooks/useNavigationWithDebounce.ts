@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { router } from 'expo-router';
 
 interface NavigationOptions {
@@ -15,14 +15,36 @@ interface NavigateToOptions {
   replace?: boolean;
 }
 
+type NavigationRoute = string | { pathname: string; params?: Record<string, string | number> };
+
+interface NavigationWithDebounceReturn {
+  isNavigating: boolean;
+  navigateTo: (
+    route: NavigationRoute,
+    callback?: () => void,
+    navigateOptions?: NavigateToOptions
+  ) => void;
+}
+
 /**
  * Hook to handle navigation with debounce protection
  * Prevents multiple rapid navigation attempts
  */
-export const useNavigationWithDebounce = (options: NavigationOptions = {}) => {
+export const useNavigationWithDebounce = (
+  options: NavigationOptions = {}
+): NavigationWithDebounceReturn => {
   const { debounceDuration = 300 } = options;
   const [isNavigating, setIsNavigating] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  // Clean up timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   /**
    * Navigate to a route with debounce protection
@@ -31,11 +53,7 @@ export const useNavigationWithDebounce = (options: NavigationOptions = {}) => {
    * @param navigateOptions - Additional navigation options
    */
   const navigateTo = useCallback(
-    (
-      route: string | { pathname: string; params?: Record<string, string | number> },
-      callback?: () => void,
-      navigateOptions?: NavigateToOptions
-    ) => {
+    (route: NavigationRoute, callback?: () => void, navigateOptions?: NavigateToOptions) => {
       if (isNavigating) return;
 
       // Set navigating state to prevent multiple clicks
@@ -54,14 +72,14 @@ export const useNavigationWithDebounce = (options: NavigationOptions = {}) => {
       // Navigate immediately
       try {
         if (navigateOptions?.replace) {
-          // @ts-ignore - Using router.replace with type safety is complex due to route typing
-          router.replace(route);
+          router.replace(route as any);
         } else {
-          // @ts-ignore - Using router.push with type safety is complex due to route typing
-          router.push(route);
+          router.push(route as any);
         }
       } catch (error) {
-        // Navigation error occurred
+        // Reset navigation state if an error occurs
+        setIsNavigating(false);
+        console.error('Navigation error:', error);
       }
 
       // Reset navigation state after debounce duration
@@ -72,16 +90,8 @@ export const useNavigationWithDebounce = (options: NavigationOptions = {}) => {
     [isNavigating, debounceDuration]
   );
 
-  // Cleanup function to prevent memory leaks
-  const cleanup = useCallback(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-  }, []);
-
   return {
     isNavigating,
     navigateTo,
-    cleanup,
   };
 };
