@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { LAYOUT } from '../constants/layout';
 import ThemedCard from './ThemedCard';
-import { AnimatedSection } from './index';
+import { Section } from './index';
 import { DailyPickSectionProps } from '@/types/ui.types';
 import { articlesService } from '@/services/articles';
 
@@ -37,9 +37,8 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   if (!article) return null;
 
   return (
-    <AnimatedSection
+    <Section
       title={showTitle ? 'Daily Pick' : undefined}
-      delay={delay}
       style={styles.container}
       paddingHorizontal={true}
     >
@@ -51,7 +50,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         summary={article.summary || undefined}
         onPress={handleArticlePress}
       />
-    </AnimatedSection>
+    </Section>
   );
 };
 

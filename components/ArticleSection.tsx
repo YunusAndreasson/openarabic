@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
-import { AnimatedSection } from './index';
+import { Section } from './index';
 import { ThemedText } from './ThemedText';
 import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';
@@ -132,13 +132,13 @@ const ArticleSection = React.memo(
     // Handle empty state if there are no articles and an empty state message is provided
     if ((!articles || articles.length === 0) && emptyStateMessage) {
       return (
-        <AnimatedSection title={title} delay={delay} style={styles.section}>
+        <Section title={title} style={styles.section}>
           <View style={styles.emptyContainer}>
             <ThemedText type="body" variant="subtle">
               {emptyStateMessage}
             </ThemedText>
           </View>
-        </AnimatedSection>
+        </Section>
       );
     }
 
@@ -146,7 +146,7 @@ const ArticleSection = React.memo(
     if (!articles || articles.length === 0) return null;
 
     return (
-      <AnimatedSection title={title} delay={delay} style={styles.section}>
+      <Section title={title} style={styles.section}>
         <FlatList
           horizontal={!vertical}
           showsHorizontalScrollIndicator={false}
@@ -164,7 +164,7 @@ const ArticleSection = React.memo(
             minimumViewTime: 300,
           }}
         />
-      </AnimatedSection>
+      </Section>
     );
   }
 );
