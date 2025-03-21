@@ -8,6 +8,7 @@ import {
   FadeIn,
   FadeOut,
   runOnUI,
+  Layout,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
@@ -140,6 +141,10 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
   // Make sure duration is valid to avoid issues with built-in animations
   const safeDuration = Math.max(1, duration); // Minimum 1ms to avoid division by zero in Reanimated
+
+  // Create standard entering and exiting animations
+  // Note: Layout animations should be applied directly on Animated.View components
+  // that use these animations, not here in the hook
   const entering = FadeIn.duration(safeDuration).delay(delay);
   const exiting = FadeOut.duration(safeDuration);
 
@@ -315,11 +320,12 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     [opacity]
   );
 
-  // Auto-start animation if enabled - move to UI thread
+  // Auto-start animation if enabled - using UI thread
   useEffect(() => {
     if (autoStart && isMountedRef.current) {
-      // Wait for layout to stabilize to prevent jumps
-      const totalDelay = Math.max(0, 10 + layoutStabilizationDelay);
+      // We still need a small delay to ensure component is mounted properly
+      // Even with Layout animations, a small initialization delay helps prevent flickering
+      const minDelay = Math.max(0, 5);
 
       // Schedule animation on the UI thread
       runOnUI(() => {
@@ -328,12 +334,12 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
         opacity.value = validInitialOpacity;
         // Use withDelay to schedule the animation on the UI thread
         opacity.value = withDelay(
-          totalDelay,
+          minDelay,
           withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing })
         );
       })();
     }
-  }, [autoStart, duration, validInitialOpacity, opacity, layoutStabilizationDelay]);
+  }, [autoStart, duration, validInitialOpacity, opacity]);
 
   // For entrance-only style, we still return all functions but they won't be used
   return {
