@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -28,8 +28,9 @@ import { EnhancedImageProps } from '@/types/ui.types';
  * - Prioritized loading based on visibility
  * - Accessibility support
  * - Memory-efficient with memoization
+ * - Prefetching for critical images
  */
-export function EnhancedImage({
+function EnhancedImageInternal({
   source,
   style,
   contentFit = 'cover',
@@ -47,6 +48,7 @@ export function EnhancedImage({
   containerWidthPercent = 1,
   isVisible = true,
   distanceFromViewport = 0,
+  prefetch = false,
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
   const [isLoading, setIsLoading] = useState(true);
@@ -80,8 +82,17 @@ export function EnhancedImage({
     return getPlaceholderColor(isDarkMode);
   }, [isDarkMode]);
 
-  // Use fade-in animation for the image
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+  // Optimize fade animation - faster for better perceived performance
+  // Reduced duration from 300ms to a snappier 150ms
+  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 150);
+
+  // Prefetch image if the prefetch prop is true
+  useEffect(() => {
+    if (prefetch && optimizedSource) {
+      // This will cache the image before it's needed for display
+      Image.prefetch(optimizedSource);
+    }
+  }, [prefetch, optimizedSource]);
 
   // Handle successful image load
   const handleImageLoad = useCallback(() => {
@@ -112,7 +123,8 @@ export function EnhancedImage({
             source={{ uri: tinyPreview }}
             contentFit={contentFit}
             blurRadius={5}
-            style={{ width: '100%', height: '100%' }}
+            style={styles.image}
+            cachePolicy={cachePolicy}
           />
         </View>
       )}
@@ -138,6 +150,7 @@ export function EnhancedImage({
           accessibilityLabel={alt}
           blurRadius={isLoading ? blurRadius : undefined}
           priority={loadPriority}
+          recyclingKey={optimizedSource} // Add recyclingKey for better memory management
         />
       </Animated.View>
 
@@ -150,6 +163,23 @@ export function EnhancedImage({
     </View>
   );
 }
+
+// Wrap with React.memo to prevent unnecessary re-renders
+export const EnhancedImage = React.memo(EnhancedImageInternal);
+
+// Create a utility function for prefetching images in bulk
+export const prefetchImages = async (urls: string[]) => {
+  if (!urls || urls.length === 0) return;
+
+  // Create an array of prefetch promises
+  const prefetchPromises = urls.map(url => {
+    const optimizedUrl = getOptimizedImageUrl(url);
+    return Image.prefetch(optimizedUrl);
+  });
+
+  // Return a promise that resolves when all images are prefetched
+  return Promise.all(prefetchPromises);
+};
 
 const styles = StyleSheet.create({
   container: {

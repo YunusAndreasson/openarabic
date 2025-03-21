@@ -117,6 +117,11 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
         windowSize={5} // Reduce window size for better performance
         initialNumToRender={10} // Limit initial render for better startup time
         removeClippedSubviews={true} // Improve memory usage by detaching off-screen views
+        getItemLayout={(data, index) => ({
+          length: 70, // Height of each word item
+          offset: 70 * index,
+          index,
+        })}
       />
     </View>
   );

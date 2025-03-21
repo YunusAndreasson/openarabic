@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
@@ -163,6 +163,16 @@ const ArticleSection = React.memo(
             itemVisiblePercentThreshold: 50,
             minimumViewTime: 300,
           }}
+          getItemLayout={(data, index) => ({
+            // Use different measurements based on horizontal/vertical layout
+            length: vertical ? 280 : 180, // Vertical uses card height, horizontal uses card width
+            offset: (vertical ? 280 : 180) * index,
+            index,
+          })}
+          windowSize={3}
+          initialNumToRender={5}
+          maxToRenderPerBatch={3}
+          removeClippedSubviews={Platform.OS === 'android'}
         />
       </Section>
     );

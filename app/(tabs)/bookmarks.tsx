@@ -1,5 +1,13 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { StyleSheet, FlatList, View, AppState, Pressable } from 'react-native';
+import {
+  StyleSheet,
+  FlatList,
+  View,
+  AppState,
+  Pressable,
+  Platform,
+  RefreshControl,
+} from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/readingList';
 import { useAuth } from '@/hooks/useAuth';
@@ -122,6 +130,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 });
+
+// Define a constant for item height calculation
+// Card content + margins + borders
+const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding and margins
 
 // Memory-optimized component for reading list items
 const ReadingListItem = React.memo(
@@ -700,6 +712,11 @@ export default function BookmarksScreen() {
             contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
             removeClippedSubviews={true}
             initialNumToRender={10}
+            getItemLayout={(data, index) => ({
+              length: ITEM_HEIGHT,
+              offset: ITEM_HEIGHT * index,
+              index,
+            })}
           />
         </ThemedView>
 

@@ -559,6 +559,11 @@ export default function ArticleScreen() {
               windowSize={5}
               removeClippedSubviews={false}
               indicatorStyle={isDarkMode ? 'white' : 'black'}
+              getItemLayout={(data, index) => ({
+                length: 70, // Adjust based on your typical sentence height
+                offset: 70 * index + (article?.title ? 150 : 0), // Account for header
+                index,
+              })}
               ListHeaderComponent={
                 <Animated.View style={safeHeaderStyle}>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />

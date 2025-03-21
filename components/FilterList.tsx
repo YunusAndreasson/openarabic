@@ -99,6 +99,11 @@ function FilterList<T extends FilterItem>({
         initialNumToRender={10}
         maxToRenderPerBatch={20}
         windowSize={5}
+        getItemLayout={(data, index) => ({
+          length: 100, // Approximate width of each filter pill
+          offset: 100 * index,
+          index,
+        })}
         accessibilityLabel={`List of ${title.toLowerCase()} filters`}
       />
     </Animated.View>

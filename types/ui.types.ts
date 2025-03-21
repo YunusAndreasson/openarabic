@@ -1218,6 +1218,9 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Distance from viewport in pixels (for priority calculation) */
   distanceFromViewport?: number;
+
+  /** Whether to prefetch this image before it's displayed */
+  prefetch?: boolean;
 }
 
 /**
