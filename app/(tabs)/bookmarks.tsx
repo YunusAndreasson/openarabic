@@ -13,7 +13,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
-import { usePressAnimation } from '@/hooks/animations';
 import { useLoadingState, useScreenFocusRefresh, useScreenAnimation } from '@/hooks';
 import EmptyState from '@/components/EmptyState';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
@@ -32,52 +31,52 @@ const styles = StyleSheet.create({
   },
   // Content area
   listContent: {
-    paddingHorizontal: 0,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: 0,
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM * 5,
   },
-  // List item styling
-  itemContainer: {
-    marginBottom: 0,
-    position: 'relative', // Important for proper progress indicator positioning
+  // Card styling
+  cardContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
   },
-  listItem: {
+  card: {
+    overflow: 'hidden',
+  },
+  cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.SMALL * 0.8,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
-  itemContentContainer: {
+  textContent: {
     flex: 1,
-    paddingRight: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SPACING.SMALL,
   },
-  itemTitle: {
+  cardTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
     fontWeight: '500',
     marginBottom: LAYOUT.SPACING.TINY / 2,
     lineHeight: (LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1) * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
-  itemAuthor: {
+  cardAuthor: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
     opacity: LAYOUT.OPACITY.DIMMED,
   },
-  progressContainer: {
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardProgressContainer: {
+    height: 3,
+    width: '100%',
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
     left: 0,
-    right: 0,
-    zIndex: 1, // Ensure progress indicator appears above other elements
   },
-  progressIndicator: {
-    height: 2, // Slightly thicker for better visibility
-    width: '100%',
-    overflow: 'hidden',
-  },
-  progressBar: {
+  cardProgressBar: {
     height: '100%',
-    width: '0%',
   },
   // Bottom action bar - similar to vocabulary screen
   bottomControlsContainer: {
@@ -91,6 +90,9 @@ const styles = StyleSheet.create({
   controlsCard: {
     padding: LAYOUT.SPACING.MEDIUM,
     width: '100%',
+  },
+  controlsLabelContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   controlsTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -140,90 +142,69 @@ const ReadingListItem = React.memo(
   }) => {
     const colors = useColors();
     const isActive = isPlaying || isPaused;
-    const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-      type: 'button',
-    });
 
     return (
-      <Pressable
-        style={styles.itemContainer}
-        onPress={() => router.push(`/article/${articleId}`)}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-      >
-        <Animated.View
+      <View style={styles.cardContainer}>
+        <BaseCard
+          onPress={() => router.push(`/article/${articleId}`)}
           style={[
-            styles.listItem,
-            {
-              borderBottomColor: colors.cardBorder,
-              backgroundColor: isActive ? `${colors.tint}08` : 'transparent',
+            styles.card,
+            isActive && {
+              borderColor: colors.tint,
+              borderLeftWidth: 3,
             },
-            animatedStyle as any,
           ]}
+          shadowSize="small"
         >
-          <View style={styles.itemContentContainer}>
-            <ThemedText
-              numberOfLines={1}
-              style={[
-                styles.itemTitle,
-                isActive && {
-                  color: colors.tint,
-                  fontWeight: '600', // Slightly bolder when active
-                },
-              ]}
-            >
-              {title}
-            </ThemedText>
-            <ThemedText
-              style={[
-                styles.itemAuthor,
-                isActive && { opacity: 0.8 }, // More visible when active
-              ]}
-              numberOfLines={1}
-            >
-              {author}
-            </ThemedText>
+          <View style={styles.cardContent}>
+            <View style={styles.textContent}>
+              <ThemedText
+                numberOfLines={1}
+                style={[
+                  styles.cardTitle,
+                  isActive && {
+                    color: colors.tint,
+                    fontWeight: '600',
+                  },
+                ]}
+              >
+                {title}
+              </ThemedText>
+              <ThemedText
+                style={[styles.cardAuthor, isActive && { opacity: 0.8 }]}
+                numberOfLines={1}
+              >
+                {author}
+              </ThemedText>
+            </View>
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={isActive ? colors.tint : colors.text}
+                style={{
+                  opacity: isActive ? LAYOUT.OPACITY.DIMMED : LAYOUT.OPACITY.DISABLED / 1.5,
+                }}
+              />
+            </View>
           </View>
 
-          {isActive ? (
-            <Ionicons
-              name="chevron-forward"
-              size={16}
-              color={colors.tint}
-              style={{ opacity: LAYOUT.OPACITY.DIMMED }}
-            />
-          ) : (
-            <Ionicons
-              name="chevron-forward"
-              size={16}
-              color={colors.text}
-              style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
-            />
-          )}
-        </Animated.View>
-
-        {/* Progress indicator at bottom of the item */}
-        <View style={styles.progressContainer}>
-          <View
-            style={[
-              styles.progressIndicator,
-              { backgroundColor: isActive ? colors.textOverlay : 'transparent' },
-            ]}
-          >
-            {isActive && (
+          {/* Progress indicator at bottom of card */}
+          {isActive && (
+            <View style={styles.cardProgressContainer}>
               <View
                 style={[
-                  styles.progressBar,
+                  styles.cardProgressBar,
                   {
                     backgroundColor: colors.tint,
                     width: `${progress * 100}%`,
                   },
                 ]}
               />
-            )}
-          </View>
-        </View>
-      </Pressable>
+            </View>
+          )}
+        </BaseCard>
+      </View>
     );
   }
 );
@@ -246,9 +227,11 @@ const BottomControls = React.memo(
     return (
       <View style={styles.bottomControlsContainer}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
-          <ThemedText type="overline" variant="secondary">
-            AUDIO CONTROLS
-          </ThemedText>
+          <View style={styles.controlsLabelContainer}>
+            <ThemedText type="overline" variant="secondary">
+              AUDIO CONTROLS
+            </ThemedText>
+          </View>
           <View style={styles.actionButtonsRow}>
             <View style={{ width: '48%' }}>
               <ThemedButton

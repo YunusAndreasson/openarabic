@@ -173,14 +173,7 @@ const Pill = React.memo(
               },
             ]}
           >
-            <ThemedText
-              type="caption"
-              variant={isSelected ? 'primary' : 'secondary'}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              weight={isSelected ? '700' : '500'}
-              align={isCategory || isHorizontalCategory ? 'center' : undefined}
-            >
+            <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
               {capitalizeFirstLetter(label.toLowerCase())}
             </ThemedText>
           </View>
@@ -220,15 +213,8 @@ const Pill = React.memo(
                   }
             }
           >
-            <ThemedText
-              type="caption"
-              variant={isSelected ? 'primary' : 'secondary'}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-              weight={isSelected ? '600' : '500'}
-              align={isCategory || isHorizontalCategory ? 'center' : undefined}
-            >
-              {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label}
+            <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
+              {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label.toUpperCase()}
             </ThemedText>
           </Pressable>
         </Animated.View>

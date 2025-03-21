@@ -145,8 +145,8 @@ export const VocabularyGraph = React.memo(
       () => (
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <ThemedText type="caption" weight="500" variant="secondary">
-              {title}
+            <ThemedText type="overline" variant="secondary">
+              {title.toUpperCase()}
             </ThemedText>
           </View>
         </View>

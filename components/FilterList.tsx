@@ -82,8 +82,8 @@ function FilterList<T extends FilterItem>({
             accessibilityLabel={`Clear ${title.toLowerCase()} filter`}
             accessibilityRole="button"
           >
-            <ThemedText type="bodyBold" colorName="tint" skipDefaultColor>
-              Clear Filter
+            <ThemedText type="overline" colorName="tint" skipDefaultColor>
+              CLEAR FILTER
             </ThemedText>
           </Pressable>
         )}
