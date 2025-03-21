@@ -18,11 +18,6 @@
  * - useSlideAnimation → useTransformAnimation({ type: 'slide' })
  */
 
-// Core animation hooks
-import { useOpacityAnimation } from './useOpacityAnimation';
-import { usePressAnimation } from './usePressAnimation';
-import { usePulseAnimation } from './usePulseAnimation';
-
 // Export main hooks
 export { useOpacityAnimation } from './useOpacityAnimation';
 export { usePressAnimation } from './usePressAnimation';
@@ -35,16 +30,6 @@ export { useGraphAnimation } from './useGraphAnimation';
 export { useAnimationTrigger } from './useAnimationTrigger';
 export { useScreenAnimation } from './useScreenAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
-
-// Export legacy hooks (with deprecation warnings)
-export {
-  useFadeInAnimation,
-  useFadeInEntrance,
-  useButtonAnimation,
-  useCardAnimation,
-  useScaleAnimation,
-  useSlideAnimation,
-} from './compatibility';
 
 // Export standardized animation configurations
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';

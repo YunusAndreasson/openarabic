@@ -29,7 +29,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { useFadeInAnimation, useFloatingButtonAnimation } from '@/hooks/animations';
+import { useOpacityAnimation, useFloatingButtonAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
@@ -158,13 +158,13 @@ export default function ArticleScreen() {
 
   // Animation hooks
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
-    useFadeInAnimation(100, 300);
+    useOpacityAnimation({ initialOpacity: 0, delay: 100, duration: 300 });
 
   const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
-    useFadeInAnimation(100, 300);
+    useOpacityAnimation({ initialOpacity: 0, delay: 100, duration: 300 });
 
   const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
-    useFadeInAnimation(300, 500);
+    useOpacityAnimation({ initialOpacity: 0, delay: 300, duration: 500 });
 
   const { combinedBackButtonStyle, combinedBookmarkButtonStyle, combinedPlayButtonStyle } =
     useFloatingButtonAnimation(isButtonsVisible);

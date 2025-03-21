@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
-import { useFadeInAnimation } from '../../hooks/animations';
+import { useOpacityAnimation } from '../../hooks/animations';
 import { warningFeedback } from '../../utils/haptics';
 import { MeaningOverlayProps } from '../../types/ui.types';
 
@@ -15,7 +15,7 @@ import { MeaningOverlayProps } from '../../types/ui.types';
 const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
   ({ visible, meaning, isWarning = false }) => {
     const colors = useColors();
-    const { animatedStyle, startAnimation, reverseAnimation } = useFadeInAnimation(0, 150);
+    const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 150 });
 
     useEffect(() => {
       if (visible) {

@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui.types';
 
 export interface RelatedArticlesSectionProps extends RelatedArticlesSectionPropsType {}
@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
 // Memoized related articles section for better performance
 export const RelatedArticlesSection = React.memo(
   ({ title, articles, renderArticleCard }: RelatedArticlesSectionProps) => {
-    const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+    const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 300 });
 
     useEffect(() => {
       startAnimation();

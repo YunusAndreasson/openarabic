@@ -5,7 +5,7 @@ import { useColors } from '../../hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../../constants/layout';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '../../hooks/animations';
+import { useOpacityAnimation } from '../../hooks/animations';
 import { InstructionFooterProps } from '../../types/ui.types';
 
 /**
@@ -13,7 +13,7 @@ import { InstructionFooterProps } from '../../types/ui.types';
  */
 const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   const colors = useColors();
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+  const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 300 });
 
   // Start the animation with a delay
   useEffect(() => {

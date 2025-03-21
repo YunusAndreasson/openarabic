@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
-import { Pressable, StyleSheet, View, Platform, TextStyle } from 'react-native';
+import { Pressable, StyleSheet, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation, useScaleAnimation } from '../hooks/animations';
+import { useOpacityAnimation, useTransformAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -26,21 +26,23 @@ const Pill = React.memo(
     const isDarkMode = useIsDarkMode();
 
     // Use fade-in animation hook with consistent timing
-    const { animatedStyle, startAnimation } = useFadeInAnimation(
-      0, // Start fully transparent
-      LAYOUT.ANIMATION.DURATION.FAST
-    );
+    const { animatedStyle, startAnimation } = useOpacityAnimation({
+      initialOpacity: 0, // Start fully transparent
+      delay: animationDelay,
+      duration: LAYOUT.ANIMATION.DURATION.FAST,
+    });
 
     // Use scale animation hook for press feedback
     const {
       animatedStyle: scaleStyle,
       startAnimation: startScaleDown,
       reverseAnimation: resetScale,
-    } = useScaleAnimation(
-      0.98, // Scale down to 98%
-      1, // Scale up to 100%
-      LAYOUT.ANIMATION.DURATION.FAST / 2 // Faster duration for responsive feel
-    );
+    } = useTransformAnimation({
+      type: 'scale',
+      initialValue: 0.98, // Scale down to 98%
+      targetValue: 1, // Scale up to 100%
+      duration: LAYOUT.ANIMATION.DURATION.FAST / 2, // Faster duration for responsive feel
+    });
 
     // Memoize the press handler
     const handlePress = useCallback(() => {
@@ -118,38 +120,6 @@ const Pill = React.memo(
       };
     }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
 
-    // Get text style based on variant and selection state
-    const textStyle = useMemo(() => {
-      const style: TextStyle = {};
-
-      if (isCategory || isHorizontalCategory) {
-        style.color = isSelected
-          ? isDarkMode
-            ? colors.white // Selected text in dark mode - white for better contrast
-            : colors.white // Selected text in light mode - white for better contrast
-          : isDarkMode
-            ? colors.text // Unselected text in dark mode - full opacity for better readability
-            : colors.titleText; // Unselected text in light mode - using titleText for better contrast
-        style.fontSize = LAYOUT.TYPOGRAPHY.SCALE.TINY + 1;
-        style.fontWeight = isSelected ? '700' : '500'; // Slightly lighter weight for unselected
-        style.letterSpacing = 0.3; // Reduced from 0.5 to allow more characters
-        style.lineHeight = 16;
-        style.textAlign = 'center';
-      } else {
-        // Filter pill text styling
-        style.fontSize = LAYOUT.TYPOGRAPHY.SCALE.SMALL;
-        style.fontWeight = isSelected ? '600' : '500'; // Slightly lighter weights for subtlety
-
-        if (isSelected) {
-          style.color = colors.tint; // Use tint color for selected state
-        } else {
-          style.color = colors.text; // Use standard text color for unselected state
-        }
-      }
-
-      return style;
-    }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
-
     // Start the fade-in animation when the component mounts
     useEffect(() => {
       startAnimation(animationDelay);
@@ -158,7 +128,7 @@ const Pill = React.memo(
     // For category pills that don't need interaction
     if (isCategory && !onSelect) {
       return (
-        <Animated.View style={animatedStyle}>
+        <Animated.View style={animatedStyle as any}>
           <View
             style={[
               styles.container,
@@ -183,8 +153,8 @@ const Pill = React.memo(
 
     // For interactive pills
     return (
-      <Animated.View style={animatedStyle}>
-        <Animated.View style={[scaleStyle, absolute && styles.absoluteContainer]}>
+      <Animated.View style={animatedStyle as any}>
+        <Animated.View style={scaleStyle as any}>
           <Pressable
             style={({ pressed: isPressedState }) => [
               styles.pill,
@@ -194,6 +164,7 @@ const Pill = React.memo(
                   backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
                 },
               isSelected && styles.pillSelected,
+              absolute && styles.absoluteContainer,
             ]}
             onPress={handlePress}
             onPressIn={() => {

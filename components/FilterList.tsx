@@ -7,7 +7,7 @@ import SectionTitle from './SectionTitle';
 import { ThemedText } from './ThemedText';
 import Pill from './Pill';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-import { useFadeInAnimation } from '../hooks/animations';
+import { useOpacityAnimation } from '../hooks/animations';
 import { FilterItem, FilterListProps } from '@/types/ui.types';
 
 /**
@@ -23,7 +23,7 @@ function FilterList<T extends FilterItem>({
   itemAnimationDelay = 650,
 }: FilterListProps<T>) {
   const colors = useColors();
-  const { animatedStyle, startAnimation } = useFadeInAnimation(0, 300);
+  const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 300 });
 
   // Memoize styles that use colors to prevent new object creation on each render
   const clearButtonStyle = useMemo(

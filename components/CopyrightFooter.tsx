@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { ThemedText } from './ThemedText';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 
 /**
  * A component that displays a copyright notice with the current Hijri year
@@ -23,7 +23,7 @@ export const CopyrightFooter = React.memo(() => {
   };
 
   const hijriYear = getHijriYear();
-  const { animatedStyle, startAnimation } = useFadeInAnimation(300, 400);
+  const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 300, duration: 400 });
 
   useEffect(() => {
     startAnimation();

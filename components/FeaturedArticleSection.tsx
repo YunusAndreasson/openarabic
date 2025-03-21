@@ -4,7 +4,7 @@ import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
-import { useFadeInAnimation } from '../hooks/animations';
+import { useOpacityAnimation } from '../hooks/animations';
 import SectionTitle from './SectionTitle';
 import ThemedCard from './ThemedCard';
 import { articlesService } from '@/services/articles';
@@ -22,10 +22,11 @@ interface FeaturedArticleItemProps {
 const FeaturedArticleItem = React.memo(
   ({ article, index, totalCount, onPress }: FeaturedArticleItemProps) => {
     // Use animation with staggered delay based on index
-    const { animatedStyle, startAnimation } = useFadeInAnimation(
-      300 + index * 100,
-      LAYOUT.ANIMATION.DURATION.NORMAL
-    );
+    const { animatedStyle, startAnimation } = useOpacityAnimation({
+      initialOpacity: 0,
+      delay: 300 + index * 100,
+      duration: LAYOUT.ANIMATION.DURATION.NORMAL,
+    });
 
     // Add queryClient for prefetching
     const queryClient = useQueryClient();
@@ -92,10 +93,11 @@ interface FeaturedArticleSectionProps {
 const FeaturedArticleSection = React.memo(
   ({ title, articles, onArticlePress, delay = 300 }: FeaturedArticleSectionProps) => {
     // Use section animation
-    const { animatedStyle, startAnimation } = useFadeInAnimation(
-      delay,
-      LAYOUT.ANIMATION.DURATION.NORMAL
-    );
+    const { animatedStyle, startAnimation } = useOpacityAnimation({
+      initialOpacity: 0,
+      delay: delay,
+      duration: LAYOUT.ANIMATION.DURATION.NORMAL,
+    });
 
     useEffect(() => {
       startAnimation();

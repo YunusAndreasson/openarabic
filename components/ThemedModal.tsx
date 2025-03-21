@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
-import { useFadeInAnimation, useScaleAnimation } from '@/hooks/animations';
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { ThemedModalProps } from '@/types/ui.types';
 
 /**
@@ -48,9 +48,9 @@ const AnimatedModalContent = ({
 }) => {
   // Use our custom fade-in animation hooks
   const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
-    useFadeInAnimation(0, animationDuration);
+    useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: animationDuration });
   const { animatedStyle: childrenAnimatedStyle, startAnimation: startChildrenAnimation } =
-    useFadeInAnimation(0, 300);
+    useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 300 });
 
   // Start animations when component mounts
   useEffect(() => {
@@ -117,25 +117,31 @@ function ThemedModalComponent({
   const isDarkMode = useIsDarkMode();
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Use standardized animation hooks
   const {
-    animatedStyle: fadeAnimatedStyle,
-    startAnimation: startFadeAnimation,
-    reverseAnimation: reverseFadeAnimation,
-  } = useFadeInAnimation(0, animationDuration);
+    animatedStyle: modalContainerAnimatedStyle,
+    startAnimation: startModalAnimation,
+    reset: resetModalAnimation,
+  } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: animationDuration });
+
+  // Use scale animation for the modal content
   const {
-    animatedStyle: scaleAnimatedStyle,
+    animatedStyle: modalScaleStyle,
     startAnimation: startScaleAnimation,
-    reverseAnimation: reverseScaleAnimation,
-  } = useScaleAnimation(0.95, 1, animationDuration);
+    reset: resetScaleAnimation,
+  } = useTransformAnimation({
+    type: 'scale',
+    initialValue: 0.95,
+    targetValue: 1,
+    duration: animationDuration,
+  });
 
   // Start animations when modal becomes visible
   useEffect(() => {
     if (visible && animated) {
-      startFadeAnimation();
+      startModalAnimation();
       startScaleAnimation();
     }
-  }, [visible, animated, startFadeAnimation, startScaleAnimation]);
+  }, [visible, animated, startModalAnimation, startScaleAnimation]);
 
   // Clean up any pending timeouts when component unmounts or modal closes
   useEffect(() => {
@@ -158,8 +164,8 @@ function ThemedModalComponent({
 
     if (animated) {
       // Run exit animations
-      reverseFadeAnimation();
-      reverseScaleAnimation();
+      resetModalAnimation();
+      resetScaleAnimation();
 
       // Clear any existing timeout
       if (closeTimeoutRef.current) {
@@ -174,7 +180,7 @@ function ThemedModalComponent({
     } else {
       triggerClose();
     }
-  }, [closeOnBackdropPress, animated, reverseFadeAnimation, reverseScaleAnimation, triggerClose]);
+  }, [closeOnBackdropPress, animated, resetModalAnimation, resetScaleAnimation, triggerClose]);
 
   // Calculate modal width
   const modalWidth = useMemo(() => {
@@ -214,10 +220,10 @@ function ThemedModalComponent({
     }
 
     return {
-      opacity: fadeAnimatedStyle.opacity,
-      transform: scaleAnimatedStyle.transform,
+      opacity: modalContainerAnimatedStyle.opacity,
+      transform: modalScaleStyle.transform,
     };
-  }, [animated, fadeAnimatedStyle, scaleAnimatedStyle]);
+  }, [animated, modalContainerAnimatedStyle, modalScaleStyle]);
 
   // Use the AnimatedModalContent component for both blur and non-blur cases
   return (

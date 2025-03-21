@@ -23,7 +23,7 @@ import ThemedCard from './ThemedCard';
 import Animated from 'react-native-reanimated';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
-import { useFadeInAnimation } from '../hooks/animations';
+import { useOpacityAnimation } from '../hooks/animations';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
 
@@ -114,7 +114,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         isViewable: boolean;
       }) => {
         // Use animation with fixed delay based on index
-        const { animatedStyle, startAnimation } = useFadeInAnimation(index * 50, 300);
+        const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: index * 50, duration: 300 });
 
         // Start the animation when the component mounts or becomes visible
         useEffect(() => {
@@ -160,7 +160,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
 
     // Add the endMessageAnimatedStyle
     const { animatedStyle: endMessageAnimatedStyle, startAnimation: startEndMessageAnimation } =
-      useFadeInAnimation(800, 400);
+      useOpacityAnimation({ initialOpacity: 0, delay: 800, duration: 400 });
 
     // Start the end message animation when the component mounts
     React.useEffect(() => {
