@@ -208,9 +208,9 @@ export default function VocabularyScreen() {
       <SignInRequired
         headerTitle=""
         colors={colors}
-        message="Sign in to track"
-        benefitTitle="Build Words"
-        benefitDescription="Learn through spaced repetition."
+        message="Sign in to continue"
+        benefitTitle="Vocabulary"
+        benefitDescription="Master new words through spaced repetition."
       />
     );
   }

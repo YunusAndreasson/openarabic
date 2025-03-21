@@ -49,7 +49,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
       setIsInReadingList(!isInReadingList);
       Toast.show({
         type: isInReadingList ? 'info' : 'success',
-        text1: isInReadingList ? 'Removed from playlist' : 'Added to playlist',
+        text1: isInReadingList ? 'Removed from bookmarks' : 'Added to bookmarks',
         position: 'bottom',
       });
     } catch (error) {
@@ -57,7 +57,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: 'Failed to update playlist',
+        text2: 'Failed to update bookmarks',
         position: 'bottom',
       });
     } finally {
@@ -69,7 +69,7 @@ export function ReadingListButton({ articleId }: ReadingListButtonProps) {
     <View style={styles.container}>
       <ThemedButton
         variant={isInReadingList ? 'outlined' : 'filled'}
-        title={isInReadingList ? 'In playlist' : 'Add to playlist'}
+        title={isInReadingList ? 'Bookmarked' : 'Bookmark'}
         icon={isInReadingList ? 'bookmark' : 'bookmark-outline'}
         onPress={toggleReadingList}
         disabled={!user || isLoading}

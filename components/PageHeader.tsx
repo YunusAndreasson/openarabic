@@ -9,7 +9,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 /**
- * A reusable page header component with consistent styling and blur effect
+ * Page header with styled blur effect
  */
 const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
   const colors = useColors();

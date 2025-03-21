@@ -10,17 +10,17 @@ import ThemedCard from './ThemedCard';
 
 interface ArticleSectionProps {
   /**
-   * Title for the section
+   * Section title
    */
   title: string;
 
   /**
-   * Array of articles to display
+   * Articles to display
    */
   articles: Article[];
 
   /**
-   * Callback when an article is pressed
+   * Callback when article is pressed
    */
   onArticlePress: (article: Article) => void;
 
@@ -30,43 +30,43 @@ interface ArticleSectionProps {
   delay?: number;
 
   /**
-   * Whether to show the time ago indicator
+   * Show time ago indicator
    */
   showTimeAgo?: boolean;
 
   /**
-   * Whether to use a vertical layout instead of horizontal
+   * Use vertical layout instead of horizontal
    */
   vertical?: boolean;
 
   /**
-   * Maximum number of articles to display
+   * Maximum articles to display
    */
   maxItems?: number;
 
   /**
-   * Message to display when there are no articles
+   * Empty state message
    */
   emptyStateMessage?: string;
 
   /**
-   * Whether to hide the difficulty label text
+   * Hide difficulty label text
    */
   hideDifficultyLabel?: boolean;
 
   /**
-   * Whether to completely hide the difficulty indicator
+   * Hide difficulty indicator
    */
   hideDifficulty?: boolean;
 
   /**
-   * Function to get the last opened timestamp for an article
+   * Function to get last opened timestamp
    */
   getLastOpenedAt?: (articleId: number) => string | undefined;
 }
 
 /**
- * A reusable component for displaying a section of articles
+ * Displays a section of articles
  */
 const ArticleSection = React.memo(
   ({

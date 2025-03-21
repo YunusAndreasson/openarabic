@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -95,8 +95,16 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
   const scale = useSharedValue(initialScale);
   const opacity = useSharedValue(initialOpacity);
 
-  // Interval ref to track animation loop for dramatic style
-  const intervalRef = useRef<NodeJS.Timeout>();
+  // Stop the animation - defined first to avoid reference issues
+  const stopAnimation = useCallback(() => {
+    // Cancel any ongoing animations
+    cancelAnimation(scale);
+    cancelAnimation(opacity);
+
+    // Reset to initial values
+    scale.value = initialScale;
+    opacity.value = initialOpacity;
+  }, [scale, opacity, initialScale, initialOpacity]);
 
   // Standard pulse function
   const standardPulse = useCallback(() => {
@@ -139,8 +147,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
           duration: 500,
           easing: TIMING_CONFIG.MEDIUM.easing,
         })
-      ),
-      withDelay(200, withTiming(initialScale, { duration: 0 }))
+      )
     );
 
     // Animate opacity in sync with scale
@@ -159,8 +166,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
           duration: 500,
           easing: TIMING_CONFIG.MEDIUM.easing,
         })
-      ),
-      withDelay(200, withTiming(initialOpacity, { duration: 0 }))
+      )
     );
   }, [scale, opacity, magnitude, initialScale, initialOpacity]);
 
@@ -207,34 +213,131 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
     }
   }, [style, dramaticPulse, gentlePulse, standardPulse]);
 
+  // Calculate animation cycle duration for each style
+  const getDurationForStyle = useCallback(() => {
+    if (style === 'dramatic') {
+      return 1350; // Total duration of dramatic animation cycle
+    } else if (style === 'gentle') {
+      return options.duration || 1200;
+    } else {
+      return TIMING_CONFIG.FAST.duration * 2; // Standard pulse (grow + shrink)
+    }
+  }, [style, options.duration]);
+
   // Start continuous animation
   const startAnimation = useCallback(
     (repetitions?: number) => {
+      // Stop any existing animations first
+      stopAnimation();
+
       if (style === 'dramatic') {
-        // Clear any existing interval
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
+        // Get the full sequence for dramatic style
+        const fullDramaticSequence = () => {
+          'worklet';
+          // Scale animation
+          scale.value = withSequence(
+            withTiming(0.7, {
+              duration: 200,
+              easing: TIMING_CONFIG.FAST.easing,
+            }),
+            withTiming(magnitude, {
+              duration: 300,
+              easing: TIMING_CONFIG.MEDIUM.easing,
+            }),
+            withDelay(
+              150,
+              withTiming(initialScale, {
+                duration: 500,
+                easing: TIMING_CONFIG.MEDIUM.easing,
+              })
+            ),
+            // Small delay between repetitions
+            withDelay(200, withTiming(initialScale, { duration: 0 }))
+          );
+
+          // Opacity animation
+          opacity.value = withSequence(
+            withTiming(0.8, {
+              duration: 200,
+              easing: TIMING_CONFIG.FAST.easing,
+            }),
+            withTiming(1, {
+              duration: 300,
+              easing: TIMING_CONFIG.MEDIUM.easing,
+            }),
+            withDelay(
+              150,
+              withTiming(initialOpacity, {
+                duration: 500,
+                easing: TIMING_CONFIG.MEDIUM.easing,
+              })
+            ),
+            // Small delay between repetitions
+            withDelay(200, withTiming(initialOpacity, { duration: 0 }))
+          );
+        };
+
+        // Execute once immediately
+        fullDramaticSequence();
+
+        // If repetitions is specified (including infinite), set up repeating animation
+        if (repetitions !== 1) {
+          const cycleTime = getDurationForStyle();
+          const repeatDelay = cycleTime;
+
+          // Delayed recursive call with repetitions handling
+          const setupNextAnimation = (remainingReps?: number) => {
+            if (remainingReps === undefined || remainingReps > 1 || remainingReps === -1) {
+              const nextReps =
+                remainingReps === undefined || remainingReps === -1 ? -1 : remainingReps - 1;
+
+              scale.value = withDelay(
+                repeatDelay,
+                withTiming(initialScale, { duration: 0 }, finished => {
+                  if (finished) {
+                    fullDramaticSequence();
+                    setupNextAnimation(nextReps);
+                  }
+                })
+              );
+            }
+          };
+
+          setupNextAnimation(repetitions);
         }
-
-        // Start the animation immediately
-        dramaticPulse();
-
-        // Set up the interval for continuous animation
-        intervalRef.current = setInterval(dramaticPulse, 1350);
       } else if (style === 'gentle') {
-        // Clear any existing interval
-        if (intervalRef.current) {
-          clearInterval(intervalRef.current);
-        }
-
-        // Start the animation immediately
-        gentlePulse();
-
-        // Use a longer interval for the gentle animation
         const pulseDuration = options.duration || 1200;
-        intervalRef.current = setInterval(gentlePulse, pulseDuration);
+        const minOpacity = options.minOpacity || 0.4;
+
+        // Create full sequence for gentle style
+        const scaleSequence = withSequence(
+          withTiming(magnitude, {
+            duration: pulseDuration * 0.5,
+            easing: TIMING_CONFIG.GENTLE.easing,
+          }),
+          withTiming(1, {
+            duration: pulseDuration * 0.5,
+            easing: TIMING_CONFIG.GENTLE.easing,
+          })
+        );
+
+        const opacitySequence = withSequence(
+          withTiming(minOpacity, {
+            duration: pulseDuration * 0.4,
+            easing: TIMING_CONFIG.GENTLE.easing,
+          }),
+          withTiming(1, {
+            duration: pulseDuration * 0.6,
+            easing: TIMING_CONFIG.GENTLE.easing,
+          })
+        );
+
+        // Apply repeating animations
+        scale.value = withRepeat(scaleSequence, repetitions ?? -1, false);
+
+        opacity.value = withRepeat(opacitySequence, repetitions ?? -1, false);
       } else {
-        // For standard style, use withRepeat
+        // Standard style - already using withRepeat
         scale.value = 1;
         scale.value = withRepeat(
           withSequence(
@@ -252,24 +355,19 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
         );
       }
     },
-    [style, scale, magnitude, dramaticPulse, gentlePulse, options.duration]
+    [
+      style,
+      scale,
+      opacity,
+      magnitude,
+      initialScale,
+      initialOpacity,
+      getDurationForStyle,
+      options.duration,
+      options.minOpacity,
+      stopAnimation,
+    ]
   );
-
-  // Stop the animation
-  const stopAnimation = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = undefined;
-    }
-
-    // Cancel any ongoing animations
-    cancelAnimation(scale);
-    cancelAnimation(opacity);
-
-    // Reset to initial values
-    scale.value = initialScale;
-    opacity.value = initialOpacity;
-  }, [scale, opacity, initialScale, initialOpacity]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -300,6 +398,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
 
     return {
       transform: [{ scale: scale.value }],
+      opacity: style === 'gentle' ? opacity.value : undefined,
     };
   });
 
