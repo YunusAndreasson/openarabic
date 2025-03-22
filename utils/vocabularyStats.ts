@@ -153,23 +153,15 @@ export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressDa
       });
     }
 
-    console.log('No study words found, returning empty week structure');
     return emptyWeek;
   }
-
-  // *** COMPLETELY REVAMPED DATE HANDLING ***
 
   // Get today's date with time set to noon to avoid timezone issues
   const today = new Date();
   today.setHours(12, 0, 0, 0);
 
-  // Get the day of week name for today
-  const todayDayName = dayNames[today.getDay()];
-
   // Format today's date as YYYY-MM-DD for comparison
   const todayFormatted = today.toISOString().split('T')[0];
-
-  console.log(`TODAY: ${todayFormatted} (${todayDayName})`);
 
   // Create an array of dates representing the last 7 days (including today)
   const dates = [];
@@ -186,13 +178,10 @@ export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressDa
     // Format date as YYYY-MM-DD for bucket key
     const dateString = date.toISOString().split('T')[0];
     const dayName = dayNames[date.getDay()];
-
-    console.log(`Creating bucket: ${dateString} (${dayName})`);
     dayBuckets[dateString] = { date: dayName, count: 0, wordsLearned: 0 };
   });
 
-  // Debug: Count the total reviews we're looking at
-  console.log(`Calculating weekly progress for ${studyWords.length} total words`);
+  // Count reviews in the last week
   let reviewsDetected = 0;
 
   // Count ANY word review that happened in the last week, regardless of source
@@ -230,31 +219,17 @@ export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressDa
       // It's within our date range
       reviewsDetected++;
 
-      // Log today's reviews for debugging
-      if (reviewDateString === todayFormatted) {
-        console.log(
-          `Today's review: Word ID ${word.sentence_word_id} at ${reviewDate.toISOString()}`
-        );
-      }
-
       // Check if we have a bucket for this date
       if (dayBuckets[reviewDateString]) {
         // Count every review
         dayBuckets[reviewDateString].count++;
         // Consider ANY review a learning event
         dayBuckets[reviewDateString].wordsLearned++;
-      } else {
-        console.log(`No bucket found for ${reviewDateString} (outside 7-day range)`);
       }
     }
   });
 
   console.log(`Detected ${reviewsDetected} reviews in the last 7 days`);
-
-  // Log all buckets
-  Object.entries(dayBuckets).forEach(([date, data]) => {
-    console.log(`Bucket ${date}: ${data.date} - ${data.wordsLearned} words, ${data.count} reviews`);
-  });
 
   // Convert buckets to array and sort by date
   const result = Object.entries(dayBuckets)
@@ -264,9 +239,6 @@ export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressDa
     }))
     .sort((a, b) => a._sortDate.getTime() - b._sortDate.getTime())
     .map(({ _sortDate, ...rest }) => rest); // Remove the sorting helper property
-
-  // Confirm we have exactly 7 days in our result
-  console.log(`Final result has ${result.length} days`);
 
   return result;
 }

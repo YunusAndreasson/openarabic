@@ -47,22 +47,9 @@ export const VocabularyGraph = React.memo(
     useEffect(() => {
       console.log(`VocabularyGraph: Received ${data.length} data points`);
 
-      // Check if today is in the data
-      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      const todayName = dayNames[new Date().getDay()];
-      const todayData = data.find(d => d.date === todayName);
-
-      console.log(`Today is ${todayName}, found in data: ${!!todayData}`);
-      if (todayData) {
-        console.log(`Today's data: ${todayData.wordsLearned} words, ${todayData.count} reviews`);
-      }
-
-      if (data.length > 0) {
-        console.log(
-          'Data sample:',
-          data.map(d => `${d.date}: ${d.wordsLearned} (${d.count} reviews)`).join(', ')
-        );
-      }
+      // Check if there's meaningful data to display
+      const hasAnyData = data.some(item => item.wordsLearned > 0);
+      console.log(`Has learning data: ${hasAnyData}`);
     }, [data]);
 
     // Canvas dimensions

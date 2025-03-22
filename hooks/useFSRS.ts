@@ -52,6 +52,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
   const queue = useRef<StudyWord[]>([]);
   const totalWordsRef = useRef<number>(0);
   const processedWordsRef = useRef<number>(0);
+
+  // Track if completion has been triggered to prevent duplicate calls
+  const completionTriggeredRef = useRef<boolean>(false);
+
   const queryClient = useQueryClient();
 
   // Initialize FSRS algorithm with standard parameters
@@ -99,17 +103,24 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
   // Initialize the queue with due words
   useEffect(() => {
     if (dueWords && dueWords.length > 0) {
+      console.log(`Initializing review session with ${dueWords.length} due words`);
       queue.current = [...dueWords];
       totalWordsRef.current = dueWords.length;
       processedWordsRef.current = 0;
       setProgress(0);
       setIsComplete(false);
+      completionTriggeredRef.current = false;
 
       // Set the first word
       setCurrentWord(queue.current[0]);
+      console.log(
+        `First word set: ${queue.current[0].sentence_word.word_form}, queue length: ${queue.current.length}`
+      );
     } else if (dueWords && dueWords.length === 0 && !isLoading) {
+      console.log('No due words found, setting review as complete');
       setIsComplete(true);
-      if (onComplete) {
+      if (onComplete && !completionTriggeredRef.current) {
+        completionTriggeredRef.current = true;
         onComplete();
       }
     }
@@ -133,11 +144,24 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
   // Update the word in the database based on swipe direction
   const updateWord = useCallback(
     async (sentenceWordId: number, success: boolean) => {
-      if (!userId || !currentWord) return;
+      // Add validation to ensure we have a valid current word and user ID
+      if (!userId || !currentWord) {
+        console.error('Cannot update word: userId or currentWord is missing');
+        return;
+      }
+
+      // Ensure the sentenceWordId matches the current word - this prevents
+      // updating words out of sequence if something goes wrong
+      if (currentWord.sentence_word_id !== sentenceWordId) {
+        console.error(
+          `Word ID mismatch: current=${currentWord.sentence_word_id}, trying to update=${sentenceWordId}`
+        );
+        return;
+      }
 
       // Prevent updating if we've already started the completion process
-      if (isComplete) {
-        console.log('Review already completed, ignoring update');
+      if (isComplete || completionTriggeredRef.current) {
+        console.log('Review already completed or completion triggered, ignoring update');
         return;
       }
 
@@ -153,11 +177,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         // Get appropriate rating based on gesture
         // Right swipe (success) = Good
         // Left swipe (failure) = Again
-        // This follows ts-fsrs convention where:
-        // Again = completely forgot (rating 1)
-        // Hard = remembered with difficulty (rating 2)
-        // Good = remembered (rating 3)
-        // Easy = remembered easily (rating 4)
         const rating = success ? Rating.Good : Rating.Again;
 
         // Get all possible next states from FSRS
@@ -187,7 +206,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
             fsrs_reps: newCard.reps,
             fsrs_lapses: newCard.lapses,
             fsrs_state: newCard.state,
-            fsrs_last_review: lastReview, // Make sure to set this correctly
+            fsrs_last_review: lastReview,
             // Update streak counters
             success_streak: success ? (currentWord.success_streak || 0) + 1 : 0,
             failure_streak: !success ? (currentWord.failure_streak || 0) + 1 : 0,
@@ -216,47 +235,97 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
           console.log(`Review record added successfully`);
         }
 
-        // Remove current word from queue and update progress
-        queue.current.shift();
-        processedWordsRef.current += 1;
+        // Update the queue and progress tracking
+        if (queue.current.length > 0) {
+          // Remove the current word from the queue
+          queue.current.shift();
 
-        // Calculate and update progress
-        const newProgress = Math.round((processedWordsRef.current / totalWordsRef.current) * 100);
-        setProgress(newProgress);
+          // Debug log the current state of the queue
+          console.log(
+            `Queue length after shift: ${queue.current.length}, total words: ${totalWordsRef.current}`
+          );
 
-        // Check if this was the last word
-        const isLastWord = queue.current.length === 0;
+          // Update the processed words counter
+          processedWordsRef.current += 1;
 
-        // Set next word or complete
-        if (!isLastWord) {
-          setCurrentWord(queue.current[0]);
+          // Calculate and update progress - ensure we don't go over 100%
+          const newProgress = Math.min(
+            Math.round((processedWordsRef.current / totalWordsRef.current) * 100),
+            100
+          );
+          setProgress(newProgress);
+
+          console.log(
+            `Progress: ${newProgress}% (${processedWordsRef.current}/${totalWordsRef.current})`
+          );
+
+          // Check if we've processed all words
+          if (queue.current.length === 0) {
+            console.log('All words reviewed, completing session');
+            // Set complete state only once
+            if (!isComplete && !completionTriggeredRef.current) {
+              console.log('Setting isComplete to true and calling onComplete callback');
+              completionTriggeredRef.current = true;
+              setIsComplete(true);
+              if (onComplete) {
+                onComplete();
+              }
+            }
+          } else {
+            // Set the next word to review
+            console.log(`Loading next word (${queue.current.length} remaining)`);
+            setCurrentWord(queue.current[0]);
+          }
         } else {
-          // Only trigger completion once
-          if (!isComplete) {
+          // This is a safety check in case the queue is empty but we're still updating words
+          console.warn('Queue is empty but trying to update words - forcing completion');
+          if (!isComplete && !completionTriggeredRef.current) {
+            console.log('Setting isComplete to true from safety condition');
+            completionTriggeredRef.current = true;
             setIsComplete(true);
             if (onComplete) {
               onComplete();
             }
           }
         }
-
-        return result;
       } catch (error) {
         console.error('Error in updateWord:', error);
         throw error;
       }
     },
-    [userId, currentWord, convertToFSRSCard, fsrsInstance, onComplete, isComplete]
+    [
+      currentWord,
+      convertToFSRSCard,
+      fsrsInstance,
+      userId,
+      isComplete,
+      queue,
+      totalWordsRef,
+      processedWordsRef,
+      onComplete,
+    ]
   );
 
   // Invalidate queries to refresh data
   const invalidateQueries = useCallback(() => {
-    if (userId) {
-      queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
-      queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+    console.log('Invalidating queries for user:', userId);
+
+    if (!userId) {
+      console.warn('Cannot invalidate queries: userId is undefined');
+      return;
     }
-  }, [userId, queryClient]);
+
+    // Force immediate invalidation
+    queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
+    queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+    queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+
+    // Also remove any cached data to force a fresh fetch on next query
+    console.log('Removing cached queries to force a fresh fetch');
+    queryClient.removeQueries({ queryKey: ['dueWords', userId] });
+    queryClient.removeQueries({ queryKey: ['studyWords', userId] });
+    queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
+  }, [queryClient, userId]);
 
   return {
     currentWord,

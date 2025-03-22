@@ -229,6 +229,8 @@ export default function ReviewScreen() {
       if (completionTriggeredRef.current) return;
       completionTriggeredRef.current = true;
 
+      console.log('onComplete callback triggered from useFSRS, transitioning to completion screen');
+
       // Set progress to 100% immediately to prevent flickering
       maxProgressRef.current = 100;
       prevProgressRef.current = 100;
@@ -350,6 +352,35 @@ export default function ReviewScreen() {
       }
     }
   }, [currentWord]);
+
+  // Update effect to properly handle isComplete changes
+  useEffect(() => {
+    if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
+      console.log('isComplete changed to true, triggering completion transition');
+
+      // Prevent duplicate transitions
+      completionTriggeredRef.current = true;
+
+      // Set progress to 100% immediately
+      maxProgressRef.current = 100;
+      prevProgressRef.current = 100;
+      setProgressAnimationKey(prev => prev + 1);
+
+      // Start transition to completion screen
+      setIsTransitioningToCompletion(true);
+
+      // Fade out current screen
+      opacity.value = withTiming(0, {
+        duration: 300,
+        easing: TIMING_CONFIG.MEDIUM.easing,
+      });
+
+      // Wait for animation to complete
+      completionTransitionRef.current = setTimeout(() => {
+        setIsTransitioningToCompletion(false);
+      }, 350);
+    }
+  }, [isComplete, isTransitioningToCompletion, opacity]);
 
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(

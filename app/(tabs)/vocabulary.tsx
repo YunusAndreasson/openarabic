@@ -144,29 +144,20 @@ export default function VocabularyScreen() {
     return calculateVocabularyStats(validStudyWords, dueWordsData);
   }, [validStudyWords, dueWordsData, studyWords.length]);
 
-  // Calculate weekly progress data with memoization - updated to use FSRS progress calculation
+  // Calculate weekly progress data with memoization
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
-    // Log a few timestamps for debugging
-    if (validStudyWords.length > 0) {
-      console.log('Sample review timestamps:');
-      validStudyWords.slice(0, 3).forEach(word => {
-        console.log(`Word ${word.sentence_word_id} timestamps:`, {
-          fsrs_last_review: word.fsrs_last_review,
-          last_review: word.last_review,
-          fsrs_due: word.fsrs_due,
-          next_review_at: word.next_review_at,
-        });
-      });
-    }
-
-    // Always get data regardless of empty study words - this ensures we at least get the empty week structure
+    // Always get data regardless of empty study words
     const progressData = calculateWeeklyProgressData(validStudyWords);
 
-    // Log the data to debug
-    console.log(
-      'Weekly progress data calculated:',
-      progressData.map(d => `${d.date}: ${d.wordsLearned} (${d.count} reviews)`).join(', ')
-    );
+    // Log the data for debugging
+    if (progressData.length > 0) {
+      console.log(
+        'Weekly progress data loaded',
+        progressData.filter(d => d.wordsLearned > 0).length > 0
+          ? 'with learning activity'
+          : 'but no learning activity'
+      );
+    }
 
     return progressData;
   }, [validStudyWords]);
