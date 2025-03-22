@@ -51,7 +51,7 @@ const queryClient = new QueryClient({
       staleTime: 60000, // Default 1 minute stale time
       gcTime: 300000, // Default 5 minute garbage collection time
       refetchOnWindowFocus: false, // Don't refetch on window focus
-      retry: 1, // Only retry failed requests once
+      retry: 3, // Only retry failed requests once
     },
   },
 });

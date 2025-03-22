@@ -68,6 +68,18 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
   },
+  floatingButton: {
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+  },
+  loadingContainer: {
+    paddingTop: 0, // Will be set dynamically with insets
+  },
+  notFoundContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 0, // Will be set dynamically with insets
+  },
 });
 
 export default function ArticleScreen() {
@@ -156,19 +168,9 @@ export default function ArticleScreen() {
   const { prepareWord, handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     colors,
-    selectedWordIds,
+    new Set([...selectedWordIds].map(id => (typeof id === 'string' ? parseInt(id, 10) : id))),
     sentenceWordsMap,
     (word: Tables<'sentence_words'>) => handleWordPress(word.id)
-  );
-
-  // Animation styles
-  const contentPadding = useMemo(
-    () => ({
-      paddingTop: insets.top + (Platform.OS === 'ios' ? 20 : 16),
-      paddingBottom: 4,
-      backgroundColor: 'transparent',
-    }),
-    [insets.top]
   );
 
   // Use the navigation with debounce hook - fix cleanup property error
@@ -177,6 +179,12 @@ export default function ArticleScreen() {
   // Handle scroll with animation
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // Always maintain UI elements when at top of screen
+      if (event.nativeEvent.contentOffset.y <= 0) {
+        prevScrollYValue.current = 0;
+      }
+
+      // Pass scroll events to animation handler
       handleAnimationScroll(event, prevScrollYValue);
     },
     [handleAnimationScroll]
@@ -373,37 +381,35 @@ export default function ArticleScreen() {
     };
   }, [stopPlayback]);
 
-  // Check if we have cached article data
-  const hasCachedData = !!queryClient.getQueryData(['article', articleId]);
-
   // Main render - Only show loading when no cached data is available
-  if ((isLoading || isLoadingArticle) && !hasCachedData) {
+  if ((isLoading || isLoadingArticle) && !isDataPrefetched) {
     return (
       <ThemedView
         style={[styles.container, { backgroundColor: colors.background }]}
-        useSafeArea={true}
-        safeAreaEdges={['top', 'left', 'right']}
+        useSafeArea={false}
       >
-        <LoadingScreen />
+        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
+          <LoadingScreen />
+        </View>
       </ThemedView>
     );
   }
 
   if (!article) {
     return (
-      <ThemedView style={styles.container}>
-        <ThemedText>Article not found</ThemedText>
+      <ThemedView style={styles.container} useSafeArea={false}>
+        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+        <View style={[styles.notFoundContainer, { paddingTop: insets.top }]}>
+          <ThemedText>Article not found</ThemedText>
+        </View>
       </ThemedView>
     );
   }
 
   return (
-    <ThemedView
-      style={styles.container}
-      useSafeArea={true}
-      safeAreaEdges={['top', 'left', 'right']}
-    >
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} />
+    <ThemedView style={styles.container} useSafeArea={false}>
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
 
       {/* Back button */}
       <FloatingButton
@@ -415,6 +421,7 @@ export default function ArticleScreen() {
         accessibilityLabel="Return to previous screen"
         colors={colors}
         isDarkMode={isDarkMode}
+        style={styles.floatingButton}
       />
 
       {/* Bookmark button */}
@@ -428,6 +435,7 @@ export default function ArticleScreen() {
           accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
           colors={colors}
           isDarkMode={isDarkMode}
+          style={styles.floatingButton}
         />
       )}
 
@@ -442,6 +450,7 @@ export default function ArticleScreen() {
         colors={colors}
         isDarkMode={isDarkMode}
         style={{
+          ...styles.floatingButton,
           right: user
             ? LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM + 10
             : LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
@@ -459,7 +468,14 @@ export default function ArticleScreen() {
               renderItem={renderSentenceItem}
               keyExtractor={item => item.id.toString()}
               style={[styles.content, { backgroundColor: colors.background }]}
-              contentContainerStyle={[styles.sentenceList, contentPadding]}
+              contentContainerStyle={[
+                styles.sentenceList,
+                {
+                  paddingTop: insets.top + (Platform.OS === 'ios' ? 40 : 30),
+                  paddingBottom: insets.bottom + 20,
+                  backgroundColor: 'transparent',
+                },
+              ]}
               onScroll={handleScroll}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={true}
@@ -468,29 +484,28 @@ export default function ArticleScreen() {
               windowSize={5}
               removeClippedSubviews={false}
               indicatorStyle={isDarkMode ? 'white' : 'black'}
+              contentInsetAdjustmentBehavior="automatic"
               getItemLayout={(_data, index) => ({
                 length: 70,
                 offset: 70 * index + (article?.title ? 150 : 0),
                 index,
               })}
               ListHeaderComponent={
-                <Animated.View style={headerStyle}>
+                <Animated.View style={[headerStyle, { paddingTop: 16 }]}>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
                 </Animated.View>
               }
               ListFooterComponent={
-                <>
-                  {otherArticles && otherArticles.length > 0 && (
-                    <Animated.View style={footerStyle}>
-                      <RelatedArticlesFooter
-                        otherArticles={otherArticles}
-                        otherCategoryArticles={otherCategoryArticles || []}
-                        article={article}
-                        renderArticleCard={renderArticleCard}
-                      />
-                    </Animated.View>
-                  )}
-                </>
+                otherArticles && otherArticles.length > 0 ? (
+                  <Animated.View style={footerStyle}>
+                    <RelatedArticlesFooter
+                      otherArticles={otherArticles}
+                      otherCategoryArticles={otherCategoryArticles || []}
+                      article={article}
+                      renderArticleCard={renderArticleCard}
+                    />
+                  </Animated.View>
+                ) : null
               }
             />
           )}

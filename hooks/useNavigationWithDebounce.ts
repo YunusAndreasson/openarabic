@@ -33,7 +33,7 @@ interface NavigationWithDebounceReturn {
 export const useNavigationWithDebounce = (
   options: NavigationOptions = {}
 ): NavigationWithDebounceReturn => {
-  const { debounceDuration = 300 } = options;
+  const { debounceDuration = 100 } = options;
   const [isNavigating, setIsNavigating] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 

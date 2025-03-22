@@ -3,9 +3,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { RefreshControl } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Components
@@ -21,12 +19,7 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import {
-  useLoadingState,
-  useScreenFocusRefresh,
-  useScreenAnimation,
-  useNavigationWithDebounce,
-} from '@/hooks';
+import { useLoadingState, useScreenAnimation, useNavigationWithDebounce } from '@/hooks';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -34,7 +27,7 @@ import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSl
 // Utils and Constants
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { LAYOUT, getPlatformTopPadding } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import {
   filterArticles,
   getLatestArticles,
@@ -43,7 +36,7 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
-import { mediumFeedback, lightFeedback } from '@/utils/haptics';
+import { mediumFeedback } from '@/utils/haptics';
 
 // Types
 import { Article } from '@/types/articles.types';
@@ -103,7 +96,7 @@ export default function ArticlesScreen() {
   const { session } = useSafeAuth();
 
   // Use the new loading state hook
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(500);
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
   // Refs
   const scrollViewRef = useRef<Animated.ScrollView>(null);
