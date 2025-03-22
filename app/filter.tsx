@@ -14,7 +14,6 @@ import ErrorState from '../components/ErrorState';
 import { articlesService } from '../services/articles';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
-import { LAYOUT } from '../constants/layout';
 
 // Animation hooks
 import { useScreenAnimation } from '../hooks/animations';
@@ -86,15 +85,6 @@ function FilterScreenContent() {
     }, [])
   );
 
-  // Debug params
-  useEffect(() => {
-    console.log('Filter params:', {
-      type,
-      id,
-      rawParams: JSON.stringify(params),
-    });
-  }, [type, id, params]);
-
   // State
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -106,7 +96,6 @@ function FilterScreenContent() {
         const { data } = await supabase.from('authors').select('*').eq('id', numericId).single();
         return data;
       } catch (err) {
-        console.error('Error fetching author:', err);
         return null;
       }
     },
@@ -122,7 +111,6 @@ function FilterScreenContent() {
         const { data } = await supabase.from('categories').select('*').eq('id', numericId).single();
         return data;
       } catch (err) {
-        console.error('Error fetching category:', err);
         return null;
       }
     },

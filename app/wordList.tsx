@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, FlatList, StatusBar } from 'react-native';
+import { StyleSheet, View, FlatList } from 'react-native';
 import { ThemedView } from '../components/ThemedView';
 import { ThemedText } from '../components/ThemedText';
 import { useColors } from '../hooks/useColors';
@@ -52,7 +52,7 @@ export default function WordListScreen() {
   const insets = useSafeAreaInsets();
 
   // Get the title and icon based on the category
-  const { title, icon, description } = React.useMemo(() => {
+  const { title } = React.useMemo(() => {
     switch (category) {
       case 'total':
         return {
@@ -131,7 +131,6 @@ export default function WordListScreen() {
           masteryScore: calculateMasteryScore(word),
         })) as EnhancedStudyWord[];
       } catch (error) {
-        console.error('Error fetching words:', error);
         return [];
       }
     },
@@ -147,7 +146,6 @@ export default function WordListScreen() {
 
   const handleWordPress = useCallback((word: EnhancedStudyWord) => {
     // Navigate to word detail or implement whatever action is needed
-    console.log('Word pressed:', word);
   }, []);
 
   // Render an item in the list
@@ -178,9 +176,6 @@ export default function WordListScreen() {
   const handleBackPress = useCallback(() => {
     router.back();
   }, [router]);
-
-  // Get the word count for display
-  const wordCount = useMemo(() => sortedWords?.length || 0, [sortedWords]);
 
   // List header component with category info card
   const ListHeaderComponent = useCallback(() => {
