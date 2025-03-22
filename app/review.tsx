@@ -6,6 +6,7 @@ import Animated, {
   withTiming,
   useAnimatedReaction,
   runOnJS,
+  Easing,
 } from 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
@@ -30,6 +31,18 @@ import {
   MeaningOverlay,
   InstructionFooter,
 } from '../components/review';
+
+// Add a fallback timing config in case the import fails
+const DEFAULT_TIMING_CONFIG = {
+  duration: 300,
+  easing: (x: number) => x,
+};
+
+// Add animation config with proper Easing worklet
+const ANIMATION_CONFIG = {
+  duration: 300,
+  easing: Easing.linear,
+};
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -91,6 +104,9 @@ export default function ReviewScreen() {
   // Track maximum progress seen to avoid regression
   const maxProgressRef = useRef(0);
 
+  // Track the total number of words for this session
+  const totalWordsRef = useRef(0);
+
   // Track if this is the first render
   const isFirstRender = useRef(true);
 
@@ -105,6 +121,13 @@ export default function ReviewScreen() {
 
   // Show loading state during initial load to prevent "no words" flash
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
+
+  // Create animated styles for the container
+  const containerStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  }, []);
 
   // Define completion transition function that both paths can use
   const triggerCompletionTransition = useCallback(() => {
@@ -122,11 +145,8 @@ export default function ReviewScreen() {
     // Start transition to completion screen
     setIsTransitioningToCompletion(true);
 
-    // Fade out current screen
-    opacity.value = withTiming(0, {
-      duration: 300,
-      easing: TIMING_CONFIG.MEDIUM.easing,
-    });
+    // Fade out current screen using our standard animation config
+    opacity.value = withTiming(0, ANIMATION_CONFIG);
 
     // Wait for animation to complete
     if (completionTransitionRef.current) {
@@ -144,19 +164,39 @@ export default function ReviewScreen() {
     onComplete: triggerCompletionTransition,
   });
 
+  // Update progress tracking
+  useEffect(() => {
+    if (!isLoading && progress !== undefined) {
+      console.log('[Progress Update]', {
+        progress,
+        isComplete,
+      });
+
+      // Update maxProgress
+      maxProgressRef.current = Math.max(maxProgressRef.current, progress);
+      prevProgressRef.current = progress;
+
+      // Force progress bar animation refresh
+      setProgressAnimationKey(prev => prev + 1);
+    }
+  }, [isLoading, progress, isComplete]);
+
+  // Initialize totalWordsRef when the session starts
+  useEffect(() => {
+    if (!isLoading && progress !== undefined && totalWordsRef.current === 0) {
+      // The initial progress percentage represents 1 word out of the total
+      // So if progress is 33%, then total words is 3 (100/33)
+      const calculatedTotal = Math.round(100 / (progress || 100));
+      totalWordsRef.current = calculatedTotal;
+      console.log('[Progress Init] Setting total words:', calculatedTotal);
+    }
+  }, [isLoading, progress]);
+
   // Use our custom hook for word sizing with simplified approach
   const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, {
     minFontSize: 50,
     maxFontSize: 100, // Fixed font size for most words
   });
-
-  // Initialize prevProgressRef and maxProgressRef with the initial progress value
-  useEffect(() => {
-    if (!isLoading && progress !== undefined) {
-      prevProgressRef.current = progress;
-      maxProgressRef.current = Math.max(maxProgressRef.current, progress);
-    }
-  }, [isLoading, progress]);
 
   // Hide initial loading after a short delay
   useEffect(() => {
@@ -169,62 +209,21 @@ export default function ReviewScreen() {
     }
   }, [showInitialLoading]);
 
-  // Use useAnimatedReaction to safely track opacity value changes
-  useAnimatedReaction(
-    () => opacity.value,
-    (currentOpacity, previousOpacity) => {
-      // Only update the current sentence when opacity is exactly 0
-      // This ensures the previous word is completely invisible before showing the new one
-      if (currentOpacity === 0 && previousOpacity !== 0) {
-        runOnJS(setCurrentSentence)(nextSentence);
-      }
-    },
-    [nextSentence]
-  );
-
-  // Extract word for display - use the state version instead of direct calculation
-  const { wordForm } = currentSentence;
-
-  // Create animated styles for the container
-  const containerStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  }, []);
-
-  // Clean up all timeouts when component unmounts
-  useEffect(() => {
-    return () => {
-      if (meaningTimeoutRef.current) {
-        clearTimeout(meaningTimeoutRef.current);
-        meaningTimeoutRef.current = null;
-      }
-
-      if (completionTransitionRef.current) {
-        clearTimeout(completionTransitionRef.current);
-        completionTransitionRef.current = null;
-      }
-
-      // Reset completion trigger on unmount
-      completionTriggeredRef.current = false;
-      isUpdatingWordRef.current = false;
-    };
-  }, []);
-
   // Update current sentence when currentWord changes
   useEffect(() => {
-    if (currentWord) {
-      const wordForm = currentWord.sentence_word.word_form;
-      const newSentence = { wordForm };
-      setNextSentence(newSentence);
+    console.log('[Word Change Effect]', {
+      currentWord: currentWord?.sentence_word.word_form,
+      currentSentence: currentSentence.wordForm,
+      isUpdating: isUpdatingWordRef.current,
+      isComplete,
+      isTransitioning: isTransitioningToCompletion,
+    });
 
-      // Only set currentSentence immediately on first load
-      if (isFirstRender.current) {
-        setCurrentSentence(newSentence);
-        isFirstRender.current = false;
-      }
+    if (currentWord && !isComplete && !isTransitioningToCompletion) {
+      const wordForm = currentWord.sentence_word.word_form;
+      setCurrentSentence({ wordForm });
     }
-  }, [currentWord]);
+  }, [currentWord, isComplete, isTransitioningToCompletion]);
 
   // Update effect to properly handle isComplete changes
   useEffect(() => {
@@ -314,58 +313,45 @@ export default function ReviewScreen() {
 
   // Handle swipe right (know the word)
   const handleSwipeRight = useCallback(() => {
+    console.log('[Swipe Right] Starting with word:', currentWord?.sentence_word.word_form);
+
     // Check for concurrent updates with a local guard
     if (isUpdatingWordRef.current) {
-      console.log('Ignoring update request - update already in progress');
+      console.log('[Swipe Right] Blocked - already updating');
       return;
     }
 
     // If we're already transitioning to completion, prevent further updates
     if (isTransitioningToCompletion || isComplete || completionTriggeredRef.current) {
+      console.log('[Swipe Right] Blocked - transitioning or complete');
       return;
     }
 
     // Set local concurrency guard
     isUpdatingWordRef.current = true;
 
-    // Update progress tracking and trigger animation only when progress actually changes
-    if (progress !== prevProgressRef.current) {
-      // Update max progress seen to prevent regression
-      maxProgressRef.current = Math.max(maxProgressRef.current, progress);
-      // Increment animation key to trigger a re-render with animation
-      setProgressAnimationKey(prev => prev + 1);
-      // Save current progress for next comparison
-      prevProgressRef.current = progress;
-    }
+    // Simple fade out
+    opacity.value = withTiming(0, ANIMATION_CONFIG);
 
-    try {
-      // Update the word in the database
-      if (currentWord?.sentence_word_id) {
-        updateWord(currentWord.sentence_word_id, true)
-          .then(() => {
-            // Reset the concurrency guard after a short delay
-            setTimeout(() => {
-              isUpdatingWordRef.current = false;
-            }, 16);
-          })
-          .catch(error => {
-            console.error('Error updating word:', error);
-            Toast.show({
-              type: 'error',
-              text1: 'Error',
-              text2: 'Failed to update word. Please try again.',
-              position: 'bottom',
-            });
-            isUpdatingWordRef.current = false;
-          });
-      } else {
-        isUpdatingWordRef.current = false;
-      }
-    } catch (error) {
-      console.error('Error in handleSwipeRight:', error);
+    // Update the word in the database
+    if (currentWord?.sentence_word_id) {
+      updateWord(currentWord.sentence_word_id, true)
+        .then(() => {
+          console.log('[Swipe Right] Word updated successfully');
+          // Reset update guard and fade back in
+          isUpdatingWordRef.current = false;
+          opacity.value = withTiming(1, ANIMATION_CONFIG);
+        })
+        .catch(error => {
+          console.error('[Swipe Right] Error:', error);
+          isUpdatingWordRef.current = false;
+          opacity.value = withTiming(1, ANIMATION_CONFIG);
+        });
+    } else {
       isUpdatingWordRef.current = false;
+      opacity.value = withTiming(1, ANIMATION_CONFIG);
     }
-  }, [currentWord, updateWord, progress, isTransitioningToCompletion, isComplete]);
+  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
 
   // Handle close button press
   const queryClient = useQueryClient();
@@ -392,6 +378,25 @@ export default function ReviewScreen() {
       router.back();
     }, 100); // Small delay to ensure haptic feedback is felt and queries are invalidated
   }, [invalidateQueries, user?.id, queryClient]);
+
+  // Clean up all timeouts when component unmounts
+  useEffect(() => {
+    return () => {
+      if (meaningTimeoutRef.current) {
+        clearTimeout(meaningTimeoutRef.current);
+        meaningTimeoutRef.current = null;
+      }
+
+      if (completionTransitionRef.current) {
+        clearTimeout(completionTransitionRef.current);
+        completionTransitionRef.current = null;
+      }
+
+      // Reset completion trigger on unmount
+      completionTriggeredRef.current = false;
+      isUpdatingWordRef.current = false;
+    };
+  }, []);
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {
@@ -422,34 +427,41 @@ export default function ReviewScreen() {
   return (
     <ThemedView style={baseStyles.container} useSafeArea={true}>
       <EntranceAnimation fullWidth>
-        <GestureHandlerRootView style={baseStyles.gestureRoot}>
-          <Animated.View style={[baseStyles.contentContainer, containerStyle]}>
-            <ReviewHeader
-              progress={progress || 0}
-              maxProgress={maxProgressRef.current}
-              animationKey={progressAnimationKey}
-              onClose={handleClose}
+        <View style={baseStyles.contentContainer}>
+          <ReviewHeader
+            progress={progress || 0}
+            maxProgress={maxProgressRef.current}
+            animationKey={progressAnimationKey}
+            onClose={handleClose}
+          />
+
+          <Animated.View
+            style={[
+              {
+                flex: 1,
+                justifyContent: 'center',
+                width: '100%',
+              },
+              containerStyle,
+            ]}
+          >
+            <ReviewCard
+              word={currentSentence.wordForm}
+              fontSize={wordFontSize}
+              onSwipeLeft={handleSwipeLeft}
+              onSwipeRight={handleSwipeRight}
+              isUpdating={isUpdatingWordRef.current}
+              isTransitioning={isTransitioningToCompletion}
             />
-
-            <View style={{ flex: 1, justifyContent: 'center', width: '100%' }}>
-              <ReviewCard
-                word={wordForm}
-                fontSize={wordFontSize}
-                onSwipeLeft={handleSwipeLeft}
-                onSwipeRight={handleSwipeRight}
-                isUpdating={isUpdatingWordRef.current}
-                isTransitioning={isTransitioningToCompletion}
-              />
-            </View>
-
-            <View style={baseStyles.footer}>
-              <InstructionFooter />
-            </View>
           </Animated.View>
 
-          {/* Position MeaningOverlay at the root level for proper overlay */}
-          <MeaningOverlay visible={showMeaningOverlay} meaning={currentMeaning} isWarning={true} />
-        </GestureHandlerRootView>
+          <View style={baseStyles.footer}>
+            <InstructionFooter />
+          </View>
+        </View>
+
+        {/* Position MeaningOverlay at the root level for proper overlay */}
+        <MeaningOverlay visible={showMeaningOverlay} meaning={currentMeaning} isWarning={true} />
       </EntranceAnimation>
     </ThemedView>
   );

@@ -86,11 +86,35 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       }
     },
     enabled: !!userId,
+    // Disable automatic refetching during a session
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: Infinity,
   });
 
-  // Initialize the queue with due words
+  // Add a ref to track if the queue has been initialized
+  const queueInitializedRef = useRef<boolean>(false);
+
+  // Initialize the queue with due words - but only once
   useEffect(() => {
-    if (dueWords && dueWords.length > 0) {
+    console.log('\n[Queue Init]', {
+      hasDueWords: !!dueWords,
+      dueWordsLength: dueWords?.length,
+      isLoading,
+      isComplete,
+      completionTriggered: completionTriggeredRef.current,
+      alreadyInitialized: queueInitializedRef.current,
+    });
+
+    // Only initialize once per session
+    if (dueWords && dueWords.length > 0 && !queueInitializedRef.current) {
+      console.log('[Queue Init] Setting up queue with words:', {
+        totalWords: dueWords.length,
+        firstWordId: dueWords[0].sentence_word_id,
+        firstWordForm: dueWords[0].sentence_word.word_form,
+      });
+
       setWordQueue(dueWords);
       totalWordsRef.current = dueWords.length;
       processedWordsRef.current = 0;
@@ -101,12 +125,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
       // Set the first word
       setCurrentWord(dueWords[0]);
-    } else if (dueWords && dueWords.length === 0 && !isLoading) {
+      queueInitializedRef.current = true;
+    } else if (dueWords && dueWords.length === 0 && !isLoading && !queueInitializedRef.current) {
+      console.log('[Queue Init] No words to review, marking as complete');
       setIsComplete(true);
       if (onComplete && !completionTriggeredRef.current) {
         completionTriggeredRef.current = true;
         onComplete();
       }
+      queueInitializedRef.current = true;
     }
   }, [dueWords, isLoading, onComplete]);
 
@@ -135,143 +162,197 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     };
   }, []);
 
+  // Helper function to update word in database
+  const updateWordInDatabase = useCallback(
+    async (word: StudyWord, success: boolean) => {
+      if (!userId) {
+        throw new Error('Cannot update word: userId is missing');
+      }
+
+      const card = convertToFSRSCard(word);
+      const now = new Date();
+
+      // Determine appropriate rating based on card state and success
+      let rating: Rating;
+      if (
+        card.state === State.New ||
+        card.state === State.Learning ||
+        card.state === State.Relearning
+      ) {
+        rating = success ? Rating.Hard : Rating.Again;
+      } else {
+        rating = success ? Rating.Good : Rating.Again;
+      }
+
+      // Get next card state from FSRS
+      const result = fsrsInstance.next(card, now, rating);
+      const { card: newCard } = result;
+      const lastReview = now.toISOString();
+
+      console.log('[Word Update] FSRS calculation complete', {
+        newStability: newCard.stability,
+        newState: newCard.state,
+        newReps: newCard.reps,
+        lastReview,
+      });
+
+      // Prepare update data from FSRS calculation result
+      const wordUpdateData = {
+        fsrs_due: newCard.due.toISOString(),
+        fsrs_stability: newCard.stability,
+        fsrs_difficulty: newCard.difficulty,
+        fsrs_elapsed_days: newCard.elapsed_days,
+        fsrs_scheduled_days: newCard.scheduled_days,
+        fsrs_reps: newCard.reps,
+        fsrs_lapses: newCard.lapses,
+        fsrs_state: newCard.state,
+        fsrs_last_review: lastReview,
+      };
+
+      console.log('[Word Update] Starting database updates');
+      // Update the word with FSRS data
+      await studyWordsFSRSService.updateFSRSWord(userId, word.sentence_word_id, wordUpdateData);
+      console.log('[Word Update] FSRS data updated');
+
+      // Record the review
+      await studyWordsFSRSService.recordFSRSReview(userId, word.sentence_word_id, rating);
+      console.log('[Word Update] Review recorded');
+
+      // Update streak counters
+      await supabase
+        .from('study_words')
+        .update({
+          success_streak: success ? (word.success_streak || 0) + 1 : 0,
+          failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
+        })
+        .eq('sentence_word_id', word.sentence_word_id)
+        .eq('user_id', userId);
+      console.log('[Word Update] Streaks updated');
+    },
+    [convertToFSRSCard, fsrsInstance, userId]
+  );
+
   // Update the word in the database based on swipe direction
   const updateWord = useCallback(
     async (sentenceWordId: number, success: boolean) => {
+      console.log('\n[Word Update] Starting word update', {
+        sentenceWordId,
+        success,
+        hasCurrentWord: !!currentWord,
+        currentWordId: currentWord?.sentence_word_id,
+        isComplete,
+        completionTriggered: completionTriggeredRef.current,
+        isProcessing: isProcessingUpdateRef.current,
+        queueLength: wordQueue.length,
+        processedWords: processedWordsRef.current,
+        totalWords: totalWordsRef.current,
+      });
+
       // Basic validation
       if (!userId || !currentWord) {
-        console.error('Cannot update word: userId or currentWord is missing');
+        console.error('[Word Update] Cannot update word: userId or currentWord is missing');
         return;
       }
 
       if (currentWord.sentence_word_id !== sentenceWordId) {
-        console.error(`Word ID mismatch: ${currentWord.sentence_word_id} vs ${sentenceWordId}`);
+        console.error(
+          `[Word Update] Word ID mismatch: ${currentWord.sentence_word_id} vs ${sentenceWordId}`
+        );
         return;
       }
 
       if (isComplete || completionTriggeredRef.current || isProcessingUpdateRef.current) {
+        console.log('[Word Update] Blocked - Already complete or processing');
         return;
       }
 
+      console.log('[Word Update] Setting processing guard');
       isProcessingUpdateRef.current = true;
 
       try {
-        const card = convertToFSRSCard(currentWord);
-        const now = new Date();
+        // Update the word in the database
+        await updateWordInDatabase(currentWord, success);
 
-        // Determine appropriate rating based on card state and success
-        let rating: Rating;
-        if (
-          card.state === State.New ||
-          card.state === State.Learning ||
-          card.state === State.Relearning
-        ) {
-          rating = success ? Rating.Hard : Rating.Again;
-        } else {
-          rating = success ? Rating.Good : Rating.Again;
-        }
-
-        // Get next card state from FSRS
-        const result = fsrsInstance.next(card, now, rating);
-        const { card: newCard, log } = result;
-        const lastReview = now.toISOString();
-
-        console.log(
-          `FSRS calculation complete - new stability: ${newCard.stability}, new state: ${newCard.state}, new reps: ${newCard.reps}`
-        );
-
-        console.log(`Setting fsrs_last_review to: ${lastReview}`);
-
-        // Prepare update data from FSRS calculation result
-        const wordUpdateData = {
-          fsrs_due: newCard.due.toISOString(),
-          fsrs_stability: newCard.stability,
-          fsrs_difficulty: newCard.difficulty,
-          fsrs_elapsed_days: newCard.elapsed_days,
-          fsrs_scheduled_days: newCard.scheduled_days,
-          fsrs_reps: newCard.reps,
-          fsrs_lapses: newCard.lapses,
-          fsrs_state: newCard.state,
-          fsrs_last_review: lastReview,
-        };
-
-        try {
-          // Update the word with FSRS data
-          await studyWordsFSRSService.updateFSRSWord(userId, sentenceWordId, wordUpdateData);
-          console.log(`Database update successful for word ${sentenceWordId}`);
-
-          // Record the review
-          await studyWordsFSRSService.recordFSRSReview(userId, sentenceWordId, rating);
-          console.log(`Review record added successfully`);
-
-          // Update streak counters
-          const { error: streakError } = await supabase
-            .from('study_words')
-            .update({
-              success_streak: success ? (currentWord.success_streak || 0) + 1 : 0,
-              failure_streak: !success ? (currentWord.failure_streak || 0) + 1 : 0,
-            })
-            .eq('sentence_word_id', sentenceWordId)
-            .eq('user_id', userId);
-
-          if (streakError) {
-            console.error('Error updating streaks:', streakError);
-          }
-
-          // Skip FSRS log storage - Table might not exist in DB schema
-          // If you want detailed analytics later, create the fsrs_logs table
-        } catch (error) {
-          console.error('Error in database operations:', error);
-          throw error;
-        }
-
+        console.log('[Word Update] Starting queue update');
         // Update queue and track progress
         setWordQueue(prevQueue => {
+          console.log('[Queue Update] Current queue state:', {
+            queueLength: prevQueue.length,
+            firstWordId: prevQueue[0]?.sentence_word_id,
+            nextWordId: prevQueue[1]?.sentence_word_id,
+          });
+
           // Remove the first word (current word)
           const newQueue = prevQueue.filter((_, index) => index !== 0);
 
           // Update progress
           processedWordsRef.current += 1;
-          setProgress(
-            Math.min(Math.round((processedWordsRef.current / totalWordsRef.current) * 100), 100)
+          const newProgress = Math.min(
+            Math.round((processedWordsRef.current / totalWordsRef.current) * 100),
+            100
           );
+          console.log('[Queue Update] Progress updated:', {
+            processed: processedWordsRef.current,
+            total: totalWordsRef.current,
+            progress: newProgress,
+          });
+          setProgress(newProgress);
 
           // Check if all words are reviewed
           if (newQueue.length === 0) {
+            console.log('[Queue Update] Queue empty, triggering completion');
             if (!completionTriggeredRef.current) {
               completionTriggeredRef.current = true;
               setTimeout(() => {
+                console.log('[Queue Update] Setting complete state');
                 setIsComplete(true);
                 if (onComplete) onComplete();
               }, 0);
             }
           } else {
-            // Set the next word
-            setCurrentWord(newQueue[0]);
+            // Set the next word - do this AFTER the database updates are complete
+            const nextWord = newQueue[0];
+            console.log('[Queue Update] Setting next word:', {
+              nextWordId: nextWord?.sentence_word_id,
+              nextWordForm: nextWord?.sentence_word.word_form,
+            });
+            setCurrentWord(nextWord);
           }
 
           return newQueue;
         });
       } catch (error) {
-        console.error('Error in updateWord:', error);
+        console.error('[Word Update] Error in word update:', error);
         throw error;
       } finally {
+        console.log('[Word Update] Resetting processing guard');
         // Reset processing flag to allow future updates
         isProcessingUpdateRef.current = false;
       }
     },
-    [
-      currentWord,
-      convertToFSRSCard,
-      fsrsInstance,
-      userId,
-      isComplete,
-      wordQueue,
-      totalWordsRef,
-      processedWordsRef,
-      onComplete,
-    ]
+    [currentWord, userId, isComplete, wordQueue, totalWordsRef, processedWordsRef, onComplete]
   );
+
+  // Reset the queue when the component unmounts or when explicitly called
+  const resetQueue = useCallback(() => {
+    console.log('[Queue] Resetting queue initialization state');
+    queueInitializedRef.current = false;
+    setWordQueue([]);
+    setCurrentWord(null);
+    setProgress(0);
+    setIsComplete(false);
+    completionTriggeredRef.current = false;
+    isProcessingUpdateRef.current = false;
+    totalWordsRef.current = 0;
+    processedWordsRef.current = 0;
+  }, []);
+
+  // Clean up when component unmounts
+  useEffect(() => {
+    return () => {
+      resetQueue();
+    };
+  }, [resetQueue]);
 
   // Invalidate queries to refresh data
   const invalidateQueries = useCallback(() => {
@@ -284,6 +365,9 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       queryClient.invalidateQueries({ queryKey: key });
       queryClient.removeQueries({ queryKey: key });
     });
+
+    // Reset the queue initialization flag to allow a fresh queue to be created next time
+    queueInitializedRef.current = false;
   }, [queryClient, userId]);
 
   return {
@@ -294,5 +378,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     updateWord,
     invalidateQueries,
     refetchDueWords: refetch,
+    resetQueue,
   };
 }

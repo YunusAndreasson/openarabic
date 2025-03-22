@@ -1,28 +1,18 @@
-import React, { useCallback, useState } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import React, { useCallback } from 'react';
+import { StyleSheet, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSpring,
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { SCREEN_WIDTH } from '@/constants/layout';
 import WordDisplay from './WordDisplay';
 
-// Animation config constants to ensure consistency
-const FAST_SPRING_CONFIG = {
-  stiffness: 250, // Higher stiffness for faster movement
-  damping: 20, // Higher damping for less bounce
-};
-
-const FADE_DURATION = 80;
-const FAST_ANIMATION_CONFIG = {
-  duration: FADE_DURATION,
-};
-
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.05;
+// Animation config constants
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15; // Reduced from 0.3 to 0.15 for easier swipes
+const TIMING_CONFIG = { duration: 300 };
 
 interface ReviewCardProps {
   word: string;
@@ -41,125 +31,98 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   isUpdating,
   isTransitioning,
 }) => {
+  console.log('[ReviewCard] Rendering with:', { word, fontSize, isUpdating, isTransitioning });
+
   // Animation values
   const translateX = useSharedValue(0);
-  const opacity = useSharedValue(1);
 
-  // Track if the card is being swiped
-  const [isSwiping, setIsSwiping] = useState(false);
-
-  // Create animated styles
-  const cardStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: translateX.value }],
-      opacity: opacity.value,
-    };
-  }, []);
-
-  // Function to reset card position and state
-  const resetCard = useCallback(() => {
-    translateX.value = 0;
-    setIsSwiping(false);
+  // Reset position function
+  const resetPosition = useCallback(() => {
+    console.log('[ReviewCard] Resetting position');
+    translateX.value = withTiming(0, TIMING_CONFIG);
   }, [translateX]);
 
-  // Function to fade out and in
-  const fadeOutAndIn = useCallback(() => {
-    // Reset position immediately
-    translateX.value = 0;
-
-    // Fade out
-    opacity.value = 0;
-
-    // After a tiny delay, fade back in
-    setTimeout(() => {
-      if (!isTransitioning) {
-        opacity.value = withTiming(1, FAST_ANIMATION_CONFIG);
-      }
-    }, 16); // One frame delay at 60fps
-  }, [translateX, opacity, isTransitioning]);
-
-  // Create the gesture handler with proper guards
+  // Create pan gesture
   const panGesture = Gesture.Pan()
+    .enabled(!isUpdating && !isTransitioning)
+    .minDistance(1) // Make gesture recognition more sensitive
     .onBegin(() => {
-      // Prevent gestures during updates or transitions
-      if (isUpdating || isTransitioning) {
-        return false;
-      }
-      setIsSwiping(true);
+      console.log('[ReviewCard] Pan gesture began:', {
+        isUpdating,
+        isTransitioning,
+        currentX: translateX.value,
+        word,
+      });
     })
-    .minDistance(1)
-    .activateAfterLongPress(0)
     .onUpdate(event => {
-      // Prevent gestures during updates or transitions
-      if (isUpdating || isTransitioning) return;
-      translateX.value = event.translationX;
+      if (!isUpdating && !isTransitioning) {
+        translateX.value = event.translationX;
+      } else {
+        console.log('[ReviewCard] Gesture blocked during update:', {
+          isUpdating,
+          isTransitioning,
+          translationX: event.translationX,
+        });
+      }
     })
     .onEnd(event => {
-      // Prevent gestures during updates or transitions
-      if (isUpdating || isTransitioning) {
-        resetCard();
-        return;
+      console.log('[ReviewCard] Pan end:', {
+        translationX: event.translationX,
+        threshold: SWIPE_THRESHOLD,
+        isUpdating,
+        isTransitioning,
+        word,
+      });
+
+      if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
+        const isRight = event.translationX > 0;
+        console.log('[ReviewCard] Swipe threshold met, triggering:', { isRight });
+        runOnJS(isRight ? onSwipeRight : onSwipeLeft)();
       }
 
-      if (event.translationX > SWIPE_THRESHOLD) {
-        // Swipe right - success
-        translateX.value = withSpring(SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
-          try {
-            runOnJS(onSwipeRight)();
-            runOnJS(fadeOutAndIn)();
-          } catch (error) {
-            console.error('Error in swipe right callback:', error);
-            runOnJS(resetCard)();
-          }
-        });
-      } else if (event.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left - failure
-        translateX.value = withSpring(-SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
-          try {
-            runOnJS(onSwipeLeft)();
-            runOnJS(fadeOutAndIn)();
-          } catch (error) {
-            console.error('Error in swipe left callback:', error);
-            runOnJS(resetCard)();
-          }
-        });
-      } else {
-        // Return to center if not swiped far enough
-        translateX.value = withSpring(0, FAST_SPRING_CONFIG, () => {
-          runOnJS(setIsSwiping)(false);
-        });
-      }
+      runOnJS(resetPosition)();
+    })
+    .onFinalize(() => {
+      console.log('[ReviewCard] Gesture finalized:', {
+        isUpdating,
+        isTransitioning,
+        currentX: translateX.value,
+        word,
+      });
     });
+
+  // Create animated style for the swipe container only
+  const swipeContainerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   return (
     <GestureDetector gesture={panGesture}>
-      <View style={styles.container}>
-        <Animated.View style={[styles.cardContainer, cardStyle]}>
-          <WordDisplay word={word} fontSize={fontSize} style={styles.wordContainer} />
+      <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
+        <Animated.View style={styles.wordContainer}>
+          <WordDisplay word={word} fontSize={fontSize} />
         </Animated.View>
-      </View>
+      </Animated.View>
     </GestureDetector>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    width: '100%',
+  swipeContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-  },
-  cardContainer: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  } as ViewStyle,
   wordContainer: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 280,
-  },
+  } as ViewStyle,
 });
 
 export default ReviewCard;

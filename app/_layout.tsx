@@ -25,6 +25,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { configureReanimatedLogger } from 'react-native-reanimated';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { AppLoader } from '@/components/Loader';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // Immediately hide the splash screen
 SplashScreen.preventAutoHideAsync()
@@ -202,14 +203,16 @@ export default function RootLayout() {
   useReactQueryDevTools(queryClient);
 
   return (
-    <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <QueryClientProvider client={queryClient}>
-          <SafeAreaProvider>
-            <AppContent />
-          </SafeAreaProvider>
-        </QueryClientProvider>
-      </PersistGate>
-    </Provider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <QueryClientProvider client={queryClient}>
+            <SafeAreaProvider>
+              <AppContent />
+            </SafeAreaProvider>
+          </QueryClientProvider>
+        </PersistGate>
+      </Provider>
+    </GestureHandlerRootView>
   );
 }
