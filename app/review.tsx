@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, Platform, TextStyle, ViewStyle } from 'react-native';
+import { StyleSheet, View, Platform, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -120,22 +120,6 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     padding: LAYOUT.SPACING.XLARGE,
   } as ViewStyle,
-  completionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '700',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    textAlign: 'center',
-  } as TextStyle,
-  emptyStateContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
-  } as ViewStyle,
-  emptyStateText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
-  } as TextStyle,
 });
 
 // Create a component for the completion screen
@@ -217,7 +201,6 @@ export default function ReviewScreen() {
   const [nextSentence, setNextSentence] = useState({
     wordForm: '',
   });
-  const [animationState, setAnimationState] = useState<'idle' | 'animating'>('idle');
 
   // Add state to track if we're transitioning to completion screen
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
@@ -394,7 +377,6 @@ export default function ReviewScreen() {
         });
 
         // Reset animation state and values
-        setAnimationState('idle');
         opacity.value = 1;
         translateX.value = 0;
 
@@ -405,9 +387,6 @@ export default function ReviewScreen() {
       const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
           try {
-            // Update animation state
-            setAnimationState('animating');
-
             // First update the word in the database
             updateWord(currentWord.sentence_word_id, success)
               .then(() => {
@@ -425,7 +404,7 @@ export default function ReviewScreen() {
                   // Only fade in if we're not transitioning to completion screen
                   if (!isTransitioningToCompletion) {
                     opacity.value = withTiming(1, FAST_ANIMATION_CONFIG, () => {
-                      runOnJS(setAnimationState)('idle');
+                      // runOnJS(setAnimationState)('idle');
                     });
                   }
                 }, 16); // One frame delay at 60fps to ensure clean transition
