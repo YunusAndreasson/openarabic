@@ -46,12 +46,16 @@ interface UseFSRSOptions {
 }
 
 export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
+  // Use React state for queue to improve concurrency safety
+  const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [isComplete, setIsComplete] = useState<boolean>(false);
-  const queue = useRef<StudyWord[]>([]);
+  // Keep these as refs since they're just for tracking
   const totalWordsRef = useRef<number>(0);
   const processedWordsRef = useRef<number>(0);
+  // Track if we're currently processing a word update to prevent concurrent updates
+  const isProcessingUpdateRef = useRef<boolean>(false);
 
   // Track if completion has been triggered to prevent duplicate calls
   const completionTriggeredRef = useRef<boolean>(false);
@@ -100,21 +104,22 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     enabled: !!userId,
   });
 
-  // Initialize the queue with due words
+  // Initialize the queue with due words - use React state for better concurrency handling
   useEffect(() => {
     if (dueWords && dueWords.length > 0) {
       console.log(`Initializing review session with ${dueWords.length} due words`);
-      queue.current = [...dueWords];
+      setWordQueue(dueWords);
       totalWordsRef.current = dueWords.length;
       processedWordsRef.current = 0;
       setProgress(0);
       setIsComplete(false);
       completionTriggeredRef.current = false;
+      isProcessingUpdateRef.current = false;
 
-      // Set the first word
-      setCurrentWord(queue.current[0]);
+      // Set the first word - it's safe to access dueWords[0] here since we've checked length > 0
+      setCurrentWord(dueWords[0]);
       console.log(
-        `First word set: ${queue.current[0].sentence_word.word_form}, queue length: ${queue.current.length}`
+        `First word set: ${dueWords[0].sentence_word.word_form}, queue length: ${dueWords.length}`
       );
     } else if (dueWords && dueWords.length === 0 && !isLoading) {
       console.log('No due words found, setting review as complete');
@@ -128,15 +133,34 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
   // Convert database word to FSRS Card
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
+    // Check if this is a new card (no review history)
+    if (
+      (word.fsrs_reps === 0 || word.fsrs_reps === null || word.fsrs_reps === undefined) &&
+      (word.fsrs_stability === 0 ||
+        word.fsrs_stability === null ||
+        word.fsrs_stability === undefined) &&
+      !word.fsrs_last_review
+    ) {
+      // Use createEmptyCard to get library defaults for a new card
+      const emptyCard = createEmptyCard(new Date());
+
+      // Preserve the due date from our database
+      return {
+        ...emptyCard,
+        due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
+      };
+    }
+
+    // For existing cards, use the stored values with fallbacks
     return {
       due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
-      stability: word.fsrs_stability || 0,
-      difficulty: word.fsrs_difficulty || 0.3,
-      elapsed_days: word.fsrs_elapsed_days || 0,
-      scheduled_days: word.fsrs_scheduled_days || 0,
-      reps: word.fsrs_reps || 0,
-      lapses: word.fsrs_lapses || 0,
-      state: word.fsrs_state || State.New,
+      stability: word.fsrs_stability ?? 0,
+      difficulty: word.fsrs_difficulty ?? 0.3,
+      elapsed_days: word.fsrs_elapsed_days ?? 0,
+      scheduled_days: word.fsrs_scheduled_days ?? 0,
+      reps: word.fsrs_reps ?? 0,
+      lapses: word.fsrs_lapses ?? 0,
+      state: word.fsrs_state ?? State.New,
       last_review: word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined,
     };
   }, []);
@@ -165,6 +189,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         return;
       }
 
+      // Prevent concurrent updates
+      if (isProcessingUpdateRef.current) {
+        console.warn('Already processing an update, ignoring this request');
+        return;
+      }
+
+      // Set processing flag
+      isProcessingUpdateRef.current = true;
+
       try {
         // Convert current word to FSRS Card
         const card = convertToFSRSCard(currentWord);
@@ -174,16 +207,38 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
           `Updating word ${sentenceWordId}, success: ${success}, current reps: ${currentWord.fsrs_reps}, current state: ${currentWord.fsrs_state}`
         );
 
-        // Get appropriate rating based on gesture
-        // Right swipe (success) = Good
-        // Left swipe (failure) = Again
-        const rating = success ? Rating.Good : Rating.Again;
+        // Get appropriate rating based on gesture and current state
+        let rating: Rating;
+
+        // Handle rating based on card state
+        if (
+          card.state === State.New ||
+          card.state === State.Learning ||
+          card.state === State.Relearning
+        ) {
+          // For new or learning cards, use appropriate learning steps
+          if (success) {
+            // For success on new/learning cards, use Hard (3) in learning phase instead of Good (4)
+            // This ensures proper progression through learning steps
+            rating = Rating.Hard;
+            console.log(`Using Rating.Hard for new/learning card with success swipe`);
+          } else {
+            // For failure, always use Again (1)
+            rating = Rating.Again;
+            console.log(`Using Rating.Again for new/learning card with failure swipe`);
+          }
+        } else {
+          // For regular review cards, use standard ratings
+          rating = success ? Rating.Good : Rating.Again;
+          console.log(`Using standard rating for review card: ${success ? 'Good' : 'Again'}`);
+        }
 
         // Get all possible next states from FSRS
         const states = fsrsInstance.repeat(card, now);
 
         // Extract the specific next state based on rating
         const result = states[rating];
+        // The result contains a card and a ReviewLog object (not RecordLogItem)
         const { card: newCard, log } = result;
 
         console.log(
@@ -194,25 +249,33 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         const lastReview = now.toISOString();
         console.log(`Setting fsrs_last_review to: ${lastReview}`);
 
-        // Update the database with the new FSRS state
-        const { error } = await supabase
-          .from('study_words')
-          .update({
-            fsrs_due: newCard.due.toISOString(),
-            fsrs_stability: newCard.stability,
-            fsrs_difficulty: newCard.difficulty,
-            fsrs_elapsed_days: newCard.elapsed_days,
-            fsrs_scheduled_days: newCard.scheduled_days,
-            fsrs_reps: newCard.reps,
-            fsrs_lapses: newCard.lapses,
-            fsrs_state: newCard.state,
-            fsrs_last_review: lastReview,
-            // Update streak counters
-            success_streak: success ? (currentWord.success_streak || 0) + 1 : 0,
-            failure_streak: !success ? (currentWord.failure_streak || 0) + 1 : 0,
-          })
-          .eq('sentence_word_id', sentenceWordId)
-          .eq('user_id', userId);
+        // Prepare update data for database
+        const wordUpdateData = {
+          fsrs_due: newCard.due.toISOString(),
+          fsrs_stability: newCard.stability,
+          fsrs_difficulty: newCard.difficulty,
+          fsrs_elapsed_days: newCard.elapsed_days,
+          fsrs_scheduled_days: newCard.scheduled_days,
+          fsrs_reps: newCard.reps,
+          fsrs_lapses: newCard.lapses,
+          fsrs_state: newCard.state,
+          fsrs_last_review: lastReview,
+          // Update streak counters
+          success_streak: success ? (currentWord.success_streak || 0) + 1 : 0,
+          failure_streak: !success ? (currentWord.failure_streak || 0) + 1 : 0,
+        };
+
+        // Use upsert with onConflict to handle both new and existing words
+        const { error } = await supabase.from('study_words').upsert(
+          {
+            sentence_word_id: sentenceWordId,
+            user_id: userId,
+            ...wordUpdateData,
+          },
+          {
+            onConflict: 'sentence_word_id,user_id',
+          }
+        );
 
         if (error) {
           console.error('Error updating word:', error);
@@ -235,15 +298,38 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
           console.log(`Review record added successfully`);
         }
 
-        // Update the queue and progress tracking
-        if (queue.current.length > 0) {
-          // Remove the current word from the queue
-          queue.current.shift();
+        // Store the FSRS log for advanced analytics and debugging
+        if (log) {
+          const { error: logError } = await supabase.from('fsrs_logs').insert({
+            user_id: userId,
+            sentence_word_id: sentenceWordId,
+            review_date: lastReview,
+            rating: rating,
+            scheduled_days: log.scheduled_days,
+            elapsed_days: log.elapsed_days,
+            // Store card state from the result
+            card_state: newCard.state,
+            card_difficulty: newCard.difficulty,
+            card_stability: newCard.stability,
+            // Store the complete log data as JSON for future detailed analysis
+            log_data: JSON.stringify(log),
+          });
 
-          // Debug log the current state of the queue
-          console.log(
-            `Queue length after shift: ${queue.current.length}, total words: ${totalWordsRef.current}`
-          );
+          if (logError) {
+            console.error('Error storing FSRS log data:', logError);
+          } else {
+            console.log('FSRS log data stored successfully for analytics');
+          }
+        }
+
+        // Update the queue and progress tracking - properly manage React state
+        if (wordQueue.length > 0) {
+          // Update queue by removing the first element
+          setWordQueue(prevQueue => {
+            const newQueue = [...prevQueue];
+            newQueue.shift();
+            return newQueue;
+          });
 
           // Update the processed words counter
           processedWordsRef.current += 1;
@@ -259,23 +345,32 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
             `Progress: ${newProgress}% (${processedWordsRef.current}/${totalWordsRef.current})`
           );
 
-          // Check if we've processed all words
-          if (queue.current.length === 0) {
-            console.log('All words reviewed, completing session');
-            // Set complete state only once
-            if (!isComplete && !completionTriggeredRef.current) {
-              console.log('Setting isComplete to true and calling onComplete callback');
-              completionTriggeredRef.current = true;
-              setIsComplete(true);
-              if (onComplete) {
-                onComplete();
+          // Check if we've processed all words - use a closure with the latest state
+          setWordQueue(prevQueue => {
+            const isQueueEmpty = prevQueue.length <= 1; // Check if this was the last word
+
+            if (isQueueEmpty) {
+              console.log('All words reviewed, completing session');
+              // Set complete state only once
+              if (!isComplete && !completionTriggeredRef.current) {
+                console.log('Setting isComplete to true and calling onComplete callback');
+                completionTriggeredRef.current = true;
+                // Schedule this for the next render to avoid state update conflicts
+                setTimeout(() => {
+                  setIsComplete(true);
+                  if (onComplete) {
+                    onComplete();
+                  }
+                }, 0);
               }
+            } else {
+              // Set the next word to review
+              const nextWord = prevQueue[1]; // Get the next word
+              console.log(`Loading next word (${prevQueue.length - 1} remaining)`);
+              setCurrentWord(nextWord);
             }
-          } else {
-            // Set the next word to review
-            console.log(`Loading next word (${queue.current.length} remaining)`);
-            setCurrentWord(queue.current[0]);
-          }
+            return prevQueue; // Return unchanged, the shift happens in the previous setWordQueue
+          });
         } else {
           // This is a safety check in case the queue is empty but we're still updating words
           console.warn('Queue is empty but trying to update words - forcing completion');
@@ -291,6 +386,9 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       } catch (error) {
         console.error('Error in updateWord:', error);
         throw error;
+      } finally {
+        // Reset processing flag to allow future updates
+        isProcessingUpdateRef.current = false;
       }
     },
     [
@@ -299,7 +397,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       fsrsInstance,
       userId,
       isComplete,
-      queue,
+      wordQueue,
       totalWordsRef,
       processedWordsRef,
       onComplete,
