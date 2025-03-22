@@ -28,7 +28,8 @@
     "knip:types": "knip --include types",
     "knip:files": "knip --include files",
     "knip:files:verbose": "knip --include files --verbose",
-    "knip:islands": "knip --include files --no-config-hints"
+    "knip:islands": "knip --include files --no-config-hints",
+    "migrate-fsrs": "ts-node scripts/migrateToFSRS.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",
@@ -66,7 +67,9 @@
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
     "react-redux": "^9.2.0",
-    "redux-persist": "^6.0.0"
+    "redux-persist": "^6.0.0",
+    "ts-fsrs": "^4.7.0",
+    "dotenv": "^16.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",

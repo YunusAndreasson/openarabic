@@ -274,6 +274,15 @@ export type Database = {
           sentence_word_id: number;
           stability: number;
           user_id: string;
+          fsrs_due: string | null;
+          fsrs_stability: number | null;
+          fsrs_difficulty: number | null;
+          fsrs_elapsed_days: number | null;
+          fsrs_scheduled_days: number | null;
+          fsrs_reps: number | null;
+          fsrs_lapses: number | null;
+          fsrs_state: number | null;
+          fsrs_last_review: string | null;
         };
         Insert: {
           created_at?: string;
@@ -286,6 +295,15 @@ export type Database = {
           sentence_word_id: number;
           stability?: number;
           user_id: string;
+          fsrs_due?: string | null;
+          fsrs_stability?: number | null;
+          fsrs_difficulty?: number | null;
+          fsrs_elapsed_days?: number | null;
+          fsrs_scheduled_days?: number | null;
+          fsrs_reps?: number | null;
+          fsrs_lapses?: number | null;
+          fsrs_state?: number | null;
+          fsrs_last_review?: string | null;
         };
         Update: {
           created_at?: string;
@@ -298,6 +316,15 @@ export type Database = {
           sentence_word_id?: number;
           stability?: number;
           user_id?: string;
+          fsrs_due?: string | null;
+          fsrs_stability?: number | null;
+          fsrs_difficulty?: number | null;
+          fsrs_elapsed_days?: number | null;
+          fsrs_scheduled_days?: number | null;
+          fsrs_reps?: number | null;
+          fsrs_lapses?: number | null;
+          fsrs_state?: number | null;
+          fsrs_last_review?: string | null;
         };
         Relationships: [
           {

@@ -15,6 +15,15 @@ export function useGraphData(
 ): GraphPaths {
   // Consolidate all calculations into a single useMemo
   return useMemo(() => {
+    // Debug log the input data
+    console.log(
+      `useGraphData: processing ${data.length} data points, width=${graphWidth}, height=${graphHeight}`
+    );
+    if (data.length > 0) {
+      console.log('First data point:', JSON.stringify(data[0]));
+      console.log('Last data point:', JSON.stringify(data[data.length - 1]));
+    }
+
     // Handle edge cases
     if (data.length <= 1) {
       const maxValue = 5;
@@ -44,9 +53,45 @@ export function useGraphData(
       };
     }
 
-    // Calculate max value
-    const maxValue =
-      Math.ceil((Math.max(...data.map(item => item.wordsLearned), 5) * 1.05) / 5) * 5;
+    // Check if all values are zero - provide useful defaults
+    const allZeroValues = data.every(item => item.wordsLearned === 0);
+    if (allZeroValues) {
+      console.log('All data points have zero wordsLearned values');
+      const maxValue = 5; // Set a default scale
+
+      // Generate default points (flat line at bottom)
+      const points = data.map((item, index) => {
+        const x = (index / (data.length - 1)) * graphWidth;
+        const y = graphHeight; // At the bottom
+        return {
+          x,
+          y,
+          value: 0,
+          label: item.date,
+        } as GraphProcessedPoint;
+      });
+
+      // Create a flat line path
+      const linePath = `M 0 ${graphHeight} L ${graphWidth} ${graphHeight}`;
+
+      // Create a flat area path (zero height rectangle)
+      const areaPath = `M 0 ${graphHeight} L ${graphWidth} ${graphHeight} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`;
+
+      return {
+        points,
+        areaPath,
+        linePath,
+        totalWordsLearned: 0,
+        dailyAverage: 0,
+        maxValue,
+      };
+    }
+
+    // Calculate max value - ensure we have a non-zero scale
+    const maxWords = Math.max(...data.map(item => item.wordsLearned), 0);
+    const maxValue = maxWords === 0 ? 5 : Math.ceil((maxWords * 1.05) / 5) * 5;
+
+    console.log(`Max words learned: ${maxWords}, using scale: ${maxValue}`);
 
     // Calculate segment width for points
     const segmentWidth = graphWidth / (data.length - 1);

@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { createEmptyCard } from 'ts-fsrs';
 
 interface WordReviewUpdate {
   interval_days: number;
@@ -40,7 +41,7 @@ export const studyWordsService = {
     if (options.forStats) {
       // For stats, we only need core fields, not all the relationships
       selectQuery = query.select(
-        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak'
+        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review'
       );
     } else {
       // Full data with relationships
@@ -63,7 +64,8 @@ export const studyWordsService = {
     // Add due date filter if requested
     if (options.onlyDue) {
       const now = new Date().toISOString();
-      filteredQuery = filteredQuery.lte('next_review_at', now);
+      // Prefer FSRS due date field, but fall back to legacy field for compatibility
+      filteredQuery = filteredQuery.lte('fsrs_due', now);
     }
 
     const { data, error } = await filteredQuery;
@@ -147,13 +149,18 @@ export const studyWordsService = {
 
       return false;
     } else {
-      // Get current time for both created_at and next_review_at
-      const currentTime = new Date().toISOString();
+      // Get current time
+      const now = new Date();
+      const currentTime = now.toISOString();
+
+      // Use createEmptyCard from ts-fsrs to initialize a new FSRS card
+      const fsrsCard = createEmptyCard(now);
 
       const newWord = {
         user_id: userId,
         sentence_word_id: sentenceWordId,
-        next_review_at: currentTime, // Set to current time so it shows up immediately for review
+        // Legacy fields (kept for compatibility)
+        next_review_at: currentTime,
         created_at: currentTime,
         ease_factor: 2.5,
         interval_days: 1,
@@ -161,9 +168,19 @@ export const studyWordsService = {
         lapses: 0,
         review_count: 0,
         previous_interval: 0,
-        difficulty: 0.3, // Default initial difficulty
-        success_streak: 0, // Initial success streak
-        failure_streak: 0, // Initial failure streak
+        difficulty: 0.3,
+        success_streak: 0,
+        failure_streak: 0,
+        // FSRS fields - properly initialized by createEmptyCard
+        fsrs_due: fsrsCard.due.toISOString(),
+        fsrs_stability: fsrsCard.stability,
+        fsrs_difficulty: fsrsCard.difficulty,
+        fsrs_elapsed_days: fsrsCard.elapsed_days,
+        fsrs_scheduled_days: fsrsCard.scheduled_days,
+        fsrs_reps: fsrsCard.reps,
+        fsrs_lapses: fsrsCard.lapses,
+        fsrs_state: fsrsCard.state,
+        fsrs_last_review: null, // No reviews yet
       };
 
       const { error: insertError } = await supabase

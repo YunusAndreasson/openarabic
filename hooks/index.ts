@@ -11,7 +11,7 @@ export * from './useThemeDetection';
 // Data hooks
 export * from './useGraphData';
 export * from './useWordStatus';
-export * from './useSpacedRepetition';
+export * from './useFSRS';
 
 // Media hooks
 export * from './useAudioPlayer';

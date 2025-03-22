@@ -13,7 +13,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
-import { useSpacedRepetition } from '@/hooks/useSpacedRepetition';
+import { useFSRS } from '@/hooks/useFSRS';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SCREEN_WIDTH, LAYOUT } from '@/constants/layout';
@@ -218,32 +218,43 @@ export default function ReviewScreen() {
   // Track if this is the first render
   const isFirstRender = useRef(true);
 
-  const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } =
-    useSpacedRepetition({
-      userId: user?.id,
-      // Add an onComplete callback to handle the transition to completion screen
-      onComplete: () => {
-        // Start the transition to completion screen with a fade-out animation
-        setIsTransitioningToCompletion(true);
+  // Add ref to track if completion has been triggered
+  const completionTriggeredRef = useRef(false);
 
-        // Clear any existing timeouts
-        if (completionTransitionRef.current) {
-          clearTimeout(completionTransitionRef.current);
-        }
+  const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
+    userId: user?.id,
+    // Add an onComplete callback to handle the transition to completion screen
+    onComplete: () => {
+      // Prevent duplicate completion transitions
+      if (completionTriggeredRef.current) return;
+      completionTriggeredRef.current = true;
 
-        // Fade out the current screen
-        opacity.value = withTiming(0, {
-          duration: 300, // Slower fade-out for a smoother transition
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        });
+      // Set progress to 100% immediately to prevent flickering
+      maxProgressRef.current = 100;
+      prevProgressRef.current = 100;
+      setProgressAnimationKey(prev => prev + 1);
 
-        // Wait for the fade-out to complete before showing the completion screen
-        completionTransitionRef.current = setTimeout(() => {
-          // Now we can safely show the completion screen
-          setIsTransitioningToCompletion(false);
-        }, 350); // Slightly longer than the animation duration to ensure it completes
-      },
-    });
+      // Start the transition to completion screen with a fade-out animation
+      setIsTransitioningToCompletion(true);
+
+      // Clear any existing timeouts
+      if (completionTransitionRef.current) {
+        clearTimeout(completionTransitionRef.current);
+      }
+
+      // Fade out the current screen
+      opacity.value = withTiming(0, {
+        duration: 300, // Slower fade-out for a smoother transition
+        easing: TIMING_CONFIG.MEDIUM.easing,
+      });
+
+      // Wait for the fade-out to complete before showing the completion screen
+      completionTransitionRef.current = setTimeout(() => {
+        // Now we can safely show the completion screen
+        setIsTransitioningToCompletion(false);
+      }, 350); // Slightly longer than the animation duration to ensure it completes
+    },
+  });
 
   // Use our custom hook for word sizing with simplified approach
   const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, {
@@ -319,6 +330,9 @@ export default function ReviewScreen() {
         clearTimeout(completionTransitionRef.current);
         completionTransitionRef.current = undefined;
       }
+
+      // Reset completion trigger on unmount
+      completionTriggeredRef.current = false;
     };
   }, []);
 
@@ -340,6 +354,11 @@ export default function ReviewScreen() {
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
     (success: boolean) => {
+      // If we're already transitioning to completion, prevent further updates
+      if (isTransitioningToCompletion || isComplete || completionTriggeredRef.current) {
+        return;
+      }
+
       // Add haptic feedback only when swiping left (don't know the word)
       if (!success) {
         lightFeedback();
@@ -387,7 +406,7 @@ export default function ReviewScreen() {
       const updateWordAndAnimate = () => {
         if (currentWord?.sentence_word_id) {
           try {
-            // First update the word in the database
+            // First update the word in the database using our new FSRS hook
             updateWord(currentWord.sentence_word_id, success)
               .then(() => {
                 // Reset position immediately
@@ -403,9 +422,7 @@ export default function ReviewScreen() {
                   // For both success and failure cases, use immediate fade-in
                   // Only fade in if we're not transitioning to completion screen
                   if (!isTransitioningToCompletion) {
-                    opacity.value = withTiming(1, FAST_ANIMATION_CONFIG, () => {
-                      // runOnJS(setAnimationState)('idle');
-                    });
+                    opacity.value = withTiming(1, FAST_ANIMATION_CONFIG);
                   }
                 }, 16); // One frame delay at 60fps to ensure clean transition
               })
@@ -442,7 +459,15 @@ export default function ReviewScreen() {
         updateWordAndAnimate();
       }
     },
-    [currentWord, updateWord, opacity, translateX, progress, isTransitioningToCompletion]
+    [
+      currentWord,
+      updateWord,
+      opacity,
+      translateX,
+      progress,
+      isTransitioningToCompletion,
+      isComplete,
+    ]
   );
 
   // Create a pan gesture handler for the entire screen
@@ -450,9 +475,14 @@ export default function ReviewScreen() {
     .activateAfterLongPress(0)
     .minDistance(1)
     .onUpdate(event => {
+      // Prevent swiping during transition to completion screen
+      if (isTransitioningToCompletion || isComplete) return;
       translateX.value = event.translationX;
     })
     .onEnd(event => {
+      // Skip gesture processing if we're transitioning to completion
+      if (isTransitioningToCompletion || isComplete) return;
+
       if (event.translationX > SWIPE_THRESHOLD) {
         // Swipe right - success - use faster spring animation
         translateX.value = withSpring(SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
@@ -545,7 +575,9 @@ export default function ReviewScreen() {
                 ]}
               >
                 <ProgressBar
-                  progress={Math.max(Math.round(progress), maxProgressRef.current)}
+                  progress={
+                    isComplete ? 100 : Math.max(Math.round(progress), maxProgressRef.current)
+                  }
                   animationTriggered={progressAnimationKey > 1}
                   key={progressAnimationKey}
                   animationDuration={500}

@@ -43,63 +43,85 @@ export const VocabularyGraph = React.memo(
     // Track if the last point haptic has been triggered
     const lastPointTriggered = useRef(false);
 
+    // Debug log the incoming data
+    useEffect(() => {
+      console.log(`VocabularyGraph: Received ${data.length} data points`);
+
+      // Check if today is in the data
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const todayName = dayNames[new Date().getDay()];
+      const todayData = data.find(d => d.date === todayName);
+
+      console.log(`Today is ${todayName}, found in data: ${!!todayData}`);
+      if (todayData) {
+        console.log(`Today's data: ${todayData.wordsLearned} words, ${todayData.count} reviews`);
+      }
+
+      if (data.length > 0) {
+        console.log(
+          'Data sample:',
+          data.map(d => `${d.date}: ${d.wordsLearned} (${d.count} reviews)`).join(', ')
+        );
+      }
+    }, [data]);
+
     // Canvas dimensions
     const PADDING = LAYOUT.SPACING.MEDIUM;
     const TOP_PADDING = LAYOUT.SPACING.SMALL; // Increase from 3px to prevent top clipping
     const BOTTOM_PADDING = LAYOUT.SPACING.MEDIUM; // Add bottom padding to prevent floor points from being cut
     const GRAPH_HEIGHT = 120;
     const GRAPH_WIDTH =
-      Dimensions.get('window').width - LAYOUT.SCREEN_EDGE_PADDING * 2 - PADDING * 2;
+      Dimensions.get('window').width - PADDING * 2 - LAYOUT.SCREEN_EDGE_PADDING * 2;
 
-    // Use the graph data hook to process data
-    const { points, areaPath, linePath } = useGraphData(
+    // Set component as ready after initial mount
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        setIsReady(true);
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }, []);
+
+    // Use graph data hook to generate points and paths
+    const { points, areaPath, linePath, totalWordsLearned, dailyAverage, maxValue } = useGraphData(
       data,
       GRAPH_WIDTH,
-      GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING // Reserve space for both top and bottom padding
+      GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING
     );
 
-    // Use our custom graph animation hook
+    // Animation related hooks
     const {
       animationProgress,
       startAnimation: startGraphAnimation,
       resetAnimation,
     } = useGraphAnimation(2000);
 
-    // Function to trigger haptic feedback safely from the JS thread
-    const triggerHapticFeedback = useCallback(() => {
+    // Function to trigger haptic feedback when the last point is shown
+    const triggerLastPointHaptic = useCallback(() => {
       if (lastPointTriggered.current) return;
-      lastPointTriggered.current = true;
-
       lightFeedback();
+      lastPointTriggered.current = true;
     }, []);
 
-    // Reset the last point triggered flag when points change or animation is reset
-    useEffect(() => {
-      lastPointTriggered.current = false;
-    }, [points.length]);
+    // Set graph state after checking if we actually have data to display
+    const hasData = data.length > 0 && data.some(d => d.count > 0);
+    const hasLearningData = data.length > 0 && data.some(d => d.wordsLearned > 0);
 
-    // Monitor animation progress to trigger haptic feedback only for the last point
+    // Add reaction to trigger haptic feedback when animation reaches the last point
     useAnimatedReaction(
       () => {
-        if (points.length === 0) return null;
-        return animationProgress.value >= 1;
+        if (points.length === 0) return false;
+        // Check if animation is at or past the last point's position
+        const lastPointPosition = 1.0; // Animation progress is normalized (0-1)
+        return animationProgress.value >= lastPointPosition;
       },
-      reachedLastPoint => {
-        if (reachedLastPoint) {
-          runOnJS(triggerHapticFeedback)();
+      isAtLastPoint => {
+        if (isAtLastPoint && hasData) {
+          runOnJS(triggerLastPointHaptic)();
         }
       },
-      [points.length, triggerHapticFeedback]
+      [points.length, hasData, triggerLastPointHaptic]
     );
-
-    // Set component as ready after a delay
-    React.useEffect(() => {
-      const timer = setTimeout(() => {
-        setIsReady(true);
-      }, 600);
-
-      return () => clearTimeout(timer);
-    }, []);
 
     // Start the animation when the component is ready and parent signals animation
     React.useEffect(() => {
@@ -187,7 +209,14 @@ export const VocabularyGraph = React.memo(
       </View>
     );
 
-    const hasData = data.length > 0;
+    // Handle case when we have data structure but no actual learning data
+    const emptyDataMessage = (
+      <View style={styles.emptyDataContainer}>
+        <ThemedText type="body" variant="secondary" style={styles.emptyDataText}>
+          No progress data yet. Review words to see your progress here.
+        </ThemedText>
+      </View>
+    );
 
     return (
       <View
@@ -197,112 +226,116 @@ export const VocabularyGraph = React.memo(
       >
         <BaseCard
           style={styles.card}
-          isLoading={isLoading || !hasData}
+          isLoading={isLoading}
           loadingComponent={loadingComponent}
           includePressAnimation={false}
           shadowSize="medium"
         >
           {cardHeader}
 
-          <View
-            style={graphContainerStyle}
-            accessible={true}
-            accessibilityLabel="Graph showing vocabulary progress over time"
-          >
-            <Canvas style={canvasStyle}>
-              {/* Grid lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-                const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
-                return (
-                  <Line
-                    key={index}
-                    p1={{ x: 0, y }}
-                    p2={{ x: GRAPH_WIDTH, y }}
-                    color={`${colors.text}15`}
-                    strokeWidth={1}
-                  />
-                );
-              })}
-
-              {/* Area under the curve with gradient */}
-              {hasData && (
-                <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
-                  <LinearGradient
-                    start={vec(0, 0)}
-                    end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
-                    colors={gradientColors}
-                  />
-                  <Path path={areaPath} />
-                  <BlurMask blur={5} style="normal" />
-                </Group>
-              )}
-
-              {/* Line for the graph - more subtle */}
-              {hasData && (
-                <Group transform={[{ translateY: TOP_PADDING }]}>
-                  <Path
-                    path={linePath}
-                    style="stroke"
-                    strokeWidth={2.5}
-                    color={`${colors.text}70`}
-                    strokeJoin="round"
-                    strokeCap="round"
-                    start={0}
-                    end={animationProgress}
-                  />
-                  <BlurMask blur={1} style="normal" />
-                </Group>
-              )}
-
-              {/* Data points */}
-              {hasData &&
-                points.map((point, index) => {
-                  // Calculate the point's position in the animation sequence
-                  const pointPosition = index / (points.length - 1);
-
+          {!hasLearningData && data.length > 0 ? (
+            emptyDataMessage
+          ) : (
+            <View
+              style={graphContainerStyle}
+              accessible={true}
+              accessibilityLabel="Graph showing vocabulary progress over time"
+            >
+              <Canvas style={canvasStyle}>
+                {/* Grid lines */}
+                {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+                  const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
                   return (
-                    <Group
+                    <Line
                       key={index}
-                      opacity={animationProgress.value >= pointPosition ? 1 : 0}
-                      transform={[{ translateY: TOP_PADDING }]}
-                    >
-                      {/* Outer circle */}
-                      <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
-                      {/* Inner circle */}
-                      <Circle cx={point.x} cy={point.y} r={2.5} color={`${colors.text}90`} />
-                    </Group>
+                      p1={{ x: 0, y }}
+                      p2={{ x: GRAPH_WIDTH, y }}
+                      color={`${colors.text}15`}
+                      strokeWidth={1}
+                    />
                   );
                 })}
-            </Canvas>
 
-            {/* X-axis labels using regular React Native Text */}
-            <View
-              style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
-              accessible={true}
-              accessibilityLabel="Date and word count labels"
-            >
-              {data.map((item, index) => (
-                <View
-                  key={index}
-                  style={styles.labelContainer}
-                  accessible={true}
-                  accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}
-                >
-                  <ThemedText type="caption" variant="primary" weight="500">
-                    {item.date}
-                  </ThemedText>
-                  <ThemedText
-                    type="caption"
-                    variant="secondary"
-                    weight="400"
-                    style={styles.wordCountText}
+                {/* Area under the curve with gradient */}
+                {hasData && (
+                  <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
+                    <LinearGradient
+                      start={vec(0, 0)}
+                      end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
+                      colors={gradientColors}
+                    />
+                    <Path path={areaPath} />
+                    <BlurMask blur={5} style="normal" />
+                  </Group>
+                )}
+
+                {/* Line for the graph - more subtle */}
+                {hasData && (
+                  <Group transform={[{ translateY: TOP_PADDING }]}>
+                    <Path
+                      path={linePath}
+                      style="stroke"
+                      strokeWidth={2.5}
+                      color={`${colors.text}70`}
+                      strokeJoin="round"
+                      strokeCap="round"
+                      start={0}
+                      end={animationProgress}
+                    />
+                    <BlurMask blur={1} style="normal" />
+                  </Group>
+                )}
+
+                {/* Data points */}
+                {hasData &&
+                  points.map((point, index) => {
+                    // Calculate the point's position in the animation sequence
+                    const pointPosition = index / (points.length - 1);
+
+                    return (
+                      <Group
+                        key={index}
+                        opacity={animationProgress.value >= pointPosition ? 1 : 0}
+                        transform={[{ translateY: TOP_PADDING }]}
+                      >
+                        {/* Outer circle */}
+                        <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
+                        {/* Inner circle */}
+                        <Circle cx={point.x} cy={point.y} r={2.5} color={`${colors.text}90`} />
+                      </Group>
+                    );
+                  })}
+              </Canvas>
+
+              {/* X-axis labels using regular React Native Text */}
+              <View
+                style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
+                accessible={true}
+                accessibilityLabel="Date and word count labels"
+              >
+                {data.map((item, index) => (
+                  <View
+                    key={index}
+                    style={styles.labelContainer}
+                    accessible={true}
+                    accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}
                   >
-                    {item.wordsLearned}
-                  </ThemedText>
-                </View>
-              ))}
+                    <ThemedText type="caption" variant="primary" weight="500">
+                      {item.date}
+                    </ThemedText>
+                    <ThemedText
+                      type="caption"
+                      variant="secondary"
+                      weight="400"
+                      style={styles.wordCountText}
+                    >
+                      {item.wordsLearned}
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
+          )}
         </BaseCard>
       </View>
     );
@@ -357,6 +390,23 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyDataContainer: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 120,
+  },
+  emptyDataText: {
+    textAlign: 'center',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  statItem: {
     alignItems: 'center',
   },
 });

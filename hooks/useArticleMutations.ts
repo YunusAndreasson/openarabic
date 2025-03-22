@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
 // Services
-import { studyWordsService } from '@/services/studyWords';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { readingListService } from '@/services/readingList';
 
 /**
@@ -67,9 +67,11 @@ export const useArticleMutations = (
   // Toggle word study status mutation
   const toggleWordMutation = useMutation({
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
-      studyWordsService.toggleStudyWord(userId, wordId),
+      studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+      queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
+      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     },
     onError: () => {
       Toast.show({

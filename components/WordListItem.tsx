@@ -7,6 +7,7 @@ import { StudyWord } from '../types/vocabulary.types';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '../hooks/animations';
 import { Ionicons } from '@expo/vector-icons';
+import { State } from 'ts-fsrs'; // Import State enum
 
 interface WordListItemProps {
   word: StudyWord;
@@ -42,7 +43,7 @@ const WordListItem = React.memo(function WordListItem({
   // Get the actual word data
   const { word_form, english } = word.sentence_word || {};
 
-  // Get mastery information
+  // Get mastery information using FSRS metrics
   const masteryInfo = useMemo(() => {
     if (masteryScore === undefined) return null;
 
@@ -70,70 +71,110 @@ const WordListItem = React.memo(function WordListItem({
     }
   }, [masteryScore, colors]);
 
-  // Get review timing information
+  // Calculate review status based on FSRS parameters
   const reviewInfo = useMemo(() => {
-    const days = word.interval_days;
-    if (days === undefined) return null;
+    // Use FSRS state for base information
+    const state = word.fsrs_state;
+    const stability = word.fsrs_stability || 0;
+    const dueDate = new Date(word.fsrs_due);
+    const now = new Date();
+    const isOverdue = dueDate <= now;
+    const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (days === 0)
-      return {
-        text: 'New',
-        color: colors.text,
-        icon: 'add-circle-outline' as const,
-        variant: undefined as TextVariant,
-      };
+    // Handle different FSRS states
+    switch (state) {
+      case State.New:
+        return {
+          text: 'New',
+          color: colors.info,
+          icon: 'add-circle-outline' as const,
+          variant: 'info' as TextVariant,
+        };
 
-    if (days === 1)
-      return {
-        text: 'Due today',
-        color: colors.warning as any,
-        icon: 'time' as const,
-        variant: 'warning' as TextVariant,
-      };
+      case State.Learning:
+        return {
+          text: 'Learning',
+          color: colors.warning as any,
+          icon: 'school-outline' as const,
+          variant: 'warning' as TextVariant,
+        };
 
-    if (days === 2)
-      return {
-        text: 'Due tomorrow',
-        color: colors.warning as any,
-        icon: 'calendar-outline' as const,
-        variant: 'warning' as TextVariant,
-      };
+      case State.Review:
+        // For Review state, show due status
+        if (isOverdue) {
+          return {
+            text: 'Due now',
+            color: colors.error as any,
+            icon: 'alert-circle-outline' as const,
+            variant: 'error' as TextVariant,
+          };
+        } else if (daysUntilDue === 0) {
+          return {
+            text: 'Due today',
+            color: colors.warning as any,
+            icon: 'today-outline' as const,
+            variant: 'warning' as TextVariant,
+          };
+        } else if (daysUntilDue === 1) {
+          return {
+            text: 'Due tomorrow',
+            color: colors.warning as any,
+            icon: 'calendar-outline' as const,
+            variant: 'warning' as TextVariant,
+          };
+        } else if (daysUntilDue <= 7) {
+          return {
+            text: `Due in ${daysUntilDue} days`,
+            color: colors.text,
+            icon: 'calendar-outline' as const,
+            variant: undefined as TextVariant,
+          };
+        } else {
+          // For longer intervals, use weeks
+          const weeks = Math.floor(daysUntilDue / 7);
+          const remainingDays = daysUntilDue % 7;
 
-    if (days <= 7)
-      return {
-        text: `Due in ${days} days`,
-        color: colors.text,
-        icon: 'calendar-outline' as const,
-        variant: undefined as TextVariant,
-      };
+          if (weeks === 1 && remainingDays === 0) {
+            return {
+              text: 'Due in 1 week',
+              color: colors.text,
+              icon: 'calendar-outline' as const,
+              variant: undefined as TextVariant,
+            };
+          } else if (remainingDays === 0) {
+            return {
+              text: `Due in ${weeks} weeks`,
+              color: colors.text,
+              icon: 'calendar-outline' as const,
+              variant: undefined as TextVariant,
+            };
+          } else {
+            return {
+              text: `Due in ${weeks}w ${remainingDays}d`,
+              color: colors.text,
+              icon: 'calendar-outline' as const,
+              variant: undefined as TextVariant,
+            };
+          }
+        }
 
-    // For longer intervals, use weeks
-    const weeks = Math.floor(days / 7);
-    const remainingDays = days % 7;
+      case State.Relearning:
+        return {
+          text: 'Relearning',
+          color: colors.error as any,
+          icon: 'refresh-circle-outline' as const,
+          variant: 'error' as TextVariant,
+        };
 
-    if (weeks === 1 && remainingDays === 0)
-      return {
-        text: 'Due in 1 week',
-        color: colors.text,
-        icon: 'calendar-outline' as const,
-        variant: undefined as TextVariant,
-      };
-
-    if (remainingDays === 0)
-      return {
-        text: `Due in ${weeks} weeks`,
-        color: colors.text,
-        icon: 'calendar-outline' as const,
-        variant: undefined as TextVariant,
-      };
-
-    return {
-      text: `Due in ${weeks}w ${remainingDays}d`,
-      color: colors.text,
-      icon: 'calendar-outline' as const,
-      variant: undefined as TextVariant,
-    };
-  }, [word.interval_days, colors]);
+      default:
+        return {
+          text: 'Unknown',
+          color: colors.text,
+          icon: 'help-circle-outline' as const,
+          variant: undefined as TextVariant,
+        };
+    }
+  }, [word.fsrs_state, word.fsrs_stability, word.fsrs_due, colors]);
 
   // Get streak information
   const streakCount = word.success_streak || 0;

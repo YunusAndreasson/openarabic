@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
-import { studyWordsService } from '../services/studyWords';
+import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
@@ -13,6 +13,11 @@ const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
 const STALE_TIME_ALWAYS_FRESH = 0;
 const PRELOAD_TIMEOUT_MS = 8000;
 
+interface UserSettings {
+  lastOpenedArticle?: number;
+  [key: string]: any;
+}
+
 /**
  * Hook to preload essential app data during initialization
  *
@@ -23,9 +28,55 @@ const PRELOAD_TIMEOUT_MS = 8000;
  */
 export const useAppPreloader = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
   const [preloadComplete, setPreloadComplete] = useState(false);
+
+  // Prefetch data when the app starts and the user is authenticated
+  useEffect(() => {
+    async function prefetchData() {
+      if (!user?.id || isAuthLoading) return;
+
+      try {
+        const userId = user.id;
+
+        // Prefetch the user's study words using FSRS
+        await queryClient.prefetchQuery({
+          queryKey: ['studyWords', userId],
+          queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { forStats: false }),
+          staleTime: 60000, // 1 minute
+        });
+
+        // Prefetch the user's due words using FSRS
+        await queryClient.prefetchQuery({
+          queryKey: ['dueWords', userId],
+          queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true }),
+          staleTime: 0, // Always fetch fresh data for due words
+        });
+
+        // Prefetch the latest articles
+        await queryClient.prefetchQuery({
+          queryKey: ['latestArticles'],
+          queryFn: () => articlesService.getArticles(),
+          staleTime: 300000, // 5 minutes
+        });
+
+        // If the user has a last opened article, prefetch it
+        const settings = (await queryClient.getQueryData(['userSettings', userId])) as UserSettings;
+        if (settings?.lastOpenedArticle) {
+          await queryClient.prefetchQuery({
+            queryKey: ['article', settings.lastOpenedArticle],
+            queryFn: () => articlesService.getArticleById(settings.lastOpenedArticle!),
+            staleTime: 300000, // 5 minutes
+          });
+        }
+      } catch (error) {
+        console.error('Error prefetching data:', error);
+      }
+    }
+
+    prefetchData();
+  }, [queryClient, user, isAuthLoading]);
 
   // Main preloading function
   const preloadAppData = async () => {
@@ -58,7 +109,7 @@ export const useAppPreloader = () => {
         preloadPromises.push(
           queryClient.prefetchQuery({
             queryKey: ['studyWords', user.id],
-            queryFn: () => studyWordsService.getStudyWords(user.id, { forStats: false }),
+            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
             staleTime: STALE_TIME_SHORT,
           })
         );
@@ -67,7 +118,7 @@ export const useAppPreloader = () => {
         preloadPromises.push(
           queryClient.prefetchQuery({
             queryKey: ['dueWords', user.id],
-            queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
+            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
             staleTime: STALE_TIME_ALWAYS_FRESH, // Always fetch fresh data for due words
           })
         );

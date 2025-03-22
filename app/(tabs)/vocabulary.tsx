@@ -7,7 +7,7 @@ import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
 import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
-import { studyWordsService } from '@/services/studyWords';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
@@ -40,7 +40,7 @@ export default function VocabularyScreen() {
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Query for study words
+  // Query for study words - updated to use FSRS service
   const {
     data: studyWords = [],
     isLoading: isStudyWordsLoading,
@@ -49,7 +49,7 @@ export default function VocabularyScreen() {
     refetch: refetchStudyWords,
   } = useQuery({
     queryKey: ['studyWords', user?.id],
-    queryFn: () => studyWordsService.getStudyWords(user!.id, { forStats: false }),
+    queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { forStats: false }),
     enabled: !!user,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false,
@@ -57,14 +57,14 @@ export default function VocabularyScreen() {
     placeholderData: () => queryClient.getQueryData(['studyWords', user?.id]) || [],
   });
 
-  // Query for due words
+  // Query for due words - updated to use FSRS service
   const {
     data: dueWordsData = [],
     isFetching: isDueWordsFetching,
     refetch: refetchDueWords,
   } = useQuery({
     queryKey: ['dueWords', user?.id],
-    queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
+    queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { onlyDue: true }),
     enabled: !!user,
     staleTime: 0, // Always fetch fresh data for due words
     gcTime: 60000, // 1 minute
@@ -120,7 +120,7 @@ export default function VocabularyScreen() {
     return !!user && (validStudyWords.length > 0 || dueWordsData.length > 0 || !isDataLoading);
   }, [user, validStudyWords.length, dueWordsData.length, isDataLoading]);
 
-  // Calculate stats with memoization
+  // Calculate stats with memoization - updated to use FSRS stats calculation
   const stats = useMemo<VocabularyStats>(() => {
     if (validStudyWords.length === 0 && studyWords.length === 0) {
       // Return safe defaults for empty data
@@ -144,13 +144,31 @@ export default function VocabularyScreen() {
     return calculateVocabularyStats(validStudyWords, dueWordsData);
   }, [validStudyWords, dueWordsData, studyWords.length]);
 
-  // Calculate weekly progress data with memoization
+  // Calculate weekly progress data with memoization - updated to use FSRS progress calculation
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
-    if (validStudyWords.length === 0) {
-      // Return empty array for empty data
-      return [];
+    // Log a few timestamps for debugging
+    if (validStudyWords.length > 0) {
+      console.log('Sample review timestamps:');
+      validStudyWords.slice(0, 3).forEach(word => {
+        console.log(`Word ${word.sentence_word_id} timestamps:`, {
+          fsrs_last_review: word.fsrs_last_review,
+          last_review: word.last_review,
+          fsrs_due: word.fsrs_due,
+          next_review_at: word.next_review_at,
+        });
+      });
     }
-    return calculateWeeklyProgressData(validStudyWords);
+
+    // Always get data regardless of empty study words - this ensures we at least get the empty week structure
+    const progressData = calculateWeeklyProgressData(validStudyWords);
+
+    // Log the data to debug
+    console.log(
+      'Weekly progress data calculated:',
+      progressData.map(d => `${d.date}: ${d.wordsLearned} (${d.count} reviews)`).join(', ')
+    );
+
+    return progressData;
   }, [validStudyWords]);
 
   // Single fade-in animation for the entire screen
@@ -173,10 +191,10 @@ export default function VocabularyScreen() {
       refetchType: 'none', // Don't refetch now, but mark as stale for when we return
     });
 
-    // Prefetch the review data to avoid the "no words" flash
+    // Prefetch the review data to avoid the "no words" flash - updated to use FSRS service
     queryClient.prefetchQuery({
       queryKey: ['dueWords', user.id, 'review'],
-      queryFn: () => studyWordsService.getStudyWords(user.id, { onlyDue: true }),
+      queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
     });
 
     // Navigate to review screen

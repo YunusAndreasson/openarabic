@@ -4,168 +4,29 @@ import {
   VocabularyStats,
   WeeklyProgressData,
 } from '../types/vocabulary.types';
+import { State } from 'ts-fsrs'; // Import State enum from ts-fsrs
 
-/**
- * Determine if a word is considered "mastered" based on its interval
- * @param word The study word to check
- * @returns boolean indicating if the word is mastered
- */
-export function isMasteredWord(word: StudyWord): boolean {
-  // A word is considered mastered if its interval is 30 days or more
-  return word.interval_days >= 30;
+// Define our own WeeklyProgressData interface for internal use
+interface FSRSWeeklyProgressData {
+  date: Date;
+  count: number;
+  wordsLearned?: number; // Made optional to work with both old and new implementations
 }
 
-/**
- * Estimate the last review date for a word based on its next review date and interval
- * @param word The study word to estimate for
- * @param currentTime The current time to use as reference
- * @returns The estimated last review date or null if the word has never been reviewed
- */
-export function estimateLastReviewDate(word: StudyWord, currentTime: Date): Date | null {
-  if (word.review_count === 0) return null;
-
-  // The next review date is scheduled as last review date + interval days
-  const reviewDate = new Date(word.next_review_at);
-
-  // If the word has been reviewed, subtract interval days to get the approximate last review date
-  reviewDate.setDate(reviewDate.getDate() - word.interval_days);
-
-  // Ensure we don't return future dates for last review
-  if (reviewDate > currentTime) return new Date(currentTime);
-
-  return reviewDate;
-}
+// We no longer need our own enum, we're using ts-fsrs State enum directly
 
 /**
- * Calculate the current streak based on review history
- * @param words The list of study words to analyze
- * @returns The current streak (consecutive days with reviews)
+ * Calculate vocabulary statistics based on FSRS data
+ * This directly uses the FSRS metrics to calculate statistics
  */
-export function calculateStreak(words: StudyWord[]): number {
-  if (words.length === 0) return 0;
-
-  const now = new Date();
-  // Calculate streak based on review history
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  // Find last review dates
-  const reviewDates = words
-    .map(word => estimateLastReviewDate(word, now))
-    .filter(Boolean) as Date[];
-
-  if (reviewDates.length === 0) {
-    return 0;
-  }
-
-  // Sort descending to get the most recent review first
-  reviewDates.sort((a, b) => b.getTime() - a.getTime());
-
-  const lastReviewDate = new Date(reviewDates[0]);
-  lastReviewDate.setHours(0, 0, 0, 0);
-
-  // Check if user has reviewed today
-  const daysDifference = Math.floor(
-    (today.getTime() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24)
-  );
-
-  if (daysDifference > 1) {
-    // Streak broken - more than 1 day since last review
-    return 0;
-  } else {
-    // Count consecutive days with reviews
-    let currentDate = new Date(today);
-    let currentStreak = 0;
-    const MAX_ITERATIONS = 366; // Safety limit (maximum 1 year of streak)
-    let iterations = 0;
-
-    // Group review dates by day
-    const reviewDatesByDay = new Map();
-    reviewDates.forEach(date => {
-      const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-      reviewDatesByDay.set(dateKey, true);
-    });
-
-    // Check for consecutive days backward in time
-    while (iterations < MAX_ITERATIONS) {
-      iterations++;
-      const dateKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
-
-      if (reviewDatesByDay.has(dateKey)) {
-        currentStreak++;
-        currentDate.setDate(currentDate.getDate() - 1);
-      } else {
-        break;
-      }
-    }
-
-    return currentStreak;
-  }
-}
-
-/**
- * Calculate weekly progress data for the last 7 days
- */
-export function calculateWeeklyProgressData(words: StudyWord[]): WeeklyProgressData[] {
-  if (words.length === 0)
-    return Array(7)
-      .fill(0)
-      .map((_, i) => ({
-        date: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i],
-        wordsLearned: 0,
-      }));
-
-  const now = new Date();
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const today = new Date();
-
-  // Create an array to hold the last 7 days with pre-initialized counts
-  const dayMap = new Map();
-
-  // Initialize the map with the last 7 days
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - (6 - i));
-    const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-    dayMap.set(dayKey, {
-      date: days[date.getDay()],
-      wordsLearned: 0,
-    });
-  }
-
-  // Count words learned per day based on estimated review dates
-  words.forEach(word => {
-    const reviewDate = estimateLastReviewDate(word, now);
-    if (reviewDate) {
-      const dayKey = `${reviewDate.getFullYear()}-${reviewDate.getMonth()}-${reviewDate.getDate()}`;
-      if (dayMap.has(dayKey)) {
-        const dayData = dayMap.get(dayKey);
-        dayData.wordsLearned += 1;
-        dayMap.set(dayKey, dayData);
-      }
-    }
-  });
-
-  // Convert map back to array in the correct order
-  return Array.from(dayMap.values());
-}
-
-/**
- * Calculate comprehensive vocabulary statistics
- * @param allWords All study words for the user
- * @param dueWords Words that are due for review
- * @returns Comprehensive vocabulary statistics
- */
-export function calculateVocabularyStats(
-  allWords: StudyWord[],
-  dueWords: StudyWord[] = []
-): VocabularyStats {
-  if (!allWords.length) {
+export function calculateVocabularyStats(studyWords: any[], dueWords: any[] = []): VocabularyStats {
+  // If no words, return defaults
+  if (!studyWords || studyWords.length === 0) {
     return {
       totalWords: 0,
-      dueWords: 0,
       masteredWords: 0,
       learningWords: 0,
+      dueWords: dueWords.length,
       streak: 0,
       successRate: 0,
       averageInterval: 0,
@@ -179,64 +40,233 @@ export function calculateVocabularyStats(
     };
   }
 
-  // Basic stats
-  const validStudyWords = allWords.filter(word => word.sentence_word != null);
-  const masteredWords = validStudyWords.filter(isMasteredWord);
-  const learningWords = validStudyWords.length - masteredWords.length;
-  const streak = calculateStreak(validStudyWords);
-  const dueWordsCount = dueWords.length;
-
-  // Calculate detailed stats
-  let totalInterval = 0;
-  let totalEaseFactor = 0;
-  let totalSuccesses = 0;
-  let totalLapses = 0;
+  // Initialize counters
+  let totalWords = studyWords.length;
+  let masteredWords = 0;
+  let learningWords = 0;
+  let newWordsCount = 0;
+  let totalStability = 0;
   let totalDifficulty = 0;
-  let longestSuccessStreak = 0;
+  let totalLapses = 0;
+  let totalSuccessStreak = 0;
   let wordsWithStreaks = 0;
+  let longestSuccessStreak = 0;
 
-  validStudyWords.forEach(word => {
-    totalInterval += word.interval_days;
-    totalEaseFactor += word.ease_factor;
-    totalSuccesses += word.review_count - word.lapses;
-    totalLapses += word.lapses;
+  // Process each word using FSRS state
+  studyWords.forEach(word => {
+    // Use ts-fsrs State enum directly for proper categorization
+    switch (word.fsrs_state) {
+      case State.New:
+        newWordsCount++;
+        learningWords++;
+        break;
 
-    // Track difficulty statistics
-    totalDifficulty += word.difficulty ?? 0.3; // Default to initial difficulty if not present
+      case State.Learning:
+        learningWords++;
+        break;
 
-    // Track success streak statistics
+      case State.Review:
+        // Consider "Mastered" if stability is high (30+ days)
+        if (word.fsrs_stability >= 30) {
+          masteredWords++;
+        } else {
+          learningWords++;
+        }
+        break;
+
+      case State.Relearning:
+        learningWords++;
+        break;
+
+      default:
+        // Default to learning for unknown states
+        learningWords++;
+    }
+
+    // Add to totals using FSRS metrics
+    if (word.fsrs_stability) totalStability += word.fsrs_stability;
+    if (word.fsrs_difficulty) totalDifficulty += word.fsrs_difficulty;
+    if (word.fsrs_lapses) totalLapses += word.fsrs_lapses;
+
+    // Track streaks
     if (word.success_streak && word.success_streak > 0) {
+      totalSuccessStreak += word.success_streak;
       wordsWithStreaks++;
-      longestSuccessStreak = Math.max(longestSuccessStreak, word.success_streak);
+      if (word.success_streak > longestSuccessStreak) {
+        longestSuccessStreak = word.success_streak;
+      }
     }
   });
 
-  const totalWords = validStudyWords.length;
-  const averageInterval = totalWords > 0 ? totalInterval / totalWords : 0;
-  const averageEaseFactor = totalWords > 0 ? totalEaseFactor / totalWords : 0;
-  const totalReviews = validStudyWords.reduce((sum, word) => sum + word.review_count, 0);
-  const successRate = totalReviews > 0 ? (totalSuccesses / totalReviews) * 100 : 0;
-  const averageLapses = totalWords > 0 ? totalLapses / totalWords : 0;
+  // Calculate averages using FSRS metrics
+  const averageInterval = totalWords > 0 ? totalStability / totalWords : 0;
   const averageDifficulty = totalWords > 0 ? totalDifficulty / totalWords : 0.3;
+  const averageLapses = totalWords > 0 ? totalLapses / totalWords : 0;
 
-  // Count new words and failed in session
-  const newWordsCount = validStudyWords.filter(w => w.sessionData?.isNew).length;
-  const failedInSessionCount = validStudyWords.filter(w => w.sessionData?.failedInSession).length;
+  // Calculate success rate based on FSRS difficulty (inverse relationship)
+  // FSRS difficulty is 0-1, where lower means easier
+  // Convert to success rate (0-100)
+  const successRate = totalWords > 0 ? Math.max(0, 100 - averageDifficulty * 100) : 0;
 
   return {
     totalWords,
-    dueWords: dueWordsCount,
-    masteredWords: masteredWords.length,
+    masteredWords,
     learningWords,
-    streak,
+    dueWords: dueWords.length,
+    streak: 0, // Not used with FSRS
     successRate,
     averageInterval,
-    averageEaseFactor,
+    averageEaseFactor: 0, // Not used with FSRS
     averageLapses,
     newWordsCount,
-    failedInSessionCount,
+    failedInSessionCount: 0, // Not tracked in this version
     longestSuccessStreak,
     wordsWithStreaks,
     averageDifficulty,
   };
+}
+
+/**
+ * Calculate weekly progress data based on FSRS review history
+ */
+export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressData[] {
+  // Day name abbreviations
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  // Return a complete empty week structure if no words are available
+  if (!studyWords || studyWords.length === 0) {
+    // Get current day and calculate start/end of week
+    const endOfWeek = new Date(); // Today
+    const startOfWeek = new Date();
+    startOfWeek.setDate(endOfWeek.getDate() - 6); // 6 days before today
+
+    // Generate a complete empty week
+    const emptyWeek: WeeklyProgressData[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      const dayName = dayNames[date.getDay()];
+      emptyWeek.push({
+        date: dayName,
+        count: 0,
+        wordsLearned: 0,
+      });
+    }
+
+    console.log('No study words found, returning empty week structure');
+    return emptyWeek;
+  }
+
+  // *** COMPLETELY REVAMPED DATE HANDLING ***
+
+  // Get today's date with time set to noon to avoid timezone issues
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  // Get the day of week name for today
+  const todayDayName = dayNames[today.getDay()];
+
+  // Format today's date as YYYY-MM-DD for comparison
+  const todayFormatted = today.toISOString().split('T')[0];
+
+  console.log(`TODAY: ${todayFormatted} (${todayDayName})`);
+
+  // Create an array of dates representing the last 7 days (including today)
+  const dates = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+    dates.push(date);
+  }
+
+  // Create buckets for each day with proper day names
+  const dayBuckets: { [key: string]: { date: string; count: number; wordsLearned: number } } = {};
+
+  dates.forEach(date => {
+    // Format date as YYYY-MM-DD for bucket key
+    const dateString = date.toISOString().split('T')[0];
+    const dayName = dayNames[date.getDay()];
+
+    console.log(`Creating bucket: ${dateString} (${dayName})`);
+    dayBuckets[dateString] = { date: dayName, count: 0, wordsLearned: 0 };
+  });
+
+  // Debug: Count the total reviews we're looking at
+  console.log(`Calculating weekly progress for ${studyWords.length} total words`);
+  let reviewsDetected = 0;
+
+  // Count ANY word review that happened in the last week, regardless of source
+  studyWords.forEach(word => {
+    // Check for any timestamp we can use
+    const timestampsToCheck = [
+      // Order matters - check the most reliable field first
+      word.fsrs_last_review,
+      // Fall back to other fields if needed
+      word.last_review,
+      word.fsrs_due,
+      word.next_review_at,
+    ];
+
+    // Use the first valid timestamp we find
+    let reviewDate = null;
+    for (const timestamp of timestampsToCheck) {
+      if (timestamp) {
+        reviewDate = new Date(timestamp);
+        // Set hours to noon to avoid timezone issues
+        reviewDate.setHours(12, 0, 0, 0);
+        break;
+      }
+    }
+
+    if (!reviewDate) return;
+
+    // Check if review date is within the last 7 days
+    const reviewDateString = reviewDate.toISOString().split('T')[0];
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
+      // It's within our date range
+      reviewsDetected++;
+
+      // Log today's reviews for debugging
+      if (reviewDateString === todayFormatted) {
+        console.log(
+          `Today's review: Word ID ${word.sentence_word_id} at ${reviewDate.toISOString()}`
+        );
+      }
+
+      // Check if we have a bucket for this date
+      if (dayBuckets[reviewDateString]) {
+        // Count every review
+        dayBuckets[reviewDateString].count++;
+        // Consider ANY review a learning event
+        dayBuckets[reviewDateString].wordsLearned++;
+      } else {
+        console.log(`No bucket found for ${reviewDateString} (outside 7-day range)`);
+      }
+    }
+  });
+
+  console.log(`Detected ${reviewsDetected} reviews in the last 7 days`);
+
+  // Log all buckets
+  Object.entries(dayBuckets).forEach(([date, data]) => {
+    console.log(`Bucket ${date}: ${data.date} - ${data.wordsLearned} words, ${data.count} reviews`);
+  });
+
+  // Convert buckets to array and sort by date
+  const result = Object.entries(dayBuckets)
+    .map(([dateString, data]) => ({
+      ...data,
+      _sortDate: new Date(dateString), // Use for sorting only
+    }))
+    .sort((a, b) => a._sortDate.getTime() - b._sortDate.getTime())
+    .map(({ _sortDate, ...rest }) => rest); // Remove the sorting helper property
+
+  // Confirm we have exactly 7 days in our result
+  console.log(`Final result has ${result.length} days`);
+
+  return result;
 }

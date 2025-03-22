@@ -18,10 +18,11 @@ interface VocabularyWordListProps {
 // Separate word item component for better performance
 const WordItem = React.memo(
   ({ studyWord, onPress, colors }: { studyWord: StudyWord; onPress: () => void; colors: any }) => {
-    // Use hooks outside of conditionals
+    // Use hooks outside of conditionals - pass all FSRS parameters
     const { statusLabel, statusIcon, isMastered, isOverdue } = useWordStatus(
-      studyWord.next_review_at,
-      studyWord.interval_days
+      studyWord.fsrs_due,
+      studyWord.fsrs_stability || 0,
+      studyWord.fsrs_state // Pass the FSRS state
     );
 
     const word = studyWord.sentence_word;

@@ -52,27 +52,31 @@ function ProgressBarComponent({
 
   // Effect to handle animation when triggered or when progress changes
   useEffect(() => {
-    // Determine if animation should be immediate or animated
-    const shouldAnimate = animationTriggered && prevProgressRef.current !== normalizedProgress;
+    // Always ensure progress doesn't go backwards
+    const targetProgress = Math.max(normalizedProgress, prevProgressRef.current);
 
-    // Only animate if progress is actually changing
-    if (shouldAnimate) {
+    // Determine if animation should be immediate or animated
+    const shouldAnimate = animationTriggered && prevProgressRef.current !== targetProgress;
+
+    // Only animate if progress is actually changing and increasing
+    if (shouldAnimate && targetProgress > prevProgressRef.current) {
       // Animate to the new target value
-      updateProgress(normalizedProgress);
+      updateProgress(targetProgress);
     } else {
       // Direct update without animation - ensures we're always showing the correct value
+      // But never allow progress to decrease
       cancelAnimation(animatedProgress);
-      animatedProgress.value = normalizedProgress;
+      animatedProgress.value = targetProgress;
     }
 
     // Update the previous progress ref for the next comparison
-    prevProgressRef.current = normalizedProgress;
+    prevProgressRef.current = targetProgress;
 
     // Clean up animation when component unmounts or key changes
     return () => {
       cancelAnimation(animatedProgress);
     };
-  }, [normalizedProgress, animationTriggered, updateProgress, animatedProgress]);
+  }, [normalizedProgress, animationTriggered, animatedProgress, updateProgress]);
 
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {
