@@ -114,7 +114,11 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         isViewable: boolean;
       }) => {
         // Use animation with fixed delay based on index
-        const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: index * 50, duration: 300 });
+        const { animatedStyle, startAnimation } = useOpacityAnimation({
+          initialOpacity: 0,
+          delay: index * 50,
+          duration: 300,
+        });
 
         // Start the animation when the component mounts or becomes visible
         useEffect(() => {

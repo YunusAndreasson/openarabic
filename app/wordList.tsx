@@ -199,9 +199,6 @@ export default function WordListScreen() {
 
   return (
     <>
-      {/* Hide the native status bar */}
-      <StatusBar hidden />
-
       {/* Disable the native header */}
       <Stack.Screen options={{ headerShown: false }} />
 

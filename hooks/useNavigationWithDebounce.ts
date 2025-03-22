@@ -79,7 +79,6 @@ export const useNavigationWithDebounce = (
       } catch (error) {
         // Reset navigation state if an error occurs
         setIsNavigating(false);
-        console.error('Navigation error:', error);
       }
 
       // Reset navigation state after debounce duration

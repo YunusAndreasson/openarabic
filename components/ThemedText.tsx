@@ -36,9 +36,9 @@ function ThemedTextComponent({
 }: ThemedTextProps) {
   const colors = useColors();
 
-  // Map legacy types to new types for backward compatibility
-  const actualType = useMemo(() => {
-    // Use a mapping object to simplify legacy type conversion
+  // Consolidated style computation - combines both type mapping and style generation
+  const { finalType, finalStyle } = useMemo(() => {
+    // Map legacy types to new types for backward compatibility
     const legacyTypeMap: Record<string, string> = {
       default: 'body',
       title: 'heading1',
@@ -46,16 +46,16 @@ function ThemedTextComponent({
       defaultSemiBold: 'bodyBold',
     };
     // @ts-ignore - The string comparison will work even though TypeScript doesn't recognize these types anymore
-    return legacyTypeMap[type] || type;
-  }, [type]);
+    const actualType = legacyTypeMap[type] || type;
 
-  // Get color based on variant or colorName
-  const textColor = useMemo(() => {
+    // Get color based on variant or colorName
+    let textColor;
     // colorName takes precedence
-    if (colorName) return colors[colorName];
-
+    if (colorName) {
+      textColor = colors[colorName];
+    }
     // Then check for variant
-    if (variant) {
+    else if (variant) {
       const variantColorMap = {
         error: colors.error,
         warning: colors.warning,
@@ -66,64 +66,69 @@ function ThemedTextComponent({
         subtle: colors.authorText,
         disabled: colors.tabIconDefault,
       };
-      return variantColorMap[variant];
+      textColor = variantColorMap[variant];
+    }
+    // Default text color if not skipped
+    else if (!skipDefaultColor) {
+      textColor = colors.text;
     }
 
-    // Default text color if not skipped
-    if (!skipDefaultColor) return colors.text;
-
-    return undefined;
-  }, [variant, colorName, colors, skipDefaultColor]);
-
-  // Consolidated style generation
-  const textStyle = useMemo(() => {
+    // Style generation
+    let finalStyle;
     // Special handling for arabic type
     if (actualType === 'arabic') {
       // Filter out undefined values to reduce style array size
-      return [
+      finalStyle = [
         getArabicTextStyle(arabicFontSize),
         textColor && { color: textColor },
         weight && { fontWeight: weight },
         align && { textAlign: align },
         style,
       ].filter(Boolean);
+    } else {
+      // Get base style from styles object, safely handle type
+      // Fast-path for common types to avoid switch overhead
+      const baseStyle =
+        actualType === 'body'
+          ? styles.body
+          : actualType === 'heading1'
+            ? styles.heading1
+            : actualType === 'heading2'
+              ? styles.heading2
+              : styles[actualType as keyof typeof styles] || styles.body;
+
+      // Special handling for link type (includes color)
+      if (actualType === 'link' && !textColor) {
+        // Filter out undefined values
+        finalStyle = [
+          baseStyle,
+          { color: colors.link },
+          weight && { fontWeight: weight },
+          align && { textAlign: align },
+          style,
+        ].filter(Boolean);
+      } else {
+        // Standard case - filter out undefined values
+        finalStyle = [
+          baseStyle,
+          textColor && { color: textColor },
+          weight && { fontWeight: weight },
+          align && { textAlign: align },
+          style,
+        ].filter(Boolean);
+      }
     }
 
-    // Get base style from styles object, safely handle type
-    // Fast-path for common types to avoid switch overhead
-    const baseStyle =
-      actualType === 'body'
-        ? styles.body
-        : actualType === 'heading1'
-          ? styles.heading1
-          : actualType === 'heading2'
-            ? styles.heading2
-            : styles[actualType as keyof typeof styles] || styles.body;
-
-    // Special handling for link type (includes color)
-    if (actualType === 'link' && !textColor) {
-      // Filter out undefined values
-      return [
-        baseStyle,
-        { color: colors.link },
-        weight && { fontWeight: weight },
-        align && { textAlign: align },
-        style,
-      ].filter(Boolean);
-    }
-
-    // Standard case - filter out undefined values
-    return [
-      baseStyle,
-      textColor && { color: textColor },
-      weight && { fontWeight: weight },
-      align && { textAlign: align },
-      style,
-    ].filter(Boolean);
-  }, [actualType, arabicFontSize, textColor, weight, align, style, colors.link]);
+    return { finalType: actualType, finalStyle };
+  }, [type, variant, colorName, skipDefaultColor, colors, arabicFontSize, weight, align, style]);
 
   return (
-    <Text style={textStyle} numberOfLines={numberOfLines} ellipsizeMode={ellipsizeMode} {...rest} />
+    <Text
+      style={finalStyle}
+      numberOfLines={numberOfLines}
+      ellipsizeMode={ellipsizeMode}
+      {...rest}
+    />
   );
 }
 

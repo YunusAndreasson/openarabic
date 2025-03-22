@@ -7,7 +7,8 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsService } from '@/services/studyWords';
 
 // Types
-import type { Article } from '@/types/articles.types';
+import type { Article, ArticleSentence } from '@/types/articles.types';
+import type { StudyWord, SentenceWord } from '@/types/vocabulary.types';
 
 /**
  * Custom hook to fetch and manage article data
@@ -21,7 +22,18 @@ export const useArticleData = (
   articleId: number | undefined,
   userId: string | undefined,
   isDataPrefetched: boolean = false
-) => {
+): {
+  article: Article | undefined;
+  isLoadingArticle: boolean;
+  isInReadingList: boolean;
+  refetchReadingListStatus: () => Promise<unknown>;
+  studyWords: StudyWord[];
+  selectedWordIds: Set<string>;
+  sortedSentences: ArticleSentence[];
+  sentenceWordsMap: Map<number, SentenceWord[]>;
+  otherArticles: Article[];
+  otherCategoryArticles: Article[];
+} => {
   // Get queryClient for cache access
   const queryClient = useQueryClient();
 
@@ -29,7 +41,7 @@ export const useArticleData = (
   const isPrefetched = Boolean(isDataPrefetched);
 
   // Fetch article data with optimized staleTime when prefetched
-  const { data: article, isLoading: isLoadingArticle } = useQuery({
+  const { data: article, isLoading: isLoadingArticle } = useQuery<Article>({
     queryKey: ['article', articleId],
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
@@ -44,16 +56,16 @@ export const useArticleData = (
       : undefined;
 
   // Check if article is in reading list with optimized behavior
-  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery({
+  const { data: isInReadingList = false, refetch: refetchReadingListStatus } = useQuery<boolean>({
     queryKey: ['isInReadingList', userId, articleId],
     queryFn: () => readingListService.isInReadingList(userId!, articleId!),
     enabled: !!userId && !!articleId,
     // Use cached data when available
-    initialData: cachedReadingListStatus,
+    initialData: cachedReadingListStatus as boolean | undefined,
   });
 
   // Fetch study words
-  const { data: studyWords = [] } = useQuery({
+  const { data: studyWords = [] } = useQuery<StudyWord[]>({
     queryKey: ['studyWords', userId],
     queryFn: () => studyWordsService.getStudyWords(userId!, { forStats: false }),
     enabled: !!userId,
@@ -61,14 +73,14 @@ export const useArticleData = (
   });
 
   // Fetch more articles by the same author
-  const { data: moreArticles = [] } = useQuery({
+  const { data: moreArticles = [] } = useQuery<Article[]>({
     queryKey: ['articles', 'author', article?.author?.id],
     queryFn: () => articlesService.getArticles(undefined, article!.author!.id),
     enabled: !!article?.author?.id,
   });
 
   // Fetch more articles in the same category
-  const { data: categoryArticles = [] } = useQuery({
+  const { data: categoryArticles = [] } = useQuery<Article[]>({
     queryKey: ['articles', 'category', article?.category?.id],
     queryFn: () => articlesService.getArticles(article!.category!.id),
     enabled: !!article?.category?.id,
@@ -88,7 +100,7 @@ export const useArticleData = (
   const sentenceWordsMap = useMemo(() => {
     if (!sortedSentences.length) return new Map();
 
-    const wordsMap = new Map();
+    const wordsMap = new Map<number, SentenceWord[]>();
     sortedSentences.forEach(sentence => {
       wordsMap.set(
         sentence.id,

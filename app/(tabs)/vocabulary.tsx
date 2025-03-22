@@ -22,7 +22,6 @@ import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/Revi
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from '@/components/ThemedText';
 
 // Helper function to calculate header height
 const getHeaderHeight = (insets: { top: number }) => {
@@ -44,8 +43,8 @@ export default function VocabularyScreen() {
   // Query for study words
   const {
     data: studyWords = [],
-    isLoading: isDataLoading,
-    isFetching,
+    isLoading: isStudyWordsLoading,
+    isFetching: isStudyWordsFetching,
     error,
     refetch: refetchStudyWords,
   } = useQuery({
@@ -54,20 +53,28 @@ export default function VocabularyScreen() {
     enabled: !!user,
     staleTime: 60000, // 1 minute
     refetchOnWindowFocus: false,
-    // Initially use data from cache if available
-    initialData: () => queryClient.getQueryData(['studyWords', user?.id]),
+    // Get previous data from cache to prevent UI flicker
+    placeholderData: () => queryClient.getQueryData(['studyWords', user?.id]) || [],
   });
 
   // Query for due words
-  const { data: dueWordsData = [], refetch: refetchDueWords } = useQuery({
+  const {
+    data: dueWordsData = [],
+    isFetching: isDueWordsFetching,
+    refetch: refetchDueWords,
+  } = useQuery({
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsService.getStudyWords(user!.id, { onlyDue: true }),
     enabled: !!user,
     staleTime: 0, // Always fetch fresh data for due words
     gcTime: 60000, // 1 minute
-    // Initially use data from cache if available
-    initialData: () => queryClient.getQueryData(['dueWords', user?.id]),
+    // Get previous data from cache to prevent UI flicker
+    placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || [],
   });
+
+  // Combined loading and fetching states for better UX
+  const isDataLoading = isStudyWordsLoading;
+  const isFetching = isStudyWordsFetching || isDueWordsFetching;
 
   // Handler for pull-to-refresh
   const handleRefresh = async () => {
@@ -108,29 +115,20 @@ export default function VocabularyScreen() {
     return studyWords.filter(word => word.sentence_word != null);
   }, [studyWords]);
 
-  // Check if study words data is already in cache to optimize loading behavior
-  const studyWordsQuery = queryClient.getQueryState(['studyWords', user?.id]);
-  const dueWordsQuery = queryClient.getQueryState(['dueWords', user?.id]);
-  const isDataCached = studyWordsQuery?.data !== undefined || dueWordsQuery?.data !== undefined;
-
-  // Check if data is ready to display - include cached data in the check
+  // Check if data is ready to display - simplified logic
   const isDataReady = useMemo(() => {
-    // Consider data ready if we have valid words OR we have cached data
-    return (
-      (!!user && !isDataLoading && validStudyWords.length > 0) ||
-      (!!user && isDataCached && !isFetching)
-    );
-  }, [user, isDataLoading, validStudyWords.length, isDataCached, isFetching]);
+    return !!user && (validStudyWords.length > 0 || dueWordsData.length > 0 || !isDataLoading);
+  }, [user, validStudyWords.length, dueWordsData.length, isDataLoading]);
 
-  // Calculate stats with safe defaults when data is loading but we're showing UI
+  // Calculate stats with memoization
   const stats = useMemo<VocabularyStats>(() => {
-    if (isDataCached && validStudyWords.length === 0) {
-      // Return safe defaults when using cached data but actual data isn't loaded yet
+    if (validStudyWords.length === 0 && studyWords.length === 0) {
+      // Return safe defaults for empty data
       return {
-        totalWords: studyWordsQuery?.data ? (studyWordsQuery.data as any[]).length : 0,
+        totalWords: 0,
         masteredWords: 0,
         learningWords: 0,
-        dueWords: dueWordsQuery?.data ? (dueWordsQuery.data as any[]).length : 0,
+        dueWords: dueWordsData.length,
         streak: 0,
         successRate: 0,
         averageInterval: 0,
@@ -144,16 +142,16 @@ export default function VocabularyScreen() {
       };
     }
     return calculateVocabularyStats(validStudyWords, dueWordsData);
-  }, [validStudyWords, dueWordsData, isDataCached, studyWordsQuery, dueWordsQuery]);
+  }, [validStudyWords, dueWordsData, studyWords.length]);
 
-  // Calculate weekly progress data with safe defaults
+  // Calculate weekly progress data with memoization
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
-    if (isDataCached && validStudyWords.length === 0) {
-      // Return empty array when using cached data but actual data isn't loaded yet
+    if (validStudyWords.length === 0) {
+      // Return empty array for empty data
       return [];
     }
     return calculateWeeklyProgressData(validStudyWords);
-  }, [validStudyWords, isDataCached]);
+  }, [validStudyWords]);
 
   // Single fade-in animation for the entire screen
   const { animatedStyle: fadeInStyle } = useOpacityAnimation({
@@ -224,8 +222,8 @@ export default function VocabularyScreen() {
     );
   }
 
-  // Show empty state only if we have no words AND we're done loading AND there's no cached data
-  if (!isFetching && validStudyWords.length === 0 && !isDataCached) {
+  // Show empty state only if we have no words AND we're done loading
+  if (!isFetching && !isDataLoading && validStudyWords.length === 0 && studyWords.length === 0) {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title="Words" />

@@ -84,7 +84,11 @@ function EnhancedImageInternal({
 
   // Optimize fade animation - faster for better perceived performance
   // Reduced duration from 300ms to a snappier 150ms
-  const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 150 });
+  const { animatedStyle, startAnimation } = useOpacityAnimation({
+    initialOpacity: 0,
+    delay: 0,
+    duration: 150,
+  });
 
   // Prefetch image if the prefetch prop is true
   useEffect(() => {

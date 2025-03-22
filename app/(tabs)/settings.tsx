@@ -254,14 +254,20 @@ export default function SettingsScreen() {
                   >
                     {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
-                  <CustomSlider
-                    value={settings.fontScale}
-                    onValueChange={handleFontScaleChange}
-                    minimumValue={0.8}
-                    maximumValue={1.3}
-                    step={0.1}
-                    style={styles.slider}
-                  />
+                  {deferredRender ? (
+                    <CustomSlider
+                      value={settings.fontScale}
+                      onValueChange={handleFontScaleChange}
+                      minimumValue={0.8}
+                      maximumValue={1.3}
+                      step={0.1}
+                      style={styles.slider}
+                    />
+                  ) : (
+                    <View
+                      style={[styles.sliderPlaceholder, { backgroundColor: colors.cardBorder }]}
+                    />
+                  )}
                 </View>
               </View>
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
@@ -487,6 +493,12 @@ const styles = StyleSheet.create({
     width: LAYOUT.BUTTON.HEIGHT.SMALL * 1.75 - 4,
     height: LAYOUT.BUTTON.HEIGHT.SMALL - 4,
     borderRadius: (LAYOUT.BUTTON.HEIGHT.SMALL - 4) / 2,
+    opacity: 0.2,
+  },
+  sliderPlaceholder: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
     opacity: 0.2,
   },
 });

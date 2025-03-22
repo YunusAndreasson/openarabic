@@ -7,11 +7,12 @@ import {
   withRepeat,
   withDelay,
   cancelAnimation,
+  Easing,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
 
-export type PulseStyle = 'standard' | 'dramatic' | 'gentle';
+export type PulseStyle = 'standard' | 'dramatic' | 'gentle' | 'halo';
 
 export interface PulseAnimationOptions {
   /**
@@ -19,11 +20,12 @@ export interface PulseAnimationOptions {
    * - 'standard': Simple scale pulse
    * - 'dramatic': More complex pulse with opacity changes
    * - 'gentle': Smoother, more subtle pulse with longer duration
+   * - 'halo': Elegant halo effect with subtle glow
    */
   style?: PulseStyle;
 
   /**
-   * Maximum scale during pulse (default 1.1 for standard, 1.25 for dramatic, 1.15 for gentle)
+   * Maximum scale during pulse (default 1.1 for standard, 1.25 for dramatic, 1.15 for gentle, 1.18 for halo)
    */
   pulseMagnitude?: number;
 
@@ -41,6 +43,16 @@ export interface PulseAnimationOptions {
    * Minimum opacity for pulse animation (default depends on style)
    */
   minOpacity?: number;
+
+  /**
+   * Halo color (only used in halo style)
+   */
+  haloColor?: string;
+
+  /**
+   * Halo intensity (0.0-1.0, default 0.5)
+   */
+  haloIntensity?: number;
 }
 
 export interface PulseAnimationResult {
@@ -55,9 +67,24 @@ export interface PulseAnimationResult {
   opacity: SharedValue<number>;
 
   /**
+   * Shared value for halo scale (only used in halo style)
+   */
+  haloScale: SharedValue<number>;
+
+  /**
+   * Shared value for halo opacity (only used in halo style)
+   */
+  haloOpacity: SharedValue<number>;
+
+  /**
    * Animated style to apply to the component
    */
   animatedStyle: ReturnType<typeof useAnimatedStyle>;
+
+  /**
+   * Animated style to apply to the halo component (only used in halo style)
+   */
+  haloAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
 
   /**
    * Function to trigger a single pulse
@@ -81,19 +108,28 @@ export interface PulseAnimationResult {
  * @returns Animation controls and style
  */
 export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAnimationResult => {
-  const { style = 'standard', pulseMagnitude, autoStart = false } = options;
+  const {
+    style = 'standard',
+    pulseMagnitude,
+    autoStart = false,
+    haloColor = 'rgba(255, 255, 255, 0.8)',
+    haloIntensity = 0.5,
+  } = options;
 
   // Set default magnitude based on style
-  const defaultMagnitude = style === 'dramatic' ? 1.25 : style === 'gentle' ? 1.15 : 1.1;
+  const defaultMagnitude =
+    style === 'dramatic' ? 1.25 : style === 'gentle' ? 1.15 : style === 'halo' ? 1.18 : 1.1;
   const magnitude = pulseMagnitude ?? defaultMagnitude;
 
   // Initial values based on style
-  const initialScale = style === 'dramatic' ? 0.3 : style === 'gentle' ? 1 : 1;
+  const initialScale = style === 'dramatic' ? 0.3 : 1;
   const initialOpacity = style === 'dramatic' ? 0.5 : style === 'gentle' ? 0.5 : 1;
 
-  // Animation values - always create both shared values to avoid conditional hook calls
+  // Animation values - always create all shared values to avoid conditional hook calls
   const scale = useSharedValue(initialScale);
   const opacity = useSharedValue(initialOpacity);
+  const haloScale = useSharedValue(1.3);
+  const haloOpacity = useSharedValue(0);
 
   // Stop the animation - defined first to avoid reference issues
   const stopAnimation = useCallback(() => {
@@ -101,11 +137,18 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
     // Cancel any ongoing animations
     cancelAnimation(scale);
     cancelAnimation(opacity);
+    cancelAnimation(haloScale);
+    cancelAnimation(haloOpacity);
 
     // Reset to initial values
     scale.value = initialScale;
     opacity.value = initialOpacity;
-  }, [scale, opacity, initialScale, initialOpacity]);
+
+    if (style === 'halo') {
+      haloScale.value = 1.3;
+      haloOpacity.value = 0;
+    }
+  }, [scale, opacity, haloScale, haloOpacity, initialScale, initialOpacity, style]);
 
   // Standard pulse function
   const standardPulse = useCallback(() => {
@@ -202,6 +245,47 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
     );
   }, [scale, opacity, magnitude, options.duration, options.minOpacity]);
 
+  // Halo pulse function - new elegant halo effect
+  const haloPulse = useCallback(() => {
+    'worklet';
+    const pulseDuration = options.duration || 1400;
+
+    // Main element animation
+    scale.value = withSequence(
+      withTiming(magnitude, {
+        duration: pulseDuration * 0.4,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      }),
+      withTiming(1, {
+        duration: pulseDuration * 0.6,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      })
+    );
+
+    // Halo animations
+    haloScale.value = withSequence(
+      withTiming(1.5, {
+        duration: pulseDuration * 0.5,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      }),
+      withTiming(1.3, {
+        duration: pulseDuration * 0.5,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      })
+    );
+
+    haloOpacity.value = withSequence(
+      withTiming(haloIntensity, {
+        duration: pulseDuration * 0.3,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      }),
+      withTiming(0.1, {
+        duration: pulseDuration * 0.7,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      })
+    );
+  }, [scale, haloScale, haloOpacity, magnitude, haloIntensity, options.duration]);
+
   // Unified pulse function that calls the appropriate style
   const pulse = useCallback(() => {
     'worklet';
@@ -209,10 +293,12 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
       dramaticPulse();
     } else if (style === 'gentle') {
       gentlePulse();
+    } else if (style === 'halo') {
+      haloPulse();
     } else {
       standardPulse();
     }
-  }, [style, dramaticPulse, gentlePulse, standardPulse]);
+  }, [style, dramaticPulse, gentlePulse, haloPulse, standardPulse]);
 
   // Calculate animation cycle duration for each style
   const getDurationForStyle = useCallback(() => {
@@ -221,6 +307,8 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
       return 1350; // Total duration of dramatic animation cycle
     } else if (style === 'gentle') {
       return options.duration || 1200;
+    } else if (style === 'halo') {
+      return options.duration || 1400;
     } else {
       return TIMING_CONFIG.FAST.duration * 2; // Standard pulse (grow + shrink)
     }
@@ -337,8 +425,49 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
 
         // Apply repeating animations
         scale.value = withRepeat(scaleSequence, repetitions ?? -1, false);
-
         opacity.value = withRepeat(opacitySequence, repetitions ?? -1, false);
+      } else if (style === 'halo') {
+        const pulseDuration = options.duration || 1400;
+
+        // Main element animation sequence
+        const scaleSequence = withSequence(
+          withTiming(magnitude, {
+            duration: pulseDuration * 0.4,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          }),
+          withTiming(1, {
+            duration: pulseDuration * 0.6,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          })
+        );
+
+        // Halo animation sequences
+        const haloScaleSequence = withSequence(
+          withTiming(1.5, {
+            duration: pulseDuration * 0.5,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          }),
+          withTiming(1.3, {
+            duration: pulseDuration * 0.5,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          })
+        );
+
+        const haloOpacitySequence = withSequence(
+          withTiming(haloIntensity, {
+            duration: pulseDuration * 0.3,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          }),
+          withTiming(0.1, {
+            duration: pulseDuration * 0.7,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          })
+        );
+
+        // Apply repeating animations using highly performant withRepeat
+        scale.value = withRepeat(scaleSequence, repetitions ?? -1, false);
+        haloScale.value = withRepeat(haloScaleSequence, repetitions ?? -1, false);
+        haloOpacity.value = withRepeat(haloOpacitySequence, repetitions ?? -1, false);
       } else {
         // Standard style - already using withRepeat
         scale.value = 1;
@@ -362,12 +491,15 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
       style,
       scale,
       opacity,
+      haloScale,
+      haloOpacity,
       magnitude,
       initialScale,
       initialOpacity,
       getDurationForStyle,
       options.duration,
       options.minOpacity,
+      haloIntensity,
       stopAnimation,
     ]
   );
@@ -405,10 +537,36 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
     };
   });
 
+  // Halo-specific animated style
+  const haloAnimatedStyle = useAnimatedStyle(() => {
+    if (style === 'halo') {
+      return {
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        borderRadius: 1000, // Large value ensures circular shape
+        transform: [{ scale: haloScale.value }],
+        opacity: haloOpacity.value,
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        shadowColor: haloColor,
+        shadowOffset: { width: 0, height: 0 },
+        shadowRadius: 15,
+        shadowOpacity: haloOpacity.value,
+        elevation: 6,
+      };
+    }
+
+    return {};
+  });
+
   return {
     scale,
     opacity,
+    haloScale,
+    haloOpacity,
     animatedStyle,
+    haloAnimatedStyle,
     pulse,
     startAnimation,
     stopAnimation,

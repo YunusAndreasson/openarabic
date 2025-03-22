@@ -1,13 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  StyleSheet,
-  FlatList,
-  View,
-  AppState,
-  Pressable,
-  Platform,
-  RefreshControl,
-} from 'react-native';
+import { StyleSheet, FlatList, View, AppState } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/readingList';
 import { useAuth } from '@/hooks/useAuth';
@@ -60,16 +52,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingRight: LAYOUT.SPACING.SMALL,
   },
-  cardTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
-    fontWeight: '500',
-    marginBottom: LAYOUT.SPACING.TINY / 2,
-    lineHeight: (LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1) * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
-  },
-  cardAuthor: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -101,12 +83,6 @@ const styles = StyleSheet.create({
   },
   controlsLabelContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  controlsTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.DIMMED,
   },
   actionButtonsRow: {
     flexDirection: 'row',
@@ -171,20 +147,17 @@ const ReadingListItem = React.memo(
           <View style={styles.cardContent}>
             <View style={styles.textContent}>
               <ThemedText
+                type="bodyBold"
                 numberOfLines={1}
-                style={[
-                  styles.cardTitle,
-                  isActive && {
-                    color: colors.tint,
-                    fontWeight: '600',
-                  },
-                ]}
+                style={isActive ? { color: colors.tint } : undefined}
               >
                 {title}
               </ThemedText>
               <ThemedText
-                style={[styles.cardAuthor, isActive && { opacity: 0.8 }]}
+                type="label"
+                variant="secondary"
                 numberOfLines={1}
+                style={isActive ? { opacity: 0.8 } : undefined}
               >
                 {author}
               </ThemedText>
