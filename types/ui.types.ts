@@ -1402,3 +1402,73 @@ export type ThemedCardProps =
  * Props for the AnimatedSection component (alias for AnimatedItem for backward compatibility)
  */
 export interface AnimatedSectionProps extends AnimatedItemProps {}
+
+/**
+ * Props for the ReviewCard component
+ */
+export interface ReviewCardProps {
+  /**
+   * Word text to display
+   */
+  word: string;
+
+  /**
+   * Font size for the word display
+   */
+  fontSize: number;
+
+  /**
+   * Callback when user swipes left (doesn't know the word)
+   */
+  onSwipeLeft: () => void;
+
+  /**
+   * Callback when user swipes right (knows the word)
+   */
+  onSwipeRight: () => void;
+
+  /**
+   * Whether the card is currently being updated
+   */
+  isUpdating: boolean;
+
+  /**
+   * Whether the card is transitioning to completion state
+   */
+  isTransitioning: boolean;
+}
+
+/**
+ * Props for the ReviewHeader component
+ */
+export interface ReviewHeaderProps {
+  /**
+   * Current progress percentage (0-100)
+   */
+  progress: number;
+
+  /**
+   * Maximum progress seen so far
+   */
+  maxProgress: number;
+
+  /**
+   * Key to trigger progress bar animation
+   */
+  animationKey: number;
+
+  /**
+   * Callback when the close button is pressed
+   */
+  onClose: () => void;
+}
+
+/**
+ * Props for the CompletionScreen component
+ */
+export interface CompletionScreenProps {
+  /**
+   * Callback when the session is closed
+   */
+  onClose: () => void;
+}

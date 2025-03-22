@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { createEmptyCard, fsrs, Rating, State } from 'ts-fsrs';
+import { createEmptyCard, Rating } from 'ts-fsrs';
 
 // Interface for FSRS-specific update fields
 interface FSRSWordUpdate {
