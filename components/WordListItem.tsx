@@ -126,21 +126,51 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
         accessibilityRole="button"
       >
         <View style={styles.cardContent}>
-          {/* Header row with streak counter */}
-          {hasStreak && (
-            <View style={styles.headerRow}>
-              <View style={styles.streakCounter}>
+          {/* Status indicators in a minimal style */}
+          <View style={styles.statusRow}>
+            {wordStatus.dueInfo && (
+              <View
+                style={[styles.statusPill, { backgroundColor: `${wordStatus.dueInfo.color}15` }]}
+              >
                 <Ionicons
-                  name="flame"
+                  name={wordStatus.dueInfo.icon as any}
                   size={12}
-                  color={(word.success_streak ?? 0) >= 3 ? colors.success : colors.warning}
+                  color={wordStatus.dueInfo.color}
+                  style={styles.statusIcon}
                 />
-                <ThemedText type="caption" weight="600" style={styles.streakText}>
-                  {word.success_streak} {(word.success_streak ?? 0) >= 5 ? '🔥' : ''}
+                <ThemedText
+                  type="caption"
+                  style={[styles.statusText, { color: wordStatus.dueInfo.color }]}
+                  skipDefaultColor
+                >
+                  {wordStatus.dueInfo.text}
                 </ThemedText>
               </View>
-            </View>
-          )}
+            )}
+
+            {hasStreak && (
+              <View
+                style={[
+                  styles.statusPill,
+                  {
+                    backgroundColor: `${(word.success_streak ?? 0) >= 3 ? colors.success : colors.warning}15`,
+                  },
+                ]}
+              >
+                <ThemedText
+                  type="caption"
+                  weight="500"
+                  style={[
+                    styles.statusText,
+                    { color: (word.success_streak ?? 0) >= 3 ? colors.success : colors.warning },
+                  ]}
+                  skipDefaultColor
+                >
+                  {word.success_streak}× streak
+                </ThemedText>
+              </View>
+            )}
+          </View>
 
           {/* Main content row */}
           <View style={styles.content}>
@@ -202,25 +232,6 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
               />
             </View>
           </View>
-
-          {/* Due info at bottom, if available */}
-          {wordStatus.dueInfo && (
-            <View style={styles.dueContainer}>
-              <Ionicons
-                name={wordStatus.dueInfo.icon as any}
-                size={14}
-                color={wordStatus.dueInfo.color}
-                style={styles.dueIcon}
-              />
-              <ThemedText
-                type="caption"
-                style={[styles.dueText, { color: wordStatus.dueInfo.color }]}
-                skipDefaultColor
-              >
-                {wordStatus.dueInfo.text}
-              </ThemedText>
-            </View>
-          )}
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -239,11 +250,28 @@ const styles = StyleSheet.create({
   cardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
   },
-  headerRow: {
+  statusRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
+    flexWrap: 'wrap',
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12,
+    marginRight: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY / 2,
+  },
+  statusIcon: {
+    marginRight: 3,
+  },
+  statusText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontWeight: '500',
   },
   content: {
     flexDirection: 'row',
@@ -289,27 +317,6 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     borderRadius: 2,
-  },
-  dueContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-  dueIcon: {
-    marginRight: 4,
-  },
-  dueText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
-    fontWeight: '500',
-  },
-  streakCounter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  streakText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    marginLeft: 3,
-    fontWeight: '600',
   },
 });
 

@@ -221,42 +221,53 @@ export default function ReviewScreen() {
   // Add ref to track if completion has been triggered
   const completionTriggeredRef = useRef(false);
 
+  // Local concurrency guard for word updates
+  const isUpdatingWordRef = useRef<boolean>(false);
+
+  // Animation values
+  const translateX = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  // Define completion transition function that both paths can use
+  const triggerCompletionTransition = useCallback(() => {
+    // Prevent duplicate transitions
+    if (completionTriggeredRef.current) return;
+    completionTriggeredRef.current = true;
+
+    console.log('Triggering completion transition');
+
+    // Set progress to 100% immediately
+    maxProgressRef.current = 100;
+    prevProgressRef.current = 100;
+    setProgressAnimationKey(prev => prev + 1);
+
+    // Start transition to completion screen
+    setIsTransitioningToCompletion(true);
+
+    // Fade out current screen
+    opacity.value = withTiming(0, {
+      duration: 300,
+      easing: TIMING_CONFIG.MEDIUM.easing,
+    });
+
+    // Wait for animation to complete
+    if (completionTransitionRef.current) {
+      clearTimeout(completionTransitionRef.current);
+    }
+
+    completionTransitionRef.current = setTimeout(() => {
+      setIsTransitioningToCompletion(false);
+    }, 350);
+  }, [opacity]);
+
+  // Initialize FSRS hook with our completion handler
   const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
     userId: user?.id,
-    // Add an onComplete callback to handle the transition to completion screen
-    onComplete: () => {
-      // Prevent duplicate completion transitions
-      if (completionTriggeredRef.current) return;
-      completionTriggeredRef.current = true;
-
-      console.log('onComplete callback triggered from useFSRS, transitioning to completion screen');
-
-      // Set progress to 100% immediately to prevent flickering
-      maxProgressRef.current = 100;
-      prevProgressRef.current = 100;
-      setProgressAnimationKey(prev => prev + 1);
-
-      // Start the transition to completion screen with a fade-out animation
-      setIsTransitioningToCompletion(true);
-
-      // Clear any existing timeouts
-      if (completionTransitionRef.current) {
-        clearTimeout(completionTransitionRef.current);
-      }
-
-      // Fade out the current screen
-      opacity.value = withTiming(0, {
-        duration: 300, // Slower fade-out for a smoother transition
-        easing: TIMING_CONFIG.MEDIUM.easing,
-      });
-
-      // Wait for the fade-out to complete before showing the completion screen
-      completionTransitionRef.current = setTimeout(() => {
-        // Now we can safely show the completion screen
-        setIsTransitioningToCompletion(false);
-      }, 350); // Slightly longer than the animation duration to ensure it completes
-    },
+    onComplete: triggerCompletionTransition,
   });
+
+  // Show loading state during initial load to prevent "no words" flash
+  const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
 
   // Use our custom hook for word sizing with simplified approach
   const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, {
@@ -272,9 +283,6 @@ export default function ReviewScreen() {
     }
   }, [isLoading, progress]);
 
-  // Show loading state during initial load to prevent "no words" flash
-  const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
-
   // Hide initial loading after a short delay
   useEffect(() => {
     if (showInitialLoading) {
@@ -285,10 +293,6 @@ export default function ReviewScreen() {
       return () => clearTimeout(timer);
     }
   }, [showInitialLoading]);
-
-  // Animation values
-  const translateX = useSharedValue(0);
-  const opacity = useSharedValue(1);
 
   // Use useAnimatedReaction to safely track opacity value changes
   useAnimatedReaction(
@@ -335,6 +339,7 @@ export default function ReviewScreen() {
 
       // Reset completion trigger on unmount
       completionTriggeredRef.current = false;
+      isUpdatingWordRef.current = false;
     };
   }, []);
 
@@ -357,38 +362,26 @@ export default function ReviewScreen() {
   useEffect(() => {
     if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
       console.log('isComplete changed to true, triggering completion transition');
-
-      // Prevent duplicate transitions
-      completionTriggeredRef.current = true;
-
-      // Set progress to 100% immediately
-      maxProgressRef.current = 100;
-      prevProgressRef.current = 100;
-      setProgressAnimationKey(prev => prev + 1);
-
-      // Start transition to completion screen
-      setIsTransitioningToCompletion(true);
-
-      // Fade out current screen
-      opacity.value = withTiming(0, {
-        duration: 300,
-        easing: TIMING_CONFIG.MEDIUM.easing,
-      });
-
-      // Wait for animation to complete
-      completionTransitionRef.current = setTimeout(() => {
-        setIsTransitioningToCompletion(false);
-      }, 350);
+      triggerCompletionTransition();
     }
-  }, [isComplete, isTransitioningToCompletion, opacity]);
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   // Handle word update (success or failure)
   const handleWordUpdate = useCallback(
     (success: boolean) => {
+      // Check for concurrent updates with a local guard
+      if (isUpdatingWordRef.current) {
+        console.log('Ignoring update request - update already in progress');
+        return;
+      }
+
       // If we're already transitioning to completion, prevent further updates
       if (isTransitioningToCompletion || isComplete || completionTriggeredRef.current) {
         return;
       }
+
+      // Set local concurrency guard
+      isUpdatingWordRef.current = true;
 
       // Add haptic feedback only when swiping left (don't know the word)
       if (!success) {
@@ -432,6 +425,9 @@ export default function ReviewScreen() {
 
         // Force progress bar to reset only on error
         setProgressAnimationKey(prev => prev + 1);
+
+        // Release the concurrency guard
+        isUpdatingWordRef.current = false;
       };
 
       const updateWordAndAnimate = () => {
@@ -455,12 +451,18 @@ export default function ReviewScreen() {
                   if (!isTransitioningToCompletion) {
                     opacity.value = withTiming(1, FAST_ANIMATION_CONFIG);
                   }
+
+                  // Release the concurrency guard after animation starts
+                  isUpdatingWordRef.current = false;
                 }, 16); // One frame delay at 60fps to ensure clean transition
               })
               .catch(handleUpdateError);
           } catch (error) {
             handleUpdateError(error);
           }
+        } else {
+          // Release the concurrency guard if there's no word to update
+          isUpdatingWordRef.current = false;
         }
       };
 
@@ -501,34 +503,41 @@ export default function ReviewScreen() {
     ]
   );
 
-  // Create a pan gesture handler for the entire screen
-  const panGesture = Gesture.Pan()
-    .activateAfterLongPress(0)
-    .minDistance(1)
-    .onUpdate(event => {
-      // Prevent swiping during transition to completion screen
-      if (isTransitioningToCompletion || isComplete) return;
-      translateX.value = event.translationX;
-    })
-    .onEnd(event => {
-      // Skip gesture processing if we're transitioning to completion
-      if (isTransitioningToCompletion || isComplete) return;
+  // Memoize the pan gesture to prevent unnecessary re-creation on renders
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activateAfterLongPress(0)
+        .minDistance(1)
+        .onUpdate(event => {
+          // Prevent swiping during transition to completion screen
+          if (isTransitioningToCompletion || isComplete) return;
+          translateX.value = event.translationX;
+        })
+        .onEnd(event => {
+          // Skip gesture processing if we're transitioning to completion
+          if (isTransitioningToCompletion || isComplete) return;
 
-      if (event.translationX > SWIPE_THRESHOLD) {
-        // Swipe right - success - use faster spring animation
-        translateX.value = withSpring(SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
-          runOnJS(handleWordUpdate)(true);
-        });
-      } else if (event.translationX < -SWIPE_THRESHOLD) {
-        // Swipe left - failure - use faster spring animation
-        translateX.value = withSpring(-SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
-          runOnJS(handleWordUpdate)(false);
-        });
-      } else {
-        // Return to center if not swiped far enough - use faster spring animation
-        translateX.value = withSpring(0, FAST_SPRING_CONFIG);
-      }
-    });
+          // Also skip if we're already processing an update
+          if (isUpdatingWordRef.current) return;
+
+          if (event.translationX > SWIPE_THRESHOLD) {
+            // Swipe right - success - use faster spring animation
+            translateX.value = withSpring(SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
+              runOnJS(handleWordUpdate)(true);
+            });
+          } else if (event.translationX < -SWIPE_THRESHOLD) {
+            // Swipe left - failure - use faster spring animation
+            translateX.value = withSpring(-SCREEN_WIDTH, FAST_SPRING_CONFIG, () => {
+              runOnJS(handleWordUpdate)(false);
+            });
+          } else {
+            // Return to center if not swiped far enough - use faster spring animation
+            translateX.value = withSpring(0, FAST_SPRING_CONFIG);
+          }
+        }),
+    [isTransitioningToCompletion, isComplete, translateX, handleWordUpdate, isUpdatingWordRef]
+  );
 
   // Handle close button press
   const queryClient = useQueryClient();
