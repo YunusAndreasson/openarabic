@@ -1,6 +1,6 @@
 import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated from 'react-native-reanimated';
@@ -33,7 +33,11 @@ export default function SettingsScreen() {
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
+  const theme = useAppSelector(state => state.theme.theme);
   const insets = useSafeAreaInsets();
+
+  // Add state to defer rendering of toggle components until theme is loaded
+  const [deferredRender, setDeferredRender] = useState(false);
 
   // Use the new loading state hook with minimal loading time
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(); // Using default values (80ms, true)
@@ -44,6 +48,13 @@ export default function SettingsScreen() {
     isLoadingState
     // Using default values for remaining parameters
   );
+
+  // Add effect to defer toggle rendering until theme state is loaded
+  useEffect(() => {
+    if (theme !== null && !deferredRender) {
+      setDeferredRender(true);
+    }
+  }, [theme, deferredRender]);
 
   const loadSession = useCallback(async () => {
     // Skip if data is already loaded
@@ -85,37 +96,6 @@ export default function SettingsScreen() {
   );
 
   // Memoize text preview styles to avoid recalculation on each render
-  const previewTextStyles = useMemo(() => {
-    const arabicFontSize = LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale;
-    const arabicLineHeight = Math.round(
-      LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
-    );
-
-    const englishFontSize = LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale;
-    const englishLineHeight = Math.round(
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
-    );
-
-    return {
-      arabic: {
-        fontSize: arabicFontSize,
-        lineHeight: arabicLineHeight,
-        color: colors.arabicText,
-        fontFamily: 'NotoNaskhArabic',
-      },
-      english: {
-        fontSize: englishFontSize,
-        lineHeight: englishLineHeight,
-        color: colors.text,
-        fontFamily: 'Philosopher-Regular',
-      },
-      hiddenEnglish: {
-        fontSize: englishFontSize,
-        lineHeight: englishLineHeight,
-        opacity: 0,
-      },
-    };
-  }, [settings.fontScale, colors.arabicText, colors.text]);
 
   async function signOut() {
     Alert.alert(
@@ -201,6 +181,11 @@ export default function SettingsScreen() {
     );
   }
 
+  // Create placeholder component to show while theme is loading
+  const TogglePlaceholder = () => (
+    <View style={[styles.togglePlaceholder, { backgroundColor: colors.cardBorder }]} />
+  );
+
   return (
     <ThemedView
       style={styles.container}
@@ -233,7 +218,7 @@ export default function SettingsScreen() {
                     <ThemedText type="body">Dark Mode</ThemedText>
                   </View>
                 </View>
-                <ThemeToggle />
+                {deferredRender ? <ThemeToggle /> : <TogglePlaceholder />}
               </View>
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.settingRow}>
@@ -243,10 +228,14 @@ export default function SettingsScreen() {
                     <ThemedText type="body">English Translation</ThemedText>
                   </View>
                 </View>
-                <Toggle
-                  value={settings.showEnglish}
-                  onValueChange={value => dispatch(setShowEnglish(value))}
-                />
+                {deferredRender ? (
+                  <Toggle
+                    value={settings.showEnglish}
+                    onValueChange={value => dispatch(setShowEnglish(value))}
+                  />
+                ) : (
+                  <TogglePlaceholder />
+                )}
               </View>
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.settingRow}>
@@ -337,6 +326,15 @@ export default function SettingsScreen() {
                 title="Facebook"
                 onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
                 icon="logo-facebook"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
+              <ThemedButton
+                variant="outlined"
+                title="Instagram"
+                onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
+                icon="logo-instagram"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
@@ -484,5 +482,11 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+  },
+  togglePlaceholder: {
+    width: LAYOUT.BUTTON.HEIGHT.SMALL * 1.75 - 4,
+    height: LAYOUT.BUTTON.HEIGHT.SMALL - 4,
+    borderRadius: (LAYOUT.BUTTON.HEIGHT.SMALL - 4) / 2,
+    opacity: 0.2,
   },
 });
