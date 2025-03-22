@@ -29,7 +29,7 @@ import { useColors } from '@/hooks/useColors';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { useOpacityAnimation, useFloatingButtonAnimation } from '@/hooks/animations';
+import { useScreenAnimations } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
@@ -88,8 +88,7 @@ export default function ArticleScreen() {
   // Track previous audio state to detect transitions
   const prevAudioStateRef = useRef(AUDIO_STATES.IDLE);
 
-  // Animation state
-  const [isButtonsVisible, setIsButtonsVisible] = useState(true);
+  // Scroll position tracking
   const prevScrollYValue = useRef(0);
 
   // Play/Stop button state
@@ -97,6 +96,18 @@ export default function ArticleScreen() {
 
   // Audio player hook
   const { audioState, loadAndPlayAudio, stopPlayback } = useAudioPlayer();
+
+  // Unified animations hook for all screen animations
+  const {
+    contentStyle,
+    headerStyle,
+    footerStyle,
+    backButtonStyle,
+    bookmarkButtonStyle,
+    playButtonStyle,
+    startAllAnimations,
+    handleScroll: handleAnimationScroll,
+  } = useScreenAnimations();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -108,21 +119,19 @@ export default function ArticleScreen() {
   // Check if data is already in cache to optimize loading time
   const isDataPrefetched = useMemo(() => {
     if (!articleId) return false;
-    // Use explicit type checking to avoid TypeScript errors
     const cachedData = queryClient.getQueryData(['article', articleId]);
     return cachedData !== undefined && cachedData !== null;
   }, [articleId, queryClient]);
 
-  // Use dynamic loading state with optimized timeout
-  const { updateMinLoadingTime } = useLoadingState(isDataPrefetched ? 100 : 500);
+  // Use the custom loading state hook
+  const { setDataLoaded } = useLoadingState(true);
 
   // Update minimum loading time when prefetched status changes
   useEffect(() => {
-    // Make sure the function exists before calling it (defensive coding)
-    if (updateMinLoadingTime) {
-      updateMinLoadingTime(isDataPrefetched ? 100 : 500);
+    if (isDataPrefetched) {
+      setDataLoaded(true);
     }
-  }, [isDataPrefetched, updateMinLoadingTime]);
+  }, [isDataPrefetched, setDataLoaded]);
 
   // Use the custom article data hook with optimized loading behavior
   const {
@@ -135,11 +144,7 @@ export default function ArticleScreen() {
     sentenceWordsMap,
     otherArticles,
     otherCategoryArticles,
-  } = useArticleData(
-    articleId,
-    user?.id,
-    !!isDataPrefetched // Make sure we pass a boolean
-  );
+  } = useArticleData(articleId, user?.id, !!isDataPrefetched);
 
   // Use the custom article mutations hook
   const { handleToggleReadingList, handleWordPress } = useArticleMutations(
@@ -156,20 +161,7 @@ export default function ArticleScreen() {
     (word: Tables<'sentence_words'>) => handleWordPress(word.id)
   );
 
-  // Animation hooks
-  const { animatedStyle: contentAnimatedStyle, startAnimation: startContentAnimation } =
-    useOpacityAnimation({ initialOpacity: 0, delay: 100, duration: 300 });
-
-  const { animatedStyle: headerAnimatedStyle, startAnimation: startHeaderAnimation } =
-    useOpacityAnimation({ initialOpacity: 0, delay: 100, duration: 300 });
-
-  const { animatedStyle: footerAnimatedStyle, startAnimation: startFooterAnimation } =
-    useOpacityAnimation({ initialOpacity: 0, delay: 300, duration: 500 });
-
-  const { combinedBackButtonStyle, combinedBookmarkButtonStyle, combinedPlayButtonStyle } =
-    useFloatingButtonAnimation(isButtonsVisible);
-
-  // Animation styles - these are now directly from the hooks
+  // Animation styles
   const contentPadding = useMemo(
     () => ({
       paddingTop: insets.top + (Platform.OS === 'ios' ? 20 : 16),
@@ -179,27 +171,15 @@ export default function ArticleScreen() {
     [insets.top]
   );
 
-  // Use the navigation with debounce hook
-  const { navigateTo, cleanup: cleanupNavigation } = useNavigationWithDebounce();
+  // Use the navigation with debounce hook - fix cleanup property error
+  const { navigateTo } = useNavigationWithDebounce();
 
+  // Handle scroll with animation
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const currentScrollY = event.nativeEvent.contentOffset.y;
-
-      // Determine if buttons should be visible
-      // Show buttons when at the top or scrolling up
-      const isScrollingUp = currentScrollY < prevScrollYValue.current;
-      const isAtTop = currentScrollY <= 0;
-      const shouldBeVisible = isScrollingUp || isAtTop;
-
-      // Update state only if it changed
-      if (isButtonsVisible !== shouldBeVisible) {
-        setIsButtonsVisible(shouldBeVisible);
-      }
-
-      prevScrollYValue.current = currentScrollY;
+      handleAnimationScroll(event, prevScrollYValue);
     },
-    [isButtonsVisible]
+    [handleAnimationScroll]
   );
 
   // Component renderers
@@ -254,32 +234,68 @@ export default function ArticleScreen() {
         key={articleData.id}
         variant="compact"
         article={articleData}
-        onPress={() => handleArticlePress(articleData.id, true)} // Pass true to indicate this is a related article
+        onPress={() => handleArticlePress(articleData.id, true)}
       />
     ),
     [handleArticlePress]
   );
 
-  // Effects
+  // Handle back button press
+  const handleBackPress = useCallback(() => {
+    navigateTo('..', () => {
+      if (isPlaying) {
+        stopPlayback();
+      }
+    });
+  }, [navigateTo, isPlaying, stopPlayback]);
+
+  // Handle bookmark toggle
+  const handleBookmarkPress = useCallback(() => {
+    if (articleId) {
+      lightFeedback();
+      handleToggleReadingList(articleId, Boolean(isInReadingList));
+    }
+  }, [articleId, isInReadingList, handleToggleReadingList]);
+
+  // Generate audio URL from article content
+  const generateArticleAudio = useCallback(() => {
+    if (!article) return null;
+    return (
+      article.audio_url ||
+      'https://file-examples.com/storage/fe8c7eef0c6364f6c9504cc/2017/11/file_example_MP3_700KB.mp3'
+    );
+  }, [article]);
+
+  // Handle play button press
+  const handlePlayPress = useCallback(async () => {
+    if (isPlaying) {
+      lightFeedback();
+      setIsPlaying(false);
+      await stopPlayback();
+    } else {
+      const audioUrl = generateArticleAudio();
+      if (!audioUrl) return;
+
+      lightFeedback();
+      setIsPlaying(true);
+      const success = await loadAndPlayAudio(audioUrl);
+
+      if (!success) {
+        setIsPlaying(false);
+        lightFeedback();
+      }
+    }
+  }, [isPlaying, generateArticleAudio, loadAndPlayAudio, stopPlayback]);
+
   // Content animation when article is loaded
   useEffect(() => {
     if (!isLoadingArticle && article) {
-      // Use a small timeout to ensure layout is stable before animations start
-      // Use a shorter timeout when data is prefetched, but always use a small delay to avoid layout issues
       const timer = setTimeout(
         () => {
           if (isMountedRef.current) {
             setIsLoading(false);
-
-            // Safely start animations with error handling
-            try {
-              if (typeof startContentAnimation === 'function') startContentAnimation();
-              if (typeof startHeaderAnimation === 'function') startHeaderAnimation();
-              if (typeof startFooterAnimation === 'function') startFooterAnimation();
-            } catch (err) {
-              // Silently handle any animation errors
-              console.warn('Animation error:', err);
-            }
+            // Use the unified animation start function
+            startAllAnimations();
           }
         },
         !!isDataPrefetched ? 10 : 50
@@ -287,14 +303,7 @@ export default function ArticleScreen() {
 
       return () => clearTimeout(timer);
     }
-  }, [
-    isLoadingArticle,
-    article,
-    startContentAnimation,
-    startHeaderAnimation,
-    startFooterAnimation,
-    isDataPrefetched,
-  ]);
+  }, [isLoadingArticle, article, startAllAnimations, isDataPrefetched]);
 
   // Reset scroll position when article ID changes
   useEffect(() => {
@@ -305,7 +314,7 @@ export default function ArticleScreen() {
           animated: false,
         });
       } catch (error) {
-        // Silently handle errors
+        // Silent error handling
       }
     }
   }, [id]);
@@ -318,7 +327,7 @@ export default function ArticleScreen() {
           dispatch(addToReadingList(parsedId));
           dispatch(incrementReadCount(parsedId));
         } catch (_error) {
-          // Silently handle errors
+          // Silent error handling
         }
       }
     }
@@ -330,96 +339,22 @@ export default function ArticleScreen() {
     }
   }, [articleId, dispatch]);
 
-  // FlatList configuration
-
-  // Handle back button press with debounce
-  const handleBackPress = useCallback(() => {
-    // Navigate back
-    navigateTo('..', () => {
-      // Any cleanup before navigation if needed
-      if (isPlaying) {
-        stopPlayback();
-      }
-    });
-  }, [navigateTo, isPlaying, stopPlayback]);
-
-  // Handle bookmark toggle with debounce for UI consistency
-  const handleBookmarkPress = useCallback(() => {
-    if (articleId) {
-      lightFeedback(); // Light haptic feedback for bookmark toggle
-      handleToggleReadingList(articleId, Boolean(isInReadingList));
-    }
-  }, [articleId, isInReadingList, handleToggleReadingList]);
-
-  // Generate audio URL from article content
-  const generateArticleAudio = useCallback(() => {
-    if (!article) return null;
-
-    // Use the article's audio_url if available
-    if (article.audio_url) {
-      return article.audio_url;
-    }
-
-    // Fallback to a sample audio URL for testing
-    return 'https://file-examples.com/storage/fe8c7eef0c6364f6c9504cc/2017/11/file_example_MP3_700KB.mp3';
-  }, [article]);
-
-  // Handle play button press
-  const handlePlayPress = useCallback(async () => {
-    if (isPlaying) {
-      // If already playing, stop playback
-      lightFeedback(); // Light haptic feedback for stopping
-
-      // Update UI immediately for responsive feel
-      setIsPlaying(false);
-      await stopPlayback();
-    } else {
-      // If not playing, start playback
-      const audioUrl = generateArticleAudio();
-
-      if (!audioUrl) {
-        return;
-      }
-
-      // Provide haptic feedback immediately
-      lightFeedback(); // Light haptic feedback for starting playback
-
-      // Update UI immediately for responsive feel
-      setIsPlaying(true);
-
-      // Load and play the audio
-      const success = await loadAndPlayAudio(audioUrl);
-
-      if (!success) {
-        setIsPlaying(false);
-        lightFeedback(); // Light haptic feedback for failure
-      }
-    }
-  }, [isPlaying, generateArticleAudio, loadAndPlayAudio, stopPlayback]);
-
   // Audio state change handler
   useEffect(() => {
-    // Handle audio state transitions
     if (audioState === AUDIO_STATES.PLAYING) {
-      // When audio starts playing, show stop button
       setIsPlaying(true);
     } else if (
       audioState === AUDIO_STATES.IDLE ||
       audioState === AUDIO_STATES.ERROR ||
       (audioState === AUDIO_STATES.PAUSED && prevAudioStateRef.current === AUDIO_STATES.PLAYING)
     ) {
-      // Reset to play button when:
-      // 1. Audio is idle or has an error, OR
-      // 2. Audio transitions from playing to paused (which happens when audio completes)
       setIsPlaying(false);
 
-      // Provide haptic feedback when audio completes
       if (prevAudioStateRef.current === AUDIO_STATES.PLAYING) {
         successFeedback();
       }
     }
 
-    // Store current state for next comparison
     prevAudioStateRef.current = audioState;
   }, [audioState]);
 
@@ -427,43 +362,18 @@ export default function ArticleScreen() {
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      cleanupNavigation();
 
-      // Stop any audio playback when unmounting
       try {
         stopPlayback();
       } catch (error) {
-        // Silently handle errors
+        // Silent error handling
       }
 
-      // Reset the play button state
       setIsPlaying(false);
     };
-  }, [cleanupNavigation, stopPlayback]);
+  }, [stopPlayback]);
 
-  // Safely cast animation styles
-  const safeHeaderStyle = headerAnimatedStyle as { opacity?: number; [key: string]: any };
-  const safeContentStyle = contentAnimatedStyle as { opacity?: number; [key: string]: any };
-  const safeFooterStyle = footerAnimatedStyle as { opacity?: number; [key: string]: any };
-
-  // Safely cast floating button animations
-  const safeBackButtonStyle = combinedBackButtonStyle as {
-    transform?: any[];
-    opacity?: number;
-    [key: string]: any;
-  };
-  const safeBookmarkButtonStyle = combinedBookmarkButtonStyle as {
-    transform?: any[];
-    opacity?: number;
-    [key: string]: any;
-  };
-  const safePlayButtonStyle = combinedPlayButtonStyle as {
-    transform?: any[];
-    opacity?: number;
-    [key: string]: any;
-  };
-
-  // Check if we have cached article data to skip showing loading screen
+  // Check if we have cached article data
   const hasCachedData = !!queryClient.getQueryData(['article', articleId]);
 
   // Main render - Only show loading when no cached data is available
@@ -499,7 +409,7 @@ export default function ArticleScreen() {
       <FloatingButton
         position="left"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={safeBackButtonStyle}
+        animatedStyle={backButtonStyle}
         onPress={handleBackPress}
         iconName="chevron-back"
         accessibilityLabel="Return to previous screen"
@@ -512,7 +422,7 @@ export default function ArticleScreen() {
         <FloatingButton
           position="right"
           top={insets.top + LAYOUT.SPACING.MEDIUM}
-          animatedStyle={safeBookmarkButtonStyle}
+          animatedStyle={bookmarkButtonStyle}
           onPress={handleBookmarkPress}
           iconName={isInReadingList ? 'bookmark' : 'bookmark-outline'}
           accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
@@ -525,7 +435,7 @@ export default function ArticleScreen() {
       <FloatingButton
         position="right"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={safePlayButtonStyle}
+        animatedStyle={playButtonStyle}
         iconName={isPlaying ? 'stop' : 'play'}
         accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
         onPress={handlePlayPress}
@@ -540,8 +450,7 @@ export default function ArticleScreen() {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }, safeContentStyle]}>
-          {/* Only render FlatList if we have data */}
+        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }, contentStyle]}>
           {sortedSentences && sortedSentences.length > 0 && (
             <FlatList
               key={`article-${id}`}
@@ -559,21 +468,20 @@ export default function ArticleScreen() {
               windowSize={5}
               removeClippedSubviews={false}
               indicatorStyle={isDarkMode ? 'white' : 'black'}
-              getItemLayout={(data, index) => ({
-                length: 70, // Adjust based on your typical sentence height
-                offset: 70 * index + (article?.title ? 150 : 0), // Account for header
+              getItemLayout={(_data, index) => ({
+                length: 70,
+                offset: 70 * index + (article?.title ? 150 : 0),
                 index,
               })}
               ListHeaderComponent={
-                <Animated.View style={safeHeaderStyle}>
+                <Animated.View style={headerStyle}>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
                 </Animated.View>
               }
               ListFooterComponent={
                 <>
-                  {/* Only render related articles sections if we have data */}
                   {otherArticles && otherArticles.length > 0 && (
-                    <Animated.View style={safeFooterStyle}>
+                    <Animated.View style={footerStyle}>
                       <RelatedArticlesFooter
                         otherArticles={otherArticles}
                         otherCategoryArticles={otherCategoryArticles || []}

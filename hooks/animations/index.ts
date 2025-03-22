@@ -29,6 +29,7 @@ export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useGraphAnimation } from './useGraphAnimation';
 export { useAnimationTrigger } from './useAnimationTrigger';
 export { useScreenAnimation } from './useScreenAnimation';
+export { useScreenAnimations } from './useScreenAnimations';
 export { useTransformAnimation } from './useTransformAnimation';
 
 // Export standardized animation configurations
