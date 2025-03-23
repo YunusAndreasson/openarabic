@@ -18,7 +18,7 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
+import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 
 // Store
@@ -36,7 +36,6 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
-import { mediumFeedback } from '@/utils/haptics';
 
 // Types
 import { Article } from '@/types/articles.types';
@@ -102,11 +101,11 @@ export default function ArticlesScreen() {
   const queryClient = useQueryClient();
 
   // Use the new loading state hook
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+  const { isLoading: isLoadingState } = useLoadingState();
 
   // Refs
-  const scrollViewRef = useRef<Animated.ScrollView>(null);
   const isInitialMount = useRef(true);
+  const scrollViewRef = useRef<any>(null);
 
   // Use React Query instead of local state for articles
   const {
@@ -122,7 +121,7 @@ export default function ArticlesScreen() {
   });
 
   // Use React Query for categories
-  const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
+  const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
     staleTime: STALE_TIME_MEDIUM,
@@ -164,8 +163,6 @@ export default function ArticlesScreen() {
   }, [articlesData]);
 
   // Organized articles by category
-  const latestArticles = useMemo(() => getLatestArticles(filteredArticles), [filteredArticles]);
-  const featuredArticles = useMemo(() => getFeaturedArticles(filteredArticles), [filteredArticles]);
   const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
 
   // Refined content container style for consistent spacing
@@ -196,7 +193,6 @@ export default function ArticlesScreen() {
   // Refactored refresh handler using React Query
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
-    mediumFeedback();
 
     // Create an array of refresh promises
     const refreshPromises = [
@@ -281,45 +277,30 @@ export default function ArticlesScreen() {
   }, []);
 
   const handleClearFilters = useCallback(() => {
-    // Scroll to top when clearing filters
-    if (scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({ y: 0, animated: true });
-    }
+    // No-op since we removed scroll functionality
   }, []);
 
-  // Replace useFocusEffect with useScreenFocusRefresh for consistency
-  useScreenFocusRefresh(
-    queryClient,
-    'articles',
-    session?.user?.id,
-    60000, // 1 minute stale time
-    false, // Don't skip initial focus - we need to load on first view
-    false // Only force refresh when stale
-  );
-
-  // Add effect to handle first load and scroll position
+  // Add effect to handle first load
   useEffect(() => {
     // Only fetch on first mount
     if (isInitialMount.current) {
       handleRefresh();
       isInitialMount.current = false;
     }
-
-    // Reset scroll position to top
-    const resetScrollPosition = () => {
-      if (scrollViewRef.current && typeof scrollViewRef.current.scrollTo === 'function') {
-        try {
-          scrollViewRef.current.scrollTo({ y: 0, animated: false });
-        } catch (e) {
-          console.warn('Failed to scroll to top:', e);
-        }
-      }
-    };
-
-    // Small delay to ensure component is mounted
-    const timer = setTimeout(resetScrollPosition, 100);
-    return () => clearTimeout(timer);
   }, [handleRefresh]);
+
+  // Add effect to scroll to top when data is loaded
+  useEffect(() => {
+    if (articlesData.length > 0 && !isArticlesLoading) {
+      // Small delay to ensure content is rendered
+      const timer = setTimeout(() => {
+        if (scrollViewRef.current) {
+          scrollViewRef.current.scrollToOffset({ offset: 0, animated: false });
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [articlesData.length, isArticlesLoading]);
 
   // Add effect to prefetch article details for visible articles
   useEffect(() => {
@@ -417,15 +398,13 @@ export default function ArticlesScreen() {
     const featuredArticles = getFeaturedArticles(articlesData);
 
     return (
-      <ArticleSection
+      <FeaturedArticleSection
         title="Featured Texts"
         articles={featuredArticles}
         onArticlePress={handleArticlePress}
-        // Show loading state if articles are fetching and we don't have data yet
-        isLoading={isArticlesFetching && featuredArticles.length === 0}
       />
     );
-  }, [articlesData, handleArticlePress, isArticlesFetching]);
+  }, [articlesData, handleArticlePress]);
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
@@ -527,7 +506,7 @@ export default function ArticlesScreen() {
       >
         <ArticleList
           articles={[]}
-          isLoading={false}
+          isLoading={isArticlesLoading}
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
           onArticlePress={handleArticlePress}
@@ -542,9 +521,6 @@ export default function ArticlesScreen() {
           maxToRenderPerBatch={3}
           updateCellsBatchingPeriod={50}
           removeClippedSubviews={Platform.OS === 'android'}
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 0,
-          }}
         />
         <PageHeader title="Texts" />
       </ThemedView>

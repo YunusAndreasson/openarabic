@@ -1,12 +1,4 @@
-import React, {
-  useCallback,
-  useMemo,
-  useState,
-  useEffect,
-  useRef,
-  forwardRef,
-  useImperativeHandle,
-} from 'react';
+import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   StyleSheet,
   FlatList,
@@ -21,23 +13,14 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
-import Animated, {
-  useSharedValue,
-  withTiming,
-  useAnimatedStyle,
-  FadeIn,
-} from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
-import { TIMING_CONFIG } from '../hooks/animations/animationConfigs';
 
-const ITEM_HEIGHT = 360; // Approximate height of each article card
+const ITEM_HEIGHT = 360;
 
-/**
- * An optimized FlatList component for rendering articles
- */
 const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
   (
     {
@@ -53,7 +36,6 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
     ref
   ) => {
     const colors = useColors();
-    const [viewableItemIds, setViewableItemIds] = useState<Set<number>>(new Set());
     const listRef = useRef<FlatList<Article>>(null);
     const queryClient = useQueryClient();
 
@@ -73,59 +55,11 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       []
     );
 
-    // Memoize the viewability configuration
-    const viewabilityConfig = useMemo<ViewabilityConfig>(
-      () => ({
-        itemVisiblePercentThreshold: 50,
-        minimumViewTime: 300,
-      }),
-      []
-    );
-
-    // Handle viewable items change
-    const onViewableItemsChanged = useCallback(
-      ({ viewableItems: items }: { viewableItems: ViewToken[] }) => {
-        // Update viewable items set
-        const newViewableIds = new Set<number>();
-
-        items.forEach(({ item, isViewable }) => {
-          if (item && item.id && isViewable) {
-            newViewableIds.add(item.id);
-
-            // Prefetch the article data in the background
-            queryClient.prefetchQuery({
-              queryKey: ['article', item.id],
-              queryFn: () => articlesService.getArticleById(item.id),
-              staleTime: 60000, // 1 minute cache
-            });
-          }
-        });
-
-        setViewableItemIds(newViewableIds);
-      },
-      [queryClient]
-    );
-
     // Create a simplified article item component
     const ArticleItem = React.memo(({ item }: { item: Article }) => {
-      // Determine if the item is visible
-      const isVisible = viewableItemIds.has(item.id);
-
-      // Simplified approach: only render content when visible
       return (
         <View style={styles.articleItemContainer}>
-          {isVisible ? (
-            <Animated.View entering={FadeIn.duration(300)}>
-              <ThemedCard
-                imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-                title={item.title}
-                category={item.category?.name ?? 'Uncategorized'}
-                author={item.author?.name ?? 'Anonymous'}
-                onPress={() => onArticlePress(item)}
-                style={styles.articleCard}
-              />
-            </Animated.View>
-          ) : (
+          <Animated.View entering={FadeIn.duration(300)}>
             <ThemedCard
               imageUrl={item.image_url || 'https://picsum.photos/800/400'}
               title={item.title}
@@ -133,9 +67,8 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
               author={item.author?.name ?? 'Anonymous'}
               onPress={() => onArticlePress(item)}
               style={styles.articleCard}
-              isLoading={true}
             />
-          )}
+          </Animated.View>
         </View>
       );
     });
@@ -148,47 +81,11 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       []
     );
 
-    // End message animation
-    const footerOpacity = useSharedValue(0);
-    const footerAnimatedStyle = useAnimatedStyle(() => ({
-      opacity: footerOpacity.value,
-    }));
-
-    // Start the end message animation when the component mounts
-    useEffect(() => {
-      // Simple timeout instead of using worklets
-      setTimeout(() => {
-        footerOpacity.value = withTiming(1, {
-          duration: 400,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        });
-      }, 800);
-    }, []);
-
     // Render the footer component
     const renderFooter = useCallback(() => {
       if (isLoading && articles.length === 0) return null;
-
-      return (
-        <>
-          <Animated.View style={[styles.endMessageContainer, footerAnimatedStyle]} />
-          <CopyrightFooter />
-        </>
-      );
-    }, [isLoading, articles.length, footerAnimatedStyle]);
-
-    // Ensure the list starts at the top on mount
-    useEffect(() => {
-      setTimeout(() => {
-        if (listRef.current && 'scrollToOffset' in listRef.current) {
-          try {
-            listRef.current.scrollToOffset({ offset: 0, animated: false });
-          } catch (e) {
-            console.warn('Failed to scroll to top:', e);
-          }
-        }
-      }, 100);
-    }, []);
+      return <CopyrightFooter />;
+    }, [isLoading, articles.length]);
 
     const refreshControl = useMemo(
       () => (
@@ -209,12 +106,10 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemLayout={getItemLayout}
-        initialNumToRender={5}
-        maxToRenderPerBatch={5}
-        windowSize={5}
+        initialNumToRender={1}
+        maxToRenderPerBatch={3}
+        windowSize={3}
         removeClippedSubviews={Platform.OS === 'android'}
-        viewabilityConfig={viewabilityConfig}
-        onViewableItemsChanged={onViewableItemsChanged}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.listContent,
@@ -225,17 +120,15 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         ListEmptyComponent={isLoading ? null : ListEmptyComponent}
         ListFooterComponent={renderFooter()}
         refreshControl={refreshControl}
-        // Use safer optimization settings
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-        }}
         scrollEventThrottle={16}
-        // DO NOT disable virtualization
         disableVirtualization={false}
-        // DO NOT force persist scrollbar (causes issues)
         persistentScrollbar={false}
-        // Use moderate update batching period
         updateCellsBatchingPeriod={50}
+        onContentSizeChange={() => {
+          if (listRef.current) {
+            listRef.current.scrollToOffset({ offset: 0, animated: false });
+          }
+        }}
       />
     );
   }
@@ -255,11 +148,6 @@ const styles = StyleSheet.create({
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-  },
-  endMessageContainer: {
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 
