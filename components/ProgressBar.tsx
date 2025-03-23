@@ -19,7 +19,7 @@ import { ProgressBarProps } from '@/types/ui.types';
  */
 function ProgressBarComponent({
   progress,
-  height = LAYOUT.SPACING.SMALL,
+  height = LAYOUT.SPACING.MEDIUM,
   style,
   fillStyle,
   backgroundColor,

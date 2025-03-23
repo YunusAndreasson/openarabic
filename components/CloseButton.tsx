@@ -1,10 +1,10 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ELEMENT_SIZES } from '../constants/ui';
-import { mediumFeedback } from '../utils/haptics';
+import { lightFeedback } from '../utils/haptics';
 import { getTouchableProps } from '../utils/accessibility';
 import { CloseButtonProps } from '@/types/ui.types';
 import Animated from 'react-native-reanimated';
@@ -31,7 +31,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
 
   const handlePress = () => {
     if (hapticFeedback) {
-      mediumFeedback();
+      lightFeedback();
     }
 
     // Small delay to ensure haptic feedback is felt
