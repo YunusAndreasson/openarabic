@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Pressable, StyleProp, ViewStyle, View } from 'react-native';
+import { StyleSheet, Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';

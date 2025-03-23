@@ -26,7 +26,6 @@ import Animated, {
   withTiming,
   useAnimatedStyle,
   FadeIn,
-  runOnUI,
 } from 'react-native-reanimated';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';

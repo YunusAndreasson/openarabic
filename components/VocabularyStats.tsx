@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -16,7 +16,7 @@ function VocabularyStatsComponent({
   isLoading = false,
 }: VocabularyStatsProps) {
   const colors = useColors();
-  const { animatedStyle, startAnimation } = useComponentAnimation();
+  const { startAnimation } = useComponentAnimation();
   const [isReady, setIsReady] = React.useState(false);
 
   // Start animation when component mounts

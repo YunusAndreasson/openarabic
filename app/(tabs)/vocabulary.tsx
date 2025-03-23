@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, View, RefreshControl, ViewStyle } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
@@ -15,8 +15,8 @@ import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
-import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
-import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
+import { useScreenFocusRefresh, useNavigationWithDebounce, useLoadingState } from '@/hooks';
+import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '@/components/PageHeader';
 import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
@@ -33,6 +33,9 @@ export default function VocabularyScreen() {
   const colors = useColors();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+
+  // Add loading state hook to match other tab screens
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -115,10 +118,26 @@ export default function VocabularyScreen() {
     return studyWords?.filter(word => word?.sentence_word != null) ?? [];
   }, [studyWords]);
 
-  // Check if data is ready to display - simplified logic
+  // Check if data is ready to display (similar to other tab screens)
   const isDataReady = useMemo(() => {
-    return !!user && (validStudyWords?.length > 0 || dueWordsData?.length > 0 || !isDataLoading);
-  }, [user, validStudyWords?.length, dueWordsData?.length, isDataLoading]);
+    return !!user && (validStudyWords.length > 0 || error !== null);
+  }, [user, validStudyWords.length, error]);
+
+  // Add screen animation hook to match other tab screens
+  const { fadeInStyle } = useScreenAnimation(
+    isDataReady,
+    isLoadingState
+    // Using default values for remaining parameters
+  );
+
+  // Update loading state based on data loading (similar to bookmarks.tsx)
+  useEffect(() => {
+    if (isAuthLoading || (!!user && isDataLoading)) {
+      startLoading();
+    } else {
+      stopLoading();
+    }
+  }, [isAuthLoading, user, isDataLoading, startLoading, stopLoading]);
 
   // Calculate stats with memoization - updated to use FSRS stats calculation
   const stats = useMemo<VocabularyStats>(() => {
@@ -149,13 +168,6 @@ export default function VocabularyScreen() {
     // Always get data regardless of empty study words
     return calculateWeeklyProgressData(validStudyWords ?? []);
   }, [validStudyWords]);
-
-  // Single fade-in animation for the entire screen
-  const { animatedStyle: fadeInStyle } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 300,
-    autoStart: true,
-  });
 
   // Handle starting a review
   const handleStartReview = () => {
@@ -192,8 +204,8 @@ export default function VocabularyScreen() {
     });
   };
 
-  // Show loading screen only for initial auth loading
-  if (isAuthLoading) {
+  // Use the consistent loading pattern with other tabs
+  if (isLoadingState && !isDataReady) {
     return <LoadingScreen color={colors.tint} />;
   }
 
@@ -231,9 +243,9 @@ export default function VocabularyScreen() {
     );
   }
 
-  // Main content
+  // Main content with fadeInStyle applied to match other tabs
   return (
-    <Animated.View style={[styles.flexContainer, fadeInStyle as ViewStyle]} collapsable={false}>
+    <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
@@ -284,13 +296,13 @@ export default function VocabularyScreen() {
           </View>
 
           {/* Review Button Section */}
-          {isDataReady && (
+          {stats.dueWords > 0 ? (
             <View style={styles.reviewButtonWrapper}>
-              {stats.dueWords > 0 ? (
-                <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
-              ) : (
-                <DisabledReviewButton />
-              )}
+              <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+            </View>
+          ) : (
+            <View style={styles.reviewButtonWrapper}>
+              <DisabledReviewButton />
             </View>
           )}
         </ThemedView>

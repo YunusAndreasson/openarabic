@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewStyle, StyleSheet } from 'react-native';
+import { View, ViewStyle } from 'react-native';
 import SectionTitle from './SectionTitle';
 import { LAYOUT } from '../constants/layout';
 
