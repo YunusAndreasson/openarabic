@@ -1,18 +1,11 @@
-import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { StyleSheet, Alert, Linking, View, ScrollView, Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
-import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from '@react-navigation/native';
+import { useScreenFocusRefresh } from '../../hooks';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedView } from '../../components/ThemedView';
-import { ThemedButton } from '../../components/ThemedButton';
-import { ThemeToggle } from '../../components/ThemeToggle';
-import { CustomSlider } from '../../components/Slider';
-import { Toggle } from '../../components/Toggle';
-import { supabase } from '../../services/supabase';
+import { createClient } from '@supabase/supabase-js';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
 import Auth from '../../components/Auth';
@@ -23,6 +16,27 @@ import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from '@/components/BaseCard';
+import { useQueryClient } from '@tanstack/react-query';
+import { ThemedView } from '../../components/ThemedView';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedSectionHeader } from '../../components/ThemedSectionHeader';
+import { Icon } from '../../components/Icon';
+import { Theme } from '../../types/theme.types';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../constants/Supabase';
+import {
+  toggleReduceAnimations,
+  toggleReduceMotion,
+  updateFontScale,
+} from '../../store/settingsSlice';
+import { switchTheme } from '../../store/themeSlice';
+import { ThemeToggle } from '../../components/ThemeToggle';
+import { CustomSlider } from '../../components/Slider';
+import { Toggle } from '../../components/Toggle';
+import { ThemedButton } from '../../components/ThemedButton';
+import { useFocusEffect } from '@react-navigation/native';
+
+// Create a Supabase client
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Helper function to calculate header height
 const getHeaderHeight = (insets: { top: number }) => {
@@ -36,6 +50,8 @@ export default function SettingsScreen() {
   const settings = useAppSelector(state => state.settings);
   const theme = useAppSelector(state => state.theme.theme);
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Add state to defer rendering of toggle components until theme is loaded
   const [deferredRender, setDeferredRender] = useState(false);
@@ -161,26 +177,9 @@ export default function SettingsScreen() {
     );
   }
 
-  if (!session) {
-    return (
-      <Animated.View style={[styles.flexOne, fadeInStyle]}>
-        <ThemedView style={styles.container}>
-          <PageHeader title="Settings" />
-          <View style={styles.authContainer}>
-            <ThemedText type="heading2" weight="600" align="center">
-              Welcome
-            </ThemedText>
-            <View style={styles.subtitleContainer}>
-              <ThemedText type="body" align="center">
-                Sign in to continue
-              </ThemedText>
-            </View>
-            <Auth />
-          </View>
-        </ThemedView>
-      </Animated.View>
-    );
-  }
+  // Skip the sign-in check so settings are always accessible
+  // Auth features will be shown conditionally in the UI if session exists
+  const showAuthUI = !session;
 
   // Create placeholder component to show while theme is loading
   const TogglePlaceholder = () => (
@@ -366,20 +365,62 @@ export default function SettingsScreen() {
                 contentContainerStyle={buttonStyles.contentContainer}
               />
               <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-              <ThemedButton
-                variant="outlined"
-                title="Sign Out"
-                onPress={signOut}
-                icon="log-out"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
-              />
+              {showAuthUI ? (
+                <ThemedButton
+                  variant="outlined"
+                  title="Sign In"
+                  onPress={() => setShowAuthModal(true)}
+                  icon="log-in"
+                  style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                  innerContainerStyle={buttonStyles.innerContainer}
+                  contentContainerStyle={buttonStyles.contentContainer}
+                />
+              ) : (
+                <ThemedButton
+                  variant="outlined"
+                  title="Sign Out"
+                  onPress={signOut}
+                  icon="log-out"
+                  style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                  innerContainerStyle={buttonStyles.innerContainer}
+                  contentContainerStyle={buttonStyles.contentContainer}
+                />
+              )}
             </BaseCard>
           </View>
         </ScrollView>
       </ThemedView>
       <PageHeader title="Settings" />
+      {showAuthModal && (
+        <ThemedView
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: colors.background,
+            padding: LAYOUT.SPACING.LARGE,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ThemedText
+            type="heading2"
+            weight="600"
+            align="center"
+            style={{ marginBottom: LAYOUT.SPACING.LARGE }}
+          >
+            Sign In
+          </ThemedText>
+          <Auth />
+          <ThemedButton
+            title="Close"
+            onPress={() => setShowAuthModal(false)}
+            style={{ marginTop: LAYOUT.SPACING.LARGE }}
+          />
+        </ThemedView>
+      )}
     </ThemedView>
   );
 }

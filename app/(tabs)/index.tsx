@@ -1,7 +1,6 @@
 import { StyleSheet, Platform } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
-import { useFocusEffect } from '@react-navigation/native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +18,7 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
+import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 
 // Store
@@ -95,6 +94,7 @@ export default function ArticlesScreen() {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const { session } = useSafeAuth();
+  const queryClient = useQueryClient();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -183,20 +183,20 @@ export default function ArticlesScreen() {
     });
   }, [inProgressArticles, lastOpenedArticles]);
 
-  // Fetch data function
+  // Define fetchArticles function - modifying to remove local isInitialMount usage
   const fetchArticles = useCallback(async () => {
+    if (isRefreshing) return; // Prevent duplicate requests
+
     startLoading();
-    setError(null);
-
     try {
-      const fetchedArticles = await articlesService.getArticles();
-      setArticles(fetchedArticles);
+      const articlesData = await articlesService.getArticles();
+      setArticles(articlesData);
+      setError(null);
 
-      // Fetch authors and categories if they haven't been fetched yet
+      // Fetch authors and categories if not already loaded
       if (authors.length === 0) {
         fetchAuthors();
       }
-
       if (categories.length === 0) {
         fetchCategories();
       }
@@ -218,6 +218,7 @@ export default function ArticlesScreen() {
     fetchCategories,
     startLoading,
     stopLoading,
+    isRefreshing,
   ]);
 
   const handleRefresh = useCallback(() => {
@@ -227,9 +228,6 @@ export default function ArticlesScreen() {
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
-
-  // Add queryClient for prefetching
-  const queryClient = useQueryClient();
 
   // Add prefetching for first few articles when data is loaded
   useEffect(() => {
@@ -299,32 +297,39 @@ export default function ArticlesScreen() {
     }
   }, []);
 
-  // Use focus effect to refresh data when tab becomes active, but only when necessary
-  useFocusEffect(
-    useCallback(() => {
-      // Always fetch on first mount, then only when force update is requested
-      if (isInitialMount.current) {
-        fetchArticles();
-        isInitialMount.current = false;
-      } else {
-        // If we already have data but are still showing loading, make sure to hide it
-        if (articles.length > 0 && isLoadingState) {
-          stopLoading();
-        }
-      }
+  // Replace useFocusEffect with useScreenFocusRefresh for consistency
+  useScreenFocusRefresh(
+    queryClient,
+    'articles',
+    session?.user?.id,
+    60000, // 1 minute stale time
+    false, // Don't skip initial focus - we need to load on first view
+    false // Only force refresh when stale
+  );
 
-      // Reset scroll position to top
+  // Add effect to handle first load and scroll position
+  useEffect(() => {
+    // Only fetch on first mount
+    if (isInitialMount.current) {
+      fetchArticles();
+      isInitialMount.current = false;
+    }
+
+    // Reset scroll position to top
+    const resetScrollPosition = () => {
       if (scrollViewRef.current && typeof scrollViewRef.current.scrollTo === 'function') {
         try {
-          setTimeout(() => {
-            scrollViewRef.current?.scrollTo?.({ y: 0, animated: false });
-          }, 100);
+          scrollViewRef.current.scrollTo({ y: 0, animated: false });
         } catch (e) {
           console.warn('Failed to scroll to top:', e);
         }
       }
-    }, [fetchArticles, isLoadingState, stopLoading, articles.length])
-  );
+    };
+
+    // Small delay to ensure component is mounted
+    const timer = setTimeout(resetScrollPosition, 100);
+    return () => clearTimeout(timer);
+  }, [fetchArticles]);
 
   // Check if data is ready to display
   const isDataReady = useMemo(() => {
