@@ -13,7 +13,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { lightFeedback } from '@/utils/haptics';
 import Animated from 'react-native-reanimated';
-import { usePressAnimation } from '@/hooks/animations';
+import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
 import { ThemedButtonProps } from '@/types/ui.types';
 
 /**
@@ -39,30 +39,46 @@ export function ThemedButton({
   onPress,
   contentContainerStyle,
   innerContainerStyle,
-  scaleAmount = 0.95,
   accessibilityLabel,
   size = 'medium',
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
 
-  // Use the standardized press animation hook from animations
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'button',
-    scaleAmount,
+  // Custom spring config for button with minimal animation and no "pulsating"
+  const buttonSpringConfig = {
+    ...SPRING_CONFIG.BUTTON,
+    damping: 25,
+    stiffness: 300,
+    mass: 0.8,
+    overshootClamping: true, // Prevent any "bounciness"
+  };
+
+  // Use the standard press animation hook with custom config
+  const {
+    animatedStyle,
+    handlePressIn: onPressIn,
+    handlePressOut: onPressOut,
+  } = usePressAnimation({
+    type: 'custom',
+    scaleAmount: 0.98, // Subtle scale effect
+    springConfig: buttonSpringConfig,
   });
 
-  // Handle press with haptic feedback
+  // Add haptic feedback
+  const handlePressIn = () => {
+    lightFeedback();
+    onPressIn();
+  };
+
   const handlePress = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !loading) {
-      // Only attempt haptic feedback if the button is interactive
-      lightFeedback();
       onPress(event);
     }
   };
 
   // Determine text size based on button size
-  const getTextType = () => {
+  const getTextType = (size: 'small' | 'medium' | 'large') => {
     switch (size) {
       case 'small':
         return 'label';
@@ -206,10 +222,10 @@ export function ThemedButton({
       <TouchableOpacity
         style={buttonStyles as any}
         disabled={disabled || loading}
-        activeOpacity={LAYOUT.OPACITY.PRESSED} // Use standardized opacity from LAYOUT
+        activeOpacity={1}
         onPress={handlePress}
         onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
+        onPressOut={onPressOut}
         accessibilityRole="button"
         accessibilityLabel={finalAccessibilityLabel}
         accessibilityState={accessibilityState}
@@ -233,11 +249,16 @@ export function ThemedButton({
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
             <ThemedText
-              type={getTextType()}
+              type={getTextType(size)}
               colorName={variant === 'filled' ? 'background' : 'tint'}
               skipDefaultColor
+              style={[
+                styles.buttonText,
+                size === 'small' ? styles.buttonTextSmall : null,
+                size === 'large' ? styles.buttonTextLarge : null,
+              ]}
             >
-              {title}
+              {title?.toUpperCase()}
             </ThemedText>
             {children}
           </View>
@@ -281,5 +302,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  buttonText: {
+    letterSpacing: 1.5,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  buttonTextSmall: {
+    letterSpacing: 1,
+    fontSize: 12,
+  },
+  buttonTextLarge: {
+    letterSpacing: 2,
+    fontSize: 16,
   },
 });

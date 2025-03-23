@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
 import { FloatingButtonProps } from '@/types/ui.types';
+import { usePressAnimation } from '@/hooks/animations';
+import { lightFeedback } from '@/utils/haptics';
 
 const styles = StyleSheet.create({
   backButton: {
@@ -43,9 +45,23 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
   isDarkMode,
   style,
 }) => {
-  // Simple handler for button press
+  // Use standardized press animation
+  const {
+    animatedStyle: pressAnimatedStyle,
+    handlePressIn,
+    handlePressOut,
+  } = usePressAnimation({
+    type: 'button',
+    scaleAmount: 0.95,
+  });
+
+  // Simple handler for button press with haptic feedback only for non-back buttons
   const handlePress = () => {
     if (onPress) {
+      // Only provide haptic feedback if it's not a back button (left position)
+      if (position !== 'left') {
+        lightFeedback();
+      }
       onPress();
     }
   };
@@ -56,24 +72,33 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
     [colors.textOverlay, colors.background, isDarkMode]
   );
 
+  // Combine external animation style with press animation style
+  const combinedAnimatedStyle = useMemo(() => {
+    if (animatedStyle) {
+      return [animatedStyle, pressAnimatedStyle];
+    }
+    return pressAnimatedStyle;
+  }, [animatedStyle, pressAnimatedStyle]);
+
   return (
     <Animated.View
       style={[
         position === 'left' ? styles.backButton : styles.playlistButton,
         { top },
-        animatedStyle,
+        combinedAnimatedStyle as any,
         style,
       ]}
     >
       <Pressable
-        style={({ pressed }) => [
+        style={[
           styles.button,
           {
             backgroundColor: buttonBackgroundColor,
-            opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
           },
         ]}
         onPress={handlePress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
       >

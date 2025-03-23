@@ -86,7 +86,7 @@ export const VocabularyGraph = React.memo(
     // Function to trigger haptic feedback when the last point is shown
     const triggerLastPointHaptic = useCallback(() => {
       if (lastPointTriggered.current) return;
-      lightFeedback();
+      // Removing the haptic feedback
       lastPointTriggered.current = true;
     }, []);
 

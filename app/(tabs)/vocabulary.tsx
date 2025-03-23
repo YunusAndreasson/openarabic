@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { StyleSheet, View, RefreshControl } from 'react-native';
+import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/VocabularyDashboard';
@@ -18,7 +18,7 @@ import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/v
 import { useScreenFocusRefresh, useNavigationWithDebounce, useLoadingState } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '@/components/PageHeader';
-import { ReviewButton, DisabledReviewButton } from '@/components/vocabulary/ReviewButton';
+import { ThemedButton } from '@/components/ThemedButton';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -251,22 +251,18 @@ export default function VocabularyScreen() {
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
       >
-        <ThemedView
-          scrollable={true}
-          useSafeArea={false}
-          includeBottomInset={false}
+        <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.tint]}
+              tintColor={colors.tint}
+              progressBackgroundColor={colors.background}
+            />
+          }
           contentContainerStyle={[styles.contentContainer, { paddingTop: getHeaderHeight(insets) }]}
-          scrollViewProps={{
-            refreshControl: (
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={handleRefresh}
-                colors={[colors.tint]}
-                tintColor={colors.tint}
-              />
-            ),
-            showsVerticalScrollIndicator: false,
-          }}
+          showsVerticalScrollIndicator={false}
         >
           {/* Stats Dashboard */}
           <VocabularyDashboard
@@ -294,14 +290,27 @@ export default function VocabularyScreen() {
           {/* Review Button Section */}
           {stats.dueWords > 0 ? (
             <View style={styles.reviewButtonWrapper}>
-              <ReviewButton dueWords={stats.dueWords} onPress={handleStartReview} />
+              <ThemedButton
+                title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'Word' : 'Words'}`}
+                onPress={handleStartReview}
+                variant="filled"
+                style={styles.reviewButton}
+                accessibilityLabel={`Review ${stats.dueWords} words`}
+              />
             </View>
           ) : (
             <View style={styles.reviewButtonWrapper}>
-              <DisabledReviewButton />
+              <ThemedButton
+                title="No words due"
+                onPress={() => {}}
+                variant="outlined"
+                style={styles.reviewButton}
+                disabled
+                accessibilityLabel="No words due"
+              />
             </View>
           )}
-        </ThemedView>
+        </ScrollView>
         <PageHeader title="Words" />
       </ThemedView>
     </Animated.View>
@@ -330,5 +339,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  reviewButton: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    width: '100%',
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    ...LAYOUT.SHADOW.SMALL,
   },
 });
