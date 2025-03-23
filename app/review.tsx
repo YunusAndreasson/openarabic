@@ -88,9 +88,6 @@ export default function ReviewScreen() {
   // Add state to control progress bar animation
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
 
-  // Track the previous progress value to avoid unnecessary animations
-  const prevProgressRef = useRef(0);
-
   // Track maximum progress seen to avoid regression
   const maxProgressRef = useRef(0);
 
@@ -109,8 +106,9 @@ export default function ReviewScreen() {
   // Show loading state during initial load to prevent "no words" flash
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
 
-  // Create animated styles for the container
+  // Create animated styles for the container - optimize to run on UI thread
   const containerStyle = useAnimatedStyle(() => {
+    'worklet';
     return {
       opacity: isTransitioningToCompletion ? opacity.value : 1,
     };
@@ -122,11 +120,12 @@ export default function ReviewScreen() {
     if (completionTriggeredRef.current) return;
     completionTriggeredRef.current = true;
 
-    console.log('Triggering completion transition');
+    if (__DEV__) {
+      console.log('Triggering completion transition');
+    }
 
     // Set progress to 100% immediately
     maxProgressRef.current = 100;
-    prevProgressRef.current = 100;
     setProgressAnimationKey(prev => prev + 1);
 
     // Start transition to completion screen
@@ -154,17 +153,25 @@ export default function ReviewScreen() {
   // Update progress tracking
   useEffect(() => {
     if (!isLoading && progress !== undefined) {
-      console.log('[Progress Update]', {
-        progress,
-        isComplete,
-      });
+      if (__DEV__) {
+        console.log('[Progress Update]', {
+          progress,
+          isComplete,
+        });
+      }
 
-      // Update maxProgress
-      maxProgressRef.current = Math.max(maxProgressRef.current, progress);
-      prevProgressRef.current = progress;
+      // Only update maxProgress and trigger animation if progress actually increased
+      if (progress > maxProgressRef.current) {
+        // Update maxProgress
+        maxProgressRef.current = progress;
 
-      // Force progress bar animation refresh
-      setProgressAnimationKey(prev => prev + 1);
+        // Only force progress bar animation refresh when there's a visual change
+        setProgressAnimationKey(prev => prev + 1);
+
+        if (__DEV__) {
+          console.log('[Progress Animation] Triggering animation, progress:', progress);
+        }
+      }
     }
   }, [isLoading, progress, isComplete]);
 
@@ -175,7 +182,9 @@ export default function ReviewScreen() {
       // So if progress is 33%, then total words is 3 (100/33)
       const calculatedTotal = Math.round(100 / (progress || 100));
       totalWordsRef.current = calculatedTotal;
-      console.log('[Progress Init] Setting total words:', calculatedTotal);
+      if (__DEV__) {
+        console.log('[Progress Init] Setting total words:', calculatedTotal);
+      }
     }
   }, [isLoading, progress]);
 
@@ -198,13 +207,15 @@ export default function ReviewScreen() {
 
   // Update current sentence when currentWord changes
   useEffect(() => {
-    console.log('[Word Change Effect]', {
-      currentWord: currentWord?.sentence_word.word_form,
-      currentSentence: currentSentence.wordForm,
-      isUpdating: isUpdatingWordRef.current,
-      isComplete,
-      isTransitioning: isTransitioningToCompletion,
-    });
+    if (__DEV__) {
+      console.log('[Word Change Effect]', {
+        currentWord: currentWord?.sentence_word.word_form,
+        currentSentence: currentSentence.wordForm,
+        isUpdating: isUpdatingWordRef.current,
+        isComplete,
+        isTransitioning: isTransitioningToCompletion,
+      });
+    }
 
     if (currentWord && !isComplete && !isTransitioningToCompletion) {
       const wordForm = currentWord.sentence_word.word_form;
@@ -213,26 +224,32 @@ export default function ReviewScreen() {
   }, [currentWord, isComplete, isTransitioningToCompletion]);
 
   // Update effect to properly handle isComplete changes
+  // Optimized to only run when the relevant conditions might have changed
   useEffect(() => {
     if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
-      console.log('isComplete changed to true, triggering completion transition');
+      if (__DEV__) {
+        console.log('isComplete changed to true, triggering completion transition');
+      }
       triggerCompletionTransition();
     }
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
-    console.log('[Swipe Left] Starting with word:', currentWord?.sentence_word.word_form);
-
-    // Check for concurrent updates with a local guard
-    if (isUpdatingWordRef.current) {
-      console.log('[Swipe Left] Blocked - already updating');
-      return;
+    if (__DEV__) {
+      console.log('[Swipe Left] Starting with word:', currentWord?.sentence_word.word_form);
     }
 
-    // If we're already transitioning to completion, prevent further updates
-    if (isTransitioningToCompletion || isComplete || completionTriggeredRef.current) {
-      console.log('[Swipe Left] Blocked - transitioning or complete');
+    // Check for concurrent updates with a local guard
+    if (
+      isUpdatingWordRef.current ||
+      isTransitioningToCompletion ||
+      isComplete ||
+      completionTriggeredRef.current
+    ) {
+      if (__DEV__) {
+        console.log('[Swipe Left] Blocked - already updating or completing');
+      }
       return;
     }
 
@@ -242,8 +259,12 @@ export default function ReviewScreen() {
     // Add haptic feedback for don't know - using very light feedback
     lightFeedback();
 
-    // First fade out the current word
-    opacity.value = withTiming(0, ANIMATION_CONFIG);
+    // First fade out the current word - use proper worklet annotation
+    const animateFadeOut = () => {
+      'worklet';
+      opacity.value = withTiming(0, ANIMATION_CONFIG);
+    };
+    animateFadeOut();
 
     // For failures, always update animation key even if progress doesn't change
     // This ensures the animation is triggered for feedback
@@ -268,20 +289,28 @@ export default function ReviewScreen() {
 
           // Show the meaning overlay
           setShowMeaningOverlay(true);
-          console.log('[Swipe Left] Showing meaning overlay');
+          if (__DEV__) {
+            console.log('[Swipe Left] Showing meaning overlay');
+          }
 
           // Hide the meaning after a delay
           meaningTimeoutRef.current = setTimeout(() => {
             try {
-              console.log('[Swipe Left] Hiding meaning overlay');
+              if (__DEV__) {
+                console.log('[Swipe Left] Hiding meaning overlay');
+              }
               setShowMeaningOverlay(false);
 
               // Update the word status after showing the meaning
               if (currentWord?.sentence_word_id) {
-                console.log('[Swipe Left] Updating word in database');
+                if (__DEV__) {
+                  console.log('[Swipe Left] Updating word in database');
+                }
                 updateWord(currentWord.sentence_word_id, false)
                   .then(() => {
-                    console.log('[Swipe Left] Word updated successfully');
+                    if (__DEV__) {
+                      console.log('[Swipe Left] Word updated successfully');
+                    }
                     // Fade in the new word after the update
                     opacity.value = withTiming(1, ANIMATION_CONFIG);
                     // Reset the concurrency guard immediately
@@ -325,43 +354,70 @@ export default function ReviewScreen() {
 
   // Handle swipe right (know the word)
   const handleSwipeRight = useCallback(() => {
-    console.log('[Swipe Right] Starting with word:', currentWord?.sentence_word.word_form);
-
-    // Check for concurrent updates with a local guard
-    if (isUpdatingWordRef.current) {
-      console.log('[Swipe Right] Blocked - already updating');
-      return;
+    if (__DEV__) {
+      console.log('[Swipe Right] Starting with word:', currentWord?.sentence_word.word_form);
     }
 
-    // If we're already transitioning to completion, prevent further updates
-    if (isTransitioningToCompletion || isComplete || completionTriggeredRef.current) {
-      console.log('[Swipe Right] Blocked - transitioning or complete');
+    // Check for concurrent updates with a local guard - combine conditions
+    if (
+      isUpdatingWordRef.current ||
+      isTransitioningToCompletion ||
+      isComplete ||
+      completionTriggeredRef.current
+    ) {
+      if (__DEV__) {
+        console.log('[Swipe Right] Blocked - already updating or completing');
+      }
       return;
     }
 
     // Set local concurrency guard
     isUpdatingWordRef.current = true;
 
-    // Simple fade out
-    opacity.value = withTiming(0, ANIMATION_CONFIG);
+    // Simple fade out - use proper worklet annotation
+    const animateFadeOut = () => {
+      'worklet';
+      opacity.value = withTiming(0, ANIMATION_CONFIG);
+    };
+    animateFadeOut();
 
     // Update the word in the database
     if (currentWord?.sentence_word_id) {
       updateWord(currentWord.sentence_word_id, true)
         .then(() => {
-          console.log('[Swipe Right] Word updated successfully');
+          if (__DEV__) {
+            console.log('[Swipe Right] Word updated successfully');
+          }
           // Reset update guard and fade back in
           isUpdatingWordRef.current = false;
-          opacity.value = withTiming(1, ANIMATION_CONFIG);
+
+          // Use proper worklet for fade in
+          const animateFadeIn = () => {
+            'worklet';
+            opacity.value = withTiming(1, ANIMATION_CONFIG);
+          };
+          animateFadeIn();
         })
         .catch(error => {
           console.error('[Swipe Right] Error:', error);
           isUpdatingWordRef.current = false;
-          opacity.value = withTiming(1, ANIMATION_CONFIG);
+
+          // Use proper worklet for fade in on error
+          const animateFadeIn = () => {
+            'worklet';
+            opacity.value = withTiming(1, ANIMATION_CONFIG);
+          };
+          animateFadeIn();
         });
     } else {
       isUpdatingWordRef.current = false;
-      opacity.value = withTiming(1, ANIMATION_CONFIG);
+
+      // Use proper worklet for fade in
+      const animateFadeIn = () => {
+        'worklet';
+        opacity.value = withTiming(1, ANIMATION_CONFIG);
+      };
+      animateFadeIn();
     }
   }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
 
