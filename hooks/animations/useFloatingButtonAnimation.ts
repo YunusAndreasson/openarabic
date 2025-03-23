@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useAnimatedStyle, withTiming, runOnUI } from 'react-native-reanimated';
 import { useTransformAnimation } from './useTransformAnimation';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { TIMING_CONFIG } from './animationConfigs';
@@ -68,13 +68,16 @@ export const useFloatingButtonAnimation = (isVisible: boolean) => {
 
   // Update animations based on visibility
   useEffect(() => {
-    'worklet';
-    // Simple fade animation
-    buttonsOpacity.value = withTiming(isVisible ? 1 : 0, {
-      duration: 200,
-    });
+    // Run on UI thread for better performance
+    runOnUI(() => {
+      'worklet';
+      // Simple fade animation
+      buttonsOpacity.value = withTiming(isVisible ? 1 : 0, {
+        duration: 200,
+      });
+    })();
 
-    // Position animations
+    // Position animations - These already run on UI thread through their hooks
     if (isVisible) {
       startBackButtonAnimation();
       startBookmarkButtonAnimation();

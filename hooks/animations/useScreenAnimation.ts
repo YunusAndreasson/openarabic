@@ -3,6 +3,7 @@ import { useLayoutReady } from '../useLayoutReady';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { useAnimationTrigger } from './useAnimationTrigger';
 import { AnimatedStyle } from './types';
+import { runOnUI } from 'react-native-reanimated';
 
 /**
  * Return type for useScreenAnimation hook
@@ -55,10 +56,13 @@ export const useScreenAnimation = (
     duration: animationDuration,
   });
 
-  // Function to start the fade-in animation
+  // Function to start the fade-in animation - ensure it's a worklet
   const startFadeInAnimation = useCallback(() => {
-    'worklet';
-    setOpacity(1);
+    // Ensure this runs on the UI thread
+    runOnUI(() => {
+      'worklet';
+      setOpacity(1);
+    })();
   }, [setOpacity]);
 
   // Trigger animations when both data and layout are ready
@@ -74,7 +78,11 @@ export const useScreenAnimation = (
   const reset = useCallback(() => {
     resetAnimations();
     resetLayout();
-    resetOpacity();
+    // Ensure opacity reset runs on the UI thread
+    runOnUI(() => {
+      'worklet';
+      resetOpacity();
+    })();
   }, [resetAnimations, resetLayout, resetOpacity]);
 
   // Helper for conditional rendering - only show content when layout is ready

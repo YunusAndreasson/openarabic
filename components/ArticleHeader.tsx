@@ -17,16 +17,17 @@ import { ArticleHeaderProps } from '@/types/ui.types';
 const styles = StyleSheet.create({
   articleHeaderContainer: {
     paddingHorizontal: 15,
-    paddingVertical: LAYOUT.SPACING.XLARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   titleContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   articleMetaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   authorContainer: {
     flexDirection: 'row',
@@ -37,13 +38,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   articleInfoItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   infoIcon: {
     opacity: LAYOUT.OPACITY.HIGH,
@@ -52,7 +53,7 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.TINY,
   },
   summaryContainer: {
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
 });
 

@@ -13,6 +13,7 @@ import {
   SlideOutLeft,
   AnimatedStyleProp,
   withDelay,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
 import { SCREEN_WIDTH } from '../../constants/layout';
@@ -165,30 +166,29 @@ export const useTransformAnimation = (
         : SlideOutLeft.duration(duration).springify();
   }
 
-  // Animation starter function
+  // Function to start the animation
   const startAnimation = useCallback(
     (onComplete?: () => void) => {
       'worklet';
+      try {
+        // First cancel any running animations
+        cancelAnimation(value);
 
-      if (delay > 0) {
+        // Different animation based on type
         if (useSpring) {
-          value.value = withDelay(
-            delay,
-            withSpring(
-              targetValue,
-              {
-                ...SPRING_CONFIG.SLIDE,
-                ...(damping !== undefined ? { damping } : {}),
-                ...(stiffness !== undefined ? { stiffness } : {}),
-              },
-              () => {
-                if (onComplete && runOnJS) {
-                  runOnJS(onComplete)();
-                }
-              }
-            )
-          );
+          // Use spring animation
+          const springConfig = {
+            damping: damping ?? 15,
+            stiffness: stiffness ?? 120,
+          };
+
+          value.value = withSpring(targetValue, springConfig, finished => {
+            if (finished && onComplete) {
+              runOnJS(onComplete)();
+            }
+          });
         } else {
+          // Use timing animation
           value.value = withDelay(
             delay,
             withTiming(
@@ -197,83 +197,71 @@ export const useTransformAnimation = (
                 duration,
                 easing: TIMING_CONFIG.MEDIUM.easing,
               },
-              () => {
-                if (onComplete && runOnJS) {
+              finished => {
+                if (finished && onComplete) {
                   runOnJS(onComplete)();
                 }
               }
             )
           );
         }
-      } else {
-        if (useSpring) {
-          value.value = withSpring(
-            targetValue,
-            {
-              ...SPRING_CONFIG.SLIDE,
-              ...(damping !== undefined ? { damping } : {}),
-              ...(stiffness !== undefined ? { stiffness } : {}),
-            },
-            () => {
-              if (onComplete && runOnJS) {
-                runOnJS(onComplete)();
-              }
-            }
-          );
-        } else {
-          value.value = withTiming(
-            targetValue,
-            {
-              duration,
-              easing: TIMING_CONFIG.MEDIUM.easing,
-            },
-            () => {
-              if (onComplete && runOnJS) {
-                runOnJS(onComplete)();
-              }
-            }
-          );
+      } catch (error) {
+        // Fallback if animation fails
+        if (onComplete) {
+          runOnJS(onComplete)();
         }
       }
     },
     [value, targetValue, duration, delay, useSpring, damping, stiffness]
   );
 
-  // Reverse animation function
+  // Function to reverse the animation
   const reverseAnimation = useCallback(
     (onComplete?: () => void) => {
       'worklet';
+      try {
+        // First cancel any running animations
+        cancelAnimation(value);
 
-      if (useSpring) {
-        value.value = withSpring(
-          startPosition,
-          {
-            ...SPRING_CONFIG.SLIDE,
-            ...(damping !== undefined ? { damping } : {}),
-            ...(stiffness !== undefined ? { stiffness } : {}),
-          },
-          () => {
-            if (onComplete && runOnJS) {
-              runOnJS(onComplete)();
+        if (useSpring) {
+          // Use spring animation
+          const springConfig = {
+            damping: damping ?? 15,
+            stiffness: stiffness ?? 120,
+          };
+
+          value.value = withSpring(
+            type === 'slide' ? startPosition : initialValue,
+            springConfig,
+            finished => {
+              if (finished && onComplete) {
+                runOnJS(onComplete)();
+              }
             }
-          }
-        );
-      } else {
-        value.value = withTiming(
-          startPosition,
-          {
-            duration,
-            easing: TIMING_CONFIG.MEDIUM.easing,
-          },
-          () => {
-            if (onComplete && runOnJS) {
-              runOnJS(onComplete)();
+          );
+        } else {
+          // Use timing animation
+          value.value = withTiming(
+            type === 'slide' ? startPosition : initialValue,
+            {
+              duration,
+              easing: TIMING_CONFIG.MEDIUM.easing,
+            },
+            finished => {
+              if (finished && onComplete) {
+                runOnJS(onComplete)();
+              }
             }
-          }
-        );
+          );
+        }
+      } catch (error) {
+        // Fallback if animation fails
+        if (onComplete) {
+          runOnJS(onComplete)();
+        }
       }
     },
-    [value, startPosition, duration, useSpring, damping, stiffness]
+    [value, initialValue, startPosition, duration, type, useSpring, damping, stiffness]
   );
 
   // Reset function

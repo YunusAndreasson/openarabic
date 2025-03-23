@@ -334,97 +334,124 @@ export default function ArticlesScreen() {
   // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
 
-  // Create a header component for the FlatList
-  const ListHeaderComponent = useCallback(() => {
-    // We no longer need to handle filtered view here as it's handled by FilteredArticleView
+  // Memoized child components to prevent re-renders
+  const DailyPick = useMemo(() => {
+    const dailyPickArticle = getDailyPickArticle(articles, getDayOfYear());
+    return (
+      <DailyPickSection
+        article={dailyPickArticle}
+        onPress={handleArticlePress}
+        delay={0}
+        showTitle={true}
+      />
+    );
+  }, [articles, handleArticlePress]);
+
+  const ContinueReadingSection = useMemo(() => {
+    return (
+      <ArticleSection
+        title="Continue Reading"
+        articles={sortedInProgressArticles}
+        onArticlePress={article => router.push(`/article/${article.id}`)}
+        delay={40}
+        showTimeAgo={true}
+        getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
+        emptyStateMessage="Start reading to save your progress here"
+      />
+    );
+  }, [sortedInProgressArticles, lastOpenedArticles]);
+
+  const LatestTextsSection = useMemo(() => {
+    if (latestArticles.length === 0) return null;
+    return (
+      <ArticleSection
+        title="Latest Texts"
+        articles={latestArticles}
+        onArticlePress={handleArticlePress}
+        delay={60}
+        showTimeAgo={true}
+      />
+    );
+  }, [latestArticles, handleArticlePress]);
+
+  const FeaturedTextsSection = useMemo(() => {
+    if (featuredArticles.length === 0) return null;
+    return (
+      <FeaturedArticleSection
+        title="Featured Texts"
+        articles={featuredArticles}
+        onArticlePress={handleArticlePress}
+        delay={80}
+      />
+    );
+  }, [featuredArticles, handleArticlePress]);
+
+  const BeginnerFriendlySection = useMemo(() => {
+    if (beginnerArticles.length === 0) return null;
+    return (
+      <ArticleSection
+        title="Beginner Friendly"
+        articles={beginnerArticles}
+        onArticlePress={handleArticlePress}
+        delay={100}
+        hideDifficulty={true}
+      />
+    );
+  }, [beginnerArticles, handleArticlePress]);
+
+  const AuthorFilterSection = useMemo(() => {
+    return (
+      <FilterList
+        title="Browse by Author"
+        items={authors}
+        selectedId={null}
+        onSelect={handleSelectAuthor}
+        onClearFilter={handleClearFilters}
+        animationDelay={120}
+        itemAnimationDelay={140}
+      />
+    );
+  }, [authors, handleSelectAuthor, handleClearFilters]);
+
+  const CategoryFilterSection = useMemo(() => {
+    return (
+      <FilterList
+        title="Browse by Category"
+        items={categories}
+        selectedId={null}
+        onSelect={handleSelectCategory}
+        animationDelay={150}
+        itemAnimationDelay={170}
+      />
+    );
+  }, [categories, handleSelectCategory]);
+
+  // Create a pre-rendered header component for the FlatList to avoid re-rendering the entire list
+  const ListHeaderComponent = useMemo(() => {
     return (
       <>
-        <DailyPickSection
-          article={getDailyPickArticle(articles, getDayOfYear())}
-          onPress={handleArticlePress}
-          delay={0}
-          showTitle={true}
-        />
-
-        <ArticleSection
-          title="Continue Reading"
-          articles={sortedInProgressArticles}
-          onArticlePress={article => router.push(`/article/${article.id}`)}
-          delay={40}
-          showTimeAgo={true}
-          getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
-          emptyStateMessage="Start reading to save your progress here"
-        />
-
-        {latestArticles.length > 0 && (
-          <ArticleSection
-            title="Latest Texts"
-            articles={latestArticles}
-            onArticlePress={handleArticlePress}
-            delay={60}
-            showTimeAgo={true}
-          />
-        )}
-
-        {featuredArticles.length > 0 && (
-          <FeaturedArticleSection
-            title="Featured Texts"
-            articles={featuredArticles}
-            onArticlePress={handleArticlePress}
-            delay={80}
-          />
-        )}
-
-        {beginnerArticles.length > 0 && (
-          <ArticleSection
-            title="Beginner Friendly"
-            articles={beginnerArticles}
-            onArticlePress={handleArticlePress}
-            delay={100}
-            hideDifficulty={true}
-          />
-        )}
-
-        {/* Author filter list */}
-        <FilterList
-          title="Browse by Author"
-          items={authors}
-          selectedId={null}
-          onSelect={handleSelectAuthor}
-          onClearFilter={handleClearFilters}
-          animationDelay={120}
-          itemAnimationDelay={140}
-        />
-
-        {/* Category filter list */}
-        <FilterList
-          title="Browse by Category"
-          items={categories}
-          selectedId={null}
-          onSelect={handleSelectCategory}
-          animationDelay={150}
-          itemAnimationDelay={170}
-        />
+        {DailyPick}
+        {ContinueReadingSection}
+        {LatestTextsSection}
+        {FeaturedTextsSection}
+        {BeginnerFriendlySection}
+        {AuthorFilterSection}
+        {CategoryFilterSection}
       </>
     );
   }, [
-    articles,
-    handleArticlePress,
-    sortedInProgressArticles,
-    latestArticles,
-    featuredArticles,
-    beginnerArticles,
-    authors,
-    handleSelectAuthor,
-    handleClearFilters,
-    categories,
-    handleSelectCategory,
-    lastOpenedArticles,
+    DailyPick,
+    ContinueReadingSection,
+    LatestTextsSection,
+    FeaturedTextsSection,
+    BeginnerFriendlySection,
+    AuthorFilterSection,
+    CategoryFilterSection,
   ]);
 
   // Create an empty state component
-  const EmptyStateComponent = useCallback(() => {
-    // Return an empty fragment instead of null to satisfy the type requirement
+  const EmptyStateComponent = useMemo(() => {
+    // Return an empty fragment as a React element
     return <></>;
   }, []);
 
@@ -468,8 +495,8 @@ export default function ArticlesScreen() {
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
           onArticlePress={handleArticlePress}
-          ListHeaderComponent={ListHeaderComponent()}
-          ListEmptyComponent={EmptyStateComponent()}
+          ListHeaderComponent={ListHeaderComponent}
+          ListEmptyComponent={EmptyStateComponent}
           contentContainerStyle={{
             ...contentContainerStyle,
             paddingTop: getHeaderHeight(insets),

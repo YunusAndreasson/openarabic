@@ -15,21 +15,26 @@ import {
   ViewToken,
   ViewabilityConfig,
   Platform,
+  View,
 } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  withTiming,
+  useAnimatedStyle,
+  FadeIn,
+  runOnUI,
+} from 'react-native-reanimated';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
-import { useOpacityAnimation } from '../hooks/animations';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
+import { TIMING_CONFIG } from '../hooks/animations/animationConfigs';
 
 const ITEM_HEIGHT = 360; // Approximate height of each article card
-
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList);
 
 /**
  * An optimized FlatList component for rendering articles
@@ -49,15 +54,12 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
     ref
   ) => {
     const colors = useColors();
-    const [viewableItems, setViewableItems] = useState<ViewToken[]>([]);
-    const listRef = useRef<FlatList>(null);
+    const [viewableItemIds, setViewableItemIds] = useState<Set<number>>(new Set());
+    const listRef = useRef<FlatList<Article>>(null);
     const queryClient = useQueryClient();
 
     // Forward the ref to the parent component
-    useImperativeHandle(ref, () => ({
-      ...listRef.current,
-      // Add any additional methods as needed
-    }));
+    useImperativeHandle(ref, () => listRef.current!, []);
 
     // Memoize the key extractor for better performance
     const keyExtractor = useCallback((item: Article) => `article-${item.id}`, []);
@@ -84,10 +86,13 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
     // Handle viewable items change
     const onViewableItemsChanged = useCallback(
       ({ viewableItems: items }: { viewableItems: ViewToken[] }) => {
-        setViewableItems(items);
-        // Prefetch data for articles that are now visible
-        items.forEach(({ item }) => {
-          if (item && item.id) {
+        // Update viewable items set
+        const newViewableIds = new Set<number>();
+
+        items.forEach(({ item, isViewable }) => {
+          if (item && item.id && isViewable) {
+            newViewableIds.add(item.id);
+
             // Prefetch the article data in the background
             queryClient.prefetchQuery({
               queryKey: ['article', item.id],
@@ -96,39 +101,32 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
             });
           }
         });
+
+        setViewableItemIds(newViewableIds);
       },
       [queryClient]
     );
 
-    // Create a functional component for the animated article item
-    const AnimatedArticleItem = React.memo(
-      ({
-        item,
-        index,
-        onArticlePress,
-        isViewable,
-      }: {
-        item: Article;
-        index: number;
-        onArticlePress: (article: Article) => void;
-        isViewable: boolean;
-      }) => {
-        // Use animation with fixed delay based on index
-        const { animatedStyle, startAnimation } = useOpacityAnimation({
-          initialOpacity: 0,
-          delay: index * 50,
-          duration: 300,
-        });
+    // Create a simplified article item component
+    const ArticleItem = React.memo(({ item }: { item: Article }) => {
+      // Determine if the item is visible
+      const isVisible = viewableItemIds.has(item.id);
 
-        // Start the animation when the component mounts or becomes visible
-        useEffect(() => {
-          if (isViewable) {
-            startAnimation();
-          }
-        }, [isViewable, startAnimation]);
-
-        return (
-          <Animated.View style={[styles.articleItemContainer, animatedStyle]}>
+      // Simplified approach: only render content when visible
+      return (
+        <View style={styles.articleItemContainer}>
+          {isVisible ? (
+            <Animated.View entering={FadeIn.duration(300)}>
+              <ThemedCard
+                imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+                title={item.title}
+                category={item.category?.name ?? 'Uncategorized'}
+                author={item.author?.name ?? 'Anonymous'}
+                onPress={() => onArticlePress(item)}
+                style={styles.articleCard}
+              />
+            </Animated.View>
+          ) : (
             <ThemedCard
               imageUrl={item.image_url || 'https://picsum.photos/800/400'}
               title={item.title}
@@ -136,40 +134,37 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
               author={item.author?.name ?? 'Anonymous'}
               onPress={() => onArticlePress(item)}
               style={styles.articleCard}
-              isLoading={!isViewable}
+              isLoading={true}
             />
-          </Animated.View>
-        );
-      }
-    );
+          )}
+        </View>
+      );
+    });
 
-    AnimatedArticleItem.displayName = 'AnimatedArticleItem';
+    ArticleItem.displayName = 'ArticleItem';
 
-    // Then update the renderItem function to use our new component
+    // Render item function with better memoization
     const renderItem: ListRenderItem<Article> = useCallback(
-      ({ item, index }) => {
-        const isViewable = viewableItems.some(viewable => viewable.item?.id === item.id);
-
-        return (
-          <AnimatedArticleItem
-            item={item}
-            index={index}
-            onArticlePress={onArticlePress}
-            isViewable={isViewable}
-          />
-        );
-      },
-      [viewableItems, onArticlePress]
+      ({ item }) => <ArticleItem item={item} />,
+      []
     );
 
-    // Add the endMessageAnimatedStyle
-    const { animatedStyle: endMessageAnimatedStyle, startAnimation: startEndMessageAnimation } =
-      useOpacityAnimation({ initialOpacity: 0, delay: 800, duration: 400 });
+    // End message animation
+    const footerOpacity = useSharedValue(0);
+    const footerAnimatedStyle = useAnimatedStyle(() => ({
+      opacity: footerOpacity.value,
+    }));
 
     // Start the end message animation when the component mounts
-    React.useEffect(() => {
-      startEndMessageAnimation();
-    }, [startEndMessageAnimation]);
+    useEffect(() => {
+      // Simple timeout instead of using worklets
+      setTimeout(() => {
+        footerOpacity.value = withTiming(1, {
+          duration: 400,
+          easing: TIMING_CONFIG.MEDIUM.easing,
+        });
+      }, 800);
+    }, []);
 
     // Render the footer component
     const renderFooter = useCallback(() => {
@@ -177,18 +172,17 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
 
       return (
         <>
-          <Animated.View style={[styles.endMessageContainer, endMessageAnimatedStyle]} />
+          <Animated.View style={[styles.endMessageContainer, footerAnimatedStyle]} />
           <CopyrightFooter />
         </>
       );
-    }, [isLoading, articles.length, endMessageAnimatedStyle]);
+    }, [isLoading, articles.length, footerAnimatedStyle]);
 
     // Ensure the list starts at the top on mount
     useEffect(() => {
       setTimeout(() => {
         if (listRef.current && 'scrollToOffset' in listRef.current) {
           try {
-            // @ts-ignore - This is safe as we've checked that scrollToOffset exists
             listRef.current.scrollToOffset({ offset: 0, animated: false });
           } catch (e) {
             console.warn('Failed to scroll to top:', e);
@@ -197,17 +191,20 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       }, 100);
     }, []);
 
-    const refreshControl = (
-      <RefreshControl
-        refreshing={isRefreshing}
-        onRefresh={onRefresh}
-        colors={[colors.tint]}
-        tintColor={colors.tint}
-      />
+    const refreshControl = useMemo(
+      () => (
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[colors.tint]}
+          tintColor={colors.tint}
+        />
+      ),
+      [isRefreshing, onRefresh, colors.tint]
     );
 
     return (
-      <AnimatedFlatList
+      <FlatList
         ref={listRef}
         data={articles}
         renderItem={renderItem}
@@ -245,20 +242,26 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
   }
 );
 
+ArticleList.displayName = 'ArticleList';
+
 const styles = StyleSheet.create({
   listContent: {
     paddingBottom: LAYOUT.SPACING.LARGE,
+    flexGrow: 1,
   },
   articleItemContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   articleCard: {
-    width: '100%',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
   },
   endMessageContainer: {
-    height: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
-export default React.memo(ArticleList);
+export default ArticleList;
