@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useOpacityAnimation, useTransformAnimation } from '../hooks/animations';
+import { useTransformAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -18,19 +18,11 @@ const Pill = React.memo(
     label,
     isSelected = false,
     onSelect,
-    animationDelay = 0,
     absolute = false,
     variant = 'filter',
   }: PillProps) => {
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
-
-    // Use fade-in animation hook with consistent timing
-    const { animatedStyle, startAnimation } = useOpacityAnimation({
-      initialOpacity: 0, // Start fully transparent
-      delay: animationDelay,
-      duration: LAYOUT.ANIMATION.DURATION.FAST,
-    });
 
     // Use scale animation hook for press feedback
     const {
@@ -120,75 +112,66 @@ const Pill = React.memo(
       };
     }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
 
-    // Start the fade-in animation when the component mounts
-    useEffect(() => {
-      startAnimation(animationDelay);
-    }, [startAnimation, animationDelay]);
-
     // For category pills that don't need interaction
     if (isCategory && !onSelect) {
       return (
-        <Animated.View style={animatedStyle as any}>
-          <View
-            style={[
-              styles.container,
-              absolute && styles.absoluteContainer,
-              containerStyle,
-              // Add subtle inner shadow for depth
-              isDarkMode && {
-                shadowColor: 'rgba(0,0,0,0.3)',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.2,
-                shadowRadius: 1,
-              },
-            ]}
-          >
-            <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
-              {capitalizeFirstLetter(label.toLowerCase())}
-            </ThemedText>
-          </View>
-        </Animated.View>
+        <View
+          style={[
+            styles.container,
+            absolute && styles.absoluteContainer,
+            containerStyle,
+            // Add subtle inner shadow for depth
+            isDarkMode && {
+              shadowColor: 'rgba(0,0,0,0.3)',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 1,
+            },
+          ]}
+        >
+          <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
+            {capitalizeFirstLetter(label.toLowerCase())}
+          </ThemedText>
+        </View>
       );
     }
 
     // For interactive pills
     return (
-      <Animated.View style={animatedStyle as any}>
-        <Animated.View style={scaleStyle as any}>
-          <Pressable
-            style={({ pressed: isPressedState }) => [
-              styles.pill,
-              containerStyle,
-              isPressedState &&
-                !isSelected && {
-                  backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
-                },
-              isSelected && styles.pillSelected,
-              absolute && styles.absoluteContainer,
-            ]}
-            onPress={handlePress}
-            onPressIn={() => {
-              startScaleDown();
-            }}
-            onPressOut={() => {
-              resetScale();
-            }}
-            disabled={!onSelect}
-            android_ripple={
-              isSelected
-                ? null
-                : {
-                    color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                    borderless: false,
-                    radius: -5,
-                  }
-            }
-          >
-            <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
-              {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label.toUpperCase()}
-            </ThemedText>
-          </Pressable>
-        </Animated.View>
+      <Animated.View style={scaleStyle as any}>
+        <Pressable
+          style={({ pressed: isPressedState }) => [
+            styles.pill,
+            containerStyle,
+            isPressedState &&
+              !isSelected && {
+                backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
+              },
+            isSelected && styles.pillSelected,
+            absolute && styles.absoluteContainer,
+          ]}
+          onPress={handlePress}
+          onPressIn={() => {
+            startScaleDown();
+          }}
+          onPressOut={() => {
+            resetScale();
+          }}
+          disabled={!onSelect}
+          android_ripple={
+            isSelected
+              ? null
+              : {
+                  color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  borderless: false,
+                  radius: -5,
+                }
+          }
+        >
+          <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
+            {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label.toUpperCase()}
+          </ThemedText>
+        </Pressable>
       </Animated.View>
     );
   }

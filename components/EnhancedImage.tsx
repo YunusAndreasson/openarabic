@@ -5,7 +5,6 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { LAYOUT } from '../constants/layout';
 import { LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
-import Animated from 'react-native-reanimated';
 import {
   getPlaceholderColor,
   getOptimizedImageUrl,
@@ -13,7 +12,6 @@ import {
   generateTinyPreview,
   getImageLoadPriority,
 } from '../utils/imageOptimization';
-import { useOpacityAnimation } from '@/hooks/animations';
 import { EnhancedImageProps } from '@/types/ui.types';
 
 /**
@@ -82,14 +80,6 @@ function EnhancedImageInternal({
     return getPlaceholderColor(isDarkMode);
   }, [isDarkMode]);
 
-  // Optimize fade animation - faster for better perceived performance
-  // Reduced duration from 300ms to a snappier 150ms
-  const { animatedStyle, startAnimation } = useOpacityAnimation({
-    initialOpacity: 0,
-    delay: 0,
-    duration: 150,
-  });
-
   // Prefetch image if the prefetch prop is true
   useEffect(() => {
     if (prefetch && optimizedSource) {
@@ -101,9 +91,8 @@ function EnhancedImageInternal({
   // Handle successful image load
   const handleImageLoad = useCallback(() => {
     setIsLoading(false);
-    startAnimation();
     onLoad?.();
-  }, [onLoad, startAnimation]);
+  }, [onLoad]);
 
   // Handle image error
   const handleError = useCallback(() => {
@@ -141,7 +130,7 @@ function EnhancedImageInternal({
       )}
 
       {/* Actual image */}
-      <Animated.View style={[styles.imageContainer, animatedStyle]}>
+      <View style={styles.imageContainer}>
         <Image
           source={{ uri: optimizedSource }}
           style={styles.image}
@@ -154,9 +143,9 @@ function EnhancedImageInternal({
           accessibilityLabel={alt}
           blurRadius={isLoading ? blurRadius : undefined}
           priority={loadPriority}
-          recyclingKey={optimizedSource} // Add recyclingKey for better memory management
+          recyclingKey={optimizedSource}
         />
-      </Animated.View>
+      </View>
 
       {/* Error state */}
       {isError && (

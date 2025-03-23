@@ -1,9 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import Animated from 'react-native-reanimated';
-import { useOpacityAnimation } from '@/hooks/animations';
 import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui.types';
 
 export interface RelatedArticlesSectionProps extends RelatedArticlesSectionPropsType {}
@@ -26,26 +24,19 @@ const styles = StyleSheet.create({
 // Memoized related articles section for better performance
 export const RelatedArticlesSection = React.memo(
   ({ title, articles, renderArticleCard }: RelatedArticlesSectionProps) => {
-    const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 300 });
-
-    useEffect(() => {
-      startAnimation();
-    }, [startAnimation]);
-
     return (
       <View style={styles.container}>
         <View style={styles.titleContainer}>
           <ThemedText type="heading3">{title}</ThemedText>
         </View>
-        <Animated.ScrollView
+        <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.horizontalList}
           removeClippedSubviews={true}
-          style={animatedStyle as any}
         >
           {articles.map(renderArticleCard)}
-        </Animated.ScrollView>
+        </ScrollView>
       </View>
     );
   }

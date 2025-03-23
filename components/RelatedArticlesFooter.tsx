@@ -1,16 +1,8 @@
 import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-
-// Components
 import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
-
-// Constants
 import { LAYOUT } from '@/constants/layout';
-
-// Utils
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-
-// Types
 import { RelatedArticlesFooterProps } from '@/types/ui.types';
 
 const styles = StyleSheet.create({

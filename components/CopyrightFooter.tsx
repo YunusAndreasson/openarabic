@@ -1,9 +1,7 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { ThemedText } from './ThemedText';
-import Animated from 'react-native-reanimated';
-import { useOpacityAnimation } from '@/hooks/animations';
 
 /**
  * A component that displays a copyright notice with the current Hijri year
@@ -23,22 +21,16 @@ export const CopyrightFooter = React.memo(() => {
   };
 
   const hijriYear = getHijriYear();
-  const { animatedStyle, startAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 300, duration: 400 });
-
-  useEffect(() => {
-    startAnimation();
-  }, [startAnimation]);
-
   const copyrightText = `© ${new Date().getFullYear()} OpenArabic • ${hijriYear}هـ`;
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
+    <View style={styles.container}>
       <View style={styles.textContainer}>
         <ThemedText type="caption" variant="subtle" align="center">
           {copyrightText}
         </ThemedText>
       </View>
-    </Animated.View>
+    </View>
   );
 });
 
