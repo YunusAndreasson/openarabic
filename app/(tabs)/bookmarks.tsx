@@ -273,6 +273,7 @@ export default function BookmarksScreen() {
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
     enabled: !!user?.id,
     staleTime: 60000, // 1 minute
+    placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
   });
 
   // Use the screen focus refresh hook

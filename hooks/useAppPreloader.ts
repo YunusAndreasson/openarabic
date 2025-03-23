@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
@@ -11,7 +11,8 @@ const MINUTE_IN_MS = 60000;
 const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
 const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
 const STALE_TIME_ALWAYS_FRESH = 0;
-const PRELOAD_TIMEOUT_MS = 8000;
+const CRITICAL_DATA_TIMEOUT_MS = 3000;
+const NON_CRITICAL_DATA_TIMEOUT_MS = 5000;
 
 interface UserSettings {
   lastOpenedArticle?: number;
@@ -31,71 +32,56 @@ export const useAppPreloader = () => {
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
   const [preloadComplete, setPreloadComplete] = useState(false);
+  const [criticalDataLoaded, setCriticalDataLoaded] = useState(false);
 
-  // Prefetch data when the app starts and the user is authenticated
-  useEffect(() => {
-    async function prefetchData() {
-      if (!user?.id || isAuthLoading) return;
-
-      try {
-        const userId = user.id;
-
-        // Prefetch the user's study words using FSRS
-        await queryClient.prefetchQuery({
-          queryKey: ['studyWords', userId],
-          queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { forStats: false }),
-          staleTime: 60000, // 1 minute
-        });
-
-        // Prefetch the user's due words using FSRS
-        await queryClient.prefetchQuery({
-          queryKey: ['dueWords', userId],
-          queryFn: () => studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true }),
-          staleTime: 0, // Always fetch fresh data for due words
-        });
-
-        // Prefetch the latest articles
-        await queryClient.prefetchQuery({
-          queryKey: ['latestArticles'],
-          queryFn: () => articlesService.getArticles(),
-          staleTime: 300000, // 5 minutes
-        });
-
-        // If the user has a last opened article, prefetch it
-        const settings = (await queryClient.getQueryData(['userSettings', userId])) as UserSettings;
-        if (settings?.lastOpenedArticle) {
-          await queryClient.prefetchQuery({
-            queryKey: ['article', settings.lastOpenedArticle],
-            queryFn: () => articlesService.getArticleById(settings.lastOpenedArticle!),
-            staleTime: 300000, // 5 minutes
-          });
-        }
-      } catch (error) {
-        console.error('Error prefetching data:', error);
-      }
-    }
-
-    prefetchData();
-  }, [queryClient, user, isAuthLoading]);
-
-  // Main preloading function
-  const preloadAppData = async () => {
+  // Main preloading function - now combines and replaces the previous prefetchData effect
+  const preloadAppData = useCallback(async () => {
     // Don't set isPreloading if already in that state to avoid unnecessary re-renders
     if (!isPreloading) {
       setIsPreloading(true);
     }
 
+    // Reset state for each preload cycle
+    setCriticalDataLoaded(false);
+    setPreloadComplete(false);
+
     try {
-      // Create an array of promises for parallel fetching
-      const preloadPromises = [
-        // Preload main articles list (home screen)
+      // STEP 1: Load critical data first (data needed for initial UI render)
+      const criticalPromises = [
+        // Preload main articles list (home screen) - critical for index page
         queryClient.prefetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
           staleTime: STALE_TIME_SHORT,
         }),
+      ];
 
-        // Preload categories (used in multiple screens)
+      // Add user-specific critical data if user is logged in
+      if (user?.id) {
+        criticalPromises.push(
+          // Due words are critical for logged-in users who might want to study
+          queryClient.prefetchQuery({
+            queryKey: ['dueWords', user.id],
+            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
+            staleTime: STALE_TIME_ALWAYS_FRESH,
+          })
+        );
+      }
+
+      // Critical data timeout - shorter than non-critical
+      const criticalTimeoutPromise = new Promise(resolve =>
+        setTimeout(resolve, CRITICAL_DATA_TIMEOUT_MS)
+      );
+
+      // Wait for critical data or timeout
+      await Promise.race([Promise.all(criticalPromises), criticalTimeoutPromise]);
+
+      // Mark critical data as loaded to allow UI to transition
+      setCriticalDataLoaded(true);
+
+      // STEP 2: Load non-critical data in the background
+      const nonCriticalPromises = [
+        // Categories data - used in filters but not needed for initial render
         queryClient.prefetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
@@ -103,10 +89,10 @@ export const useAppPreloader = () => {
         }),
       ];
 
-      // Conditionally add user-specific data preloading
+      // Add user-specific non-critical data if user is logged in
       if (user?.id) {
-        // Preload vocabulary/study words if user is logged in
-        preloadPromises.push(
+        // Study words detail data - needed for vocabulary screen but not immediately
+        nonCriticalPromises.push(
           queryClient.prefetchQuery({
             queryKey: ['studyWords', user.id],
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
@@ -114,41 +100,42 @@ export const useAppPreloader = () => {
           })
         );
 
-        // Also preload due words for vocabulary screen
-        preloadPromises.push(
-          queryClient.prefetchQuery({
-            queryKey: ['dueWords', user.id],
-            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-            staleTime: STALE_TIME_ALWAYS_FRESH, // Always fetch fresh data for due words
-          })
-        );
+        // Try to prefetch the user's last opened article if available
+        const settings = (await queryClient.getQueryData([
+          'userSettings',
+          user.id,
+        ])) as UserSettings;
+        if (settings?.lastOpenedArticle) {
+          nonCriticalPromises.push(
+            queryClient.prefetchQuery({
+              queryKey: ['article', settings.lastOpenedArticle],
+              queryFn: () => articlesService.getArticleById(settings.lastOpenedArticle!),
+              staleTime: STALE_TIME_MEDIUM,
+            })
+          );
+        }
       }
 
-      // Add a safety timeout of 8 seconds to prevent infinite waiting
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Preloading timed out')), PRELOAD_TIMEOUT_MS)
+      // Non-critical data timeout
+      const nonCriticalTimeoutPromise = new Promise(resolve =>
+        setTimeout(resolve, NON_CRITICAL_DATA_TIMEOUT_MS)
       );
 
-      // Wait for all preloading to complete OR timeout after 8 seconds
-      await Promise.race([Promise.all(preloadPromises), timeoutPromise]).catch(error => {
-        // Log timeout but continue with app initialization
-        if (error.message === 'Preloading timed out') {
-          // Data preloading timed out, continuing with partial data
-        } else {
-          throw error;
-        }
-      });
+      // Wait for non-critical data or timeout
+      await Promise.race([Promise.all(nonCriticalPromises), nonCriticalTimeoutPromise]);
 
-      // We've either loaded all data or hit the timeout, mark as complete
+      // All preloading complete
       setPreloadComplete(true);
     } catch (error) {
-      // Fail silently - the app will fall back to regular loading
-      // Still mark preloading as complete to not block the app
+      // Fail silently but ensure state is properly set
+      if (!criticalDataLoaded) {
+        setCriticalDataLoaded(true);
+      }
       setPreloadComplete(true);
     } finally {
       setIsPreloading(false);
     }
-  };
+  }, [queryClient, user, isPreloading, isAuthLoading]);
 
   // Function to prefetch a specific article
   const prefetchArticle = async (articleId: number) => {
@@ -182,6 +169,7 @@ export const useAppPreloader = () => {
   const refreshPreloadedData = () => {
     // Reset state
     setPreloadComplete(false);
+    setCriticalDataLoaded(false);
 
     // Batch invalidate common queries
     const queriesToInvalidate = [['articles'], ['categories']];
@@ -207,6 +195,7 @@ export const useAppPreloader = () => {
   return {
     isPreloading,
     preloadComplete,
+    criticalDataLoaded,
     preloadAppData,
     prefetchArticle,
     refreshPreloadedData,

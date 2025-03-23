@@ -2,7 +2,7 @@ import { StyleSheet, Platform } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Components
@@ -48,6 +48,11 @@ import FeaturedArticleSection from '../../components/FeaturedArticleSection';
 import FilterList from '../../components/FilterList';
 import DailyPickSection from '../../components/DailyPickSection';
 import ErrorState from '../../components/ErrorState';
+
+// Cache duration constants
+const MINUTE_IN_MS = 60000;
+const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
+const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
 
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -103,19 +108,37 @@ export default function ArticlesScreen() {
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const isInitialMount = useRef(true);
 
-  // State
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [categories, setCategories] = useState<Tables<'categories'>[]>([]);
+  // Use React Query instead of local state for articles
+  const {
+    data: articlesData = [],
+    isLoading: isArticlesLoading,
+    isFetching: isArticlesFetching,
+    error: articlesError,
+  } = useQuery({
+    queryKey: ['articles'],
+    queryFn: () => articlesService.getArticles(),
+    staleTime: STALE_TIME_SHORT,
+    placeholderData: () => queryClient.getQueryData(['articles']) || [],
+  });
+
+  // Use React Query for categories
+  const { data: categoriesData = [], isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesService.getCategories(),
+    staleTime: STALE_TIME_MEDIUM,
+    placeholderData: () => queryClient.getQueryData(['categories']) || [],
+  });
+
+  // State for authors (keep this as is since it uses Supabase directly)
   const [authors, setAuthors] = useState<Tables<'authors'>[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Get inProgressArticles from Redux
   const { inProgressArticles = [], lastOpenedArticles = {} } = useAppSelectorMemo(
     state => state.readingList
   );
 
-  // Define fetchAuthors and fetchCategories functions
+  // Define fetchAuthors function
   const fetchAuthors = useCallback(async () => {
     try {
       const { data } = await supabase.from('authors').select('*');
@@ -125,33 +148,20 @@ export default function ArticlesScreen() {
     }
   }, []);
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const categoriesData = await categoriesService.getCategories();
-      setCategories(categoriesData ?? []);
-    } catch (_err) {
-      setCategories([]);
-    }
-  }, []);
-
   // Add an effect to fetch in-progress articles when the component mounts
   useEffect(() => {
     dispatch(fetchInProgressArticles());
   }, [dispatch]);
 
-  // Add effects to fetch authors and categories when the component mounts
+  // Add effects to fetch authors when the component mounts
   useEffect(() => {
     fetchAuthors();
   }, [fetchAuthors]);
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
   // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
-    return filterArticles(articles, null, null);
-  }, [articles]);
+    return filterArticles(articlesData, null, null);
+  }, [articlesData]);
 
   // Organized articles by category
   const latestArticles = useMemo(() => getLatestArticles(filteredArticles), [filteredArticles]);
@@ -183,57 +193,37 @@ export default function ArticlesScreen() {
     });
   }, [inProgressArticles, lastOpenedArticles]);
 
-  // Define fetchArticles function - modifying to remove local isInitialMount usage
-  const fetchArticles = useCallback(async () => {
-    if (isRefreshing) return; // Prevent duplicate requests
-
-    startLoading();
-    try {
-      const articlesData = await articlesService.getArticles();
-      setArticles(articlesData);
-      setError(null);
-
-      // Fetch authors and categories if not already loaded
-      if (authors.length === 0) {
-        fetchAuthors();
-      }
-      if (categories.length === 0) {
-        fetchCategories();
-      }
-
-      // Dispatch fetchInProgressArticles after fetching articles
-      dispatch(fetchInProgressArticles());
-    } catch (err) {
-      console.error('Error fetching articles:', err);
-      setError('Failed to load articles. Please try again later.');
-    } finally {
-      stopLoading();
-      setIsRefreshing(false);
-    }
-  }, [
-    dispatch,
-    authors.length,
-    categories.length,
-    fetchAuthors,
-    fetchCategories,
-    startLoading,
-    stopLoading,
-    isRefreshing,
-  ]);
-
+  // Refactored refresh handler using React Query
   const handleRefresh = useCallback(() => {
+    setIsRefreshing(true);
     mediumFeedback();
-    fetchArticles();
-  }, [fetchArticles]);
+
+    // Create an array of refresh promises
+    const refreshPromises = [
+      queryClient.invalidateQueries({ queryKey: ['articles'] }),
+      queryClient.invalidateQueries({ queryKey: ['categories'] }),
+      dispatch(fetchInProgressArticles()),
+      fetchAuthors(),
+    ];
+
+    // Wait for all refreshes to complete
+    Promise.all(refreshPromises)
+      .catch(err => {
+        console.error('Error during refresh:', err);
+      })
+      .finally(() => {
+        setIsRefreshing(false);
+      });
+  }, [queryClient, dispatch, fetchAuthors]);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
   // Add prefetching for first few articles when data is loaded
   useEffect(() => {
-    if (articles.length > 0 && !isLoadingState) {
+    if (articlesData.length > 0 && !isArticlesLoading) {
       // Prefetch first 10 articles in background
-      const articlesToPreload = articles.slice(0, 10);
+      const articlesToPreload = articlesData.slice(0, 10);
       articlesToPreload.forEach(article => {
         queryClient.prefetchQuery({
           queryKey: ['article', article.id],
@@ -253,7 +243,7 @@ export default function ArticlesScreen() {
         });
       }
     }
-  }, [articles, isLoadingState, queryClient, session]);
+  }, [articlesData, isArticlesLoading, queryClient, session]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -311,7 +301,7 @@ export default function ArticlesScreen() {
   useEffect(() => {
     // Only fetch on first mount
     if (isInitialMount.current) {
-      fetchArticles();
+      handleRefresh();
       isInitialMount.current = false;
     }
 
@@ -329,23 +319,70 @@ export default function ArticlesScreen() {
     // Small delay to ensure component is mounted
     const timer = setTimeout(resetScrollPosition, 100);
     return () => clearTimeout(timer);
-  }, [fetchArticles]);
+  }, [handleRefresh]);
 
-  // Check if data is ready to display
+  // Add effect to prefetch article details for visible articles
+  useEffect(() => {
+    // Function to prefetch data for all visible articles
+    const prefetchVisible = () => {
+      if (articlesData.length === 0) return;
+
+      // Get the most important articles to prefetch (first 5)
+      const criticalArticles = articlesData.slice(0, 5);
+
+      // Prefetch these immediately with higher priority
+      criticalArticles.forEach(article => {
+        queryClient.prefetchQuery({
+          queryKey: ['article', article.id],
+          queryFn: () => articlesService.getArticleById(article.id),
+          staleTime: STALE_TIME_SHORT,
+        });
+      });
+
+      // Prefetch the rest with lower priority after a delay
+      if (articlesData.length > 5) {
+        setTimeout(() => {
+          const remainingArticles = articlesData.slice(5, 15);
+          remainingArticles.forEach(article => {
+            queryClient.prefetchQuery({
+              queryKey: ['article', article.id],
+              queryFn: () => articlesService.getArticleById(article.id),
+              staleTime: STALE_TIME_SHORT,
+            });
+          });
+        }, 1000); // Delay by 1 second to prioritize rendering
+      }
+    };
+
+    // Call prefetch when articles data is loaded and not loading
+    if (articlesData.length > 0 && !isArticlesLoading) {
+      prefetchVisible();
+    }
+  }, [articlesData, isArticlesLoading, queryClient]);
+
+  // Optimize the data ready check to allow faster rendering
   const isDataReady = useMemo(() => {
-    return articles.length > 0 || error !== null;
-  }, [articles.length, error]);
+    // Consider data ready in any of these conditions:
+    // 1. We have articles data
+    // 2. We're loading but have cache
+    // 3. We're not loading but have an error (show error state)
+    return (
+      articlesData.length > 0 ||
+      (isArticlesLoading && queryClient.getQueryState(['articles'])?.data !== undefined) ||
+      (!isArticlesLoading && !!articlesError)
+    );
+  }, [articlesData.length, isArticlesLoading, articlesError, queryClient]);
 
   // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
 
   // Memoized child components to prevent re-renders
   const DailyPick = useMemo(() => {
-    const dailyPickArticle = getDailyPickArticle(articles, getDayOfYear());
+    const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
     return (
       <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
     );
-  }, [articles, handleArticlePress]);
+  }, [articlesData, handleArticlePress]);
 
   const ContinueReadingSection = useMemo(() => {
     return (
@@ -361,27 +398,34 @@ export default function ArticlesScreen() {
   }, [sortedInProgressArticles, lastOpenedArticles]);
 
   const LatestTextsSection = useMemo(() => {
-    if (latestArticles.length === 0) return null;
+    const latestArticles = getLatestArticles(articlesData, 10);
+
     return (
       <ArticleSection
         title="Latest Texts"
         articles={latestArticles}
         onArticlePress={handleArticlePress}
-        showTimeAgo={true}
+        showTimeAgo
+        hideDifficultyLabel
+        // Show loading state if articles are fetching and we don't have data yet
+        isLoading={isArticlesFetching && latestArticles.length === 0}
       />
     );
-  }, [latestArticles, handleArticlePress]);
+  }, [articlesData, handleArticlePress, isArticlesFetching]);
 
   const FeaturedTextsSection = useMemo(() => {
-    if (featuredArticles.length === 0) return null;
+    const featuredArticles = getFeaturedArticles(articlesData);
+
     return (
-      <FeaturedArticleSection
+      <ArticleSection
         title="Featured Texts"
         articles={featuredArticles}
         onArticlePress={handleArticlePress}
+        // Show loading state if articles are fetching and we don't have data yet
+        isLoading={isArticlesFetching && featuredArticles.length === 0}
       />
     );
-  }, [featuredArticles, handleArticlePress]);
+  }, [articlesData, handleArticlePress, isArticlesFetching]);
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
@@ -411,12 +455,12 @@ export default function ArticlesScreen() {
     return (
       <FilterList
         title="Browse by Category"
-        items={categories}
+        items={categoriesData}
         selectedId={null}
         onSelect={handleSelectCategory}
       />
     );
-  }, [categories, handleSelectCategory]);
+  }, [categoriesData, handleSelectCategory]);
 
   // Create a pre-rendered header component for the FlatList to avoid re-rendering the entire list
   const ListHeaderComponent = useMemo(() => {
@@ -451,18 +495,18 @@ export default function ArticlesScreen() {
   const articlesQuery = queryClient.getQueryState(['articles']);
   const isDataCached = articlesQuery?.data !== undefined;
 
-  // If loading and we don't have cached data, show loading screen
-  if (isLoadingState && !isRefreshing && !isDataCached) {
+  // If no cached data and still loading, show a minimal loading screen
+  if (isArticlesLoading && articlesData.length === 0 && !isDataCached) {
     return <LoadingScreen />;
   }
 
   // Show error state only if there's no cached data
-  if (error && !isRefreshing && !isDataCached) {
+  if (articlesError && !isRefreshing && !isDataCached) {
     return (
       <ErrorState
-        message={error}
+        message={articlesError.message}
         onRetry={() => {
-          fetchArticles();
+          handleRefresh();
         }}
       />
     );

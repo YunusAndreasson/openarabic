@@ -6,7 +6,7 @@ import { useColors } from '../hooks/useColors';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import { Loader } from '../components/Loader';
 import PageHeader from '../components/PageHeader';
@@ -190,6 +190,59 @@ export default function WordListScreen() {
       }
     },
     enabled: !!user?.id,
+    placeholderData: () => {
+      // Try to use cached study words to create a placeholder
+      const queryClient = useQueryClient();
+
+      // Get the appropriate cached data based on category
+      if (category === 'due') {
+        const dueWords = queryClient.getQueryData<StudyWord[]>(['dueWords', user?.id]);
+        if (dueWords?.length) {
+          return dueWords
+            .filter(word => word && word.sentence_word && word.sentence_word.word_form)
+            .map(word => ({
+              ...word,
+              retentionScore: calculateRetentionScore(word),
+            })) as EnhancedStudyWord[];
+        }
+      }
+
+      // For other categories, start with all study words and filter
+      const studyWords = queryClient.getQueryData<StudyWord[]>(['studyWords', user?.id]);
+      if (!studyWords?.length) return undefined;
+
+      // Filter by category
+      let filteredWords: StudyWord[] = [];
+      switch (category) {
+        case 'total':
+          filteredWords = studyWords;
+          break;
+        case 'mastered':
+          filteredWords = studyWords.filter(
+            word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
+          );
+          break;
+        case 'learning':
+          filteredWords = studyWords.filter(
+            word =>
+              word.fsrs_state === State.New ||
+              word.fsrs_state === State.Learning ||
+              word.fsrs_state === State.Relearning ||
+              (word.fsrs_state === State.Review && word.fsrs_stability < 30)
+          );
+          break;
+        default:
+          filteredWords = studyWords;
+      }
+
+      // Map to enhanced study words
+      return filteredWords
+        .filter(word => word && word.sentence_word && word.sentence_word.word_form)
+        .map(word => ({
+          ...word,
+          retentionScore: calculateRetentionScore(word),
+        })) as EnhancedStudyWord[];
+    },
   });
 
   // Sort the words by retention score (highest first)

@@ -7,6 +7,8 @@ import { Section } from './index';
 import { ThemedText } from './ThemedText';
 import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';
+import { LoadingContainer } from './Loader';
+import { useColors } from '@/hooks/useColors';
 
 interface ArticleSectionProps {
   /**
@@ -58,6 +60,11 @@ interface ArticleSectionProps {
    * Function to get last opened timestamp
    */
   getLastOpenedAt?: (articleId: number) => string | undefined;
+
+  /**
+   * Whether articles are loading
+   */
+  isLoading?: boolean;
 }
 
 /**
@@ -75,9 +82,11 @@ const ArticleSection = React.memo(
     hideDifficultyLabel = false,
     hideDifficulty = false,
     getLastOpenedAt,
+    isLoading = false,
   }: ArticleSectionProps) => {
     // Add queryClient for prefetching
     const queryClient = useQueryClient();
+    const colors = useColors();
 
     // Limit the number of articles if maxItems is specified
     const displayedArticles = maxItems ? articles.slice(0, maxItems) : articles;
@@ -123,50 +132,51 @@ const ArticleSection = React.memo(
       [handleItemPress, showTimeAgo, hideDifficultyLabel, hideDifficulty, getLastOpenedAt]
     );
 
-    // Handle empty state if there are no articles and an empty state message is provided
-    if ((!articles || articles.length === 0) && emptyStateMessage) {
+    // If loading and no articles, show loading state
+    if (isLoading && displayedArticles.length === 0) {
       return (
-        <Section title={title} style={styles.section}>
-          <View style={styles.emptyContainer}>
-            <ThemedText type="body" variant="subtle">
-              {emptyStateMessage}
-            </ThemedText>
+        <Section title={title}>
+          <View style={styles.loadingContainer}>
+            <LoadingContainer size="small" color={colors.text} />
           </View>
         </Section>
       );
     }
 
-    // Skip rendering if no articles and no empty state message
-    if (!articles || articles.length === 0) return null;
+    // If empty and not loading, show empty state message or nothing
+    if (displayedArticles.length === 0 && !isLoading) {
+      if (emptyStateMessage) {
+        return (
+          <Section title={title}>
+            <View style={styles.emptyContainer}>
+              <ThemedText>{emptyStateMessage}</ThemedText>
+            </View>
+          </Section>
+        );
+      }
+      return null; // Don't render the section at all if no items and no empty message
+    }
 
+    // Default render with articles
     return (
-      <Section title={title} style={styles.section}>
+      <Section title={title}>
         <FlatList
+          data={displayedArticles}
+          renderItem={renderItem}
+          keyExtractor={item => `article-${item.id}`}
           horizontal={!vertical}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.listContent,
-            vertical ? styles.verticalListContent : styles.horizontalListContent,
-          ]}
-          data={displayedArticles}
-          keyExtractor={item => item.id.toString()}
-          renderItem={renderItem}
-          onViewableItemsChanged={handleViewableItemsChanged}
-          viewabilityConfig={{
-            itemVisiblePercentThreshold: 50,
-            minimumViewTime: 300,
-          }}
-          getItemLayout={(data, index) => ({
-            // Use different measurements based on horizontal/vertical layout
-            length: vertical ? 280 : 180, // Vertical uses card height, horizontal uses card width
-            offset: (vertical ? 280 : 180) * index,
-            index,
-          })}
-          windowSize={3}
           initialNumToRender={5}
-          maxToRenderPerBatch={3}
+          maxToRenderPerBatch={5}
+          windowSize={3}
           removeClippedSubviews={Platform.OS === 'android'}
+          onViewableItemsChanged={handleViewableItemsChanged}
+          viewabilityConfig={{ viewAreaCoveragePercentThreshold: 30 }}
+          contentContainerStyle={[
+            styles.list,
+            vertical ? styles.verticalList : styles.horizontalList,
+          ]}
         />
       </Section>
     );
@@ -174,27 +184,28 @@ const ArticleSection = React.memo(
 );
 
 const styles = StyleSheet.create({
-  section: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  list: {
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
-  horizontalListContent: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SCREEN_EDGE_PADDING,
+  horizontalList: {
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
-  verticalListContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  listContent: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
+  verticalList: {
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   emptyContainer: {
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.LARGE,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  loadingContainer: {
+    minHeight: 200,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
 });
-
-ArticleSection.displayName = 'ArticleSection';
 
 export default ArticleSection;

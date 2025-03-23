@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -41,6 +41,8 @@ export const useArticleData = (
   userId: string | undefined,
   isDataPrefetched: boolean = false
 ) => {
+  const queryClient = useQueryClient();
+
   // Fetch article data
   const {
     data: article,
@@ -51,6 +53,19 @@ export const useArticleData = (
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
     staleTime: isDataPrefetched ? 0 : 300000, // 5 minutes cache
+    placeholderData: () => {
+      // Use the article from the articles list as placeholder while full article loads
+      const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
+      const cachedArticle = cachedArticles?.find((a: Article) => a.id === articleId);
+      if (cachedArticle) {
+        return {
+          ...cachedArticle,
+          // Include empty article_sentences to prevent null errors
+          article_sentences: [],
+        };
+      }
+      return undefined;
+    },
   });
 
   // Check if article is in user's reading list
@@ -199,6 +214,17 @@ export const useArticleData = (
     },
     enabled: !!article?.category_id,
     staleTime: isDataPrefetched ? 0 : 300000, // 5 minutes
+    placeholderData: () => {
+      // Try to create placeholder data from the articles cache
+      const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
+      if (cachedArticles && article?.category_id) {
+        // Filter cached articles by category, excluding current article
+        return cachedArticles
+          .filter(a => a.category_id === article.category_id && a.id !== article.id)
+          .slice(0, 5); // Limit to 5 articles for performance
+      }
+      return [];
+    },
   });
 
   // Get similar category articles
@@ -216,6 +242,17 @@ export const useArticleData = (
     },
     enabled: !!article?.id,
     staleTime: isDataPrefetched ? 0 : 300000, // 5 minutes
+    placeholderData: () => {
+      // Use cached articles from other categories
+      const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
+      if (cachedArticles && article?.category_id) {
+        // Filter for articles from different categories
+        return cachedArticles
+          .filter(a => a.category_id !== article.category_id && a.id !== article.id)
+          .slice(0, 5); // Limit to 5 articles for performance
+      }
+      return [];
+    },
   });
 
   return {

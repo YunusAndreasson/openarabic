@@ -74,7 +74,7 @@ function AppContent() {
   });
 
   // Use the app preloader hook to preload data
-  const { preloadAppData } = useAppPreloader();
+  const { preloadAppData, criticalDataLoaded, preloadComplete } = useAppPreloader();
 
   // Sync theme with system on first load
   useEffect(() => {
@@ -104,28 +104,31 @@ function AppContent() {
     };
   }, [appReady, preloadAppData]);
 
+  // Mark app as ready when critical data is loaded
+  useEffect(() => {
+    if (criticalDataLoaded && !appReady) {
+      setAppReady(true);
+      // Immediately hide loader once critical data is ready
+      setShowAppLoader(false);
+    }
+  }, [criticalDataLoaded, appReady]);
+
   // Prepare app resources
   const prepareResources = useCallback(async () => {
     try {
       if (fontsLoaded) {
-        // Start preloading data and wait for it to complete
+        // Start preloading data and wait for critical data
         await preloadAppData().catch(() => {
           // Error handling without console logging
         });
 
-        // Set a small delay before marking app as ready for smoother visual transition
-        setTimeout(() => {
-          setAppReady(true);
-
-          // Hide our custom loader after a longer transition for smoother animation
-          setTimeout(() => {
-            setShowAppLoader(false);
-          }, 150);
-        }, 50);
+        // Note: We don't need to set appReady here anymore since
+        // it's handled by the useEffect that watches criticalDataLoaded
       }
     } catch (e) {
       // Error handling without console logging
       setShowAppLoader(false);
+      setAppReady(true);
     }
   }, [fontsLoaded, preloadAppData]);
 
