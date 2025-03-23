@@ -259,7 +259,7 @@ export const readingListService = {
         `
         )
         .match({ user_id: userId })
-        .order('position', { ascending: true });
+        .order('added_at', { ascending: false });
 
       if (error) throw error;
 

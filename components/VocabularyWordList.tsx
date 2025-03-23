@@ -117,7 +117,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
         maxToRenderPerBatch={10} // Limit batch size for smoother performance
         windowSize={5} // Reduce window size for better performance
         initialNumToRender={10} // Limit initial render for better startup time
-        removeClippedSubviews={true} // Improve memory usage by detaching off-screen views
+        removeClippedSubviews={false}
         getItemLayout={(data, index) => ({
           length: 70, // Height of each word item
           offset: 70 * index,

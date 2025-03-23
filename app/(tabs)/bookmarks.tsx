@@ -46,14 +46,18 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: LAYOUT.SPACING.MEDIUM,
   },
   textContent: {
     flex: 1,
     paddingRight: LAYOUT.SPACING.SMALL,
   },
+  titleText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
   iconContainer: {
+    paddingTop: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -149,8 +153,7 @@ const ReadingListItem = React.memo(
             <View style={styles.textContent}>
               <ThemedText
                 type="bodyBold"
-                numberOfLines={1}
-                style={isActive ? { color: colors.tint } : undefined}
+                style={[styles.titleText, isActive ? { color: colors.tint } : undefined]}
               >
                 {title}
               </ThemedText>
@@ -684,8 +687,11 @@ export default function BookmarksScreen() {
             }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
-            removeClippedSubviews={true}
+            removeClippedSubviews={false}
             initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            updateCellsBatchingPeriod={100}
             getItemLayout={(data, index) => ({
               length: ITEM_HEIGHT,
               offset: ITEM_HEIGHT * index,
