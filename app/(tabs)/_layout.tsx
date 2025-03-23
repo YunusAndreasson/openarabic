@@ -112,18 +112,11 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
             accessibilityState={{ selected: isFocused }}
             accessibilityLabel={screen.accessibilityLabel || label}
           >
-            <Animated.View
-              style={{
-                transform: [{ scale: isFocused ? 1.1 : 1 }],
-                opacity: isFocused ? 1 : 0.8,
-              }}
-            >
-              <Ionicons
-                name={isFocused ? screen.iconFilled : screen.iconOutline}
-                size={ICON_SIZE}
-                color={isFocused ? colors.tint : colors.tabIconDefault}
-              />
-            </Animated.View>
+            <Ionicons
+              name={isFocused ? screen.iconFilled : screen.iconOutline}
+              size={ICON_SIZE}
+              color={isFocused ? colors.tint : colors.tabIconDefault}
+            />
             <ThemedText
               style={{
                 ...styles.label,
