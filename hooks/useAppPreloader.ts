@@ -100,6 +100,15 @@ export const useAppPreloader = () => {
           })
         );
 
+        // Prefetch reading list data for bookmarks screen
+        nonCriticalPromises.push(
+          queryClient.prefetchQuery({
+            queryKey: ['readingList', user.id],
+            queryFn: () => readingListService.getReadingList(user.id),
+            staleTime: STALE_TIME_SHORT,
+          })
+        );
+
         // Try to prefetch the user's last opened article if available
         const settings = (await queryClient.getQueryData([
           'userSettings',

@@ -264,10 +264,9 @@ export default function BookmarksScreen() {
 
   // Query for reading list
   const {
-    data: readingList,
+    data: readingList = [], // Default to empty array to avoid undefined
     isLoading: isDataLoading,
     status,
-    refetch,
   } = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
@@ -312,12 +311,12 @@ export default function BookmarksScreen() {
 
   // Update loading state based on data loading
   useEffect(() => {
-    if (isAuthLoading || (!!user && (isDataLoading || status === 'pending'))) {
+    if (isAuthLoading) {
       startLoading();
     } else {
       stopLoading();
     }
-  }, [isAuthLoading, user, isDataLoading, status, startLoading, stopLoading]);
+  }, [isAuthLoading, startLoading, stopLoading]);
 
   // Get active playlist based on mode
   const activePlaylist = useMemo(() => {
@@ -589,21 +588,6 @@ export default function BookmarksScreen() {
 
   const insets = useSafeAreaInsets();
 
-  // Use cached data to render a skeleton while loading instead of the full loading screen
-  if (isLoadingState && !readingList) {
-    return (
-      <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
-        <ThemedView
-          style={styles.container}
-          includeBottomInset={false}
-          safeAreaEdges={['left', 'right']}
-        >
-          <PageHeader title="Bookmarks" />
-        </ThemedView>
-      </Animated.View>
-    );
-  }
-
   // Require sign in
   if (!user) {
     return (
@@ -618,7 +602,7 @@ export default function BookmarksScreen() {
   }
 
   // Empty reading list
-  if (!readingList || readingList.length === 0) {
+  if (readingList.length === 0) {
     return (
       <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
         <ThemedView
@@ -693,7 +677,7 @@ export default function BookmarksScreen() {
             maxToRenderPerBatch={10}
             windowSize={5}
             updateCellsBatchingPeriod={100}
-            getItemLayout={(data, index) => ({
+            getItemLayout={(_data, index) => ({
               length: ITEM_HEIGHT,
               offset: ITEM_HEIGHT * index,
               index,

@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, RefreshControl, ViewStyle } from 'react-native';
+import React, { useMemo, useState, useEffect } from 'react';
+import { StyleSheet, View, RefreshControl } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/VocabularyDashboard';
@@ -269,31 +269,27 @@ export default function VocabularyScreen() {
           }}
         >
           {/* Stats Dashboard */}
-          <View style={styles.sectionWrapper}>
-            <VocabularyDashboard
-              totalWords={stats.totalWords}
-              masteredWords={stats.masteredWords}
-              learningWords={stats.learningWords}
-              dueWords={stats.dueWords}
-              colors={colors}
-              animationTriggered={true}
-              onStatPress={handleStatPress}
-              streakStats={{
-                longestSuccessStreak: stats.longestSuccessStreak || 0,
-                wordsWithStreaks: stats.wordsWithStreaks || 0,
-                averageDifficulty: stats.averageDifficulty || 0,
-              }}
-            />
-          </View>
+          <VocabularyDashboard
+            totalWords={stats.totalWords}
+            masteredWords={stats.masteredWords}
+            learningWords={stats.learningWords}
+            dueWords={stats.dueWords}
+            colors={colors}
+            animationTriggered={true}
+            onStatPress={handleStatPress}
+            streakStats={{
+              longestSuccessStreak: stats.longestSuccessStreak || 0,
+              wordsWithStreaks: stats.wordsWithStreaks || 0,
+              averageDifficulty: stats.averageDifficulty || 0,
+            }}
+          />
 
           {/* Weekly Progress Graph */}
-          <View style={styles.sectionWrapper}>
-            <VocabularyGraph
-              data={weeklyProgressData}
-              animationTriggered={true}
-              title="Weekly Progress"
-            />
-          </View>
+          <VocabularyGraph
+            data={weeklyProgressData}
+            animationTriggered={true}
+            title="Weekly Progress"
+          />
 
           {/* Review Button Section */}
           {stats.dueWords > 0 ? (
@@ -327,10 +323,7 @@ const styles = StyleSheet.create({
   reviewButtonWrapper: {
     width: '100%',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  sectionWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   emptyStateContainer: {
     flex: 1,

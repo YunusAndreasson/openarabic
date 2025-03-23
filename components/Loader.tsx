@@ -3,8 +3,8 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated from 'react-native-reanimated';
-import { useOpacityAnimation } from '../hooks/animations';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
+import { usePulseAnimation } from '../hooks/animations';
 import {
   LoaderProps,
   LoadingScreenProps,
@@ -19,34 +19,15 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   const colors = useColors();
   const loaderColor = color || colors.text;
 
-  // Use opacity animation for pulsing effect
-  const { animatedStyle, setOpacity } = useOpacityAnimation({
-    initialOpacity: 0.4,
-    duration: 1200,
+  // Use pulse animation hook with gentle style for smooth scaling effect
+  const { animatedStyle, startAnimation } = usePulseAnimation({
+    style: 'gentle',
+    pulseMagnitude: 1.15,
+    duration: 2000,
+    autoStart: true,
   });
 
-  // Start animation on mount
-  useEffect(() => {
-    let isActive = true;
-    const animate = () => {
-      if (!isActive) return;
-      setOpacity(1);
-      setTimeout(() => {
-        if (!isActive) return;
-        setOpacity(0.4);
-        setTimeout(() => {
-          if (!isActive) return;
-          animate();
-        }, 1200);
-      }, 1200);
-    };
-    animate();
-    return () => {
-      isActive = false;
-    };
-  }, [setOpacity]);
-
-  // Size configuration with safe defaults
+  // Size configuration with safe defaults - always defaulting to large
   const circleSize = useMemo(() => {
     if (typeof size === 'number') return size;
     switch (size) {
@@ -65,13 +46,13 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
     if (typeof size === 'number') return 4;
     switch (size) {
       case 'large':
-        return 4;
+        return 5; // Slightly thicker for better visibility
       case 'medium':
         return 3;
       case 'small':
         return 2;
       default:
-        return 4;
+        return 5;
     }
   }, [size]);
 
@@ -86,13 +67,18 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
       borderWidth,
       shadowColor: loaderColor,
       shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.6,
+      shadowRadius: 8,
+      elevation: 8,
     }),
     [circleSize, loaderColor, borderWidth]
   );
 
   return (
     <View style={[styles.container, style as ViewStyle]}>
-      <Animated.View style={[styles.circle, circleStyle, animatedStyle]} />
+      <Animated.View
+        style={[styles.circle, circleStyle, animatedStyle as AnimatedStyleProp<ViewStyle>]}
+      />
     </View>
   );
 };
@@ -103,14 +89,14 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
 
-  // Use opacity animation for fade-in effect
-  const { animatedStyle } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 150,
+  // Use opacity animation from hooks/animations for fade-in effect
+  const { animatedStyle } = usePulseAnimation({
+    style: 'standard',
+    autoStart: true,
   });
 
   return (
-    <Animated.View style={[{ flex: 1 }, animatedStyle]}>
+    <Animated.View style={[{ flex: 1 }, animatedStyle as AnimatedStyleProp<ViewStyle>]}>
       <ThemedView style={styles.fullScreen}>
         <View style={styles.loaderContainer}>
           <Loader size="large" color={color || colors.tint} />
@@ -169,9 +155,6 @@ const styles = StyleSheet.create({
   },
   circle: {
     // Base styles only - specific styles moved to circleStyle for better memoization
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    elevation: 8,
   },
   fullScreen: {
     flex: 1,
