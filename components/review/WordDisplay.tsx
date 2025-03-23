@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, ViewStyle, Platform, StyleSheet, TextStyle } from 'react-native';
+import { View, Platform, StyleSheet, TextStyle } from 'react-native';
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { WordDisplayProps } from '../../types/ui.types';
