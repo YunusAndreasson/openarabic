@@ -25,11 +25,6 @@ interface ArticleSectionProps {
   onArticlePress: (article: Article) => void;
 
   /**
-   * Animation delay in milliseconds
-   */
-  delay?: number;
-
-  /**
    * Show time ago indicator
    */
   showTimeAgo?: boolean;
@@ -73,7 +68,6 @@ const ArticleSection = React.memo(
     title,
     articles,
     onArticlePress,
-    delay = 0,
     showTimeAgo = false,
     vertical = false,
     maxItems,

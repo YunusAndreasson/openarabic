@@ -338,12 +338,7 @@ export default function ArticlesScreen() {
   const DailyPick = useMemo(() => {
     const dailyPickArticle = getDailyPickArticle(articles, getDayOfYear());
     return (
-      <DailyPickSection
-        article={dailyPickArticle}
-        onPress={handleArticlePress}
-        delay={0}
-        showTitle={true}
-      />
+      <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
     );
   }, [articles, handleArticlePress]);
 
@@ -353,7 +348,6 @@ export default function ArticlesScreen() {
         title="Continue Reading"
         articles={sortedInProgressArticles}
         onArticlePress={article => router.push(`/article/${article.id}`)}
-        delay={40}
         showTimeAgo={true}
         getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
         emptyStateMessage="Start reading to save your progress here"
@@ -368,7 +362,6 @@ export default function ArticlesScreen() {
         title="Latest Texts"
         articles={latestArticles}
         onArticlePress={handleArticlePress}
-        delay={60}
         showTimeAgo={true}
       />
     );
@@ -381,7 +374,6 @@ export default function ArticlesScreen() {
         title="Featured Texts"
         articles={featuredArticles}
         onArticlePress={handleArticlePress}
-        delay={80}
       />
     );
   }, [featuredArticles, handleArticlePress]);
@@ -393,7 +385,6 @@ export default function ArticlesScreen() {
         title="Beginner Friendly"
         articles={beginnerArticles}
         onArticlePress={handleArticlePress}
-        delay={100}
         hideDifficulty={true}
       />
     );
@@ -407,8 +398,6 @@ export default function ArticlesScreen() {
         selectedId={null}
         onSelect={handleSelectAuthor}
         onClearFilter={handleClearFilters}
-        animationDelay={120}
-        itemAnimationDelay={140}
       />
     );
   }, [authors, handleSelectAuthor, handleClearFilters]);
@@ -420,8 +409,6 @@ export default function ArticlesScreen() {
         items={categories}
         selectedId={null}
         onSelect={handleSelectCategory}
-        animationDelay={150}
-        itemAnimationDelay={170}
       />
     );
   }, [categories, handleSelectCategory]);

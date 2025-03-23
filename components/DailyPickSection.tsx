@@ -13,7 +13,6 @@ import { articlesService } from '@/services/articles';
 const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   article,
   onPress,
-  delay = 0,
   showTitle = true,
 }) => {
   // Use queryClient for prefetching

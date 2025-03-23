@@ -1,10 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
-import { useOpacityAnimation } from '../hooks/animations';
 import SectionTitle from './SectionTitle';
 import ThemedCard from './ThemedCard';
 import { articlesService } from '@/services/articles';
@@ -21,13 +19,6 @@ interface FeaturedArticleItemProps {
  */
 const FeaturedArticleItem = React.memo(
   ({ article, index, totalCount, onPress }: FeaturedArticleItemProps) => {
-    // Use animation with staggered delay based on index
-    const { animatedStyle, startAnimation } = useOpacityAnimation({
-      initialOpacity: 0,
-      delay: 300 + index * 100,
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL,
-    });
-
     // Add queryClient for prefetching
     const queryClient = useQueryClient();
 
@@ -43,14 +34,8 @@ const FeaturedArticleItem = React.memo(
       onPress(article);
     }, [article, onPress, queryClient]);
 
-    useEffect(() => {
-      startAnimation();
-    }, [startAnimation]);
-
     return (
-      <Animated.View
-        style={[index < totalCount - 1 ? styles.itemMargin : undefined, animatedStyle]}
-      >
+      <View style={index < totalCount - 1 ? styles.itemMargin : undefined}>
         <ThemedCard
           imageUrl={article.image_url || ''}
           title={article.title}
@@ -60,7 +45,7 @@ const FeaturedArticleItem = React.memo(
           onPress={handlePress}
           style={styles.card}
         />
-      </Animated.View>
+      </View>
     );
   }
 );
@@ -91,23 +76,12 @@ interface FeaturedArticleSectionProps {
  * A section displaying featured articles in a vertical stack
  */
 const FeaturedArticleSection = React.memo(
-  ({ title, articles, onArticlePress, delay = 300 }: FeaturedArticleSectionProps) => {
-    // Use section animation
-    const { animatedStyle, startAnimation } = useOpacityAnimation({
-      initialOpacity: 0,
-      delay: delay,
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL,
-    });
-
-    useEffect(() => {
-      startAnimation();
-    }, [startAnimation]);
-
+  ({ title, articles, onArticlePress }: FeaturedArticleSectionProps) => {
     // Skip rendering if no articles
     if (!articles || articles.length === 0) return null;
 
     return (
-      <Animated.View style={[styles.section, animatedStyle]}>
+      <View style={styles.section}>
         <SectionTitle title={title} />
         <View style={styles.contentContainer}>
           {articles.map((article, index) => (
@@ -120,7 +94,7 @@ const FeaturedArticleSection = React.memo(
             />
           ))}
         </View>
-      </Animated.View>
+      </View>
     );
   }
 );
