@@ -16,7 +16,7 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
 
 // Animation hooks
-import { useScreenAnimation } from '../hooks/animations';
+import { useScreenAnimation } from '@/hooks/animations';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 
 // Types
@@ -109,7 +109,7 @@ function FilterScreenContent() {
     queryFn: async () => {
       try {
         const { data } = await supabase.from('categories').select('*').eq('id', numericId).single();
-        return data;
+        return data ?? null;
       } catch (err) {
         return null;
       }
@@ -133,19 +133,23 @@ function FilterScreenContent() {
 
       // Fetch articles based on filter type
       let articlesData: Article[] = [];
-      if (type === 'author') {
-        articlesData = await articlesService.getArticles(undefined, numericId);
-      } else if (type === 'category') {
-        articlesData = await articlesService.getArticles(numericId, undefined);
-      } else {
-        // Fallback
-        if (numericId) {
-          articlesData = await articlesService.getArticles(numericId, undefined);
+      try {
+        if (type === 'author') {
+          articlesData = (await articlesService.getArticles(undefined, numericId)) ?? [];
+        } else if (type === 'category') {
+          articlesData = (await articlesService.getArticles(numericId, undefined)) ?? [];
         } else {
-          throw new Error(`Invalid filter type: "${type}"`);
+          // Fallback
+          if (numericId) {
+            articlesData = (await articlesService.getArticles(numericId, undefined)) ?? [];
+          } else {
+            throw new Error(`Invalid filter type: "${type}"`);
+          }
         }
+        return articlesData;
+      } catch (err) {
+        throw new Error(err instanceof Error ? err.message : 'Failed to fetch articles');
       }
-      return articlesData;
     },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     refetchOnWindowFocus: false,
@@ -160,7 +164,7 @@ function FilterScreenContent() {
 
   // Determine if data is ready for animations
   const isDataReady = useMemo(() => {
-    return (articles && articles.length > 0) || error !== null;
+    return articles?.length > 0 || error !== null;
   }, [articles, error]);
 
   // Use the screen animation hook with a shorter duration for returning from article

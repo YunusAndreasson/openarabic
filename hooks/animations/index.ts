@@ -20,41 +20,24 @@
 
 // Export main hooks
 export { useOpacityAnimation } from './useOpacityAnimation';
-export { usePressAnimation } from './usePressAnimation';
 export { usePulseAnimation } from './usePulseAnimation';
+export { usePressAnimation } from './usePressAnimation';
+export { useTransformAnimation } from './useTransformAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
-export { useToggleAnimation } from './useToggleAnimation';
-export { useProgressAnimation } from './useProgressAnimation';
-export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
-export { useGraphAnimation } from './useGraphAnimation';
 export { useAnimationTrigger } from './useAnimationTrigger';
+export { useToggleAnimation } from './useToggleAnimation';
+export { useGraphAnimation } from './useGraphAnimation';
+export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
+export { useProgressAnimation } from './useProgressAnimation';
+export { useScrollVisibility } from './useScrollVisibility';
 export { useScreenAnimation } from './useScreenAnimation';
 export { useScreenAnimations } from './useScreenAnimations';
-export { useTransformAnimation } from './useTransformAnimation';
 
-// Export standardized animation configurations
-export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
-
-// Export animation types
-export * from './types';
-
-// Export type definitions from hooks
-export type {
-  FadeAnimationStyle,
-  FadeAnimationOptions,
-  FadeAnimationResult,
-} from './useOpacityAnimation';
-export type {
-  PressAnimationType,
-  PressAnimationOptions,
-  PressAnimationResult,
-} from './usePressAnimation';
+// Export types
 export type { PulseStyle, PulseAnimationOptions, PulseAnimationResult } from './usePulseAnimation';
-export type { AnimationTriggerResult } from './useAnimationTrigger';
+export type { PressAnimationType } from './usePressAnimation';
+export type { SharedValue } from './types';
 export type { ScreenAnimationResult } from './useScreenAnimation';
-export type {
-  TransformType,
-  SlideDirection,
-  TransformAnimationOptions,
-  TransformAnimationResult,
-} from './useTransformAnimation';
+
+// Export animation configs
+export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';

@@ -12,6 +12,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
+import { withTiming } from 'react-native-reanimated';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -268,10 +269,7 @@ export default function ArticleScreen() {
   // Generate audio URL from article content
   const generateArticleAudio = useCallback(() => {
     if (!article) return null;
-    return (
-      article.audio_url ||
-      'https://file-examples.com/storage/fe8c7eef0c6364f6c9504cc/2017/11/file_example_MP3_700KB.mp3'
-    );
+    return article?.audio_url ?? null;
   }, [article]);
 
   // Handle play button press

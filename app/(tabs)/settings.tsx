@@ -18,7 +18,8 @@ import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
 import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
-import { useLoadingState, useScreenAnimation } from '../../hooks';
+import { useLoadingState } from '../../hooks';
+import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from '@/components/BaseCard';
@@ -65,9 +66,9 @@ export default function SettingsScreen() {
     startLoading();
     try {
       const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-    } catch (_error) {
-      // Error handling removed
+      setSession(data?.session ?? null);
+    } catch (_err) {
+      setSession(null);
     } finally {
       stopLoading();
     }

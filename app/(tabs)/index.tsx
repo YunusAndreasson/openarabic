@@ -19,7 +19,8 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useScreenAnimation, useNavigationWithDebounce } from '@/hooks';
+import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
+import { useScreenAnimation } from '@/hooks/animations';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -110,7 +111,7 @@ export default function ArticlesScreen() {
   const [error, setError] = useState<string | null>(null);
 
   // Get inProgressArticles from Redux
-  const { inProgressArticles, lastOpenedArticles = {} } = useAppSelectorMemo(
+  const { inProgressArticles = [], lastOpenedArticles = {} } = useAppSelectorMemo(
     state => state.readingList
   );
 
@@ -118,18 +119,18 @@ export default function ArticlesScreen() {
   const fetchAuthors = useCallback(async () => {
     try {
       const { data } = await supabase.from('authors').select('*');
-      setAuthors(data || []);
+      setAuthors(data ?? []);
     } catch (_err) {
-      // Error handling is silent as it's not critical
+      setAuthors([]);
     }
   }, []);
 
   const fetchCategories = useCallback(async () => {
     try {
       const categoriesData = await categoriesService.getCategories();
-      setCategories(categoriesData);
+      setCategories(categoriesData ?? []);
     } catch (_err) {
-      // Don't set error state here, as it's not critical
+      setCategories([]);
     }
   }, []);
 
@@ -171,17 +172,11 @@ export default function ArticlesScreen() {
 
   // Sort in-progress articles by last opened time
   const sortedInProgressArticles = useMemo(() => {
-    if (!inProgressArticles.length) return [];
+    if (!inProgressArticles?.length) return [];
 
     return [...inProgressArticles].sort((a, b) => {
-      const aTime =
-        lastOpenedArticles && lastOpenedArticles[a.id]
-          ? new Date(lastOpenedArticles[a.id]).getTime()
-          : 0;
-      const bTime =
-        lastOpenedArticles && lastOpenedArticles[b.id]
-          ? new Date(lastOpenedArticles[b.id]).getTime()
-          : 0;
+      const aTime = lastOpenedArticles?.[a.id] ? new Date(lastOpenedArticles[a.id]).getTime() : 0;
+      const bTime = lastOpenedArticles?.[b.id] ? new Date(lastOpenedArticles[b.id]).getTime() : 0;
 
       // Sort by last opened time (most recent first)
       return bTime - aTime;

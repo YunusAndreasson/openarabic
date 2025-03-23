@@ -112,23 +112,23 @@ export default function VocabularyScreen() {
 
   // Filter valid study words
   const validStudyWords = useMemo(() => {
-    return studyWords.filter(word => word.sentence_word != null);
+    return studyWords?.filter(word => word?.sentence_word != null) ?? [];
   }, [studyWords]);
 
   // Check if data is ready to display - simplified logic
   const isDataReady = useMemo(() => {
-    return !!user && (validStudyWords.length > 0 || dueWordsData.length > 0 || !isDataLoading);
-  }, [user, validStudyWords.length, dueWordsData.length, isDataLoading]);
+    return !!user && (validStudyWords?.length > 0 || dueWordsData?.length > 0 || !isDataLoading);
+  }, [user, validStudyWords?.length, dueWordsData?.length, isDataLoading]);
 
   // Calculate stats with memoization - updated to use FSRS stats calculation
   const stats = useMemo<VocabularyStats>(() => {
-    if (validStudyWords.length === 0 && studyWords.length === 0) {
+    if (validStudyWords?.length === 0 && studyWords?.length === 0) {
       // Return safe defaults for empty data
       return {
         totalWords: 0,
         masteredWords: 0,
         learningWords: 0,
-        dueWords: dueWordsData.length,
+        dueWords: dueWordsData?.length ?? 0,
         streak: 0,
         successRate: 0,
         averageInterval: 0,
@@ -141,25 +141,13 @@ export default function VocabularyScreen() {
         averageDifficulty: 0.3, // Default initial difficulty
       };
     }
-    return calculateVocabularyStats(validStudyWords, dueWordsData);
-  }, [validStudyWords, dueWordsData, studyWords.length]);
+    return calculateVocabularyStats(validStudyWords ?? [], dueWordsData ?? []);
+  }, [validStudyWords, dueWordsData, studyWords?.length]);
 
   // Calculate weekly progress data with memoization
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
     // Always get data regardless of empty study words
-    const progressData = calculateWeeklyProgressData(validStudyWords);
-
-    // Log the data for debugging
-    if (progressData.length > 0) {
-      console.log(
-        'Weekly progress data loaded',
-        progressData.filter(d => d.wordsLearned > 0).length > 0
-          ? 'with learning activity'
-          : 'but no learning activity'
-      );
-    }
-
-    return progressData;
+    return calculateWeeklyProgressData(validStudyWords ?? []);
   }, [validStudyWords]);
 
   // Single fade-in animation for the entire screen
