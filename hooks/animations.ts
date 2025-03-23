@@ -5,6 +5,7 @@ import {
   withTiming,
   withSpring,
   withDelay,
+  Easing,
 } from 'react-native-reanimated';
 
 interface TransformAnimationOptions {
@@ -29,11 +30,11 @@ const SPRING_CONFIG = {
 const TIMING_CONFIG = {
   FAST: {
     duration: 150,
-    easing: (x: number) => x,
+    easing: Easing.linear,
   },
   MEDIUM: {
     duration: 300,
-    easing: (x: number) => x,
+    easing: Easing.linear,
   },
 };
 
@@ -104,7 +105,7 @@ export function useOpacityAnimation({
       });
       opacity.value = withTiming(value, {
         duration,
-        easing: TIMING_CONFIG.MEDIUM.easing,
+        easing: Easing.linear,
       });
     },
     [opacity, duration]
@@ -116,7 +117,7 @@ export function useOpacityAnimation({
       delay,
       withTiming(1, {
         duration,
-        easing: TIMING_CONFIG.MEDIUM.easing,
+        easing: Easing.linear,
       })
     );
   }, [opacity, duration, delay]);
@@ -127,7 +128,7 @@ export function useOpacityAnimation({
       delay,
       withTiming(0, {
         duration,
-        easing: TIMING_CONFIG.MEDIUM.easing,
+        easing: Easing.linear,
       })
     );
   }, [opacity, duration, delay]);

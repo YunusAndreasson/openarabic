@@ -11,8 +11,8 @@ import { SCREEN_WIDTH } from '@/constants/layout';
 import WordDisplay from './WordDisplay';
 
 // Animation config constants
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.15; // Reduced from 0.3 to 0.15 for easier swipes
-const TIMING_CONFIG = { duration: 300 };
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.04;
+const RESET_CONFIG = { duration: 150 }; // Faster reset animation
 
 interface ReviewCardProps {
   word: string;
@@ -21,6 +21,7 @@ interface ReviewCardProps {
   onSwipeRight: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
+  opacity: Animated.SharedValue<number>;
 }
 
 const ReviewCard: React.FC<ReviewCardProps> = ({
@@ -30,76 +31,70 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   onSwipeRight,
   isUpdating,
   isTransitioning,
+  opacity,
 }) => {
   console.log('[ReviewCard] Rendering with:', { word, fontSize, isUpdating, isTransitioning });
 
   // Animation values
   const translateX = useSharedValue(0);
+  const isAnimatingRef = useSharedValue(false);
 
-  // Reset position function
+  // Reset position function with callback
   const resetPosition = useCallback(() => {
-    console.log('[ReviewCard] Resetting position');
-    translateX.value = withTiming(0, TIMING_CONFIG);
-  }, [translateX]);
+    translateX.value = withTiming(0, RESET_CONFIG, finished => {
+      if (finished) {
+        isAnimatingRef.value = false;
+      }
+    });
+  }, [translateX, isAnimatingRef]);
+
+  // Handle swipe completion
+  const handleSwipeComplete = useCallback(
+    (isRight: boolean) => {
+      isAnimatingRef.value = true;
+      // First trigger the swipe action (which will start fading out)
+      runOnJS(isRight ? onSwipeRight : onSwipeLeft)();
+      // Then reset position after a short delay
+      setTimeout(() => {
+        runOnJS(resetPosition)();
+      }, 50);
+    },
+    [onSwipeLeft, onSwipeRight, resetPosition]
+  );
 
   // Create pan gesture
   const panGesture = Gesture.Pan()
-    .enabled(!isUpdating && !isTransitioning)
-    .minDistance(1) // Make gesture recognition more sensitive
-    .onBegin(() => {
-      console.log('[ReviewCard] Pan gesture began:', {
-        isUpdating,
-        isTransitioning,
-        currentX: translateX.value,
-        word,
-      });
-    })
+    .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+    .minDistance(0.1)
+    .activeOffsetX([-1, 1])
     .onUpdate(event => {
-      if (!isUpdating && !isTransitioning) {
+      if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
         translateX.value = event.translationX;
-      } else {
-        console.log('[ReviewCard] Gesture blocked during update:', {
-          isUpdating,
-          isTransitioning,
-          translationX: event.translationX,
-        });
       }
     })
     .onEnd(event => {
-      console.log('[ReviewCard] Pan end:', {
-        translationX: event.translationX,
-        threshold: SWIPE_THRESHOLD,
-        isUpdating,
-        isTransitioning,
-        word,
-      });
-
-      if (Math.abs(event.translationX) > SWIPE_THRESHOLD) {
+      if (!isAnimatingRef.value && Math.abs(event.translationX) > SWIPE_THRESHOLD) {
         const isRight = event.translationX > 0;
-        console.log('[ReviewCard] Swipe threshold met, triggering:', { isRight });
-        runOnJS(isRight ? onSwipeRight : onSwipeLeft)();
+        runOnJS(handleSwipeComplete)(isRight);
+      } else {
+        runOnJS(resetPosition)();
       }
-
-      runOnJS(resetPosition)();
-    })
-    .onFinalize(() => {
-      console.log('[ReviewCard] Gesture finalized:', {
-        isUpdating,
-        isTransitioning,
-        currentX: translateX.value,
-        word,
-      });
     });
 
-  // Create animated style for the swipe container only
+  // Create animated style for the swipe container
   const swipeContainerStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
+  }));
+
+  // Create animated style for the word container
+  const wordContainerStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
   }));
 
   return (
     <GestureDetector gesture={panGesture}>
       <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
-        <Animated.View style={styles.wordContainer}>
+        <Animated.View style={[styles.wordContainer, wordContainerStyle]}>
           <WordDisplay word={word} fontSize={fontSize} />
         </Animated.View>
       </Animated.View>

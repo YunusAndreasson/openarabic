@@ -1,11 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation } from '../../hooks/animations';
-import { warningFeedback } from '../../utils/haptics';
+import { lightFeedback } from '../../utils/haptics';
 import { MeaningOverlayProps } from '../../types/ui.types';
 
 /**
@@ -15,21 +15,41 @@ import { MeaningOverlayProps } from '../../types/ui.types';
 const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
   ({ visible, meaning, isWarning = false }) => {
     const colors = useColors();
-    const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 150 });
+    // Add internal state to track if we should render anything
+    const [shouldRender, setShouldRender] = useState(visible);
 
+    const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
+      initialOpacity: 0,
+      delay: 0,
+      duration: 150,
+    });
+
+    // Watch for visibility changes
     useEffect(() => {
       if (visible) {
+        // When becoming visible, render immediately and animate in
+        setShouldRender(true);
         startAnimation();
+
         // Provide haptic feedback when showing a warning
         if (isWarning) {
-          warningFeedback();
+          lightFeedback();
         }
-      } else {
+      } else if (shouldRender) {
+        // When hiding, animate out first, then stop rendering
         reverseAnimation();
-      }
-    }, [visible, startAnimation, reverseAnimation, isWarning]);
 
-    if (!visible) return null;
+        // Wait for animation to complete before unmounting
+        const timeout = setTimeout(() => {
+          setShouldRender(false);
+        }, 200); // slightly longer than animation duration
+
+        return () => clearTimeout(timeout);
+      }
+    }, [visible, startAnimation, reverseAnimation, isWarning, shouldRender]);
+
+    // Don't render anything if we shouldn't render
+    if (!shouldRender) return null;
 
     // Use warning color and larger font size when isWarning is true
     const textColor = isWarning ? colors.warning : colors.tint;
@@ -38,7 +58,9 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
       : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;
 
     return (
-      <Animated.View style={[styles.overlay, animatedStyle]}>
+      <Animated.View
+        style={[styles.overlay, { backgroundColor: colors.background }, animatedStyle]}
+      >
         <ThemedText
           style={[
             styles.text,
@@ -60,13 +82,13 @@ const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
     zIndex: 1000,
-    top: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    height: 280, // Match the height of the word container
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
+    alignSelf: 'center',
   } as ViewStyle,
   text: {
     textAlign: 'center',

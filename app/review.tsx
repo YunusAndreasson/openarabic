@@ -4,11 +4,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  useAnimatedReaction,
-  runOnJS,
   Easing,
 } from 'react-native-reanimated';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemedView } from '@/components/ThemedView';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
@@ -17,10 +14,8 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { LAYOUT } from '@/constants/layout';
 import { Loader } from '@/components/Loader';
 import Toast from 'react-native-toast-message';
-import { AnimatedItem as EntranceAnimation } from '@/components/index';
-import { TIMING_CONFIG } from '@/hooks/animations';
 import { useQueryClient } from '@tanstack/react-query';
-import { lightFeedback, mediumFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 import { useWordSizing } from '../hooks/useWordSizing';
 
 // Import our components
@@ -32,13 +27,7 @@ import {
   InstructionFooter,
 } from '../components/review';
 
-// Add a fallback timing config in case the import fails
-const DEFAULT_TIMING_CONFIG = {
-  duration: 300,
-  easing: (x: number) => x,
-};
-
-// Add animation config with proper Easing worklet
+// Animation config with proper Easing worklet
 const ANIMATION_CONFIG = {
   duration: 300,
   easing: Easing.linear,
@@ -50,10 +39,6 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
-  gestureRoot: {
-    flex: 1,
-    width: '100%',
-  } as ViewStyle,
   contentContainer: {
     flex: 1,
     width: '100%',
@@ -61,6 +46,14 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 0,
     paddingBottom: 0,
+  } as ViewStyle,
+  wordArea: {
+    flex: 1,
+    width: '100%',
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 280,
   } as ViewStyle,
   footer: {
     width: '100%',
@@ -87,9 +80,6 @@ export default function ReviewScreen() {
   const [currentSentence, setCurrentSentence] = useState({
     wordForm: '',
   });
-  const [nextSentence, setNextSentence] = useState({
-    wordForm: '',
-  });
 
   // Add state to track if we're transitioning to completion screen
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
@@ -107,9 +97,6 @@ export default function ReviewScreen() {
   // Track the total number of words for this session
   const totalWordsRef = useRef(0);
 
-  // Track if this is the first render
-  const isFirstRender = useRef(true);
-
   // Add ref to track if completion has been triggered
   const completionTriggeredRef = useRef(false);
 
@@ -125,9 +112,9 @@ export default function ReviewScreen() {
   // Create animated styles for the container
   const containerStyle = useAnimatedStyle(() => {
     return {
-      opacity: opacity.value,
+      opacity: isTransitioningToCompletion ? opacity.value : 1,
     };
-  }, []);
+  }, [isTransitioningToCompletion]);
 
   // Define completion transition function that both paths can use
   const triggerCompletionTransition = useCallback(() => {
@@ -235,22 +222,28 @@ export default function ReviewScreen() {
 
   // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
+    console.log('[Swipe Left] Starting with word:', currentWord?.sentence_word.word_form);
+
     // Check for concurrent updates with a local guard
     if (isUpdatingWordRef.current) {
-      console.log('Ignoring update request - update already in progress');
+      console.log('[Swipe Left] Blocked - already updating');
       return;
     }
 
     // If we're already transitioning to completion, prevent further updates
     if (isTransitioningToCompletion || isComplete || completionTriggeredRef.current) {
+      console.log('[Swipe Left] Blocked - transitioning or complete');
       return;
     }
 
     // Set local concurrency guard
     isUpdatingWordRef.current = true;
 
-    // Add haptic feedback for don't know
+    // Add haptic feedback for don't know - using very light feedback
     lightFeedback();
+
+    // First fade out the current word
+    opacity.value = withTiming(0, ANIMATION_CONFIG);
 
     // For failures, always update animation key even if progress doesn't change
     // This ensures the animation is triggered for feedback
@@ -263,53 +256,72 @@ export default function ReviewScreen() {
     }
 
     try {
-      // Store the current word's meaning before updating
-      if (currentWord?.sentence_word?.english) {
-        setCurrentMeaning(currentWord.sentence_word.english);
-      } else {
-        setCurrentMeaning('No translation available');
-      }
-
-      // Fade in the meaning overlay
-      setShowMeaningOverlay(true);
-
-      // Hide the meaning after a delay
-      meaningTimeoutRef.current = setTimeout(() => {
+      // Wait for the fade out to complete
+      setTimeout(() => {
         try {
-          setShowMeaningOverlay(false);
-
-          // Update the word status after showing the meaning
-          if (currentWord?.sentence_word_id) {
-            updateWord(currentWord.sentence_word_id, false)
-              .then(() => {
-                // Reset the concurrency guard only after the update is complete
-                setTimeout(() => {
-                  isUpdatingWordRef.current = false;
-                }, 16);
-              })
-              .catch(error => {
-                console.error('Error updating word:', error);
-                Toast.show({
-                  type: 'error',
-                  text1: 'Error',
-                  text2: 'Failed to update word. Please try again.',
-                  position: 'bottom',
-                });
-                isUpdatingWordRef.current = false;
-              });
+          // Store the current word's meaning before updating
+          if (currentWord?.sentence_word?.english) {
+            setCurrentMeaning(currentWord.sentence_word.english);
           } else {
-            isUpdatingWordRef.current = false;
+            setCurrentMeaning('No translation available');
           }
+
+          // Show the meaning overlay
+          setShowMeaningOverlay(true);
+          console.log('[Swipe Left] Showing meaning overlay');
+
+          // Hide the meaning after a delay
+          meaningTimeoutRef.current = setTimeout(() => {
+            try {
+              console.log('[Swipe Left] Hiding meaning overlay');
+              setShowMeaningOverlay(false);
+
+              // Update the word status after showing the meaning
+              if (currentWord?.sentence_word_id) {
+                console.log('[Swipe Left] Updating word in database');
+                updateWord(currentWord.sentence_word_id, false)
+                  .then(() => {
+                    console.log('[Swipe Left] Word updated successfully');
+                    // Fade in the new word after the update
+                    opacity.value = withTiming(1, ANIMATION_CONFIG);
+                    // Reset the concurrency guard immediately
+                    isUpdatingWordRef.current = false;
+                  })
+                  .catch(error => {
+                    console.error('[Swipe Left] Error updating word:', error);
+                    Toast.show({
+                      type: 'error',
+                      text1: 'Error',
+                      text2: 'Failed to update word. Please try again.',
+                      position: 'bottom',
+                    });
+                    // Fade in even on error
+                    opacity.value = withTiming(1, ANIMATION_CONFIG);
+                    isUpdatingWordRef.current = false;
+                  });
+              } else {
+                // Fade in if no word to update
+                opacity.value = withTiming(1, ANIMATION_CONFIG);
+                isUpdatingWordRef.current = false;
+              }
+            } catch (error) {
+              console.error('[Swipe Left] Error in meaning timeout:', error);
+              opacity.value = withTiming(1, ANIMATION_CONFIG);
+              isUpdatingWordRef.current = false;
+            }
+          }, 1000);
         } catch (error) {
-          console.error('Error in meaning timeout:', error);
+          console.error('[Swipe Left] Error after fade out:', error);
+          opacity.value = withTiming(1, ANIMATION_CONFIG);
           isUpdatingWordRef.current = false;
         }
-      }, 1000);
+      }, 150); // Time for fade out to complete
     } catch (error) {
-      console.error('Error in handleSwipeLeft:', error);
+      console.error('[Swipe Left] Error in handleSwipeLeft:', error);
+      opacity.value = withTiming(1, ANIMATION_CONFIG);
       isUpdatingWordRef.current = false;
     }
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete]);
+  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
 
   // Handle swipe right (know the word)
   const handleSwipeRight = useCallback(() => {
@@ -356,7 +368,7 @@ export default function ReviewScreen() {
   // Handle close button press
   const queryClient = useQueryClient();
   const handleClose = useCallback(() => {
-    mediumFeedback(); // Stronger haptic feedback
+    lightFeedback(); // Changed from mediumFeedback to lightFeedback for consistency
 
     // First invalidate the queries to ensure the vocabulary screen gets updated data
     invalidateQueries();
@@ -426,43 +438,46 @@ export default function ReviewScreen() {
   // Return the main content with entrance animation
   return (
     <ThemedView style={baseStyles.container} useSafeArea={true}>
-      <EntranceAnimation fullWidth>
-        <View style={baseStyles.contentContainer}>
-          <ReviewHeader
-            progress={progress || 0}
-            maxProgress={maxProgressRef.current}
-            animationKey={progressAnimationKey}
-            onClose={handleClose}
-          />
-
-          <Animated.View
-            style={[
-              {
-                flex: 1,
-                justifyContent: 'center',
-                width: '100%',
-              },
-              containerStyle,
-            ]}
-          >
-            <ReviewCard
-              word={currentSentence.wordForm}
-              fontSize={wordFontSize}
-              onSwipeLeft={handleSwipeLeft}
-              onSwipeRight={handleSwipeRight}
-              isUpdating={isUpdatingWordRef.current}
-              isTransitioning={isTransitioningToCompletion}
+      <Animated.View style={[baseStyles.contentContainer, containerStyle]}>
+        {/* Show loading state during initial load */}
+        {showInitialLoading ? (
+          <Loader />
+        ) : isComplete ? (
+          <CompletionScreen onClose={handleClose} />
+        ) : (
+          <>
+            {/* Header with progress bar */}
+            <ReviewHeader
+              progress={maxProgressRef.current}
+              maxProgress={maxProgressRef.current}
+              animationKey={progressAnimationKey}
+              onClose={handleClose}
             />
-          </Animated.View>
 
-          <View style={baseStyles.footer}>
+            {/* Word display area with meaning overlay */}
+            <View style={baseStyles.wordArea}>
+              <ReviewCard
+                word={currentSentence.wordForm}
+                fontSize={wordFontSize}
+                onSwipeLeft={handleSwipeLeft}
+                onSwipeRight={handleSwipeRight}
+                isUpdating={isUpdatingWordRef.current}
+                isTransitioning={isTransitioningToCompletion}
+                opacity={opacity}
+              />
+              {/* Position MeaningOverlay within the word area */}
+              <MeaningOverlay
+                visible={showMeaningOverlay}
+                meaning={currentMeaning}
+                isWarning={true}
+              />
+            </View>
+
+            {/* Footer with instructions */}
             <InstructionFooter />
-          </View>
-        </View>
-
-        {/* Position MeaningOverlay at the root level for proper overlay */}
-        <MeaningOverlay visible={showMeaningOverlay} meaning={currentMeaning} isWarning={true} />
-      </EntranceAnimation>
+          </>
+        )}
+      </Animated.View>
     </ThemedView>
   );
 }
