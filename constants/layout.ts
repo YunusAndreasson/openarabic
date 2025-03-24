@@ -56,7 +56,7 @@ export const LAYOUT = {
 
   // Specific component heights
   BOTTOM_BAR: {
-    HEIGHT: Platform.OS === 'ios' ? 80 : 49, // Taller on iOS to accommodate text and spacing
+    HEIGHT: Platform.OS === 'ios' ? 65 : 45, // Reduced height for both platforms
     MARGIN: 12, // Tighter margin for bottom elements
   },
 

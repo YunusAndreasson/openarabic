@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.TINY / 2,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
