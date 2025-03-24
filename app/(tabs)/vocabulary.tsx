@@ -14,7 +14,7 @@ import { LoadingScreen } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { calculateVocabularyStats, calculateWeeklyProgressData } from '@/utils/vocabularyStats';
+import { calculateWeeklyProgressData } from '@/utils/vocabularyStats';
 import { useScreenFocusRefresh, useNavigationWithDebounce, useLoadingState } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '@/components/PageHeader';

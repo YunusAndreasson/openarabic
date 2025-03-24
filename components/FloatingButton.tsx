@@ -80,7 +80,9 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
       if (position !== 'left') {
         lightFeedback();
         // Show appropriate toast message based on bookmark state
-        showToast(isBookmarked ? 'Bookmark removed' : 'Added to bookmarks');
+        // We need to show "Removed" when it IS bookmarked (because we're about to remove it)
+        // and "Added" when it's NOT bookmarked (because we're about to add it)
+        showToast(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks');
       }
       onPress();
     }

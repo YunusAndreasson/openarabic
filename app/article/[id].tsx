@@ -26,7 +26,7 @@ import ThemedCard from '@/components/ThemedCard';
 
 // Hooks
 import { useColors } from '@/hooks/useColors';
-import { useAppSelector, useAppDispatch } from '@/store/hooks';
+import { useAppSelector } from '@/store/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { useScreenAnimations } from '@/hooks/animations';
@@ -34,7 +34,7 @@ import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useAudioPlayer, AUDIO_STATES } from '@/hooks/useAudioPlayer';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useLoadingState } from '@/hooks/useLoadingState';
 
 // Store
@@ -201,6 +201,8 @@ export default function ArticleScreen() {
   const handleBookmarkPress = useCallback(() => {
     if (articleId && user) {
       lightFeedback();
+      // Update local state immediately for better UX
+      setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
       handleToggleReadingList(articleId, Boolean(isInReadingList));
     }
   }, [articleId, isInReadingList, handleToggleReadingList, user]);
@@ -343,6 +345,7 @@ export default function ArticleScreen() {
         accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
         colors={colors}
         isDarkMode={isDarkMode}
+        isBookmarked={isInReadingList}
         style={{
           ...styles.floatingButton,
           right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
