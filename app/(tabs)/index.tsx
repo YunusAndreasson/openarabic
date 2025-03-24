@@ -20,6 +20,7 @@ import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
 import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
+import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -93,6 +94,10 @@ const getHeaderHeight = (insets: { top: number }) => {
   return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE; // Added LAYOUT.SPACING.LARGE
 };
 
+// Add prefetch scheduling to reduce network spikes
+const PREFETCH_BATCH_SIZE = 5;
+const PREFETCH_DELAY_MS = 300;
+
 export default function ArticlesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -116,16 +121,20 @@ export default function ArticlesScreen() {
   } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: STALE_TIME_SHORT,
-    placeholderData: () => queryClient.getQueryData(['articles']) || [],
+    staleTime: ARTICLES_STALE_TIME, // 4 hours since articles update once per day
+    gcTime: ARTICLES_GC_TIME, // 24 hours
   });
 
   // Use React Query for categories
-  const { data: categoriesData = [] } = useQuery({
+  const {
+    data: categoriesData = [],
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
+  } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
-    staleTime: STALE_TIME_MEDIUM,
-    placeholderData: () => queryClient.getQueryData(['categories']) || [],
+    staleTime: ARTICLES_STALE_TIME, // 4 hours since categories update with articles
+    gcTime: ARTICLES_GC_TIME, // 24 hours
   });
 
   // State for authors (keep this as is since it uses Supabase directly)
@@ -190,8 +199,20 @@ export default function ArticlesScreen() {
     });
   }, [inProgressArticles, lastOpenedArticles]);
 
-  // Refactored refresh handler using React Query
+  // Refactored refresh handler using React Query - only refresh when needed
   const handleRefresh = useCallback(() => {
+    // Only refresh if it's been 4+ hours since the last refresh
+    const articlesQuery = queryClient.getQueryState(['articles']);
+    const lastUpdated = articlesQuery?.dataUpdatedAt || 0;
+    const now = Date.now();
+    const fourHoursInMs = 4 * 60 * 60 * 1000;
+
+    // Don't refresh if data is fresh (less than 4 hours old)
+    if (now - lastUpdated < fourHoursInMs && articlesData.length > 0) {
+      setIsRefreshing(false);
+      return;
+    }
+
     setIsRefreshing(true);
 
     // Create an array of refresh promises
@@ -210,44 +231,71 @@ export default function ArticlesScreen() {
       .finally(() => {
         setIsRefreshing(false);
       });
-  }, [queryClient, dispatch, fetchAuthors]);
+  }, [queryClient, dispatch, fetchAuthors, articlesData.length]);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Add prefetching for first few articles when data is loaded
+  // Add prefetching for first few articles when data is loaded - optimized with batching
   useEffect(() => {
     if (articlesData.length > 0 && !isArticlesLoading) {
-      // Prefetch first 10 articles in background
-      const articlesToPreload = articlesData.slice(0, 10);
-      articlesToPreload.forEach(article => {
-        queryClient.prefetchQuery({
-          queryKey: ['article', article.id],
-          queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: 60000, // 1 minute cache
-        });
-      });
+      // Prefetch articles in small batches to avoid network spikes
+      const prefetchArticlesBatched = () => {
+        const articlesToPreload = articlesData.slice(0, Math.min(15, articlesData.length));
 
-      // If user is authenticated, also prefetch reading list status
-      if (session?.user) {
-        articlesToPreload.forEach(article => {
-          queryClient.prefetchQuery({
-            queryKey: ['isInReadingList', session.user.id, article.id],
-            queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-            staleTime: 60000,
-          });
-        });
-      }
+        // Process in small batches with delays between batches
+        for (let i = 0; i < articlesToPreload.length; i += PREFETCH_BATCH_SIZE) {
+          const batch = articlesToPreload.slice(i, i + PREFETCH_BATCH_SIZE);
+
+          setTimeout(
+            () => {
+              batch.forEach(article => {
+                // Check if already in cache first
+                if (!queryClient.getQueryData(['article', article.id])) {
+                  queryClient.prefetchQuery({
+                    queryKey: ['article', article.id],
+                    queryFn: () => articlesService.getArticleById(article.id),
+                    staleTime: ARTICLES_STALE_TIME,
+                    gcTime: ARTICLES_GC_TIME,
+                  });
+                }
+
+                // Prefetch reading list status if logged in
+                if (
+                  session?.user &&
+                  !queryClient.getQueryData(['isInReadingList', session.user.id, article.id])
+                ) {
+                  queryClient.prefetchQuery({
+                    queryKey: ['isInReadingList', session.user.id, article.id],
+                    queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
+                    staleTime: 60000, // This can change frequently
+                  });
+                }
+              });
+            },
+            (i * PREFETCH_DELAY_MS) / PREFETCH_BATCH_SIZE
+          ); // Stagger the batches
+        }
+      };
+
+      prefetchArticlesBatched();
     }
   }, [articlesData, isArticlesLoading, queryClient, session]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      // Start prefetching article data immediately when press begins
-      queryClient.prefetchQuery({
-        queryKey: ['article', article.id],
-        queryFn: () => articlesService.getArticleById(article.id),
-      });
+      // Check if article is already in cache
+      const cachedArticle = queryClient.getQueryData(['article', article.id]);
+
+      if (!cachedArticle) {
+        // Start prefetching article data immediately when press begins
+        queryClient.prefetchQuery({
+          queryKey: ['article', article.id],
+          queryFn: () => articlesService.getArticleById(article.id),
+          staleTime: ARTICLES_STALE_TIME,
+          gcTime: ARTICLES_GC_TIME,
+        });
+      }
 
       // Navigate to article detail with debounce protection
       navigateTo(`/article/${article.id}`, () => {
@@ -255,11 +303,14 @@ export default function ArticlesScreen() {
         if (session?.user) {
           dispatch(addToReadingList(article.id));
 
-          // Also prefetch reading list status
-          queryClient.prefetchQuery({
-            queryKey: ['isInReadingList', session.user.id, article.id],
-            queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-          });
+          // Also prefetch reading list status if not already cached
+          if (!queryClient.getQueryData(['isInReadingList', session.user.id, article.id])) {
+            queryClient.prefetchQuery({
+              queryKey: ['isInReadingList', session.user.id, article.id],
+              queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
+              staleTime: 60000, // Reading list status can change
+            });
+          }
         }
       });
     },

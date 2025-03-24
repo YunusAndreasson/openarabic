@@ -8,11 +8,21 @@ import { useAuth } from './useAuth';
 
 // Cache duration constants
 const MINUTE_IN_MS = 60000;
+const HOUR_IN_MS = 60 * MINUTE_IN_MS;
 const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
 const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
 const STALE_TIME_ALWAYS_FRESH = 0;
 const LOAD_TIMEOUT_MS = 10000;
 const MIN_LOADING_TIME = 500; // Minimum time to show loading state
+
+// Single-device optimization - much longer cache time for vocabulary data
+// Since vocabulary data only changes on this device, we can cache it longer
+export const VOCAB_STALE_TIME = 30 * MINUTE_IN_MS; // 30 minutes
+
+// Article optimization - much longer cache time for articles
+// Since articles are static once published and only updated once per day
+export const ARTICLES_STALE_TIME = 4 * HOUR_IN_MS; // 4 hours
+export const ARTICLES_GC_TIME = 24 * HOUR_IN_MS; // 24 hours
 
 // Only log errors in development
 const logError = (message: string, error?: any) => {
@@ -69,7 +79,8 @@ export const useAppPreloader = () => {
         .fetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
-          staleTime: STALE_TIME_SHORT,
+          staleTime: ARTICLES_STALE_TIME, // Much longer stale time for articles
+          gcTime: ARTICLES_GC_TIME, // Keep data in cache for a full day
         })
         .catch(error => {
           logWarning('Failed to load articles:', error);
@@ -80,7 +91,8 @@ export const useAppPreloader = () => {
         .fetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
-          staleTime: STALE_TIME_MEDIUM,
+          staleTime: ARTICLES_STALE_TIME, // Categories change with articles, so same cache time
+          gcTime: ARTICLES_GC_TIME,
         })
         .catch(error => {
           logWarning('Failed to load categories:', error);
@@ -172,11 +184,19 @@ export const useAppPreloader = () => {
       if (!articleId) return false;
 
       try {
+        // Check if article is already in cache
+        const existingArticle = queryClient.getQueryData(['article', articleId]);
+        if (existingArticle) {
+          // Article already cached, no need to fetch again
+          return true;
+        }
+
         const prefetchPromises = [
           queryClient.prefetchQuery({
             queryKey: ['article', articleId],
             queryFn: () => articlesService.getArticleById(articleId),
-            staleTime: STALE_TIME_SHORT,
+            staleTime: ARTICLES_STALE_TIME, // Much longer stale time for individual articles
+            gcTime: ARTICLES_GC_TIME,
           }),
         ];
 
@@ -185,7 +205,7 @@ export const useAppPreloader = () => {
             queryClient.prefetchQuery({
               queryKey: ['isInReadingList', user.id, articleId],
               queryFn: () => readingListService.isInReadingList(user.id, articleId),
-              staleTime: STALE_TIME_SHORT,
+              staleTime: STALE_TIME_SHORT, // This can change frequently based on user actions
             })
           );
         }
@@ -193,13 +213,40 @@ export const useAppPreloader = () => {
         await Promise.all(prefetchPromises);
         return true;
       } catch (error) {
-        console.error('Article prefetch failed:', error);
+        logError('Article prefetch failed:', error);
         queryClient.setQueryData(['article', articleId], null);
         return false;
       }
     },
     [queryClient, user?.id]
   );
+
+  // Prefetch vocabulary data specifically
+  const prefetchVocabularyData = useCallback(async () => {
+    if (!user?.id) return false;
+
+    try {
+      // Use much longer stale time for vocabulary data since changes only happen on this device
+      await Promise.allSettled([
+        queryClient.prefetchQuery({
+          queryKey: ['dueWords', user.id],
+          queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
+          staleTime: VOCAB_STALE_TIME,
+        }),
+
+        queryClient.prefetchQuery({
+          queryKey: ['studyWords', user.id],
+          queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
+          staleTime: VOCAB_STALE_TIME,
+        }),
+      ]);
+
+      return true;
+    } catch (error) {
+      logError('Vocabulary data prefetch failed:', error);
+      return false;
+    }
+  }, [queryClient, user?.id]);
 
   // Force refresh of all data
   const refreshPreloadedData = useCallback(async () => {
@@ -237,9 +284,17 @@ export const useAppPreloader = () => {
       criticalDataLoaded: isLoaded,
       preloadAppData,
       prefetchArticle,
+      prefetchVocabularyData,
       refreshPreloadedData,
     }),
-    [isPreloading, isLoaded, preloadAppData, prefetchArticle, refreshPreloadedData]
+    [
+      isPreloading,
+      isLoaded,
+      preloadAppData,
+      prefetchArticle,
+      prefetchVocabularyData,
+      refreshPreloadedData,
+    ]
   );
 
   return returnValue;

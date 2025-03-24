@@ -9,6 +9,7 @@ import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';
 import { LoadingContainer } from './Loader';
 import { useColors } from '@/hooks/useColors';
+import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';
 
 interface ArticleSectionProps {
   /**
@@ -102,16 +103,21 @@ const ArticleSection = React.memo(
     // Handle viewability change for prefetching
     const handleViewableItemsChanged = useCallback(
       ({ viewableItems }: { viewableItems: { item: Article }[] }) => {
-        // Prefetch data for articles that become visible
-        viewableItems.forEach(({ item }) => {
+        // Only prefetch articles that aren't already in the cache
+        for (const { item } of viewableItems) {
           if (item && item.id) {
-            queryClient.prefetchQuery({
-              queryKey: ['article', item.id],
-              queryFn: () => articlesService.getArticleById(item.id),
-              staleTime: 60000, // 1 minute cache
-            });
+            // Check if already in cache first to avoid unnecessary network requests
+            const cachedArticle = queryClient.getQueryData(['article', item.id]);
+            if (!cachedArticle) {
+              queryClient.prefetchQuery({
+                queryKey: ['article', item.id],
+                queryFn: () => articlesService.getArticleById(item.id),
+                staleTime: ARTICLES_STALE_TIME,
+                gcTime: ARTICLES_GC_TIME,
+              });
+            }
           }
-        });
+        }
       },
       [queryClient]
     );

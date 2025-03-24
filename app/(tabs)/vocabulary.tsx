@@ -22,6 +22,9 @@ import { ThemedButton } from '@/components/ThemedButton';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAppPreloader } from '@/hooks/useAppPreloader';
+import { useFocusEffect } from '@react-navigation/native';
+import { VOCAB_STALE_TIME } from '@/hooks/useAppPreloader';
 
 // Pure functions moved outside component
 const getHeaderHeight = (insets: { top: number }) => {
@@ -116,6 +119,7 @@ export default function VocabularyScreen() {
   const colors = useColors();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
+  const { prefetchVocabularyData } = useAppPreloader();
 
   // Add loading state hook to match other tab screens
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -126,7 +130,16 @@ export default function VocabularyScreen() {
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Query for study words - updated to use FSRS service
+  // Use prefetchVocabularyData to load data with better error handling on screen focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        prefetchVocabularyData();
+      }
+    }, [user?.id, prefetchVocabularyData])
+  );
+
+  // Query for study words - updated to use FSRS service with longer stale time
   const {
     data: studyWords = [],
     isLoading: isStudyWordsLoading,
@@ -137,13 +150,13 @@ export default function VocabularyScreen() {
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { forStats: false }),
     enabled: !!user,
-    staleTime: 60000, // 1 minute
+    staleTime: VOCAB_STALE_TIME, // Much longer stale time since data only changes on this device
     refetchOnWindowFocus: false,
     // Get previous data from cache to prevent UI flicker
     placeholderData: () => queryClient.getQueryData(['studyWords', user?.id]) || [],
   });
 
-  // Query for due words - updated to use FSRS service
+  // Query for due words with optimized settings
   const {
     data: dueWordsData = [],
     isFetching: isDueWordsFetching,
@@ -152,8 +165,8 @@ export default function VocabularyScreen() {
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { onlyDue: true }),
     enabled: !!user,
-    staleTime: 0, // Always fetch fresh data for due words
-    gcTime: 60000, // 1 minute
+    staleTime: VOCAB_STALE_TIME, // Increased from 0 to reduce network calls
+    gcTime: 30 * 60000, // 30 minutes
     // Get previous data from cache to prevent UI flicker
     placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || [],
   });
@@ -178,23 +191,23 @@ export default function VocabularyScreen() {
     }
   };
 
-  // Use the screen focus refresh hook with debounce
+  // Use the screen focus refresh hook with debounce - reduced frequency
   useScreenFocusRefresh(
     queryClient,
     'dueWords',
     user?.id,
-    0, // Always refresh due words
+    VOCAB_STALE_TIME, // Only refresh after stale time instead of always
     true, // Skip initial focus
-    true // Force refresh on focus
+    false // Don't force refresh on focus, data only changes on this device
   );
 
   useScreenFocusRefresh(
     queryClient,
     'studyWords',
     user?.id,
-    60000, // 1 minute stale time
+    VOCAB_STALE_TIME, // Use the longer stale time
     true, // Skip initial focus
-    true // Force refresh on focus
+    false // Don't force refresh on focus, data only changes on this device
   );
 
   // Filter valid study words with error protection
@@ -202,6 +215,28 @@ export default function VocabularyScreen() {
     if (!Array.isArray(studyWords)) return [];
     return studyWords.filter(word => word?.sentence_word != null);
   }, [studyWords]);
+
+  // Cache stats calculation key based on array lengths and last updated times
+  // This prevents unnecessary recalculations when the underlying data hasn't changed
+  const statsCalculationKey = useMemo(() => {
+    const dueCount = dueWordsData?.length || 0;
+    const totalCount = validStudyWords?.length || 0;
+
+    // Find the latest updated timestamp to use as part of the calculation key
+    let latestTimestamp = 0;
+    if (Array.isArray(validStudyWords)) {
+      for (const word of validStudyWords) {
+        if (word?.last_updated_at) {
+          const timestamp = new Date(word.last_updated_at).getTime();
+          if (timestamp > latestTimestamp) {
+            latestTimestamp = timestamp;
+          }
+        }
+      }
+    }
+
+    return `${dueCount}-${totalCount}-${latestTimestamp}`;
+  }, [dueWordsData?.length, validStudyWords]);
 
   // Check if data is ready to display with loading protection
   const isDataReady = useMemo(() => {
@@ -225,7 +260,7 @@ export default function VocabularyScreen() {
     }
   }, [isAuthLoading, user, isDataLoading, startLoading, stopLoading]);
 
-  // Split stats calculation into smaller memoized chunks
+  // Split stats calculation into smaller memoized chunks - optimized with calculation key
   const baseStats = useMemo(() => {
     if (validStudyWords?.length === 0 && studyWords?.length === 0) {
       return {
@@ -235,12 +270,12 @@ export default function VocabularyScreen() {
       };
     }
     return getBaseStats(validStudyWords ?? [], dueWordsData ?? []);
-  }, [validStudyWords?.length, studyWords?.length, dueWordsData?.length]);
+  }, [statsCalculationKey]); // Only recalculate when key changes
 
   const advancedStats = useMemo(() => {
     if (validStudyWords?.length === 0) return null;
     return getAdvancedStats(validStudyWords);
-  }, [validStudyWords]);
+  }, [statsCalculationKey]); // Only recalculate when key changes
 
   // Combine stats with safe defaults
   const stats = useMemo<VocabularyStats>(
@@ -273,19 +308,27 @@ export default function VocabularyScreen() {
   const handleStartReview = () => {
     if (!user) return;
 
-    // Invalidate due words query to refresh after review
-    queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+    // Since we're on a single device, we only need to mark queries as stale
+    // without forcing a refetch - this will prevent flickering when returning
+    // from the review screen
 
-    // Mark study words as stale to ensure refresh when returning
+    // Mark due words query as stale to ensure it refreshes when needed
     queryClient.invalidateQueries({
-      queryKey: ['studyWords', user.id],
-      refetchType: 'none', // Don't refetch now, but mark as stale for when we return
+      queryKey: ['dueWords', user.id],
+      refetchType: 'none', // Don't refetch immediately
     });
 
-    // Prefetch the review data to avoid the "no words" flash - updated to use FSRS service
+    // Mark study words as stale
+    queryClient.invalidateQueries({
+      queryKey: ['studyWords', user.id],
+      refetchType: 'none',
+    });
+
+    // Prefetch review data with longer cache time
     queryClient.prefetchQuery({
       queryKey: ['dueWords', user.id, 'review'],
       queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
+      staleTime: VOCAB_STALE_TIME,
     });
 
     // Navigate to review screen
