@@ -49,34 +49,50 @@ export const useAppPreloader = () => {
       // STEP 1: Load critical data first (data needed for initial UI render)
       const criticalPromises = [
         // Preload main articles list (home screen) - critical for index page
-        queryClient.prefetchQuery({
-          queryKey: ['articles'],
-          queryFn: () => articlesService.getArticles(),
-          staleTime: STALE_TIME_SHORT,
-        }),
+        queryClient
+          .prefetchQuery({
+            queryKey: ['articles'],
+            queryFn: () => articlesService.getArticles(),
+            staleTime: STALE_TIME_SHORT,
+          })
+          .catch(error => {
+            console.error('Failed to load articles:', error);
+            return null;
+          }),
       ];
 
       // Add user-specific critical data if user is logged in
       if (user?.id) {
         criticalPromises.push(
           // Due words are critical for logged-in users who might want to study
-          queryClient.prefetchQuery({
-            queryKey: ['dueWords', user.id],
-            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-            staleTime: STALE_TIME_ALWAYS_FRESH,
-          })
+          queryClient
+            .prefetchQuery({
+              queryKey: ['dueWords', user.id],
+              queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
+              staleTime: STALE_TIME_ALWAYS_FRESH,
+            })
+            .catch(error => {
+              console.error('Failed to load due words:', error);
+              return null;
+            })
         );
       }
 
       // Critical data timeout - shorter than non-critical
       const criticalTimeoutPromise = new Promise(resolve =>
-        setTimeout(resolve, CRITICAL_DATA_TIMEOUT_MS)
+        setTimeout(() => {
+          console.warn('Critical data load timed out');
+          resolve(null);
+        }, CRITICAL_DATA_TIMEOUT_MS)
       );
 
-      // Wait for critical data or timeout
-      await Promise.race([Promise.all(criticalPromises), criticalTimeoutPromise]);
+      // Wait for critical data or timeout, but don't throw
+      const results = await Promise.race([
+        Promise.allSettled(criticalPromises),
+        criticalTimeoutPromise,
+      ]);
 
-      // Mark critical data as loaded to allow UI to transition
+      // Mark critical data as loaded regardless of outcome
       setCriticalDataLoaded(true);
 
       // STEP 2: Load non-critical data in the background
@@ -147,35 +163,47 @@ export const useAppPreloader = () => {
   }, [queryClient, user, isPreloading, isAuthLoading]);
 
   // Function to prefetch a specific article
-  const prefetchArticle = async (articleId: number) => {
-    if (!articleId) return;
+  const prefetchArticle = useCallback(
+    async (articleId: number) => {
+      if (!articleId) return false;
 
-    try {
-      // Prefetch the specific article
-      await queryClient.prefetchQuery({
-        queryKey: ['article', articleId],
-        queryFn: () => articlesService.getArticleById(articleId),
-        staleTime: STALE_TIME_SHORT,
-      });
-
-      // Prefetch reading list status if user is logged in
-      if (user?.id) {
-        await queryClient.prefetchQuery({
-          queryKey: ['isInReadingList', user.id, articleId],
-          queryFn: () => readingListService.isInReadingList(user.id, articleId),
+      try {
+        // Prefetch the specific article with timeout
+        const articlePromise = queryClient.prefetchQuery({
+          queryKey: ['article', articleId],
+          queryFn: () => articlesService.getArticleById(articleId),
           staleTime: STALE_TIME_SHORT,
         });
-      }
 
-      return true;
-    } catch (error) {
-      // Failed to prefetch article
-      return false;
-    }
-  };
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Article prefetch timeout')), CRITICAL_DATA_TIMEOUT_MS)
+        );
+
+        await Promise.race([articlePromise, timeoutPromise]);
+
+        // Only prefetch reading list status if article prefetch succeeded
+        if (user?.id) {
+          await queryClient.prefetchQuery({
+            queryKey: ['isInReadingList', user.id, articleId],
+            queryFn: () => readingListService.isInReadingList(user.id, articleId),
+            staleTime: STALE_TIME_SHORT,
+          });
+        }
+
+        return true;
+      } catch (error) {
+        // Failed to prefetch article - ensure query is marked as failed
+        queryClient.setQueryData(['article', articleId], null);
+        console.error('Article prefetch failed:', error);
+        return false;
+      }
+    },
+    [queryClient, user?.id]
+  );
 
   // Force refresh of preloaded data
-  const refreshPreloadedData = () => {
+  const refreshPreloadedData = useCallback(async () => {
     // Reset state
     setPreloadComplete(false);
     setCriticalDataLoaded(false);
@@ -188,18 +216,25 @@ export const useAppPreloader = () => {
       queriesToInvalidate.push(['studyWords', user.id], ['dueWords', user.id]);
     }
 
-    // Invalidate all queries in one operation
-    queryClient.invalidateQueries({
-      predicate: query => {
-        return queriesToInvalidate.some(
-          key => query.queryKey[0] === key[0] && (key.length === 1 || query.queryKey[1] === key[1])
-        );
-      },
-    });
+    try {
+      // Invalidate all queries in one operation
+      await queryClient.invalidateQueries({
+        predicate: query => {
+          return queriesToInvalidate.some(
+            key =>
+              query.queryKey[0] === key[0] && (key.length === 1 || query.queryKey[1] === key[1])
+          );
+        },
+      });
 
-    // Trigger a new preload
-    preloadAppData();
-  };
+      // Trigger a new preload only after invalidation is complete
+      await preloadAppData();
+    } catch (error) {
+      // Ensure state is reset even on error
+      setPreloadComplete(true);
+      setCriticalDataLoaded(true);
+    }
+  }, [queryClient, user?.id, preloadAppData]);
 
   return {
     isPreloading,

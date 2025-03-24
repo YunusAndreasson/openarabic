@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useLayoutReady } from '../useLayoutReady';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { useAnimationTrigger } from './useAnimationTrigger';
@@ -43,6 +43,15 @@ export const useScreenAnimation = (
   layoutDelay = 0,
   animationDelay = 0
 ): ScreenAnimationResult => {
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   // Manages layout readiness with optional delay
   const { isLayoutReady, resetLayout } = useLayoutReady(layoutDelay);
 
@@ -58,6 +67,8 @@ export const useScreenAnimation = (
 
   // Function to start the fade-in animation - ensure it's a worklet
   const startFadeInAnimation = useCallback(() => {
+    if (!isMountedRef.current) return;
+
     // Ensure this runs on the UI thread
     runOnUI(() => {
       'worklet';

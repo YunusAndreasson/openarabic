@@ -56,13 +56,14 @@ export const useNavigationWithDebounce = (
     (route: NavigationRoute, callback?: () => void, navigateOptions?: NavigateToOptions) => {
       if (isNavigating) return;
 
-      // Set navigating state to prevent multiple clicks
-      setIsNavigating(true);
-
-      // Clear any existing timeout
+      // Clear any existing timeout first
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = undefined;
       }
+
+      // Set navigating state to prevent multiple clicks
+      setIsNavigating(true);
 
       // Run callback if provided
       if (callback) {
@@ -77,14 +78,18 @@ export const useNavigationWithDebounce = (
           router.push(route as any);
         }
       } catch (error) {
-        // Reset navigation state if an error occurs
+        console.error('Navigation error:', error);
         setIsNavigating(false);
+        return;
       }
 
       // Reset navigation state after debounce duration
-      timeoutRef.current = setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setIsNavigating(false);
+        timeoutRef.current = undefined;
       }, debounceDuration);
+
+      timeoutRef.current = timeoutId;
     },
     [isNavigating, debounceDuration]
   );

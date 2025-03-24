@@ -48,39 +48,37 @@ const calculateRetentionScore = (word: StudyWord): number => {
  * This directly uses the State enum from ts-fsrs
  */
 const getStateInfo = (word: StudyWord) => {
-  // Use FSRS state enum directly
   switch (word.fsrs_state) {
     case State.New:
       return {
         label: 'New',
-        color: '#ff9500', // Orange
+        colorKey: 'warning' as const,
       };
     case State.Learning:
       return {
         label: 'Learning',
-        color: '#ffcc00', // Yellow
+        colorKey: 'accent' as const,
       };
     case State.Review:
-      // For Review state, further differentiate based on stability
       if (word.fsrs_stability >= 30) {
         return {
           label: 'Mastered',
-          color: '#34c759', // Green
+          colorKey: 'success' as const,
         };
       }
       return {
         label: 'Review',
-        color: '#5ac8fa', // Blue
+        colorKey: 'info' as const,
       };
     case State.Relearning:
       return {
         label: 'Relearning',
-        color: '#ff3b30', // Red
+        colorKey: 'error' as const,
       };
     default:
       return {
         label: 'Unknown',
-        color: '#8e8e93', // Gray
+        colorKey: 'text' as const,
       };
   }
 };
@@ -89,6 +87,9 @@ const getStateInfo = (word: StudyWord) => {
 const getHeaderHeight = (insets: { top: number }) => {
   return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
 };
+
+const ITEM_HEIGHT = 70;
+const CATEGORY_HEADER_HEIGHT = 150;
 
 export default function WordListScreen() {
   const { category } = useLocalSearchParams();
@@ -133,34 +134,49 @@ export default function WordListScreen() {
   }, [category]);
 
   // Fetch words based on the category
-  const { data: wordsData, isLoading } = useQuery<EnhancedStudyWord[]>({
+  const {
+    data: wordsData,
+    isLoading,
+    error,
+  } = useQuery<EnhancedStudyWord[]>({
     queryKey: ['vocabulary-words', user?.id, category],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id) throw new Error('User not authenticated');
 
       try {
         // For all categories, fetch the complete data
         const allWords = await studyWordsFSRSService.getFSRSWords(user.id);
 
-        // Filter out invalid words
+        // Filter out invalid words with type guard
         const filteredWords = allWords.filter(
-          word => word && word.sentence_word && word.sentence_word.word_form
+          (
+            word
+          ): word is StudyWord & {
+            sentence_word: NonNullable<typeof word.sentence_word> & {
+              word_form: NonNullable<typeof word.sentence_word.word_form>;
+            };
+          } => {
+            return Boolean(
+              word &&
+                word.sentence_word &&
+                word.sentence_word.word_form &&
+                typeof word.sentence_word.word_form === 'string'
+            );
+          }
         );
 
         // Filter words based on category using FSRS states
-        let result = [];
+        let result: StudyWord[] = [];
         switch (category) {
           case 'total':
             result = filteredWords;
             break;
           case 'mastered':
-            // Use FSRS State.Review and high stability (proper FSRS measure of mastery)
             result = filteredWords.filter(
               word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
             );
             break;
           case 'learning':
-            // Include New, Learning, and Relearning states from FSRS
             result = filteredWords.filter(
               word =>
                 word.fsrs_state === State.New ||
@@ -170,10 +186,22 @@ export default function WordListScreen() {
             );
             break;
           case 'due':
-            // For due words, use the onlyDue parameter (relies on fsrs_due)
             const dueWords = await studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true });
             result = dueWords.filter(
-              word => word && word.sentence_word && word.sentence_word.word_form
+              (
+                word
+              ): word is StudyWord & {
+                sentence_word: NonNullable<typeof word.sentence_word> & {
+                  word_form: NonNullable<typeof word.sentence_word.word_form>;
+                };
+              } => {
+                return Boolean(
+                  word &&
+                    word.sentence_word &&
+                    word.sentence_word.word_form &&
+                    typeof word.sentence_word.word_form === 'string'
+                );
+              }
             );
             break;
           default:
@@ -184,46 +212,61 @@ export default function WordListScreen() {
         return result.map(word => ({
           ...word,
           retentionScore: calculateRetentionScore(word),
-        })) as EnhancedStudyWord[];
+        }));
       } catch (error) {
-        return [];
+        // Properly handle and rethrow the error
+        console.error('Error fetching words:', error);
+        throw error instanceof Error ? error : new Error('Failed to fetch vocabulary words');
       }
     },
     enabled: !!user?.id,
     placeholderData: () => {
-      // Try to use cached study words to create a placeholder
       const queryClient = useQueryClient();
 
-      // Get the appropriate cached data based on category
       if (category === 'due') {
         const dueWords = queryClient.getQueryData<StudyWord[]>(['dueWords', user?.id]);
-        if (dueWords?.length) {
-          return dueWords
-            .filter(word => word && word.sentence_word && word.sentence_word.word_form)
-            .map(word => ({
-              ...word,
-              retentionScore: calculateRetentionScore(word),
-            })) as EnhancedStudyWord[];
-        }
+        if (!dueWords?.length) return undefined;
+
+        const validWords = dueWords.filter(
+          (
+            word
+          ): word is NonNullable<typeof word> & {
+            sentence_word: NonNullable<StudyWord['sentence_word']> & { word_form: string };
+          } =>
+            Boolean(
+              word?.sentence_word?.word_form && typeof word.sentence_word.word_form === 'string'
+            )
+        );
+
+        return validWords.map(word => ({
+          ...word,
+          retentionScore: calculateRetentionScore(word),
+        }));
       }
 
-      // For other categories, start with all study words and filter
       const studyWords = queryClient.getQueryData<StudyWord[]>(['studyWords', user?.id]);
       if (!studyWords?.length) return undefined;
 
-      // Filter by category
-      let filteredWords: StudyWord[] = [];
+      const validStudyWords = studyWords.filter(
+        (
+          word
+        ): word is NonNullable<typeof word> & {
+          sentence_word: NonNullable<StudyWord['sentence_word']> & { word_form: string };
+        } =>
+          Boolean(
+            word?.sentence_word?.word_form && typeof word.sentence_word.word_form === 'string'
+          )
+      );
+
+      let filteredWords = validStudyWords;
       switch (category) {
-        case 'total':
-          filteredWords = studyWords;
-          break;
         case 'mastered':
-          filteredWords = studyWords.filter(
+          filteredWords = validStudyWords.filter(
             word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
           );
           break;
         case 'learning':
-          filteredWords = studyWords.filter(
+          filteredWords = validStudyWords.filter(
             word =>
               word.fsrs_state === State.New ||
               word.fsrs_state === State.Learning ||
@@ -231,41 +274,27 @@ export default function WordListScreen() {
               (word.fsrs_state === State.Review && word.fsrs_stability < 30)
           );
           break;
-        default:
-          filteredWords = studyWords;
       }
 
-      // Map to enhanced study words
-      return filteredWords
-        .filter(word => word && word.sentence_word && word.sentence_word.word_form)
-        .map(word => ({
-          ...word,
-          retentionScore: calculateRetentionScore(word),
-        })) as EnhancedStudyWord[];
+      return filteredWords.map(word => ({
+        ...word,
+        retentionScore: calculateRetentionScore(word),
+      }));
     },
   });
 
   // Sort the words by retention score (highest first)
   const sortedWords = useMemo(() => {
     if (!wordsData) return [];
-    // Sort by retention score (highest to lowest)
     return [...wordsData].sort((a, b) => b.retentionScore - a.retentionScore);
   }, [wordsData]);
-
-  const handleWordPress = useCallback((word: EnhancedStudyWord) => {
-    // Navigate to word detail or implement whatever action is needed
-  }, []);
 
   // Render an item in the list
   const renderItem = useCallback(
     ({ item }: { item: EnhancedStudyWord }) => (
-      <WordListItem
-        word={item}
-        onPress={() => handleWordPress(item)}
-        masteryScore={item.retentionScore}
-      />
+      <WordListItem word={item} masteryScore={item.retentionScore} />
     ),
-    [handleWordPress]
+    []
   );
 
   // Empty list component
@@ -299,6 +328,33 @@ export default function WordListScreen() {
       </View>
     );
   }, [isLoading, category]);
+
+  const getItemLayout = useCallback(
+    (_: any, index: number) => ({
+      length: ITEM_HEIGHT,
+      offset:
+        ITEM_HEIGHT * index +
+        (category ? CATEGORY_HEADER_HEIGHT : 0) +
+        getHeaderHeight(insets) +
+        LAYOUT.SPACING.LARGE,
+      index,
+    }),
+    [category, insets]
+  );
+
+  // Add error UI handling
+  if (error) {
+    return (
+      <ThemedView style={styles.container}>
+        <Stack.Screen options={{ title }} />
+        <View style={styles.errorContainer}>
+          <ThemedText style={[styles.errorText, { color: colors.error }]}>
+            Failed to load vocabulary words. Please try again later.
+          </ThemedText>
+        </View>
+      </ThemedView>
+    );
+  }
 
   return (
     <>
@@ -344,15 +400,7 @@ export default function WordListScreen() {
                 windowSize={5}
                 removeClippedSubviews={true}
                 updateCellsBatchingPeriod={50}
-                getItemLayout={(data, index) => ({
-                  length: 70, // Adjusted height to match tighter card
-                  offset:
-                    70 * index +
-                    (category ? 150 : 0) +
-                    getHeaderHeight(insets) +
-                    LAYOUT.SPACING.LARGE, // Include header height and extra padding
-                  index,
-                })}
+                getItemLayout={getItemLayout}
               />
             )}
           </View>
@@ -397,5 +445,15 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DIMMED,
     marginTop: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.LARGE,
+  },
+  errorText: {
+    textAlign: 'center',
+    fontSize: 16,
   },
 });

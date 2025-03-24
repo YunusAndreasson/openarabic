@@ -81,20 +81,21 @@ export default function VocabularyScreen() {
 
   // Handler for pull-to-refresh
   const handleRefresh = async () => {
-    if (!user) return;
+    if (!user || isFetching) return; // Prevent multiple refreshes
 
     // Provide haptic feedback when refreshing
     mediumFeedback();
 
     setIsRefreshing(true);
-
-    // Refetch both study words and due words
-    await Promise.all([refetchStudyWords(), refetchDueWords()]);
-
-    setIsRefreshing(false);
+    try {
+      // Refetch both study words and due words
+      await Promise.all([refetchStudyWords(), refetchDueWords()]);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
-  // Use the screen focus refresh hook
+  // Use the screen focus refresh hook with debounce
   useScreenFocusRefresh(
     queryClient,
     'dueWords',
@@ -113,15 +114,17 @@ export default function VocabularyScreen() {
     true // Force refresh on focus
   );
 
-  // Filter valid study words
+  // Filter valid study words with error protection
   const validStudyWords = useMemo(() => {
-    return studyWords?.filter(word => word?.sentence_word != null) ?? [];
+    if (!Array.isArray(studyWords)) return [];
+    return studyWords.filter(word => word?.sentence_word != null);
   }, [studyWords]);
 
-  // Check if data is ready to display (similar to other tab screens)
+  // Check if data is ready to display with loading protection
   const isDataReady = useMemo(() => {
+    if (isAuthLoading || isDataLoading) return false;
     return !!user && (validStudyWords.length > 0 || error !== null);
-  }, [user, validStudyWords.length, error]);
+  }, [user, validStudyWords.length, error, isAuthLoading, isDataLoading]);
 
   // Add screen animation hook to match other tab screens
   const { fadeInStyle } = useScreenAnimation(

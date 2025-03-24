@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { ThemedText } from '../../components/ThemedText';
@@ -15,8 +15,14 @@ import { MeaningOverlayProps } from '../../types/ui.types';
 const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
   ({ visible, meaning, isWarning = false }) => {
     const colors = useColors();
-    // Add internal state to track if we should render anything
     const [shouldRender, setShouldRender] = useState(visible);
+    const isMountedRef = useRef(true);
+
+    useEffect(() => {
+      return () => {
+        isMountedRef.current = false;
+      };
+    }, []);
 
     const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
       initialOpacity: 0,
@@ -27,28 +33,25 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
     // Watch for visibility changes
     useEffect(() => {
       if (visible) {
-        // When becoming visible, render immediately and animate in
         setShouldRender(true);
         startAnimation();
 
-        // Provide haptic feedback when showing a warning
         if (isWarning) {
           lightFeedback();
         }
       } else if (shouldRender) {
-        // When hiding, animate out first, then stop rendering
         reverseAnimation();
 
-        // Wait for animation to complete before unmounting
         const timeout = setTimeout(() => {
-          setShouldRender(false);
-        }, 200); // slightly longer than animation duration
+          if (isMountedRef.current) {
+            setShouldRender(false);
+          }
+        }, 200);
 
         return () => clearTimeout(timeout);
       }
     }, [visible, startAnimation, reverseAnimation, isWarning, shouldRender]);
 
-    // Don't render anything if we shouldn't render
     if (!shouldRender) return null;
 
     // Use warning color and larger font size when isWarning is true

@@ -106,6 +106,9 @@ export default function ReviewScreen() {
   // Show loading state during initial load to prevent "no words" flash
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
 
+  // Add ref for last progress update time
+  const lastProgressUpdateRef = useRef(Date.now());
+
   // Create animated styles for the container - optimize to run on UI thread
   const containerStyle = useAnimatedStyle(() => {
     'worklet';
@@ -116,31 +119,23 @@ export default function ReviewScreen() {
 
   // Define completion transition function that both paths can use
   const triggerCompletionTransition = useCallback(() => {
-    // Prevent duplicate transitions
     if (completionTriggeredRef.current) return;
     completionTriggeredRef.current = true;
 
-    if (__DEV__) {
-      console.log('Triggering completion transition');
-    }
-
-    // Set progress to 100% immediately
     maxProgressRef.current = 100;
     setProgressAnimationKey(prev => prev + 1);
-
-    // Start transition to completion screen
     setIsTransitioningToCompletion(true);
-
-    // Fade out current screen using our standard animation config
     opacity.value = withTiming(0, ANIMATION_CONFIG);
 
-    // Wait for animation to complete
     if (completionTransitionRef.current) {
       clearTimeout(completionTransitionRef.current);
     }
 
     completionTransitionRef.current = setTimeout(() => {
-      setIsTransitioningToCompletion(false);
+      if (completionTriggeredRef.current) {
+        // Only update state if not unmounted
+        setIsTransitioningToCompletion(false);
+      }
     }, 350);
   }, [opacity]);
 
@@ -150,27 +145,19 @@ export default function ReviewScreen() {
     onComplete: triggerCompletionTransition,
   });
 
-  // Update progress tracking
+  // Update progress tracking with debounce
   useEffect(() => {
     if (!isLoading && progress !== undefined) {
-      if (__DEV__) {
-        console.log('[Progress Update]', {
-          progress,
-          isComplete,
-        });
+      const now = Date.now();
+      if (now - lastProgressUpdateRef.current < 100) {
+        return; // Debounce rapid updates
       }
 
-      // Only update maxProgress and trigger animation if progress actually increased
-      if (progress > maxProgressRef.current) {
-        // Update maxProgress
-        maxProgressRef.current = progress;
-
-        // Only force progress bar animation refresh when there's a visual change
+      const safeProgress = Math.min(100, Math.max(0, progress));
+      if (safeProgress > maxProgressRef.current) {
+        maxProgressRef.current = safeProgress;
         setProgressAnimationKey(prev => prev + 1);
-
-        if (__DEV__) {
-          console.log('[Progress Animation] Triggering animation, progress:', progress);
-        }
+        lastProgressUpdateRef.current = now;
       }
     }
   }, [isLoading, progress, isComplete]);
@@ -178,13 +165,10 @@ export default function ReviewScreen() {
   // Initialize totalWordsRef when the session starts
   useEffect(() => {
     if (!isLoading && progress !== undefined && totalWordsRef.current === 0) {
-      // The initial progress percentage represents 1 word out of the total
-      // So if progress is 33%, then total words is 3 (100/33)
-      const calculatedTotal = Math.round(100 / (progress || 100));
+      // Prevent division by zero and handle edge cases
+      const safeProgress = Math.max(1, progress || 100);
+      const calculatedTotal = Math.max(1, Math.round(100 / safeProgress));
       totalWordsRef.current = calculatedTotal;
-      if (__DEV__) {
-        console.log('[Progress Init] Setting total words:', calculatedTotal);
-      }
     }
   }, [isLoading, progress]);
 
@@ -197,11 +181,17 @@ export default function ReviewScreen() {
   // Hide initial loading after a short delay
   useEffect(() => {
     if (showInitialLoading) {
+      const mounted = { current: true };
       const timer = setTimeout(() => {
-        setShowInitialLoading(false);
-      }, 300); // Enough time for data to load
+        if (mounted.current) {
+          setShowInitialLoading(false);
+        }
+      }, 300);
 
-      return () => clearTimeout(timer);
+      return () => {
+        mounted.current = false;
+        clearTimeout(timer);
+      };
     }
   }, [showInitialLoading]);
 
@@ -256,100 +246,57 @@ export default function ReviewScreen() {
     // Set local concurrency guard
     isUpdatingWordRef.current = true;
 
-    // Add haptic feedback for don't know - using very light feedback
+    // Add haptic feedback for don't know
     lightFeedback();
 
-    // First fade out the current word - use proper worklet annotation
-    const animateFadeOut = () => {
-      'worklet';
-      opacity.value = withTiming(0, ANIMATION_CONFIG);
-    };
-    animateFadeOut();
+    // Create a promise chain to ensure sequential execution
+    const updateSequence = async () => {
+      try {
+        // First fade out the current word
+        opacity.value = withTiming(0, ANIMATION_CONFIG);
+        await new Promise(resolve => setTimeout(resolve, 150));
 
-    // For failures, always update animation key even if progress doesn't change
-    // This ensures the animation is triggered for feedback
-    setProgressAnimationKey(prev => prev + 1);
+        // Store and show the meaning
+        const meaning = currentWord?.sentence_word?.english || 'No translation available';
+        setCurrentMeaning(meaning);
+        setShowMeaningOverlay(true);
 
-    // Clear any existing timeouts to prevent memory leaks
-    if (meaningTimeoutRef.current) {
-      clearTimeout(meaningTimeoutRef.current);
-      meaningTimeoutRef.current = null;
-    }
-
-    try {
-      // Wait for the fade out to complete
-      setTimeout(() => {
-        try {
-          // Store the current word's meaning before updating
-          if (currentWord?.sentence_word?.english) {
-            setCurrentMeaning(currentWord.sentence_word.english);
-          } else {
-            setCurrentMeaning('No translation available');
-          }
-
-          // Show the meaning overlay
-          setShowMeaningOverlay(true);
-          if (__DEV__) {
-            console.log('[Swipe Left] Showing meaning overlay');
-          }
-
-          // Hide the meaning after a delay
+        // Wait for meaning display
+        await new Promise(resolve => {
           meaningTimeoutRef.current = setTimeout(() => {
-            try {
-              if (__DEV__) {
-                console.log('[Swipe Left] Hiding meaning overlay');
-              }
-              setShowMeaningOverlay(false);
-
-              // Update the word status after showing the meaning
-              if (currentWord?.sentence_word_id) {
-                if (__DEV__) {
-                  console.log('[Swipe Left] Updating word in database');
-                }
-                updateWord(currentWord.sentence_word_id, false)
-                  .then(() => {
-                    if (__DEV__) {
-                      console.log('[Swipe Left] Word updated successfully');
-                    }
-                    // Fade in the new word after the update
-                    opacity.value = withTiming(1, ANIMATION_CONFIG);
-                    // Reset the concurrency guard immediately
-                    isUpdatingWordRef.current = false;
-                  })
-                  .catch(error => {
-                    console.error('[Swipe Left] Error updating word:', error);
-                    Toast.show({
-                      type: 'error',
-                      text1: 'Error',
-                      text2: 'Failed to update word. Please try again.',
-                      position: 'bottom',
-                    });
-                    // Fade in even on error
-                    opacity.value = withTiming(1, ANIMATION_CONFIG);
-                    isUpdatingWordRef.current = false;
-                  });
-              } else {
-                // Fade in if no word to update
-                opacity.value = withTiming(1, ANIMATION_CONFIG);
-                isUpdatingWordRef.current = false;
-              }
-            } catch (error) {
-              console.error('[Swipe Left] Error in meaning timeout:', error);
-              opacity.value = withTiming(1, ANIMATION_CONFIG);
-              isUpdatingWordRef.current = false;
-            }
+            setShowMeaningOverlay(false);
+            resolve(null);
           }, 1000);
-        } catch (error) {
-          console.error('[Swipe Left] Error after fade out:', error);
-          opacity.value = withTiming(1, ANIMATION_CONFIG);
-          isUpdatingWordRef.current = false;
+        });
+
+        // Update the word in database
+        if (currentWord?.sentence_word_id) {
+          await updateWord(currentWord.sentence_word_id, false);
         }
-      }, 150); // Time for fade out to complete
-    } catch (error) {
-      console.error('[Swipe Left] Error in handleSwipeLeft:', error);
-      opacity.value = withTiming(1, ANIMATION_CONFIG);
-      isUpdatingWordRef.current = false;
-    }
+
+        // Fade back in
+        opacity.value = withTiming(1, ANIMATION_CONFIG);
+      } catch (error) {
+        console.error('[Swipe Left] Error:', error);
+        Toast.show({
+          type: 'error',
+          text1: 'Error',
+          text2: 'Failed to update word. Please try again.',
+          position: 'bottom',
+        });
+        opacity.value = withTiming(1, ANIMATION_CONFIG);
+      } finally {
+        // Always reset the guard when the sequence completes
+        isUpdatingWordRef.current = false;
+        if (meaningTimeoutRef.current) {
+          clearTimeout(meaningTimeoutRef.current);
+          meaningTimeoutRef.current = null;
+        }
+      }
+    };
+
+    // Start the update sequence
+    updateSequence();
   }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
 
   // Handle swipe right (know the word)
@@ -358,7 +305,6 @@ export default function ReviewScreen() {
       console.log('[Swipe Right] Starting with word:', currentWord?.sentence_word.word_form);
     }
 
-    // Check for concurrent updates with a local guard - combine conditions
     if (
       isUpdatingWordRef.current ||
       isTransitioningToCompletion ||
@@ -371,85 +317,66 @@ export default function ReviewScreen() {
       return;
     }
 
-    // Set local concurrency guard
     isUpdatingWordRef.current = true;
+    opacity.value = withTiming(0, ANIMATION_CONFIG);
 
-    // Simple fade out - use proper worklet annotation
-    const animateFadeOut = () => {
-      'worklet';
-      opacity.value = withTiming(0, ANIMATION_CONFIG);
-    };
-    animateFadeOut();
-
-    // Update the word in the database
     if (currentWord?.sentence_word_id) {
       updateWord(currentWord.sentence_word_id, true)
         .then(() => {
-          if (__DEV__) {
-            console.log('[Swipe Right] Word updated successfully');
-          }
-          // Reset update guard and fade back in
-          isUpdatingWordRef.current = false;
-
-          // Use proper worklet for fade in
-          const animateFadeIn = () => {
-            'worklet';
-            opacity.value = withTiming(1, ANIMATION_CONFIG);
-          };
-          animateFadeIn();
+          if (!isUpdatingWordRef.current) return; // Guard against unmount
+          opacity.value = withTiming(1, ANIMATION_CONFIG);
         })
         .catch(error => {
           console.error('[Swipe Right] Error:', error);
+          if (!isUpdatingWordRef.current) return; // Guard against unmount
+          opacity.value = withTiming(1, ANIMATION_CONFIG);
+        })
+        .finally(() => {
           isUpdatingWordRef.current = false;
-
-          // Use proper worklet for fade in on error
-          const animateFadeIn = () => {
-            'worklet';
-            opacity.value = withTiming(1, ANIMATION_CONFIG);
-          };
-          animateFadeIn();
         });
     } else {
+      opacity.value = withTiming(1, ANIMATION_CONFIG);
       isUpdatingWordRef.current = false;
-
-      // Use proper worklet for fade in
-      const animateFadeIn = () => {
-        'worklet';
-        opacity.value = withTiming(1, ANIMATION_CONFIG);
-      };
-      animateFadeIn();
     }
   }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
 
   // Handle close button press
   const queryClient = useQueryClient();
   const handleClose = useCallback(() => {
-    lightFeedback(); // Changed from mediumFeedback to lightFeedback for consistency
+    const mounted = { current: true };
+    lightFeedback();
 
-    // First invalidate the queries to ensure the vocabulary screen gets updated data
+    // First invalidate queries
     invalidateQueries();
 
-    // Force immediate invalidation of the dueWords query to ensure it's refetched
     if (user?.id) {
       queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
       queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
       queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-
-      // Remove any cached data to force a fresh fetch
       queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
       queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
       queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
     }
 
-    // Add a small delay to ensure the queries are invalidated before navigating back
-    setTimeout(() => {
-      router.back();
-    }, 100); // Small delay to ensure haptic feedback is felt and queries are invalidated
+    // Wait for queries to be invalidated before navigating
+    const navigationTimer = setTimeout(() => {
+      if (mounted.current) {
+        router.back();
+      }
+    }, 100);
+
+    return () => {
+      mounted.current = false;
+      clearTimeout(navigationTimer);
+    };
   }, [invalidateQueries, user?.id, queryClient]);
 
   // Clean up all timeouts when component unmounts
   useEffect(() => {
     return () => {
+      // Cancel any ongoing animations
+      opacity.value = withTiming(1, { duration: 0 });
+
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = null;
@@ -460,11 +387,13 @@ export default function ReviewScreen() {
         completionTransitionRef.current = null;
       }
 
-      // Reset completion trigger on unmount
+      // Reset all refs
       completionTriggeredRef.current = false;
       isUpdatingWordRef.current = false;
+      maxProgressRef.current = 0;
+      totalWordsRef.current = 0;
     };
-  }, []);
+  }, [opacity]);
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {

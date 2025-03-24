@@ -74,11 +74,6 @@ export default function SettingsScreen() {
   }, [theme, deferredRender]);
 
   const loadSession = useCallback(async () => {
-    // Skip if data is already loaded
-    if (session) {
-      return;
-    }
-
     startLoading();
     try {
       const { data } = await supabase.auth.getSession();
@@ -88,12 +83,24 @@ export default function SettingsScreen() {
     } finally {
       stopLoading();
     }
-  }, [session, startLoading, stopLoading]);
+  }, [startLoading, stopLoading]);
 
-  // Use focus effect to only load session when tab is focused and data isn't loaded yet
+  // Use focus effect to only load session when tab is focused
   useFocusEffect(
     useCallback(() => {
+      let mounted = true;
+      const subscription = supabase.auth.onAuthStateChange((_event, session) => {
+        if (mounted) {
+          setSession(session);
+        }
+      });
+
       loadSession();
+
+      return () => {
+        mounted = false;
+        subscription.data.subscription.unsubscribe();
+      };
     }, [loadSession])
   );
 

@@ -9,13 +9,13 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, Component } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../store/store';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setTheme } from '../store/themeSlice';
-import { useColorScheme, AppState } from 'react-native';
+import { useColorScheme, AppState, View, Text } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
 import Toast, { BaseToast } from 'react-native-toast-message';
@@ -27,17 +27,8 @@ import { useAppPreloader } from '../hooks/useAppPreloader';
 import { AppLoader } from '@/components/Loader';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-// Immediately hide the splash screen
-SplashScreen.preventAutoHideAsync()
-  .then(() => {
-    SplashScreen.hideAsync().catch(() => {
-      // Error handling without console logging
-    });
-  })
-  .catch(() => {
-    // Error handling without console logging
-    SplashScreen.hideAsync().catch(() => {});
-  });
+// Hide splash screen immediately
+SplashScreen.hideAsync();
 
 // Configure Reanimated logger to disable strict mode
 // This will suppress warnings about property "opacity" being overwritten by a layout animation
@@ -52,10 +43,37 @@ const queryClient = new QueryClient({
       staleTime: 60000, // Default 1 minute stale time
       gcTime: 300000, // Default 5 minute garbage collection time
       refetchOnWindowFocus: false, // Don't refetch on window focus
-      retry: 3, // Only retry failed requests once
+      retry: (failureCount, error: any) => {
+        // Don't retry on 404s or auth errors
+        if (error?.status === 404 || error?.status === 401 || error?.status === 403) {
+          return false;
+        }
+        // Only retry twice for other errors
+        return failureCount < 2;
+      },
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff capped at 10s
+    },
+    mutations: {
+      retry: false, // Don't retry mutations by default
+      gcTime: 0, // Don't keep mutation data in cache
     },
   },
 });
+
+// Add cache cleanup on app state change
+if (typeof window !== 'undefined') {
+  AppState.addEventListener('change', nextAppState => {
+    if (nextAppState === 'active') {
+      // Remove stale data when app comes to foreground
+      queryClient.invalidateQueries({
+        predicate: query => {
+          const queryState = query.state;
+          return Date.now() - queryState.dataUpdatedAt > 60000; // Invalidate if older than 1 minute
+        },
+      });
+    }
+  });
+}
 
 function AppContent() {
   const colorScheme = useColorScheme();
@@ -67,8 +85,8 @@ function AppContent() {
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
 
-  // Load only essential fonts immediately
-  const [fontsLoaded, fontError] = useFonts({
+  // Load fonts synchronously since we know they exist
+  useFonts({
     Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
     NotoNaskhArabic: require('../assets/fonts/Madina.otf'),
   });
@@ -76,68 +94,60 @@ function AppContent() {
   // Use the app preloader hook to preload data
   const { preloadAppData, criticalDataLoaded, preloadComplete } = useAppPreloader();
 
-  // Sync theme with system on first load
+  // Sync theme with system on first load and changes
   useEffect(() => {
-    if (colorScheme && !theme) {
-      dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
+    if (!colorScheme) return; // Skip if colorScheme is not available
+
+    // Only update theme if it's not set or if system theme changes and we're in auto mode
+    const isAutoTheme = !theme; // No theme set means auto
+    if (isAutoTheme) {
+      const newTheme = colorScheme === 'dark' ? Theme.Dark : Theme.Light;
+      if (newTheme !== theme) {
+        dispatch(setTheme(newTheme));
+      }
     }
   }, [colorScheme, dispatch, theme]);
 
   // Watch for app state changes to optimize performance
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     const subscription = AppState.addEventListener('change', nextAppState => {
-      // When app comes to foreground, make sure splash is hidden
+      // When app comes to foreground
       if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        SplashScreen.hideAsync().catch(() => {});
-
         // Refresh data when coming back to foreground if app was already initialized
         if (appReady) {
           // Use a small delay to ensure UI is responsive first
-          setTimeout(() => preloadAppData(), 300);
+          timeoutId = setTimeout(() => preloadAppData(), 300);
         }
+      } else if (nextAppState === 'background') {
+        // Hide any active toasts when app goes to background
+        Toast.hide();
       }
       appState.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // Clean up any remaining toasts
+      Toast.hide();
     };
   }, [appReady, preloadAppData]);
 
   // Mark app as ready when critical data is loaded
   useEffect(() => {
-    if (criticalDataLoaded && !appReady) {
+    if (criticalDataLoaded) {
       setAppReady(true);
-      // Immediately hide loader once critical data is ready
       setShowAppLoader(false);
     }
-  }, [criticalDataLoaded, appReady]);
+  }, [criticalDataLoaded]);
 
-  // Prepare app resources
-  const prepareResources = useCallback(async () => {
-    try {
-      if (fontsLoaded) {
-        // Start preloading data and wait for critical data
-        await preloadAppData().catch(() => {
-          // Error handling without console logging
-        });
-
-        // Note: We don't need to set appReady here anymore since
-        // it's handled by the useEffect that watches criticalDataLoaded
-      }
-    } catch (e) {
-      // Error handling without console logging
-      setShowAppLoader(false);
-      setAppReady(true);
-    }
-  }, [fontsLoaded, preloadAppData]);
-
-  // Handle app initialization as soon as fonts are loaded
+  // Start resource preparation immediately
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      prepareResources();
-    }
-  }, [fontsLoaded, fontError, prepareResources]);
+    preloadAppData();
+  }, [preloadAppData]);
 
   const toastConfig = {
     success: (props: React.ComponentProps<typeof BaseToast>) => (
@@ -168,11 +178,7 @@ function AppContent() {
     ),
   };
 
-  // Don't render anything until fonts are loaded
-  if (!fontsLoaded && !fontError) {
-    return <AppLoader color={colors.tint} />;
-  }
-
+  // Render content immediately since fonts are guaranteed
   return (
     <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
       <Stack
@@ -202,6 +208,48 @@ function AppContent() {
   );
 }
 
+// Custom error boundary implementation
+class ErrorBoundary extends Component<
+  { children: React.ReactNode; FallbackComponent: React.ComponentType<{ error: Error }> },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: {
+    children: React.ReactNode;
+    FallbackComponent: React.ComponentType<{ error: Error }>;
+  }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  render() {
+    if (this.state.hasError && this.state.error) {
+      return <this.props.FallbackComponent error={this.state.error} />;
+    }
+    return this.props.children;
+  }
+}
+
+interface FallbackProps {
+  error: Error;
+}
+
+function ErrorFallback({ error }: FallbackProps) {
+  const colors = useColors();
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+      <Text style={{ color: colors.error, fontSize: 16, marginBottom: 10 }}>
+        Something went wrong
+      </Text>
+      <Text style={{ color: colors.text, marginBottom: 20 }}>Please try again</Text>
+      <Text style={{ color: colors.text, fontSize: 12, opacity: 0.7 }}>{error.toString()}</Text>
+    </View>
+  );
+}
+
 export default function RootLayout() {
   useReactQueryDevTools(queryClient);
 
@@ -211,7 +259,9 @@ export default function RootLayout() {
         <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
-              <AppContent />
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <AppContent />
+              </ErrorBoundary>
             </SafeAreaProvider>
           </QueryClientProvider>
         </PersistGate>

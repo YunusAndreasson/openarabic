@@ -55,9 +55,17 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       // First trigger the swipe action (which will start fading out)
       runOnJS(isRight ? onSwipeRight : onSwipeLeft)();
       // Then reset position after a short delay
-      setTimeout(() => {
-        runOnJS(resetPosition)();
+      const resetTimer = setTimeout(() => {
+        if (isAnimatingRef.value) {
+          // Only reset if still animating
+          runOnJS(resetPosition)();
+        }
       }, 50);
+
+      return () => {
+        clearTimeout(resetTimer);
+        isAnimatingRef.value = false;
+      };
     },
     [onSwipeLeft, onSwipeRight, resetPosition]
   );

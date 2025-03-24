@@ -163,19 +163,22 @@ export const useArticleData = (
         // Get all words for all sentences
         const allWords: SentenceWord[] = [];
 
-        // For each sentence, get its words either from existing data or fetch
-        for (const sentenceId of sentenceIds) {
-          if (existingSentenceWords.has(sentenceId)) {
-            allWords.push(...(existingSentenceWords.get(sentenceId) || []));
-          } else {
-            // This is a simplified approach - in reality, you'd want to batch fetch these
-            // but we're working with the existing API structure
-            const sentence = await articlesService.getArticleById(articleId!);
-            const words =
-              sentence.article_sentences?.find(s => s.id === sentenceId)?.sentence_words || [];
-            allWords.push(...words);
-          }
+        // Batch fetch all sentences that don't have existing data
+        const sentencesToFetch = sentenceIds.filter(id => !existingSentenceWords.has(id));
+        if (sentencesToFetch.length > 0) {
+          const article = await articlesService.getArticleById(articleId!);
+          const fetchedSentences = article.article_sentences || [];
+          fetchedSentences.forEach(sentence => {
+            if (sentence.sentence_words) {
+              allWords.push(...sentence.sentence_words);
+            }
+          });
         }
+
+        // Add existing sentence words
+        existingSentenceWords.forEach(words => {
+          allWords.push(...words);
+        });
 
         // Group by sentence ID
         const map = new Map<number, SentenceWord[]>();
@@ -208,9 +211,15 @@ export const useArticleData = (
     queryKey: ['otherArticles', article?.category_id],
     queryFn: async () => {
       if (!article?.category_id) return [];
-      // Get articles in the same category, excluding the current one
-      const articles = await articlesService.getArticles(article.category_id);
-      return articles.filter(a => a.id !== article.id);
+      try {
+        // Get articles in the same category, excluding the current one
+        const articles = await articlesService.getArticles(article.category_id);
+        return articles.filter(a => a.id !== article.id);
+      } catch (error) {
+        // Return empty array on error to prevent UI breakage
+        console.warn('Failed to fetch related articles:', error);
+        return [];
+      }
     },
     enabled: !!article?.category_id,
     staleTime: isDataPrefetched ? 0 : 300000, // 5 minutes
@@ -236,9 +245,15 @@ export const useArticleData = (
     queryKey: ['otherCategoryArticles', article?.id],
     queryFn: async () => {
       if (!article?.id) return [];
-      // Get articles from all categories, excluding current category
-      const articles = await articlesService.getArticles();
-      return articles.filter(a => a.category_id !== article.category_id && a.id !== article.id);
+      try {
+        // Get articles from all categories, excluding current category
+        const articles = await articlesService.getArticles();
+        return articles.filter(a => a.category_id !== article.category_id && a.id !== article.id);
+      } catch (error) {
+        // Return empty array on error to prevent UI breakage
+        console.warn('Failed to fetch other category articles:', error);
+        return [];
+      }
     },
     enabled: !!article?.id,
     staleTime: isDataPrefetched ? 0 : 300000, // 5 minutes

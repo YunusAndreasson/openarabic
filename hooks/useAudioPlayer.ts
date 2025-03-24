@@ -59,39 +59,50 @@ export function useAudioPlayer() {
   // Initialize audio session
   const initAudioSession = useCallback(async () => {
     try {
-      // Set audio mode once at the beginning
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
       });
+      return true;
     } catch (error) {
-      // Failed to set audio mode
+      console.error('Failed to initialize audio session:', error);
+      setAudioState(AUDIO_STATES.ERROR);
+      return false;
     }
   }, []);
 
   // Start tracking progress
   const startProgressTracking = useCallback(() => {
-    // Clear any existing interval
+    // Clear any existing interval first
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
 
     // Set up a new interval to update progress
-    progressIntervalRef.current = setInterval(async () => {
-      if (soundRef.current) {
-        try {
-          const status = await soundRef.current.getStatusAsync();
-          if (status.isLoaded) {
-            setProgress(status.positionMillis);
-            setDuration(status.durationMillis || 0);
-          }
-        } catch (error) {
-          // Error getting status
+    const intervalId = setInterval(async () => {
+      if (!soundRef.current) {
+        clearInterval(progressIntervalRef.current!);
+        progressIntervalRef.current = null;
+        return;
+      }
+
+      try {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded) {
+          setProgress(status.positionMillis);
+          setDuration(status.durationMillis || 0);
         }
+      } catch (error) {
+        console.error('Error getting audio status:', error);
+        clearInterval(progressIntervalRef.current!);
+        progressIntervalRef.current = null;
       }
     }, 1000);
+
+    progressIntervalRef.current = intervalId;
   }, []);
 
   // Handle playback status updates
@@ -144,14 +155,16 @@ export function useAudioPlayer() {
         lastActionTimeRef.current = Date.now();
 
         // Clean up any existing audio first
-        await cleanupAudio();
+        await cleanupAudio().catch(e => console.error('Cleanup error:', e));
 
         // Create the new sound object
         const { sound } = await Audio.Sound.createAsync(
           { uri: audioUrl },
           { shouldPlay: false },
           onPlaybackStatusUpdate
-        );
+        ).catch(e => {
+          throw new Error(`Failed to create sound: ${e.message}`);
+        });
 
         soundRef.current = sound;
 
@@ -159,15 +172,18 @@ export function useAudioPlayer() {
         await new Promise(resolve => setTimeout(resolve, 300));
 
         // Start playback
-        await sound.playAsync();
-        setAudioState(AUDIO_STATES.PLAYING);
+        await sound.playAsync().catch(e => {
+          throw new Error(`Failed to start playback: ${e.message}`);
+        });
 
-        // Start tracking progress
+        setAudioState(AUDIO_STATES.PLAYING);
         startProgressTracking();
 
         return true;
       } catch (error) {
+        console.error('Audio playback error:', error);
         setAudioState(AUDIO_STATES.ERROR);
+        await cleanupAudio().catch(() => {}); // Cleanup on error
         return false;
       }
     },

@@ -8,6 +8,7 @@ import {
   FadeIn,
   FadeOut,
   runOnUI,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
@@ -154,11 +155,14 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // Cleanup shared animation values on unmount
   useEffect(() => {
     isMountedRef.current = true;
+    const opacityValue = opacity.value;
 
     return () => {
       isMountedRef.current = false;
-      // Cancel any pending animations by setting to the target value immediately
+      // Cancel any pending animations and reset to initial value
       opacity.value = validInitialOpacity;
+      // Ensure any ongoing animations are stopped
+      cancelAnimation(opacity);
     };
   }, [opacity, validInitialOpacity]);
 

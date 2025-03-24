@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useCallback } from 'react';
 import { Platform, StyleSheet, Animated } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,15 +47,20 @@ const ICON_SIZE = 24;
 const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const lastPressRef = useRef(0);
+  const PRESS_DELAY = 500; // Minimum time between presses
   // Reduce blur intensity
   const intensity = Platform.OS === 'ios' ? 55 : 80;
   const isDarkMode = colors.background === '#121212';
 
   // Calculate appropriate bottom padding based on device
-  const bottomInset =
-    Platform.OS === 'ios'
-      ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) // Cap the inset to avoid too much space
-      : 0;
+  const bottomInset = useMemo(
+    () =>
+      Platform.OS === 'ios'
+        ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) // Cap the inset to avoid too much space
+        : 0,
+    [insets.bottom]
+  );
 
   const blurContainerStyle = useMemo(
     () => [
@@ -80,6 +85,30 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
     [colors.shadow, bottomInset, isDarkMode]
   );
 
+  // Memoize tab press handler
+  const getTabPressHandler = useCallback(
+    (route: any, isFocused: boolean) => {
+      return () => {
+        const now = Date.now();
+        if (now - lastPressRef.current < PRESS_DELAY) {
+          return; // Ignore rapid taps
+        }
+        lastPressRef.current = now;
+
+        const event = navigation.emit({
+          type: 'tabPress',
+          target: route.key,
+          canPreventDefault: true,
+        });
+
+        if (!isFocused && !event.defaultPrevented) {
+          navigation.navigate(route.name);
+        }
+      };
+    },
+    [navigation]
+  );
+
   return (
     <BlurView intensity={intensity} tint={isDarkMode ? 'dark' : 'light'} style={blurContainerStyle}>
       {state.routes.map((route, index) => {
@@ -90,22 +119,10 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
         const screen = TAB_SCREENS.find(s => s.name === route.name);
         if (!screen) return null;
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
         return (
           <PlatformPressable
             key={route.key}
-            onPress={onPress}
+            onPress={getTabPressHandler(route, isFocused)}
             style={styles.tabButton}
             android_ripple={{ color: colors.tint + '40', borderless: true }}
             accessibilityRole="tab"
