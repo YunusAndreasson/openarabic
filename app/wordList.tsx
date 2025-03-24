@@ -30,14 +30,14 @@ interface EnhancedStudyWord extends StudyWord {
 const calculateRetentionScore = (word: StudyWord): number => {
   // Use FSRS stability directly - this is the core metric FSRS uses to determine memory strength
   // Higher stability = better retention
-  const stabilityScore = Math.min(word.fsrs_stability / 100, 1) * 60;
+  const stabilityScore = Math.min(word.fsrs_stability / 100, 1) * 70;
 
   // Use FSRS difficulty (inversely) - this is the FSRS-calculated difficulty factor (lower is easier)
   const difficultyFactor = 1 - word.fsrs_difficulty;
-  const difficultyScore = difficultyFactor * 30;
+  const difficultyScore = difficultyFactor * 20;
 
   // Apply a penalty based on lapses in FSRS
-  const lapsesPenalty = Math.min(word.fsrs_lapses / 10, 1) * 20;
+  const lapsesPenalty = Math.min(word.fsrs_lapses / 10, 1) * 10;
 
   // Return a weighted score based on FSRS parameters
   return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
@@ -96,6 +96,7 @@ export default function WordListScreen() {
   const colors = useColors();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
 
   // Get the title and icon based on the category
   const { title } = React.useMemo(() => {
@@ -117,12 +118,6 @@ export default function WordListScreen() {
           title: 'Learning Words',
           icon: 'school',
           description: 'Words still being learned',
-        };
-      case 'due':
-        return {
-          title: 'Review Words',
-          icon: 'alarm',
-          description: 'Words due today',
         };
       default:
         return {
@@ -185,25 +180,6 @@ export default function WordListScreen() {
                 (word.fsrs_state === State.Review && word.fsrs_stability < 30)
             );
             break;
-          case 'due':
-            const dueWords = await studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true });
-            result = dueWords.filter(
-              (
-                word
-              ): word is StudyWord & {
-                sentence_word: NonNullable<typeof word.sentence_word> & {
-                  word_form: NonNullable<typeof word.sentence_word.word_form>;
-                };
-              } => {
-                return Boolean(
-                  word &&
-                    word.sentence_word &&
-                    word.sentence_word.word_form &&
-                    typeof word.sentence_word.word_form === 'string'
-                );
-              }
-            );
-            break;
           default:
             result = filteredWords;
         }
@@ -221,29 +197,6 @@ export default function WordListScreen() {
     },
     enabled: !!user?.id,
     placeholderData: () => {
-      const queryClient = useQueryClient();
-
-      if (category === 'due') {
-        const dueWords = queryClient.getQueryData<StudyWord[]>(['dueWords', user?.id]);
-        if (!dueWords?.length) return undefined;
-
-        const validWords = dueWords.filter(
-          (
-            word
-          ): word is NonNullable<typeof word> & {
-            sentence_word: NonNullable<StudyWord['sentence_word']> & { word_form: string };
-          } =>
-            Boolean(
-              word?.sentence_word?.word_form && typeof word.sentence_word.word_form === 'string'
-            )
-        );
-
-        return validWords.map(word => ({
-          ...word,
-          retentionScore: calculateRetentionScore(word),
-        }));
-      }
-
       const studyWords = queryClient.getQueryData<StudyWord[]>(['studyWords', user?.id]);
       if (!studyWords?.length) return undefined;
 
@@ -292,9 +245,22 @@ export default function WordListScreen() {
   // Render an item in the list
   const renderItem = useCallback(
     ({ item }: { item: EnhancedStudyWord }) => (
-      <WordListItem word={item} masteryScore={item.retentionScore} />
+      <WordListItem
+        word={item}
+        masteryScore={item.retentionScore}
+        onPress={() => {
+          // Check if sentence_word exists and has a valid sentence_id
+          if (item.sentence_word?.sentence_id) {
+            // Navigate to the article containing the word
+            router.push({
+              pathname: '/article/[id]',
+              params: { id: item.sentence_word.sentence_id.toString() },
+            });
+          }
+        }}
+      />
     ),
-    []
+    [router]
   );
 
   // Empty list component
@@ -322,7 +288,7 @@ export default function WordListScreen() {
       <View style={styles.headerContainer}>
         {/* Category Info Card */}
         <CategoryInfoCard
-          category={category as 'total' | 'mastered' | 'learning' | 'due'}
+          category={category as 'total' | 'mastered' | 'learning'}
           hideTitle={true}
         />
       </View>
@@ -424,7 +390,7 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.MEDIUM, // Increased gap for better spacing between items
+    gap: LAYOUT.SPACING.SMALL, // Decreased gap to match vocabulary.tsx
   },
   headerContainer: {
     paddingBottom: LAYOUT.SPACING.LARGE, // Increased padding

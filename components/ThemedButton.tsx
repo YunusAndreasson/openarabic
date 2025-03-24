@@ -41,6 +41,7 @@ export function ThemedButton({
   innerContainerStyle,
   accessibilityLabel,
   size = 'medium',
+  textWeight = 'bold',
   ...props
 }: ThemedButtonProps) {
   const colors = useColors();
@@ -78,15 +79,27 @@ export function ThemedButton({
   };
 
   // Determine text size based on button size
-  const getTextType = (size: 'small' | 'medium' | 'large') => {
-    switch (size) {
-      case 'small':
-        return 'label';
-      case 'large':
-        return 'heading3';
-      case 'medium':
-      default:
-        return 'bodyBold';
+  const getTextType = (size: 'small' | 'medium' | 'large', weight: 'normal' | 'bold') => {
+    if (weight === 'normal') {
+      switch (size) {
+        case 'small':
+          return 'caption';
+        case 'large':
+          return 'heading3';
+        case 'medium':
+        default:
+          return 'body';
+      }
+    } else {
+      switch (size) {
+        case 'small':
+          return 'label';
+        case 'large':
+          return 'heading3';
+        case 'medium':
+        default:
+          return 'bodyBold';
+      }
     }
   };
 
@@ -217,6 +230,14 @@ export function ThemedButton({
   // Determine if we need to render an icon container
   const hasIcon = loading || iconComponent || icon;
 
+  // Determine text style based on weight
+  const buttonTextStyle = [
+    styles.buttonText,
+    size === 'small' ? styles.buttonTextSmall : null,
+    size === 'large' ? styles.buttonTextLarge : null,
+    textWeight === 'normal' ? styles.normalText : null,
+  ];
+
   return (
     <Animated.View style={animatedStyle as any}>
       <TouchableOpacity
@@ -249,16 +270,12 @@ export function ThemedButton({
 
           <View style={[styles.contentContainer, contentContainerStyle]}>
             <ThemedText
-              type={getTextType(size)}
+              type={getTextType(size, textWeight)}
               colorName={variant === 'filled' ? 'background' : 'tint'}
               skipDefaultColor
-              style={[
-                styles.buttonText,
-                size === 'small' ? styles.buttonTextSmall : null,
-                size === 'large' ? styles.buttonTextLarge : null,
-              ]}
+              style={buttonTextStyle}
             >
-              {title?.toUpperCase()}
+              {textWeight === 'normal' ? title : title?.toUpperCase()}
             </ThemedText>
             {children}
           </View>
@@ -315,5 +332,10 @@ const styles = StyleSheet.create({
   buttonTextLarge: {
     letterSpacing: 2,
     fontSize: 16,
+  },
+  normalText: {
+    letterSpacing: 0.5,
+    fontWeight: '400',
+    textTransform: 'none',
   },
 });

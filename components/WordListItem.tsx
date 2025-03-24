@@ -6,7 +6,6 @@ import { LAYOUT } from '../constants/layout';
 import { StudyWord } from '../types/vocabulary.types';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '../hooks/animations';
-import { Ionicons } from '@expo/vector-icons';
 import { State } from 'ts-fsrs';
 
 interface WordListItemProps {
@@ -32,43 +31,18 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
     // Get FSRS data
     const stability = word.fsrs_stability || 0;
     const state = word.fsrs_state;
-    const dueDate = new Date(word.fsrs_due);
-    const now = new Date();
-    const isOverdue = dueDate <= now;
-    const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
     // Normalized progress (0-100)
-    const progress = Math.min(100, Math.round((stability / 60) * 100));
+    // Use the same calculation logic as in calculateRetentionScore from wordList.tsx
+    const stabilityScore = Math.min(stability / 100, 1) * 70;
+    const difficultyFactor = 1 - word.fsrs_difficulty;
+    const difficultyScore = difficultyFactor * 20;
+    const lapsesPenalty = Math.min(word.fsrs_lapses / 10, 1) * 10;
 
-    // Due date info
-    let dueInfo = null;
-    if (state !== State.New) {
-      if (isOverdue) {
-        dueInfo = {
-          text: 'Due Now',
-          color: colors.error,
-          icon: 'time-outline',
-        };
-      } else if (daysUntilDue === 0) {
-        dueInfo = {
-          text: 'Today',
-          color: colors.warning,
-          icon: 'today-outline',
-        };
-      } else if (daysUntilDue === 1) {
-        dueInfo = {
-          text: 'Tomorrow',
-          color: colors.warning,
-          icon: 'calendar-outline',
-        };
-      } else if (daysUntilDue <= 7) {
-        dueInfo = {
-          text: `${daysUntilDue} days`,
-          color: colors.text,
-          icon: 'calendar-outline',
-        };
-      }
-    }
+    const progress = Math.max(
+      0,
+      Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty))
+    );
 
     // Get progress colors
     let progressColor: string;
@@ -88,7 +62,6 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
     const isNewWord = state === State.New;
 
     return {
-      dueInfo,
       progress: {
         value: progress,
         color: progressColor,
@@ -96,7 +69,7 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
       },
       isNewWord,
     };
-  }, [word.fsrs_stability, word.fsrs_state, word.fsrs_due, colors]);
+  }, [word.fsrs_stability, word.fsrs_state, word.fsrs_difficulty, word.fsrs_lapses, colors]);
 
   // Return null early if there's no word data, after all hooks are called
   if (!word_form) return null;
@@ -109,8 +82,6 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
       borderColor: colors.cardBorder,
     },
   ];
-
-  const hasStreak = (word.success_streak ?? 0) > 0;
 
   return (
     <Animated.View style={animatedStyle as any}>
@@ -126,52 +97,6 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
         accessibilityRole="button"
       >
         <View style={styles.cardContent}>
-          {/* Status indicators in a minimal style */}
-          <View style={styles.statusRow}>
-            {wordStatus.dueInfo && (
-              <View
-                style={[styles.statusPill, { backgroundColor: `${wordStatus.dueInfo.color}15` }]}
-              >
-                <Ionicons
-                  name={wordStatus.dueInfo.icon as any}
-                  size={12}
-                  color={wordStatus.dueInfo.color}
-                  style={styles.statusIcon}
-                />
-                <ThemedText
-                  type="caption"
-                  style={[styles.statusText, { color: wordStatus.dueInfo.color }]}
-                  skipDefaultColor
-                >
-                  {wordStatus.dueInfo.text}
-                </ThemedText>
-              </View>
-            )}
-
-            {hasStreak && (
-              <View
-                style={[
-                  styles.statusPill,
-                  {
-                    backgroundColor: `${(word.success_streak ?? 0) >= 3 ? colors.success : colors.warning}15`,
-                  },
-                ]}
-              >
-                <ThemedText
-                  type="caption"
-                  weight="500"
-                  style={[
-                    styles.statusText,
-                    { color: (word.success_streak ?? 0) >= 3 ? colors.success : colors.warning },
-                  ]}
-                  skipDefaultColor
-                >
-                  {word.success_streak}× streak
-                </ThemedText>
-              </View>
-            )}
-          </View>
-
           {/* Main content row */}
           <View style={styles.content}>
             {/* Left side with English text */}
@@ -215,12 +140,7 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
                 {wordStatus.progress.value}%
               </ThemedText>
             </View>
-            <View
-              style={[
-                styles.progressBar,
-                wordStatus.isNewWord ? { backgroundColor: `${colors.info}20` } : undefined,
-              ]}
-            >
+            <View style={[styles.progressBar, { backgroundColor: `${colors.text}10` }]}>
               <View
                 style={[
                   styles.progressFill,
@@ -244,34 +164,11 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.SHADOW.MEDIUM,
-    marginVertical: LAYOUT.SPACING.SMALL / 2,
+    marginVertical: 2,
     overflow: 'hidden',
   },
   cardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    flexWrap: 'wrap',
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    marginRight: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.TINY / 2,
-  },
-  statusIcon: {
-    marginRight: 3,
-  },
-  statusText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
   },
   content: {
     flexDirection: 'row',

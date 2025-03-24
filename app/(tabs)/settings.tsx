@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, Alert, Linking, View, ScrollView, Platform } from 'react-native';
+import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
-import { useScreenFocusRefresh } from '../../hooks';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createClient } from '@supabase/supabase-js';
@@ -16,19 +15,9 @@ import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from '@/components/BaseCard';
-import { useQueryClient } from '@tanstack/react-query';
 import { ThemedView } from '../../components/ThemedView';
 import { ThemedText } from '../../components/ThemedText';
-import { ThemedSectionHeader } from '../../components/ThemedSectionHeader';
-import { Icon } from '../../components/Icon';
-import { Theme } from '../../types/theme.types';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../constants/Supabase';
-import {
-  toggleReduceAnimations,
-  toggleReduceMotion,
-  updateFontScale,
-} from '../../store/settingsSlice';
-import { switchTheme } from '../../store/themeSlice';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { CustomSlider } from '../../components/Slider';
 import { Toggle } from '../../components/Toggle';
@@ -50,7 +39,6 @@ export default function SettingsScreen() {
   const settings = useAppSelector(state => state.settings);
   const theme = useAppSelector(state => state.theme.theme);
   const insets = useSafeAreaInsets();
-  const queryClient = useQueryClient();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Add state to defer rendering of toggle components until theme is loaded
@@ -329,6 +317,7 @@ export default function SettingsScreen() {
                 title="Twitter"
                 onPress={() => handleSocialLink('https://twitter.com/OpenArabicApp')}
                 icon="logo-twitter"
+                textWeight="normal"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
@@ -339,6 +328,7 @@ export default function SettingsScreen() {
                 title="Facebook"
                 onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
                 icon="logo-facebook"
+                textWeight="normal"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
@@ -348,6 +338,7 @@ export default function SettingsScreen() {
                 title="Instagram"
                 onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
                 icon="logo-instagram"
+                textWeight="normal"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
@@ -367,6 +358,7 @@ export default function SettingsScreen() {
                 title="Support"
                 onPress={handleSupport}
                 icon="mail"
+                textWeight="normal"
                 style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
@@ -378,6 +370,7 @@ export default function SettingsScreen() {
                   title="Sign In"
                   onPress={() => setShowAuthModal(true)}
                   icon="log-in"
+                  textWeight="normal"
                   style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                   innerContainerStyle={buttonStyles.innerContainer}
                   contentContainerStyle={buttonStyles.contentContainer}
@@ -388,6 +381,7 @@ export default function SettingsScreen() {
                   title="Sign Out"
                   onPress={signOut}
                   icon="log-out"
+                  textWeight="normal"
                   style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
                   innerContainerStyle={buttonStyles.innerContainer}
                   contentContainerStyle={buttonStyles.contentContainer}

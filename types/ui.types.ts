@@ -340,6 +340,8 @@ export interface BaseButtonProps
   children?: React.ReactNode;
   /** Size variant of the button */
   size?: 'small' | 'medium' | 'large';
+  /** Text weight for the button text */
+  textWeight?: 'normal' | 'bold';
 }
 
 /**

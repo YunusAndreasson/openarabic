@@ -3,7 +3,7 @@ import InfoCard from '../InfoCard';
 import { useColors } from '../../hooks/useColors';
 
 interface CategoryInfoCardProps {
-  category: 'total' | 'mastered' | 'learning' | 'due';
+  category: 'total' | 'mastered' | 'learning';
   hideTitle?: boolean;
   onPress?: () => void;
 }
@@ -45,15 +45,6 @@ const CategoryInfoCard = React.memo(
             icon: 'school',
             iconColor: colors.info,
             bgColor: colors.info + '30',
-          };
-        case 'due':
-          return {
-            title: 'Review Words',
-            description:
-              'Words scheduled for review today based on spaced repetition algorithms. Reviewing at optimal intervals maximizes retention while minimizing study time.',
-            icon: 'alarm',
-            iconColor: colors.warning,
-            bgColor: colors.warning + '30',
           };
         default:
           return {
