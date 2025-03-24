@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import React, { useMemo, useRef, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { Platform, StyleSheet, Animated } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -44,21 +44,27 @@ const TAB_SCREENS = [
 // Standard icon size for tab bar
 const ICON_SIZE = 24;
 
+// Platform-specific shadow styles
+const PLATFORM_STYLES = Platform.select({
+  ios: {
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
+    shadowRadius: LAYOUT.SPACING.SMALL / 2,
+  },
+  android: {
+    elevation: 8,
+  },
+}) as any;
+
 const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const lastPressRef = useRef(0);
-  const PRESS_DELAY = 500; // Minimum time between presses
-  // Reduce blur intensity
   const intensity = Platform.OS === 'ios' ? 55 : 80;
   const isDarkMode = colors.background === '#121212';
 
   // Calculate appropriate bottom padding based on device
   const bottomInset = useMemo(
-    () =>
-      Platform.OS === 'ios'
-        ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) // Cap the inset to avoid too much space
-        : 0,
+    () => (Platform.OS === 'ios' ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) : 0),
     [insets.bottom]
   );
 
@@ -69,31 +75,45 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
         backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.75)' : 'rgba(255, 255, 255, 0.75)',
         height: LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset,
         paddingBottom: bottomInset,
-        ...Platform.select({
-          ios: {
-            shadowColor: colors.shadow,
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
-            shadowRadius: LAYOUT.SPACING.SMALL / 2,
-          },
-          android: {
-            elevation: 8,
-          },
-        }),
+        ...PLATFORM_STYLES,
+        ...(Platform.OS === 'ios' && { shadowColor: colors.shadow }),
       },
     ],
     [colors.shadow, bottomInset, isDarkMode]
   );
 
-  // Memoize tab press handler
+  // Memoize tab button styles
+  const getTabButtonStyle = useCallback(
+    (isFocused: boolean) => ({
+      ...styles.label,
+      color: isFocused ? colors.tint : colors.tabIconDefault,
+      ...Platform.select({
+        ios: {
+          fontWeight: '500' as const,
+        },
+        android: {
+          paddingBottom: 2,
+        },
+      }),
+    }),
+    [colors.tint, colors.tabIconDefault]
+  );
+
+  // Memoize ripple color
+  const rippleColor = useMemo(() => colors.tint + '40', [colors.tint]);
+
+  // Memoized debounced tab press handler
   const getTabPressHandler = useCallback(
     (route: any, isFocused: boolean) => {
+      let lastPress = 0;
+      const PRESS_DELAY = 500;
+
       return () => {
         const now = Date.now();
-        if (now - lastPressRef.current < PRESS_DELAY) {
-          return; // Ignore rapid taps
+        if (now - lastPress < PRESS_DELAY) {
+          return;
         }
-        lastPressRef.current = now;
+        lastPress = now;
 
         const event = navigation.emit({
           type: 'tabPress',
@@ -124,7 +144,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
             key={route.key}
             onPress={getTabPressHandler(route, isFocused)}
             style={styles.tabButton}
-            android_ripple={{ color: colors.tint + '40', borderless: true }}
+            android_ripple={{ color: rippleColor, borderless: true }}
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
             accessibilityLabel={screen.accessibilityLabel || label}
@@ -134,21 +154,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
               size={ICON_SIZE}
               color={isFocused ? colors.tint : colors.tabIconDefault}
             />
-            <ThemedText
-              style={{
-                ...styles.label,
-                color: isFocused ? colors.tint : colors.tabIconDefault,
-                ...Platform.select({
-                  ios: {
-                    fontWeight: '500' as const,
-                  },
-                  android: {
-                    paddingBottom: 2,
-                  },
-                }),
-              }}
-              skipDefaultColor
-            >
+            <ThemedText style={getTabButtonStyle(isFocused)} skipDefaultColor>
               {label}
             </ThemedText>
           </PlatformPressable>

@@ -23,9 +23,92 @@ import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Helper function to calculate header height
+// Pure functions moved outside component
 const getHeaderHeight = (insets: { top: number }) => {
   return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
+};
+
+// Split stats calculation into smaller chunks for better memoization
+const getBaseStats = (validStudyWords: any[], dueWordsData: any[]) => {
+  const stats = validStudyWords.reduce(
+    (acc, word) => {
+      // Count new words
+      if (!word.last_reviewed_at) {
+        acc.newWordsCount++;
+      }
+      return acc;
+    },
+    {
+      totalWords: validStudyWords.length,
+      dueWords: dueWordsData?.length ?? 0,
+      newWordsCount: 0,
+    }
+  );
+  return stats;
+};
+
+const getAdvancedStats = (validStudyWords: any[]) => {
+  if (validStudyWords.length === 0) return null;
+
+  // Single pass for all stats
+  const stats = validStudyWords.reduce(
+    (acc, word) => {
+      // Track reviewed words stats
+      if (word.last_reviewed_at) {
+        acc.reviewedCount++;
+        acc.successRateSum += word.success_rate || 0;
+        acc.intervalSum += word.interval || 0;
+        acc.easeFactorSum += word.ease_factor || 0;
+      }
+
+      // Track mastery stats
+      if (word.state === 'mastered') acc.masteredCount++;
+      if (word.state === 'learning') acc.learningCount++;
+
+      // Track streaks and difficulty
+      acc.maxStreak = Math.max(acc.maxStreak, word.streak || 0);
+      acc.maxLongestStreak = Math.max(acc.maxLongestStreak, word.longest_streak || 0);
+      if (word.streak > 0) acc.streakCount++;
+
+      // Track other stats
+      acc.lapsesSum += word.lapses || 0;
+      if (word.failed_in_session) acc.failedInSession++;
+      acc.difficultySum += word.difficulty || 0.3;
+
+      return acc;
+    },
+    {
+      reviewedCount: 0,
+      successRateSum: 0,
+      intervalSum: 0,
+      easeFactorSum: 0,
+      masteredCount: 0,
+      learningCount: 0,
+      maxStreak: 0,
+      maxLongestStreak: 0,
+      streakCount: 0,
+      lapsesSum: 0,
+      failedInSession: 0,
+      difficultySum: 0,
+    }
+  );
+
+  const totalCount = validStudyWords.length || 1;
+  const reviewedCount = stats.reviewedCount || 1;
+
+  return {
+    successRate: stats.successRateSum / reviewedCount,
+    averageInterval: stats.intervalSum / reviewedCount,
+    averageEaseFactor: stats.easeFactorSum / reviewedCount,
+    masteredWords: stats.masteredCount,
+    learningWords: stats.learningCount,
+    streak: stats.maxStreak,
+    longestSuccessStreak: stats.maxLongestStreak,
+    wordsWithStreaks: stats.streakCount,
+    averageLapses: stats.lapsesSum / totalCount,
+    failedInSessionCount: stats.failedInSession,
+    averageDifficulty: stats.difficultySum / totalCount,
+  };
 };
 
 export default function VocabularyScreen() {
@@ -142,29 +225,43 @@ export default function VocabularyScreen() {
     }
   }, [isAuthLoading, user, isDataLoading, startLoading, stopLoading]);
 
-  // Calculate stats with memoization - updated to use FSRS stats calculation
-  const stats = useMemo<VocabularyStats>(() => {
+  // Split stats calculation into smaller memoized chunks
+  const baseStats = useMemo(() => {
     if (validStudyWords?.length === 0 && studyWords?.length === 0) {
-      // Return safe defaults for empty data
       return {
         totalWords: 0,
-        masteredWords: 0,
-        learningWords: 0,
         dueWords: dueWordsData?.length ?? 0,
-        streak: 0,
+        newWordsCount: 0,
+      };
+    }
+    return getBaseStats(validStudyWords ?? [], dueWordsData ?? []);
+  }, [validStudyWords?.length, studyWords?.length, dueWordsData?.length]);
+
+  const advancedStats = useMemo(() => {
+    if (validStudyWords?.length === 0) return null;
+    return getAdvancedStats(validStudyWords);
+  }, [validStudyWords]);
+
+  // Combine stats with safe defaults
+  const stats = useMemo<VocabularyStats>(
+    () => ({
+      ...baseStats,
+      ...(advancedStats ?? {
         successRate: 0,
         averageInterval: 0,
         averageEaseFactor: 0,
-        averageLapses: 0,
-        newWordsCount: 0,
-        failedInSessionCount: 0,
+        masteredWords: 0,
+        learningWords: 0,
+        streak: 0,
         longestSuccessStreak: 0,
         wordsWithStreaks: 0,
-        averageDifficulty: 0.3, // Default initial difficulty
-      };
-    }
-    return calculateVocabularyStats(validStudyWords ?? [], dueWordsData ?? []);
-  }, [validStudyWords, dueWordsData, studyWords?.length]);
+        averageLapses: 0,
+        failedInSessionCount: 0,
+        averageDifficulty: 0.3,
+      }),
+    }),
+    [baseStats, advancedStats]
+  );
 
   // Calculate weekly progress data with memoization
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {

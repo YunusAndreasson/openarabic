@@ -9,13 +9,13 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useCallback, useRef, Component } from 'react';
+import { useEffect, useState, useCallback, useRef, Component, useMemo } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../store/store';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setTheme } from '../store/themeSlice';
-import { useColorScheme, AppState, View, Text } from 'react-native';
+import { useColorScheme, AppState, View, Text, StyleSheet } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
 import Toast, { BaseToast } from 'react-native-toast-message';
@@ -60,20 +60,28 @@ const queryClient = new QueryClient({
   },
 });
 
-// Add cache cleanup on app state change
+// Simpler cache cleanup that only runs when needed
 if (typeof window !== 'undefined') {
   AppState.addEventListener('change', nextAppState => {
     if (nextAppState === 'active') {
-      // Remove stale data when app comes to foreground
-      queryClient.invalidateQueries({
-        predicate: query => {
-          const queryState = query.state;
-          return Date.now() - queryState.dataUpdatedAt > 60000; // Invalidate if older than 1 minute
-        },
-      });
+      // Just mark queries as stale - they'll refetch when needed
+      queryClient.invalidateQueries();
     }
   });
 }
+
+// Static stack options
+const stackScreenOptions = {
+  headerShown: true,
+  animation: 'slide_from_right',
+} as const;
+
+const reviewScreenOptions = {
+  headerShown: false,
+  animation: 'none',
+  presentation: 'containedModal',
+  gestureEnabled: false,
+} as const;
 
 function AppContent() {
   const colorScheme = useColorScheme();
@@ -84,6 +92,9 @@ function AppContent() {
   const [showAppLoader, setShowAppLoader] = useState(true);
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
+
+  // Memoize navigation theme to prevent recalculation
+  const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
 
   // Load fonts synchronously since we know they exist
   useFonts({
@@ -96,31 +107,20 @@ function AppContent() {
 
   // Sync theme with system on first load and changes
   useEffect(() => {
-    if (!colorScheme) return; // Skip if colorScheme is not available
-
-    // Only update theme if it's not set or if system theme changes and we're in auto mode
-    const isAutoTheme = !theme; // No theme set means auto
-    if (isAutoTheme) {
-      const newTheme = colorScheme === 'dark' ? Theme.Dark : Theme.Light;
-      if (newTheme !== theme) {
-        dispatch(setTheme(newTheme));
-      }
+    // Only sync on first load or when no explicit theme is set
+    if (colorScheme && !theme) {
+      dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
     }
   }, [colorScheme, dispatch, theme]);
 
   // Watch for app state changes to optimize performance
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
     const subscription = AppState.addEventListener('change', nextAppState => {
-      // When app comes to foreground
-      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-        // Refresh data when coming back to foreground if app was already initialized
-        if (appReady) {
-          // Use a small delay to ensure UI is responsive first
-          timeoutId = setTimeout(() => preloadAppData(), 300);
-        }
+      if (appState.current === 'background' && nextAppState === 'active' && appReady) {
+        // Invalidate queries and refresh data
+        queryClient.invalidateQueries();
+        setTimeout(preloadAppData, 300);
       } else if (nextAppState === 'background') {
-        // Hide any active toasts when app goes to background
         Toast.hide();
       }
       appState.current = nextAppState;
@@ -128,10 +128,6 @@ function AppContent() {
 
     return () => {
       subscription.remove();
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      // Clean up any remaining toasts
       Toast.hide();
     };
   }, [appReady, preloadAppData]);
@@ -149,55 +145,36 @@ function AppContent() {
     preloadAppData();
   }, [preloadAppData]);
 
-  const toastConfig = {
-    success: (props: React.ComponentProps<typeof BaseToast>) => (
-      <BaseToast
-        {...props}
-        style={{
-          borderLeftColor: colors.tint,
-          backgroundColor: colors.cardBackground,
-          borderColor: colors.cardBorder,
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          width: '90%',
-          height: 'auto',
-        }}
-        contentContainerStyle={{
-          paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-          paddingVertical: LAYOUT.SPACING.MEDIUM,
-        }}
-        text1Style={{
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-          fontWeight: '600',
-          color: colors.titleText,
-        }}
-        text2Style={{
-          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-          color: colors.text,
-        }}
-      />
-    ),
-  };
+  // Memoize toast config to prevent recreation
+  const toastConfig = useMemo(
+    () => ({
+      success: (props: React.ComponentProps<typeof BaseToast>) => (
+        <BaseToast
+          {...props}
+          style={[
+            styles.toastContainer,
+            {
+              borderLeftColor: colors.tint,
+              backgroundColor: colors.cardBackground,
+              borderColor: colors.cardBorder,
+            },
+          ]}
+          contentContainerStyle={styles.toastContent}
+          text1Style={[styles.toastTitle, { color: colors.titleText }]}
+          text2Style={[styles.toastMessage, { color: colors.text }]}
+        />
+      ),
+    }),
+    [colors]
+  );
 
   // Render content immediately since fonts are guaranteed
   return (
-    <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-      <Stack
-        screenOptions={{
-          headerShown: true,
-          animation: 'slide_from_right',
-        }}
-      >
+    <NavigationThemeProvider value={navigationTheme}>
+      <Stack screenOptions={stackScreenOptions}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="article" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="review"
-          options={{
-            headerShown: false,
-            animation: 'none',
-            presentation: 'containedModal',
-            gestureEnabled: false,
-          }}
-        />
+        <Stack.Screen name="review" options={reviewScreenOptions} />
       </Stack>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Toast config={toastConfig} />
@@ -213,16 +190,19 @@ class ErrorBoundary extends Component<
   { children: React.ReactNode; FallbackComponent: React.ComponentType<{ error: Error }> },
   { hasError: boolean; error: Error | null }
 > {
-  constructor(props: {
-    children: React.ReactNode;
-    FallbackComponent: React.ComponentType<{ error: Error }>;
-  }) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
+  static defaultState = { hasError: false, error: null };
+
+  state = ErrorBoundary.defaultState;
 
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
+  }
+
+  // Only update state if error changes
+  shouldComponentUpdate(_: any, nextState: { hasError: boolean; error: Error | null }) {
+    if (this.state.hasError !== nextState.hasError) return true;
+    if (this.state.error !== nextState.error) return true;
+    return false;
   }
 
   render() {
@@ -237,15 +217,52 @@ interface FallbackProps {
   error: Error;
 }
 
+const styles = StyleSheet.create({
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorTitle: {
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  errorMessage: {
+    marginBottom: 20,
+  },
+  errorDetail: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
+  gestureRoot: {
+    flex: 1,
+  },
+  toastContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    width: '90%',
+    height: 'auto',
+  },
+  toastContent: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  toastTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    fontWeight: '600',
+  },
+  toastMessage: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+  },
+});
+
 function ErrorFallback({ error }: FallbackProps) {
   const colors = useColors();
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-      <Text style={{ color: colors.error, fontSize: 16, marginBottom: 10 }}>
-        Something went wrong
-      </Text>
-      <Text style={{ color: colors.text, marginBottom: 20 }}>Please try again</Text>
-      <Text style={{ color: colors.text, fontSize: 12, opacity: 0.7 }}>{error.toString()}</Text>
+    <View style={styles.errorContainer}>
+      <Text style={[styles.errorTitle, { color: colors.error }]}>Something went wrong</Text>
+      <Text style={[styles.errorMessage, { color: colors.text }]}>Please try again</Text>
+      <Text style={[styles.errorDetail, { color: colors.text }]}>{error.toString()}</Text>
     </View>
   );
 }
@@ -254,7 +271,7 @@ export default function RootLayout() {
   useReactQueryDevTools(queryClient);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
