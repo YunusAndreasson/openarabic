@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { ThemedView } from './ThemedView';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated, { AnimatedStyle } from 'react-native-reanimated';
 import { usePulseAnimation } from '../hooks/animations';
 import {
   LoaderProps,
@@ -20,7 +20,7 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   const loaderColor = color || colors.text;
 
   // Use pulse animation hook with gentle style for smooth scaling effect
-  const { animatedStyle, startAnimation } = usePulseAnimation({
+  const { animatedStyle } = usePulseAnimation({
     style: 'gentle',
     pulseMagnitude: 1.15,
     duration: 2000,
@@ -77,7 +77,7 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   return (
     <View style={[styles.container, style as ViewStyle]}>
       <Animated.View
-        style={[styles.circle, circleStyle, animatedStyle as AnimatedStyleProp<ViewStyle>]}
+        style={[styles.circle, circleStyle, animatedStyle as AnimatedStyle<ViewStyle>]}
       />
     </View>
   );
@@ -96,7 +96,7 @@ export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   });
 
   return (
-    <Animated.View style={[{ flex: 1 }, animatedStyle as AnimatedStyleProp<ViewStyle>]}>
+    <Animated.View style={[{ flex: 1 }, animatedStyle as AnimatedStyle<ViewStyle>]}>
       <ThemedView style={styles.fullScreen}>
         <View style={styles.loaderContainer}>
           <Loader size="large" color={color || colors.tint} />

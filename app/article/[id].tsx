@@ -38,17 +38,12 @@ import { useAudioPlayer, AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useLoadingState } from '@/hooks/useLoadingState';
 
 // Store
-import {
-  addToReadingList,
-  incrementReadCount,
-  updateLastOpenedArticle,
-} from '@/store/readingListSlice';
 
 // Constants
 import { LAYOUT } from '@/constants/layout';
 
 // Utils
-import { successFeedback, lightFeedback } from '@/utils/haptics';
+import { lightFeedback } from '@/utils/haptics';
 
 // Types
 import type { Tables } from '@/types/database.types';
@@ -94,10 +89,8 @@ export default function ArticleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const { user } = useAuth();
-  const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
-  const [isLoading, setIsLoading] = useState(true);
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
   const queryClient = useQueryClient();
@@ -106,7 +99,6 @@ export default function ArticleScreen() {
   const isMountedRef = useRef(true);
 
   // Track previous audio state to detect transitions
-  const prevAudioStateRef = useRef(AUDIO_STATES.IDLE);
 
   // Scroll position tracking
   const prevScrollYValue = useRef(0);
@@ -123,7 +115,7 @@ export default function ArticleScreen() {
   const { navigateTo } = useNavigationWithDebounce();
 
   // Audio player hook
-  const { audioState, loadAndPlayAudio, stopPlayback } = useAudioPlayer();
+  const { loadAndPlayAudio, stopPlayback } = useAudioPlayer();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -377,7 +369,7 @@ export default function ArticleScreen() {
   );
 
   // Main render - loading state
-  if ((isLoading || isLoadingArticle) && !isDataPrefetched) {
+  if (isLoadingArticle && !isDataPrefetched) {
     return (
       <ThemedView
         style={[styles.container, { backgroundColor: colors.background }]}

@@ -728,6 +728,8 @@ export interface FloatingButtonProps extends BasePressableProps, BaseThemedProps
   accessibilityLabel: string;
   /** Whether the app is in dark mode */
   isDarkMode: boolean;
+  /** Whether the item is currently bookmarked */
+  isBookmarked?: boolean;
 }
 
 /**

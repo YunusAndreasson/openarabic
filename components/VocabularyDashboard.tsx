@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { VocabularyStats } from '@/types/vocabulary.types';
-import { AnimatedText } from './index';
+import { AnimatedText } from './AnimatedText';
 import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';
 import BaseCard from './BaseCard';
@@ -38,7 +38,7 @@ interface StatItemProps {
 
 // Separate StatItem component for better reusability and memoization
 const StatItem = React.memo(
-  ({ value, label, icon, iconColor, bgColor, animateValue, category, onPress }: StatItemProps) => {
+  ({ value, label, icon, iconColor, bgColor, category, onPress }: StatItemProps) => {
     // Use the standard press animation hook
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
@@ -90,7 +90,6 @@ export const VocabularyDashboard = React.memo(
     colors,
     animationTriggered = false,
     onStatPress,
-    streakStats,
   }: VocabularyDashboardProps) => {
     // Ensure colors are bright enough for dark mode with fallbacks
     const safeColors = useMemo(

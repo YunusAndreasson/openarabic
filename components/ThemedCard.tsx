@@ -41,13 +41,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const [imageError, setImageError] = useState(false);
   const isCompact = variant === 'compact';
-
-  // Handle image errors
-  const handleImageError = () => {
-    setImageError(true);
-  };
 
   /**
    * Creates a platform and theme-aware gradient for card overlays
@@ -107,7 +101,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <EnhancedImage
             source={imageUrl}
             style={styles.image}
-            onError={handleImageError}
+            onError={() => {
+              /* Handle image load error silently */
+            }}
             contentFit="cover"
             transition={500}
             showLoadingIndicator={true}

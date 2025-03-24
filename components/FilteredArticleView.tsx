@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '../constants/layout';
@@ -74,22 +73,9 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   selectedAuthor,
   selectedCategory,
   onClearFilter,
-  isFirstRender = false,
 }) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-
-  // Track if component has been mounted before to prevent flickering animations
-  const hasBeenMounted = useRef(false);
-  const shouldAnimate = isFirstRender && !hasBeenMounted.current;
-
-  // Track header opacity with regular state to avoid type issues
-  const [headerOpacity] = useState(shouldAnimate ? 0 : 1);
-
-  // Set mounted flag after first render
-  useEffect(() => {
-    hasBeenMounted.current = true;
-  }, []);
 
   // Determine the header title based on selected filters
   const headerTitle = useMemo(() => {
@@ -116,23 +102,12 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
     return { paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM };
   }, [headerHeight]);
 
-  // Create simple style objects to avoid type errors
-  const headerStyle = {
-    ...styles.headerContainer,
-    // When animating, start with opacity from state (0)
-    // Otherwise use the default style opacity (1)
-    opacity: shouldAnimate ? headerOpacity : styles.headerContainer.opacity,
-  };
-
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
       {/* Standard Page Header with back button */}
-      <Animated.View
-        style={headerStyle}
-        entering={shouldAnimate ? FadeIn.duration(300) : undefined}
-      >
+      <View style={styles.headerContainer}>
         <PageHeader title={headerTitle} onBackPress={onClearFilter} />
-      </Animated.View>
+      </View>
 
       {/* Scrollable content */}
       <ThemedView
@@ -153,13 +128,9 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
           ),
         }}
       >
-        {/* Articles with staggered animations */}
-        {articles.map((article, index) => (
-          <Animated.View
-            key={`filtered-article-${article.id}`}
-            style={styles.articleContainer}
-            entering={shouldAnimate ? FadeIn.duration(200).delay(index * 50) : undefined}
-          >
+        {/* Articles */}
+        {articles.map(article => (
+          <View key={`filtered-article-${article.id}`} style={styles.articleContainer}>
             <ThemedCard
               imageUrl={article.image_url || ''}
               title={article.title}
@@ -173,7 +144,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
               onPress={() => onArticlePress?.(article)}
               isLoading={isLoading}
             />
-          </Animated.View>
+          </View>
         ))}
 
         {/* No results message */}
@@ -191,10 +162,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         {/* Footer */}
         {articles.length > 0 && (
           <>
-            <Animated.View
-              style={styles.endMessageContainer}
-              entering={shouldAnimate ? FadeIn.duration(400) : undefined}
-            />
+            <View style={styles.endMessageContainer} />
             <CopyrightFooter />
           </>
         )}
@@ -208,7 +176,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    opacity: 1,
     zIndex: 2000, // Higher than PageHeader's z-index (1000)
   },
   scrollContainer: {

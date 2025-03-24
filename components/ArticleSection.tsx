@@ -3,7 +3,7 @@ import { FlatList, StyleSheet, View, Platform } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
-import { Section } from './index';
+import Section from './Section';
 import { ThemedText } from './ThemedText';
 import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';

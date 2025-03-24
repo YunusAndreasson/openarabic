@@ -10,7 +10,6 @@ import { useAuth } from './useAuth';
 const MINUTE_IN_MS = 60000;
 const HOUR_IN_MS = 60 * MINUTE_IN_MS;
 const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
-const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
 const STALE_TIME_ALWAYS_FRESH = 0;
 const LOAD_TIMEOUT_MS = 10000;
 const MIN_LOADING_TIME = 500; // Minimum time to show loading state
@@ -37,17 +36,12 @@ const logWarning = (message: string, error?: any) => {
   }
 };
 
-interface UserSettings {
-  lastOpenedArticle?: number;
-  [key: string]: any;
-}
-
 /**
  * Hook to preload app data during initialization
  */
 export const useAppPreloader = () => {
   const queryClient = useQueryClient();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const preloadLockRef = useRef(false);
@@ -139,25 +133,20 @@ export const useAppPreloader = () => {
       }
 
       // Load data with timeout and validate articles in parallel
-      const [allDataLoaded, [articles]] = await Promise.all([
-        new Promise<boolean>(resolve => {
-          const timeoutId = setTimeout(() => {
+      const articles = await Promise.race<any[]>([
+        articlesPromise,
+        new Promise<any[]>(resolve => {
+          setTimeout(() => {
             logWarning('Data loading timeout reached, proceeding with available data');
-            resolve(false);
+            resolve([]);
           }, LOAD_TIMEOUT_MS);
-
-          Promise.all([articlesPromise, categoriesPromise, ...userDataPromises])
-            .then(() => {
-              clearTimeout(timeoutId);
-              resolve(true);
-            })
-            .catch(() => {
-              clearTimeout(timeoutId);
-              resolve(false);
-            });
         }),
-        Promise.all([articlesPromise]),
       ]);
+
+      // Continue loading other data in background
+      Promise.all([categoriesPromise, ...userDataPromises]).catch(error => {
+        logWarning('Some background data failed to load:', error);
+      });
 
       const hasValidArticles = Array.isArray(articles) && articles.length > 0;
       if (!hasValidArticles) {

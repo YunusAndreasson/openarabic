@@ -43,46 +43,6 @@ const calculateRetentionScore = (word: StudyWord): number => {
   return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
 };
 
-/**
- * Get label and color based on FSRS State enum
- * This directly uses the State enum from ts-fsrs
- */
-const getStateInfo = (word: StudyWord) => {
-  switch (word.fsrs_state) {
-    case State.New:
-      return {
-        label: 'New',
-        colorKey: 'warning' as const,
-      };
-    case State.Learning:
-      return {
-        label: 'Learning',
-        colorKey: 'accent' as const,
-      };
-    case State.Review:
-      if (word.fsrs_stability >= 30) {
-        return {
-          label: 'Mastered',
-          colorKey: 'success' as const,
-        };
-      }
-      return {
-        label: 'Review',
-        colorKey: 'info' as const,
-      };
-    case State.Relearning:
-      return {
-        label: 'Relearning',
-        colorKey: 'error' as const,
-      };
-    default:
-      return {
-        label: 'Unknown',
-        colorKey: 'text' as const,
-      };
-  }
-};
-
 // Helper function to calculate header height
 const getHeaderHeight = (insets: { top: number }) => {
   return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;

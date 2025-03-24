@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Toast from 'react-native-toast-message';
 
 // Services
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -23,21 +22,11 @@ export const useArticleMutations = (
     mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
       readingListService.addToReadingList(userId, articleId),
     onSuccess: () => {
-      Toast.show({
-        type: 'success',
-        text1: 'Added to bookmarks',
-        position: 'bottom',
-      });
       refetchReadingListStatus();
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
     },
     onError: () => {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to add to bookmarks',
-        position: 'bottom',
-      });
+      // Error handled silently
     },
   });
 
@@ -46,21 +35,11 @@ export const useArticleMutations = (
     mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
       readingListService.removeFromReadingList(userId, articleId),
     onSuccess: () => {
-      Toast.show({
-        type: 'success',
-        text1: 'Removed from bookmarks',
-        position: 'bottom',
-      });
       refetchReadingListStatus();
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
     },
     onError: () => {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to remove from bookmarks',
-        position: 'bottom',
-      });
+      // Error handled silently
     },
   });
 
@@ -74,11 +53,7 @@ export const useArticleMutations = (
       queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     },
     onError: () => {
-      Toast.show({
-        type: 'error',
-        text1: 'Error',
-        text2: 'Failed to update word status',
-      });
+      // Error handled silently
     },
   });
 

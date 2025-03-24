@@ -37,7 +37,7 @@ function ThemedTextComponent({
   const colors = useColors();
 
   // Consolidated style computation - combines both type mapping and style generation
-  const { finalType, finalStyle } = useMemo(() => {
+  const { finalStyle } = useMemo(() => {
     // Map legacy types to new types for backward compatibility
     const legacyTypeMap: Record<string, string> = {
       default: 'body',
@@ -119,7 +119,7 @@ function ThemedTextComponent({
       }
     }
 
-    return { finalType: actualType, finalStyle };
+    return { finalStyle };
   }, [type, variant, colorName, skipDefaultColor, colors, arabicFontSize, weight, align, style]);
 
   return (

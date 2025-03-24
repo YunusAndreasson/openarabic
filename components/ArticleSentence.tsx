@@ -19,41 +19,11 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,
   },
-  englishText: {
-    writingDirection: 'ltr',
-    fontFamily: 'Philosopher',
-    textAlign: 'left',
-    paddingLeft: LAYOUT.SPACING.SMALL,
-  },
 });
-
-// Function to create dynamic styles based on settings and colors
-const getEnglishTextStyle = (
-  settings: ArticleSentenceProps['settings'],
-  colors: ArticleSentenceProps['colors']
-) => {
-  return {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-    lineHeight: Math.round(
-      LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL * settings.fontScale
-    ),
-  };
-};
 
 // Memoized sentence component for better list performance
 export const ArticleSentence = React.memo(
-  ({ sentence, words, renderWord, settings, colors, containerStyle }: ArticleSentenceProps) => {
-    // Memoize dynamic styles
-    const englishTextStyle = React.useMemo(
-      () => getEnglishTextStyle(settings, colors),
-      [settings.fontScale, colors.englishText]
-    );
-
-    // Use a less prominent color for English text
-    // In dark mode, englishText is already '#CCCCCC' which is less white than the main text
-    // In light mode, we'll use authorText which is '#666666' (less black than the main text)
-    const textColor = { color: colors.authorText };
-
+  ({ sentence, words, renderWord, settings, containerStyle }: ArticleSentenceProps) => {
     return (
       <View style={[styles.sentenceContainer, containerStyle]}>
         <View style={styles.arabicSentence}>{words.map(renderWord)}</View>

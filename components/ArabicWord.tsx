@@ -173,7 +173,7 @@ function ArabicWordComponent({
 
   // Consolidated visual properties - calculate multiple derived values in a single pass
   // This reduces overhead from multiple hooks and ensures consistent generation
-  const { textProps, wordStyle, accessibilityLabel } = useMemo(() => {
+  const { textProps, wordStyle } = useMemo(() => {
     // Calculate font size once
     const calculatedFontSize = baseSize * scale;
 
@@ -202,20 +202,11 @@ function ArabicWordComponent({
       });
     }
 
-    // Build accessibility label
-    const label = `Arabic word: ${word.word_form}. ${
-      isSelected
-        ? 'Added to study list.'
-        : 'Tap to see translation, long press to add to study list.'
-    }`;
-
     return {
-      fontSize: calculatedFontSize,
       textProps: calculatedTextProps,
       wordStyle: [...baseStyles, ...styleObjects],
-      accessibilityLabel: label,
     };
-  }, [baseSize, scale, isSelected, tooltipVisible, isDarkMode, word.word_form]);
+  }, [baseSize, scale, isSelected, tooltipVisible, isDarkMode]);
 
   // Reset animation when component unmounts
   useEffect(() => {
@@ -235,7 +226,6 @@ function ArabicWordComponent({
         style={wordStyle}
         activeOpacity={0.7}
         onLayout={handleLayout}
-        accessibilityLabel={accessibilityLabel}
       >
         <Animated.View
           style={[

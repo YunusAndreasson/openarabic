@@ -9,7 +9,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useCallback, useRef, Component, useMemo } from 'react';
+import { useEffect, useState, useRef, Component, useMemo } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../store/store';
@@ -18,14 +18,13 @@ import { setTheme } from '../store/themeSlice';
 import { useColorScheme, AppState, View, Text, StyleSheet } from 'react-native';
 import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
-import Toast, { BaseToast } from 'react-native-toast-message';
 import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { configureReanimatedLogger } from 'react-native-reanimated';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { AppLoader } from '@/components/Loader';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { ToastProvider } from '@/components/ToastProvider';
 
 // Hide splash screen immediately
 SplashScreen.hideAsync();
@@ -103,7 +102,7 @@ function AppContent() {
   });
 
   // Use the app preloader hook to preload data
-  const { preloadAppData, criticalDataLoaded, preloadComplete } = useAppPreloader();
+  const { preloadAppData, criticalDataLoaded } = useAppPreloader();
 
   // Sync theme with system on first load and changes
   useEffect(() => {
@@ -120,15 +119,12 @@ function AppContent() {
         // Invalidate queries and refresh data
         queryClient.invalidateQueries();
         setTimeout(preloadAppData, 300);
-      } else if (nextAppState === 'background') {
-        Toast.hide();
       }
       appState.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
-      Toast.hide();
     };
   }, [appReady, preloadAppData]);
 
@@ -145,42 +141,20 @@ function AppContent() {
     preloadAppData();
   }, [preloadAppData]);
 
-  // Memoize toast config to prevent recreation
-  const toastConfig = useMemo(
-    () => ({
-      success: (props: React.ComponentProps<typeof BaseToast>) => (
-        <BaseToast
-          {...props}
-          style={[
-            styles.toastContainer,
-            {
-              borderLeftColor: colors.tint,
-              backgroundColor: colors.cardBackground,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-          contentContainerStyle={styles.toastContent}
-          text1Style={[styles.toastTitle, { color: colors.titleText }]}
-          text2Style={[styles.toastMessage, { color: colors.text }]}
-        />
-      ),
-    }),
-    [colors]
-  );
-
   // Render content immediately since fonts are guaranteed
   return (
     <NavigationThemeProvider value={navigationTheme}>
-      <Stack screenOptions={stackScreenOptions}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="article" options={{ headerShown: false }} />
-        <Stack.Screen name="review" options={reviewScreenOptions} />
-      </Stack>
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Toast config={toastConfig} />
+      <ToastProvider>
+        <Stack screenOptions={stackScreenOptions}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="article" options={{ headerShown: false }} />
+          <Stack.Screen name="review" options={reviewScreenOptions} />
+        </Stack>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Show AppLoader during initialization */}
-      {showAppLoader && <AppLoader color={colors.tint} />}
+        {/* Show AppLoader during initialization */}
+        {showAppLoader && <AppLoader color={colors.tint} />}
+      </ToastProvider>
     </NavigationThemeProvider>
   );
 }
@@ -238,22 +212,6 @@ const styles = StyleSheet.create({
   gestureRoot: {
     flex: 1,
   },
-  toastContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: '90%',
-    height: 'auto',
-  },
-  toastContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
-  toastTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    fontWeight: '600',
-  },
-  toastMessage: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-  },
 });
 
 function ErrorFallback({ error }: FallbackProps) {
@@ -276,9 +234,11 @@ export default function RootLayout() {
         <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
             <SafeAreaProvider>
-              <ErrorBoundary FallbackComponent={ErrorFallback}>
-                <AppContent />
-              </ErrorBoundary>
+              <ToastProvider>
+                <ErrorBoundary FallbackComponent={ErrorFallback}>
+                  <AppContent />
+                </ErrorBoundary>
+              </ToastProvider>
             </SafeAreaProvider>
           </QueryClientProvider>
         </PersistGate>

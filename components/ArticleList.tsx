@@ -1,23 +1,11 @@
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
-import {
-  StyleSheet,
-  FlatList,
-  ListRenderItem,
-  RefreshControl,
-  ViewToken,
-  ViewabilityConfig,
-  Platform,
-  View,
-} from 'react-native';
+import { StyleSheet, FlatList, ListRenderItem, RefreshControl, Platform, View } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
-import Animated, { FadeIn } from 'react-native-reanimated';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '../types/ui.types';
-import { useQueryClient } from '@tanstack/react-query';
-import { articlesService } from '../services/articles';
 
 const ITEM_HEIGHT = 360;
 
@@ -37,7 +25,6 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
   ) => {
     const colors = useColors();
     const listRef = useRef<FlatList<Article>>(null);
-    const queryClient = useQueryClient();
 
     // Forward the ref to the parent component
     useImperativeHandle(ref, () => listRef.current!, []);
@@ -59,16 +46,14 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
     const ArticleItem = React.memo(({ item }: { item: Article }) => {
       return (
         <View style={styles.articleItemContainer}>
-          <Animated.View entering={FadeIn.duration(300)}>
-            <ThemedCard
-              imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-              title={item.title}
-              category={item.category?.name ?? 'Uncategorized'}
-              author={item.author?.name ?? 'Anonymous'}
-              onPress={() => onArticlePress(item)}
-              style={styles.articleCard}
-            />
-          </Animated.View>
+          <ThemedCard
+            imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+            title={item.title}
+            category={item.category?.name ?? 'Uncategorized'}
+            author={item.author?.name ?? 'Anonymous'}
+            onPress={() => onArticlePress(item)}
+            style={styles.articleCard}
+          />
         </View>
       );
     });

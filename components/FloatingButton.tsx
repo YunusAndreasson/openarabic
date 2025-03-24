@@ -6,6 +6,7 @@ import { LAYOUT } from '@/constants/layout';
 import { FloatingButtonProps } from '@/types/ui.types';
 import { usePressAnimation } from '@/hooks/animations';
 import { lightFeedback } from '@/utils/haptics';
+import { useToast } from './ToastProvider';
 
 const styles = StyleSheet.create({
   backButton: {
@@ -44,7 +45,10 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
   colors,
   isDarkMode,
   style,
+  isBookmarked,
 }) => {
+  const { showToast } = useToast();
+
   // Use standardized press animation
   const {
     animatedStyle: pressAnimatedStyle,
@@ -54,17 +58,6 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
     type: 'button',
     scaleAmount: 0.95,
   });
-
-  // Simple handler for button press with haptic feedback only for non-back buttons
-  const handlePress = () => {
-    if (onPress) {
-      // Only provide haptic feedback if it's not a back button (left position)
-      if (position !== 'left') {
-        lightFeedback();
-      }
-      onPress();
-    }
-  };
 
   // Memoize background color to prevent recalculation
   const buttonBackgroundColor = useMemo(
@@ -79,6 +72,19 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
     }
     return pressAnimatedStyle;
   }, [animatedStyle, pressAnimatedStyle]);
+
+  // Simple handler for button press with haptic feedback only for non-back buttons
+  const handlePress = () => {
+    if (onPress) {
+      // Only provide haptic feedback if it's not a back button (left position)
+      if (position !== 'left') {
+        lightFeedback();
+        // Show appropriate toast message based on bookmark state
+        showToast(isBookmarked ? 'Bookmark removed' : 'Added to bookmarks');
+      }
+      onPress();
+    }
+  };
 
   return (
     <Animated.View

@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { LAYOUT } from '../constants/layout';
 import ThemedCard from './ThemedCard';
-import { Section } from './index';
+import Section from './Section';
 import { DailyPickSectionProps } from '@/types/ui.types';
 import { articlesService } from '@/services/articles';
 import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';

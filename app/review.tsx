@@ -13,7 +13,6 @@ import { useFSRS } from '@/hooks/useFSRS';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LAYOUT } from '@/constants/layout';
 import { Loader } from '@/components/Loader';
-import Toast from 'react-native-toast-message';
 import { useQueryClient } from '@tanstack/react-query';
 import { lightFeedback } from '@/utils/haptics';
 import { useWordSizing } from '../hooks/useWordSizing';
@@ -278,12 +277,6 @@ export default function ReviewScreen() {
         opacity.value = withTiming(1, ANIMATION_CONFIG);
       } catch (error) {
         console.error('[Swipe Left] Error:', error);
-        Toast.show({
-          type: 'error',
-          text1: 'Error',
-          text2: 'Failed to update word. Please try again.',
-          position: 'bottom',
-        });
         opacity.value = withTiming(1, ANIMATION_CONFIG);
       } finally {
         // Always reset the guard when the sequence completes
