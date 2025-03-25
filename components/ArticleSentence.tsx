@@ -9,7 +9,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.XXLARGE,
-    backgroundColor: 'transparent',
   },
   arabicSentence: {
     flexDirection: 'row-reverse',

@@ -74,7 +74,6 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
   const borderColor = isDarkMode
     ? colors.cardBorder // dark theme border
     : colors.cardBorder; // light theme border
-  const transparent = 'transparent'; // For linter compliance
 
   // Size and position calculations for layout (these calculations are safe even if layout is null)
   const { width: screenWidth } = Dimensions.get('window');
@@ -108,13 +107,13 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
             borderLeftWidth: ARROW_SIZE,
             borderRightWidth: ARROW_SIZE,
             borderTopWidth: ARROW_SIZE,
-            borderLeftColor: transparent,
-            borderRightColor: transparent,
+            borderLeftColor: colors.transparent,
+            borderRightColor: colors.transparent,
           },
         ]}
       />
     ),
-    [backgroundColor, ARROW_SIZE, transparent]
+    [backgroundColor, ARROW_SIZE, colors.transparent]
   );
 
   // Don't render anything if tooltip shouldn't be visible or has no layout

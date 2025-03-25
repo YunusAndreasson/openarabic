@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   cardProgressContainer: {
     height: 3,
     width: '100%',
-    backgroundColor: 'transparent',
+    backgroundColor: 'transparent', // Will use colors.transparent in dynamicStyles
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
-    backgroundColor: 'transparent',
+    backgroundColor: 'transparent', // Will use colors.transparent in dynamicStyles
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderBottomRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    backgroundColor: 'transparent',
+    backgroundColor: 'transparent', // Will use colors.transparent in dynamicStyles if used
   },
 });
 

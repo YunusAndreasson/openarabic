@@ -40,17 +40,17 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
     [backgroundColor, colors.borderOverlay, onBackPress]
   );
 
-  // BlurView style to match tabbar implementation
+  // Memoize blur container styles for performance
   const blurContainerStyle = useMemo(
     () => [
       styles.blurContainer,
       {
-        backgroundColor: 'transparent', // Allow blur to work through
+        backgroundColor: colors.transparent, // Allow blur to work through
         borderBottomColor: colors.borderOverlay,
         ...(Platform.OS === 'ios' && { shadowColor: colors.shadow }),
       },
     ],
-    [colors.borderOverlay, colors.shadow]
+    [colors.borderOverlay, colors.shadow, colors.transparent]
   );
 
   return (
