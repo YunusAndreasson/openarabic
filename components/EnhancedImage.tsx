@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { StyleSheet, Pressable, View, Dimensions, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
 import { LAYOUT } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';

@@ -1,4 +1,4 @@
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import React, { useMemo } from 'react';
@@ -74,17 +74,17 @@ function ThemedTextComponent({
     }
 
     // Style generation
-    let finalStyle;
+    let computedStyle;
     // Special handling for arabic type
     if (actualType === 'arabic') {
       // Filter out undefined values to reduce style array size
-      finalStyle = [
+      computedStyle = [
         getArabicTextStyle(arabicFontSize),
         textColor && { color: textColor },
         weight && { fontWeight: weight },
         align && { textAlign: align },
         style,
-      ].filter(Boolean);
+      ].filter(Boolean) as StyleProp<TextStyle>;
     } else {
       // Get base style from styles object, safely handle type
       // Fast-path for common types to avoid switch overhead
@@ -100,26 +100,26 @@ function ThemedTextComponent({
       // Special handling for link type (includes color)
       if (actualType === 'link' && !textColor) {
         // Filter out undefined values
-        finalStyle = [
+        computedStyle = [
           baseStyle,
           { color: colors.link },
           weight && { fontWeight: weight },
           align && { textAlign: align },
           style,
-        ].filter(Boolean);
+        ].filter(Boolean) as StyleProp<TextStyle>;
       } else {
         // Standard case - filter out undefined values
-        finalStyle = [
+        computedStyle = [
           baseStyle,
           textColor && { color: textColor },
           weight && { fontWeight: weight },
           align && { textAlign: align },
           style,
-        ].filter(Boolean);
+        ].filter(Boolean) as StyleProp<TextStyle>;
       }
     }
 
-    return { finalStyle };
+    return { finalStyle: computedStyle };
   }, [type, variant, colorName, skipDefaultColor, colors, arabicFontSize, weight, align, style]);
 
   return (

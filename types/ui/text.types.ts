@@ -13,8 +13,27 @@ export type TextTypeName =
   | 'link'
   | 'overline';
 
-export type TextVariant = 'error' | 'subtle' | 'highlight' | 'default' | 'success' | 'warning';
-export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+export type TextVariant =
+  | 'error'
+  | 'subtle'
+  | 'success'
+  | 'warning'
+  | 'info'
+  | 'primary'
+  | 'secondary'
+  | 'disabled';
+
+export type TextWeight =
+  | 'normal'
+  | 'medium'
+  | 'semibold'
+  | 'bold'
+  | '300'
+  | '400'
+  | '500'
+  | '600'
+  | number; // Allow numeric weights for flexibility
+
 export type TextAlign = 'auto' | 'left' | 'right' | 'center' | 'justify';
 
 /**
