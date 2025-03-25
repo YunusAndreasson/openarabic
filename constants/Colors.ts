@@ -2,6 +2,8 @@
 export const Colors = {
   light: {
     text: '#212121', // Dark charcoal for primary text
+    textSecondary: '#424242', // Medium charcoal for secondary text
+    textTertiary: '#606060', // Lighter charcoal for tertiary text
     background: '#FAFAFA', // Soft near-white for background
     tint: '#333333', // Neutral dark tint for interactive elements
     icon: '#6E6E6E', // Medium gray for icons
@@ -43,6 +45,8 @@ export const Colors = {
   },
   dark: {
     text: '#E0E0E0', // Light gray for primary text
+    textSecondary: '#BBBBBB', // Medium light gray for secondary text
+    textTertiary: '#999999', // Darker gray for tertiary text
     background: '#121212', // Near-black background
     tint: '#CCCCCC', // Muted light gray for interactive elements
     icon: '#BBBBBB', // Light gray for icons

@@ -90,6 +90,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
     (isFocused: boolean) => ({
       ...styles.label,
       color: isFocused ? colors.tint : colors.tabIconDefault,
+      opacity: isFocused ? 1 : 0.8,
       ...Platform.select({
         ios: {
           fontWeight: '500' as const,
@@ -156,6 +157,9 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
               name={isFocused ? screen.iconFilled : screen.iconOutline}
               size={ICON_SIZE}
               color={isFocused ? colors.tint : colors.tabIconDefault}
+              style={{
+                opacity: isFocused ? 1 : 0.8,
+              }}
             />
             <ThemedText style={getTabButtonStyle(isFocused)} skipDefaultColor>
               {label}

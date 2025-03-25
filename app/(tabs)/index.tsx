@@ -19,9 +19,8 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
+import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
 // Store
@@ -52,7 +51,6 @@ import DailyPickSection from '../../components/DailyPickSection';
 import ErrorState from '../../components/ErrorState';
 
 // Cache duration constants
-const MINUTE_IN_MS = 60000;
 
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);

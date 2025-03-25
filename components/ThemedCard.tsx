@@ -3,7 +3,7 @@ import { StyleSheet, View, StyleProp, ViewStyle, Platform } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import Pill from './Pill';
 import { LoadingContainer } from './Loader';
@@ -19,6 +19,8 @@ import { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
  * The component is optimized for performance with memoization and proper image loading handling.
  * It uses Reanimated 3's built-in animations for optimal performance.
  */
+
+const GOLDEN_RATIO_ADJUSTED = 1.5;
 
 function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Extract common props
@@ -46,32 +48,27 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   /**
    * Creates a platform and theme-aware gradient for card overlays
    *
-   * iOS light mode requires a special gradient that ends with the card background color
-   * to ensure proper visual integration with the card.
-   *
-   * Other platforms/themes use the standard gradient colors from the theme.
+   * Create a gradient that perfectly blends with the card background color
+   * for a seamless transition between image and content.
    */
   const createCardGradient = () => {
     // Define gradient types as readonly arrays for type safety
     type GradientColors = readonly [string, string, string];
 
-    // For iOS light mode, we need a custom gradient that matches the card background
-    if (Platform.OS === 'ios' && !isDarkMode) {
-      const iosLightGradient: GradientColors = [
-        colors.gradientStart, // Start with transparent
-        colors.gradientMiddle, // Mid-fade with high opacity
-        colors.cardBackground, // End with card background color
-      ];
-      return iosLightGradient;
+    // Use theme-specific values for better visibility
+    if (isDarkMode) {
+      return [
+        'rgba(0,0,0,0)', // Start transparent
+        'rgba(30,30,30,0.85)', // Dark theme mid-fade
+        colors.cardBackground, // End with exact card background color
+      ] as GradientColors;
+    } else {
+      return [
+        'rgba(255,255,255,0)', // Start transparent
+        'rgba(250,250,250,0.85)', // Light theme mid-fade
+        colors.cardBackground, // End with exact card background color
+      ] as GradientColors;
     }
-
-    // For other platforms/themes, use the default gradient colors
-    const defaultGradient: GradientColors = [
-      colors.gradientStart,
-      colors.gradientMiddle,
-      colors.gradientEnd,
-    ];
-    return defaultGradient;
   };
 
   // Render loading state
@@ -111,13 +108,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             alt={`Image for ${title}`}
           />
 
-          {/* Category pill (moved inside image container) */}
-          {category && (
-            <View style={styles.pillContainer}>
-              <Pill id={category} label={category} variant="category" />
-            </View>
-          )}
-
           {/* Gradient overlay */}
           <LinearGradient
             colors={createCardGradient()}
@@ -128,11 +118,18 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           />
         </View>
 
+        {/* Category pill moved outside the image container for consistent positioning */}
+        {category && (
+          <View style={styles.pillContainer}>
+            <Pill id={category} label={category} variant="category" />
+          </View>
+        )}
+
         {/* Content container */}
         <View style={styles.contentContainer}>
           {/* Title */}
           <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2}>
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
               {title}
             </ThemedText>
           </View>
@@ -140,7 +137,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {/* Author */}
           {author && (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" variant="secondary" numberOfLines={1}>
+              <ThemedText type="label" colorName="textSecondary" numberOfLines={1}>
                 By {author}
               </ThemedText>
             </View>
@@ -149,7 +146,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {/* Summary */}
           {summary && (
             <View style={styles.summaryContainer}>
-              <ThemedText type="caption" variant="secondary" numberOfLines={3}>
+              <ThemedText type="caption" colorName="textTertiary" numberOfLines={3}>
                 {summary}
               </ThemedText>
             </View>
@@ -179,25 +176,34 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
               /* Handle image load error silently */
             }}
           />
+
+          {/* Add gradient overlay to compact card for better text contrast */}
+          <LinearGradient
+            colors={createCardGradient()}
+            style={styles.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            pointerEvents="none"
+          />
         </View>
 
         {/* Render the category pill outside the imageContainer */}
         {article.category && (
-          <View style={styles.pillContainer}>
+          <View style={styles.pillContainerCompact}>
             <Pill id={article.category.id} label={article.category.name} variant="category" />
           </View>
         )}
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2}>
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
               {article.title}
             </ThemedText>
           </View>
 
           {article.author && (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" variant="secondary" numberOfLines={1}>
+              <ThemedText type="label" colorName="textSecondary" numberOfLines={1}>
                 By {article.author.name}
               </ThemedText>
             </View>
@@ -272,8 +278,11 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 3 + LAYOUT.SPACING.XLARGE,
+    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
     position: 'relative',
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
   },
   compactContainer: {
     width: LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE,
@@ -282,13 +291,19 @@ const styles = StyleSheet.create({
   compactImageContainer: {
     position: 'relative',
     width: '100%',
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.MEDIUM,
+    height: Math.round(
+      (LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE) / GOLDEN_RATIO_ADJUSTED
+    ),
     zIndex: LAYOUT.Z_INDEX.BASE,
-    overflow: 'visible',
+    overflow: 'hidden',
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   image: {
     width: '100%',
     height: '100%',
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   imageOverlayContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -296,28 +311,39 @@ const styles = StyleSheet.create({
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    height: '200%',
+    bottom: -LAYOUT.SPACING.XLARGE * 2,
   },
   iosLightModeGradient: {
     // Special case for iOS light mode
   },
   pillContainer: {
     position: 'absolute',
-    top: LAYOUT.SPACING.SMALL,
+    top: LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-    maxWidth: '70%', // Added to match CompactArticleCard
+    maxWidth: '70%',
+  },
+  pillContainerCompact: {
+    position: 'absolute',
+    top: LAYOUT.SPACING.MEDIUM,
+    left: LAYOUT.SPACING.MEDIUM,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    maxWidth: '70%',
   },
   contentContainer: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: -LAYOUT.SPACING.MEDIUM,
   },
   titleContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.SMALL - 2,
   },
   summaryContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL - 2,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   authorContainer: {
     marginTop: 0,
@@ -328,10 +354,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.TINY,
+    marginBottom: 0,
   },
   loadingComponentContainer: {
     width: '100%',
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 3 + LAYOUT.SPACING.XLARGE,
+    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
     justifyContent: 'center',
     alignItems: 'center',
   },

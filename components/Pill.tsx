@@ -14,6 +14,7 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { ThemedText } from './ThemedText';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
 import { PillProps } from '@/types/ui/pill.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 /**
  * A unified pill component that can be used for filters, categories, and other selectable items
@@ -135,7 +136,12 @@ const Pill = React.memo(
             },
           ]}
         >
-          <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
+          <ThemedText
+            type="overline"
+            colorName="textSecondary"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {capitalizeFirstLetter(label.toLowerCase())}
           </ThemedText>
         </View>
@@ -174,7 +180,12 @@ const Pill = React.memo(
                 }
           }
         >
-          <ThemedText type="overline" variant="secondary" numberOfLines={1} ellipsizeMode="tail">
+          <ThemedText
+            type="overline"
+            colorName={isSelected ? 'tint' : 'textSecondary'}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label.toUpperCase()}
           </ThemedText>
         </Pressable>
