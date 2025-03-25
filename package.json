@@ -68,8 +68,7 @@
     "react-native-webview": "13.12.5",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
-    "ts-fsrs": "^4.7.0",
-    "dotenv": "^16.3.1"
+    "ts-fsrs": "^4.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",

@@ -49,13 +49,6 @@ export const ELEMENT_SIZES = {
     XLARGE: 48,
   },
 
-  AVATAR: {
-    SMALL: 32,
-    MEDIUM: 48,
-    LARGE: 64,
-    XLARGE: 96,
-  },
-
   BUTTON: {
     HEIGHT: LAYOUT.BUTTON.HEIGHT,
     PADDING: LAYOUT.BUTTON.PADDING,

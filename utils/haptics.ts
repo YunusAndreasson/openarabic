@@ -33,19 +33,6 @@ export const mediumFeedback = () => {
 };
 
 /**
- * Success feedback for positive outcomes like:
- * - Successful submissions
- * - Task completions
- */
-export const successFeedback = () => {
-  try {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  } catch (error) {
-    // Silently handle errors, haptics failure should not break the app
-  }
-};
-
-/**
  * Error feedback for negative outcomes like:
  * - Failed operations
  * - Input validation errors
@@ -53,19 +40,6 @@ export const successFeedback = () => {
 export const errorFeedback = () => {
   try {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  } catch (error) {
-    // Silently handle errors, haptics failure should not break the app
-  }
-};
-
-/**
- * Warning feedback for cautionary situations like:
- * - Warnings
- * - Confirmations of potentially disruptive actions
- */
-export const warningFeedback = () => {
-  try {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
   } catch (error) {
     // Silently handle errors, haptics failure should not break the app
   }

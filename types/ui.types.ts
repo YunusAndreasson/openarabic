@@ -76,15 +76,6 @@ export interface BaseAnimationProps {
 }
 
 /**
- * Base props for styling pills
- */
-export interface BasePillStyleProps {
-  isSelected?: boolean;
-  isDarkMode: boolean;
-  colors: ReturnType<typeof useColors>;
-}
-
-/**
  * Styles for pills
  */
 export interface BasePillStyles {
@@ -94,11 +85,6 @@ export interface BasePillStyles {
 
 /**
  * Base props for category pills
- */
-export interface CategoryPillBaseProps {
-  category: string;
-  absolute?: boolean;
-}
 
 /**
  * Pill variant types
@@ -246,58 +232,7 @@ export interface FilterListProps<T extends FilterItem> {
 
 /**
  * Props for horizontal category pill items
- */
-export interface HorizontalCategoryPillItemProps extends BasePressableProps {
-  category: Category | null;
-  isSelected: boolean;
-}
 
-/**
- * Props for category pills container
- */
-export interface CategoryPillsContainerProps {
-  categories: Category[];
-  selectedCategory: Category | null;
-  onSelectCategory: (category: Category | null) => void;
-  visible: SharedValue<number>;
-}
-
-/**
- * Props for article list component
- */
-export interface ArticleListProps extends BaseStyleProps {
-  articles: Article[];
-  isLoading: boolean;
-  isRefreshing: boolean;
-  onRefresh: () => void;
-  onArticlePress: (article: Article) => void;
-  ListHeaderComponent?: React.ReactElement;
-  ListEmptyComponent?: React.ReactElement;
-  contentContainerStyle?: StyleProp<ViewStyle>;
-  initialNumToRender?: number;
-  windowSize?: number;
-  maxToRenderPerBatch?: number;
-  updateCellsBatchingPeriod?: number;
-  removeClippedSubviews?: boolean;
-  maintainVisibleContentPosition?: {
-    minIndexForVisible: number;
-  };
-}
-
-/**
- * Props for compact article card component
- */
-export interface CompactArticleCardProps extends BaseStyleProps, BaseOptionalPressableProps {
-  article: Article;
-  showTimeAgo?: boolean;
-  hideDifficultyLabel?: boolean;
-  hideDifficulty?: boolean;
-  lastOpenedAt?: string;
-}
-
-/**
- * Base props for card components
- */
 export interface BaseCardProps extends BaseAnimatedStyleProps {
   /** Whether the card is in a loading state */
   isLoading?: boolean;
@@ -595,11 +530,6 @@ export interface AnimatedTextProps extends ThemedTextProps {
 }
 
 /**
- * Include a type alias for backward compatibility
- */
-export type AnimatedThemedTextProps = AnimatedTextProps;
-
-/**
  * Props for the ProgressBar component
  */
 export interface ProgressBarProps extends BaseStyleProps {
@@ -730,16 +660,6 @@ export interface FloatingButtonProps extends BasePressableProps, BaseThemedProps
   isDarkMode: boolean;
   /** Whether the item is currently bookmarked */
   isBookmarked?: boolean;
-}
-
-/**
- * Props for the BackButton component
- */
-export interface BackButtonProps extends BasePressableProps {
-  /**
-   * Optional button text, defaults to "Back to home"
-   */
-  text?: string;
 }
 
 /**
@@ -1146,16 +1066,6 @@ export interface AnimatedItemProps extends BaseChildrenProps, BaseAnimationProps
 }
 
 /**
- * Props for the ReadingListButton component
- */
-export interface ReadingListButtonProps extends BaseStyleProps {
-  /**
-   * ID of the article to add/remove from reading list
-   */
-  articleId: number;
-}
-
-/**
  * Props for the PageHeader component
  */
 export interface PageHeaderProps {
@@ -1305,11 +1215,6 @@ export interface VocabularyStatsProps
 }
 
 /**
- * Transition type for animations
- */
-export type TransitionType = 'fade' | 'slide';
-
-/**
  * Props for the WordReviewCard component
  */
 export interface WordReviewCardProps {
@@ -1403,11 +1308,6 @@ export type ThemedCardProps =
       });
 
 /**
- * Props for the AnimatedSection component (alias for AnimatedItem for backward compatibility)
- */
-export interface AnimatedSectionProps extends AnimatedItemProps {}
-
-/**
  * Props for the ReviewCard component
  */
 export interface ReviewCardProps {
@@ -1463,16 +1363,6 @@ export interface ReviewHeaderProps {
 
   /**
    * Callback when the close button is pressed
-   */
-  onClose: () => void;
-}
-
-/**
- * Props for the CompletionScreen component
- */
-export interface CompletionScreenProps {
-  /**
-   * Callback when the session is closed
    */
   onClose: () => void;
 }

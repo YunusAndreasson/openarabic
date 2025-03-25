@@ -193,6 +193,7 @@ export const readingListService = {
 
   /**
    * Deletes an article from the reading list
+   * @deprecated Use removeFromReadingList instead with explicit userId
    */
   async deleteFromReadingList(articleId: number): Promise<void> {
     try {
@@ -208,13 +209,8 @@ export const readingListService = {
         throw new Error('User must be logged in to update reading list');
       }
 
-      // Delete the article from the reading list
-      const { error } = await supabase
-        .from('reading_list')
-        .delete()
-        .match({ user_id: user.id, article_id: articleId });
-
-      if (error) throw error;
+      // Delete the article from the reading list using removeFromReadingList
+      await this.removeFromReadingList(user.id, articleId);
     } catch (error) {
       throw error;
     }

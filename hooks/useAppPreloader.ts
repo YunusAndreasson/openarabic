@@ -14,11 +14,6 @@ const LOAD_TIMEOUT_MS = 10000;
 const MIN_LOADING_TIME = 500; // Minimum time to show loading state
 
 // No caching for vocabulary data - always fresh
-export const VOCAB_STALE_TIME = 0; // No caching
-
-// No caching for articles - always fresh
-export const ARTICLES_STALE_TIME = 0; // No caching
-export const ARTICLES_GC_TIME = 0; // No garbage collection retention
 
 // Only log errors in development
 const logError = (message: string, error?: any) => {

@@ -19,9 +19,7 @@
     "constants/Colors.ts",
     "app/_layout.tsx",
     "app/review.tsx",
-    "components/ActionButton.tsx",
     "components/ArticleHeader.tsx",
-    "components/ArticleSentence.tsx",
-    "components/Avatar.tsx"
+    "components/ArticleSentence.tsx"
   ]
 }
