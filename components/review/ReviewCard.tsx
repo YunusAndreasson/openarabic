@@ -33,8 +33,6 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   isTransitioning,
   opacity,
 }) => {
-  console.log('[ReviewCard] Rendering with:', { word, fontSize, isUpdating, isTransitioning });
-
   // Animation values
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);

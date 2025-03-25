@@ -229,19 +229,16 @@ describe('useArticleMutations', () => {
   // TODO: Implement proper error tests when the underlying issue is resolved
   it('handles errors when adding to reading list', async () => {
     // Skip this test for now
-    console.log('Skipping test: handles errors when adding to reading list');
     expect(true).toBe(true);
   });
 
   it('handles errors when removing from reading list', async () => {
     // Skip this test for now
-    console.log('Skipping test: handles errors when removing from reading list');
     expect(true).toBe(true);
   });
 
   it('handles errors when toggling word study status', async () => {
     // Skip this test for now
-    console.log('Skipping test: handles errors when toggling word study status');
     expect(true).toBe(true);
   });
 });

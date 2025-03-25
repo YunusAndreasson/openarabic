@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase, checkAuthentication } from './supabase';
 import { createEmptyCard, Rating } from 'ts-fsrs';
 import { StudyWord } from '@/types/vocabulary.types';
 
@@ -25,16 +25,8 @@ interface GetFSRSWordsOptions {
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session?.user) {
-      throw new Error('User must be authenticated to manage study words');
-    }
-
-    if (session.user.id !== userId) {
-      throw new Error('User ID mismatch');
-    }
+    // Validate authentication and user ID
+    await checkAuthentication(userId);
 
     // Build the query step by step with proper typing
     let query = supabase.from('study_words');
@@ -194,36 +186,31 @@ export const studyWordsFSRSService = {
     }
 
     if (existingWord) {
-      try {
-        // First, delete all reviews related to this study word to avoid foreign key constraint errors
-        const { error: reviewsDeleteError } = await supabase
-          .from('reviews')
-          .delete()
-          .eq('user_id', userId)
-          .eq('sentence_word_id', sentenceWordId);
+      // First, delete all reviews related to this study word to avoid foreign key constraint errors
+      const { error: reviewsDeleteError } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('user_id', userId)
+        .eq('sentence_word_id', sentenceWordId);
 
-        if (reviewsDeleteError) {
-          console.error('Error deleting reviews:', reviewsDeleteError);
-          throw reviewsDeleteError;
-        }
-
-        // After deleting reviews, delete the study word
-        const { error: deleteError } = await supabase
-          .from('study_words')
-          .delete()
-          .eq('user_id', userId)
-          .eq('sentence_word_id', sentenceWordId);
-
-        if (deleteError) {
-          console.error('Error deleting study word:', deleteError);
-          throw deleteError;
-        }
-
-        return false;
-      } catch (error) {
-        console.error('Error in toggleFSRSStudyWord:', error);
-        throw error;
+      if (reviewsDeleteError) {
+        console.error('Error deleting reviews:', reviewsDeleteError);
+        throw reviewsDeleteError;
       }
+
+      // After deleting reviews, delete the study word
+      const { error: deleteError } = await supabase
+        .from('study_words')
+        .delete()
+        .eq('user_id', userId)
+        .eq('sentence_word_id', sentenceWordId);
+
+      if (deleteError) {
+        console.error('Error deleting study word:', deleteError);
+        throw deleteError;
+      }
+
+      return false;
     } else {
       // Get current time
       const now = new Date();

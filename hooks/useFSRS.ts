@@ -63,23 +63,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
   // Initialize the queue with due words - but only once
   useEffect(() => {
-    console.log('\n[Queue Init]', {
-      hasDueWords: !!dueWords,
-      dueWordsLength: dueWords?.length,
-      isLoading,
-      isComplete,
-      completionTriggered: completionTriggeredRef.current,
-      alreadyInitialized: queueInitializedRef.current,
-    });
-
     // Only initialize once per session
     if (dueWords && dueWords.length > 0 && !queueInitializedRef.current) {
-      console.log('[Queue Init] Setting up queue with words:', {
-        totalWords: dueWords.length,
-        firstWordId: dueWords[0].sentence_word_id,
-        firstWordForm: dueWords[0].sentence_word.word_form,
-      });
-
       setWordQueue(dueWords);
       totalWordsRef.current = dueWords.length;
       processedWordsRef.current = 0;
@@ -92,7 +77,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       setCurrentWord(dueWords[0]);
       queueInitializedRef.current = true;
     } else if (dueWords && dueWords.length === 0 && !isLoading && !queueInitializedRef.current) {
-      console.log('[Queue Init] No words to review, marking as complete');
       setIsComplete(true);
       if (onComplete && !completionTriggeredRef.current) {
         completionTriggeredRef.current = true;
@@ -154,13 +138,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       const { card: newCard } = result;
       const lastReview = now.toISOString();
 
-      console.log('[Word Update] FSRS calculation complete', {
-        newStability: newCard.stability,
-        newState: newCard.state,
-        newReps: newCard.reps,
-        lastReview,
-      });
-
       // Prepare update data from FSRS calculation result
       const wordUpdateData = {
         fsrs_due: newCard.due.toISOString(),
@@ -174,14 +151,11 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         fsrs_last_review: lastReview,
       };
 
-      console.log('[Word Update] Starting database updates');
       // Update the word with FSRS data
       await studyWordsFSRSService.updateFSRSWord(userId, word.sentence_word_id, wordUpdateData);
-      console.log('[Word Update] FSRS data updated');
 
       // Record the review
       await studyWordsFSRSService.recordFSRSReview(userId, word.sentence_word_id, rating);
-      console.log('[Word Update] Review recorded');
 
       // Update streak counters
       await supabase
@@ -192,7 +166,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         })
         .eq('sentence_word_id', word.sentence_word_id)
         .eq('user_id', userId);
-      console.log('[Word Update] Streaks updated');
     },
     [convertToFSRSCard, fsrsInstance, userId]
   );
@@ -200,19 +173,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
   // Update the word in the database based on swipe direction
   const updateWord = useCallback(
     async (sentenceWordId: number, success: boolean) => {
-      console.log('\n[Word Update] Starting word update', {
-        sentenceWordId,
-        success,
-        hasCurrentWord: !!currentWord,
-        currentWordId: currentWord?.sentence_word_id,
-        isComplete,
-        completionTriggered: completionTriggeredRef.current,
-        isProcessing: isProcessingUpdateRef.current,
-        queueLength: wordQueue.length,
-        processedWords: processedWordsRef.current,
-        totalWords: totalWordsRef.current,
-      });
-
       // Basic validation
       if (!userId || !currentWord) {
         console.error('[Word Update] Cannot update word: userId or currentWord is missing');
@@ -227,26 +187,17 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       }
 
       if (isComplete || completionTriggeredRef.current || isProcessingUpdateRef.current) {
-        console.log('[Word Update] Blocked - Already complete or processing');
         return;
       }
 
-      console.log('[Word Update] Setting processing guard');
       isProcessingUpdateRef.current = true;
 
       try {
         // Update the word in the database
         await updateWordInDatabase(currentWord, success);
 
-        console.log('[Word Update] Starting queue update');
         // Update queue and track progress
         setWordQueue(prevQueue => {
-          console.log('[Queue Update] Current queue state:', {
-            queueLength: prevQueue.length,
-            firstWordId: prevQueue[0]?.sentence_word_id,
-            nextWordId: prevQueue[1]?.sentence_word_id,
-          });
-
           // Remove the first word (current word)
           const newQueue = prevQueue.filter((_, index) => index !== 0);
 
@@ -256,20 +207,13 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
             Math.round((processedWordsRef.current / totalWordsRef.current) * 100),
             100
           );
-          console.log('[Queue Update] Progress updated:', {
-            processed: processedWordsRef.current,
-            total: totalWordsRef.current,
-            progress: newProgress,
-          });
           setProgress(newProgress);
 
           // Check if all words are reviewed
           if (newQueue.length === 0) {
-            console.log('[Queue Update] Queue empty, triggering completion');
             if (!completionTriggeredRef.current) {
               completionTriggeredRef.current = true;
               setTimeout(() => {
-                console.log('[Queue Update] Setting complete state');
                 setIsComplete(true);
                 if (onComplete) onComplete();
               }, 0);
@@ -277,10 +221,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
           } else {
             // Set the next word - do this AFTER the database updates are complete
             const nextWord = newQueue[0];
-            console.log('[Queue Update] Setting next word:', {
-              nextWordId: nextWord?.sentence_word_id,
-              nextWordForm: nextWord?.sentence_word.word_form,
-            });
             setCurrentWord(nextWord);
           }
 
@@ -290,7 +230,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         console.error('[Word Update] Error in word update:', error);
         throw error;
       } finally {
-        console.log('[Word Update] Resetting processing guard');
         // Reset processing flag to allow future updates
         isProcessingUpdateRef.current = false;
       }
@@ -300,7 +239,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
   // Reset the queue when the component unmounts or when explicitly called
   const resetQueue = useCallback(() => {
-    console.log('[Queue] Resetting queue initialization state');
     queueInitializedRef.current = false;
     setWordQueue([]);
     setCurrentWord(null);

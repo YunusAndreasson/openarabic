@@ -2,9 +2,6 @@ import { renderHook, act } from '@testing-library/react-hooks';
 import * as React from 'react';
 import { useAnimationTrigger } from '../../hooks/animations/useAnimationTrigger';
 
-// Add a console log to see if the test is running
-console.log('Running useAnimationTrigger tests...');
-
 describe('useAnimationTrigger', () => {
   beforeEach(() => {
     jest.useFakeTimers();

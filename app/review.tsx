@@ -196,16 +196,6 @@ export default function ReviewScreen() {
 
   // Update current sentence when currentWord changes
   useEffect(() => {
-    if (__DEV__) {
-      console.log('[Word Change Effect]', {
-        currentWord: currentWord?.sentence_word.word_form,
-        currentSentence: currentSentence.wordForm,
-        isUpdating: isUpdatingWordRef.current,
-        isComplete,
-        isTransitioning: isTransitioningToCompletion,
-      });
-    }
-
     if (currentWord && !isComplete && !isTransitioningToCompletion) {
       const wordForm = currentWord.sentence_word.word_form;
       setCurrentSentence({ wordForm });
@@ -216,19 +206,12 @@ export default function ReviewScreen() {
   // Optimized to only run when the relevant conditions might have changed
   useEffect(() => {
     if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
-      if (__DEV__) {
-        console.log('isComplete changed to true, triggering completion transition');
-      }
       triggerCompletionTransition();
     }
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
-    if (__DEV__) {
-      console.log('[Swipe Left] Starting with word:', currentWord?.sentence_word.word_form);
-    }
-
     // Check for concurrent updates with a local guard
     if (
       isUpdatingWordRef.current ||
@@ -236,9 +219,6 @@ export default function ReviewScreen() {
       isComplete ||
       completionTriggeredRef.current
     ) {
-      if (__DEV__) {
-        console.log('[Swipe Left] Blocked - already updating or completing');
-      }
       return;
     }
 
@@ -294,19 +274,12 @@ export default function ReviewScreen() {
 
   // Handle swipe right (know the word)
   const handleSwipeRight = useCallback(() => {
-    if (__DEV__) {
-      console.log('[Swipe Right] Starting with word:', currentWord?.sentence_word.word_form);
-    }
-
     if (
       isUpdatingWordRef.current ||
       isTransitioningToCompletion ||
       isComplete ||
       completionTriggeredRef.current
     ) {
-      if (__DEV__) {
-        console.log('[Swipe Right] Blocked - already updating or completing');
-      }
       return;
     }
 

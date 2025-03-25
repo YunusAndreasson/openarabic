@@ -49,8 +49,6 @@ export const useArticleMutations = (
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
       studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId),
     onSuccess: result => {
-      console.log(`[toggleWordMutation] Success - word was ${result ? 'added' : 'removed'}`);
-
       // Always refetch data immediately
       queryClient.invalidateQueries({
         queryKey: ['studyWords', userId],
@@ -110,7 +108,6 @@ export const useArticleMutations = (
   const handleWordPress = useCallback(
     (wordId: number) => {
       if (!userId) return;
-      console.log(`[handleWordPress] Toggling word ${wordId} for user ${userId}`);
       toggleWordMutation.mutate({ userId, wordId });
     },
     [userId, toggleWordMutation]

@@ -21,13 +21,25 @@ jest.mock('../../services/readingList', () => ({
 }));
 
 // Mock supabase with proper structure
-jest.mock('../../services/supabase', () => ({
-  supabase: {
-    auth: {
-      getSession: jest.fn(),
+jest.mock('../../services/supabase', () => {
+  const mockUser = { id: 'user-123' };
+  const mockSession = { user: mockUser };
+
+  return {
+    supabase: {
+      auth: {
+        getSession: jest.fn().mockResolvedValue({
+          data: { session: mockSession },
+          error: null,
+        }),
+      },
     },
-  },
-}));
+    checkAuthentication: jest.fn().mockResolvedValue({
+      session: mockSession,
+      user: mockUser,
+    }),
+  };
+});
 
 describe('readingListSlice', () => {
   let store: ReturnType<typeof configureStore>;
@@ -162,12 +174,6 @@ describe('readingListSlice', () => {
         { id: 2, title: 'Article 2' },
       ];
 
-      // Mock the authentication check
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
-        error: null,
-      });
-
       // Mock the service response
       (readingListService.getInProgressArticles as jest.Mock).mockResolvedValue(mockArticles);
 
@@ -180,14 +186,16 @@ describe('readingListSlice', () => {
       expect(state.readingList.isLoading).toBe(false);
       expect(state.readingList.error).toBe(null);
       expect(state.readingList.lastUpdated).toBeTruthy();
+
+      // Verify the service was called with the correct user ID
+      expect(readingListService.getInProgressArticles).toHaveBeenCalledWith('user-123');
     });
 
     it('should handle fetchInProgressArticles.rejected when user is not authenticated', async () => {
       // Mock authentication failure
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: null },
-        error: null,
-      });
+      const authError = new Error('User is not authenticated');
+      const { checkAuthentication } = require('../../services/supabase');
+      (checkAuthentication as jest.Mock).mockRejectedValueOnce(authError);
 
       // Dispatch the action
       await store.dispatch(fetchInProgressArticles() as unknown as AnyAction);
@@ -199,12 +207,6 @@ describe('readingListSlice', () => {
     });
 
     it('should handle fetchInProgressArticles.rejected with server error', async () => {
-      // Mock authentication success but service failure
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
-        error: null,
-      });
-
       // Mock service error
       const errorMessage = 'Server error';
       (readingListService.getInProgressArticles as jest.Mock).mockRejectedValue(
@@ -221,12 +223,6 @@ describe('readingListSlice', () => {
     });
 
     it('should handle addToReadingList.fulfilled', async () => {
-      // Mock the authentication check
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
-        error: null,
-      });
-
       // Mock the service response
       (readingListService.addToReadingList as jest.Mock).mockResolvedValue(undefined);
 
@@ -238,17 +234,11 @@ describe('readingListSlice', () => {
       // Dispatch the action
       await store.dispatch(addToReadingList(1) as unknown as AnyAction);
 
-      // Verify the service was called with the correct article ID
-      expect(readingListService.addToReadingList).toHaveBeenCalledWith(1);
+      // Verify the service was called with the correct user ID and article ID
+      expect(readingListService.addToReadingList).toHaveBeenCalledWith('user-123', 1);
     });
 
     it('should handle addToReadingList.rejected', async () => {
-      // Mock authentication success but service failure
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
-        error: null,
-      });
-
       // Mock service error
       const errorMessage = 'Failed to add to reading list';
       (readingListService.addToReadingList as jest.Mock).mockRejectedValue(new Error(errorMessage));
@@ -262,12 +252,6 @@ describe('readingListSlice', () => {
     });
 
     it('should handle incrementReadCount.fulfilled', async () => {
-      // Mock the authentication check
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
-        error: null,
-      });
-
       // Mock the service response
       (readingListService.incrementReadCount as jest.Mock).mockResolvedValue(undefined);
 
@@ -279,18 +263,12 @@ describe('readingListSlice', () => {
       // Dispatch the action
       await store.dispatch(incrementReadCount(1) as unknown as AnyAction);
 
-      // Verify the service was called with the correct article ID
-      expect(readingListService.incrementReadCount).toHaveBeenCalledWith(1);
+      // Verify the service was called with the correct userId and articleId
+      expect(readingListService.incrementReadCount).toHaveBeenCalledWith('user-123', 1);
     });
 
     // Increase timeout for this test and simplify to avoid timeouts
     it('should handle race conditions by maintaining loading state correctly', async () => {
-      // Mock the authentication check
-      (supabase.auth.getSession as jest.Mock).mockResolvedValue({
-        data: { session: { user: { id: 'user-123' } } },
-        error: null,
-      });
-
       // Create responses for two sequential calls
       const firstResponse = [{ id: 1, title: 'First Response' }];
       const secondResponse = [{ id: 2, title: 'Second Response' }];

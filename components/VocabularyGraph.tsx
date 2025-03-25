@@ -42,15 +42,6 @@ export const VocabularyGraph = React.memo(
     // Track if the last point haptic has been triggered
     const lastPointTriggered = useRef(false);
 
-    // Debug log the incoming data
-    useEffect(() => {
-      console.log(`VocabularyGraph: Received ${data.length} data points`);
-
-      // Check if there's meaningful data to display
-      const hasAnyData = data.some(item => item.wordsLearned > 0);
-      console.log(`Has learning data: ${hasAnyData}`);
-    }, [data]);
-
     // Canvas dimensions
     const PADDING = LAYOUT.SPACING.MEDIUM;
     const TOP_PADDING = LAYOUT.SPACING.SMALL; // Increase from 3px to prevent top clipping

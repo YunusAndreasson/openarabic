@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Article } from '../types/articles.types';
 import { readingListService } from '../services/readingList';
-import { supabase } from '../services/supabase';
+import { supabase, checkAuthentication } from '../services/supabase';
 
 interface ReadingListState {
   inProgressArticles: Article[];
@@ -19,31 +19,15 @@ const initialState: ReadingListState = {
   lastOpenedArticles: {},
 };
 
-// Helper function to check if user is authenticated
-const checkUserAuthenticated = async () => {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  if (!data.session) throw new Error('User is not authenticated');
-  return data.session.user;
-};
-
-// Helper to ensure lastOpenedArticles is always an object
-const ensureLastOpenedArticles = (state: ReadingListState) => {
-  if (!state.lastOpenedArticles) {
-    state.lastOpenedArticles = {};
-  }
-  return state;
-};
-
 // Async thunks
 export const fetchInProgressArticles = createAsyncThunk(
   'readingList/fetchInProgressArticles',
   async (_, { rejectWithValue }) => {
     try {
-      // Check if user is authenticated first
-      await checkUserAuthenticated();
+      // Get authenticated user
+      const { user } = await checkAuthentication();
 
-      const articles = await readingListService.getInProgressArticles();
+      const articles = await readingListService.getInProgressArticles(user.id);
       return articles;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
@@ -55,10 +39,10 @@ export const addToReadingList = createAsyncThunk(
   'readingList/addToReadingList',
   async (articleId: number, { dispatch, rejectWithValue }) => {
     try {
-      // Check if user is authenticated first
-      await checkUserAuthenticated();
+      // Get authenticated user
+      const { user } = await checkAuthentication();
 
-      await readingListService.addToReadingList(articleId);
+      await readingListService.addToReadingList(user.id, articleId);
 
       // Refresh the list after adding
       dispatch(fetchInProgressArticles());
@@ -73,10 +57,10 @@ export const incrementReadCount = createAsyncThunk(
   'readingList/incrementReadCount',
   async (articleId: number, { dispatch, rejectWithValue }) => {
     try {
-      // Check if user is authenticated first
-      await checkUserAuthenticated();
+      // Get authenticated user
+      const { user } = await checkAuthentication();
 
-      await readingListService.incrementReadCount(articleId);
+      await readingListService.incrementReadCount(user.id, articleId);
 
       // Refresh the list after incrementing read count
       dispatch(fetchInProgressArticles());
@@ -112,42 +96,34 @@ const readingListSlice = createSlice({
     builder
       // fetchInProgressArticles
       .addCase(fetchInProgressArticles.pending, state => {
-        ensureLastOpenedArticles(state);
         state.isLoading = true;
         state.error = null;
       })
       .addCase(fetchInProgressArticles.fulfilled, (state, action: PayloadAction<Article[]>) => {
-        ensureLastOpenedArticles(state);
         state.isLoading = false;
         state.inProgressArticles = action.payload;
         state.lastUpdated = new Date().toISOString();
       })
       .addCase(fetchInProgressArticles.rejected, (state, action) => {
-        ensureLastOpenedArticles(state);
         state.isLoading = false;
         state.error = action.payload as string;
       })
       // addToReadingList
       .addCase(addToReadingList.pending, state => {
-        ensureLastOpenedArticles(state);
         state.error = null;
       })
       .addCase(addToReadingList.rejected, (state, action) => {
-        ensureLastOpenedArticles(state);
         state.error = action.payload as string;
       })
       // incrementReadCount
       .addCase(incrementReadCount.pending, state => {
-        ensureLastOpenedArticles(state);
         state.error = null;
       })
       .addCase(incrementReadCount.rejected, (state, action) => {
-        ensureLastOpenedArticles(state);
         state.error = action.payload as string;
       })
       // updateLastOpenedArticle
       .addCase(updateLastOpenedArticle.fulfilled, (state, action) => {
-        ensureLastOpenedArticles(state);
         const { articleId, timestamp } = action.payload;
         state.lastOpenedArticles[articleId] = timestamp;
       });

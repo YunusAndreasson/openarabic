@@ -1,9 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useLoadingState } from '../../hooks/useLoadingState';
 
-// Add a console log to see if the test is running
-console.log('Running useLoadingState tests...');
-
 describe('useLoadingState', () => {
   beforeEach(() => {
     jest.useFakeTimers();

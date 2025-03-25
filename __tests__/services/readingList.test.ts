@@ -110,7 +110,7 @@ describe('readingListService', () => {
         error: null,
       });
 
-      const result = await readingListService.getInProgressArticles();
+      const result = await readingListService.getInProgressArticles('user-123');
 
       expect(result).toEqual([
         {
@@ -123,17 +123,6 @@ describe('readingListService', () => {
       expect((supabase as unknown as SupabaseMock).from).toHaveBeenCalledWith('reading_list');
     });
 
-    it('returns empty array when user is not authenticated', async () => {
-      // Mock no user
-      ((supabase as unknown as SupabaseMock).auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: null },
-        error: null,
-      });
-
-      const result = await readingListService.getInProgressArticles();
-      expect(result).toEqual([]);
-    });
-
     it('handles database query errors', async () => {
       // Mock database error
       (supabase as unknown as SupabaseMock).order.mockResolvedValueOnce({
@@ -141,7 +130,9 @@ describe('readingListService', () => {
         error: new Error('Database error'),
       });
 
-      await expect(readingListService.getInProgressArticles()).rejects.toThrow('Database error');
+      await expect(readingListService.getInProgressArticles('user-123')).rejects.toThrow(
+        'Database error'
+      );
     });
 
     it('filters out null articles', async () => {
@@ -162,7 +153,7 @@ describe('readingListService', () => {
         error: null,
       });
 
-      const result = await readingListService.getInProgressArticles();
+      const result = await readingListService.getInProgressArticles('user-123');
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(2);
     });
@@ -182,7 +173,7 @@ describe('readingListService', () => {
         error: null,
       });
 
-      await readingListService.addToReadingList(1);
+      await readingListService.addToReadingList(user.id, 1);
 
       // Verify the upsert was called with the correct parameters
       expect((supabase as unknown as SupabaseMock).upsert).toHaveBeenCalledWith(
@@ -211,7 +202,7 @@ describe('readingListService', () => {
         error: null,
       });
 
-      await readingListService.addToReadingList(1);
+      await readingListService.addToReadingList(user.id, 1);
 
       // Verify the upsert was called with position 1
       expect((supabase as unknown as SupabaseMock).upsert).toHaveBeenCalledWith(
@@ -240,18 +231,14 @@ describe('readingListService', () => {
         error: new Error('Upsert failed'),
       });
 
-      await expect(readingListService.addToReadingList(1)).rejects.toThrow('Upsert failed');
+      await expect(readingListService.addToReadingList(user.id, 1)).rejects.toThrow(
+        'Upsert failed'
+      );
     });
   });
 
   describe('incrementReadCount', () => {
-    it('increments read count for existing article', async () => {
-      // Mock user authentication
-      ((supabase as unknown as SupabaseMock).auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null,
-      });
-
+    it('increments read count for an article', async () => {
       // Mock fetch current read count
       (supabase as unknown as SupabaseMock).match.mockResolvedValueOnce({
         data: [{ read_count: 2 }],
@@ -263,19 +250,13 @@ describe('readingListService', () => {
         error: null,
       });
 
-      await readingListService.incrementReadCount(1);
+      await readingListService.incrementReadCount('user-123', 1);
 
       // Check that update was called
       expect((supabase as unknown as SupabaseMock).from).toHaveBeenCalledWith('reading_list');
     });
 
     it('adds article to reading list if not found', async () => {
-      // Mock user authentication
-      ((supabase as unknown as SupabaseMock).auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null,
-      });
-
       // Mock fetch current read count with empty result
       (supabase as unknown as SupabaseMock).match.mockResolvedValueOnce({
         data: [],
@@ -287,26 +268,20 @@ describe('readingListService', () => {
         error: null,
       });
 
-      await readingListService.incrementReadCount(1);
+      await readingListService.incrementReadCount('user-123', 1);
 
       // Should have called from at least once
       expect((supabase as unknown as SupabaseMock).from).toHaveBeenCalledWith('reading_list');
     });
 
     it('throws error for other fetch errors', async () => {
-      // Mock user authentication
-      ((supabase as unknown as SupabaseMock).auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null,
-      });
-
       // Mock fetch current read count with a different error
       (supabase as unknown as SupabaseMock).match.mockRejectedValueOnce({
         code: 'OTHER_ERROR',
         message: 'Database error',
       });
 
-      await expect(readingListService.incrementReadCount(1)).rejects.toEqual({
+      await expect(readingListService.incrementReadCount('user-123', 1)).rejects.toEqual({
         code: 'OTHER_ERROR',
         message: 'Database error',
       });
@@ -321,7 +296,7 @@ describe('readingListService', () => {
         error: null,
       });
 
-      await readingListService.markAsCompleted(1);
+      await readingListService.markAsCompleted('user-123', 1);
 
       // Verify the update was called with the correct parameters
       expect((supabase as unknown as SupabaseMock).update).toHaveBeenCalledWith({
@@ -339,18 +314,14 @@ describe('readingListService', () => {
         error: new Error('Update failed'),
       });
 
-      await expect(readingListService.markAsCompleted(1)).rejects.toThrow('Update failed');
+      await expect(readingListService.markAsCompleted('user-123', 1)).rejects.toThrow(
+        'Update failed'
+      );
     });
   });
 
   describe('getCompletedArticles', () => {
     it('should return completed articles for authenticated user', async () => {
-      // Mock user authentication
-      ((supabase as unknown as SupabaseMock).auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: { id: 'user-123' } },
-        error: null,
-      });
-
       // Mock database response
       (supabase as unknown as SupabaseMock).order.mockResolvedValueOnce({
         data: [
@@ -368,7 +339,7 @@ describe('readingListService', () => {
         error: null,
       });
 
-      const result = await readingListService.getCompletedArticles();
+      const result = await readingListService.getCompletedArticles('user-123');
 
       expect(result).toEqual([
         {
@@ -385,45 +356,6 @@ describe('readingListService', () => {
       expect((supabase as unknown as SupabaseMock).select).toHaveBeenCalledWith(
         expect.stringContaining('completed_at')
       );
-    });
-
-    it('returns empty array when user is not authenticated', async () => {
-      // Mock no user
-      ((supabase as unknown as SupabaseMock).auth.getUser as jest.Mock).mockResolvedValue({
-        data: { user: null },
-        error: null,
-      });
-
-      const result = await readingListService.getCompletedArticles();
-
-      expect(result).toEqual([]);
-      expect((supabase as unknown as SupabaseMock).from).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('deleteFromReadingList', () => {
-    it('should delete an article from reading list', async () => {
-      // Mock delete success
-      (supabase as unknown as SupabaseMock).match.mockResolvedValueOnce({
-        data: { id: 1 },
-        error: null,
-      });
-
-      await readingListService.deleteFromReadingList(1);
-
-      // Verify the delete was called correctly
-      expect((supabase as unknown as SupabaseMock).delete).toHaveBeenCalled();
-      expect((supabase as unknown as SupabaseMock).from).toHaveBeenCalledWith('reading_list');
-    });
-
-    it('throws error when delete fails', async () => {
-      // Mock delete failure
-      (supabase as unknown as SupabaseMock).match.mockResolvedValueOnce({
-        data: null,
-        error: new Error('Delete failed'),
-      });
-
-      await expect(readingListService.deleteFromReadingList(1)).rejects.toThrow('Delete failed');
     });
   });
 });

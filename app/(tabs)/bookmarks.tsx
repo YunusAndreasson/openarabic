@@ -350,10 +350,6 @@ export default function BookmarksScreen() {
       if (isError) {
         console.error('Error loading reading list:', error);
       }
-
-      if (readingList.length === 0 && user?.id) {
-        console.log('Reading list is empty for user:', user.id);
-      }
     }
   }, [
     isAuthLoading,

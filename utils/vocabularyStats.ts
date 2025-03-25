@@ -118,8 +118,6 @@ export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProg
     }
   });
 
-  console.log(`Detected ${reviewsDetected} reviews in the last 7 days`);
-
   // Convert buckets to array and sort by date
   const result = Object.entries(dayBuckets)
     .map(([dateString, data]) => ({

@@ -172,15 +172,6 @@ export default function ArticleScreen() {
     otherCategoryArticles,
   } = useArticleData(articleId, user?.id, !!isDataPrefetched);
 
-  // Add console logs for debugging
-  useEffect(() => {
-    // Remove excessive logging that impacts performance
-    // Only log in development
-    if (__DEV__) {
-      console.log('Article data loaded:', !!article);
-    }
-  }, [article]);
-
   // Use animation hook for content and button visibility on scroll
   const {
     contentStyle,

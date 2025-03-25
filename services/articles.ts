@@ -65,10 +65,6 @@ export const articlesService = {
   },
 
   async getArticleById(id: number): Promise<Article> {
-    console.log(
-      `[articlesService] Fetching article id=${id} with columns: ${DETAIL_VIEW_COLUMNS.substring(0, 50)}...`
-    );
-
     const { data, error } = await supabase
       .from('articles')
       .select(DETAIL_VIEW_COLUMNS)
@@ -93,21 +89,8 @@ export const articlesService = {
       data.article_sentences = [];
     }
 
-    console.log(
-      `[articlesService] Fetched article id=${id}, title=${data.title}, sentences=`,
-      data.article_sentences ? data.article_sentences.length : 0
-    );
-
     // Check if sentences have words
     if (data.article_sentences && data.article_sentences.length > 0) {
-      console.log(
-        `[articlesService] First sentence has ${
-          data.article_sentences[0].sentence_words
-            ? data.article_sentences[0].sentence_words.length
-            : 'no'
-        } words`
-      );
-
       // Ensure each sentence has a sentence_words array
       data.article_sentences.forEach(sentence => {
         if (!sentence.sentence_words) {
