@@ -81,7 +81,7 @@
     "@types/jest": "^29.5.14",
     "@types/react": "~18.3.12",
     "@types/react-test-renderer": "^19.0.0",
-    "eslint": "^9.23.0",
+    "eslint": "8.56.0",
     "eslint-config-expo": "~8.0.1",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.3",
