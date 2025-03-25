@@ -3,7 +3,7 @@ import { StyleSheet, Pressable, ViewStyle, StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
-import { FloatingButtonProps } from '@/types/ui.types';
+import { FloatingButtonProps } from '@/types/ui/button.types';
 import { usePressAnimation } from '@/hooks/animations';
 import { lightFeedback } from '@/utils/haptics';
 import { useToast } from './ToastProvider';

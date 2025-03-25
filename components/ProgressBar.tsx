@@ -1,11 +1,12 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useColors } from '../hooks/useColors';
+import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import Animated, { cancelAnimation } from 'react-native-reanimated';
 import { useProgressAnimation } from '../hooks/animations';
-import { ProgressBarProps } from '@/types/ui.types';
+import { ProgressBarProps } from '@/types/ui/loader.types';
+import { AnimatedStyleProp } from '@/types/ui/base.types';
 
 /**
  * A customizable progress bar component that can be used to display the
@@ -99,7 +100,7 @@ function ProgressBarComponent({
 
   return (
     <View
-      style={containerStyle}
+      style={containerStyle as AnimatedStyleProp<any>}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: normalizedProgress }}
     >
@@ -114,7 +115,7 @@ function ProgressBarComponent({
         <Animated.View
           style={[
             styles.fill,
-            animatedStyle as any,
+            animatedStyle as AnimatedStyleProp<any>,
             {
               backgroundColor: progressFillColor,
               borderRadius: height / 2,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { StatCardProps } from '@/types/ui.types';
+import { StatCardProps } from '@/types/ui/layout.types';
 import InfoCard from './InfoCard';
 
 export const StatCard = React.memo(

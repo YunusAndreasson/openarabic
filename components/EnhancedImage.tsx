@@ -1,11 +1,12 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { StyleSheet, Pressable, View, Dimensions, Platform } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '@/constants/layout';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { EnhancedImageProps } from '@/types/ui/image.types';
 import { LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
-import { EnhancedImageProps } from '@/types/ui.types';
 
 /**
  * EnhancedImage component with essential optimizations

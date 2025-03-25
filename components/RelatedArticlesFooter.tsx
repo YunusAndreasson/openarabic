@@ -3,7 +3,7 @@ import { StyleSheet, View, Platform } from 'react-native';
 import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
 import { LAYOUT } from '@/constants/layout';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { RelatedArticlesFooterProps } from '@/types/ui.types';
+import { RelatedArticlesFooterProps } from '@/types/ui/layout.types';
 
 const styles = StyleSheet.create({
   container: {

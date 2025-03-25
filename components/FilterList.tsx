@@ -6,7 +6,7 @@ import SectionTitle from './SectionTitle';
 import { ThemedText } from './ThemedText';
 import Pill from './Pill';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-import { FilterItem, FilterListProps } from '@/types/ui.types';
+import { FilterItem, FilterListProps } from '@/types/ui/pill.types';
 
 /**
  * A generic filter list component that can be used for both author and category filters

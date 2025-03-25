@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { useColors } from '../hooks/useColors';
-import { LAYOUT } from '../constants/layout';
+import { useColors } from '@/hooks/useColors';
+import { LAYOUT } from '@/constants/layout';
 import { ThemedView } from './ThemedView';
 import Animated, { AnimatedStyle } from 'react-native-reanimated';
 import { usePulseAnimation } from '../hooks/animations';
@@ -10,7 +10,7 @@ import {
   LoadingScreenProps,
   LoadingContainerProps,
   AppLoaderProps,
-} from '@/types/ui.types';
+} from '@/types/ui/loader.types';
 
 /**
  * Loader component that displays a pulsating circle

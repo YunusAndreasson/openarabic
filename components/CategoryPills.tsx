@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Pill from './Pill';
 import Animated from 'react-native-reanimated';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-import { CategoryPillsProps } from '@/types/ui.types';
+import { CategoryPillsProps } from '@/types/ui/layout.types';
 
 function CategoryPillsComponent({
   categories,

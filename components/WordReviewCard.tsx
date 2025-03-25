@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { LAYOUT } from '../constants/layout';
-import { WordReviewCardProps } from '@/types/ui.types';
+import { WordReviewCardProps } from '@/types/ui/layout.types';
 import BaseCard from './BaseCard';
 import { ThemedText } from './ThemedText';
 

@@ -6,7 +6,7 @@ import { LAYOUT } from '../constants/layout';
 import { ELEMENT_SIZES } from '../constants/ui';
 import { lightFeedback } from '../utils/haptics';
 import { getTouchableProps } from '../utils/accessibility';
-import { CloseButtonProps } from '@/types/ui.types';
+import { CloseButtonProps } from '@/types/ui/button.types';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
 

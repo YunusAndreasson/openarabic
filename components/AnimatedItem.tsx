@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { AnimatedItemProps } from '@/types/ui.types';
+import { AnimatedItemProps } from '@/types/ui/layout.types';
 import { LAYOUT } from '@/constants/layout';
 import SectionTitle from './SectionTitle';
 

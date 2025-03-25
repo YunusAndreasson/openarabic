@@ -12,7 +12,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { LAYOUT } from '@/constants/layout';
 
 // Types
-import { ArticleHeaderProps } from '@/types/ui.types';
+import { ArticleHeaderProps } from '@/types/ui/layout.types';
 
 const styles = StyleSheet.create({
   articleHeaderContainer: {

@@ -2,7 +2,8 @@ import React from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { ThemedText } from './ThemedText';
-import { ThemedTextProps } from '../types/ui.types';
+import { ThemedTextProps } from '@/types/ui/text.types';
+import { AnimatedStyleProp } from '@/types/ui/base.types';
 
 /**
  * AnimatedText combines ThemedText with animation capabilities.
@@ -35,7 +36,7 @@ export const AnimatedText = React.memo(
     ...rest
   }: AnimatedTextProps) => {
     return (
-      <Animated.View style={animatedViewStyle}>
+      <Animated.View style={animatedViewStyle as AnimatedStyleProp<any>}>
         <ThemedText
           style={style}
           type={type}

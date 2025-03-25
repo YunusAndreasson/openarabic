@@ -5,7 +5,7 @@ import { useColors } from '../hooks/useColors';
 import { Article } from '../types/articles.types';
 import ThemedCard from './ThemedCard';
 import { CopyrightFooter } from './CopyrightFooter';
-import { ArticleListProps } from '../types/ui.types';
+import { ArticleListProps } from '@/types/ui/article.types';
 
 const ITEM_HEIGHT = 360;
 

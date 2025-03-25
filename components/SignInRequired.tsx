@@ -8,7 +8,7 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import PageHeader from './PageHeader';
-import { SignInRequiredProps } from '@/types/ui.types';
+import { SignInRequiredProps } from '@/types/ui/layout.types';
 
 export const SignInRequired = React.memo(
   ({

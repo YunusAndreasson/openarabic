@@ -1,13 +1,19 @@
 import React, { useCallback, useMemo } from 'react';
 import { Pressable, StyleSheet, View, Platform } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  interpolate,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { useTransformAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { ThemedText } from './ThemedText';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-import { PillProps } from '@/types/ui.types';
+import { PillProps } from '@/types/ui/pill.types';
 
 /**
  * A unified pill component that can be used for filters, categories, and other selectable items

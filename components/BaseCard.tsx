@@ -5,7 +5,8 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { LoadingContainer } from './Loader';
 import { usePressAnimation } from '../hooks/animations/usePressAnimation';
-import { BaseCardProps } from '@/types/ui.types';
+import { BaseCardProps } from '@/types/ui/card.types';
+import { AnimatedStyleProp } from '@/types/ui/base.types';
 
 /**
  * BaseCard is a foundational component that provides consistent styling for all card elements
@@ -61,28 +62,29 @@ const BaseCard: React.FC<BaseCardProps> = ({
     }
   }, [colors.shadow, shadowSize]);
 
-  // Memoize the combined card style
-  const cardStyle = useMemo(
-    () => [
-      styles.card,
-      shadowStyle,
-      {
-        backgroundColor: colors.cardBackground,
-        borderColor: colors.cardBorder,
-      },
-      style,
-    ],
-    [shadowStyle, colors.cardBackground, colors.cardBorder, style]
-  );
+  // Create base styles for the card
+  const baseStyles = [
+    styles.card,
+    shadowStyle,
+    {
+      backgroundColor: colors.cardBackground,
+      borderColor: colors.cardBorder,
+    },
+    style,
+  ];
 
   // Render loading state if needed
   if (isLoading) {
-    return <View style={cardStyle}>{loadingComponent || <LoadingContainer size="medium" />}</View>;
+    return (
+      <View style={baseStyles as AnimatedStyleProp<any>}>
+        {loadingComponent || <LoadingContainer size="medium" />}
+      </View>
+    );
   }
 
   // Non-interactive card
   if (!onPress) {
-    return <View style={cardStyle}>{children}</View>;
+    return <View style={baseStyles as AnimatedStyleProp<any>}>{children}</View>;
   }
 
   // Interactive card with press handling
@@ -97,7 +99,13 @@ const BaseCard: React.FC<BaseCardProps> = ({
         foreground: true,
       }}
     >
-      <Animated.View style={[cardStyle, includePressAnimation && animatedStyle]}>
+      <Animated.View
+        style={
+          includePressAnimation
+            ? ([baseStyles, animatedStyle] as AnimatedStyleProp<any>)
+            : (baseStyles as AnimatedStyleProp<any>)
+        }
+      >
         <View style={styles.contentContainer}>{children}</View>
       </Animated.View>
     </Pressable>

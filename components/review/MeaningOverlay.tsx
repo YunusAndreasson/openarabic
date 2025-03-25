@@ -6,7 +6,7 @@ import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation } from '../../hooks/animations';
 import { lightFeedback } from '../../utils/haptics';
-import { MeaningOverlayProps } from '../../types/ui.types';
+import { MeaningOverlayProps } from '@/types/ui/review.types';
 
 /**
  * Component that displays the meaning of a word with a fade animation

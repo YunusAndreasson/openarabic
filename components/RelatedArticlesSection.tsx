@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui.types';
+import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui/article.types';
 
 export interface RelatedArticlesSectionProps extends RelatedArticlesSectionPropsType {}
 

@@ -4,7 +4,7 @@ import { useColors } from '@/hooks/useColors';
 import { useState, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { ThemedInputProps } from '@/types/ui.types';
+import { ThemedInputProps } from '@/types/ui/form.types';
 import { errorFeedback } from '../utils/haptics';
 
 export function ThemedInput({

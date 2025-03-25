@@ -1,0 +1,93 @@
+import { TextProps, TextStyle, StyleProp } from 'react-native';
+import { AnimatedStyle } from 'react-native-reanimated';
+
+export type TextTypeName =
+  | 'arabic'
+  | 'body'
+  | 'bodyBold'
+  | 'caption'
+  | 'heading1'
+  | 'heading2'
+  | 'heading3'
+  | 'label'
+  | 'link'
+  | 'overline';
+
+export type TextVariant = 'error' | 'subtle' | 'highlight' | 'default' | 'success' | 'warning';
+export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+export type TextAlign = 'auto' | 'left' | 'right' | 'center' | 'justify';
+
+/**
+ * Props for the ThemedText component
+ */
+export interface ThemedTextProps extends TextProps {
+  /** Type of text (heading, body, etc.) */
+  type?: TextTypeName;
+  /** Variant of text (error, subtle, etc.) */
+  variant?: TextVariant;
+  /** Weight of the text */
+  weight?: TextWeight;
+  /** Alignment of the text */
+  align?: TextAlign;
+  /** Custom color to apply to text - use theme colors when possible */
+  colorName?: keyof typeof import('../../constants/Colors').Colors.light;
+  /** Skip applying the default text color */
+  skipDefaultColor?: boolean;
+  /** Maximum number of lines to show */
+  numberOfLines?: number;
+  /** How text should be truncated if it overflows */
+  ellipsizeMode?: 'head' | 'middle' | 'tail' | 'clip';
+  /** Font size for Arabic text */
+  arabicFontSize?: number;
+  /** Custom style to apply to the text */
+  style?: StyleProp<TextStyle>;
+  /** Text content to display */
+  children?: React.ReactNode;
+}
+
+/**
+ * AnimatedText combines ThemedText with animation capabilities.
+ * It provides a convenient way to create text that animates on changes
+ * while maintaining the theming system and properly separating animation
+ * styling from typography styling.
+ */
+export interface AnimatedTextProps extends ThemedTextProps {
+  /** Text content to display */
+  children: React.ReactNode;
+  /** Style for the text */
+  style?: StyleProp<TextStyle>;
+  /** Whether to animate when the content changes */
+  animate?: boolean;
+  /** Animation magnitude (how much to scale) */
+  magnitude?: number;
+  /** Style for the animated container view */
+  animatedViewStyle?: StyleProp<AnimatedStyle<StyleProp<any>>>;
+}
+
+/**
+ * Props for the ArabicWord component
+ */
+export interface ArabicWordProps {
+  /** The Arabic word to display */
+  word: string;
+  /** The English translation of the word */
+  translation?: string;
+  /** Whether this word is known by the user */
+  isKnown?: boolean;
+  /** Whether the word is interactive */
+  interactive?: boolean;
+  /** Function called when word is pressed */
+  onPress?: () => void;
+  /** Whether a long press should show word info */
+  showInfoOnLongPress?: boolean;
+  /** Whether to highlight the word */
+  highlighted?: boolean;
+  /** Color when the word is highlighted */
+  highlightColor?: string;
+  /** Size of text (normal, large) */
+  size?: 'normal' | 'large' | 'small';
+  /** Custom font size */
+  fontSize?: number;
+  /** Custom line height */
+  lineHeight?: number;
+}

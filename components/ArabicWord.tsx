@@ -24,7 +24,7 @@ import { useAuth } from '../hooks/useAuth';
 import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
-import { ArabicWordProps } from '@/types/ui.types';
+import { ArabicWordProps } from '@/types/ui/text.types';
 
 // Type for animated styles to fix TypeScript errors
 type AnimatedStyles = {

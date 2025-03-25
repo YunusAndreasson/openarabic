@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import { ThemedButton } from './ThemedButton';
 import { errorFeedback } from '../utils/haptics';
-import { ErrorStateProps } from '@/types/ui.types';
+import { ErrorStateProps } from '@/types/ui/layout.types';
 
 /**
  * A component for displaying error messages

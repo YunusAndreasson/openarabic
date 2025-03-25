@@ -6,7 +6,7 @@ import Animated from 'react-native-reanimated';
 import { lightFeedback } from '../utils/haptics';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { ToggleProps } from '@/types/ui.types';
+import { ToggleProps } from '@/types/ui/form.types';
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();

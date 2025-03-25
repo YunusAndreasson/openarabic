@@ -5,7 +5,7 @@ import { LAYOUT } from '../constants/layout';
 import { TIMING } from '../constants/ui';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { useColors } from '../hooks/useColors';
-import { WordTooltipProps } from '@/types/ui.types';
+import { WordTooltipProps } from '@/types/ui/modal.types';
 import Animated from 'react-native-reanimated';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 

@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
-import { PageHeaderProps } from '@/types/ui.types';
+import { PageHeaderProps } from '@/types/ui/layout.types';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

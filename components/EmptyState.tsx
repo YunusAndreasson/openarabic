@@ -3,7 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedButton } from './ThemedButton';
 import { LAYOUT } from '../constants/layout';
-import { EmptyStateProps } from '@/types/ui.types';
+import { EmptyStateProps } from '@/types/ui/layout.types';
 
 /**
  * A reusable empty state component that displays a title, message, and optional action button

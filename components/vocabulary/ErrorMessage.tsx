@@ -6,7 +6,7 @@ import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useNavigation } from 'expo-router';
-import { ErrorMessageProps } from '../../types/ui.types';
+import { ErrorMessageProps } from '@/types/ui/review.types';
 
 /**
  * Displays an error message with a retry button

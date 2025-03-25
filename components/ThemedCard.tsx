@@ -9,7 +9,7 @@ import Pill from './Pill';
 import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
-import { ThemedCardProps } from '@/types/ui.types';
+import { ThemedCardProps } from '@/types/ui/card.types';
 import { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
 
 /**

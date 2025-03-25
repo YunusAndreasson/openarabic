@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { ArticleSentenceProps } from '@/types/ui.types';
+import { ArticleSentenceProps } from '@/types/ui/layout.types';
 
 const styles = StyleSheet.create({
   sentenceContainer: {

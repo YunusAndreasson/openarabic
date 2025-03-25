@@ -14,7 +14,8 @@ import { LAYOUT } from '@/constants/layout';
 import { lightFeedback } from '@/utils/haptics';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
-import { ThemedButtonProps } from '@/types/ui.types';
+import { ThemedButtonProps } from '@/types/ui/button.types';
+import { AnimatedStyleProp } from '@/types/ui/base.types';
 
 /**
  * A themed button component that supports different visual styles,
@@ -239,9 +240,9 @@ export function ThemedButton({
   ];
 
   return (
-    <Animated.View style={animatedStyle as any}>
+    <Animated.View style={animatedStyle as AnimatedStyleProp<any>}>
       <TouchableOpacity
-        style={buttonStyles as any}
+        style={buttonStyles as AnimatedStyleProp<any>}
         disabled={disabled || loading}
         activeOpacity={1}
         onPress={handlePress}

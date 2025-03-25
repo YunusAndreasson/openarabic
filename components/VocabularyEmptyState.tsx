@@ -4,7 +4,7 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
 import { router } from 'expo-router';
-import { VocabularyEmptyStateProps } from '@/types/ui.types';
+import { VocabularyEmptyStateProps } from '@/types/ui/layout.types';
 
 export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyStateProps) => {
   const handleBrowseArticles = useCallback(() => {

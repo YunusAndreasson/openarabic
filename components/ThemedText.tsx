@@ -2,7 +2,7 @@ import { Text, StyleSheet } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import React, { useMemo } from 'react';
-import { ThemedTextProps } from '@/types/ui.types';
+import { ThemedTextProps } from '@/types/ui/text.types';
 
 /**
  * ThemedText component provides consistent typography across the app

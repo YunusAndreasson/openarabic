@@ -7,7 +7,7 @@ import { LAYOUT } from '@/constants/layout';
 import { LoadingContainer } from './Loader';
 import { useComponentAnimation, useProgressAnimation } from '@/hooks/animations';
 import { createArcPath } from '@/utils/graphUtils';
-import { VocabularyStatsProps } from '@/types/ui.types';
+import { VocabularyStatsProps } from '@/types/ui/layout.types';
 import BaseCard from './BaseCard';
 
 function VocabularyStatsComponent({
