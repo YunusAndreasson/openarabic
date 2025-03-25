@@ -19,7 +19,7 @@ interface FSRSWeeklyProgressData {
  * Calculate vocabulary statistics based on FSRS data
  * This directly uses the FSRS metrics to calculate statistics
  */
-export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressData[] {
+export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProgressData[] {
   // Day name abbreviations
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -81,9 +81,8 @@ export function calculateWeeklyProgressData(studyWords: any[]): WeeklyProgressDa
       // Order matters - check the most reliable field first
       word.fsrs_last_review,
       // Fall back to other fields if needed
-      word.last_review,
-      word.fsrs_due,
       word.next_review_at,
+      word.fsrs_due,
     ];
 
     // Use the first valid timestamp we find

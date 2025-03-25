@@ -60,11 +60,11 @@ export interface AnimatedItemProps extends BaseStyleProps {
  */
 export interface ArticleSentenceProps {
   /** Sentence data */
-  sentence: any;
+  sentence: import('../articles.types').ArticleSentence;
   /** Words in the sentence */
-  words: any[];
+  words: import('../vocabulary.types').SentenceWord[];
   /** Function to render each word */
-  renderWord: (word: any) => React.ReactNode;
+  renderWord: (word: import('../vocabulary.types').SentenceWord) => React.ReactNode;
   /** Display settings */
   settings: {
     showEnglish: boolean;
@@ -151,10 +151,20 @@ export interface SectionTitleProps {
  * Props for the SignInRequired component
  */
 export interface SignInRequiredProps {
+  /** Title for the sign in prompt */
+  title?: string;
   /** Message to display */
-  message: string;
+  message?: string;
+  /** Optional benefit title to display */
+  benefitTitle?: string;
+  /** Optional benefit description to display */
+  benefitDescription?: string;
+  /** Optional header title to display */
+  headerTitle?: string;
+  /** Theme colors object */
+  colors: any;
   /** Callback when sign in button is pressed */
-  onSignIn: () => void;
+  onSignIn?: () => void;
   /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
 }
@@ -179,14 +189,8 @@ export interface StatCardProps {
  * Props for the VocabularyEmptyState component
  */
 export interface VocabularyEmptyStateProps {
-  /** Title text to display */
-  title: string;
-  /** Description text to display */
-  description: string;
-  /** Button action text */
-  actionText?: string;
-  /** Callback when the action button is pressed */
-  onAction?: () => void;
+  /** Theme colors object */
+  colors: any;
   /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
 }

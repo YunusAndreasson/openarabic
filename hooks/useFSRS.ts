@@ -3,43 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createEmptyCard, fsrs, Rating, Card, State } from 'ts-fsrs';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
-
-// Interface for our word data combined with FSRS card data
-interface StudyWord {
-  sentence_word_id: number;
-  user_id: string;
-  sentence_word: {
-    id: number;
-    word_form: string;
-    english: string;
-    root_id: number;
-    word_type_id: number;
-    position: number;
-    sentence_id: number;
-    root?: {
-      id: number;
-      letters: string;
-      meaning: string;
-    };
-    word_type?: {
-      id: number;
-      name: string;
-    };
-  };
-  // FSRS fields
-  fsrs_due: string;
-  fsrs_stability: number;
-  fsrs_difficulty: number;
-  fsrs_elapsed_days: number;
-  fsrs_scheduled_days: number;
-  fsrs_reps: number;
-  fsrs_lapses: number;
-  fsrs_state: number;
-  fsrs_last_review: string | null;
-  // Other fields
-  success_streak?: number;
-  failure_streak?: number;
-}
+import { StudyWord } from '@/types/vocabulary.types';
 
 interface UseFSRSOptions {
   userId: string | undefined;

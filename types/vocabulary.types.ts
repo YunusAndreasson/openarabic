@@ -1,4 +1,5 @@
 import type { Tables } from './database.types';
+import { State } from 'ts-fsrs';
 
 /**
  * Enhanced sentence word type with root and word type information
@@ -7,6 +8,7 @@ import type { Tables } from './database.types';
 export interface SentenceWord extends Tables<'sentence_words'> {
   root: Tables<'roots'> | null;
   word_type: Tables<'word_types'> | null;
+  sentence?: Tables<'article_sentences'> | null;
 }
 
 /**
@@ -40,6 +42,7 @@ export interface StudyWord {
 
   // Additional fields
   created_at: string;
+  last_updated_at?: string;
   success_streak?: number;
   failure_streak?: number;
   difficulty?: number;

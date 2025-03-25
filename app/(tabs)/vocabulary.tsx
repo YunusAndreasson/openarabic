@@ -11,7 +11,7 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
-import { VocabularyStats, WeeklyProgressData } from '@/types/vocabulary.types';
+import { VocabularyStats, WeeklyProgressData, StudyWord } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
 import { calculateWeeklyProgressData } from '@/utils/vocabularyStats';
@@ -24,6 +24,7 @@ import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 // Pure functions moved outside component
 const getHeaderHeight = (insets: { top: number }) => {
@@ -31,11 +32,11 @@ const getHeaderHeight = (insets: { top: number }) => {
 };
 
 // Split stats calculation into smaller chunks for better memoization
-const getBaseStats = (validStudyWords: any[], dueWordsData: any[]) => {
+const getBaseStats = (validStudyWords: StudyWord[], dueWordsData: StudyWord[]) => {
   const stats = validStudyWords.reduce(
     (acc, word) => {
       // Count new words
-      if (!word.last_reviewed_at) {
+      if (!word.fsrs_last_review) {
         acc.newWordsCount++;
       }
       return acc;
@@ -49,33 +50,35 @@ const getBaseStats = (validStudyWords: any[], dueWordsData: any[]) => {
   return stats;
 };
 
-const getAdvancedStats = (validStudyWords: any[]) => {
+const getAdvancedStats = (validStudyWords: StudyWord[]) => {
   if (validStudyWords.length === 0) return null;
 
   // Single pass for all stats
   const stats = validStudyWords.reduce(
     (acc, word) => {
       // Track reviewed words stats
-      if (word.last_reviewed_at) {
+      if (word.fsrs_last_review) {
         acc.reviewedCount++;
-        acc.successRateSum += word.success_rate || 0;
-        acc.intervalSum += word.interval || 0;
+        // Calculate success_rate from success_streak if available
+        const successRate = word.success_streak ? word.success_streak / (word.fsrs_reps || 1) : 0;
+        acc.successRateSum += successRate;
+        acc.intervalSum += word.interval_days || 0;
         acc.easeFactorSum += word.ease_factor || 0;
       }
 
-      // Track mastery stats
-      if (word.state === 'mastered') acc.masteredCount++;
-      if (word.state === 'learning') acc.learningCount++;
+      // Track mastery stats - use fsrs_state instead of 'state'
+      if (word.fsrs_state === 3) acc.masteredCount++; // Assuming state 3 is 'mastered'
+      if (word.fsrs_state === 1 || word.fsrs_state === 2) acc.learningCount++; // Assuming states 1-2 are 'learning'
 
       // Track streaks and difficulty
-      acc.maxStreak = Math.max(acc.maxStreak, word.streak || 0);
-      acc.maxLongestStreak = Math.max(acc.maxLongestStreak, word.longest_streak || 0);
-      if (word.streak > 0) acc.streakCount++;
+      acc.maxStreak = Math.max(acc.maxStreak, word.success_streak || 0);
+      acc.maxLongestStreak = Math.max(acc.maxLongestStreak, word.success_streak || 0);
+      if ((word.success_streak || 0) > 0) acc.streakCount++;
 
       // Track other stats
-      acc.lapsesSum += word.lapses || 0;
-      if (word.failed_in_session) acc.failedInSession++;
-      acc.difficultySum += word.difficulty || 0.3;
+      acc.lapsesSum += word.fsrs_lapses || 0;
+      if (word.sessionData?.failedInSession) acc.failedInSession++;
+      acc.difficultySum += word.fsrs_difficulty || 0.3;
 
       return acc;
     },
@@ -119,6 +122,7 @@ export default function VocabularyScreen() {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { prefetchVocabularyData } = useAppPreloader();
+  const router = useRouter();
 
   // Add loading state hook to match other tab screens
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -140,7 +144,7 @@ export default function VocabularyScreen() {
 
   // Query for study words - updated to use FSRS service with longer stale time
   const {
-    data: studyWords = [],
+    data: studyWords = [] as StudyWord[],
     isLoading: isStudyWordsLoading,
     isFetching: isStudyWordsFetching,
     error,
@@ -153,12 +157,13 @@ export default function VocabularyScreen() {
     gcTime: 600000, // Keep in cache for 10 minutes
     retry: 2, // Add retry capability
     refetchOnWindowFocus: true,
-    placeholderData: () => queryClient.getQueryData(['studyWords', user?.id]) || [],
+    placeholderData: () =>
+      queryClient.getQueryData(['studyWords', user?.id]) || ([] as StudyWord[]),
   });
 
   // Query for due words with optimized settings
   const {
-    data: dueWordsData = [],
+    data: dueWordsData = [] as StudyWord[],
     isFetching: isDueWordsFetching,
     refetch: refetchDueWords,
   } = useQuery({
@@ -168,7 +173,7 @@ export default function VocabularyScreen() {
     staleTime: 120000, // Cache for 2 minutes (due words change more frequently)
     gcTime: 300000, // Keep in cache for 5 minutes
     retry: 2, // Add retry capability
-    placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || [],
+    placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || ([] as StudyWord[]),
   });
 
   // Combined loading and fetching states for better UX
@@ -212,8 +217,8 @@ export default function VocabularyScreen() {
 
   // Filter valid study words with error protection
   const validStudyWords = useMemo(() => {
-    if (!Array.isArray(studyWords)) return [];
-    return studyWords.filter(word => word?.sentence_word != null);
+    if (!Array.isArray(studyWords)) return [] as StudyWord[];
+    return studyWords.filter(word => word?.sentence_word != null) as StudyWord[];
   }, [studyWords]);
 
   // Cache stats calculation key based on array lengths and last updated times
@@ -353,11 +358,11 @@ export default function VocabularyScreen() {
   if (!user) {
     return (
       <SignInRequired
-        headerTitle=""
+        message="Sign in to track your vocabulary progress and create custom study sets"
+        benefitTitle="Vocabulary Benefits"
+        benefitDescription="Sign in to save your word progress across devices, create study sets, and track your learning progress"
         colors={colors}
-        message="Sign in to continue"
-        benefitTitle="Vocabulary"
-        benefitDescription="Master new words through spaced repetition."
+        onSignIn={() => router.navigate('/(tabs)/settings')}
       />
     );
   }

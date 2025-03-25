@@ -18,6 +18,7 @@ export const SignInRequired = React.memo(
     benefitDescription,
     colors,
     headerTitle,
+    onSignIn,
   }: SignInRequiredProps) => {
     return (
       <Animated.View style={styles.container} entering={FadeIn.duration(300)}>
@@ -60,7 +61,7 @@ export const SignInRequired = React.memo(
             <ThemedButton
               title="Sign In"
               icon="log-in"
-              onPress={() => router.navigate('/(tabs)/settings')}
+              onPress={() => (onSignIn ? onSignIn() : router.navigate('/(tabs)/settings'))}
               style={styles.signInButton}
             />
           </View>

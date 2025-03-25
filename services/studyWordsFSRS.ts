@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { createEmptyCard, Rating } from 'ts-fsrs';
+import { StudyWord } from '@/types/vocabulary.types';
 
 // Interface for FSRS-specific update fields
 interface FSRSWordUpdate {
@@ -23,7 +24,7 @@ interface GetFSRSWordsOptions {
 
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
-  async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}) {
+  async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -94,7 +95,7 @@ export const studyWordsFSRSService = {
       throw error;
     }
 
-    return data;
+    return data as StudyWord[];
   },
 
   // Update word with FSRS parameters
