@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import PageHeader from './PageHeader';
 import { SignInRequiredProps } from '@/types/ui/layout.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 export const SignInRequired = React.memo(
   ({
@@ -25,7 +26,9 @@ export const SignInRequired = React.memo(
         <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
           {headerTitle && <PageHeader title={headerTitle} />}
           <View style={styles.emptyStateContainer}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.text + '10' }]}>
+            <View
+              style={[styles.iconContainer, { backgroundColor: withOpacity(colors.text, 0.1) }]}
+            >
               <Ionicons name="log-in-outline" size={48} color={colors.text} />
             </View>
             <View style={styles.titleContainer}>
@@ -99,8 +102,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   iconContainer: {
-    width: 100,
-    height: 100,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     alignItems: 'center',
@@ -124,6 +127,6 @@ const styles = StyleSheet.create({
   },
   benefitDescriptionContainer: {},
   signInButton: {
-    minWidth: 150,
+    minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 3,
   },
 });

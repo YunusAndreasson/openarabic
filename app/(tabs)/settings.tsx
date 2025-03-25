@@ -9,7 +9,7 @@ import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
 import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
-import { LAYOUT } from '../../constants/layout';
+import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
@@ -26,11 +26,6 @@ import { useFocusEffect } from '@react-navigation/native';
 
 // Create a Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Helper function to calculate header height
-const getHeaderHeight = (insets: { top: number }) => {
-  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
-};
 
 export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null);
@@ -464,12 +459,12 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: LAYOUT.BORDER.WIDTH.THIN,
-    width: '100%',
+    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
   },
   sliderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '50%',
+    width: `${LAYOUT.WIDTH_RATIOS.HALF * 100}%`,
   },
   slider: {
     flex: 1,
@@ -486,12 +481,12 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   previewWrapper: {
-    height: 100,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
   },
   previewContent: {
     position: 'absolute',
-    width: '100%',
+    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
     top: 0,
   },
   arabicPreviewText: {
@@ -516,7 +511,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   actionButton: {
-    borderWidth: 0,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -536,12 +531,12 @@ const styles = StyleSheet.create({
     width: LAYOUT.BUTTON.HEIGHT.SMALL * 1.75 - 4,
     height: LAYOUT.BUTTON.HEIGHT.SMALL - 4,
     borderRadius: (LAYOUT.BUTTON.HEIGHT.SMALL - 4) / 2,
-    opacity: 0.2,
+    opacity: LAYOUT.OPACITY.XLIGHT,
   },
   sliderPlaceholder: {
     flex: 1,
     height: 4,
-    borderRadius: 2,
-    opacity: 0.2,
+    borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
+    opacity: LAYOUT.OPACITY.XLIGHT * 2,
   },
 });

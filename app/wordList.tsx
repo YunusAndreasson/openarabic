@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, FlatList } from 'react-native';
+import { StyleSheet, View, FlatList, Platform } from 'react-native';
 import { ThemedView } from '../components/ThemedView';
 import { ThemedText } from '../components/ThemedText';
 import { useColors } from '../hooks/useColors';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT, getHeaderHeight } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
@@ -41,11 +41,6 @@ const calculateRetentionScore = (word: StudyWord): number => {
 
   // Return a weighted score based on FSRS parameters
   return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
-};
-
-// Helper function to calculate header height
-const getHeaderHeight = (insets: { top: number }) => {
-  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
 };
 
 const ITEM_HEIGHT = 70;
@@ -381,5 +376,11 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
     fontSize: 16,
+  },
+  filterText: {
+    fontFamily: 'NotoSans',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: '400',
+    letterSpacing: 0.1,
   },
 });

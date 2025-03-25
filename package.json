@@ -29,7 +29,9 @@
     "knip:files": "knip --include files",
     "knip:files:verbose": "knip --include files --verbose",
     "knip:islands": "knip --include files --no-config-hints",
-    "migrate-fsrs": "ts-node scripts/migrateToFSRS.ts"
+    "migrate-fsrs": "ts-node scripts/migrateToFSRS.ts",
+    "update-app-config": "node scripts/update-app-config.js",
+    "prebuild": "npm run update-app-config"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.4",

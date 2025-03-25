@@ -19,6 +19,7 @@ import { useGraphData } from '@/hooks/useGraphData';
 import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import BaseCard from './BaseCard';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -133,8 +134,8 @@ export const VocabularyGraph = React.memo(
     // Memoize gradient colors
     const gradientColors = useMemo(
       () => [
-        `${colors.text}30`, // Increased from 20 for better contrast
-        `${colors.text}10`, // Increased from 08 for better contrast
+        withOpacity(colors.text, 0.19), // Increased from 0.12 for better contrast
+        withOpacity(colors.text, 0.06), // Increased from 0.03 for better contrast
       ],
       [colors.text]
     );
@@ -227,7 +228,7 @@ export const VocabularyGraph = React.memo(
                       key={index}
                       p1={{ x: 0, y }}
                       p2={{ x: GRAPH_WIDTH, y }}
-                      color={`${colors.text}15`}
+                      color={withOpacity(colors.text, 0.08)}
                       strokeWidth={1}
                     />
                   );
@@ -253,7 +254,7 @@ export const VocabularyGraph = React.memo(
                       path={linePath}
                       style="stroke"
                       strokeWidth={2.5}
-                      color={`${colors.text}70`}
+                      color={withOpacity(colors.text, 0.44)}
                       strokeJoin="round"
                       strokeCap="round"
                       start={0}
@@ -278,7 +279,12 @@ export const VocabularyGraph = React.memo(
                         {/* Outer circle */}
                         <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
                         {/* Inner circle */}
-                        <Circle cx={point.x} cy={point.y} r={2.5} color={`${colors.text}90`} />
+                        <Circle
+                          cx={point.x}
+                          cy={point.y}
+                          r={2.5}
+                          color={withOpacity(colors.text, 0.56)}
+                        />
                       </Group>
                     );
                   })}
@@ -373,7 +379,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    height: 120,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.MEDIUM,
   },
   emptyDataText: {
     textAlign: 'center',

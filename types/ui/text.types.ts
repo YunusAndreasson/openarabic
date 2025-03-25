@@ -87,16 +87,23 @@ export interface AnimatedTextProps extends ThemedTextProps {
  * Props for the ArabicWord component
  */
 export interface ArabicWordProps {
-  /** The Arabic word to display */
-  word: string;
-  /** The English translation of the word */
-  translation?: string;
-  /** Whether this word is known by the user */
-  isKnown?: boolean;
+  /** The word object with details */
+  word: {
+    word_form: string;
+    english?: string;
+    id?: number;
+    [key: string]: any;
+  };
+  /** Whether this word is selected */
+  isSelected?: boolean;
+  /** Function called when word is pressed */
+  onPress: (word: any) => void;
+  /** Scaling factor for the word size */
+  scale?: number;
+  /** Base size for the word display */
+  baseSize?: number;
   /** Whether the word is interactive */
   interactive?: boolean;
-  /** Function called when word is pressed */
-  onPress?: () => void;
   /** Whether a long press should show word info */
   showInfoOnLongPress?: boolean;
   /** Whether to highlight the word */

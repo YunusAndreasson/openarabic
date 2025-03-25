@@ -199,12 +199,16 @@ export interface VocabularyEmptyStateProps {
  * Props for the VocabularyStats component
  */
 export interface VocabularyStatsProps {
+  /** Total number of words */
+  totalWords: number;
+  /** Number of mastered words */
+  masteredWords: number;
   /** Number of words the user knows */
-  knownWords: number;
+  knownWords?: number;
   /** Number of words due for review */
-  dueWords: number;
+  dueWords?: number;
   /** Number of words the user is learning */
-  learningWords: number;
+  learningWords?: number;
   /** Whether the stats are loading */
   isLoading?: boolean;
   /** Additional container style */

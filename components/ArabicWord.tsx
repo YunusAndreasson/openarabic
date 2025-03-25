@@ -84,26 +84,26 @@ function ArabicWordComponent({
     const backgroundColor = interpolateColor(
       longPressProgress.value,
       [0, 1],
-      ['transparent', isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.05)']
+      [colors.transparent, isDarkMode ? colors.textOverlay : colors.overlay]
     );
 
     return {
       backgroundColor,
       borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     };
-  }, [isDarkMode]);
+  }, [isDarkMode, colors.textOverlay, colors.overlay, colors.transparent]);
 
   // Animated border style - always present but opacity changes
   const borderStyle = useAnimatedStyle(() => {
     return {
-      borderBottomWidth: 1.5,
+      borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
       borderBottomColor: interpolateColor(
         borderOpacity.value,
         [0, 1],
-        ['transparent', isDarkMode ? colors.borderOverlay : colors.textOverlay]
+        [colors.transparent, isDarkMode ? colors.borderOverlay : colors.textOverlay]
       ),
     };
-  }, [isDarkMode, colors.borderOverlay, colors.textOverlay]);
+  }, [isDarkMode, colors.borderOverlay, colors.textOverlay, colors.transparent]);
 
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -197,7 +197,7 @@ function ArabicWordComponent({
     // Add tooltip feedback style
     if (tooltipVisible) {
       styleObjects.push({
-        backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.01)',
+        backgroundColor: isDarkMode ? colors.textOverlay : colors.overlay,
       });
     }
 
@@ -270,5 +270,10 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  highlightedWordStyle: {
+    // Increase line spacing
+    marginBottom: 2,
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
   },
 });

@@ -26,6 +26,7 @@ import { AppLoader } from '@/components/Loader';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider } from '@/components/ToastProvider';
 import { useAuth } from '../hooks/useAuth';
+import { LAYOUT } from '@/constants/layout';
 
 // Hide splash screen immediately
 SplashScreen.hideAsync();
@@ -190,18 +191,18 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: LAYOUT.SPACING.XLARGE,
   },
   errorTitle: {
-    fontSize: 16,
-    marginBottom: 10,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   errorMessage: {
-    marginBottom: 20,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   errorDetail: {
-    fontSize: 12,
-    opacity: 0.7,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   gestureRoot: {
     flex: 1,

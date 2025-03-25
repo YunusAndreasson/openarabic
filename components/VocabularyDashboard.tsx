@@ -8,11 +8,12 @@ import { AnimatedText } from './AnimatedText';
 import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';
 import BaseCard from './BaseCard';
+import { useColors } from '@/hooks/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
   extends Pick<VocabularyStats, 'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords'> {
-  colors: any;
   /** Flag to trigger animations when parent component is ready */
   animationTriggered?: boolean;
   /** Callback for when a stat item is pressed */
@@ -87,24 +88,10 @@ export const VocabularyDashboard = React.memo(
     masteredWords,
     learningWords,
     dueWords,
-    colors,
     animationTriggered = false,
     onStatPress,
   }: VocabularyDashboardProps) => {
-    // Ensure colors are bright enough for dark mode with fallbacks
-    const safeColors = useMemo(
-      () => ({
-        tintColor: colors.tint || '#3498db',
-        accentColor: colors.accent || '#ff9500',
-        successColor: colors.success || '#2ecc71',
-        infoColor: colors.info || '#339AF0',
-        textColor: colors.text || '#000000',
-        cardBackground: colors.cardBackground || '#ffffff',
-        cardBorder: colors.cardBorder || '#e0e0e0',
-        dueWordsColor: colors.warning || '#FCC419',
-      }),
-      [colors]
-    );
+    const colors = useColors();
 
     // Prepare stat items data
     const statItems = useMemo(
@@ -113,8 +100,8 @@ export const VocabularyDashboard = React.memo(
           value: totalWords,
           label: 'Total',
           icon: 'book',
-          iconColor: safeColors.textColor,
-          bgColor: safeColors.textColor + '30',
+          iconColor: colors.text,
+          bgColor: withOpacity(colors.text, 0.19),
           animateValue: animationTriggered,
           category: 'total' as const,
         },
@@ -122,8 +109,8 @@ export const VocabularyDashboard = React.memo(
           value: masteredWords,
           label: 'Mastered',
           icon: 'checkmark-circle',
-          iconColor: safeColors.successColor,
-          bgColor: safeColors.successColor + '30',
+          iconColor: colors.success,
+          bgColor: withOpacity(colors.success, 0.19),
           animateValue: animationTriggered,
           category: 'mastered' as const,
         },
@@ -131,8 +118,8 @@ export const VocabularyDashboard = React.memo(
           value: learningWords,
           label: 'Learning',
           icon: 'school',
-          iconColor: safeColors.infoColor,
-          bgColor: safeColors.infoColor + '30',
+          iconColor: colors.info,
+          bgColor: withOpacity(colors.info, 0.19),
           animateValue: animationTriggered,
           category: 'learning' as const,
         },
@@ -140,13 +127,13 @@ export const VocabularyDashboard = React.memo(
           value: dueWords,
           label: 'Review',
           icon: 'alarm',
-          iconColor: safeColors.dueWordsColor,
-          bgColor: safeColors.dueWordsColor + '30',
+          iconColor: colors.warning,
+          bgColor: withOpacity(colors.warning, 0.19),
           animateValue: animationTriggered,
           category: 'due' as const,
         },
       ],
-      [totalWords, masteredWords, learningWords, dueWords, safeColors, animationTriggered]
+      [totalWords, masteredWords, learningWords, dueWords, colors, animationTriggered]
     );
 
     return (

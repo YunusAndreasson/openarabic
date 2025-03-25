@@ -9,6 +9,9 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { ThemedText } from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { Theme } from '@/constants/Colors';
+import { withOpacity } from '@/utils/colorUtils';
 
 const TAB_SCREENS = [
   {
@@ -60,7 +63,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const intensity = Platform.OS === 'ios' ? 55 : 80;
-  const isDarkMode = colors.background === '#121212';
+  const isDarkMode = useIsDarkMode();
 
   // Calculate appropriate bottom padding based on device
   const bottomInset = useMemo(
@@ -72,14 +75,14 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
     () => [
       styles.blurContainer,
       {
-        backgroundColor: isDarkMode ? 'rgba(18, 18, 18, 0.75)' : 'rgba(255, 255, 255, 0.75)',
+        backgroundColor: isDarkMode ? colors.modalOverlay : colors.overlay,
         height: LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset,
         paddingBottom: bottomInset,
         ...PLATFORM_STYLES,
         ...(Platform.OS === 'ios' && { shadowColor: colors.shadow }),
       },
     ],
-    [colors.shadow, bottomInset, isDarkMode]
+    [colors.shadow, colors.modalOverlay, colors.overlay, bottomInset, isDarkMode]
   );
 
   // Memoize tab button styles
@@ -100,7 +103,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
   );
 
   // Memoize ripple color
-  const rippleColor = useMemo(() => colors.tint + '40', [colors.tint]);
+  const rippleColor = useMemo(() => withOpacity(colors.tint, 0.25), [colors.tint]);
 
   // Memoized debounced tab press handler
   const getTabPressHandler = useCallback(

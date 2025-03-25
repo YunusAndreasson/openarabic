@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
 import { router } from 'expo-router';
 import { VocabularyEmptyStateProps } from '@/types/ui/layout.types';
+import { withOpacity } from '@/utils/colorUtils';
 
 export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyStateProps) => {
   const handleBrowseArticles = useCallback(() => {
@@ -13,7 +14,7 @@ export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyState
 
   return (
     <View style={styles.enhancedEmptyContainer}>
-      <View style={[styles.emptyIconContainer, { backgroundColor: colors.text + '10' }]}>
+      <View style={[styles.emptyIconContainer, { backgroundColor: withOpacity(colors.text, 0.1) }]}>
         <Ionicons
           name="book-outline"
           size={48}
@@ -38,7 +39,7 @@ export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyState
         </ThemedText>
       </View>
       <TouchableOpacity
-        style={[styles.emptyActionButton, { backgroundColor: colors.text + '10' }]}
+        style={[styles.emptyActionButton, { backgroundColor: withOpacity(colors.text, 0.1) }]}
         onPress={handleBrowseArticles}
         accessibilityLabel="Go to articles to build words"
         accessibilityRole="button"
@@ -61,8 +62,8 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
   },
   emptyIconContainer: {
-    width: 100,
-    height: 100,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     alignItems: 'center',

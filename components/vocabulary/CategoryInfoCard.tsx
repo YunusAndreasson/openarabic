@@ -1,6 +1,7 @@
 import React from 'react';
 import InfoCard from '../InfoCard';
 import { useColors } from '../../hooks/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface CategoryInfoCardProps {
   category: 'total' | 'mastered' | 'learning';
@@ -26,7 +27,7 @@ const CategoryInfoCard = React.memo(
               'Words added to your spaced repetition system, scheduled for review based on memory strength.',
             icon: 'book',
             iconColor: colors.text,
-            bgColor: colors.text + '30',
+            bgColor: withOpacity(colors.text, 0.19), // 30 in hex is approx 19% opacity
           };
         case 'mastered':
           return {
@@ -35,7 +36,7 @@ const CategoryInfoCard = React.memo(
               'Words with long review intervals that have been successfully recalled multiple times and stored in long-term memory.',
             icon: 'checkmark-circle',
             iconColor: colors.success,
-            bgColor: colors.success + '30',
+            bgColor: withOpacity(colors.success, 0.19),
           };
         case 'learning':
           return {
@@ -44,7 +45,7 @@ const CategoryInfoCard = React.memo(
               'Words with shorter review intervals still being committed to memory. Regular practice strengthens neural connections and improves retention.',
             icon: 'school',
             iconColor: colors.info,
-            bgColor: colors.info + '30',
+            bgColor: withOpacity(colors.info, 0.19),
           };
         default:
           return {
@@ -52,7 +53,7 @@ const CategoryInfoCard = React.memo(
             description: 'Words being learned through spaced repetition.',
             icon: 'book',
             iconColor: colors.text,
-            bgColor: colors.text + '30',
+            bgColor: withOpacity(colors.text, 0.19),
           };
       }
     };

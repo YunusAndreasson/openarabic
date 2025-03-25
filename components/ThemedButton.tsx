@@ -172,7 +172,7 @@ export function ThemedButton({
   const buttonStyles = useMemo(() => {
     // Determine colors based on variant
     const isFilled = variant === 'filled';
-    const backgroundColor = isFilled ? colors.tint : 'transparent';
+    const backgroundColor = isFilled ? colors.tint : colors.transparent;
 
     // Apply border for outlined variant consistently across platforms
     // This matches the ThemedCard border style

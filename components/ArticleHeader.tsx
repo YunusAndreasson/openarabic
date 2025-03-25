@@ -12,7 +12,16 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import { LAYOUT } from '@/constants/layout';
 
 // Types
-import { ArticleHeaderProps } from '@/types/ui/layout.types';
+import { Article } from '@/types/articles.types';
+
+// Define the props interface locally
+interface ArticleHeaderProps {
+  article: Article;
+  colors: {
+    text: string;
+    [key: string]: string;
+  };
+}
 
 const styles = StyleSheet.create({
   articleHeaderContainer: {
@@ -54,6 +63,13 @@ const styles = StyleSheet.create({
   },
   summaryContainer: {
     paddingTop: LAYOUT.SPACING.SMALL,
+  },
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    height: LAYOUT.HEADER.NAV_HEIGHT,
   },
 });
 

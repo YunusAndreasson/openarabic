@@ -9,7 +9,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { SignInRequired } from '@/components/SignInRequired';
 import { Audio } from 'expo-av';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
@@ -20,11 +20,6 @@ import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
-
-// Helper function to calculate header height
-const getHeaderHeight = (insets: { top: number }) => {
-  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -96,14 +91,14 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   shuffleButton: {
-    borderWidth: 1,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
   playButton: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     right: 0,
-    width: 50,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -136,6 +131,17 @@ const ReadingListItem = React.memo(
     const colors = useColors();
     const isActive = isPlaying || isPaused;
 
+    // Component-specific dynamic styles
+    const dynamicStyles = useMemo(
+      () => ({
+        cardProgressContainer: {
+          ...styles.cardProgressContainer,
+          backgroundColor: colors.transparent,
+        },
+      }),
+      [colors]
+    );
+
     return (
       <View style={styles.cardContainer}>
         <BaseCard
@@ -161,7 +167,7 @@ const ReadingListItem = React.memo(
                 type="label"
                 variant="secondary"
                 numberOfLines={1}
-                style={isActive ? { opacity: 0.8 } : undefined}
+                style={isActive ? { opacity: LAYOUT.OPACITY.MEDIUM_HIGH } : undefined}
               >
                 {author}
               </ThemedText>
@@ -180,7 +186,7 @@ const ReadingListItem = React.memo(
 
           {/* Progress indicator at bottom of card */}
           {isActive && (
-            <View style={styles.cardProgressContainer}>
+            <View style={[dynamicStyles.cardProgressContainer]}>
               <View
                 style={[
                   styles.cardProgressBar,
@@ -213,8 +219,23 @@ const BottomControls = React.memo(
   }) => {
     const colors = useColors();
 
+    // Component-specific dynamic styles
+    const dynamicStyles = useMemo(
+      () => ({
+        bottomControlsContainer: {
+          ...styles.bottomControlsContainer,
+          backgroundColor: colors.transparent,
+        },
+        shuffleButton: {
+          ...styles.shuffleButton,
+          borderColor: colors.tint,
+        },
+      }),
+      [colors]
+    );
+
     return (
-      <View style={styles.bottomControlsContainer}>
+      <View style={[dynamicStyles.bottomControlsContainer]}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
           <View style={styles.controlsLabelContainer}>
             <ThemedText type="overline" variant="secondary">
@@ -222,7 +243,7 @@ const BottomControls = React.memo(
             </ThemedText>
           </View>
           <View style={styles.actionButtonsRow}>
-            <View style={{ width: '48%' }}>
+            <View style={{ width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%` }}>
               <ThemedButton
                 title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
                 onPress={onPlayAll}
@@ -233,12 +254,12 @@ const BottomControls = React.memo(
                 }
               />
             </View>
-            <View style={{ width: '48%' }}>
+            <View style={{ width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%` }}>
               <ThemedButton
                 title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
                 onPress={onShuffle}
                 variant="outlined"
-                style={[styles.shuffleButton, { width: '100%', borderColor: colors.tint }]}
+                style={[dynamicStyles.shuffleButton, { width: '100%' }]}
                 accessibilityLabel={
                   isPlaying && isShuffleMode
                     ? 'Stop shuffle playback'
@@ -666,10 +687,10 @@ export default function BookmarksScreen() {
           >
             <EmptyState
               title="No Bookmarks Found"
-              message="Bookmark articles to listen to them later or save them for reference."
-              buttonTitle="Browse Articles"
-              buttonIcon="book"
-              onButtonPress={() => router.push('/(tabs)')}
+              description="Bookmark articles to listen to them later or save them for reference."
+              actionText="Browse Articles"
+              icon="book"
+              onAction={() => router.push('/(tabs)')}
             />
           </ThemedView>
           <PageHeader title="Bookmarks" />

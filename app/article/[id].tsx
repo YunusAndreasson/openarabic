@@ -57,11 +57,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   sentenceList: {
     paddingHorizontal: LAYOUT.SPACING.LARGE,
-    backgroundColor: 'transparent',
   },
   contentContainer: {
     flex: 1,
@@ -325,7 +323,7 @@ export default function ArticleScreen() {
           renderWord={renderWord}
           settings={settings}
           colors={colors}
-          containerStyle={{ backgroundColor: 'transparent' }}
+          containerStyle={{ backgroundColor: colors.transparent }}
         />
       );
     },
@@ -442,7 +440,7 @@ export default function ArticleScreen() {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }]}>
+        <Animated.View style={[{ flex: 1 }]}>
           {sortedSentences && sortedSentences.length > 0 && (
             <FlatList
               key={`article-${id}`}
@@ -456,7 +454,6 @@ export default function ArticleScreen() {
                 {
                   paddingTop: insets.top + (Platform.OS === 'ios' ? 40 : 30),
                   paddingBottom: insets.bottom + 20,
-                  backgroundColor: 'transparent',
                 },
               ]}
               onScroll={handleScroll}

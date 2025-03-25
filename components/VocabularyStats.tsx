@@ -106,7 +106,7 @@ export const VocabularyStats = React.memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
   progressCard: {
-    height: 130,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL,
   },
   progressContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.SMALL,
   },
   circleCanvas: {
-    width: 80,
-    height: 80,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
   },
 });

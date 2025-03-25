@@ -62,7 +62,7 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
       width: circleSize,
       height: circleSize,
       borderRadius: circleSize / 2,
-      backgroundColor: 'transparent',
+      backgroundColor: colors.transparent,
       borderColor: loaderColor,
       borderWidth,
       shadowColor: loaderColor,
@@ -71,7 +71,7 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
       shadowRadius: 8,
       elevation: 8,
     }),
-    [circleSize, loaderColor, borderWidth]
+    [circleSize, loaderColor, borderWidth, colors.transparent]
   );
 
   return (
@@ -179,6 +179,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
 });

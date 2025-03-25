@@ -171,11 +171,17 @@ export default function ReviewScreen() {
     }
   }, [isLoading, progress]);
 
+  // Calculate dynamic font size for Arabic words based on window width
+  // Smaller screens need smaller fonts, larger screens can have larger fonts
+  const dynamicFontConfig = {
+    minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6, // For very small screens
+    maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3, // Fixed font size for most words
+    minScreenWidth: 320, // iPhone SE width
+    maxScreenWidth: 500, // Tablet width threshold
+  };
+
   // Use our custom hook for word sizing with simplified approach
-  const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, {
-    minFontSize: 50,
-    maxFontSize: 100, // Fixed font size for most words
-  });
+  const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, dynamicFontConfig);
 
   // Hide initial loading after a short delay
   useEffect(() => {
@@ -425,7 +431,7 @@ export default function ReviewScreen() {
             </View>
 
             {/* Footer with instructions */}
-            <InstructionFooter />
+            <InstructionFooter primaryText="Tap on a word to see its meaning. Long press to add to your vocabulary." />
           </>
         )}
       </Animated.View>

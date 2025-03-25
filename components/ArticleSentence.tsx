@@ -23,9 +23,11 @@ const styles = StyleSheet.create({
 
 // Memoized sentence component for better list performance
 export const ArticleSentence = React.memo(
-  ({ sentence, words, renderWord, settings, containerStyle }: ArticleSentenceProps) => {
+  ({ sentence, words, renderWord, settings, colors, containerStyle }: ArticleSentenceProps) => {
     return (
-      <View style={[styles.sentenceContainer, containerStyle]}>
+      <View
+        style={[styles.sentenceContainer, { backgroundColor: colors.transparent }, containerStyle]}
+      >
         <View style={styles.arabicSentence}>{words.map(renderWord)}</View>
         {settings.showEnglish && (
           <ThemedText

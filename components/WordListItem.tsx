@@ -140,7 +140,7 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
                 {wordStatus.progress.value}%
               </ThemedText>
             </View>
-            <View style={[styles.progressBar, { backgroundColor: `${colors.text}10` }]}>
+            <View style={[styles.progressBar, { backgroundColor: colors.overlay }]}>
               <View
                 style={[
                   styles.progressFill,
@@ -207,13 +207,12 @@ const styles = StyleSheet.create({
   progressBar: {
     height: 4,
     width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.05)',
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
   },
 });
 

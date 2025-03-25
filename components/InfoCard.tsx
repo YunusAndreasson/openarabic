@@ -5,6 +5,7 @@ import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import BaseCard from './BaseCard';
+import { withOpacity } from '@/utils/colorUtils';
 
 interface InfoCardProps {
   /**
@@ -119,7 +120,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
   const colors = useColors();
 
   // Default colors if not provided
-  const bgColor = iconBgColor || colors.text + '30';
+  const bgColor = iconBgColor || withOpacity(colors.text, 0.19); // 30 in hex is approx 19%
   const iconClr = iconColor || colors.text;
 
   // Determine if this is a stat card (has a value)

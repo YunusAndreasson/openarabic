@@ -272,17 +272,17 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
-    height: 180,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 3 + LAYOUT.SPACING.XLARGE,
     position: 'relative',
   },
   compactContainer: {
-    width: 220,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE,
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   compactImageContainer: {
     position: 'relative',
     width: '100%',
-    height: 120,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.BASE,
     overflow: 'visible',
   },
@@ -292,7 +292,7 @@ const styles = StyleSheet.create({
   },
   imageOverlayContainer: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
+    zIndex: LAYOUT.Z_INDEX.CARD,
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   },
   loadingComponentContainer: {
     width: '100%',
-    height: 180,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 3 + LAYOUT.SPACING.XLARGE,
     justifyContent: 'center',
     alignItems: 'center',
   },

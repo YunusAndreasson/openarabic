@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { LoadingScreen } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData, StudyWord } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,11 +25,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-
-// Pure functions moved outside component
-const getHeaderHeight = (insets: { top: number }) => {
-  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE;
-};
 
 // Split stats calculation into smaller chunks for better memoization
 const getBaseStats = (validStudyWords: StudyWord[], dueWordsData: StudyWord[]) => {

@@ -8,6 +8,7 @@ import ThemedCard from './ThemedCard';
 import { LAYOUT } from '@/constants/layout';
 import { useWordStatus } from '@/hooks/useWordStatus';
 import { StudyWord } from '@/types/vocabulary.types';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 interface VocabularyWordListProps {
   title: string;
@@ -17,49 +18,55 @@ interface VocabularyWordListProps {
 
 // Separate word item component for better performance
 const WordItem = React.memo(
-  ({ studyWord, onPress, colors }: { studyWord: StudyWord; onPress: () => void; colors: any }) => {
-    // Use hooks outside of conditionals - pass all FSRS parameters
-    const { statusLabel, statusIcon, isMastered, isOverdue } = useWordStatus(
-      studyWord.fsrs_due,
-      studyWord.fsrs_stability || 0,
-      studyWord.fsrs_state // Pass the FSRS state
-    );
+  ({
+    studyWord,
+    onPress,
+    colors,
+  }: {
+    studyWord: StudyWord;
+    onPress: () => void;
+    colors: ReturnType<typeof useColors>;
+  }) => {
+    const isDarkMode = useIsDarkMode();
+    const word = studyWord.sentence_word?.word_form || '...';
+    const english = studyWord.sentence_word?.english || '...';
+    const isLearning = studyWord.fsrs_state === 1 || studyWord.fsrs_state === 2;
+    const isMastered = studyWord.fsrs_state === 3;
+    const isOverdue = studyWord.fsrs_due ? new Date(studyWord.fsrs_due) < new Date() : false;
 
-    const word = studyWord.sentence_word;
-    if (!word) return null;
+    let statusLabel = isMastered ? 'Mastered' : isLearning ? 'Learning' : 'New';
+    if (isOverdue) statusLabel = 'Due';
+
+    let statusIcon = isMastered ? 'checkmark-circle' : isLearning ? 'school' : 'star';
+    if (isOverdue) statusIcon = 'time';
 
     return (
-      <ThemedCard onPress={onPress} variant="compact">
+      <ThemedCard onPress={onPress} style={{ paddingVertical: LAYOUT.SPACING.MEDIUM }}>
         <View style={styles.wordInfo}>
-          <ThemedText
-            type="arabic"
-            colorName="arabicText"
-            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE}
-            skipDefaultColor
-          >
-            {word.word_form}
+          <ThemedText type="heading3" numberOfLines={1}>
+            {word}
           </ThemedText>
           <View style={styles.translationContainer}>
             <ThemedText type="body" variant="secondary">
-              {word.english}
+              {english}
             </ThemedText>
           </View>
         </View>
         <View style={styles.statusContainer}>
-          <BlurView intensity={10} tint="light" style={styles.statusPill}>
+          <BlurView intensity={10} tint={isDarkMode ? 'dark' : 'light'} style={styles.statusPill}>
             <View
               style={[
                 styles.statusBackground,
                 {
                   backgroundColor: isMastered
-                    ? '#495057'
+                    ? colors.elevation3
                     : isOverdue
                       ? colors.warning
                       : colors.info,
                 },
               ]}
             >
-              <Ionicons name={statusIcon} size={16} color={colors.background} />
+              <Ionicons name={statusIcon as any} size={16} color={colors.background} />
               <ThemedText type="caption" weight="600" colorName="background" skipDefaultColor>
                 {statusLabel}
               </ThemedText>

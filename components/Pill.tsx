@@ -128,7 +128,7 @@ const Pill = React.memo(
             containerStyle,
             // Add subtle inner shadow for depth
             isDarkMode && {
-              shadowColor: 'rgba(0,0,0,0.3)',
+              shadowColor: colors.shadow,
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.2,
               shadowRadius: 1,
@@ -168,7 +168,7 @@ const Pill = React.memo(
             isSelected
               ? null
               : {
-                  color: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
+                  color: isDarkMode ? colors.textOverlay : colors.overlay,
                   borderless: false,
                   radius: -5,
                 }

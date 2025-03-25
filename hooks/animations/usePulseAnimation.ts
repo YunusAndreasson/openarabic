@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { useWindowDimensions } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -11,6 +12,9 @@ import {
 } from 'react-native-reanimated';
 import { TIMING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
+import { LAYOUT } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
+import { withOpacity } from '../../utils/colorUtils';
 
 export type PulseStyle = 'standard' | 'dramatic' | 'gentle' | 'halo';
 
@@ -108,11 +112,12 @@ export interface PulseAnimationResult {
  * @returns Animation controls and style
  */
 export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAnimationResult => {
+  const colors = useColors();
   const {
     style = 'standard',
     pulseMagnitude,
     autoStart = false,
-    haloColor = 'rgba(255, 255, 255, 0.8)',
+    haloColor = withOpacity(colors.white, 0.8),
     haloIntensity = 0.5,
   } = options;
 
@@ -493,7 +498,7 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
         position: 'absolute',
         width: '100%',
         height: '100%',
-        borderRadius: 1000, // Large value ensures circular shape
+        borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Large value ensures circular shape
         transform: [{ scale: haloScale.value }],
         opacity: haloOpacity.value,
         backgroundColor: 'transparent',

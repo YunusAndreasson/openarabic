@@ -39,6 +39,7 @@ export const Colors = {
     textShadowDark: 'rgba(0, 0, 0, 0.5)', // Dark text shadow
     modalOverlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
     black: '#000000', // Pure black for dark mode
+    transparent: 'transparent', // Transparent color
   },
   dark: {
     text: '#E0E0E0', // Light gray for primary text
@@ -79,6 +80,7 @@ export const Colors = {
     textShadowDark: 'rgba(255, 255, 255, 0.5)', // Dark text shadow
     modalOverlay: 'rgba(0, 0, 0, 0.8)', // Modal overlay
     black: '#000000', // Pure black for dark mode
+    transparent: 'transparent', // Transparent color
   },
 } as const;
 

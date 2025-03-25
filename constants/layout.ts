@@ -194,6 +194,18 @@ export const LAYOUT = {
     POPUP: 6,
   },
 
+  // Width ratios for grid and column layouts
+  WIDTH_RATIOS: {
+    ALMOST_HALF: 0.48, // Slightly less than half for paired elements with margin
+    HALF: 0.5, // Exact half
+    THIRD: 0.3333, // Third
+    TWO_THIRDS: 0.6667, // Two thirds
+    QUARTER: 0.25, // Quarter
+    THREE_QUARTERS: 0.75, // Three quarters
+    TWO_FIFTHS: 0.4, // 40% width
+    FULL: 1, // Full width
+  },
+
   // Animation timing constants (in milliseconds)
   ANIMATION: {
     DURATION: {
@@ -213,6 +225,7 @@ export const LAYOUT = {
   // Border styles
   BORDER: {
     WIDTH: {
+      NONE: 0, // No border
       THIN: 0.5,
       NORMAL: 1,
       THICK: 2,
@@ -252,4 +265,16 @@ export const getArabicTextStyle = (
     textAlignVertical: 'center',
     ...additionalStyles,
   };
+};
+
+// Helper function to calculate consistent header height and spacing
+export const getHeaderHeight = (insets: { top: number }) => {
+  // Updated calculation to account for the new spacing in PageHeader
+  return (
+    insets.top +
+    LAYOUT.SPACING.TINY +
+    LAYOUT.SPACING.XLARGE +
+    LAYOUT.SPACING.LARGE +
+    LAYOUT.SPACING.SMALL
+  );
 };

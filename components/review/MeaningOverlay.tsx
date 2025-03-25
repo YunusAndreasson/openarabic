@@ -70,7 +70,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
             {
               color: textColor,
               fontSize: fontSize,
-            } as TextStyle,
+            },
           ]}
           skipDefaultColor
         >
@@ -81,24 +81,25 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
   }
 );
 
+// Use separate style objects for view and text styles to avoid TypeScript errors
 const styles = StyleSheet.create({
   overlay: {
     position: 'absolute',
-    zIndex: 1000,
+    zIndex: LAYOUT.Z_INDEX.POPUP,
     left: 0,
     right: 0,
-    height: 280, // Match the height of the word container
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 5 + LAYOUT.SPACING.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
     alignSelf: 'center',
-  } as ViewStyle,
+  },
   text: {
     textAlign: 'center',
     fontWeight: '700',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
     padding: LAYOUT.SPACING.LARGE,
-  } as TextStyle,
+  },
 });
 
 export default MeaningOverlay;

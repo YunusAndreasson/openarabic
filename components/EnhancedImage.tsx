@@ -6,6 +6,7 @@ import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { EnhancedImageProps } from '@/types/ui/image.types';
 import { LoadingContainer } from './Loader';
 import { Ionicons } from '@expo/vector-icons';
+import { useColors } from '@/hooks/useColors';
 
 /**
  * EnhancedImage component with essential optimizations
@@ -26,6 +27,7 @@ function EnhancedImageInternal({
   cachePolicy = 'memory-disk',
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
   const [isLoading, setIsLoading] = React.useState(true);
   const [isError, setIsError] = React.useState(false);
 
@@ -40,10 +42,8 @@ function EnhancedImageInternal({
     onError?.();
   }, [onError]);
 
-  const placeholderColor = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)';
-
   return (
-    <View style={[styles.container, style]}>
+    <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
       <Image
         source={source}
         style={styles.image}
@@ -57,14 +57,18 @@ function EnhancedImageInternal({
       />
 
       {isLoading && showLoadingIndicator && (
-        <View style={[styles.loadingContainer, { backgroundColor: placeholderColor }]}>
+        <View style={[styles.loadingContainer, { backgroundColor: colors.imagePlaceholder }]}>
           <LoadingContainer size="small" />
         </View>
       )}
 
       {isError && (
-        <View style={[styles.errorContainer, { backgroundColor: placeholderColor }]}>
-          <Ionicons name="alert-circle-outline" size={24} color={isDarkMode ? '#fff' : '#000'} />
+        <View style={[styles.errorContainer, { backgroundColor: colors.imagePlaceholder }]}>
+          <Ionicons
+            name="alert-circle-outline"
+            size={24}
+            color={isDarkMode ? colors.white : colors.black}
+          />
         </View>
       )}
     </View>
@@ -79,7 +83,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     overflow: 'hidden',
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   image: {
     width: '100%',

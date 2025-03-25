@@ -37,7 +37,7 @@ function CategoryPillsComponent({
   // Render the component
   return (
     <Animated.View
-      style={[styles.container, { backgroundColor: 'transparent' }, containerAnimatedStyle]}
+      style={[styles.container, { backgroundColor: colors.transparent }, containerAnimatedStyle]}
     >
       <View style={styles.scrollContainer}>
         <ScrollView
@@ -68,7 +68,7 @@ function CategoryPillsComponent({
 
         {/* Right fade gradient (more pronounced, starts earlier) */}
         <LinearGradient
-          colors={['transparent', colors.background, colors.background]}
+          colors={[colors.transparent, colors.background, colors.background]}
           start={{ x: 0.3, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           locations={[0, 0.7, 1]}
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    width: '40%', // Use percentage instead of fixed width to better adapt to different screen sizes
+    width: `${LAYOUT.WIDTH_RATIOS.TWO_FIFTHS * 100}%`, // Better than hardcoded 40%
     zIndex: 1,
   },
 });

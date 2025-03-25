@@ -30,7 +30,7 @@ import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSl
 // Utils and Constants
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import {
   filterArticles,
   getLatestArticles,
@@ -88,11 +88,6 @@ const useSafeAuth = () => {
 };
 
 // Memoized article item renderer for better performance
-
-// Helper function to calculate header height
-const getHeaderHeight = (insets: { top: number }) => {
-  return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.LARGE; // Added LAYOUT.SPACING.LARGE
-};
 
 // Add prefetch scheduling to reduce network spikes
 const PREFETCH_BATCH_SIZE = 5;

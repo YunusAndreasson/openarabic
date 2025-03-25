@@ -176,15 +176,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerContainer: {
-    zIndex: 2000, // Higher than PageHeader's z-index (1000)
+    zIndex: LAYOUT.Z_INDEX.MODAL,
   },
   scrollContainer: {
     flex: 1,
-    zIndex: 1, // Lower than header z-index
+    zIndex: LAYOUT.Z_INDEX.BASE,
   },
   contentContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    flex: 1,
+    zIndex: LAYOUT.Z_INDEX.BASE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -201,6 +203,13 @@ const styles = StyleSheet.create({
   noResultsText: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  header: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: LAYOUT.Z_INDEX.MODAL,
   },
 });
 

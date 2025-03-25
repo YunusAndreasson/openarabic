@@ -86,20 +86,17 @@ export interface ThemedModalProps extends BaseChildrenProps {
  * Props for the WordTooltip component
  */
 export interface WordTooltipProps {
-  /** The Arabic word to display */
-  word: string;
-  /** The translation of the word */
-  translation: string;
-  /** The x position of the tooltip trigger (word) */
-  x: number;
-  /** The y position of the tooltip trigger (word) */
-  y: number;
-  /** The width of the tooltip trigger (word) */
-  width: number;
-  /** The height of the tooltip trigger (word) */
-  height: number;
   /** Whether the tooltip is visible */
   visible: boolean;
+  /** The text to display in the tooltip */
+  text?: string;
+  /** Layout information for positioning the tooltip */
+  layout: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
   /** Function to close the tooltip */
   onClose: () => void;
   /** Whether the user knows this word */

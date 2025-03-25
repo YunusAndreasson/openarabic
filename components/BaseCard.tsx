@@ -31,11 +31,10 @@ const BaseCard: React.FC<BaseCardProps> = ({
 
   // Memoize the shadow style calculation
   const shadowStyle = useMemo(() => {
+    // Get shadow properties from LAYOUT constants
     const baseShadow = {
       shadowColor: colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 3,
+      ...LAYOUT.SHADOW.MEDIUM, // Use medium shadow as base
       elevation: 3,
     };
 
@@ -43,17 +42,13 @@ const BaseCard: React.FC<BaseCardProps> = ({
       case 'small':
         return {
           ...baseShadow,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.05,
-          shadowRadius: 2,
+          ...LAYOUT.SHADOW.SMALL,
           elevation: 1,
         };
       case 'large':
         return {
           ...baseShadow,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 6,
+          ...LAYOUT.SHADOW.LARGE,
           elevation: 5,
         };
       case 'medium':

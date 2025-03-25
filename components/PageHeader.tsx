@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View, StyleSheet, Pressable, Platform } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { View, StyleSheet, Pressable, Platform, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,14 +7,16 @@ import { useColors } from '../hooks/useColors';
 import { PageHeaderProps } from '@/types/ui/layout.types';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 /**
  * Page header with styled blur effect
  */
 const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
   const colors = useColors();
-  const isDarkMode = colors.background === '#121212';
-  const intensity = Platform.OS === 'ios' ? 80 : 100;
+  const isDarkMode = useIsDarkMode();
+  // Match tabbar intensity values for consistency
+  const intensity = Platform.OS === 'ios' ? 55 : 80;
   const insets = useSafeAreaInsets();
 
   const handleBackPress = useCallback(() => {
@@ -23,32 +25,45 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
     }
   }, [onBackPress]);
 
+  // Consistent background color with tabbar
+  const backgroundColor = isDarkMode ? colors.modalOverlay : colors.overlay;
+
+  const containerStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        backgroundColor, // Fallback background color
+        borderBottomColor: colors.borderOverlay,
+      },
+      onBackPress && styles.wrapperWithBack,
+    ],
+    [backgroundColor, colors.borderOverlay, onBackPress]
+  );
+
+  // BlurView style to match tabbar implementation
+  const blurContainerStyle = useMemo(
+    () => [
+      styles.blurContainer,
+      {
+        backgroundColor: 'transparent', // Allow blur to work through
+        borderBottomColor: colors.borderOverlay,
+        ...(Platform.OS === 'ios' && { shadowColor: colors.shadow }),
+      },
+    ],
+    [colors.borderOverlay, colors.shadow]
+  );
+
   return (
-    <View style={styles.wrapper}>
+    <View style={containerStyle}>
       <BlurView
         intensity={intensity}
         tint={isDarkMode ? 'dark' : 'light'}
-        style={[
-          styles.blurContainer,
-          {
-            backgroundColor: isDarkMode ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.5)',
-          },
-          Platform.select({
-            ios: {
-              shadowColor: colors.shadow,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
-              shadowRadius: LAYOUT.SPACING.SMALL / 2,
-            },
-            android: {
-              elevation: 8,
-            },
-          }),
-        ]}
+        experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
+        style={blurContainerStyle}
       >
         <View
           style={[
-            styles.container,
+            styles.contentContainer,
             {
               paddingTop: insets.top + LAYOUT.SPACING.TINY,
             },
@@ -60,7 +75,7 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
               style={({ pressed }) => [
                 styles.backButton,
                 {
-                  backgroundColor: pressed ? colors.textOverlay : 'transparent',
+                  backgroundColor: pressed ? colors.textOverlay : colors.transparent,
                   opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
                 },
               ]}
@@ -79,23 +94,34 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
 });
 
 const styles = StyleSheet.create({
-  wrapper: {
+  container: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
+    width: '100%',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden', // Ensure blur is contained
   },
   blurContainer: {
-    overflow: 'hidden',
+    width: '100%',
+    height: '100%',
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  container: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  contentContainer: {
     paddingBottom: LAYOUT.SPACING.MEDIUM,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   titleContainer: {
     flexShrink: 1,
@@ -107,6 +133,9 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL,
     marginLeft: -LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  },
+  wrapperWithBack: {
+    // Add any necessary styles for the wrapper when onBackPress is true
   },
 });
 
