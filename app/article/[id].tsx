@@ -45,6 +45,9 @@ import { LAYOUT } from '@/constants/layout';
 // Utils
 import { lightFeedback } from '@/utils/haptics';
 
+// Services
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+
 // Types
 import type { Tables } from '@/types/database.types';
 
@@ -67,7 +70,10 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   loadingContainer: {
-    paddingTop: 0, // Will be set dynamically with insets
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 0, // Remove the top padding since we're centering
   },
   notFoundContainer: {
     flex: 1,
@@ -130,6 +136,23 @@ export default function ArticleScreen() {
   // Use the custom loading state hook
   const { setDataLoaded } = useLoadingState(true);
 
+  // Pre-fetch study words if user is logged in and we don't have them cached
+  useEffect(() => {
+    if (user?.id) {
+      // Check if we already have study words in cache
+      const cachedStudyWords = queryClient.getQueryData(['studyWords', user.id]);
+
+      // Always prefetch study words immediately with highest priority
+      queryClient.prefetchQuery({
+        queryKey: ['studyWords', user.id],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
+        staleTime: 0,
+        retry: false,
+        networkMode: 'always',
+      });
+    }
+  }, [user?.id, queryClient]);
+
   // Update minimum loading time when prefetched status changes
   useEffect(() => {
     // Always show loading state regardless of cache
@@ -151,26 +174,12 @@ export default function ArticleScreen() {
 
   // Add console logs for debugging
   useEffect(() => {
-    console.log('Article data:', !!article);
-    console.log('Sorted sentences:', sortedSentences?.length || 0);
-    console.log(
-      'Sentence words map size:',
-      sentenceWordsMap
-        ? sentenceWordsMap instanceof Map
-          ? sentenceWordsMap.size
-          : 'Not a Map'
-        : 'No map'
-    );
-    if (sortedSentences?.length) {
-      console.log('First sentence ID:', sortedSentences[0]?.id);
-      if (sentenceWordsMap instanceof Map) {
-        console.log(
-          'Words for first sentence:',
-          sentenceWordsMap.get(sortedSentences[0]?.id)?.length || 0
-        );
-      }
+    // Remove excessive logging that impacts performance
+    // Only log in development
+    if (__DEV__) {
+      console.log('Article data loaded:', !!article);
     }
-  }, [article, sortedSentences, sentenceWordsMap]);
+  }, [article]);
 
   // Use animation hook for content and button visibility on scroll
   const {
@@ -186,9 +195,18 @@ export default function ArticleScreen() {
 
   // Start content animations when mounted
   useEffect(() => {
+    let cleanupFn: (() => void) | undefined;
+
     if (isMountedRef.current) {
-      startAllAnimations();
+      cleanupFn = startAllAnimations();
     }
+
+    // Cleanup function to handle component unmount
+    return () => {
+      if (cleanupFn) {
+        cleanupFn();
+      }
+    };
   }, [startAllAnimations]);
 
   // Handle article data hook callbacks
@@ -398,7 +416,7 @@ export default function ArticleScreen() {
         useSafeArea={false}
       >
         <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
-        <View style={[styles.loadingContainer, { paddingTop: insets.top }]}>
+        <View style={[styles.loadingContainer]}>
           <LoadingScreen />
         </View>
 
@@ -433,7 +451,7 @@ export default function ArticleScreen() {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }, contentStyle]}>
+        <Animated.View style={[{ flex: 1, backgroundColor: 'transparent' }]}>
           {sortedSentences && sortedSentences.length > 0 && (
             <FlatList
               key={`article-${id}`}
@@ -465,7 +483,7 @@ export default function ArticleScreen() {
                 index,
               })}
               ListHeaderComponent={
-                <Animated.View style={[headerStyle]}>
+                <Animated.View>
                   <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
                 </Animated.View>
               }

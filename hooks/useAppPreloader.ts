@@ -38,13 +38,28 @@ const logWarning = (message: string, error?: any) => {
  */
 export const useAppPreloader = () => {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const preloadLockRef = useRef(false);
 
   // Main preloading function
   const preloadAppData = useCallback(async () => {
+    // If auth is still loading, wait until it's resolved
+    if (isAuthLoading) {
+      return new Promise<void>(resolve => {
+        const checkAuth = () => {
+          if (!isAuthLoading) {
+            resolve();
+            preloadAppData(); // Retry after auth is resolved
+          } else {
+            setTimeout(checkAuth, 100);
+          }
+        };
+        checkAuth();
+      });
+    }
+
     // If already preloading, return a promise that resolves when current preload completes
     if (isPreloading || preloadLockRef.current) {
       return new Promise<void>(resolve => {
@@ -70,8 +85,9 @@ export const useAppPreloader = () => {
         .fetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
-          staleTime: NO_CACHE, // No caching
-          gcTime: NO_CACHE, // No cache retention
+          staleTime: 300000, // Cache for 5 minutes (same as in index.tsx)
+          gcTime: 900000, // Keep in cache for 15 minutes
+          retry: 2, // Add retry capability
         })
         .catch(error => {
           logWarning('Failed to load articles:', error);
@@ -82,8 +98,9 @@ export const useAppPreloader = () => {
         .fetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
-          staleTime: NO_CACHE, // No caching
-          gcTime: NO_CACHE, // No cache retention
+          staleTime: 600000, // Cache for 10 minutes (same as in index.tsx)
+          gcTime: 1800000, // Keep in cache for 30 minutes
+          retry: 2, // Add retry capability
         })
         .catch(error => {
           logWarning('Failed to load categories:', error);
@@ -98,8 +115,9 @@ export const useAppPreloader = () => {
             .fetchQuery({
               queryKey: ['dueWords', user.id],
               queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-              staleTime: NO_CACHE, // No caching
-              gcTime: NO_CACHE, // No cache retention
+              staleTime: 120000, // Cache for 2 minutes (same as in vocabulary.tsx)
+              gcTime: 300000, // Keep in cache for 5 minutes
+              retry: 2, // Add retry capability
             })
             .catch(error => {
               logWarning('Failed to load due words:', error);
@@ -110,8 +128,9 @@ export const useAppPreloader = () => {
             .fetchQuery({
               queryKey: ['studyWords', user.id],
               queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-              staleTime: NO_CACHE, // No caching
-              gcTime: NO_CACHE, // No cache retention
+              staleTime: 180000, // Cache for 3 minutes (same as in vocabulary.tsx)
+              gcTime: 600000, // Keep in cache for 10 minutes
+              retry: 2, // Add retry capability
             })
             .catch(error => {
               logWarning('Failed to load study words:', error);
@@ -122,8 +141,10 @@ export const useAppPreloader = () => {
             .fetchQuery({
               queryKey: ['readingList', user.id],
               queryFn: () => readingListService.getReadingList(user.id),
-              staleTime: NO_CACHE, // No caching
-              gcTime: NO_CACHE, // No cache retention
+              staleTime: 60000, // Cache for 1 minute
+              gcTime: 300000, // Keep in cache for 5 minutes
+              retry: 3, // Retry failed requests up to 3 times
+              retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
             })
             .catch(error => {
               logWarning('Failed to load reading list:', error);
@@ -165,7 +186,7 @@ export const useAppPreloader = () => {
       setIsPreloading(false);
       preloadLockRef.current = false;
     }
-  }, [queryClient, user, isPreloading]);
+  }, [queryClient, user, isPreloading, isAuthLoading]);
 
   // Function to prefetch a specific article
   const prefetchArticle = useCallback(
@@ -210,20 +231,22 @@ export const useAppPreloader = () => {
     if (!user?.id) return false;
 
     try {
-      // Always fetch fresh data
+      // Use consistent cache settings
       await Promise.allSettled([
         queryClient.prefetchQuery({
           queryKey: ['dueWords', user.id],
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-          staleTime: NO_CACHE, // No caching
-          gcTime: NO_CACHE, // No cache retention
+          staleTime: 120000, // Cache for 2 minutes (same as in main preload)
+          gcTime: 300000, // Keep in cache for 5 minutes
+          retry: 2, // Add retry capability
         }),
 
         queryClient.prefetchQuery({
           queryKey: ['studyWords', user.id],
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-          staleTime: NO_CACHE, // No caching
-          gcTime: NO_CACHE, // No cache retention
+          staleTime: 180000, // Cache for 3 minutes (same as in main preload)
+          gcTime: 600000, // Keep in cache for 10 minutes
+          retry: 2, // Add retry capability
         }),
       ]);
 

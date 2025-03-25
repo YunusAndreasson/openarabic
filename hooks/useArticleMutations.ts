@@ -64,10 +64,31 @@ export const useArticleMutations = (
       queryClient.invalidateQueries({
         queryKey: ['vocabularyStats'],
       });
+
+      // Show success toast
+      Toast.show({
+        type: 'success',
+        text1: result ? 'Word added to study list' : 'Word removed from study list',
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     },
     onError: error => {
       console.error(`[toggleWordMutation] Error:`, error);
-      // Error handled silently
+
+      // Show error toast to user
+      Toast.show({
+        type: 'error',
+        text1: 'Error updating study list',
+        text2: 'Please try again later',
+        position: 'bottom',
+        visibilityTime: 3000,
+      });
+
+      // Refresh study words data anyway to ensure UI is consistent
+      queryClient.invalidateQueries({
+        queryKey: ['studyWords', userId],
+      });
     },
   });
 

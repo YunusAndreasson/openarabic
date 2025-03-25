@@ -193,17 +193,36 @@ export const studyWordsFSRSService = {
     }
 
     if (existingWord) {
-      const { error: deleteError } = await supabase
-        .from('study_words')
-        .delete()
-        .eq('user_id', userId)
-        .eq('sentence_word_id', sentenceWordId);
+      try {
+        // First, delete all reviews related to this study word to avoid foreign key constraint errors
+        const { error: reviewsDeleteError } = await supabase
+          .from('reviews')
+          .delete()
+          .eq('user_id', userId)
+          .eq('sentence_word_id', sentenceWordId);
 
-      if (deleteError) {
-        throw deleteError;
+        if (reviewsDeleteError) {
+          console.error('Error deleting reviews:', reviewsDeleteError);
+          throw reviewsDeleteError;
+        }
+
+        // After deleting reviews, delete the study word
+        const { error: deleteError } = await supabase
+          .from('study_words')
+          .delete()
+          .eq('user_id', userId)
+          .eq('sentence_word_id', sentenceWordId);
+
+        if (deleteError) {
+          console.error('Error deleting study word:', deleteError);
+          throw deleteError;
+        }
+
+        return false;
+      } catch (error) {
+        console.error('Error in toggleFSRSStudyWord:', error);
+        throw error;
       }
-
-      return false;
     } else {
       // Get current time
       const now = new Date();

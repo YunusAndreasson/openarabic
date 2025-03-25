@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, FlatList, View, AppState } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/readingList';
@@ -266,11 +266,20 @@ export default function BookmarksScreen() {
   const {
     data: readingList = [], // Default to empty array to avoid undefined
     isLoading: isDataLoading,
+    isFetching,
+    isError,
+    error,
   } = useQuery({
     queryKey: ['readingList', user?.id],
-    queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
-    enabled: !!user?.id,
-    staleTime: 0, // No caching
+    queryFn: () => {
+      if (!user?.id) return Promise.resolve([]);
+      return readingListService.getReadingList(user.id);
+    },
+    enabled: !!user?.id && !isAuthLoading, // Only enable when auth is resolved and user exists
+    staleTime: 60000, // Cache for 1 minute rather than no caching
+    gcTime: 300000, // Keep in cache for 5 minutes
+    retry: 3, // Retry failed requests up to 3 times
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
     placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
   });
 
@@ -298,39 +307,8 @@ export default function BookmarksScreen() {
   const isMountedRef = useRef(true);
   const lastActionTimeRef = useRef(Date.now());
 
-  // Check if data is ready to display
-  const isDataReady = useMemo(() => {
-    return !!user && !isDataLoading && !!readingList;
-  }, [user, isDataLoading, readingList]);
-
-  // Use improved screen animation with data-ready check
-  const { fadeInStyle } = useScreenAnimation(
-    isDataReady,
-    isLoadingState
-    // Using default values for remaining parameters
-  );
-
-  // Update loading state based on data loading
-  useEffect(() => {
-    if (isAuthLoading) {
-      startLoading();
-    } else {
-      stopLoading();
-    }
-  }, [isAuthLoading, startLoading, stopLoading]);
-
-  // Get active playlist based on mode
-  const activePlaylist = useMemo(() => {
-    return isShuffleMode ? shuffledList : readingList || [];
-  }, [isShuffleMode, shuffledList, readingList]);
-
-  // Check if something is currently playing
-  const isCurrentlyPlaying = useMemo(() => {
-    return audioState !== AUDIO_STATES.IDLE;
-  }, [audioState]);
-
   // Clean up all audio resources
-  const cleanupAudio = async () => {
+  const cleanupAudio = useCallback(async () => {
     // Clear any timers
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
@@ -347,7 +325,95 @@ export default function BookmarksScreen() {
         // Error during cleanup
       }
     }
-  };
+  }, []);
+
+  // Check if data is ready to display
+  const isDataReady = useMemo(() => {
+    return !!user && !isDataLoading && !!readingList;
+  }, [user, isDataLoading, readingList]);
+
+  // Use improved screen animation with data-ready check
+  const { fadeInStyle } = useScreenAnimation(
+    isDataReady,
+    isLoadingState
+    // Using default values for remaining parameters
+  );
+
+  // Update loading state based on data loading
+  useEffect(() => {
+    if (isAuthLoading || isDataLoading || isFetching) {
+      startLoading();
+    } else {
+      stopLoading();
+
+      // Log for debugging
+      if (isError) {
+        console.error('Error loading reading list:', error);
+      }
+
+      if (readingList.length === 0 && user?.id) {
+        console.log('Reading list is empty for user:', user.id);
+      }
+    }
+  }, [
+    isAuthLoading,
+    isDataLoading,
+    isFetching,
+    startLoading,
+    stopLoading,
+    isError,
+    error,
+    readingList,
+    user,
+  ]);
+
+  // Add an extra effect to force refresh reading list data when auth state changes
+  useEffect(() => {
+    if (user?.id && !isDataLoading) {
+      queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
+    }
+  }, [user?.id, queryClient, isDataLoading]);
+
+  // Handle component focus and cleanup - MUST BE BEFORE ANY CONDITIONAL RETURNS
+  useFocusEffect(
+    React.useCallback(() => {
+      // Refresh reading list when screen is focused
+      if (user?.id) {
+        // First check if we already have data
+        const existingData = queryClient.getQueryData(['readingList', user.id]);
+
+        // If we need fresh data, trigger prefetch instead of invalidation
+        if (!existingData || isDataLoading) {
+          queryClient.prefetchQuery({
+            queryKey: ['readingList', user.id],
+            queryFn: () => readingListService.getReadingList(user.id),
+            staleTime: 60000, // Match the query staleTime
+            gcTime: 300000, // Match the query gcTime
+          });
+        } else {
+          // Otherwise just invalidate to refresh in background
+          queryClient.invalidateQueries({ queryKey: ['readingList', user.id] }).catch(error => {
+            console.error('Failed to refresh reading list:', error);
+          });
+        }
+      }
+
+      return () => {
+        // Clean up audio when screen is unfocused
+        cleanupAudio();
+      };
+    }, [user?.id, queryClient, isDataLoading, cleanupAudio])
+  );
+
+  // Get active playlist based on mode
+  const activePlaylist = useMemo(() => {
+    return isShuffleMode ? shuffledList : readingList || [];
+  }, [isShuffleMode, shuffledList, readingList]);
+
+  // Check if something is currently playing
+  const isCurrentlyPlaying = useMemo(() => {
+    return audioState !== AUDIO_STATES.IDLE;
+  }, [audioState]);
 
   // Initialize audio session
   const initAudioSession = async () => {
@@ -534,21 +600,6 @@ export default function BookmarksScreen() {
   };
 
   // Play previous track in playlist
-
-  // Handle component focus and cleanup
-  useFocusEffect(
-    React.useCallback(() => {
-      // Refresh reading list when screen is focused
-      if (user?.id) {
-        queryClient.invalidateQueries({ queryKey: ['readingList'] });
-      }
-
-      return () => {
-        // Clean up audio when screen is unfocused
-        cleanupAudio();
-      };
-    }, [user?.id, queryClient])
-  );
 
   // Monitor app state changes
   useEffect(() => {

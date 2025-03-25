@@ -5,23 +5,33 @@ import { supabase } from '../services/supabase';
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authError, setAuthError] = useState<Error | null>(null);
 
   useEffect(() => {
     // Get initial session
     const initSession = async () => {
+      setIsLoading(true);
       try {
         const {
           data: { session },
           error,
         } = await supabase.auth.getSession();
-        if (error) throw error;
+        if (error) {
+          setAuthError(error);
+          console.error('Auth initialization error:', error);
+          return;
+        }
         setSession(session);
-      } catch {
+        setAuthError(null);
+      } catch (error) {
+        setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
+        console.error('Auth exception:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
+    // Initialize immediately
     initSession();
 
     // Listen for auth changes
@@ -29,6 +39,7 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (isLoading) setIsLoading(false); // Ensure loading state is updated
     });
 
     return () => subscription.unsubscribe();
@@ -38,5 +49,6 @@ export function useAuth() {
     session,
     user: session?.user ?? null,
     isLoading,
+    authError,
   };
 }

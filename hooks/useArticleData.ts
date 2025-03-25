@@ -92,6 +92,14 @@ export const useArticleData = (
     enabled: !!userId,
     staleTime: 0, // No caching
     gcTime: 0, // No cache retention
+    // Improve priority to load faster
+    networkMode: 'always',
+    retry: false,
+    // Use any existing cache data immediately while fetching
+    placeholderData: () => {
+      const cachedStudyWords = queryClient.getQueryData<FSRSStudyWord[]>(['studyWords', userId]);
+      return cachedStudyWords || [];
+    },
   });
 
   // Extract sentence words from article
@@ -105,12 +113,7 @@ export const useArticleData = (
       if (!articleId) return [];
 
       // Always fetch fresh data from the API to ensure we have sentences
-      console.log('[useArticleData] Fetching sentences for article:', articleId);
       const articleData = await articlesService.getArticleById(articleId);
-      console.log(
-        '[useArticleData] Fetched article sentences:',
-        articleData.article_sentences?.length || 0
-      );
       return articleData.article_sentences || [];
     },
     enabled: !!articleId,
@@ -120,7 +123,6 @@ export const useArticleData = (
 
   // Sort sentences by position
   const sortedSentences = useMemo(() => {
-    console.log('[useArticleData] Sorting sentences, count:', sentences?.length || 0);
     return [...sentences].sort((a, b) => a.position - b.position);
   }, [sentences]);
 
@@ -128,23 +130,12 @@ export const useArticleData = (
   const selectedWordIds = useMemo(() => {
     // Create a set with numeric IDs for more reliable type comparison
     const ids = new Set(
-      studyWords.map(w => {
+      (studyWords || []).map(w => {
         // Convert IDs to numbers to ensure consistent comparison
         const id = w.sentence_word_id;
         return typeof id === 'string' ? parseInt(id, 10) : id;
       })
     );
-
-    // Only log in development and only first few IDs to avoid long logs
-    if (process.env.NODE_ENV !== 'production') {
-      const idArray = Array.from(ids);
-      const displayIds =
-        idArray.length > 5
-          ? idArray.slice(0, 5).join(', ') + `... (${idArray.length} total)`
-          : idArray.join(', ');
-      console.log(`[useArticleData] selectedWordIds: ${displayIds}`);
-    }
-
     return ids;
   }, [studyWords]);
 
@@ -152,7 +143,6 @@ export const useArticleData = (
   const sentenceWordsMap = useMemo(() => {
     // If there are no sentences, return an empty query result
     if (sortedSentences.length === 0) {
-      console.log('[useArticleData] No sentences available, returning empty map');
       return {
         data: new Map(),
         isLoading: false,
@@ -161,7 +151,6 @@ export const useArticleData = (
 
     // Extract the sentence IDs from sortedSentences
     const sentenceIds = sortedSentences.map(sentence => sentence.id);
-    console.log('[useArticleData] Processing sentenceIds:', sentenceIds.length);
 
     // Use existing sentence words data if available in the article sentences
     const existingSentenceWords = new Map<number, SentenceWord[]>();
@@ -174,11 +163,8 @@ export const useArticleData = (
       }
     });
 
-    console.log('[useArticleData] Existing sentence words map size:', existingSentenceWords.size);
-
     // If all sentences have words, return that data without fetching
     if (sentenceIds.length === existingSentenceWords.size) {
-      console.log('[useArticleData] All sentences have words, using existing data');
       return {
         data: existingSentenceWords,
         isLoading: false,
@@ -191,28 +177,16 @@ export const useArticleData = (
       queryFn: async () => {
         // Get all words for all sentences
         const allWords: SentenceWord[] = [];
-        console.log('[useArticleData] Fetching words for sentences that need data');
 
         // Batch fetch all sentences that don't have existing data
         const sentencesToFetch = sentenceIds.filter(id => !existingSentenceWords.has(id));
-        console.log('[useArticleData] Sentences that need fetching:', sentencesToFetch.length);
 
         if (sentencesToFetch.length > 0) {
           const article = await articlesService.getArticleById(articleId!);
           const fetchedSentences = article.article_sentences || [];
-          console.log(
-            '[useArticleData] Fetched article again, sentences:',
-            fetchedSentences.length
-          );
 
           fetchedSentences.forEach(sentence => {
             if (sentence.sentence_words) {
-              console.log(
-                '[useArticleData] Words in sentence',
-                sentence.id,
-                ':',
-                sentence.sentence_words.length
-              );
               allWords.push(...sentence.sentence_words);
             }
           });
@@ -241,7 +215,10 @@ export const useArticleData = (
       },
       enabled: sentenceIds.length > 0,
       staleTime: 0, // No caching
-      gcTime: 0, // No cache retention
+      gcTime: 0, // No cache retention,
+      retry: 1, // Limit retries to prevent excessive loading
+      refetchOnWindowFocus: false, // Don't refetch on window focus
+      refetchOnMount: false, // Only fetch once
     });
   }, [sortedSentences, articleId, isDataPrefetched]);
 

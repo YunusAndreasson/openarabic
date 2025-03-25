@@ -149,9 +149,10 @@ export default function VocabularyScreen() {
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { forStats: false }),
     enabled: !!user,
-    staleTime: 0, // No caching
+    staleTime: 180000, // Cache for 3 minutes
+    gcTime: 600000, // Keep in cache for 10 minutes
+    retry: 2, // Add retry capability
     refetchOnWindowFocus: true,
-    // Always fetch fresh data
     placeholderData: () => queryClient.getQueryData(['studyWords', user?.id]) || [],
   });
 
@@ -164,9 +165,9 @@ export default function VocabularyScreen() {
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { onlyDue: true }),
     enabled: !!user,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
-    // Always fetch fresh data
+    staleTime: 120000, // Cache for 2 minutes (due words change more frequently)
+    gcTime: 300000, // Keep in cache for 5 minutes
+    retry: 2, // Add retry capability
     placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || [],
   });
 
@@ -190,23 +191,23 @@ export default function VocabularyScreen() {
     }
   };
 
-  // Use the screen focus refresh hook with debounce - reduced frequency
+  // Use the screen focus refresh hook with debounce - with proper caching
   useScreenFocusRefresh(
     queryClient,
     'dueWords',
     user?.id,
-    0, // No caching
+    120000, // Cache for 2 minutes (same as query)
     true, // Skip initial focus
-    true // Force refresh on focus, no caching
+    false // Only refresh if stale
   );
 
   useScreenFocusRefresh(
     queryClient,
     'studyWords',
     user?.id,
-    0, // No caching
+    180000, // Cache for 3 minutes (same as query)
     true, // Skip initial focus
-    true // Force refresh on focus, no caching
+    false // Only refresh if stale
   );
 
   // Filter valid study words with error protection

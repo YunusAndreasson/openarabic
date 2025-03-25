@@ -16,18 +16,18 @@ export const useScreenAnimations = (initialButtonsVisibility = true) => {
 
   // Content animations
   const { animatedStyle: contentStyle, startAnimation: startContentAnimation } =
-    useOpacityAnimation({ initialOpacity: 0, delay: 100, duration: 300 });
+    useOpacityAnimation({ initialOpacity: 0, delay: 0, duration: 400 });
 
   const { animatedStyle: headerStyle, startAnimation: startHeaderAnimation } = useOpacityAnimation({
     initialOpacity: 0,
-    delay: 100,
-    duration: 300,
+    delay: 0,
+    duration: 400,
   });
 
   const { animatedStyle: footerStyle, startAnimation: startFooterAnimation } = useOpacityAnimation({
     initialOpacity: 0,
-    delay: 300,
-    duration: 500,
+    delay: 200,
+    duration: 400,
   });
 
   // Button animations
@@ -51,16 +51,20 @@ export const useScreenAnimations = (initialButtonsVisibility = true) => {
 
   // Unified function to start all content animations
   const startAllAnimations = useCallback(() => {
-    try {
-      startContentAnimation();
-      startHeaderAnimation();
-      startFooterAnimation();
-      startBackButtonAnimation();
-      startBookmarkButtonAnimation();
-      startPlayButtonAnimation();
-    } catch (err) {
-      // Silent error handling
-    }
+    const timeoutId = setTimeout(() => {
+      try {
+        startContentAnimation();
+        startHeaderAnimation();
+        startFooterAnimation();
+        startBackButtonAnimation();
+        startBookmarkButtonAnimation();
+        startPlayButtonAnimation();
+      } catch (err) {
+        // Silent error handling
+      }
+    }, 50); // Small delay to ensure component is fully mounted
+
+    return () => clearTimeout(timeoutId);
   }, [
     startContentAnimation,
     startHeaderAnimation,

@@ -25,6 +25,7 @@ import { useAppPreloader } from '../hooks/useAppPreloader';
 import { AppLoader } from '@/components/Loader';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider } from '@/components/ToastProvider';
+import { useAuth } from '../hooks/useAuth';
 
 // Hide splash screen immediately
 SplashScreen.hideAsync();
@@ -35,19 +36,20 @@ configureReanimatedLogger({
   strict: false,
 });
 
-// Create React Query client with all caching disabled
+// Create React Query client with more balanced caching defaults
+// Individual queries can override these settings as needed
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0, // No stale time - always consider data stale
-      gcTime: 0, // No cache retention
-      refetchOnWindowFocus: true, // Always refetch on focus
-      refetchOnMount: true, // Always refetch on mount
-      refetchOnReconnect: true, // Always refetch on reconnect
-      retry: false, // No retries
+      staleTime: 60000, // Consider data stale after 1 minute
+      gcTime: 300000, // Keep unused data in cache for 5 minutes
+      refetchOnWindowFocus: true, // Still refetch on focus
+      refetchOnMount: true, // Still refetch on mount
+      refetchOnReconnect: true, // Still refetch on reconnect
+      retry: 1, // Add minimal retry
     },
     mutations: {
-      retry: false, // No retries for mutations
+      retry: 1, // Add minimal retry for mutations
       gcTime: 0, // No cache for mutations
     },
   },
@@ -75,6 +77,7 @@ function AppContent() {
   const [showAppLoader, setShowAppLoader] = useState(true);
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
+  const { user, isLoading: isAuthLoading, authError } = useAuth();
 
   // Memoize navigation theme to prevent recalculation
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
@@ -95,6 +98,19 @@ function AppContent() {
       dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
     }
   }, [colorScheme, dispatch, theme]);
+
+  // Start preloading app data after authentication is resolved
+  useEffect(() => {
+    if (!isAuthLoading) {
+      // Authentication is resolved (whether user is logged in or not)
+      // This ensures we don't start preloading before auth is complete
+      preloadAppData();
+
+      if (authError) {
+        console.error('Auth error during app initialization:', authError);
+      }
+    }
+  }, [isAuthLoading, preloadAppData, authError]);
 
   // Watch for app state changes
   useEffect(() => {
@@ -118,11 +134,6 @@ function AppContent() {
       setShowAppLoader(false);
     }
   }, [criticalDataLoaded]);
-
-  // Start resource preparation immediately
-  useEffect(() => {
-    preloadAppData();
-  }, [preloadAppData]);
 
   // Render content immediately since fonts are guaranteed
   return (

@@ -87,11 +87,8 @@ function ArabicWordComponent({
     // Immediately update visual state
     pressed.value = isSelected ? 1 : 0;
 
-    // Animate border opacity with faster animation for better feedback
-    borderOpacity.value = withTiming(isSelected ? 1 : 0, {
-      duration: 100,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-    });
+    // Make border opacity change immediate with no animation
+    borderOpacity.value = isSelected ? 1 : 0;
   }, [isSelected, pressed, borderOpacity, word.id]);
 
   // Animated style for long press feedback
