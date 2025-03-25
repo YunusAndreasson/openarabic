@@ -18,7 +18,6 @@ import { useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
 import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
-import { lightFeedback } from '@/utils/haptics';
 import BaseCard from './BaseCard';
 
 interface VocabularyGraphProps {
@@ -70,7 +69,7 @@ export const VocabularyGraph = React.memo(
     }, []);
 
     // Use graph data hook to generate points and paths
-    const { points, areaPath, linePath, totalWordsLearned, dailyAverage, maxValue } = useGraphData(
+    const { points, areaPath, linePath } = useGraphData(
       data,
       GRAPH_WIDTH,
       GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING

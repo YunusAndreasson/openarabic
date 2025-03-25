@@ -20,6 +20,8 @@ export function useVocabulary() {
       }
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Fetch due words count for the current user
@@ -36,6 +38,8 @@ export function useVocabulary() {
       }
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Mutation to toggle study word status
@@ -77,6 +81,8 @@ export function useVocabulary() {
       }
     },
     enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Check if a word is being studied

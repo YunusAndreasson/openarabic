@@ -6,7 +6,6 @@ import ThemedCard from './ThemedCard';
 import Section from './Section';
 import { DailyPickSectionProps } from '@/types/ui.types';
 import { articlesService } from '@/services/articles';
-import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';
 
 /**
  * A section displaying the daily pick article
@@ -20,20 +19,16 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   const queryClient = useQueryClient();
 
   // Handle the press with prefetching
-  const handleArticlePress = useCallback(() => {
+  const handlePress = React.useCallback(() => {
     if (!article) return;
 
-    // Check if article is already in cache before prefetching
-    const cachedArticle = queryClient.getQueryData(['article', article.id]);
-    if (!cachedArticle) {
-      // Prefetch article data with longer stale time since articles rarely change
-      queryClient.prefetchQuery({
-        queryKey: ['article', article.id],
-        queryFn: () => articlesService.getArticleById(article.id),
-        staleTime: ARTICLES_STALE_TIME,
-        gcTime: ARTICLES_GC_TIME,
-      });
-    }
+    // Always prefetch article data with no caching
+    queryClient.prefetchQuery({
+      queryKey: ['article', article.id],
+      queryFn: () => articlesService.getArticleById(article.id),
+      staleTime: 0, // No caching
+      gcTime: 0, // No cache retention
+    });
 
     // Call the original onPress handler
     onPress(article);
@@ -42,12 +37,12 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   // Daily pick should be pre-loaded at startup since it's important
   // This ensures it's ready when the user sees it
   React.useEffect(() => {
-    if (article && !queryClient.getQueryData(['article', article.id])) {
+    if (article) {
       queryClient.prefetchQuery({
         queryKey: ['article', article.id],
         queryFn: () => articlesService.getArticleById(article.id),
-        staleTime: ARTICLES_STALE_TIME,
-        gcTime: ARTICLES_GC_TIME,
+        staleTime: 0, // No caching
+        gcTime: 0, // No cache retention
       });
     }
   }, [article, queryClient]);
@@ -67,7 +62,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         category={article.category?.name || 'General'}
         author={article.author?.name || 'Unknown'}
         summary={article.summary || undefined}
-        onPress={handleArticlePress}
+        onPress={handlePress}
       />
     </Section>
   );

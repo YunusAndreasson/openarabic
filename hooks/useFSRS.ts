@@ -86,11 +86,12 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       }
     },
     enabled: !!userId,
-    // Disable automatic refetching during a session
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    staleTime: Infinity,
+    // Always fetch fresh data
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 0, // No caching
+    gcTime: 0, // No cache retention
   });
 
   // Add a ref to track if the queue has been initialized

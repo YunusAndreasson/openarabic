@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import React, { useMemo, useCallback } from 'react';
-import { Platform, StyleSheet, Animated } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';

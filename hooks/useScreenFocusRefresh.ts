@@ -9,18 +9,18 @@ import { QueryClient, QueryKey } from '@tanstack/react-query';
  * @param queryClient - React Query client instance
  * @param queryKey - Query key to invalidate
  * @param userId - User ID to include in query key
- * @param staleTime - Time in ms after which data is considered stale (default: 60000ms)
+ * @param staleTime - Time in ms after which data is considered stale (default: 0ms)
  * @param skipInitialFocus - Whether to skip refresh on initial focus (default: true)
- * @param forceRefreshOnFocus - Force refresh even if data is not stale (default: false)
+ * @param forceRefreshOnFocus - Force refresh even if data is not stale (default: true)
  * @returns Object with manual refresh function
  */
 export const useScreenFocusRefresh = (
   queryClient: QueryClient,
   queryKey: string,
   userId: string | undefined,
-  staleTime = 60000,
+  staleTime = 0, // No caching by default
   skipInitialFocus = true,
-  forceRefreshOnFocus = false
+  forceRefreshOnFocus = true // Always force refresh by default
 ): { refreshData: () => void } => {
   // Track if this is the initial mount
   const isInitialMount = useRef(true);

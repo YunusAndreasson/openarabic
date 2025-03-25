@@ -124,22 +124,17 @@ export default function ArticleScreen() {
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
-  // Check if data is already in cache to optimize loading time
-  const isDataPrefetched = useMemo(() => {
-    if (!articleId) return false;
-    const cachedData = queryClient.getQueryData(['article', articleId]);
-    return cachedData !== undefined && cachedData !== null;
-  }, [articleId, queryClient]);
+  // Always fetch fresh data - no caching
+  const isDataPrefetched = false;
 
   // Use the custom loading state hook
   const { setDataLoaded } = useLoadingState(true);
 
   // Update minimum loading time when prefetched status changes
   useEffect(() => {
-    if (isDataPrefetched) {
-      setDataLoaded(true);
-    }
-  }, [isDataPrefetched, setDataLoaded]);
+    // Always show loading state regardless of cache
+    setDataLoaded(false);
+  }, [setDataLoaded]);
 
   // Extract article data hook before using any results
   const {
@@ -153,6 +148,29 @@ export default function ArticleScreen() {
     otherArticles,
     otherCategoryArticles,
   } = useArticleData(articleId, user?.id, !!isDataPrefetched);
+
+  // Add console logs for debugging
+  useEffect(() => {
+    console.log('Article data:', !!article);
+    console.log('Sorted sentences:', sortedSentences?.length || 0);
+    console.log(
+      'Sentence words map size:',
+      sentenceWordsMap
+        ? sentenceWordsMap instanceof Map
+          ? sentenceWordsMap.size
+          : 'Not a Map'
+        : 'No map'
+    );
+    if (sortedSentences?.length) {
+      console.log('First sentence ID:', sortedSentences[0]?.id);
+      if (sentenceWordsMap instanceof Map) {
+        console.log(
+          'Words for first sentence:',
+          sentenceWordsMap.get(sortedSentences[0]?.id)?.length || 0
+        );
+      }
+    }
+  }, [article, sortedSentences, sentenceWordsMap]);
 
   // Use animation hook for content and button visibility on scroll
   const {
@@ -183,7 +201,8 @@ export default function ArticleScreen() {
   const { prepareWord, handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     colors,
-    new Set([...selectedWordIds].map(id => (typeof id === 'string' ? parseInt(id, 10) : id))),
+    // Simply pass the selectedWordIds directly now that our hooks handle type consistency
+    selectedWordIds,
     sentenceWordsMap || new Map(),
     (word: Tables<'sentence_words'>) => handleWordPress(word.id)
   );

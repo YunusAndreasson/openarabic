@@ -48,12 +48,25 @@ export const useArticleMutations = (
   const toggleWordMutation = useMutation({
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
       studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
-      queryClient.invalidateQueries({ queryKey: ['dueWords', userId] });
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+    onSuccess: result => {
+      console.log(`[toggleWordMutation] Success - word was ${result ? 'added' : 'removed'}`);
+
+      // Always refetch data immediately
+      queryClient.invalidateQueries({
+        queryKey: ['studyWords', userId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['dueWords', userId],
+      });
+
+      // Always refetch stats
+      queryClient.invalidateQueries({
+        queryKey: ['vocabularyStats'],
+      });
     },
-    onError: () => {
+    onError: error => {
+      console.error(`[toggleWordMutation] Error:`, error);
       // Error handled silently
     },
   });
@@ -76,6 +89,7 @@ export const useArticleMutations = (
   const handleWordPress = useCallback(
     (wordId: number) => {
       if (!userId) return;
+      console.log(`[handleWordPress] Toggling word ${wordId} for user ${userId}`);
       toggleWordMutation.mutate({ userId, wordId });
     },
     [userId, toggleWordMutation]

@@ -46,6 +46,13 @@ function ArabicWordComponent({
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
 
+  // Keep minimal logging for production debugging
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[ArabicWord] Word ${word.id} selection changed to ${isSelected}`);
+    }
+  }, [word.id, isSelected]);
+
   // Animated values for long press feedback
   const longPressProgress = useSharedValue(0);
   const borderOpacity = useSharedValue(isSelected ? 1 : 0);
@@ -72,10 +79,20 @@ function ArabicWordComponent({
 
   // Update the pressed value based on isSelected - direct assignment for immediate effect
   useEffect(() => {
+    // Only log in development to avoid excessive logs
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[ArabicWord] Selection updated for word ${word.id} to ${isSelected}`);
+    }
+
+    // Immediately update visual state
     pressed.value = isSelected ? 1 : 0;
-    // Animate border opacity to avoid layout shifts
-    borderOpacity.value = withTiming(isSelected ? 1 : 0, { duration: 150 });
-  }, [isSelected, pressed, borderOpacity]);
+
+    // Animate border opacity with faster animation for better feedback
+    borderOpacity.value = withTiming(isSelected ? 1 : 0, {
+      duration: 100,
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+    });
+  }, [isSelected, pressed, borderOpacity, word.id]);
 
   // Animated style for long press feedback
   const longPressStyle = useAnimatedStyle(() => {
@@ -136,13 +153,18 @@ function ArabicWordComponent({
     // Trigger haptic feedback immediately
     lightFeedback();
 
+    // Log the word press action for debugging
+    console.log(
+      `[ArabicWord] handleLongPress for word ${word.id}:${word.word_form}, currently isSelected=${isSelected}`
+    );
+
     // Update selection state through the parent component
     onPress(word);
 
     // Animate the long press feedback - faster entry with bounce
     longPressProgress.value = withTiming(1, {
       duration: 80,
-      easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Bouncy easing
     });
 
     // Automatically reset the animation with better reliability
@@ -165,11 +187,8 @@ function ArabicWordComponent({
       }
     }, 300);
 
-    // Invalidate the dueWords query to refresh the vocabulary screen
-    if (user) {
-      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-    }
-  }, [onPress, word, queryClient, user, longPressProgress, cleanupAnimation]);
+    // Remove invalidation of queries here - we'll handle it in the mutation
+  }, [onPress, word, longPressProgress, cleanupAnimation]);
 
   // Consolidated visual properties - calculate multiple derived values in a single pass
   // This reduces overhead from multiple hooks and ensures consistent generation

@@ -35,39 +35,23 @@ configureReanimatedLogger({
   strict: false,
 });
 
-// Create React Query client with optimized settings and faster startup
+// Create React Query client with all caching disabled
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60000, // Default 1 minute stale time
-      gcTime: 300000, // Default 5 minute garbage collection time
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      retry: (failureCount, error: any) => {
-        // Don't retry on 404s or auth errors
-        if (error?.status === 404 || error?.status === 401 || error?.status === 403) {
-          return false;
-        }
-        // Only retry twice for other errors
-        return failureCount < 2;
-      },
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff capped at 10s
+      staleTime: 0, // No stale time - always consider data stale
+      gcTime: 0, // No cache retention
+      refetchOnWindowFocus: true, // Always refetch on focus
+      refetchOnMount: true, // Always refetch on mount
+      refetchOnReconnect: true, // Always refetch on reconnect
+      retry: false, // No retries
     },
     mutations: {
-      retry: false, // Don't retry mutations by default
-      gcTime: 0, // Don't keep mutation data in cache
+      retry: false, // No retries for mutations
+      gcTime: 0, // No cache for mutations
     },
   },
 });
-
-// Simpler cache cleanup that only runs when needed
-if (typeof window !== 'undefined') {
-  AppState.addEventListener('change', nextAppState => {
-    if (nextAppState === 'active') {
-      // Just mark queries as stale - they'll refetch when needed
-      queryClient.invalidateQueries();
-    }
-  });
-}
 
 // Static stack options
 const stackScreenOptions = {
@@ -112,12 +96,11 @@ function AppContent() {
     }
   }, [colorScheme, dispatch, theme]);
 
-  // Watch for app state changes to optimize performance
+  // Watch for app state changes
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (appState.current === 'background' && nextAppState === 'active' && appReady) {
-        // Invalidate queries and refresh data
-        queryClient.invalidateQueries();
+        // Just trigger preload data when returning to active state
         setTimeout(preloadAppData, 300);
       }
       appState.current = nextAppState;

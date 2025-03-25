@@ -18,9 +18,9 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
+import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 // Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
@@ -51,8 +51,6 @@ import ErrorState from '../../components/ErrorState';
 
 // Cache duration constants
 const MINUTE_IN_MS = 60000;
-const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
-const STALE_TIME_MEDIUM = 5 * MINUTE_IN_MS; // 5 minutes
 
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -121,20 +119,16 @@ export default function ArticlesScreen() {
   } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: ARTICLES_STALE_TIME, // 4 hours since articles update once per day
-    gcTime: ARTICLES_GC_TIME, // 24 hours
+    staleTime: 0, // No caching
+    gcTime: 0, // No caching
   });
 
   // Use React Query for categories
-  const {
-    data: categoriesData = [],
-    isLoading: isCategoriesLoading,
-    error: categoriesError,
-  } = useQuery({
+  const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
-    staleTime: ARTICLES_STALE_TIME, // 4 hours since categories update with articles
-    gcTime: ARTICLES_GC_TIME, // 24 hours
+    staleTime: 0, // No caching
+    gcTime: 0, // No caching
   });
 
   // State for authors (keep this as is since it uses Supabase directly)
@@ -199,20 +193,8 @@ export default function ArticlesScreen() {
     });
   }, [inProgressArticles, lastOpenedArticles]);
 
-  // Refactored refresh handler using React Query - only refresh when needed
+  // Refactored refresh handler using React Query - always refresh
   const handleRefresh = useCallback(() => {
-    // Only refresh if it's been 4+ hours since the last refresh
-    const articlesQuery = queryClient.getQueryState(['articles']);
-    const lastUpdated = articlesQuery?.dataUpdatedAt || 0;
-    const now = Date.now();
-    const fourHoursInMs = 4 * 60 * 60 * 1000;
-
-    // Don't refresh if data is fresh (less than 4 hours old)
-    if (now - lastUpdated < fourHoursInMs && articlesData.length > 0) {
-      setIsRefreshing(false);
-      return;
-    }
-
     setIsRefreshing(true);
 
     // Create an array of refresh promises
@@ -231,7 +213,7 @@ export default function ArticlesScreen() {
       .finally(() => {
         setIsRefreshing(false);
       });
-  }, [queryClient, dispatch, fetchAuthors, articlesData.length]);
+  }, [queryClient, dispatch, fetchAuthors]);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
@@ -250,25 +232,21 @@ export default function ArticlesScreen() {
           setTimeout(
             () => {
               batch.forEach(article => {
-                // Check if already in cache first
-                if (!queryClient.getQueryData(['article', article.id])) {
-                  queryClient.prefetchQuery({
-                    queryKey: ['article', article.id],
-                    queryFn: () => articlesService.getArticleById(article.id),
-                    staleTime: ARTICLES_STALE_TIME,
-                    gcTime: ARTICLES_GC_TIME,
-                  });
-                }
+                // Always prefetch article data with no caching
+                queryClient.prefetchQuery({
+                  queryKey: ['article', article.id],
+                  queryFn: () => articlesService.getArticleById(article.id),
+                  staleTime: 0, // No caching
+                  gcTime: 0, // No cache retention
+                });
 
                 // Prefetch reading list status if logged in
-                if (
-                  session?.user &&
-                  !queryClient.getQueryData(['isInReadingList', session.user.id, article.id])
-                ) {
+                if (session?.user) {
                   queryClient.prefetchQuery({
                     queryKey: ['isInReadingList', session.user.id, article.id],
                     queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-                    staleTime: 60000, // This can change frequently
+                    staleTime: 0, // No caching
+                    gcTime: 0, // No cache retention
                   });
                 }
               });
@@ -284,18 +262,13 @@ export default function ArticlesScreen() {
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      // Check if article is already in cache
-      const cachedArticle = queryClient.getQueryData(['article', article.id]);
-
-      if (!cachedArticle) {
-        // Start prefetching article data immediately when press begins
-        queryClient.prefetchQuery({
-          queryKey: ['article', article.id],
-          queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: ARTICLES_STALE_TIME,
-          gcTime: ARTICLES_GC_TIME,
-        });
-      }
+      // Always prefetch article data with no caching
+      queryClient.prefetchQuery({
+        queryKey: ['article', article.id],
+        queryFn: () => articlesService.getArticleById(article.id),
+        staleTime: 0, // No caching
+        gcTime: 0, // No cache retention
+      });
 
       // Navigate to article detail with debounce protection
       navigateTo(`/article/${article.id}`, () => {
@@ -303,14 +276,13 @@ export default function ArticlesScreen() {
         if (session?.user) {
           dispatch(addToReadingList(article.id));
 
-          // Also prefetch reading list status if not already cached
-          if (!queryClient.getQueryData(['isInReadingList', session.user.id, article.id])) {
-            queryClient.prefetchQuery({
-              queryKey: ['isInReadingList', session.user.id, article.id],
-              queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-              staleTime: 60000, // Reading list status can change
-            });
-          }
+          // Always prefetch reading list status with no caching
+          queryClient.prefetchQuery({
+            queryKey: ['isInReadingList', session.user.id, article.id],
+            queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
+            staleTime: 0, // No caching
+            gcTime: 0, // No cache retention
+          });
         }
       });
     },
@@ -367,7 +339,8 @@ export default function ArticlesScreen() {
         queryClient.prefetchQuery({
           queryKey: ['article', article.id],
           queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: STALE_TIME_SHORT,
+          staleTime: 0, // No caching
+          gcTime: 0, // No cache retention
         });
       });
 
@@ -379,7 +352,8 @@ export default function ArticlesScreen() {
             queryClient.prefetchQuery({
               queryKey: ['article', article.id],
               queryFn: () => articlesService.getArticleById(article.id),
-              staleTime: STALE_TIME_SHORT,
+              staleTime: 0, // No caching
+              gcTime: 0, // No cache retention
             });
           });
         }, 1000); // Delay by 1 second to prioritize rendering

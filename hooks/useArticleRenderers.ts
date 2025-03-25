@@ -10,7 +10,7 @@ import type { SentenceWord } from '@/types/vocabulary.types';
  * Hook for article rendering functions
  * @param settings - App settings
  * @param colors - Theme colors
- * @param selectedWordIds - Set of selected word IDs
+ * @param selectedWordIds - Set of selected word IDs (can be number or string)
  * @param sentenceWordsMap - Map of sentence IDs to words
  * @param handleWordPress - Function to handle word press
  * @returns Object with rendering functions
@@ -21,7 +21,7 @@ export const useArticleRenderers = (
     showEnglish: boolean;
   },
   colors: Record<string, string>,
-  selectedWordIds: Set<number>,
+  selectedWordIds: Set<number | string>,
   sentenceWordsMap: Map<number, SentenceWord[]>,
   handleWordPress: (word: SentenceWord) => void
 ) => {
@@ -31,7 +31,24 @@ export const useArticleRenderers = (
   // Prepare word for rendering
   const prepareWord = useCallback(
     (word: SentenceWord) => {
-      const isSelected = selectedWordIds.has(word.id);
+      // Extract the word ID as both number and string representations for checking
+      const wordId = word.id;
+      const stringWordId = String(wordId);
+
+      // Debug log to check the Set contents and format
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(
+          `[prepareWord] Checking word ${wordId}, selectedWordIds:`,
+          Array.from(selectedWordIds).map(id => (typeof id === 'string' ? `"${id}"` : id))
+        );
+      }
+
+      // Check both number and string formats to ensure robust matching
+      const isSelected =
+        selectedWordIds.has(wordId) ||
+        selectedWordIds.has(Number(wordId)) ||
+        (typeof wordId === 'number' && selectedWordIds.has(stringWordId));
+
       return {
         word,
         isSelected,

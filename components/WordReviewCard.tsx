@@ -8,7 +8,7 @@ import { ThemedText } from './ThemedText';
 /**
  * A card component for displaying a word during review
  */
-export function WordReviewCard({ word, isVisible }: Omit<WordReviewCardProps, 'transitionType'>) {
+export function WordReviewCard({ word }: Omit<WordReviewCardProps, 'transitionType'>) {
   if (!word) return null;
 
   return (

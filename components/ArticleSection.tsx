@@ -9,7 +9,6 @@ import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';
 import { LoadingContainer } from './Loader';
 import { useColors } from '@/hooks/useColors';
-import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';
 
 interface ArticleSectionProps {
   /**
@@ -103,19 +102,15 @@ const ArticleSection = React.memo(
     // Handle viewability change for prefetching
     const handleViewableItemsChanged = useCallback(
       ({ viewableItems }: { viewableItems: { item: Article }[] }) => {
-        // Only prefetch articles that aren't already in the cache
+        // Always prefetch articles with no caching
         for (const { item } of viewableItems) {
           if (item && item.id) {
-            // Check if already in cache first to avoid unnecessary network requests
-            const cachedArticle = queryClient.getQueryData(['article', item.id]);
-            if (!cachedArticle) {
-              queryClient.prefetchQuery({
-                queryKey: ['article', item.id],
-                queryFn: () => articlesService.getArticleById(item.id),
-                staleTime: ARTICLES_STALE_TIME,
-                gcTime: ARTICLES_GC_TIME,
-              });
-            }
+            queryClient.prefetchQuery({
+              queryKey: ['article', item.id],
+              queryFn: () => articlesService.getArticleById(item.id),
+              staleTime: 0, // No caching
+              gcTime: 0, // No cache retention
+            });
           }
         }
       },

@@ -24,7 +24,6 @@ import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useFocusEffect } from '@react-navigation/native';
-import { VOCAB_STALE_TIME } from '@/hooks/useAppPreloader';
 
 // Pure functions moved outside component
 const getHeaderHeight = (insets: { top: number }) => {
@@ -150,9 +149,9 @@ export default function VocabularyScreen() {
     queryKey: ['studyWords', user?.id],
     queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { forStats: false }),
     enabled: !!user,
-    staleTime: VOCAB_STALE_TIME, // Much longer stale time since data only changes on this device
-    refetchOnWindowFocus: false,
-    // Get previous data from cache to prevent UI flicker
+    staleTime: 0, // No caching
+    refetchOnWindowFocus: true,
+    // Always fetch fresh data
     placeholderData: () => queryClient.getQueryData(['studyWords', user?.id]) || [],
   });
 
@@ -165,9 +164,9 @@ export default function VocabularyScreen() {
     queryKey: ['dueWords', user?.id],
     queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { onlyDue: true }),
     enabled: !!user,
-    staleTime: VOCAB_STALE_TIME, // Increased from 0 to reduce network calls
-    gcTime: 30 * 60000, // 30 minutes
-    // Get previous data from cache to prevent UI flicker
+    staleTime: 0, // No caching
+    gcTime: 0, // No cache retention
+    // Always fetch fresh data
     placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || [],
   });
 
@@ -196,18 +195,18 @@ export default function VocabularyScreen() {
     queryClient,
     'dueWords',
     user?.id,
-    VOCAB_STALE_TIME, // Only refresh after stale time instead of always
+    0, // No caching
     true, // Skip initial focus
-    false // Don't force refresh on focus, data only changes on this device
+    true // Force refresh on focus, no caching
   );
 
   useScreenFocusRefresh(
     queryClient,
     'studyWords',
     user?.id,
-    VOCAB_STALE_TIME, // Use the longer stale time
+    0, // No caching
     true, // Skip initial focus
-    false // Don't force refresh on focus, data only changes on this device
+    true // Force refresh on focus, no caching
   );
 
   // Filter valid study words with error protection
@@ -308,27 +307,24 @@ export default function VocabularyScreen() {
   const handleStartReview = () => {
     if (!user) return;
 
-    // Since we're on a single device, we only need to mark queries as stale
-    // without forcing a refetch - this will prevent flickering when returning
-    // from the review screen
+    // Always refresh data when navigating to review screen
 
-    // Mark due words query as stale to ensure it refreshes when needed
+    // Always refetch due words immediately
     queryClient.invalidateQueries({
       queryKey: ['dueWords', user.id],
-      refetchType: 'none', // Don't refetch immediately
     });
 
-    // Mark study words as stale
+    // Always refetch study words immediately
     queryClient.invalidateQueries({
       queryKey: ['studyWords', user.id],
-      refetchType: 'none',
     });
 
     // Prefetch review data with longer cache time
     queryClient.prefetchQuery({
       queryKey: ['dueWords', user.id, 'review'],
       queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-      staleTime: VOCAB_STALE_TIME,
+      staleTime: 0, // No caching
+      gcTime: 0, // No cache retention
     });
 
     // Navigate to review screen

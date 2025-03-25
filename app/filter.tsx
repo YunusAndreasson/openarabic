@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -99,7 +99,7 @@ function FilterScreenContent() {
         return null;
       }
     },
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    staleTime: 0, // No caching
     enabled: type === 'author' && !isNaN(numericId), // Only run when type is author
   });
 
@@ -114,7 +114,7 @@ function FilterScreenContent() {
         return null;
       }
     },
-    staleTime: 10 * 60 * 1000, // Cache for 10 minutes
+    staleTime: 0, // No caching
     enabled: type === 'category' || type !== 'author', // Run for categories or when not specified
   });
 
@@ -151,9 +151,9 @@ function FilterScreenContent() {
         throw new Error(err instanceof Error ? err.message : 'Failed to fetch articles');
       }
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: !isReturningFromArticle.current, // Don't refetch when returning from article
+    staleTime: 0, // No caching
+    refetchOnWindowFocus: true,
+    refetchOnMount: true, // Always refetch
   });
 
   // Overall loading state combines all loading states

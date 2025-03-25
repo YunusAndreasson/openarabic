@@ -266,12 +266,11 @@ export default function BookmarksScreen() {
   const {
     data: readingList = [], // Default to empty array to avoid undefined
     isLoading: isDataLoading,
-    status,
   } = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => (user?.id ? readingListService.getReadingList(user.id) : []),
     enabled: !!user?.id,
-    staleTime: 60000, // 1 minute
+    staleTime: 0, // No caching
     placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
   });
 
@@ -280,7 +279,9 @@ export default function BookmarksScreen() {
     queryClient,
     'readingList',
     user?.id,
-    60000 // 1 minute stale time
+    0, // No caching
+    false, // Don't skip initial focus
+    true // Force refresh on focus
   );
 
   // Simple audio state management

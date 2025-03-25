@@ -6,7 +6,6 @@ import { LAYOUT } from '../constants/layout';
 import SectionTitle from './SectionTitle';
 import ThemedCard from './ThemedCard';
 import { articlesService } from '@/services/articles';
-import { ARTICLES_STALE_TIME, ARTICLES_GC_TIME } from '@/hooks/useAppPreloader';
 
 interface FeaturedArticleItemProps {
   article: Article;
@@ -25,17 +24,13 @@ const FeaturedArticleItem = React.memo(
 
     // Create handler with prefetching
     const handlePress = useCallback(() => {
-      // Check if article is already in cache before prefetching
-      const cachedArticle = queryClient.getQueryData(['article', article.id]);
-      if (!cachedArticle) {
-        // Prefetch article data with longer cache time
-        queryClient.prefetchQuery({
-          queryKey: ['article', article.id],
-          queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: ARTICLES_STALE_TIME,
-          gcTime: ARTICLES_GC_TIME,
-        });
-      }
+      // Always prefetch article data with no caching
+      queryClient.prefetchQuery({
+        queryKey: ['article', article.id],
+        queryFn: () => articlesService.getArticleById(article.id),
+        staleTime: 0, // No caching
+        gcTime: 0, // No cache retention
+      });
 
       // Call the original onPress handler
       onPress(article);

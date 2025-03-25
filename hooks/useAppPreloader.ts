@@ -6,22 +6,19 @@ import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
 
-// Cache duration constants
+// No caching - all data refreshes on every query
 const MINUTE_IN_MS = 60000;
 const HOUR_IN_MS = 60 * MINUTE_IN_MS;
-const STALE_TIME_SHORT = MINUTE_IN_MS; // 1 minute
-const STALE_TIME_ALWAYS_FRESH = 0;
+const NO_CACHE = 0;
 const LOAD_TIMEOUT_MS = 10000;
 const MIN_LOADING_TIME = 500; // Minimum time to show loading state
 
-// Single-device optimization - much longer cache time for vocabulary data
-// Since vocabulary data only changes on this device, we can cache it longer
-export const VOCAB_STALE_TIME = 30 * MINUTE_IN_MS; // 30 minutes
+// No caching for vocabulary data - always fresh
+export const VOCAB_STALE_TIME = 0; // No caching
 
-// Article optimization - much longer cache time for articles
-// Since articles are static once published and only updated once per day
-export const ARTICLES_STALE_TIME = 4 * HOUR_IN_MS; // 4 hours
-export const ARTICLES_GC_TIME = 24 * HOUR_IN_MS; // 24 hours
+// No caching for articles - always fresh
+export const ARTICLES_STALE_TIME = 0; // No caching
+export const ARTICLES_GC_TIME = 0; // No garbage collection retention
 
 // Only log errors in development
 const logError = (message: string, error?: any) => {
@@ -73,8 +70,8 @@ export const useAppPreloader = () => {
         .fetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
-          staleTime: ARTICLES_STALE_TIME, // Much longer stale time for articles
-          gcTime: ARTICLES_GC_TIME, // Keep data in cache for a full day
+          staleTime: NO_CACHE, // No caching
+          gcTime: NO_CACHE, // No cache retention
         })
         .catch(error => {
           logWarning('Failed to load articles:', error);
@@ -85,8 +82,8 @@ export const useAppPreloader = () => {
         .fetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
-          staleTime: ARTICLES_STALE_TIME, // Categories change with articles, so same cache time
-          gcTime: ARTICLES_GC_TIME,
+          staleTime: NO_CACHE, // No caching
+          gcTime: NO_CACHE, // No cache retention
         })
         .catch(error => {
           logWarning('Failed to load categories:', error);
@@ -101,7 +98,8 @@ export const useAppPreloader = () => {
             .fetchQuery({
               queryKey: ['dueWords', user.id],
               queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-              staleTime: STALE_TIME_ALWAYS_FRESH,
+              staleTime: NO_CACHE, // No caching
+              gcTime: NO_CACHE, // No cache retention
             })
             .catch(error => {
               logWarning('Failed to load due words:', error);
@@ -112,7 +110,8 @@ export const useAppPreloader = () => {
             .fetchQuery({
               queryKey: ['studyWords', user.id],
               queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-              staleTime: STALE_TIME_SHORT,
+              staleTime: NO_CACHE, // No caching
+              gcTime: NO_CACHE, // No cache retention
             })
             .catch(error => {
               logWarning('Failed to load study words:', error);
@@ -123,7 +122,8 @@ export const useAppPreloader = () => {
             .fetchQuery({
               queryKey: ['readingList', user.id],
               queryFn: () => readingListService.getReadingList(user.id),
-              staleTime: STALE_TIME_SHORT,
+              staleTime: NO_CACHE, // No caching
+              gcTime: NO_CACHE, // No cache retention
             })
             .catch(error => {
               logWarning('Failed to load reading list:', error);
@@ -173,19 +173,13 @@ export const useAppPreloader = () => {
       if (!articleId) return false;
 
       try {
-        // Check if article is already in cache
-        const existingArticle = queryClient.getQueryData(['article', articleId]);
-        if (existingArticle) {
-          // Article already cached, no need to fetch again
-          return true;
-        }
-
+        // Always fetch fresh data
         const prefetchPromises = [
           queryClient.prefetchQuery({
             queryKey: ['article', articleId],
             queryFn: () => articlesService.getArticleById(articleId),
-            staleTime: ARTICLES_STALE_TIME, // Much longer stale time for individual articles
-            gcTime: ARTICLES_GC_TIME,
+            staleTime: NO_CACHE, // No caching
+            gcTime: NO_CACHE, // No cache retention
           }),
         ];
 
@@ -194,7 +188,8 @@ export const useAppPreloader = () => {
             queryClient.prefetchQuery({
               queryKey: ['isInReadingList', user.id, articleId],
               queryFn: () => readingListService.isInReadingList(user.id, articleId),
-              staleTime: STALE_TIME_SHORT, // This can change frequently based on user actions
+              staleTime: NO_CACHE, // No caching
+              gcTime: NO_CACHE, // No cache retention
             })
           );
         }
@@ -215,18 +210,20 @@ export const useAppPreloader = () => {
     if (!user?.id) return false;
 
     try {
-      // Use much longer stale time for vocabulary data since changes only happen on this device
+      // Always fetch fresh data
       await Promise.allSettled([
         queryClient.prefetchQuery({
           queryKey: ['dueWords', user.id],
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-          staleTime: VOCAB_STALE_TIME,
+          staleTime: NO_CACHE, // No caching
+          gcTime: NO_CACHE, // No cache retention
         }),
 
         queryClient.prefetchQuery({
           queryKey: ['studyWords', user.id],
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-          staleTime: VOCAB_STALE_TIME,
+          staleTime: NO_CACHE, // No caching
+          gcTime: NO_CACHE, // No cache retention
         }),
       ]);
 
