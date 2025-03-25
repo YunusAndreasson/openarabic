@@ -1,4 +1,4 @@
-import { ViewStyle } from 'react-native';
+import { ViewStyle, StyleProp } from 'react-native';
 import { BaseAnimatedStyleProps, BaseOptionalPressableProps } from './base.types';
 import { Article } from '../articles.types';
 
@@ -13,11 +13,17 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
   /** Optional callback when card is pressed */
   onPress?: () => void;
   /** Shadow size for the card */
-  shadowSize?: 'small' | 'medium' | 'large';
+  shadowSize?: 'small' | 'medium' | 'large' | 'none';
   /** Whether to include press animation */
   includePressAnimation?: boolean;
   /** Custom loading component to use */
   loadingComponent?: React.ReactNode;
+  /** Additional styling for the content container */
+  contentStyle?: StyleProp<ViewStyle>;
+  /** Whether the card is disabled (reduces opacity and prevents interactions) */
+  disabled?: boolean;
+  /** Test ID for testing */
+  testID?: string;
 }
 
 /**

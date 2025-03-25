@@ -47,7 +47,13 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
       {
         backgroundColor: colors.transparent, // Allow blur to work through
         borderBottomColor: colors.borderOverlay,
-        ...(Platform.OS === 'ios' && { shadowColor: colors.shadow }),
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        ...(Platform.OS === 'ios' && {
+          shadowColor: colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
+          shadowRadius: LAYOUT.SPACING.SMALL / 2,
+        }),
       },
     ],
     [colors.borderOverlay, colors.shadow, colors.transparent]
@@ -101,22 +107,17 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
     width: '100%',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
     overflow: 'hidden', // Ensure blur is contained
   },
   blurContainer: {
     width: '100%',
     height: '100%',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 0,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-      },
       android: {
-        elevation: 4,
+        elevation: 8,
       },
     }),
   },

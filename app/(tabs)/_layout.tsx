@@ -53,6 +53,7 @@ const PLATFORM_STYLES = Platform.select({
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
     shadowRadius: LAYOUT.SPACING.SMALL / 2,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   android: {
     elevation: 8,
@@ -79,10 +80,20 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
         height: LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset,
         paddingBottom: bottomInset,
         ...PLATFORM_STYLES,
-        ...(Platform.OS === 'ios' && { shadowColor: colors.shadow }),
+        ...(Platform.OS === 'ios' && {
+          shadowColor: colors.shadow,
+          borderTopColor: colors.borderOverlay,
+        }),
       },
     ],
-    [colors.shadow, colors.modalOverlay, colors.overlay, bottomInset, isDarkMode]
+    [
+      colors.shadow,
+      colors.modalOverlay,
+      colors.overlay,
+      colors.borderOverlay,
+      bottomInset,
+      isDarkMode,
+    ]
   );
 
   // Memoize tab button styles
@@ -90,7 +101,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
     (isFocused: boolean) => ({
       ...styles.label,
       color: isFocused ? colors.tint : colors.tabIconDefault,
-      opacity: isFocused ? 1 : 0.8,
+      opacity: isFocused ? 1 : 0.7,
       ...Platform.select({
         ios: {
           fontWeight: '500' as const,
@@ -147,7 +158,12 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
           <PlatformPressable
             key={route.key}
             onPress={getTabPressHandler(route, isFocused)}
-            style={styles.tabButton}
+            style={[
+              styles.tabButton,
+              {
+                paddingTop: LAYOUT.SPACING.TINY,
+              },
+            ]}
             android_ripple={{ color: rippleColor, borderless: true }}
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
@@ -158,7 +174,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
               size={ICON_SIZE}
               color={isFocused ? colors.tint : colors.tabIconDefault}
               style={{
-                opacity: isFocused ? 1 : 0.8,
+                opacity: isFocused ? 1 : 0.7,
               }}
             />
             <ThemedText style={getTabButtonStyle(isFocused)} skipDefaultColor>
@@ -221,6 +237,7 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     borderTopWidth: 0,
+    zIndex: LAYOUT.Z_INDEX.HEADER, // Match z-index with top header
   },
   tabButton: {
     flex: 1,
@@ -231,5 +248,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     textAlign: 'center',
+    marginTop: LAYOUT.SPACING.TINY / 2,
   },
 });

@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   headerContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, View, Platform } from 'react-native';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
@@ -9,6 +9,7 @@ import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';
 import { LoadingContainer } from './Loader';
 import { useColors } from '@/hooks/useColors';
+import SectionTitle from './SectionTitle';
 
 interface ArticleSectionProps {
   /**
@@ -84,7 +85,6 @@ const ArticleSection = React.memo(
     getLastOpenedAt,
     isLoading = false,
   }: ArticleSectionProps) => {
-    // Add queryClient for prefetching
     const queryClient = useQueryClient();
     const colors = useColors();
 
@@ -102,14 +102,13 @@ const ArticleSection = React.memo(
     // Handle viewability change for prefetching
     const handleViewableItemsChanged = useCallback(
       ({ viewableItems }: { viewableItems: { item: Article }[] }) => {
-        // Always prefetch articles with no caching
         for (const { item } of viewableItems) {
           if (item && item.id) {
             queryClient.prefetchQuery({
               queryKey: ['article', item.id],
               queryFn: () => articlesService.getArticleById(item.id),
-              staleTime: 0, // No caching
-              gcTime: 0, // No cache retention
+              staleTime: 0,
+              gcTime: 0,
             });
           }
         }
@@ -120,47 +119,50 @@ const ArticleSection = React.memo(
     // Render each article item
     const renderItem = useCallback(
       ({ item }: { item: Article }) => (
-        <ThemedCard
-          variant="compact"
-          article={item}
-          onPress={() => handleItemPress(item)}
-          showTimeAgo={showTimeAgo}
-          hideDifficultyLabel={hideDifficultyLabel}
-          hideDifficulty={hideDifficulty}
-          lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(item.id) : undefined}
-        />
+        <View
+          style={vertical ? styles.verticalArticleContainer : styles.horizontalArticleContainer}
+        >
+          <ThemedCard
+            variant="compact"
+            article={item}
+            onPress={() => handleItemPress(item)}
+            showTimeAgo={showTimeAgo}
+            hideDifficultyLabel={hideDifficultyLabel}
+            hideDifficulty={hideDifficulty}
+            lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(item.id) : undefined}
+          />
+        </View>
       ),
-      [handleItemPress, showTimeAgo, hideDifficultyLabel, hideDifficulty, getLastOpenedAt]
+      [handleItemPress, showTimeAgo, hideDifficultyLabel, hideDifficulty, getLastOpenedAt, vertical]
     );
 
-    // If loading and no articles, show loading state
-    if (isLoading && displayedArticles.length === 0) {
+    if (isLoading) {
       return (
-        <Section title={title}>
+        <View style={styles.container}>
+          <SectionTitle title={title} />
           <View style={styles.loadingContainer}>
-            <LoadingContainer size="small" color={colors.text} />
+            <LoadingContainer />
           </View>
-        </Section>
+        </View>
       );
     }
 
-    // If empty and not loading, show empty state message or nothing
-    if (displayedArticles.length === 0 && !isLoading) {
-      if (emptyStateMessage) {
-        return (
-          <Section title={title}>
-            <View style={styles.emptyContainer}>
-              <ThemedText>{emptyStateMessage}</ThemedText>
-            </View>
-          </Section>
-        );
-      }
-      return null; // Don't render the section at all if no items and no empty message
+    if (displayedArticles.length === 0) {
+      return (
+        <View style={styles.container}>
+          <SectionTitle title={title} />
+          <View style={styles.emptyContainer}>
+            <ThemedText type="body" variant="subtle">
+              {emptyStateMessage || 'No articles found'}
+            </ThemedText>
+          </View>
+        </View>
+      );
     }
 
-    // Default render with articles
     return (
-      <Section title={title}>
+      <View style={styles.container}>
+        <SectionTitle title={title} />
         <FlatList
           data={displayedArticles}
           renderItem={renderItem}
@@ -168,44 +170,47 @@ const ArticleSection = React.memo(
           horizontal={!vertical}
           showsHorizontalScrollIndicator={false}
           showsVerticalScrollIndicator={false}
-          initialNumToRender={5}
-          maxToRenderPerBatch={5}
-          windowSize={3}
-          removeClippedSubviews={Platform.OS === 'android'}
+          contentContainerStyle={vertical ? styles.verticalList : styles.horizontalList}
           onViewableItemsChanged={handleViewableItemsChanged}
-          viewabilityConfig={{ viewAreaCoveragePercentThreshold: 30 }}
-          contentContainerStyle={[
-            styles.list,
-            vertical ? styles.verticalList : styles.horizontalList,
-          ]}
+          viewabilityConfig={{
+            viewAreaCoveragePercentThreshold: 50,
+          }}
         />
-      </Section>
+      </View>
     );
   }
 );
 
+ArticleSection.displayName = 'ArticleSection';
+
 const styles = StyleSheet.create({
-  list: {
-    paddingTop: LAYOUT.SPACING.SMALL,
+  container: {
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   horizontalList: {
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.TINY,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
   },
   verticalList: {
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  emptyContainer: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  horizontalArticleContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  verticalArticleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   loadingContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     minHeight: 200,
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
+  },
+  emptyContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

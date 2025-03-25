@@ -22,7 +22,7 @@ export default React.memo(SectionTitle);
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    paddingVertical: 0,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
 });

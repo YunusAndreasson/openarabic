@@ -1,33 +1,36 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Pressable, View } from 'react-native';
+import { StyleSheet, Pressable, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
+import { usePressAnimation } from '../hooks/animations';
 import { LoadingContainer } from './Loader';
-import { usePressAnimation } from '../hooks/animations/usePressAnimation';
 import { BaseCardProps } from '@/types/ui/card.types';
 import { AnimatedStyleProp } from '@/types/ui/base.types';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
 /**
- * BaseCard is a foundational component that provides consistent styling for all card elements
+ * BaseCard is the foundation component for all card-type UI elements
  * in the application. It handles border radius, shadows, press animations, and loading states.
  */
+
 const BaseCard: React.FC<BaseCardProps> = ({
   children,
+  style,
   onPress,
   isLoading = false,
-  style,
   shadowSize = 'medium',
   includePressAnimation = true,
   loadingComponent,
+  contentStyle,
+  disabled = false,
+  testID,
 }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // Use press animation hook for smooth press feedback
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-    includeOpacity: true,
-  });
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
 
   // Memoize the shadow style calculation
   const shadowStyle = useMemo(() => {
@@ -39,6 +42,8 @@ const BaseCard: React.FC<BaseCardProps> = ({
     };
 
     switch (shadowSize) {
+      case 'none':
+        return {};
       case 'small':
         return {
           ...baseShadow,
@@ -57,21 +62,36 @@ const BaseCard: React.FC<BaseCardProps> = ({
     }
   }, [colors.shadow, shadowSize]);
 
-  // Create base styles for the card
-  const baseStyles = [
-    styles.card,
-    shadowStyle,
-    {
-      backgroundColor: colors.cardBackground,
-      borderColor: colors.cardBorder,
-    },
-    style,
-  ];
+  // Card border for light mode only
+  const borderStyle = useMemo(
+    () =>
+      !isDarkMode && shadowSize !== 'none'
+        ? { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.cardBorder }
+        : {},
+    [isDarkMode, shadowSize, colors.cardBorder]
+  );
+
+  // Combined card style
+  const combinedCardStyle = useMemo(
+    () => [
+      styles.card,
+      {
+        backgroundColor: colors.cardBackground,
+      },
+      shadowStyle,
+      borderStyle,
+      style,
+    ],
+    [colors.cardBackground, shadowStyle, borderStyle, style]
+  );
+
+  // Combine content style
+  const combinedContentStyle = useMemo(() => [styles.content, contentStyle], [contentStyle]);
 
   // Render loading state if needed
   if (isLoading) {
     return (
-      <View style={baseStyles as AnimatedStyleProp<any>}>
+      <View style={combinedCardStyle as AnimatedStyleProp<any>}>
         {loadingComponent || <LoadingContainer size="medium" />}
       </View>
     );
@@ -79,30 +99,33 @@ const BaseCard: React.FC<BaseCardProps> = ({
 
   // Non-interactive card
   if (!onPress) {
-    return <View style={baseStyles as AnimatedStyleProp<any>}>{children}</View>;
+    return (
+      <View style={combinedCardStyle as AnimatedStyleProp<any>} testID={testID}>
+        <View style={combinedContentStyle}>{children}</View>
+      </View>
+    );
   }
 
   // Interactive card with press handling
   return (
     <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
       onPress={onPress}
-      onPressIn={includePressAnimation ? handlePressIn : undefined}
-      onPressOut={includePressAnimation ? handlePressOut : undefined}
+      disabled={disabled}
+      testID={testID}
       android_ripple={{
         color: colors.textOverlay,
         borderless: false,
         foreground: true,
       }}
+      style={({ pressed }) => [
+        combinedCardStyle,
+        pressed && !disabled && { opacity: LAYOUT.OPACITY.PRESSED },
+        disabled && { opacity: LAYOUT.OPACITY.DISABLED },
+      ]}
     >
-      <Animated.View
-        style={
-          includePressAnimation
-            ? ([baseStyles, animatedStyle] as AnimatedStyleProp<any>)
-            : (baseStyles as AnimatedStyleProp<any>)
-        }
-      >
-        <View style={styles.contentContainer}>{children}</View>
-      </Animated.View>
+      <View style={combinedContentStyle}>{children}</View>
     </Pressable>
   );
 };
@@ -110,12 +133,14 @@ const BaseCard: React.FC<BaseCardProps> = ({
 const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     overflow: 'hidden',
   },
-  contentContainer: {
-    flex: 1,
+  image: {
+    minHeight: 120,
     width: '100%',
+  },
+  content: {
+    overflow: 'hidden',
   },
 });
 

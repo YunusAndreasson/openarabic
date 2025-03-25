@@ -53,6 +53,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
             author={item.author?.name ?? 'Anonymous'}
             onPress={() => onArticlePress(item)}
             style={styles.articleCard}
+            shadowSize="medium"
           />
         </View>
       );
