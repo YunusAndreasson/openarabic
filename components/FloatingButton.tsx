@@ -1,51 +1,54 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Pressable, ViewStyle, StyleProp } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
 import { FloatingButtonProps } from '@/types/ui/button.types';
 import { usePressAnimation } from '@/hooks/animations';
 import { lightFeedback } from '@/utils/haptics';
 import { useToast } from './ToastProvider';
 
+const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM;
+
 const styles = StyleSheet.create({
-  backButton: {
+  container: {
     position: 'absolute',
     zIndex: LAYOUT.Z_INDEX.HEADER + 5,
-    left: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-    overflow: 'hidden',
-  },
-  playlistButton: {
-    position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
-    right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-    overflow: 'hidden',
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
   },
   button: {
-    padding: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
-    overflow: 'hidden',
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    borderRadius: BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    minWidth: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   buttonIcon: {
     alignSelf: 'center',
   },
 });
 
-export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<ViewStyle> }> = ({
+const FloatingButton: React.FC<FloatingButtonProps> = ({
   position,
+  buttonType = 'back',
   top,
-  animatedStyle,
-  onPress,
   iconName,
   accessibilityLabel,
+  onPress,
   colors,
   isDarkMode,
-  style,
   isBookmarked,
+  animatedStyle,
+  style,
 }) => {
   const { showToast } = useToast();
 
@@ -74,29 +77,59 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
   }, [animatedStyle, pressAnimatedStyle]);
 
   // Simple handler for button press with haptic feedback only for non-back buttons
-  const handlePress = () => {
+  const handlePress = async () => {
     if (onPress) {
-      // Only provide haptic feedback if it's not a back button (left position)
-      if (position !== 'left') {
+      // Only provide haptic feedback for non-back buttons
+      if (buttonType !== 'back') {
         lightFeedback();
-        // Show appropriate toast message based on bookmark state
-        // We need to show "Removed" when it IS bookmarked (because we're about to remove it)
-        // and "Added" when it's NOT bookmarked (because we're about to add it)
+      }
+
+      // Execute the press action
+      await onPress();
+
+      // Only show toast for bookmark actions
+      if (buttonType === 'bookmark' && isBookmarked !== undefined) {
         showToast(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks');
       }
-      onPress();
     }
   };
 
+  const containerStyle = useMemo(() => {
+    const baseStyle: ViewStyle = {
+      ...styles.container,
+      top,
+    };
+
+    switch (position) {
+      case 'top-left':
+        baseStyle.left = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        break;
+      case 'top-right':
+        baseStyle.right = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        break;
+      case 'bottom-left':
+        baseStyle.left = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        baseStyle.bottom = LAYOUT.SPACING.MEDIUM;
+        break;
+      case 'bottom-right':
+        baseStyle.right = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        baseStyle.bottom = LAYOUT.SPACING.MEDIUM;
+        break;
+    }
+
+    return baseStyle;
+  }, [position, top]);
+
+  // Determine icon color based on button type and state
+  const iconColor = useMemo(() => {
+    if (isBookmarked) {
+      return isDarkMode ? colors.text : colors.primary;
+    }
+    return colors.text;
+  }, [isBookmarked, isDarkMode, colors]);
+
   return (
-    <Animated.View
-      style={[
-        position === 'left' ? styles.backButton : styles.playlistButton,
-        { top },
-        combinedAnimatedStyle as any,
-        style,
-      ]}
-    >
+    <Animated.View style={[containerStyle, combinedAnimatedStyle as any, style]}>
       <Pressable
         style={[
           styles.button,
@@ -110,7 +143,7 @@ export const FloatingButton: React.FC<FloatingButtonProps & { style?: StyleProp<
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
       >
-        <Ionicons name={iconName} size={24} color={colors.text} style={styles.buttonIcon} />
+        <Ionicons name={iconName as any} size={24} color={iconColor} style={styles.buttonIcon} />
       </Pressable>
     </Animated.View>
   );

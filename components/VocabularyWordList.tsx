@@ -6,7 +6,6 @@ import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import ThemedCard from './ThemedCard';
 import { LAYOUT } from '@/constants/layout';
-import { useWordStatus } from '@/hooks/useWordStatus';
 import { StudyWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
@@ -125,7 +124,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
         windowSize={5} // Reduce window size for better performance
         initialNumToRender={10} // Limit initial render for better startup time
         removeClippedSubviews={false}
-        getItemLayout={(data, index) => ({
+        getItemLayout={(_data, index) => ({
           length: 70, // Height of each word item
           offset: 70 * index,
           index,

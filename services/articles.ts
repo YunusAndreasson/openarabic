@@ -17,7 +17,8 @@ const LIST_VIEW_COLUMNS = `
   summary,
   audio_url,
   category:categories(id, name),
-  author:authors(id, name)
+  author:authors(id, name),
+  article_sentences:article_sentences(id)
 `;
 
 // Define the columns needed for detail view

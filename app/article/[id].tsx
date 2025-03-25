@@ -138,7 +138,6 @@ export default function ArticleScreen() {
   useEffect(() => {
     if (user?.id) {
       // Check if we already have study words in cache
-      const cachedStudyWords = queryClient.getQueryData(['studyWords', user.id]);
 
       // Always prefetch study words immediately with highest priority
       queryClient.prefetchQuery({
@@ -163,6 +162,7 @@ export default function ArticleScreen() {
     isLoadingArticle,
     isInReadingList,
     refetchReadingListStatus,
+    isLoadingReadingList,
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap,
@@ -172,8 +172,6 @@ export default function ArticleScreen() {
 
   // Use animation hook for content and button visibility on scroll
   const {
-    contentStyle,
-    headerStyle,
     footerStyle,
     backButtonStyle,
     bookmarkButtonStyle,
@@ -181,6 +179,24 @@ export default function ArticleScreen() {
     startAllAnimations,
     handleScroll: handleAnimationScroll,
   } = useScreenAnimations(true); // Initialize with buttons visible
+
+  // Update bookmark icon when reading list status changes
+  useEffect(() => {
+    if (!isLoadingReadingList) {
+      setInitialBookmarkIcon(isInReadingList ? 'bookmark' : 'bookmark-outline');
+    }
+  }, [isLoadingReadingList, isInReadingList]);
+
+  // Check if all data is loaded
+  const isLoading = useMemo(() => {
+    return (
+      isLoadingArticle || // Article data loading
+      isLoadingReadingList || // Reading list status loading
+      !article?.article_sentences || // No sentences available
+      !sentenceWordsMap || // No sentence words map
+      (article.article_sentences.length > 0 && !sortedSentences?.length) // Has sentences but not sorted yet
+    );
+  }, [isLoadingArticle, isLoadingReadingList, article, sentenceWordsMap, sortedSentences]);
 
   // Start content animations when mounted
   useEffect(() => {
@@ -232,13 +248,6 @@ export default function ArticleScreen() {
       handleToggleReadingList(articleId, Boolean(isInReadingList));
     }
   }, [articleId, isInReadingList, handleToggleReadingList, user]);
-
-  // Update bookmark icon when data loads
-  useEffect(() => {
-    if (isInReadingList === true) {
-      setInitialBookmarkIcon('bookmark');
-    }
-  }, [isInReadingList]);
 
   // Make sure we use initialBookmarkIcon as fallback
   const bookmarkIconToDisplay = (
@@ -347,7 +356,8 @@ export default function ArticleScreen() {
     <View style={styles.staticButtonsContainer}>
       {/* Back button */}
       <FloatingButton
-        position="left"
+        position="top-left"
+        buttonType="back"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={backButtonStyle}
         onPress={handleBackPress}
@@ -363,7 +373,8 @@ export default function ArticleScreen() {
 
       {/* ALWAYS show bookmark button regardless of user state */}
       <FloatingButton
-        position="right"
+        position="top-right"
+        buttonType="bookmark"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={bookmarkButtonStyle}
         onPress={user ? () => handleBookmarkPress() : () => {}}
@@ -375,13 +386,14 @@ export default function ArticleScreen() {
         style={{
           ...styles.floatingButton,
           right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-          opacity: user ? 1 : 0.3, // Show dimmed if no user but ALWAYS visible
+          opacity: user ? 1 : 0.3,
         }}
       />
 
       {/* Play/Stop button */}
       <FloatingButton
-        position="right"
+        position="top-right"
+        buttonType="play"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={playButtonStyle}
         iconName={isPlaying ? 'stop' : 'play'}
@@ -398,7 +410,7 @@ export default function ArticleScreen() {
   );
 
   // Main render - loading state
-  if (isLoadingArticle && !isDataPrefetched) {
+  if (isLoading) {
     return (
       <ThemedView
         style={[styles.container, { backgroundColor: colors.background }]}
@@ -472,7 +484,7 @@ export default function ArticleScreen() {
               })}
               ListHeaderComponent={
                 <Animated.View>
-                  <ArticleHeader article={article} colors={colors} isDarkMode={isDarkMode} />
+                  <ArticleHeader article={article} colors={colors} />
                 </Animated.View>
               }
               ListFooterComponent={

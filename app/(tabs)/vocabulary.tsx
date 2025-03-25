@@ -410,7 +410,6 @@ export default function VocabularyScreen() {
             masteredWords={stats.masteredWords}
             learningWords={stats.learningWords}
             dueWords={stats.dueWords}
-            colors={colors}
             animationTriggered={true}
             onStatPress={handleStatPress}
             streakStats={{

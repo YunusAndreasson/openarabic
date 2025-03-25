@@ -1,5 +1,6 @@
-import { TouchableOpacityProps, ViewStyle } from 'react-native';
+import { TouchableOpacityProps, ViewStyle, StyleProp } from 'react-native';
 import { BaseAnimatedStyleProps } from './base.types';
+import { AnimatedStyleProp } from 'react-native-reanimated';
 
 /**
  * Button variant types
@@ -93,22 +94,20 @@ export interface CloseButtonProps {
  * Props for the FloatingButton component
  */
 export interface FloatingButtonProps {
-  /** Function to call when button is pressed */
-  onPress: () => void;
-  /** Icon name from Ionicons */
-  icon: string;
-  /** Position of the button (bottom-right, bottom-left, etc.) */
-  position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
-  /** Size of the button */
-  size?: 'small' | 'medium' | 'large';
-  /** Whether the button is disabled */
-  disabled?: boolean;
-  /** Text to show next to the button */
-  text?: string;
-  /** Color of the button background */
-  backgroundColor?: string;
-  /** Color of the icon */
-  iconColor?: string;
-  /** Accessibility label for screen readers */
-  accessibilityLabel?: string;
+  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  buttonType?: 'back' | 'bookmark' | 'play';
+  top?: number;
+  iconName: string;
+  accessibilityLabel: string;
+  onPress: () => void | Promise<void>;
+  colors: {
+    background: string;
+    text: string;
+    primary?: string;
+    [key: string]: string | undefined;
+  };
+  isDarkMode: boolean;
+  isBookmarked?: boolean;
+  animatedStyle?: AnimatedStyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
 }

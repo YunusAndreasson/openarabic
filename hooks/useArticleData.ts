@@ -43,7 +43,7 @@ export const useArticleData = (
 ) => {
   const queryClient = useQueryClient();
 
-  // Fetch article data
+  // Fetch article data with all sentences and words in one query
   const {
     data: article,
     isLoading: isLoadingArticle,
@@ -52,16 +52,14 @@ export const useArticleData = (
     queryKey: ['article', articleId],
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
+    staleTime: 0,
+    gcTime: 0,
     placeholderData: () => {
-      // Use the article from the articles list as placeholder while full article loads
       const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
       const cachedArticle = cachedArticles?.find((a: Article) => a.id === articleId);
       if (cachedArticle) {
         return {
           ...cachedArticle,
-          // Include empty article_sentences to prevent null errors
           article_sentences: [],
         };
       }
@@ -69,7 +67,7 @@ export const useArticleData = (
     },
   });
 
-  // Check if article is in user's reading list
+  // Check if article is in user's reading list - can run in parallel with article fetch
   const {
     data: isInReadingList = false,
     refetch: refetchReadingListStatus,
@@ -78,11 +76,11 @@ export const useArticleData = (
     queryKey: ['readingList', userId, articleId],
     queryFn: () => readingListService.isInReadingList(userId!, articleId!),
     enabled: !!userId && !!articleId,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
+    staleTime: 0,
+    gcTime: 0,
   });
 
-  // Fetch study words using FSRS service
+  // Fetch study words - can run in parallel with article fetch
   const { data: studyWords = [] } = useQuery<FSRSStudyWord[]>({
     queryKey: ['studyWords', userId],
     queryFn: async () => {
@@ -90,48 +88,26 @@ export const useArticleData = (
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
-    // Improve priority to load faster
+    staleTime: 0,
+    gcTime: 0,
     networkMode: 'always',
     retry: false,
-    // Use any existing cache data immediately while fetching
     placeholderData: () => {
       const cachedStudyWords = queryClient.getQueryData<FSRSStudyWord[]>(['studyWords', userId]);
       return cachedStudyWords || [];
     },
   });
 
-  // Extract sentence words from article
-  const {
-    data: sentences = [],
-    isLoading: isLoadingSentences,
-    error: sentencesError,
-  } = useQuery<ArticleSentence[]>({
-    queryKey: ['sentences', articleId],
-    queryFn: async () => {
-      if (!articleId) return [];
-
-      // Always fetch fresh data from the API to ensure we have sentences
-      const articleData = await articlesService.getArticleById(articleId);
-      return articleData.article_sentences || [];
-    },
-    enabled: !!articleId,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
-  });
-
-  // Sort sentences by position
+  // Process sentences from article data - no additional fetch needed
   const sortedSentences = useMemo(() => {
-    return [...sentences].sort((a, b) => a.position - b.position);
-  }, [sentences]);
+    if (!article?.article_sentences) return [];
+    return [...article.article_sentences].sort((a, b) => a.position - b.position);
+  }, [article?.article_sentences]);
 
   // Extract selected word IDs
   const selectedWordIds = useMemo(() => {
-    // Create a set with numeric IDs for more reliable type comparison
     const ids = new Set(
       (studyWords || []).map(w => {
-        // Convert IDs to numbers to ensure consistent comparison
         const id = w.sentence_word_id;
         return typeof id === 'string' ? parseInt(id, 10) : id;
       })
@@ -139,154 +115,82 @@ export const useArticleData = (
     return ids;
   }, [studyWords]);
 
-  // Create a map of sentence ID to array of sentence words
+  // Create sentence words map from article data - no additional fetch needed
   const sentenceWordsMap = useMemo(() => {
-    // If there are no sentences, return an empty query result
-    if (sortedSentences.length === 0) {
+    if (!sortedSentences.length) {
       return {
         data: new Map(),
         isLoading: false,
       };
     }
 
-    // Extract the sentence IDs from sortedSentences
-    const sentenceIds = sortedSentences.map(sentence => sentence.id);
-
-    // Use existing sentence words data if available in the article sentences
-    const existingSentenceWords = new Map<number, SentenceWord[]>();
+    const map = new Map<number, SentenceWord[]>();
     sortedSentences.forEach(sentence => {
       if (sentence.sentence_words) {
-        existingSentenceWords.set(
+        map.set(
           sentence.id,
-          sentence.sentence_words.sort((a, b) => a.position - b.position)
+          [...sentence.sentence_words].sort((a, b) => a.position - b.position)
         );
       }
     });
 
-    // If all sentences have words, return that data without fetching
-    if (sentenceIds.length === existingSentenceWords.size) {
-      return {
-        data: existingSentenceWords,
-        isLoading: false,
-      };
-    }
+    return {
+      data: map,
+      isLoading: false,
+    };
+  }, [sortedSentences]);
 
-    // Otherwise fetch sentence words
-    return useQuery<Map<number, SentenceWord[]>>({
-      queryKey: ['sentenceWords', sentenceIds],
-      queryFn: async () => {
-        // Get all words for all sentences
-        const allWords: SentenceWord[] = [];
-
-        // Batch fetch all sentences that don't have existing data
-        const sentencesToFetch = sentenceIds.filter(id => !existingSentenceWords.has(id));
-
-        if (sentencesToFetch.length > 0) {
-          const article = await articlesService.getArticleById(articleId!);
-          const fetchedSentences = article.article_sentences || [];
-
-          fetchedSentences.forEach(sentence => {
-            if (sentence.sentence_words) {
-              allWords.push(...sentence.sentence_words);
-            }
-          });
-        }
-
-        // Add existing sentence words
-        existingSentenceWords.forEach(words => {
-          allWords.push(...words);
-        });
-
-        // Group by sentence ID
-        const map = new Map<number, SentenceWord[]>();
-        allWords.forEach(word => {
-          if (!map.has(word.sentence_id)) {
-            map.set(word.sentence_id, []);
-          }
-          map.get(word.sentence_id)!.push(word);
-        });
-
-        // Sort words by position within each sentence
-        map.forEach(words => {
-          words.sort((a, b) => a.position - b.position);
-        });
-
-        return map;
-      },
-      enabled: sentenceIds.length > 0,
-      staleTime: 0, // No caching
-      gcTime: 0, // No cache retention,
-      retry: 1, // Limit retries to prevent excessive loading
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      refetchOnMount: false, // Only fetch once
-    });
-  }, [sortedSentences, articleId, isDataPrefetched]);
-
-  // Get related articles
-  const {
-    data: otherArticles = [],
-    isLoading: isLoadingOtherArticles,
-    error: otherArticlesError,
-  } = useQuery<Article[]>({
+  // Get related articles - can run in parallel with main article fetch
+  const { data: otherArticles = [], isLoading: isLoadingOtherArticles } = useQuery<Article[]>({
     queryKey: ['otherArticles', article?.category_id],
     queryFn: async () => {
       if (!article?.category_id) return [];
       try {
-        // Get articles in the same category, excluding the current one
         const articles = await articlesService.getArticles(article.category_id);
         return articles.filter(a => a.id !== article.id);
       } catch (error) {
-        // Return empty array on error to prevent UI breakage
         console.warn('Failed to fetch related articles:', error);
         return [];
       }
     },
     enabled: !!article?.category_id,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
+    staleTime: 0,
+    gcTime: 0,
     placeholderData: () => {
-      // Try to create placeholder data from the articles cache
       const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
       if (cachedArticles && article?.category_id) {
-        // Filter cached articles by category, excluding current article
         return cachedArticles
           .filter(a => a.category_id === article.category_id && a.id !== article.id)
-          .slice(0, 5); // Limit to 5 articles for performance
+          .slice(0, 5);
       }
       return [];
     },
   });
 
-  // Get similar category articles
-  const {
-    data: otherCategoryArticles = [],
-    isLoading: isLoadingOtherCategoryArticles,
-    error: otherCategoryArticlesError,
-  } = useQuery<Article[]>({
+  // Get other category articles - can run in parallel with main article fetch
+  const { data: otherCategoryArticles = [], isLoading: isLoadingOtherCategoryArticles } = useQuery<
+    Article[]
+  >({
     queryKey: ['otherCategoryArticles', article?.id],
     queryFn: async () => {
       if (!article?.id) return [];
       try {
-        // Get articles from all categories, excluding current category
         const articles = await articlesService.getArticles();
         return articles.filter(a => a.category_id !== article.category_id && a.id !== article.id);
       } catch (error) {
-        // Return empty array on error to prevent UI breakage
         console.warn('Failed to fetch other category articles:', error);
         return [];
       }
     },
     enabled: !!article?.id,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
+    staleTime: 0,
+    gcTime: 0,
     placeholderData: () => {
-      // Use cached articles from other categories
       const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
       if (cachedArticles && article?.category_id) {
-        // Filter for articles from different categories
         return cachedArticles
           .filter(a => a.category_id !== article.category_id && a.id !== article.id)
-          .slice(0, 5); // Limit to 5 articles for performance
+          .slice(0, 5);
       }
       return [];
     },
@@ -294,21 +198,18 @@ export const useArticleData = (
 
   return {
     article,
-    isLoadingArticle: isLoadingArticle || isLoadingSentences,
-    articleError: articleError || sentencesError,
+    isLoadingArticle,
+    articleError,
     isInReadingList,
     refetchReadingListStatus,
     isLoadingReadingList,
     selectedWordIds,
     sortedSentences,
     sentenceWordsMap: sentenceWordsMap.data,
-    isLoadingSentenceWords: sentenceWordsMap.isLoading,
     otherArticles,
     isLoadingOtherArticles,
-    otherArticlesError,
     otherCategoryArticles,
     isLoadingOtherCategoryArticles,
-    otherCategoryArticlesError,
   };
 };
 

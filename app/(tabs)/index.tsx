@@ -593,11 +593,6 @@ export default function ArticlesScreen() {
             ...contentContainerStyle,
             paddingTop: getHeaderHeight(insets),
           }}
-          initialNumToRender={1}
-          windowSize={3}
-          maxToRenderPerBatch={3}
-          updateCellsBatchingPeriod={50}
-          removeClippedSubviews={Platform.OS === 'android'}
         />
         <PageHeader title="Texts" />
       </ThemedView>

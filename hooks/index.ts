@@ -22,7 +22,6 @@ export * from './useThemeDetection';
 
 // Data hooks
 export * from './useGraphData';
-export * from './useWordStatus';
 export * from './useFSRS';
 
 // Media hooks

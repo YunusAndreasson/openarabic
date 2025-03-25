@@ -6,14 +6,14 @@ import { SentenceWord } from './vocabulary.types';
  */
 export type Category = Tables<'categories'>;
 
-export type ArticleSentence = Tables<'article_sentences'> & {
-  sentence_words: SentenceWord[];
-};
+export interface ArticleSentence extends Tables<'article_sentences'> {
+  sentence_words?: Tables<'sentence_words'>[];
+}
 
-export type Article = Tables<'articles'> & {
-  category: Category | null;
+export interface Article extends Tables<'articles'> {
+  article_sentences?: ArticleSentence[];
+  category?: Tables<'categories'>;
   author: Tables<'authors'> | null;
-  article_sentences: ArticleSentence[];
   audio_url: string | null;
   last_opened_at?: string;
-};
+}

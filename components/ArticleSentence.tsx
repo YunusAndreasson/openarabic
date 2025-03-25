@@ -1,8 +1,25 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { ArticleSentenceProps } from '@/types/ui/layout.types';
+import type { Tables } from '@/types/database.types';
+
+interface ArticleSentenceProps {
+  sentence: Tables<'article_sentences'>;
+  words: (Tables<'sentence_words'> & {
+    root: Tables<'roots'> | null;
+    word_type: Tables<'word_types'> | null;
+  })[];
+  renderWord: (
+    word: Tables<'sentence_words'> & {
+      root: Tables<'roots'> | null;
+      word_type: Tables<'word_types'> | null;
+    }
+  ) => React.ReactNode;
+  settings: any;
+  colors: any;
+  containerStyle?: StyleProp<ViewStyle>;
+}
 
 const styles = StyleSheet.create({
   sentenceContainer: {

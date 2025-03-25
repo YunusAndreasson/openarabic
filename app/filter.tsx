@@ -4,22 +4,14 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-
-// Components
 import FilteredArticleView from '../components/FilteredArticleView';
 import { LoadingScreen } from '../components/Loader';
 import ErrorState from '../components/ErrorState';
-
-// Services
 import { articlesService } from '../services/articles';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
-
-// Animation hooks
 import { useScreenAnimation } from '@/hooks/animations';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
-
-// Types
 import { Article } from '../types/articles.types';
 
 // Create a supabase client for fetching data directly

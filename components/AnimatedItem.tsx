@@ -17,7 +17,6 @@ const AnimatedItem = React.memo(
   ({
     children,
     delay = 0,
-    duration = 300,
     style,
     fullWidth = false,
     title,
@@ -30,7 +29,7 @@ const AnimatedItem = React.memo(
     paddingHorizontal?: boolean;
   }) => {
     // Create a custom entry animation with configured delay and duration
-    const entering = FadeIn.delay(delay).duration(duration);
+    const entering = FadeIn.delay(delay).duration(300);
 
     return (
       <Animated.View style={[fullWidth && { flex: 1, width: '100%' }, style]} entering={entering}>

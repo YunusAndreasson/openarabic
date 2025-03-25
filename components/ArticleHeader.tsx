@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -76,9 +76,23 @@ const styles = StyleSheet.create({
 export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors }) => {
   if (!article) return null;
 
-  const readingTime = article.article_sentences?.length
-    ? Math.max(1, Math.ceil(article.article_sentences.length / 10))
-    : 3;
+  // Calculate reading time based on sentences count or summary length
+  const readingTime = useMemo(() => {
+    // If we have article_sentences array, use its length
+    if (article.article_sentences?.length) {
+      return Math.max(1, Math.ceil(article.article_sentences.length / 10));
+    }
+
+    // Otherwise estimate based on summary length (assuming ~15 words per sentence)
+    if (article.summary) {
+      const wordCount = article.summary.split(/\s+/).length;
+      const estimatedSentences = Math.ceil(wordCount / 15);
+      return Math.max(1, Math.ceil(estimatedSentences / 10));
+    }
+
+    // Default fallback
+    return 2;
+  }, [article.article_sentences, article.summary]);
 
   const categoryName = article.category?.name
     ? capitalizeFirstLetter(article.category.name)
