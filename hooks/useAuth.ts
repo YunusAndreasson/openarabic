@@ -43,7 +43,7 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isLoading]);
 
   return {
     session,

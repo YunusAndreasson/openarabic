@@ -269,9 +269,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  highlightedWordStyle: {
-    // Increase line spacing
-    marginBottom: 2,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
-  },
 });

@@ -15,7 +15,7 @@ import {
   withDelay,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';
+import { TIMING_CONFIG } from './animationConfigs';
 import { SCREEN_WIDTH } from '../../constants/layout';
 import { SharedValue } from './types';
 import { ViewStyle } from 'react-native';

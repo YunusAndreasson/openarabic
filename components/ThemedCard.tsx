@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle, Platform } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -305,18 +305,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
-  imageOverlayContainer: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: LAYOUT.Z_INDEX.CARD,
-  },
   gradient: {
     ...StyleSheet.absoluteFillObject,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
     height: '200%',
     bottom: -LAYOUT.SPACING.XLARGE * 2,
-  },
-  iosLightModeGradient: {
-    // Special case for iOS light mode
   },
   pillContainer: {
     position: 'absolute',

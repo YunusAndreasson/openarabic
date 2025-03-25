@@ -65,7 +65,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
         isAnimatingRef.value = false;
       };
     },
-    [onSwipeLeft, onSwipeRight, resetPosition]
+    [isAnimatingRef, onSwipeLeft, onSwipeRight, resetPosition]
   );
 
   // Create pan gesture

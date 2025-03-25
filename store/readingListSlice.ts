@@ -73,7 +73,7 @@ export const incrementReadCount = createAsyncThunk(
 
 export const updateLastOpenedArticle = createAsyncThunk(
   'readingList/updateLastOpenedArticle',
-  async (articleId: number, {}) => {
+  async (articleId: number) => {
     // No need to check authentication or make API calls
     // Just return the article ID and current timestamp
     return {

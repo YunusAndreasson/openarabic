@@ -60,10 +60,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  contentWrapper: {
-    flex: 1,
-    marginTop: -1, // To hide the header border when content is at the top
-  },
 });
 
 // Properly wrap useAuth to avoid conditional hook calls

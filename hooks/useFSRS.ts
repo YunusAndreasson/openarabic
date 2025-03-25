@@ -237,7 +237,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         isProcessingUpdateRef.current = false;
       }
     },
-    [currentWord, userId, isComplete, wordQueue, totalWordsRef, processedWordsRef, onComplete]
+    [userId, currentWord, isComplete, updateWordInDatabase, onComplete]
   );
 
   // Reset the queue when the component unmounts or when explicitly called

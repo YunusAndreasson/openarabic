@@ -56,20 +56,13 @@ const styles = StyleSheet.create({
   summaryContainer: {
     paddingTop: LAYOUT.SPACING.SMALL,
   },
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    height: LAYOUT.HEADER.NAV_HEIGHT,
-  },
 });
 
 export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors }) => {
-  if (!article) return null;
-
   // Calculate reading time based on sentences count or summary length
   const readingTime = useMemo(() => {
+    if (!article) return 2;
+
     // If we have article_sentences array, use its length
     if (article.article_sentences?.length) {
       return Math.max(1, Math.ceil(article.article_sentences.length / 10));
@@ -84,7 +77,9 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
 
     // Default fallback
     return 2;
-  }, [article.article_sentences, article.summary]);
+  }, [article]);
+
+  if (!article) return null;
 
   const categoryName = article.category?.name
     ? capitalizeFirstLetter(article.category.name)

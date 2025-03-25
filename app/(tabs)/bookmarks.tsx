@@ -93,18 +93,6 @@ const styles = StyleSheet.create({
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
-  playButton: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    right: 0,
-    width: LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderBottomRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    backgroundColor: 'transparent', // Will use colors.transparent in dynamicStyles if used
-  },
 });
 
 // Define a constant for item height calculation
@@ -203,6 +191,8 @@ const ReadingListItem = React.memo(
     );
   }
 );
+
+ReadingListItem.displayName = 'ReadingListItem';
 
 // Bottom Action Buttons component
 const BottomControls = React.memo(

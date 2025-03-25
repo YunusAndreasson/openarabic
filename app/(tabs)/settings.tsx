@@ -428,15 +428,6 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  authContainer: {
-    flex: 1,
-    padding: LAYOUT.SCREEN_EDGE_PADDING,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  subtitleContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
   settingsWrapper: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },

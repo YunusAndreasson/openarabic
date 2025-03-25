@@ -4,7 +4,7 @@ import { LAYOUT } from '@/constants/layout';
 import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui/article.types';
 import SectionTitle from './SectionTitle';
 
-export interface RelatedArticlesSectionProps extends RelatedArticlesSectionPropsType {}
+export type RelatedArticlesSectionProps = RelatedArticlesSectionPropsType;
 
 const styles = StyleSheet.create({
   container: {
@@ -35,3 +35,5 @@ export const RelatedArticlesSection = React.memo(
     );
   }
 );
+
+RelatedArticlesSection.displayName = 'RelatedArticlesSection';

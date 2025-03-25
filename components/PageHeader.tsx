@@ -75,23 +75,25 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
             },
           ]}
         >
-          {onBackPress && (
-            <Pressable
-              onPress={handleBackPress}
-              style={({ pressed }) => [
-                styles.backButton,
-                {
-                  backgroundColor: pressed ? colors.textOverlay : colors.transparent,
-                  opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
-                },
-              ]}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="chevron-back" size={24} color={colors.tint} />
-            </Pressable>
-          )}
-          <View style={[styles.titleContainer, onBackPress && styles.titleWithBack]}>
-            <ThemedText type="heading3">{title}</ThemedText>
+          <View style={styles.headerRow}>
+            {onBackPress && (
+              <Pressable
+                onPress={handleBackPress}
+                style={({ pressed }) => [
+                  styles.backButton,
+                  {
+                    backgroundColor: pressed ? colors.textOverlay : colors.transparent,
+                    opacity: pressed ? LAYOUT.OPACITY.PRESSED : 1,
+                  },
+                ]}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="chevron-back" size={24} color={colors.tint} />
+              </Pressable>
+            )}
+            <View style={[styles.titleContainer, onBackPress && styles.titleWithBack]}>
+              <ThemedText type="heading3">{title}</ThemedText>
+            </View>
           </View>
         </View>
       </BlurView>
@@ -124,8 +126,13 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   titleContainer: {
     flexShrink: 1,
+    flexGrow: 1,
   },
   titleWithBack: {
     marginLeft: LAYOUT.SPACING.SMALL,

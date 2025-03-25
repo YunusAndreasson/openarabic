@@ -270,12 +270,12 @@ export default function VocabularyScreen() {
       };
     }
     return getBaseStats(validStudyWords ?? [], dueWordsData ?? []);
-  }, [statsCalculationKey]); // Only recalculate when key changes
+  }, [dueWordsData, studyWords?.length, validStudyWords]); // Only recalculate when key changes
 
   const advancedStats = useMemo(() => {
     if (validStudyWords?.length === 0) return null;
     return getAdvancedStats(validStudyWords);
-  }, [statsCalculationKey]); // Only recalculate when key changes
+  }, [validStudyWords]); // Only recalculate when key changes
 
   // Combine stats with safe defaults
   const stats = useMemo<VocabularyStats>(

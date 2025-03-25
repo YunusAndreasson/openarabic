@@ -1,0 +1,132 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { studyWordsFSRSService } from '../services/studyWordsFSRS';
+import { StudyWord } from '../types/vocabulary.types';
+import { State } from 'ts-fsrs';
+
+// Enhanced study word with retention score
+export interface EnhancedStudyWord extends StudyWord {
+  retentionScore: number;
+}
+
+type WordListCategory = 'total' | 'mastered' | 'learning';
+
+/**
+ * Calculate a retention score based on FSRS parameters
+ * This directly uses the key metrics from FSRS algorithm
+ */
+const calculateRetentionScore = (word: StudyWord): number => {
+  const stabilityScore = Math.min(word.fsrs_stability / 100, 1) * 70;
+  const difficultyFactor = 1 - word.fsrs_difficulty;
+  const difficultyScore = difficultyFactor * 20;
+  const lapsesPenalty = Math.min(word.fsrs_lapses / 10, 1) * 10;
+  return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
+};
+
+export function useWordList(userId: string | undefined, category: WordListCategory) {
+  const queryClient = useQueryClient();
+
+  return useQuery<EnhancedStudyWord[]>({
+    queryKey: ['vocabulary-words', userId, category],
+    queryFn: async () => {
+      if (!userId) throw new Error('User not authenticated');
+
+      try {
+        const allWords = await studyWordsFSRSService.getFSRSWords(userId);
+
+        // Filter out invalid words with type guard
+        const filteredWords = allWords.filter(
+          (
+            word
+          ): word is StudyWord & {
+            sentence_word: NonNullable<typeof word.sentence_word> & {
+              word_form: NonNullable<typeof word.sentence_word.word_form>;
+            };
+          } => {
+            return Boolean(
+              word &&
+                word.sentence_word &&
+                word.sentence_word.word_form &&
+                typeof word.sentence_word.word_form === 'string'
+            );
+          }
+        );
+
+        // Filter words based on category using FSRS states
+        let result: StudyWord[] = [];
+        switch (category) {
+          case 'total':
+            result = filteredWords;
+            break;
+          case 'mastered':
+            result = filteredWords.filter(
+              word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
+            );
+            break;
+          case 'learning':
+            result = filteredWords.filter(
+              word =>
+                word.fsrs_state === State.New ||
+                word.fsrs_state === State.Learning ||
+                word.fsrs_state === State.Relearning ||
+                (word.fsrs_state === State.Review && word.fsrs_stability < 30)
+            );
+            break;
+          default:
+            result = filteredWords;
+        }
+
+        // Calculate retention score and sort by it
+        return result
+          .map(word => ({
+            ...word,
+            retentionScore: calculateRetentionScore(word),
+          }))
+          .sort((a, b) => b.retentionScore - a.retentionScore);
+      } catch (error) {
+        console.error('Error fetching words:', error);
+        throw error instanceof Error ? error : new Error('Failed to fetch vocabulary words');
+      }
+    },
+    enabled: !!userId,
+    placeholderData: () => {
+      const studyWords = queryClient.getQueryData<StudyWord[]>(['studyWords', userId]);
+      if (!studyWords?.length) return undefined;
+
+      const validStudyWords = studyWords.filter(
+        (
+          word
+        ): word is NonNullable<typeof word> & {
+          sentence_word: NonNullable<StudyWord['sentence_word']> & { word_form: string };
+        } =>
+          Boolean(
+            word?.sentence_word?.word_form && typeof word.sentence_word.word_form === 'string'
+          )
+      );
+
+      let filteredWords = validStudyWords;
+      switch (category) {
+        case 'mastered':
+          filteredWords = validStudyWords.filter(
+            word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
+          );
+          break;
+        case 'learning':
+          filteredWords = validStudyWords.filter(
+            word =>
+              word.fsrs_state === State.New ||
+              word.fsrs_state === State.Learning ||
+              word.fsrs_state === State.Relearning ||
+              (word.fsrs_state === State.Review && word.fsrs_stability < 30)
+          );
+          break;
+      }
+
+      return filteredWords
+        .map(word => ({
+          ...word,
+          retentionScore: calculateRetentionScore(word),
+        }))
+        .sort((a, b) => b.retentionScore - a.retentionScore);
+    },
+  });
+}

@@ -55,9 +55,6 @@ export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProg
     dayBuckets[dateString] = { date: dayName, count: 0, wordsLearned: 0 };
   });
 
-  // Count reviews in the last week
-  let reviewsDetected = 0;
-
   // Count ANY word review that happened in the last week, regardless of source
   studyWords.forEach(word => {
     // Check for any timestamp we can use
@@ -89,9 +86,6 @@ export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProg
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
-      // It's within our date range
-      reviewsDetected++;
-
       // Check if we have a bucket for this date
       if (dayBuckets[reviewDateString]) {
         // Count every review

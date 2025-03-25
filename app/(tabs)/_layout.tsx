@@ -172,9 +172,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
               name={isFocused ? screen.iconFilled : screen.iconOutline}
               size={ICON_SIZE}
               color={isFocused ? colors.tint : colors.tabIconDefault}
-              style={{
-                opacity: isFocused ? 1 : 0.7,
-              }}
+              style={isFocused ? styles.activeIcon : styles.inactiveIcon}
             />
             <ThemedText style={getTabButtonStyle(isFocused)} skipDefaultColor>
               {label}
@@ -248,5 +246,11 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     textAlign: 'center',
     marginTop: LAYOUT.SPACING.TINY / 2,
+  },
+  activeIcon: {
+    opacity: 1,
+  },
+  inactiveIcon: {
+    opacity: 0.7,
   },
 });

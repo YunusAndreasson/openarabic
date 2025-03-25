@@ -3,7 +3,14 @@ import { StyleSheet, View, Platform } from 'react-native';
 import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
 import { LAYOUT } from '@/constants/layout';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { RelatedArticlesFooterProps } from '@/types/ui/layout.types';
+import { Article } from '@/types/articles.types';
+
+interface RelatedArticlesFooterProps {
+  otherArticles: Article[];
+  otherCategoryArticles: Article[];
+  article: Article | null;
+  renderArticleCard: (article: Article) => React.ReactNode;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -19,7 +26,7 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
   otherCategoryArticles,
   article,
   renderArticleCard,
-}) => {
+}): React.ReactElement | null => {
   if (!otherArticles.length && !otherCategoryArticles.length) return null;
 
   return (

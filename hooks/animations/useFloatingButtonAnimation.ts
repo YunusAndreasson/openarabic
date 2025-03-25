@@ -3,7 +3,6 @@ import { useAnimatedStyle, withTiming, runOnUI } from 'react-native-reanimated';
 import { useTransformAnimation } from './useTransformAnimation';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { TIMING_CONFIG } from './animationConfigs';
-import { ViewStyle } from 'react-native';
 
 /**
  * Hook for floating button animations that combines slide and opacity effects

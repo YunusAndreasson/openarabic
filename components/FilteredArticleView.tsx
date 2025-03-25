@@ -204,13 +204,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  header: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.MODAL,
-  },
 });
 
 export default FilteredArticleView;

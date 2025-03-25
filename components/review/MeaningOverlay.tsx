@@ -109,3 +109,4 @@ const styles = StyleSheet.create({
 });
 
 export default MeaningOverlay;
+MeaningOverlay.displayName = 'MeaningOverlay';

@@ -151,7 +151,7 @@ export const readingListService = {
    * Gets the user's reading list
    */
   async getReadingList(userId: string): Promise<
-    Array<{
+    {
       user_id: string;
       article_id: number;
       position: number;
@@ -160,7 +160,7 @@ export const readingListService = {
       read_count: number;
       added_at: string;
       articles: Article & { author: { id: number; name: string } };
-    }>
+    }[]
   > {
     const { data, error } = await supabase
       .from('reading_list')

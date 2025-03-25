@@ -76,7 +76,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
     // Render item function with better memoization
     const renderItem: ListRenderItem<Article> = useCallback(
       ({ item }) => <ArticleItem item={item} />,
-      []
+      [ArticleItem]
     );
 
     const footerElement = useMemo(

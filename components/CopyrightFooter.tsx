@@ -34,6 +34,8 @@ export const CopyrightFooter = React.memo(() => {
   );
 });
 
+CopyrightFooter.displayName = 'CopyrightFooter';
+
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',

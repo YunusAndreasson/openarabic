@@ -133,10 +133,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
   },
-  image: {
-    minHeight: 120,
-    width: '100%',
-  },
   content: {
     overflow: 'hidden',
   },

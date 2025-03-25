@@ -69,3 +69,5 @@ export const ArticleSentence = React.memo(
     );
   }
 );
+
+ArticleSentence.displayName = 'ArticleSentence';

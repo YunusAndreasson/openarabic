@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, View, Platform, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -53,16 +53,6 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: 280,
-  } as ViewStyle,
-  footer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.LARGE : LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    marginTop: 'auto',
-    height: 80,
   } as ViewStyle,
 });
 
