@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createEmptyCard, fsrs, Rating, Card, State } from 'ts-fsrs';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { supabase } from '@/services/supabase';
 import { StudyWord } from '@/types/vocabulary.types';
+import { studyWordsService } from '@/services/studyWords';
 
 interface UseFSRSOptions {
   userId: string | undefined;
@@ -158,14 +158,17 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
       await studyWordsFSRSService.recordFSRSReview(userId, word.sentence_word_id, rating);
 
       // Update streak counters
-      await supabase
-        .from('study_words')
-        .update({
-          success_streak: success ? (word.success_streak || 0) + 1 : 0,
-          failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
-        })
-        .eq('sentence_word_id', word.sentence_word_id)
-        .eq('user_id', userId);
+      await studyWordsService.updateWordReview(word.sentence_word_id, {
+        success_streak: success ? (word.success_streak || 0) + 1 : 0,
+        failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
+        interval_days: word.interval_days,
+        ease_factor: word.ease_factor,
+        next_review_at: word.next_review_at,
+        review_count: word.review_count,
+        lapses: word.lapses,
+        stability: word.stability,
+        previous_interval: word.previous_interval,
+      });
     },
     [convertToFSRSCard, fsrsInstance, userId]
   );

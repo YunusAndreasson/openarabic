@@ -5,7 +5,7 @@ import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
 // Types
-import type { Article, ArticleSentence } from '@/types/articles.types';
+import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
 // Define a type for FSRS study word to avoid any
@@ -34,13 +34,8 @@ interface FSRSStudyWord {
  * Custom hook to fetch and process article data
  * @param articleId - The ID of the article to fetch
  * @param userId - The current user ID
- * @param isDataPrefetched - Whether the data is already prefetched
  */
-export const useArticleData = (
-  articleId: number | undefined,
-  userId: string | undefined,
-  isDataPrefetched: boolean = false
-) => {
+export const useArticleData = (articleId: number | undefined, userId: string | undefined) => {
   const queryClient = useQueryClient();
 
   // Fetch article data with all sentences and words in one query
@@ -129,7 +124,20 @@ export const useArticleData = (
       if (sentence.sentence_words) {
         map.set(
           sentence.id,
-          [...sentence.sentence_words].sort((a, b) => a.position - b.position)
+          [...sentence.sentence_words]
+            .sort((a, b) => a.position - b.position)
+            .map(word => ({
+              ...word,
+              root: {
+                id: word.root_id,
+                letters: '',
+                meaning: null,
+              },
+              word_type: {
+                id: word.word_type_id,
+                name: '',
+              },
+            }))
         );
       }
     });

@@ -10,7 +10,6 @@ import { BlurView } from 'expo-blur';
 import { ThemedText } from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { Theme } from '@/constants/Colors';
 import { withOpacity } from '@/utils/colorUtils';
 
 const TAB_SCREENS = [

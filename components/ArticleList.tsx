@@ -9,12 +9,24 @@ import { ArticleListProps } from '@/types/ui/article.types';
 
 const ITEM_HEIGHT = 360;
 
+interface ListFooterProps {
+  isLoading: boolean;
+  articlesLength: number;
+}
+
+const ListFooter: React.FC<ListFooterProps> = ({ isLoading, articlesLength }) => {
+  if (isLoading && articlesLength === 0) return null;
+  return <CopyrightFooter />;
+};
+
+ListFooter.displayName = 'ListFooter';
+
 const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
   (
     {
       articles,
       isLoading,
-      isRefreshing,
+      isRefreshing = false,
       onRefresh,
       onArticlePress,
       ListHeaderComponent,
@@ -67,11 +79,10 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       []
     );
 
-    // Render the footer component
-    const renderFooter = useCallback(() => {
-      if (isLoading && articles.length === 0) return null;
-      return <CopyrightFooter />;
-    }, [isLoading, articles.length]);
+    const footerElement = useMemo(
+      () => (isLoading && articles.length === 0 ? null : <CopyrightFooter />),
+      [isLoading, articles.length]
+    );
 
     const refreshControl = useMemo(
       () => (
@@ -104,7 +115,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         ]}
         ListHeaderComponent={ListHeaderComponent}
         ListEmptyComponent={isLoading ? null : ListEmptyComponent}
-        ListFooterComponent={renderFooter()}
+        ListFooterComponent={footerElement}
         refreshControl={refreshControl}
         scrollEventThrottle={16}
         disableVirtualization={false}

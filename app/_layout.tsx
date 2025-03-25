@@ -78,7 +78,7 @@ function AppContent() {
   const [showAppLoader, setShowAppLoader] = useState(true);
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
-  const { user, isLoading: isAuthLoading, authError } = useAuth();
+  const { isLoading: isAuthLoading, authError } = useAuth();
 
   // Memoize navigation theme to prevent recalculation
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);

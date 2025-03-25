@@ -23,6 +23,20 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
 }) => {
   const colors = useColors();
 
+  const buttonSize =
+    typeof size === 'string'
+      ? size === 'large'
+        ? ELEMENT_SIZES.ICON.LARGE
+        : ELEMENT_SIZES.ICON.SMALL
+      : size;
+
+  const finalIconSize =
+    typeof iconSize === 'string'
+      ? iconSize === 'large'
+        ? ELEMENT_SIZES.ICON.LARGE
+        : ELEMENT_SIZES.ICON.SMALL
+      : iconSize;
+
   // Use the standardized press animation hook for consistent animation
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'button',
@@ -48,9 +62,9 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
         {...getTouchableProps('Close', 'large')}
         style={[
           {
-            width: size,
-            height: size,
-            borderRadius: size / 2,
+            width: buttonSize,
+            height: buttonSize,
+            borderRadius: buttonSize / 2,
             backgroundColor: colors.cardBackground,
             justifyContent: 'center',
             alignItems: 'center',
@@ -60,7 +74,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
           style,
         ]}
       >
-        <Ionicons name="close" size={iconSize} color={color || colors.tabIconDefault} />
+        <Ionicons name="close" size={finalIconSize} color={color || colors.tabIconDefault} />
       </TouchableOpacity>
     </Animated.View>
   );

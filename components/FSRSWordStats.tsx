@@ -2,7 +2,6 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
 
 // Define state names for clearer display
 const STATE_NAMES = ['New', 'Learning', 'Review', 'Relearning'];
@@ -46,15 +45,6 @@ export function FSRSWordStats({
   };
 
   const difficultyInfo = getDifficultyInfo(difficulty);
-
-  const barContainerStyle = {
-    backgroundColor: colors.overlay,
-    height: 12,
-    width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    overflow: 'hidden',
-    marginTop: 4,
-  };
 
   return (
     <View style={styles.container}>

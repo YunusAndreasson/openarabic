@@ -37,16 +37,6 @@ export function withOpacity(hex: string, opacity: number): string {
 }
 
 /**
- * Convert a hex alpha value to a decimal opacity
- *
- * @param hexAlpha - Two-character hex alpha (e.g., "80")
- * @returns Decimal opacity between 0 and 1
- */
-export function hexAlphaToOpacity(hexAlpha: string): number {
-  return parseInt(hexAlpha, 16) / 255;
-}
-
-/**
  * Convert a decimal opacity to a hex alpha value
  *
  * @param opacity - Decimal opacity between 0 and 1
@@ -56,44 +46,4 @@ export function opacityToHexAlpha(opacity: number): string {
   return Math.round(opacity * 255)
     .toString(16)
     .padStart(2, '0');
-}
-
-/**
- * Add opacity to a hex color using hex notation
- *
- * @param hex - Hex color string (e.g., "#FF5500")
- * @param opacity - Opacity value between 0 and 1
- * @returns Hex color with alpha (e.g., "#FF550080")
- */
-export function withHexOpacity(hex: string, opacity: number): string {
-  hex = hex.replace(/^#/, '');
-  return `#${hex}${opacityToHexAlpha(opacity)}`;
-}
-
-/**
- * Lighten a color by the given amount
- *
- * @param hex - Hex color string
- * @param amount - Amount to lighten (0-1)
- * @returns Lightened color as hex
- */
-export function lighten(hex: string, amount: number): string {
-  const rgb = hexToRgb(hex).split(',').map(Number);
-  const newRgb = rgb.map(c => Math.min(255, c + Math.round(amount * 255)));
-
-  return '#' + newRgb.map(c => c.toString(16).padStart(2, '0')).join('');
-}
-
-/**
- * Darken a color by the given amount
- *
- * @param hex - Hex color string
- * @param amount - Amount to darken (0-1)
- * @returns Darkened color as hex
- */
-export function darken(hex: string, amount: number): string {
-  const rgb = hexToRgb(hex).split(',').map(Number);
-  const newRgb = rgb.map(c => Math.max(0, c - Math.round(amount * 255)));
-
-  return '#' + newRgb.map(c => c.toString(16).padStart(2, '0')).join('');
 }

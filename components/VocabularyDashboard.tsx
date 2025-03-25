@@ -4,7 +4,6 @@ import { ThemedText } from './ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../constants/layout';
 import { VocabularyStats } from '@/types/vocabulary.types';
-import { AnimatedText } from './AnimatedText';
 import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';
 import BaseCard from './BaseCard';
@@ -68,9 +67,9 @@ const StatItem = React.memo(
           <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
             <Ionicons name={icon as any} size={24} color={iconColor} />
           </View>
-          <AnimatedText type="body" weight="600" style={styles.statValue}>
+          <ThemedText type="body" weight="600" style={styles.statValue}>
             {value}
-          </AnimatedText>
+          </ThemedText>
           <ThemedText type="caption" variant="secondary" weight="500">
             {label}
           </ThemedText>

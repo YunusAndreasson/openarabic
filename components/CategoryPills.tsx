@@ -2,7 +2,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
-import type { Tables } from '../types/database.types';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
 import Pill from './Pill';
@@ -12,7 +11,7 @@ import { CategoryPillsProps } from '@/types/ui/layout.types';
 
 function CategoryPillsComponent({
   categories,
-  selectedCategory,
+  selectedCategoryId,
   onSelectCategory,
 }: CategoryPillsProps) {
   const colors = useColors();
@@ -28,8 +27,8 @@ function CategoryPillsComponent({
 
   // Memoize the press handler factory
   const createPressHandler = useCallback(
-    (category: Tables<'categories'> | null) => () => {
-      onSelectCategory(category);
+    (categoryId: number | null) => () => {
+      onSelectCategory(categoryId);
     },
     [onSelectCategory]
   );
@@ -49,7 +48,7 @@ function CategoryPillsComponent({
           <Pill
             id="all"
             label="All"
-            isSelected={selectedCategory === null}
+            isSelected={selectedCategoryId === null}
             onSelect={() => createPressHandler(null)()}
             variant="horizontal-category"
           />
@@ -59,8 +58,8 @@ function CategoryPillsComponent({
               key={category.id}
               id={category.id}
               label={capitalizeFirstLetter(category.name.toLowerCase())}
-              isSelected={selectedCategory?.id === category.id}
-              onSelect={() => createPressHandler(category)()}
+              isSelected={selectedCategoryId === category.id}
+              onSelect={() => createPressHandler(category.id)()}
               variant="horizontal-category"
             />
           ))}

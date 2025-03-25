@@ -9,24 +9,22 @@ import { LAYOUT } from '../constants/layout';
 /**
  * TimeAgo component to show when an article was published or last opened
  */
-export const TimeAgo = React.memo(
-  ({ date, isLastOpened = false }: { date: string; isLastOpened?: boolean }) => {
-    const colors = useColors();
+export const TimeAgo = React.memo(({ date }: { date: string; isLastOpened?: boolean }) => {
+  const colors = useColors();
 
-    // Ensure we have a valid date
-    const validDate = date ? date : new Date().toISOString();
-    const timeAgoText = formatTimeAgo(validDate);
+  // Ensure we have a valid date
+  const validDate = date ? date : new Date().toISOString();
+  const timeAgoText = formatTimeAgo(validDate);
 
-    return (
-      <View style={styles.timeAgoContainer}>
-        <Ionicons name="time-outline" size={14} color={colors.tint} style={styles.timeIcon} />
-        <ThemedText type="caption" weight="500" colorName="tint" skipDefaultColor>
-          {timeAgoText}
-        </ThemedText>
-      </View>
-    );
-  }
-);
+  return (
+    <View style={styles.timeAgoContainer}>
+      <Ionicons name="time-outline" size={14} color={colors.tint} style={styles.timeIcon} />
+      <ThemedText type="caption" weight="500" colorName="tint" skipDefaultColor>
+        {timeAgoText}
+      </ThemedText>
+    </View>
+  );
+});
 
 /**
  * DifficultyIndicator component to display article difficulty

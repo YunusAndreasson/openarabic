@@ -7,8 +7,6 @@ import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
 
 // No caching - all data refreshes on every query
-const MINUTE_IN_MS = 60000;
-const HOUR_IN_MS = 60 * MINUTE_IN_MS;
 const NO_CACHE = 0;
 const LOAD_TIMEOUT_MS = 10000;
 const MIN_LOADING_TIME = 500; // Minimum time to show loading state

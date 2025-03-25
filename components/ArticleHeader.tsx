@@ -1,17 +1,9 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-// Components
 import { ThemedText } from '@/components/ThemedText';
-
-// Utils
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-
-// Constants
 import { LAYOUT } from '@/constants/layout';
-
-// Types
 import { Article } from '@/types/articles.types';
 
 // Define the props interface locally

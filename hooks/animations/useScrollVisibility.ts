@@ -1,10 +1,5 @@
 import { useState } from 'react';
-import {
-  useSharedValue,
-  useAnimatedScrollHandler,
-  runOnJS,
-  useWorkletCallback,
-} from 'react-native-reanimated';
+import { useSharedValue, useAnimatedScrollHandler, runOnJS } from 'react-native-reanimated';
 import { NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 
 /**

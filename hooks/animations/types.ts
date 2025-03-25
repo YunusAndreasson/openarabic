@@ -8,14 +8,6 @@ import type {
   SharedValue as ReanimatedSharedValue,
   AnimatedStyleProp as ReanimatedAnimatedStyleProp,
   AnimatedStyle as ReanimatedAnimatedStyle,
-  WithTimingConfig,
-  WithSpringConfig,
-  EasingFunction,
-  AnimatableValue,
-  Animation,
-  AnimationCallback,
-  EntryExitAnimationFunction,
-  LayoutAnimationFunction,
 } from 'react-native-reanimated';
 
 // Re-export types

@@ -61,6 +61,7 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
     } else {
       fadeOut();
       reverseAnimation();
+      return () => {}; // Empty cleanup for else path
     }
   }, [visible, fadeIn, fadeOut, startAnimation, reverseAnimation, onClose]);
 

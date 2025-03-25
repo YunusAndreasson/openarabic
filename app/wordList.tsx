@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Platform } from 'react-native';
+import { StyleSheet, View, FlatList } from 'react-native';
 import { ThemedView } from '../components/ThemedView';
 import { ThemedText } from '../components/ThemedText';
 import { useColors } from '../hooks/useColors';

@@ -1,5 +1,4 @@
 import type { Tables } from './database.types';
-import { State } from 'ts-fsrs';
 
 /**
  * Enhanced sentence word type with root and word type information

@@ -1,17 +1,4 @@
-import {
-  StudyWord,
-  SrsStats,
-  VocabularyStats,
-  WeeklyProgressData,
-} from '../types/vocabulary.types';
-import { State } from 'ts-fsrs'; // Import State enum from ts-fsrs
-
-// Define our own WeeklyProgressData interface for internal use
-interface FSRSWeeklyProgressData {
-  date: Date;
-  count: number;
-  wordsLearned?: number; // Made optional to work with both old and new implementations
-}
+import { StudyWord, WeeklyProgressData } from '../types/vocabulary.types';
 
 // We no longer need our own enum, we're using ts-fsrs State enum directly
 
@@ -49,9 +36,6 @@ export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProg
   // Get today's date with time set to noon to avoid timezone issues
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-
-  // Format today's date as YYYY-MM-DD for comparison
-  const todayFormatted = today.toISOString().split('T')[0];
 
   // Create an array of dates representing the last 7 days (including today)
   const dates = [];

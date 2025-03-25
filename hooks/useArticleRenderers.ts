@@ -9,7 +9,7 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 /**
  * Hook for article rendering functions
  * @param settings - App settings
- * @param colors - Theme colors
+ * @param _colors - Theme colors
  * @param selectedWordIds - Set of selected word IDs (can be number or string)
  * @param sentenceWordsMap - Map of sentence IDs to words
  * @param handleWordPress - Function to handle word press
@@ -20,7 +20,7 @@ export const useArticleRenderers = (
     fontScale: number;
     showEnglish: boolean;
   },
-  colors: Record<string, string>,
+  _colors: Record<string, string>,
   selectedWordIds: Set<number | string>,
   sentenceWordsMap: Map<number, SentenceWord[]>,
   handleWordPress: (word: SentenceWord) => void

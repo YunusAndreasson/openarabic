@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { LAYOUT } from '../constants/layout';

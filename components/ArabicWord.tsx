@@ -19,7 +19,6 @@ import Animated, {
   runOnJS,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
@@ -40,8 +39,7 @@ function ArabicWordComponent({
 }: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const queryClient = useQueryClient();
-  const { user } = useAuth();
+  useAuth();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);

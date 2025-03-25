@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Pressable, ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, Pressable, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
 import { FloatingButtonProps } from '@/types/ui/button.types';
 import { usePressAnimation } from '@/hooks/animations';

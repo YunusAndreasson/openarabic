@@ -1,7 +1,7 @@
 import { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
 import { Edge } from 'react-native-safe-area-context';
 import { Article } from '../articles.types';
-import { BaseStyleProps, BaseThemedProps } from './base.types';
+import { BaseStyleProps } from './base.types';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -219,18 +219,26 @@ export interface VocabularyStatsProps {
  * Props for the WordReviewCard component
  */
 export interface WordReviewCardProps {
-  /** Arabic word to display */
-  arabicWord: string;
-  /** English translation of the word */
-  englishWord: string;
-  /** Example sentence containing the word */
-  exampleSentence?: string;
-  /** Translation of the example sentence */
-  exampleTranslation?: string;
-  /** Whether to show the full details */
-  showDetails: boolean;
-  /** Whether to show meaning */
-  showMeaning: boolean;
+  /** Word object to display */
+  word: {
+    sentence_word?: {
+      word_form: string;
+    };
+  } | null;
+  /** Type of transition animation */
+  transitionType?: string;
   /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
+}
+
+/**
+ * Props for the DailyPickSection component
+ */
+export interface DailyPickSectionProps {
+  /** The article to display */
+  article: Article | null;
+  /** Callback when article is pressed */
+  onPress: (article: Article) => void;
+  /** Whether to show the section title */
+  showTitle?: boolean;
 }

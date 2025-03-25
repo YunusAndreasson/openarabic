@@ -3,12 +3,10 @@ import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../types/articles.types';
 import { LAYOUT } from '../constants/layout';
-import Section from './Section';
 import { ThemedText } from './ThemedText';
 import { articlesService } from '@/services/articles';
 import ThemedCard from './ThemedCard';
 import { LoadingContainer } from './Loader';
-import { useColors } from '@/hooks/useColors';
 import SectionTitle from './SectionTitle';
 
 interface ArticleSectionProps {
@@ -86,7 +84,6 @@ const ArticleSection = React.memo(
     isLoading = false,
   }: ArticleSectionProps) => {
     const queryClient = useQueryClient();
-    const colors = useColors();
 
     // Limit the number of articles if maxItems is specified
     const displayedArticles = maxItems ? articles.slice(0, maxItems) : articles;

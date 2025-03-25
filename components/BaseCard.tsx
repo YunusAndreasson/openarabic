@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Pressable, View, Platform } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet, Pressable, View } from 'react-native';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { usePressAnimation } from '../hooks/animations';
@@ -20,7 +19,6 @@ const BaseCard: React.FC<BaseCardProps> = ({
   onPress,
   isLoading = false,
   shadowSize = 'medium',
-  includePressAnimation = true,
   loadingComponent,
   contentStyle,
   disabled = false,
@@ -30,7 +28,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
   const isDarkMode = useIsDarkMode();
 
   // Use press animation hook for smooth press feedback
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation();
+  const { handlePressIn, handlePressOut } = usePressAnimation();
 
   // Memoize the shadow style calculation
   const shadowStyle = useMemo(() => {

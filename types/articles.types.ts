@@ -1,5 +1,4 @@
 import type { Tables } from './database.types';
-import { SentenceWord } from './vocabulary.types';
 
 /**
  * Category type used across multiple components

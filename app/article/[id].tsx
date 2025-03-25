@@ -128,9 +128,6 @@ export default function ArticleScreen() {
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
-  // Always fetch fresh data - no caching
-  const isDataPrefetched = false;
-
   // Use the custom loading state hook
   const { setDataLoaded } = useLoadingState(true);
 
@@ -168,7 +165,7 @@ export default function ArticleScreen() {
     sentenceWordsMap,
     otherArticles,
     otherCategoryArticles,
-  } = useArticleData(articleId, user?.id, !!isDataPrefetched);
+  } = useArticleData(articleId, user?.id);
 
   // Use animation hook for content and button visibility on scroll
   const {

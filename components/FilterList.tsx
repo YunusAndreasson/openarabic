@@ -31,7 +31,7 @@ function FilterList<T extends FilterItem>({
 
   // Render each filter item with staggered animation
   const renderItem = useCallback(
-    ({ item, index }: { item: T; index: number }) => {
+    ({ item }: { item: T; index: number }) => {
       return (
         <Pill
           id={item.id}
@@ -76,7 +76,7 @@ function FilterList<T extends FilterItem>({
         initialNumToRender={10}
         maxToRenderPerBatch={20}
         windowSize={5}
-        getItemLayout={(data, index) => ({
+        getItemLayout={(_data, index) => ({
           length: 100, // Approximate width of each filter pill
           offset: 100 * index,
           index,

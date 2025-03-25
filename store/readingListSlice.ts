@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Article } from '../types/articles.types';
 import { readingListService } from '../services/readingList';
-import { supabase, checkAuthentication } from '../services/supabase';
+import { checkAuthentication } from '../services/supabase';
 
 interface ReadingListState {
   inProgressArticles: Article[];
@@ -73,7 +73,7 @@ export const incrementReadCount = createAsyncThunk(
 
 export const updateLastOpenedArticle = createAsyncThunk(
   'readingList/updateLastOpenedArticle',
-  async (articleId: number, { getState }) => {
+  async (articleId: number, {}) => {
     // No need to check authentication or make API calls
     // Just return the article ID and current timestamp
     return {

@@ -1,5 +1,4 @@
 import { TextProps, TextStyle, StyleProp } from 'react-native';
-import { AnimatedStyle } from 'react-native-reanimated';
 
 export type TextTypeName =
   | 'arabic'
@@ -62,25 +61,6 @@ export interface ThemedTextProps extends TextProps {
   style?: StyleProp<TextStyle>;
   /** Text content to display */
   children?: React.ReactNode;
-}
-
-/**
- * AnimatedText combines ThemedText with animation capabilities.
- * It provides a convenient way to create text that animates on changes
- * while maintaining the theming system and properly separating animation
- * styling from typography styling.
- */
-export interface AnimatedTextProps extends ThemedTextProps {
-  /** Text content to display */
-  children: React.ReactNode;
-  /** Style for the text */
-  style?: StyleProp<TextStyle>;
-  /** Whether to animate when the content changes */
-  animate?: boolean;
-  /** Animation magnitude (how much to scale) */
-  magnitude?: number;
-  /** Style for the animated container view */
-  animatedViewStyle?: StyleProp<AnimatedStyle<StyleProp<any>>>;
 }
 
 /**

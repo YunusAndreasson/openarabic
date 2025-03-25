@@ -76,18 +76,18 @@ export type ThemedButtonProps =
  * Props for the CloseButton component
  */
 export interface CloseButtonProps {
-  /** Function to call when close button is pressed */
+  /** Function to call when button is pressed */
   onPress: () => void;
-  /** Size of the close button (small or large) */
-  size?: 'small' | 'large';
+  /** Size of the button container */
+  size?: number | 'small' | 'large';
+  /** Size of the close icon */
+  iconSize?: number | 'small' | 'large';
   /** Color of the close icon */
   color?: string;
-  /** Style applied to the container */
-  style?: ViewStyle;
-  /** Whether to use a circle background */
-  useCircle?: boolean;
-  /** Accessibility label for screen readers */
-  accessibilityLabel?: string;
+  /** Additional styles for the button */
+  style?: StyleProp<ViewStyle>;
+  /** Whether to trigger haptic feedback on press */
+  hapticFeedback?: boolean;
 }
 
 /**

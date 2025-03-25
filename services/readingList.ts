@@ -62,12 +62,12 @@ export const readingListService = {
 
     // Extract the articles from the nested structure
     const articles = (data || [])
-      .filter(item => item.articles) // Filter out any null articles
+      .filter(item => item.articles && item.completed_at) // Filter out any null articles or completed_at
       .map(item => {
         // Cast and add completed_at date
         return {
           ...(item.articles as unknown as Article),
-          completed_at: item.completed_at,
+          completed_at: item.completed_at as string,
         };
       });
 
@@ -152,7 +152,6 @@ export const readingListService = {
    */
   async getReadingList(userId: string): Promise<
     Array<{
-      id: number;
       user_id: string;
       article_id: number;
       position: number;
@@ -160,7 +159,6 @@ export const readingListService = {
       completed_at: string | null;
       read_count: number;
       added_at: string;
-      updated_at: string | null;
       articles: Article & { author: { id: number; name: string } };
     }>
   > {
