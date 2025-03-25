@@ -1,4 +1,4 @@
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -103,7 +103,6 @@ export default function ArticlesScreen() {
 
   // Refs
   const isInitialMount = useRef(true);
-  const scrollViewRef = useRef<any>(null);
 
   // Use React Query instead of local state for articles
   const {
@@ -334,19 +333,6 @@ export default function ArticlesScreen() {
       isInitialMount.current = false;
     }
   }, [handleRefresh]);
-
-  // Add effect to scroll to top when data is loaded
-  useEffect(() => {
-    if (articlesData.length > 0 && !isArticlesLoading) {
-      // Small delay to ensure content is rendered
-      const timer = setTimeout(() => {
-        if (scrollViewRef.current) {
-          scrollViewRef.current.scrollToOffset({ offset: 0, animated: false });
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [articlesData.length, isArticlesLoading]);
 
   // Add effect to prefetch article details for visible articles
   useEffect(() => {

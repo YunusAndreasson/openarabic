@@ -198,6 +198,7 @@ export default function ReviewScreen() {
         clearTimeout(timer);
       };
     }
+    return () => {}; // Return empty cleanup function for false case
   }, [showInitialLoading]);
 
   // Update current sentence when currentWord changes

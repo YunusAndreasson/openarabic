@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { StyleSheet, TextStyle, ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { StyleSheet } from 'react-native';
+import Animated, { StyleProps } from 'react-native-reanimated';
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
@@ -39,6 +39,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
         if (isWarning) {
           lightFeedback();
         }
+        return () => {};
       } else if (shouldRender) {
         reverseAnimation();
 
@@ -50,6 +51,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
 
         return () => clearTimeout(timeout);
       }
+      return () => {};
     }, [visible, startAnimation, reverseAnimation, isWarning, shouldRender]);
 
     if (!shouldRender) return null;
@@ -62,7 +64,11 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
 
     return (
       <Animated.View
-        style={[styles.overlay, { backgroundColor: colors.background }, animatedStyle]}
+        style={[
+          styles.overlay,
+          { backgroundColor: colors.background },
+          animatedStyle as StyleProps,
+        ]}
       >
         <ThemedText
           style={[
