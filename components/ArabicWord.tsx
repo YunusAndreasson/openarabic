@@ -24,6 +24,7 @@ import { usePressAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
 import { ArabicWordProps } from '@/types/ui/text.types';
+import { TOOLTIP_COLORS } from '../constants/tooltipColors';
 
 // Type for animated styles to fix TypeScript errors
 type AnimatedStyles = {
@@ -47,6 +48,9 @@ function ArabicWordComponent({
   // Animated values for long press feedback
   const longPressProgress = useSharedValue(0);
   const borderOpacity = useSharedValue(isSelected ? 1 : 0);
+
+  // Get the current tooltip/highlight color based on theme
+  const tooltipColor = isDarkMode ? TOOLTIP_COLORS.DARK : TOOLTIP_COLORS.LIGHT;
 
   // Calculate absolute position considering page scroll - memoized for performance
   const absoluteLayout = useMemo(
@@ -77,19 +81,19 @@ function ArabicWordComponent({
     borderOpacity.value = isSelected ? 1 : 0;
   }, [isSelected, pressed, borderOpacity, word.id]);
 
-  // Animated style for long press feedback
+  // Animated style for long press feedback - ensure this matches tooltip color with solid colors
   const longPressStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       longPressProgress.value,
       [0, 1],
-      [colors.transparent, isDarkMode ? colors.textOverlay : colors.overlay]
+      [colors.transparent, tooltipColor] // Use solid colors matching tooltip
     );
 
     return {
       backgroundColor,
       borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     };
-  }, [isDarkMode, colors.textOverlay, colors.overlay, colors.transparent]);
+  }, [longPressProgress.value, tooltipColor, colors.transparent]);
 
   // Animated border style - always present but opacity changes
   const borderStyle = useAnimatedStyle(() => {
@@ -98,10 +102,10 @@ function ArabicWordComponent({
       borderBottomColor: interpolateColor(
         borderOpacity.value,
         [0, 1],
-        [colors.transparent, isDarkMode ? colors.borderOverlay : colors.textOverlay]
+        [colors.transparent, tooltipColor] // Use solid colors matching tooltip
       ),
     };
-  }, [isDarkMode, colors.borderOverlay, colors.textOverlay, colors.transparent]);
+  }, [borderOpacity.value, tooltipColor, colors.transparent]);
 
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -164,46 +168,32 @@ function ArabicWordComponent({
         );
       }
     }, 300);
-
-    // Remove invalidation of queries here - we'll handle it in the mutation
   }, [onPress, word, longPressProgress, cleanupAnimation]);
 
-  // Consolidated visual properties - calculate multiple derived values in a single pass
-  // This reduces overhead from multiple hooks and ensures consistent generation
-  const { textProps, wordStyle } = useMemo(() => {
-    // Calculate font size once
-    const calculatedFontSize = baseSize * scale;
+  // Calculate font size once outside the memo to avoid recalculations
+  const calculatedFontSize = baseSize * scale;
 
-    // Build text props
-    const calculatedTextProps = {
+  // Memoize text props to prevent unnecessary recalculations
+  const textProps = useMemo(
+    () => ({
       type: 'arabic' as const,
       variant: isSelected ? ('primary' as const) : undefined,
       skipDefaultColor: true,
       colorName: isSelected ? ('tint' as const) : ('text' as const),
       arabicFontSize: calculatedFontSize,
       weight: isSelected ? ('600' as const) : ('normal' as const),
-      style: {
-        paddingVertical: 0,
-        marginBottom: 0,
-      },
-    };
+      style: styles.textStyle,
+    }),
+    [isSelected, calculatedFontSize]
+  );
 
-    // Build word styles
-    const baseStyles = [styles.wordContainer] as const;
-    const styleObjects: any[] = [];
-
-    // Add tooltip feedback style
+  // Determine word container style based on tooltip visibility
+  const containerStyle = useMemo(() => {
     if (tooltipVisible) {
-      styleObjects.push({
-        backgroundColor: isDarkMode ? colors.textOverlay : colors.overlay,
-      });
+      return [styles.wordContainer, { backgroundColor: tooltipColor }];
     }
-
-    return {
-      textProps: calculatedTextProps,
-      wordStyle: [...baseStyles, ...styleObjects],
-    };
-  }, [baseSize, scale, isSelected, tooltipVisible, isDarkMode, colors.textOverlay, colors.overlay]);
+    return styles.wordContainer;
+  }, [tooltipVisible, tooltipColor]);
 
   // Reset animation when component unmounts
   useEffect(() => {
@@ -220,7 +210,7 @@ function ArabicWordComponent({
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={250}
-        style={wordStyle}
+        style={containerStyle}
         activeOpacity={0.7}
         onLayout={handleLayout}
       >
@@ -262,11 +252,13 @@ const styles = StyleSheet.create({
     flexGrow: 0, // Prevent growing
     alignSelf: 'flex-start', // Allow natural width
     maxWidth: 150, // Prevent extremely long words from causing layout issues
-    // Prevent layout shifts by reserving space
-    height: undefined, // Allow height to be determined by content
   },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  textStyle: {
+    paddingVertical: 0,
+    marginBottom: 0,
   },
 });

@@ -7,7 +7,8 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { useColors } from '../hooks/useColors';
 import { WordTooltipProps } from '@/types/ui/modal.types';
 import Animated from 'react-native-reanimated';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import { useTransformAnimation } from '@/hooks/animations';
+import { TOOLTIP_COLORS } from '../constants/tooltipColors';
 
 /**
  * A tooltip component that displays above an Arabic word
@@ -17,18 +18,7 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
-  // Setup fade animation
-  const {
-    fadeIn,
-    fadeOut,
-    animatedStyle: opacityStyle,
-  } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: TIMING.INTERACTION.TOOLTIP_DURATION / 6, // Animation should be quick
-    style: 'standard',
-  });
-
-  // Setup transform animation (slide up effect)
+  // Setup transform animation (scale effect only, no opacity changes)
   const {
     startAnimation,
     reverseAnimation,
@@ -44,31 +34,24 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
   // Trigger animation based on visibility
   useEffect(() => {
     if (visible) {
-      // Start both animations
-      fadeIn();
+      // Start animation
       startAnimation();
 
       // Auto-close tooltip after standardized delay
       const timer = setTimeout(() => {
-        // Start fade out and reverse animations, then call onClose when complete
-        fadeOut(() => {
-          reverseAnimation();
-          onClose();
-        });
-      }, TIMING.INTERACTION.TOOLTIP_DURATION - 150); // Leave time for fade out
+        // Reverse animation then call onClose when complete
+        reverseAnimation(onClose);
+      }, TIMING.INTERACTION.TOOLTIP_DURATION - 150); // Leave time for animation
 
       return () => clearTimeout(timer);
     } else {
-      fadeOut();
       reverseAnimation();
       return () => {}; // Empty cleanup for else path
     }
-  }, [visible, fadeIn, fadeOut, startAnimation, reverseAnimation, onClose]);
+  }, [visible, startAnimation, reverseAnimation, onClose]);
 
-  // Get colors based on theme
-  const backgroundColor = isDarkMode
-    ? colors.cardBackground // dark theme background
-    : colors.white; // light theme background
+  // Get colors based on theme - using TOOLTIP_COLORS from constants instead of hardcoded values
+  const backgroundColor = isDarkMode ? TOOLTIP_COLORS.DARK : TOOLTIP_COLORS.LIGHT;
   const textColor = isDarkMode
     ? colors.text // dark theme text
     : colors.titleText; // light theme text
@@ -81,6 +64,7 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
   const MAX_TOOLTIP_WIDTH = screenWidth * 0.7; // Maximum 70% of screen width
   const ARROW_SIZE = 8;
   const TOOLTIP_MARGIN = 10;
+  const TOOLTIP_HEIGHT = 40; // Estimate height to improve positioning
 
   // Memoize the tooltip content to reduce re-renders
   const tooltipContent = useMemo(
@@ -120,31 +104,21 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
   // Don't render anything if tooltip shouldn't be visible or has no layout
   if (!visible || !layout) return null;
 
-  // Calculate position values based on layout
+  // Calculate position values based on layout, ensuring perfect centering
   const wordCenterX = layout.x + layout.width / 2;
-  const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - 30; // Increased height for better visibility
+  const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - TOOLTIP_HEIGHT; // Position better with explicit height
 
   return (
     <Animated.View
       style={[
         styles.tooltipContainer,
-        {
-          top: tooltipTop,
-          width: screenWidth,
-        },
-        opacityStyle as unknown as ViewStyle,
+        styles.absoluteFull,
+        { top: tooltipTop },
         transformStyle as unknown as ViewStyle,
       ]}
       pointerEvents="none"
     >
-      <View
-        style={[
-          styles.tooltipWrapper,
-          {
-            left: wordCenterX,
-          },
-        ]}
-      >
+      <View style={[styles.tooltipWrapper, { left: wordCenterX }]}>
         <View
           style={[
             styles.tooltip,
@@ -153,12 +127,11 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
               backgroundColor,
               borderColor,
               shadowColor: colors.shadow,
-              transform: [{ translateX: -50 }],
             },
           ]}
         >
           {tooltipContent}
-          {/* Arrow pointing to the word */}
+          {/* Arrow pointing to the word - centered precisely */}
           {arrowComponent}
         </View>
       </View>
@@ -170,22 +143,27 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
 WordTooltip.displayName = 'WordTooltip';
 
 const styles = StyleSheet.create({
+  absoluteFull: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    width: '100%',
+  },
   tooltipContainer: {
     position: 'absolute',
-    width: '100%',
     zIndex: LAYOUT.Z_INDEX.TOOLTIP,
-    alignItems: 'center',
   },
   tooltipWrapper: {
     position: 'absolute',
+    transform: [{ translateX: -50 }], // Center horizontally
   },
   tooltip: {
     position: 'relative',
     paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    alignSelf: 'flex-start', // Allow content to determine width
+    alignSelf: 'center', // Center itself
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },
