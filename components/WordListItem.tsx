@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    minHeight: 50,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    minHeight: 40,
   },
   leftContent: {
     flex: 1,
@@ -191,12 +191,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   englishText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-    lineHeight: Platform.OS === 'ios' ? 22 : 26,
+    lineHeight: Platform.OS === 'ios' ? 20 : 24,
   },
   progressBarContainer: {
-    marginVertical: LAYOUT.SPACING.SMALL,
+    marginVertical: LAYOUT.SPACING.SMALL / 2,
   },
   progressBarLabelContainer: {
     flexDirection: 'row',

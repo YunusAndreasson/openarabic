@@ -15,7 +15,7 @@ import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWordList, EnhancedStudyWord } from '../hooks/useWordList';
 
-const ITEM_HEIGHT = 70;
+const ITEM_HEIGHT = 60;
 const CATEGORY_HEADER_HEIGHT = 150;
 
 export default function WordListScreen() {
@@ -147,40 +147,38 @@ export default function WordListScreen() {
           includeBottomInset={false}
           safeAreaEdges={['left', 'right']}
         >
-          <View style={styles.contentWrapper}>
-            {isLoading ? (
-              <View
-                style={[
-                  styles.loaderContainer,
-                  { paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.LARGE },
-                ]}
-              >
-                <Loader size="large" color={colors.tint} />
-              </View>
-            ) : (
-              <FlatList
-                data={words || []}
-                renderItem={renderItem}
-                keyExtractor={item => item.sentence_word_id.toString()}
-                contentContainerStyle={[
-                  styles.listContent,
-                  {
-                    paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.LARGE,
-                  },
-                ]}
-                ListHeaderComponent={ListHeaderComponent}
-                ListEmptyComponent={renderEmptyComponent}
-                showsVerticalScrollIndicator={false}
-                initialNumToRender={8}
-                maxToRenderPerBatch={5}
-                windowSize={5}
-                removeClippedSubviews={true}
-                updateCellsBatchingPeriod={50}
-                getItemLayout={getItemLayout}
-              />
-            )}
-          </View>
           <PageHeader title={title} onBackPress={handleBackPress} />
+          {isLoading ? (
+            <View style={styles.loaderContainer}>
+              <Loader size="large" color={colors.tint} />
+            </View>
+          ) : (
+            <FlatList
+              data={words || []}
+              renderItem={renderItem}
+              keyExtractor={item => item.sentence_word_id.toString()}
+              contentContainerStyle={[
+                styles.listContent,
+                { paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.MEDIUM },
+              ]}
+              ListHeaderComponent={ListHeaderComponent}
+              ListEmptyComponent={renderEmptyComponent}
+              showsVerticalScrollIndicator={true}
+              initialNumToRender={10}
+              maxToRenderPerBatch={8}
+              windowSize={3}
+              removeClippedSubviews={true}
+              updateCellsBatchingPeriod={75}
+              getItemLayout={getItemLayout}
+              scrollEventThrottle={16}
+              maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+                autoscrollToTopThreshold: 10,
+              }}
+              onEndReachedThreshold={0.5}
+              onScrollToIndexFailed={() => {}}
+            />
+          )}
         </ThemedView>
       </Animated.View>
     </>
@@ -196,16 +194,13 @@ const styles = StyleSheet.create({
   flexContainer: {
     flex: 1,
   },
-  contentWrapper: {
-    flex: 1,
-  },
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    gap: LAYOUT.SPACING.SMALL, // Decreased gap to match vocabulary.tsx
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
+    gap: 2,
   },
   headerContainer: {
-    paddingBottom: LAYOUT.SPACING.LARGE, // Increased padding
+    paddingBottom: 0,
   },
   loaderContainer: {
     flex: 1,
@@ -216,7 +211,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE * 2, // Increased top margin
   },
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
