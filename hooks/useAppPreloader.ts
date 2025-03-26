@@ -115,8 +115,8 @@ export const useAppPreloader = () => {
           queryClient.prefetchQuery({
             queryKey: ['article', articleId],
             queryFn: () => articlesService.getArticleById(articleId),
-            staleTime: 300000, // 5 minutes
-            gcTime: 600000, // 10 minutes
+            staleTime: 0, // No caching
+            gcTime: 0, // No cache retention
           }),
         ];
 
@@ -125,8 +125,8 @@ export const useAppPreloader = () => {
             queryClient.prefetchQuery({
               queryKey: ['isInReadingList', user.id, articleId],
               queryFn: () => readingListService.isInReadingList(user.id, articleId),
-              staleTime: 60000, // 1 minute
-              gcTime: 300000, // 5 minutes
+              staleTime: 0, // No caching
+              gcTime: 0, // No cache retention
             })
           );
         }

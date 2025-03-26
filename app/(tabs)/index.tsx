@@ -240,8 +240,8 @@ export default function ArticlesScreen() {
         queryClient.prefetchQuery({
           queryKey: ['article', article.id],
           queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: 60000, // Cache for 1 minute
-          gcTime: 300000, // Keep in garbage collection for 5 minutes
+          staleTime: 0, // No caching
+          gcTime: 0, // No cache retention
         }),
       ];
 
@@ -251,8 +251,8 @@ export default function ArticlesScreen() {
           queryClient.prefetchQuery({
             queryKey: ['isInReadingList', session.user.id, article.id],
             queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-            staleTime: 60000,
-            gcTime: 300000,
+            staleTime: 0, // No caching
+            gcTime: 0, // No cache retention
           })
         );
       }

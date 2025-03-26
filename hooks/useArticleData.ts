@@ -50,14 +50,6 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     staleTime: 0,
     gcTime: 0,
     placeholderData: () => {
-      const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
-      const cachedArticle = cachedArticles?.find((a: Article) => a.id === articleId);
-      if (cachedArticle) {
-        return {
-          ...cachedArticle,
-          article_sentences: [],
-        };
-      }
       return undefined;
     },
   });
