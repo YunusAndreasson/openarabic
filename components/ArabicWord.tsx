@@ -49,8 +49,11 @@ function ArabicWordComponent({
   const longPressProgress = useSharedValue(0);
   const borderOpacity = useSharedValue(isSelected ? 1 : 0);
 
-  // Get the current tooltip/highlight color based on theme
+  // Get the current tooltip/highlight color based on theme - use fainter colors
   const tooltipColor = isDarkMode ? TOOLTIP_COLORS.DARK : TOOLTIP_COLORS.LIGHT;
+  const highlightColor = isDarkMode
+    ? TOOLTIP_COLORS.WORD_HIGHLIGHT_DARK
+    : TOOLTIP_COLORS.WORD_HIGHLIGHT_LIGHT;
 
   // Calculate absolute position considering page scroll - memoized for performance
   const absoluteLayout = useMemo(
@@ -81,19 +84,19 @@ function ArabicWordComponent({
     borderOpacity.value = isSelected ? 1 : 0;
   }, [isSelected, pressed, borderOpacity, word.id]);
 
-  // Animated style for long press feedback - ensure this matches tooltip color with solid colors
+  // Animated style for long press feedback - ensure this matches tooltip color with a fainter appearance
   const longPressStyle = useAnimatedStyle(() => {
     const backgroundColor = interpolateColor(
       longPressProgress.value,
       [0, 1],
-      [colors.transparent, tooltipColor] // Use solid colors matching tooltip
+      [colors.transparent, highlightColor] // Use fainter highlight color
     );
 
     return {
       backgroundColor,
       borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     };
-  }, [longPressProgress.value, tooltipColor, colors.transparent]);
+  }, [longPressProgress.value, highlightColor, colors.transparent]);
 
   // Animated border style - always present but opacity changes
   const borderStyle = useAnimatedStyle(() => {
@@ -102,10 +105,10 @@ function ArabicWordComponent({
       borderBottomColor: interpolateColor(
         borderOpacity.value,
         [0, 1],
-        [colors.transparent, tooltipColor] // Use solid colors matching tooltip
+        [colors.transparent, highlightColor] // Use fainter highlight color
       ),
     };
-  }, [borderOpacity.value, tooltipColor, colors.transparent]);
+  }, [borderOpacity.value, highlightColor, colors.transparent]);
 
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
@@ -190,10 +193,10 @@ function ArabicWordComponent({
   // Determine word container style based on tooltip visibility
   const containerStyle = useMemo(() => {
     if (tooltipVisible) {
-      return [styles.wordContainer, { backgroundColor: tooltipColor }];
+      return [styles.wordContainer, { backgroundColor: highlightColor }];
     }
     return styles.wordContainer;
-  }, [tooltipVisible, tooltipColor]);
+  }, [tooltipVisible, highlightColor]);
 
   // Reset animation when component unmounts
   useEffect(() => {

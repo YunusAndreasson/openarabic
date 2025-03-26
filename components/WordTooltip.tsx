@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
@@ -6,138 +6,236 @@ import { TIMING } from '../constants/ui';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { useColors } from '../hooks/useColors';
 import { WordTooltipProps } from '@/types/ui/modal.types';
-import Animated from 'react-native-reanimated';
-import { useTransformAnimation } from '@/hooks/animations';
+import Animated, { interpolateColor } from 'react-native-reanimated';
+import { useTransformAnimation, useOpacityAnimation } from '@/hooks/animations';
 import { TOOLTIP_COLORS } from '../constants/tooltipColors';
 
 /**
  * A tooltip component that displays above an Arabic word
  * Shows the English translation of the word with minimal visual design
+ * Ensures the arrow tip is precisely centered over the word regardless of screen position
  */
-export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordTooltipProps) => {
-  const isDarkMode = useIsDarkMode();
-  const colors = useColors();
+export const WordTooltip = React.memo(
+  ({ visible, text = '', layout, onClose }: WordTooltipProps) => {
+    const isDarkMode = useIsDarkMode();
+    const colors = useColors();
 
-  // Setup transform animation (scale effect only, no opacity changes)
-  const {
-    startAnimation,
-    reverseAnimation,
-    animatedStyle: transformStyle,
-  } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 0.95,
-    targetValue: 1,
-    duration: TIMING.INTERACTION.TOOLTIP_DURATION / 6,
-    useSpring: true, // Use spring for more natural motion
-  });
+    // Clean up the text by removing any duplicate spaces and trimming - done once
+    const cleanText = useMemo(() => text.replace(/\s+/g, ' ').trim(), [text]);
 
-  // Trigger animation based on visibility
-  useEffect(() => {
-    if (visible) {
-      // Start animation
-      startAnimation();
+    // Setup transform animation for scale effect
+    const {
+      startAnimation: startScaleAnimation,
+      reverseAnimation: reverseScaleAnimation,
+      animatedStyle: transformStyle,
+    } = useTransformAnimation({
+      type: 'scale',
+      initialValue: 0.94, // Slightly larger starting scale for more subtle effect
+      targetValue: 1,
+      duration: TIMING.INTERACTION.TOOLTIP_DURATION / 7, // Slightly faster animation
+      useSpring: true,
+    });
 
-      // Auto-close tooltip after standardized delay
-      const timer = setTimeout(() => {
-        // Reverse animation then call onClose when complete
-        reverseAnimation(onClose);
-      }, TIMING.INTERACTION.TOOLTIP_DURATION - 150); // Leave time for animation
+    // Setup opacity animation for subtle fade effect
+    const {
+      fadeIn,
+      fadeOut,
+      animatedStyle: opacityStyle,
+    } = useOpacityAnimation({
+      initialOpacity: 0.7, // Start more visible for faster appearance
+      duration: TIMING.INTERACTION.TOOLTIP_DURATION / 10,
+    });
 
-      return () => clearTimeout(timer);
-    } else {
-      reverseAnimation();
-      return () => {}; // Empty cleanup for else path
-    }
-  }, [visible, startAnimation, reverseAnimation, onClose]);
+    // Handle closing the tooltip with animation sequence
+    const handleClose = useCallback(() => {
+      fadeOut(() => {
+        reverseScaleAnimation(onClose);
+      });
+    }, [fadeOut, reverseScaleAnimation, onClose]);
 
-  // Get colors based on theme - using TOOLTIP_COLORS from constants instead of hardcoded values
-  const backgroundColor = isDarkMode ? TOOLTIP_COLORS.DARK : TOOLTIP_COLORS.LIGHT;
-  const textColor = isDarkMode
-    ? colors.text // dark theme text
-    : colors.titleText; // light theme text
-  const borderColor = isDarkMode
-    ? colors.cardBorder // dark theme border
-    : colors.cardBorder; // light theme border
+    // Trigger animations based on visibility
+    useEffect(() => {
+      if (visible) {
+        // Start both animations
+        startScaleAnimation();
+        fadeIn();
 
-  // Size and position calculations for layout (these calculations are safe even if layout is null)
-  const { width: screenWidth } = Dimensions.get('window');
-  const MAX_TOOLTIP_WIDTH = screenWidth * 0.7; // Maximum 70% of screen width
-  const ARROW_SIZE = 8;
-  const TOOLTIP_MARGIN = 10;
-  const TOOLTIP_HEIGHT = 40; // Estimate height to improve positioning
+        // Auto-close tooltip after standardized delay
+        const timer = setTimeout(() => {
+          handleClose();
+        }, TIMING.INTERACTION.TOOLTIP_DURATION - 100); // Slightly quicker dismissal
 
-  // Memoize the tooltip content to reduce re-renders
-  const tooltipContent = useMemo(
-    () => (
-      <ThemedText
-        style={[styles.tooltipText, { color: textColor }]}
-        skipDefaultColor
-        numberOfLines={2}
-        ellipsizeMode="tail"
-      >
-        {text}
-      </ThemedText>
-    ),
-    [text, textColor]
-  );
+        return () => clearTimeout(timer);
+      } else {
+        handleClose();
+        return () => {}; // Empty cleanup for else path
+      }
+    }, [visible, startScaleAnimation, fadeIn, handleClose]);
 
-  // Memoize the arrow component to reduce re-renders
-  const arrowComponent = useMemo(
-    () => (
-      <View
+    // Get colors based on theme - using colors from Colors.ts
+    const backgroundColor = isDarkMode ? TOOLTIP_COLORS.DARK : TOOLTIP_COLORS.LIGHT;
+    const textColor = isDarkMode
+      ? colors.text // dark theme text
+      : colors.textSecondary; // More subtle text color for better contrast
+    const borderColor = isDarkMode
+      ? colors.elevation3 // slightly lighter border for dark mode
+      : colors.elevation2; // slightly darker border for light mode
+
+    // Size and position calculations
+    const { width: screenWidth } = Dimensions.get('window');
+
+    // Harmonious spacing values
+    const SPACING = LAYOUT.SPACING.SMALL; // Consistent spacing for harmony
+    const ARROW_SIZE = 5; // Arrow size
+    const TOOLTIP_MARGIN = SPACING; // Gap between word and tooltip (same as internal padding)
+    const TOOLTIP_HEIGHT = 30; // Slightly reduced height for tighter appearance
+    const SCREEN_MARGIN = 16; // Margin from screen edges
+
+    // Character width multipliers for width calculation
+    const CHAR_WIDTH = 5.5; // Base width per character
+    const PADDING_MULTIPLIER = 1.6; // Extra space multiplier for padding
+
+    // Memoize the tooltip content to reduce re-renders
+    const tooltipContent = useMemo(() => {
+      return (
+        <ThemedText
+          style={[styles.tooltipText, { color: textColor }]}
+          skipDefaultColor
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {cleanText}
+        </ThemedText>
+      );
+    }, [cleanText, textColor]);
+
+    // Calculate tooltip position and adjust for screen edges
+    const tooltipPositioning = useMemo(() => {
+      if (!layout) {
+        return {
+          wordCenterX: 0,
+          tooltipTop: 0,
+          tooltipWidth: 100,
+          tooltipLeftOffset: 0,
+          arrowOffset: 0,
+        };
+      }
+
+      // Calculate initial position values based on word layout
+      const wordCenterX = layout.x + layout.width / 2;
+      const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - TOOLTIP_HEIGHT;
+
+      // Calculate width based on content length - tighter around the text
+      const textLength = cleanText.length;
+      let tooltipWidth = Math.max(
+        // Base on character count with some padding
+        textLength * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2,
+        // Ensure it's at least as wide as the word + some padding
+        layout.width + SPACING * 2,
+        // Absolute minimum width
+        70
+      );
+
+      // Cap maximum width
+      tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.5);
+
+      // Calculate potential tooltip edges based on centered position
+      const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
+      const idealTooltipRight = wordCenterX + tooltipWidth / 2;
+
+      // Check if tooltip would extend beyond screen edges
+      const leftOverflow = SCREEN_MARGIN - idealTooltipLeft;
+      const rightOverflow = idealTooltipRight - (screenWidth - SCREEN_MARGIN);
+
+      // Determine final tooltip position, adjusting if needed to keep on screen
+      let tooltipLeftOffset = idealTooltipLeft;
+
+      if (leftOverflow > 0) {
+        // Tooltip would go off left edge, move it right
+        tooltipLeftOffset = SCREEN_MARGIN;
+      } else if (rightOverflow > 0) {
+        // Tooltip would go off right edge, move it left
+        tooltipLeftOffset = screenWidth - SCREEN_MARGIN - tooltipWidth;
+      }
+
+      // Calculate exact arrow offset from tooltip left edge
+      // This ensures the arrow is perfectly centered over the word regardless of tooltip position
+      const arrowOffset = wordCenterX - tooltipLeftOffset;
+
+      return {
+        wordCenterX,
+        tooltipTop,
+        tooltipWidth,
+        tooltipLeftOffset,
+        arrowOffset,
+      };
+    }, [
+      layout,
+      cleanText,
+      SPACING,
+      ARROW_SIZE,
+      TOOLTIP_HEIGHT,
+      TOOLTIP_MARGIN,
+      CHAR_WIDTH,
+      PADDING_MULTIPLIER,
+      SCREEN_MARGIN,
+      screenWidth,
+    ]);
+
+    // Don't render anything if tooltip shouldn't be visible or has no layout
+    if (!visible || !layout) return null;
+
+    const { tooltipTop, tooltipWidth, tooltipLeftOffset, arrowOffset } = tooltipPositioning;
+
+    return (
+      <Animated.View
         style={[
-          styles.arrow,
-          {
-            borderTopColor: backgroundColor,
-            borderLeftWidth: ARROW_SIZE,
-            borderRightWidth: ARROW_SIZE,
-            borderTopWidth: ARROW_SIZE,
-            borderLeftColor: colors.transparent,
-            borderRightColor: colors.transparent,
-          },
+          styles.tooltipContainer,
+          styles.absoluteFull,
+          { top: tooltipTop },
+          transformStyle as unknown as ViewStyle,
+          opacityStyle as unknown as ViewStyle,
         ]}
-      />
-    ),
-    [backgroundColor, ARROW_SIZE, colors.transparent]
-  );
-
-  // Don't render anything if tooltip shouldn't be visible or has no layout
-  if (!visible || !layout) return null;
-
-  // Calculate position values based on layout, ensuring perfect centering
-  const wordCenterX = layout.x + layout.width / 2;
-  const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - TOOLTIP_HEIGHT; // Position better with explicit height
-
-  return (
-    <Animated.View
-      style={[
-        styles.tooltipContainer,
-        styles.absoluteFull,
-        { top: tooltipTop },
-        transformStyle as unknown as ViewStyle,
-      ]}
-      pointerEvents="none"
-    >
-      <View style={[styles.tooltipWrapper, { left: wordCenterX }]}>
+        pointerEvents="none"
+      >
+        {/* Tooltip positioned absolutely with fixed left offset */}
         <View
           style={[
             styles.tooltip,
             {
-              maxWidth: MAX_TOOLTIP_WIDTH,
+              position: 'absolute',
+              left: tooltipLeftOffset,
+              width: tooltipWidth,
               backgroundColor,
               borderColor,
               shadowColor: colors.shadow,
+              padding: SPACING, // Equal spacing in all directions
             },
           ]}
         >
           {tooltipContent}
-          {/* Arrow pointing to the word - centered precisely */}
-          {arrowComponent}
+
+          {/* Arrow pointing to the word - absolute positioning from tooltip left */}
+          <View
+            style={[
+              styles.arrow,
+              {
+                left: arrowOffset, // Absolute position relative to the tooltip's left edge
+                borderTopWidth: ARROW_SIZE,
+                borderLeftWidth: ARROW_SIZE,
+                borderRightWidth: ARROW_SIZE,
+                borderTopColor: backgroundColor,
+                borderLeftColor: 'transparent',
+                borderRightColor: 'transparent',
+                bottom: -ARROW_SIZE, // Exact positioning at the bottom
+              },
+            ]}
+          />
         </View>
-      </View>
-    </Animated.View>
-  );
-});
+      </Animated.View>
+    );
+  }
+);
 
 // Add display name to the memoized component
 WordTooltip.displayName = 'WordTooltip';
@@ -153,22 +251,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: LAYOUT.Z_INDEX.TOOLTIP,
   },
-  tooltipWrapper: {
-    position: 'absolute',
-    transform: [{ translateX: -50 }], // Center horizontally
-  },
   tooltip: {
     position: 'relative',
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    alignSelf: 'center', // Center itself
+    alignSelf: 'flex-start',
     ...Platform.select({
       ios: {
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.15,
-        shadowRadius: 4,
+        shadowRadius: 2,
       },
       android: {
         elevation: 2,
@@ -179,14 +271,13 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2, // Compact line height
   },
   arrow: {
     position: 'absolute',
-    bottom: -8, // Match arrow size
-    left: '50%', // Center the arrow
-    marginLeft: -8, // Half of arrow width
     width: 0,
     height: 0,
+    marginLeft: -2.5, // Half of arrow size for perfect centering
+    borderStyle: 'solid',
   },
 });

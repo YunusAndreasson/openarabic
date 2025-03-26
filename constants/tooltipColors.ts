@@ -5,12 +5,22 @@
  */
 export const TOOLTIP_COLORS = {
   /**
-   * Dark mode tooltip background - matches textOverlay from Colors.ts but with 100% opacity
+   * Dark mode tooltip background - uses elevation2 color for better contrast
    */
-  DARK: '#333333',
+  DARK: '#2C2C2C',
 
   /**
-   * Light mode tooltip background - matches overlay from Colors.ts but with 100% opacity
+   * Light mode tooltip background - uses elevation1 color for subtle appearance
    */
-  LIGHT: '#F2F2F2',
+  LIGHT: '#F0F0F0',
+
+  /**
+   * Dark mode word highlight - uses a fainter version to emphasize tooltip
+   */
+  WORD_HIGHLIGHT_DARK: 'rgba(46, 45, 45, 0.6)',
+
+  /**
+   * Light mode word highlight - uses a fainter version to emphasize tooltip
+   */
+  WORD_HIGHLIGHT_LIGHT: 'rgba(240, 240, 240, 0.7)',
 } as const;
