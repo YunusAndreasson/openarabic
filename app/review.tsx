@@ -38,6 +38,10 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   contentContainer: {
     flex: 1,
     width: '100%',
@@ -362,10 +366,7 @@ export default function ReviewScreen() {
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {
     initialLoadRef.current = false;
     return (
-      <ThemedView
-        style={[baseStyles.container, { justifyContent: 'center', alignItems: 'center' }]}
-        useSafeArea={true}
-      >
+      <ThemedView style={[baseStyles.container, baseStyles.centered]} useSafeArea={true}>
         <Loader size="large" color={colors.tint} />
       </ThemedView>
     );

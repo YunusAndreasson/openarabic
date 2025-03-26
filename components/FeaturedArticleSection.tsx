@@ -6,6 +6,7 @@ import { LAYOUT } from '../constants/layout';
 import SectionTitle from './SectionTitle';
 import ThemedCard from './ThemedCard';
 import { articlesService } from '@/services/articles';
+import { ThemedText } from './ThemedText';
 
 interface FeaturedArticleItemProps {
   article: Article;
@@ -39,7 +40,8 @@ const FeaturedArticleItem = React.memo(
     return (
       <View style={index < totalCount - 1 ? styles.itemMargin : undefined}>
         <ThemedCard
-          imageUrl={article.image_url || ''}
+          variant="article"
+          imageUrl={article.image_url || 'https://picsum.photos/800/400'}
           title={article.title}
           category={article.category?.name || 'Uncategorized'}
           author={article.author?.name || 'Anonymous'}
@@ -79,23 +81,27 @@ interface FeaturedArticleSectionProps {
  */
 const FeaturedArticleSection = React.memo(
   ({ title, articles, onArticlePress }: FeaturedArticleSectionProps) => {
-    // Skip rendering if no articles
-    if (!articles || articles.length === 0) return null;
-
+    // Always render the section header, even if there are no articles
     return (
       <View style={styles.section}>
         <SectionTitle title={title} />
-        <View style={styles.contentContainer}>
-          {articles.map((article, index) => (
-            <FeaturedArticleItem
-              key={`featured-${article.id}`}
-              article={article}
-              index={index}
-              totalCount={articles.length}
-              onPress={onArticlePress}
-            />
-          ))}
-        </View>
+        {articles && articles.length > 0 ? (
+          <View style={styles.contentContainer}>
+            {articles.map((article, index) => (
+              <FeaturedArticleItem
+                key={`featured-${article.id}`}
+                article={article}
+                index={index}
+                totalCount={articles.length}
+                onPress={onArticlePress}
+              />
+            ))}
+          </View>
+        ) : (
+          <View style={styles.emptyContainer}>
+            <ThemedText style={styles.emptyText}>No featured articles available</ThemedText>
+          </View>
+        )}
       </View>
     );
   }
@@ -104,6 +110,8 @@ const FeaturedArticleSection = React.memo(
 const styles = StyleSheet.create({
   section: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -113,6 +121,15 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+  },
+  emptyContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    alignItems: 'center',
+  },
+  emptyText: {
+    opacity: 0.7,
   },
 });
 

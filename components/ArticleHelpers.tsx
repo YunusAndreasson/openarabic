@@ -26,6 +26,8 @@ export const TimeAgo = React.memo(({ date }: { date: string; isLastOpened?: bool
   );
 });
 
+TimeAgo.displayName = 'TimeAgo';
+
 /**
  * DifficultyIndicator component to display article difficulty
  */
@@ -78,6 +80,8 @@ export const DifficultyIndicator = React.memo(
     );
   }
 );
+
+DifficultyIndicator.displayName = 'DifficultyIndicator';
 
 const styles = StyleSheet.create({
   // DifficultyIndicator styles

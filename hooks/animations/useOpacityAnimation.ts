@@ -155,7 +155,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // Cleanup shared animation values on unmount
   useEffect(() => {
     isMountedRef.current = true;
-    const opacityValue = opacity.value;
 
     return () => {
       isMountedRef.current = false;

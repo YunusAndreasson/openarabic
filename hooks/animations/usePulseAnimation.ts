@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from 'react';
-import { useWindowDimensions } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -306,18 +305,6 @@ export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAni
   }, [style, dramaticPulse, gentlePulse, haloPulse, standardPulse]);
 
   // Calculate animation cycle duration for each style
-  const getDurationForStyle = useCallback(() => {
-    'worklet';
-    if (style === 'dramatic') {
-      return 1350; // Total duration of dramatic animation cycle
-    } else if (style === 'gentle') {
-      return options.duration || 1200;
-    } else if (style === 'halo') {
-      return options.duration || 1400;
-    } else {
-      return TIMING_CONFIG.FAST.duration * 2; // Standard pulse (grow + shrink)
-    }
-  }, [style, options.duration]);
 
   // Start the pulse animation
   const startAnimation = useCallback(() => {

@@ -87,6 +87,15 @@ const styles = StyleSheet.create({
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Higher than other content
   },
+  userButtonActive: {
+    opacity: 1,
+  },
+  userButtonInactive: {
+    opacity: 0.3,
+  },
+  flexOne: {
+    flex: 1,
+  },
 });
 
 export default function ArticleScreen() {
@@ -383,7 +392,7 @@ export default function ArticleScreen() {
         style={{
           ...styles.floatingButton,
           right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-          opacity: user ? 1 : 0.3,
+          ...(user ? styles.userButtonActive : styles.userButtonInactive),
         }}
       />
 
@@ -405,6 +414,8 @@ export default function ArticleScreen() {
       />
     </View>
   );
+
+  StaticButtons.displayName = 'StaticButtons';
 
   // Main render - loading state
   if (isLoading) {
@@ -449,7 +460,7 @@ export default function ArticleScreen() {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View style={[{ flex: 1 }]}>
+        <Animated.View style={[styles.flexOne]}>
           {sortedSentences && sortedSentences.length > 0 && (
             <FlatList
               key={`article-${id}`}

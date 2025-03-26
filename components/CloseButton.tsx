@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
@@ -9,6 +9,13 @@ import { getTouchableProps } from '../utils/accessibility';
 import { CloseButtonProps } from '@/types/ui/button.types';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 /**
  * A reusable close button component with proper styling and haptic feedback
@@ -66,11 +73,10 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
             height: buttonSize,
             borderRadius: buttonSize / 2,
             backgroundColor: colors.cardBackground,
-            justifyContent: 'center',
-            alignItems: 'center',
             ...LAYOUT.SHADOW.SMALL,
             shadowColor: colors.shadow,
           },
+          styles.buttonContainer,
           style,
         ]}
       >

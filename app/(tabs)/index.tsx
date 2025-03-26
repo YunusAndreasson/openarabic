@@ -389,11 +389,14 @@ export default function ArticlesScreen() {
 
   // Memoized child components to prevent re-renders
   const DailyPick = useMemo(() => {
+    // Don't show daily pick if there's an error or no articles
+    if (articlesError || articlesData.length === 0) return null;
+
     const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
     return (
       <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
     );
-  }, [articlesData, handleArticlePress]);
+  }, [articlesData, articlesError, handleArticlePress]);
 
   const ContinueReadingSection = useMemo(() => {
     return (
@@ -427,10 +430,11 @@ export default function ArticlesScreen() {
   const FeaturedTextsSection = useMemo(() => {
     const featuredArticles = getFeaturedArticles(articlesData);
 
+    // Force the component to render even if no articles are available
     return (
       <FeaturedArticleSection
-        title="Featured Texts"
-        articles={featuredArticles}
+        title="Featured Texts (Top Priority)"
+        articles={featuredArticles || []}
         onArticlePress={handleArticlePress}
       />
     );
@@ -473,15 +477,25 @@ export default function ArticlesScreen() {
 
   // Create a pre-rendered header component for the FlatList to avoid re-rendering the entire list
   const ListHeaderComponent = useMemo(() => {
+    // Create an array of sections in the exact order we want them to appear
+    const orderedSections = [
+      DailyPick,
+      ContinueReadingSection,
+      LatestTextsSection,
+      FeaturedTextsSection, // This MUST appear here, before filters
+      BeginnerFriendlySection,
+      AuthorFilterSection,
+      CategoryFilterSection,
+    ];
+
+    // Filter out any null sections and render them in order
     return (
       <>
-        {DailyPick}
-        {ContinueReadingSection}
-        {LatestTextsSection}
-        {FeaturedTextsSection}
-        {BeginnerFriendlySection}
-        {AuthorFilterSection}
-        {CategoryFilterSection}
+        {orderedSections
+          .filter(section => section !== null)
+          .map((section, index) => (
+            <React.Fragment key={index}>{section}</React.Fragment>
+          ))}
       </>
     );
   }, [

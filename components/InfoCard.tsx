@@ -174,7 +174,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
           style={[
             styles.textContainer,
             layoutMode === 'column' && { marginTop: LAYOUT.SPACING.SMALL },
-            layoutMode !== 'column' && hideTitle && { flex: 1 },
+            layoutMode !== 'column' && hideTitle && styles.flexOne,
           ]}
         >
           {/* Show value for stat cards */}
@@ -262,6 +262,9 @@ const styles = StyleSheet.create({
   },
   descriptionWrapper: {
     // No additional styles needed for description
+  },
+  flexOne: {
+    flex: 1,
   },
 });
 

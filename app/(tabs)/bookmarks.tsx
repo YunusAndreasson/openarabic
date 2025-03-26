@@ -25,11 +25,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  animatedContainer: {
+    flex: 1,
+  },
   // Content area
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: 0,
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM * 5,
+  },
+  flexContainer: {
+    flex: 1,
   },
   // Card styling
   cardContainer: {
@@ -59,7 +65,6 @@ const styles = StyleSheet.create({
   cardProgressContainer: {
     height: 3,
     width: '100%',
-    backgroundColor: 'transparent', // Will use colors.transparent in dynamicStyles
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
@@ -74,7 +79,6 @@ const styles = StyleSheet.create({
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
-    backgroundColor: 'transparent', // Will use colors.transparent in dynamicStyles
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
@@ -92,6 +96,12 @@ const styles = StyleSheet.create({
   },
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  activeBorder: {
+    borderLeftWidth: 3,
   },
 });
 
@@ -138,7 +148,7 @@ const ReadingListItem = React.memo(
             styles.card,
             isActive && {
               borderColor: colors.tint,
-              borderLeftWidth: 3,
+              ...styles.activeBorder,
             },
           ]}
           shadowSize="small"
@@ -238,7 +248,7 @@ const BottomControls = React.memo(
                 title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
                 onPress={onPlayAll}
                 variant="filled"
-                style={{ width: '100%' }}
+                style={styles.fullWidth}
                 accessibilityLabel={
                   isPlaying && !isShuffleMode ? 'Stop playback' : 'Play all bookmarked articles'
                 }
@@ -249,7 +259,7 @@ const BottomControls = React.memo(
                 title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
                 onPress={onShuffle}
                 variant="outlined"
-                style={[dynamicStyles.shuffleButton, { width: '100%' }]}
+                style={[dynamicStyles.shuffleButton, styles.fullWidth]}
                 accessibilityLabel={
                   isPlaying && isShuffleMode
                     ? 'Stop shuffle playback'
@@ -263,6 +273,8 @@ const BottomControls = React.memo(
     );
   }
 );
+
+BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen() {
   const colors = useColors();
@@ -437,85 +449,72 @@ export default function BookmarksScreen() {
     }
   };
 
-  // Load and play audio with the specified URL
-  const loadAndPlayAudio = async (audioUrl: string) => {
-    if (!audioUrl) {
-      setAudioState(AUDIO_STATES.ERROR);
-      return false;
-    }
+  // Stop all playback
+  const stopPlayback = useCallback(async () => {
+    // Stop and clean up
+    await cleanupAudio();
 
-    try {
-      setAudioState(AUDIO_STATES.LOADING);
-      lastActionTimeRef.current = Date.now();
+    // Reset state
+    setAudioState(AUDIO_STATES.IDLE);
+    setCurrentTrackIndex(-1);
+    setPlaybackProgress(0);
+    setPlaylistMode(false);
+  }, [cleanupAudio]);
 
-      // Clean up any existing audio first
-      await cleanupAudio();
-
-      // Create the new sound object
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUrl },
-        { shouldPlay: false },
-        onPlaybackStatusUpdate
-      );
-
-      soundRef.current = sound;
-
-      // Add a small delay before playing to ensure the audio system is ready
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Start playback
-      await sound.playAsync();
-      setAudioState(AUDIO_STATES.PLAYING);
-
-      // Start tracking progress
-      startProgressTracking();
-
-      return true;
-    } catch (error) {
-      setAudioState(AUDIO_STATES.ERROR);
-      return false;
-    }
-  };
-
-  // Handle playback status updates
-  const onPlaybackStatusUpdate = (status: any) => {
-    if (!status.isLoaded) {
-      if (status.error) {
-        setAudioState(AUDIO_STATES.ERROR);
-      }
+  // Play next track in playlist
+  const playNextTrack = useCallback(async () => {
+    // If not in playlist mode or at the end of playlist, stop playback
+    if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
+      await stopPlayback();
       return;
     }
 
-    // Update progress if playing
-    if (status.isPlaying) {
-      const progress = status.positionMillis / status.durationMillis;
-      setPlaybackProgress(progress || 0);
-    }
+    // Move to next track
+    setCurrentTrackIndex(prev => prev + 1);
+  }, [playlistMode, currentTrackIndex, activePlaylist.length, stopPlayback]);
 
-    // Handle playback completion
-    if (status.didJustFinish) {
-      if (status.isLooping) {
+  // Handle playback status updates
+  const onPlaybackStatusUpdate = useCallback(
+    (status: any) => {
+      if (!status.isLoaded) {
+        if (status.error) {
+          setAudioState(AUDIO_STATES.ERROR);
+        }
         return;
       }
 
-      // Update state based on playback mode
-      if (audioState === AUDIO_STATES.PLAYING) {
-        setAudioState(AUDIO_STATES.PAUSED);
+      // Update progress if playing
+      if (status.isPlaying) {
+        const progress = status.positionMillis / status.durationMillis;
+        setPlaybackProgress(progress || 0);
       }
 
-      // Handle completion based on mode
-      if (!playlistMode) {
-        // Single track mode - just stop
-        stopPlayback();
-      } else {
-        // In playlist mode, proceed to next track
-        playNextTrack();
+      // Handle playback completion
+      if (status.didJustFinish) {
+        if (status.isLooping) {
+          return;
+        }
+
+        // Update state based on playback mode
+        if (audioState === AUDIO_STATES.PLAYING) {
+          setAudioState(AUDIO_STATES.PAUSED);
+        }
+
+        // Handle completion based on mode
+        if (!playlistMode) {
+          // Single track mode - just stop
+          stopPlayback();
+        } else {
+          // In playlist mode, proceed to next track
+          playNextTrack();
+        }
       }
-    }
-  };
+    },
+    [audioState, playlistMode, stopPlayback, playNextTrack]
+  );
 
   // Start tracking playback progress
-  const startProgressTracking = () => {
+  const startProgressTracking = useCallback(() => {
     // Clear any existing interval
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
@@ -535,9 +534,52 @@ export default function BookmarksScreen() {
         }
       }
     }, 1000); // Update every second
-  };
+  }, [audioState]);
 
-  // Toggle track playback
+  // Load and play audio with the specified URL
+  const loadAndPlayAudio = useCallback(
+    async (audioUrl: string) => {
+      if (!audioUrl) {
+        console.warn('No audio URL provided');
+        setAudioState(AUDIO_STATES.ERROR);
+        return false;
+      }
+
+      try {
+        setAudioState(AUDIO_STATES.LOADING);
+        lastActionTimeRef.current = Date.now();
+
+        // Clean up any existing audio first
+        await cleanupAudio();
+
+        // Create the new sound object
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          { shouldPlay: false },
+          onPlaybackStatusUpdate
+        );
+
+        soundRef.current = sound;
+
+        // Add a small delay before playing to ensure the audio system is ready
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Start playback
+        await sound.playAsync();
+        setAudioState(AUDIO_STATES.PLAYING);
+
+        // Start tracking progress
+        startProgressTracking();
+
+        return true;
+      } catch (error) {
+        console.error('Failed to load or play audio:', error);
+        setAudioState(AUDIO_STATES.ERROR);
+        return false;
+      }
+    },
+    [cleanupAudio, onPlaybackStatusUpdate, startProgressTracking]
+  );
 
   // Start playback of all tracks in order
   const startPlayback = async () => {
@@ -552,18 +594,6 @@ export default function BookmarksScreen() {
 
     // Set to playlist mode
     setPlaylistMode(true);
-  };
-
-  // Stop all playback
-  const stopPlayback = async () => {
-    // Stop and clean up
-    await cleanupAudio();
-
-    // Reset state
-    setAudioState(AUDIO_STATES.IDLE);
-    setCurrentTrackIndex(-1);
-    setPlaybackProgress(0);
-    setPlaylistMode(false);
   };
 
   // Start shuffle playback
@@ -593,20 +623,6 @@ export default function BookmarksScreen() {
     // Set to playlist mode
     setPlaylistMode(true);
   };
-
-  // Play next track in playlist
-  const playNextTrack = async () => {
-    // If not in playlist mode or at the end of playlist, stop playback
-    if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
-      await stopPlayback();
-      return;
-    }
-
-    // Move to next track
-    setCurrentTrackIndex(prev => prev + 1);
-  };
-
-  // Play previous track in playlist
 
   // Monitor app state changes
   useEffect(() => {
@@ -643,7 +659,7 @@ export default function BookmarksScreen() {
         loadAndPlayAudio(track.articles.audio_url);
       }
     }
-  }, [currentTrackIndex, activePlaylist]);
+  }, [currentTrackIndex, activePlaylist, loadAndPlayAudio]);
 
   const insets = useSafeAreaInsets();
 
@@ -663,7 +679,7 @@ export default function BookmarksScreen() {
   // Empty reading list
   if (readingList.length === 0) {
     return (
-      <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
+      <Animated.View style={[styles.animatedContainer, fadeInStyle]}>
         <ThemedView
           style={styles.container}
           includeBottomInset={false}
@@ -672,7 +688,7 @@ export default function BookmarksScreen() {
           <ThemedView
             useSafeArea={false}
             includeBottomInset={false}
-            style={{ flex: 1 }}
+            style={styles.flexContainer}
             contentContainerStyle={{ paddingTop: getHeaderHeight(insets) }}
           >
             <EmptyState
@@ -691,13 +707,13 @@ export default function BookmarksScreen() {
 
   // Normal display with playlist
   return (
-    <Animated.View style={[{ flex: 1 }, fadeInStyle]}>
+    <Animated.View style={[styles.animatedContainer, fadeInStyle]}>
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
       >
-        <ThemedView useSafeArea={false} includeBottomInset={false} style={{ flex: 1 }}>
+        <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexContainer}>
           <FlatList
             ref={flatListRef}
             data={readingList}

@@ -88,7 +88,7 @@ export default function WordListScreen() {
   // Handle back button press
   const handleBackPress = useCallback(() => {
     router.back();
-  }, [router]);
+  }, []);
 
   // List header component with category info card
   const ListHeaderComponent = useCallback(() => {

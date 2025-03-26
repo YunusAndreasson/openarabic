@@ -9,7 +9,7 @@ import Pill from './Pill';
 import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
-import { ThemedCardProps } from '@/types/ui/card.types';
+import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui/card.types';
 import { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
 
 /**
@@ -26,20 +26,26 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Extract common props
   const { onPress, style, isLoading = false, variant = 'article' } = props;
 
-  // Extract variant-specific props
-  const imageUrl = 'imageUrl' in props ? props.imageUrl : undefined;
-  const title = 'title' in props ? props.title : undefined;
-  const category = 'category' in props ? props.category : undefined;
-  const author = 'author' in props ? props.author : undefined;
-  const summary = 'summary' in props ? props.summary : undefined;
+  // Type guards
+  const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
+    'variant' in p && p.variant === 'article';
+  const isCompactVariant = (p: ThemedCardProps): p is CompactCardProps =>
+    'variant' in p && p.variant === 'compact';
+
+  // Extract variant-specific props based on type
+  const imageUrl = isArticleVariant(props) ? props.imageUrl : undefined;
+  const title = isArticleVariant(props) ? props.title : undefined;
+  const category = isArticleVariant(props) ? props.category : undefined;
+  const author = isArticleVariant(props) ? props.author : undefined;
+  const summary = isArticleVariant(props) ? props.summary : undefined;
   const children = 'children' in props ? props.children : undefined;
 
   // Extract compact article props
-  const article = 'article' in props ? props.article : undefined;
-  const showTimeAgo = 'showTimeAgo' in props ? props.showTimeAgo : false;
-  const hideDifficultyLabel = 'hideDifficultyLabel' in props ? props.hideDifficultyLabel : false;
-  const hideDifficulty = 'hideDifficulty' in props ? props.hideDifficulty : false;
-  const lastOpenedAt = 'lastOpenedAt' in props ? props.lastOpenedAt : undefined;
+  const article = isCompactVariant(props) ? props.article : undefined;
+  const showTimeAgo = isCompactVariant(props) ? props.showTimeAgo : false;
+  const hideDifficultyLabel = isCompactVariant(props) ? props.hideDifficultyLabel : false;
+  const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
+  const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
 
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -87,16 +93,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Render article content
   const renderArticleContent = () => {
-    if (!imageUrl || !title || !category) {
-      console.warn('ThemedCard: Missing required props for article variant');
-      return null;
-    }
-
+    if (!isArticleVariant(props)) return null;
     return (
       <>
         <View style={styles.imageContainer}>
           <EnhancedImage
-            source={imageUrl}
+            source={props.imageUrl}
             style={styles.image}
             onError={() => {
               /* Handle image load error silently */
@@ -105,7 +107,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             transition={500}
             showLoadingIndicator={true}
             cachePolicy="memory-disk"
-            alt={`Image for ${title}`}
+            alt={`Image for ${props.title}`}
           />
 
           {/* Gradient overlay */}
@@ -158,16 +160,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Render compact article content
   const renderCompactArticleContent = () => {
-    if (!article) {
-      console.warn('ThemedCard: Missing article prop for compact article variant');
-      return null;
-    }
-
+    if (!isCompactVariant(props)) return null;
     return (
       <>
         <View style={styles.compactImageContainer}>
           <EnhancedImage
-            source={article.image_url || 'https://picsum.photos/800/400'}
+            source={props.article.image_url || 'https://picsum.photos/800/400'}
             style={styles.image}
             contentFit="cover"
             showLoadingIndicator={true}
@@ -188,33 +186,40 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         </View>
 
         {/* Render the category pill outside the imageContainer */}
-        {article.category && (
+        {props.article.category && (
           <View style={styles.pillContainerCompact}>
-            <Pill id={article.category.id} label={article.category.name} variant="category" />
+            <Pill
+              id={props.article.category.id}
+              label={props.article.category.name}
+              variant="category"
+            />
           </View>
         )}
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
-              {article.title}
+              {props.article.title}
             </ThemedText>
           </View>
 
-          {article.author && (
+          {props.article.author && (
             <View style={styles.authorContainer}>
               <ThemedText type="label" colorName="textSecondary" numberOfLines={1}>
-                By {article.author.name}
+                By {props.article.author.name}
               </ThemedText>
             </View>
           )}
 
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
-              <TimeAgo date={lastOpenedAt || article.created_at} isLastOpened={!!lastOpenedAt} />
+              <TimeAgo
+                date={lastOpenedAt || props.article.created_at}
+                isLastOpened={!!lastOpenedAt}
+              />
             ) : hideDifficulty ? null : (
               <DifficultyIndicator
-                level={article.difficulty_level}
+                level={props.article.difficulty_level}
                 hideLabel={hideDifficultyLabel}
               />
             )}

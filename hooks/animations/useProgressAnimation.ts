@@ -4,7 +4,6 @@ import {
   useAnimatedStyle,
   withTiming,
   SharedValue,
-  withDelay,
   runOnJS,
   cancelAnimation,
 } from 'react-native-reanimated';

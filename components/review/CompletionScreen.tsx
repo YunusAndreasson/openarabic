@@ -42,7 +42,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
         },
       ]}
     >
-      <View style={{ alignItems: 'center' }}>
+      <View style={styles.centered}>
         <AnimatedItem delay={100}>
           <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
         </AnimatedItem>
@@ -78,6 +78,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
   } as ViewStyle,
+  centered: {
+    alignItems: 'center',
+  },
 });
 
 export default CompletionScreen;

@@ -60,6 +60,8 @@ const WordDisplay = React.memo(
   }
 );
 
+WordDisplay.displayName = 'WordDisplay';
+
 const styles = StyleSheet.create({
   container: {
     width: '100%',

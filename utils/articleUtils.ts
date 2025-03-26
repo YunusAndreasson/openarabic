@@ -96,6 +96,7 @@ export function getLatestArticles(articles: Article[], limit = 10): Article[] {
 export function getFeaturedArticles(articles: Article[], limit = 5): Article[] {
   return articles
     .slice(0) // Create a copy to avoid mutating the original array
+    .filter(article => article.difficulty_level >= 3) // Only include articles with difficulty 3+
     .sort((a, b) => b.difficulty_level - a.difficulty_level)
     .slice(0, limit);
 }

@@ -218,25 +218,6 @@ export default function VocabularyScreen() {
 
   // Cache stats calculation key based on array lengths and last updated times
   // This prevents unnecessary recalculations when the underlying data hasn't changed
-  const statsCalculationKey = useMemo(() => {
-    const dueCount = dueWordsData?.length || 0;
-    const totalCount = validStudyWords?.length || 0;
-
-    // Find the latest updated timestamp to use as part of the calculation key
-    let latestTimestamp = 0;
-    if (Array.isArray(validStudyWords)) {
-      for (const word of validStudyWords) {
-        if (word?.last_updated_at) {
-          const timestamp = new Date(word.last_updated_at).getTime();
-          if (timestamp > latestTimestamp) {
-            latestTimestamp = timestamp;
-          }
-        }
-      }
-    }
-
-    return `${dueCount}-${totalCount}-${latestTimestamp}`;
-  }, [dueWordsData?.length, validStudyWords]);
 
   // Check if data is ready to display with loading protection
   const isDataReady = useMemo(() => {

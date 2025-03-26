@@ -22,6 +22,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  visible: {
+    opacity: 1,
+  },
 });
 
 export default function FilterScreen() {
@@ -219,7 +222,7 @@ function FilterScreenContent() {
       style={[
         styles.container,
         // Only animate on initial mount, not when returning from article
-        isInitialMount.current && !isReturningFromArticle.current ? fadeInStyle : { opacity: 1 },
+        isInitialMount.current && !isReturningFromArticle.current ? fadeInStyle : styles.visible,
       ]}
     >
       <FilteredArticleView

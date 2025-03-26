@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { QueryClient, QueryKey } from '@tanstack/react-query';
 
@@ -30,7 +30,7 @@ export const useScreenFocusRefresh = (
   const prevUserId = useRef(userId);
 
   // Create the full query key
-  const fullQueryKey: QueryKey = [queryKey, userId];
+  const fullQueryKey = useMemo(() => [queryKey, userId] as QueryKey, [queryKey, userId]);
 
   // Function to check if data is stale and refresh if needed
   const checkAndRefreshData = useCallback(() => {

@@ -40,7 +40,11 @@ const WordItem = React.memo(
     if (isOverdue) statusIcon = 'time';
 
     return (
-      <ThemedCard onPress={onPress} style={{ paddingVertical: LAYOUT.SPACING.MEDIUM }}>
+      <ThemedCard
+        variant="basic"
+        onPress={onPress}
+        style={{ paddingVertical: LAYOUT.SPACING.MEDIUM }}
+      >
         <View style={styles.wordInfo}>
           <ThemedText type="heading3" numberOfLines={1}>
             {word}

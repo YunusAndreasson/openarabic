@@ -102,16 +102,6 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     height: 80,
   } as ViewStyle,
-  instructionsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    ...LAYOUT.SHADOW.SMALL,
-  } as ViewStyle,
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -135,22 +125,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     ...LAYOUT.SHADOW.SMALL,
   } as ViewStyle,
-  instructionContainer: {
-    // Animation Adjustments:
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: Platform.OS === 'ios' ? LAYOUT.SPACING.XLARGE * 2 : LAYOUT.SPACING.MEDIUM * 2,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    elevation: 10,
-    shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 4,
-    shadowOpacity: 0.1,
-  },
 });
 
 export default InstructionFooter;

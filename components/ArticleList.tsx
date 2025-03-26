@@ -59,6 +59,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       return (
         <View style={styles.articleItemContainer}>
           <ThemedCard
+            variant="article"
             imageUrl={item.image_url || 'https://picsum.photos/800/400'}
             title={item.title}
             category={item.category?.name ?? 'Uncategorized'}
@@ -107,7 +108,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         maxToRenderPerBatch={3}
         windowSize={3}
         removeClippedSubviews={Platform.OS === 'android'}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
         contentContainerStyle={[
           styles.listContent,
           { backgroundColor: colors.background },

@@ -57,7 +57,8 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
       paddingHorizontal={true}
     >
       <ThemedCard
-        imageUrl={article.image_url || ''}
+        variant="article"
+        imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         title={article.title}
         category={article.category?.name || 'General'}
         author={article.author?.name || 'Unknown'}

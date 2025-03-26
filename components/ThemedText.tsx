@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-unused-styles */
 import { Text, StyleSheet, StyleProp, TextStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';

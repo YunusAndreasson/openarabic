@@ -120,13 +120,7 @@ const Pill = React.memo(
             styles.container,
             absolute && styles.absoluteContainer,
             containerStyle,
-            // Add subtle inner shadow for depth
-            isDarkMode && {
-              shadowColor: colors.shadow,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 1,
-            },
+            isDarkMode && [styles.darkModeShadow, { shadowColor: colors.shadow }],
           ]}
         >
           <ThemedText
@@ -211,6 +205,11 @@ const styles = StyleSheet.create({
   pillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9, // Slightly smaller font size
     fontWeight: '500', // Add medium font weight for better readability
+  },
+  darkModeShadow: {
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+    shadowOffset: { width: 0, height: 1 },
   },
 });
 

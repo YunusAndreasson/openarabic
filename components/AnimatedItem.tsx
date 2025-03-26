@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { AnimatedItemProps } from '@/types/ui/layout.types';
 import { LAYOUT } from '@/constants/layout';
@@ -13,6 +13,13 @@ import SectionTitle from './SectionTitle';
  * - Full width containers (when fullWidth is true - replacing EntranceAnimation)
  * - Section containers with titles (when title is provided - replacing AnimatedSection)
  */
+const styles = StyleSheet.create({
+  fullWidth: {
+    flex: 1,
+    width: '100%',
+  },
+});
+
 const AnimatedItem = React.memo(
   ({
     children,
@@ -32,7 +39,7 @@ const AnimatedItem = React.memo(
     const entering = FadeIn.delay(delay).duration(300);
 
     return (
-      <Animated.View style={[fullWidth && { flex: 1, width: '100%' }, style]} entering={entering}>
+      <Animated.View style={[fullWidth && styles.fullWidth, style]} entering={entering}>
         {showTitle && title && <SectionTitle title={title} />}
         {paddingHorizontal ? (
           <View style={{ paddingHorizontal: LAYOUT.SPACING.MEDIUM }}>{children}</View>

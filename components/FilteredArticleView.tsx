@@ -132,6 +132,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         {articles.map(article => (
           <View key={`filtered-article-${article.id}`} style={styles.articleContainer}>
             <ThemedCard
+              variant="article"
               imageUrl={article.image_url || ''}
               title={article.title}
               category={

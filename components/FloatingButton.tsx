@@ -23,7 +23,6 @@ const styles = StyleSheet.create({
     borderRadius: BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -135,6 +134,7 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
           styles.button,
           {
             backgroundColor: buttonBackgroundColor,
+            shadowColor: colors.shadow,
           },
         ]}
         onPress={handlePress}

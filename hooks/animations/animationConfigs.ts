@@ -20,7 +20,6 @@ const createDefaultEasing = () => {
 
   // Fallback implementation for tests
   // These properly type and implement easing functions that return proper easing functions
-  const identity = (x: number) => x;
 
   // Correctly typed composable functions that return an easing function
   const composableOut = (easingFn: (t: number) => number) => (t: number) => {
@@ -37,7 +36,7 @@ const createDefaultEasing = () => {
 
   const quadFallback = (t: number) => t * t;
   const cubicFallback = (t: number) => t * t * t;
-  const bezierFallback = (x1: number, y1: number, x2: number, y2: number) => {
+  const bezierFallback = (_x1: number, _y1: number, _x2: number, _y2: number) => {
     return (t: number) => {
       // Very basic bezier implementation, not accurate but safe for testing
       return t;

@@ -23,7 +23,7 @@ export const SignInRequired = React.memo(
   }: SignInRequiredProps) => {
     return (
       <Animated.View style={styles.container} entering={FadeIn.duration(300)}>
-        <ThemedView style={styles.container} contentContainerStyle={{ padding: 0 }}>
+        <ThemedView style={styles.container} contentContainerStyle={styles.noPadding}>
           {headerTitle && <PageHeader title={headerTitle} />}
           <View style={styles.emptyStateContainer}>
             <View
@@ -128,5 +128,8 @@ const styles = StyleSheet.create({
   benefitDescriptionContainer: {},
   signInButton: {
     minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 3,
+  },
+  noPadding: {
+    padding: 0,
   },
 });

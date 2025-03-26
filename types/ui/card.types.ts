@@ -29,7 +29,15 @@ export interface BaseCardProps extends BaseAnimatedStyleProps {
 /**
  * Variant types for ThemedCard
  */
-export type CardVariant = 'article' | 'compact';
+export type CardVariant = 'article' | 'compact' | 'basic';
+
+/**
+ * Props for basic variant of ThemedCard
+ */
+export interface BasicCardProps extends BaseCardProps, BaseOptionalPressableProps {
+  variant: 'basic';
+  children?: React.ReactNode;
+}
 
 /**
  * Props for article variant of ThemedCard
@@ -38,11 +46,11 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
   /** Variant of the card */
   variant: 'article';
   /** URL of the image to display in the card */
-  imageUrl?: string;
+  imageUrl: string;
   /** Title text to display in the card */
-  title?: string;
+  title: string;
   /** Category text to display in a pill on the card */
-  category?: string;
+  category: string;
   /** Author name to display in the card */
   author?: string;
   /** Summary text to display in the card */
@@ -58,7 +66,7 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
   /** Children to render inside the card (use this OR article data) */
   children?: React.ReactNode;
   /** Article data to display in the card */
-  article?: Article;
+  article: Article;
   /** Show time ago instead of difficulty */
   showTimeAgo?: boolean;
   /** Hide the difficulty label */
@@ -81,14 +89,15 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
 export type ThemedCardProps =
   | ArticleCardProps
   | CompactCardProps
+  | BasicCardProps
   | (BaseCardProps &
       BaseOptionalPressableProps & {
         /** URL of the image to display in the card (for article variant) */
-        imageUrl?: string;
+        imageUrl: string;
         /** Title text to display in the card (for article variant) */
-        title?: string;
+        title: string;
         /** Category text to display in a pill on the card (for article variant) */
-        category?: string;
+        category: string;
         /** Author name to display in the card (for article variant) */
         author?: string;
         /** Summary text to display in the card (for article variant) */
@@ -96,7 +105,7 @@ export type ThemedCardProps =
         /** Children to render inside the card (for compact variant) */
         children?: React.ReactNode;
         /** Article data to display (for compact variant) */
-        article?: Article;
+        article: Article;
         /** Show time ago instead of difficulty (for compact variant) */
         showTimeAgo?: boolean;
         /** Hide the difficulty label (for compact variant) */

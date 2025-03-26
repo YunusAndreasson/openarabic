@@ -39,11 +39,11 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (isLoading) setIsLoading(false); // Ensure loading state is updated
+      setIsLoading(false); // Update loading state directly without checking isLoading
     });
 
     return () => subscription.unsubscribe();
-  }, [isLoading]);
+  }, []); // Removed isLoading from dependency array
 
   return {
     session,

@@ -1,8 +1,16 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { StatCardProps } from '@/types/ui/layout.types';
 import InfoCard from './InfoCard';
 import { withOpacity } from '@/utils/colorUtils';
 import { LAYOUT } from '@/constants/layout';
+
+const styles = StyleSheet.create({
+  cardStyle: {
+    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
+    height: 90,
+  },
+});
 
 export const StatCard = React.memo(
   ({ label, value, icon, colors, animateValue = false, onPress }: StatCardProps) => {
@@ -13,7 +21,7 @@ export const StatCard = React.memo(
         icon={icon}
         iconBgColor={withOpacity(colors.text, 0.1)}
         iconColor={colors.icon}
-        style={{ width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`, height: 90 }}
+        style={styles.cardStyle}
         includePressAnimation={false}
         shadowSize="small"
         animateValue={animateValue}

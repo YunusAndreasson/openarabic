@@ -35,6 +35,11 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL,
     gap: LAYOUT.SPACING.TINY,
   },
+  englishText: {
+    writingDirection: 'ltr',
+    fontFamily: 'Philosopher',
+    paddingLeft: LAYOUT.SPACING.SMALL,
+  },
 });
 
 // Memoized sentence component for better list performance
@@ -50,17 +55,17 @@ export const ArticleSentence = React.memo(
             type="body"
             variant="secondary"
             align="left"
-            style={{
-              writingDirection: 'ltr',
-              fontFamily: 'Philosopher',
-              paddingLeft: LAYOUT.SPACING.SMALL,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-              lineHeight: Math.round(
-                LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
-                  LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
-                  settings.fontScale
-              ),
-            }}
+            style={[
+              styles.englishText,
+              {
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
+                lineHeight: Math.round(
+                  LAYOUT.TYPOGRAPHY.SCALE.MEDIUM *
+                    LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL *
+                    settings.fontScale
+                ),
+              },
+            ]}
           >
             {sentence.english}
           </ThemedText>

@@ -130,11 +130,10 @@ export const WordTooltip = React.memo(({ visible, text, layout, onClose }: WordT
         styles.tooltipContainer,
         {
           top: tooltipTop,
-          width: '100%',
-          alignItems: 'center',
+          width: screenWidth,
         },
-        opacityStyle as unknown as ViewStyle, // Apply fade animation
-        transformStyle as unknown as ViewStyle, // Apply transform animation
+        opacityStyle as unknown as ViewStyle,
+        transformStyle as unknown as ViewStyle,
       ]}
       pointerEvents="none"
     >
@@ -175,6 +174,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: '100%',
     zIndex: LAYOUT.Z_INDEX.TOOLTIP,
+    alignItems: 'center',
   },
   tooltipWrapper: {
     position: 'absolute',

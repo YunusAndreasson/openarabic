@@ -210,7 +210,7 @@ export default function SettingsScreen() {
                 </View>
                 {deferredRender ? <ThemeToggle /> : <TogglePlaceholder />}
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="language" size={20} color={colors.tabIconDefault} />
@@ -227,7 +227,7 @@ export default function SettingsScreen() {
                   <TogglePlaceholder />
                 )}
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.settingRow}>
                 <View style={styles.settingLabelContainer}>
                   <Ionicons name="text" size={20} color={colors.tabIconDefault} />
@@ -260,7 +260,7 @@ export default function SettingsScreen() {
                   )}
                 </View>
               </View>
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.previewContainer}>
                 <View style={styles.previewLabelContainer}>
                   <ThemedText type="caption" variant="secondary">
@@ -317,7 +317,7 @@ export default function SettingsScreen() {
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Facebook"
@@ -328,6 +328,7 @@ export default function SettingsScreen() {
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
+              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <ThemedButton
                 variant="outlined"
                 title="Instagram"
@@ -358,7 +359,7 @@ export default function SettingsScreen() {
                 innerContainerStyle={buttonStyles.innerContainer}
                 contentContainerStyle={buttonStyles.contentContainer}
               />
-              <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
+              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               {showAuthUI ? (
                 <ThemedButton
                   variant="outlined"
@@ -389,17 +390,13 @@ export default function SettingsScreen() {
       <PageHeader title="Settings" />
       {showAuthModal && (
         <ThemedView
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: colors.background,
-            padding: LAYOUT.SPACING.LARGE,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+          style={[
+            styles.modalContainer,
+            {
+              backgroundColor: colors.background,
+              padding: LAYOUT.SPACING.LARGE,
+            },
+          ]}
         >
           <ThemedText
             type="heading2"
@@ -448,9 +445,10 @@ const styles = StyleSheet.create({
   settingLabelTextContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  divider: {
+  commonDivider: {
     height: LAYOUT.BORDER.WIDTH.THIN,
     width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   sliderContainer: {
     flexDirection: 'row',
@@ -529,5 +527,14 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
     opacity: LAYOUT.OPACITY.XLIGHT * 2,
+  },
+  modalContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

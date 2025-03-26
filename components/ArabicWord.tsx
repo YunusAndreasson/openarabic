@@ -203,7 +203,7 @@ function ArabicWordComponent({
       textProps: calculatedTextProps,
       wordStyle: [...baseStyles, ...styleObjects],
     };
-  }, [baseSize, scale, isSelected, tooltipVisible, isDarkMode]);
+  }, [baseSize, scale, isSelected, tooltipVisible, isDarkMode, colors.textOverlay, colors.overlay]);
 
   // Reset animation when component unmounts
   useEffect(() => {

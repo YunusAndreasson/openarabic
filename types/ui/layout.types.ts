@@ -174,15 +174,17 @@ export interface SignInRequiredProps {
  */
 export interface StatCardProps {
   /** Title text for the stat */
-  title: string;
+  label: string;
   /** Value of the stat */
   value: string | number;
   /** Icon name to display */
   icon?: string;
-  /** Whether the stat is loading */
-  isLoading?: boolean;
-  /** Additional container style */
-  containerStyle?: StyleProp<ViewStyle>;
+  /** Colors object for theming */
+  colors: any;
+  /** Whether to animate the value */
+  animateValue?: boolean;
+  /** Callback when card is pressed */
+  onPress?: () => void;
 }
 
 /**
