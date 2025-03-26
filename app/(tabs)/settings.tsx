@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
+import { StyleSheet, Alert, Linking, View, ScrollView, ViewStyle } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
@@ -12,6 +12,7 @@ import { useColors } from '../../hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
 import { useScreenAnimation } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from '@/components/BaseCard';
@@ -49,12 +50,31 @@ export default function SettingsScreen() {
     // Using default values for remaining parameters
   );
 
+  // Use opacity animation for the slider
+  const { animatedStyle: sliderFadeStyle, startAnimation: startSliderAnimation } =
+    useOpacityAnimation({
+      initialOpacity: 0,
+      duration: 200,
+    });
+
   // Add effect to defer toggle rendering until theme state is loaded
   useEffect(() => {
     if (theme !== null && !deferredRender) {
       setDeferredRender(true);
     }
   }, [theme, deferredRender]);
+
+  const [isSliderReady, setIsSliderReady] = useState(false);
+
+  // Add effect to handle slider initialization
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSliderReady(true);
+      startSliderAnimation();
+    }, 100); // Small delay to ensure theme is loaded
+
+    return () => clearTimeout(timer);
+  }, [startSliderAnimation]);
 
   const loadSession = useCallback(async () => {
     startLoading();
@@ -244,18 +264,23 @@ export default function SettingsScreen() {
                   >
                     {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
-                  {deferredRender ? (
-                    <CustomSlider
-                      value={settings.fontScale}
-                      onValueChange={handleFontScaleChange}
-                      minimumValue={0.8}
-                      maximumValue={1.3}
-                      step={0.1}
-                      style={styles.slider}
-                    />
+                  {deferredRender && isSliderReady ? (
+                    <Animated.View style={[styles.sliderWrapper, sliderFadeStyle as ViewStyle]}>
+                      <CustomSlider
+                        value={settings.fontScale}
+                        onValueChange={handleFontScaleChange}
+                        minimumValue={0.8}
+                        maximumValue={1.3}
+                        step={0.1}
+                        style={styles.slider}
+                      />
+                    </Animated.View>
                   ) : (
                     <View
-                      style={[styles.sliderPlaceholder, { backgroundColor: colors.cardBorder }]}
+                      style={[
+                        styles.sliderPlaceholder,
+                        { backgroundColor: colors.cardBorder, height: 40 },
+                      ]}
                     />
                   )}
                 </View>
@@ -522,9 +547,12 @@ const styles = StyleSheet.create({
     borderRadius: (LAYOUT.BUTTON.HEIGHT.SMALL - 4) / 2,
     opacity: LAYOUT.OPACITY.XLIGHT,
   },
+  sliderWrapper: {
+    flex: 1,
+  },
   sliderPlaceholder: {
     flex: 1,
-    height: 4,
+    height: 40,
     borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
     opacity: LAYOUT.OPACITY.XLIGHT * 2,
   },
