@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, RefreshControl, View } from 'react-native';
+import { StyleSheet, RefreshControl, View, FlatList } from 'react-native';
 import { Article } from '../types/articles.types';
-import ThemedCard from './ThemedCard';
-import { LAYOUT } from '../constants/layout';
+import BaseCard from './BaseCard';
+import { LAYOUT, getHeaderHeight } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { CopyrightFooter } from './CopyrightFooter';
 import { Tables } from '../types/database.types';
@@ -52,12 +52,6 @@ interface FilteredArticleViewProps {
    * Callback to clear the current filter
    */
   onClearFilter?: () => void;
-
-  /**
-   * Whether this is the first render of the component
-   * Used to control animations
-   */
-  isFirstRender?: boolean;
 }
 
 /**
@@ -92,82 +86,98 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
     }
   }, [selectedAuthor, selectedCategory, isLoading]);
 
-  // Calculate header height for content padding
-  const headerHeight = useMemo(() => {
-    return insets.top + LAYOUT.SPACING.TINY + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM;
-  }, [insets.top]);
+  // Calculate header height for spacer
+  const headerHeight = useMemo(() => getHeaderHeight(insets), [insets]);
 
-  // Memoize the content padding for better performance
-  const contentPaddingStyle = useMemo(() => {
-    return { paddingTop: headerHeight + LAYOUT.SPACING.MEDIUM };
+  const renderItem = useMemo(
+    () =>
+      ({ item: article }: { item: Article }) => (
+        <View style={styles.articleContainer}>
+          <BaseCard
+            onPress={() => onArticlePress?.(article)}
+            style={styles.card}
+            shadowSize="small"
+          >
+            <View style={styles.cardContent}>
+              <View style={styles.textContent}>
+                <ThemedText type="bodyBold" style={styles.titleText}>
+                  {article.title}
+                </ThemedText>
+                <ThemedText type="label" variant="secondary" numberOfLines={1}>
+                  {article.author?.name || 'Anonymous'}
+                </ThemedText>
+              </View>
+              <View style={styles.iconContainer}>
+                <ThemedText
+                  type="label"
+                  variant="secondary"
+                  style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
+                >
+                  →
+                </ThemedText>
+              </View>
+            </View>
+          </BaseCard>
+        </View>
+      ),
+    [onArticlePress]
+  );
+
+  const ListEmptyComponent = useMemo(() => {
+    if (isLoading) return null;
+    return (
+      <View style={styles.noResultsContainer}>
+        <ThemedText
+          style={styles.noResultsText}
+          accessibilityLabel="No articles found with the current filter"
+        >
+          No articles found
+        </ThemedText>
+      </View>
+    );
+  }, [isLoading]);
+
+  const ListFooterComponent = useMemo(() => {
+    if (!articles.length) return null;
+    return (
+      <>
+        <View style={styles.endMessageContainer} />
+        <CopyrightFooter />
+      </>
+    );
+  }, [articles.length]);
+
+  // Create a header spacer component
+  const HeaderSpacer = useMemo(() => {
+    return <View style={{ height: headerHeight + 20 }} />;
   }, [headerHeight]);
 
   return (
-    <ThemedView style={styles.container} useSafeArea={false}>
-      {/* Standard Page Header with back button */}
-      <View style={styles.headerContainer}>
-        <PageHeader title={headerTitle} onBackPress={onClearFilter} />
-      </View>
-
-      {/* Scrollable content */}
-      <ThemedView
-        style={styles.scrollContainer}
-        scrollable={true}
-        contentContainerStyle={[styles.contentContainer, contentPaddingStyle]}
-        useSafeArea={false}
-        scrollViewProps={{
-          showsVerticalScrollIndicator: false,
-          accessibilityLabel: 'Filtered articles list',
-          refreshControl: (
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={onRefresh}
-              colors={[colors.tint]}
-              tintColor={colors.tint}
-            />
-          ),
-        }}
-      >
-        {/* Articles */}
-        {articles.map(article => (
-          <View key={`filtered-article-${article.id}`} style={styles.articleContainer}>
-            <ThemedCard
-              variant="article"
-              imageUrl={article.image_url || ''}
-              title={article.title}
-              category={
-                article.category?.name
-                  ? capitalizeFirstLetter(article.category.name.toLowerCase())
-                  : 'Uncategorized'
-              }
-              author={article.author?.name || 'Anonymous'}
-              summary={article.summary || undefined}
-              onPress={() => onArticlePress?.(article)}
-              isLoading={isLoading}
-            />
-          </View>
-        ))}
-
-        {/* No results message */}
-        {articles.length === 0 && !isLoading && (
-          <View style={styles.noResultsContainer}>
-            <ThemedText
-              style={styles.noResultsText}
-              accessibilityLabel="No articles found with the current filter"
-            >
-              No articles found
-            </ThemedText>
-          </View>
-        )}
-
-        {/* Footer */}
-        {articles.length > 0 && (
-          <>
-            <View style={styles.endMessageContainer} />
-            <CopyrightFooter />
-          </>
-        )}
-      </ThemedView>
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+    >
+      <FlatList
+        data={articles}
+        renderItem={renderItem}
+        keyExtractor={item => `filtered-article-${item.id}`}
+        contentContainerStyle={styles.listContent}
+        ListHeaderComponent={HeaderSpacer}
+        ListEmptyComponent={ListEmptyComponent}
+        ListFooterComponent={ListFooterComponent}
+        showsVerticalScrollIndicator={true}
+        indicatorStyle={colors.text === '#212121' ? 'black' : 'white'}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.tint]}
+            tintColor={colors.tint}
+          />
+        }
+      />
+      <PageHeader title={headerTitle} onBackPress={onClearFilter} />
     </ThemedView>
   );
 };
@@ -176,21 +186,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerContainer: {
-    zIndex: LAYOUT.Z_INDEX.MODAL,
-  },
-  scrollContainer: {
-    flex: 1,
-    zIndex: LAYOUT.Z_INDEX.BASE,
-  },
-  contentContainer: {
-    flex: 1,
-    zIndex: LAYOUT.Z_INDEX.BASE,
-    alignItems: 'center',
-    justifyContent: 'center',
+  listContent: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  card: {
+    overflow: 'hidden',
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  textContent: {
+    flex: 1,
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  titleText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  iconContainer: {
+    paddingTop: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   endMessageContainer: {
     height: LAYOUT.SPACING.MEDIUM,
