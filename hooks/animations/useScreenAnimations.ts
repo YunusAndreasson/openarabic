@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-native';
 import { AnimatedStyleProp } from 'react-native-reanimated';
@@ -51,20 +51,12 @@ export const useScreenAnimations = (initialButtonsVisibility = true) => {
 
   // Unified function to start all content animations
   const startAllAnimations = useCallback(() => {
-    const timeoutId = setTimeout(() => {
-      try {
-        startContentAnimation();
-        startHeaderAnimation();
-        startFooterAnimation();
-        startBackButtonAnimation();
-        startBookmarkButtonAnimation();
-        startPlayButtonAnimation();
-      } catch (err) {
-        // Silent error handling
-      }
-    }, 50); // Small delay to ensure component is fully mounted
-
-    return () => clearTimeout(timeoutId);
+    startContentAnimation();
+    startHeaderAnimation();
+    startFooterAnimation();
+    startBackButtonAnimation();
+    startBookmarkButtonAnimation();
+    startPlayButtonAnimation();
   }, [
     startContentAnimation,
     startHeaderAnimation,
@@ -113,12 +105,21 @@ export const useScreenAnimations = (initialButtonsVisibility = true) => {
 
   return {
     // Animation styles - ensure they're typed as AnimatedStyleProp<ViewStyle>
-    contentStyle: contentStyle as AnimatedStyleProp<ViewStyle>,
-    headerStyle: headerStyle as AnimatedStyleProp<ViewStyle>,
-    footerStyle: footerStyle as AnimatedStyleProp<ViewStyle>,
-    backButtonStyle: backButtonStyle as AnimatedStyleProp<ViewStyle>,
-    bookmarkButtonStyle: bookmarkButtonStyle as AnimatedStyleProp<ViewStyle>,
-    playButtonStyle: playButtonStyle as AnimatedStyleProp<ViewStyle>,
+    contentStyle: useMemo(() => contentStyle as AnimatedStyleProp<ViewStyle>, [contentStyle]),
+    headerStyle: useMemo(() => headerStyle as AnimatedStyleProp<ViewStyle>, [headerStyle]),
+    footerStyle: useMemo(() => footerStyle as AnimatedStyleProp<ViewStyle>, [footerStyle]),
+    backButtonStyle: useMemo(
+      () => backButtonStyle as AnimatedStyleProp<ViewStyle>,
+      [backButtonStyle]
+    ),
+    bookmarkButtonStyle: useMemo(
+      () => bookmarkButtonStyle as AnimatedStyleProp<ViewStyle>,
+      [bookmarkButtonStyle]
+    ),
+    playButtonStyle: useMemo(
+      () => playButtonStyle as AnimatedStyleProp<ViewStyle>,
+      [playButtonStyle]
+    ),
 
     // Animation controllers
     startAllAnimations,

@@ -104,9 +104,9 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemLayout={getItemLayout}
-        initialNumToRender={1}
-        maxToRenderPerBatch={3}
-        windowSize={3}
+        initialNumToRender={12}
+        maxToRenderPerBatch={8}
+        windowSize={7}
         removeClippedSubviews={Platform.OS === 'android'}
         showsVerticalScrollIndicator={true}
         contentContainerStyle={[
@@ -120,12 +120,11 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
         refreshControl={refreshControl}
         scrollEventThrottle={16}
         disableVirtualization={false}
-        persistentScrollbar={false}
+        persistentScrollbar={true}
         updateCellsBatchingPeriod={50}
-        onContentSizeChange={() => {
-          if (listRef.current) {
-            listRef.current.scrollToOffset({ offset: 0, animated: false });
-          }
+        maintainVisibleContentPosition={{
+          minIndexForVisible: 0,
+          autoscrollToTopThreshold: 10,
         }}
       />
     );

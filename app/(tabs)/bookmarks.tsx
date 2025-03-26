@@ -20,6 +20,13 @@ import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
+import { useAppSelector } from '../../store/hooks';
+import { useIsDarkMode } from '../../hooks/useThemeDetection';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { Tables } from '@/types/database.types';
+import type { RootState } from '../../store/store';
+import type { Article } from '@/types/articles.types';
 
 const styles = StyleSheet.create({
   container: {
@@ -109,8 +116,19 @@ const styles = StyleSheet.create({
 // Card content + margins + borders
 const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding and margins
 
+type ReadingListItem = {
+  user_id: string;
+  article_id: number;
+  position: number;
+  completed: boolean;
+  completed_at: string | null;
+  read_count: number;
+  added_at: string;
+  articles: Article & { author: { id: number; name: string } };
+};
+
 // Memory-optimized component for reading list items
-const ReadingListItem = React.memo(
+const ReadingListItemComponent = React.memo(
   ({
     title,
     author,
@@ -202,7 +220,7 @@ const ReadingListItem = React.memo(
   }
 );
 
-ReadingListItem.displayName = 'ReadingListItem';
+ReadingListItemComponent.displayName = 'ReadingListItem';
 
 // Bottom Action Buttons component
 const BottomControls = React.memo(
@@ -278,12 +296,37 @@ BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen() {
   const colors = useColors();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
+  const settings = useAppSelector((state: RootState) => state.settings);
+  const isDarkMode = useIsDarkMode();
+  const insets = useSafeAreaInsets();
+  const flatListRef = useRef<FlatList<ReadingListItem>>(null);
   const queryClient = useQueryClient();
-  const flatListRef = useRef<FlatList<any>>(null);
 
-  // Use the new loading state hook with optimized defaults
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+  // Audio player hook
+  const { loadAndPlayAudio, stopPlayback } = useAudioPlayer();
+
+  // Use the custom loading state hook
+  const { setDataLoaded } = useLoadingState(true);
+
+  // Pre-fetch study words if user is logged in
+  useEffect(() => {
+    if (user?.id) {
+      queryClient.prefetchQuery({
+        queryKey: ['studyWords', user.id],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
+        staleTime: 180000, // 3 minutes
+        retry: 2,
+      });
+    }
+  }, [user?.id, queryClient]);
+
+  // Clean up audio resources when component unmounts
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+    };
+  }, [stopPlayback]);
 
   // Query for reading list
   const {
@@ -298,11 +341,11 @@ export default function BookmarksScreen() {
       if (!user?.id) return Promise.resolve([]);
       return readingListService.getReadingList(user.id);
     },
-    enabled: !!user?.id && !isAuthLoading, // Only enable when auth is resolved and user exists
-    staleTime: 60000, // Cache for 1 minute rather than no caching
-    gcTime: 300000, // Keep in cache for 5 minutes
-    retry: 3, // Retry failed requests up to 3 times
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+    enabled: !!user?.id,
+    staleTime: 300000, // Increase cache time to 5 minutes to reduce unnecessary refetches
+    gcTime: 900000, // Keep in cache for 15 minutes
+    retry: 2, // Reduce retry attempts to 2 since 3 is excessive
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
     placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
   });
 
@@ -330,26 +373,6 @@ export default function BookmarksScreen() {
   const isMountedRef = useRef(true);
   const lastActionTimeRef = useRef(Date.now());
 
-  // Clean up all audio resources
-  const cleanupAudio = useCallback(async () => {
-    // Clear any timers
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-
-    // Unload sound if it exists
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync().catch(() => {});
-        await soundRef.current.unloadAsync().catch(() => {});
-        soundRef.current = null;
-      } catch (error) {
-        // Error during cleanup
-      }
-    }
-  }, []);
-
   // Check if data is ready to display
   const isDataReady = useMemo(() => {
     return !!user && !isDataLoading && !!readingList;
@@ -358,33 +381,18 @@ export default function BookmarksScreen() {
   // Use improved screen animation with data-ready check
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
-    isLoadingState
+    isDataLoading
     // Using default values for remaining parameters
   );
 
   // Update loading state based on data loading
   useEffect(() => {
-    if (isAuthLoading || isDataLoading || isFetching) {
-      startLoading();
+    if (isDataLoading || isFetching) {
+      setDataLoaded(false);
     } else {
-      stopLoading();
-
-      // Log for debugging
-      if (isError) {
-        console.error('Error loading reading list:', error);
-      }
+      setDataLoaded(true);
     }
-  }, [
-    isAuthLoading,
-    isDataLoading,
-    isFetching,
-    startLoading,
-    stopLoading,
-    isError,
-    error,
-    readingList,
-    user,
-  ]);
+  }, [isDataLoading, isFetching, setDataLoaded, isError, error, readingList, user]);
 
   // Add an extra effect to force refresh reading list data when auth state changes
   useEffect(() => {
@@ -419,9 +427,9 @@ export default function BookmarksScreen() {
 
       return () => {
         // Clean up audio when screen is unfocused
-        cleanupAudio();
+        stopPlayback();
       };
-    }, [user?.id, queryClient, isDataLoading, cleanupAudio])
+    }, [user?.id, queryClient, isDataLoading, stopPlayback])
   );
 
   // Get active playlist based on mode
@@ -448,138 +456,6 @@ export default function BookmarksScreen() {
       // Failed to set audio mode
     }
   };
-
-  // Stop all playback
-  const stopPlayback = useCallback(async () => {
-    // Stop and clean up
-    await cleanupAudio();
-
-    // Reset state
-    setAudioState(AUDIO_STATES.IDLE);
-    setCurrentTrackIndex(-1);
-    setPlaybackProgress(0);
-    setPlaylistMode(false);
-  }, [cleanupAudio]);
-
-  // Play next track in playlist
-  const playNextTrack = useCallback(async () => {
-    // If not in playlist mode or at the end of playlist, stop playback
-    if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
-      await stopPlayback();
-      return;
-    }
-
-    // Move to next track
-    setCurrentTrackIndex(prev => prev + 1);
-  }, [playlistMode, currentTrackIndex, activePlaylist.length, stopPlayback]);
-
-  // Handle playback status updates
-  const onPlaybackStatusUpdate = useCallback(
-    (status: any) => {
-      if (!status.isLoaded) {
-        if (status.error) {
-          setAudioState(AUDIO_STATES.ERROR);
-        }
-        return;
-      }
-
-      // Update progress if playing
-      if (status.isPlaying) {
-        const progress = status.positionMillis / status.durationMillis;
-        setPlaybackProgress(progress || 0);
-      }
-
-      // Handle playback completion
-      if (status.didJustFinish) {
-        if (status.isLooping) {
-          return;
-        }
-
-        // Update state based on playback mode
-        if (audioState === AUDIO_STATES.PLAYING) {
-          setAudioState(AUDIO_STATES.PAUSED);
-        }
-
-        // Handle completion based on mode
-        if (!playlistMode) {
-          // Single track mode - just stop
-          stopPlayback();
-        } else {
-          // In playlist mode, proceed to next track
-          playNextTrack();
-        }
-      }
-    },
-    [audioState, playlistMode, stopPlayback, playNextTrack]
-  );
-
-  // Start tracking playback progress
-  const startProgressTracking = useCallback(() => {
-    // Clear any existing interval
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    // Set up progress tracking interval
-    progressIntervalRef.current = setInterval(async () => {
-      if (soundRef.current && audioState === AUDIO_STATES.PLAYING) {
-        try {
-          const status = await soundRef.current.getStatusAsync();
-          if (status.isLoaded && status.durationMillis) {
-            const progress = status.positionMillis / status.durationMillis;
-            setPlaybackProgress(progress);
-          }
-        } catch (error) {
-          // Error getting status
-        }
-      }
-    }, 1000); // Update every second
-  }, [audioState]);
-
-  // Load and play audio with the specified URL
-  const loadAndPlayAudio = useCallback(
-    async (audioUrl: string) => {
-      if (!audioUrl) {
-        console.warn('No audio URL provided');
-        setAudioState(AUDIO_STATES.ERROR);
-        return false;
-      }
-
-      try {
-        setAudioState(AUDIO_STATES.LOADING);
-        lastActionTimeRef.current = Date.now();
-
-        // Clean up any existing audio first
-        await cleanupAudio();
-
-        // Create the new sound object
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: audioUrl },
-          { shouldPlay: false },
-          onPlaybackStatusUpdate
-        );
-
-        soundRef.current = sound;
-
-        // Add a small delay before playing to ensure the audio system is ready
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        // Start playback
-        await sound.playAsync();
-        setAudioState(AUDIO_STATES.PLAYING);
-
-        // Start tracking progress
-        startProgressTracking();
-
-        return true;
-      } catch (error) {
-        console.error('Failed to load or play audio:', error);
-        setAudioState(AUDIO_STATES.ERROR);
-        return false;
-      }
-    },
-    [cleanupAudio, onPlaybackStatusUpdate, startProgressTracking]
-  );
 
   // Start playback of all tracks in order
   const startPlayback = async () => {
@@ -647,7 +523,7 @@ export default function BookmarksScreen() {
 
     return () => {
       isMountedRef.current = false;
-      cleanupAudio();
+      stopPlayback();
     };
   }, []);
 
@@ -660,8 +536,6 @@ export default function BookmarksScreen() {
       }
     }
   }, [currentTrackIndex, activePlaylist, loadAndPlayAudio]);
-
-  const insets = useSafeAreaInsets();
 
   // Require sign in
   if (!user) {
@@ -735,7 +609,7 @@ export default function BookmarksScreen() {
                     readingList[currentTrackIndex]?.article_id === item.article_id));
 
               return (
-                <ReadingListItem
+                <ReadingListItemComponent
                   title={item.articles?.title || 'Untitled'}
                   author={item.articles?.author?.name || 'Unknown Author'}
                   progress={isItemPlaying || isItemPaused ? playbackProgress : 0}

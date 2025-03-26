@@ -55,7 +55,6 @@ export const articlesService = {
     if (categoryId) query = query.eq('category_id', categoryId);
     if (authorId) query = query.eq('author_id', authorId);
 
-    // Order by creation date descending for freshest content first
     query = query.order('created_at', { ascending: false });
 
     const { data, error } = await query;
@@ -73,31 +72,21 @@ export const articlesService = {
       .single();
 
     if (error) {
-      console.error(`[articlesService] Error fetching article id=${id}:`, error);
       throw error;
     }
 
     if (!data) {
-      console.error(`[articlesService] Article with id=${id} not found`);
       throw new Error(`Article with id ${id} not found`);
     }
 
-    // Ensure article_sentences is always an array
+    // Initialize empty arrays for data consistency
     if (!data.article_sentences) {
-      console.warn(
-        `[articlesService] Article id=${id} has no article_sentences, initializing empty array`
-      );
       data.article_sentences = [];
     }
 
-    // Check if sentences have words
     if (data.article_sentences && data.article_sentences.length > 0) {
-      // Ensure each sentence has a sentence_words array
       data.article_sentences.forEach(sentence => {
         if (!sentence.sentence_words) {
-          console.warn(
-            `[articlesService] Sentence id=${sentence.id} is missing sentence_words, initializing empty array`
-          );
           sentence.sentence_words = [];
         }
       });

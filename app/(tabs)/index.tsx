@@ -14,7 +14,7 @@ import PageHeader from '@/components/PageHeader';
 
 // Hooks and Services
 import { useColors } from '@/hooks/useColors';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
@@ -62,25 +62,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Properly wrap useAuth to avoid conditional hook calls
-const useSafeAuth = () => {
-  // Always call the hook regardless of availability
-  let authResult: { session: any } = { session: null };
-
-  // Try to get the session but safely handle errors
-  try {
-    const authData = useAuth();
-    if (authData && authData.session) {
-      authResult.session = authData.session;
-    }
-  } catch (e) {
-    // If useAuth is not available, just return null session
-    console.warn('useAuth not available or threw an error');
-  }
-
-  return authResult;
-};
-
 // Memoized article item renderer for better performance
 
 // Add prefetch scheduling to reduce network spikes
@@ -91,8 +72,8 @@ export default function ArticlesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
-  const { session } = useSafeAuth();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
@@ -254,51 +235,35 @@ export default function ArticlesScreen() {
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      // Prefetch all required data in parallel before navigation
+      // Only prefetch critical data needed for immediate display
       const prefetchPromises = [
-        // Prefetch article data
         queryClient.prefetchQuery({
           queryKey: ['article', article.id],
           queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: 0, // No caching
-          gcTime: 0, // No cache retention
+          staleTime: 60000, // Cache for 1 minute
+          gcTime: 300000, // Keep in garbage collection for 5 minutes
         }),
       ];
 
-      // If user is logged in, prefetch user-specific data
+      // Prefetch user-specific data in parallel only if user is logged in
       if (session?.user) {
-        // Prefetch reading list status
         prefetchPromises.push(
           queryClient.prefetchQuery({
             queryKey: ['isInReadingList', session.user.id, article.id],
             queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-            staleTime: 0,
-            gcTime: 0,
-          })
-        );
-
-        // Prefetch study words for highlighting
-        prefetchPromises.push(
-          queryClient.prefetchQuery({
-            queryKey: ['studyWords', session.user.id],
-            queryFn: () => studyWordsFSRSService.getFSRSWords(session.user.id),
-            staleTime: 0,
-            gcTime: 0,
-            networkMode: 'always',
-            retry: false,
+            staleTime: 60000,
+            gcTime: 300000,
           })
         );
       }
 
-      // Start all prefetch operations in parallel
-      Promise.all(prefetchPromises).catch(err => {
-        // Silent error handling - we'll proceed with navigation anyway
-        console.warn('Prefetch error:', err);
+      // Start prefetch operations in parallel
+      Promise.all(prefetchPromises).catch(() => {
+        // Silent error handling - proceed with navigation
       });
 
       // Navigate to article detail with debounce protection
       navigateTo(`/article/${article.id}`, () => {
-        // Add to reading list if authenticated (this runs before navigation)
         if (session?.user) {
           dispatch(addToReadingList(article.id));
         }

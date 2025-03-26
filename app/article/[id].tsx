@@ -140,25 +140,20 @@ export default function ArticleScreen() {
   // Use the custom loading state hook
   const { setDataLoaded } = useLoadingState(true);
 
-  // Pre-fetch study words if user is logged in and we don't have them cached
+  // Pre-fetch study words if user is logged in
   useEffect(() => {
     if (user?.id) {
-      // Check if we already have study words in cache
-
-      // Always prefetch study words immediately with highest priority
       queryClient.prefetchQuery({
         queryKey: ['studyWords', user.id],
         queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 0,
-        retry: false,
-        networkMode: 'always',
+        staleTime: 180000, // 3 minutes
+        retry: 2,
       });
     }
   }, [user?.id, queryClient]);
 
   // Update minimum loading time when prefetched status changes
   useEffect(() => {
-    // Always show loading state regardless of cache
     setDataLoaded(false);
   }, [setDataLoaded]);
 
@@ -184,7 +179,7 @@ export default function ArticleScreen() {
     playButtonStyle,
     startAllAnimations,
     handleScroll: handleAnimationScroll,
-  } = useScreenAnimations(true); // Initialize with buttons visible
+  } = useScreenAnimations(true);
 
   // Update bookmark icon when reading list status changes
   useEffect(() => {
@@ -196,28 +191,17 @@ export default function ArticleScreen() {
   // Check if all data is loaded
   const isLoading = useMemo(() => {
     return (
-      isLoadingArticle || // Article data loading
-      isLoadingReadingList || // Reading list status loading
-      !article?.article_sentences || // No sentences available
-      !sentenceWordsMap || // No sentence words map
-      (article.article_sentences.length > 0 && !sortedSentences?.length) // Has sentences but not sorted yet
+      isLoadingArticle ||
+      isLoadingReadingList ||
+      !article?.article_sentences ||
+      !sentenceWordsMap ||
+      (article.article_sentences.length > 0 && !sortedSentences?.length)
     );
   }, [isLoadingArticle, isLoadingReadingList, article, sentenceWordsMap, sortedSentences]);
 
   // Start content animations when mounted
   useEffect(() => {
-    let cleanupFn: (() => void) | undefined;
-
-    if (isMountedRef.current) {
-      cleanupFn = startAllAnimations();
-    }
-
-    // Cleanup function to handle component unmount
-    return () => {
-      if (cleanupFn) {
-        cleanupFn();
-      }
-    };
+    startAllAnimations();
   }, [startAllAnimations]);
 
   // Handle article data hook callbacks
@@ -226,11 +210,10 @@ export default function ArticleScreen() {
     refetchReadingListStatus
   );
 
-  // Use the article renderers hook as usual
+  // Use the article renderers hook
   const { prepareWord, handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     colors,
-    // Simply pass the selectedWordIds directly now that our hooks handle type consistency
     selectedWordIds,
     sentenceWordsMap || new Map(),
     (word: Tables<'sentence_words'>) => handleWordPress(word.id)
@@ -245,24 +228,14 @@ export default function ArticleScreen() {
     });
   }, [navigateTo, isPlaying, stopPlayback]);
 
-  // Handle bookmark toggle
+  // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
     if (articleId && user) {
       lightFeedback();
-      // Update local state immediately for better UX
       setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
       handleToggleReadingList(articleId, Boolean(isInReadingList));
     }
   }, [articleId, isInReadingList, handleToggleReadingList, user]);
-
-  // Make sure we use initialBookmarkIcon as fallback
-  const bookmarkIconToDisplay = (
-    isInReadingList === true
-      ? 'bookmark'
-      : isInReadingList === false
-        ? 'bookmark-outline'
-        : initialBookmarkIcon
-  ) as 'bookmark' | 'bookmark-outline';
 
   // Handle play button press
   const handlePlayPress = useCallback(async () => {
@@ -288,12 +261,9 @@ export default function ArticleScreen() {
   // Handle scroll with animation
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      // Always maintain UI elements when at top of screen
       if (event.nativeEvent.contentOffset.y <= 0) {
         prevScrollYValue.current = 0;
       }
-
-      // Pass scroll events to animation handler
       handleAnimationScroll(event, prevScrollYValue);
     },
     [handleAnimationScroll]
@@ -322,6 +292,7 @@ export default function ArticleScreen() {
     [prepareWord]
   );
 
+  // Render article list item with optimized settings
   const renderSentenceItem = useCallback(
     ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(sentence.id);
@@ -329,12 +300,7 @@ export default function ArticleScreen() {
         <ArticleSentence
           key={sentence.id}
           sentence={sentence}
-          words={
-            words as (Tables<'sentence_words'> & {
-              root: Tables<'roots'> | null;
-              word_type: Tables<'word_types'> | null;
-            })[]
-          }
+          words={words}
           renderWord={renderWord}
           settings={settings}
           colors={colors}
@@ -345,6 +311,7 @@ export default function ArticleScreen() {
     [getWordsForSentence, renderWord, settings, colors]
   );
 
+  // Render article card with memoization
   const renderArticleCard = useCallback(
     (articleData: any) => (
       <ThemedCard
@@ -384,7 +351,7 @@ export default function ArticleScreen() {
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={bookmarkButtonStyle}
         onPress={user ? () => handleBookmarkPress() : () => {}}
-        iconName={bookmarkIconToDisplay}
+        iconName={initialBookmarkIcon}
         accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
         colors={colors}
         isDarkMode={isDarkMode}
@@ -479,10 +446,15 @@ export default function ArticleScreen() {
               onScroll={handleScroll}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={true}
-              initialNumToRender={10}
-              maxToRenderPerBatch={10}
-              windowSize={5}
-              removeClippedSubviews={false}
+              initialNumToRender={35}
+              maxToRenderPerBatch={20}
+              windowSize={10}
+              removeClippedSubviews={Platform.OS === 'android'}
+              updateCellsBatchingPeriod={50}
+              maintainVisibleContentPosition={{
+                minIndexForVisible: 0,
+                autoscrollToTopThreshold: 10,
+              }}
               indicatorStyle={isDarkMode ? 'white' : 'black'}
               contentInsetAdjustmentBehavior="automatic"
               getItemLayout={(_data, index) => ({
