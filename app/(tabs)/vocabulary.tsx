@@ -119,8 +119,8 @@ export default function VocabularyScreen() {
   const { prefetchVocabularyData } = useAppPreloader();
   const router = useRouter();
 
-  // Add loading state hook to match other tab screens
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+  // Add loading state hook to match other tab screens - initialize with NOT loading
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -132,9 +132,13 @@ export default function VocabularyScreen() {
   useFocusEffect(
     React.useCallback(() => {
       if (user?.id) {
-        prefetchVocabularyData();
+        // Only fetch if we don't have data already
+        const hasStudyWords = queryClient.getQueryData(['studyWords', user?.id]);
+        if (!hasStudyWords) {
+          prefetchVocabularyData();
+        }
       }
-    }, [user?.id, prefetchVocabularyData])
+    }, [user?.id, prefetchVocabularyData, queryClient])
   );
 
   // Query for study words - updated to use FSRS service with longer stale time
@@ -151,7 +155,8 @@ export default function VocabularyScreen() {
     staleTime: 180000, // Cache for 3 minutes
     gcTime: 600000, // Keep in cache for 10 minutes
     retry: 2, // Add retry capability
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on mount when we have data
     placeholderData: () =>
       queryClient.getQueryData(['studyWords', user?.id]) || ([] as StudyWord[]),
   });
@@ -168,6 +173,8 @@ export default function VocabularyScreen() {
     staleTime: 120000, // Cache for 2 minutes (due words change more frequently)
     gcTime: 300000, // Keep in cache for 5 minutes
     retry: 2, // Add retry capability
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnMount: false, // Don't refetch on mount when we have data
     placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || ([] as StudyWord[]),
   });
 
@@ -216,30 +223,30 @@ export default function VocabularyScreen() {
     return studyWords.filter(word => word?.sentence_word != null) as StudyWord[];
   }, [studyWords]);
 
-  // Cache stats calculation key based on array lengths and last updated times
-  // This prevents unnecessary recalculations when the underlying data hasn't changed
-
   // Check if data is ready to display with loading protection
   const isDataReady = useMemo(() => {
+    // If we have cached data, consider it ready immediately
+    if (queryClient.getQueryData(['studyWords', user?.id])) return true;
+
+    // Otherwise check loading states
     if (isAuthLoading || isDataLoading) return false;
     return !!user && (validStudyWords.length > 0 || error !== null);
-  }, [user, validStudyWords.length, error, isAuthLoading, isDataLoading]);
+  }, [user, validStudyWords.length, error, isAuthLoading, isDataLoading, queryClient]);
 
   // Add screen animation hook to match other tab screens
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
-    isLoadingState
-    // Using default values for remaining parameters
+    isLoadingState,
+    0, // Set animation duration to 0
+    0, // Set layout delay to 0
+    0 // Set animation delay to 0
   );
 
-  // Update loading state based on data loading (similar to bookmarks.tsx)
+  // Update loading state based on data loading - always bypass loading screen
   useEffect(() => {
-    if (isAuthLoading || (!!user && isDataLoading)) {
-      startLoading();
-    } else {
-      stopLoading();
-    }
-  }, [isAuthLoading, user, isDataLoading, startLoading, stopLoading]);
+    // Always stop loading immediately - never show the loading screen
+    stopLoading();
+  }, [stopLoading]);
 
   // Split stats calculation into smaller memoized chunks - optimized with calculation key
   const baseStats = useMemo(() => {
@@ -324,11 +331,6 @@ export default function VocabularyScreen() {
       params: { category },
     });
   };
-
-  // Use the consistent loading pattern with other tabs
-  if (isLoadingState && !isDataReady) {
-    return <LoadingScreen color={colors.tint} />;
-  }
 
   // Show sign-in message if not authenticated
   if (!user) {

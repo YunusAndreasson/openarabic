@@ -22,9 +22,9 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   // Use pulse animation hook with gentle style for smooth scaling effect
   const { animatedStyle } = usePulseAnimation({
     style: 'gentle',
-    pulseMagnitude: 1.15,
-    duration: 2000,
-    autoStart: true,
+    pulseMagnitude: 1, // No pulse
+    duration: 0, // No duration
+    autoStart: false, // Don't auto start
   });
 
   // Size configuration with safe defaults - always defaulting to large
@@ -89,20 +89,13 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
   const colors = useColors();
 
-  // Use opacity animation from hooks/animations for fade-in effect
-  const { animatedStyle } = usePulseAnimation({
-    style: 'standard',
-    autoStart: true,
-  });
-
+  // Remove animation completely for instant display
   return (
-    <Animated.View style={[{ flex: 1 }, animatedStyle as AnimatedStyle<ViewStyle>]}>
-      <ThemedView style={styles.fullScreen}>
-        <View style={styles.loaderContainer}>
-          <Loader size="large" color={color || colors.tint} />
-        </View>
-      </ThemedView>
-    </Animated.View>
+    <ThemedView style={styles.fullScreen}>
+      <View style={styles.loaderContainer}>
+        <Loader size="large" color={color || colors.tint} />
+      </View>
+    </ThemedView>
   );
 };
 
