@@ -8,7 +8,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { SignInRequired } from '@/components/SignInRequired';
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,19 +20,9 @@ import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
-import { useAppSelector } from '../../store/hooks';
-import { useIsDarkMode } from '../../hooks/useThemeDetection';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { Tables } from '@/types/database.types';
-import type { RootState } from '../../store/store';
-import type { Article } from '@/types/articles.types';
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  animatedContainer: {
     flex: 1,
   },
   // Content area
@@ -40,9 +30,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: 0,
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM * 5,
-  },
-  flexContainer: {
-    flex: 1,
   },
   // Card styling
   cardContainer: {
@@ -72,6 +59,7 @@ const styles = StyleSheet.create({
   cardProgressContainer: {
     height: 3,
     width: '100%',
+    backgroundColor: 'transparent',
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
@@ -80,12 +68,13 @@ const styles = StyleSheet.create({
   cardProgressBar: {
     height: '100%',
   },
-  // Bottom action bar - similar to vocabulary screen
+  // Bottom action bar
   bottomControlsContainer: {
     position: 'absolute',
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
+    backgroundColor: 'transparent',
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
@@ -104,11 +93,43 @@ const styles = StyleSheet.create({
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
-  fullWidth: {
+  activeCard: {
+    borderColor: 'tint',
+    borderLeftWidth: 3,
+  },
+  activeText: {
+    color: 'tint',
+  },
+  activeIcon: {
+    opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  inactiveIcon: {
+    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+  },
+  buttonContainer: {
+    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
+  },
+  fullWidthButton: {
     width: '100%',
   },
-  activeBorder: {
-    borderLeftWidth: 3,
+  flexOne: {
+    flex: 1,
+  },
+  mediumOpacity: {
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    paddingTop: 0,
+  },
+  listContentWithHeader: {
+    paddingTop: 0,
+  },
+  progressBarTint: {
+    backgroundColor: 'tint',
+  },
+  headerPadding: {
+    paddingTop: 0,
   },
 });
 
@@ -116,19 +137,8 @@ const styles = StyleSheet.create({
 // Card content + margins + borders
 const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding and margins
 
-type ReadingListItem = {
-  user_id: string;
-  article_id: number;
-  position: number;
-  completed: boolean;
-  completed_at: string | null;
-  read_count: number;
-  added_at: string;
-  articles: Article & { author: { id: number; name: string } };
-};
-
 // Memory-optimized component for reading list items
-const ReadingListItemComponent = React.memo(
+const ReadingListItem = React.memo(
   ({
     title,
     author,
@@ -147,35 +157,18 @@ const ReadingListItemComponent = React.memo(
     const colors = useColors();
     const isActive = isPlaying || isPaused;
 
-    // Component-specific dynamic styles
-    const dynamicStyles = useMemo(
-      () => ({
-        cardProgressContainer: {
-          ...styles.cardProgressContainer,
-          backgroundColor: colors.transparent,
-        },
-      }),
-      [colors]
-    );
-
     return (
       <View style={styles.cardContainer}>
         <BaseCard
           onPress={() => router.push(`/article/${articleId}`)}
-          style={[
-            styles.card,
-            isActive && {
-              borderColor: colors.tint,
-              ...styles.activeBorder,
-            },
-          ]}
+          style={[styles.card, isActive && { ...styles.activeCard, borderColor: colors.tint }]}
           shadowSize="small"
         >
           <View style={styles.cardContent}>
             <View style={styles.textContent}>
               <ThemedText
                 type="bodyBold"
-                style={[styles.titleText, isActive ? { color: colors.tint } : undefined]}
+                style={[styles.titleText, isActive && { color: colors.tint }]}
               >
                 {title}
               </ThemedText>
@@ -183,7 +176,7 @@ const ReadingListItemComponent = React.memo(
                 type="label"
                 variant="secondary"
                 numberOfLines={1}
-                style={isActive ? { opacity: LAYOUT.OPACITY.MEDIUM_HIGH } : undefined}
+                style={isActive ? styles.mediumOpacity : undefined}
               >
                 {author}
               </ThemedText>
@@ -193,23 +186,17 @@ const ReadingListItemComponent = React.memo(
                 name="chevron-forward"
                 size={16}
                 color={isActive ? colors.tint : colors.text}
-                style={{
-                  opacity: isActive ? LAYOUT.OPACITY.DIMMED : LAYOUT.OPACITY.DISABLED / 1.5,
-                }}
+                style={isActive ? styles.activeIcon : styles.inactiveIcon}
               />
             </View>
           </View>
 
-          {/* Progress indicator at bottom of card */}
           {isActive && (
-            <View style={[dynamicStyles.cardProgressContainer]}>
+            <View style={styles.cardProgressContainer}>
               <View
                 style={[
                   styles.cardProgressBar,
-                  {
-                    backgroundColor: colors.tint,
-                    width: `${progress * 100}%`,
-                  },
+                  { backgroundColor: colors.tint, width: `${progress * 100}%` },
                 ]}
               />
             </View>
@@ -220,7 +207,7 @@ const ReadingListItemComponent = React.memo(
   }
 );
 
-ReadingListItemComponent.displayName = 'ReadingListItem';
+ReadingListItem.displayName = 'ReadingListItem';
 
 // Bottom Action Buttons component
 const BottomControls = React.memo(
@@ -237,23 +224,8 @@ const BottomControls = React.memo(
   }) => {
     const colors = useColors();
 
-    // Component-specific dynamic styles
-    const dynamicStyles = useMemo(
-      () => ({
-        bottomControlsContainer: {
-          ...styles.bottomControlsContainer,
-          backgroundColor: colors.transparent,
-        },
-        shuffleButton: {
-          ...styles.shuffleButton,
-          borderColor: colors.tint,
-        },
-      }),
-      [colors]
-    );
-
     return (
-      <View style={[dynamicStyles.bottomControlsContainer]}>
+      <View style={styles.bottomControlsContainer}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
           <View style={styles.controlsLabelContainer}>
             <ThemedText type="overline" variant="secondary">
@@ -261,23 +233,23 @@ const BottomControls = React.memo(
             </ThemedText>
           </View>
           <View style={styles.actionButtonsRow}>
-            <View style={{ width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%` }}>
+            <View style={styles.buttonContainer}>
               <ThemedButton
                 title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
                 onPress={onPlayAll}
                 variant="filled"
-                style={styles.fullWidth}
+                style={styles.fullWidthButton}
                 accessibilityLabel={
                   isPlaying && !isShuffleMode ? 'Stop playback' : 'Play all bookmarked articles'
                 }
               />
             </View>
-            <View style={{ width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%` }}>
+            <View style={styles.buttonContainer}>
               <ThemedButton
                 title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
                 onPress={onShuffle}
                 variant="outlined"
-                style={[dynamicStyles.shuffleButton, styles.fullWidth]}
+                style={[styles.shuffleButton, styles.fullWidthButton, { borderColor: colors.tint }]}
                 accessibilityLabel={
                   isPlaying && isShuffleMode
                     ? 'Stop shuffle playback'
@@ -296,37 +268,12 @@ BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen() {
   const colors = useColors();
-  const { user } = useAuth();
-  const settings = useAppSelector((state: RootState) => state.settings);
-  const isDarkMode = useIsDarkMode();
-  const insets = useSafeAreaInsets();
-  const flatListRef = useRef<FlatList<ReadingListItem>>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
+  const flatListRef = useRef<FlatList<any>>(null);
 
-  // Audio player hook
-  const { loadAndPlayAudio, stopPlayback } = useAudioPlayer();
-
-  // Use the custom loading state hook
-  const { setDataLoaded } = useLoadingState(true);
-
-  // Pre-fetch study words if user is logged in
-  useEffect(() => {
-    if (user?.id) {
-      queryClient.prefetchQuery({
-        queryKey: ['studyWords', user.id],
-        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 180000, // 3 minutes
-        retry: 2,
-      });
-    }
-  }, [user?.id, queryClient]);
-
-  // Clean up audio resources when component unmounts
-  useEffect(() => {
-    return () => {
-      stopPlayback();
-    };
-  }, [stopPlayback]);
+  // Use the new loading state hook with optimized defaults
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
   // Query for reading list
   const {
@@ -341,11 +288,11 @@ export default function BookmarksScreen() {
       if (!user?.id) return Promise.resolve([]);
       return readingListService.getReadingList(user.id);
     },
-    enabled: !!user?.id,
-    staleTime: 300000, // Increase cache time to 5 minutes to reduce unnecessary refetches
-    gcTime: 900000, // Keep in cache for 15 minutes
-    retry: 2, // Reduce retry attempts to 2 since 3 is excessive
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+    enabled: !!user?.id && !isAuthLoading, // Only enable when auth is resolved and user exists
+    staleTime: 60000, // Cache for 1 minute rather than no caching
+    gcTime: 300000, // Keep in cache for 5 minutes
+    retry: 3, // Retry failed requests up to 3 times
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
     placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
   });
 
@@ -373,6 +320,26 @@ export default function BookmarksScreen() {
   const isMountedRef = useRef(true);
   const lastActionTimeRef = useRef(Date.now());
 
+  // Clean up all audio resources
+  const cleanupAudio = useCallback(async () => {
+    // Clear any timers
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    // Unload sound if it exists
+    if (soundRef.current) {
+      try {
+        await soundRef.current.stopAsync().catch(() => {});
+        await soundRef.current.unloadAsync().catch(() => {});
+        soundRef.current = null;
+      } catch (error) {
+        // Error during cleanup
+      }
+    }
+  }, []);
+
   // Check if data is ready to display
   const isDataReady = useMemo(() => {
     return !!user && !isDataLoading && !!readingList;
@@ -381,18 +348,33 @@ export default function BookmarksScreen() {
   // Use improved screen animation with data-ready check
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
-    isDataLoading
+    isLoadingState
     // Using default values for remaining parameters
   );
 
   // Update loading state based on data loading
   useEffect(() => {
-    if (isDataLoading || isFetching) {
-      setDataLoaded(false);
+    if (isAuthLoading || isDataLoading || isFetching) {
+      startLoading();
     } else {
-      setDataLoaded(true);
+      stopLoading();
+
+      // Log for debugging
+      if (isError) {
+        console.error('Error loading reading list:', error);
+      }
     }
-  }, [isDataLoading, isFetching, setDataLoaded, isError, error, readingList, user]);
+  }, [
+    isAuthLoading,
+    isDataLoading,
+    isFetching,
+    startLoading,
+    stopLoading,
+    isError,
+    error,
+    readingList,
+    user,
+  ]);
 
   // Add an extra effect to force refresh reading list data when auth state changes
   useEffect(() => {
@@ -427,9 +409,9 @@ export default function BookmarksScreen() {
 
       return () => {
         // Clean up audio when screen is unfocused
-        stopPlayback();
+        cleanupAudio();
       };
-    }, [user?.id, queryClient, isDataLoading, stopPlayback])
+    }, [user?.id, queryClient, isDataLoading, cleanupAudio])
   );
 
   // Get active playlist based on mode
@@ -457,6 +439,108 @@ export default function BookmarksScreen() {
     }
   };
 
+  // Load and play audio with the specified URL
+  const loadAndPlayAudio = async (audioUrl: string) => {
+    if (!audioUrl) {
+      setAudioState(AUDIO_STATES.ERROR);
+      return false;
+    }
+
+    try {
+      setAudioState(AUDIO_STATES.LOADING);
+      lastActionTimeRef.current = Date.now();
+
+      // Clean up any existing audio first
+      await cleanupAudio();
+
+      // Create the new sound object
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: audioUrl },
+        { shouldPlay: false },
+        onPlaybackStatusUpdate
+      );
+
+      soundRef.current = sound;
+
+      // Add a small delay before playing to ensure the audio system is ready
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      // Start playback
+      await sound.playAsync();
+      setAudioState(AUDIO_STATES.PLAYING);
+
+      // Start tracking progress
+      startProgressTracking();
+
+      return true;
+    } catch (error) {
+      setAudioState(AUDIO_STATES.ERROR);
+      return false;
+    }
+  };
+
+  // Handle playback status updates
+  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    if (!status.isLoaded) {
+      if (status.error) {
+        setAudioState(AUDIO_STATES.ERROR);
+      }
+      return;
+    }
+
+    // Update progress if playing
+    if (status.isPlaying && status.durationMillis) {
+      const progress = status.positionMillis / status.durationMillis;
+      setPlaybackProgress(progress || 0);
+    }
+
+    // Handle playback completion
+    if (status.didJustFinish) {
+      if (status.isLooping) {
+        return;
+      }
+
+      // Update state based on playback mode
+      if (audioState === AUDIO_STATES.PLAYING) {
+        setAudioState(AUDIO_STATES.PAUSED);
+      }
+
+      // Handle completion based on mode
+      if (!playlistMode) {
+        // Single track mode - just stop
+        stopPlayback();
+      } else {
+        // In playlist mode, proceed to next track
+        playNextTrack();
+      }
+    }
+  };
+
+  // Start tracking playback progress
+  const startProgressTracking = () => {
+    // Clear any existing interval
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+    }
+
+    // Set up progress tracking interval
+    progressIntervalRef.current = setInterval(async () => {
+      if (soundRef.current && audioState === AUDIO_STATES.PLAYING) {
+        try {
+          const status = await soundRef.current.getStatusAsync();
+          if (status.isLoaded && status.durationMillis) {
+            const progress = status.positionMillis / status.durationMillis;
+            setPlaybackProgress(progress);
+          }
+        } catch (error) {
+          // Error getting status
+        }
+      }
+    }, 1000); // Update every second
+  };
+
+  // Toggle track playback
+
   // Start playback of all tracks in order
   const startPlayback = async () => {
     // Check if we have a playlist
@@ -470,6 +554,18 @@ export default function BookmarksScreen() {
 
     // Set to playlist mode
     setPlaylistMode(true);
+  };
+
+  // Stop all playback
+  const stopPlayback = async () => {
+    // Stop and clean up
+    await cleanupAudio();
+
+    // Reset state
+    setAudioState(AUDIO_STATES.IDLE);
+    setCurrentTrackIndex(-1);
+    setPlaybackProgress(0);
+    setPlaylistMode(false);
   };
 
   // Start shuffle playback
@@ -500,6 +596,20 @@ export default function BookmarksScreen() {
     setPlaylistMode(true);
   };
 
+  // Play next track in playlist
+  const playNextTrack = async () => {
+    // If not in playlist mode or at the end of playlist, stop playback
+    if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
+      await stopPlayback();
+      return;
+    }
+
+    // Move to next track
+    setCurrentTrackIndex(prev => prev + 1);
+  };
+
+  // Play previous track in playlist
+
   // Monitor app state changes
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
@@ -523,7 +633,7 @@ export default function BookmarksScreen() {
 
     return () => {
       isMountedRef.current = false;
-      stopPlayback();
+      cleanupAudio();
     };
   }, []);
 
@@ -535,7 +645,9 @@ export default function BookmarksScreen() {
         loadAndPlayAudio(track.articles.audio_url);
       }
     }
-  }, [currentTrackIndex, activePlaylist, loadAndPlayAudio]);
+  }, [currentTrackIndex, activePlaylist]);
+
+  const insets = useSafeAreaInsets();
 
   // Require sign in
   if (!user) {
@@ -553,7 +665,7 @@ export default function BookmarksScreen() {
   // Empty reading list
   if (readingList.length === 0) {
     return (
-      <Animated.View style={[styles.animatedContainer, fadeInStyle]}>
+      <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView
           style={styles.container}
           includeBottomInset={false}
@@ -562,8 +674,11 @@ export default function BookmarksScreen() {
           <ThemedView
             useSafeArea={false}
             includeBottomInset={false}
-            style={styles.flexContainer}
-            contentContainerStyle={{ paddingTop: getHeaderHeight(insets) }}
+            style={styles.flexOne}
+            contentContainerStyle={[
+              styles.listContentWithHeader,
+              { paddingTop: getHeaderHeight(insets) },
+            ]}
           >
             <EmptyState
               title="No Bookmarks Found"
@@ -581,19 +696,18 @@ export default function BookmarksScreen() {
 
   // Normal display with playlist
   return (
-    <Animated.View style={[styles.animatedContainer, fadeInStyle]}>
+    <Animated.View style={[styles.flexOne, fadeInStyle]}>
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
       >
-        <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexContainer}>
+        <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
           <FlatList
             ref={flatListRef}
             data={readingList}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => {
-              // Determine if this item is currently playing
               const isItemPlaying =
                 audioState === AUDIO_STATES.PLAYING &&
                 ((isShuffleMode &&
@@ -609,7 +723,7 @@ export default function BookmarksScreen() {
                     readingList[currentTrackIndex]?.article_id === item.article_id));
 
               return (
-                <ReadingListItemComponent
+                <ReadingListItem
                   title={item.articles?.title || 'Untitled'}
                   author={item.articles?.author?.name || 'Unknown Author'}
                   progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
@@ -634,7 +748,6 @@ export default function BookmarksScreen() {
           />
         </ThemedView>
 
-        {/* Bottom Action Buttons - similar to vocabulary screen */}
         <BottomControls
           onPlayAll={isCurrentlyPlaying ? stopPlayback : startPlayback}
           onShuffle={isCurrentlyPlaying ? stopPlayback : startShufflePlayback}

@@ -67,6 +67,7 @@ export function useAudioPlayer() {
       });
       return true;
     } catch (error) {
+      console.error('Failed to initialize audio session:', error);
       setAudioState(AUDIO_STATES.ERROR);
       return false;
     }
@@ -95,6 +96,7 @@ export function useAudioPlayer() {
           setDuration(status.durationMillis || 0);
         }
       } catch (error) {
+        console.error('Error getting audio status:', error);
         clearInterval(progressIntervalRef.current!);
         progressIntervalRef.current = null;
       }
@@ -113,21 +115,17 @@ export function useAudioPlayer() {
         return;
       }
 
-      // Batch state updates for better performance
-      const updates = {
-        audioState: status.isPlaying
-          ? AUDIO_STATES.PLAYING
-          : status.isBuffering
-            ? AUDIO_STATES.LOADING
-            : AUDIO_STATES.PAUSED,
-        progress: status.positionMillis,
-        duration: status.durationMillis || 0,
-      };
+      if (status.isPlaying) {
+        setAudioState(AUDIO_STATES.PLAYING);
+      } else if (status.isBuffering) {
+        setAudioState(AUDIO_STATES.LOADING);
+      } else {
+        setAudioState(AUDIO_STATES.PAUSED);
+      }
 
-      // Only update if values have changed
-      setAudioState(updates.audioState);
-      setProgress(updates.progress);
-      setDuration(updates.duration);
+      // Update progress and duration
+      setProgress(status.positionMillis);
+      setDuration(status.durationMillis || 0);
 
       // Handle track completion
       if (status.didJustFinish && !status.isLooping) {
@@ -157,7 +155,7 @@ export function useAudioPlayer() {
         lastActionTimeRef.current = Date.now();
 
         // Clean up any existing audio first
-        await cleanupAudio();
+        await cleanupAudio().catch(e => console.error('Cleanup error:', e));
 
         // Create the new sound object
         const { sound } = await Audio.Sound.createAsync(
@@ -170,7 +168,10 @@ export function useAudioPlayer() {
 
         soundRef.current = sound;
 
-        // Start playback immediately
+        // Add a small delay before playing to ensure the audio system is ready
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Start playback
         await sound.playAsync().catch(e => {
           throw new Error(`Failed to start playback: ${e.message}`);
         });
@@ -180,8 +181,9 @@ export function useAudioPlayer() {
 
         return true;
       } catch (error) {
+        console.error('Audio playback error:', error);
         setAudioState(AUDIO_STATES.ERROR);
-        await cleanupAudio(); // Cleanup on error
+        await cleanupAudio().catch(() => {}); // Cleanup on error
         return false;
       }
     },
