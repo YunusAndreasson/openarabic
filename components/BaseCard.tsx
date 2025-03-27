@@ -60,13 +60,13 @@ const BaseCard: React.FC<BaseCardProps> = ({
     }
   }, [colors.shadow, shadowSize]);
 
-  // Card border for light mode only
+  // Card border style with increased visibility
   const borderStyle = useMemo(
-    () =>
-      !isDarkMode && shadowSize !== 'none'
-        ? { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.cardBorder }
-        : {},
-    [isDarkMode, shadowSize, colors.cardBorder]
+    () => ({
+      borderWidth: 0.5,
+      borderColor: isDarkMode ? colors.elevation3 : colors.cardBorder,
+    }),
+    [isDarkMode, colors.elevation3, colors.cardBorder]
   );
 
   // Combined card style

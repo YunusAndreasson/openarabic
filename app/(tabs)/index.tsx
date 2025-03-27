@@ -420,7 +420,7 @@ export default function ArticlesScreen() {
   const AuthorFilterSection = useMemo(() => {
     return (
       <FilterList
-        title="Browse by Author"
+        title="Authors"
         items={authors}
         selectedId={null}
         onSelect={handleSelectAuthor}
@@ -432,7 +432,7 @@ export default function ArticlesScreen() {
   const CategoryFilterSection = useMemo(() => {
     return (
       <FilterList
-        title="Browse by Category"
+        title="Categories"
         items={categoriesData}
         selectedId={null}
         onSelect={handleSelectCategory}
