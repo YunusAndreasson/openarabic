@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { StyleSheet, Alert, Linking, View, ScrollView, ViewStyle } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createClient } from '@supabase/supabase-js';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -28,6 +28,25 @@ import { useFocusEffect } from '@react-navigation/native';
 // Create a Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Memoize static components to prevent unnecessary re-renders
+const SettingLabel = React.memo(({ icon, text }: { icon: string; text: string }) => {
+  const colors = useColors();
+  return (
+    <View style={styles.settingLabelContainer}>
+      <Ionicons name={icon as any} size={20} color={colors.tabIconDefault} />
+      <View style={styles.settingLabelTextContainer}>
+        <ThemedText type="body">{text}</ThemedText>
+      </View>
+    </View>
+  );
+});
+
+// Memoize divider component
+const Divider = React.memo(() => {
+  const colors = useColors();
+  return <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />;
+});
+
 export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const colors = useColors();
@@ -37,45 +56,34 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Add state to defer rendering of toggle components until theme is loaded
-  const [deferredRender, setDeferredRender] = useState(false);
+  // Use the loading state hook with minimal loading time
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
-  // Use the new loading state hook with minimal loading time
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(); // Using default values (80ms, true)
+  // Use screen animation for coordinated animations with layout readiness check
+  const { isLayoutReady, fadeInStyle, shouldRenderAnimatedContent, triggerAnimations } =
+    useScreenAnimation(
+      true, // Always ready to display
+      isLoadingState,
+      80, // Fast animation duration
+      50, // Small layout delay to ensure stability
+      0 // No animation delay
+    );
 
-  // Use the new screen animation hook
-  const { fadeInStyle } = useScreenAnimation(
-    true, // Always ready to display
-    isLoadingState
-    // Using default values for remaining parameters
-  );
-
-  // Use opacity animation for the slider
-  const { animatedStyle: sliderFadeStyle, startAnimation: startSliderAnimation } =
+  // Use opacity animation for controls with a slight delay
+  const { animatedStyle: controlsStyle, startAnimation: startControlsAnimation } =
     useOpacityAnimation({
       initialOpacity: 0,
-      duration: 200,
+      duration: 150,
+      delay: 100, // Increased delay after main content
     });
 
-  // Add effect to defer toggle rendering until theme state is loaded
-  useEffect(() => {
-    if (theme !== null && !deferredRender) {
-      setDeferredRender(true);
-    }
-  }, [theme, deferredRender]);
+  // Memoize the animation trigger function to prevent unnecessary re-renders
+  const startAnimations = useCallback(() => {
+    triggerAnimations();
+    startControlsAnimation();
+  }, [triggerAnimations, startControlsAnimation]);
 
-  const [isSliderReady, setIsSliderReady] = useState(false);
-
-  // Add effect to handle slider initialization
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsSliderReady(true);
-      startSliderAnimation();
-    }, 100); // Small delay to ensure theme is loaded
-
-    return () => clearTimeout(timer);
-  }, [startSliderAnimation]);
-
+  // Load session and trigger animations
   const loadSession = useCallback(async () => {
     startLoading();
     try {
@@ -85,8 +93,19 @@ export default function SettingsScreen() {
       setSession(null);
     } finally {
       stopLoading();
+      // Only trigger animations when layout is ready
+      if (isLayoutReady) {
+        startAnimations();
+      }
     }
-  }, [startLoading, stopLoading]);
+  }, [startLoading, stopLoading, startAnimations, isLayoutReady]);
+
+  // Effect to trigger animations when layout becomes ready
+  useEffect(() => {
+    if (isLayoutReady && !isLoadingState) {
+      startAnimations();
+    }
+  }, [isLayoutReady, isLoadingState, startAnimations]);
 
   // Use focus effect to only load session when tab is focused
   useFocusEffect(
@@ -107,7 +126,7 @@ export default function SettingsScreen() {
     }, [loadSession])
   );
 
-  // Custom button styles to ensure left alignment
+  // Memoize button styles
   const buttonStyles = useMemo(
     () => ({
       innerContainer: {
@@ -122,9 +141,28 @@ export default function SettingsScreen() {
     []
   );
 
-  // Memoize text preview styles to avoid recalculation on each render
+  // Simple handlers don't need memoization
+  const handleSupport = () => {
+    Linking.openURL('mailto:yunus@edenmind.com');
+  };
 
-  async function signOut() {
+  const handleSocialLink = (url: string) => {
+    Linking.openURL(url);
+  };
+
+  // Keep memoization for handlers with dependencies or complex logic
+  const handleFontScaleChange = useCallback(
+    (value: number) => {
+      const previousScale = settings.fontScale;
+      if (Math.abs(value - previousScale) >= 0.1) {
+        lightFeedback();
+      }
+      dispatch(setFontScale(value));
+    },
+    [settings.fontScale, dispatch]
+  );
+
+  const handleSignOut = useCallback(() => {
     Alert.alert(
       'Sign Out',
       'Are you sure?',
@@ -149,35 +187,10 @@ export default function SettingsScreen() {
       ],
       { cancelable: true }
     );
-  }
+  }, [startLoading, stopLoading]);
 
-  const handleSupport = () => {
-    Linking.openURL('mailto:yunus@edenmind.com');
-  };
-
-  const handleSocialLink = (url: string) => {
-    Linking.openURL(url);
-  };
-
-  // Handle font scale change with haptic feedback
-  const handleFontScaleChange = useCallback(
-    (value: number) => {
-      // Get the previous scale value
-      const previousScale = settings.fontScale;
-
-      // Check if the value has actually changed to a different step
-      if (Math.abs(value - previousScale) >= 0.1) {
-        // Trigger haptic feedback for every increment
-        lightFeedback();
-      }
-
-      dispatch(setFontScale(value));
-    },
-    [settings.fontScale, dispatch]
-  );
-
-  // Use cached data to render a skeleton while loading instead of the full loading screen
-  if (isLoadingState) {
+  // Use cached data to render a skeleton while loading or layout not ready
+  if (isLoadingState || !isLayoutReady) {
     return (
       <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView style={styles.container}>
@@ -188,13 +201,9 @@ export default function SettingsScreen() {
   }
 
   // Skip the sign-in check so settings are always accessible
-  // Auth features will be shown conditionally in the UI if session exists
   const showAuthUI = !session;
 
-  // Create placeholder component to show while theme is loading
-  const TogglePlaceholder = () => (
-    <View style={[styles.togglePlaceholder, { backgroundColor: colors.cardBorder }]} />
-  );
+  const shouldShowControls = shouldRenderAnimatedContent && isLayoutReady;
 
   return (
     <ThemedView
@@ -221,40 +230,23 @@ export default function SettingsScreen() {
               shadowSize="small"
               includePressAnimation={false}
             >
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
-                  <Ionicons name="moon" size={20} color={colors.tabIconDefault} />
-                  <View style={styles.settingLabelTextContainer}>
-                    <ThemedText type="body">Dark Mode</ThemedText>
-                  </View>
-                </View>
-                {deferredRender ? <ThemeToggle /> : <TogglePlaceholder />}
-              </View>
-              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
-                  <Ionicons name="language" size={20} color={colors.tabIconDefault} />
-                  <View style={styles.settingLabelTextContainer}>
-                    <ThemedText type="body">English Translation</ThemedText>
-                  </View>
-                </View>
-                {deferredRender ? (
+              <Animated.View style={[styles.settingRow, controlsStyle as AnimatedStyle<ViewStyle>]}>
+                <SettingLabel icon="moon" text="Dark Mode" />
+                {shouldShowControls && <ThemeToggle />}
+              </Animated.View>
+              <Divider />
+              <Animated.View style={[styles.settingRow, controlsStyle as AnimatedStyle<ViewStyle>]}>
+                <SettingLabel icon="language" text="English Translation" />
+                {shouldShowControls && (
                   <Toggle
                     value={settings.showEnglish}
                     onValueChange={value => dispatch(setShowEnglish(value))}
                   />
-                ) : (
-                  <TogglePlaceholder />
                 )}
-              </View>
-              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
-              <View style={styles.settingRow}>
-                <View style={styles.settingLabelContainer}>
-                  <Ionicons name="text" size={20} color={colors.tabIconDefault} />
-                  <View style={styles.settingLabelTextContainer}>
-                    <ThemedText type="body">Text Size</ThemedText>
-                  </View>
-                </View>
+              </Animated.View>
+              <Divider />
+              <Animated.View style={[styles.settingRow, controlsStyle as AnimatedStyle<ViewStyle>]}>
+                <SettingLabel icon="text" text="Text Size" />
                 <View style={styles.sliderContainer}>
                   <ThemedText
                     type="caption"
@@ -264,8 +256,8 @@ export default function SettingsScreen() {
                   >
                     {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
-                  {deferredRender && isSliderReady ? (
-                    <Animated.View style={[styles.sliderWrapper, sliderFadeStyle as ViewStyle]}>
+                  {shouldShowControls && (
+                    <View style={styles.sliderWrapper}>
                       <CustomSlider
                         value={settings.fontScale}
                         onValueChange={handleFontScaleChange}
@@ -274,17 +266,10 @@ export default function SettingsScreen() {
                         step={0.1}
                         style={styles.slider}
                       />
-                    </Animated.View>
-                  ) : (
-                    <View
-                      style={[
-                        styles.sliderPlaceholder,
-                        { backgroundColor: colors.cardBorder, height: 40 },
-                      ]}
-                    />
+                    </View>
                   )}
                 </View>
-              </View>
+              </Animated.View>
               <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.previewContainer}>
                 <View style={styles.previewLabelContainer}>
@@ -400,7 +385,7 @@ export default function SettingsScreen() {
                 <ThemedButton
                   variant="outlined"
                   title="Sign Out"
-                  onPress={signOut}
+                  onPress={handleSignOut}
                   icon="log-out"
                   textWeight="normal"
                   style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
