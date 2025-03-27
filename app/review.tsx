@@ -1,11 +1,5 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  Easing,
-} from 'react-native-reanimated';
 import { ThemedView } from '@/components/ThemedView';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +10,7 @@ import { Loader } from '@/components/Loader';
 import { useQueryClient } from '@tanstack/react-query';
 import { lightFeedback } from '@/utils/haptics';
 import { useWordSizing } from '../hooks/useWordSizing';
+import useFadeAnimation from '../hooks/animations/useFadeAnimation';
 
 // Import our components
 import {
@@ -25,12 +20,6 @@ import {
   MeaningOverlay,
   InstructionFooter,
 } from '../components/review';
-
-// Animation config with proper Easing worklet
-const ANIMATION_CONFIG = {
-  duration: 300,
-  easing: Easing.linear,
-};
 
 const baseStyles = StyleSheet.create({
   container: {
@@ -67,6 +56,38 @@ export default function ReviewScreen() {
   const initialLoadRef = useRef(true);
 
   const { user } = useAuth();
+
+  // Use our optimized fade animation hook only for the word content
+  const { fadeIn, fadeOut, opacity } = useFadeAnimation(1);
+
+  // Define completion transition function that both paths can use
+  const triggerCompletionTransition = useCallback(() => {
+    if (completionTriggeredRef.current) return;
+    completionTriggeredRef.current = true;
+
+    maxProgressRef.current = 100;
+    setProgressAnimationKey(prev => prev + 1);
+    setIsTransitioningToCompletion(true);
+    fadeOut();
+
+    if (completionTransitionRef.current) {
+      clearTimeout(completionTransitionRef.current);
+    }
+
+    completionTransitionRef.current = setTimeout(() => {
+      if (completionTriggeredRef.current) {
+        // Only update state if not unmounted
+        setIsTransitioningToCompletion(false);
+      }
+    }, 350);
+  }, [fadeOut]);
+
+  // Initialize FSRS hook with our completion handler
+  const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
+    userId: user?.id,
+    onComplete: triggerCompletionTransition,
+  });
+
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const meaningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [currentMeaning, setCurrentMeaning] = useState('');
@@ -93,77 +114,11 @@ export default function ReviewScreen() {
   // Local concurrency guard for word updates
   const isUpdatingWordRef = useRef<boolean>(false);
 
-  // Animation values
-  const opacity = useSharedValue(1);
-
   // Show loading state during initial load to prevent "no words" flash
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
 
   // Add ref for last progress update time
   const lastProgressUpdateRef = useRef(Date.now());
-
-  // Create animated styles for the container - optimize to run on UI thread
-  const containerStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: isTransitioningToCompletion ? opacity.value : 1,
-    };
-  }, [isTransitioningToCompletion]);
-
-  // Define completion transition function that both paths can use
-  const triggerCompletionTransition = useCallback(() => {
-    if (completionTriggeredRef.current) return;
-    completionTriggeredRef.current = true;
-
-    maxProgressRef.current = 100;
-    setProgressAnimationKey(prev => prev + 1);
-    setIsTransitioningToCompletion(true);
-    opacity.value = withTiming(0, ANIMATION_CONFIG);
-
-    if (completionTransitionRef.current) {
-      clearTimeout(completionTransitionRef.current);
-    }
-
-    completionTransitionRef.current = setTimeout(() => {
-      if (completionTriggeredRef.current) {
-        // Only update state if not unmounted
-        setIsTransitioningToCompletion(false);
-      }
-    }, 350);
-  }, [opacity]);
-
-  // Initialize FSRS hook with our completion handler
-  const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
-    userId: user?.id,
-    onComplete: triggerCompletionTransition,
-  });
-
-  // Update progress tracking with debounce
-  useEffect(() => {
-    if (!isLoading && progress !== undefined) {
-      const now = Date.now();
-      if (now - lastProgressUpdateRef.current < 100) {
-        return; // Debounce rapid updates
-      }
-
-      const safeProgress = Math.min(100, Math.max(0, progress));
-      if (safeProgress > maxProgressRef.current) {
-        maxProgressRef.current = safeProgress;
-        setProgressAnimationKey(prev => prev + 1);
-        lastProgressUpdateRef.current = now;
-      }
-    }
-  }, [isLoading, progress, isComplete]);
-
-  // Initialize totalWordsRef when the session starts
-  useEffect(() => {
-    if (!isLoading && progress !== undefined && totalWordsRef.current === 0) {
-      // Prevent division by zero and handle edge cases
-      const safeProgress = Math.max(1, progress || 100);
-      const calculatedTotal = Math.max(1, Math.round(100 / safeProgress));
-      totalWordsRef.current = calculatedTotal;
-    }
-  }, [isLoading, progress]);
 
   // Calculate dynamic font size for Arabic words based on window width
   // Smaller screens need smaller fonts, larger screens can have larger fonts
@@ -195,6 +150,13 @@ export default function ReviewScreen() {
     return () => {}; // Return empty cleanup function for false case
   }, [showInitialLoading]);
 
+  // Update effect to properly handle isComplete changes
+  useEffect(() => {
+    if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
+      triggerCompletionTransition();
+    }
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+
   // Update current sentence when currentWord changes
   useEffect(() => {
     if (currentWord && !isComplete && !isTransitioningToCompletion) {
@@ -203,13 +165,32 @@ export default function ReviewScreen() {
     }
   }, [currentWord, isComplete, isTransitioningToCompletion]);
 
-  // Update effect to properly handle isComplete changes
-  // Optimized to only run when the relevant conditions might have changed
+  // Update progress tracking with debounce
   useEffect(() => {
-    if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
-      triggerCompletionTransition();
+    if (!isLoading && progress !== undefined) {
+      const now = Date.now();
+      if (now - lastProgressUpdateRef.current < 100) {
+        return; // Debounce rapid updates
+      }
+
+      const safeProgress = Math.min(100, Math.max(0, progress));
+      if (safeProgress > maxProgressRef.current) {
+        maxProgressRef.current = safeProgress;
+        setProgressAnimationKey(prev => prev + 1);
+        lastProgressUpdateRef.current = now;
+      }
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+  }, [isLoading, progress, isComplete]);
+
+  // Initialize totalWordsRef when the session starts
+  useEffect(() => {
+    if (!isLoading && progress !== undefined && totalWordsRef.current === 0) {
+      // Prevent division by zero and handle edge cases
+      const safeProgress = Math.max(1, progress || 100);
+      const calculatedTotal = Math.max(1, Math.round(100 / safeProgress));
+      totalWordsRef.current = calculatedTotal;
+    }
+  }, [isLoading, progress]);
 
   // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
@@ -233,8 +214,8 @@ export default function ReviewScreen() {
     const updateSequence = async () => {
       try {
         // First fade out the current word
-        opacity.value = withTiming(0, ANIMATION_CONFIG);
-        await new Promise(resolve => setTimeout(resolve, 150));
+        fadeOut();
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         // Store and show the meaning
         const meaning = currentWord?.sentence_word?.english || 'No translation available';
@@ -246,7 +227,7 @@ export default function ReviewScreen() {
           meaningTimeoutRef.current = setTimeout(() => {
             setShowMeaningOverlay(false);
             resolve(null);
-          }, 1000);
+          }, 2000); // Show meaning for 2 seconds
         });
 
         // Update the word in database
@@ -254,11 +235,12 @@ export default function ReviewScreen() {
           await updateWord(currentWord.sentence_word_id, false);
         }
 
-        // Fade back in
-        opacity.value = withTiming(1, ANIMATION_CONFIG);
+        // Wait for the new word to be ready before fading in
+        await new Promise(resolve => setTimeout(resolve, 300));
+        fadeIn();
       } catch (error) {
         console.error('[Swipe Left] Error:', error);
-        opacity.value = withTiming(1, ANIMATION_CONFIG);
+        fadeIn();
       } finally {
         // Always reset the guard when the sequence completes
         isUpdatingWordRef.current = false;
@@ -271,7 +253,7 @@ export default function ReviewScreen() {
 
     // Start the update sequence
     updateSequence();
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
+  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
 
   // Handle swipe right (know the word)
   const handleSwipeRight = useCallback(() => {
@@ -285,27 +267,35 @@ export default function ReviewScreen() {
     }
 
     isUpdatingWordRef.current = true;
-    opacity.value = withTiming(0, ANIMATION_CONFIG);
 
-    if (currentWord?.sentence_word_id) {
-      updateWord(currentWord.sentence_word_id, true)
-        .then(() => {
-          if (!isUpdatingWordRef.current) return; // Guard against unmount
-          opacity.value = withTiming(1, ANIMATION_CONFIG);
-        })
-        .catch(error => {
-          console.error('[Swipe Right] Error:', error);
-          if (!isUpdatingWordRef.current) return; // Guard against unmount
-          opacity.value = withTiming(1, ANIMATION_CONFIG);
-        })
-        .finally(() => {
-          isUpdatingWordRef.current = false;
-        });
-    } else {
-      opacity.value = withTiming(1, ANIMATION_CONFIG);
-      isUpdatingWordRef.current = false;
-    }
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, opacity]);
+    // First, ensure the word is hidden
+    fadeOut();
+
+    // Wait for fade out to complete before updating
+    setTimeout(() => {
+      if (currentWord?.sentence_word_id) {
+        updateWord(currentWord.sentence_word_id, true)
+          .then(() => {
+            if (!isUpdatingWordRef.current) return; // Guard against unmount
+            // Add a small delay before showing the new word
+            setTimeout(() => {
+              fadeIn();
+            }, 150);
+          })
+          .catch(error => {
+            console.error('[Swipe Right] Error:', error);
+            if (!isUpdatingWordRef.current) return; // Guard against unmount
+            fadeIn();
+          })
+          .finally(() => {
+            isUpdatingWordRef.current = false;
+          });
+      } else {
+        fadeIn();
+        isUpdatingWordRef.current = false;
+      }
+    }, 300); // Wait for fade out animation to complete
+  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
 
   // Handle close button press
   const queryClient = useQueryClient();
@@ -342,7 +332,7 @@ export default function ReviewScreen() {
   useEffect(() => {
     return () => {
       // Cancel any ongoing animations
-      opacity.value = withTiming(1, { duration: 0 });
+      fadeIn();
 
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
@@ -360,7 +350,7 @@ export default function ReviewScreen() {
       maxProgressRef.current = 0;
       totalWordsRef.current = 0;
     };
-  }, [opacity]);
+  }, [fadeIn]);
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {
@@ -387,7 +377,7 @@ export default function ReviewScreen() {
   // Return the main content with entrance animation
   return (
     <ThemedView style={baseStyles.container} useSafeArea={true}>
-      <Animated.View style={[baseStyles.contentContainer, containerStyle]}>
+      <View style={baseStyles.contentContainer}>
         {/* Show loading state during initial load */}
         {showInitialLoading ? (
           <Loader />
@@ -426,7 +416,7 @@ export default function ReviewScreen() {
             <InstructionFooter primaryText="Tap on a word to see its meaning. Long press to add to your vocabulary." />
           </>
         )}
-      </Animated.View>
+      </View>
     </ThemedView>
   );
 }
