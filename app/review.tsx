@@ -204,55 +204,51 @@ export default function ReviewScreen() {
       return;
     }
 
-    // Set local concurrency guard
     isUpdatingWordRef.current = true;
 
     // Add haptic feedback for don't know
     lightFeedback();
 
-    // Create a promise chain to ensure sequential execution
-    const updateSequence = async () => {
-      try {
-        // First fade out the current word
-        fadeOut();
-        await new Promise(resolve => setTimeout(resolve, 200));
+    // First, ensure the word is hidden
+    fadeOut();
 
-        // Store and show the meaning
-        const meaning = currentWord?.sentence_word?.english || 'No translation available';
-        setCurrentMeaning(meaning);
-        setShowMeaningOverlay(true);
+    // Show meaning overlay after fade out
+    setTimeout(() => {
+      const meaning = currentWord?.sentence_word?.english || 'No translation available';
+      setCurrentMeaning(meaning);
+      setShowMeaningOverlay(true);
 
-        // Wait for meaning display
-        await new Promise(resolve => {
-          meaningTimeoutRef.current = setTimeout(() => {
-            setShowMeaningOverlay(false);
-            resolve(null);
-          }, 2000); // Show meaning for 2 seconds
-        });
+      // Hide meaning overlay after 2 seconds and update word
+      meaningTimeoutRef.current = setTimeout(() => {
+        setShowMeaningOverlay(false);
 
-        // Update the word in database
         if (currentWord?.sentence_word_id) {
-          await updateWord(currentWord.sentence_word_id, false);
+          updateWord(currentWord.sentence_word_id, false)
+            .then(() => {
+              if (!isUpdatingWordRef.current) return; // Guard against unmount
+              // Add a small delay before showing the new word
+              setTimeout(() => {
+                fadeIn();
+              }, 150);
+            })
+            .catch(error => {
+              console.error('[Swipe Left] Error:', error);
+              if (!isUpdatingWordRef.current) return; // Guard against unmount
+              fadeIn();
+            })
+            .finally(() => {
+              isUpdatingWordRef.current = false;
+              if (meaningTimeoutRef.current) {
+                clearTimeout(meaningTimeoutRef.current);
+                meaningTimeoutRef.current = null;
+              }
+            });
+        } else {
+          fadeIn();
+          isUpdatingWordRef.current = false;
         }
-
-        // Wait for the new word to be ready before fading in
-        await new Promise(resolve => setTimeout(resolve, 300));
-        fadeIn();
-      } catch (error) {
-        console.error('[Swipe Left] Error:', error);
-        fadeIn();
-      } finally {
-        // Always reset the guard when the sequence completes
-        isUpdatingWordRef.current = false;
-        if (meaningTimeoutRef.current) {
-          clearTimeout(meaningTimeoutRef.current);
-          meaningTimeoutRef.current = null;
-        }
-      }
-    };
-
-    // Start the update sequence
-    updateSequence();
+      }, 2000);
+    }, 300);
   }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
 
   // Handle swipe right (know the word)
