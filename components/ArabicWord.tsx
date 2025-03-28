@@ -129,12 +129,16 @@ function ArabicWordComponent({
       type: 'arabic' as const,
       variant: isSelected ? ('primary' as const) : undefined,
       skipDefaultColor: true,
-      colorName: isSelected ? ('tint' as const) : ('text' as const),
+      colorName: tooltipVisible
+        ? ('textTertiary' as const)
+        : isSelected
+          ? ('tint' as const)
+          : ('text' as const),
       arabicFontSize: calculatedFontSize,
       weight: isSelected ? ('600' as const) : ('normal' as const),
       style: styles.textStyle,
     }),
-    [isSelected, calculatedFontSize]
+    [isSelected, calculatedFontSize, tooltipVisible]
   );
 
   return (
@@ -153,6 +157,9 @@ function ArabicWordComponent({
             pressStyle as AnimatedStyles,
             borderStyle as AnimatedStyles,
             fadeStyle as AnimatedStyles,
+            {
+              borderBottomColor: isSelected ? colors.textOverlay : 'transparent',
+            },
           ]}
         >
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
