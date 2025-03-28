@@ -9,9 +9,9 @@ import { EmptyStateProps } from '@/types/ui/layout.types';
  * A reusable empty state component that displays a title, message, and optional action button
  */
 const EmptyState = React.memo(
-  ({ title, message, buttonTitle, buttonIcon, onButtonPress }: EmptyStateProps) => {
+  ({ title, description, actionText, icon, onAction, containerStyle }: EmptyStateProps) => {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, containerStyle]}>
         <View style={styles.titleContainer}>
           <ThemedText type="heading2" align="center">
             {title}
@@ -19,12 +19,12 @@ const EmptyState = React.memo(
         </View>
         <View style={styles.messageContainer}>
           <ThemedText type="body" variant="subtle" align="center">
-            {message}
+            {description}
           </ThemedText>
         </View>
 
-        {buttonTitle && onButtonPress && (
-          <ThemedButton title={buttonTitle} icon={buttonIcon} onPress={onButtonPress} />
+        {actionText && onAction && (
+          <ThemedButton title={actionText} icon={icon} onPress={onAction} />
         )}
       </View>
     );

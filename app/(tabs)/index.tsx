@@ -5,14 +5,10 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
-
-// Components
 import { ThemedView } from '@/components/ThemedView';
 import { LoadingScreen } from '@/components/Loader';
 import ArticleList from '@/components/ArticleList';
 import PageHeader from '@/components/PageHeader';
-
-// Hooks and Services
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '../../hooks/useAuth';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
@@ -21,12 +17,7 @@ import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
 import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-
-// Store
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
-
-// Utils and Constants
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';

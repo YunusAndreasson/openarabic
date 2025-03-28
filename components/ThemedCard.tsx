@@ -33,7 +33,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     'variant' in p && p.variant === 'compact';
 
   // Extract variant-specific props based on type
-  const imageUrl = isArticleVariant(props) ? props.imageUrl : undefined;
   const title = isArticleVariant(props) ? props.title : undefined;
   const category = isArticleVariant(props) ? props.category : undefined;
   const author = isArticleVariant(props) ? props.author : undefined;

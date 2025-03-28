@@ -112,6 +112,7 @@ export const Toast = React.memo(
         fadeOut();
         reverseScaleAnimation();
         reverseSlideAnimation();
+        return () => undefined;
       }
     }, [
       visible,

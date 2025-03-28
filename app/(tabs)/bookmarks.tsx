@@ -97,9 +97,6 @@ const styles = StyleSheet.create({
     borderColor: 'tint',
     borderLeftWidth: 3,
   },
-  activeText: {
-    color: 'tint',
-  },
   activeIcon: {
     opacity: LAYOUT.OPACITY.DIMMED,
   },
@@ -118,17 +115,7 @@ const styles = StyleSheet.create({
   mediumOpacity: {
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
-  emptyStateContainer: {
-    flex: 1,
-    paddingTop: 0,
-  },
   listContentWithHeader: {
-    paddingTop: 0,
-  },
-  progressBarTint: {
-    backgroundColor: 'tint',
-  },
-  headerPadding: {
     paddingTop: 0,
   },
 });

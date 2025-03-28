@@ -10,7 +10,6 @@ import { useQuery } from '@tanstack/react-query';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { LoadingScreen } from '@/components/Loader';
 import { VocabularyStats, WeeklyProgressData, StudyWord } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
@@ -120,7 +119,7 @@ export default function VocabularyScreen() {
   const router = useRouter();
 
   // Add loading state hook to match other tab screens - initialize with NOT loading
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
+  const { isLoading: isLoadingState, stopLoading } = useLoadingState(false);
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);

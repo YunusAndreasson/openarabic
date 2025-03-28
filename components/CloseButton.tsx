@@ -3,7 +3,6 @@ import { TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
-import { ELEMENT_SIZES } from '../constants/ui';
 import { lightFeedback } from '../utils/haptics';
 import { getTouchableProps } from '../utils/accessibility';
 import { CloseButtonProps } from '@/types/ui/button.types';
@@ -22,8 +21,8 @@ const styles = StyleSheet.create({
  */
 export const CloseButton: React.FC<CloseButtonProps> = ({
   onPress,
-  size = ELEMENT_SIZES.ICON.LARGE,
-  iconSize = ELEMENT_SIZES.ICON.SMALL,
+  size = LAYOUT.BUTTON.HEIGHT.LARGE,
+  iconSize = LAYOUT.BUTTON.ICON_SIZE.SMALL,
   color,
   style,
   hapticFeedback = true,
@@ -33,15 +32,15 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   const buttonSize =
     typeof size === 'string'
       ? size === 'large'
-        ? ELEMENT_SIZES.ICON.LARGE
-        : ELEMENT_SIZES.ICON.SMALL
+        ? LAYOUT.BUTTON.HEIGHT.LARGE
+        : LAYOUT.BUTTON.HEIGHT.SMALL
       : size;
 
   const finalIconSize =
     typeof iconSize === 'string'
       ? iconSize === 'large'
-        ? ELEMENT_SIZES.ICON.LARGE
-        : ELEMENT_SIZES.ICON.SMALL
+        ? LAYOUT.BUTTON.ICON_SIZE.LARGE
+        : LAYOUT.BUTTON.ICON_SIZE.SMALL
       : iconSize;
 
   // Use the standardized press animation hook for consistent animation

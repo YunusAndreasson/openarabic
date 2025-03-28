@@ -234,8 +234,6 @@ function FilterScreenContent() {
         selectedAuthor={type === 'author' ? author : null}
         selectedCategory={type === 'category' ? category : null}
         onClearFilter={handleClearFilter}
-        // Only allow animations on first render, never when returning from article
-        isFirstRender={isInitialMount.current && !isReturningFromArticle.current}
       />
     </Animated.View>
   );

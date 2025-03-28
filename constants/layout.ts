@@ -119,6 +119,11 @@ export const LAYOUT = {
         LARGE: 16,
       },
     },
+    ICON_SIZE: {
+      SMALL: 16,
+      MEDIUM: 20,
+      LARGE: 24,
+    },
   },
 
   // Typography scale

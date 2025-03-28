@@ -40,19 +40,20 @@ const SettingLabel = React.memo(({ icon, text }: { icon: string; text: string })
     </View>
   );
 });
+SettingLabel.displayName = 'SettingLabel';
 
 // Memoize divider component
 const Divider = React.memo(() => {
   const colors = useColors();
   return <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />;
 });
+Divider.displayName = 'Divider';
 
 export default function SettingsScreen() {
   const [session, setSession] = useState<Session | null>(null);
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
-  const theme = useAppSelector(state => state.theme.theme);
   const insets = useSafeAreaInsets();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -214,7 +215,7 @@ export default function SettingsScreen() {
       <ThemedView
         useSafeArea={false}
         includeBottomInset={false}
-        style={{ flex: 1 }}
+        style={styles.flexOne}
         scrollable={true}
         contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
       >
@@ -300,7 +301,7 @@ export default function SettingsScreen() {
                         Welcome to the Arabic language
                       </ThemedText>
                     ) : (
-                      <ThemedText type="body" style={[styles.englishPreviewText, { opacity: 0 }]}>
+                      <ThemedText type="body" style={[styles.englishPreviewText, styles.hidden]}>
                         Welcome to the Arabic language
                       </ThemedText>
                     )}
@@ -526,20 +527,8 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
-  togglePlaceholder: {
-    width: LAYOUT.BUTTON.HEIGHT.SMALL * 1.75 - 4,
-    height: LAYOUT.BUTTON.HEIGHT.SMALL - 4,
-    borderRadius: (LAYOUT.BUTTON.HEIGHT.SMALL - 4) / 2,
-    opacity: LAYOUT.OPACITY.XLIGHT,
-  },
   sliderWrapper: {
     flex: 1,
-  },
-  sliderPlaceholder: {
-    flex: 1,
-    height: 40,
-    borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
-    opacity: LAYOUT.OPACITY.XLIGHT * 2,
   },
   modalContainer: {
     position: 'absolute',
@@ -549,5 +538,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  hidden: {
+    opacity: 0,
   },
 });

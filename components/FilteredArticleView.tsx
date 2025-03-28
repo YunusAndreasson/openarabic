@@ -89,52 +89,55 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   // Calculate header height for spacer
   const headerHeight = useMemo(() => getHeaderHeight(insets), [insets]);
 
-  const renderItem = useMemo(
-    () =>
-      ({ item: article }: { item: Article }) => (
-        <View style={styles.articleContainer}>
-          <BaseCard
-            onPress={() => onArticlePress?.(article)}
-            style={styles.card}
-            shadowSize="small"
-          >
-            <View style={styles.cardContent}>
-              <View style={styles.textContent}>
-                <ThemedText type="bodyBold" style={styles.titleText}>
-                  {article.title}
-                </ThemedText>
-                <ThemedText type="label" variant="secondary" numberOfLines={1}>
-                  {article.author?.name || 'Anonymous'}
-                </ThemedText>
-              </View>
-              <View style={styles.iconContainer}>
-                <ThemedText
-                  type="label"
-                  variant="secondary"
-                  style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
-                >
-                  →
-                </ThemedText>
-              </View>
-            </View>
-          </BaseCard>
+  const ArticleItem = React.memo(({ article }: { article: Article }) => (
+    <View style={styles.articleContainer}>
+      <BaseCard onPress={() => onArticlePress?.(article)} style={styles.card} shadowSize="small">
+        <View style={styles.cardContent}>
+          <View style={styles.textContent}>
+            <ThemedText type="bodyBold" style={styles.titleText}>
+              {article.title}
+            </ThemedText>
+            <ThemedText type="label" variant="secondary" numberOfLines={1}>
+              {article.author?.name || 'Anonymous'}
+            </ThemedText>
+          </View>
+          <View style={styles.iconContainer}>
+            <ThemedText
+              type="label"
+              variant="secondary"
+              style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
+            >
+              →
+            </ThemedText>
+          </View>
         </View>
-      ),
-    [onArticlePress]
-  );
+      </BaseCard>
+    </View>
+  ));
+  ArticleItem.displayName = 'ArticleItem';
+
+  const renderItem = useMemo(() => {
+    const RenderItem = ({ item }: { item: Article }) => <ArticleItem article={item} />;
+    RenderItem.displayName = 'RenderItem';
+    return RenderItem;
+  }, [ArticleItem]);
 
   const ListEmptyComponent = useMemo(() => {
-    if (isLoading) return null;
-    return (
-      <View style={styles.noResultsContainer}>
-        <ThemedText
-          style={styles.noResultsText}
-          accessibilityLabel="No articles found with the current filter"
-        >
-          No articles found
-        </ThemedText>
-      </View>
-    );
+    const EmptyView = () => {
+      if (isLoading) return null;
+      return (
+        <View style={styles.noResultsContainer}>
+          <ThemedText
+            style={styles.noResultsText}
+            accessibilityLabel="No articles found with the current filter"
+          >
+            No articles found
+          </ThemedText>
+        </View>
+      );
+    };
+    EmptyView.displayName = 'EmptyView';
+    return EmptyView;
   }, [isLoading]);
 
   const ListFooterComponent = useMemo(() => {
@@ -229,3 +232,5 @@ const styles = StyleSheet.create({
 });
 
 export default FilteredArticleView;
+
+FilteredArticleView.displayName = 'FilteredArticleView';

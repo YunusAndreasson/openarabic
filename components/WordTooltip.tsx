@@ -2,13 +2,11 @@ import React, { useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '../constants/layout';
-import { TIMING } from '../constants/ui';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { useColors } from '../hooks/useColors';
 import { WordTooltipProps } from '@/types/ui/modal.types';
-import Animated, { interpolateColor } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useTransformAnimation, useOpacityAnimation } from '@/hooks/animations';
-import { TOOLTIP_COLORS } from '../constants/tooltipColors';
 
 /**
  * A tooltip component that displays above an Arabic word
@@ -32,7 +30,7 @@ export const WordTooltip = React.memo(
       type: 'scale',
       initialValue: 0.94, // Slightly larger starting scale for more subtle effect
       targetValue: 1,
-      duration: TIMING.INTERACTION.TOOLTIP_DURATION / 7, // Slightly faster animation
+      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 7, // Slightly faster animation
       useSpring: true,
     });
 
@@ -43,7 +41,7 @@ export const WordTooltip = React.memo(
       animatedStyle: opacityStyle,
     } = useOpacityAnimation({
       initialOpacity: 0.7, // Start more visible for faster appearance
-      duration: TIMING.INTERACTION.TOOLTIP_DURATION / 10,
+      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 10,
     });
 
     // Handle closing the tooltip with animation sequence
@@ -63,7 +61,7 @@ export const WordTooltip = React.memo(
         // Auto-close tooltip after standardized delay
         const timer = setTimeout(() => {
           handleClose();
-        }, TIMING.INTERACTION.TOOLTIP_DURATION - 100); // Slightly quicker dismissal
+        }, LAYOUT.ANIMATION.DURATION.SLOW * 3); // Increased duration by 3x
 
         return () => clearTimeout(timer);
       } else {
@@ -73,7 +71,7 @@ export const WordTooltip = React.memo(
     }, [visible, startScaleAnimation, fadeIn, handleClose]);
 
     // Get colors based on theme - using colors from Colors.ts
-    const backgroundColor = isDarkMode ? TOOLTIP_COLORS.DARK : TOOLTIP_COLORS.LIGHT;
+    const backgroundColor = isDarkMode ? colors.elevation2 : colors.elevation1;
     const textColor = isDarkMode
       ? colors.text // dark theme text
       : colors.textSecondary; // More subtle text color for better contrast
@@ -203,7 +201,6 @@ export const WordTooltip = React.memo(
           style={[
             styles.tooltip,
             {
-              position: 'absolute',
               left: tooltipLeftOffset,
               width: tooltipWidth,
               backgroundColor,
@@ -225,9 +222,9 @@ export const WordTooltip = React.memo(
                 borderLeftWidth: ARROW_SIZE,
                 borderRightWidth: ARROW_SIZE,
                 borderTopColor: backgroundColor,
-                borderLeftColor: 'transparent',
-                borderRightColor: 'transparent',
                 bottom: -ARROW_SIZE, // Exact positioning at the bottom
+                borderLeftColor: colors.transparent,
+                borderRightColor: colors.transparent,
               },
             ]}
           />
@@ -249,10 +246,10 @@ const styles = StyleSheet.create({
   },
   tooltipContainer: {
     position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.TOOLTIP,
+    zIndex: 999999, // Ensure tooltips are always on top
   },
   tooltip: {
-    position: 'relative',
+    position: 'absolute',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     alignSelf: 'flex-start',

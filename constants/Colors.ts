@@ -19,7 +19,7 @@ export const Colors = {
     highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
     englishText: '#212121', // Dark charcoal for English text
     titleText: '#212121', // Dark charcoal for title text
-    white: '#FFFFFF', // Pure white for light mode
+    white: '#FFFFFF', // Using cardBackground color for consistency
     success: '#2E7D32', // Signature green for success messages
     warning: '#FCC419', // Muted amber/yellow for warning messages
     error: '#D95040', // Soft red for error messages
@@ -40,7 +40,7 @@ export const Colors = {
     textShadowLight: 'rgba(0, 0, 0, 0.2)', // Light text shadow
     textShadowDark: 'rgba(0, 0, 0, 0.5)', // Dark text shadow
     modalOverlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
-    black: '#000000', // Pure black for dark mode
+    black: '#212121', // Using text color for consistency
     transparent: 'transparent', // Transparent color
   },
   dark: {
@@ -62,7 +62,7 @@ export const Colors = {
     highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
     englishText: '#E0E0E0', // Light gray for English text
     titleText: '#E0E0E0', // Light gray for title text
-    white: '#FFFFFF', // Pure white for dark mode
+    white: '#1E1E1E', // Using cardBackground color for consistency
     success: '#2E7D32', // Signature green for success messages
     warning: '#FCC419', // Muted amber/yellow for warning messages
     error: '#EF5350', // Soft red for error messages
@@ -83,7 +83,7 @@ export const Colors = {
     textShadowLight: 'rgba(255, 255, 255, 0.2)', // Light text shadow
     textShadowDark: 'rgba(255, 255, 255, 0.5)', // Dark text shadow
     modalOverlay: 'rgba(0, 0, 0, 0.8)', // Modal overlay
-    black: '#000000', // Pure black for dark mode
+    black: '#121212', // Using background color for consistency
     transparent: 'transparent', // Transparent color
   },
 } as const;
