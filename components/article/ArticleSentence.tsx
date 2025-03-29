@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, StyleProp, ViewStyle } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { LAYOUT } from '@/constants/layout';
-import type { Tables } from '@/types/database.types';
+import { ThemedText } from '../../components/ThemedText';
+import { LAYOUT } from '../../constants/layout';
+import type { Tables } from '../../types/database.types';
 
 interface ArticleSentenceProps {
   sentence: Tables<'article_sentences'>;
@@ -76,3 +76,5 @@ export const ArticleSentence = React.memo(
 );
 
 ArticleSentence.displayName = 'ArticleSentence';
+
+export default ArticleSentence;

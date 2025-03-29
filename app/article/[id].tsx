@@ -18,10 +18,8 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { ArabicWord } from '@/components/ArabicWord';
 import { LoadingScreen } from '@/components/Loader';
-import { ArticleSentence } from '@/components/ArticleSentence';
-import ArticleHeader from '@/components/ArticleHeader';
+import { ArticleSentence, ArticleHeader, RelatedArticlesFooter } from '@/components/article';
 import FloatingButton from '@/components/FloatingButton';
-import RelatedArticlesFooter from '@/components/RelatedArticlesFooter';
 import ThemedCard from '@/components/ThemedCard';
 
 // Hooks

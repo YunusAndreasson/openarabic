@@ -1,10 +1,14 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { LAYOUT } from '@/constants/layout';
-import type { RelatedArticlesSectionProps as RelatedArticlesSectionPropsType } from '@/types/ui/article.types';
-import SectionTitle from './SectionTitle';
+import { LAYOUT } from '../../constants/layout';
+import { Article } from '../../types/articles.types';
+import SectionTitle from '../../components/SectionTitle';
 
-export type RelatedArticlesSectionProps = RelatedArticlesSectionPropsType;
+export interface RelatedArticlesSectionProps {
+  title: string;
+  articles: Article[];
+  renderArticleCard: (article: Article) => React.ReactNode;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -37,3 +41,5 @@ export const RelatedArticlesSection = React.memo(
 );
 
 RelatedArticlesSection.displayName = 'RelatedArticlesSection';
+
+export default RelatedArticlesSection;

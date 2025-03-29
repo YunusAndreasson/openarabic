@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '@/components/ThemedText';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { LAYOUT } from '@/constants/layout';
-import { Article } from '@/types/articles.types';
+import { ThemedText } from '../../components/ThemedText';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import { LAYOUT } from '../../constants/layout';
+import { Article } from '../../types/articles.types';
 
 // Define the props interface locally
 interface ArticleHeaderProps {

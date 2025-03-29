@@ -1,13 +1,13 @@
 import React, { useCallback } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Article } from '../types/articles.types';
-import { LAYOUT } from '../constants/layout';
-import { ThemedText } from './ThemedText';
-import { articlesService } from '@/services/articles';
-import ThemedCard from './ThemedCard';
-import { LoadingContainer } from './Loader';
-import SectionTitle from './SectionTitle';
+import { Article } from '../../types/articles.types';
+import { LAYOUT } from '../../constants/layout';
+import { ThemedText } from '../../components/ThemedText';
+import { articlesService } from '../../services/articles';
+import ThemedCard from '../../components/ThemedCard';
+import { LoadingContainer } from '../../components/Loader';
+import SectionTitle from '../../components/SectionTitle';
 
 interface ArticleSectionProps {
   /**

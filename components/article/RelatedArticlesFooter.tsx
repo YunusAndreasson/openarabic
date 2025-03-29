@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { RelatedArticlesSection } from '@/components/RelatedArticlesSection';
-import { LAYOUT } from '@/constants/layout';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { Article } from '@/types/articles.types';
+import { RelatedArticlesSection } from './RelatedArticlesSection';
+import { LAYOUT } from '../../constants/layout';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import { Article } from '../../types/articles.types';
 
 interface RelatedArticlesFooterProps {
   otherArticles: Article[];

@@ -29,14 +29,15 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
+import { useReactQueryDevTools } from '@dev-plugins/react-query';
+import { ArticleSection } from '../../components/article';
+import FeaturedArticleSection from '../../components/FeaturedArticleSection';
 
 // Types
 import { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 
 // Import the extracted components
-import ArticleSection from '../../components/ArticleSection';
-import FeaturedArticleSection from '../../components/FeaturedArticleSection';
 import FilterList from '../../components/FilterList';
 import DailyPickSection from '../../components/DailyPickSection';
 import ErrorState from '../../components/ErrorState';
