@@ -15,9 +15,9 @@ export const Colors = {
     cardShadow: '#999999', // Subtle gray for card shadow
     categoryText: '#212121', // Dark charcoal for category text
     authorText: '#606060', // Darker gray for author text (increased contrast)
-    arabicText: '#212121', // Dark charcoal for Arabic text
+    arabicText: '#101010', // Pure black for Arabic text (brighter than regular text)
     highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
-    englishText: '#212121', // Dark charcoal for English text
+    englishText: '#424242', // Medium charcoal for English text (dimmer than Arabic)
     titleText: '#212121', // Dark charcoal for title text
     white: '#FFFFFF', // Using cardBackground color for consistency
     success: '#2E7D32', // Signature green for success messages
@@ -29,8 +29,8 @@ export const Colors = {
     successOverlay: 'rgba(46, 125, 50, 0.2)', // Semi-transparent green for success overlay
     warningOverlay: 'rgba(252, 196, 25, 0.2)', // Semi-transparent yellow for warning overlay
     textOverlay: 'rgba(0, 0, 0, 0.1)', // Light text overlay for darkening
-    borderOverlay: 'rgba(0, 0, 0, 0.2)', // Darker border overlay
-    gradientStart: 'rgba(250, 250, 250, 0)', // Transparent gradient start
+    borderOverlay: 'rgba(255, 255, 255, 0.2)', // Darker border overlay
+    gradientStart: 'rgba(250, 250, 250, 0)',
     gradientMiddle: 'rgba(240, 240, 240, 0.7)', // Light gradient middle
     gradientEnd: 'rgba(240, 240, 240, 1)', // Full opacity gradient end
     elevation1: '#F0F0F0', // Light elevation
@@ -58,14 +58,14 @@ export const Colors = {
     cardShadow: '#000000', // Dark shadow for depth
     categoryText: '#E0E0E0', // Light gray for category text
     authorText: '#CCCCCC', // Lighter gray for author text (improved contrast)
-    arabicText: '#E0E0E0', // Light gray for Arabic text
+    arabicText: '#F0F0F0', // Pure white for Arabic text (brighter than regular text)
     highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
-    englishText: '#E0E0E0', // Light gray for English text
+    englishText: '#BBBBBB', // Medium light gray for English text (dimmer than Arabic)
     titleText: '#E0E0E0', // Light gray for title text
     white: '#1E1E1E', // Using cardBackground color for consistency
     success: '#2E7D32', // Signature green for success messages
     warning: '#FCC419', // Muted amber/yellow for warning messages
-    error: '#EF5350', // Soft red for error messages
+    error: '#EF5350',
     info: '#339AF0', // Light blue for informational messages
     shadow: '#000000', // Dark shadow for depth
     overlay: 'rgba(255, 255, 255, 0.05)', // Light overlay for background elements

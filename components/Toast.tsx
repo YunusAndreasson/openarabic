@@ -7,6 +7,7 @@ import { useColors } from '../hooks/useColors';
 import Animated from 'react-native-reanimated';
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '../constants/Colors';
 
 interface ToastProps {
   visible: boolean;
@@ -73,21 +74,8 @@ export const Toast = React.memo(
       animatedStyle: scaleStyle,
     } = useTransformAnimation({
       type: 'scale',
-      initialValue: 0.7,
+      initialValue: 0.9,
       targetValue: 1,
-      useSpring: true,
-      damping: 10,
-      stiffness: 200,
-    });
-
-    const {
-      startAnimation: startSlideAnimation,
-      reverseAnimation: reverseSlideAnimation,
-      animatedStyle: slideStyle,
-    } = useTransformAnimation({
-      type: 'slide',
-      initialValue: 30,
-      targetValue: 0,
       useSpring: true,
       damping: 12,
       stiffness: 170,
@@ -97,12 +85,10 @@ export const Toast = React.memo(
       if (visible) {
         fadeIn();
         startScaleAnimation();
-        startSlideAnimation();
 
         const timer = setTimeout(() => {
           fadeOut(() => {
             reverseScaleAnimation();
-            reverseSlideAnimation();
             onClose();
           });
         }, duration);
@@ -111,25 +97,17 @@ export const Toast = React.memo(
       } else {
         fadeOut();
         reverseScaleAnimation();
-        reverseSlideAnimation();
         return () => undefined;
       }
-    }, [
-      visible,
-      fadeIn,
-      fadeOut,
-      startScaleAnimation,
-      reverseScaleAnimation,
-      startSlideAnimation,
-      reverseSlideAnimation,
-      onClose,
-      duration,
-    ]);
+    }, [visible, fadeIn, fadeOut, startScaleAnimation, reverseScaleAnimation, onClose, duration]);
 
-    const backgroundColor = isDarkMode ? colors.white : colors.black;
+    // In dark mode: light background with dark text
+    // In light mode: dark background with light text
+    const lightColors = Colors.light;
+    const backgroundColor = isDarkMode ? lightColors.cardBackground : colors.black;
     const textColor = isDarkMode ? colors.black : colors.white;
-    const borderColor = isDarkMode ? colors.cardBorder : colors.cardBorder;
-    const shadowColor = isDarkMode ? colors.cardShadow : colors.shadow;
+    const borderColor = isDarkMode ? colors.cardBorder : colors.borderOverlay;
+    const shadowColor = colors.shadow;
 
     const { width: screenWidth } = Dimensions.get('window');
     const MAX_TOAST_WIDTH = screenWidth * 0.9;
@@ -160,7 +138,7 @@ export const Toast = React.memo(
 
     return (
       <Animated.View
-        style={[containerStyle, opacityStyle as any, scaleStyle as any, slideStyle as any]}
+        style={[containerStyle, opacityStyle as any, scaleStyle as any]}
         pointerEvents="none"
       >
         <View
