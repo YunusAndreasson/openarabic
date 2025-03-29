@@ -9,7 +9,7 @@ export type RelatedArticlesSectionProps = RelatedArticlesSectionPropsType;
 const styles = StyleSheet.create({
   container: {
     marginTop: LAYOUT.SPACING.XXLARGE,
-    marginHorizontal: -LAYOUT.SPACING.LARGE,
+    marginHorizontal: -LAYOUT.SPACING.SMALL,
   },
   horizontalList: {
     paddingLeft: LAYOUT.SPACING.LARGE,

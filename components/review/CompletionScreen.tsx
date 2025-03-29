@@ -60,11 +60,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
         </AnimatedItem>
 
         <AnimatedItem delay={700}>
-          <ThemedButton
-            title="Done"
-            onPress={onClose}
-            style={{ marginTop: LAYOUT.SPACING.LARGE }}
-          />
+          <ThemedButton title="Done" onPress={onClose} style={styles.doneButton} />
         </AnimatedItem>
       </View>
     </View>
@@ -80,6 +76,9 @@ const styles = StyleSheet.create({
   } as ViewStyle,
   centered: {
     alignItems: 'center',
+  },
+  doneButton: {
+    marginTop: LAYOUT.SPACING.LARGE,
   },
 });
 

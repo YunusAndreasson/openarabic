@@ -20,10 +20,7 @@ const ErrorMessage = React.memo(
     const navigation = useNavigation<BottomTabNavigationProp<any>>();
 
     return (
-      <View
-        style={[styles.messageContainer, { marginTop: LAYOUT.SPACING.XLARGE }]}
-        accessibilityRole="alert"
-      >
+      <View style={[styles.messageContainer]} accessibilityRole="alert">
         <ThemedText
           style={[styles.message, { color: colors.error }]}
           accessibilityLabel={`Error: ${customMessage}`}
@@ -33,7 +30,7 @@ const ErrorMessage = React.memo(
         <ThemedButton
           title="Try Again"
           onPress={() => navigation.navigate(screenName as never)}
-          style={{ marginTop: LAYOUT.SPACING.LARGE }}
+          style={styles.retryButton}
           accessibilityLabel="Reload this screen"
         />
       </View>
@@ -46,10 +43,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
   message: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: LAYOUT.SPACING.LARGE,
   },
 });
 

@@ -102,11 +102,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
             </ThemedText>
           </View>
           <View style={styles.iconContainer}>
-            <ThemedText
-              type="label"
-              variant="secondary"
-              style={{ opacity: LAYOUT.OPACITY.DISABLED / 1.5 }}
-            >
+            <ThemedText type="label" variant="secondary" style={styles.arrowText}>
               →
             </ThemedText>
           </View>
@@ -152,7 +148,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 
   // Create a header spacer component
   const HeaderSpacer = useMemo(() => {
-    return <View style={{ height: headerHeight + 20 }} />;
+    return <View style={[styles.headerSpacer, { height: headerHeight + 20 }]} />;
   }, [headerHeight]);
 
   return (
@@ -201,33 +197,38 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
   },
   textContent: {
     flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
   iconContainer: {
-    paddingTop: 4,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  endMessageContainer: {
-    height: LAYOUT.SPACING.MEDIUM,
   },
   noResultsContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingVertical: LAYOUT.SPACING.XLARGE,
   },
   noResultsText: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  endMessageContainer: {
+    height: LAYOUT.SPACING.XLARGE,
+  },
+  arrowText: {
+    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+  },
+  headerSpacer: {
+    height: 0, // This will be dynamically set
   },
 });
 

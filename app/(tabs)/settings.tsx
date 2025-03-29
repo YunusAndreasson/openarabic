@@ -405,23 +405,17 @@ export default function SettingsScreen() {
             styles.modalContainer,
             {
               backgroundColor: colors.background,
-              padding: LAYOUT.SPACING.LARGE,
             },
           ]}
         >
-          <ThemedText
-            type="heading2"
-            weight="600"
-            align="center"
-            style={{ marginBottom: LAYOUT.SPACING.LARGE }}
-          >
+          <ThemedText type="heading2" weight="600" align="center" style={styles.modalTitle}>
             Sign In
           </ThemedText>
           <Auth />
           <ThemedButton
             title="Close"
             onPress={() => setShowAuthModal(false)}
-            style={{ marginTop: LAYOUT.SPACING.LARGE }}
+            style={styles.modalCloseButton}
           />
         </ThemedView>
       )}
@@ -538,8 +532,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: LAYOUT.SPACING.LARGE,
   },
   hidden: {
     opacity: 0,
+  },
+  modalTitle: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  modalCloseButton: {
+    marginTop: LAYOUT.SPACING.LARGE,
   },
 });

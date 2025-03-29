@@ -40,11 +40,7 @@ const WordItem = React.memo(
     if (isOverdue) statusIcon = 'time';
 
     return (
-      <ThemedCard
-        variant="basic"
-        onPress={onPress}
-        style={{ paddingVertical: LAYOUT.SPACING.MEDIUM }}
-      >
+      <ThemedCard variant="basic" onPress={onPress} style={styles.wordCard}>
         <View style={styles.wordInfo}>
           <ThemedText type="heading3" numberOfLines={1}>
             {word}
@@ -177,5 +173,8 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
     alignItems: 'center',
     justifyContent: 'center',
+  } as ViewStyle,
+  wordCard: {
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   } as ViewStyle,
 });

@@ -51,6 +51,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  listContentContainer: {
+    // Base styles from contentContainerStyle
+    flexGrow: 1,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+  },
 });
 
 // Memoized article item renderer for better performance
@@ -503,6 +508,15 @@ export default function ArticlesScreen() {
     }, [queryClient])
   );
 
+  // Compute dynamic styles based on insets
+  const dynamicListContentStyle = useMemo(
+    () => ({
+      ...styles.listContentContainer,
+      paddingTop: getHeaderHeight(insets),
+    }),
+    [insets]
+  );
+
   // If no cached data and still loading, show a minimal loading screen
   if (isArticlesLoading && articlesData.length === 0 && !isDataCached) {
     return <LoadingScreen />;
@@ -541,10 +555,7 @@ export default function ArticlesScreen() {
           onArticlePress={handleArticlePress}
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={EmptyStateComponent}
-          contentContainerStyle={{
-            ...contentContainerStyle,
-            paddingTop: getHeaderHeight(insets),
-          }}
+          contentContainerStyle={dynamicListContentStyle}
         />
         <PageHeader title="Texts" />
       </ThemedView>

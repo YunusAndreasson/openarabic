@@ -18,6 +18,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
+  paddedContent: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
 });
 
 const AnimatedItem = React.memo(
@@ -41,11 +44,7 @@ const AnimatedItem = React.memo(
     return (
       <Animated.View style={[fullWidth && styles.fullWidth, style]} entering={entering}>
         {showTitle && title && <SectionTitle title={title} />}
-        {paddingHorizontal ? (
-          <View style={{ paddingHorizontal: LAYOUT.SPACING.MEDIUM }}>{children}</View>
-        ) : (
-          children
-        )}
+        {paddingHorizontal ? <View style={styles.paddedContent}>{children}</View> : children}
       </Animated.View>
     );
   }

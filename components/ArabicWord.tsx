@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   wordContainer: {
     marginHorizontal: 1,
     marginVertical: LAYOUT.SPACING.TINY / 2,
-    paddingHorizontal: 3,
+    paddingHorizontal: 1,
     paddingVertical: 3,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     flexShrink: 0,

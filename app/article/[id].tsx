@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sentenceList: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
   contentContainer: {
     flex: 1,

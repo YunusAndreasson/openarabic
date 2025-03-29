@@ -55,7 +55,7 @@ export function FSRSWordStats({
 
       <View style={styles.row}>
         <ThemedText style={styles.label}>Difficulty:</ThemedText>
-        <ThemedText style={{ color: difficultyInfo.color }}>
+        <ThemedText style={[styles.difficultyText, { color: difficultyInfo.color }]}>
           {difficultyInfo.text} ({(difficulty * 100).toFixed(0)}%)
         </ThemedText>
       </View>
@@ -96,5 +96,8 @@ const styles = StyleSheet.create({
   label: {
     fontWeight: 'bold',
     marginRight: 8,
+  },
+  difficultyText: {
+    // The color will be set dynamically
   },
 });

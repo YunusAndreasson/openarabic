@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ViewStyle } from 'react-native';
+import { View, ViewStyle, StyleSheet } from 'react-native';
 import SectionTitle from './SectionTitle';
 import { LAYOUT } from '../constants/layout';
 
@@ -30,6 +30,12 @@ interface SectionProps {
   paddingHorizontal?: boolean;
 }
 
+const styles = StyleSheet.create({
+  paddedContent: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  } as ViewStyle,
+});
+
 /**
  * A non-animated section component that replaces AnimatedSection for better performance
  * when animations aren't needed
@@ -39,11 +45,7 @@ const Section = React.memo(
     return (
       <View style={style}>
         {showTitle && title && <SectionTitle title={title} />}
-        {paddingHorizontal ? (
-          <View style={{ paddingHorizontal: LAYOUT.SPACING.MEDIUM }}>{children}</View>
-        ) : (
-          children
-        )}
+        {paddingHorizontal ? <View style={styles.paddedContent}>{children}</View> : children}
       </View>
     );
   }

@@ -17,7 +17,7 @@ interface ArticleHeaderProps {
 
 const styles = StyleSheet.create({
   articleHeaderContainer: {
-    paddingHorizontal: 15,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.SMALL,
     paddingBottom: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.SMALL,
