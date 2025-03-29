@@ -22,6 +22,15 @@ interface GetFSRSWordsOptions {
   limit?: number;
 }
 
+// Query key constants for consistent key usage
+export const FSRS_QUERY_KEYS = {
+  all: (userId: string) => ['fsrs-words', userId] as const,
+  due: (userId: string) => ['fsrs-words', userId, 'due'] as const,
+  stats: (userId: string) => ['fsrs-words', userId, 'stats'] as const,
+  filtered: (userId: string, category: string) =>
+    ['fsrs-words', userId, 'filtered', category] as const,
+} as const;
+
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
