@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { ThemedView } from '@/components/ThemedView';
 import { LoadingScreen } from '@/components/Loader';
 import ArticleList from '@/components/index/ArticleList';
@@ -15,7 +14,7 @@ import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useNavigationWithDebounce } from '@/hooks';
+import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
 import { createClient } from '@supabase/supabase-js';
@@ -31,6 +30,7 @@ import {
 import { getDayOfYear } from '@/utils/dateUtils';
 import { ArticleSection } from '../../components/article';
 import FeaturedArticleSection from '../../components/index/FeaturedArticleSection';
+import { mediumFeedback } from '@/utils/haptics';
 
 // Types
 import { Article } from '@/types/articles.types';
@@ -149,27 +149,31 @@ export default function ArticlesScreen() {
     });
   }, [inProgressArticles, lastOpenedArticles]);
 
-  // Refactored refresh handler using React Query - always refresh
-  const handleRefresh = useCallback(() => {
+  // Combined loading and fetching states for better UX
+  const isFetching = isArticlesFetching;
+
+  // Handler for pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    if (isFetching) return; // Prevent multiple refreshes
+
+    // Provide haptic feedback when refreshing
+    mediumFeedback();
+
     setIsRefreshing(true);
-
-    // Create an array of refresh promises
-    const refreshPromises = [
-      queryClient.invalidateQueries({ queryKey: ['articles'] }),
-      queryClient.invalidateQueries({ queryKey: ['categories'] }),
-      dispatch(fetchInProgressArticles()),
-      fetchAuthors(),
-    ];
-
-    // Wait for all refreshes to complete
-    Promise.all(refreshPromises)
-      .catch(err => {
-        console.error('Error during refresh:', err);
-      })
-      .finally(() => {
-        setIsRefreshing(false);
-      });
-  }, [queryClient, dispatch, fetchAuthors]);
+    try {
+      // Create an array of refresh promises
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['articles'] }),
+        queryClient.invalidateQueries({ queryKey: ['categories'] }),
+        dispatch(fetchInProgressArticles()),
+        fetchAuthors(),
+      ]);
+    } catch (err) {
+      console.error('Error during refresh:', err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient, dispatch, fetchAuthors, isFetching]);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
@@ -369,16 +373,13 @@ export default function ArticlesScreen() {
         onArticlePress={handleArticlePress}
         showTimeAgo
         hideDifficultyLabel
-        // Show loading state if articles are fetching and we don't have data yet
-        isLoading={isArticlesFetching && latestArticles.length === 0}
       />
     );
-  }, [articlesData, handleArticlePress, isArticlesFetching]);
+  }, [articlesData, handleArticlePress]);
 
   const FeaturedTextsSection = useMemo(() => {
     const featuredArticles = getFeaturedArticles(articlesData);
 
-    // Force the component to render even if no articles are available
     return (
       <FeaturedArticleSection
         title="Featured Texts"
@@ -466,33 +467,23 @@ export default function ArticlesScreen() {
   const articlesQuery = queryClient.getQueryState(['articles']);
   const isDataCached = articlesQuery?.data !== undefined;
 
-  // Add effect to prefetch data on focus - MUST BE BEFORE ANY CONDITIONAL RETURNS
-  useFocusEffect(
-    React.useCallback(() => {
-      // Check if we need to prefetch
-      const articlesQueryData = queryClient.getQueryState(['articles']);
-      const categoriesQueryData = queryClient.getQueryState(['categories']);
+  // Use the screen focus refresh hook with debounce - with proper caching
+  useScreenFocusRefresh(
+    queryClient,
+    'articles',
+    undefined,
+    300000, // Cache for 5 minutes (same as query)
+    true, // Skip initial focus
+    false // Only refresh if stale
+  );
 
-      // Prefetch articles if needed
-      if (!articlesQueryData?.data || articlesQueryData.dataUpdatedAt < Date.now() - 300000) {
-        queryClient.prefetchQuery({
-          queryKey: ['articles'],
-          queryFn: () => articlesService.getArticles(),
-          staleTime: 300000, // 5 minutes
-          gcTime: 900000, // 15 minutes
-        });
-      }
-
-      // Prefetch categories if needed
-      if (!categoriesQueryData?.data || categoriesQueryData.dataUpdatedAt < Date.now() - 600000) {
-        queryClient.prefetchQuery({
-          queryKey: ['categories'],
-          queryFn: () => categoriesService.getCategories(),
-          staleTime: 600000, // 10 minutes
-          gcTime: 1800000, // 30 minutes
-        });
-      }
-    }, [queryClient])
+  useScreenFocusRefresh(
+    queryClient,
+    'categories',
+    undefined,
+    600000, // Cache for 10 minutes (same as query)
+    true, // Skip initial focus
+    false // Only refresh if stale
   );
 
   // Compute dynamic styles based on insets with all necessary styles
@@ -506,7 +497,7 @@ export default function ArticlesScreen() {
   );
 
   // If no cached data and still loading, show a minimal loading screen
-  if (isArticlesLoading && articlesData.length === 0 && !isDataCached) {
+  if ((isArticlesLoading && articlesData.length === 0 && !isDataCached) || isRefreshing) {
     return <LoadingScreen />;
   }
 
@@ -536,7 +527,7 @@ export default function ArticlesScreen() {
         accessibilityRole="scrollbar"
       >
         <ArticleList
-          articles={[]}
+          articles={articlesData}
           isLoading={isArticlesLoading}
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}

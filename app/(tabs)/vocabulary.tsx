@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import { LoadingScreen } from '@/components/Loader';
 
 // Split stats calculation into smaller chunks for better memoization
 const getBaseStats = (validStudyWords: StudyWord[], dueWordsData: StudyWord[]) => {
@@ -330,6 +331,15 @@ export default function VocabularyScreen() {
       params: { category },
     });
   };
+
+  // Check if data is already in cache to optimize loading behavior
+  const studyWordsQuery = queryClient.getQueryState(['studyWords', user?.id]);
+  const isDataCached = studyWordsQuery?.data !== undefined;
+
+  // Show loading screen during initial load or refresh
+  if ((isDataLoading && !isDataCached) || isRefreshing) {
+    return <LoadingScreen />;
+  }
 
   // Show sign-in message if not authenticated
   if (!user) {

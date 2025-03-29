@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
-import { StyleSheet, FlatList, ListRenderItem, RefreshControl, Platform, View } from 'react-native';
+import { StyleSheet, FlatList, ListRenderItem, Platform, View, RefreshControl } from 'react-native';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import { Article } from '../../types/articles.types';
@@ -92,9 +92,11 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
           onRefresh={onRefresh}
           colors={[colors.tint]}
           tintColor={colors.tint}
+          progressBackgroundColor={colors.background}
+          progressViewOffset={Platform.OS === 'android' ? 20 : 0}
         />
       ),
-      [isRefreshing, onRefresh, colors.tint]
+      [isRefreshing, onRefresh, colors.tint, colors.background]
     );
 
     return (
