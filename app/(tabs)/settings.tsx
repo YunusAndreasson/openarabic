@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
-import { StyleSheet, Alert, Linking, View, ScrollView, ViewStyle } from 'react-native';
+import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { AnimatedStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createClient } from '@supabase/supabase-js';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
@@ -12,7 +12,6 @@ import { useColors } from '../../hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import { useOpacityAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from '@/components/BaseCard';
@@ -24,6 +23,7 @@ import { CustomSlider } from '../../components/Slider';
 import { Toggle } from '../../components/Toggle';
 import { ThemedButton } from '../../components/ThemedButton';
 import { useFocusEffect } from '@react-navigation/native';
+import { useAppPreloader } from '@/hooks/useAppPreloader';
 
 // Create a Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -56,6 +56,7 @@ export default function SettingsScreen() {
   const settings = useAppSelector(state => state.settings);
   const insets = useSafeAreaInsets();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { settingsReady } = useAppPreloader();
 
   // Use the loading state hook with minimal loading time
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -70,19 +71,10 @@ export default function SettingsScreen() {
       0 // No animation delay
     );
 
-  // Use opacity animation for controls with a slight delay
-  const { animatedStyle: controlsStyle, startAnimation: startControlsAnimation } =
-    useOpacityAnimation({
-      initialOpacity: 0,
-      duration: 150,
-      delay: 100, // Increased delay after main content
-    });
-
   // Memoize the animation trigger function to prevent unnecessary re-renders
   const startAnimations = useCallback(() => {
     triggerAnimations();
-    startControlsAnimation();
-  }, [triggerAnimations, startControlsAnimation]);
+  }, [triggerAnimations]);
 
   // Load session and trigger animations
   const loadSession = useCallback(async () => {
@@ -142,15 +134,6 @@ export default function SettingsScreen() {
     []
   );
 
-  // Simple handlers don't need memoization
-  const handleSupport = () => {
-    Linking.openURL('mailto:yunus@edenmind.com');
-  };
-
-  const handleSocialLink = (url: string) => {
-    Linking.openURL(url);
-  };
-
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
     (value: number) => {
@@ -190,8 +173,17 @@ export default function SettingsScreen() {
     );
   }, [startLoading, stopLoading]);
 
-  // Use cached data to render a skeleton while loading or layout not ready
-  if (isLoadingState || !isLayoutReady) {
+  // Simple handlers
+  const handleSupport = () => {
+    Linking.openURL('mailto:yunus@edenmind.com');
+  };
+
+  const handleSocialLink = (url: string) => {
+    Linking.openURL(url);
+  };
+
+  // Use cached data to render a skeleton while loading or layout not ready or settings not ready
+  if (isLoadingState || !isLayoutReady || !settingsReady) {
     return (
       <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView style={styles.container}>
@@ -203,8 +195,6 @@ export default function SettingsScreen() {
 
   // Skip the sign-in check so settings are always accessible
   const showAuthUI = !session;
-
-  const shouldShowControls = shouldRenderAnimatedContent && isLayoutReady;
 
   return (
     <ThemedView
@@ -231,22 +221,20 @@ export default function SettingsScreen() {
               shadowSize="small"
               includePressAnimation={false}
             >
-              <Animated.View style={[styles.settingRow, controlsStyle as AnimatedStyle<ViewStyle>]}>
+              <View style={styles.settingRow}>
                 <SettingLabel icon="moon" text="Dark Mode" />
-                {shouldShowControls && <ThemeToggle />}
-              </Animated.View>
+                <ThemeToggle />
+              </View>
               <Divider />
-              <Animated.View style={[styles.settingRow, controlsStyle as AnimatedStyle<ViewStyle>]}>
+              <View style={styles.settingRow}>
                 <SettingLabel icon="language" text="English Translation" />
-                {shouldShowControls && (
-                  <Toggle
-                    value={settings.showEnglish}
-                    onValueChange={value => dispatch(setShowEnglish(value))}
-                  />
-                )}
-              </Animated.View>
+                <Toggle
+                  value={settings.showEnglish}
+                  onValueChange={value => dispatch(setShowEnglish(value))}
+                />
+              </View>
               <Divider />
-              <Animated.View style={[styles.settingRow, controlsStyle as AnimatedStyle<ViewStyle>]}>
+              <View style={styles.settingRow}>
                 <SettingLabel icon="text" text="Text Size" />
                 <View style={styles.sliderContainer}>
                   <ThemedText
@@ -257,20 +245,18 @@ export default function SettingsScreen() {
                   >
                     {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
-                  {shouldShowControls && (
-                    <View style={styles.sliderWrapper}>
-                      <CustomSlider
-                        value={settings.fontScale}
-                        onValueChange={handleFontScaleChange}
-                        minimumValue={0.8}
-                        maximumValue={1.3}
-                        step={0.1}
-                        style={styles.slider}
-                      />
-                    </View>
-                  )}
+                  <View style={styles.sliderWrapper}>
+                    <CustomSlider
+                      value={settings.fontScale}
+                      onValueChange={handleFontScaleChange}
+                      minimumValue={0.8}
+                      maximumValue={1.3}
+                      step={0.1}
+                      style={styles.slider}
+                    />
+                  </View>
                 </View>
-              </Animated.View>
+              </View>
               <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.previewContainer}>
                 <View style={styles.previewLabelContainer}>

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -40,6 +40,16 @@ export const useToggleAnimation = (isActive: boolean, travelDistance: number) =>
     );
   };
 
+  // Function to immediately set toggle state without animation
+  const forceAnimateToInitialState = useCallback(
+    (toActive: boolean) => {
+      'worklet';
+      translateX.value = toActive ? travelDistance : 0;
+      toggleScale.value = 1;
+    },
+    [translateX, toggleScale, travelDistance]
+  );
+
   // Update animation when value changes
   useEffect(() => {
     // Run animation on UI thread
@@ -63,5 +73,6 @@ export const useToggleAnimation = (isActive: boolean, travelDistance: number) =>
     handleAnimatedStyle,
     translateX,
     toggleScale,
+    forceAnimateToInitialState,
   };
 };

@@ -1,5 +1,5 @@
 import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
-import { useCallback, memo, useMemo } from 'react';
+import { useCallback, memo, useMemo, useEffect, useRef } from 'react';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import Animated from 'react-native-reanimated';
@@ -11,6 +11,7 @@ import { ToggleProps } from '@/types/ui/form.types';
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
+  const isMounted = useRef(false);
 
   // Memoize dimensions to prevent recalculation on each render
   const dimensions = useMemo(() => {
@@ -32,10 +33,17 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const { TOGGLE_HEIGHT, HANDLE_SIZE, TOGGLE_WIDTH, TRAVEL_DISTANCE } = dimensions;
 
   // Use the standardized toggle animation hook
-  const { containerAnimatedStyle, handleAnimatedStyle } = useToggleAnimation(
-    value,
-    TRAVEL_DISTANCE
-  );
+  const { containerAnimatedStyle, handleAnimatedStyle, forceAnimateToInitialState } =
+    useToggleAnimation(value, TRAVEL_DISTANCE);
+
+  // Set mounted flag after initial render
+  useEffect(() => {
+    isMounted.current = true;
+    // Force immediate animation to initial state to avoid glitching
+    if (forceAnimateToInitialState) {
+      forceAnimateToInitialState(value);
+    }
+  }, [value, forceAnimateToInitialState]);
 
   // Handle press with haptic feedback
   const handlePress = useCallback(() => {
@@ -90,11 +98,16 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     [HANDLE_SIZE, colors.background, shadowStyle]
   );
 
+  // Instead of immediately rendering the animated view, position the handle directly
+  const initialHandleStyle = value ? { transform: [{ translateX: TRAVEL_DISTANCE }] } : {};
+
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={1}>
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
-          <Animated.View style={[handleStyle, handleAnimatedStyle]} />
+          <Animated.View
+            style={[handleStyle, isMounted.current ? handleAnimatedStyle : initialHandleStyle]}
+          />
         </View>
       </Animated.View>
     </TouchableOpacity>
