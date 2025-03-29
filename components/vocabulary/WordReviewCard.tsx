@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '../../constants/layout';
 import { WordReviewCardProps } from '@/types/ui/layout.types';
-import BaseCard from './BaseCard';
-import { ThemedText } from './ThemedText';
+import BaseCard from '../BaseCard';
+import { ThemedText } from '../ThemedText';
 
 /**
  * A card component for displaying a word during review

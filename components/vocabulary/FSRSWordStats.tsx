@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
 
 // Define state names for clearer display

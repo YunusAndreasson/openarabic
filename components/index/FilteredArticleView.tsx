@@ -1,15 +1,15 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, RefreshControl, View, FlatList } from 'react-native';
-import { Article } from '../types/articles.types';
-import BaseCard from './BaseCard';
-import { LAYOUT, getHeaderHeight } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
+import { Article } from '../../types/articles.types';
+import BaseCard from '../BaseCard';
+import { LAYOUT, getHeaderHeight } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
 import { CopyrightFooter } from './CopyrightFooter';
-import { Tables } from '../types/database.types';
-import { capitalizeFirstLetter } from '../utils/stringUtils';
-import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
-import PageHeader from './PageHeader';
+import { Tables } from '../../types/database.types';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import { ThemedText } from '../ThemedText';
+import { ThemedView } from '../ThemedView';
+import PageHeader from '../PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface FilteredArticleViewProps {

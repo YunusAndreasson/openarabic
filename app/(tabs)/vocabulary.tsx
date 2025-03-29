@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
-import { VocabularyGraph } from '@/components/VocabularyGraph';
-import { VocabularyDashboard } from '@/components/VocabularyDashboard';
-import { VocabularyEmptyState } from '@/components/VocabularyEmptyState';
+import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
+import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
+import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
 import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';

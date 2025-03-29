@@ -4,7 +4,7 @@ import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
-import FilteredArticleView from '../components/FilteredArticleView';
+import FilteredArticleView from '../components/index/FilteredArticleView';
 import { LoadingScreen } from '../components/Loader';
 import ErrorState from '../components/ErrorState';
 import { articlesService } from '../services/articles';

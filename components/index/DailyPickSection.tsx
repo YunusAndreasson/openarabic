@@ -1,9 +1,9 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { LAYOUT } from '../constants/layout';
-import ThemedCard from './ThemedCard';
-import Section from './Section';
+import { LAYOUT } from '../../constants/layout';
+import ThemedCard from '../ThemedCard';
+import Section from '../Section';
 import { DailyPickSectionProps } from '@/types/ui/layout.types';
 import { articlesService } from '@/services/articles';
 

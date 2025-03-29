@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from './ThemedText';
-import { formatTimeAgo } from '../utils/dateUtils';
-import { useColors } from '../hooks/useColors';
-import { LAYOUT } from '../constants/layout';
+import { ThemedText } from '../ThemedText';
+import { formatTimeAgo } from '../../utils/dateUtils';
+import { useColors } from '../../hooks/useColors';
+import { LAYOUT } from '../../constants/layout';
 
 /**
  * TimeAgo component to show when an article was published or last opened

@@ -5,8 +5,8 @@ import { LAYOUT } from '@/constants/layout';
 import { router } from 'expo-router';
 import { VocabularyEmptyStateProps } from '@/types/ui/layout.types';
 import { withOpacity } from '@/utils/colorUtils';
-import { ThemedText } from './ThemedText';
-import EmptyState from './EmptyState';
+import { ThemedText } from '../ThemedText';
+import EmptyState from '../EmptyState';
 
 export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyStateProps) => {
   const handleBrowseArticles = useCallback(() => {

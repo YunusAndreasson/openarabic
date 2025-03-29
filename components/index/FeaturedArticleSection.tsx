@@ -1,12 +1,12 @@
 import React, { useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Article } from '../types/articles.types';
-import { LAYOUT } from '../constants/layout';
-import SectionTitle from './SectionTitle';
-import ThemedCard from './ThemedCard';
+import { Article } from '../../types/articles.types';
+import { LAYOUT } from '../../constants/layout';
+import SectionTitle from '../SectionTitle';
+import ThemedCard from '../ThemedCard';
 import { articlesService } from '@/services/articles';
-import { ThemedText } from './ThemedText';
+import { ThemedText } from '../ThemedText';
 
 interface FeaturedArticleItemProps {
   article: Article;

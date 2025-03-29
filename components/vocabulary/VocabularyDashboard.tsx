@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { ThemedText } from '../ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '../constants/layout';
+import { LAYOUT } from '../../constants/layout';
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { usePressAnimation } from '@/hooks/animations';
 import Animated from 'react-native-reanimated';
-import BaseCard from './BaseCard';
+import BaseCard from '../BaseCard';
 import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 

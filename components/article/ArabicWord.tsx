@@ -6,14 +6,14 @@ import {
   Platform,
   LayoutChangeEvent,
 } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { useColors } from '../hooks/useColors';
-import { LAYOUT } from '../constants/layout';
-import { Colors } from '../constants/Colors';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
+import { ThemedText } from '../ThemedText';
+import { useColors } from '../../hooks/useColors';
+import { LAYOUT } from '../../constants/layout';
+import { Colors } from '../../constants/Colors';
+import { useIsDarkMode } from '../../hooks/useThemeDetection';
 import Animated from 'react-native-reanimated';
-import { useAuth } from '../hooks/useAuth';
-import { useOpacityAnimation, useTransformAnimation } from '../hooks/animations';
+import { useAuth } from '../../hooks/useAuth';
+import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
 import { ArabicWordProps } from '@/types/ui/text.types';

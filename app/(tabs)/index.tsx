@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { ThemedView } from '@/components/ThemedView';
 import { LoadingScreen } from '@/components/Loader';
-import ArticleList from '@/components/ArticleList';
+import ArticleList from '@/components/index/ArticleList';
 import PageHeader from '@/components/PageHeader';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '../../hooks/useAuth';
@@ -29,17 +29,16 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
-import { useReactQueryDevTools } from '@dev-plugins/react-query';
 import { ArticleSection } from '../../components/article';
-import FeaturedArticleSection from '../../components/FeaturedArticleSection';
+import FeaturedArticleSection from '../../components/index/FeaturedArticleSection';
 
 // Types
 import { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 
 // Import the extracted components
-import FilterList from '../../components/FilterList';
-import DailyPickSection from '../../components/DailyPickSection';
+import FilterList from '../../components/index/FilterList';
+import DailyPickSection from '../../components/index/DailyPickSection';
 import ErrorState from '../../components/ErrorState';
 
 // Cache duration constants

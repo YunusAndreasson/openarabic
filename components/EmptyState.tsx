@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { ThemedText } from './ThemedText';
 import { ThemedButton } from './ThemedButton';
 import { LAYOUT } from '../constants/layout';
@@ -25,7 +25,8 @@ const EmptyState = React.memo(
     iconSize = 24,
     iconContainerStyle,
   }: EmptyStateProps) => {
-    const IconComponent = icon || Ionicons;
+    const IconComponent = icon && typeof icon !== 'string' ? icon : Ionicons;
+    const iconName = typeof icon === 'string' ? icon : 'alert-circle-outline';
 
     return (
       <View style={[styles.container, containerStyle]}>
@@ -38,7 +39,7 @@ const EmptyState = React.memo(
             ]}
           >
             <IconComponent
-              name={typeof icon === 'string' ? icon : 'alert-circle-outline'}
+              name={iconName}
               size={iconSize}
               color={colors?.text}
               style={styles.icon}

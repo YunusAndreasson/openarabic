@@ -1,11 +1,8 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
-
 import FloatingButton from '@/components/FloatingButton';
 import { LAYOUT } from '@/constants/layout';
-import { Tables } from '@/types/database.types';
 
 const styles = StyleSheet.create({
   staticButtonsContainer: {

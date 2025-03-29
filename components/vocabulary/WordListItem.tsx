@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { useColors } from '../hooks/useColors';
-import { LAYOUT } from '../constants/layout';
-import { StudyWord } from '../types/vocabulary.types';
+import { ThemedText } from '../ThemedText';
+import { useColors } from '../../hooks/useColors';
+import { LAYOUT } from '../../constants/layout';
+import { StudyWord } from '../../types/vocabulary.types';
 import Animated from 'react-native-reanimated';
-import { usePressAnimation } from '../hooks/animations';
+import { usePressAnimation } from '../../hooks/animations';
 import { State } from 'ts-fsrs';
 
 interface WordListItemProps {

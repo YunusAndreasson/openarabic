@@ -3,3 +3,8 @@ export { default as ArticleSentence } from './ArticleSentence';
 export { default as ArticleSection } from './ArticleSection';
 export { default as RelatedArticlesFooter } from './RelatedArticlesFooter';
 export { default as RelatedArticlesSection } from './RelatedArticlesSection';
+export { ArticleButtons } from './ArticleButtons';
+export { ArabicWord } from './ArabicWord';
+export { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
+export { ArticleContent } from './ArticleContent';
+export { WordTooltip } from './WordTooltip';

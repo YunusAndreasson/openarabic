@@ -9,7 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 import { Loader } from '../components/Loader';
 import PageHeader from '../components/PageHeader';
 import { Ionicons } from '@expo/vector-icons';
-import WordListItem from '../components/WordListItem';
+import WordListItem from '../components/vocabulary/WordListItem';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

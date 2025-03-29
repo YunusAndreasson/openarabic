@@ -1,14 +1,14 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import { LAYOUT } from '@/constants/layout';
-import { LoadingContainer } from './Loader';
+import { LoadingContainer } from '../Loader';
 import { useComponentAnimation, useProgressAnimation } from '@/hooks/animations';
 import { createArcPath } from '@/utils/graphUtils';
 import { VocabularyStatsProps } from '@/types/ui/layout.types';
-import BaseCard from './BaseCard';
+import BaseCard from '../BaseCard';
 
 function VocabularyStatsComponent({
   totalWords,

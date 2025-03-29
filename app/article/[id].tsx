@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
-import { ArabicWord } from '@/components/ArabicWord';
+import { ArabicWord } from '@/components/article/ArabicWord';
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleSentence } from '@/components/article';
 import ThemedCard from '@/components/ThemedCard';

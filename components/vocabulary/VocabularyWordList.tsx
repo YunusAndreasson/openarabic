@@ -1,10 +1,10 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View, FlatList, ListRenderItem, ViewStyle } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import ThemedCard from './ThemedCard';
+import ThemedCard from '../ThemedCard';
 import { LAYOUT } from '@/constants/layout';
 import { StudyWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';

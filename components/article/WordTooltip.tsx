@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { LAYOUT } from '../constants/layout';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { useColors } from '../hooks/useColors';
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useColors } from '@/hooks/useColors';
 import { WordTooltipProps } from '@/types/ui/modal.types';
 import Animated from 'react-native-reanimated';
 import { useTransformAnimation, useOpacityAnimation } from '@/hooks/animations';

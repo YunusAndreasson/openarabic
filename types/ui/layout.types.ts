@@ -2,6 +2,7 @@ import { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
 import { Edge } from 'react-native-safe-area-context';
 import { Article } from '../articles.types';
 import { BaseStyleProps } from './base.types';
+import { Ionicons } from '@expo/vector-icons';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -110,7 +111,7 @@ export interface EmptyStateProps {
   /** Description text to display */
   description: string;
   /** Icon component or name to display */
-  icon?: React.ComponentType<any> | string;
+  icon?: React.ComponentType<any> | keyof typeof Ionicons.glyphMap;
   /** Button action text */
   actionText?: string;
   /** Callback when the action button is pressed */

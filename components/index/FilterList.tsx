@@ -1,11 +1,11 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, FlatList, Pressable, StyleSheet } from 'react-native';
-import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
-import SectionTitle from './SectionTitle';
-import { ThemedText } from './ThemedText';
-import Pill from './Pill';
-import { capitalizeFirstLetter } from '../utils/stringUtils';
+import { LAYOUT } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
+import SectionTitle from '../SectionTitle';
+import { ThemedText } from '../ThemedText';
+import Pill from '../Pill';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
 import { FilterItem, FilterListProps } from '@/types/ui/pill.types';
 
 /**

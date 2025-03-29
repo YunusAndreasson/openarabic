@@ -4,9 +4,9 @@ import { StyleSheet, ScrollView, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
-import Pill from './Pill';
+import Pill from '../Pill';
 import Animated from 'react-native-reanimated';
-import { capitalizeFirstLetter } from '../utils/stringUtils';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
 import { CategoryPillsProps } from '@/types/ui/layout.types';
 
 function CategoryPillsComponent({

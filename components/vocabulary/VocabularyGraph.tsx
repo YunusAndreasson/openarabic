@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useEffect, useCallback } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { useColors } from '../hooks/useColors';
+import { ThemedText } from '../ThemedText';
+import { useColors } from '../../hooks/useColors';
 import {
   Canvas,
   Path,
@@ -12,13 +12,13 @@ import {
   LinearGradient,
   vec,
 } from '@shopify/react-native-skia';
-import { LAYOUT } from '../constants/layout';
-import { LoadingContainer } from './Loader';
+import { LAYOUT } from '../../constants/layout';
+import { LoadingContainer } from '../Loader';
 import { useGraphAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
 import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
-import BaseCard from './BaseCard';
+import BaseCard from '../BaseCard';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface VocabularyGraphProps {

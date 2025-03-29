@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { LAYOUT } from '../constants/layout';
-import { ThemedText } from './ThemedText';
+import { LAYOUT } from '../../constants/layout';
+import { ThemedText } from '../ThemedText';
 
 /**
  * A component that displays a copyright notice with the current Hijri year

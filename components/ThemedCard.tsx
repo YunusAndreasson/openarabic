@@ -10,7 +10,7 @@ import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui/card.types';
-import { TimeAgo, DifficultyIndicator } from './ArticleHelpers';
+import { TimeAgo, DifficultyIndicator } from './article/ArticleHelpers';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
