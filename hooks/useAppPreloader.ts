@@ -14,26 +14,17 @@ export const useAppPreloader = () => {
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [settingsReady, setSettingsReady] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(true);
   const preloadLockRef = useRef(false);
 
   // Get settings to check if they're loaded
   const settings = useAppSelector(state => state.settings);
   const theme = useAppSelector(state => state.theme);
 
-  // Check if Redux store has been hydrated with settings
+  // Add logging for debugging
   useEffect(() => {
-    if (
-      settings &&
-      typeof settings.fontScale === 'number' &&
-      typeof settings.showEnglish === 'boolean' &&
-      theme &&
-      typeof theme.theme === 'string'
-    ) {
-      setSettingsReady(true);
-    }
-  }, [settings, theme]);
+    console.log('AppPreloader state:', { isPreloading, isLoaded, settings, theme });
+  }, [isPreloading, isLoaded, settings, theme]);
 
   // Main preloading function
   const preloadAppData = useCallback(async () => {
@@ -201,9 +192,7 @@ export const useAppPreloader = () => {
   const returnValue = useMemo(
     () => ({
       isPreloading,
-      preloadComplete: isLoaded,
-      criticalDataLoaded: isLoaded && settingsReady, // Only consider critical data loaded if settings are ready
-      settingsReady, // Export this flag to check specifically for settings readiness
+      isLoaded,
       preloadAppData,
       prefetchArticle,
       prefetchVocabularyData,
@@ -212,7 +201,6 @@ export const useAppPreloader = () => {
     [
       isPreloading,
       isLoaded,
-      settingsReady,
       preloadAppData,
       prefetchArticle,
       prefetchVocabularyData,

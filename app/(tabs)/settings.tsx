@@ -56,10 +56,10 @@ export default function SettingsScreen() {
   const settings = useAppSelector(state => state.settings);
   const insets = useSafeAreaInsets();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { settingsReady } = useAppPreloader();
+  const { isLoaded } = useAppPreloader();
 
   // Use the loading state hook with minimal loading time
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
   // Use screen animation for coordinated animations with layout readiness check
   const { isLayoutReady, fadeInStyle, shouldRenderAnimatedContent, triggerAnimations } =
@@ -182,8 +182,17 @@ export default function SettingsScreen() {
     Linking.openURL(url);
   };
 
+  // Add logging to help debug
+  useEffect(() => {
+    console.log('Settings screen debug -', {
+      isLoaded,
+      isLoadingState,
+      isLayoutReady,
+    });
+  }, [isLoaded, isLoadingState, isLayoutReady]);
+
   // Use cached data to render a skeleton while loading or layout not ready or settings not ready
-  if (isLoadingState || !isLayoutReady || !settingsReady) {
+  if (isLoadingState) {
     return (
       <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView style={styles.container}>

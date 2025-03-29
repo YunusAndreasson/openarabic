@@ -90,7 +90,12 @@ function AppContent() {
   });
 
   // Use the app preloader hook to preload data
-  const { preloadAppData, criticalDataLoaded } = useAppPreloader();
+  const { preloadAppData, isLoaded } = useAppPreloader();
+
+  // Add logging to track preloading status
+  useEffect(() => {
+    console.log('App preloading status:', { isLoaded, isAuthLoading });
+  }, [isLoaded, isAuthLoading]);
 
   // Sync theme with system on first load and changes
   useEffect(() => {
@@ -130,11 +135,11 @@ function AppContent() {
 
   // Mark app as ready when critical data is loaded
   useEffect(() => {
-    if (criticalDataLoaded) {
+    if (isLoaded) {
       setAppReady(true);
       setShowAppLoader(false);
     }
-  }, [criticalDataLoaded]);
+  }, [isLoaded]);
 
   // Render content immediately since fonts are guaranteed
   return (
