@@ -103,4 +103,6 @@ export interface WordTooltipProps {
   isKnown?: boolean;
   /** Function to mark the word as known/unknown */
   onToggleKnown?: () => void;
+  /** Optional zIndex value to control tooltip stacking order */
+  zIndex?: number;
 }

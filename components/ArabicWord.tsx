@@ -23,6 +23,9 @@ type AnimatedStyles = {
   [key: string]: any;
 };
 
+// Global counter for tooltip zIndex values
+let tooltipZIndexCounter = 999999;
+
 function ArabicWordComponent({
   word,
   isSelected,
@@ -37,6 +40,7 @@ function ArabicWordComponent({
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
+  const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
 
   // Use transform animation for press feedback
   const {
@@ -121,6 +125,10 @@ function ArabicWordComponent({
     startPressAnimation();
     const fadeOpacity = isDarkMode ? 0.7 : 0.5;
 
+    // Increment global counter and set new zIndex
+    tooltipZIndexCounter += 1;
+    setTooltipZIndex(tooltipZIndexCounter);
+
     setWordOpacity(fadeOpacity, () => {
       setTooltipVisible(true);
       reversePressAnimation();
@@ -198,6 +206,7 @@ function ArabicWordComponent({
           text={word.english}
           layout={absoluteLayout}
           onClose={handleTooltipClose}
+          zIndex={tooltipZIndex}
         />
       )}
     </>

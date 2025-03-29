@@ -14,7 +14,7 @@ import { useTransformAnimation, useOpacityAnimation } from '@/hooks/animations';
  * Ensures the arrow tip is precisely centered over the word regardless of screen position
  */
 export const WordTooltip = React.memo(
-  ({ visible, text = '', layout, onClose }: WordTooltipProps) => {
+  ({ visible, text = '', layout, onClose, zIndex }: WordTooltipProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
@@ -25,9 +25,9 @@ export const WordTooltip = React.memo(
       animatedStyle: transformStyle,
     } = useTransformAnimation({
       type: 'scale',
-      initialValue: 0.94, // Slightly larger starting scale for more subtle effect
+      initialValue: 0.94,
       targetValue: 1,
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 7, // Slightly faster animation
+      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 5, // Standardized duration
       useSpring: true,
     });
 
@@ -37,8 +37,8 @@ export const WordTooltip = React.memo(
       fadeOut,
       animatedStyle: opacityStyle,
     } = useOpacityAnimation({
-      initialOpacity: 0.7, // Start more visible for faster appearance
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 10,
+      initialOpacity: 0.7,
+      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 5, // Matched with scale animation
     });
 
     // Handle closing the tooltip with animation sequence
@@ -187,7 +187,10 @@ export const WordTooltip = React.memo(
         style={[
           styles.tooltipContainer,
           styles.absoluteFull,
-          { top: tooltipTop },
+          {
+            top: tooltipTop,
+            zIndex: zIndex ?? 999999, // Use provided zIndex or fallback to default
+          },
           transformStyle as unknown as ViewStyle,
           opacityStyle as unknown as ViewStyle,
         ]}
