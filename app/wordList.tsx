@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, FlatList } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { ThemedView } from '../components/ThemedView';
 import { ThemedText } from '../components/ThemedText';
 import { useColors } from '../hooks/useColors';
@@ -16,7 +17,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWordList, EnhancedStudyWord } from '../hooks/useWordList';
 
 const ITEM_HEIGHT = 60;
-const CATEGORY_HEADER_HEIGHT = 150;
+
+// Move WordListItem component definition outside to optimize recycling
+const WordListItemMemo = React.memo(({ item }: { item: EnhancedStudyWord }) => (
+  <View style={{ marginVertical: 1 }}>
+    <WordListItem
+      word={item}
+      masteryScore={item.retentionScore}
+      onPress={() => {}} // Empty function since we don't want any action on press
+    />
+  </View>
+));
 
 export default function WordListScreen() {
   const { category } = useLocalSearchParams();
@@ -61,15 +72,9 @@ export default function WordListScreen() {
     error,
   } = useWordList(user?.id, category as 'total' | 'mastered' | 'learning');
 
-  // Render an item in the list
+  // Optimize renderItem for FlashList
   const renderItem = useCallback(
-    ({ item }: { item: EnhancedStudyWord }) => (
-      <WordListItem
-        word={item}
-        masteryScore={item.retentionScore}
-        onPress={() => {}} // Empty function since we don't want any action on press
-      />
-    ),
+    ({ item }: { item: EnhancedStudyWord }) => <WordListItemMemo item={item} />,
     []
   );
 
@@ -104,19 +109,6 @@ export default function WordListScreen() {
       </View>
     );
   }, [isLoading, category]);
-
-  const getItemLayout = useCallback(
-    (_: any, index: number) => ({
-      length: ITEM_HEIGHT,
-      offset:
-        ITEM_HEIGHT * index +
-        (category ? CATEGORY_HEADER_HEIGHT : 0) +
-        getHeaderHeight(insets) +
-        LAYOUT.SPACING.LARGE,
-      index,
-    }),
-    [category, insets]
-  );
 
   // Add error UI handling
   if (error) {
@@ -153,30 +145,24 @@ export default function WordListScreen() {
               <Loader size="large" color={colors.tint} />
             </View>
           ) : (
-            <FlatList
+            <FlashList
               data={words || []}
               renderItem={renderItem}
-              keyExtractor={item => item.sentence_word_id.toString()}
-              contentContainerStyle={[
-                styles.listContent,
-                { paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.MEDIUM },
-              ]}
+              estimatedItemSize={ITEM_HEIGHT}
               ListHeaderComponent={ListHeaderComponent}
               ListEmptyComponent={renderEmptyComponent}
               showsVerticalScrollIndicator={true}
-              initialNumToRender={10}
-              maxToRenderPerBatch={8}
-              windowSize={3}
-              removeClippedSubviews={true}
-              updateCellsBatchingPeriod={75}
-              getItemLayout={getItemLayout}
-              scrollEventThrottle={16}
-              maintainVisibleContentPosition={{
-                minIndexForVisible: 0,
-                autoscrollToTopThreshold: 10,
+              estimatedFirstItemOffset={getHeaderHeight(insets) + LAYOUT.SPACING.MEDIUM}
+              overrideItemLayout={layout => {
+                layout.size = ITEM_HEIGHT;
               }}
-              onEndReachedThreshold={0.5}
-              onScrollToIndexFailed={() => {}}
+              drawDistance={100}
+              contentInsetAdjustmentBehavior="automatic"
+              contentContainerStyle={{
+                paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+                paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
+                paddingTop: LAYOUT.SPACING.XXLARGE * 3,
+              }}
             />
           )}
         </ThemedView>
@@ -193,11 +179,6 @@ const styles = StyleSheet.create({
   },
   flexContainer: {
     flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
-    gap: 2,
   },
   headerContainer: {
     paddingBottom: 0,

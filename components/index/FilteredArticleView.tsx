@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, RefreshControl, View, FlatList } from 'react-native';
+import { StyleSheet, RefreshControl, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Article } from '../../types/articles.types';
 import BaseCard from '../BaseCard';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
@@ -56,7 +57,7 @@ interface FilteredArticleViewProps {
 
 /**
  * A specialized component for displaying filtered articles
- * Uses a simple ScrollView instead of FlatList to avoid recycling issues
+ * Uses a simple ScrollView instead of FlashList to avoid recycling issues
  */
 const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   articles,
@@ -151,22 +152,29 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
     return <View style={[styles.headerSpacer, { height: headerHeight + 20 }]} />;
   }, [headerHeight]);
 
+  // Calculate the estimated item height based on content + padding + margins
+  const ITEM_HEIGHT = 100; // Adjust this based on your actual card height
+
   return (
     <ThemedView
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
     >
-      <FlatList
+      <FlashList
         data={articles}
         renderItem={renderItem}
+        estimatedItemSize={ITEM_HEIGHT}
         keyExtractor={item => `filtered-article-${item.id}`}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={HeaderSpacer}
         ListEmptyComponent={ListEmptyComponent}
         ListFooterComponent={ListFooterComponent}
         showsVerticalScrollIndicator={true}
-        indicatorStyle={colors.text === '#212121' ? 'black' : 'white'}
+        drawDistance={ITEM_HEIGHT * 5}
+        overrideItemLayout={layout => {
+          layout.size = ITEM_HEIGHT;
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

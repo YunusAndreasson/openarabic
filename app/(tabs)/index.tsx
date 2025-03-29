@@ -330,7 +330,7 @@ export default function ArticlesScreen() {
     );
   }, [categoriesData, handleSelectCategory]);
 
-  // Create a pre-rendered header component for the FlatList to avoid re-rendering the entire list
+  // Create a pre-rendered header component for the Flash to avoid re-rendering the entire list
   const ListHeaderComponent = useMemo(() => {
     // Create an array of sections in the exact order we want them to appear
     const orderedSections = [

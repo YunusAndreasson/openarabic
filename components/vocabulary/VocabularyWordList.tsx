@@ -1,5 +1,5 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, FlatList, ListRenderItem, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
@@ -8,6 +8,8 @@ import ThemedCard from '../ThemedCard';
 import { LAYOUT } from '@/constants/layout';
 import { StudyWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface VocabularyWordListProps {
   title: string;
@@ -81,6 +83,7 @@ WordItem.displayName = 'WordItem';
 
 export function VocabularyWordList({ title, words, onWordPress }: VocabularyWordListProps) {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
 
   // Memoize the render item function to prevent recreating on each render
   const renderItem = useCallback<ListRenderItem<StudyWord>>(
@@ -114,21 +117,26 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
       <View style={styles.titleContainer}>
         <ThemedText type="heading3">{title}</ThemedText>
       </View>
-      <FlatList
+      <FlashList
         data={words}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
+        estimatedItemSize={70}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        maxToRenderPerBatch={10} // Limit batch size for smoother performance
-        windowSize={5} // Reduce window size for better performance
-        initialNumToRender={10} // Limit initial render for better startup time
-        removeClippedSubviews={false}
-        getItemLayout={(_data, index) => ({
-          length: 70, // Height of each word item
-          offset: 70 * index,
-          index,
-        })}
+        contentContainerStyle={{
+          paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+          paddingTop: Math.max(
+            insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.XLARGE,
+            LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM
+          ),
+          paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
+        }}
+        drawDistance={500}
+        estimatedFirstItemOffset={0}
+        overrideItemLayout={(layout, _item) => {
+          layout.size = 70 + LAYOUT.SPACING.MEDIUM; // Add spacing to item height
+        }}
+        ItemSeparatorComponent={() => <View style={{ height: LAYOUT.SPACING.MEDIUM }} />}
       />
     </View>
   );
@@ -143,10 +151,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  } as ViewStyle,
-  listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    gap: LAYOUT.SPACING.MEDIUM,
   } as ViewStyle,
   wordInfo: {
     flex: 1,

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { View, FlatList, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import SectionTitle from '../SectionTitle';
@@ -29,9 +30,15 @@ function FilterList<T extends FilterItem>({
   // Determine if this is a category filter based on the title
   const isCategory = title.toLowerCase().includes('category');
 
+  // Calculate the estimated item size based on the pill width
+  const ESTIMATED_ITEM_SIZE = 100; // Approximate width of each filter pill
+
+  // Memoize the keyExtractor for better performance
+  const keyExtractor = useCallback((item: T) => `filter-${item.id}`, []);
+
   // Render each filter item with staggered animation
   const renderItem = useCallback(
-    ({ item }: { item: T; index: number }) => {
+    ({ item }: { item: T }) => {
       return (
         <Pill
           id={item.id}
@@ -65,24 +72,22 @@ function FilterList<T extends FilterItem>({
           </Pressable>
         )}
       </View>
-      <FlatList
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-        data={items}
-        keyExtractor={item => `filter-${item.id}`}
-        renderItem={renderItem}
-        removeClippedSubviews={true}
-        initialNumToRender={10}
-        maxToRenderPerBatch={20}
-        windowSize={5}
-        getItemLayout={(_data, index) => ({
-          length: 100, // Approximate width of each filter pill
-          offset: 100 * index,
-          index,
-        })}
-        accessibilityLabel={`List of ${title.toLowerCase()} filters`}
-      />
+      <View style={styles.listContainer}>
+        <FlashList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.listContent}
+          data={items}
+          keyExtractor={keyExtractor}
+          renderItem={renderItem}
+          estimatedItemSize={ESTIMATED_ITEM_SIZE}
+          drawDistance={ESTIMATED_ITEM_SIZE * 5}
+          overrideItemLayout={layout => {
+            layout.size = ESTIMATED_ITEM_SIZE;
+          }}
+          accessibilityLabel={`List of ${title.toLowerCase()} filters`}
+        />
+      </View>
     </View>
   );
 }
@@ -96,6 +101,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingRight: LAYOUT.SPACING.MEDIUM,
+  },
+  listContainer: {
+    height: 40, // Fixed height for the FlashList container
   },
   listContent: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

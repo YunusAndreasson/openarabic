@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, FlatList, View, AppState } from 'react-native';
+import { StyleSheet, View, AppState } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/readingList';
 import { useAuth } from '@/hooks/useAuth';
@@ -20,6 +21,7 @@ import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
+import { RefreshControl } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
@@ -29,9 +31,8 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: 0,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.MEDIUM * 5,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
   },
-  // Card styling
   cardContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     position: 'relative',
@@ -124,27 +125,40 @@ const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding 
 // Memory-optimized component for reading list items
 const ReadingListItem = React.memo(
   ({
-    title,
-    author,
-    progress,
-    isPlaying,
-    isPaused,
-    articleId,
+    item,
+    audioState,
+    isShuffleMode,
+    shuffledList,
+    readingList,
+    currentTrackIndex,
+    playbackProgress,
   }: {
-    title: string;
-    author: string;
-    progress: number;
-    isPlaying: boolean;
-    isPaused: boolean;
-    articleId: number;
+    item: any;
+    audioState: string;
+    isShuffleMode: boolean;
+    shuffledList: any[];
+    readingList: any[];
+    currentTrackIndex: number;
+    playbackProgress: number;
   }) => {
     const colors = useColors();
-    const isActive = isPlaying || isPaused;
+
+    const isItemPlaying =
+      audioState === AUDIO_STATES.PLAYING &&
+      ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+        (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+
+    const isItemPaused =
+      audioState === AUDIO_STATES.PAUSED &&
+      ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
+        (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+
+    const isActive = isItemPlaying || isItemPaused;
 
     return (
       <View style={styles.cardContainer}>
         <BaseCard
-          onPress={() => router.push(`/article/${articleId}`)}
+          onPress={() => router.push(`/article/${item.article_id}`)}
           style={[styles.card, isActive && { ...styles.activeCard, borderColor: colors.tint }]}
           shadowSize="small"
         >
@@ -154,7 +168,7 @@ const ReadingListItem = React.memo(
                 type="bodyBold"
                 style={[styles.titleText, isActive && { color: colors.tint }]}
               >
-                {title}
+                {item.articles?.title || 'Untitled'}
               </ThemedText>
               <ThemedText
                 type="label"
@@ -162,7 +176,7 @@ const ReadingListItem = React.memo(
                 numberOfLines={1}
                 style={isActive ? styles.mediumOpacity : undefined}
               >
-                {author}
+                {item.articles?.author?.name || 'Unknown Author'}
               </ThemedText>
             </View>
             <View style={styles.iconContainer}>
@@ -180,7 +194,10 @@ const ReadingListItem = React.memo(
               <View
                 style={[
                   styles.cardProgressBar,
-                  { backgroundColor: colors.tint, width: `${progress * 100}%` },
+                  {
+                    backgroundColor: colors.tint,
+                    width: `${(isItemPlaying || isItemPaused ? playbackProgress : 0) * 100}%`,
+                  },
                 ]}
               />
             </View>
@@ -254,7 +271,7 @@ export default function BookmarksScreen() {
   const colors = useColors();
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
-  const flatListRef = useRef<FlatList<any>>(null);
+  const flashListRef = useRef<FlashList<any>>(null);
 
   // Use the new loading state hook with optimized defaults
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -683,48 +700,40 @@ export default function BookmarksScreen() {
         safeAreaEdges={['left', 'right']}
       >
         <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
-          <FlatList
-            ref={flatListRef}
+          <FlashList
+            ref={flashListRef}
             data={readingList}
             keyExtractor={item => `${item.article_id}`}
-            renderItem={({ item }) => {
-              const isItemPlaying =
-                audioState === AUDIO_STATES.PLAYING &&
-                ((isShuffleMode &&
-                  shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-                  (!isShuffleMode &&
-                    readingList[currentTrackIndex]?.article_id === item.article_id));
-
-              const isItemPaused =
-                audioState === AUDIO_STATES.PAUSED &&
-                ((isShuffleMode &&
-                  shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-                  (!isShuffleMode &&
-                    readingList[currentTrackIndex]?.article_id === item.article_id));
-
-              return (
-                <ReadingListItem
-                  title={item.articles?.title || 'Untitled'}
-                  author={item.articles?.author?.name || 'Unknown Author'}
-                  progress={isItemPlaying || isItemPaused ? playbackProgress : 0}
-                  isPlaying={isItemPlaying}
-                  isPaused={isItemPaused}
-                  articleId={item.article_id}
-                />
-              );
+            renderItem={({ item }) => (
+              <ReadingListItem
+                item={item}
+                audioState={audioState}
+                isShuffleMode={isShuffleMode}
+                shuffledList={shuffledList}
+                readingList={readingList}
+                currentTrackIndex={currentTrackIndex}
+                playbackProgress={playbackProgress}
+              />
+            )}
+            estimatedItemSize={ITEM_HEIGHT}
+            contentContainerStyle={{
+              paddingTop: Math.max(
+                insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.XLARGE,
+                LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM
+              ),
+              paddingBottom:
+                LAYOUT.CONTENT_SPACING.BOTTOM +
+                LAYOUT.BOTTOM_BAR.HEIGHT +
+                insets.bottom +
+                LAYOUT.SPACING.SMALL,
+              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
             }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
-            removeClippedSubviews={false}
-            initialNumToRender={10}
-            maxToRenderPerBatch={10}
-            windowSize={5}
-            updateCellsBatchingPeriod={100}
-            getItemLayout={(_data, index) => ({
-              length: ITEM_HEIGHT,
-              offset: ITEM_HEIGHT * index,
-              index,
-            })}
+            ListEmptyComponent={null}
+            drawDistance={ITEM_HEIGHT * 10}
+            overrideItemLayout={layout => {
+              layout.size = ITEM_HEIGHT;
+            }}
           />
         </ThemedView>
 

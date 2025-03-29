@@ -1,11 +1,13 @@
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
-import { StyleSheet, FlatList, ListRenderItem, Platform, View, RefreshControl } from 'react-native';
+import { StyleSheet, Platform, View, RefreshControl } from 'react-native';
+import { FlashList, ListRenderItem } from '@shopify/flash-list';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import { Article } from '../../types/articles.types';
 import ThemedCard from '../ThemedCard';
 import { CopyrightFooter } from './CopyrightFooter';
 import { ArticleListProps } from '@/types/ui/article.types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ITEM_HEIGHT = 360;
 
@@ -21,7 +23,7 @@ const ListFooter: React.FC<ListFooterProps> = ({ isLoading, articlesLength }) =>
 
 ListFooter.displayName = 'ListFooter';
 
-const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
+const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
   (
     {
       articles,
@@ -31,29 +33,19 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       onArticlePress,
       ListHeaderComponent,
       ListEmptyComponent,
-      contentContainerStyle,
       hideMainList = false,
     },
     ref
   ) => {
     const colors = useColors();
-    const listRef = useRef<FlatList<Article>>(null);
+    const listRef = useRef<FlashList<Article>>(null);
+    const insets = useSafeAreaInsets();
 
     // Forward the ref to the parent component
     useImperativeHandle(ref, () => listRef.current!, []);
 
     // Memoize the key extractor for better performance
     const keyExtractor = useCallback((item: Article) => `article-${item.id}`, []);
-
-    // Memoize the getItemLayout function for better performance
-    const getItemLayout = useCallback(
-      (_: any, index: number) => ({
-        length: ITEM_HEIGHT,
-        offset: ITEM_HEIGHT * index,
-        index,
-      }),
-      []
-    );
 
     // Create a simplified article item component
     const ArticleItem = React.memo(({ item }: { item: Article }) => {
@@ -100,36 +92,39 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       [isRefreshing, onRefresh, colors.tint, colors.background]
     );
 
+    // Create a wrapper View to handle the background color and padding
     return (
-      <FlatList
-        ref={listRef}
-        data={hideMainList ? [] : articles}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        getItemLayout={getItemLayout}
-        initialNumToRender={12}
-        maxToRenderPerBatch={8}
-        windowSize={7}
-        removeClippedSubviews={Platform.OS === 'android'}
-        showsVerticalScrollIndicator={true}
-        contentContainerStyle={[
-          styles.listContent,
-          { backgroundColor: colors.background },
-          contentContainerStyle,
-        ]}
-        ListHeaderComponent={ListHeaderComponent}
-        ListEmptyComponent={isLoading ? null : ListEmptyComponent}
-        ListFooterComponent={footerElement}
-        refreshControl={refreshControl}
-        scrollEventThrottle={16}
-        disableVirtualization={false}
-        persistentScrollbar={true}
-        updateCellsBatchingPeriod={50}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-          autoscrollToTopThreshold: 10,
-        }}
-      />
+      <View style={[{ flex: 1, backgroundColor: colors.background }]}>
+        <FlashList
+          ref={listRef}
+          data={hideMainList ? [] : articles}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          estimatedItemSize={ITEM_HEIGHT}
+          showsVerticalScrollIndicator={true}
+          contentContainerStyle={{
+            paddingTop: Math.max(
+              insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.XLARGE,
+              LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM
+            ),
+            paddingBottom:
+              LAYOUT.CONTENT_SPACING.BOTTOM +
+              LAYOUT.BOTTOM_BAR.HEIGHT +
+              insets.bottom +
+              LAYOUT.SPACING.SMALL,
+          }}
+          ListHeaderComponent={ListHeaderComponent}
+          ListEmptyComponent={isLoading ? null : ListEmptyComponent}
+          ListFooterComponent={footerElement}
+          refreshControl={refreshControl}
+          scrollEventThrottle={16}
+          overrideItemLayout={(layout, _item) => {
+            layout.size = ITEM_HEIGHT;
+          }}
+          drawDistance={ITEM_HEIGHT * 5}
+          estimatedListSize={{ height: ITEM_HEIGHT * 10, width: 0 }}
+        />
+      </View>
     );
   }
 );
@@ -137,10 +132,6 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
 ArticleList.displayName = 'ArticleList';
 
 const styles = StyleSheet.create({
-  listContent: {
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    flexGrow: 1,
-  },
   articleItemContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,

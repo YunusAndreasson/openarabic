@@ -96,7 +96,7 @@ The application follows a modular component architecture to ensure maintainabili
 
 3. **List Virtualization**
 
-   - FlatList is used for efficient rendering of article sentences
+   - Flashlist is used for efficient rendering of article sentences
    - Configuration includes:
      - initialNumToRender: 5
      - maxToRenderPerBatch: 5
