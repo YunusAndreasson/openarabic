@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,7 +11,7 @@ import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
-import { useScreenAnimation } from '@/hooks/animations';
+import { useScreenAnimation, useOpacityAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
 import BaseCard from '@/components/BaseCard';
@@ -61,8 +61,39 @@ export default function SettingsScreen() {
   // Simple loading state for session loading
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
+  // Check if we have concrete values
+  const hasConcreteValues =
+    settings &&
+    typeof settings.fontScale === 'number' &&
+    !Number.isNaN(settings.fontScale) &&
+    settings.fontScale >= 0.8 &&
+    settings.fontScale <= 1.3 &&
+    typeof settings.showEnglish === 'boolean';
+
   // Simple fade animation
   const { fadeInStyle } = useScreenAnimation(true, isLoadingState);
+
+  // Fade animations for UI elements that depend on Redux store data
+  const { animatedStyle: themeToggleFade } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 150,
+    autoStart: hasConcreteValues,
+  });
+
+  const { animatedStyle: englishToggleFade } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 150,
+    autoStart: hasConcreteValues,
+  });
+
+  const { animatedStyle: sliderFade } = useOpacityAnimation({
+    initialOpacity: 0,
+    duration: 150,
+    autoStart: hasConcreteValues,
+  });
+
+  // Empty style object for animated views
+  const emptyStyle = {};
 
   // Load session
   const loadSession = useCallback(async () => {
@@ -147,26 +178,6 @@ export default function SettingsScreen() {
   // Skip the sign-in check so settings are always accessible
   const showAuthUI = !session;
 
-  // Show loading state when session is loading
-  if (isLoadingState) {
-    return (
-      <Animated.View style={[styles.flexOne, fadeInStyle]}>
-        <ThemedView style={styles.container}>
-          <PageHeader title="Settings" />
-        </ThemedView>
-      </Animated.View>
-    );
-  }
-
-  // Ensure we have concrete values before rendering
-  const hasConcreteValues =
-    settings &&
-    typeof settings.fontScale === 'number' &&
-    !Number.isNaN(settings.fontScale) &&
-    settings.fontScale >= 0.8 &&
-    settings.fontScale <= 1.3 &&
-    typeof settings.showEnglish === 'boolean';
-
   // Show loading if we don't have valid settings
   if (!hasConcreteValues) {
     return (
@@ -217,15 +228,19 @@ export default function SettingsScreen() {
             >
               <View style={styles.settingRow}>
                 <SettingLabel icon="moon" text="Dark Mode" />
-                <ThemeToggle />
+                <Animated.View style={[emptyStyle, themeToggleFade]}>
+                  <ThemeToggle />
+                </Animated.View>
               </View>
               <Divider />
               <View style={styles.settingRow}>
                 <SettingLabel icon="language" text="English Translation" />
-                <Toggle
-                  value={settings.showEnglish}
-                  onValueChange={value => dispatch(setShowEnglish(value))}
-                />
+                <Animated.View style={[emptyStyle, englishToggleFade]}>
+                  <Toggle
+                    value={settings.showEnglish}
+                    onValueChange={value => dispatch(setShowEnglish(value))}
+                  />
+                </Animated.View>
               </View>
               <Divider />
               <View style={styles.settingRow}>
@@ -240,14 +255,16 @@ export default function SettingsScreen() {
                     {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
                   <View style={styles.sliderWrapper}>
-                    <CustomSlider
-                      value={settings.fontScale}
-                      onValueChange={handleFontScaleChange}
-                      minimumValue={0.8}
-                      maximumValue={1.3}
-                      step={0.1}
-                      style={styles.slider}
-                    />
+                    <Animated.View style={[emptyStyle, sliderFade]}>
+                      <CustomSlider
+                        value={settings.fontScale}
+                        onValueChange={handleFontScaleChange}
+                        minimumValue={0.8}
+                        maximumValue={1.3}
+                        step={0.1}
+                        style={styles.slider}
+                      />
+                    </Animated.View>
                   </View>
                 </View>
               </View>
