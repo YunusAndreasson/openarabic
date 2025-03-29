@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -11,7 +11,7 @@ import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { Colors } from '../constants/Colors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import Animated, { runOnJS } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
 import { useOpacityAnimation, useTransformAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';

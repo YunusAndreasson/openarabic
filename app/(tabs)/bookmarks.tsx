@@ -59,7 +59,6 @@ const styles = StyleSheet.create({
   cardProgressContainer: {
     height: 3,
     width: '100%',
-    backgroundColor: 'transparent',
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
@@ -74,7 +73,6 @@ const styles = StyleSheet.create({
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SCREEN_EDGE_PADDING,
     right: LAYOUT.SCREEN_EDGE_PADDING,
-    backgroundColor: 'transparent',
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   controlsCard: {
@@ -94,7 +92,6 @@ const styles = StyleSheet.create({
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
   activeCard: {
-    borderColor: 'tint',
     borderLeftWidth: 3,
   },
   activeIcon: {
@@ -179,7 +176,7 @@ const ReadingListItem = React.memo(
           </View>
 
           {isActive && (
-            <View style={styles.cardProgressContainer}>
+            <View style={[styles.cardProgressContainer, { backgroundColor: colors.transparent }]}>
               <View
                 style={[
                   styles.cardProgressBar,
@@ -212,7 +209,7 @@ const BottomControls = React.memo(
     const colors = useColors();
 
     return (
-      <View style={styles.bottomControlsContainer}>
+      <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
           <View style={styles.controlsLabelContainer}>
             <ThemedText type="overline" variant="secondary">
@@ -622,7 +619,7 @@ export default function BookmarksScreen() {
       isMountedRef.current = false;
       cleanupAudio();
     };
-  }, []);
+  }, [cleanupAudio]);
 
   // Load and play track when currentTrackIndex or activePlaylist changes
   useEffect(() => {
@@ -632,6 +629,7 @@ export default function BookmarksScreen() {
         loadAndPlayAudio(track.articles.audio_url);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTrackIndex, activePlaylist]);
 
   const insets = useSafeAreaInsets();
@@ -734,6 +732,9 @@ export default function BookmarksScreen() {
             })}
           />
         </ThemedView>
+
+        <View style={[styles.cardProgressContainer, { backgroundColor: colors.transparent }]} />
+        <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]} />
 
         <BottomControls
           onPlayAll={isCurrentlyPlaying ? stopPlayback : startPlayback}

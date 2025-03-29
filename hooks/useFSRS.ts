@@ -278,6 +278,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
   return {
     currentWord,
+    wordQueue,
     isLoading,
     isComplete,
     progress,

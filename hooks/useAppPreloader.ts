@@ -6,25 +6,6 @@ import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
 
-// No caching - all data refreshes on every query
-const NO_CACHE = 0;
-const LOAD_TIMEOUT_MS = 10000;
-
-// No caching for vocabulary data - always fresh
-
-// Only log errors in development
-const logError = (message: string, error?: any) => {
-  if (__DEV__) {
-    console.error(message, error);
-  }
-};
-
-const logWarning = (message: string, error?: any) => {
-  if (__DEV__) {
-    console.warn(message, error);
-  }
-};
-
 /**
  * Hook to preload app data during initialization
  */
