@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useNavigationWithDebounce } from './useNavigationWithDebounce';
 
@@ -89,9 +89,11 @@ export const useArticleRenderers = (
     [navigateTo]
   );
 
-  // Memoize getWordsForSentence to prevent recreation on every render
+  // Get words for a given sentence ID
   const getWordsForSentence = useCallback(
-    (sentenceId: number): SentenceWord[] => sentenceWordsMap.get(sentenceId) || [],
+    (sentenceId: number) => {
+      return sentenceWordsMap.get(sentenceId) || [];
+    },
     [sentenceWordsMap]
   );
 

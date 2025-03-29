@@ -17,6 +17,7 @@ import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animatio
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
 import { ArabicWordProps } from '@/types/ui/text.types';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Type for animated styles to fix TypeScript errors
 type AnimatedStyles = {
@@ -28,19 +29,38 @@ let tooltipZIndexCounter = 999999;
 
 function ArabicWordComponent({
   word,
-  isSelected,
+  isSelected: propIsSelected,
   onPress,
   scale = 1,
   baseSize = 32,
 }: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  useAuth();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
   const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
+  const [forceSelected, setForceSelected] = useState<boolean | null>(null);
+
+  // Directly get selected status from cache to bypass potential stale props
+  const studyWords = queryClient.getQueryData(['studyWords', user?.id]);
+
+  // Determine if this word is selected by checking if it exists in study words
+  const directlySelected = useMemo(() => {
+    if (!studyWords || !Array.isArray(studyWords)) return false;
+
+    const wordId = word.id;
+    return studyWords.some(sw => {
+      const swId = sw.sentence_word_id;
+      return swId === wordId || String(swId) === String(wordId);
+    });
+  }, [studyWords, word.id]);
+
+  // Use directly checked selection status OR forced selection OR prop
+  const isSelected = forceSelected !== null ? forceSelected : directlySelected || propIsSelected;
 
   // Use transform animation for press feedback
   const {
@@ -171,9 +191,20 @@ function ArabicWordComponent({
     // Schedule the reverse animation using state
     setNeedsReverseAnimation(true);
 
+    // Set optimistic update to show selection immediately
+    setForceSelected(!isSelected);
+
     // Then handle selection
     onPress(word);
-  }, [onPress, word, startPressAnimation]);
+  }, [onPress, word, startPressAnimation, isSelected]);
+
+  // Styling for border based on selection state
+  const borderStyle = useMemo(() => {
+    return {
+      borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
+      borderBottomColor: isSelected ? colors.textOverlay : Colors.light.transparent,
+    };
+  }, [isSelected, colors.textOverlay]);
 
   return (
     <>
@@ -191,8 +222,7 @@ function ArabicWordComponent({
             pressStyle as AnimatedStyles,
             {
               opacity: Number(tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1),
-              borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
-              borderBottomColor: isSelected ? colors.textOverlay : Colors.light.transparent,
+              ...borderStyle,
             },
           ]}
         >

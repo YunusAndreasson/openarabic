@@ -46,10 +46,17 @@ export const useArticleMutations = (
 
   // Toggle word study status mutation
   const toggleWordMutation = useMutation({
-    mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) =>
-      studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId),
+    mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
+      try {
+        const result = await studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId);
+        return result;
+      } catch (error) {
+        console.error(`Error toggling study word:`, error);
+        throw error;
+      }
+    },
     onSuccess: result => {
-      // Always refetch data immediately
+      // Invalidate queries to update UI
       queryClient.invalidateQueries({
         queryKey: ['studyWords', userId],
       });
@@ -72,8 +79,6 @@ export const useArticleMutations = (
       });
     },
     onError: error => {
-      console.error(`[toggleWordMutation] Error:`, error);
-
       // Show error toast to user
       Toast.show({
         type: 'error',
