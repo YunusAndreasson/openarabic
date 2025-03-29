@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
 
 import { ArticleHeader, RelatedArticlesFooter } from '@/components/article';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { Tables } from '@/types/database.types';
 import { Article } from '@/types/articles.types';
 
@@ -67,10 +67,7 @@ export const ArticleContent = ({
             style={[styles.content, { backgroundColor: colors.background }]}
             contentContainerStyle={{
               paddingHorizontal: LAYOUT.SPACING.SMALL,
-              paddingTop: Math.max(
-                insets.top + LAYOUT.SPACING.XXLARGE * 3,
-                LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE * 2
-              ),
+              paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE * 2,
               paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
             }}
             onScroll={handleScroll}

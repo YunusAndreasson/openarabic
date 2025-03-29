@@ -5,7 +5,7 @@ import { useColors } from '@/hooks/useColors';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import ThemedCard from '../ThemedCard';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { StudyWord } from '@/types/vocabulary.types';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { FlashList, ListRenderItem } from '@shopify/flash-list';
@@ -125,10 +125,7 @@ export function VocabularyWordList({ title, words, onWordPress }: VocabularyWord
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-          paddingTop: Math.max(
-            insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.XLARGE,
-            LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM
-          ),
+          paddingTop: getHeaderHeight(insets),
           paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
         }}
         drawDistance={500}

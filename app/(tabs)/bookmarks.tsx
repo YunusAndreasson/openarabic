@@ -717,10 +717,7 @@ export default function BookmarksScreen() {
             )}
             estimatedItemSize={ITEM_HEIGHT}
             contentContainerStyle={{
-              paddingTop: Math.max(
-                insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.XLARGE,
-                LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM
-              ),
+              paddingTop: getHeaderHeight(insets),
               paddingBottom:
                 LAYOUT.CONTENT_SPACING.BOTTOM +
                 LAYOUT.BOTTOM_BAR.HEIGHT +
