@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
@@ -6,14 +6,10 @@ import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard
 import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
 import { SignInRequired } from '@/components/SignInRequired';
 import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from '@tanstack/react-query';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { VocabularyStats, WeeklyProgressData, StudyWord } from '@/types/vocabulary.types';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { calculateWeeklyProgressData } from '@/utils/vocabularyStats';
 import { useScreenFocusRefresh, useNavigationWithDebounce, useLoadingState } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '@/components/PageHeader';
@@ -25,91 +21,8 @@ import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { LoadingScreen } from '@/components/Loader';
-
-// Split stats calculation into smaller chunks for better memoization
-const getBaseStats = (validStudyWords: StudyWord[], dueWordsData: StudyWord[]) => {
-  const stats = validStudyWords.reduce(
-    (acc, word) => {
-      // Count new words
-      if (!word.fsrs_last_review) {
-        acc.newWordsCount++;
-      }
-      return acc;
-    },
-    {
-      totalWords: validStudyWords.length,
-      dueWords: dueWordsData?.length ?? 0,
-      newWordsCount: 0,
-    }
-  );
-  return stats;
-};
-
-const getAdvancedStats = (validStudyWords: StudyWord[]) => {
-  if (validStudyWords.length === 0) return null;
-
-  // Single pass for all stats
-  const stats = validStudyWords.reduce(
-    (acc, word) => {
-      // Track reviewed words stats
-      if (word.fsrs_last_review) {
-        acc.reviewedCount++;
-        // Calculate success_rate from success_streak if available
-        const successRate = word.success_streak ? word.success_streak / (word.fsrs_reps || 1) : 0;
-        acc.successRateSum += successRate;
-        acc.intervalSum += word.interval_days || 0;
-        acc.easeFactorSum += word.ease_factor || 0;
-      }
-
-      // Track mastery stats - use fsrs_state instead of 'state'
-      if (word.fsrs_state === 3) acc.masteredCount++; // Assuming state 3 is 'mastered'
-      if (word.fsrs_state === 1 || word.fsrs_state === 2) acc.learningCount++; // Assuming states 1-2 are 'learning'
-
-      // Track streaks and difficulty
-      acc.maxStreak = Math.max(acc.maxStreak, word.success_streak || 0);
-      acc.maxLongestStreak = Math.max(acc.maxLongestStreak, word.success_streak || 0);
-      if ((word.success_streak || 0) > 0) acc.streakCount++;
-
-      // Track other stats
-      acc.lapsesSum += word.fsrs_lapses || 0;
-      if (word.sessionData?.failedInSession) acc.failedInSession++;
-      acc.difficultySum += word.fsrs_difficulty || 0.3;
-
-      return acc;
-    },
-    {
-      reviewedCount: 0,
-      successRateSum: 0,
-      intervalSum: 0,
-      easeFactorSum: 0,
-      masteredCount: 0,
-      learningCount: 0,
-      maxStreak: 0,
-      maxLongestStreak: 0,
-      streakCount: 0,
-      lapsesSum: 0,
-      failedInSession: 0,
-      difficultySum: 0,
-    }
-  );
-
-  const totalCount = validStudyWords.length || 1;
-  const reviewedCount = stats.reviewedCount || 1;
-
-  return {
-    successRate: stats.successRateSum / reviewedCount,
-    averageInterval: stats.intervalSum / reviewedCount,
-    averageEaseFactor: stats.easeFactorSum / reviewedCount,
-    masteredWords: stats.masteredCount,
-    learningWords: stats.learningCount,
-    streak: stats.maxStreak,
-    longestSuccessStreak: stats.maxLongestStreak,
-    wordsWithStreaks: stats.streakCount,
-    averageLapses: stats.lapsesSum / totalCount,
-    failedInSessionCount: stats.failedInSession,
-    averageDifficulty: stats.difficultySum / totalCount,
-  };
-};
+import { useFSRSQueries } from '@/hooks/useFSRSQueries';
+import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -141,46 +54,23 @@ export default function VocabularyScreen() {
     }, [user?.id, prefetchVocabularyData, queryClient])
   );
 
-  // Query for study words - updated to use FSRS service with longer stale time
+  // Use the FSRS queries hook for data fetching
   const {
-    data: studyWords = [] as StudyWord[],
-    isLoading: isStudyWordsLoading,
-    isFetching: isStudyWordsFetching,
+    allWords: studyWords,
+    dueWords: dueWordsData,
+    isLoading: isDataLoading,
+    isFetching,
     error,
-    refetch: refetchStudyWords,
-  } = useQuery({
-    queryKey: ['studyWords', user?.id],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { forStats: false }),
-    enabled: !!user,
-    staleTime: 180000, // Cache for 3 minutes
-    gcTime: 600000, // Keep in cache for 10 minutes
-    retry: 2, // Add retry capability
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnMount: false, // Don't refetch on mount when we have data
-    placeholderData: () =>
-      queryClient.getQueryData(['studyWords', user?.id]) || ([] as StudyWord[]),
+    invalidateAllQueries,
+  } = useFSRSQueries({
+    userId: user?.id,
   });
 
-  // Query for due words with optimized settings
-  const {
-    data: dueWordsData = [] as StudyWord[],
-    isFetching: isDueWordsFetching,
-    refetch: refetchDueWords,
-  } = useQuery({
-    queryKey: ['dueWords', user?.id],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id, { onlyDue: true }),
-    enabled: !!user,
-    staleTime: 120000, // Cache for 2 minutes (due words change more frequently)
-    gcTime: 300000, // Keep in cache for 5 minutes
-    retry: 2, // Add retry capability
-    refetchOnWindowFocus: false, // Don't refetch on window focus
-    refetchOnMount: false, // Don't refetch on mount when we have data
-    placeholderData: () => queryClient.getQueryData(['dueWords', user?.id]) || ([] as StudyWord[]),
-  });
-
-  // Combined loading and fetching states for better UX
-  const isDataLoading = isStudyWordsLoading;
-  const isFetching = isStudyWordsFetching || isDueWordsFetching;
+  // Use the vocabulary stats hook for stats calculations
+  const { stats, weeklyProgressData, validStudyWords } = useVocabularyStats(
+    studyWords ?? [],
+    dueWordsData ?? []
+  );
 
   // Handler for pull-to-refresh
   const handleRefresh = async () => {
@@ -191,8 +81,7 @@ export default function VocabularyScreen() {
 
     setIsRefreshing(true);
     try {
-      // Refetch both study words and due words
-      await Promise.all([refetchStudyWords(), refetchDueWords()]);
+      await invalidateAllQueries();
     } finally {
       setIsRefreshing(false);
     }
@@ -217,14 +106,8 @@ export default function VocabularyScreen() {
     false // Only refresh if stale
   );
 
-  // Filter valid study words with error protection
-  const validStudyWords = useMemo(() => {
-    if (!Array.isArray(studyWords)) return [] as StudyWord[];
-    return studyWords.filter(word => word?.sentence_word != null) as StudyWord[];
-  }, [studyWords]);
-
   // Check if data is ready to display with loading protection
-  const isDataReady = useMemo(() => {
+  const isDataReady = React.useMemo(() => {
     // If we have cached data, consider it ready immediately
     if (queryClient.getQueryData(['studyWords', user?.id])) return true;
 
@@ -243,78 +126,17 @@ export default function VocabularyScreen() {
   );
 
   // Update loading state based on data loading - always bypass loading screen
-  useEffect(() => {
+  React.useEffect(() => {
     // Always stop loading immediately - never show the loading screen
     stopLoading();
   }, [stopLoading]);
-
-  // Split stats calculation into smaller memoized chunks - optimized with calculation key
-  const baseStats = useMemo(() => {
-    if (validStudyWords?.length === 0 && studyWords?.length === 0) {
-      return {
-        totalWords: 0,
-        dueWords: dueWordsData?.length ?? 0,
-        newWordsCount: 0,
-      };
-    }
-    return getBaseStats(validStudyWords ?? [], dueWordsData ?? []);
-  }, [dueWordsData, studyWords?.length, validStudyWords]); // Only recalculate when key changes
-
-  const advancedStats = useMemo(() => {
-    if (validStudyWords?.length === 0) return null;
-    return getAdvancedStats(validStudyWords);
-  }, [validStudyWords]); // Only recalculate when key changes
-
-  // Combine stats with safe defaults
-  const stats = useMemo<VocabularyStats>(
-    () => ({
-      ...baseStats,
-      ...(advancedStats ?? {
-        successRate: 0,
-        averageInterval: 0,
-        averageEaseFactor: 0,
-        masteredWords: 0,
-        learningWords: 0,
-        streak: 0,
-        longestSuccessStreak: 0,
-        wordsWithStreaks: 0,
-        averageLapses: 0,
-        failedInSessionCount: 0,
-        averageDifficulty: 0.3,
-      }),
-    }),
-    [baseStats, advancedStats]
-  );
-
-  // Calculate weekly progress data with memoization
-  const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
-    // Always get data regardless of empty study words
-    return calculateWeeklyProgressData(validStudyWords ?? []);
-  }, [validStudyWords]);
 
   // Handle starting a review
   const handleStartReview = () => {
     if (!user) return;
 
     // Always refresh data when navigating to review screen
-
-    // Always refetch due words immediately
-    queryClient.invalidateQueries({
-      queryKey: ['dueWords', user.id],
-    });
-
-    // Always refetch study words immediately
-    queryClient.invalidateQueries({
-      queryKey: ['studyWords', user.id],
-    });
-
-    // Prefetch review data with longer cache time
-    queryClient.prefetchQuery({
-      queryKey: ['dueWords', user.id, 'review'],
-      queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-      staleTime: 0, // No caching
-      gcTime: 0, // No cache retention
-    });
+    invalidateAllQueries();
 
     // Navigate to review screen
     navigateTo({
@@ -364,7 +186,7 @@ export default function VocabularyScreen() {
   }
 
   // Show empty state only if we have no words AND we're done loading
-  if (!isFetching && !isDataLoading && validStudyWords.length === 0 && studyWords.length === 0) {
+  if (!isFetching && !isDataLoading && validStudyWords.length === 0 && studyWords?.length === 0) {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title="Words" />

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
@@ -58,24 +58,13 @@ export default function SettingsScreen() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { isLoaded } = useAppPreloader();
 
-  // Use the loading state hook with minimal loading time
+  // Simple loading state for session loading
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
-  // Use screen animation for coordinated animations with layout readiness check
-  const { isLayoutReady, fadeInStyle, triggerAnimations } = useScreenAnimation(
-    true, // Always ready to display
-    isLoadingState,
-    80, // Fast animation duration
-    50, // Small layout delay to ensure stability
-    0 // No animation delay
-  );
+  // Simple fade animation
+  const { fadeInStyle } = useScreenAnimation(true, isLoadingState);
 
-  // Memoize the animation trigger function to prevent unnecessary re-renders
-  const startAnimations = useCallback(() => {
-    triggerAnimations();
-  }, [triggerAnimations]);
-
-  // Load session and trigger animations
+  // Load session
   const loadSession = useCallback(async () => {
     startLoading();
     try {
@@ -85,21 +74,10 @@ export default function SettingsScreen() {
       setSession(null);
     } finally {
       stopLoading();
-      // Only trigger animations when layout is ready
-      if (isLayoutReady) {
-        startAnimations();
-      }
     }
-  }, [startLoading, stopLoading, startAnimations, isLayoutReady]);
+  }, [startLoading, stopLoading]);
 
-  // Effect to trigger animations when layout becomes ready
-  useEffect(() => {
-    if (isLayoutReady && !isLoadingState) {
-      startAnimations();
-    }
-  }, [isLayoutReady, isLoadingState, startAnimations]);
-
-  // Use focus effect to only load session when tab is focused
+  // Load session on focus
   useFocusEffect(
     useCallback(() => {
       let mounted = true;
@@ -116,21 +94,6 @@ export default function SettingsScreen() {
         subscription.data.subscription.unsubscribe();
       };
     }, [loadSession])
-  );
-
-  // Memoize button styles
-  const buttonStyles = useMemo(
-    () => ({
-      innerContainer: {
-        justifyContent: 'flex-start' as const,
-        alignItems: 'flex-start' as const,
-      },
-      contentContainer: {
-        justifyContent: 'flex-start' as const,
-        alignItems: 'flex-start' as const,
-      },
-    }),
-    []
   );
 
   // Keep memoization for handlers with dependencies or complex logic
@@ -181,7 +144,10 @@ export default function SettingsScreen() {
     Linking.openURL(url);
   };
 
-  // Use cached data to render a skeleton while loading or layout not ready or settings not ready
+  // Skip the sign-in check so settings are always accessible
+  const showAuthUI = !session;
+
+  // Show loading state when session is loading
   if (isLoadingState) {
     return (
       <Animated.View style={[styles.flexOne, fadeInStyle]}>
@@ -192,8 +158,37 @@ export default function SettingsScreen() {
     );
   }
 
-  // Skip the sign-in check so settings are always accessible
-  const showAuthUI = !session;
+  // Ensure we have concrete values before rendering
+  const hasConcreteValues =
+    settings &&
+    typeof settings.fontScale === 'number' &&
+    !Number.isNaN(settings.fontScale) &&
+    settings.fontScale >= 0.8 &&
+    settings.fontScale <= 1.3 &&
+    typeof settings.showEnglish === 'boolean';
+
+  // Show loading if we don't have valid settings
+  if (!hasConcreteValues) {
+    return (
+      <Animated.View style={[styles.flexOne, fadeInStyle]}>
+        <ThemedView style={styles.container}>
+          <PageHeader title="Settings" />
+        </ThemedView>
+      </Animated.View>
+    );
+  }
+
+  // Button styles
+  const buttonStyles = {
+    innerContainer: {
+      justifyContent: 'flex-start' as const,
+      alignItems: 'flex-start' as const,
+    },
+    contentContainer: {
+      justifyContent: 'flex-start' as const,
+      alignItems: 'flex-start' as const,
+    },
+  };
 
   return (
     <ThemedView
