@@ -11,6 +11,7 @@ import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui/card.types';
 import { TimeAgo, DifficultyIndicator } from './article/ArticleHelpers';
+import { DEFAULT_IMAGES } from '@/constants/images';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -97,7 +98,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <>
         <View style={styles.imageContainer}>
           <EnhancedImage
-            source={props.imageUrl}
+            source={props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
             style={styles.image}
             onError={() => {
               /* Handle image load error silently */
@@ -107,6 +108,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             showLoadingIndicator={true}
             cachePolicy="memory-disk"
             alt={`Image for ${props.title}`}
+            blurRadius={1}
+            priority="high"
+            placeholder={
+              props.placeholder || {
+                blurhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_BLURHASH,
+              }
+            }
+            prefetch={true}
           />
 
           {/* Gradient overlay */}
@@ -164,7 +173,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <>
         <View style={styles.compactImageContainer}>
           <EnhancedImage
-            source={props.article.image_url || 'https://picsum.photos/800/400'}
+            source={props.article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
             style={styles.image}
             contentFit="cover"
             showLoadingIndicator={true}
@@ -172,6 +181,15 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             onError={() => {
               /* Handle image load error silently */
             }}
+            blurRadius={1}
+            priority="high"
+            placeholder={
+              props.article.placeholder || {
+                blurhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_BLURHASH,
+              }
+            }
+            prefetch={true}
+            alt={`Image for ${props.article.title}`}
           />
 
           {/* Add gradient overlay to compact card for better text contrast */}

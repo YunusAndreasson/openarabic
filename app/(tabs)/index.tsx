@@ -441,6 +441,7 @@ export default function ArticlesScreen() {
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={EmptyStateComponent}
           contentContainerStyle={contentContainerStyle}
+          hideMainList={true}
         />
         <PageHeader title="Texts" />
       </ThemedView>

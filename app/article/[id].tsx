@@ -311,7 +311,12 @@ export default function ArticleScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         useSafeArea={false}
       >
-        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
+        <StatusBar
+          style={isDarkMode ? 'light' : 'dark'}
+          translucent={true}
+          animated={true}
+          hidden={false}
+        />
         <View style={[styles.loadingContainer]}>
           <LoadingScreen />
         </View>

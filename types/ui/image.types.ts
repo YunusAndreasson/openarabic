@@ -1,14 +1,30 @@
 import { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
 
 /**
+ * Image configuration options
+ */
+export interface ImageConfig {
+  /** How the image should fit within its container */
+  contentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  /** Transition duration in milliseconds */
+  transition?: number;
+  /** Whether to show loading indicator */
+  showLoadingIndicator?: boolean;
+  /** Caching policy for the image */
+  cachePolicy?: 'memory' | 'disk' | 'memory-disk' | 'none';
+  /** Blur radius for smooth transitions */
+  blurRadius?: number;
+}
+
+/**
  * Props for the EnhancedImage component
  */
 export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressableProps {
-  /** Source URL of the image */
+  /** Source URL of the image - required and must be non-null */
   source: string;
 
   /** Content fit mode */
-  contentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  contentFit?: ImageConfig['contentFit'];
 
   /** Whether to show loading indicator */
   showLoadingIndicator?: boolean;
@@ -29,7 +45,7 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   transition?: number;
 
   /** Caching policy */
-  cachePolicy?: 'memory' | 'disk' | 'memory-disk' | 'none';
+  cachePolicy?: ImageConfig['cachePolicy'];
 
   /** Blur radius for progressive loading */
   blurRadius?: number;
@@ -54,4 +70,7 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
 
   /** Whether to prefetch this image before it's displayed */
   prefetch?: boolean;
+
+  /** Placeholder image using blurhash or thumbhash */
+  placeholder?: { blurhash?: string; thumbhash?: string };
 }

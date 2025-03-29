@@ -55,6 +55,8 @@ export interface ArticleCardProps extends BaseCardProps, BaseOptionalPressablePr
   author?: string;
   /** Summary text to display in the card */
   summary?: string;
+  /** Placeholder image using blurhash or thumbhash */
+  placeholder?: { blurhash?: string; thumbhash?: string };
 }
 
 /**

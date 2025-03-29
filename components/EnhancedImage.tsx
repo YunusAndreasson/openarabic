@@ -14,6 +14,8 @@ import { useColors } from '@/hooks/useColors';
  * - Error handling
  * - Basic caching
  * - Accessibility support
+ * - Blur transitions
+ * - Placeholder support (blurhash/thumbhash)
  */
 function EnhancedImageInternal({
   source,
@@ -25,6 +27,8 @@ function EnhancedImageInternal({
   onError,
   transition = 300,
   cachePolicy = 'memory-disk',
+  placeholder,
+  blurRadius = 0,
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -54,9 +58,12 @@ function EnhancedImageInternal({
         cachePolicy={cachePolicy}
         accessible={!!alt}
         accessibilityLabel={alt}
+        placeholder={placeholder}
+        blurRadius={blurRadius}
+        allowDownscaling={true}
       />
 
-      {isLoading && showLoadingIndicator && (
+      {isLoading && showLoadingIndicator && !placeholder && (
         <View style={[styles.loadingContainer, { backgroundColor: colors.imagePlaceholder }]}>
           <LoadingContainer size="small" />
         </View>

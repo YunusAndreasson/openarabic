@@ -15,4 +15,5 @@ export interface Article extends Tables<'articles'> {
   author: Tables<'authors'> | null;
   audio_url: string | null;
   last_opened_at?: string;
+  placeholder?: { blurhash?: string; thumbhash?: string };
 }

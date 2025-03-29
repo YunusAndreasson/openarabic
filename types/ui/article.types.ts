@@ -22,6 +22,8 @@ export interface ArticleListProps {
   ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
   /** Optional style for the list content container */
   contentContainerStyle?: StyleProp<ViewStyle>;
+  /** Whether to hide the main list of articles and only show header sections */
+  hideMainList?: boolean;
 }
 
 /**

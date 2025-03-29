@@ -32,6 +32,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
       ListHeaderComponent,
       ListEmptyComponent,
       contentContainerStyle,
+      hideMainList = false,
     },
     ref
   ) => {
@@ -102,7 +103,7 @@ const ArticleList = forwardRef<FlatList<Article>, ArticleListProps>(
     return (
       <FlatList
         ref={listRef}
-        data={articles}
+        data={hideMainList ? [] : articles}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         getItemLayout={getItemLayout}
