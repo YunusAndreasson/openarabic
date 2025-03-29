@@ -39,16 +39,6 @@ function ThemedTextComponent({
 
   // Consolidated style computation - combines both type mapping and style generation
   const { finalStyle } = useMemo(() => {
-    // Map legacy types to new types for backward compatibility
-    const legacyTypeMap: Record<string, string> = {
-      default: 'body',
-      title: 'heading1',
-      subtitle: 'heading2',
-      defaultSemiBold: 'bodyBold',
-    };
-    // @ts-ignore - The string comparison will work even though TypeScript doesn't recognize these types anymore
-    const actualType = legacyTypeMap[type] || type;
-
     // Get color based on variant or colorName
     let textColor;
     // colorName takes precedence
@@ -77,7 +67,7 @@ function ThemedTextComponent({
     // Style generation
     let computedStyle;
     // Special handling for arabic type
-    if (actualType === 'arabic') {
+    if (type === 'arabic') {
       // Filter out undefined values to reduce style array size
       computedStyle = [
         getArabicTextStyle(arabicFontSize),
@@ -90,16 +80,16 @@ function ThemedTextComponent({
       // Get base style from styles object, safely handle type
       // Fast-path for common types to avoid switch overhead
       const baseStyle =
-        actualType === 'body'
+        type === 'body'
           ? styles.body
-          : actualType === 'heading1'
+          : type === 'heading1'
             ? styles.heading1
-            : actualType === 'heading2'
+            : type === 'heading2'
               ? styles.heading2
-              : styles[actualType as keyof typeof styles] || styles.body;
+              : styles[type as keyof typeof styles] || styles.body;
 
       // Special handling for link type (includes color)
-      if (actualType === 'link' && !textColor) {
+      if (type === 'link' && !textColor) {
         // Filter out undefined values
         computedStyle = [
           baseStyle,

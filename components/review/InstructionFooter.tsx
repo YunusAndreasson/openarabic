@@ -8,6 +8,12 @@ import Animated from 'react-native-reanimated';
 import { useOpacityAnimation } from '../../hooks/animations';
 import { InstructionFooterProps } from '@/types/ui/review.types';
 
+// Define a union type for the container style
+type ContainerStyle = ViewStyle & {
+  shadowColor?: string;
+  shadowOpacity?: number;
+};
+
 /**
  * Footer component that displays swipe instructions
  *
@@ -51,8 +57,8 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     color: colors.tabIconDefault,
   };
 
-  // Use only ViewStyle properties for the container
-  const containerStyle = {
+  // Use ContainerStyle type for the container
+  const containerStyle: ContainerStyle = {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

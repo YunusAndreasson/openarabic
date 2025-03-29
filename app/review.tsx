@@ -10,7 +10,7 @@ import { Loader } from '@/components/Loader';
 import { useQueryClient } from '@tanstack/react-query';
 import { lightFeedback } from '@/utils/haptics';
 import { useWordSizing } from '../hooks/useWordSizing';
-import useFadeAnimation from '../hooks/animations/useFadeAnimation';
+import { useOpacityAnimation } from '@/hooks/animations';
 
 // Import our components
 import {
@@ -57,8 +57,8 @@ export default function ReviewScreen() {
 
   const { user } = useAuth();
 
-  // Use our optimized fade animation hook only for the word content
-  const { fadeIn, fadeOut, opacity } = useFadeAnimation(1);
+  // Use opacity animation directly instead of the legacy fade animation
+  const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
 
   // Define completion transition function that both paths can use
   const triggerCompletionTransition = useCallback(() => {

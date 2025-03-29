@@ -14,29 +14,6 @@ module.exports = {
     'react-native/no-inline-styles': 'warn',
     'react-native/no-color-literals': 'warn',
     'react-native/no-raw-text': ['warn', { skip: ['ThemedText'] }],
-    // Prevent imports from deprecated utils/animations.ts
-    'no-restricted-imports': [
-      'error',
-      {
-        paths: [
-          {
-            name: '../utils/animations',
-            message:
-              'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md',
-          },
-          {
-            name: '../../utils/animations',
-            message:
-              'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md',
-          },
-          {
-            name: '@/utils/animations',
-            message:
-              'Please import animation hooks from @/hooks/animations instead. See docs/hooks-migration-guide.md',
-          },
-        ],
-      },
-    ],
   },
   ignorePatterns: ['/dist/*', 'node_modules', '.expo', '.github'],
   env: {
