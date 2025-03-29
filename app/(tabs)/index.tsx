@@ -52,9 +52,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   listContentContainer: {
-    // Base styles from contentContainerStyle
     flexGrow: 1,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
   },
 });
 
@@ -136,18 +135,6 @@ export default function ArticlesScreen() {
 
   // Organized articles by category
   const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
-
-  // Refined content container style for consistent spacing
-  const contentContainerStyle = useMemo(
-    () => ({
-      flexGrow: 1,
-      backgroundColor: colors.background,
-      paddingTop: LAYOUT.SPACING.LARGE,
-      paddingBottom:
-        LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    }),
-    [colors.background]
-  );
 
   // Sort in-progress articles by last opened time
   const sortedInProgressArticles = useMemo(() => {
@@ -394,7 +381,7 @@ export default function ArticlesScreen() {
     // Force the component to render even if no articles are available
     return (
       <FeaturedArticleSection
-        title="Featured Texts (Top Priority)"
+        title="Featured Texts"
         articles={featuredArticles || []}
         onArticlePress={handleArticlePress}
       />
@@ -508,13 +495,14 @@ export default function ArticlesScreen() {
     }, [queryClient])
   );
 
-  // Compute dynamic styles based on insets
-  const dynamicListContentStyle = useMemo(
+  // Compute dynamic styles based on insets with all necessary styles
+  const contentContainerStyle = useMemo(
     () => ({
       ...styles.listContentContainer,
+      backgroundColor: colors.background,
       paddingTop: getHeaderHeight(insets),
     }),
-    [insets]
+    [insets, colors.background]
   );
 
   // If no cached data and still loading, show a minimal loading screen
@@ -555,7 +543,7 @@ export default function ArticlesScreen() {
           onArticlePress={handleArticlePress}
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={EmptyStateComponent}
-          contentContainerStyle={dynamicListContentStyle}
+          contentContainerStyle={contentContainerStyle}
         />
         <PageHeader title="Texts" />
       </ThemedView>

@@ -290,7 +290,6 @@ const styles = StyleSheet.create({
   },
   compactContainer: {
     width: LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE,
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   compactImageContainer: {
     position: 'relative',
