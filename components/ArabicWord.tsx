@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -9,8 +9,9 @@ import {
 import { ThemedText } from './ThemedText';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
+import { Colors } from '../constants/Colors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import Animated from 'react-native-reanimated';
+import Animated, { runOnJS } from 'react-native-reanimated';
 import { useAuth } from '../hooks/useAuth';
 import { useOpacityAnimation, useTransformAnimation } from '../hooks/animations';
 import { WordTooltip } from './WordTooltip';
@@ -35,6 +36,7 @@ function ArabicWordComponent({
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
+  const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
 
   // Use transform animation for press feedback
   const {
@@ -49,16 +51,32 @@ function ArabicWordComponent({
   });
 
   // Use opacity animation for border
-  const { setOpacity: setBorderOpacity, animatedStyle: borderStyle } = useOpacityAnimation({
+  const { setOpacity: setBorderOpacity } = useOpacityAnimation({
     initialOpacity: isSelected ? 1 : 0,
     duration: 200,
   });
 
   // Use opacity animation for word fade
-  const { animatedStyle: fadeStyle, setOpacity: setWordOpacity } = useOpacityAnimation({
+  const { setOpacity: setWordOpacity } = useOpacityAnimation({
     initialOpacity: 1,
     duration: 200,
   });
+
+  // Handle the animation reversal after a brief delay
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+
+    if (needsReverseAnimation) {
+      timer = setTimeout(() => {
+        reversePressAnimation();
+        setNeedsReverseAnimation(false);
+      }, 200);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [needsReverseAnimation, reversePressAnimation]);
 
   // Calculate absolute position considering page scroll - memoized for performance
   const absoluteLayout = useMemo(
@@ -78,6 +96,14 @@ function ArabicWordComponent({
     setBorderOpacity(isSelected ? 1 : 0);
   }, [isSelected, setBorderOpacity]);
 
+  // Ensure proper opacity when tooltip is closed
+  useEffect(() => {
+    if (!tooltipVisible) {
+      // When tooltip is hidden, ensure full opacity
+      setWordOpacity(1);
+    }
+  }, [tooltipVisible, setWordOpacity]);
+
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setLayout(event.nativeEvent.layout);
@@ -93,32 +119,21 @@ function ArabicWordComponent({
   const handlePress = useCallback(() => {
     if (!layout) return;
     startPressAnimation();
-    setWordOpacity(0.5, () => {
+    const fadeOpacity = isDarkMode ? 0.7 : 0.5;
+
+    setWordOpacity(fadeOpacity, () => {
       setTooltipVisible(true);
       reversePressAnimation();
     });
-  }, [layout, setWordOpacity, startPressAnimation, reversePressAnimation]);
+  }, [layout, setWordOpacity, startPressAnimation, reversePressAnimation, isDarkMode]);
 
   // Handle tooltip close
   const handleTooltipClose = useCallback(() => {
+    // Always restore full opacity when tooltip closes
     setWordOpacity(1, () => {
       setTooltipVisible(false);
     });
   }, [setWordOpacity]);
-
-  // Add to study list on long press with animated feedback
-  const handleLongPress = useCallback(() => {
-    lightFeedback();
-    onPress(word);
-    startPressAnimation();
-
-    setTimeout(() => {
-      reversePressAnimation();
-      setWordOpacity(1, () => {
-        setTooltipVisible(false);
-      });
-    }, 300);
-  }, [onPress, word, startPressAnimation, reversePressAnimation, setWordOpacity]);
 
   // Calculate font size once outside the memo to avoid recalculations
   const calculatedFontSize = baseSize * scale;
@@ -129,17 +144,28 @@ function ArabicWordComponent({
       type: 'arabic' as const,
       variant: isSelected ? ('primary' as const) : undefined,
       skipDefaultColor: true,
-      colorName: tooltipVisible
-        ? ('textTertiary' as const)
-        : isSelected
-          ? ('tint' as const)
-          : ('text' as const),
+      colorName: tooltipVisible ? ('textTertiary' as const) : ('arabicText' as const),
       arabicFontSize: calculatedFontSize,
       weight: isSelected ? ('600' as const) : ('normal' as const),
       style: styles.textStyle,
     }),
     [isSelected, calculatedFontSize, tooltipVisible]
   );
+
+  // Add to study list on long press with animated feedback
+  const handleLongPress = useCallback(() => {
+    // Provide haptic feedback
+    lightFeedback();
+
+    // Execute the animation and selection separately
+    startPressAnimation();
+
+    // Schedule the reverse animation using state
+    setNeedsReverseAnimation(true);
+
+    // Then handle selection
+    onPress(word);
+  }, [onPress, word, startPressAnimation]);
 
   return (
     <>
@@ -155,10 +181,10 @@ function ArabicWordComponent({
           style={[
             styles.container,
             pressStyle as AnimatedStyles,
-            borderStyle as AnimatedStyles,
-            fadeStyle as AnimatedStyles,
             {
-              borderBottomColor: isSelected ? colors.textOverlay : 'transparent',
+              opacity: Number(tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1),
+              borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
+              borderBottomColor: isSelected ? colors.textOverlay : Colors.light.transparent,
             },
           ]}
         >
@@ -197,7 +223,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
-    borderBottomColor: 'transparent',
   },
   textStyle: {
     paddingVertical: 0,

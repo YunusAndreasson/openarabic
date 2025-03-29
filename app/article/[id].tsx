@@ -108,13 +108,11 @@ export default function ArticleScreen() {
   const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
   const queryClient = useQueryClient();
 
-  // Track component mounted state
-  const isMountedRef = useRef(true);
-
   // Track previous audio state to detect transitions
 
   // Scroll position tracking
   const prevScrollYValue = useRef(0);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
   // Play/Stop button state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -261,12 +259,21 @@ export default function ArticleScreen() {
   // Handle scroll with animation
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const isScrollingUp = currentScrollY < prevScrollYValue.current;
+      const isAtTop = currentScrollY <= 0;
+      const shouldBeVisible = isScrollingUp || isAtTop;
+
+      if (isHeaderVisible !== shouldBeVisible) {
+        setIsHeaderVisible(shouldBeVisible);
+      }
+
       if (event.nativeEvent.contentOffset.y <= 0) {
         prevScrollYValue.current = 0;
       }
       handleAnimationScroll(event, prevScrollYValue);
     },
-    [handleAnimationScroll]
+    [handleAnimationScroll, isHeaderVisible]
   );
 
   // Component renderers
@@ -391,7 +398,7 @@ export default function ArticleScreen() {
         style={[styles.container, { backgroundColor: colors.background }]}
         useSafeArea={false}
       >
-        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
         <View style={[styles.loadingContainer]}>
           <LoadingScreen />
         </View>
@@ -406,7 +413,7 @@ export default function ArticleScreen() {
   if (!article) {
     return (
       <ThemedView style={styles.container} useSafeArea={false}>
-        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
         <View style={[styles.notFoundContainer, { paddingTop: insets.top }]}>
           <ThemedText>Article not found</ThemedText>
         </View>
@@ -420,7 +427,12 @@ export default function ArticleScreen() {
   // Main article view
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
-      <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} />
+      <StatusBar
+        style={isDarkMode ? 'light' : 'dark'}
+        translucent={true}
+        animated={true}
+        hidden={!isHeaderVisible}
+      />
 
       {/* Static buttons are always rendered */}
       <StaticButtons />
