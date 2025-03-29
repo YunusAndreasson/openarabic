@@ -1,4 +1,5 @@
 import { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
+import { ImageContentPosition, ImageTransition } from 'expo-image';
 
 /**
  * Image configuration options
@@ -7,7 +8,7 @@ export interface ImageConfig {
   /** How the image should fit within its container */
   contentFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
   /** Transition duration in milliseconds */
-  transition?: number;
+  transition?: number | ImageTransition;
   /** Whether to show loading indicator */
   showLoadingIndicator?: boolean;
   /** Caching policy for the image */
@@ -26,6 +27,9 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Content fit mode */
   contentFit?: ImageConfig['contentFit'];
 
+  /** Content position within container */
+  contentPosition?: ImageContentPosition;
+
   /** Whether to show loading indicator */
   showLoadingIndicator?: boolean;
 
@@ -41,8 +45,11 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** For testing/debugging - disable optimizations */
   disableOptimization?: boolean;
 
-  /** Image transition duration in ms */
-  transition?: number;
+  /** Image transition duration in ms or transition object */
+  transition?: number | ImageTransition;
+
+  /** Skip transition effect entirely */
+  skipTransition?: boolean;
 
   /** Caching policy */
   cachePolicy?: ImageConfig['cachePolicy'];
@@ -71,6 +78,12 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Whether to prefetch this image before it's displayed */
   prefetch?: boolean;
 
+  /** ThumbHash string for efficient placeholder generation */
+  thumbhash?: string;
+
   /** Placeholder image using blurhash or thumbhash */
   placeholder?: { blurhash?: string; thumbhash?: string };
+
+  /** Whether animated images should automatically play */
+  autoplay?: boolean;
 }

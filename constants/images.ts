@@ -8,4 +8,7 @@ export const DEFAULT_IMAGES = {
 
   /** Default blurhash for article placeholder */
   ARTICLE_PLACEHOLDER_BLURHASH: 'L9R:+n%M-;-;~qxu-;M{-;IU%Mt7',
+
+  /** Default thumbhash for article placeholder - more efficient than blurhash */
+  ARTICLE_PLACEHOLDER_THUMBHASH: 'FQQODgAAGx8rAAAAAAAAAAAANwAAGgAGaAAA',
 } as const;

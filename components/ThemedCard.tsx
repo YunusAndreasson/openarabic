@@ -104,15 +104,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
               /* Handle image load error silently */
             }}
             contentFit="cover"
-            transition={500}
-            showLoadingIndicator={true}
+            skipTransition={true}
             cachePolicy="memory-disk"
             alt={`Image for ${props.title}`}
             blurRadius={1}
             priority="high"
             placeholder={
               props.placeholder || {
-                blurhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_BLURHASH,
+                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
             prefetch={true}
@@ -176,8 +175,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             source={props.article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
             style={styles.image}
             contentFit="cover"
-            showLoadingIndicator={true}
-            transition={300}
+            skipTransition={true}
             onError={() => {
               /* Handle image load error silently */
             }}
@@ -185,7 +183,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             priority="high"
             placeholder={
               props.article.placeholder || {
-                blurhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_BLURHASH,
+                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
             prefetch={true}
