@@ -11,7 +11,6 @@ export * from './animations/useToggleAnimation';
 export * from './animations/useGraphAnimation';
 export * from './animations/useFloatingButtonAnimation';
 export * from './animations/useProgressAnimation';
-export * from './animations/useScrollVisibility';
 
 // Auth hooks
 export * from './useAuth';

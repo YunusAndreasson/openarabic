@@ -29,7 +29,6 @@ export { useToggleAnimation } from './useToggleAnimation';
 export { useGraphAnimation } from './useGraphAnimation';
 export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
-export { useScrollVisibility } from './useScrollVisibility';
 export { useScreenAnimation } from './useScreenAnimation';
 export { useScreenAnimations } from './useScreenAnimations';
 
