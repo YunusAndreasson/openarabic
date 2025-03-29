@@ -132,12 +132,6 @@ export const AppLoader: React.FC<AppLoaderProps> = ({ color }) => {
   );
 };
 
-// Component display names for debugging
-Loader.displayName = 'Loader';
-LoadingScreen.displayName = 'LoadingScreen';
-LoadingContainer.displayName = 'LoadingContainer';
-AppLoader.displayName = 'AppLoader';
-
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',

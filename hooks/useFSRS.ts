@@ -45,7 +45,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         const data = await studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit: 50 });
         return data as StudyWord[];
       } catch (error) {
-        console.error('Error fetching due words:', error);
         throw error;
       }
     },
@@ -178,14 +177,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     async (sentenceWordId: number, success: boolean) => {
       // Basic validation
       if (!userId || !currentWord) {
-        console.error('[Word Update] Cannot update word: userId or currentWord is missing');
         return;
       }
 
       if (currentWord.sentence_word_id !== sentenceWordId) {
-        console.error(
-          `[Word Update] Word ID mismatch: ${currentWord.sentence_word_id} vs ${sentenceWordId}`
-        );
         return;
       }
 

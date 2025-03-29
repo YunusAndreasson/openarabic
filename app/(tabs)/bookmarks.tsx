@@ -342,11 +342,6 @@ export default function BookmarksScreen() {
       startLoading();
     } else {
       stopLoading();
-
-      // Log for debugging
-      if (isError) {
-        console.error('Error loading reading list:', error);
-      }
     }
   }, [
     isAuthLoading,

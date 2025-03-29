@@ -1,9 +1,8 @@
 import { Easing } from 'react-native-reanimated';
 
-// Create default easing functions that are safe in test environments
+// Create easing functions with fallbacks for environments without Reanimated
 const createDefaultEasing = () => {
   try {
-    // Try to use Reanimated's Easing if available
     if (Easing && typeof Easing.out === 'function' && typeof Easing.quad === 'function') {
       return {
         quad: Easing.quad,
@@ -15,13 +14,10 @@ const createDefaultEasing = () => {
       };
     }
   } catch (e) {
-    // Log error but continue with fallbacks
+    // Use fallback implementations
   }
 
-  // Fallback implementation for tests
-  // These properly type and implement easing functions that return proper easing functions
-
-  // Correctly typed composable functions that return an easing function
+  // Fallback implementations
   const composableOut = (easingFn: (t: number) => number) => (t: number) => {
     return 1 - easingFn(1 - t);
   };
@@ -37,10 +33,7 @@ const createDefaultEasing = () => {
   const quadFallback = (t: number) => t * t;
   const cubicFallback = (t: number) => t * t * t;
   const bezierFallback = (_x1: number, _y1: number, _x2: number, _y2: number) => {
-    return (t: number) => {
-      // Very basic bezier implementation, not accurate but safe for testing
-      return t;
-    };
+    return (t: number) => t;
   };
 
   return {

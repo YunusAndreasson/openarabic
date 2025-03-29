@@ -57,12 +57,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Memoized article item renderer for better performance
-
-// Add prefetch scheduling to reduce network spikes
-const PREFETCH_BATCH_SIZE = 5;
-const PREFETCH_DELAY_MS = 300;
-
 export default function ArticlesScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -85,9 +79,9 @@ export default function ArticlesScreen() {
   } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 900000, // Keep in cache for 15 minutes
-    retry: 2, // Add retry capability
+    staleTime: 600000, // Match preloader's 10 minutes
+    gcTime: 1800000, // Match preloader's 30 minutes
+    retry: 2,
   });
 
   // Use React Query for categories
@@ -178,48 +172,6 @@ export default function ArticlesScreen() {
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Add prefetching for first few articles when data is loaded - optimized with batching
-  useEffect(() => {
-    if (articlesData.length > 0 && !isArticlesLoading) {
-      // Prefetch articles in small batches to avoid network spikes
-      const prefetchArticlesBatched = () => {
-        const articlesToPreload = articlesData.slice(0, Math.min(15, articlesData.length));
-
-        // Process in small batches with delays between batches
-        for (let i = 0; i < articlesToPreload.length; i += PREFETCH_BATCH_SIZE) {
-          const batch = articlesToPreload.slice(i, i + PREFETCH_BATCH_SIZE);
-
-          setTimeout(
-            () => {
-              batch.forEach(article => {
-                // Always prefetch article data with no caching
-                queryClient.prefetchQuery({
-                  queryKey: ['article', article.id],
-                  queryFn: () => articlesService.getArticleById(article.id),
-                  staleTime: 0, // No caching
-                  gcTime: 0, // No cache retention
-                });
-
-                // Prefetch reading list status if logged in
-                if (session?.user) {
-                  queryClient.prefetchQuery({
-                    queryKey: ['isInReadingList', session.user.id, article.id],
-                    queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-                    staleTime: 0, // No caching
-                    gcTime: 0, // No cache retention
-                  });
-                }
-              });
-            },
-            (i * PREFETCH_DELAY_MS) / PREFETCH_BATCH_SIZE
-          ); // Stagger the batches
-        }
-      };
-
-      prefetchArticlesBatched();
-    }
-  }, [articlesData, isArticlesLoading, queryClient, session]);
-
   const handleArticlePress = useCallback(
     (article: Article) => {
       // Only prefetch critical data needed for immediate display
@@ -282,59 +234,13 @@ export default function ArticlesScreen() {
     }
   }, [handleRefresh]);
 
-  // Add effect to prefetch article details for visible articles
-  useEffect(() => {
-    // Function to prefetch data for all visible articles
-    const prefetchVisible = () => {
-      if (articlesData.length === 0) return;
-
-      // Get the most important articles to prefetch (first 5)
-      const criticalArticles = articlesData.slice(0, 5);
-
-      // Prefetch these immediately with higher priority
-      criticalArticles.forEach(article => {
-        queryClient.prefetchQuery({
-          queryKey: ['article', article.id],
-          queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: 0, // No caching
-          gcTime: 0, // No cache retention
-        });
-      });
-
-      // Prefetch the rest with lower priority after a delay
-      if (articlesData.length > 5) {
-        setTimeout(() => {
-          const remainingArticles = articlesData.slice(5, 15);
-          remainingArticles.forEach(article => {
-            queryClient.prefetchQuery({
-              queryKey: ['article', article.id],
-              queryFn: () => articlesService.getArticleById(article.id),
-              staleTime: 0, // No caching
-              gcTime: 0, // No cache retention
-            });
-          });
-        }, 1000); // Delay by 1 second to prioritize rendering
-      }
-    };
-
-    // Call prefetch when articles data is loaded and not loading
-    if (articlesData.length > 0 && !isArticlesLoading) {
-      prefetchVisible();
-    }
-  }, [articlesData, isArticlesLoading, queryClient]);
-
-  // Optimize the data ready check to allow faster rendering
+  // Update the loading check to consider preloader state
   const isDataReady = useMemo(() => {
     // Consider data ready in any of these conditions:
     // 1. We have articles data
-    // 2. We're loading but have cache
-    // 3. We're not loading but have an error (show error state)
-    return (
-      articlesData.length > 0 ||
-      (isArticlesLoading && queryClient.getQueryState(['articles'])?.data !== undefined) ||
-      (!isArticlesLoading && !!articlesError)
-    );
-  }, [articlesData.length, isArticlesLoading, articlesError, queryClient]);
+    // 2. We have an error to display
+    return articlesData.length > 0 || (!isArticlesLoading && !!articlesError);
+  }, [articlesData.length, isArticlesLoading, articlesError]);
 
   // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
@@ -496,8 +402,8 @@ export default function ArticlesScreen() {
     [insets, colors.background]
   );
 
-  // If no cached data and still loading, show a minimal loading screen
-  if ((isArticlesLoading && articlesData.length === 0 && !isDataCached) || isRefreshing) {
+  // If no data and still loading, show loading screen
+  if (isArticlesLoading && articlesData.length === 0) {
     return <LoadingScreen />;
   }
 

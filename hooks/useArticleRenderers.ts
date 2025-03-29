@@ -35,7 +35,6 @@ export const useArticleRenderers = (
       const wordId = word.id;
       const stringWordId = String(wordId);
 
-      // Remove debug logs - they're causing performance issues during scrolling
       // Check both number and string formats to ensure robust matching
       const isSelected =
         selectedWordIds.has(wordId) ||

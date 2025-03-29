@@ -124,8 +124,7 @@ export const readingListService = {
       .match({ user_id: userId, article_id: articleId });
 
     if (error) {
-      console.error('Error removing from reading list:', error);
-      throw error;
+      throw new Error(`Failed to remove article from reading list: ${error.message}`);
     }
   },
 

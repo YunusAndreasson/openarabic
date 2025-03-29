@@ -4,7 +4,6 @@ import {
   ThemeProvider as NavigationThemeProvider,
 } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useReactQueryDevTools } from '@dev-plugins/react-query';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -20,7 +19,6 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { Theme } from '@/constants/Colors';
 import { useColors } from '@/hooks/useColors';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { configureReanimatedLogger } from 'react-native-reanimated';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { AppLoader } from '@/components/Loader';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -31,27 +29,20 @@ import { LAYOUT } from '@/constants/layout';
 // Hide splash screen immediately
 SplashScreen.hideAsync();
 
-// Configure Reanimated logger to disable strict mode
-// This will suppress warnings about property "opacity" being overwritten by a layout animation
-configureReanimatedLogger({
-  strict: false,
-});
-
 // Create React Query client with more balanced caching defaults
-// Individual queries can override these settings as needed
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60000, // Consider data stale after 1 minute
-      gcTime: 300000, // Keep unused data in cache for 5 minutes
-      refetchOnWindowFocus: true, // Still refetch on focus
-      refetchOnMount: true, // Still refetch on mount
-      refetchOnReconnect: true, // Still refetch on reconnect
-      retry: 1, // Add minimal retry
+      staleTime: 60000,
+      gcTime: 300000,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+      retry: 1,
     },
     mutations: {
-      retry: 1, // Add minimal retry for mutations
-      gcTime: 0, // No cache for mutations
+      retry: 1,
+      gcTime: 0,
     },
   },
 });
@@ -92,11 +83,6 @@ function AppContent() {
   // Use the app preloader hook to preload data
   const { preloadAppData, isLoaded } = useAppPreloader();
 
-  // Add logging to track preloading status
-  useEffect(() => {
-    console.log('App preloading status:', { isLoaded, isAuthLoading });
-  }, [isLoaded, isAuthLoading]);
-
   // Sync theme with system on first load and changes
   useEffect(() => {
     // Only sync on first load or when no explicit theme is set
@@ -111,10 +97,6 @@ function AppContent() {
       // Authentication is resolved (whether user is logged in or not)
       // This ensures we don't start preloading before auth is complete
       preloadAppData();
-
-      if (authError) {
-        console.error('Auth error during app initialization:', authError);
-      }
     }
   }, [isAuthLoading, preloadAppData, authError]);
 
@@ -226,8 +208,6 @@ function ErrorFallback({ error }: FallbackProps) {
 }
 
 export default function RootLayout() {
-  useReactQueryDevTools(queryClient);
-
   return (
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>

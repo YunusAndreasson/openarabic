@@ -181,15 +181,6 @@ export default function SettingsScreen() {
     Linking.openURL(url);
   };
 
-  // Add logging to help debug
-  useEffect(() => {
-    console.log('Settings screen debug -', {
-      isLoaded,
-      isLoadingState,
-      isLayoutReady,
-    });
-  }, [isLoaded, isLoadingState, isLayoutReady]);
-
   // Use cached data to render a skeleton while loading or layout not ready or settings not ready
   if (isLoadingState) {
     return (

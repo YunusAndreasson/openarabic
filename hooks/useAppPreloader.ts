@@ -13,7 +13,7 @@ export const useAppPreloader = () => {
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);
-  const [isLoaded, setIsLoaded] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
   const preloadLockRef = useRef(false);
 
   // Main preloading function
@@ -78,9 +78,21 @@ export const useAppPreloader = () => {
         );
       }
 
-      await Promise.all(promises);
+      // Wait for all promises to resolve
+      const results = await Promise.all(promises);
+
+      // Only set loaded if we have articles data
+      const articlesData = results[0]; // First promise is articles
+      if (Array.isArray(articlesData) && articlesData.length > 0) {
+        setIsLoaded(true);
+      } else {
+        console.warn('Articles data not loaded properly');
+        setIsLoaded(false);
+      }
+    } catch (error) {
+      console.error('Error preloading app data:', error);
+      setIsLoaded(false);
     } finally {
-      setIsLoaded(true);
       setIsPreloading(false);
       preloadLockRef.current = false;
     }

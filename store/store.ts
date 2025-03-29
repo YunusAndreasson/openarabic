@@ -2,7 +2,6 @@ import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import themeReducer from './themeSlice';
 import settingsReducer from './settingsSlice';
 import readingListReducer from './readingListSlice';
-import devToolsEnhancer from 'redux-devtools-expo-dev-plugin';
 import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -24,11 +23,9 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
   reducer: persistedReducer,
-  devTools: false,
-  enhancers: getDefaultEnhancers => getDefaultEnhancers().concat(devToolsEnhancer()),
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
-      serializableCheck: false, // Disable serializable check in development
+      serializableCheck: false,
     }),
 });
 

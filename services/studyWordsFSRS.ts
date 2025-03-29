@@ -203,8 +203,7 @@ export const studyWordsFSRSService = {
         .eq('sentence_word_id', sentenceWordId);
 
       if (reviewsDeleteError) {
-        console.error('Error deleting reviews:', reviewsDeleteError);
-        throw reviewsDeleteError;
+        throw new Error(`Failed to delete reviews: ${reviewsDeleteError.message}`);
       }
 
       // After deleting reviews, delete the study word
@@ -215,8 +214,7 @@ export const studyWordsFSRSService = {
         .eq('sentence_word_id', sentenceWordId);
 
       if (deleteError) {
-        console.error('Error deleting study word:', deleteError);
-        throw deleteError;
+        throw new Error(`Failed to delete study word: ${deleteError.message}`);
       }
 
       return false;

@@ -81,7 +81,6 @@ function CategoryPillsComponent({
 
 // Memoize the entire component
 export const CategoryPills = React.memo(CategoryPillsComponent);
-CategoryPills.displayName = 'CategoryPills';
 
 const styles = StyleSheet.create({
   container: {
