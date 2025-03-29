@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
-import { studyWordsFSRSService } from '../services/studyWordsFSRS';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
@@ -61,7 +61,7 @@ export const useAppPreloader = () => {
           }),
 
           queryClient.fetchQuery({
-            queryKey: ['dueWords', user.id],
+            queryKey: FSRS_QUERY_KEYS.due(user.id),
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
             staleTime: 180000, // 3 minutes
             gcTime: 300000, // 5 minutes
@@ -69,7 +69,7 @@ export const useAppPreloader = () => {
           }),
 
           queryClient.fetchQuery({
-            queryKey: ['studyWords', user.id],
+            queryKey: FSRS_QUERY_KEYS.all(user.id),
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
             staleTime: 300000, // 5 minutes
             gcTime: 600000, // 10 minutes
@@ -139,10 +139,10 @@ export const useAppPreloader = () => {
     if (!user?.id) return false;
 
     try {
-      // Use consistent cache settings
+      // Use consistent cache settings and consistent query keys from FSRS_QUERY_KEYS
       await Promise.allSettled([
         queryClient.prefetchQuery({
-          queryKey: ['dueWords', user.id],
+          queryKey: FSRS_QUERY_KEYS.due(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
           staleTime: 120000,
           gcTime: 300000,
@@ -150,7 +150,7 @@ export const useAppPreloader = () => {
         }),
 
         queryClient.prefetchQuery({
-          queryKey: ['studyWords', user.id],
+          queryKey: FSRS_QUERY_KEYS.all(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
           staleTime: 180000,
           gcTime: 600000,
@@ -171,7 +171,10 @@ export const useAppPreloader = () => {
 
     const queriesToInvalidate = [['articles'], ['categories']];
     if (user?.id) {
-      queriesToInvalidate.push(['studyWords', user.id], ['dueWords', user.id]);
+      queriesToInvalidate.push(
+        [...FSRS_QUERY_KEYS.all(user.id)],
+        [...FSRS_QUERY_KEYS.due(user.id)]
+      );
     }
 
     try {

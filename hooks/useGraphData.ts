@@ -15,24 +15,25 @@ export function useGraphData(
 ): GraphPaths {
   // Consolidate all calculations into a single useMemo
   return useMemo(() => {
-    // Handle edge cases
-    if (data.length <= 1) {
-      const maxValue = 5;
-      let points: GraphProcessedPoint[] = [];
-      let areaPath = '';
-      let linePath = '';
+    // Default values for empty or single point data
+    const maxValue = Math.max(5, ...data.map(d => d.wordsLearned));
+    const points: GraphProcessedPoint[] = [];
+    let areaPath = '';
+    let linePath = '';
 
-      if (data.length === 1) {
-        const point: GraphProcessedPoint = {
-          x: graphWidth / 2,
-          y: graphHeight - (data[0].wordsLearned / maxValue) * graphHeight,
-          value: data[0].wordsLearned,
-          label: data[0].date,
-        };
-        points = [{ ...point, x: 0 }, point, { ...point, x: graphWidth }];
-        areaPath = `M ${point.x} ${point.y} L ${point.x} ${graphHeight} L ${point.x} ${graphHeight} Z`;
-        linePath = `M ${point.x - 10} ${point.y} L ${point.x + 10} ${point.y}`;
-      }
+    // If no data or single point, create a flat line at 0
+    if (data.length <= 1) {
+      // Create points at 0 height
+      const y = graphHeight;
+      points.push(
+        { x: 0, y, value: 0, label: 'Day 1' },
+        { x: graphWidth / 2, y, value: 0, label: 'Day 2' },
+        { x: graphWidth, y, value: 0, label: 'Day 3' }
+      );
+
+      // Create flat line paths
+      areaPath = `M 0 ${y} L ${graphWidth} ${y} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`;
+      linePath = `M 0 ${y} L ${graphWidth} ${y}`;
 
       return {
         points,
@@ -44,88 +45,53 @@ export function useGraphData(
       };
     }
 
-    // Check if all values are zero - provide useful defaults
-    const allZeroValues = data.every(item => item.wordsLearned === 0);
-    if (allZeroValues) {
-      // Generate default points (flat line at bottom)
-      const maxValue = 5; // Set a default scale
-
-      const points = data.map((item, index) => {
-        const x = (index / (data.length - 1)) * graphWidth;
-        const y = graphHeight; // At the bottom
-        return {
-          x,
-          y,
-          value: 0,
-          label: item.date,
-        } as GraphProcessedPoint;
-      });
-
-      // Create a flat line path
-      const linePath = `M 0 ${graphHeight} L ${graphWidth} ${graphHeight}`;
-
-      // Create a flat area path (zero height rectangle)
-      const areaPath = `M 0 ${graphHeight} L ${graphWidth} ${graphHeight} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`;
-
-      return {
-        points,
-        areaPath,
-        linePath,
-        totalWordsLearned: 0,
-        dailyAverage: 0,
-        maxValue,
-      };
-    }
-
-    // Calculate max value - ensure we have a non-zero scale
-    const maxWords = Math.max(...data.map(item => item.wordsLearned), 0);
-    const maxValue = maxWords === 0 ? 5 : Math.ceil((maxWords * 1.05) / 5) * 5;
-
-    // Calculate segment width for points
-    const segmentWidth = graphWidth / (data.length - 1);
-
-    // Generate points
-    const points = data.map((item, index) => {
-      const x = index * segmentWidth;
+    // Process multiple data points
+    const xStep = graphWidth / (data.length - 1);
+    data.forEach((item, index) => {
+      const x = index * xStep;
       const y = graphHeight - (item.wordsLearned / maxValue) * graphHeight;
-      return {
+      points.push({
         x,
         y,
         value: item.wordsLearned,
         label: item.date,
-      } as GraphProcessedPoint;
+      });
     });
 
-    // Generate both paths in a single pass
-    let linePath = `M ${points[0].x} ${points[0].y}`;
-    let areaPath = `M ${points[0].x} ${points[0].y}`;
+    // Generate smooth curve paths using cubic bezier curves
 
-    // Create smooth curve using cubic bezier curves
+    // Start path with a move to the first point
+    linePath = `M ${points[0].x} ${points[0].y}`;
+    areaPath = `M ${points[0].x} ${points[0].y}`;
+
+    // For each segment between points, create a smooth curve
     for (let i = 0; i < points.length - 1; i++) {
       const current = points[i];
       const next = points[i + 1];
 
       // Calculate control points for smooth curve
-      const xDistance = next.x - current.x;
-      const controlPointX1 = current.x + xDistance / 3;
-      const controlPointY1 = current.y;
-      const controlPointX2 = next.x - xDistance / 3;
-      const controlPointY2 = next.y;
+      // Control points are positioned at 1/3 and 2/3 along the x-distance between points
+      const xDiff = next.x - current.x;
+      const cp1x = current.x + xDiff / 3;
+      const cp2x = current.x + (xDiff * 2) / 3;
 
-      // Add cubic bezier curve command (same for both paths)
-      const bezierCommand = ` C ${controlPointX1} ${controlPointY1}, ${controlPointX2} ${controlPointY2}, ${next.x} ${next.y}`;
-      linePath += bezierCommand;
-      areaPath += bezierCommand;
+      // Keep control points at the same y-level as their anchor points
+      // This creates a smooth, natural curve
+      const cp1y = current.y;
+      const cp2y = next.y;
+
+      // Add cubic bezier curve segment to the path
+      linePath += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
+      areaPath += ` C ${cp1x},${cp1y} ${cp2x},${cp2y} ${next.x},${next.y}`;
     }
 
-    // Complete the area path
-    areaPath += ` L ${points[points.length - 1].x} ${graphHeight}`;
-    areaPath += ` L ${points[0].x} ${graphHeight}`;
-    areaPath += ' Z'; // Close the path
+    // Complete the area path by adding lines to the bottom corners and back to start
+    const lastPoint = points[points.length - 1];
+    areaPath += ` L ${lastPoint.x} ${graphHeight} L ${points[0].x} ${graphHeight} Z`;
 
-    // Calculate stats in the same pass
+    // Calculate statistics
     const totalWordsLearned = data.reduce((sum, item) => sum + item.wordsLearned, 0);
-    const dailyAverage = Math.round((totalWordsLearned / data.length) * 10) / 10;
+    const dailyAverage = totalWordsLearned / data.length;
 
     return {
       points,

@@ -114,7 +114,9 @@ export function useVocabularyStats(studyWords: StudyWord[], dueWordsData: StudyW
   // Combine stats with safe defaults
   const stats = useMemo<VocabularyStats>(
     () => ({
-      ...baseStats,
+      totalWords: baseStats.totalWords || 0,
+      dueWords: baseStats.dueWords || 0,
+      newWordsCount: baseStats.newWordsCount || 0,
       ...(advancedStats ?? {
         successRate: 0,
         averageInterval: 0,

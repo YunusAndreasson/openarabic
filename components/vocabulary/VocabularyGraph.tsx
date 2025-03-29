@@ -182,16 +182,7 @@ export const VocabularyGraph = React.memo(
       <View style={[graphContainerStyle, styles.loadingContainer]}>
         <LoadingContainer size="small" />
         <ThemedText type="body" variant="secondary">
-          {data.length === 0 ? 'No data available' : 'Loading data...'}
-        </ThemedText>
-      </View>
-    );
-
-    // Handle case when we have data structure but no actual learning data
-    const emptyDataMessage = (
-      <View style={styles.emptyDataContainer}>
-        <ThemedText type="body" variant="secondary" style={styles.emptyDataText}>
-          No progress data yet. Review words to see your progress here.
+          Loading data...
         </ThemedText>
       </View>
     );
@@ -210,115 +201,105 @@ export const VocabularyGraph = React.memo(
           shadowSize="medium"
         >
           {cardHeader}
-
-          {!hasLearningData && data.length > 0 ? (
-            emptyDataMessage
-          ) : (
-            <View
-              style={graphContainerStyle}
-              accessible={true}
-              accessibilityLabel="Graph showing vocabulary progress over time"
-            >
-              <Canvas style={canvasStyle}>
-                {/* Grid lines */}
-                {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
-                  const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
-                  return (
-                    <Line
-                      key={index}
-                      p1={{ x: 0, y }}
-                      p2={{ x: GRAPH_WIDTH, y }}
-                      color={withOpacity(colors.text, 0.08)}
-                      strokeWidth={1}
-                    />
-                  );
-                })}
-
-                {/* Area under the curve with gradient */}
-                {hasData && (
-                  <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
-                    <LinearGradient
-                      start={vec(0, 0)}
-                      end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
-                      colors={gradientColors}
-                    />
-                    <Path path={areaPath} />
-                    <BlurMask blur={5} style="normal" />
-                  </Group>
-                )}
-
-                {/* Line for the graph - more subtle */}
-                {hasData && (
-                  <Group transform={[{ translateY: TOP_PADDING }]}>
-                    <Path
-                      path={linePath}
-                      style="stroke"
-                      strokeWidth={2.5}
-                      color={withOpacity(colors.text, 0.44)}
-                      strokeJoin="round"
-                      strokeCap="round"
-                      start={0}
-                      end={animationProgress}
-                    />
-                    <BlurMask blur={1} style="normal" />
-                  </Group>
-                )}
-
-                {/* Data points */}
-                {hasData &&
-                  points.map((point, index) => {
-                    // Calculate the point's position in the animation sequence
-                    const pointPosition = index / (points.length - 1);
-
-                    return (
-                      <Group
-                        key={index}
-                        opacity={animationProgress.value >= pointPosition ? 1 : 0}
-                        transform={[{ translateY: TOP_PADDING }]}
-                      >
-                        {/* Outer circle */}
-                        <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
-                        {/* Inner circle */}
-                        <Circle
-                          cx={point.x}
-                          cy={point.y}
-                          r={2.5}
-                          color={withOpacity(colors.text, 0.56)}
-                        />
-                      </Group>
-                    );
-                  })}
-              </Canvas>
-
-              {/* X-axis labels using regular React Native Text */}
-              <View
-                style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
-                accessible={true}
-                accessibilityLabel="Date and word count labels"
-              >
-                {data.map((item, index) => (
-                  <View
+          <View
+            style={graphContainerStyle}
+            accessible={true}
+            accessibilityLabel="Graph showing vocabulary progress over time"
+          >
+            <Canvas style={canvasStyle}>
+              {/* Grid lines */}
+              {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+                const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
+                return (
+                  <Line
                     key={index}
-                    style={styles.labelContainer}
-                    accessible={true}
-                    accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}
+                    p1={{ x: 0, y }}
+                    p2={{ x: GRAPH_WIDTH, y }}
+                    color={withOpacity(colors.text, 0.08)}
+                    strokeWidth={1}
+                  />
+                );
+              })}
+
+              {/* Area under the curve with gradient */}
+              <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
+                <LinearGradient
+                  start={vec(0, 0)}
+                  end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
+                  colors={gradientColors}
+                />
+                <Path path={areaPath} />
+                <BlurMask blur={5} style="normal" />
+              </Group>
+
+              {/* Line for the graph - more subtle */}
+              <Group transform={[{ translateY: TOP_PADDING }]}>
+                <Path
+                  path={linePath}
+                  style="stroke"
+                  strokeWidth={2.5}
+                  color={withOpacity(colors.text, 0.44)}
+                  strokeJoin="round"
+                  strokeCap="round"
+                  start={0}
+                  end={animationProgress}
+                />
+                <BlurMask blur={1} style="normal" />
+              </Group>
+
+              {/* Data points */}
+              {points.map((point, index) => {
+                // Calculate the point's position in the animation sequence
+                const pointPosition = index / (points.length - 1);
+
+                return (
+                  <Group
+                    key={index}
+                    opacity={animationProgress.value >= pointPosition ? 1 : 0}
+                    transform={[{ translateY: TOP_PADDING }]}
                   >
-                    <ThemedText type="caption" variant="primary" weight="500">
-                      {item.date}
-                    </ThemedText>
-                    <ThemedText
-                      type="caption"
-                      variant="secondary"
-                      weight="400"
-                      style={styles.wordCountText}
-                    >
-                      {item.wordsLearned}
-                    </ThemedText>
-                  </View>
-                ))}
-              </View>
+                    {/* Outer circle */}
+                    <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
+                    {/* Inner circle */}
+                    <Circle
+                      cx={point.x}
+                      cy={point.y}
+                      r={2.5}
+                      color={withOpacity(colors.text, 0.56)}
+                    />
+                  </Group>
+                );
+              })}
+            </Canvas>
+
+            {/* X-axis labels using regular React Native Text */}
+            <View
+              style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
+              accessible={true}
+              accessibilityLabel="Date and word count labels"
+            >
+              {data.map((item, index) => (
+                <View
+                  key={index}
+                  style={styles.labelContainer}
+                  accessible={true}
+                  accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}
+                >
+                  <ThemedText type="caption" variant="primary" weight="500">
+                    {item.date}
+                  </ThemedText>
+                  <ThemedText
+                    type="caption"
+                    variant="secondary"
+                    weight="400"
+                    style={styles.wordCountText}
+                  >
+                    {item.wordsLearned}
+                  </ThemedText>
+                </View>
+              ))}
             </View>
-          )}
+          </View>
         </BaseCard>
       </View>
     );

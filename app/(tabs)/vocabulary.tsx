@@ -23,6 +23,7 @@ import { useRouter } from 'expo-router';
 import { LoadingScreen } from '@/components/Loader';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
+import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -46,13 +47,23 @@ export default function VocabularyScreen() {
     React.useCallback(() => {
       if (user?.id) {
         // Only fetch if we don't have data already
-        const hasStudyWords = queryClient.getQueryData(['studyWords', user?.id]);
+        const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
         if (!hasStudyWords) {
           prefetchVocabularyData();
         }
       }
     }, [user?.id, prefetchVocabularyData, queryClient])
   );
+
+  // Also try to load data on first mount, not just on focus
+  React.useEffect(() => {
+    if (user?.id) {
+      const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
+      if (!hasStudyWords) {
+        prefetchVocabularyData();
+      }
+    }
+  }, [user?.id, prefetchVocabularyData, queryClient]);
 
   // Use the FSRS queries hook for data fetching
   const {
@@ -90,7 +101,7 @@ export default function VocabularyScreen() {
   // Use the screen focus refresh hook with debounce - with proper caching
   useScreenFocusRefresh(
     queryClient,
-    'dueWords',
+    FSRS_QUERY_KEYS.due(user?.id ?? '')[0],
     user?.id,
     120000, // Cache for 2 minutes (same as query)
     true, // Skip initial focus
@@ -99,7 +110,7 @@ export default function VocabularyScreen() {
 
   useScreenFocusRefresh(
     queryClient,
-    'studyWords',
+    FSRS_QUERY_KEYS.all(user?.id ?? '')[0],
     user?.id,
     180000, // Cache for 3 minutes (same as query)
     true, // Skip initial focus
@@ -109,7 +120,9 @@ export default function VocabularyScreen() {
   // Check if data is ready to display with loading protection
   const isDataReady = React.useMemo(() => {
     // If we have cached data, consider it ready immediately
-    if (queryClient.getQueryData(['studyWords', user?.id])) return true;
+    const hasCachedData =
+      user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)) !== undefined;
+    if (hasCachedData) return true;
 
     // Otherwise check loading states
     if (isAuthLoading || isDataLoading) return false;
@@ -155,8 +168,8 @@ export default function VocabularyScreen() {
   };
 
   // Check if data is already in cache to optimize loading behavior
-  const studyWordsQuery = queryClient.getQueryState(['studyWords', user?.id]);
-  const isDataCached = studyWordsQuery?.data !== undefined;
+  const isDataCached =
+    user?.id && queryClient.getQueryState(FSRS_QUERY_KEYS.all(user.id))?.data !== undefined;
 
   // Show loading screen during initial load or refresh
   if ((isDataLoading && !isDataCached) || isRefreshing) {

@@ -43,32 +43,34 @@ export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProg
     dayBuckets[dateString] = { date: dayName, count: 0, wordsLearned: 0 };
   });
 
-  // Process each study word
-  studyWords.forEach(word => {
-    // Skip invalid words
-    if (!word.fsrs_last_review) return;
+  // Process each study word if we have any
+  if (Array.isArray(studyWords) && studyWords.length > 0) {
+    studyWords.forEach(word => {
+      // Skip invalid words
+      if (!word.fsrs_last_review) return;
 
-    const reviewDate = new Date(word.fsrs_last_review);
-    reviewDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+      const reviewDate = new Date(word.fsrs_last_review);
+      reviewDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
 
-    // Check if review date is within the last 7 days
-    const reviewDateString = reviewDate.toISOString().split('T')[0];
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 6);
-    sevenDaysAgo.setHours(0, 0, 0, 0);
+      // Check if review date is within the last 7 days
+      const reviewDateString = reviewDate.toISOString().split('T')[0];
+      const sevenDaysAgo = new Date(today);
+      sevenDaysAgo.setDate(today.getDate() - 6);
+      sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
-      // Check if we have a bucket for this date
-      if (dayBuckets[reviewDateString]) {
-        // Count every review
-        dayBuckets[reviewDateString].count++;
-        // Consider ANY review a learning event
-        dayBuckets[reviewDateString].wordsLearned++;
+      if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
+        // Check if we have a bucket for this date
+        if (dayBuckets[reviewDateString]) {
+          // Count every review
+          dayBuckets[reviewDateString].count++;
+          // Consider ANY review a learning event
+          dayBuckets[reviewDateString].wordsLearned++;
+        }
       }
-    }
-  });
+    });
+  }
 
-  // Convert to array and sort by date
+  // Convert to array and sort by date - this will always return 7 days
   return Object.values(dayBuckets).sort((a, b) => {
     const dayOrder = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
     return dayOrder[a.date as keyof typeof dayOrder] - dayOrder[b.date as keyof typeof dayOrder];

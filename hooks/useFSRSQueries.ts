@@ -22,6 +22,7 @@ export function useFSRSQueries({ userId, category, limit }: UseFSRSQueriesOption
     enabled: !!userId,
     staleTime: 300000, // 5 minutes
     gcTime: 600000, // 10 minutes
+    initialData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
   });
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
@@ -32,7 +33,7 @@ export function useFSRSQueries({ userId, category, limit }: UseFSRSQueriesOption
     staleTime: 180000, // 3 minutes
     gcTime: 300000, // 5 minutes
     // Use data from allWordsQuery if available and filter client-side
-    placeholderData: () => {
+    initialData: () => {
       const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId!));
       if (allWords) {
         const now = new Date().toISOString();
@@ -50,7 +51,7 @@ export function useFSRSQueries({ userId, category, limit }: UseFSRSQueriesOption
     staleTime: 600000, // 10 minutes
     gcTime: 1800000, // 30 minutes
     // Use data from allWordsQuery if available
-    placeholderData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
+    initialData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
   });
 
   // Query for filtered words (by category) - uses moderate cache times
@@ -62,7 +63,7 @@ export function useFSRSQueries({ userId, category, limit }: UseFSRSQueriesOption
     staleTime: 300000, // 5 minutes
     gcTime: 600000, // 10 minutes
     // Use data from allWordsQuery if available
-    placeholderData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
+    initialData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
   });
 
   // Function to invalidate all FSRS queries
