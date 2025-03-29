@@ -18,9 +18,6 @@ export const WordTooltip = React.memo(
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
-    // Clean up the text by removing any duplicate spaces and trimming - done once
-    const cleanText = useMemo(() => text.replace(/\s+/g, ' ').trim(), [text]);
-
     // Setup transform animation for scale effect
     const {
       startAnimation: startScaleAnimation,
@@ -102,10 +99,10 @@ export const WordTooltip = React.memo(
           numberOfLines={2}
           ellipsizeMode="tail"
         >
-          {cleanText}
+          {text}
         </ThemedText>
       );
-    }, [cleanText, textColor]);
+    }, [text, textColor]);
 
     // Calculate tooltip position and adjust for screen edges
     const tooltipPositioning = useMemo(() => {
@@ -124,7 +121,7 @@ export const WordTooltip = React.memo(
       const tooltipTop = layout.y - TOOLTIP_MARGIN - ARROW_SIZE - TOOLTIP_HEIGHT;
 
       // Calculate width based on content length - tighter around the text
-      const textLength = cleanText.length;
+      const textLength = text.length;
       let tooltipWidth = Math.max(
         // Base on character count with some padding
         textLength * CHAR_WIDTH + SPACING * PADDING_MULTIPLIER * 2,
@@ -169,7 +166,7 @@ export const WordTooltip = React.memo(
       };
     }, [
       layout,
-      cleanText,
+      text,
       SPACING,
       ARROW_SIZE,
       TOOLTIP_HEIGHT,
