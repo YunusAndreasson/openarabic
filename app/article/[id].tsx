@@ -126,7 +126,7 @@ export default function ArticleScreen() {
   const { navigateTo } = useNavigationWithDebounce();
 
   // Audio player hook
-  const { loadAndPlayAudio, stopPlayback } = useAudioPlayer();
+  const { loadAndPlayAudio, stopPlayback, audioState } = useAudioPlayer();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -134,6 +134,24 @@ export default function ArticleScreen() {
     const parsed = parseInt(id as string, 10);
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
+
+  // Stabilize audio state changes
+  const stableAudioState = useMemo(() => {
+    // When audio finishes, it might rapidly transition through states
+    // We want to stabilize this by treating certain state combinations as "stopped"
+    if (audioState === 'idle' || audioState === 'error') {
+      return 'stopped';
+    } else if (audioState === 'playing') {
+      return 'playing';
+    } else {
+      return 'stopped';
+    }
+  }, [audioState]);
+
+  // Update isPlaying state when stable audio state changes
+  useEffect(() => {
+    setIsPlaying(stableAudioState === 'playing');
+  }, [stableAudioState]);
 
   // Use the custom loading state hook
   const { setDataLoaded } = useLoadingState(true);
