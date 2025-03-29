@@ -1,26 +1,18 @@
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import { useLocalSearchParams } from 'expo-router';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  Platform,
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-} from 'react-native';
+import { StyleSheet, View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
 import { ArabicWord } from '@/components/ArabicWord';
 import { LoadingScreen } from '@/components/Loader';
-import { ArticleSentence, ArticleHeader, RelatedArticlesFooter } from '@/components/article';
-import FloatingButton from '@/components/FloatingButton';
+import { ArticleSentence } from '@/components/article';
 import ThemedCard from '@/components/ThemedCard';
+import { ArticleButtons } from '@/components/article/ArticleButtons';
+import { ArticleContent } from '@/components/article/ArticleContent';
+import { ArticleNotFound } from '@/components/NotFound';
 
 // Hooks
 import { useColors } from '@/hooks/useColors';
@@ -38,7 +30,6 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 // Store
 
 // Constants
-import { LAYOUT } from '@/constants/layout';
 
 // Utils
 import { lightFeedback } from '@/utils/haptics';
@@ -53,46 +44,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-  },
-  sentenceList: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-  },
   contentContainer: {
     flex: 1,
-  },
-  floatingButton: {
-    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 0, // Remove the top padding since we're centering
-  },
-  notFoundContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 0, // Will be set dynamically with insets
-  },
-  // Static buttons container that won't use animations
-  staticButtonsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Higher than other content
-  },
-  userButtonActive: {
-    opacity: 1,
-  },
-  userButtonInactive: {
-    opacity: 0.3,
-  },
-  flexOne: {
-    flex: 1,
   },
 });
 
@@ -102,8 +61,6 @@ export default function ArticleScreen() {
   const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
-  const insets = useSafeAreaInsets();
-  const flatListRef = useRef<FlatList<Tables<'article_sentences'>>>(null);
   const queryClient = useQueryClient();
 
   // Track previous audio state to detect transitions
@@ -347,66 +304,6 @@ export default function ArticleScreen() {
     [handleArticlePress]
   );
 
-  // Static rendering of floating buttons - will always be visible immediately but fade with scroll
-  const StaticButtons = () => (
-    <View style={styles.staticButtonsContainer}>
-      {/* Back button */}
-      <FloatingButton
-        position="top-left"
-        buttonType="back"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={backButtonStyle}
-        onPress={handleBackPress}
-        iconName="chevron-back"
-        accessibilityLabel="Return to previous screen"
-        colors={colors}
-        isDarkMode={isDarkMode}
-        style={{
-          ...styles.floatingButton,
-          left: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-        }}
-      />
-
-      {/* ALWAYS show bookmark button regardless of user state */}
-      <FloatingButton
-        position="top-right"
-        buttonType="bookmark"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={bookmarkButtonStyle}
-        onPress={user ? () => handleBookmarkPress() : () => {}}
-        iconName={initialBookmarkIcon}
-        accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
-        colors={colors}
-        isDarkMode={isDarkMode}
-        isBookmarked={isInReadingList}
-        style={{
-          ...styles.floatingButton,
-          right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-          ...(user ? styles.userButtonActive : styles.userButtonInactive),
-        }}
-      />
-
-      {/* Play/Stop button */}
-      <FloatingButton
-        position="top-right"
-        buttonType="play"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={playButtonStyle}
-        iconName={isPlaying ? 'stop' : 'play'}
-        accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
-        onPress={handlePlayPress}
-        colors={colors}
-        isDarkMode={isDarkMode}
-        style={{
-          ...styles.floatingButton,
-          right: LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM + 10,
-        }}
-      />
-    </View>
-  );
-
-  StaticButtons.displayName = 'StaticButtons';
-
   // Main render - loading state
   if (isLoading) {
     return (
@@ -419,8 +316,20 @@ export default function ArticleScreen() {
           <LoadingScreen />
         </View>
 
-        {/* Static buttons are always rendered */}
-        <StaticButtons />
+        <ArticleButtons
+          backButtonStyle={backButtonStyle}
+          bookmarkButtonStyle={bookmarkButtonStyle}
+          playButtonStyle={playButtonStyle}
+          handleBackPress={handleBackPress}
+          handleBookmarkPress={handleBookmarkPress}
+          handlePlayPress={handlePlayPress}
+          isInReadingList={isInReadingList}
+          initialBookmarkIcon={initialBookmarkIcon}
+          isPlaying={isPlaying}
+          colors={colors}
+          isDarkMode={isDarkMode}
+          user={user}
+        />
       </ThemedView>
     );
   }
@@ -430,12 +339,23 @@ export default function ArticleScreen() {
     return (
       <ThemedView style={styles.container} useSafeArea={false}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
-        <View style={[styles.notFoundContainer, { paddingTop: insets.top }]}>
-          <ThemedText>Article not found</ThemedText>
-        </View>
 
-        {/* Static buttons are always rendered */}
-        <StaticButtons />
+        <ArticleNotFound />
+
+        <ArticleButtons
+          backButtonStyle={backButtonStyle}
+          bookmarkButtonStyle={bookmarkButtonStyle}
+          playButtonStyle={playButtonStyle}
+          handleBackPress={handleBackPress}
+          handleBookmarkPress={handleBookmarkPress}
+          handlePlayPress={handlePlayPress}
+          isInReadingList={isInReadingList}
+          initialBookmarkIcon={initialBookmarkIcon}
+          isPlaying={isPlaying}
+          colors={colors}
+          isDarkMode={isDarkMode}
+          user={user}
+        />
       </ThemedView>
     );
   }
@@ -450,66 +370,38 @@ export default function ArticleScreen() {
         hidden={!isHeaderVisible}
       />
 
-      {/* Static buttons are always rendered */}
-      <StaticButtons />
+      <ArticleButtons
+        backButtonStyle={backButtonStyle}
+        bookmarkButtonStyle={bookmarkButtonStyle}
+        playButtonStyle={playButtonStyle}
+        handleBackPress={handleBackPress}
+        handleBookmarkPress={handleBookmarkPress}
+        handlePlayPress={handlePlayPress}
+        isInReadingList={isInReadingList}
+        initialBookmarkIcon={initialBookmarkIcon}
+        isPlaying={isPlaying}
+        colors={colors}
+        isDarkMode={isDarkMode}
+        user={user}
+      />
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        <Animated.View style={[styles.flexOne]}>
-          {sortedSentences && sortedSentences.length > 0 && (
-            <FlatList
-              key={`article-${id}`}
-              ref={flatListRef}
-              data={sortedSentences}
-              renderItem={renderSentenceItem}
-              keyExtractor={item => item.id.toString()}
-              style={[styles.content, { backgroundColor: colors.background }]}
-              contentContainerStyle={[
-                styles.sentenceList,
-                {
-                  paddingTop: insets.top + (Platform.OS === 'ios' ? 40 : 30),
-                  paddingBottom: insets.bottom + 20,
-                },
-              ]}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-              showsVerticalScrollIndicator={true}
-              initialNumToRender={35}
-              maxToRenderPerBatch={20}
-              windowSize={10}
-              removeClippedSubviews={Platform.OS === 'android'}
-              updateCellsBatchingPeriod={50}
-              maintainVisibleContentPosition={{
-                minIndexForVisible: 0,
-                autoscrollToTopThreshold: 10,
-              }}
-              indicatorStyle={isDarkMode ? 'white' : 'black'}
-              contentInsetAdjustmentBehavior="automatic"
-              getItemLayout={(_data, index) => ({
-                length: 70,
-                offset: 70 * index + (article?.title ? 150 : 0),
-                index,
-              })}
-              ListHeaderComponent={
-                <Animated.View>
-                  <ArticleHeader article={article} colors={colors} />
-                </Animated.View>
-              }
-              ListFooterComponent={
-                otherArticles && otherArticles.length > 0 ? (
-                  <Animated.View style={footerStyle}>
-                    <RelatedArticlesFooter
-                      otherArticles={otherArticles}
-                      otherCategoryArticles={otherCategoryArticles || []}
-                      article={article}
-                      renderArticleCard={renderArticleCard}
-                    />
-                  </Animated.View>
-                ) : null
-              }
-            />
-          )}
-        </Animated.View>
+        {sortedSentences && sortedSentences.length > 0 && (
+          <ArticleContent
+            id={id as string}
+            article={article}
+            sortedSentences={sortedSentences}
+            renderSentenceItem={renderSentenceItem}
+            handleScroll={handleScroll}
+            colors={colors}
+            isDarkMode={isDarkMode}
+            footerStyle={footerStyle}
+            otherArticles={otherArticles}
+            otherCategoryArticles={otherCategoryArticles}
+            renderArticleCard={renderArticleCard}
+          />
+        )}
       </View>
     </ThemedView>
   );
