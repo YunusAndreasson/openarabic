@@ -1,11 +1,10 @@
-import { useState, useCallback, useRef, useMemo, useEffect } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '../services/articles';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
-import { useAppSelector } from '@/store/hooks';
 
 /**
  * Hook to preload app data during initialization
@@ -16,15 +15,6 @@ export const useAppPreloader = () => {
   const [isPreloading, setIsPreloading] = useState(false);
   const [isLoaded, setIsLoaded] = useState(true);
   const preloadLockRef = useRef(false);
-
-  // Get settings to check if they're loaded
-  const settings = useAppSelector(state => state.settings);
-  const theme = useAppSelector(state => state.theme);
-
-  // Add logging for debugging
-  useEffect(() => {
-    console.log('AppPreloader state:', { isPreloading, isLoaded, settings, theme });
-  }, [isPreloading, isLoaded, settings, theme]);
 
   // Main preloading function
   const preloadAppData = useCallback(async () => {

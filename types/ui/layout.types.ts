@@ -109,14 +109,24 @@ export interface EmptyStateProps {
   title: string;
   /** Description text to display */
   description: string;
-  /** Icon name to display */
-  icon?: string;
+  /** Icon component or name to display */
+  icon?: React.ComponentType<any> | string;
   /** Button action text */
   actionText?: string;
   /** Callback when the action button is pressed */
   onAction?: () => void;
   /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
+  /** Theme colors object */
+  colors?: any;
+  /** Additional message to display below description */
+  submessage?: string;
+  /** Custom action button component */
+  customActionButton?: React.ReactNode;
+  /** Size of the icon */
+  iconSize?: number;
+  /** Additional style for the icon container */
+  iconContainerStyle?: StyleProp<ViewStyle>;
 }
 
 /**

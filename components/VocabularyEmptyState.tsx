@@ -1,39 +1,44 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { ThemedText } from './ThemedText';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
 import { router } from 'expo-router';
 import { VocabularyEmptyStateProps } from '@/types/ui/layout.types';
 import { withOpacity } from '@/utils/colorUtils';
+import { ThemedText } from './ThemedText';
+import EmptyState from './EmptyState';
+
+export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyStateProps) => {
+  const handleBrowseArticles = useCallback(() => {
+    router.push('/(tabs)');
+  }, []);
+
+  const customActionButton = (
+    <TouchableOpacity
+      style={[styles.emptyActionButton, { backgroundColor: withOpacity(colors.text, 0.1) }]}
+      onPress={handleBrowseArticles}
+      accessibilityLabel="Go to articles to build words"
+      accessibilityRole="button"
+    >
+      <ThemedText type="bodyBold">Articles</ThemedText>
+      <Ionicons name="arrow-forward" size={16} color={colors.text} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <EmptyState
+      title="Begin Words Journey"
+      description="No saved words"
+      submessage="Tap words while reading to add to your study list"
+      icon="book-outline"
+      colors={colors}
+      iconSize={48}
+      customActionButton={customActionButton}
+    />
+  );
+});
 
 const styles = StyleSheet.create({
-  enhancedEmptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM,
-  },
-  emptyIconContainer: {
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  messageContainer: {
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  submessageContainer: {
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
   emptyActionButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -41,54 +46,8 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    gap: LAYOUT.SPACING.SMALL,
   },
-  icon: {
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-});
-
-export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyStateProps) => {
-  const handleBrowseArticles = useCallback(() => {
-    router.push('/(tabs)');
-  }, []);
-
-  return (
-    <View style={styles.enhancedEmptyContainer}>
-      <View style={[styles.emptyIconContainer, { backgroundColor: withOpacity(colors.text, 0.1) }]}>
-        <Ionicons
-          name="book-outline"
-          size={48}
-          color={colors.text}
-          style={styles.icon}
-          accessibilityLabel="Empty words list"
-        />
-      </View>
-      <View style={styles.titleContainer}>
-        <ThemedText type="heading2" accessibilityRole="header">
-          Begin Words Journey
-        </ThemedText>
-      </View>
-      <View style={styles.messageContainer}>
-        <ThemedText type="bodyBold" variant="secondary">
-          No saved words
-        </ThemedText>
-      </View>
-      <View style={styles.submessageContainer}>
-        <ThemedText type="body" variant="subtle">
-          Tap words while reading to add to your study list
-        </ThemedText>
-      </View>
-      <TouchableOpacity
-        style={[styles.emptyActionButton, { backgroundColor: withOpacity(colors.text, 0.1) }]}
-        onPress={handleBrowseArticles}
-        accessibilityLabel="Go to articles to build words"
-        accessibilityRole="button"
-      >
-        <ThemedText type="bodyBold">Articles</ThemedText>
-        <Ionicons name="arrow-forward" size={16} color={colors.text} />
-      </TouchableOpacity>
-    </View>
-  );
 });
 
 VocabularyEmptyState.displayName = 'VocabularyEmptyState';

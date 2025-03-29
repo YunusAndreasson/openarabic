@@ -62,14 +62,13 @@ export default function SettingsScreen() {
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
   // Use screen animation for coordinated animations with layout readiness check
-  const { isLayoutReady, fadeInStyle, shouldRenderAnimatedContent, triggerAnimations } =
-    useScreenAnimation(
-      true, // Always ready to display
-      isLoadingState,
-      80, // Fast animation duration
-      50, // Small layout delay to ensure stability
-      0 // No animation delay
-    );
+  const { isLayoutReady, fadeInStyle, triggerAnimations } = useScreenAnimation(
+    true, // Always ready to display
+    isLoadingState,
+    80, // Fast animation duration
+    50, // Small layout delay to ensure stability
+    0 // No animation delay
+  );
 
   // Memoize the animation trigger function to prevent unnecessary re-renders
   const startAnimations = useCallback(() => {
