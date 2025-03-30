@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { Article } from '../../types/articles.types';
 import { LAYOUT } from '../../constants/layout';
@@ -161,22 +160,19 @@ const ArticleSection = React.memo(
     return (
       <View style={styles.container}>
         <SectionTitle title={title} />
-        <View style={vertical ? styles.verticalListContainer : styles.horizontalListContainer}>
-          <FlashList
-            data={displayedArticles}
-            renderItem={renderItem}
-            estimatedItemSize={200}
-            keyExtractor={item => `article-${item.id}`}
-            horizontal={!vertical}
-            showsHorizontalScrollIndicator={false}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={vertical ? styles.verticalList : styles.horizontalList}
-            onViewableItemsChanged={handleViewableItemsChanged}
-            viewabilityConfig={{
-              viewAreaCoveragePercentThreshold: 50,
-            }}
-          />
-        </View>
+        <FlatList
+          data={displayedArticles}
+          renderItem={renderItem}
+          keyExtractor={item => `article-${item.id}`}
+          horizontal={!vertical}
+          showsHorizontalScrollIndicator={false}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={vertical ? styles.verticalList : styles.horizontalList}
+          onViewableItemsChanged={handleViewableItemsChanged}
+          viewabilityConfig={{
+            viewAreaCoveragePercentThreshold: 50,
+          }}
+        />
       </View>
     );
   }
@@ -187,13 +183,6 @@ ArticleSection.displayName = 'ArticleSection';
 const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  horizontalListContainer: {
-    height: 200, // Adjust this based on your card height
-  },
-  verticalListContainer: {
-    flex: 1,
-    minHeight: 200,
   },
   horizontalList: {
     paddingLeft: LAYOUT.SPACING.MEDIUM,

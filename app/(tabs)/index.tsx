@@ -96,6 +96,7 @@ export default function ArticlesScreen() {
   // State for authors (keep this as is since it uses Supabase directly)
   const [authors, setAuthors] = useState<Tables<'authors'>[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showPulsingLoader, setShowPulsingLoader] = useState(false);
 
   // Get inProgressArticles from Redux
   const { inProgressArticles = [], lastOpenedArticles = {} } = useAppSelectorMemo(
@@ -154,6 +155,8 @@ export default function ArticlesScreen() {
     mediumFeedback();
 
     setIsRefreshing(true);
+    setShowPulsingLoader(true);
+
     try {
       // Create an array of refresh promises
       await Promise.all([
@@ -166,6 +169,7 @@ export default function ArticlesScreen() {
       console.error('Error during refresh:', err);
     } finally {
       setIsRefreshing(false);
+      setShowPulsingLoader(false);
     }
   }, [queryClient, dispatch, fetchAuthors, isFetching]);
 
@@ -403,7 +407,7 @@ export default function ArticlesScreen() {
   );
 
   // If no data and still loading, show loading screen
-  if (isArticlesLoading && articlesData.length === 0) {
+  if ((isArticlesLoading && articlesData.length === 0) || showPulsingLoader) {
     return <LoadingScreen />;
   }
 

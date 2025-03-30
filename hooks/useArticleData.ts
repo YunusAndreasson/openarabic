@@ -49,9 +49,8 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     enabled: !!articleId,
     staleTime: 0,
     gcTime: 0,
-    placeholderData: () => {
-      return undefined;
-    },
+    refetchOnMount: 'always',
+    placeholderData: undefined,
   });
 
   // Check if article is in user's reading list - can run in parallel with article fetch
@@ -65,6 +64,7 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     enabled: !!userId && !!articleId,
     staleTime: 0,
     gcTime: 0,
+    refetchOnMount: 'always',
   });
 
   // Fetch study words - can run in parallel with article fetch
@@ -79,10 +79,8 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     gcTime: 0,
     networkMode: 'always',
     retry: false,
-    placeholderData: () => {
-      const cachedStudyWords = queryClient.getQueryData<FSRSStudyWord[]>(['studyWords', userId]);
-      return cachedStudyWords || [];
-    },
+    refetchOnMount: 'always',
+    placeholderData: undefined,
   });
 
   // Process sentences from article data - no additional fetch needed
@@ -156,15 +154,8 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     enabled: !!article?.category_id,
     staleTime: 0,
     gcTime: 0,
-    placeholderData: () => {
-      const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
-      if (cachedArticles && article?.category_id) {
-        return cachedArticles
-          .filter(a => a.category_id === article.category_id && a.id !== article.id)
-          .slice(0, 5);
-      }
-      return [];
-    },
+    refetchOnMount: 'always',
+    placeholderData: undefined,
   });
 
   // Get other category articles - can run in parallel with main article fetch
@@ -185,15 +176,8 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     enabled: !!article?.id,
     staleTime: 0,
     gcTime: 0,
-    placeholderData: () => {
-      const cachedArticles = queryClient.getQueryData<Article[]>(['articles']);
-      if (cachedArticles && article?.category_id) {
-        return cachedArticles
-          .filter(a => a.category_id !== article.category_id && a.id !== article.id)
-          .slice(0, 5);
-      }
-      return [];
-    },
+    refetchOnMount: 'always',
+    placeholderData: undefined,
   });
 
   return {

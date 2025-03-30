@@ -25,7 +25,6 @@ import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { useLoadingState } from '@/hooks/useLoadingState';
 
 // Store
 
@@ -108,9 +107,6 @@ export default function ArticleScreen() {
     setIsPlaying(stableAudioState === 'playing');
   }, [stableAudioState]);
 
-  // Use the custom loading state hook
-  const { setDataLoaded } = useLoadingState(true);
-
   // Pre-fetch study words if user is logged in
   useEffect(() => {
     if (user?.id) {
@@ -122,11 +118,6 @@ export default function ArticleScreen() {
       });
     }
   }, [user?.id, queryClient]);
-
-  // Update minimum loading time when prefetched status changes
-  useEffect(() => {
-    setDataLoaded(false);
-  }, [setDataLoaded]);
 
   // Extract article data hook before using any results
   const {
