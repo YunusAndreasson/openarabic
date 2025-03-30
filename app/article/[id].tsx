@@ -183,11 +183,10 @@ export default function ArticleScreen() {
 
   // Handle back button press
   const handleBackPress = useCallback(() => {
-    navigateTo('..', () => {
-      if (isPlaying) {
-        stopPlayback();
-      }
-    });
+    if (isPlaying) {
+      stopPlayback().catch(console.error); // Handle audio cleanup in parallel
+    }
+    navigateTo('..'); // Navigate immediately
   }, [navigateTo, isPlaying, stopPlayback]);
 
   // Handle bookmark toggle with optimistic updates

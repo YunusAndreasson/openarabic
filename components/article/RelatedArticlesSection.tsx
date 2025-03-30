@@ -19,6 +19,9 @@ const styles = StyleSheet.create({
     paddingLeft: LAYOUT.SPACING.LARGE,
     paddingRight: LAYOUT.SPACING.LARGE,
   },
+  articleContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
 });
 
 // Memoized related articles section for better performance
@@ -33,7 +36,11 @@ export const RelatedArticlesSection = React.memo(
           contentContainerStyle={styles.horizontalList}
           removeClippedSubviews={true}
         >
-          {articles.map(renderArticleCard)}
+          {articles.map(article => (
+            <View key={article.id} style={styles.articleContainer}>
+              {renderArticleCard(article)}
+            </View>
+          ))}
         </ScrollView>
       </View>
     );
