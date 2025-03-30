@@ -78,7 +78,6 @@ export const useNavigationWithDebounce = (
           router.push(route as any);
         }
       } catch (error) {
-        console.error('Navigation error:', error);
         setIsNavigating(false);
         return;
       }

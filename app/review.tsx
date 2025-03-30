@@ -232,7 +232,6 @@ export default function ReviewScreen() {
               }, 150);
             })
             .catch(error => {
-              console.error('[Swipe Left] Error:', error);
               if (!isUpdatingWordRef.current) return; // Guard against unmount
               fadeIn();
             })
@@ -279,7 +278,6 @@ export default function ReviewScreen() {
             }, 150);
           })
           .catch(error => {
-            console.error('[Swipe Right] Error:', error);
             if (!isUpdatingWordRef.current) return; // Guard against unmount
             fadeIn();
           })

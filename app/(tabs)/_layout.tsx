@@ -116,19 +116,10 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
   // Memoize ripple color
   const rippleColor = useMemo(() => withOpacity(colors.tint, 0.25), [colors.tint]);
 
-  // Memoized debounced tab press handler
+  // Memoized tab press handler
   const getTabPressHandler = useCallback(
     (route: any, isFocused: boolean) => {
-      let lastPress = 0;
-      const PRESS_DELAY = 500;
-
       return () => {
-        const now = Date.now();
-        if (now - lastPress < PRESS_DELAY) {
-          return;
-        }
-        lastPress = now;
-
         const event = navigation.emit({
           type: 'tabPress',
           target: route.key,

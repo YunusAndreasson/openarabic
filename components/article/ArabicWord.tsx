@@ -25,7 +25,7 @@ type AnimatedStyles = {
 };
 
 // Global counter for tooltip zIndex values
-let tooltipZIndexCounter = 999999;
+let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
 
 function ArabicWordComponent({
   word,

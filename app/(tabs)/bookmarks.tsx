@@ -319,7 +319,6 @@ export default function BookmarksScreen() {
   const soundRef = useRef<Audio.Sound | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
-  const lastActionTimeRef = useRef(Date.now());
 
   // Clean up all audio resources
   const cleanupAudio = useCallback(async () => {
@@ -332,11 +331,11 @@ export default function BookmarksScreen() {
     // Unload sound if it exists
     if (soundRef.current) {
       try {
-        await soundRef.current.stopAsync().catch(() => {});
-        await soundRef.current.unloadAsync().catch(() => {});
+        await soundRef.current.stopAsync();
+        await soundRef.current.unloadAsync();
         soundRef.current = null;
       } catch (error) {
-        // Error during cleanup
+        // Error during cleanup - no need to handle
       }
     }
   }, []);
@@ -398,7 +397,7 @@ export default function BookmarksScreen() {
         } else {
           // Otherwise just invalidate to refresh in background
           queryClient.invalidateQueries({ queryKey: ['readingList', user.id] }).catch(error => {
-            console.error('Failed to refresh reading list:', error);
+            throw error;
           });
         }
       }
@@ -428,7 +427,6 @@ export default function BookmarksScreen() {
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
         shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
       });
     } catch (error) {
       // Failed to set audio mode
@@ -444,7 +442,6 @@ export default function BookmarksScreen() {
 
     try {
       setAudioState(AUDIO_STATES.LOADING);
-      lastActionTimeRef.current = Date.now();
 
       // Clean up any existing audio first
       await cleanupAudio();
@@ -458,10 +455,7 @@ export default function BookmarksScreen() {
 
       soundRef.current = sound;
 
-      // Add a small delay before playing to ensure the audio system is ready
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // Start playback
+      // Start playback immediately
       await sound.playAsync();
       setAudioState(AUDIO_STATES.PLAYING);
 
@@ -535,8 +529,6 @@ export default function BookmarksScreen() {
     }, 1000); // Update every second
   };
 
-  // Toggle track playback
-
   // Start playback of all tracks in order
   const startPlayback = async () => {
     // Check if we have a playlist
@@ -544,11 +536,9 @@ export default function BookmarksScreen() {
       return;
     }
 
-    // Start from the beginning
+    // Start from the beginning and set playlist mode
     setCurrentTrackIndex(0);
     setIsShuffleMode(false);
-
-    // Set to playlist mode
     setPlaylistMode(true);
   };
 
@@ -557,7 +547,7 @@ export default function BookmarksScreen() {
     // Stop and clean up
     await cleanupAudio();
 
-    // Reset state
+    // Reset state in one batch
     setAudioState(AUDIO_STATES.IDLE);
     setCurrentTrackIndex(-1);
     setPlaybackProgress(0);
@@ -571,24 +561,19 @@ export default function BookmarksScreen() {
       return;
     }
 
-    // Create shuffled playlist
+    // Create shuffled playlist and find first valid track
     const shuffled = [...readingList].sort(() => Math.random() - 0.5);
+    const validIndex = shuffled.findIndex(item => !!item?.articles?.audio_url);
 
-    // Make sure the first item has a valid audio URL
-    if (!shuffled[0]?.articles?.audio_url) {
-      const validIndex = shuffled.findIndex(item => !!item?.articles?.audio_url);
-      if (validIndex > 0) {
-        // Swap with first item
-        [shuffled[0], shuffled[validIndex]] = [shuffled[validIndex], shuffled[0]];
-      }
+    if (validIndex > 0) {
+      // Swap with first item if found
+      [shuffled[0], shuffled[validIndex]] = [shuffled[validIndex], shuffled[0]];
     }
 
-    // Update state
+    // Update state in one batch
     setShuffledList(shuffled);
     setCurrentTrackIndex(0);
     setIsShuffleMode(true);
-
-    // Set to playlist mode
     setPlaylistMode(true);
   };
 

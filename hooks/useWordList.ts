@@ -83,7 +83,6 @@ export function useWordList(userId: string | undefined, category: WordListCatego
           }))
           .sort((a, b) => b.retentionScore - a.retentionScore);
       } catch (error) {
-        console.error('Error fetching words:', error);
         throw error instanceof Error ? error : new Error('Failed to fetch vocabulary words');
       }
     },

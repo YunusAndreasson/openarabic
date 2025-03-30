@@ -63,25 +63,20 @@ export function useAudioPlayer() {
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
         shouldDuckAndroid: true,
-        playThroughEarpieceAndroid: false,
       });
       return true;
     } catch (error) {
-      console.error('Failed to initialize audio session:', error);
-      setAudioState(AUDIO_STATES.ERROR);
-      return false;
+      throw error;
     }
   }, []);
 
   // Start tracking progress
   const startProgressTracking = useCallback(() => {
-    // Clear any existing interval first
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
       progressIntervalRef.current = null;
     }
 
-    // Set up a new interval to update progress
     const intervalId = setInterval(async () => {
       if (!soundRef.current) {
         clearInterval(progressIntervalRef.current!);
@@ -95,12 +90,10 @@ export function useAudioPlayer() {
           setProgress(status.positionMillis);
           setDuration(status.durationMillis || 0);
         }
-      } catch (error) {
-        console.error('Error getting audio status:', error);
-        clearInterval(progressIntervalRef.current!);
-        progressIntervalRef.current = null;
+      } catch {
+        // Ignore status check errors - they will be handled by the status update callback
       }
-    }, 1000);
+    }, 500);
 
     progressIntervalRef.current = intervalId;
   }, []);
@@ -155,35 +148,30 @@ export function useAudioPlayer() {
         lastActionTimeRef.current = Date.now();
 
         // Clean up any existing audio first
-        await cleanupAudio().catch(e => console.error('Cleanup error:', e));
+        await cleanupAudio().catch(e => {});
 
-        // Create the new sound object
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: audioUrl },
-          { shouldPlay: false },
-          onPlaybackStatusUpdate
-        ).catch(e => {
-          throw new Error(`Failed to create sound: ${e.message}`);
-        });
+        // Run audio setup and sound creation in parallel
+        const [_, { sound }] = await Promise.all([
+          Audio.setAudioModeAsync({
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+            shouldDuckAndroid: true,
+          }),
+          Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false }, onPlaybackStatusUpdate),
+        ]);
 
         soundRef.current = sound;
 
-        // Add a small delay before playing to ensure the audio system is ready
-        await new Promise(resolve => setTimeout(resolve, 300));
-
         // Start playback
-        await sound.playAsync().catch(e => {
-          throw new Error(`Failed to start playback: ${e.message}`);
-        });
+        await sound.playAsync();
 
         setAudioState(AUDIO_STATES.PLAYING);
         startProgressTracking();
 
         return true;
       } catch (error) {
-        console.error('Audio playback error:', error);
         setAudioState(AUDIO_STATES.ERROR);
-        await cleanupAudio().catch(() => {}); // Cleanup on error
+        await cleanupAudio().catch(() => {});
         return false;
       }
     },

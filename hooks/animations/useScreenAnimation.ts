@@ -31,7 +31,7 @@ export interface ScreenAnimationResult {
  *
  * @param isDataReady - Boolean indicating if data is ready to animate
  * @param isLoading - Boolean indicating if data is still loading (default: false)
- * @param animationDuration - Duration of the fade-in animation in ms (default: 80ms for extremely fast transitions)
+ * @param animationDuration - Duration of the fade-in animation in ms (default: 50ms for snappier transitions)
  * @param layoutDelay - Delay in ms before layout is considered ready (default: 0)
  * @param animationDelay - Delay in ms before starting animations (default: 0)
  * @returns ScreenAnimationResult
@@ -39,7 +39,7 @@ export interface ScreenAnimationResult {
 export const useScreenAnimation = (
   isDataReady: boolean,
   isLoading = false,
-  animationDuration = 80,
+  animationDuration = 50,
   layoutDelay = 0,
   animationDelay = 0
 ): ScreenAnimationResult => {

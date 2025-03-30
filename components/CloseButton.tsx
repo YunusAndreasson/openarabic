@@ -61,7 +61,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   return (
     <Animated.View style={animatedStyle as any}>
       <TouchableOpacity
-        onPress={handlePress}
+        onPress={onPress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={1}

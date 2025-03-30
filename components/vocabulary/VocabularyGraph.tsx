@@ -40,9 +40,6 @@ export const VocabularyGraph = React.memo(
     const colors = useColors();
     const [isReady, setIsReady] = React.useState(false);
 
-    // Track if the last point haptic has been triggered
-    const lastPointTriggered = useRef(false);
-
     // Canvas dimensions
     const PADDING = LAYOUT.SPACING.MEDIUM;
     const TOP_PADDING = LAYOUT.SPACING.SMALL; // Increase from 3px to prevent top clipping
@@ -74,13 +71,6 @@ export const VocabularyGraph = React.memo(
       resetAnimation,
     } = useGraphAnimation(2000);
 
-    // Function to trigger haptic feedback when the last point is shown
-    const triggerLastPointHaptic = useCallback(() => {
-      if (lastPointTriggered.current) return;
-      // Removing the haptic feedback
-      lastPointTriggered.current = true;
-    }, []);
-
     // Set graph state after checking if we actually have data to display
     const hasData = data.length > 0 && data.some(d => d.count > 0);
     const hasLearningData = data.length > 0 && data.some(d => d.wordsLearned > 0);
@@ -95,10 +85,10 @@ export const VocabularyGraph = React.memo(
       },
       isAtLastPoint => {
         if (isAtLastPoint && hasData) {
-          runOnJS(triggerLastPointHaptic)();
+          // Removing the haptic feedback
         }
       },
-      [points.length, hasData, triggerLastPointHaptic]
+      [points.length, hasData]
     );
 
     // Start the animation when the component is ready and parent signals animation
@@ -109,9 +99,6 @@ export const VocabularyGraph = React.memo(
       // 3. We have data points
       // 4. Parent has triggered animations
       if (isReady && !isLoading && points.length > 0 && animationTriggered) {
-        // Reset the last point triggered flag
-        lastPointTriggered.current = false;
-
         // Use setTimeout to ensure synchronization with mastery bar
         setTimeout(() => {
           startGraphAnimation();

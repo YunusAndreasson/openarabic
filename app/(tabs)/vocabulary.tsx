@@ -24,6 +24,7 @@ import { LoadingScreen } from '@/components/Loader';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -33,37 +34,26 @@ export default function VocabularyScreen() {
   const { prefetchVocabularyData } = useAppPreloader();
   const router = useRouter();
 
-  // Add loading state hook to match other tab screens - initialize with NOT loading
-  const { isLoading: isLoadingState, stopLoading } = useLoadingState(false);
-
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
-  // Use prefetchVocabularyData to load data with better error handling on screen focus
+  // Combine focus effects for better performance
   useFocusEffect(
     React.useCallback(() => {
-      if (user?.id) {
-        // Only fetch if we don't have data already
-        const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
-        if (!hasStudyWords) {
-          prefetchVocabularyData();
-        }
+      if (!user?.id) return;
+
+      const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
+      const hasDueWords = queryClient.getQueryData(FSRS_QUERY_KEYS.due(user.id));
+
+      // Only fetch if we're missing either data set
+      if (!hasStudyWords || !hasDueWords) {
+        prefetchVocabularyData();
       }
     }, [user?.id, prefetchVocabularyData, queryClient])
   );
-
-  // Also try to load data on first mount, not just on focus
-  React.useEffect(() => {
-    if (user?.id) {
-      const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
-      if (!hasStudyWords) {
-        prefetchVocabularyData();
-      }
-    }
-  }, [user?.id, prefetchVocabularyData, queryClient]);
 
   // Use the FSRS queries hook for data fetching
   const {
@@ -83,75 +73,63 @@ export default function VocabularyScreen() {
     dueWordsData ?? []
   );
 
-  // Handler for pull-to-refresh
+  // Combine query invalidation into a single function
+  const invalidateVocabularyQueries = React.useCallback(async () => {
+    if (!user?.id) return;
+    await queryClient.invalidateQueries({
+      predicate: query => {
+        const key = query.queryKey[0];
+        return key === FSRS_QUERY_KEYS.due(user.id)[0] || key === FSRS_QUERY_KEYS.all(user.id)[0];
+      },
+    });
+  }, [user?.id, queryClient]);
+
+  // Use single screen focus refresh with optimized invalidation
+  useScreenFocusRefresh(
+    queryClient,
+    'vocabulary',
+    user?.id,
+    300000, // Cache for 5 minutes
+    true // Skip initial focus
+  );
+
+  // Invalidate queries on focus with optimized function
+  useFocusEffect(
+    React.useCallback(() => {
+      invalidateVocabularyQueries();
+    }, [invalidateVocabularyQueries])
+  );
+
+  // Handler for pull-to-refresh with optimized invalidation
   const handleRefresh = async () => {
-    if (!user || isFetching) return; // Prevent multiple refreshes
+    if (!user || isFetching) return;
 
-    // Provide haptic feedback when refreshing
     mediumFeedback();
-
     setIsRefreshing(true);
     try {
-      await invalidateAllQueries();
+      await invalidateVocabularyQueries();
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  // Use the screen focus refresh hook with debounce - with proper caching
-  useScreenFocusRefresh(
-    queryClient,
-    FSRS_QUERY_KEYS.due(user?.id ?? '')[0],
-    user?.id,
-    120000, // Cache for 2 minutes (same as query)
-    true, // Skip initial focus
-    false // Only refresh if stale
-  );
-
-  useScreenFocusRefresh(
-    queryClient,
-    FSRS_QUERY_KEYS.all(user?.id ?? '')[0],
-    user?.id,
-    180000, // Cache for 3 minutes (same as query)
-    true, // Skip initial focus
-    false // Only refresh if stale
-  );
-
   // Check if data is ready to display with loading protection
   const isDataReady = React.useMemo(() => {
-    // If we have cached data, consider it ready immediately
-    const hasCachedData =
-      user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)) !== undefined;
+    if (!user?.id) return false;
+    // Check cache first for instant feedback
+    const hasCachedData = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
     if (hasCachedData) return true;
-
-    // Otherwise check loading states
-    if (isAuthLoading || isDataLoading) return false;
-    return !!user && (validStudyWords.length > 0 || error !== null);
-  }, [user, validStudyWords.length, error, isAuthLoading, isDataLoading, queryClient]);
+    // Only check loading states if no cached data
+    return !isAuthLoading && !isDataLoading && validStudyWords.length > 0;
+  }, [user?.id, validStudyWords.length, isAuthLoading, isDataLoading, queryClient]);
 
   // Add screen animation hook to match other tab screens
-  const { fadeInStyle } = useScreenAnimation(
-    isDataReady,
-    isLoadingState,
-    0, // Set animation duration to 0
-    0, // Set layout delay to 0
-    0 // Set animation delay to 0
-  );
+  const { fadeInStyle } = useScreenAnimation(isDataReady, isRefreshing);
 
-  // Update loading state based on data loading - always bypass loading screen
-  React.useEffect(() => {
-    // Always stop loading immediately - never show the loading screen
-    stopLoading();
-  }, [stopLoading]);
-
-  // Handle starting a review
+  // Handle starting a review with optimized invalidation
   const handleStartReview = () => {
     if (!user) return;
-
-    // Always refresh data when navigating to review screen
-    invalidateAllQueries();
-
-    // Navigate to review screen
+    invalidateVocabularyQueries();
     navigateTo({
       pathname: '/review',
       params: { fromVocabulary: 'true' },
@@ -160,7 +138,6 @@ export default function VocabularyScreen() {
 
   // Handle stat press events
   const handleStatPress = (category: 'total' | 'mastered' | 'learning' | 'due') => {
-    // Navigate to the word list with the selected category
     navigateTo({
       pathname: '/wordList',
       params: { category },
@@ -168,11 +145,10 @@ export default function VocabularyScreen() {
   };
 
   // Check if data is already in cache to optimize loading behavior
-  const isDataCached =
-    user?.id && queryClient.getQueryState(FSRS_QUERY_KEYS.all(user.id))?.data !== undefined;
+  const isDataCached = user?.id && queryClient.getQueryState(FSRS_QUERY_KEYS.all(user.id))?.data;
 
-  // Show loading screen during initial load or refresh
-  if ((isDataLoading && !isDataCached) || isRefreshing) {
+  // Show loading screen only during initial uncached load
+  if (!isDataCached && isDataLoading && !isRefreshing) {
     return <LoadingScreen />;
   }
 

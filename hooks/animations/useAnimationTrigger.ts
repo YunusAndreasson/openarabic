@@ -11,8 +11,6 @@ export interface AnimationTriggerResult {
   triggerAnimations: () => void;
   /** Function to reset animation state */
   resetAnimations: () => void;
-  /** @internal For testing only - tracks if reset was called */
-  __hasBeenReset?: boolean;
 }
 
 /**
@@ -161,6 +159,5 @@ export const useAnimationTrigger = (
     animationsTriggered,
     triggerAnimations,
     resetAnimations,
-    __hasBeenReset: hasBeenReset,
   };
 };

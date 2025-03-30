@@ -107,15 +107,19 @@ export default function ArticleScreen() {
     setIsPlaying(stableAudioState === 'playing');
   }, [stableAudioState]);
 
-  // Pre-fetch study words if user is logged in
+  // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
     if (user?.id) {
-      queryClient.prefetchQuery({
-        queryKey: ['studyWords', user.id],
-        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 180000, // 3 minutes
-        retry: 2,
-      });
+      const studyWordsQuery = queryClient.getQueryData(['studyWords', user.id]);
+      if (!studyWordsQuery) {
+        queryClient.prefetchQuery({
+          queryKey: ['studyWords', user.id],
+          queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
+          staleTime: 300000, // Cache for 5 minutes
+          gcTime: 600000, // Keep in garbage collection for 10 minutes
+          retry: 2,
+        });
+      }
     }
   }, [user?.id, queryClient]);
 
@@ -150,8 +154,12 @@ export default function ArticleScreen() {
     }
   }, [isLoadingReadingList, isInReadingList]);
 
-  // Check if all data is loaded
+  // Check if all data is loaded with optimized loading states
   const isLoading = useMemo(() => {
+    // Consider data ready if we have article data in cache
+    const articleQuery = queryClient.getQueryData(['article', articleId]);
+    if (articleQuery) return false;
+
     return (
       isLoadingArticle ||
       isLoadingReadingList ||
@@ -159,7 +167,15 @@ export default function ArticleScreen() {
       !sentenceWordsMap ||
       (article.article_sentences.length > 0 && !sortedSentences?.length)
     );
-  }, [isLoadingArticle, isLoadingReadingList, article, sentenceWordsMap, sortedSentences]);
+  }, [
+    isLoadingArticle,
+    isLoadingReadingList,
+    article,
+    sentenceWordsMap,
+    sortedSentences,
+    articleId,
+    queryClient,
+  ]);
 
   // Start content animations when mounted
   useEffect(() => {
@@ -181,10 +197,13 @@ export default function ArticleScreen() {
     (word: Tables<'sentence_words'>) => handleWordPress(word.id)
   );
 
-  // Handle back button press
+  // Handle back button press with optimized cleanup
   const handleBackPress = useCallback(() => {
     if (isPlaying) {
-      stopPlayback().catch(console.error); // Handle audio cleanup in parallel
+      // Run audio cleanup in parallel
+      stopPlayback().catch(error => {
+        console.error('Error cleaning up audio:', error);
+      });
     }
     navigateTo('..'); // Navigate immediately
   }, [navigateTo, isPlaying, stopPlayback]);

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
@@ -38,7 +38,7 @@ interface FSRSStudyWord {
 export const useArticleData = (articleId: number | undefined, userId: string | undefined) => {
   const queryClient = useQueryClient();
 
-  // Fetch article data with all sentences and words in one query
+  // Fetch article data with optimized caching
   const {
     data: article,
     isLoading: isLoadingArticle,
@@ -47,13 +47,13 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     queryKey: ['article', articleId],
     queryFn: () => articlesService.getArticleById(articleId!),
     enabled: !!articleId,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
-    placeholderData: undefined,
+    staleTime: 300000, // Cache for 5 minutes
+    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    refetchOnMount: false, // Don't refetch on mount if we have data
+    placeholderData: old => old, // Keep old data while fetching
   });
 
-  // Check if article is in user's reading list - can run in parallel with article fetch
+  // Check if article is in user's reading list - optimized caching
   const {
     data: isInReadingList = false,
     refetch: refetchReadingListStatus,
@@ -62,12 +62,12 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     queryKey: ['readingList', userId, articleId],
     queryFn: () => readingListService.isInReadingList(userId!, articleId!),
     enabled: !!userId && !!articleId,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
+    staleTime: 300000, // Cache for 5 minutes
+    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    refetchOnMount: false,
   });
 
-  // Fetch study words - can run in parallel with article fetch
+  // Fetch study words with optimized caching
   const { data: studyWords = [] } = useQuery<FSRSStudyWord[]>({
     queryKey: ['studyWords', userId],
     queryFn: async () => {
@@ -75,12 +75,12 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId,
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 300000, // Cache for 5 minutes
+    gcTime: 600000, // Keep in garbage collection for 10 minutes
     networkMode: 'always',
-    retry: false,
-    refetchOnMount: 'always',
-    placeholderData: undefined,
+    retry: 2,
+    refetchOnMount: false,
+    placeholderData: old => old,
   });
 
   // Process sentences from article data - no additional fetch needed
@@ -138,27 +138,26 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     };
   }, [sortedSentences]);
 
-  // Get related articles - can run in parallel with main article fetch
+  // Get related articles with optimized caching
   const { data: otherArticles = [], isLoading: isLoadingOtherArticles } = useQuery<Article[]>({
     queryKey: ['otherArticles', article?.category_id],
     queryFn: async () => {
       if (!article?.category_id) return [];
       try {
-        const articles = await articlesService.getArticles(article.category_id);
-        return articles.filter(a => a.id !== article.id);
+        const relatedArticles = await articlesService.getRelatedArticles(article.id);
+        return relatedArticles;
       } catch (error) {
-        console.warn('Failed to fetch related articles:', error);
         return [];
       }
     },
     enabled: !!article?.category_id,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
-    placeholderData: undefined,
+    staleTime: 300000, // Cache for 5 minutes
+    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    refetchOnMount: false,
+    placeholderData: old => old,
   });
 
-  // Get other category articles - can run in parallel with main article fetch
+  // Get other category articles with optimized caching
   const { data: otherCategoryArticles = [], isLoading: isLoadingOtherCategoryArticles } = useQuery<
     Article[]
   >({
@@ -166,19 +165,48 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     queryFn: async () => {
       if (!article?.id) return [];
       try {
-        const articles = await articlesService.getArticles();
-        return articles.filter(a => a.category_id !== article.category_id && a.id !== article.id);
+        const otherArticles = await articlesService.getOtherCategoryArticles(article.category_id);
+        return otherArticles;
       } catch (error) {
-        console.warn('Failed to fetch other category articles:', error);
         return [];
       }
     },
     enabled: !!article?.id,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: 'always',
-    placeholderData: undefined,
+    staleTime: 300000, // Cache for 5 minutes
+    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    refetchOnMount: false,
+    placeholderData: old => old,
   });
+
+  // Prefetch next and previous articles when current article loads
+  useEffect(() => {
+    if (article?.id && otherArticles.length > 0) {
+      // Find current article index
+      const currentIndex = otherArticles.findIndex(a => a.id === article.id);
+      if (currentIndex !== -1) {
+        // Prefetch next article
+        if (currentIndex < otherArticles.length - 1) {
+          const nextArticle = otherArticles[currentIndex + 1];
+          queryClient.prefetchQuery({
+            queryKey: ['article', nextArticle.id],
+            queryFn: () => articlesService.getArticleById(nextArticle.id),
+            staleTime: 300000,
+            gcTime: 600000,
+          });
+        }
+        // Prefetch previous article
+        if (currentIndex > 0) {
+          const prevArticle = otherArticles[currentIndex - 1];
+          queryClient.prefetchQuery({
+            queryKey: ['article', prevArticle.id],
+            queryFn: () => articlesService.getArticleById(prevArticle.id),
+            staleTime: 300000,
+            gcTime: 600000,
+          });
+        }
+      }
+    }
+  }, [article?.id, otherArticles, queryClient]);
 
   return {
     article,

@@ -109,7 +109,6 @@ function FilterScreenContent() {
         return null;
       }
     },
-    staleTime: 0, // No caching
     enabled: type === 'category' || type !== 'author', // Run for categories or when not specified
   });
 
@@ -146,7 +145,6 @@ function FilterScreenContent() {
         throw new Error(err instanceof Error ? err.message : 'Failed to fetch articles');
       }
     },
-    staleTime: 0, // No caching
     refetchOnWindowFocus: true,
     refetchOnMount: true, // Always refetch
   });

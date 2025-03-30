@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View, StyleProp, ViewStyle, Pressable } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -253,7 +253,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
     // Otherwise render custom children
     if (!children) {
-      console.warn('ThemedCard: Missing children prop for compact variant');
       return null;
     }
 

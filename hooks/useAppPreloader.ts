@@ -18,7 +18,6 @@ export const useAppPreloader = () => {
 
   // Main preloading function
   const preloadAppData = useCallback(async () => {
-    // If auth is still loading or already preloading, return early
     if (isAuthLoading || isPreloading || preloadLockRef.current) {
       return;
     }
@@ -28,36 +27,32 @@ export const useAppPreloader = () => {
     setIsLoaded(false);
 
     try {
-      // Load everything in parallel for faster startup
       const promises: Promise<any>[] = [
-        // Core data with increased stale/cache times for better performance
         queryClient.fetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
-          staleTime: 600000, // 10 minutes
-          gcTime: 1800000, // 30 minutes
-          retry: 2,
+          staleTime: 300000, // 5 minutes
+          gcTime: 600000, // 10 minutes
+          retry: 1,
         }),
 
         queryClient.fetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
-          staleTime: 1200000, // 20 minutes
-          gcTime: 3600000, // 1 hour
-          retry: 2,
+          staleTime: 600000, // 10 minutes
+          gcTime: 900000, // 15 minutes
+          retry: 1,
         }),
       ];
 
-      // Load user data in parallel if logged in
       if (user?.id) {
         promises.push(
           queryClient.fetchQuery({
             queryKey: ['readingList', user.id],
             queryFn: () => readingListService.getReadingList(user.id),
-            staleTime: 120000, // 2 minutes
+            staleTime: 180000, // 3 minutes
             gcTime: 300000, // 5 minutes
-            retry: 3,
-            retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+            retry: 1,
           }),
 
           queryClient.fetchQuery({
@@ -65,7 +60,7 @@ export const useAppPreloader = () => {
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
             staleTime: 180000, // 3 minutes
             gcTime: 300000, // 5 minutes
-            retry: 2,
+            retry: 1,
           }),
 
           queryClient.fetchQuery({
@@ -73,24 +68,15 @@ export const useAppPreloader = () => {
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
             staleTime: 300000, // 5 minutes
             gcTime: 600000, // 10 minutes
-            retry: 2,
+            retry: 1,
           })
         );
       }
 
-      // Wait for all promises to resolve
       const results = await Promise.all(promises);
-
-      // Only set loaded if we have articles data
-      const articlesData = results[0]; // First promise is articles
-      if (Array.isArray(articlesData) && articlesData.length > 0) {
-        setIsLoaded(true);
-      } else {
-        console.warn('Articles data not loaded properly');
-        setIsLoaded(false);
-      }
+      const articlesData = results[0];
+      setIsLoaded(Array.isArray(articlesData) && articlesData.length > 0);
     } catch (error) {
-      console.error('Error preloading app data:', error);
       setIsLoaded(false);
     } finally {
       setIsPreloading(false);
@@ -108,8 +94,8 @@ export const useAppPreloader = () => {
           queryClient.prefetchQuery({
             queryKey: ['article', articleId],
             queryFn: () => articlesService.getArticleById(articleId),
-            staleTime: 0, // No caching
-            gcTime: 0, // No cache retention
+            staleTime: 60000,
+            gcTime: 300000,
           }),
         ];
 
@@ -118,16 +104,16 @@ export const useAppPreloader = () => {
             queryClient.prefetchQuery({
               queryKey: ['isInReadingList', user.id, articleId],
               queryFn: () => readingListService.isInReadingList(user.id, articleId),
-              staleTime: 0, // No caching
-              gcTime: 0, // No cache retention
+              staleTime: 60000,
+              gcTime: 300000,
             })
           );
         }
 
-        await Promise.all(prefetchPromises);
-        return true;
-      } catch (error) {
-        queryClient.setQueryData(['article', articleId], null);
+        // Use allSettled to handle partial failures
+        const results = await Promise.allSettled(prefetchPromises);
+        return results.some(result => result.status === 'fulfilled');
+      } catch {
         return false;
       }
     },
@@ -139,27 +125,25 @@ export const useAppPreloader = () => {
     if (!user?.id) return false;
 
     try {
-      // Use consistent cache settings and consistent query keys from FSRS_QUERY_KEYS
-      await Promise.allSettled([
+      const results = await Promise.allSettled([
         queryClient.prefetchQuery({
           queryKey: FSRS_QUERY_KEYS.due(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
           staleTime: 120000,
           gcTime: 300000,
-          retry: 2,
+          retry: 1,
         }),
-
         queryClient.prefetchQuery({
           queryKey: FSRS_QUERY_KEYS.all(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
           staleTime: 180000,
           gcTime: 600000,
-          retry: 2,
+          retry: 1,
         }),
       ]);
 
-      return true;
-    } catch (error) {
+      return results.some(result => result.status === 'fulfilled');
+    } catch {
       return false;
     }
   }, [queryClient, user?.id]);
@@ -178,15 +162,18 @@ export const useAppPreloader = () => {
     }
 
     try {
-      await queryClient.invalidateQueries({
-        predicate: query =>
-          queriesToInvalidate.some(
-            key =>
-              query.queryKey[0] === key[0] && (key.length === 1 || query.queryKey[1] === key[1])
-          ),
-      });
-      await preloadAppData();
-    } catch (error) {
+      // Run invalidation and preload in parallel
+      await Promise.all([
+        queryClient.invalidateQueries({
+          predicate: query =>
+            queriesToInvalidate.some(
+              key =>
+                query.queryKey[0] === key[0] && (key.length === 1 || query.queryKey[1] === key[1])
+            ),
+        }),
+        preloadAppData(),
+      ]);
+    } catch {
       if (!isPreloading) {
         setIsLoaded(true);
       }

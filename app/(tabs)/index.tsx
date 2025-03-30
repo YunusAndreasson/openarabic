@@ -79,49 +79,45 @@ export default function ArticlesScreen() {
   } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: 600000, // Match preloader's 10 minutes
-    gcTime: 1800000, // Match preloader's 30 minutes
+    staleTime: 300000, // Cache for 5 minutes
+    gcTime: 600000, // Keep in garbage collection for 10 minutes
     retry: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    placeholderData: old => old,
   });
 
-  // Use React Query for categories
+  // Use React Query for categories with longer cache times
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
-    staleTime: 600000, // Cache for 10 minutes (categories change less frequently)
-    gcTime: 1800000, // Keep in cache for 30 minutes
-    retry: 2, // Add retry capability
+    staleTime: 1800000,
+    gcTime: 3600000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
-  // State for authors (keep this as is since it uses Supabase directly)
-  const [authors, setAuthors] = useState<Tables<'authors'>[]>([]);
+  // Use React Query for authors with proper caching
+  const { data: authors = [] } = useQuery({
+    queryKey: ['authors'],
+    queryFn: async () => {
+      const { data } = await supabase.from('authors').select('*').order('name');
+      return data || [];
+    },
+    staleTime: 1800000,
+    gcTime: 3600000,
+    retry: 2,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+  });
+
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [showPulsingLoader, setShowPulsingLoader] = useState(false);
 
   // Get inProgressArticles from Redux
   const { inProgressArticles = [], lastOpenedArticles = {} } = useAppSelectorMemo(
     state => state.readingList
   );
-
-  // Define fetchAuthors function
-  const fetchAuthors = useCallback(async () => {
-    try {
-      const { data } = await supabase.from('authors').select('*');
-      setAuthors(data ?? []);
-    } catch (_err) {
-      setAuthors([]);
-    }
-  }, []);
-
-  // Add an effect to fetch in-progress articles when the component mounts
-  useEffect(() => {
-    dispatch(fetchInProgressArticles());
-  }, [dispatch]);
-
-  // Add effects to fetch authors when the component mounts
-  useEffect(() => {
-    fetchAuthors();
-  }, [fetchAuthors]);
 
   // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
@@ -149,63 +145,57 @@ export default function ArticlesScreen() {
 
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
-    if (isFetching) return; // Prevent multiple refreshes
+    if (isFetching) return;
 
-    // Provide haptic feedback when refreshing
     mediumFeedback();
-
     setIsRefreshing(true);
-    setShowPulsingLoader(true);
 
     try {
-      // Create an array of refresh promises
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['articles'] }),
-        queryClient.invalidateQueries({ queryKey: ['categories'] }),
-        dispatch(fetchInProgressArticles()),
-        fetchAuthors(),
-      ]);
-    } catch (err) {
-      console.error('Error during refresh:', err);
+      // Invalidate all related queries at once
+      await queryClient.invalidateQueries({
+        predicate: query => {
+          const key = query.queryKey[0];
+          return key === 'articles' || key === 'categories' || key === 'authors';
+        },
+      });
     } finally {
       setIsRefreshing(false);
-      setShowPulsingLoader(false);
     }
-  }, [queryClient, dispatch, fetchAuthors, isFetching]);
+  }, [queryClient, isFetching]);
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
   const handleArticlePress = useCallback(
     (article: Article) => {
-      // Only prefetch critical data needed for immediate display
-      const prefetchPromises = [
+      // Only prefetch if not already in cache
+      const articleQuery = queryClient.getQueryData(['article', article.id]);
+      if (!articleQuery) {
         queryClient.prefetchQuery({
           queryKey: ['article', article.id],
           queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: 0, // No caching
-          gcTime: 0, // No cache retention
-        }),
-      ];
+          staleTime: 300000, // Cache for 5 minutes
+          gcTime: 600000, // Keep in garbage collection for 10 minutes
+        });
+      }
 
-      // Prefetch user-specific data in parallel only if user is logged in
+      // Only prefetch reading list status if user is logged in and not in cache
       if (session?.user) {
-        prefetchPromises.push(
+        const readingListQuery = queryClient.getQueryData([
+          'isInReadingList',
+          session.user.id,
+          article.id,
+        ]);
+        if (!readingListQuery) {
           queryClient.prefetchQuery({
             queryKey: ['isInReadingList', session.user.id, article.id],
             queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
-            staleTime: 0, // No caching
-            gcTime: 0, // No cache retention
-          })
-        );
+            staleTime: 300000,
+            gcTime: 600000,
+          });
+        }
       }
 
-      // Start prefetch operations in parallel
-      Promise.all(prefetchPromises).catch(() => {
-        // Silent error handling - proceed with navigation
-      });
-
-      // Navigate to article detail with debounce protection
       navigateTo(`/article/${article.id}`, () => {
         if (session?.user) {
           dispatch(addToReadingList(article.id));
@@ -231,7 +221,6 @@ export default function ArticlesScreen() {
 
   // Add effect to handle first load
   useEffect(() => {
-    // Only fetch on first mount
     if (isInitialMount.current) {
       handleRefresh();
       isInitialMount.current = false;
@@ -407,7 +396,7 @@ export default function ArticlesScreen() {
   );
 
   // If no data and still loading, show loading screen
-  if ((isArticlesLoading && articlesData.length === 0) || showPulsingLoader) {
+  if ((isArticlesLoading && articlesData.length === 0) || isRefreshing) {
     return <LoadingScreen />;
   }
 

@@ -94,4 +94,47 @@ export const articlesService = {
 
     return data as unknown as Article;
   },
+
+  async getRelatedArticles(articleId: number): Promise<Article[]> {
+    // Get the article's category first
+    const { data: article, error: articleError } = await supabase
+      .from('articles')
+      .select('category_id')
+      .eq('id', articleId)
+      .single();
+
+    if (articleError || !article) {
+      return [];
+    }
+
+    // Get related articles from the same category
+    const { data, error } = await supabase
+      .from('articles')
+      .select(LIST_VIEW_COLUMNS)
+      .eq('category_id', article.category_id)
+      .neq('id', articleId) // Exclude current article
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (error) {
+      return [];
+    }
+
+    return data as unknown as Article[];
+  },
+
+  async getOtherCategoryArticles(categoryId: number): Promise<Article[]> {
+    const { data, error } = await supabase
+      .from('articles')
+      .select(LIST_VIEW_COLUMNS)
+      .eq('category_id', categoryId)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (error) {
+      return [];
+    }
+
+    return data as unknown as Article[];
+  },
 };

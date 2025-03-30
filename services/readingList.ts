@@ -108,7 +108,6 @@ export const readingListService = {
       .upsert(insertData, { onConflict: 'user_id,article_id' });
 
     if (error) {
-      console.error('Error adding to reading list:', error);
       throw error;
     }
   },
@@ -139,7 +138,6 @@ export const readingListService = {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      console.error('Error checking reading list status:', error);
       throw error;
     }
 
@@ -176,7 +174,6 @@ export const readingListService = {
       .order('added_at', { ascending: false });
 
     if (error) {
-      console.error('Error getting reading list:', error);
       throw error;
     }
 

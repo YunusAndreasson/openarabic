@@ -54,7 +54,7 @@ export const SafeEasing = createDefaultEasing();
  */
 export const TIMING_CONFIG = {
   FAST: {
-    duration: 80,
+    duration: 50,
     easing: SafeEasing.out(SafeEasing.quad),
   },
   MEDIUM: {
@@ -62,12 +62,12 @@ export const TIMING_CONFIG = {
     easing: SafeEasing.out(SafeEasing.cubic),
   },
   SLOW: {
-    duration: 150,
+    duration: 120,
     easing: SafeEasing.bezier(0.25, 0.1, 0.25, 1),
   },
   GENTLE: {
-    duration: 600, // Longer duration for smoother animation
-    easing: SafeEasing.bezier(0.4, 0.0, 0.2, 1), // Material design standard easing
+    duration: 300,
+    easing: SafeEasing.bezier(0.4, 0.0, 0.2, 1),
   },
 };
 

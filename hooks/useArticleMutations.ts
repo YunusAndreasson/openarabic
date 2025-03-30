@@ -51,7 +51,6 @@ export const useArticleMutations = (
         const result = await studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId);
         return result;
       } catch (error) {
-        console.error(`Error toggling study word:`, error);
         throw error;
       }
     },

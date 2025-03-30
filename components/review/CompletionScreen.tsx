@@ -21,15 +21,13 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
   // Ensure queries are invalidated when the component mounts
   useEffect(() => {
     if (user?.id) {
-      // Force immediate invalidation of all relevant queries
-      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-
-      // Remove any cached data to force a fresh fetch
-      queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
-      queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
+      // Invalidate all relevant queries at once
+      queryClient.invalidateQueries({
+        predicate: query => {
+          const key = query.queryKey[0];
+          return key === 'dueWords' || key === 'studyWords' || key === 'vocabularyStats';
+        },
+      });
     }
   }, [user?.id, queryClient]);
 

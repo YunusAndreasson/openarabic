@@ -10,22 +10,26 @@ export function useAuth() {
   useEffect(() => {
     // Get initial session
     const initSession = async () => {
-      setIsLoading(true);
       try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
+        // Run auth initialization and session fetch in parallel
+        const [
+          _,
+          {
+            data: { session },
+            error,
+          },
+        ] = await Promise.all([supabase.auth.initialize(), supabase.auth.getSession()]);
+
         if (error) {
           setAuthError(error);
-          console.error('Auth initialization error:', error);
-          return;
+          setSession(null);
+        } else {
+          setSession(session);
+          setAuthError(null);
         }
-        setSession(session);
-        setAuthError(null);
       } catch (error) {
         setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
-        console.error('Auth exception:', error);
+        setSession(null);
       } finally {
         setIsLoading(false);
       }
@@ -39,11 +43,12 @@ export function useAuth() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      setIsLoading(false); // Update loading state directly without checking isLoading
+      setIsLoading(false);
+      setAuthError(null);
     });
 
     return () => subscription.unsubscribe();
-  }, []); // Removed isLoading from dependency array
+  }, []);
 
   return {
     session,

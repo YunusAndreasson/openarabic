@@ -19,11 +19,13 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
   // Keep these as refs since they're just for tracking
   const totalWordsRef = useRef<number>(0);
   const processedWordsRef = useRef<number>(0);
-  // Track if we're currently processing a word update to prevent concurrent updates
-  const isProcessingUpdateRef = useRef<boolean>(false);
 
-  // Track if completion has been triggered to prevent duplicate calls
-  const completionTriggeredRef = useRef<boolean>(false);
+  // Consolidate state tracking into a single ref
+  const stateTrackingRef = useRef({
+    isProcessingUpdate: false,
+    completionTriggered: false,
+    queueInitialized: false,
+  });
 
   const queryClient = useQueryClient();
 
@@ -53,35 +55,35 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    staleTime: 0, // No caching
-    gcTime: 0, // No cache retention
   });
-
-  // Add a ref to track if the queue has been initialized
-  const queueInitializedRef = useRef<boolean>(false);
 
   // Initialize the queue with due words - but only once
   useEffect(() => {
     // Only initialize once per session
-    if (dueWords && dueWords.length > 0 && !queueInitializedRef.current) {
+    if (dueWords && dueWords.length > 0 && !stateTrackingRef.current.queueInitialized) {
       setWordQueue(dueWords);
       totalWordsRef.current = dueWords.length;
       processedWordsRef.current = 0;
       setProgress(0);
       setIsComplete(false);
-      completionTriggeredRef.current = false;
-      isProcessingUpdateRef.current = false;
+      stateTrackingRef.current.completionTriggered = false;
+      stateTrackingRef.current.isProcessingUpdate = false;
 
       // Set the first word
       setCurrentWord(dueWords[0]);
-      queueInitializedRef.current = true;
-    } else if (dueWords && dueWords.length === 0 && !isLoading && !queueInitializedRef.current) {
+      stateTrackingRef.current.queueInitialized = true;
+    } else if (
+      dueWords &&
+      dueWords.length === 0 &&
+      !isLoading &&
+      !stateTrackingRef.current.queueInitialized
+    ) {
       setIsComplete(true);
-      if (onComplete && !completionTriggeredRef.current) {
-        completionTriggeredRef.current = true;
+      if (onComplete && !stateTrackingRef.current.completionTriggered) {
+        stateTrackingRef.current.completionTriggered = true;
         onComplete();
       }
-      queueInitializedRef.current = true;
+      stateTrackingRef.current.queueInitialized = true;
     }
   }, [dueWords, isLoading, onComplete]);
 
@@ -184,11 +186,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
         return;
       }
 
-      if (isComplete || completionTriggeredRef.current || isProcessingUpdateRef.current) {
+      if (
+        isComplete ||
+        stateTrackingRef.current.completionTriggered ||
+        stateTrackingRef.current.isProcessingUpdate
+      ) {
         return;
       }
 
-      isProcessingUpdateRef.current = true;
+      stateTrackingRef.current.isProcessingUpdate = true;
 
       try {
         // Update the word in the database
@@ -209,8 +215,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
           // Check if all words are reviewed
           if (newQueue.length === 0) {
-            if (!completionTriggeredRef.current) {
-              completionTriggeredRef.current = true;
+            if (!stateTrackingRef.current.completionTriggered) {
+              stateTrackingRef.current.completionTriggered = true;
               setTimeout(() => {
                 setIsComplete(true);
                 if (onComplete) onComplete();
@@ -225,11 +231,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
           return newQueue;
         });
       } catch (error) {
-        console.error('[Word Update] Error in word update:', error);
         throw error;
       } finally {
         // Reset processing flag to allow future updates
-        isProcessingUpdateRef.current = false;
+        stateTrackingRef.current.isProcessingUpdate = false;
       }
     },
     [userId, currentWord, isComplete, updateWordInDatabase, onComplete]
@@ -237,13 +242,13 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
   // Reset the queue when the component unmounts or when explicitly called
   const resetQueue = useCallback(() => {
-    queueInitializedRef.current = false;
+    stateTrackingRef.current.queueInitialized = false;
     setWordQueue([]);
     setCurrentWord(null);
     setProgress(0);
     setIsComplete(false);
-    completionTriggeredRef.current = false;
-    isProcessingUpdateRef.current = false;
+    stateTrackingRef.current.completionTriggered = false;
+    stateTrackingRef.current.isProcessingUpdate = false;
     totalWordsRef.current = 0;
     processedWordsRef.current = 0;
   }, []);
@@ -268,7 +273,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     });
 
     // Reset the queue initialization flag to allow a fresh queue to be created next time
-    queueInitializedRef.current = false;
+    stateTrackingRef.current.queueInitialized = false;
   }, [queryClient, userId]);
 
   return {
