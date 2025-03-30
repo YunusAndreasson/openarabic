@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, AppState } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { readingListService } from '@/services/readingList';
@@ -9,7 +9,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
 import { SignInRequired } from '@/components/SignInRequired';
-import { Audio, AVPlaybackStatus } from 'expo-av';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -17,21 +16,14 @@ import Animated from 'react-native-reanimated';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import EmptyState from '@/components/EmptyState';
-import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
+import { AUDIO_STATES, useAudioPlayer, AudioTrack } from '@/hooks/useAudioPlayer';
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
-import { RefreshControl } from 'react-native';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  // Content area
-  listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: 0,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
   },
   cardContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -58,7 +50,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cardProgressContainer: {
-    height: 3,
+    height: 4,
     width: '100%',
     overflow: 'hidden',
     position: 'absolute',
@@ -94,6 +86,9 @@ const styles = StyleSheet.create({
   },
   activeCard: {
     borderLeftWidth: 3,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   activeIcon: {
     opacity: LAYOUT.OPACITY.DIMMED,
@@ -126,48 +121,42 @@ const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding 
 const ReadingListItem = React.memo(
   ({
     item,
-    audioState,
-    isShuffleMode,
-    shuffledList,
-    readingList,
-    currentTrackIndex,
-    playbackProgress,
+    progress,
+    duration,
+    isActive,
   }: {
     item: any;
     audioState: string;
-    isShuffleMode: boolean;
-    shuffledList: any[];
-    readingList: any[];
-    currentTrackIndex: number;
-    playbackProgress: number;
+    progress: number;
+    duration: number;
+    isActive: boolean;
   }) => {
     const colors = useColors();
 
-    const isItemPlaying =
-      audioState === AUDIO_STATES.PLAYING &&
-      ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-        (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+    // Calculate progress percentage
+    const playbackProgress = duration > 0 ? progress / duration : 0;
 
-    const isItemPaused =
-      audioState === AUDIO_STATES.PAUSED &&
-      ((isShuffleMode && shuffledList[currentTrackIndex]?.article_id === item.article_id) ||
-        (!isShuffleMode && readingList[currentTrackIndex]?.article_id === item.article_id));
+    // Prepare styles explicitly for clarity
+    const activeCardStyle = isActive
+      ? {
+          ...styles.activeCard,
+          borderColor: colors.tint,
+          borderLeftWidth: 3, // Force border width
+        }
+      : undefined;
 
-    const isActive = isItemPlaying || isItemPaused;
+    const activeTitleStyle = isActive ? { color: colors.tint } : undefined;
 
     return (
       <View style={styles.cardContainer}>
         <BaseCard
           onPress={() => router.push(`/article/${item.article_id}`)}
-          style={[styles.card, isActive && { ...styles.activeCard, borderColor: colors.tint }]}
+          style={[styles.card, activeCardStyle]}
           shadowSize="small"
         >
           <View style={styles.cardContent}>
             <View style={styles.textContent}>
-              <ThemedText
-                type="bodyBold"
-                style={[styles.titleText, isActive && { color: colors.tint }]}
-              >
+              <ThemedText type="bodyBold" style={[styles.titleText, activeTitleStyle]}>
                 {item.articles?.title || 'Untitled'}
               </ThemedText>
               <ThemedText
@@ -196,7 +185,7 @@ const ReadingListItem = React.memo(
                   styles.cardProgressBar,
                   {
                     backgroundColor: colors.tint,
-                    width: `${(isItemPlaying || isItemPaused ? playbackProgress : 0) * 100}%`,
+                    width: `${playbackProgress * 100}%`,
                   },
                 ]}
               />
@@ -205,6 +194,23 @@ const ReadingListItem = React.memo(
         </BaseCard>
       </View>
     );
+  },
+  // Custom equality function to ensure re-rendering when audio state changes
+  (prevProps, nextProps) => {
+    // Always re-render if active state changes
+    if (prevProps.isActive !== nextProps.isActive) return false;
+
+    // If this item is active, re-render when audio state or progress changes
+    if (nextProps.isActive) {
+      return (
+        prevProps.audioState === nextProps.audioState &&
+        prevProps.progress === nextProps.progress &&
+        prevProps.duration === nextProps.duration
+      );
+    }
+
+    // Otherwise, only re-render if basic props change
+    return prevProps.item.article_id === nextProps.item.article_id;
   }
 );
 
@@ -272,9 +278,27 @@ export default function BookmarksScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const flashListRef = useRef<FlashList<any>>(null);
+  // Store the current playlist
+  const currentPlaylistRef = useRef<AudioTrack[]>([]);
 
   // Use the new loading state hook with optimized defaults
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+
+  // Use the AudioPlayer hook
+  const {
+    audioState,
+    currentTrackIndex,
+    progress,
+    duration,
+    playlistMode,
+    startPlayback,
+    stopPlayback,
+    startShufflePlayback,
+    playNextTrack,
+  } = useAudioPlayer();
+
+  // Maintain shuffled mode state separately
+  const [isShuffleMode, setIsShuffleMode] = useState(false);
 
   // Query for reading list
   const {
@@ -306,39 +330,6 @@ export default function BookmarksScreen() {
     false, // Don't skip initial focus
     true // Force refresh on focus
   );
-
-  // Simple audio state management
-  const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
-  const [isShuffleMode, setIsShuffleMode] = useState(false);
-  const [playbackProgress, setPlaybackProgress] = useState(0);
-  const [shuffledList, setShuffledList] = useState<any[]>([]);
-  const [playlistMode, setPlaylistMode] = useState(false); // Track if we're playing a list or single item
-
-  // Simple refs for audio instance, timers, and state tracking
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const isMountedRef = useRef(true);
-
-  // Clean up all audio resources
-  const cleanupAudio = useCallback(async () => {
-    // Clear any timers
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
-    }
-
-    // Unload sound if it exists
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      } catch (error) {
-        // Error during cleanup - no need to handle
-      }
-    }
-  }, []);
 
   // Check if data is ready to display
   const isDataReady = useMemo(() => {
@@ -378,7 +369,7 @@ export default function BookmarksScreen() {
     }
   }, [user?.id, queryClient, isDataLoading]);
 
-  // Handle component focus and cleanup - MUST BE BEFORE ANY CONDITIONAL RETURNS
+  // Handle component focus and cleanup
   useFocusEffect(
     React.useCallback(() => {
       // Refresh reading list when screen is focused
@@ -403,231 +394,122 @@ export default function BookmarksScreen() {
       }
 
       return () => {
-        // Clean up audio when screen is unfocused
-        cleanupAudio();
+        // Stop playback when leaving the screen
+        stopPlayback();
       };
-    }, [user?.id, queryClient, isDataLoading, cleanupAudio])
+    }, [user?.id, queryClient, isDataLoading, stopPlayback])
   );
 
-  // Get active playlist based on mode
-  const activePlaylist = useMemo(() => {
-    return isShuffleMode ? shuffledList : readingList || [];
-  }, [isShuffleMode, shuffledList, readingList]);
+  // Convert reading list to audio tracks
+  const readingListTracks = useMemo((): AudioTrack[] => {
+    if (!readingList || readingList.length === 0) return [];
+
+    return readingList
+      .filter(item => !!item.articles?.audio_url)
+      .map(item => ({
+        id: item.article_id,
+        audioUrl: item.articles.audio_url as string, // Cast to string since we filtered nulls
+        title: item.articles.title || 'Untitled',
+        // Add other needed properties
+      }));
+  }, [readingList]);
+
+  // Check if an item is the currently playing track
+  const isActiveTrack = useCallback(
+    (articleId: number): boolean => {
+      // First check if we're playing at all
+      if (audioState === AUDIO_STATES.IDLE || currentTrackIndex < 0) {
+        return false;
+      }
+
+      // Get the current track
+      const currentTrack = readingListTracks[currentTrackIndex];
+      if (!currentTrack) return false;
+
+      // Compare IDs directly
+      return currentTrack.id === articleId;
+    },
+    [audioState, currentTrackIndex, readingListTracks]
+  );
 
   // Check if something is currently playing
-  const isCurrentlyPlaying = useMemo(() => {
-    return audioState !== AUDIO_STATES.IDLE;
-  }, [audioState]);
+  const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
-  // Initialize audio session
-  const initAudioSession = async () => {
-    try {
-      // Set audio mode once at the beginning
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-      });
-    } catch (error) {
-      // Failed to set audio mode
-    }
-  };
-
-  // Load and play audio with the specified URL
-  const loadAndPlayAudio = async (audioUrl: string) => {
-    if (!audioUrl) {
-      setAudioState(AUDIO_STATES.ERROR);
-      return false;
-    }
-
-    try {
-      setAudioState(AUDIO_STATES.LOADING);
-
-      // Clean up any existing audio first
-      await cleanupAudio();
-
-      // Create the new sound object
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: audioUrl },
-        { shouldPlay: false },
-        onPlaybackStatusUpdate
-      );
-
-      soundRef.current = sound;
-
-      // Start playback immediately
-      await sound.playAsync();
-      setAudioState(AUDIO_STATES.PLAYING);
-
-      // Start tracking progress
-      startProgressTracking();
-
-      return true;
-    } catch (error) {
-      setAudioState(AUDIO_STATES.ERROR);
-      return false;
-    }
-  };
-
-  // Handle playback status updates
-  const onPlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (!status.isLoaded) {
-      if (status.error) {
-        setAudioState(AUDIO_STATES.ERROR);
-      }
-      return;
-    }
-
-    // Update progress if playing
-    if (status.isPlaying && status.durationMillis) {
-      const progress = status.positionMillis / status.durationMillis;
-      setPlaybackProgress(progress || 0);
-    }
-
-    // Handle playback completion
-    if (status.didJustFinish) {
-      if (status.isLooping) {
-        return;
-      }
-
-      // Update state based on playback mode
-      if (audioState === AUDIO_STATES.PLAYING) {
-        setAudioState(AUDIO_STATES.PAUSED);
-      }
-
-      // Handle completion based on mode
-      if (!playlistMode) {
-        // Single track mode - just stop
-        stopPlayback();
-      } else {
-        // In playlist mode, proceed to next track
-        playNextTrack();
-      }
-    }
-  };
-
-  // Start tracking playback progress
-  const startProgressTracking = () => {
-    // Clear any existing interval
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-    }
-
-    // Set up progress tracking interval
-    progressIntervalRef.current = setInterval(async () => {
-      if (soundRef.current && audioState === AUDIO_STATES.PLAYING) {
-        try {
-          const status = await soundRef.current.getStatusAsync();
-          if (status.isLoaded && status.durationMillis) {
-            const progress = status.positionMillis / status.durationMillis;
-            setPlaybackProgress(progress);
-          }
-        } catch (error) {
-          // Error getting status
-        }
-      }
-    }, 1000); // Update every second
-  };
-
-  // Start playback of all tracks in order
-  const startPlayback = async () => {
-    // Check if we have a playlist
-    if (!readingList || readingList.length === 0) {
-      return;
-    }
-
-    // Start from the beginning and set playlist mode
-    setCurrentTrackIndex(0);
-    setIsShuffleMode(false);
-    setPlaylistMode(true);
-  };
-
-  // Stop all playback
-  const stopPlayback = async () => {
-    // Stop and clean up
-    await cleanupAudio();
-
-    // Reset state in one batch
-    setAudioState(AUDIO_STATES.IDLE);
-    setCurrentTrackIndex(-1);
-    setPlaybackProgress(0);
-    setPlaylistMode(false);
-  };
-
-  // Start shuffle playback
-  const startShufflePlayback = async () => {
-    // Check if we have a playlist
-    if (!readingList || readingList.length === 0) {
-      return;
-    }
-
-    // Create shuffled playlist and find first valid track
-    const shuffled = [...readingList].sort(() => Math.random() - 0.5);
-    const validIndex = shuffled.findIndex(item => !!item?.articles?.audio_url);
-
-    if (validIndex > 0) {
-      // Swap with first item if found
-      [shuffled[0], shuffled[validIndex]] = [shuffled[validIndex], shuffled[0]];
-    }
-
-    // Update state in one batch
-    setShuffledList(shuffled);
-    setCurrentTrackIndex(0);
-    setIsShuffleMode(true);
-    setPlaylistMode(true);
-  };
-
-  // Play next track in playlist
-  const playNextTrack = async () => {
-    // If not in playlist mode or at the end of playlist, stop playback
-    if (!playlistMode || currentTrackIndex < 0 || currentTrackIndex >= activePlaylist.length - 1) {
-      await stopPlayback();
-      return;
-    }
-
-    // Move to next track
-    setCurrentTrackIndex(prev => prev + 1);
-  };
-
-  // Play previous track in playlist
-
-  // Monitor app state changes
+  // Add an effect to monitor track completion and handle next track
   useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      // Pause when app goes to background
-      if (nextAppState !== 'active' && audioState === AUDIO_STATES.PLAYING && soundRef.current) {
-        soundRef.current.pauseAsync().catch(() => {});
+    // If we're not in playlist mode, don't do anything
+    if (!playlistMode || audioState !== AUDIO_STATES.PLAYING) return;
+
+    // If we're at the end of the track (progress close to duration)
+    if (duration > 0 && progress > 0 && progress / duration > 0.99) {
+      // Only track completion once
+      if (!endOfTrackReachedRef.current) {
+        endOfTrackReachedRef.current = true;
       }
-    });
+    } else {
+      // Reset flag when not at end of track
+      endOfTrackReachedRef.current = false;
+    }
+  }, [progress, duration, playlistMode, currentTrackIndex, audioState]);
 
-    return () => {
-      subscription.remove();
-    };
-  }, [audioState]);
-
-  // Initialize audio session when component mounts
+  // Add a separate effect for actual track transitions
+  // This addresses a timing issue where the status update in the hook doesn't always trigger
+  const endOfTrackReachedRef = useRef(false);
   useEffect(() => {
-    initAudioSession();
+    // If track just changed to PAUSED and we were near the end, try to play next track
+    if (audioState === AUDIO_STATES.PAUSED && endOfTrackReachedRef.current && playlistMode) {
+      endOfTrackReachedRef.current = false;
 
-    // Set mounted flag
-    isMountedRef.current = true;
-
-    return () => {
-      isMountedRef.current = false;
-      cleanupAudio();
-    };
-  }, [cleanupAudio]);
-
-  // Load and play track when currentTrackIndex or activePlaylist changes
-  useEffect(() => {
-    if (currentTrackIndex >= 0 && activePlaylist && currentTrackIndex < activePlaylist.length) {
-      const track = activePlaylist[currentTrackIndex];
-      if (track?.articles?.audio_url) {
-        loadAndPlayAudio(track.articles.audio_url);
+      // Check if we have more tracks
+      if (currentTrackIndex < currentPlaylistRef.current.length - 1) {
+        // Small delay to allow state to settle
+        setTimeout(() => {
+          playNextTrack(currentPlaylistRef.current);
+        }, 300);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTrackIndex, activePlaylist]);
+  }, [audioState, playlistMode, currentTrackIndex, playNextTrack]);
+
+  // Handle "Play All" button
+  const handlePlayAll = useCallback(() => {
+    if (isCurrentlyPlaying) {
+      stopPlayback();
+      setIsShuffleMode(false);
+      currentPlaylistRef.current = [];
+    } else {
+      // Make sure we have valid audio tracks
+      const validTracks = readingListTracks.filter(track => !!track.audioUrl);
+
+      if (validTracks.length === 0) return;
+
+      // Store the current playlist
+      currentPlaylistRef.current = validTracks;
+
+      // Start playback with the valid tracks
+      startPlayback(validTracks, 0); // Explicitly start at index 0
+      setIsShuffleMode(false);
+    }
+  }, [isCurrentlyPlaying, readingListTracks, startPlayback, stopPlayback]);
+
+  // Handle "Shuffle" button
+  const handleShuffle = useCallback(() => {
+    if (isCurrentlyPlaying) {
+      stopPlayback();
+      setIsShuffleMode(false);
+      currentPlaylistRef.current = [];
+    } else {
+      // Make sure we have valid audio tracks
+      const validTracks = readingListTracks.filter(track => !!track.audioUrl);
+
+      if (validTracks.length === 0) return;
+
+      // Store the current playlist (shuffled version will be created internally)
+      currentPlaylistRef.current = validTracks;
+
+      startShufflePlayback(validTracks);
+      setIsShuffleMode(true);
+    }
+  }, [isCurrentlyPlaying, readingListTracks, startShufflePlayback, stopPlayback]);
 
   const insets = useSafeAreaInsets();
 
@@ -688,16 +570,15 @@ export default function BookmarksScreen() {
           <FlashList
             ref={flashListRef}
             data={readingList}
+            extraData={[audioState, currentTrackIndex, progress]}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (
               <ReadingListItem
                 item={item}
                 audioState={audioState}
-                isShuffleMode={isShuffleMode}
-                shuffledList={shuffledList}
-                readingList={readingList}
-                currentTrackIndex={currentTrackIndex}
-                playbackProgress={playbackProgress}
+                progress={progress}
+                duration={duration}
+                isActive={isActiveTrack(item.article_id)}
               />
             )}
             estimatedItemSize={ITEM_HEIGHT}
@@ -719,12 +600,9 @@ export default function BookmarksScreen() {
           />
         </ThemedView>
 
-        <View style={[styles.cardProgressContainer, { backgroundColor: colors.transparent }]} />
-        <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]} />
-
         <BottomControls
-          onPlayAll={isCurrentlyPlaying ? stopPlayback : startPlayback}
-          onShuffle={isCurrentlyPlaying ? stopPlayback : startShufflePlayback}
+          onPlayAll={handlePlayAll}
+          onShuffle={handleShuffle}
           isPlaying={isCurrentlyPlaying}
           isShuffleMode={isShuffleMode}
         />
