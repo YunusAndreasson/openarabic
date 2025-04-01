@@ -43,3 +43,6 @@ coverage/
 
 translate/set_keys.py
 translate/audio/
+translate/articles/
+translate/archive/
+translate/__pycache__/

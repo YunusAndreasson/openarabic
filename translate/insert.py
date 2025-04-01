@@ -43,6 +43,25 @@ WORD_TYPE_MAPPING = {
 }
 
 
+def _remove_final_haraka(word: str) -> str:
+    """
+    Remove the last short vowel (haraka) or tanween
+    from an Arabic word, if present.
+    """
+    # Set of diacritics we want to remove from the end
+    final_diacritics = {"َ", "ُ", "ِ", "ْ", "ً", "ٌ", "ٍ"}
+
+    # Convert to a list of characters for easy popping
+    chars = list(word)
+
+    # Remove diacritics while the last character is in our set
+    while chars and chars[-1] in final_diacritics:
+        chars.pop()
+
+    # Reconstruct the word after stripping final diacritics
+    return "".join(chars)
+
+
 def generate_content_hash(data: Dict) -> str:
     """Generate a unique hash for the article content."""
     content = json.dumps(data, sort_keys=True)
@@ -204,11 +223,14 @@ def insert_sentence_words(sentence_id: int, translation: Dict) -> None:
         audio_filename = generate_audio_filename()
         audio_url = generate_word_audio(word["arabic"], audio_filename)
 
+        # Remove final haraka from word form before saving
+        cleaned_word_form = _remove_final_haraka(word["arabic"])
+
         # Prepare word data
         word_data = {
             "sentence_id": sentence_id,
             "position": position,
-            "word_form": word["arabic"],
+            "word_form": cleaned_word_form,  # Use the cleaned word form
             "english": word["english"],
             "word_type_id": word_type_id,
             "root_id": root_id,
@@ -346,17 +368,49 @@ def archive_files(json_path: str, article_id: int) -> None:
 def main():
     """Main function to run the script."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(script_dir, "output.json")
+    articles_dir = os.path.join(script_dir, "article")
 
-    if not os.path.exists(json_path):
-        print(f"Error: Could not find {json_path}")
+    if not os.path.exists(articles_dir):
+        print(f"Error: Could not find articles directory at {articles_dir}")
         return
 
-    try:
-        process_json_file(json_path)
-        print("Data insertion completed successfully!")
-    except Exception as e:
-        print(f"Error occurred: {str(e)}")
+    # Get all json files in the articles directory
+    json_files = []
+
+    # Check for output.json directly in the articles directory
+    direct_output_json = os.path.join(articles_dir, "output.json")
+    if os.path.exists(direct_output_json):
+        json_files.append(direct_output_json)
+
+    # Also check subdirectories
+    for item in os.listdir(articles_dir):
+        item_path = os.path.join(articles_dir, item)
+        if os.path.isdir(item_path):  # If it's a directory
+            output_json = os.path.join(item_path, "output.json")
+            if os.path.exists(output_json):
+                json_files.append(output_json)
+
+    if not json_files:
+        print("No article output.json files found in the articles directory")
+        return
+
+    success_count = 0
+    error_count = 0
+
+    for json_path in json_files:
+        try:
+            print(f"\nProcessing {json_path}...")
+            process_json_file(json_path)
+            success_count += 1
+            print(f"Successfully processed {json_path}")
+        except Exception as e:
+            error_count += 1
+            print(f"Error processing {json_path}: {str(e)}")
+
+    print("\nProcessing complete!")
+    print(f"Successfully processed: {success_count} articles")
+    if error_count > 0:
+        print(f"Failed to process: {error_count} articles")
 
 
 if __name__ == "__main__":
