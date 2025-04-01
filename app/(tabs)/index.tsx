@@ -16,7 +16,7 @@ import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
 import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import { fetchInProgressArticles, addToReadingList } from '@/store/readingListSlice';
+import { addToReadingList } from '@/store/readingListSlice';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
@@ -31,10 +31,10 @@ import { getDayOfYear } from '@/utils/dateUtils';
 import { ArticleSection } from '../../components/article';
 import FeaturedArticleSection from '../../components/index/FeaturedArticleSection';
 import { mediumFeedback } from '@/utils/haptics';
+import { setDailyPick, setFeaturedArticles } from '@/store/featuredContentSlice';
 
 // Types
 import { Article } from '@/types/articles.types';
-import type { Tables } from '@/types/database.types';
 
 // Import the extracted components
 import FilterList from '../../components/index/FilterList';
@@ -119,6 +119,11 @@ export default function ArticlesScreen() {
     state => state.readingList
   );
 
+  // Get the featured content state from Redux
+  const { dailyPick, featuredArticles: featuredArticlesState } = useAppSelectorMemo(
+    state => state.featuredContent
+  );
+
   // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
     return filterArticles(articlesData, null, null);
@@ -131,13 +136,15 @@ export default function ArticlesScreen() {
   const sortedInProgressArticles = useMemo(() => {
     if (!inProgressArticles?.length) return [];
 
-    return [...inProgressArticles].sort((a, b) => {
-      const aTime = lastOpenedArticles?.[a.id] ? new Date(lastOpenedArticles[a.id]).getTime() : 0;
-      const bTime = lastOpenedArticles?.[b.id] ? new Date(lastOpenedArticles[b.id]).getTime() : 0;
+    return [...inProgressArticles]
+      .sort((a, b) => {
+        const aTime = lastOpenedArticles?.[a.id] ? new Date(lastOpenedArticles[a.id]).getTime() : 0;
+        const bTime = lastOpenedArticles?.[b.id] ? new Date(lastOpenedArticles[b.id]).getTime() : 0;
 
-      // Sort by last opened time (most recent first)
-      return bTime - aTime;
-    });
+        // Sort by last opened time (most recent first)
+        return bTime - aTime;
+      })
+      .slice(0, 20); // Limit to 20 articles
   }, [inProgressArticles, lastOpenedArticles]);
 
   // Combined loading and fetching states for better UX
@@ -238,16 +245,51 @@ export default function ArticlesScreen() {
   // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
 
+  // Effect to handle daily pick updates
+  useEffect(() => {
+    if (articlesError || articlesData.length === 0) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    if (dailyPick.date !== today) {
+      const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
+      if (dailyPickArticle) {
+        dispatch(setDailyPick({ articleId: dailyPickArticle.id, date: today }));
+      }
+    }
+  }, [articlesData, articlesError, dailyPick.date, dispatch]);
+
+  // Effect to handle featured articles updates
+  useEffect(() => {
+    if (articlesError || articlesData.length === 0) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    if (featuredArticlesState.lastUpdated !== today) {
+      const featuredArticlesList = getFeaturedArticles(articlesData, 3);
+      if (featuredArticlesList.length > 0) {
+        dispatch(
+          setFeaturedArticles({
+            ids: featuredArticlesList.map(article => article.id),
+            lastUpdated: today,
+          })
+        );
+      }
+    }
+  }, [articlesData, articlesError, featuredArticlesState.lastUpdated, dispatch]);
+
   // Memoized child components to prevent re-renders
   const DailyPick = useMemo(() => {
     // Don't show daily pick if there's an error or no articles
     if (articlesError || articlesData.length === 0) return null;
 
-    const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
-    return (
+    let dailyPickArticle: Article | null = null;
+    if (dailyPick.articleId !== null) {
+      dailyPickArticle = articlesData.find(article => article.id === dailyPick.articleId) || null;
+    }
+
+    return dailyPickArticle ? (
       <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
-    );
-  }, [articlesData, articlesError, handleArticlePress]);
+    ) : null;
+  }, [articlesData, articlesError, handleArticlePress, dailyPick.articleId]);
 
   const ContinueReadingSection = useMemo(() => {
     return (
@@ -263,7 +305,7 @@ export default function ArticlesScreen() {
   }, [sortedInProgressArticles, lastOpenedArticles]);
 
   const LatestTextsSection = useMemo(() => {
-    const latestArticles = getLatestArticles(articlesData, 10);
+    const latestArticles = getLatestArticles(articlesData, 20); // Changed from 10 to 20
 
     return (
       <ArticleSection
@@ -277,23 +319,26 @@ export default function ArticlesScreen() {
   }, [articlesData, handleArticlePress]);
 
   const FeaturedTextsSection = useMemo(() => {
-    const featuredArticles = getFeaturedArticles(articlesData);
+    // Use existing featured articles
+    const featuredArticlesList = articlesData.filter(article =>
+      featuredArticlesState.ids.includes(article.id)
+    );
 
     return (
       <FeaturedArticleSection
         title="Featured Texts"
-        articles={featuredArticles || []}
+        articles={featuredArticlesList}
         onArticlePress={handleArticlePress}
       />
     );
-  }, [articlesData, handleArticlePress]);
+  }, [articlesData, featuredArticlesState.ids, handleArticlePress]);
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
     return (
       <ArticleSection
         title="Beginner Friendly"
-        articles={beginnerArticles}
+        articles={beginnerArticles.slice(0, 20)} // Limit to 20 articles
         onArticlePress={handleArticlePress}
         hideDifficulty={true}
       />
