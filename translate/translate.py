@@ -487,18 +487,22 @@ def validate_translation_results(
 
 # Define valid parts of speech
 VALID_POS = {
-    "verb",  # Any verb form
-    "noun",  # Nouns, pronouns, adjectives, adverbs
-    "particle",  # Particles, prepositions, conjunctions, etc.
+    "verb",
+    "noun",
+    "particle",
+    "adjective",
+    "pronoun",
+    "adverb",
+    "preposition",
+    "conjunction",
+    "interjection",
+    "numeral",
 }
 
 
 def is_valid_pos(pos: str) -> bool:
     """
-    Validate if a part of speech is valid according to our 3-category system:
-    - verb: Any verb form
-    - noun: Nouns, pronouns, adjectives, adverbs
-    - particle: Particles, prepositions, conjunctions, etc.
+    Validate if a part of speech is valid according to our word type mapping system.
     """
     if not pos:
         return False
