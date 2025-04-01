@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { lightFeedback } from '@/utils/haptics';
 import { useWordSizing } from '../hooks/useWordSizing';
 import { useOpacityAnimation } from '@/hooks/animations';
+import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 
 // Import our components
 import {
@@ -60,6 +61,12 @@ export default function ReviewScreen() {
   // Use opacity animation directly instead of the legacy fade animation
   const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
 
+  // Add audio player hook
+  const { loadAndPlayAudio, stopPlayback } = useAudioPlayer();
+
+  // Add ref for next word's audio preloading
+  const nextWordAudioRef = useRef<{ url: string; loaded: boolean } | null>(null);
+
   // Define completion transition function that both paths can use
   const triggerCompletionTransition = useCallback(() => {
     if (completionTriggeredRef.current) return;
@@ -83,10 +90,11 @@ export default function ReviewScreen() {
   }, [fadeOut]);
 
   // Initialize FSRS hook with our completion handler
-  const { currentWord, isLoading, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
-    userId: user?.id,
-    onComplete: triggerCompletionTransition,
-  });
+  const { currentWord, wordQueue, isLoading, isComplete, progress, updateWord, invalidateQueries } =
+    useFSRS({
+      userId: user?.id,
+      onComplete: triggerCompletionTransition,
+    });
 
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const meaningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -161,9 +169,26 @@ export default function ReviewScreen() {
   useEffect(() => {
     if (currentWord && !isComplete && !isTransitioningToCompletion) {
       const wordForm = currentWord.sentence_word.word_form;
+      const audioUrl = currentWord.sentence_word.audio_url;
       setCurrentSentence({ wordForm });
+
+      // Play audio if available
+      if (audioUrl) {
+        loadAndPlayAudio(audioUrl);
+      }
+
+      // Track next word's audio URL if available
+      const nextWord = wordQueue[0];
+      if (nextWord?.sentence_word?.audio_url) {
+        nextWordAudioRef.current = {
+          url: nextWord.sentence_word.audio_url,
+          loaded: false,
+        };
+      } else {
+        nextWordAudioRef.current = null;
+      }
     }
-  }, [currentWord, isComplete, isTransitioningToCompletion]);
+  }, [currentWord, wordQueue, isComplete, isTransitioningToCompletion, loadAndPlayAudio]);
 
   // Update progress tracking with debounce
   useEffect(() => {
@@ -205,6 +230,9 @@ export default function ReviewScreen() {
     }
 
     isUpdatingWordRef.current = true;
+
+    // Stop current audio
+    stopPlayback();
 
     // Add haptic feedback for don't know
     lightFeedback();
@@ -248,7 +276,15 @@ export default function ReviewScreen() {
         }
       }, 2000);
     }, 300);
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
+  }, [
+    currentWord,
+    updateWord,
+    isTransitioningToCompletion,
+    isComplete,
+    fadeIn,
+    fadeOut,
+    stopPlayback,
+  ]);
 
   // Handle swipe right (know the word)
   const handleSwipeRight = useCallback(() => {
@@ -262,6 +298,9 @@ export default function ReviewScreen() {
     }
 
     isUpdatingWordRef.current = true;
+
+    // Stop current audio
+    stopPlayback();
 
     // First, ensure the word is hidden
     fadeOut();
@@ -289,7 +328,15 @@ export default function ReviewScreen() {
         isUpdatingWordRef.current = false;
       }
     }, 300); // Wait for fade out animation to complete
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
+  }, [
+    currentWord,
+    updateWord,
+    isTransitioningToCompletion,
+    isComplete,
+    fadeIn,
+    fadeOut,
+    stopPlayback,
+  ]);
 
   // Handle close button press
   const queryClient = useQueryClient();
@@ -345,6 +392,14 @@ export default function ReviewScreen() {
       totalWordsRef.current = 0;
     };
   }, [fadeIn]);
+
+  // Clean up audio when component unmounts or transitions
+  useEffect(() => {
+    return () => {
+      stopPlayback();
+      nextWordAudioRef.current = null;
+    };
+  }, [stopPlayback]);
 
   // Show loading screen during initial load
   if ((isLoading && initialLoadRef.current) || showInitialLoading) {

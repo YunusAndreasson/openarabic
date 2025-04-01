@@ -40,6 +40,7 @@ export type Database = {
           audio_url: string | null;
           author_id: number;
           category_id: number;
+          content_hash: string | null;
           created_at: string;
           difficulty_level: number;
           id: number;
@@ -51,6 +52,7 @@ export type Database = {
           audio_url?: string | null;
           author_id: number;
           category_id: number;
+          content_hash?: string | null;
           created_at?: string;
           difficulty_level: number;
           id?: number;
@@ -62,6 +64,7 @@ export type Database = {
           audio_url?: string | null;
           author_id?: number;
           category_id?: number;
+          content_hash?: string | null;
           created_at?: string;
           difficulty_level?: number;
           id?: number;
@@ -115,6 +118,59 @@ export type Database = {
           name?: string;
         };
         Relationships: [];
+      };
+      fsrs_logs: {
+        Row: {
+          card_difficulty: number;
+          card_stability: number;
+          card_state: number;
+          created_at: string | null;
+          elapsed_days: number;
+          id: number;
+          log_data: Json;
+          rating: number;
+          review_date: string;
+          scheduled_days: number;
+          sentence_word_id: number;
+          user_id: string;
+        };
+        Insert: {
+          card_difficulty: number;
+          card_stability: number;
+          card_state: number;
+          created_at?: string | null;
+          elapsed_days: number;
+          id?: number;
+          log_data: Json;
+          rating: number;
+          review_date: string;
+          scheduled_days: number;
+          sentence_word_id: number;
+          user_id: string;
+        };
+        Update: {
+          card_difficulty?: number;
+          card_stability?: number;
+          card_state?: number;
+          created_at?: string | null;
+          elapsed_days?: number;
+          id?: number;
+          log_data?: Json;
+          rating?: number;
+          review_date?: string;
+          scheduled_days?: number;
+          sentence_word_id?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'fsrs_logs_sentence_word_id_fkey';
+            columns: ['sentence_word_id'];
+            isOneToOne: false;
+            referencedRelation: 'sentence_words';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       reading_list: {
         Row: {
@@ -206,6 +262,7 @@ export type Database = {
       };
       sentence_words: {
         Row: {
+          audio_url: string | null;
           difficulty_level: number;
           english: string;
           grammar_note: string | null;
@@ -217,6 +274,7 @@ export type Database = {
           word_type_id: number;
         };
         Insert: {
+          audio_url?: string | null;
           difficulty_level?: number;
           english: string;
           grammar_note?: string | null;
@@ -228,6 +286,7 @@ export type Database = {
           word_type_id: number;
         };
         Update: {
+          audio_url?: string | null;
           difficulty_level?: number;
           english?: string;
           grammar_note?: string | null;
@@ -265,7 +324,18 @@ export type Database = {
       study_words: {
         Row: {
           created_at: string;
+          difficulty: number;
           ease_factor: number;
+          failure_streak: number;
+          fsrs_difficulty: number | null;
+          fsrs_due: string | null;
+          fsrs_elapsed_days: number | null;
+          fsrs_lapses: number | null;
+          fsrs_last_review: string | null;
+          fsrs_reps: number | null;
+          fsrs_scheduled_days: number | null;
+          fsrs_stability: number | null;
+          fsrs_state: number | null;
           interval_days: number;
           lapses: number;
           next_review_at: string;
@@ -273,20 +343,23 @@ export type Database = {
           review_count: number;
           sentence_word_id: number;
           stability: number;
+          success_streak: number;
           user_id: string;
-          fsrs_due: string | null;
-          fsrs_stability: number | null;
-          fsrs_difficulty: number | null;
-          fsrs_elapsed_days: number | null;
-          fsrs_scheduled_days: number | null;
-          fsrs_reps: number | null;
-          fsrs_lapses: number | null;
-          fsrs_state: number | null;
-          fsrs_last_review: string | null;
         };
         Insert: {
           created_at?: string;
+          difficulty?: number;
           ease_factor?: number;
+          failure_streak?: number;
+          fsrs_difficulty?: number | null;
+          fsrs_due?: string | null;
+          fsrs_elapsed_days?: number | null;
+          fsrs_lapses?: number | null;
+          fsrs_last_review?: string | null;
+          fsrs_reps?: number | null;
+          fsrs_scheduled_days?: number | null;
+          fsrs_stability?: number | null;
+          fsrs_state?: number | null;
           interval_days?: number;
           lapses?: number;
           next_review_at: string;
@@ -294,20 +367,23 @@ export type Database = {
           review_count?: number;
           sentence_word_id: number;
           stability?: number;
+          success_streak?: number;
           user_id: string;
-          fsrs_due?: string | null;
-          fsrs_stability?: number | null;
-          fsrs_difficulty?: number | null;
-          fsrs_elapsed_days?: number | null;
-          fsrs_scheduled_days?: number | null;
-          fsrs_reps?: number | null;
-          fsrs_lapses?: number | null;
-          fsrs_state?: number | null;
-          fsrs_last_review?: string | null;
         };
         Update: {
           created_at?: string;
+          difficulty?: number;
           ease_factor?: number;
+          failure_streak?: number;
+          fsrs_difficulty?: number | null;
+          fsrs_due?: string | null;
+          fsrs_elapsed_days?: number | null;
+          fsrs_lapses?: number | null;
+          fsrs_last_review?: string | null;
+          fsrs_reps?: number | null;
+          fsrs_scheduled_days?: number | null;
+          fsrs_stability?: number | null;
+          fsrs_state?: number | null;
           interval_days?: number;
           lapses?: number;
           next_review_at?: string;
@@ -315,16 +391,8 @@ export type Database = {
           review_count?: number;
           sentence_word_id?: number;
           stability?: number;
+          success_streak?: number;
           user_id?: string;
-          fsrs_due?: string | null;
-          fsrs_stability?: number | null;
-          fsrs_difficulty?: number | null;
-          fsrs_elapsed_days?: number | null;
-          fsrs_scheduled_days?: number | null;
-          fsrs_reps?: number | null;
-          fsrs_lapses?: number | null;
-          fsrs_state?: number | null;
-          fsrs_last_review?: string | null;
         };
         Relationships: [
           {
