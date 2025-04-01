@@ -120,14 +120,6 @@ function ArabicWordComponent({
     setBorderOpacity(isSelected ? 1 : 0);
   }, [isSelected, setBorderOpacity]);
 
-  // Ensure proper opacity when tooltip is closed
-  useEffect(() => {
-    if (!tooltipVisible) {
-      // When tooltip is hidden, ensure full opacity
-      setWordOpacity(1);
-    }
-  }, [tooltipVisible, setWordOpacity]);
-
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setLayout(event.nativeEvent.layout);
@@ -142,26 +134,25 @@ function ArabicWordComponent({
   // Show tooltip on quick press with fade animation
   const handlePress = useCallback(() => {
     if (!layout) return;
-    startPressAnimation();
-    const fadeOpacity = isDarkMode ? 0.7 : 0.5;
 
     // Increment global counter and set new zIndex
     tooltipZIndexCounter += 1;
     setTooltipZIndex(tooltipZIndexCounter);
 
-    setWordOpacity(fadeOpacity, () => {
-      setTooltipVisible(true);
-      reversePressAnimation();
-    });
-  }, [layout, setWordOpacity, startPressAnimation, reversePressAnimation, isDarkMode]);
+    // Show tooltip immediately
+    setTooltipVisible(true);
+  }, [layout]);
 
   // Handle tooltip close
   const handleTooltipClose = useCallback(() => {
-    // Always restore full opacity when tooltip closes
-    setWordOpacity(1, () => {
-      setTooltipVisible(false);
-    });
-  }, [setWordOpacity]);
+    setTooltipVisible(false);
+  }, []);
+
+  // Update word opacity based on tooltip visibility
+  useEffect(() => {
+    const fadeOpacity = tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1;
+    setWordOpacity(fadeOpacity);
+  }, [tooltipVisible, isDarkMode, setWordOpacity]);
 
   // Calculate font size once outside the memo to avoid recalculations
   const calculatedFontSize = baseSize * scale;

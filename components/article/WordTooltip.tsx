@@ -25,10 +25,10 @@ export const WordTooltip = React.memo(
       animatedStyle: transformStyle,
     } = useTransformAnimation({
       type: 'scale',
-      initialValue: 0.94,
+      initialValue: 1,
       targetValue: 1,
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 5, // Standardized duration
-      useSpring: true,
+      duration: 0,
+      useSpring: false,
     });
 
     // Setup opacity animation for subtle fade effect
@@ -37,16 +37,15 @@ export const WordTooltip = React.memo(
       fadeOut,
       animatedStyle: opacityStyle,
     } = useOpacityAnimation({
-      initialOpacity: 0.7,
-      duration: LAYOUT.ANIMATION.DURATION.NORMAL / 5, // Matched with scale animation
+      initialOpacity: 1,
+      duration: 0,
     });
 
     // Handle closing the tooltip with animation sequence
     const handleClose = useCallback(() => {
-      fadeOut(() => {
-        reverseScaleAnimation(onClose);
-      });
-    }, [fadeOut, reverseScaleAnimation, onClose]);
+      // Call onClose immediately without animations
+      onClose();
+    }, [onClose]);
 
     // Trigger animations based on visibility
     useEffect(() => {
@@ -58,7 +57,7 @@ export const WordTooltip = React.memo(
         // Auto-close tooltip after standardized delay
         const timer = setTimeout(() => {
           handleClose();
-        }, LAYOUT.ANIMATION.DURATION.SLOW * 3); // Increased duration by 3x
+        }, LAYOUT.ANIMATION.DURATION.SLOW * 3);
 
         return () => clearTimeout(timer);
       } else {
