@@ -1,0 +1,618 @@
+{
+  "metadata": {
+    "title": "Prophets from Abrahams Lineage",
+    "summary": "The text discusses the lineage of prophets from Abraham and Noah, highlighting their divine guidance and virtues.",
+    "difficulty_level": 4,
+    "total_units": 5
+  },
+  "translations": [
+    {
+      "index": 0,
+      "original": "قال الله تعالى عن إبراهيم الخليل عليه السلام:",
+      "tashkeel": "قَالَ اللَّهُ تَعَالَى عَنْ إِبْرَاهِيمَ الْخَلِيلِ عَلَيْهِ السَّلَامُ",
+      "word_by_word": [
+        {
+          "arabic": "قَالَ",
+          "english": "said",
+          "pos": "verb",
+          "root": "ق-و-ل",
+          "notes": null
+        },
+        {
+          "arabic": "اللَّهُ",
+          "english": "Allah",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "تَعَالَى",
+          "english": "Exalted is He",
+          "pos": "verb",
+          "root": "ع-ل-و",
+          "notes": null
+        },
+        {
+          "arabic": "عَنْ",
+          "english": "about",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "إِبْرَاهِيمَ",
+          "english": "Ibrahim",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "الْخَلِيلِ",
+          "english": "the Friend of Allah",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "عَلَيْهِ",
+          "english": "upon him",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "السَّلَامُ",
+          "english": "peace",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        }
+      ],
+      "full_translation": "Allah, Exalted is He, said about Ibrahim (Abraham), the Friend of Allah, peace be upon him:",
+      "notes": "The phrase 'Friend of Allah' is a title of honor for Prophet Ibrahim (Abraham).\nUncertainty Resolution:\n- Resolved:\n  * The diacritics for إِبْرَاهِيمَ were confirmed based on standard pronunciation and context.",
+      "verification_status": "Verified",
+      "verification_issues": null
+    },
+    {
+      "index": 1,
+      "original": "(وَوَهَبْنَا لَهُ إِسْحَاقَ وَيَعْقُوبَ كُلًّا هَدَيْنَا وَنُوحًا هَدَيْنَا مِنْ قَبْلُ وَمِنْ ذُرِّيَّتِهِ دَاوُودَ وَسُلَيْمَانَ وَأَيُّوبَ وَيُوسُفَ وَمُوسَى وَهَارُونَ وَكَذَلِكَ نَجْزِي الْمُحْسِنِينَ * وَزَكَرِيَّا وَيَحْيَى وَعِيسَى وَإِلْيَاسَ كُلٌّ مِنَ الصَّالِحِينَ * وَإِسْمَاعِيلَ وَالْيَسَعَ وَيُونُسَ وَلُوطًا وَكُلًّا فَضَّلْنَا عَلَى الْعَالَمِينَ) الأنعام/ 84 - 86.",
+      "tashkeel": "وَوَهَبْنَا لَهُ إِسْحَاقَ وَيَعْقُوبَ كُلًّا هَدَيْنَا وَنُوحًا هَدَيْنَا مِنْ قَبْلُ وَمِنْ ذُرِّيَّتِهِ دَاوُودَ وَسُلَيْمَانَ وَأَيُّوبَ وَيُوسُفَ وَمُوسَى وَهَارُونَ وَكَذَلِكَ نَجْزِي الْمُحْسِنِينَ * وَزَكَرِيَّا وَيَحْيَى وَعِيسَى وَإِلْيَاسَ كُلٌّ مِنَ الصَّالِحِينَ * وَإِسْمَاعِيلَ وَالْيَسَعَ وَيُونُسَ وَلُوطًا وَكُلًّا فَضَّلْنَا عَلَى الْعَالَمِينَ",
+      "word_by_word": [
+        {
+          "arabic": "وَوَهَبْنَا",
+          "english": "And We bestowed",
+          "pos": "verb",
+          "root": "و-ه-ب",
+          "notes": null
+        },
+        {
+          "arabic": "لَهُ",
+          "english": "upon him",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "إِسْحَاقَ",
+          "english": "Ishaq",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَيَعْقُوبَ",
+          "english": "and Ya'qub",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "كُلًّا",
+          "english": "each of them",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "هَدَيْنَا",
+          "english": "We guided",
+          "pos": "verb",
+          "root": "ه-د-ي",
+          "notes": null
+        },
+        {
+          "arabic": "وَنُوحًا",
+          "english": "and Nuh",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "هَدَيْنَا",
+          "english": "We guided",
+          "pos": "verb",
+          "root": "ه-د-ي",
+          "notes": null
+        },
+        {
+          "arabic": "مِنْ",
+          "english": "from",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "قَبْلُ",
+          "english": "before",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَمِنْ",
+          "english": "and from",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "ذُرِّيَّتِهِ",
+          "english": "his descendants",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "دَاوُودَ",
+          "english": "Dawud",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَسُلَيْمَانَ",
+          "english": "and Sulayman",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَأَيُّوبَ",
+          "english": "and Ayyub",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَيُوسُفَ",
+          "english": "and Yusuf",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَمُوسَى",
+          "english": "and Musa",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَهَارُونَ",
+          "english": "and Harun",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَكَذَلِكَ",
+          "english": "Thus",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "نَجْزِي",
+          "english": "do We reward",
+          "pos": "verb",
+          "root": "ج-ز-ي",
+          "notes": null
+        },
+        {
+          "arabic": "الْمُحْسِنِينَ",
+          "english": "those who do good",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَزَكَرِيَّا",
+          "english": "and Zakariya",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَيَحْيَى",
+          "english": "and Yahya",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَعِيسَى",
+          "english": "and 'Isa",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَإِلْيَاسَ",
+          "english": "and Ilyas",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "كُلٌّ",
+          "english": "each",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "مِنَ",
+          "english": "from",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "الصَّالِحِينَ",
+          "english": "the righteous",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَإِسْمَاعِيلَ",
+          "english": "and Isma'il",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَالْيَسَعَ",
+          "english": "and Al-Yasa'",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَيُونُسَ",
+          "english": "and Yunus",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَلُوطًا",
+          "english": "and Lut",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَكُلًّا",
+          "english": "and each of them",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "فَضَّلْنَا",
+          "english": "We preferred",
+          "pos": "verb",
+          "root": "ف-ض-ل",
+          "notes": null
+        },
+        {
+          "arabic": "عَلَى",
+          "english": "over",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "الْعَالَمِينَ",
+          "english": "the worlds",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        }
+      ],
+      "full_translation": "And We bestowed upon him Ishaq (Isaac) and Ya'qub (Jacob), each of them We guided; and Nuh (Noah) We guided before; and from his descendants, Dawud (David), Sulayman (Solomon), Ayyub (Job), Yusuf (Joseph), Musa (Moses), and Harun (Aaron). Thus do We reward those who do good. And Zakariya (Zechariah), Yahya (John), 'Isa (Jesus), and Ilyas (Elijah), each one of them was of the righteous. And Isma'il (Ishmael), Al-Yasa' (Elisha), Yunus (Jonah), and Lut (Lot), and each one We preferred over the worlds.",
+      "notes": "This is a Quranic verse, hence the translation maintains a formal tone. The term 'progeny' refers to descendants.\nUncertainty Resolution:\n- Resolved:\n  * The term 'ذُرِّيَّتِهِ' is translated as 'descendants' to better reflect the context of lineage.\n  * The diacritics for ذُرِّيَّتِهِ were confirmed based on standard pronunciation and context.",
+      "verification_status": "Verified",
+      "verification_issues": null
+    },
+    {
+      "index": 2,
+      "original": "فهذا نص في أن عيسى عليه السلام من ذرية إبراهيم عليه السلام أو نوح،",
+      "tashkeel": "فَهَذَا نَصٌّ فِي أَنَّ عِيسَى عَلَيْهِ السَّلَامُ مِنْ ذُرِّيَّةِ إِبْرَاهِيمَ عَلَيْهِ السَّلَامُ أَوْ نُوحٍ",
+      "word_by_word": [
+        {
+          "arabic": "فَهَذَا",
+          "english": "This",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "نَصٌّ",
+          "english": "text",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "فِي",
+          "english": "in",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "أَنَّ",
+          "english": "that",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "عِيسَى",
+          "english": "'Isa",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "عَلَيْهِ",
+          "english": "upon him",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "السَّلَامُ",
+          "english": "peace",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "مِنْ",
+          "english": "from",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "ذُرِّيَّةِ",
+          "english": "descendants",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "إِبْرَاهِيمَ",
+          "english": "Ibrahim",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "عَلَيْهِ",
+          "english": "upon him",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "السَّلَامُ",
+          "english": "peace",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "أَوْ",
+          "english": "or",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "نُوحٍ",
+          "english": "Nuh",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        }
+      ],
+      "full_translation": "This is a text indicating that 'Isa (Jesus), peace be upon him, is from the descendants of Ibrahim (Abraham), peace be upon him, or Nuh (Noah),",
+      "notes": "The phrase 'peace be upon him' is a common honorific for prophets.\nUncertainty Resolution:\n- Resolved:\n  * The term 'ذُرِّيَّةِ' is translated as 'descendants' to better reflect the context of lineage.\n  * The diacritics for ذُرِّيَّةِ were confirmed based on standard pronunciation and context.",
+      "verification_status": "Verified",
+      "verification_issues": null
+    },
+    {
+      "index": 3,
+      "original": "لأن الضمير في قوله: (ومن ذريته) قيل: عائد إلى نوح لأنه أقرب مذكور،",
+      "tashkeel": "لِأَنَّ الضَّمِيرَ فِي قَوْلِهِ: (وَمِنْ ذُرِّيَّتِهِ) قِيلَ: عَائِدٌ إِلَى نُوحٍ لِأَنَّهُ أَقْرَبُ مَذْكُورٍ",
+      "word_by_word": [
+        {
+          "arabic": "لِأَنَّ",
+          "english": "because",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "الضَّمِيرَ",
+          "english": "the pronoun",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "فِي",
+          "english": "in",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "قَوْلِهِ",
+          "english": "His saying",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "وَمِنْ",
+          "english": "and from",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "ذُرِّيَّتِهِ",
+          "english": "his descendants",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "قِيلَ",
+          "english": "is said",
+          "pos": "verb",
+          "root": "ق-و-ل",
+          "notes": null
+        },
+        {
+          "arabic": "عَائِدٌ",
+          "english": "referring",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "إِلَى",
+          "english": "to",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "نُوحٍ",
+          "english": "Nuh",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "لِأَنَّهُ",
+          "english": "because he",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "أَقْرَبُ",
+          "english": "closest",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "مَذْكُورٍ",
+          "english": "mentioned",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        }
+      ],
+      "full_translation": "because the pronoun in His saying: 'and from his descendants' is said to refer back to Nuh (Noah) because he is the closest mentioned.",
+      "notes": "The pronoun 'his' in 'from his progeny' is subject to interpretation, referring either to Nuh (Noah) or Ibrahim (Abraham).\nUncertainty Resolution:\n- Resolved:\n  * The pronoun 'his' in 'ذُرِّيَّتِهِ' refers to Nuh based on the context provided.\n  * The diacritics for ذُرِّيَّتِهِ were confirmed based on standard pronunciation and context.",
+      "verification_status": "Verified",
+      "verification_issues": null
+    },
+    {
+      "index": 4,
+      "original": "وقيل: عائد إلى إبراهيم لأن الآيات تتحدث عنه.",
+      "tashkeel": "وَقِيلَ: عَائِدٌ إِلَى إِبْرَاهِيمَ لِأَنَّ الْآيَاتِ تَتَحَدَّثُ عَنْهُ",
+      "word_by_word": [
+        {
+          "arabic": "وَقِيلَ",
+          "english": "And it is said",
+          "pos": "verb",
+          "root": "ق-و-ل",
+          "notes": null
+        },
+        {
+          "arabic": "عَائِدٌ",
+          "english": "referring",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "إِلَى",
+          "english": "to",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "إِبْرَاهِيمَ",
+          "english": "Ibrahim",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "لِأَنَّ",
+          "english": "because",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "الْآيَاتِ",
+          "english": "the verses",
+          "pos": "noun",
+          "root": null,
+          "notes": null
+        },
+        {
+          "arabic": "تَتَحَدَّثُ",
+          "english": "are discussing",
+          "pos": "verb",
+          "root": "ح-د-ث",
+          "notes": null
+        },
+        {
+          "arabic": "عَنْهُ",
+          "english": "about him",
+          "pos": "particle",
+          "root": null,
+          "notes": null
+        }
+      ],
+      "full_translation": "And it is said to refer back to Ibrahim (Abraham) because the verses are discussing him.",
+      "notes": "The pronoun 'his' in 'from his progeny' is subject to interpretation, referring either to Nuh (Noah) or Ibrahim (Abraham).\nUncertainty Resolution:\n- Resolved:\n  * The pronoun 'his' in 'ذُرِّيَّتِهِ' refers to Ibrahim based on the context provided.\n  * The diacritics for إِبْرَاهِيمَ were confirmed based on standard pronunciation and context.",
+      "verification_status": "Verified",
+      "verification_issues": null
+    }
+  ]
+}

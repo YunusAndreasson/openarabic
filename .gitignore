@@ -38,3 +38,8 @@ yarn-error.*
 app-example
 
 coverage/
+
+.venv/
+
+translate/set_keys.py
+translate/audio/

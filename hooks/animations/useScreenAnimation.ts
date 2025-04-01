@@ -39,7 +39,7 @@ export interface ScreenAnimationResult {
 export const useScreenAnimation = (
   isDataReady: boolean,
   isLoading = false,
-  animationDuration = 50,
+  animationDuration = 0,
   layoutDelay = 0,
   animationDelay = 0
 ): ScreenAnimationResult => {
