@@ -29,6 +29,8 @@ const WordListItemMemo = React.memo(({ item }: { item: EnhancedStudyWord }) => (
   </View>
 ));
 
+WordListItemMemo.displayName = 'WordListItemMemo';
+
 export default function WordListScreen() {
   const { category } = useLocalSearchParams();
   const colors = useColors();

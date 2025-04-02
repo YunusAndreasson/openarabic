@@ -86,13 +86,16 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
 /**
  * A full-screen loading component that uses ThemedView for consistent styling
  */
-export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color }) => {
+export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color, style }) => {
   const colors = useColors();
+
+  // Handle paddingTop separately to properly position loader
+  const loaderContainerStyle = style?.paddingTop ? { paddingTop: style.paddingTop } : undefined;
 
   // Remove animation completely for instant display
   return (
-    <ThemedView style={styles.fullScreen}>
-      <View style={styles.loaderContainer}>
+    <ThemedView style={[styles.fullScreen, style]}>
+      <View style={[styles.loaderContainer, loaderContainerStyle]}>
         <Loader size="large" color={color || colors.tint} />
       </View>
     </ThemedView>

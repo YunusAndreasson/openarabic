@@ -17,6 +17,8 @@ export interface LoaderProps extends BaseAnimatedStyleProps {
 export interface LoadingScreenProps {
   /** Color of the loader (defaults to tint color) */
   color?: string;
+  /** Optional style to customize the screen container */
+  style?: ViewStyle;
 }
 
 /**

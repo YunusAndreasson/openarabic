@@ -1,11 +1,11 @@
 import { StyleSheet, View, FlatList, ScrollView } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedView } from '@/components/ThemedView';
-import { LoadingScreen } from '@/components/Loader';
+import { Loader } from '@/components/Loader';
 import ArticleList from '@/components/index/ArticleList';
 import PageHeader from '@/components/PageHeader';
 import { useColors } from '@/hooks/useColors';
@@ -97,6 +97,16 @@ const styles = StyleSheet.create({
   },
   horizontalArticleContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
   },
 });
 
@@ -546,10 +556,15 @@ export default function ArticlesScreen() {
     [insets, colors.background]
   );
 
-  // If no data and still loading, show loading screen
-  if ((isArticlesLoading && articlesData.length === 0) || isRefreshing) {
-    return <LoadingScreen />;
-  }
+  // Use state to control loading overlay visibility
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(
+    (isArticlesLoading && articlesData.length === 0) || isRefreshing
+  );
+
+  // Update loading overlay visibility when loading state changes
+  useEffect(() => {
+    setShowLoadingOverlay((isArticlesLoading && articlesData.length === 0) || isRefreshing);
+  }, [isArticlesLoading, articlesData.length, isRefreshing]);
 
   // Show error state only if there's no cached data
   if (articlesError && !isRefreshing && !isDataCached) {
@@ -563,7 +578,7 @@ export default function ArticlesScreen() {
     );
   }
 
-  // Main content view
+  // Main content view with loading overlay when needed
   return (
     <Animated.View
       style={[styles.container, fadeInStyle]}
@@ -588,6 +603,17 @@ export default function ArticlesScreen() {
           hideMainList={true}
         />
         <PageHeader title="Texts" />
+
+        {/* Loading overlay that fades out rather than jumps */}
+        {showLoadingOverlay && (
+          <Animated.View
+            style={[styles.loadingOverlay, { backgroundColor: colors.background }]}
+            entering={FadeIn.duration(200)}
+            exiting={FadeOut.duration(300)}
+          >
+            <Loader size="large" color={colors.tint} />
+          </Animated.View>
+        )}
       </ThemedView>
     </Animated.View>
   );

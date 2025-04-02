@@ -19,7 +19,6 @@ import { mediumFeedback } from '@/utils/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useFocusEffect } from '@react-navigation/native';
-import { useRouter } from 'expo-router';
 import { LoadingScreen } from '@/components/Loader';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
@@ -31,7 +30,6 @@ export default function VocabularyScreen() {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { prefetchVocabularyData } = useAppPreloader();
-  const router = useRouter();
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
