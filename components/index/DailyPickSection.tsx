@@ -51,11 +51,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   if (!article) return null;
 
   return (
-    <Section
-      title={showTitle ? 'Daily Pick' : undefined}
-      style={styles.container}
-      paddingHorizontal={true}
-    >
+    <Section title={showTitle ? 'Daily Pick' : undefined} style={styles.container} showTitle={true}>
       <ThemedCard
         variant="article"
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
@@ -72,6 +68,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE, // Add significant top margin
   },
 });
 

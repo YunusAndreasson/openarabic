@@ -79,12 +79,12 @@ export const ArticleButtons = ({
         buttonType="bookmark"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={bookmarkButtonStyle}
-        onPress={user ? () => handleBookmarkPress() : () => {}}
-        iconName={initialBookmarkIcon}
+        onPress={user ? handleBookmarkPress : () => {}}
+        iconName={user ? initialBookmarkIcon : 'bookmark-outline'}
         accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
         colors={colors}
         isDarkMode={isDarkMode}
-        isBookmarked={isInReadingList}
+        isBookmarked={user ? isInReadingList : false}
         style={{
           ...styles.floatingButton,
           right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,

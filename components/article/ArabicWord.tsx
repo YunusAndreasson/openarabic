@@ -173,6 +173,11 @@ function ArabicWordComponent({
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
+    // If no user, do nothing on long press
+    if (!user) {
+      return;
+    }
+
     // Provide haptic feedback
     lightFeedback();
 
@@ -187,7 +192,7 @@ function ArabicWordComponent({
 
     // Then handle selection
     onPress(word);
-  }, [onPress, word, startPressAnimation, isSelected]);
+  }, [onPress, word, startPressAnimation, isSelected, user]);
 
   // Styling for border based on selection state
   const borderStyle = useMemo(() => {

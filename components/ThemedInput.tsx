@@ -67,6 +67,7 @@ export function ThemedInput({
           autoCorrect={false}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          textAlignVertical="center"
           {...props}
         />
         {rightIcon && (
@@ -115,6 +116,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
   },
   leftIcon: {
     marginRight: LAYOUT.SPACING.MEDIUM,

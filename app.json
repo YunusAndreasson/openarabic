@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "oa3",
-    "slug": "oa3",
+    "name": "Open Arabic",
+    "slug": "open-arabic",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {

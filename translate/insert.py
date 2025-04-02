@@ -98,7 +98,7 @@ def _generate_audio_common(text: str, filename: str) -> Optional[str]:
         # Use the multilingual v2 model which has good support for Arabic
         audio_stream = eleven_labs.text_to_speech.convert(
             text=text,
-            voice_id="pqHfZKP75CvOlQylNhV4",  # Default Arabic voice
+            voice_id="nPczCjzI2devNBz1zQrb",
             model_id="eleven_multilingual_v2",
             output_format="mp3_44100_128",
             voice_settings=VoiceSettings(
@@ -106,7 +106,7 @@ def _generate_audio_common(text: str, filename: str) -> Optional[str]:
                 similarity_boost=0.9,
                 style=0.0,
                 use_speaker_boost=True,
-                speed=0.9,
+                speed=0.8,
             ),
         )
 
@@ -273,10 +273,65 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
         ).execute()
 
 
+def validate_article_data(data: Dict) -> None:
+    """
+    Validate article data before processing. Raises ValueError with detailed message if validation fails.
+    """
+    # 1. Check required metadata fields
+    required_metadata = ["title", "summary", "difficulty_level"]
+    missing_fields = [
+        field for field in required_metadata if not data.get("metadata", {}).get(field)
+    ]
+    if missing_fields:
+        raise ValueError(
+            f"Missing required metadata fields: {', '.join(missing_fields)}"
+        )
+
+    # 2. Check translations array exists and is not empty
+    if (
+        not data.get("translations")
+        or not isinstance(data["translations"], list)
+        or len(data["translations"]) == 0
+    ):
+        raise ValueError("Article must contain at least one translation")
+
+    # 3. Validate each translation entry
+    for idx, translation in enumerate(data["translations"]):
+        if not translation.get("original"):
+            raise ValueError(f"Missing Arabic text in translation at position {idx}")
+        if not translation.get("full_translation"):
+            raise ValueError(f"Missing English translation at position {idx}")
+
+        # 4. Validate word-by-word translations if present
+        if "word_by_word" in translation:
+            if not isinstance(translation["word_by_word"], list):
+                raise ValueError(
+                    f"word_by_word must be a list in translation at position {idx}"
+                )
+
+            for word_idx, word in enumerate(translation["word_by_word"]):
+                if not word.get("arabic"):
+                    raise ValueError(
+                        f"Missing Arabic word in word_by_word at translation {idx}, word {word_idx}"
+                    )
+                if not word.get("english"):
+                    raise ValueError(
+                        f"Missing English translation in word_by_word at translation {idx}, word {word_idx}"
+                    )
+
+    # 5. Check difficulty level is within valid range
+    difficulty = data["metadata"]["difficulty_level"]
+    if not isinstance(difficulty, int) or difficulty < 1 or difficulty > 5:
+        raise ValueError("Difficulty level must be an integer between 1 and 5")
+
+
 def process_json_file(file_path: str) -> None:
     """Process the JSON file and insert data into Supabase."""
     with open(file_path, "r", encoding="utf-8") as f:
         data = json.load(f)
+
+    # Validate data before processing
+    validate_article_data(data)
 
     # Generate content hash for idempotency
     content_hash = generate_content_hash(data)

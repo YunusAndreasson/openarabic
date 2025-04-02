@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { Alert, StyleSheet, TouchableOpacity, Platform, View } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { ThemedView } from './ThemedView';
 import { ThemedInput } from './ThemedInput';
 import { ThemedButton } from './ThemedButton';
+import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
 
 /**
@@ -26,6 +27,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Validation state
   const [emailError, setEmailError] = useState('');
@@ -126,54 +128,70 @@ export default function Auth() {
     setLoading(false);
   }, [email, password, validateEmail, validatePassword]);
 
+  const toggleMode = useCallback(() => {
+    setIsRegistering(!isRegistering);
+    setEmailError('');
+    setPasswordError('');
+  }, [isRegistering]);
+
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.inputContainer}>
-        <ThemedInput
-          icon="mail-outline"
-          value={email}
-          onChangeText={handleEmailChange}
-          onBlur={handleEmailBlur}
-          placeholder="Email"
-          keyboardType="email-address"
-          returnKeyType="next"
-          autoComplete="email"
-          error={emailError}
-        />
+    <View style={styles.container}>
+      <ThemedText type="heading3" align="center" style={styles.formTitle}>
+        {isRegistering ? 'Create Account' : 'Sign In'}
+      </ThemedText>
 
-        <ThemedInput
-          icon="lock-closed-outline"
-          value={password}
-          onChangeText={handlePasswordChange}
-          onBlur={handlePasswordBlur}
-          placeholder="Password"
-          secureTextEntry={!showPassword}
-          rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
-          onRightIconPress={() => setShowPassword(!showPassword)}
-          returnKeyType="done"
-          autoComplete="password"
-          error={passwordError}
-          hint={`${PASSWORD_REQUIREMENTS.minLength}+ chars with upper, lower & number`}
-        />
-      </ThemedView>
+      <View style={styles.inputsButtonGroup}>
+        <View style={styles.inputWrapper}>
+          <ThemedInput
+            icon="mail-outline"
+            value={email}
+            onChangeText={handleEmailChange}
+            onBlur={handleEmailBlur}
+            placeholder="Email"
+            keyboardType="email-address"
+            returnKeyType="next"
+            autoComplete="email"
+            error={emailError}
+            textAlignVertical="center"
+          />
+        </View>
 
-      <ThemedView style={styles.buttonContainer}>
+        <View style={styles.inputWrapper}>
+          <ThemedInput
+            icon="lock-closed-outline"
+            value={password}
+            onChangeText={handlePasswordChange}
+            onBlur={handlePasswordBlur}
+            placeholder="Password"
+            secureTextEntry={!showPassword}
+            rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            onRightIconPress={() => setShowPassword(!showPassword)}
+            returnKeyType="done"
+            autoComplete="password"
+            error={passwordError}
+            hint={
+              isRegistering
+                ? `${PASSWORD_REQUIREMENTS.minLength}+ chars with upper, lower & number`
+                : undefined
+            }
+            textAlignVertical="center"
+          />
+        </View>
+
         <ThemedButton
-          title="Sign In"
-          onPress={signInWithEmail}
+          title={isRegistering ? 'Create Account' : 'Sign In'}
+          onPress={isRegistering ? signUpWithEmail : signInWithEmail}
           disabled={loading}
           style={styles.button}
         />
+      </View>
 
-        <ThemedButton
-          variant="outlined"
-          title="Create Account"
-          onPress={signUpWithEmail}
-          disabled={loading}
-          style={styles.button}
-        />
-      </ThemedView>
-    </ThemedView>
+      <TouchableOpacity onPress={toggleMode} style={styles.toggleContainer} activeOpacity={0.7}>
+        <ThemedText type="body" align="center" variant="secondary">
+          {isRegistering ? 'Already have an account? Sign in' : 'Need an account? Create one'}
+        </ThemedText>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -181,17 +199,29 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    justifyContent: 'center',
+    flex: 1,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  inputContainer: {
+  formTitle: {
+    marginBottom: LAYOUT.SPACING.LARGE,
     width: '100%',
-    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
-  buttonContainer: {
+  inputsButtonGroup: {
     width: '100%',
-    gap: LAYOUT.SPACING.MEDIUM,
+    maxWidth: 400,
+  },
+  inputWrapper: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   button: {
     width: '100%',
+    marginTop: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  toggleContainer: {
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    width: '100%',
+    maxWidth: 400,
   },
 });

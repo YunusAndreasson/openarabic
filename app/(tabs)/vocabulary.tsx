@@ -4,13 +4,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
 import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
 import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
-import { SignInRequired } from '@/components/SignInRequired';
+import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useQueryClient } from '@tanstack/react-query';
 import Animated from 'react-native-reanimated';
-import { useScreenFocusRefresh, useNavigationWithDebounce, useLoadingState } from '@/hooks';
+import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -24,7 +24,6 @@ import { LoadingScreen } from '@/components/Loader';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
 export default function VocabularyScreen() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -62,7 +61,6 @@ export default function VocabularyScreen() {
     isLoading: isDataLoading,
     isFetching,
     error,
-    invalidateAllQueries,
   } = useFSRSQueries({
     userId: user?.id,
   });
@@ -154,15 +152,7 @@ export default function VocabularyScreen() {
 
   // Show sign-in message if not authenticated
   if (!user) {
-    return (
-      <SignInRequired
-        message="Sign in to track your vocabulary progress and create custom study sets"
-        benefitTitle="Vocabulary Benefits"
-        benefitDescription="Sign in to save your word progress across devices, create study sets, and track your learning progress"
-        colors={colors}
-        onSignIn={() => router.navigate('/(tabs)/settings')}
-      />
-    );
+    return <UnifiedSignInScreen headerTitle="Words" colors={colors} />;
   }
 
   // Show error message if there was an error loading data

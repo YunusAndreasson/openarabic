@@ -12,6 +12,7 @@ import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
 import PageHeader from '../PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { formatTimeAgo } from '../../utils/dateUtils';
 
 interface FilteredArticleViewProps {
   /**
@@ -90,27 +91,41 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   // Calculate header height for spacer
   const headerHeight = useMemo(() => getHeaderHeight(insets), [insets]);
 
-  const ArticleItem = React.memo(({ article }: { article: Article }) => (
-    <View style={styles.articleContainer}>
-      <BaseCard onPress={() => onArticlePress?.(article)} style={styles.card} shadowSize="small">
-        <View style={styles.cardContent}>
-          <View style={styles.textContent}>
-            <ThemedText type="bodyBold" style={styles.titleText}>
-              {article.title}
-            </ThemedText>
-            <ThemedText type="label" variant="secondary" numberOfLines={1}>
-              {article.author?.name || 'Anonymous'}
-            </ThemedText>
+  const ArticleItem = React.memo(({ article }: { article: Article }) => {
+    const categoryName = article.category?.name
+      ? capitalizeFirstLetter(article.category.name)
+      : 'Uncategorized';
+
+    // Format time directly without TimeAgo component
+    const timeAgoText = formatTimeAgo(article.created_at);
+
+    return (
+      <View style={styles.articleContainer}>
+        <BaseCard onPress={() => onArticlePress?.(article)} style={styles.card} shadowSize="small">
+          <View style={styles.cardContent}>
+            <View style={styles.textContent}>
+              <ThemedText
+                type="bodyBold"
+                numberOfLines={2}
+                colorName="text"
+                style={styles.titleText}
+              >
+                {article.title}
+              </ThemedText>
+              <ThemedText type="caption" colorName="textSecondary" numberOfLines={1}>
+                {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
+              </ThemedText>
+            </View>
+            <View style={styles.iconContainer}>
+              <ThemedText type="label" variant="secondary" style={styles.arrowText}>
+                →
+              </ThemedText>
+            </View>
           </View>
-          <View style={styles.iconContainer}>
-            <ThemedText type="label" variant="secondary" style={styles.arrowText}>
-              →
-            </ThemedText>
-          </View>
-        </View>
-      </BaseCard>
-    </View>
-  ));
+        </BaseCard>
+      </View>
+    );
+  });
   ArticleItem.displayName = 'ArticleItem';
 
   const renderItem = useMemo(() => {
@@ -205,7 +220,7 @@ const styles = StyleSheet.create({
   },
   cardContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
   },
@@ -219,6 +234,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   noResultsContainer: {
     flex: 1,

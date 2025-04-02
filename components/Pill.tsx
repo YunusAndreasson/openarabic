@@ -91,7 +91,9 @@ const Pill = React.memo(
           ? isDarkMode
             ? `${colors.tint}15` // Selected, dark mode - subtle tint background
             : `${colors.tint}10` // Selected, light mode - very subtle tint background
-          : colors.cardBackground, // Unselected - use cardBackground for consistency with cards
+          : isDarkMode
+            ? colors.elevation2 // Unselected, dark mode - use elevation2 for subtle contrast
+            : colors.elevation1, // Unselected, light mode - use elevation1 for subtle contrast
         borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN, // Use constants
         borderColor: isSelected
           ? colors.tint // Selected - use tint color for border to make selection obvious

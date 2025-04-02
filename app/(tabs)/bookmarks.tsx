@@ -8,7 +8,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedButton } from '@/components/ThemedButton';
-import { SignInRequired } from '@/components/SignInRequired';
+import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -515,15 +515,7 @@ export default function BookmarksScreen() {
 
   // Require sign in
   if (!user) {
-    return (
-      <SignInRequired
-        headerTitle="Bookmarks"
-        colors={colors}
-        message="Sign in to manage your bookmarked articles"
-        benefitTitle="Benefits of Bookmarks"
-        benefitDescription="Save articles for later and listen to audio versions on the go."
-      />
-    );
+    return <UnifiedSignInScreen headerTitle="Bookmarks" colors={colors} />;
   }
 
   // Empty reading list

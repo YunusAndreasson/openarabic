@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createClient } from '@supabase/supabase-js';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
-import Auth from '../../components/Auth';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
@@ -23,7 +22,7 @@ import { CustomSlider } from '../../components/Slider';
 import { Toggle } from '../../components/Toggle';
 import { ThemedButton } from '../../components/ThemedButton';
 import { useFocusEffect } from '@react-navigation/native';
-import { useAppPreloader } from '@/hooks/useAppPreloader';
+import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 
 // Create a Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -55,8 +54,6 @@ export default function SettingsScreen() {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const insets = useSafeAreaInsets();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const { isLoaded } = useAppPreloader();
 
   // Simple loading state for session loading
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
@@ -187,6 +184,11 @@ export default function SettingsScreen() {
         </ThemedView>
       </Animated.View>
     );
+  }
+
+  // If user is not signed in, show the UnifiedSignInScreen
+  if (showAuthUI) {
+    return <UnifiedSignInScreen headerTitle="Settings" colors={colors} />;
   }
 
   // Button styles
@@ -368,54 +370,21 @@ export default function SettingsScreen() {
                 contentContainerStyle={buttonStyles.contentContainer}
               />
               <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
-              {showAuthUI ? (
-                <ThemedButton
-                  variant="outlined"
-                  title="Sign In"
-                  onPress={() => setShowAuthModal(true)}
-                  icon="log-in"
-                  textWeight="normal"
-                  style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                  innerContainerStyle={buttonStyles.innerContainer}
-                  contentContainerStyle={buttonStyles.contentContainer}
-                />
-              ) : (
-                <ThemedButton
-                  variant="outlined"
-                  title="Sign Out"
-                  onPress={handleSignOut}
-                  icon="log-out"
-                  textWeight="normal"
-                  style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                  innerContainerStyle={buttonStyles.innerContainer}
-                  contentContainerStyle={buttonStyles.contentContainer}
-                />
-              )}
+              <ThemedButton
+                variant="outlined"
+                title="Sign Out"
+                onPress={handleSignOut}
+                icon="log-out"
+                textWeight="normal"
+                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
+                innerContainerStyle={buttonStyles.innerContainer}
+                contentContainerStyle={buttonStyles.contentContainer}
+              />
             </BaseCard>
           </View>
         </ScrollView>
       </ThemedView>
       <PageHeader title="Settings" />
-      {showAuthModal && (
-        <ThemedView
-          style={[
-            styles.modalContainer,
-            {
-              backgroundColor: colors.background,
-            },
-          ]}
-        >
-          <ThemedText type="heading2" weight="600" align="center" style={styles.modalTitle}>
-            Sign In
-          </ThemedText>
-          <Auth />
-          <ThemedButton
-            title="Close"
-            onPress={() => setShowAuthModal(false)}
-            style={styles.modalCloseButton}
-          />
-        </ThemedView>
-      )}
     </ThemedView>
   );
 }
@@ -521,23 +490,10 @@ const styles = StyleSheet.create({
   sliderWrapper: {
     flex: 1,
   },
-  modalContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
   hidden: {
     opacity: 0,
   },
   modalTitle: {
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  modalCloseButton: {
-    marginTop: LAYOUT.SPACING.LARGE,
   },
 });

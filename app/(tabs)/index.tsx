@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View, FlatList, ScrollView } from 'react-native';
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { router } from 'expo-router';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -29,15 +29,20 @@ import {
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { ArticleSection } from '../../components/article';
-import FeaturedArticleSection from '../../components/index/FeaturedArticleSection';
 import { mediumFeedback } from '@/utils/haptics';
 import { setDailyPick, setFeaturedArticles } from '@/store/featuredContentSlice';
+import BaseCard from '@/components/BaseCard';
+import { ThemedText } from '@/components/ThemedText';
+import SectionTitle from '@/components/SectionTitle';
+import { formatTimeAgo } from '@/utils/dateUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import ThemedCard from '@/components/ThemedCard';
+import Pill from '@/components/Pill';
 
 // Types
 import { Article } from '@/types/articles.types';
 
 // Import the extracted components
-import FilterList from '../../components/index/FilterList';
 import DailyPickSection from '../../components/index/DailyPickSection';
 import ErrorState from '../../components/ErrorState';
 
@@ -55,7 +60,86 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
   },
+  sectionContainer: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  articleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  card: {
+    overflow: 'hidden',
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  textContent: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  titleText: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  iconContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: LAYOUT.SPACING.TINY,
+  },
+  arrowText: {
+    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+  },
+  horizontalList: {
+    paddingLeft: 0,
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  horizontalArticleContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
 });
+
+// Add ArticleItem component outside of the main component
+const ArticleItem = React.memo(
+  ({ article, onPress }: { article: Article; onPress: (article: Article) => void }) => {
+    const categoryName = article.category?.name
+      ? capitalizeFirstLetter(article.category.name)
+      : 'Uncategorized';
+
+    // Format time directly without TimeAgo component
+    const timeAgoText = formatTimeAgo(article.created_at);
+
+    return (
+      <View style={styles.articleContainer}>
+        <BaseCard onPress={() => onPress(article)} style={styles.card}>
+          <View style={styles.cardContent}>
+            <View style={styles.textContent}>
+              <ThemedText
+                type="bodyBold"
+                numberOfLines={2}
+                colorName="text"
+                style={styles.titleText}
+              >
+                {article.title}
+              </ThemedText>
+              <ThemedText type="caption" colorName="textSecondary" numberOfLines={1}>
+                {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
+              </ThemedText>
+            </View>
+            <View style={styles.iconContainer}>
+              <ThemedText type="label" variant="secondary" style={styles.arrowText}>
+                →
+              </ThemedText>
+            </View>
+          </View>
+        </BaseCard>
+      </View>
+    );
+  }
+);
+
+ArticleItem.displayName = 'ArticleItem';
 
 export default function ArticlesScreen() {
   const colors = useColors();
@@ -222,10 +306,6 @@ export default function ArticlesScreen() {
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
 
-  const handleClearFilters = useCallback(() => {
-    // No-op since we removed scroll functionality
-  }, []);
-
   // Add effect to handle first load
   useEffect(() => {
     if (isInitialMount.current) {
@@ -287,11 +367,19 @@ export default function ArticlesScreen() {
     }
 
     return dailyPickArticle ? (
-      <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
+      <View style={styles.sectionContainer}>
+        <DailyPickSection
+          article={dailyPickArticle}
+          onPress={handleArticlePress}
+          showTitle={true}
+        />
+      </View>
     ) : null;
   }, [articlesData, articlesError, handleArticlePress, dailyPick.articleId]);
 
   const ContinueReadingSection = useMemo(() => {
+    if (sortedInProgressArticles.length === 0) return null;
+
     return (
       <ArticleSection
         title="Continue Reading"
@@ -299,89 +387,108 @@ export default function ArticlesScreen() {
         onArticlePress={article => router.push(`/article/${article.id}`)}
         showTimeAgo={true}
         getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
-        emptyStateMessage="Start reading to save your progress here"
       />
     );
   }, [sortedInProgressArticles, lastOpenedArticles]);
 
   const LatestTextsSection = useMemo(() => {
-    const latestArticles = getLatestArticles(articlesData, 20); // Changed from 10 to 20
+    const latestArticles = getLatestArticles(articlesData, 20);
 
     return (
-      <ArticleSection
-        title="Latest Texts"
-        articles={latestArticles}
-        onArticlePress={handleArticlePress}
-        showTimeAgo
-        hideDifficultyLabel
-      />
+      <View style={styles.sectionContainer}>
+        <SectionTitle title="Latest Texts" />
+        {latestArticles.map(article => (
+          <ArticleItem key={article.id} article={article} onPress={handleArticlePress} />
+        ))}
+      </View>
     );
   }, [articlesData, handleArticlePress]);
-
-  const FeaturedTextsSection = useMemo(() => {
-    // Use existing featured articles
-    const featuredArticlesList = articlesData.filter(article =>
-      featuredArticlesState.ids.includes(article.id)
-    );
-
-    return (
-      <FeaturedArticleSection
-        title="Featured Texts"
-        articles={featuredArticlesList}
-        onArticlePress={handleArticlePress}
-      />
-    );
-  }, [articlesData, featuredArticlesState.ids, handleArticlePress]);
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
     return (
-      <ArticleSection
-        title="Beginner Friendly"
-        articles={beginnerArticles.slice(0, 20)} // Limit to 20 articles
-        onArticlePress={handleArticlePress}
-        hideDifficulty={true}
-      />
+      <View style={styles.sectionContainer}>
+        <SectionTitle title="Beginner Friendly" />
+        <FlatList
+          data={beginnerArticles.slice(0, 20)}
+          renderItem={({ item }) => (
+            <View style={styles.horizontalArticleContainer}>
+              <ThemedCard
+                variant="compact"
+                article={item}
+                onPress={() => handleArticlePress(item)}
+                hideDifficulty={true}
+              />
+            </View>
+          )}
+          keyExtractor={item => `beginner-${item.id}`}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+        />
+      </View>
     );
   }, [beginnerArticles, handleArticlePress]);
 
   const AuthorFilterSection = useMemo(() => {
     return (
-      <FilterList
-        title="Authors"
-        items={authors}
-        selectedId={null}
-        onSelect={handleSelectAuthor}
-        onClearFilter={handleClearFilters}
-      />
+      <View style={styles.sectionContainer}>
+        <SectionTitle title="Authors" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+        >
+          {authors.map(author => (
+            <Pill
+              key={`author-${author.id}`}
+              id={author.id}
+              label={capitalizeFirstLetter(author.name)}
+              isSelected={false}
+              onSelect={id => handleSelectAuthor(Number(id))}
+              variant="filter"
+            />
+          ))}
+        </ScrollView>
+      </View>
     );
-  }, [authors, handleSelectAuthor, handleClearFilters]);
+  }, [authors, handleSelectAuthor]);
 
   const CategoryFilterSection = useMemo(() => {
     return (
-      <FilterList
-        title="Categories"
-        items={categoriesData}
-        selectedId={null}
-        onSelect={handleSelectCategory}
-      />
+      <View style={styles.sectionContainer}>
+        <SectionTitle title="Categories" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.horizontalList}
+        >
+          {categoriesData.map(category => (
+            <Pill
+              key={`category-${category.id}`}
+              id={category.id}
+              label={capitalizeFirstLetter(category.name)}
+              isSelected={false}
+              onSelect={id => handleSelectCategory(Number(id))}
+              variant="filter"
+            />
+          ))}
+        </ScrollView>
+      </View>
     );
   }, [categoriesData, handleSelectCategory]);
 
   // Create a pre-rendered header component for the Flash to avoid re-rendering the entire list
   const ListHeaderComponent = useMemo(() => {
-    // Create an array of sections in the exact order we want them to appear
     const orderedSections = [
       DailyPick,
       ContinueReadingSection,
       LatestTextsSection,
-      FeaturedTextsSection, // This MUST appear here, before filters
       BeginnerFriendlySection,
       AuthorFilterSection,
       CategoryFilterSection,
     ];
 
-    // Filter out any null sections and render them in order
     return (
       <>
         {orderedSections
@@ -395,7 +502,6 @@ export default function ArticlesScreen() {
     DailyPick,
     ContinueReadingSection,
     LatestTextsSection,
-    FeaturedTextsSection,
     BeginnerFriendlySection,
     AuthorFilterSection,
     CategoryFilterSection,
@@ -435,7 +541,7 @@ export default function ArticlesScreen() {
     () => ({
       ...styles.listContentContainer,
       backgroundColor: colors.background,
-      paddingTop: getHeaderHeight(insets),
+      paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.LARGE * 3, // Triple the top padding
     }),
     [insets, colors.background]
   );

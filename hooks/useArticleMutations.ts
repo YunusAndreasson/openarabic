@@ -97,6 +97,7 @@ export const useArticleMutations = (
   // Handler for toggling reading list status
   const handleToggleReadingList = useCallback(
     (articleId: number | undefined, isInReadingList: boolean) => {
+      // If no user ID, do nothing
       if (!userId || !articleId) return;
 
       if (isInReadingList) {

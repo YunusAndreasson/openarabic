@@ -210,7 +210,14 @@ export default function ArticleScreen() {
 
   // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
-    if (articleId && user) {
+    // Add this check: If no user, do nothing
+    if (!user) {
+      // Optionally, you could show a message prompting the user to log in
+      console.log('User must be logged in to manage bookmarks.');
+      return;
+    }
+
+    if (articleId) {
       lightFeedback();
       setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
       handleToggleReadingList(articleId, Boolean(isInReadingList));

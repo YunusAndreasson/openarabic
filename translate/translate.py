@@ -13,12 +13,26 @@ from tqdm import tqdm
 # Execute set_keys.py to set environment variables
 exec(open("set_keys.py").read())
 
+# Define valid parts of speech
+VALID_POS = {
+    "verb",
+    "noun",
+    "particle",
+    "adjective",
+    "pronoun",
+    "adverb",
+    "preposition",
+    "conjunction",
+    "interjection",
+    "numeral",
+}
+
 
 # Define function schemas for API operations
 # Function for translating sentences
 TRANSLATE_SENTENCES_FUNCTION = {
     "name": "translate_sentences",
-    "description": "Translate Arabic sentences to English, preserving word order where possible and noting uncertainties",
+    "description": "Translate Islamic Arabic sentences to English, preserving word order where possible and noting uncertainties",
     "parameters": {
         "type": "object",
         "properties": {
@@ -133,8 +147,8 @@ WORD_TRANSLATION_FUNCTION = {
                                     },
                                     "p": {
                                         "type": "string",
-                                        "enum": ["verb", "noun", "particle"],
-                                        "description": "Part of speech - MUST be one of: verb (any verb form), noun (nouns, pronouns, adjectives, adverbs), or particle (particles, prepositions, conjunctions, etc.)",
+                                        "enum": list(VALID_POS),
+                                        "description": "Part of speech - MUST be one of the valid parts of speech defined in the enums",
                                     },
                                     "r": {
                                         "type": ["string", "null"],
@@ -340,11 +354,6 @@ def clean_text(text: str) -> str:
         r"\(\s*see\s*[:.]?\s*([^)]+)\)", r"(see: \1)", text, flags=re.IGNORECASE
     )
 
-    # 8. Merge fragmented sentences
-    # Join sentences that end with conjunctions or prepositions
-    conjunction_pattern = r"\b(و|أو|ثم|لكن|بل|أم|حتى|أن|إن|لأن)\s*\n"
-    text = re.sub(conjunction_pattern, r"\1 ", text)
-
     # 9. Final cleanup of any remaining whitespace issues
     text = text.strip()
 
@@ -485,21 +494,6 @@ def validate_translation_results(
         )
 
 
-# Define valid parts of speech
-VALID_POS = {
-    "verb",
-    "noun",
-    "particle",
-    "adjective",
-    "pronoun",
-    "adverb",
-    "preposition",
-    "conjunction",
-    "interjection",
-    "numeral",
-}
-
-
 def is_valid_pos(pos: str) -> bool:
     """
     Validate if a part of speech is valid according to our word type mapping system.
@@ -569,7 +563,9 @@ MAX_SENTENCE_LENGTH = 500  # characters
 MAX_BATCH_SIZE = 5  # Increased from 3 to 7 for better efficiency with GPT-4o
 CONTEXT_WINDOW_SIZE = 2  # Number of sentences before and after to include as context
 
-GENERAL_SYSTEM_PROMPT = """AI translator and linguist specializing in Classical Arabic Islamic texts. Prioritize:
+GENERAL_SYSTEM_PROMPT = """Expert AI translator and linguist specializing in Classical Arabic Islamic texts.
+
+Prioritize:
 
 1. Accuracy: Preserve authentic meaning without additions or omissions
 2. Context: Consider preceding/following text and historical-religious context
@@ -625,6 +621,7 @@ CONTENT_ANALYSIS_PROMPT = """First, analyze the entire text to provide:
    - Concise description of main content
    - Include key themes or concepts
    - Use clear, accessible language
+   - Avoid filler words such as "this", "that", "it", etc.
 
 3. Difficulty Level (1-5):
    Level 1: Basic vocabulary and grammar
@@ -690,22 +687,22 @@ Rules for Language Learning Focus:
 
 Return each unit with its type in the specified JSON format.
 
-Input text:
+Input text: 
 """
 )
 
 SENTENCE_TRANSLATION_USER_PROMPT = """Translate Arabic sentences to English. For each sentence:
 
-1. Render meaning in formal English
-2. Maintain religious terms with transliteration/explanation: "taqwā (God-consciousness)"
-3. Document alternative interpretations with contextual justification
-4. Match register: solemn for supplications, precise for hadith
-5. Preserve punctuation
+1. Render meaning in formal English, keeping word order as close as possible to Arabic
+2. Document alternative interpretations with contextual justification
+3. Match register: solemn for supplications, precise for hadith
+4. Preserve punctuation
+5. Insert English words in brackets [] only when necessary for grammatical clarity
 
 Return structured format per sentence:
-• Arabic text/index
-• English translation
-• Term/uncertainty notes
+- Arabic text/index 
+- English translation (matching Arabic word order)
+- Term/uncertainty notes
 """
 
 TASHKEEL_USER_PROMPT = """Add diacritical marks (tashkīl) using:
@@ -724,32 +721,21 @@ Requirements:
 - Preserve original formatting
 """
 
-WORD_BY_WORD_USER_PROMPT = """Analyze each word using:
+WORD_BY_WORD_USER_PROMPT = (
+    """Analyze each word using:
 1. Original Arabic
 2. Diacritical text
 3. Full translation
 4. Previous uncertainty notes
 
 Per word, specify:
-• Arabic with diacritics
-• Precise English equivalent
-• Part of speech - STRICTLY use only these three categories:
-  - verb: For any verb form
-  - noun: For nouns, pronouns, adjectives, and adverbial nouns
-  - particle: For particles, prepositions, and grammatical tools
-• Root (for verbs and derived nouns only)
-• Notes field: Include detailed grammatical information here
-
-Part of Speech Mapping Rules:
-- Pronouns → noun
-- Prepositions → particle
-- Adverbs → noun (if derived from noun) or particle (if functional)
-- Adjectives → noun
-- Demonstratives → noun
-- Relative pronouns → noun
-- Conjunctions → particle
-- Question words → particle
-- Negation tools → particle
+- Arabic with diacritics
+- Precise English equivalent
+- Part of speech - STRICTLY use only these categories:
+"""
+    + "".join(f"  - {pos}\n" for pos in sorted(VALID_POS))
+    + """• Root (for verbs and derived nouns only)
+Notes field: Include detailed grammatical information here
 
 If you need to note the specific grammatical function, put it in the notes field, NOT in the part of speech.
 
@@ -762,15 +748,8 @@ For the word "فيها":
     "p": "particle",
     "n": "Preposition في with attached pronoun ها"
   }
-
-✗ INCORRECT:
-  {
-    "a": "فيها",
-    "e": "in it",
-    "p": "preposition",  // Wrong - must use "particle"
-    "n": "Compound word"
-  }
 """
+)
 
 FINAL_VERIFICATION_USER_PROMPT = """Review and resolve all translation components:
 1. Original Arabic
@@ -1153,13 +1132,15 @@ def batch_translate_full_sentences(
 
 def batch_add_tashkeel(
     sentences: List[str],
-    translations: List[Dict[str, Any]],
+    translation_results: List[Dict[str, Any]],
     all_sentences: List[str] = None,
     indices: List[int] = None,
 ) -> List[Dict[str, str]]:
     """Add diacritical marks to multiple sentences in a batch"""
     formatted_inputs = []
-    for i, (sentence, translation_data) in enumerate(zip(sentences, translations)):
+    for i, (sentence, translation_data) in enumerate(
+        zip(sentences, translation_results)
+    ):
         # Add grammatical context if available
         grammar_context = ""
         if all_sentences and indices and i < len(indices):
