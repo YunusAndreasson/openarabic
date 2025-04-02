@@ -54,14 +54,14 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
     <Section
       title={showTitle ? 'Daily Pick' : undefined}
       style={styles.container}
-      showTitle={true}
+      showTitle={false}
       paddingHorizontal={true}
     >
       <ThemedCard
         variant="article"
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         title={article.title}
-        category={article.category?.name || 'General'}
+        category="DAILY PICK"
         author={article.author?.name || 'Unknown'}
         summary={article.summary || undefined}
         onPress={handlePress}
@@ -73,7 +73,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.SMALL, // Reduced from LARGE to SMALL
+    marginTop: LAYOUT.SPACING.MEDIUM, // Increased from SMALL to LARGE to match vocabulary screen
   },
 });
 

@@ -383,7 +383,7 @@ export default function ArticlesScreen() {
         <DailyPickSection
           article={dailyPickArticle}
           onPress={handleArticlePress}
-          showTitle={true}
+          showTitle={false}
         />
       </View>
     ) : null;
