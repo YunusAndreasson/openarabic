@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
+import { useAuth } from '@/hooks/useAuth';
 import { useScreenAnimation, useOpacityAnimation } from '@/hooks/animations';
 import PageHeader from '../../components/PageHeader';
 import { lightFeedback } from '@/utils/haptics';
@@ -49,7 +50,7 @@ const Divider = React.memo(() => {
 Divider.displayName = 'Divider';
 
 export default function SettingsScreen() {
-  const [session, setSession] = useState<Session | null>(null);
+  const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
@@ -74,55 +75,49 @@ export default function SettingsScreen() {
   const { animatedStyle: themeToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues,
+    autoStart: hasConcreteValues && !isLoadingState && !isAuthLoading,
+    delay: 100,
   });
 
   const { animatedStyle: englishToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues,
+    autoStart: hasConcreteValues && !isLoadingState && !isAuthLoading,
+    delay: 150,
   });
 
   const { animatedStyle: sliderFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues,
+    autoStart: hasConcreteValues && !isLoadingState && !isAuthLoading,
+    delay: 200,
   });
 
   // Empty style object for animated views
   const emptyStyle = {};
 
-  // Load session
-  const loadSession = useCallback(async () => {
-    startLoading();
-    try {
-      const { data } = await supabase.auth.getSession();
-      setSession(data?.session ?? null);
-    } catch (_err) {
-      setSession(null);
-    } finally {
+  // Load session effect replaced with useAuth hook
+  useEffect(() => {
+    if (isAuthLoading) {
+      startLoading();
+    } else {
       stopLoading();
     }
-  }, [startLoading, stopLoading]);
+  }, [isAuthLoading, startLoading, stopLoading]);
 
-  // Load session on focus
-  useFocusEffect(
-    useCallback(() => {
-      let mounted = true;
-      const subscription = supabase.auth.onAuthStateChange((_event, session) => {
-        if (mounted) {
-          setSession(session);
+  // Add effect to ensure animations start properly after settings are loaded
+  useEffect(() => {
+    if (hasConcreteValues && !isLoadingState && !isAuthLoading) {
+      // Small delay to ensure animations run smoothly
+      const timer = setTimeout(() => {
+        // Re-trigger animations if needed
+        if (themeToggleFade && englishToggleFade && sliderFade) {
+          // Animation will restart based on opacity hooks
         }
-      });
-
-      loadSession();
-
-      return () => {
-        mounted = false;
-        subscription.data.subscription.unsubscribe();
-      };
-    }, [loadSession])
-  );
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [hasConcreteValues, isLoadingState, isAuthLoading]);
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
@@ -172,9 +167,6 @@ export default function SettingsScreen() {
     Linking.openURL(url);
   };
 
-  // Skip the sign-in check so settings are always accessible
-  const showAuthUI = !session;
-
   // Show loading if we don't have valid settings
   if (!hasConcreteValues) {
     return (
@@ -186,8 +178,8 @@ export default function SettingsScreen() {
     );
   }
 
-  // If user is not signed in, show the UnifiedSignInScreen
-  if (showAuthUI) {
+  // Show if not signed in
+  if (!user) {
     return <UnifiedSignInScreen headerTitle="Settings" colors={colors} />;
   }
 

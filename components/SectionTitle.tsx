@@ -5,21 +5,15 @@ import { LAYOUT } from '../constants/layout';
 import { SectionTitleProps } from '@/types/ui/layout.types';
 
 /**
- * A consistent section title component used across the app
- * Enhanced to be visually distinct from regular content titles
- * while maintaining proper visual hierarchy
+ * A minimal, refined section title component
+ * Clean typography with perfectly balanced spacing
  */
-const SectionTitle: React.FC<SectionTitleProps> = ({ title }) => {
+const SectionTitle: React.FC<SectionTitleProps> = ({ title, containerStyle }) => {
   return (
-    <View style={styles.container}>
-      <View style={styles.titleWrapper}>
-        {/* Accent line removed */}
-
-        {/* Title text with specialized styling */}
-        <ThemedText type="bodyBold" colorName="text" skipDefaultColor style={styles.titleText}>
-          {title}
-        </ThemedText>
-      </View>
+    <View style={[styles.container, containerStyle]}>
+      <ThemedText type="label" colorName="text" style={styles.titleText}>
+        {title}
+      </ThemedText>
     </View>
   );
 };
@@ -30,15 +24,12 @@ export default React.memo(SectionTitle);
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  titleWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   titleText: {
-    letterSpacing: 0.25,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
+    fontWeight: '600',
   },
 });
