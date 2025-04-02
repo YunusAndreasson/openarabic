@@ -79,9 +79,9 @@ export interface CloseButtonProps {
   /** Function to call when button is pressed */
   onPress: () => void;
   /** Size of the button container */
-  size?: number | 'small' | 'large';
+  size?: number | 'small' | 'medium' | 'large';
   /** Size of the close icon */
-  iconSize?: number | 'small' | 'large';
+  iconSize?: number | 'small' | 'medium' | 'large';
   /** Color of the close icon */
   color?: string;
   /** Additional styles for the button */

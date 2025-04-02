@@ -94,7 +94,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
     // Create a wrapper View to handle the background color and padding
     return (
-      <View style={[{ flex: 1, backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FlashList
           ref={listRef}
           data={hideMainList ? [] : articles}
@@ -103,10 +103,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           estimatedItemSize={ITEM_HEIGHT}
           showsVerticalScrollIndicator={true}
           contentContainerStyle={{
-            paddingTop: Math.max(
-              insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.XLARGE,
-              LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM
-            ),
+            paddingTop: Math.max(insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM),
             paddingBottom:
               LAYOUT.CONTENT_SPACING.BOTTOM +
               LAYOUT.BOTTOM_BAR.HEIGHT +
@@ -139,6 +136,9 @@ const styles = StyleSheet.create({
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+  },
+  container: {
+    flex: 1,
   },
 });
 

@@ -1,6 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
-import { Session } from '@supabase/supabase-js';
 import { Ionicons } from '@expo/vector-icons';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +21,6 @@ import { ThemeToggle } from '../../components/ThemeToggle';
 import { CustomSlider } from '../../components/Slider';
 import { Toggle } from '../../components/Toggle';
 import { ThemedButton } from '../../components/ThemedButton';
-import { useFocusEffect } from '@react-navigation/native';
 import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 
 // Create a Supabase client
@@ -484,8 +482,5 @@ const styles = StyleSheet.create({
   },
   hidden: {
     opacity: 0,
-  },
-  modalTitle: {
-    marginBottom: LAYOUT.SPACING.LARGE,
   },
 });

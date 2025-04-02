@@ -3,6 +3,7 @@ import { View, StyleSheet, ViewStyle } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { ProgressBar } from '@/components/ProgressBar';
 import CloseButton from '@/components/CloseButton';
+import { useColors } from '@/hooks/useColors';
 
 interface ReviewHeaderProps {
   progress: number;
@@ -17,6 +18,8 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
   animationKey,
   onClose,
 }) => {
+  const colors = useColors();
+
   return (
     <View style={styles.header}>
       <View style={styles.progressContainer}>
@@ -27,7 +30,7 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
           animationDuration={500}
         />
       </View>
-      <CloseButton onPress={onClose} />
+      <CloseButton onPress={onClose} size="large" iconSize={24} color={colors.tabIconDefault} />
     </View>
   );
 };

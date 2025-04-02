@@ -20,7 +20,7 @@ const ITEM_HEIGHT = 60;
 
 // Move WordListItem component definition outside to optimize recycling
 const WordListItemMemo = React.memo(({ item }: { item: EnhancedStudyWord }) => (
-  <View style={{ marginVertical: 1 }}>
+  <View style={styles.wordItemContainer}>
     <WordListItem
       word={item}
       masteryScore={item.retentionScore}
@@ -210,5 +210,8 @@ const styles = StyleSheet.create({
   errorText: {
     textAlign: 'center',
     fontSize: 16,
+  },
+  wordItemContainer: {
+    marginVertical: 1,
   },
 });

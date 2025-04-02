@@ -97,7 +97,8 @@ const styles = StyleSheet.create({
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 5 + LAYOUT.SPACING.MEDIUM,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.XLARGE,
     alignSelf: 'center',
   },
   text: {

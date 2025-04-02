@@ -13,6 +13,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     justifyContent: 'center',
     alignItems: 'center',
+    padding: LAYOUT.SPACING.SMALL,
   },
 });
 
@@ -21,32 +22,46 @@ const styles = StyleSheet.create({
  */
 export const CloseButton: React.FC<CloseButtonProps> = ({
   onPress,
-  size = LAYOUT.BUTTON.HEIGHT.LARGE,
-  iconSize = LAYOUT.BUTTON.ICON_SIZE.SMALL,
+  size = LAYOUT.BUTTON.HEIGHT.MEDIUM,
+  iconSize = LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
   color,
   style,
   hapticFeedback = true,
 }) => {
   const colors = useColors();
 
-  const buttonSize =
-    typeof size === 'string'
-      ? size === 'large'
-        ? LAYOUT.BUTTON.HEIGHT.LARGE
-        : LAYOUT.BUTTON.HEIGHT.SMALL
-      : size;
+  const buttonSize = React.useMemo(() => {
+    if (typeof size === 'number') return size;
 
-  const finalIconSize =
-    typeof iconSize === 'string'
-      ? iconSize === 'large'
-        ? LAYOUT.BUTTON.ICON_SIZE.LARGE
-        : LAYOUT.BUTTON.ICON_SIZE.SMALL
-      : iconSize;
+    switch (size) {
+      case 'large':
+        return LAYOUT.BUTTON.HEIGHT.LARGE;
+      case 'medium':
+        return LAYOUT.BUTTON.HEIGHT.MEDIUM;
+      case 'small':
+      default:
+        return LAYOUT.BUTTON.HEIGHT.SMALL;
+    }
+  }, [size]);
+
+  const finalIconSize = React.useMemo(() => {
+    if (typeof iconSize === 'number') return iconSize;
+
+    switch (iconSize) {
+      case 'large':
+        return LAYOUT.BUTTON.ICON_SIZE.LARGE;
+      case 'medium':
+        return LAYOUT.BUTTON.ICON_SIZE.MEDIUM;
+      case 'small':
+      default:
+        return LAYOUT.BUTTON.ICON_SIZE.SMALL;
+    }
+  }, [iconSize]);
 
   // Use the standardized press animation hook for consistent animation
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'button',
-    scaleAmount: 0.95,
+    scaleAmount: 0.9,
   });
 
   const handlePress = () => {
@@ -61,25 +76,22 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   return (
     <Animated.View style={animatedStyle as any}>
       <TouchableOpacity
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        activeOpacity={1}
+        activeOpacity={0.7}
         {...getTouchableProps('Close', 'large')}
         style={[
           {
             width: buttonSize,
             height: buttonSize,
-            borderRadius: buttonSize / 2,
-            backgroundColor: colors.cardBackground,
-            ...LAYOUT.SHADOW.SMALL,
-            shadowColor: colors.shadow,
           },
           styles.buttonContainer,
           style,
         ]}
+        hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
       >
-        <Ionicons name="close" size={finalIconSize} color={color || colors.tabIconDefault} />
+        <Ionicons name="close-outline" size={finalIconSize} color={color || colors.tint} />
       </TouchableOpacity>
     </Animated.View>
   );

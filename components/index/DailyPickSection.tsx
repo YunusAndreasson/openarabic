@@ -68,7 +68,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.LARGE, // Add significant top margin
+    marginTop: LAYOUT.SPACING.SMALL, // Reduced from LARGE to SMALL
   },
 });
 

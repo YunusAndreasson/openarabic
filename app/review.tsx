@@ -39,6 +39,7 @@ const baseStyles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 0,
     paddingBottom: 0,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   } as ViewStyle,
   wordArea: {
     flex: 1,
