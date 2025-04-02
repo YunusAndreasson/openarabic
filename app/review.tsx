@@ -73,6 +73,9 @@ export default function ReviewScreen() {
     if (completionTriggeredRef.current) return;
     completionTriggeredRef.current = true;
 
+    // Stop any playing audio to prevent it from continuing into completion screen
+    stopPlayback();
+
     maxProgressRef.current = 100;
     setProgressAnimationKey(prev => prev + 1);
     setIsTransitioningToCompletion(true);
@@ -88,7 +91,7 @@ export default function ReviewScreen() {
         setIsTransitioningToCompletion(false);
       }
     }, 350);
-  }, [fadeOut]);
+  }, [fadeOut, stopPlayback]);
 
   // Initialize FSRS hook with our completion handler
   const { currentWord, wordQueue, isLoading, isComplete, progress, updateWord, invalidateQueries } =
@@ -164,7 +167,12 @@ export default function ReviewScreen() {
     if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
       triggerCompletionTransition();
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+
+    // Stop audio playback when review is complete
+    if (isComplete) {
+      stopPlayback();
+    }
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, stopPlayback]);
 
   // Update current sentence when currentWord changes
   useEffect(() => {

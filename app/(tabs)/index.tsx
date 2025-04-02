@@ -62,10 +62,12 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  articlesListContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   card: {
     overflow: 'hidden',
@@ -92,7 +94,7 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DISABLED / 1.5,
   },
   horizontalList: {
-    paddingLeft: 0,
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
     paddingRight: LAYOUT.SPACING.SMALL,
   },
   horizontalArticleContainer: {
@@ -407,9 +409,11 @@ export default function ArticlesScreen() {
     return (
       <View style={styles.sectionContainer}>
         <SectionTitle title="Latest Texts" />
-        {latestArticles.map(article => (
-          <ArticleItem key={article.id} article={article} onPress={handleArticlePress} />
-        ))}
+        <View style={styles.articlesListContainer}>
+          {latestArticles.map(article => (
+            <ArticleItem key={article.id} article={article} onPress={handleArticlePress} />
+          ))}
+        </View>
       </View>
     );
   }, [articlesData, handleArticlePress]);

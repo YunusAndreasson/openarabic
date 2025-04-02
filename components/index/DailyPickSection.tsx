@@ -51,7 +51,12 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   if (!article) return null;
 
   return (
-    <Section title={showTitle ? 'Daily Pick' : undefined} style={styles.container} showTitle={true}>
+    <Section
+      title={showTitle ? 'Daily Pick' : undefined}
+      style={styles.container}
+      showTitle={true}
+      paddingHorizontal={true}
+    >
       <ThemedCard
         variant="article"
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}

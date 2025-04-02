@@ -185,6 +185,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   horizontalList: {
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
     paddingRight: LAYOUT.SPACING.SMALL,
   },
   verticalList: {
