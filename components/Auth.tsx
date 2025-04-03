@@ -5,6 +5,7 @@ import { ThemedInput } from './ThemedInput';
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { analytics } from '@/services/analytics';
 
 /**
  * Email validation regex and password requirements
@@ -105,6 +106,10 @@ export default function Auth() {
     });
 
     if (error) Alert.alert('Error', error.message);
+    else {
+      // Track successful sign in
+      await analytics.trackSignIn('email');
+    }
     setLoading(false);
   }, [email, password, validateEmail, validatePassword]);
 
@@ -123,7 +128,11 @@ export default function Auth() {
     });
 
     if (error) Alert.alert('Error', error.message);
-    else Alert.alert('Success', 'Check your email for the confirmation link!');
+    else {
+      // Track successful sign up
+      await analytics.trackSignUp('email');
+      Alert.alert('Success', 'Check your email for the confirmation link!');
+    }
     setLoading(false);
   }, [email, password, validateEmail, validatePassword]);
 

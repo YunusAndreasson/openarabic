@@ -3,6 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useQueryClient } from '@tanstack/react-query';
+import { analytics } from '@/services/analytics';
 
 // Components
 import { ThemedView } from '@/components/ThemedView';
@@ -137,6 +138,29 @@ export default function ArticleScreen() {
     otherCategoryArticles,
   } = useArticleData(articleId, user?.id);
 
+  // Track article view when article data loads
+  useEffect(() => {
+    if (article && !isLoadingArticle && user) {
+      analytics.trackViewArticle(article.id, {
+        title: article.title,
+        category: article.category?.name,
+        wordCount:
+          article.article_sentences?.reduce(
+            (total, sentence) => total + (sentence.sentence_words?.length || 0),
+            0
+          ) || 0,
+        sentenceCount: article.article_sentences?.length || 0,
+      });
+    }
+  }, [article, isLoadingArticle, user]);
+
+  // Track reading list changes
+  useEffect(() => {
+    if (article && user && !isLoadingReadingList) {
+      analytics.trackToggleReadingList(article.id, isInReadingList);
+    }
+  }, [article, isInReadingList, isLoadingReadingList, user]);
+
   // Use animation hook for content and button visibility on scroll
   const {
     footerStyle,
@@ -146,6 +170,38 @@ export default function ArticleScreen() {
     startAllAnimations,
     handleScroll: handleAnimationScroll,
   } = useScreenAnimations(true);
+
+  // Track article completion and handle animations on scroll
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+      const paddingToBottom = 20;
+      const isCloseToBottom =
+        layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+
+      if (isCloseToBottom && article && user) {
+        analytics.trackCompleteArticle(article.id, {
+          wordsAdded: selectedWordIds.size,
+        });
+      }
+
+      // Handle scroll animations
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const isScrollingUp = currentScrollY < prevScrollYValue.current;
+      const isAtTop = currentScrollY <= 0;
+      const shouldBeVisible = isScrollingUp || isAtTop;
+
+      if (isHeaderVisible !== shouldBeVisible) {
+        setIsHeaderVisible(shouldBeVisible);
+      }
+
+      if (event.nativeEvent.contentOffset.y <= 0) {
+        prevScrollYValue.current = 0;
+      }
+      handleAnimationScroll(event, prevScrollYValue);
+    },
+    [article, user, selectedWordIds, handleAnimationScroll, isHeaderVisible, prevScrollYValue]
+  );
 
   // Update bookmark icon when reading list status changes
   useEffect(() => {
@@ -244,26 +300,6 @@ export default function ArticleScreen() {
       }
     }
   }, [isPlaying, article, loadAndPlayAudio, stopPlayback]);
-
-  // Handle scroll with animation
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const currentScrollY = event.nativeEvent.contentOffset.y;
-      const isScrollingUp = currentScrollY < prevScrollYValue.current;
-      const isAtTop = currentScrollY <= 0;
-      const shouldBeVisible = isScrollingUp || isAtTop;
-
-      if (isHeaderVisible !== shouldBeVisible) {
-        setIsHeaderVisible(shouldBeVisible);
-      }
-
-      if (event.nativeEvent.contentOffset.y <= 0) {
-        prevScrollYValue.current = 0;
-      }
-      handleAnimationScroll(event, prevScrollYValue);
-    },
-    [handleAnimationScroll, isHeaderVisible]
-  );
 
   // Component renderers
   const renderWord = useCallback(

@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -11,18 +11,14 @@ import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { Colors } from '../../constants/Colors';
 import { useIsDarkMode } from '../../hooks/useThemeDetection';
-import Animated, {
-  useSharedValue,
-  withSequence,
-  withTiming,
-  useAnimatedStyle,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useAuth } from '../../hooks/useAuth';
 import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
+import { analytics } from '@/services/analytics';
 
 // Global counter for tooltip zIndex values
 let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
@@ -234,6 +230,25 @@ function ArabicWordComponent({
       backgroundColor: isHighlighted ? highlightColor : Colors.light.transparent,
     };
   }, [isSelected, isHighlighted, colors.textOverlay, colors.tint]);
+
+  // Track word selection changes
+  useEffect(() => {
+    if (user && word.id) {
+      const wordId = typeof word.id === 'string' ? parseInt(word.id, 10) : word.id;
+      if (isSelected) {
+        analytics.trackAddStudyWord(wordId, {
+          word: word.word_form,
+          english: word.english,
+          articleId: word.sentence?.article_id,
+        });
+      } else {
+        analytics.trackRemoveStudyWord(wordId, {
+          word: word.word_form,
+          english: word.english,
+        });
+      }
+    }
+  }, [isSelected, user, word]);
 
   return (
     <>
