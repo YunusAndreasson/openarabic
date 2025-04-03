@@ -1,5 +1,4 @@
 import { Article } from '../types/articles.types';
-import { getDayOfYear } from './dateUtils';
 
 /**
  * Filters articles by author ID

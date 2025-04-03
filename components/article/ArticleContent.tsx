@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, Platform, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native';
+import { StyleSheet, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
@@ -53,7 +53,7 @@ export const ArticleContent = ({
 }: ArticleContentProps) => {
   const insets = useSafeAreaInsets();
   const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
-  const { scrollToSentence, highlightWord, wordPosition } = useLocalSearchParams<{
+  const { scrollToSentence } = useLocalSearchParams<{
     scrollToSentence?: string;
     highlightWord?: string;
     wordPosition?: string;

@@ -31,4 +31,3 @@ export { default as Auth } from './Auth';
 export * from './article';
 export * from './review';
 export * from './vocabulary';
-export * from './index';

@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Alert, StyleSheet, TouchableOpacity, Platform, View } from 'react-native';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { supabase } from '@/services/supabase';
-import { ThemedView } from './ThemedView';
 import { ThemedInput } from './ThemedInput';
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';

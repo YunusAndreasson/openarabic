@@ -198,14 +198,12 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   loadingContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     minHeight: 200,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.LARGE,
     alignItems: 'center',
     justifyContent: 'center',

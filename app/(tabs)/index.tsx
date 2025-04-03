@@ -65,6 +65,9 @@ const styles = StyleSheet.create({
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
+  articleItemPadding: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
   articlesListContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
@@ -122,7 +125,7 @@ const ArticleItem = React.memo(
     const timeAgoText = formatTimeAgo(article.created_at);
 
     return (
-      <View style={styles.articleContainer}>
+      <View style={[styles.articleContainer, styles.articleItemPadding]}>
         <BaseCard onPress={() => onPress(article)} style={styles.card}>
           <View style={styles.cardContent}>
             <View style={styles.textContent}>
@@ -388,11 +391,9 @@ export default function ArticlesScreen() {
     return (
       <View style={styles.sectionContainer}>
         <SectionTitle title="Latest Texts" />
-        <View style={styles.articlesListContainer}>
-          {latestArticles.map(article => (
-            <ArticleItem key={article.id} article={article} onPress={handleArticlePress} />
-          ))}
-        </View>
+        {latestArticles.map(article => (
+          <ArticleItem key={article.id} article={article} onPress={handleArticlePress} />
+        ))}
       </View>
     );
   }, [articlesData, handleArticlePress]);

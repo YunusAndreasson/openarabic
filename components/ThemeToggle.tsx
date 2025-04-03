@@ -1,7 +1,7 @@
 import { useAppDispatch, useAppSelectorMemo } from '@/store/hooks';
 import { setTheme } from '@/store/themeSlice';
 import { Theme } from '@/constants/Colors';
-import { useCallback, memo, useRef } from 'react';
+import { useCallback, memo } from 'react';
 import { Toggle } from './Toggle';
 
 function ThemeToggleComponent() {

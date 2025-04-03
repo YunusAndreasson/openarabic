@@ -1,11 +1,3 @@
-import { StudyWord } from '@/types/vocabulary.types';
-
-interface WeeklyProgress {
-  date: string;
-  count: number;
-  wordsLearned: number;
-}
-
 export interface WeeklyProgressData {
   date: string;
   count: number;
@@ -24,10 +16,7 @@ interface ReviewLog {
  * @param reviewLogs Array of review logs
  * @returns Array of weekly progress data points
  */
-export function calculateWeeklyProgressData(
-  studyWords: StudyWord[],
-  reviewLogs: ReviewLog[] = []
-): WeeklyProgressData[] {
+export function calculateWeeklyProgressData(reviewLogs: ReviewLog[] = []): WeeklyProgressData[] {
   // Get today's date and create a map of dates
   const today = new Date();
   today.setHours(0, 0, 0, 0);

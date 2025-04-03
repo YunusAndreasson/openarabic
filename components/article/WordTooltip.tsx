@@ -19,24 +19,17 @@ export const WordTooltip = React.memo(
     const colors = useColors();
 
     // Setup transform animation for scale effect
-    const {
-      startAnimation: startScaleAnimation,
-      reverseAnimation: reverseScaleAnimation,
-      animatedStyle: transformStyle,
-    } = useTransformAnimation({
-      type: 'scale',
-      initialValue: 1,
-      targetValue: 1,
-      duration: 0,
-      useSpring: false,
-    });
+    const { startAnimation: startScaleAnimation, animatedStyle: transformStyle } =
+      useTransformAnimation({
+        type: 'scale',
+        initialValue: 1,
+        targetValue: 1,
+        duration: 0,
+        useSpring: false,
+      });
 
     // Setup opacity animation for subtle fade effect
-    const {
-      fadeIn,
-      fadeOut,
-      animatedStyle: opacityStyle,
-    } = useOpacityAnimation({
+    const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation({
       initialOpacity: 1,
       duration: 0,
     });

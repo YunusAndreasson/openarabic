@@ -11,7 +11,6 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
-import type { Tables } from '@/types/database.types';
 
 interface ArticleSentenceProps {
   sentence: {

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useEffect, useCallback } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useColors } from '../../hooks/useColors';
@@ -14,9 +14,8 @@ import {
 } from '@shopify/react-native-skia';
 import { LAYOUT } from '../../constants/layout';
 import { LoadingContainer } from '../Loader';
-import { useGraphAnimation } from '@/hooks/animations';
+import { useProgressAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
-import { useAnimatedReaction, runOnJS } from 'react-native-reanimated';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import BaseCard from '../BaseCard';
 import { withOpacity } from '@/utils/colorUtils';
@@ -64,32 +63,12 @@ export const VocabularyGraph = React.memo(
       GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING
     );
 
-    // Animation related hooks
+    // Use progress animation instead of useGraphAnimation
     const {
-      animationProgress,
-      startAnimation: startGraphAnimation,
-      resetAnimation,
-    } = useGraphAnimation(2000);
-
-    // Set graph state after checking if we actually have data to display
-    const hasData = data.length > 0 && data.some(d => d.count > 0);
-    const hasLearningData = data.length > 0 && data.some(d => d.wordsLearned > 0);
-
-    // Add reaction to trigger haptic feedback when animation reaches the last point
-    useAnimatedReaction(
-      () => {
-        if (points.length === 0) return false;
-        // Check if animation is at or past the last point's position
-        const lastPointPosition = 1.0; // Animation progress is normalized (0-1)
-        return animationProgress.value >= lastPointPosition;
-      },
-      isAtLastPoint => {
-        if (isAtLastPoint && hasData) {
-          // Removing the haptic feedback
-        }
-      },
-      [points.length, hasData]
-    );
+      progress: animationProgress,
+      updateProgress,
+      reset: resetAnimation,
+    } = useProgressAnimation(0, 2000); // 2000ms duration
 
     // Start the animation when the component is ready and parent signals animation
     React.useEffect(() => {
@@ -101,7 +80,7 @@ export const VocabularyGraph = React.memo(
       if (isReady && !isLoading && points.length > 0 && animationTriggered) {
         // Use setTimeout to ensure synchronization with mastery bar
         setTimeout(() => {
-          startGraphAnimation();
+          updateProgress(100); // Animate to 100%
         }, 50);
       }
 
@@ -109,14 +88,7 @@ export const VocabularyGraph = React.memo(
       if (!animationTriggered) {
         resetAnimation();
       }
-    }, [
-      isReady,
-      isLoading,
-      points.length,
-      animationTriggered,
-      startGraphAnimation,
-      resetAnimation,
-    ]);
+    }, [isReady, isLoading, points.length, animationTriggered, updateProgress, resetAnimation]);
 
     // Memoize gradient colors
     const gradientColors = useMemo(
@@ -209,7 +181,10 @@ export const VocabularyGraph = React.memo(
               })}
 
               {/* Area under the curve with gradient */}
-              <Group opacity={animationProgress} transform={[{ translateY: TOP_PADDING }]}>
+              <Group
+                opacity={animationProgress.value / 100}
+                transform={[{ translateY: TOP_PADDING }]}
+              >
                 <LinearGradient
                   start={vec(0, 0)}
                   end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
@@ -229,7 +204,7 @@ export const VocabularyGraph = React.memo(
                   strokeJoin="round"
                   strokeCap="round"
                   start={0}
-                  end={animationProgress}
+                  end={animationProgress.value / 100}
                 />
                 <BlurMask blur={1} style="normal" />
               </Group>
@@ -237,7 +212,7 @@ export const VocabularyGraph = React.memo(
               {/* Data points */}
               {points.map((point, index) => {
                 // Calculate the point's position in the animation sequence
-                const pointPosition = index / (points.length - 1);
+                const pointPosition = (index / (points.length - 1)) * 100;
 
                 return (
                   <Group

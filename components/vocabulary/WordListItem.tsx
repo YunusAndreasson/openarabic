@@ -9,7 +9,6 @@ import { usePressAnimation } from '../../hooks/animations';
 import { State } from 'ts-fsrs';
 import { format } from 'date-fns';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 
 interface WordListItemProps {
   word: StudyWord;
@@ -27,7 +26,7 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
   });
 
   // Get the actual word data
-  const { word_form, english, word_type, root, sentence } = word.sentence_word || {};
+  const { word_form, english, sentence } = word.sentence_word || {};
 
   // Calculate learning progress and status
   const wordStatus = useMemo(() => {
@@ -112,20 +111,6 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
   ];
 
   // Get learning state label
-  const getLearningStateLabel = () => {
-    switch (wordStatus.state) {
-      case State.New:
-        return 'NEW';
-      case State.Learning:
-        return 'LEARNING';
-      case State.Review:
-        return wordStatus.progress.value >= 80 ? 'MASTERED' : 'LEARNING';
-      case State.Relearning:
-        return 'RELEARNING';
-      default:
-        return 'NEW';
-    }
-  };
 
   return (
     <Animated.View style={animatedStyle as any}>

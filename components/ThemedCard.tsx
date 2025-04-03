@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle, Pressable } from 'react-native';
+import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,7 @@ import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui/card.types';
-import { TimeAgo, DifficultyIndicator, SummaryIndicator } from './article/ArticleHelpers';
+import { TimeAgo, SummaryIndicator } from './article/ArticleHelpers';
 import { DEFAULT_IMAGES } from '@/constants/images';
 
 /**
@@ -43,7 +43,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Extract compact article props
   const article = isCompactVariant(props) ? props.article : undefined;
   const showTimeAgo = isCompactVariant(props) ? props.showTimeAgo : false;
-  const hideDifficultyLabel = isCompactVariant(props) ? props.hideDifficultyLabel : false;
   const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
   const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
 

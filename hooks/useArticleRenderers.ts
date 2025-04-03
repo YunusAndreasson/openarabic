@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { router } from 'expo-router';
 import { useNavigationWithDebounce } from './useNavigationWithDebounce';
 

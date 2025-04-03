@@ -5,7 +5,6 @@ import {
   LayoutRectangle,
   Platform,
   LayoutChangeEvent,
-  Animated as RNAnimated,
 } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useColors } from '../../hooks/useColors';
@@ -116,11 +115,6 @@ function ArabicWordComponent({
       );
     }
   }, [isHighlighted, highlightOpacity]);
-
-  // Create animated style for highlight effect
-  const highlightStyle = useAnimatedStyle(() => ({
-    opacity: highlightOpacity.value,
-  }));
 
   // Handle the animation reversal after a brief delay
   useEffect(() => {

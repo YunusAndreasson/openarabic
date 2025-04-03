@@ -115,6 +115,7 @@ export default function SettingsScreen() {
       }, 150);
       return () => clearTimeout(timer);
     }
+    return undefined; // Add return for when condition is not met
   }, [hasConcreteValues, isLoadingState, isAuthLoading]);
 
   // Keep memoization for handlers with dependencies or complex logic
