@@ -37,6 +37,7 @@ import { formatTimeAgo } from '@/utils/dateUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import ThemedCard from '@/components/ThemedCard';
 import Pill from '@/components/Pill';
+import { useAppLoading } from '../../app/_layout'; // Import the app loading context hook
 
 // Types
 import { Article } from '@/types/articles.types';
@@ -161,6 +162,7 @@ export default function ArticlesScreen() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { session } = useAuth();
+  const { initialLoadComplete, wasPreloaded } = useAppLoading();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
@@ -542,13 +544,20 @@ export default function ArticlesScreen() {
 
   // Use state to control loading overlay visibility
   const [showLoadingOverlay, setShowLoadingOverlay] = useState(
-    (isArticlesLoading && articlesData.length === 0) || isRefreshing
+    !wasPreloaded && ((isArticlesLoading && articlesData.length === 0) || isRefreshing)
   );
 
   // Update loading overlay visibility when loading state changes
   useEffect(() => {
-    setShowLoadingOverlay((isArticlesLoading && articlesData.length === 0) || isRefreshing);
-  }, [isArticlesLoading, articlesData.length, isRefreshing]);
+    // Only show the loader if:
+    // 1. Articles weren't preloaded during app initialization
+    // 2. Articles are still loading and we don't have cached data
+    // 3. We're refreshing the data
+    // This prevents showing the loader twice in a row
+    setShowLoadingOverlay(
+      !wasPreloaded && ((isArticlesLoading && articlesData.length === 0) || isRefreshing)
+    );
+  }, [isArticlesLoading, articlesData.length, isRefreshing, wasPreloaded]);
 
   // Show error state only if there's no cached data
   if (articlesError && !isRefreshing && !isDataCached) {

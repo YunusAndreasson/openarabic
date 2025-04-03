@@ -1,4 +1,4 @@
-import {
+import React, {
   DarkTheme,
   DefaultTheme,
   ThemeProvider as NavigationThemeProvider,
@@ -8,7 +8,16 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect, useState, useRef, Component, useMemo } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  Component,
+  useMemo,
+  createContext,
+  useContext,
+} from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../store/store';
@@ -71,6 +80,21 @@ const reviewScreenOptions = {
   gestureEnabled: false,
 } as const;
 
+// App loading context type
+interface AppLoadingContextType {
+  initialLoadComplete: boolean;
+  wasPreloaded: boolean;
+}
+
+// Create context with default values
+export const AppLoadingContext = createContext<AppLoadingContextType>({
+  initialLoadComplete: false,
+  wasPreloaded: false,
+});
+
+// Hook to use the app loading context
+export const useAppLoading = () => useContext(AppLoadingContext);
+
 function AppContent() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
@@ -78,6 +102,7 @@ function AppContent() {
   const isDark = theme === Theme.Dark;
   const colors = useColors();
   const [appReady, setAppReady] = useState(false);
+  const [showLoader, setShowLoader] = useState(true);
   const appState = useRef(AppState.currentState);
   const { isLoading: isAuthLoading, session } = useAuth();
   const hasHiddenSplash = useRef(false);
@@ -89,25 +114,36 @@ function AppContent() {
   });
 
   // Use the app preloader hook to preload data
-  const { preloadAppData, isLoaded } = useAppPreloader();
+  const { preloadAppData, isLoaded, isPreloading } = useAppPreloader();
+
+  // Make this available to child components via context
+  const appLoadingContext = useMemo(
+    () => ({
+      initialLoadComplete: appReady,
+      wasPreloaded: isLoaded,
+    }),
+    [appReady, isLoaded]
+  );
 
   // Identify user in Mixpanel when auth state changes
   useEffect(() => {
-    if (!session?.user || !appReady) return;
+    if (!appReady || isAuthLoading) return;
 
     const identifyUser = async () => {
       try {
-        await analytics.identify(session.user.id, {
-          email: session.user.email,
-          last_active: new Date().toISOString(),
-        });
+        if (session?.user) {
+          await analytics.identify(session.user.id, {
+            email: session.user.email,
+            last_active: new Date().toISOString(),
+          });
+        }
       } catch {
         /* Ignore analytics errors */
       }
     };
 
     identifyUser();
-  }, [session, appReady]);
+  }, [session, appReady, isAuthLoading]);
 
   // Memoize navigation theme to prevent recalculation
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
@@ -145,31 +181,43 @@ function AppContent() {
       hasHiddenSplash.current = true;
       try {
         await SplashScreen.hideAsync();
-        // Only set appReady after successfully hiding splash screen
-        setAppReady(true);
+        // Hide loader after a small delay to ensure smooth transition
+        setTimeout(() => {
+          setShowLoader(false);
+          setAppReady(true);
+        }, 100);
       } catch {
         /* Ignore splash screen errors */
+        setShowLoader(false);
+        setAppReady(true);
       }
     }
   }, [fontsLoaded, isLoaded, isAuthLoading]);
 
   // Don't render anything until initial resources are loaded
   if (!fontsLoaded || !isLoaded || isAuthLoading) {
-    return null;
+    return <AppLoader color={colors.tint} />;
   }
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <ToastProvider>
-        <View style={styles.container} onLayout={onLayoutRootView}>
-          <Stack screenOptions={stackScreenOptions}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="article" options={{ headerShown: false }} />
-            <Stack.Screen name="review" options={reviewScreenOptions} />
-          </Stack>
-          <StatusBar style={isDark ? 'light' : 'dark'} />
-          {!appReady && <AppLoader color={colors.tint} />}
-        </View>
+        <AppLoadingContext.Provider value={appLoadingContext}>
+          <View style={styles.container} onLayout={onLayoutRootView}>
+            {!showLoader ? (
+              <>
+                <Stack screenOptions={stackScreenOptions}>
+                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  <Stack.Screen name="article" options={{ headerShown: false }} />
+                  <Stack.Screen name="review" options={reviewScreenOptions} />
+                </Stack>
+                <StatusBar style={isDark ? 'light' : 'dark'} />
+              </>
+            ) : (
+              <AppLoader color={colors.tint} />
+            )}
+          </View>
+        </AppLoadingContext.Provider>
       </ToastProvider>
     </NavigationThemeProvider>
   );
