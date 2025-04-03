@@ -46,3 +46,4 @@ translate/audio/
 translate/articles/
 translate/archive/
 translate/__pycache__/
+.env.local

@@ -25,6 +25,14 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ToastProvider } from '@/components/ToastProvider';
 import { useAuth } from '../hooks/useAuth';
 import { LAYOUT } from '@/constants/layout';
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 // Hide splash screen immediately
 SplashScreen.hideAsync();
@@ -207,7 +215,7 @@ function ErrorFallback({ error }: FallbackProps) {
   );
 }
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.gestureRoot}>
       <Provider store={store}>
@@ -225,4 +233,4 @@ export default function RootLayout() {
       </Provider>
     </GestureHandlerRootView>
   );
-}
+});
