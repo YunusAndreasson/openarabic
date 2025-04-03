@@ -1,5 +1,6 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
 import { Toast } from './Toast';
+import { setGlobalToastHandler } from '../utils/errorHandling';
 
 interface ToastContextType {
   showToast: (message: string, duration?: number) => void;
@@ -33,6 +34,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const handleClose = useCallback(() => {
     setToastState(prev => ({ ...prev, visible: false }));
   }, []);
+
+  // Register the toast handler globally when the component mounts
+  useEffect(() => {
+    setGlobalToastHandler(showToast);
+  }, [showToast]);
 
   return (
     <ToastContext.Provider value={{ showToast }}>

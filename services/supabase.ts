@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { Database } from '../types/database.types';
+import { handleError } from '../utils/errorHandling';
 
 /**
  * Supabase client configuration and initialization
@@ -34,23 +35,45 @@ AppState.addEventListener('change', state => {
  * @throws Error if user is not authenticated or IDs don't match
  */
 export async function checkAuthentication(expectedUserId?: string) {
-  const { data, error } = await supabase.auth.getSession();
+  try {
+    const { data, error } = await supabase.auth.getSession();
 
-  if (error) {
+    if (error) {
+      handleError(error, {
+        toastMessage: 'Authentication error',
+        analyticsEventName: 'Auth_Session_Error',
+        sentrySeverity: 'error',
+      });
+      throw error;
+    }
+
+    if (!data.session || !data.session.user) {
+      const error = new Error('User must be authenticated');
+      handleError(error, {
+        toastMessage: 'Please sign in to continue',
+        analyticsEventName: 'Auth_Required',
+        sentrySeverity: 'info',
+      });
+      throw error;
+    }
+
+    // If an expected user ID was provided, verify it matches
+    if (expectedUserId && data.session.user.id !== expectedUserId) {
+      const error = new Error('User ID mismatch');
+      handleError(error, {
+        toastMessage: 'Session expired, please sign in again',
+        analyticsEventName: 'Auth_User_Mismatch',
+        sentrySeverity: 'warning',
+      });
+      throw error;
+    }
+
+    return {
+      session: data.session,
+      user: data.session.user,
+    };
+  } catch (error) {
+    // Re-throw the error after handling it
     throw error;
   }
-
-  if (!data.session || !data.session.user) {
-    throw new Error('User must be authenticated');
-  }
-
-  // If an expected user ID was provided, verify it matches
-  if (expectedUserId && data.session.user.id !== expectedUserId) {
-    throw new Error('User ID mismatch');
-  }
-
-  return {
-    session: data.session,
-    user: data.session.user,
-  };
 }

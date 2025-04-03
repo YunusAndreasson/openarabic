@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/database.types';
 import { Article } from '../types/articles.types';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import { handleError } from '../utils/errorHandling';
 
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -50,91 +51,165 @@ const DETAIL_VIEW_COLUMNS = `
 
 export const articlesService = {
   async getArticles(categoryId?: number, authorId?: number): Promise<Article[]> {
-    let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
+    try {
+      let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
 
-    if (categoryId) query = query.eq('category_id', categoryId);
-    if (authorId) query = query.eq('author_id', authorId);
+      if (categoryId) query = query.eq('category_id', categoryId);
+      if (authorId) query = query.eq('author_id', authorId);
 
-    query = query.order('created_at', { ascending: false });
+      query = query.order('created_at', { ascending: false });
 
-    const { data, error } = await query;
-    if (error) {
+      const { data, error } = await query;
+      if (error) {
+        handleError(error, {
+          toastMessage: 'Failed to load articles',
+          analyticsEventName: 'Articles_Load_Error',
+          sentrySeverity: 'error',
+          analyticsProperties: { categoryId, authorId },
+        });
+        throw error;
+      }
+      return data as unknown as Article[];
+    } catch (error) {
+      // Re-throw after handling
       throw error;
     }
-    return data as unknown as Article[];
   },
 
   async getArticleById(id: number): Promise<Article> {
-    const { data, error } = await supabase
-      .from('articles')
-      .select(DETAIL_VIEW_COLUMNS)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(DETAIL_VIEW_COLUMNS)
+        .eq('id', id)
+        .single();
 
-    if (error) {
+      if (error) {
+        handleError(error, {
+          toastMessage: 'Failed to load article',
+          analyticsEventName: 'Article_Load_Error',
+          sentrySeverity: 'error',
+          analyticsProperties: { articleId: id },
+        });
+        throw error;
+      }
+
+      if (!data) {
+        const error = new Error(`Article with id ${id} not found`);
+        handleError(error, {
+          toastMessage: 'Article not found',
+          analyticsEventName: 'Article_Not_Found',
+          sentrySeverity: 'warning',
+          analyticsProperties: { articleId: id },
+        });
+        throw error;
+      }
+
+      // Initialize empty arrays for data consistency
+      if (!data.article_sentences) {
+        data.article_sentences = [];
+      }
+
+      if (data.article_sentences && data.article_sentences.length > 0) {
+        data.article_sentences.forEach(sentence => {
+          if (!sentence.sentence_words) {
+            sentence.sentence_words = [];
+          }
+        });
+      }
+
+      return data as unknown as Article;
+    } catch (error) {
       throw error;
     }
-
-    if (!data) {
-      throw new Error(`Article with id ${id} not found`);
-    }
-
-    // Initialize empty arrays for data consistency
-    if (!data.article_sentences) {
-      data.article_sentences = [];
-    }
-
-    if (data.article_sentences && data.article_sentences.length > 0) {
-      data.article_sentences.forEach(sentence => {
-        if (!sentence.sentence_words) {
-          sentence.sentence_words = [];
-        }
-      });
-    }
-
-    return data as unknown as Article;
   },
 
   async getRelatedArticles(articleId: number): Promise<Article[]> {
-    // Get the article's category first
-    const { data: article, error: articleError } = await supabase
-      .from('articles')
-      .select('category_id')
-      .eq('id', articleId)
-      .single();
+    try {
+      // Get the article's category first
+      const { data: article, error: articleError } = await supabase
+        .from('articles')
+        .select('category_id')
+        .eq('id', articleId)
+        .single();
 
-    if (articleError || !article) {
+      if (articleError) {
+        handleError(articleError, {
+          toastMessage: 'Failed to load related articles',
+          analyticsEventName: 'Related_Articles_Load_Error',
+          sentrySeverity: 'warning',
+          analyticsProperties: { articleId },
+        });
+        return [];
+      }
+
+      if (!article) {
+        return [];
+      }
+
+      // Get related articles from the same category
+      const { data, error } = await supabase
+        .from('articles')
+        .select(LIST_VIEW_COLUMNS)
+        .eq('category_id', article.category_id)
+        .neq('id', articleId)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        handleError(error, {
+          toastMessage: 'Failed to load related articles',
+          analyticsEventName: 'Related_Articles_Load_Error',
+          sentrySeverity: 'warning',
+          analyticsProperties: { articleId, categoryId: article.category_id },
+        });
+        return [];
+      }
+
+      return data as unknown as Article[];
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error('Unknown error loading related articles');
+      handleError(error, {
+        toastMessage: 'Failed to load related articles',
+        analyticsEventName: 'Related_Articles_Load_Error',
+        sentrySeverity: 'warning',
+        showToast: false, // Don't show toast for this fallback case
+      });
       return [];
     }
-
-    // Get related articles from the same category
-    const { data, error } = await supabase
-      .from('articles')
-      .select(LIST_VIEW_COLUMNS)
-      .eq('category_id', article.category_id)
-      .neq('id', articleId) // Exclude current article
-      .order('created_at', { ascending: false })
-      .limit(5);
-
-    if (error) {
-      return [];
-    }
-
-    return data as unknown as Article[];
   },
 
   async getOtherCategoryArticles(categoryId: number): Promise<Article[]> {
-    const { data, error } = await supabase
-      .from('articles')
-      .select(LIST_VIEW_COLUMNS)
-      .eq('category_id', categoryId)
-      .order('created_at', { ascending: false })
-      .limit(10);
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(LIST_VIEW_COLUMNS)
+        .eq('category_id', categoryId)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-    if (error) {
+      if (error) {
+        handleError(error, {
+          toastMessage: 'Failed to load category articles',
+          analyticsEventName: 'Category_Articles_Load_Error',
+          sentrySeverity: 'warning',
+          analyticsProperties: { categoryId },
+        });
+        return [];
+      }
+
+      return data as unknown as Article[];
+    } catch (err) {
+      const error =
+        err instanceof Error ? err : new Error('Unknown error loading category articles');
+      handleError(error, {
+        toastMessage: 'Failed to load category articles',
+        analyticsEventName: 'Category_Articles_Load_Error',
+        sentrySeverity: 'warning',
+        showToast: false,
+      });
       return [];
     }
-
-    return data as unknown as Article[];
   },
 };
