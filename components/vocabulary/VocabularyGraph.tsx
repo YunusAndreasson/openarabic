@@ -12,9 +12,9 @@ import {
   LinearGradient,
   vec,
 } from '@shopify/react-native-skia';
+import { useSharedValue, withTiming, useDerivedValue } from 'react-native-reanimated';
 import { LAYOUT } from '../../constants/layout';
 import { LoadingContainer } from '../Loader';
-import { useProgressAnimation } from '@/hooks/animations';
 import { useGraphData } from '@/hooks/useGraphData';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import BaseCard from '../BaseCard';
@@ -38,14 +38,42 @@ export const VocabularyGraph = React.memo(
   }: VocabularyGraphProps) => {
     const colors = useColors();
     const [isReady, setIsReady] = React.useState(false);
+    const [hasError, setHasError] = React.useState(false);
 
-    // Canvas dimensions
+    // Use Reanimated's shared value for animation
+    const progress = useSharedValue(0);
+
+    // Create derived value for opacity
+    const opacity = useDerivedValue(() => progress.value);
+
+    // Canvas dimensions with safe defaults
     const PADDING = LAYOUT.SPACING.MEDIUM;
-    const TOP_PADDING = LAYOUT.SPACING.SMALL; // Increase from 3px to prevent top clipping
-    const BOTTOM_PADDING = LAYOUT.SPACING.MEDIUM; // Add bottom padding to prevent floor points from being cut
+    const TOP_PADDING = LAYOUT.SPACING.LARGE;
+    const BOTTOM_PADDING = LAYOUT.SPACING.LARGE;
+    const POINT_RADIUS = 2.5;
+    const POINT_STROKE = 1.5;
     const GRAPH_HEIGHT = 120;
-    const GRAPH_WIDTH =
-      Dimensions.get('window').width - PADDING * 2 - LAYOUT.SCREEN_EDGE_PADDING * 2;
+    const GRAPH_WIDTH = Math.max(
+      100,
+      Dimensions.get('window').width - PADDING * 2 - LAYOUT.SCREEN_EDGE_PADDING * 2
+    );
+
+    // Validate data before processing
+    const validData = useMemo(() => {
+      try {
+        return data.filter(
+          item =>
+            item &&
+            typeof item === 'object' &&
+            typeof item.date === 'string' &&
+            typeof item.wordsLearned === 'number' &&
+            !isNaN(item.wordsLearned)
+        );
+      } catch (error) {
+        setHasError(true);
+        return [];
+      }
+    }, [data]);
 
     // Set component as ready after initial mount
     useEffect(() => {
@@ -56,46 +84,25 @@ export const VocabularyGraph = React.memo(
       return () => clearTimeout(timer);
     }, []);
 
-    // Use graph data hook to generate points and paths
+    // Use graph data hook to generate points and paths with error handling
     const { points, areaPath, linePath } = useGraphData(
-      data,
-      GRAPH_WIDTH,
+      validData,
+      GRAPH_WIDTH - POINT_RADIUS * 4,
       GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING
     );
 
-    // Use progress animation instead of useGraphAnimation
-    const {
-      progress: animationProgress,
-      updateProgress,
-      reset: resetAnimation,
-    } = useProgressAnimation(0, 2000); // 2000ms duration
-
     // Start the animation when the component is ready and parent signals animation
-    React.useEffect(() => {
-      // Only start animation if:
-      // 1. Component is ready (mounted and visible)
-      // 2. Not in loading state
-      // 3. We have data points
-      // 4. Parent has triggered animations
-      if (isReady && !isLoading && points.length > 0 && animationTriggered) {
-        // Use setTimeout to ensure synchronization with mastery bar
-        setTimeout(() => {
-          updateProgress(100); // Animate to 100%
-        }, 50);
+    useEffect(() => {
+      if (isReady && !isLoading && points.length > 0 && animationTriggered && !hasError) {
+        progress.value = withTiming(1, { duration: 2000 });
+      } else if (!animationTriggered) {
+        progress.value = 0;
       }
-
-      // Reset animation state when parent animation trigger is turned off
-      if (!animationTriggered) {
-        resetAnimation();
-      }
-    }, [isReady, isLoading, points.length, animationTriggered, updateProgress, resetAnimation]);
+    }, [isReady, isLoading, points.length, animationTriggered, hasError, progress]);
 
     // Memoize gradient colors
     const gradientColors = useMemo(
-      () => [
-        withOpacity(colors.text, 0.19), // Increased from 0.12 for better contrast
-        withOpacity(colors.text, 0.06), // Increased from 0.03 for better contrast
-      ],
+      () => [withOpacity(colors.text, 0.19), withOpacity(colors.text, 0.06)],
       [colors.text]
     );
 
@@ -118,7 +125,7 @@ export const VocabularyGraph = React.memo(
       () => [
         styles.graphContainer,
         {
-          height: GRAPH_HEIGHT + 50, // Increase height to accommodate labels
+          height: GRAPH_HEIGHT + 50,
         },
       ],
       [GRAPH_HEIGHT]
@@ -130,13 +137,22 @@ export const VocabularyGraph = React.memo(
         {
           height: GRAPH_HEIGHT,
           width: GRAPH_WIDTH,
-          marginBottom: LAYOUT.SPACING.SMALL, // Use LAYOUT constant instead of hardcoded 10
+          marginBottom: LAYOUT.SPACING.SMALL,
         },
       ],
       [GRAPH_HEIGHT, GRAPH_WIDTH]
     );
 
-    // Custom loading component for the card
+    // Error state component
+    const errorComponent = (
+      <View style={[graphContainerStyle, styles.loadingContainer]}>
+        <ThemedText type="body" variant="secondary">
+          Unable to display graph
+        </ThemedText>
+      </View>
+    );
+
+    // Loading component
     const loadingComponent = (
       <View style={[graphContainerStyle, styles.loadingContainer]}>
         <LoadingContainer size="small" />
@@ -146,10 +162,20 @@ export const VocabularyGraph = React.memo(
       </View>
     );
 
+    // If there's an error or no valid data, show error state
+    if (hasError || validData.length === 0) {
+      return (
+        <BaseCard style={styles.card} includePressAnimation={false} shadowSize="medium">
+          {cardHeader}
+          {errorComponent}
+        </BaseCard>
+      );
+    }
+
     return (
       <View
         accessible={true}
-        accessibilityLabel={`Vocabulary progress graph for the last ${data.length} days`}
+        accessibilityLabel={`Vocabulary progress graph for the last ${validData.length} days`}
         accessibilityHint="Shows your daily word learning progress"
       >
         <BaseCard
@@ -181,10 +207,7 @@ export const VocabularyGraph = React.memo(
               })}
 
               {/* Area under the curve with gradient */}
-              <Group
-                opacity={animationProgress.value / 100}
-                transform={[{ translateY: TOP_PADDING }]}
-              >
+              <Group opacity={opacity} transform={[{ translateY: TOP_PADDING }]}>
                 <LinearGradient
                   start={vec(0, 0)}
                   end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
@@ -194,7 +217,7 @@ export const VocabularyGraph = React.memo(
                 <BlurMask blur={5} style="normal" />
               </Group>
 
-              {/* Line for the graph - more subtle */}
+              {/* Line for the graph */}
               <Group transform={[{ translateY: TOP_PADDING }]}>
                 <Path
                   path={linePath}
@@ -204,43 +227,40 @@ export const VocabularyGraph = React.memo(
                   strokeJoin="round"
                   strokeCap="round"
                   start={0}
-                  end={animationProgress.value / 100}
+                  end={opacity}
                 />
                 <BlurMask blur={1} style="normal" />
               </Group>
 
               {/* Data points */}
-              {points.map((point, index) => {
-                // Calculate the point's position in the animation sequence
-                const pointPosition = (index / (points.length - 1)) * 100;
-
-                return (
-                  <Group
-                    key={index}
-                    opacity={animationProgress.value >= pointPosition ? 1 : 0}
-                    transform={[{ translateY: TOP_PADDING }]}
-                  >
-                    {/* Outer circle */}
-                    <Circle cx={point.x} cy={point.y} r={5} color={colors.cardBackground} />
-                    {/* Inner circle */}
+              <Group opacity={opacity} transform={[{ translateX: POINT_RADIUS * 2 }]}>
+                {points.map((point, index) => (
+                  <Group key={index}>
                     <Circle
                       cx={point.x}
-                      cy={point.y}
-                      r={2.5}
-                      color={withOpacity(colors.text, 0.56)}
+                      cy={point.y + TOP_PADDING}
+                      r={POINT_RADIUS + POINT_STROKE}
+                      color={colors.cardBackground}
+                    />
+                    <Circle
+                      cx={point.x}
+                      cy={point.y + TOP_PADDING}
+                      r={POINT_RADIUS}
+                      color={colors.text}
+                      style="fill"
                     />
                   </Group>
-                );
-              })}
+                ))}
+              </Group>
             </Canvas>
 
-            {/* X-axis labels using regular React Native Text */}
+            {/* X-axis labels */}
             <View
               style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
               accessible={true}
               accessibilityLabel="Date and word count labels"
             >
-              {data.map((item, index) => (
+              {validData.map((item, index) => (
                 <View
                   key={index}
                   style={styles.labelContainer}
@@ -249,14 +269,6 @@ export const VocabularyGraph = React.memo(
                 >
                   <ThemedText type="caption" variant="primary" weight="500">
                     {item.date}
-                  </ThemedText>
-                  <ThemedText
-                    type="caption"
-                    variant="secondary"
-                    weight="400"
-                    style={styles.wordCountText}
-                  >
-                    {item.wordsLearned}
                   </ThemedText>
                 </View>
               ))}
@@ -273,66 +285,36 @@ VocabularyGraph.displayName = 'VocabularyGraph';
 
 const styles = StyleSheet.create({
   card: {
-    width: '100%',
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
   titleRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
   graphContainer: {
-    width: '100%',
-    paddingBottom: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
   },
   canvas: {
-    // Dimensions are set dynamically in the component
+    alignSelf: 'center',
   },
   xAxisLabels: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 44,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    width: '100%',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   labelContainer: {
-    width: 32,
     alignItems: 'center',
-    position: 'relative',
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  wordCountText: {
-    fontSize: 10,
-    marginTop: 2,
   },
   loadingContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  emptyDataContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.MEDIUM,
-  },
-  emptyDataText: {
-    textAlign: 'center',
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  statItem: {
-    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
   },
 });

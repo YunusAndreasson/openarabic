@@ -79,9 +79,8 @@ function AppContent() {
   const colors = useColors();
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
-  const { isLoading: isAuthLoading, authError, session } = useAuth();
+  const { isLoading: isAuthLoading, session } = useAuth();
   const hasHiddenSplash = useRef(false);
-  const isInitialMount = useRef(true);
 
   // Load fonts
   const [fontsLoaded] = useFonts({

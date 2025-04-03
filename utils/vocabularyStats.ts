@@ -16,7 +16,10 @@ interface ReviewLog {
  * @param reviewLogs Array of review logs
  * @returns Array of weekly progress data points
  */
-export function calculateWeeklyProgressData(reviewLogs: ReviewLog[] = []): WeeklyProgressData[] {
+export function calculateWeeklyProgressData(
+  studyWords: any[] = [],
+  reviewLogs: ReviewLog[] = []
+): WeeklyProgressData[] {
   // Get today's date and create a map of dates
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -37,11 +40,20 @@ export function calculateWeeklyProgressData(reviewLogs: ReviewLog[] = []): Weekl
     });
   }
 
-  // Process review logs
-  if (reviewLogs?.length > 0) {
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(today.getDate() - 6);
+  // Get the date 7 days ago for filtering
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
 
+  // First, get the count of words learned before the 7-day period
+  const wordsLearnedBefore = studyWords.filter(word => {
+    if (!word?.fsrs_last_review) return false;
+    const reviewDate = new Date(word.fsrs_last_review);
+    return reviewDate < sevenDaysAgo;
+  }).length;
+
+  // Process review logs to track daily progress
+  if (reviewLogs?.length > 0) {
     reviewLogs.forEach(log => {
       const reviewDate = new Date(log.reviewed_at);
       reviewDate.setHours(0, 0, 0, 0);
@@ -58,15 +70,18 @@ export function calculateWeeklyProgressData(reviewLogs: ReviewLog[] = []): Weekl
   }
 
   // Convert to array and calculate cumulative words learned
-  let cumulativeWords = 0;
+  let cumulativeWords = wordsLearnedBefore;
+
   return Array.from(dateMap.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([_, data]) => {
+      // Add new unique words learned on this day to the cumulative count
       cumulativeWords += data.words.size;
+
       return {
         date: data.date,
         count: data.count,
-        wordsLearned: cumulativeWords,
+        wordsLearned: Math.max(0, cumulativeWords),
       };
     });
 }
