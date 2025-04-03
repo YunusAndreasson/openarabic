@@ -13,6 +13,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
 import { useScreenAnimation } from '@/hooks/animations';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { Article } from '../types/articles.types';
+import { handleError } from '@/utils/errorHandling';
 
 // Create a supabase client for fetching data directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -91,6 +92,7 @@ function FilterScreenContent() {
         const { data } = await supabase.from('authors').select('*').eq('id', numericId).single();
         return data;
       } catch (err) {
+        handleError(err instanceof Error ? err : String(err));
         return null;
       }
     },
@@ -106,6 +108,7 @@ function FilterScreenContent() {
         const { data } = await supabase.from('categories').select('*').eq('id', numericId).single();
         return data ?? null;
       } catch (err) {
+        handleError(err instanceof Error ? err : String(err));
         return null;
       }
     },

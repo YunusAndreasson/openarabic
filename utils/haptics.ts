@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-
+import { handleError } from '@/utils/errorHandling';
 /**
  * Standardized haptic feedback patterns for consistent user experience
  */
@@ -14,7 +14,7 @@ export const lightFeedback = () => {
   try {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   } catch (error) {
-    // Silently handle errors, haptics failure should not break the app
+    handleError(error instanceof Error ? error : String(error));
   }
 };
 
@@ -28,7 +28,7 @@ export const mediumFeedback = () => {
   try {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   } catch (error) {
-    // Silently handle errors, haptics failure should not break the app
+    handleError(error instanceof Error ? error : String(error));
   }
 };
 
@@ -41,6 +41,6 @@ export const errorFeedback = () => {
   try {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   } catch (error) {
-    // Silently handle errors, haptics failure should not break the app
+    handleError(error instanceof Error ? error : String(error));
   }
 };

@@ -259,7 +259,7 @@ function ArabicWordComponent({
         style={[
           styles.wordContainer,
           // Add offsetY adjustment for first sentence positioning
-          highlightWord ? { marginTop: 2 } : null,
+          highlightWord ? styles.highlightedWord : null,
         ]}
         activeOpacity={0.7}
         onLayout={handleLayout}
@@ -300,6 +300,9 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     alignSelf: 'flex-start',
     maxWidth: 150,
+  },
+  highlightedWord: {
+    marginTop: 2,
   },
   container: {
     alignItems: 'center',

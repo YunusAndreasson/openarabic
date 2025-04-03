@@ -4,7 +4,6 @@ module.exports = {
   plugins: ['prettier', 'react-native'],
   rules: {
     'prettier/prettier': 'error',
-    // Add some common helpful rules
     'no-unused-vars': 'warn',
     'no-console': 'warn',
     'react-hooks/rules-of-hooks': 'error',

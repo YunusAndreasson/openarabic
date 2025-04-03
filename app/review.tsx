@@ -275,7 +275,7 @@ export default function ReviewScreen() {
                 fadeIn();
               }, 150);
             })
-            .catch(error => {
+            .catch(_ => {
               if (!isUpdatingWordRef.current) return; // Guard against unmount
               fadeIn();
             })
@@ -332,7 +332,7 @@ export default function ReviewScreen() {
               fadeIn();
             }, 150);
           })
-          .catch(error => {
+          .catch(_ => {
             if (!isUpdatingWordRef.current) return; // Guard against unmount
             fadeIn();
           })

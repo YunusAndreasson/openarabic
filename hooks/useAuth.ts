@@ -13,7 +13,7 @@ export function useAuth() {
       try {
         // Run auth initialization and session fetch in parallel
         const [
-          _,
+          ,
           {
             data: { session },
             error,

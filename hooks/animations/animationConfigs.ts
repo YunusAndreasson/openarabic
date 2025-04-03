@@ -1,3 +1,4 @@
+import { handleError } from '@/utils/errorHandling';
 import { Easing } from 'react-native-reanimated';
 
 // Create easing functions with fallbacks for environments without Reanimated
@@ -14,6 +15,7 @@ const createDefaultEasing = () => {
       };
     }
   } catch (e) {
+    handleError(e instanceof Error ? e : String(e));
     // Use fallback implementations
   }
 

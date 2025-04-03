@@ -85,14 +85,13 @@ function ArticleSentenceComponent({
       </View>
       {settings?.showEnglish && sentence.english && (
         <Animated.Text
-          style={{
-            fontFamily: 'Philosopher',
-            color: colors.text,
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * (settings.fontScale || 1),
-            opacity: 0.8,
-            paddingLeft: LAYOUT.SPACING.SMALL,
-            paddingBottom: LAYOUT.SPACING.SMALL,
-          }}
+          style={[
+            styles.englishText,
+            {
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * (settings.fontScale || 1),
+              color: colors.text,
+            },
+          ]}
         >
           {sentence.english}
         </Animated.Text>
@@ -122,6 +121,12 @@ const styles = StyleSheet.create({
     paddingRight: LAYOUT.SPACING.SMALL,
     minHeight: 40,
     width: '100%',
+  },
+  englishText: {
+    fontFamily: 'Philosopher',
+    opacity: 0.8,
+    paddingLeft: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.SMALL,
   },
 });
 

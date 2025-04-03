@@ -26,19 +26,10 @@ import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-
-// Store
-
-// Constants
-
-// Utils
 import { lightFeedback } from '@/utils/haptics';
-
-// Services
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-
-// Types
 import type { Tables } from '@/types/database.types';
+import { handleError } from '@/utils/errorHandling';
 
 const styles = StyleSheet.create({
   container: {
@@ -258,7 +249,7 @@ export default function ArticleScreen() {
     if (isPlaying) {
       // Run audio cleanup in parallel
       stopPlayback().catch(error => {
-        console.error('Error cleaning up audio:', error);
+        handleError(error);
       });
     }
     navigateTo('..'); // Navigate immediately
@@ -268,8 +259,6 @@ export default function ArticleScreen() {
   const handleBookmarkPress = useCallback(() => {
     // Add this check: If no user, do nothing
     if (!user) {
-      // Optionally, you could show a message prompting the user to log in
-      console.log('User must be logged in to manage bookmarks.');
       return;
     }
 

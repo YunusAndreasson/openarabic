@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as Sentry from '@sentry/react-native';
 import { analytics } from '../services/analytics';
 import { errorFeedback } from './haptics';
@@ -82,12 +83,15 @@ export const handleError = async (
 
     // 5. Log to console in development
     if (__DEV__) {
+      // eslint-disable-next-line no-console
       console.error(errorObj);
     }
   } catch (handlingError) {
     // If error handling itself fails, log to console in development
     if (__DEV__) {
+      // eslint-disable-next-line no-console
       console.error('Error while handling error:', handlingError);
+      // eslint-disable-next-line no-console
       console.error('Original error:', errorObj);
     }
   }

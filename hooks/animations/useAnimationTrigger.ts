@@ -1,3 +1,4 @@
+import { handleError } from '@/utils/errorHandling';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { runOnUI } from 'react-native-reanimated';
 
@@ -86,7 +87,7 @@ export const useAnimationTrigger = (
         // Attempt to run the animation on the UI thread for better performance
         runOnUI(startAnimation)();
       } catch (e) {
-        // Fallback to regular JS thread if the animation function isn't a worklet
+        handleError(e instanceof Error ? e : String(e));
         startAnimation();
       }
     }

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { router } from 'expo-router';
-
+import { handleError } from '@/utils/errorHandling';
 interface NavigationOptions {
   /**
    * Debounce duration in milliseconds
@@ -78,6 +78,7 @@ export const useNavigationWithDebounce = (
           router.push(route as any);
         }
       } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
         setIsNavigating(false);
         return;
       }

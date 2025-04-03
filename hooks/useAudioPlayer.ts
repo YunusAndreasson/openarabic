@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import { AppState } from 'react-native';
+import { handleError } from '@/utils/errorHandling';
 
 // Audio player states
 export const AUDIO_STATES = {
@@ -46,10 +47,10 @@ export function useAudioPlayer() {
     // Unload sound if it exists
     if (soundRef.current) {
       try {
-        await soundRef.current.stopAsync().catch(e => {});
-        await soundRef.current.unloadAsync().catch(e => {});
+        await soundRef.current.stopAsync().catch(_e => {});
+        await soundRef.current.unloadAsync().catch(_e => {});
       } catch (error) {
-        // Audio cleanup error
+        handleError(error instanceof Error ? error : String(error));
       } finally {
         soundRef.current = null;
       }
@@ -148,10 +149,10 @@ export function useAudioPlayer() {
         lastActionTimeRef.current = Date.now();
 
         // Clean up any existing audio first
-        await cleanupAudio().catch(e => {});
+        await cleanupAudio().catch(_e => {});
 
         // Run audio setup and sound creation in parallel
-        const [_, { sound }] = await Promise.all([
+        const [, { sound }] = await Promise.all([
           Audio.setAudioModeAsync({
             playsInSilentModeIOS: true,
             staysActiveInBackground: true,
@@ -170,6 +171,7 @@ export function useAudioPlayer() {
 
         return true;
       } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
         setAudioState(AUDIO_STATES.ERROR);
         await cleanupAudio().catch(() => {});
         return false;
@@ -191,6 +193,7 @@ export function useAudioPlayer() {
         setAudioState(AUDIO_STATES.PLAYING);
       }
     } catch (error) {
+      handleError(error instanceof Error ? error : String(error));
       setAudioState(AUDIO_STATES.ERROR);
     }
   }, [audioState]);
@@ -291,6 +294,7 @@ export function useAudioPlayer() {
       setProgress(position);
       return true;
     } catch (error) {
+      handleError(error instanceof Error ? error : String(error));
       return false;
     }
   }, []);

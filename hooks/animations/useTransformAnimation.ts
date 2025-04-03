@@ -19,6 +19,7 @@ import { TIMING_CONFIG } from './animationConfigs';
 import { SCREEN_WIDTH } from '../../constants/layout';
 import { SharedValue } from './types';
 import { ViewStyle } from 'react-native';
+import { handleError } from '@/utils/errorHandling';
 
 export type TransformType = 'scale' | 'slide';
 export type SlideDirection = 'right' | 'left';
@@ -206,7 +207,7 @@ export const useTransformAnimation = (
           );
         }
       } catch (error) {
-        // Fallback if animation fails
+        handleError(error instanceof Error ? error : String(error));
         if (onComplete) {
           runOnJS(onComplete)();
         }
@@ -255,7 +256,7 @@ export const useTransformAnimation = (
           );
         }
       } catch (error) {
-        // Fallback if animation fails
+        handleError(error instanceof Error ? error : String(error));
         if (onComplete) {
           runOnJS(onComplete)();
         }

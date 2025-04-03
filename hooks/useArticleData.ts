@@ -7,6 +7,7 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 // Types
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
 // Define a type for FSRS study word to avoid any
 interface FSRSStudyWord {
@@ -147,6 +148,7 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
         const relatedArticles = await articlesService.getRelatedArticles(article.id);
         return relatedArticles;
       } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
         return [];
       }
     },
@@ -168,6 +170,7 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
         const otherArticles = await articlesService.getOtherCategoryArticles(article.category_id);
         return otherArticles;
       } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
         return [];
       }
     },

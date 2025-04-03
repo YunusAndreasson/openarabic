@@ -1,11 +1,12 @@
-import React, {
+import React from 'react';
+import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider as NavigationThemeProvider,
 } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Stack, useNavigationContainerRef } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -37,9 +38,12 @@ import { LAYOUT } from '@/constants/layout';
 import * as Sentry from '@sentry/react-native';
 import { analytics } from '../services/analytics';
 
+// Create navigation integration for Sentry
+const navigationIntegration = Sentry.reactNavigationIntegration();
+
 Sentry.init({
   dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
-
+  integrations: [navigationIntegration],
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
 });
@@ -106,6 +110,7 @@ function AppContent() {
   const appState = useRef(AppState.currentState);
   const { isLoading: isAuthLoading, session } = useAuth();
   const hasHiddenSplash = useRef(false);
+  const navigationRef = useNavigationContainerRef();
 
   // Load fonts
   const [fontsLoaded] = useFonts({
@@ -114,7 +119,7 @@ function AppContent() {
   });
 
   // Use the app preloader hook to preload data
-  const { preloadAppData, isLoaded, isPreloading } = useAppPreloader();
+  const { preloadAppData, isLoaded } = useAppPreloader();
 
   // Make this available to child components via context
   const appLoadingContext = useMemo(
@@ -194,6 +199,13 @@ function AppContent() {
     }
   }, [fontsLoaded, isLoaded, isAuthLoading]);
 
+  // Register navigation container with Sentry
+  useEffect(() => {
+    if (navigationRef?.current) {
+      navigationIntegration.registerNavigationContainer(navigationRef);
+    }
+  }, [navigationRef]);
+
   // Don't render anything until initial resources are loaded
   if (!fontsLoaded || !isLoaded || isAuthLoading) {
     return <AppLoader color={colors.tint} />;
@@ -206,7 +218,7 @@ function AppContent() {
           <View style={styles.container} onLayout={onLayoutRootView}>
             {!showLoader ? (
               <>
-                <Stack screenOptions={stackScreenOptions}>
+                <Stack ref={navigationRef} screenOptions={stackScreenOptions}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="article" options={{ headerShown: false }} />
                   <Stack.Screen name="review" options={reviewScreenOptions} />

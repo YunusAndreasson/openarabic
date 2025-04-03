@@ -5,6 +5,7 @@ import Toast from 'react-native-toast-message';
 // Services
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { readingListService } from '@/services/readingList';
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Hook for article-related mutations
@@ -78,6 +79,7 @@ export const useArticleMutations = (
       });
     },
     onError: error => {
+      handleError(error instanceof Error ? error : String(error));
       // Show error toast to user
       Toast.show({
         type: 'error',

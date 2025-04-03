@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { Mixpanel } from 'mixpanel-react-native';
+import { handleError } from '@/utils/errorHandling';
 
 // Initialize Mixpanel with your project token
 const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || 'YOUR_MIXPANEL_TOKEN';
@@ -43,7 +44,6 @@ class Analytics {
   constructor() {
     // Skip initialization in development if tracking is disabled
     if (__DEV__ && !ENABLE_DEV_TRACKING) {
-      console.log('Analytics tracking disabled in development mode');
       return;
     }
 
@@ -90,10 +90,9 @@ class Analytics {
       // Enable debug logs in development
       if (__DEV__) {
         this.mixpanel.setLoggingEnabled(true);
-        console.log('Analytics initialized in development mode');
       }
     } catch (error) {
-      console.error('Error initializing Mixpanel:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -107,7 +106,7 @@ class Analytics {
         await this.mixpanel.getPeople().set(userProperties);
       }
     } catch (error) {
-      console.error('Error identifying user:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -115,7 +114,6 @@ class Analytics {
   async track(eventName: string, properties?: Record<string, any>) {
     // Skip tracking in development if disabled
     if (__DEV__ && !ENABLE_DEV_TRACKING) {
-      console.log('Development tracking disabled. Would have tracked:', eventName, properties);
       return;
     }
 
@@ -127,7 +125,7 @@ class Analytics {
         environment: __DEV__ ? 'development' : 'production',
       });
     } catch (error) {
-      console.error('Error tracking event:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -138,7 +136,7 @@ class Analytics {
     try {
       await this.mixpanel.getPeople().set(properties);
     } catch (error) {
-      console.error('Error updating user profile:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -157,7 +155,7 @@ class Analytics {
     try {
       await this.mixpanel.reset();
     } catch (error) {
-      console.error('Error resetting analytics:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -168,7 +166,7 @@ class Analytics {
     try {
       await this.mixpanel.registerSuperProperties(properties);
     } catch (error) {
-      console.error('Error setting super properties:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -179,7 +177,7 @@ class Analytics {
     try {
       await this.mixpanel.timeEvent(eventName);
     } catch (error) {
-      console.error('Error timing event:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -190,7 +188,7 @@ class Analytics {
     try {
       await this.mixpanel.optOutTracking();
     } catch (error) {
-      console.error('Error opting out of tracking:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -201,7 +199,7 @@ class Analytics {
     try {
       await this.mixpanel.optInTracking();
     } catch (error) {
-      console.error('Error opting in to tracking:', error);
+      handleError(error instanceof Error ? error : String(error));
     }
   }
 
@@ -212,7 +210,7 @@ class Analytics {
     try {
       return await this.mixpanel.getDistinctId();
     } catch (error) {
-      console.error('Error getting distinct ID:', error);
+      handleError(error instanceof Error ? error : String(error));
       return null;
     }
   }

@@ -69,9 +69,6 @@ const styles = StyleSheet.create({
   articleItemPadding: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  articlesListContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
   card: {
     overflow: 'hidden',
   },
@@ -162,7 +159,7 @@ export default function ArticlesScreen() {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  const { initialLoadComplete, wasPreloaded } = useAppLoading();
+  const { wasPreloaded } = useAppLoading();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();

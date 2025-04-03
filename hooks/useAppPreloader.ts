@@ -5,7 +5,7 @@ import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFS
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
-
+import { handleError } from '@/utils/errorHandling';
 /**
  * Hook to preload app data during initialization
  */
@@ -77,6 +77,7 @@ export const useAppPreloader = () => {
       const articlesData = results[0];
       setIsLoaded(Array.isArray(articlesData) && articlesData.length > 0);
     } catch (error) {
+      handleError(error instanceof Error ? error : String(error));
       setIsLoaded(false);
     } finally {
       setIsPreloading(false);

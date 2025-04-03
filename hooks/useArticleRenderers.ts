@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
 import { router } from 'expo-router';
 import { useNavigationWithDebounce } from './useNavigationWithDebounce';
-
-// Types
+import { handleError } from '@/utils/errorHandling';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 
@@ -82,6 +81,7 @@ export const useArticleRenderers = (
           });
         }
       } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
         // Fallback to most basic navigation if all else fails
         router.push(`/article/${articleId}`);
       }

@@ -8,6 +8,7 @@ import {
 import { SPRING_CONFIG } from './animationConfigs';
 import { SharedValue } from './types';
 import { useCallback, useEffect, useRef } from 'react';
+import { handleError } from '@/utils/errorHandling';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 
@@ -106,7 +107,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
         // Ensure we reset the animation on unmount to prevent memory issues
         pressed.value = 0;
       } catch (error) {
-        // Silently handle errors during cleanup
+        handleError(error instanceof Error ? error : String(error));
       }
     };
   }, [pressed]);
@@ -141,7 +142,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     try {
       pressed.value = withSpring(1, finalSpringConfig);
     } catch (error) {
-      // Fallback to immediate value change on error
+      handleError(error instanceof Error ? error : String(error));
       pressed.value = 1;
     }
   }, [pressed, finalSpringConfig]);
@@ -153,7 +154,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     try {
       pressed.value = withSpring(0, finalSpringConfig);
     } catch (error) {
-      // Fallback to immediate value change on error
+      handleError(error instanceof Error ? error : String(error));
       pressed.value = 0;
     }
   }, [pressed, finalSpringConfig]);

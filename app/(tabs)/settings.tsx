@@ -116,7 +116,14 @@ export default function SettingsScreen() {
       return () => clearTimeout(timer);
     }
     return undefined; // Add return for when condition is not met
-  }, [hasConcreteValues, isLoadingState, isAuthLoading]);
+  }, [
+    hasConcreteValues,
+    isLoadingState,
+    isAuthLoading,
+    themeToggleFade,
+    englishToggleFade,
+    sliderFade,
+  ]);
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(

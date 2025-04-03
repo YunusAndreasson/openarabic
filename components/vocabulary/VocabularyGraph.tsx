@@ -19,6 +19,7 @@ import { useGraphData } from '@/hooks/useGraphData';
 import { WeeklyProgressData } from '@/types/vocabulary.types';
 import BaseCard from '../BaseCard';
 import { withOpacity } from '@/utils/colorUtils';
+import { handleError } from '@/utils/errorHandling';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -71,6 +72,7 @@ export const VocabularyGraph = React.memo(
         );
       } catch (error) {
         setHasError(true);
+        handleError(error instanceof Error ? error : String(error));
         return [];
       }
     }, [data]);
