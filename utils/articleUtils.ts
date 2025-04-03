@@ -1,5 +1,5 @@
 import { Article } from '../types/articles.types';
-import { addDays, getDayOfYear } from './dateUtils';
+import { getDayOfYear } from './dateUtils';
 
 /**
  * Filters articles by author ID
@@ -47,34 +47,6 @@ export function filterArticles(
 }
 
 /**
- * Gets recent articles (within the specified number of days from the reference date)
- * @param articles - The articles to filter
- * @param days - The number of days to consider as recent (default: 30)
- * @param limit - The maximum number of articles to return (default: 10)
- * @param referenceDate - The reference date to calculate from (default: current date)
- * @returns Recent articles sorted by creation date (newest first)
- */
-export function getRecentArticles(
-  articles: Article[],
-  days = 30,
-  limit = 10,
-  referenceDate: Date = new Date()
-): Article[] {
-  // Calculate the cutoff date by subtracting the specified number of days
-  const cutoffDate = addDays(referenceDate, -days);
-
-  return articles
-    .filter(article => {
-      // Parse the article's creation date
-      const articleDate = new Date(article.created_at);
-      // Compare the article date with the cutoff date
-      return articleDate >= cutoffDate;
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, limit);
-}
-
-/**
  * Gets latest articles sorted by creation date
  * @param articles - The articles to sort
  * @param limit - The maximum number of articles to return (default: 10)
@@ -115,26 +87,6 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
   }
 
   return shuffled;
-}
-
-/**
- * Gets featured articles (highest difficulty level)
- * @param articles - The articles to sort
- * @param limit - The maximum number of articles to return (default: 5)
- * @returns Featured articles randomly selected from high difficulty articles
- */
-export function getFeaturedArticles(articles: Article[], limit = 5): Article[] {
-  // Get the current day of year for consistent daily randomization
-  const dayOfYear = getDayOfYear();
-
-  // Filter eligible articles (difficulty 3+)
-  const eligibleArticles = articles.filter(article => article.difficulty_level >= 3);
-
-  // Shuffle the eligible articles using the day of year as seed
-  const shuffledArticles = seededShuffle(eligibleArticles, dayOfYear);
-
-  // Return the first 'limit' articles
-  return shuffledArticles.slice(0, limit);
 }
 
 /**

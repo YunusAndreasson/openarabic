@@ -130,5 +130,4 @@ const readingListSlice = createSlice({
   },
 });
 
-export const { clearReadingList } = readingListSlice.actions;
 export default readingListSlice.reducer;

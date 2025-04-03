@@ -23,14 +23,13 @@ import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import {
   filterArticles,
   getLatestArticles,
-  getFeaturedArticles,
   getBeginnerArticles,
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { ArticleSection } from '../../components/article';
 import { mediumFeedback } from '@/utils/haptics';
-import { setDailyPick, setFeaturedArticles } from '@/store/featuredContentSlice';
+import { setDailyPick } from '@/store/featuredContentSlice';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import SectionTitle from '@/components/SectionTitle';
@@ -215,10 +214,8 @@ export default function ArticlesScreen() {
     state => state.readingList
   );
 
-  // Get the featured content state from Redux
-  const { dailyPick, featuredArticles: featuredArticlesState } = useAppSelectorMemo(
-    state => state.featuredContent
-  );
+  // Get the daily pick state from Redux
+  const { dailyPick } = useAppSelectorMemo(state => state.featuredContent);
 
   // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
@@ -349,24 +346,6 @@ export default function ArticlesScreen() {
       }
     }
   }, [articlesData, articlesError, dailyPick.date, dispatch]);
-
-  // Effect to handle featured articles updates
-  useEffect(() => {
-    if (articlesError || articlesData.length === 0) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    if (featuredArticlesState.lastUpdated !== today) {
-      const featuredArticlesList = getFeaturedArticles(articlesData, 3);
-      if (featuredArticlesList.length > 0) {
-        dispatch(
-          setFeaturedArticles({
-            ids: featuredArticlesList.map(article => article.id),
-            lastUpdated: today,
-          })
-        );
-      }
-    }
-  }, [articlesData, articlesError, featuredArticlesState.lastUpdated, dispatch]);
 
   // Memoized child components to prevent re-renders
   const DailyPick = useMemo(() => {

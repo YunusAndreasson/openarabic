@@ -35,15 +35,3 @@ export function hexToRgb(hex: string): string {
 export function withOpacity(hex: string, opacity: number): string {
   return `rgba(${hexToRgb(hex)},${opacity})`;
 }
-
-/**
- * Convert a decimal opacity to a hex alpha value
- *
- * @param opacity - Decimal opacity between 0 and 1
- * @returns Two-character hex alpha
- */
-export function opacityToHexAlpha(opacity: number): string {
-  return Math.round(opacity * 255)
-    .toString(16)
-    .padStart(2, '0');
-}

@@ -54,9 +54,3 @@ export async function checkAuthentication(expectedUserId?: string) {
     user: data.session.user,
   };
 }
-
-// Export a utility function to get the current user ID
-export async function getCurrentUserId(): Promise<string> {
-  const { user } = await checkAuthentication();
-  return user.id;
-}
