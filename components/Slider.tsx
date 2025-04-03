@@ -41,12 +41,12 @@ export function CustomSlider({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     justifyContent: 'center',
+    width: '100%',
   },
   slider: {
-    width: '100%',
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    width: '100%',
   },
 });

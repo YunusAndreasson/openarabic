@@ -205,12 +205,8 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
+  arrowText: {
+    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -219,10 +215,37 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContent: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
+  },
+  container: {
+    flex: 1,
+  },
+  endMessageContainer: {
+    height: LAYOUT.SPACING.XLARGE,
+  },
+  headerSpacer: {
+    height: 0, // This will be dynamically set
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: LAYOUT.SPACING.TINY,
+  },
+  listContent: {
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: LAYOUT.SPACING.XLARGE,
+  },
+  noResultsText: {
+    textAlign: 'center',
   },
   textContent: {
     flex: 1,
@@ -230,29 +253,6 @@ const styles = StyleSheet.create({
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
-  },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.TINY,
-  },
-  noResultsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.XLARGE,
-  },
-  noResultsText: {
-    textAlign: 'center',
-  },
-  endMessageContainer: {
-    height: LAYOUT.SPACING.XLARGE,
-  },
-  arrowText: {
-    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
-  },
-  headerSpacer: {
-    height: 0, // This will be dynamically set
   },
 });
 

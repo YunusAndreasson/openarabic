@@ -97,18 +97,18 @@ export const EnhancedImage = React.memo(EnhancedImageInternal);
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
-    overflow: 'hidden',
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-  },
-  image: {
-    width: '100%',
-    height: '100%',
+    overflow: 'hidden',
+    position: 'relative',
   },
   errorContainer: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 2,
+  },
+  image: {
+    height: '100%',
+    width: '100%',
   },
 });

@@ -17,35 +17,32 @@ interface ArticleHeaderProps {
 
 const styles = StyleSheet.create({
   articleHeaderContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.LARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  articleMetaContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  authorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
   },
   articleInfoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   articleInfoItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    flexDirection: 'row',
     marginBottom: LAYOUT.SPACING.TINY,
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  articleMetaContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  authorContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
   },
   infoIcon: {
     opacity: LAYOUT.OPACITY.HIGH,
@@ -55,6 +52,9 @@ const styles = StyleSheet.create({
   },
   summaryContainer: {
     paddingTop: LAYOUT.SPACING.SMALL,
+  },
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
 

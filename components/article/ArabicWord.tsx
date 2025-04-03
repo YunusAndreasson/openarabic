@@ -264,14 +264,7 @@ function ArabicWordComponent({
         activeOpacity={0.7}
         onLayout={handleLayout}
       >
-        <Animated.View
-          style={[
-            styles.container,
-            // @ts-ignore - Animation types
-            pressStyle,
-            borderStyle,
-          ]}
-        >
+        <Animated.View style={[styles.container, pressStyle, borderStyle]}>
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
         </Animated.View>
       </TouchableOpacity>
@@ -290,29 +283,29 @@ function ArabicWordComponent({
 }
 
 const styles = StyleSheet.create({
-  wordContainer: {
-    marginHorizontal: 1,
-    marginVertical: LAYOUT.SPACING.TINY / 2,
-    paddingHorizontal: 1,
-    paddingVertical: 3,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    flexShrink: 0,
-    flexGrow: 0,
-    alignSelf: 'flex-start',
-    maxWidth: 150,
+  container: {
+    alignItems: 'center',
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
+    justifyContent: 'center',
   },
   highlightedWord: {
     marginTop: 2,
   },
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
-  },
   textStyle: {
-    paddingVertical: 0,
     marginBottom: 0,
+    paddingVertical: 0,
     textAlign: 'right',
+  },
+  wordContainer: {
+    alignSelf: 'flex-start',
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    flexGrow: 0,
+    flexShrink: 0,
+    marginHorizontal: 1,
+    marginVertical: LAYOUT.SPACING.TINY / 2,
+    maxWidth: 150,
+    paddingHorizontal: 1,
+    paddingVertical: 3,
   },
 });
 

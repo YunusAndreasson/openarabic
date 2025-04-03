@@ -86,16 +86,25 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
   } as ViewStyle,
   contentContainer: {
-    width: '100%',
-    maxWidth: 350,
     alignItems: 'center',
     justifyContent: 'center',
+    maxWidth: 350,
+    width: '100%',
+  },
+  doneButton: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    minWidth: 150,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   iconContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE * 1.5,
+    alignItems: 'center',
     height: 120,
     justifyContent: 'center',
-    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.XLARGE * 1.5,
+  },
+  subtitleText: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
   },
   textContainer: {
     alignItems: 'center',
@@ -105,15 +114,6 @@ const styles = StyleSheet.create({
   titleText: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
-  },
-  subtitleText: {
-    textAlign: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  doneButton: {
-    marginTop: LAYOUT.SPACING.LARGE,
-    minWidth: 150,
-    paddingVertical: LAYOUT.SPACING.SMALL,
   },
 });
 

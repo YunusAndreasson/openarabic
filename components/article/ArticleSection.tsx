@@ -184,29 +184,29 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  horizontalList: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  verticalList: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: LAYOUT.SPACING.LARGE,
   },
   horizontalArticleContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
+  horizontalList: {
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 200,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
   verticalArticleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
-  loadingContainer: {
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    minHeight: 200,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyContainer: {
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    alignItems: 'center',
-    justifyContent: 'center',
+  verticalList: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 });
 

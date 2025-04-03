@@ -42,17 +42,17 @@ const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => {
 });
 
 const styles = StyleSheet.create({
+  buttonContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
+  },
   container: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: LAYOUT.SPACING.LARGE,
   },
   textContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  buttonContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
 

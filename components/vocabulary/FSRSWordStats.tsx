@@ -85,19 +85,19 @@ export function FSRSWordStats({
 
 const styles = StyleSheet.create({
   container: {
-    padding: 10,
     borderRadius: 8,
     marginVertical: 8,
+    padding: 10,
   },
-  row: {
-    flexDirection: 'row',
-    marginBottom: 6,
+  difficultyText: {
+    // The color will be set dynamically
   },
   label: {
     fontWeight: 'bold',
     marginRight: 8,
   },
-  difficultyText: {
-    // The color will be set dynamically
+  row: {
+    flexDirection: 'row',
+    marginBottom: 6,
   },
 });

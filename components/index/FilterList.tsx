@@ -93,13 +93,18 @@ function FilterList<T extends FilterItem>({
 }
 
 const styles = StyleSheet.create({
+  clearButton: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
+  },
   container: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   headerContainer: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingRight: LAYOUT.SPACING.MEDIUM,
   },
   listContainer: {
@@ -107,11 +112,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  clearButton: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
 });
 

@@ -135,24 +135,24 @@ const styles = StyleSheet.create({
   },
   bodyBold: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: 'bold',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   // Heading styles with consistent weight and line height
   heading1: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
     fontWeight: 'bold',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   heading2: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
     fontWeight: 'bold',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   heading3: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
     fontWeight: '600',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   caption: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -160,15 +160,15 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     fontWeight: '600',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   overline: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontWeight: '600',
+    letterSpacing: 1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    fontWeight: '600',
   },
   link: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,

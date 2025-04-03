@@ -5,15 +5,15 @@ import FloatingButton from '@/components/FloatingButton';
 import { LAYOUT } from '@/constants/layout';
 
 const styles = StyleSheet.create({
-  staticButtonsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Higher than other content
-  },
   floatingButton: {
     zIndex: LAYOUT.Z_INDEX.HEADER,
+  },
+  staticButtonsContainer: {
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Higher than other content
   },
   userButtonActive: {
     opacity: 1,

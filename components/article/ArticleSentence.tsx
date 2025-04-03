@@ -102,31 +102,31 @@ function ArticleSentenceComponent({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
     marginVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     overflow: 'visible',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
+  },
+  englishText: {
+    fontFamily: 'Philosopher',
+    opacity: 0.8,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingLeft: LAYOUT.SPACING.SMALL,
   },
   sentenceBackground: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
   },
   wordsContainer: {
+    alignItems: 'center',
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL / 2,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    justifyContent: 'flex-start',
     minHeight: 40,
+    paddingRight: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.SMALL,
     width: '100%',
-  },
-  englishText: {
-    fontFamily: 'Philosopher',
-    opacity: 0.8,
-    paddingLeft: LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.SMALL,
   },
 });
 

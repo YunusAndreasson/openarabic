@@ -222,40 +222,17 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  contentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    width: '100%',
   },
   contentColumn: {
+    alignItems: 'center',
     flexDirection: 'column',
-    alignItems: 'center',
   },
-  iconContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.SMALL,
-    marginRight: LAYOUT.SPACING.SMALL,
-    alignSelf: 'flex-start',
-    minWidth: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textContainer: {
-    flex: 1,
-  },
-  titleWrapper: {
-    flex: 1,
-  },
-  valueWrapper: {
-    marginBottom: LAYOUT.SPACING.TINY,
+  contentRow: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
   },
   contentTitleWrapper: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -265,6 +242,29 @@ const styles = StyleSheet.create({
   },
   flexOne: {
     flex: 1,
+  },
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
+    minWidth: 38,
+    padding: LAYOUT.SPACING.SMALL,
+  },
+  textContainer: {
+    flex: 1,
+  },
+  titleWrapper: {
+    flex: 1,
+  },
+  valueWrapper: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
 });
 

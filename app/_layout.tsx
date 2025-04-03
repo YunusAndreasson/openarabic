@@ -37,6 +37,8 @@ import { useAuth } from '../hooks/useAuth';
 import { LAYOUT } from '@/constants/layout';
 import * as Sentry from '@sentry/react-native';
 import { analytics } from '../services/analytics';
+import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
+import madinaFont from '../assets/fonts/Madina.otf';
 
 // Create navigation integration for Sentry
 const navigationIntegration = Sentry.reactNavigationIntegration();
@@ -114,8 +116,8 @@ function AppContent() {
 
   // Load fonts
   const [fontsLoaded] = useFonts({
-    Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
-    NotoNaskhArabic: require('../assets/fonts/Madina.otf'),
+    Philosopher: philosopherFont,
+    NotoNaskhArabic: madinaFont,
   });
 
   // Use the app preloader hook to preload data
@@ -249,7 +251,10 @@ class ErrorBoundary extends Component<
   }
 
   // Only update state if error changes
-  shouldComponentUpdate(_: any, nextState: { hasError: boolean; error: Error | null }) {
+  shouldComponentUpdate(
+    _prevProps: unknown,
+    nextState: { hasError: boolean; error: Error | null }
+  ) {
     if (this.state.hasError !== nextState.hasError) return true;
     if (this.state.error !== nextState.error) return true;
     return false;
@@ -272,21 +277,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   errorContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
-  },
-  errorTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  errorMessage: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   errorDetail: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  errorMessage: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  errorTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   gestureRoot: {
     flex: 1,

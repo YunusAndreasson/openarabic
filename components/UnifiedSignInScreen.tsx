@@ -142,8 +142,52 @@ export const UnifiedSignInScreen = React.memo(
 UnifiedSignInScreen.displayName = 'UnifiedSignInScreen';
 
 const styles = StyleSheet.create({
+  authContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  benefitContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
+  },
+  benefitIcon: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  benefitItem: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  benefitTextContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingVertical: LAYOUT.SPACING.XLARGE,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+    marginBottom: LAYOUT.SPACING.LARGE,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+  },
+  messageContainer: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
   },
   noPadding: {
     padding: 0,
@@ -151,54 +195,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingVertical: LAYOUT.SPACING.XLARGE,
-  },
-  iconContainer: {
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  messageContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
-  },
-  benefitContainer: {
-    width: '100%',
-    padding: LAYOUT.SPACING.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  benefitItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  benefitIcon: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  benefitTextContainer: {
-    flex: 1,
-  },
   signInButton: {
     minWidth: '80%',
   },
-  authContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

@@ -214,32 +214,32 @@ export default function Auth() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  button: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.TINY,
     width: '100%',
+  },
+  container: {
     alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
+    justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
   },
   formTitle: {
     marginBottom: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
-  inputsButtonGroup: {
-    width: '100%',
-    maxWidth: 400,
-  },
   inputWrapper: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  button: {
+  inputsButtonGroup: {
+    maxWidth: 400,
     width: '100%',
-    marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.LARGE,
   },
   toggleContainer: {
+    maxWidth: 400,
     paddingVertical: LAYOUT.SPACING.SMALL,
     width: '100%',
-    maxWidth: 400,
   },
 });

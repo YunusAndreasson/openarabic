@@ -161,15 +161,14 @@ export const VocabularyDashboard = React.memo(
 VocabularyDashboard.displayName = 'VocabularyDashboard';
 
 const styles = StyleSheet.create({
-  mainCard: {
-    width: '100%',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  iconWrapper: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.SMALL,
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  mainCard: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     width: '100%',
   },
   statItem: {
@@ -177,18 +176,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
-  iconWrapper: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  statValue: {
-    marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
   statLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: LAYOUT.OPACITY.DIMMED,
     fontWeight: '500',
+    opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  statValue: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  statsRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
 });

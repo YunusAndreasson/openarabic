@@ -40,13 +40,13 @@ export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyState
 
 const styles = StyleSheet.create({
   emptyActionButton: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    flexDirection: 'row',
     gap: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
 });
 

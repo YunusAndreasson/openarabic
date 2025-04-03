@@ -96,26 +96,32 @@ export function ThemedInput({
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
-    marginVertical: LAYOUT.SPACING.TINY,
-  },
   container: {
-    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    height: LAYOUT.INPUT.HEIGHT,
     borderRadius: LAYOUT.INPUT.BORDER_RADIUS,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
     borderWidth: LAYOUT.INPUT.BORDER_WIDTH.DEFAULT,
+    flexDirection: 'row',
+    height: LAYOUT.INPUT.HEIGHT,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    width: '100%',
   },
   containerFocused: {
     borderWidth: LAYOUT.INPUT.BORDER_WIDTH.FOCUSED,
   },
+  helperTextContainer: {
+    marginLeft: LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  hitSlop: {
+    bottom: LAYOUT.SPACING.MEDIUM,
+    left: LAYOUT.SPACING.MEDIUM,
+    right: LAYOUT.SPACING.MEDIUM,
+    top: LAYOUT.SPACING.MEDIUM,
+  },
   input: {
     flex: 1,
-    height: '100%',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    height: '100%',
     paddingVertical: 0,
     textAlignVertical: 'center',
   },
@@ -125,14 +131,8 @@ const styles = StyleSheet.create({
   rightIcon: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  hitSlop: {
-    top: LAYOUT.SPACING.MEDIUM,
-    bottom: LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SPACING.MEDIUM,
-    right: LAYOUT.SPACING.MEDIUM,
-  },
-  helperTextContainer: {
-    marginTop: LAYOUT.SPACING.TINY,
-    marginLeft: LAYOUT.SPACING.TINY,
+  wrapper: {
+    marginVertical: LAYOUT.SPACING.TINY,
+    width: '100%',
   },
 });

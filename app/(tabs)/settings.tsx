@@ -388,52 +388,59 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  actionButton: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  actionsContainer: {
+    overflow: 'hidden',
+  },
+  actionsWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  arabicPreviewText: {
+    flexShrink: 0,
+    marginBottom: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
+  },
+  commonDivider: {
+    height: LAYOUT.BORDER.WIDTH.THIN,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
+  },
+  connectContainer: {
+    overflow: 'hidden',
+  },
+  connectWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
   container: {
     flex: 1,
+  },
+  englishPreviewText: {
+    flexShrink: 0,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
   flexOne: {
     flex: 1,
   },
-  settingsWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  hidden: {
+    opacity: 0,
   },
-  settingsContainer: {
-    overflow: 'hidden',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
-  settingLabelContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  settingLabelTextContainer: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  commonDivider: {
-    height: LAYOUT.BORDER.WIDTH.THIN,
-    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-  },
-  sliderContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: `${LAYOUT.WIDTH_RATIOS.HALF * 100}%`,
-  },
-  slider: {
-    flex: 1,
-    height: 40,
-  },
-  scaleText: {
-    width: 45,
-    marginRight: LAYOUT.SPACING.SMALL,
+  listContent: {
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   previewContainer: {
     padding: LAYOUT.SPACING.SMALL,
+  },
+  previewContent: {
+    position: 'absolute',
+    top: 0,
+    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
   },
   previewLabelContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -442,42 +449,9 @@ const styles = StyleSheet.create({
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
   },
-  previewContent: {
-    position: 'absolute',
-    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
-    top: 0,
-  },
-  arabicPreviewText: {
-    marginBottom: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    flexShrink: 0,
-  },
-  englishPreviewText: {
-    paddingVertical: LAYOUT.SPACING.TINY,
-    flexShrink: 0,
-  },
-  connectWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  connectContainer: {
-    overflow: 'hidden',
-  },
-  actionsWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  actionsContainer: {
-    overflow: 'hidden',
-  },
-  actionButton: {
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  listContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+  scaleText: {
+    marginRight: LAYOUT.SPACING.SMALL,
+    width: 45,
   },
   scrollView: {
     flex: 1,
@@ -485,10 +459,36 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
+  settingLabelContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  settingLabelTextContainer: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  settingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  settingsContainer: {
+    overflow: 'hidden',
+  },
+  settingsWrapper: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  slider: {
+    flex: 1,
+    height: 40,
+  },
+  sliderContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    width: `${LAYOUT.WIDTH_RATIOS.HALF * 100}%`,
+  },
   sliderWrapper: {
     flex: 1,
-  },
-  hidden: {
-    opacity: 0,
   },
 });

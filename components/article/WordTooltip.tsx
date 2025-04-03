@@ -231,20 +231,23 @@ WordTooltip.displayName = 'WordTooltip';
 
 const styles = StyleSheet.create({
   absoluteFull: {
-    position: 'absolute',
     left: 0,
+    position: 'absolute',
     right: 0,
     width: '100%',
   },
-  tooltipContainer: {
+  arrow: {
     position: 'absolute',
-    zIndex: 999999, // Ensure tooltips are always on top
+    width: 0,
+    height: 0,
+    marginLeft: -2.5, // Half of arrow size for perfect centering
+    borderStyle: 'solid',
   },
   tooltip: {
-    position: 'absolute',
+    alignSelf: 'flex-start',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    alignSelf: 'flex-start',
+    position: 'absolute',
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 1 },
@@ -256,17 +259,14 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  tooltipContainer: {
+    position: 'absolute',
+    zIndex: 999999, // Ensure tooltips are always on top
+  },
   tooltipText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2, // Compact line height
-  },
-  arrow: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    marginLeft: -2.5, // Half of arrow size for perfect centering
-    borderStyle: 'solid',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    textAlign: 'center', // Compact line height
   },
 });

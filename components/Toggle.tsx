@@ -122,10 +122,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SPACING.TINY,
   },
-  toggleTrack: {
-    alignItems: 'flex-start',
-    justifyContent: 'center',
-  },
   handle: {
     position: 'relative',
   },
@@ -139,4 +135,8 @@ const styles = StyleSheet.create({
       : {
           elevation: 2,
         },
+  toggleTrack: {
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
 });

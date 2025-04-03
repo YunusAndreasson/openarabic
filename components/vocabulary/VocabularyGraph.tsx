@@ -286,37 +286,37 @@ export const VocabularyGraph = React.memo(
 VocabularyGraph.displayName = 'VocabularyGraph';
 
 const styles = StyleSheet.create({
+  canvas: {
+    alignSelf: 'center',
+  },
   card: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  header: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
   graphContainer: {
     alignItems: 'center',
   },
-  canvas: {
-    alignSelf: 'center',
-  },
-  xAxisLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+  header: {
+    paddingBottom: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   labelContainer: {
     alignItems: 'center',
   },
   loadingContainer: {
-    justifyContent: 'center',
     alignItems: 'center',
     gap: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+  },
+  titleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  xAxisLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
   },
 });

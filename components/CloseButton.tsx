@@ -11,8 +11,8 @@ import { usePressAnimation } from '@/hooks/animations';
 
 const styles = StyleSheet.create({
   buttonContainer: {
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     padding: LAYOUT.SPACING.SMALL,
   },
 });

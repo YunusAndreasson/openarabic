@@ -136,39 +136,39 @@ export const AppLoader: React.FC<AppLoaderProps> = ({ color }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+  appLoader: {
     alignItems: 'center',
+    bottom: 0,
     justifyContent: 'center',
-    minWidth: 64,
-    minHeight: 64,
-    padding: LAYOUT.SPACING.SMALL,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   circle: {
     // Base styles only - specific styles moved to circleStyle for better memoization
+  },
+  componentLoader: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  container: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 64,
+    minWidth: 64,
+    padding: LAYOUT.SPACING.SMALL,
   },
   fullScreen: {
     flex: 1,
   },
   loaderContainer: {
+    alignItems: 'center',
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
     height: '100%',
-  },
-  componentLoader: {
     justifyContent: 'center',
-    alignItems: 'center',
     width: '100%',
-  },
-  appLoader: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
 });

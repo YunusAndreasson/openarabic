@@ -59,16 +59,12 @@ export function useAudioPlayer() {
 
   // Initialize audio session
   const initAudioSession = useCallback(async () => {
-    try {
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-      });
-      return true;
-    } catch (error) {
-      throw error;
-    }
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+    });
+    return true;
   }, []);
 
   // Start tracking progress

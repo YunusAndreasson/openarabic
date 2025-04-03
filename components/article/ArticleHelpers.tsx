@@ -103,34 +103,30 @@ SummaryIndicator.displayName = 'SummaryIndicator';
 const styles = StyleSheet.create({
   // DifficultyIndicator styles
   difficultyContainer: {
-    flexDirection: 'column',
     alignItems: 'flex-start',
+    flexDirection: 'column',
   },
   difficultyTextContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
   starsContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
   },
   starIcon: {
     marginRight: LAYOUT.SPACING.TINY,
   },
-
-  // TimeAgo styles
   timeAgoContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     paddingLeft: 0,
   },
   timeIcon: {
     marginRight: LAYOUT.SPACING.TINY,
   },
-
-  // SummaryIndicator styles
   summaryIndicatorContainer: {
-    flexDirection: 'column',
     alignItems: 'flex-start',
+    flexDirection: 'column',
     marginTop: LAYOUT.SPACING.TINY,
   },
   summaryText: {

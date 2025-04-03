@@ -77,59 +77,59 @@ export const SignInRequired = React.memo(
 SignInRequired.displayName = 'SignInRequired';
 
 const styles = StyleSheet.create({
+  benefitContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    marginBottom: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
+  },
+  benefitDescriptionContainer: {},
+  benefitTitleContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
   container: {
     flex: 1,
   },
+  emptyStateContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
   headerContainer: {
+    alignItems: 'center',
+    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
+    flexDirection: 'row',
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: Platform.select({
       ios: LAYOUT.CONTENT_SPACING.TOP,
       android: LAYOUT.CONTENT_SPACING.TOP + LAYOUT.SPACING.XLARGE,
     }),
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.THIN,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   headerTitle: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
   },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
   iconContainer: {
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
   },
   messageContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  benefitContainer: {
-    width: '100%',
-    padding: LAYOUT.SPACING.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
+  noPadding: {
+    padding: 0,
   },
-  benefitTitleContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  benefitDescriptionContainer: {},
   signInButton: {
     minWidth: LAYOUT.BUTTON.HEIGHT.LARGE * 3,
   },
-  noPadding: {
-    padding: 0,
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

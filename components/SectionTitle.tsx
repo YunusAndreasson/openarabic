@@ -28,8 +28,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   titleText: {
+    fontWeight: '600',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
-    fontWeight: '600',
   },
 });

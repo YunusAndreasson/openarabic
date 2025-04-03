@@ -33,8 +33,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContent: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     padding: LAYOUT.SPACING.MEDIUM,
   },
   textContent: {
@@ -45,26 +45,26 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   iconContainer: {
-    paddingTop: 4,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 4,
   },
   cardProgressContainer: {
+    bottom: 0,
     height: 4,
-    width: '100%',
+    left: 0,
     overflow: 'hidden',
     position: 'absolute',
-    bottom: 0,
-    left: 0,
+    width: '100%',
   },
   cardProgressBar: {
     height: '100%',
   },
   // Bottom action bar
   bottomControlsContainer: {
-    position: 'absolute',
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SCREEN_EDGE_PADDING,
+    position: 'absolute',
     right: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
@@ -76,9 +76,9 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   actionButtonsRow: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     width: '100%',
   },
   shuffleButton: {
@@ -86,9 +86,9 @@ const styles = StyleSheet.create({
   },
   activeCard: {
     borderLeftWidth: 3,
+    elevation: 6,
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 6,
   },
   activeIcon: {
     opacity: LAYOUT.OPACITY.DIMMED,

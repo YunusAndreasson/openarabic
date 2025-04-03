@@ -85,30 +85,30 @@ const EmptyState = React.memo(
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
-  },
-  iconContainer: {
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
   },
   icon: {
     opacity: LAYOUT.OPACITY.DIMMED,
   },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  iconContainer: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+    marginBottom: LAYOUT.SPACING.LARGE,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
   },
   messageContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   submessageContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });
 

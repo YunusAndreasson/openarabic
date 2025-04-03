@@ -288,10 +288,13 @@ export function ThemedButton({
 
 const styles = StyleSheet.create({
   button: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  buttonDisabled: {
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   buttonShadow: {
     ...LAYOUT.SHADOW.MEDIUM,
@@ -299,44 +302,41 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
   },
-  buttonDisabled: {
-    opacity: LAYOUT.OPACITY.DISABLED,
+  buttonText: {
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textAlign: 'center',
   },
-  innerContainer: {
-    flexDirection: 'row',
+  buttonTextLarge: {
+    fontSize: 16,
+    letterSpacing: 2,
+  },
+  buttonTextSmall: {
+    fontSize: 12,
+    letterSpacing: 1,
+  },
+  contentContainer: {
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
-    width: '100%',
   },
   iconContainer: {
-    marginRight: LAYOUT.SPACING.SMALL,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   iconContainerSmall: {
     marginRight: LAYOUT.SPACING.TINY,
   },
-  contentContainer: {
-    flexDirection: 'row',
+  innerContainer: {
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
-  },
-  buttonText: {
-    letterSpacing: 1.5,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  buttonTextSmall: {
-    letterSpacing: 1,
-    fontSize: 12,
-  },
-  buttonTextLarge: {
-    letterSpacing: 2,
-    fontSize: 16,
+    width: '100%',
   },
   normalText: {
-    letterSpacing: 0.5,
     fontWeight: '400',
+    letterSpacing: 0.5,
     textTransform: 'none',
   },
 });

@@ -90,22 +90,22 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
 // Use separate style objects for view and text styles to avoid TypeScript errors
 const styles = StyleSheet.create({
   overlay: {
-    position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.POPUP,
-    left: 0,
-    right: 0,
+    alignItems: 'center',
+    alignSelf: 'center',
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 5 + LAYOUT.SPACING.MEDIUM,
     justifyContent: 'center',
-    alignItems: 'center',
+    left: 0,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.XLARGE,
-    alignSelf: 'center',
+    position: 'absolute',
+    right: 0,
+    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   text: {
-    textAlign: 'center',
     fontWeight: '700',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
     padding: LAYOUT.SPACING.LARGE,
+    textAlign: 'center',
   },
 });
 

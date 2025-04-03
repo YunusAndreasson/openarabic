@@ -251,29 +251,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  contentContainer: {
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.LARGE,
+  },
+  emptyStateContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
   flexContainer: {
     flex: 1,
   },
-  contentContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-  },
-  reviewButtonWrapper: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
   reviewButton: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    width: '100%',
     paddingVertical: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
     ...LAYOUT.SHADOW.SMALL,
+  },
+  reviewButtonWrapper: {
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    width: '100%',
   },
 });

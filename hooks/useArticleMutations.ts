@@ -48,12 +48,7 @@ export const useArticleMutations = (
   // Toggle word study status mutation
   const toggleWordMutation = useMutation({
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
-      try {
-        const result = await studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId);
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId);
     },
     onSuccess: result => {
       // Invalidate queries to update UI

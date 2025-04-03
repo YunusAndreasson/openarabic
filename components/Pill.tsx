@@ -184,22 +184,27 @@ const Pill = React.memo(
 );
 
 const styles = StyleSheet.create({
-  container: {
-    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-    minWidth: 50,
-  },
   absoluteContainer: {
+    left: LAYOUT.SPACING.MEDIUM,
     position: 'absolute',
     top: LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
   },
+  container: {
+    minWidth: 50,
+    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+  },
+  darkModeShadow: {
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1,
+  },
   pill: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.SMALL - 1,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    marginRight: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
   pillSelected: {
     borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Use constant
@@ -207,11 +212,6 @@ const styles = StyleSheet.create({
   pillText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9, // Slightly smaller font size
     fontWeight: '500', // Add medium font weight for better readability
-  },
-  darkModeShadow: {
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-    shadowOffset: { width: 0, height: 1 },
   },
 });
 

@@ -102,45 +102,45 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
 });
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-    width: '100%',
-    borderBottomWidth: 0,
-    overflow: 'hidden', // Ensure blur is contained
+  backButton: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginLeft: -LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.SMALL,
   },
   blurContainer: {
-    width: '100%',
-    height: '100%',
     borderBottomWidth: 0,
+    height: '100%',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
     ...Platform.select({
       android: {
         elevation: 8,
       },
     }),
   },
+  container: {
+    borderBottomWidth: 0,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: '100%',
+    zIndex: LAYOUT.Z_INDEX.HEADER, // Ensure blur is contained
+  },
   contentContainer: {
     paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   headerRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
   },
   titleContainer: {
-    flexShrink: 1,
     flexGrow: 1,
+    flexShrink: 1,
   },
   titleWithBack: {
     marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  backButton: {
-    padding: LAYOUT.SPACING.SMALL,
-    marginLeft: -LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   wrapperWithBack: {
     // Add any necessary styles for the wrapper when onBackPress is true

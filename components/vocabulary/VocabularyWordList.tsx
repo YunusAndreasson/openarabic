@@ -145,23 +145,10 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: LAYOUT.SPACING.XXLARGE,
   } as ViewStyle,
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  } as ViewStyle,
-  wordInfo: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
-  } as ViewStyle,
-  translationContainer: {
-    marginTop: LAYOUT.SPACING.TINY,
-  } as ViewStyle,
-  statusContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
-  } as ViewStyle,
-  statusPill: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  emptyContainer: {
+    padding: LAYOUT.SPACING.XLARGE,
+    alignItems: 'center',
+    justifyContent: 'center',
   } as ViewStyle,
   statusBackground: {
     flexDirection: 'row',
@@ -170,12 +157,25 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL - 2,
     gap: LAYOUT.SPACING.SMALL - 2,
   } as ViewStyle,
-  emptyContainer: {
-    padding: LAYOUT.SPACING.XLARGE,
-    alignItems: 'center',
-    justifyContent: 'center',
+  statusContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
+  } as ViewStyle,
+  statusPill: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  } as ViewStyle,
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  } as ViewStyle,
+  translationContainer: {
+    marginTop: LAYOUT.SPACING.TINY,
   } as ViewStyle,
   wordCard: {
     paddingVertical: LAYOUT.SPACING.MEDIUM,
+  } as ViewStyle,
+  wordInfo: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.SMALL,
   } as ViewStyle,
 });

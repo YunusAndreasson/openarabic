@@ -53,15 +53,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Define styles before components that use them
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  listContentContainer: {
-    flexGrow: 1,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-  },
-  sectionContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+  arrowText: {
+    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -73,10 +66,42 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContent: {
-    flexDirection: 'row',
     alignItems: 'flex-start',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
+  },
+  container: {
+    flex: 1,
+  },
+  horizontalArticleContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  horizontalList: {
+    paddingLeft: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: LAYOUT.SPACING.TINY,
+  },
+  listContentContainer: {
+    flexGrow: 1,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+  },
+  loadingOverlay: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 100,
+  },
+  sectionContainer: {
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   textContent: {
     flex: 1,
@@ -84,31 +109,6 @@ const styles = StyleSheet.create({
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
-  },
-  iconContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: LAYOUT.SPACING.TINY,
-  },
-  arrowText: {
-    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
-  },
-  horizontalList: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  horizontalArticleContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
   },
 });
 

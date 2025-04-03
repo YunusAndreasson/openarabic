@@ -51,77 +51,68 @@ const DETAIL_VIEW_COLUMNS = `
 
 export const articlesService = {
   async getArticles(categoryId?: number, authorId?: number): Promise<Article[]> {
-    try {
-      let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
+    let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
 
-      if (categoryId) query = query.eq('category_id', categoryId);
-      if (authorId) query = query.eq('author_id', authorId);
+    if (categoryId) query = query.eq('category_id', categoryId);
+    if (authorId) query = query.eq('author_id', authorId);
 
-      query = query.order('created_at', { ascending: false });
+    query = query.order('created_at', { ascending: false });
 
-      const { data, error } = await query;
-      if (error) {
-        handleError(error, {
-          toastMessage: 'Failed to load articles',
-          analyticsEventName: 'Articles_Load_Error',
-          sentrySeverity: 'error',
-          analyticsProperties: { categoryId, authorId },
-        });
-        throw error;
-      }
-      return data as unknown as Article[];
-    } catch (error) {
-      // Re-throw after handling
+    const { data, error } = await query;
+    if (error) {
+      handleError(error, {
+        toastMessage: 'Failed to load articles',
+        analyticsEventName: 'Articles_Load_Error',
+        sentrySeverity: 'error',
+        analyticsProperties: { categoryId, authorId },
+      });
       throw error;
     }
+    return data as unknown as Article[];
   },
 
   async getArticleById(id: number): Promise<Article> {
-    try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select(DETAIL_VIEW_COLUMNS)
-        .eq('id', id)
-        .single();
+    const { data, error } = await supabase
+      .from('articles')
+      .select(DETAIL_VIEW_COLUMNS)
+      .eq('id', id)
+      .single();
 
-      if (error) {
-        handleError(error, {
-          toastMessage: 'Failed to load article',
-          analyticsEventName: 'Article_Load_Error',
-          sentrySeverity: 'error',
-          analyticsProperties: { articleId: id },
-        });
-        throw error;
-      }
-
-      if (!data) {
-        const error = new Error(`Article with id ${id} not found`);
-        handleError(error, {
-          toastMessage: 'Article not found',
-          analyticsEventName: 'Article_Not_Found',
-          sentrySeverity: 'warning',
-          analyticsProperties: { articleId: id },
-        });
-        throw error;
-      }
-
-      // Initialize empty arrays for data consistency
-      if (!data.article_sentences) {
-        data.article_sentences = [];
-      }
-
-      if (data.article_sentences && data.article_sentences.length > 0) {
-        data.article_sentences.forEach(sentence => {
-          if (!sentence.sentence_words) {
-            sentence.sentence_words = [];
-          }
-        });
-      }
-
-      return data as unknown as Article;
-    } catch (error) {
+    if (error) {
+      handleError(error, {
+        toastMessage: 'Failed to load article',
+        analyticsEventName: 'Article_Load_Error',
+        sentrySeverity: 'error',
+        analyticsProperties: { articleId: id },
+      });
       throw error;
     }
+
+    if (!data) {
+      const error = new Error(`Article with id ${id} not found`);
+      handleError(error, {
+        toastMessage: 'Article not found',
+        analyticsEventName: 'Article_Not_Found',
+        sentrySeverity: 'warning',
+        analyticsProperties: { articleId: id },
+      });
+      throw error;
+    }
+
+    // Initialize empty arrays for data consistency
+    if (!data.article_sentences) {
+      data.article_sentences = [];
+    }
+
+    if (data.article_sentences && data.article_sentences.length > 0) {
+      data.article_sentences.forEach(sentence => {
+        if (!sentence.sentence_words) {
+          sentence.sentence_words = [];
+        }
+      });
+    }
+
+    return data as unknown as Article;
   },
 
   async getRelatedArticles(articleId: number): Promise<Article[]> {

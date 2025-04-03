@@ -23,15 +23,15 @@ import {
 } from '../components/review';
 
 const baseStyles = StyleSheet.create({
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   } as ViewStyle,
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   contentContainer: {
     flex: 1,
     width: '100%',

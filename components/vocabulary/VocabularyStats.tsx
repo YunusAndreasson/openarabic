@@ -105,39 +105,39 @@ function VocabularyStatsComponent({
 export const VocabularyStats = React.memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
+  circleCanvas: {
+    height: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
+  },
+  circleContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  labelContainer: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
   progressCard: {
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL,
   },
   progressContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
     flex: 1,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    flexDirection: 'row',
     height: '100%',
+    justifyContent: 'space-between',
   },
   progressTextContainer: {
     flex: 1,
     paddingVertical: LAYOUT.SPACING.SMALL,
   },
-  labelContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  valueContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
   subtextContainer: {
     marginTop: LAYOUT.SPACING.TINY,
   },
-  circleContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  circleCanvas: {
-    width: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
+  valueContainer: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
 });

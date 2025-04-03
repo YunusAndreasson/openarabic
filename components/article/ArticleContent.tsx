@@ -80,7 +80,7 @@ export const ArticleContent = ({
   }, [scrollToSentence, sortedSentences]);
 
   return (
-    <Animated.View style={[styles.flexOne]}>
+    <Animated.View style={styles.flexOne}>
       {sortedSentences && sortedSentences.length > 0 && (
         <View style={styles.listContainer}>
           <FlashList

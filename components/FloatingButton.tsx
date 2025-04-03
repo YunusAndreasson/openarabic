@@ -11,17 +11,11 @@ import { useToast } from './ToastProvider';
 const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM;
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-  },
   button: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
     alignItems: 'center',
+    borderRadius: BUTTON_SIZE / 2,
+    elevation: 5,
+    height: BUTTON_SIZE,
     justifyContent: 'center',
     shadowOffset: {
       width: 0,
@@ -29,10 +23,16 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5,
+    width: BUTTON_SIZE,
   },
   buttonIcon: {
     alignSelf: 'center',
+  },
+  container: {
+    height: BUTTON_SIZE,
+    position: 'absolute',
+    width: BUTTON_SIZE,
+    zIndex: LAYOUT.Z_INDEX.HEADER + 5,
   },
 });
 

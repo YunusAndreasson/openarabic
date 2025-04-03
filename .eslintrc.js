@@ -1,10 +1,19 @@
 // https://docs.expo.dev/guides/using-eslint/
 module.exports = {
-  extends: ['expo', 'prettier'],
-  plugins: ['prettier', 'react-native'],
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react/recommended',
+    'plugin:react-native/all',
+    'expo',
+    'prettier',
+  ],
+  parser: '@typescript-eslint/parser',
+  plugins: ['prettier', 'react-native', '@typescript-eslint', 'react'],
   rules: {
     'prettier/prettier': 'error',
-    'no-unused-vars': 'warn',
+    'no-unused-vars': 'off',
+    '@typescript-eslint/no-unused-vars': 'warn',
     'no-console': 'warn',
     'react-hooks/rules-of-hooks': 'error',
     'react-hooks/exhaustive-deps': 'warn',
@@ -13,6 +22,7 @@ module.exports = {
     'react-native/no-inline-styles': 'warn',
     'react-native/no-color-literals': 'warn',
     'react-native/no-raw-text': ['warn', { skip: ['ThemedText'] }],
+    'react/react-in-jsx-scope': 'off',
   },
   ignorePatterns: ['/dist/*', 'node_modules', '.expo', '.github'],
   env: {
@@ -26,5 +36,10 @@ module.exports = {
     },
     ecmaVersion: 'latest',
     sourceType: 'module',
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
   },
 };

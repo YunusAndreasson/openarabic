@@ -7,8 +7,8 @@ import { LAYOUT } from '@/constants/layout';
 
 const styles = StyleSheet.create({
   cardStyle: {
-    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
     height: 90,
+    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
   },
 });
 

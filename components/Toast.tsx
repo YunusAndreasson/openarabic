@@ -19,20 +19,13 @@ interface ToastProps {
 const DEFAULT_DURATION = 2500;
 
 const styles = StyleSheet.create({
-  toastContainer: {
-    position: 'absolute',
-    width: '100%',
-    alignItems: 'center',
-    zIndex: LAYOUT.Z_INDEX.POPUP,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
   toast: {
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    alignSelf: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    alignSelf: 'center',
     overflow: 'hidden',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL + 2,
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },
@@ -44,11 +37,18 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  toastContainer: {
+    alignItems: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    position: 'absolute',
+    width: '100%',
+    zIndex: LAYOUT.Z_INDEX.POPUP,
+  },
   toastText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
     fontWeight: '500',
-    textAlign: 'center',
     lineHeight: (LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1) * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    textAlign: 'center',
   },
 });
 

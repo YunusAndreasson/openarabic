@@ -78,7 +78,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
 
   return (
     <View style={[styles.footer, style]}>
-      {/* @ts-ignore Type issues with Animated.View style props - functionally works correctly */}
+      {/* @ts-expect-error Type issues with Animated.View style props - functionally works correctly */}
       <Animated.View style={[containerStyle, animatedStyle]}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
@@ -108,6 +108,14 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
     height: 80,
   } as ViewStyle,
+  instructionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...LAYOUT.SHADOW.SMALL,
+  } as ViewStyle,
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -123,14 +131,6 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.DIMMED,
     paddingTop: 2,
   } as TextStyle,
-  instructionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...LAYOUT.SHADOW.SMALL,
-  } as ViewStyle,
 });
 
 export default InstructionFooter;

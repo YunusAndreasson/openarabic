@@ -39,9 +39,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   loadingContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     paddingTop: 0, // Remove the top padding since we're centering
   },
 });
@@ -358,7 +358,7 @@ export default function ArticleScreen() {
           animated={true}
           hidden={false}
         />
-        <View style={[styles.loadingContainer]}>
+        <View style={styles.loadingContainer}>
           <LoadingScreen />
         </View>
 

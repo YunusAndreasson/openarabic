@@ -210,97 +210,97 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
 });
 
 const styles = StyleSheet.create({
+  arabicContainer: {
+    alignItems: 'flex-end',
+    flex: 0.5,
+    justifyContent: 'center',
+    minHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+  },
+  cardContent: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL * 0.75,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
   container: {
-    width: '100%',
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    width: '100%',
     ...LAYOUT.SHADOW.MEDIUM,
     marginVertical: LAYOUT.SPACING.SMALL / 4,
     overflow: 'hidden',
   },
-  cardContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.SPACING.SMALL * 0.75,
-  },
   content: {
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: LAYOUT.SPACING.SMALL / 2,
     minHeight: 36,
   },
+  divider: {
+    height: 1,
+    marginVertical: LAYOUT.SPACING.SMALL / 2,
+    opacity: 0.3,
+    width: '100%',
+  },
+  englishText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: '600',
+    lineHeight: Platform.OS === 'ios' ? 24 : 26,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  lastReview: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+  },
+  learningInfoContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: LAYOUT.SPACING.SMALL / 2,
+  },
   leftContent: {
+    alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
+  },
+  memoryStrengthLabel: {
+    fontWeight: '500',
+    letterSpacing: 0.5,
+  },
+  progressBar: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    height: 4,
+    marginBottom: LAYOUT.SPACING.SMALL / 2,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  progressBarContainer: {
+    marginTop: LAYOUT.SPACING.SMALL / 2,
+  },
+  progressBarLabelContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: LAYOUT.SPACING.SMALL / 3,
+  },
+  progressFill: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    height: '100%',
+  },
+  streakText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '500',
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   textContainer: {
     flex: 1,
   },
   translationRow: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: LAYOUT.SPACING.SMALL / 2,
-  },
-  arabicContainer: {
-    flex: 0.5,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    minHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-  },
-  englishText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-    lineHeight: Platform.OS === 'ios' ? 24 : 26,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    width: '100%',
-    marginVertical: LAYOUT.SPACING.SMALL / 2,
-    opacity: 0.3,
-  },
-  progressBarContainer: {
-    marginTop: LAYOUT.SPACING.SMALL / 2,
-  },
-  memoryStrengthLabel: {
-    letterSpacing: 0.5,
-    fontWeight: '500',
-  },
-  progressBarLabelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL / 3,
-  },
-  learningInfoContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.SMALL / 2,
-  },
-  streakText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-    fontWeight: '500',
-  },
-  progressBar: {
-    height: 4,
-    width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    overflow: 'hidden',
-    marginBottom: LAYOUT.SPACING.SMALL / 2,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-  },
-  lastReview: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });
 

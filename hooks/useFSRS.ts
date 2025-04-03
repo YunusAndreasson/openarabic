@@ -42,13 +42,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     queryKey: ['dueWords', userId],
     queryFn: async () => {
       if (!userId) return [];
-
-      try {
-        const data = await studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit: 50 });
-        return data as StudyWord[];
-      } catch (error) {
-        throw error;
-      }
+      const data = await studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit: 50 });
+      return data as StudyWord[];
     },
     enabled: !!userId,
     // Always fetch fresh data
@@ -230,8 +225,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
 
           return newQueue;
         });
-      } catch (error) {
-        throw error;
       } finally {
         // Reset processing flag to allow future updates
         stateTrackingRef.current.isProcessingUpdate = false;

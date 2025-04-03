@@ -26,20 +26,20 @@ export function WordReviewCard({ word }: Omit<WordReviewCardProps, 'transitionTy
 
 // Define styles
 const styles = StyleSheet.create({
+  arabicWordContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+  },
   card: {
     margin: LAYOUT.SPACING.MEDIUM,
     minHeight: 200,
   },
   contentContainer: {
-    flex: 1,
     alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-  },
-  arabicWordContainer: {
-    paddingVertical: LAYOUT.SPACING.LARGE,
-    paddingHorizontal: LAYOUT.SPACING.XXLARGE,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
 });
 

@@ -179,6 +179,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.XLARGE,
+  },
+  emptyText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    opacity: LAYOUT.OPACITY.DIMMED,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.LARGE,
+  },
+  errorText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
   flexContainer: {
     flex: 1,
   },
@@ -186,30 +207,9 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
   },
   loaderContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyContainer: {
-    padding: LAYOUT.SPACING.XLARGE,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  errorText: {
-    textAlign: 'center',
-    fontSize: 16,
   },
   wordItemContainer: {
     marginVertical: 1,

@@ -84,27 +84,17 @@ export const CategoryPills = React.memo(CategoryPillsComponent);
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 0,
     left: 0,
+    position: 'absolute',
     right: 0,
+    top: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
-  scrollContainer: {
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  scrollContent: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    gap: LAYOUT.SPACING.SMALL,
-    paddingTop: LAYOUT.CONTENT_SPACING.TOP,
-    paddingBottom: 0, // Removed padding completely (was LAYOUT.SPACING.TINY)
-  },
   leftFadeGradient: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
     bottom: 0,
+    left: 0,
+    position: 'absolute',
+    top: 0,
     width: LAYOUT.SCREEN_EDGE_PADDING,
     zIndex: 1,
   },
@@ -115,5 +105,15 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: `${LAYOUT.WIDTH_RATIOS.TWO_FIFTHS * 100}%`, // Better than hardcoded 40%
     zIndex: 1,
+  },
+  scrollContainer: {
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  scrollContent: {
+    gap: LAYOUT.SPACING.SMALL,
+    paddingBottom: 0,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.CONTENT_SPACING.TOP, // Removed padding completely (was LAYOUT.SPACING.TINY)
   },
 });

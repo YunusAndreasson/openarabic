@@ -11,16 +11,16 @@ export interface RelatedArticlesSectionProps {
 }
 
 const styles = StyleSheet.create({
+  articleContainer: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+  },
   container: {
-    marginTop: LAYOUT.SPACING.XXLARGE,
     marginHorizontal: -LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.XXLARGE,
   },
   horizontalList: {
     paddingLeft: LAYOUT.SPACING.LARGE,
     paddingRight: LAYOUT.SPACING.LARGE,
-  },
-  articleContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 });
 

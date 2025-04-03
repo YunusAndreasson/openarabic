@@ -34,7 +34,7 @@ export const studyWordsService = {
     }
 
     // Build the query step by step with proper typing
-    let query = supabase.from('study_words');
+    const query = supabase.from('study_words');
 
     // Define the selection based on options
     let selectQuery;

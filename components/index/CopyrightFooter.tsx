@@ -40,12 +40,12 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: '100%',
-    padding: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
   },
   textContainer: {
-    width: '100%',
     alignItems: 'center',
+    width: '100%',
   },
 });

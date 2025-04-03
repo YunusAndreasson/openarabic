@@ -291,83 +291,83 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
 // Styles
 const styles = StyleSheet.create({
-  imageContainer: {
-    width: '100%',
-    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
-    position: 'relative',
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    overflow: 'hidden',
+  authorContainer: {
+    marginBottom: LAYOUT.SPACING.TINY,
+    marginTop: 0,
+  },
+  cardFooter: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 0,
+    marginTop: LAYOUT.SPACING.TINY,
   },
   compactContainer: {
     width: LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE,
   },
   compactImageContainer: {
-    position: 'relative',
-    width: '100%',
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: Math.round(
       (LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE) / GOLDEN_RATIO_ADJUSTED
     ),
-    zIndex: LAYOUT.Z_INDEX.BASE,
     overflow: 'hidden',
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  },
-  image: {
+    position: 'relative',
     width: '100%',
-    height: '100%',
-    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    zIndex: LAYOUT.Z_INDEX.BASE,
+  },
+  contentContainer: {
+    marginTop: -LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
-    height: '200%',
     bottom: -LAYOUT.SPACING.XLARGE * 2,
+    height: '200%',
+    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+  image: {
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: '100%',
+    width: '100%',
+  },
+  imageContainer: {
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
+    overflow: 'hidden',
+    position: 'relative',
+    width: '100%',
+  },
+  loadingComponentContainer: {
+    alignItems: 'center',
+    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
+    justifyContent: 'center',
+    width: '100%',
   },
   pillContainer: {
+    left: LAYOUT.SPACING.MEDIUM,
+    maxWidth: '70%',
     position: 'absolute',
     top: LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-    maxWidth: '70%',
   },
   pillContainerCompact: {
+    left: LAYOUT.SPACING.MEDIUM,
+    maxWidth: '70%',
     position: 'absolute',
     top: LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SPACING.MEDIUM,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
-    maxWidth: '70%',
   },
-  contentContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: -LAYOUT.SPACING.MEDIUM,
+  summaryContainer: {
+    marginBottom: LAYOUT.SPACING.TINY,
+    marginTop: LAYOUT.SPACING.SMALL - 2,
   },
   titleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL - 2,
-  },
-  summaryContainer: {
-    marginTop: LAYOUT.SPACING.SMALL - 2,
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  authorContainer: {
-    marginTop: 0,
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.TINY,
-    marginBottom: 0,
-  },
-  loadingComponentContainer: {
-    width: '100%',
-    height: Math.round((SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2) / GOLDEN_RATIO_ADJUSTED),
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
 

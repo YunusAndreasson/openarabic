@@ -129,13 +129,13 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 ArticleList.displayName = 'ArticleList';
 
 const styles = StyleSheet.create({
-  articleItemContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+  },
+  articleItemContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   container: {
     flex: 1,
