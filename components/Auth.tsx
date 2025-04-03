@@ -100,14 +100,18 @@ export default function Auth() {
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) Alert.alert('Error', error.message);
     else {
-      // Track successful sign in
+      // Track successful sign in and identify user in Mixpanel
+      await analytics.identify(data.user.id, {
+        email: data.user.email,
+        last_sign_in: new Date().toISOString(),
+      });
       await analytics.trackSignIn('email');
     }
     setLoading(false);
@@ -122,14 +126,20 @@ export default function Auth() {
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (error) Alert.alert('Error', error.message);
     else {
-      // Track successful sign up
+      // Track successful sign up and identify user in Mixpanel
+      if (data?.user) {
+        await analytics.identify(data.user.id, {
+          email: data.user.email,
+          created_at: new Date().toISOString(),
+        });
+      }
       await analytics.trackSignUp('email');
       Alert.alert('Success', 'Check your email for the confirmation link!');
     }

@@ -8,7 +8,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useState, useRef, Component, useMemo } from 'react';
+import { useCallback, useEffect, useState, useRef, Component, useMemo } from 'react';
 import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store, persistor } from '../store/store';
@@ -26,6 +26,7 @@ import { ToastProvider } from '@/components/ToastProvider';
 import { useAuth } from '../hooks/useAuth';
 import { LAYOUT } from '@/constants/layout';
 import * as Sentry from '@sentry/react-native';
+import { analytics } from '../services/analytics';
 
 Sentry.init({
   dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
@@ -34,8 +35,10 @@ Sentry.init({
   // spotlight: __DEV__,
 });
 
-// Hide splash screen immediately
-SplashScreen.hideAsync();
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* Rehydrating, ignore errors */
+});
 
 // Create React Query client with more balanced caching defaults
 const queryClient = new QueryClient({
@@ -74,16 +77,14 @@ function AppContent() {
   const { theme } = useAppSelector(state => state.theme);
   const isDark = theme === Theme.Dark;
   const colors = useColors();
-  const [showAppLoader, setShowAppLoader] = useState(true);
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
-  const { isLoading: isAuthLoading, authError } = useAuth();
+  const { isLoading: isAuthLoading, authError, session } = useAuth();
+  const hasHiddenSplash = useRef(false);
+  const isInitialMount = useRef(true);
 
-  // Memoize navigation theme to prevent recalculation
-  const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
-
-  // Load fonts synchronously since we know they exist
-  useFonts({
+  // Load fonts
+  const [fontsLoaded] = useFonts({
     Philosopher: require('../assets/fonts/Philosopher-Regular.ttf'),
     NotoNaskhArabic: require('../assets/fonts/Madina.otf'),
   });
@@ -91,9 +92,29 @@ function AppContent() {
   // Use the app preloader hook to preload data
   const { preloadAppData, isLoaded } = useAppPreloader();
 
+  // Identify user in Mixpanel when auth state changes
+  useEffect(() => {
+    if (!session?.user || !appReady) return;
+
+    const identifyUser = async () => {
+      try {
+        await analytics.identify(session.user.id, {
+          email: session.user.email,
+          last_active: new Date().toISOString(),
+        });
+      } catch {
+        /* Ignore analytics errors */
+      }
+    };
+
+    identifyUser();
+  }, [session, appReady]);
+
+  // Memoize navigation theme to prevent recalculation
+  const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
+
   // Sync theme with system on first load and changes
   useEffect(() => {
-    // Only sync on first load or when no explicit theme is set
     if (colorScheme && !theme) {
       dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
     }
@@ -101,18 +122,15 @@ function AppContent() {
 
   // Start preloading app data after authentication is resolved
   useEffect(() => {
-    if (!isAuthLoading) {
-      // Authentication is resolved (whether user is logged in or not)
-      // This ensures we don't start preloading before auth is complete
+    if (!isAuthLoading && !isLoaded) {
       preloadAppData();
     }
-  }, [isAuthLoading, preloadAppData, authError]);
+  }, [isAuthLoading, isLoaded, preloadAppData]);
 
   // Watch for app state changes
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (appState.current === 'background' && nextAppState === 'active' && appReady) {
-        // Just trigger preload data when returning to active state
         setTimeout(preloadAppData, 300);
       }
       appState.current = nextAppState;
@@ -123,27 +141,36 @@ function AppContent() {
     };
   }, [appReady, preloadAppData]);
 
-  // Mark app as ready when critical data is loaded
-  useEffect(() => {
-    if (isLoaded) {
-      setAppReady(true);
-      setShowAppLoader(false);
+  const onLayoutRootView = useCallback(async () => {
+    if (!hasHiddenSplash.current && fontsLoaded && isLoaded && !isAuthLoading) {
+      hasHiddenSplash.current = true;
+      try {
+        await SplashScreen.hideAsync();
+        // Only set appReady after successfully hiding splash screen
+        setAppReady(true);
+      } catch {
+        /* Ignore splash screen errors */
+      }
     }
-  }, [isLoaded]);
+  }, [fontsLoaded, isLoaded, isAuthLoading]);
 
-  // Render content immediately since fonts are guaranteed
+  // Don't render anything until initial resources are loaded
+  if (!fontsLoaded || !isLoaded || isAuthLoading) {
+    return null;
+  }
+
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <ToastProvider>
-        <Stack screenOptions={stackScreenOptions}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="article" options={{ headerShown: false }} />
-          <Stack.Screen name="review" options={reviewScreenOptions} />
-        </Stack>
-        <StatusBar style={isDark ? 'light' : 'dark'} />
-
-        {/* Show AppLoader during initialization */}
-        {showAppLoader && <AppLoader color={colors.tint} />}
+        <View style={styles.container} onLayout={onLayoutRootView}>
+          <Stack screenOptions={stackScreenOptions}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="article" options={{ headerShown: false }} />
+            <Stack.Screen name="review" options={reviewScreenOptions} />
+          </Stack>
+          <StatusBar style={isDark ? 'light' : 'dark'} />
+          {!appReady && <AppLoader color={colors.tint} />}
+        </View>
       </ToastProvider>
     </NavigationThemeProvider>
   );
@@ -182,6 +209,9 @@ interface FallbackProps {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',

@@ -50,8 +50,8 @@ class Analytics {
     // Disable legacy autotrack mobile events
     const trackAutomaticEvents = false;
 
-    // Use Native Mode by default
-    const useNative = true;
+    // Use JavaScript mode for Expo compatibility
+    const useNative = false;
 
     // Set server URL (use api-eu.mixpanel.com for EU data residency if needed)
     const serverURL = 'https://api.mixpanel.com';
