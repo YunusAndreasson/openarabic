@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { StyleSheet, Platform, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
+import { useLocalSearchParams } from 'expo-router';
 
 import { ArticleHeader, RelatedArticlesFooter } from '@/components/article';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
@@ -52,6 +53,31 @@ export const ArticleContent = ({
 }: ArticleContentProps) => {
   const insets = useSafeAreaInsets();
   const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
+  const { scrollToSentence, highlightWord, wordPosition } = useLocalSearchParams<{
+    scrollToSentence?: string;
+    highlightWord?: string;
+    wordPosition?: string;
+  }>();
+
+  // Effect to scroll to the specified sentence when the component mounts
+  useEffect(() => {
+    if (scrollToSentence && sortedSentences) {
+      const sentenceIndex = sortedSentences.findIndex(s => s.id === parseInt(scrollToSentence));
+      if (sentenceIndex !== -1) {
+        // Add a small delay to ensure the list is rendered
+        setTimeout(() => {
+          // Adjust viewPosition based on sentence index to prevent edge cases
+          const viewPosition = sentenceIndex < 3 ? 0.15 : 0.3; // Show less space above for early sentences
+
+          flashListRef.current?.scrollToIndex({
+            index: sentenceIndex,
+            animated: true,
+            viewPosition: viewPosition, // Dynamic position based on index
+          });
+        }, 500);
+      }
+    }
+  }, [scrollToSentence, sortedSentences]);
 
   return (
     <Animated.View style={[styles.flexOne]}>
@@ -67,7 +93,7 @@ export const ArticleContent = ({
             style={[styles.content, { backgroundColor: colors.background }]}
             contentContainerStyle={{
               paddingHorizontal: LAYOUT.SPACING.SMALL,
-              paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE * 2,
+              paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE * 2.5,
               paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
             }}
             onScroll={handleScroll}

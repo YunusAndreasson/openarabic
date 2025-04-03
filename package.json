@@ -34,6 +34,7 @@
     "@shopify/react-native-skia": "1.5.0",
     "@supabase/supabase-js": "^2.49.4",
     "@tanstack/react-query": "^5.71.3",
+    "date-fns": "^4.1.0",
     "expo": "~52.0.42",
     "expo-av": "~15.0.2",
     "expo-blur": "~14.0.3",

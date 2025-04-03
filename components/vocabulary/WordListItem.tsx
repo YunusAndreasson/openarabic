@@ -7,6 +7,9 @@ import { StudyWord } from '../../types/vocabulary.types';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation } from '../../hooks/animations';
 import { State } from 'ts-fsrs';
+import { format } from 'date-fns';
+import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 interface WordListItemProps {
   word: StudyWord;
@@ -24,7 +27,7 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
   });
 
   // Get the actual word data
-  const { word_form, english } = word.sentence_word || {};
+  const { word_form, english, word_type, root, sentence } = word.sentence_word || {};
 
   // Calculate learning progress and status
   const wordStatus = useMemo(() => {
@@ -32,49 +35,74 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
     const stability = word.fsrs_stability || 0;
     const state = word.fsrs_state;
 
-    // Normalized progress (0-100)
-    // Use the same calculation logic as in calculateRetentionScore from wordList.tsx
-    const stabilityScore = Math.min(stability / 100, 1) * 70;
-    const difficultyFactor = 1 - word.fsrs_difficulty;
-    const difficultyScore = difficultyFactor * 20;
-    const lapsesPenalty = Math.min(word.fsrs_lapses / 10, 1) * 10;
+    // Calculate memory strength based on FSRS stability
+    const progress = Math.min(100, Math.round((Math.log2(1 + stability) / Math.log2(366)) * 100));
 
-    const progress = Math.max(
-      0,
-      Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty))
-    );
-
-    // Get progress colors
+    // Get progress colors based on state and progress
     let progressColor: string;
-    if (progress >= 80) {
-      progressColor = colors.success;
-    } else if (progress >= 50) {
-      progressColor = colors.warning;
-    } else if (progress >= 20) {
-      progressColor = colors.info;
-    } else if (progress > 0) {
-      progressColor = colors.info;
+    let statusIcon: string = 'school-outline';
+
+    if (state === State.Review && progress >= 80) {
+      progressColor = colors.success; // Mastered
+      statusIcon = 'checkmark-circle-outline';
+    } else if (state === State.Review && progress >= 50) {
+      progressColor = colors.warning; // Learning well
+      statusIcon = 'thumbs-up-outline';
+    } else if (state === State.Learning || state === State.Relearning) {
+      progressColor = colors.info; // In learning phase
+      statusIcon = 'sync-outline';
     } else {
-      // For zero progress (new words), use a light color instead of nothing
-      progressColor = `${colors.info}40`;
+      progressColor = `${colors.info}40`; // New or early stage
+      statusIcon = 'add-circle-outline';
     }
 
     const isNewWord = state === State.New;
+    const lastReview = word.fsrs_last_review ? new Date(word.fsrs_last_review) : null;
 
     return {
       progress: {
         value: progress,
         color: progressColor,
-        width: Math.max(5, progress), // Minimum 5% width for visibility
+        width: Math.max(5, progress),
       },
       isNewWord,
+      lastReview,
+      reviewCount: word.fsrs_reps || 0,
+      successStreak: word.success_streak || 0,
+      state,
+      statusIcon,
     };
-  }, [word.fsrs_stability, word.fsrs_state, word.fsrs_difficulty, word.fsrs_lapses, colors]);
+  }, [
+    word.fsrs_stability,
+    word.fsrs_state,
+    word.fsrs_last_review,
+    word.fsrs_reps,
+    word.success_streak,
+    colors,
+  ]);
 
-  // Return null early if there's no word data, after all hooks are called
+  // Handle navigation to the article
+  const handlePress = () => {
+    if (sentence?.article_id) {
+      router.push({
+        pathname: '/article/[id]',
+        params: {
+          id: sentence.article_id,
+          scrollToSentence: sentence.id,
+          highlightWord: word.sentence_word?.id,
+          wordPosition: word.sentence_word?.position,
+          scrollBehavior: 'smooth',
+          highlight: 'true',
+        },
+      });
+    } else {
+      onPress(); // Fallback to default behavior
+    }
+  };
+
+  // Return null early if there's no word data
   if (!word_form) return null;
 
-  // Optimize the container style to avoid style recalculation on each render
   const containerStyle = [
     styles.container,
     {
@@ -83,35 +111,53 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
     },
   ];
 
+  // Get learning state label
+  const getLearningStateLabel = () => {
+    switch (wordStatus.state) {
+      case State.New:
+        return 'NEW';
+      case State.Learning:
+        return 'LEARNING';
+      case State.Review:
+        return wordStatus.progress.value >= 80 ? 'MASTERED' : 'LEARNING';
+      case State.Relearning:
+        return 'RELEARNING';
+      default:
+        return 'NEW';
+    }
+  };
+
   return (
     <Animated.View style={animatedStyle as any}>
       <TouchableOpacity
         style={containerStyle}
-        onPress={onPress}
+        onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={0.7}
         accessible={true}
         accessibilityLabel={`Word: ${word_form}. English: ${english}.`}
-        accessibilityHint="Tap to practice this word"
+        accessibilityHint="Tap to view in article context"
         accessibilityRole="button"
       >
         <View style={styles.cardContent}>
           {/* Main content row */}
           <View style={styles.content}>
-            {/* Left side with English text */}
+            {/* Left side with English text and metadata */}
             <View style={styles.leftContent}>
               <View style={styles.textContainer}>
-                {/* English translation */}
-                <ThemedText
-                  type="body"
-                  variant="secondary"
-                  weight="500"
-                  numberOfLines={2}
-                  style={styles.englishText}
-                >
-                  {english || 'No translation available'}
-                </ThemedText>
+                {/* English translation with word type tag */}
+                <View style={styles.translationRow}>
+                  <ThemedText
+                    type="body"
+                    variant="secondary"
+                    weight="500"
+                    numberOfLines={2}
+                    style={styles.englishText}
+                  >
+                    {english || 'No translation available'}
+                  </ThemedText>
+                </View>
               </View>
             </View>
 
@@ -130,18 +176,23 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
             </View>
           </View>
 
+          {/* Divider */}
+          <View style={[styles.divider, { backgroundColor: colors.overlay }]} />
+
           {/* Memory Strength label and progress bar */}
           <View style={styles.progressBarContainer}>
+            {/* Memory Strength caption and percentage side by side */}
             <View style={styles.progressBarLabelContainer}>
-              <ThemedText type="overline" variant="subtle">
+              <ThemedText type="caption" variant="subtle" style={styles.memoryStrengthLabel}>
                 MEMORY STRENGTH
               </ThemedText>
               <ThemedText type="caption" variant="subtle">
                 {wordStatus.progress.value}%
               </ThemedText>
             </View>
+
             <View style={[styles.progressBar, { backgroundColor: colors.overlay }]}>
-              <View
+              <Animated.View
                 style={[
                   styles.progressFill,
                   {
@@ -150,6 +201,21 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
                   },
                 ]}
               />
+            </View>
+
+            {/* Review info and streak below progress bar */}
+            <View style={styles.learningInfoContainer}>
+              {wordStatus.lastReview && (
+                <ThemedText type="caption" variant="subtle" style={styles.lastReview}>
+                  Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
+                </ThemedText>
+              )}
+
+              {wordStatus.successStreak > 0 && (
+                <ThemedText type="caption" variant="subtle" style={styles.streakText}>
+                  🔥 {wordStatus.successStreak} streak
+                </ThemedText>
+              )}
             </View>
           </View>
         </View>
@@ -164,55 +230,92 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
     ...LAYOUT.SHADOW.MEDIUM,
-    marginVertical: 2,
+    marginVertical: LAYOUT.SPACING.SMALL / 4,
     overflow: 'hidden',
   },
   cardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.SMALL * 0.75,
   },
   content: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    minHeight: 40,
+    marginBottom: LAYOUT.SPACING.SMALL / 2,
+    minHeight: 36,
   },
   leftContent: {
     flex: 1,
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginRight: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   textContainer: {
     flex: 1,
   },
+  translationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: LAYOUT.SPACING.SMALL / 2,
+  },
   arabicContainer: {
     flex: 0.5,
     alignItems: 'flex-end',
+    justifyContent: 'center',
+    minHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
   },
   englishText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-    lineHeight: Platform.OS === 'ios' ? 20 : 24,
+    lineHeight: Platform.OS === 'ios' ? 24 : 26,
+    fontWeight: '600',
+  },
+  divider: {
+    height: 1,
+    width: '100%',
+    marginVertical: LAYOUT.SPACING.SMALL / 2,
+    opacity: 0.3,
   },
   progressBarContainer: {
-    marginVertical: LAYOUT.SPACING.SMALL / 2,
+    marginTop: LAYOUT.SPACING.SMALL / 2,
+  },
+  memoryStrengthLabel: {
+    letterSpacing: 0.5,
+    fontWeight: '500',
   },
   progressBarLabelContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: LAYOUT.SPACING.SMALL / 3,
+  },
+  learningInfoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.SMALL / 2,
+  },
+  streakText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    fontWeight: '500',
   },
   progressBar: {
     height: 4,
     width: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     overflow: 'hidden',
+    marginBottom: LAYOUT.SPACING.SMALL / 2,
   },
   progressFill: {
     height: '100%',
-    borderRadius: LAYOUT.BORDER_RADIUS.XSMALL / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+  },
+  lastReview: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });
 

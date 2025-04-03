@@ -1,31 +1,45 @@
-import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
+import React, { memo, useCallback, useEffect, useState, useMemo, useRef } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
   LayoutRectangle,
   Platform,
   LayoutChangeEvent,
+  Animated as RNAnimated,
 } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { Colors } from '../../constants/Colors';
 import { useIsDarkMode } from '../../hooks/useThemeDetection';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  withSequence,
+  withTiming,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import { useAuth } from '../../hooks/useAuth';
 import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
 import { WordTooltip } from './WordTooltip';
 import { lightFeedback } from '@/utils/haptics';
-import { ArabicWordProps } from '@/types/ui/text.types';
 import { useQueryClient } from '@tanstack/react-query';
-
-// Type for animated styles to fix TypeScript errors
-type AnimatedStyles = {
-  [key: string]: any;
-};
+import { useLocalSearchParams } from 'expo-router';
 
 // Global counter for tooltip zIndex values
 let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
+
+export interface ArabicWordProps {
+  word: {
+    id?: number | string;
+    word_form: string;
+    english?: string;
+    [key: string]: any;
+  };
+  isSelected?: boolean;
+  onPress: (word: any) => void;
+  scale?: number;
+  baseSize?: number;
+}
 
 function ArabicWordComponent({
   word,
@@ -86,6 +100,28 @@ function ArabicWordComponent({
     duration: 200,
   });
 
+  // Get URL params for highlighting
+  const { highlightWord } = useLocalSearchParams<{ highlightWord?: string }>();
+  const isHighlighted = word.id != null && highlightWord === word.id.toString();
+
+  // Use Reanimated for highlight animation
+  const highlightOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    if (isHighlighted) {
+      // Use Reanimated's animation sequence
+      highlightOpacity.value = withSequence(
+        withTiming(1, { duration: 300 }),
+        withTiming(0, { duration: 1000 })
+      );
+    }
+  }, [isHighlighted, highlightOpacity]);
+
+  // Create animated style for highlight effect
+  const highlightStyle = useAnimatedStyle(() => ({
+    opacity: highlightOpacity.value,
+  }));
+
   // Handle the animation reversal after a brief delay
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -120,6 +156,12 @@ function ArabicWordComponent({
     setBorderOpacity(isSelected ? 1 : 0);
   }, [isSelected, setBorderOpacity]);
 
+  // Update word opacity based on tooltip visibility
+  useEffect(() => {
+    // Original effect for word opacity animation
+    setWordOpacity(tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1);
+  }, [tooltipVisible, isDarkMode, setWordOpacity]);
+
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setLayout(event.nativeEvent.layout);
@@ -130,6 +172,23 @@ function ArabicWordComponent({
       setPageLayout({ x: 0, y: 0 });
     }
   }, []);
+
+  // Calculate font size once outside the memo to avoid recalculations
+  const calculatedFontSize = baseSize * scale;
+
+  // Memoize text props to prevent unnecessary recalculations
+  const textProps = useMemo(
+    () => ({
+      type: 'arabic' as const,
+      variant: isSelected ? ('primary' as const) : undefined,
+      skipDefaultColor: false,
+      colorName: 'arabicText' as const,
+      arabicFontSize: calculatedFontSize,
+      weight: isSelected ? ('600' as const) : ('normal' as const),
+      style: styles.textStyle,
+    }),
+    [isSelected, calculatedFontSize]
+  );
 
   // Show tooltip on quick press with fade animation
   const handlePress = useCallback(() => {
@@ -147,29 +206,6 @@ function ArabicWordComponent({
   const handleTooltipClose = useCallback(() => {
     setTooltipVisible(false);
   }, []);
-
-  // Update word opacity based on tooltip visibility
-  useEffect(() => {
-    const fadeOpacity = tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1;
-    setWordOpacity(fadeOpacity);
-  }, [tooltipVisible, isDarkMode, setWordOpacity]);
-
-  // Calculate font size once outside the memo to avoid recalculations
-  const calculatedFontSize = baseSize * scale;
-
-  // Memoize text props to prevent unnecessary recalculations
-  const textProps = useMemo(
-    () => ({
-      type: 'arabic' as const,
-      variant: isSelected ? ('primary' as const) : undefined,
-      skipDefaultColor: true,
-      colorName: tooltipVisible ? ('textTertiary' as const) : ('arabicText' as const),
-      arabicFontSize: calculatedFontSize,
-      weight: isSelected ? ('600' as const) : ('normal' as const),
-      style: styles.textStyle,
-    }),
-    [isSelected, calculatedFontSize, tooltipVisible]
-  );
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
@@ -194,13 +230,16 @@ function ArabicWordComponent({
     onPress(word);
   }, [onPress, word, startPressAnimation, isSelected, user]);
 
-  // Styling for border based on selection state
+  // Update styling for border based on selection and highlight state
   const borderStyle = useMemo(() => {
+    const highlightColor = colors.tint ? `${colors.tint}40` : Colors.light.transparent;
+
     return {
       borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
       borderBottomColor: isSelected ? colors.textOverlay : Colors.light.transparent,
+      backgroundColor: isHighlighted ? highlightColor : Colors.light.transparent,
     };
-  }, [isSelected, colors.textOverlay]);
+  }, [isSelected, isHighlighted, colors.textOverlay, colors.tint]);
 
   return (
     <>
@@ -208,18 +247,20 @@ function ArabicWordComponent({
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={250}
-        style={styles.wordContainer}
+        style={[
+          styles.wordContainer,
+          // Add offsetY adjustment for first sentence positioning
+          highlightWord ? { marginTop: 2 } : null,
+        ]}
         activeOpacity={0.7}
         onLayout={handleLayout}
       >
         <Animated.View
           style={[
             styles.container,
-            pressStyle as AnimatedStyles,
-            {
-              opacity: Number(tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1),
-              ...borderStyle,
-            },
+            // @ts-ignore - Animation types
+            pressStyle,
+            borderStyle,
           ]}
         >
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
@@ -238,9 +279,6 @@ function ArabicWordComponent({
     </>
   );
 }
-
-// Memoize the component to prevent unnecessary re-renders
-export const ArabicWord = memo(ArabicWordComponent);
 
 const styles = StyleSheet.create({
   wordContainer: {
@@ -262,5 +300,8 @@ const styles = StyleSheet.create({
   textStyle: {
     paddingVertical: 0,
     marginBottom: 0,
+    textAlign: 'right',
   },
 });
+
+export const ArabicWord = memo(ArabicWordComponent);
