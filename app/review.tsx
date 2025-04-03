@@ -89,6 +89,8 @@ export default function ReviewScreen() {
       if (completionTriggeredRef.current) {
         // Only update state if not unmounted
         setIsTransitioningToCompletion(false);
+        // Stop audio playback again to ensure nothing is playing
+        stopPlayback();
       }
     }, 350);
   }, [fadeOut, stopPlayback]);
@@ -176,6 +178,11 @@ export default function ReviewScreen() {
 
   // Update current sentence when currentWord changes
   useEffect(() => {
+    // Don't play audio if we're completing or transitioning to completion
+    if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
+      return;
+    }
+
     if (currentWord && !isComplete && !isTransitioningToCompletion) {
       const wordForm = currentWord.sentence_word.word_form;
       const audioUrl = currentWord.sentence_word.audio_url;
@@ -384,6 +391,9 @@ export default function ReviewScreen() {
       // Cancel any ongoing animations
       fadeIn();
 
+      // Stop any playing audio
+      stopPlayback();
+
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = null;
@@ -400,7 +410,7 @@ export default function ReviewScreen() {
       maxProgressRef.current = 0;
       totalWordsRef.current = 0;
     };
-  }, [fadeIn]);
+  }, [fadeIn, stopPlayback]);
 
   // Clean up audio when component unmounts or transitions
   useEffect(() => {
@@ -422,13 +432,16 @@ export default function ReviewScreen() {
 
   // Show completion screen if all words are reviewed or if there are no words to review
   if (isComplete || (!isLoading && !currentWord)) {
+    // Stop audio playback when showing completion screen
+    stopPlayback();
+
     // Only continue with the main content during the transition animation
     if (isComplete && isTransitioningToCompletion) {
       // The opacity animation will handle the fade out
       // Continue to the main return below
     } else {
       // Otherwise show the completion screen
-      return <CompletionScreen onClose={handleClose} />;
+      return <CompletionScreen onClose={handleClose} onMount={stopPlayback} />;
     }
   }
 
@@ -440,7 +453,7 @@ export default function ReviewScreen() {
         {showInitialLoading ? (
           <Loader />
         ) : isComplete ? (
-          <CompletionScreen onClose={handleClose} />
+          <CompletionScreen onClose={handleClose} onMount={stopPlayback} />
         ) : (
           <>
             {/* Header with progress bar */}

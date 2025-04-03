@@ -11,12 +11,21 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface CompletionScreenProps {
   onClose: () => void;
+  onMount?: () => void;
 }
 
-const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
+const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose, onMount }) => {
   const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+
+  // Call onMount when component mounts
+  useEffect(() => {
+    // Stop any audio playback when completion screen mounts
+    if (onMount) {
+      onMount();
+    }
+  }, [onMount]);
 
   // Ensure queries are invalidated when the component mounts
   useEffect(() => {
@@ -40,22 +49,26 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
         },
       ]}
     >
-      <View style={styles.centered}>
+      <View style={styles.contentContainer}>
         <AnimatedItem delay={100}>
-          <Ionicons name="checkmark-circle" size={80} color={colors.tint} />
+          <View style={styles.iconContainer}>
+            <Ionicons name="checkmark-circle" size={100} color={colors.tint} />
+          </View>
         </AnimatedItem>
 
-        <AnimatedItem delay={300}>
-          <ThemedText type="heading2" variant="primary">
-            Great job!
-          </ThemedText>
-        </AnimatedItem>
+        <View style={styles.textContainer}>
+          <AnimatedItem delay={300}>
+            <ThemedText type="heading2" variant="primary" style={styles.titleText}>
+              Great job!
+            </ThemedText>
+          </AnimatedItem>
 
-        <AnimatedItem delay={500}>
-          <ThemedText type="heading3" variant="primary">
-            You've completed your review session.
-          </ThemedText>
-        </AnimatedItem>
+          <AnimatedItem delay={500}>
+            <ThemedText type="heading3" variant="primary" style={styles.subtitleText}>
+              You've completed your review session.
+            </ThemedText>
+          </AnimatedItem>
+        </View>
 
         <AnimatedItem delay={700}>
           <ThemedButton title="Done" onPress={onClose} style={styles.doneButton} />
@@ -72,11 +85,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: LAYOUT.SPACING.XLARGE,
   } as ViewStyle,
-  centered: {
+  contentContainer: {
+    width: '100%',
+    maxWidth: 350,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    marginBottom: LAYOUT.SPACING.XLARGE * 1.5,
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textContainer: {
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.XLARGE * 1.5,
+    width: '100%',
+  },
+  titleText: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    textAlign: 'center',
+  },
+  subtitleText: {
+    textAlign: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   doneButton: {
     marginTop: LAYOUT.SPACING.LARGE,
+    minWidth: 150,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
 });
 

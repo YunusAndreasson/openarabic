@@ -266,4 +266,24 @@ export const studyWordsFSRSService = {
       return true;
     }
   },
+
+  // New function to get review logs for weekly progress
+  async getReviewLogs(userId: string, daysBack: number = 7): Promise<any[]> {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (daysBack - 1));
+
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('reviewed_at, grade, sentence_word_id')
+      .eq('user_id', userId)
+      .gte('reviewed_at', startDate.toISOString())
+      .lte('reviewed_at', now.toISOString())
+      .order('reviewed_at', { ascending: true });
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
 };

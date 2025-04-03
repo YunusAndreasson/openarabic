@@ -12,67 +12,72 @@ export interface WeeklyProgressData {
   wordsLearned: number;
 }
 
+interface ReviewLog {
+  reviewed_at: string;
+  grade: number;
+  sentence_word_id: number;
+}
+
 /**
- * Calculate weekly progress data from study words
+ * Calculate weekly progress data from study words and review logs
  * @param studyWords Array of study words
+ * @param reviewLogs Array of review logs
  * @returns Array of weekly progress data points
  */
-export function calculateWeeklyProgressData(studyWords: StudyWord[]): WeeklyProgressData[] {
-  // Get today's date with time set to noon to avoid timezone issues
+export function calculateWeeklyProgressData(
+  studyWords: StudyWord[],
+  reviewLogs: ReviewLog[] = []
+): WeeklyProgressData[] {
+  // Get today's date and create a map of dates
   const today = new Date();
-  today.setHours(12, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
 
-  // Create an array of dates representing the last 7 days (including today)
-  const dates = [];
+  // Create a map of dates and their corresponding day names
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dateMap = new Map<string, { date: string; count: number; words: Set<number> }>();
+
+  // Initialize the last 7 days
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
-    dates.push(date);
+    const dateString = date.toISOString().split('T')[0];
+    dateMap.set(dateString, {
+      date: dayNames[date.getDay()],
+      count: 0,
+      words: new Set(),
+    });
   }
 
-  // Day name abbreviations
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // Process review logs
+  if (reviewLogs?.length > 0) {
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 6);
 
-  // Create buckets for each day with proper day names
-  const dayBuckets: { [key: string]: WeeklyProgress } = {};
-
-  dates.forEach(date => {
-    // Format date as YYYY-MM-DD for bucket key
-    const dateString = date.toISOString().split('T')[0];
-    const dayName = dayNames[date.getDay()];
-    dayBuckets[dateString] = { date: dayName, count: 0, wordsLearned: 0 };
-  });
-
-  // Process each study word if we have any
-  if (Array.isArray(studyWords) && studyWords.length > 0) {
-    studyWords.forEach(word => {
-      // Skip invalid words
-      if (!word.fsrs_last_review) return;
-
-      const reviewDate = new Date(word.fsrs_last_review);
-      reviewDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-
-      // Check if review date is within the last 7 days
-      const reviewDateString = reviewDate.toISOString().split('T')[0];
-      const sevenDaysAgo = new Date(today);
-      sevenDaysAgo.setDate(today.getDate() - 6);
-      sevenDaysAgo.setHours(0, 0, 0, 0);
+    reviewLogs.forEach(log => {
+      const reviewDate = new Date(log.reviewed_at);
+      reviewDate.setHours(0, 0, 0, 0);
 
       if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
-        // Check if we have a bucket for this date
-        if (dayBuckets[reviewDateString]) {
-          // Count every review
-          dayBuckets[reviewDateString].count++;
-          // Consider ANY review a learning event
-          dayBuckets[reviewDateString].wordsLearned++;
+        const dateString = reviewDate.toISOString().split('T')[0];
+        const dateData = dateMap.get(dateString);
+        if (dateData) {
+          dateData.count++;
+          dateData.words.add(log.sentence_word_id);
         }
       }
     });
   }
 
-  // Convert to array and sort by date - this will always return 7 days
-  return Object.values(dayBuckets).sort((a, b) => {
-    const dayOrder = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    return dayOrder[a.date as keyof typeof dayOrder] - dayOrder[b.date as keyof typeof dayOrder];
-  });
+  // Convert to array and calculate cumulative words learned
+  let cumulativeWords = 0;
+  return Array.from(dateMap.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([_, data]) => {
+      cumulativeWords += data.words.size;
+      return {
+        date: data.date,
+        count: data.count,
+        wordsLearned: cumulativeWords,
+      };
+    });
 }

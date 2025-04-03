@@ -83,6 +83,23 @@ export const DifficultyIndicator = React.memo(
 
 DifficultyIndicator.displayName = 'DifficultyIndicator';
 
+/**
+ * SummaryIndicator component to display article summary in compact views
+ */
+export const SummaryIndicator = React.memo(({ summary }: { summary: string | null }) => {
+  if (!summary) return null;
+
+  return (
+    <View style={styles.summaryIndicatorContainer}>
+      <ThemedText type="caption" variant="subtle" style={styles.summaryText}>
+        {summary}
+      </ThemedText>
+    </View>
+  );
+});
+
+SummaryIndicator.displayName = 'SummaryIndicator';
+
 const styles = StyleSheet.create({
   // DifficultyIndicator styles
   difficultyContainer: {
@@ -108,5 +125,15 @@ const styles = StyleSheet.create({
   },
   timeIcon: {
     marginRight: LAYOUT.SPACING.TINY,
+  },
+
+  // SummaryIndicator styles
+  summaryIndicatorContainer: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  summaryText: {
+    lineHeight: 14,
   },
 });

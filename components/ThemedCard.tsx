@@ -10,7 +10,7 @@ import { LoadingContainer } from './Loader';
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
 import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui/card.types';
-import { TimeAgo, DifficultyIndicator } from './article/ArticleHelpers';
+import { TimeAgo, DifficultyIndicator, SummaryIndicator } from './article/ArticleHelpers';
 import { DEFAULT_IMAGES } from '@/constants/images';
 
 /**
@@ -233,10 +233,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
                 isLastOpened={!!lastOpenedAt}
               />
             ) : hideDifficulty ? null : (
-              <DifficultyIndicator
-                level={props.article.difficulty_level}
-                hideLabel={hideDifficultyLabel}
-              />
+              <SummaryIndicator summary={props.article.summary} />
             )}
           </View>
         </View>

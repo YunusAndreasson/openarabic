@@ -23,7 +23,6 @@ interface ArticleSentenceProps {
 
 const styles = StyleSheet.create({
   sentenceContainer: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.XXLARGE,
   },
