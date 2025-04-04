@@ -1,8 +1,11 @@
 import { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
-import { Edge } from 'react-native-safe-area-context';
-import { Article } from '../articles.types';
+import { Article, ArticleSentence } from '../articles.types';
 import { BaseStyleProps } from './base.types';
 import { Ionicons } from '@expo/vector-icons';
+import { ThemeColors } from './theme.types';
+import { Category } from '../articles.types';
+import { ComponentProps } from 'react';
+import { SentenceWord } from '../vocabulary.types';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -21,7 +24,7 @@ export interface ThemedViewProps extends ViewProps {
   /** Whether to include bottom insets in safe area (default: true) */
   includeBottomInset?: boolean;
   /** Specific edges to apply safe area insets to (overrides includeBottomInset) */
-  safeAreaEdges?: Edge[];
+  safeAreaEdges?: ('top' | 'right' | 'bottom' | 'left')[];
   /** Optional ScrollView props */
   scrollViewProps?: Omit<React.ComponentProps<typeof ScrollView>, 'children'>;
   /** Children to render inside the view */
@@ -56,28 +59,28 @@ export interface AnimatedItemProps extends BaseStyleProps {
   animate?: boolean;
 }
 
+export interface DisplaySettings {
+  showEnglish: boolean;
+  fontScale: number;
+  showTransliteration?: boolean;
+  showWordType?: boolean;
+  [key: string]: boolean | number | undefined;
+}
+
 /**
  * Props for the ArticleSentence component
  */
 export interface ArticleSentenceProps {
   /** Sentence data */
-  sentence: import('../articles.types').ArticleSentence;
+  sentence: ArticleSentence;
   /** Words in the sentence */
-  words: import('../vocabulary.types').SentenceWord[];
+  words: SentenceWord[];
   /** Function to render each word */
-  renderWord: (word: import('../vocabulary.types').SentenceWord) => React.ReactNode;
+  renderWord: (word: SentenceWord) => React.ReactNode;
   /** Display settings */
-  settings: {
-    showEnglish: boolean;
-    fontScale: number;
-    [key: string]: any;
-  };
+  settings: DisplaySettings;
   /** Theme colors */
-  colors: {
-    englishText: string;
-    authorText: string;
-    [key: string]: any;
-  };
+  colors: ThemeColors;
   /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
 }
@@ -85,49 +88,38 @@ export interface ArticleSentenceProps {
 /**
  * Props for the CategoryPills component
  */
-export interface CategoryPillsProps {
-  /** List of categories */
-  categories: any[];
-  /** Currently selected category ID */
+export interface CategoryPillsProps extends BaseLayoutProps {
+  categories: Category[];
   selectedCategoryId?: number | null;
-  /** Callback when a category is selected */
   onSelectCategory: (categoryId: number | null) => void;
-  /** Whether to include an "All" option */
   includeAllOption?: boolean;
-  /** Label for the "All" option */
   allLabel?: string;
-  /** Whether the component is disabled */
   disabled?: boolean;
-  /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-/**
- * Props for the EmptyState component
- */
-export interface EmptyStateProps {
-  /** Title text to display */
+export interface BaseLayoutProps extends ViewProps {
+  style?: StyleProp<ViewStyle>;
+  colors: ThemeColors;
+}
+
+export interface IconProps {
+  name: ComponentProps<typeof Ionicons>['name'];
+  size?: number;
+  color?: string;
+}
+
+export interface EmptyStateProps extends BaseLayoutProps {
   title: string;
-  /** Description text to display */
   description: string;
-  /** Icon component or name to display */
-  icon?: React.ComponentType<any> | keyof typeof Ionicons.glyphMap;
-  /** Button action text */
+  icon: IconProps | ComponentProps<typeof Ionicons>['name'];
   actionText?: string;
-  /** Callback when the action button is pressed */
   onAction?: () => void;
-  /** Additional container style */
-  containerStyle?: StyleProp<ViewStyle>;
-  /** Theme colors object */
-  colors?: any;
-  /** Additional message to display below description */
   submessage?: string;
-  /** Custom action button component */
   customActionButton?: React.ReactNode;
-  /** Size of the icon */
   iconSize?: number;
-  /** Additional style for the icon container */
-  iconContainerStyle?: StyleProp<ViewStyle>;
+  iconContainerStyle?: ViewStyle;
+  containerStyle?: ViewStyle;
 }
 
 /**
@@ -161,50 +153,31 @@ export interface SectionTitleProps {
 /**
  * Props for the SignInRequired component
  */
-export interface SignInRequiredProps {
-  /** Title for the sign in prompt */
+export interface SignInRequiredProps extends BaseLayoutProps {
   title?: string;
-  /** Message to display */
   message?: string;
-  /** Optional benefit title to display */
   benefitTitle?: string;
-  /** Optional benefit description to display */
   benefitDescription?: string;
-  /** Optional header title to display */
   headerTitle?: string;
-  /** Theme colors object */
-  colors: any;
-  /** Callback when sign in button is pressed */
   onSignIn?: () => void;
-  /** Additional container style */
   containerStyle?: StyleProp<ViewStyle>;
 }
 
 /**
  * Props for the StatCard component
  */
-export interface StatCardProps {
-  /** Title text for the stat */
+export interface StatCardProps extends BaseLayoutProps {
   label: string;
-  /** Value of the stat */
   value: string | number;
-  /** Icon name to display */
-  icon?: string;
-  /** Colors object for theming */
-  colors: any;
-  /** Whether to animate the value */
+  icon?: ComponentProps<typeof Ionicons>['name'];
   animateValue?: boolean;
-  /** Callback when card is pressed */
   onPress?: () => void;
 }
 
 /**
  * Props for the VocabularyEmptyState component
  */
-export interface VocabularyEmptyStateProps {
-  /** Theme colors object */
-  colors: any;
-  /** Additional container style */
+export interface VocabularyEmptyStateProps extends BaseLayoutProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
@@ -254,4 +227,19 @@ export interface DailyPickSectionProps {
   onPress: (article: Article) => void;
   /** Whether to show the section title */
   showTitle?: boolean;
+}
+
+export interface CategoryListProps extends BaseLayoutProps {
+  categories: Category[];
+  selectedCategoryId?: number | null;
+  onSelectCategory: (categoryId: number | null) => void;
+  includeAllOption?: boolean;
+  allLabel?: string;
+  disabled?: boolean;
+}
+
+export interface ThemedCardProps extends BaseLayoutProps {
+  onPress?: () => void;
+  children?: React.ReactNode;
+  disabled?: boolean;
 }

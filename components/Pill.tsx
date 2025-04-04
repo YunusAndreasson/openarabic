@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { Pressable, StyleSheet, View, Platform } from 'react-native';
-import Animated from 'react-native-reanimated';
+import { Pressable, StyleSheet, View, Platform, ViewStyle } from 'react-native';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import { useTransformAnimation } from '../hooks/animations';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
@@ -139,7 +139,7 @@ const Pill = React.memo(
 
     // For interactive pills
     return (
-      <Animated.View style={scaleStyle as any}>
+      <Animated.View style={scaleStyle as AnimatedStyleProp<ViewStyle>}>
         <Pressable
           style={({ pressed: isPressedState }) => [
             styles.pill,

@@ -23,7 +23,7 @@ interface ErrorOptions {
   // Custom analytics event name (default: 'Error Occurred')
   analyticsEventName?: string;
   // Additional analytics properties
-  analyticsProperties?: Record<string, any>;
+  analyticsProperties?: Record<string, string | number | boolean>;
   // Whether to capture in Sentry
   captureSentry?: boolean;
   // Sentry severity level

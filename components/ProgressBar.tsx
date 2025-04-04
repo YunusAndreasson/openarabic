@@ -1,5 +1,5 @@
 import React, { useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
 import { LAYOUT } from '@/constants/layout';
@@ -100,7 +100,7 @@ function ProgressBarComponent({
 
   return (
     <View
-      style={containerStyle as AnimatedStyleProp<any>}
+      style={containerStyle as StyleProp<ViewStyle>}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: normalizedProgress }}
     >
@@ -115,7 +115,7 @@ function ProgressBarComponent({
         <Animated.View
           style={[
             styles.fill,
-            animatedStyle as AnimatedStyleProp<any>,
+            animatedStyle as AnimatedStyleProp<ViewStyle>,
             {
               backgroundColor: progressFillColor,
               borderRadius: height / 2,

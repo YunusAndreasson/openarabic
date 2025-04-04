@@ -14,14 +14,17 @@ import {
   AnimatedStyleProp,
   withDelay,
   cancelAnimation,
+  WithTimingConfig,
+  WithSpringConfig,
+  BaseAnimationBuilder,
 } from 'react-native-reanimated';
+import { ViewStyle } from 'react-native';
 import { TIMING_CONFIG } from './animationConfigs';
 import { SCREEN_WIDTH } from '../../constants/layout';
 import { SharedValue } from './types';
-import { ViewStyle } from 'react-native';
 import { handleError } from '@/utils/errorHandling';
 
-export type TransformType = 'scale' | 'slide';
+export type TransformType = 'scale' | 'slide' | 'translateY' | 'translateX' | 'rotate';
 export type SlideDirection = 'right' | 'left';
 
 export interface TransformAnimationOptions {
@@ -76,9 +79,19 @@ export interface TransformAnimationOptions {
    */
   damping?: number;
   stiffness?: number;
+
+  /**
+   * Spring configuration for withSpring
+   */
+  springConfig?: WithSpringConfig;
+
+  /**
+   * Timing configuration for withTiming
+   */
+  timingConfig?: WithTimingConfig;
 }
 
-export interface TransformAnimationResult {
+interface TransformAnimationResult {
   /**
    * The shared value controlling the animation
    */
@@ -109,12 +122,12 @@ export interface TransformAnimationResult {
   /**
    * Built-in entering animation for Reanimated 3
    */
-  entering: any;
+  entering: BaseAnimationBuilder;
 
   /**
    * Built-in exiting animation for Reanimated 3
    */
-  exiting: any;
+  exiting: BaseAnimationBuilder;
 
   /**
    * The transform property directly exposed for custom animations
@@ -149,8 +162,8 @@ export const useTransformAnimation = (
   const value = useSharedValue(startPosition);
 
   // Create optimized entering and exiting animations based on transform type
-  let entering: any;
-  let exiting: any;
+  let entering: BaseAnimationBuilder;
+  let exiting: BaseAnimationBuilder;
 
   if (type === 'scale') {
     entering = ZoomIn.duration(duration).delay(delay).springify();

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, ComponentProps } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -67,7 +67,11 @@ const WordItem = React.memo(
                 },
               ]}
             >
-              <Ionicons name={statusIcon as any} size={16} color={colors.background} />
+              <Ionicons
+                name={statusIcon as ComponentProps<typeof Ionicons>['name']}
+                size={16}
+                color={colors.background}
+              />
               <ThemedText type="caption" weight="600" colorName="background" skipDefaultColor>
                 {statusLabel}
               </ThemedText>

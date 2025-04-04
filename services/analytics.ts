@@ -2,6 +2,15 @@ import { Platform } from 'react-native';
 import { Mixpanel } from 'mixpanel-react-native';
 import { handleError } from '@/utils/errorHandling';
 
+type AnalyticsProperties =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | { [key: string]: AnalyticsProperties }
+  | AnalyticsProperties[];
+
 // Initialize Mixpanel with your project token
 const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || 'YOUR_MIXPANEL_TOKEN';
 
@@ -97,7 +106,7 @@ class Analytics {
   }
 
   // Initialize user profile
-  async identify(userId: string, userProperties?: Record<string, any>) {
+  async identify(userId: string, userProperties?: Record<string, AnalyticsProperties>) {
     if (!this.isInitialized) return;
 
     try {
@@ -111,7 +120,7 @@ class Analytics {
   }
 
   // Track an event
-  async track(eventName: string, properties?: Record<string, any>) {
+  async track(eventName: string, properties?: Record<string, AnalyticsProperties>) {
     // Skip tracking in development if disabled
     if (__DEV__ && !ENABLE_DEV_TRACKING) {
       return;
@@ -130,7 +139,7 @@ class Analytics {
   }
 
   // Update user profile properties
-  async updateUserProfile(properties: Record<string, any>) {
+  async updateUserProfile(properties: Record<string, AnalyticsProperties>) {
     if (!this.isInitialized) return;
 
     try {
@@ -141,7 +150,7 @@ class Analytics {
   }
 
   // Track page/screen view
-  async trackScreen(screenName: string, properties?: Record<string, any>) {
+  async trackScreen(screenName: string, properties?: Record<string, AnalyticsProperties>) {
     await this.track('Screen View', {
       screen: screenName,
       ...properties,
@@ -160,7 +169,7 @@ class Analytics {
   }
 
   // Set super properties that will be included with all subsequent track calls
-  async setSuperProperties(properties: Record<string, any>) {
+  async setSuperProperties(properties: Record<string, AnalyticsProperties>) {
     if (!this.isInitialized) return;
 
     try {

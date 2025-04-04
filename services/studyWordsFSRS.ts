@@ -31,6 +31,12 @@ export const FSRS_QUERY_KEYS = {
     ['fsrs-words', userId, 'filtered', category] as const,
 } as const;
 
+interface ReviewLog {
+  reviewed_at: string;
+  grade: number;
+  sentence_word_id: number;
+}
+
 export const studyWordsFSRSService = {
   // Fetch study words with FSRS parameters
   async getFSRSWords(userId: string, options: GetFSRSWordsOptions = {}): Promise<StudyWord[]> {
@@ -268,7 +274,7 @@ export const studyWordsFSRSService = {
   },
 
   // New function to get review logs for weekly progress
-  async getReviewLogs(userId: string, daysBack: number = 7): Promise<any[]> {
+  async getReviewLogs(userId: string, daysBack: number = 7): Promise<ReviewLog[]> {
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (daysBack - 1));
 

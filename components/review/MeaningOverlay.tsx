@@ -13,7 +13,8 @@ import { MeaningOverlayProps } from '@/types/ui/review.types';
  * without changing the background brightness
  */
 const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
-  ({ visible, meaning, isWarning = false }) => {
+  // eslint-disable-next-line react/prop-types
+  ({ visible, meaning, isWarning = false, duration = 150, animate = true, onClose }) => {
     const colors = useColors();
     const [shouldRender, setShouldRender] = useState(visible);
     const isMountedRef = useRef(true);
@@ -27,7 +28,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
     const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
       initialOpacity: 0,
       delay: 0,
-      duration: 150,
+      duration: animate ? duration : 0,
     });
 
     // Watch for visibility changes
@@ -42,17 +43,30 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
         return () => {};
       } else if (shouldRender) {
         reverseAnimation();
+        onClose?.();
 
-        const timeout = setTimeout(() => {
-          if (isMountedRef.current) {
-            setShouldRender(false);
-          }
-        }, 200);
+        const timeout = setTimeout(
+          () => {
+            if (isMountedRef.current) {
+              setShouldRender(false);
+            }
+          },
+          animate ? duration + 50 : 0
+        );
 
         return () => clearTimeout(timeout);
       }
       return () => {};
-    }, [visible, startAnimation, reverseAnimation, isWarning, shouldRender]);
+    }, [
+      visible,
+      startAnimation,
+      reverseAnimation,
+      isWarning,
+      shouldRender,
+      duration,
+      animate,
+      onClose,
+    ]);
 
     if (!shouldRender) return null;
 

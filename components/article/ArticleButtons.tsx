@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import FloatingButton from '@/components/FloatingButton';
 import { LAYOUT } from '@/constants/layout';
+import { ThemeColors } from '../../types/ui/theme.types';
+import { AnimatedStyleProp } from 'react-native-reanimated';
 
 const styles = StyleSheet.create({
   floatingButton: {
@@ -23,34 +25,35 @@ const styles = StyleSheet.create({
   },
 });
 
-type ArticleButtonsProps = {
-  backButtonStyle: any;
-  bookmarkButtonStyle: any;
-  playButtonStyle: any;
-  handleBackPress: () => void;
-  handleBookmarkPress: () => void;
-  handlePlayPress: () => void;
+interface ArticleButtonsProps {
+  backButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  bookmarkButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  playButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  onBackPress: () => void;
+  onBookmarkPress: () => void;
+  onPlayPress: () => void;
+  colors: ThemeColors;
+  isBookmarked: boolean;
+  user: { id: string } | null;
   isInReadingList: boolean | undefined;
   initialBookmarkIcon: 'bookmark-outline' | 'bookmark';
   isPlaying: boolean;
-  colors: any;
   isDarkMode: boolean;
-  user: any;
-};
+}
 
 export const ArticleButtons = ({
   backButtonStyle,
   bookmarkButtonStyle,
   playButtonStyle,
-  handleBackPress,
-  handleBookmarkPress,
-  handlePlayPress,
+  onBackPress,
+  onBookmarkPress,
+  onPlayPress,
+  colors,
+  user,
   isInReadingList,
   initialBookmarkIcon,
   isPlaying,
-  colors,
   isDarkMode,
-  user,
 }: ArticleButtonsProps) => {
   const insets = useSafeAreaInsets();
 
@@ -62,7 +65,7 @@ export const ArticleButtons = ({
         buttonType="back"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={backButtonStyle}
-        onPress={handleBackPress}
+        onPress={onBackPress}
         iconName="chevron-back"
         accessibilityLabel="Return to previous screen"
         colors={colors}
@@ -79,7 +82,7 @@ export const ArticleButtons = ({
         buttonType="bookmark"
         top={insets.top + LAYOUT.SPACING.MEDIUM}
         animatedStyle={bookmarkButtonStyle}
-        onPress={user ? handleBookmarkPress : () => {}}
+        onPress={user ? onBookmarkPress : () => {}}
         iconName={user ? initialBookmarkIcon : 'bookmark-outline'}
         accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
         colors={colors}
@@ -100,7 +103,7 @@ export const ArticleButtons = ({
         animatedStyle={playButtonStyle}
         iconName={isPlaying ? 'stop' : 'play'}
         accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
-        onPress={handlePlayPress}
+        onPress={onPlayPress}
         colors={colors}
         isDarkMode={isDarkMode}
         style={{

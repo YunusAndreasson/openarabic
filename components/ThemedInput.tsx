@@ -1,99 +1,115 @@
-import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
+  TextInputProps,
+  NativeSyntheticEvent,
+  TextInputFocusEventData,
+  GestureResponderEvent,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '@/hooks/useColors';
 import { useState, useEffect } from 'react';
 import { ThemedText } from './ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { ThemedInputProps } from '@/types/ui/form.types';
 import { errorFeedback } from '../utils/haptics';
+import React from 'react';
+import type { ComponentProps } from 'react';
 
-export function ThemedInput({
-  icon,
-  rightIcon,
-  onRightIconPress,
-  style,
-  onFocus,
-  onBlur,
-  error,
-  hint,
-  ...props
-}: ThemedInputProps) {
-  const colors = useColors();
-  const [isFocused, setIsFocused] = useState(false);
-  const [prevError, setPrevError] = useState(error);
+interface ThemedInputProps extends TextInputProps {
+  icon?: ComponentProps<typeof Ionicons>['name'];
+  rightIcon?: ComponentProps<typeof Ionicons>['name'];
+  error?: string;
+  hint?: string;
+  onFocus?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onBlur?: (e: NativeSyntheticEvent<TextInputFocusEventData>) => void;
+  onRightIconPress?: (e: GestureResponderEvent) => void;
+  style?: TextInputProps['style'];
+}
 
-  useEffect(() => {
-    if (error && !prevError) {
-      errorFeedback();
-    }
-    setPrevError(error);
-  }, [error, prevError]);
+export const ThemedInput = React.forwardRef<TextInput, ThemedInputProps>(
+  ({ icon, rightIcon, onRightIconPress, style, onFocus, onBlur, error, hint, ...props }, ref) => {
+    const colors = useColors();
+    const [isFocused, setIsFocused] = useState(false);
+    const [prevError, setPrevError] = useState(error);
 
-  const containerStyles = [
-    styles.container,
-    {
-      backgroundColor: colors.background,
-      borderColor: error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon,
-    },
-    isFocused && styles.containerFocused,
-  ];
+    useEffect(() => {
+      if (error && !prevError) {
+        errorFeedback();
+      }
+      setPrevError(error);
+    }, [error, prevError]);
 
-  const handleFocus = (e: any) => {
-    setIsFocused(true);
-    onFocus?.(e);
-  };
+    const containerStyles = [
+      styles.container,
+      {
+        backgroundColor: colors.background,
+        borderColor: error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon,
+      },
+      isFocused && styles.containerFocused,
+    ];
 
-  const handleBlur = (e: any) => {
-    setIsFocused(false);
-    onBlur?.(e);
-  };
+    const handleFocus = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      setIsFocused(true);
+      onFocus?.(e);
+    };
 
-  return (
-    <View style={styles.wrapper}>
-      <View style={containerStyles}>
-        {icon && (
-          <Ionicons
-            name={icon as any}
-            size={20}
-            color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
-            style={styles.leftIcon}
-          />
-        )}
-        <TextInput
-          style={[styles.input, { color: colors.text }, style]}
-          placeholderTextColor={colors.icon}
-          selectionColor={colors.tint}
-          autoCapitalize="none"
-          autoCorrect={false}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          textAlignVertical="center"
-          {...props}
-        />
-        {rightIcon && (
-          <TouchableOpacity
-            onPress={onRightIconPress}
-            hitSlop={styles.hitSlop}
-            style={styles.rightIcon}
-          >
+    const handleBlur = (e: NativeSyntheticEvent<TextInputFocusEventData>) => {
+      setIsFocused(false);
+      onBlur?.(e);
+    };
+
+    return (
+      <View style={styles.wrapper}>
+        <View style={containerStyles}>
+          {icon && (
             <Ionicons
-              name={rightIcon as any}
+              name={icon}
               size={20}
               color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
+              style={styles.leftIcon}
             />
-          </TouchableOpacity>
+          )}
+          <TextInput
+            style={[styles.input, { color: colors.text }, style]}
+            placeholderTextColor={colors.icon}
+            selectionColor={colors.tint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            textAlignVertical="center"
+            ref={ref}
+            {...props}
+          />
+          {rightIcon && (
+            <TouchableOpacity
+              onPress={onRightIconPress}
+              hitSlop={styles.hitSlop}
+              style={styles.rightIcon}
+            >
+              <Ionicons
+                name={rightIcon}
+                size={20}
+                color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
+        {(error || hint) && (
+          <View style={styles.helperTextContainer}>
+            <ThemedText type="caption" variant={error ? 'error' : 'secondary'}>
+              {error || hint}
+            </ThemedText>
+          </View>
         )}
       </View>
-      {(error || hint) && (
-        <View style={styles.helperTextContainer}>
-          <ThemedText type="caption" variant={error ? 'error' : 'secondary'}>
-            {error || hint}
-          </ThemedText>
-        </View>
-      )}
-    </View>
-  );
-}
+    );
+  }
+);
+
+ThemedInput.displayName = 'ThemedInput';
 
 const styles = StyleSheet.create({
   container: {

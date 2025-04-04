@@ -1,12 +1,12 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet } from 'react-native';
+import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useColors } from '../hooks/useColors';
 import { LAYOUT } from '../constants/layout';
 import { lightFeedback } from '../utils/haptics';
 import { getTouchableProps } from '../utils/accessibility';
 import { CloseButtonProps } from '@/types/ui/button.types';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import { usePressAnimation } from '@/hooks/animations';
 
 const styles = StyleSheet.create({
@@ -74,7 +74,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   };
 
   return (
-    <Animated.View style={animatedStyle as any}>
+    <Animated.View style={animatedStyle as AnimatedStyleProp<ViewStyle>}>
       <TouchableOpacity
         onPress={handlePress}
         onPressIn={handlePressIn}

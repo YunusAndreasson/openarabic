@@ -19,30 +19,23 @@ import { lightFeedback } from '@/utils/haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import { analytics } from '@/services/analytics';
+import { SentenceWord } from '../../types/vocabulary.types';
 
 // Global counter for tooltip zIndex values
 let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
 
-export interface ArabicWordProps {
-  word: {
-    id?: number | string;
-    word_form: string;
-    english?: string;
-    [key: string]: any;
+interface ArabicWordProps {
+  word: SentenceWord;
+  onPress: (word: SentenceWord) => void;
+  settings: {
+    showEnglish: boolean;
+    fontScale: number;
+    showTransliteration?: boolean;
+    showWordType?: boolean;
   };
-  isSelected?: boolean;
-  onPress: (word: any) => void;
-  scale?: number;
-  baseSize?: number;
 }
 
-function ArabicWordComponent({
-  word,
-  isSelected: propIsSelected,
-  onPress,
-  scale = 1,
-  baseSize = 32,
-}: ArabicWordProps) {
+function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
@@ -69,7 +62,7 @@ function ArabicWordComponent({
   }, [studyWords, word.id]);
 
   // Use directly checked selection status OR forced selection OR prop
-  const isSelected = forceSelected !== null ? forceSelected : directlySelected || propIsSelected;
+  const isSelected = forceSelected !== null ? forceSelected : directlySelected;
 
   // Use transform animation for press feedback
   const {
@@ -164,7 +157,7 @@ function ArabicWordComponent({
   }, []);
 
   // Calculate font size once outside the memo to avoid recalculations
-  const calculatedFontSize = baseSize * scale;
+  const calculatedFontSize = settings.fontScale * 32;
 
   // Memoize text props to prevent unnecessary recalculations
   const textProps = useMemo(

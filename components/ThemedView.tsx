@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
-import { ScrollView, View, StyleSheet } from 'react-native';
+import { ScrollView, View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
 import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { ThemedViewProps } from '@/types/ui/layout.types';
-import { AnimatedStyleProp } from '@/types/ui/base.types';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -36,7 +35,7 @@ function ThemedViewComponent({
       style,
     ],
     [colors.background, style]
-  ) as AnimatedStyleProp<any>;
+  ) as StyleProp<ViewStyle>;
 
   // Determine which edges to apply safe area insets to
   const edges = useMemo((): Edge[] | undefined => {

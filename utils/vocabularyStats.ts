@@ -1,3 +1,5 @@
+import { StudyWord } from '../types/vocabulary.types';
+
 export interface WeeklyProgressData {
   date: string;
   count: number;
@@ -17,7 +19,7 @@ interface ReviewLog {
  * @returns Array of weekly progress data points
  */
 export function calculateWeeklyProgressData(
-  studyWords: any[] = [],
+  studyWords: StudyWord[] = [],
   reviewLogs: ReviewLog[] = []
 ): WeeklyProgressData[] {
   // Get today's date and create a map of dates
@@ -84,4 +86,9 @@ export function calculateWeeklyProgressData(
         wordsLearned: Math.max(0, cumulativeWords),
       };
     });
+}
+
+export class VocabularyStats {
+  studyWords: StudyWord[] = [];
+  // ... existing code ...
 }

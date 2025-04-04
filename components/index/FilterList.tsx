@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { View, Pressable, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import PropTypes from 'prop-types';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import SectionTitle from '../SectionTitle';
@@ -91,6 +92,20 @@ function FilterList<T extends FilterItem>({
     </View>
   );
 }
+
+// Add PropTypes validation
+FilterList.propTypes = {
+  title: PropTypes.string.isRequired,
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    })
+  ).isRequired,
+  selectedId: PropTypes.number,
+  onSelect: PropTypes.func.isRequired,
+  onClearFilter: PropTypes.func,
+};
 
 const styles = StyleSheet.create({
   clearButton: {

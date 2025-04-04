@@ -190,7 +190,7 @@ function FilterScreenContent() {
       });
 
       // Use the navigation with debounce for smoother transitions
-      navigateTo(`/article/${article.id}`);
+      navigateTo({ pathname: '/article/[id]', params: { id: article.id } });
     },
     [navigateTo, queryClient]
   );

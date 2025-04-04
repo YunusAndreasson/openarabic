@@ -22,9 +22,9 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
   // Use pulse animation hook with gentle style for smooth scaling effect
   const { animatedStyle } = usePulseAnimation({
     style: 'gentle',
-    pulseMagnitude: 1, // No pulse
-    duration: 0, // No duration
-    autoStart: false, // Don't auto start
+    pulseMagnitude: 1.05,
+    duration: 1000,
+    autoStart: true,
   });
 
   // Size configuration with safe defaults - always defaulting to large
@@ -129,9 +129,20 @@ export const AppLoader: React.FC<AppLoaderProps> = ({ color }) => {
   const colors = useColors();
 
   return (
-    <View style={[styles.appLoader, { backgroundColor: colors.background }]}>
-      <Loader size="large" color={color || colors.tint} />
-    </View>
+    <Animated.View style={[styles.appLoader, { backgroundColor: colors.background }]}>
+      <View style={styles.container}>
+        <View
+          style={[
+            styles.circle,
+            styles.appLoaderCircle,
+            {
+              backgroundColor: colors.transparent,
+              borderColor: color || colors.tint,
+            },
+          ]}
+        />
+      </View>
+    </Animated.View>
   );
 };
 
@@ -145,6 +156,12 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
+  },
+  appLoaderCircle: {
+    borderRadius: 26,
+    borderWidth: 5,
+    height: 52,
+    width: 52,
   },
   circle: {
     // Base styles only - specific styles moved to circleStyle for better memoization

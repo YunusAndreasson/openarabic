@@ -1,11 +1,12 @@
 import { Tabs } from 'expo-router';
 import React, { useMemo, useCallback } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, ViewStyle } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '@/constants/layout';
 import { PlatformPressable } from '@react-navigation/elements';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import { ThemedText } from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,7 +58,7 @@ const PLATFORM_STYLES = Platform.select({
   android: {
     elevation: 8,
   },
-}) as any;
+}) as ViewStyle;
 
 const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
@@ -118,7 +119,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
 
   // Memoized tab press handler
   const getTabPressHandler = useCallback(
-    (route: any, isFocused: boolean) => {
+    (route: Route<string>, isFocused: boolean) => {
       return () => {
         const event = navigation.emit({
           type: 'tabPress',
@@ -218,30 +219,30 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  blurContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    borderTopWidth: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER, // Match z-index with top header
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: LAYOUT.SPACING.TINY / 2,
-  },
-  label: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.TINY / 2,
-  },
   activeIcon: {
     opacity: 1,
   },
+  blurContainer: {
+    borderTopWidth: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    zIndex: LAYOUT.Z_INDEX.HEADER, // Match z-index with top header
+  },
   inactiveIcon: {
     opacity: 0.7,
+  },
+  label: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    marginTop: LAYOUT.SPACING.TINY / 2,
+    textAlign: 'center',
+  },
+  tabButton: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingBottom: LAYOUT.SPACING.TINY / 2,
   },
 });

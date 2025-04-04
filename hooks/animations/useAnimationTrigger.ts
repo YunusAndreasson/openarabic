@@ -1,6 +1,6 @@
 import { handleError } from '@/utils/errorHandling';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { runOnUI } from 'react-native-reanimated';
+import { runOnUI, isWorkletFunction } from 'react-native-reanimated';
 
 /**
  * Return type for useAnimationTrigger hook
@@ -84,8 +84,11 @@ export const useAnimationTrigger = (
   const safeStartAnimation = useCallback(() => {
     if (isMountedRef.current && startAnimation) {
       try {
-        // Attempt to run the animation on the UI thread for better performance
-        runOnUI(startAnimation)();
+        if (isWorkletFunction(startAnimation)) {
+          runOnUI(startAnimation)();
+        } else {
+          startAnimation();
+        }
       } catch (e) {
         handleError(e instanceof Error ? e : String(e));
         startAnimation();

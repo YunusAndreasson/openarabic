@@ -30,6 +30,7 @@ import { lightFeedback } from '@/utils/haptics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { Tables } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
+import { Article } from '../../types/articles.types';
 
 const styles = StyleSheet.create({
   container: {
@@ -236,7 +237,7 @@ export default function ArticleScreen() {
   );
 
   // Use the article renderers hook
-  const { prepareWord, handleArticlePress, getWordsForSentence } = useArticleRenderers(
+  const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     colors,
     selectedWordIds,
@@ -252,7 +253,7 @@ export default function ArticleScreen() {
         handleError(error);
       });
     }
-    navigateTo('..'); // Navigate immediately
+    navigateTo({ pathname: '/' }); // Navigate to root
   }, [navigateTo, isPlaying, stopPlayback]);
 
   // Handle bookmark toggle with optimistic updates
@@ -298,19 +299,21 @@ export default function ArticleScreen() {
         word_type: Tables<'word_types'> | null;
       }
     ) => {
-      const props = prepareWord(word);
       return (
         <ArabicWord
-          key={props.key}
-          word={props.word}
-          isSelected={props.isSelected}
-          onPress={props.onPress}
-          scale={props.scale}
-          baseSize={props.baseSize}
+          key={word.id}
+          word={word}
+          onPress={word => handleWordPress(word.id)}
+          settings={{
+            showEnglish: false,
+            fontScale: settings.fontScale,
+            showTransliteration: false,
+            showWordType: false,
+          }}
         />
       );
     },
-    [prepareWord]
+    [handleWordPress, settings]
   );
 
   // Render article list item with optimized settings
@@ -334,7 +337,7 @@ export default function ArticleScreen() {
 
   // Render article card with memoization
   const renderArticleCard = useCallback(
-    (articleData: any) => (
+    (articleData: Article) => (
       <ThemedCard
         key={articleData.id}
         variant="compact"
@@ -366,10 +369,11 @@ export default function ArticleScreen() {
           backButtonStyle={backButtonStyle}
           bookmarkButtonStyle={bookmarkButtonStyle}
           playButtonStyle={playButtonStyle}
-          handleBackPress={handleBackPress}
-          handleBookmarkPress={handleBookmarkPress}
-          handlePlayPress={handlePlayPress}
+          onBackPress={handleBackPress}
+          onBookmarkPress={handleBookmarkPress}
+          onPlayPress={handlePlayPress}
           isInReadingList={isInReadingList}
+          isBookmarked={isInReadingList}
           initialBookmarkIcon={initialBookmarkIcon}
           isPlaying={isPlaying}
           colors={colors}
@@ -392,10 +396,11 @@ export default function ArticleScreen() {
           backButtonStyle={backButtonStyle}
           bookmarkButtonStyle={bookmarkButtonStyle}
           playButtonStyle={playButtonStyle}
-          handleBackPress={handleBackPress}
-          handleBookmarkPress={handleBookmarkPress}
-          handlePlayPress={handlePlayPress}
+          onBackPress={handleBackPress}
+          onBookmarkPress={handleBookmarkPress}
+          onPlayPress={handlePlayPress}
           isInReadingList={isInReadingList}
+          isBookmarked={isInReadingList}
           initialBookmarkIcon={initialBookmarkIcon}
           isPlaying={isPlaying}
           colors={colors}
@@ -420,10 +425,11 @@ export default function ArticleScreen() {
         backButtonStyle={backButtonStyle}
         bookmarkButtonStyle={bookmarkButtonStyle}
         playButtonStyle={playButtonStyle}
-        handleBackPress={handleBackPress}
-        handleBookmarkPress={handleBookmarkPress}
-        handlePlayPress={handlePlayPress}
+        onBackPress={handleBackPress}
+        onBookmarkPress={handleBookmarkPress}
+        onPlayPress={handlePlayPress}
         isInReadingList={isInReadingList}
+        isBookmarked={isInReadingList}
         initialBookmarkIcon={initialBookmarkIcon}
         isPlaying={isPlaying}
         colors={colors}

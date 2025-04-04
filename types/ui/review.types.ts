@@ -32,14 +32,12 @@ export interface MeaningOverlayProps {
   meaning: string;
   /** Whether this is a warning message */
   isWarning?: boolean;
-  /** Translation of the word (alternative to meaning) */
-  translation?: string;
-  /** Function to close the overlay */
-  onClose?: () => void;
-  /** Display duration in milliseconds */
+  /** Animation duration in milliseconds */
   duration?: number;
   /** Whether to animate the overlay */
   animate?: boolean;
+  /** Function to call when the overlay is closed */
+  onClose?: () => void;
 }
 
 /**

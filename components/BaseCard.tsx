@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Pressable, View } from 'react-native';
+import { StyleSheet, Pressable, View, ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { usePressAnimation } from '../hooks/animations';
@@ -89,18 +90,18 @@ const BaseCard: React.FC<BaseCardProps> = ({
   // Render loading state if needed
   if (isLoading) {
     return (
-      <View style={combinedCardStyle as AnimatedStyleProp<any>}>
+      <Animated.View style={combinedCardStyle as AnimatedStyleProp<ViewStyle>}>
         {loadingComponent || <LoadingContainer size="medium" />}
-      </View>
+      </Animated.View>
     );
   }
 
   // Non-interactive card
   if (!onPress) {
     return (
-      <View style={combinedCardStyle as AnimatedStyleProp<any>} testID={testID}>
+      <Animated.View style={combinedCardStyle as AnimatedStyleProp<ViewStyle>} testID={testID}>
         <View style={combinedContentStyle}>{children}</View>
-      </View>
+      </Animated.View>
     );
   }
 

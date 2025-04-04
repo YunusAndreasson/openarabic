@@ -20,69 +20,24 @@ import { AUDIO_STATES, useAudioPlayer, AudioTrack } from '@/hooks/useAudioPlayer
 import PageHeader from '@/components/PageHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
+import { Article } from '../../types/articles.types';
+import { Tables } from '../../types/database.types';
+
+type ReadingListItem = Tables<'reading_list'> & {
+  articles: Article & {
+    author: {
+      id: number;
+      name: string;
+    };
+  };
+};
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  cardContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    position: 'relative',
-  },
-  card: {
-    overflow: 'hidden',
-  },
-  cardContent: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  textContent: {
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  titleText: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 4,
-  },
-  cardProgressContainer: {
-    bottom: 0,
-    height: 4,
-    left: 0,
-    overflow: 'hidden',
-    position: 'absolute',
-    width: '100%',
-  },
-  cardProgressBar: {
-    height: '100%',
-  },
-  // Bottom action bar
-  bottomControlsContainer: {
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SCREEN_EDGE_PADDING,
-    position: 'absolute',
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: LAYOUT.Z_INDEX.POPUP,
-  },
-  controlsCard: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
-  },
-  controlsLabelContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
   actionButtonsRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-  },
-  shuffleButton: {
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
   activeCard: {
     borderLeftWidth: 3,
@@ -93,23 +48,78 @@ const styles = StyleSheet.create({
   activeIcon: {
     opacity: LAYOUT.OPACITY.DIMMED,
   },
-  inactiveIcon: {
-    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+  bottomControlsContainer: {
+    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    left: LAYOUT.SCREEN_EDGE_PADDING,
+    position: 'absolute',
+    right: LAYOUT.SCREEN_EDGE_PADDING,
+    zIndex: LAYOUT.Z_INDEX.POPUP,
   },
   buttonContainer: {
     width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
   },
-  fullWidthButton: {
+  card: {
+    overflow: 'hidden',
+  },
+  cardContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
+  },
+  cardContent: {
+    alignItems: 'flex-start',
+    flexDirection: 'row',
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  cardProgressBar: {
+    height: '100%',
+  },
+  cardProgressContainer: {
+    bottom: 0,
+    height: 4,
+    left: 0,
+    overflow: 'hidden',
+    position: 'absolute',
     width: '100%',
+  },
+  container: {
+    flex: 1,
+  },
+  controlsCard: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
+  },
+  controlsLabelContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   flexOne: {
     flex: 1,
   },
-  mediumOpacity: {
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  fullWidthButton: {
+    width: '100%',
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 4,
+  },
+  inactiveIcon: {
+    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
   },
   listContentWithHeader: {
     paddingTop: 0,
+  },
+  mediumOpacity: {
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  shuffleButton: {
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  },
+  textContent: {
+    flex: 1,
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  titleText: {
+    marginBottom: LAYOUT.SPACING.TINY,
   },
 });
 
@@ -118,14 +128,14 @@ const styles = StyleSheet.create({
 const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding and margins
 
 // Memory-optimized component for reading list items
-const ReadingListItem = React.memo(
+const BookmarkListItem = React.memo(
   ({
     item,
     progress,
     duration,
     isActive,
   }: {
-    item: any;
+    item: ReadingListItem;
     audioState: string;
     progress: number;
     duration: number;
@@ -214,7 +224,7 @@ const ReadingListItem = React.memo(
   }
 );
 
-ReadingListItem.displayName = 'ReadingListItem';
+BookmarkListItem.displayName = 'BookmarkListItem';
 
 // Bottom Action Buttons component
 const BottomControls = React.memo(
@@ -277,7 +287,7 @@ export default function BookmarksScreen() {
   const colors = useColors();
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
-  const flashListRef = useRef<FlashList<any>>(null);
+  const flashListRef = useRef<FlashList<ReadingListItem>>(null);
   // Store the current playlist
   const currentPlaylistRef = useRef<AudioTrack[]>([]);
 
@@ -540,8 +550,9 @@ export default function BookmarksScreen() {
               title="No Bookmarks Found"
               description="Bookmark articles to listen to them later or save them for reference."
               actionText="Browse Articles"
-              icon="book"
+              icon={{ name: 'book', size: 48 }}
               onAction={() => router.push('/(tabs)')}
+              colors={colors}
             />
           </ThemedView>
           <PageHeader title="Bookmarks" />
@@ -565,7 +576,7 @@ export default function BookmarksScreen() {
             extraData={[audioState, currentTrackIndex, progress]}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (
-              <ReadingListItem
+              <BookmarkListItem
                 item={item}
                 audioState={audioState}
                 progress={progress}

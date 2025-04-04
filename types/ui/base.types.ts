@@ -15,10 +15,7 @@ export interface BaseStyleProps {
  */
 export interface BaseAnimatedStyleProps {
   /** Optional style to apply to the component, supporting animated styles */
-  style?:
-    | StyleProp<ViewStyle>
-    | StyleProp<AnimatedStyle<ViewStyle>>
-    | AnimatedStyle<StyleProp<ViewStyle>>;
+  style?: StyleProp<ViewStyle> | AnimatedStyle<ViewStyle>;
 }
 
 /**
@@ -74,8 +71,4 @@ export interface BasePillStyles {
 /**
  * Type to help with animated style casting
  */
-export type AnimatedStyleProp<T> =
-  | StyleProp<T>
-  | StyleProp<AnimatedStyle<T>>
-  | AnimatedStyle<StyleProp<T>>
-  | any; // Fallback for complex animation cases
+export type AnimatedStyleProp<T> = StyleProp<T> | AnimatedStyle<T>;

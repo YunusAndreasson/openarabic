@@ -298,7 +298,7 @@ export default function ArticlesScreen() {
         }
       }
 
-      navigateTo(`/article/${article.id}`, () => {
+      navigateTo({ pathname: '/article/[id]', params: { id: article.id } }, () => {
         if (session?.user) {
           dispatch(addToReadingList(article.id));
         }

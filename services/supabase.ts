@@ -16,6 +16,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    flowType: 'pkce',
+    debug: __DEV__,
   },
 });
 
@@ -35,45 +37,40 @@ AppState.addEventListener('change', state => {
  * @throws Error if user is not authenticated or IDs don't match
  */
 export async function checkAuthentication(expectedUserId?: string) {
-  try {
-    const { data, error } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
 
-    if (error) {
-      handleError(error, {
-        toastMessage: 'Authentication error',
-        analyticsEventName: 'Auth_Session_Error',
-        sentrySeverity: 'error',
-      });
-      throw error;
-    }
-
-    if (!data.session || !data.session.user) {
-      const error = new Error('User must be authenticated');
-      handleError(error, {
-        toastMessage: 'Please sign in to continue',
-        analyticsEventName: 'Auth_Required',
-        sentrySeverity: 'info',
-      });
-      throw error;
-    }
-
-    // If an expected user ID was provided, verify it matches
-    if (expectedUserId && data.session.user.id !== expectedUserId) {
-      const error = new Error('User ID mismatch');
-      handleError(error, {
-        toastMessage: 'Session expired, please sign in again',
-        analyticsEventName: 'Auth_User_Mismatch',
-        sentrySeverity: 'warning',
-      });
-      throw error;
-    }
-
-    return {
-      session: data.session,
-      user: data.session.user,
-    };
-  } catch (error) {
-    // Re-throw the error after handling it
+  if (error) {
+    handleError(error, {
+      toastMessage: 'Authentication error',
+      analyticsEventName: 'Auth_Session_Error',
+      sentrySeverity: 'error',
+    });
     throw error;
   }
+
+  if (!data.session || !data.session.user) {
+    const error = new Error('User must be authenticated');
+    handleError(error, {
+      toastMessage: 'Please sign in to continue',
+      analyticsEventName: 'Auth_Required',
+      sentrySeverity: 'info',
+    });
+    throw error;
+  }
+
+  // If an expected user ID was provided, verify it matches
+  if (expectedUserId && data.session.user.id !== expectedUserId) {
+    const error = new Error('User ID mismatch');
+    handleError(error, {
+      toastMessage: 'Session expired, please sign in again',
+      analyticsEventName: 'Auth_User_Mismatch',
+      sentrySeverity: 'warning',
+    });
+    throw error;
+  }
+
+  return {
+    session: data.session,
+    user: data.session.user,
+  };
 }

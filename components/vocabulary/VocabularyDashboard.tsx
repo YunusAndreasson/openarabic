@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, ViewStyle } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { LAYOUT } from '../../constants/layout';
 import { VocabularyStats } from '@/types/vocabulary.types';
 import { usePressAnimation } from '@/hooks/animations';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import BaseCard from '../BaseCard';
 import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
@@ -52,7 +52,7 @@ const StatItem = React.memo(
     };
 
     return (
-      <Animated.View style={animatedStyle as any}>
+      <Animated.View style={animatedStyle as AnimatedStyleProp<ViewStyle>}>
         <TouchableOpacity
           style={styles.statItem}
           onPress={handlePress}
@@ -65,7 +65,7 @@ const StatItem = React.memo(
           accessibilityHint={`Shows details about ${label.toLowerCase()} words`}
         >
           <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
-            <Ionicons name={icon as any} size={24} color={iconColor} />
+            <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={24} color={iconColor} />
           </View>
           <ThemedText type="body" weight="600" style={styles.statValue}>
             {value}
@@ -83,10 +83,10 @@ StatItem.displayName = 'StatItem';
 
 export const VocabularyDashboard = React.memo(
   ({
-    totalWords,
-    masteredWords,
-    learningWords,
-    dueWords,
+    totalWords = 0,
+    masteredWords = 0,
+    learningWords = 0,
+    dueWords = 0,
     animationTriggered = false,
     onStatPress,
   }: VocabularyDashboardProps) => {

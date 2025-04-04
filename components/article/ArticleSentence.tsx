@@ -1,5 +1,5 @@
 import React, { memo, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { ArabicWord } from './ArabicWord';
 import { Colors } from '../../constants/Colors';
 import { LAYOUT } from '../../constants/layout';
@@ -11,20 +11,25 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 import { useLocalSearchParams } from 'expo-router';
+import { ThemeColors } from '../../types/ui/theme.types';
+import { SentenceWord } from '../../types/vocabulary.types';
 
 interface ArticleSentenceProps {
   sentence: {
     id: string | number;
     english?: string;
   };
-  words: any[]; // Words are passed as a separate prop
-  renderWord?: (word: any) => React.ReactNode; // Function to render words
-  onWordPress?: (word: any) => void; // Optional if renderWord is provided
-  settings?: any;
-  colors?: any;
-  containerStyle?: any;
-  scale?: number;
-  baseSize?: number;
+  words: SentenceWord[];
+  renderWord?: (word: SentenceWord) => React.ReactNode;
+  onWordPress?: (word: SentenceWord) => void;
+  settings: {
+    showEnglish: boolean;
+    fontScale: number;
+    showTransliteration?: boolean;
+    showWordType?: boolean;
+  };
+  colors: ThemeColors;
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 function ArticleSentenceComponent({
@@ -35,8 +40,6 @@ function ArticleSentenceComponent({
   settings,
   colors: propColors,
   containerStyle,
-  scale = 1,
-  baseSize = 32,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
@@ -78,8 +81,7 @@ function ArticleSentenceComponent({
                 key={`${word.id}-${index}`}
                 word={word}
                 onPress={onWordPress!}
-                scale={scale}
-                baseSize={baseSize}
+                settings={settings}
               />
             ))}
       </View>

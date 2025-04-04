@@ -180,7 +180,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         data={articles}
         renderItem={renderItem}
         estimatedItemSize={ITEM_HEIGHT}
-        keyExtractor={item => `filtered-article-${item.id}`}
+        keyExtractor={(_, index) => String(index)}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={HeaderSpacer}
         ListEmptyComponent={ListEmptyComponent}

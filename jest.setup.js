@@ -2,11 +2,12 @@
  * @jest-environment node
  */
 
-/* global jest */
+import { jest } from '@jest/globals';
+import { TextEncoder, TextDecoder } from 'util';
 
 // eslint-disable-next-line no-undef
 if (typeof global.jest === 'undefined') {
-  global.jest = require('@jest/globals').jest;
+  global.jest = jest;
 }
 
 // Mock requestAnimationFrame and cancelAnimationFrame
@@ -171,12 +172,11 @@ global.Intl = {
   }),
 };
 
-// Fix TextEncoder issue in jest environment
 if (typeof TextEncoder === 'undefined') {
-  global.TextEncoder = require('util').TextEncoder;
+  global.TextEncoder = TextEncoder;
 }
 if (typeof TextDecoder === 'undefined') {
-  global.TextDecoder = require('util').TextDecoder;
+  global.TextDecoder = TextDecoder;
 }
 
 // Mock react-native-safe-area-context

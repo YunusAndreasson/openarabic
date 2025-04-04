@@ -40,28 +40,17 @@ import { analytics } from '../services/analytics';
 import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
 import madinaFont from '../assets/fonts/Madina.otf';
 
-// Create navigation integration for Sentry
-const navigationIntegration = Sentry.reactNavigationIntegration();
-
-Sentry.init({
-  dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
-  integrations: [navigationIntegration],
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
-});
-
-// Keep the splash screen visible while we fetch resources
+// Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
-  /* Rehydrating, ignore errors */
+  /* Ignore errors */
 });
 
-// Create React Query client with more balanced caching defaults
+// Create React Query client with balanced caching defaults
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60000,
       gcTime: 300000,
-      refetchOnWindowFocus: true,
       refetchOnMount: true,
       refetchOnReconnect: true,
       retry: 1,
@@ -71,6 +60,15 @@ const queryClient = new QueryClient({
       gcTime: 0,
     },
   },
+});
+
+// Initialize Sentry navigation integration
+const navigationIntegration = Sentry.reactNavigationIntegration();
+Sentry.init({
+  dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
+  integrations: [navigationIntegration],
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
 });
 
 // Static stack options
@@ -131,6 +129,14 @@ function AppContent() {
     }),
     [appReady, isLoaded]
   );
+
+  // Register navigation container with Sentry
+  useEffect(() => {
+    if (navigationRef?.current) {
+      const navigationIntegration = Sentry.reactNavigationIntegration();
+      navigationIntegration.registerNavigationContainer(navigationRef);
+    }
+  }, [navigationRef]);
 
   // Identify user in Mixpanel when auth state changes
   useEffect(() => {
@@ -201,13 +207,6 @@ function AppContent() {
     }
   }, [fontsLoaded, isLoaded, isAuthLoading]);
 
-  // Register navigation container with Sentry
-  useEffect(() => {
-    if (navigationRef?.current) {
-      navigationIntegration.registerNavigationContainer(navigationRef);
-    }
-  }, [navigationRef]);
-
   // Don't render anything until initial resources are loaded
   if (!fontsLoaded || !isLoaded || isAuthLoading) {
     return <AppLoader color={colors.tint} />;
@@ -220,7 +219,7 @@ function AppContent() {
           <View style={styles.container} onLayout={onLayoutRootView}>
             {!showLoader ? (
               <>
-                <Stack ref={navigationRef} screenOptions={stackScreenOptions}>
+                <Stack screenOptions={stackScreenOptions}>
                   <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   <Stack.Screen name="article" options={{ headerShown: false }} />
                   <Stack.Screen name="review" options={reviewScreenOptions} />

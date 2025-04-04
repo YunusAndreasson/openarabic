@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, NativeScrollEvent, NativeSyntheticEvent, View } from 'react-native';
+import { StyleSheet, NativeScrollEvent, NativeSyntheticEvent, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -9,6 +9,7 @@ import { ArticleHeader, RelatedArticlesFooter } from '@/components/article';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { Tables } from '@/types/database.types';
 import { Article } from '@/types/articles.types';
+import { ThemeColors } from '../../types/ui/theme.types';
 
 const styles = StyleSheet.create({
   content: {
@@ -23,19 +24,19 @@ const styles = StyleSheet.create({
   },
 });
 
-type ArticleContentProps = {
+interface ArticleContentProps {
   id: string;
   article: Article;
   sortedSentences: Tables<'article_sentences'>[];
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => React.ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  colors: any;
+  colors: ThemeColors;
   isDarkMode: boolean;
-  footerStyle: any;
+  footerStyle?: AnimatedStyleProp<ViewStyle>;
   otherArticles?: Article[];
   otherCategoryArticles?: Article[];
   renderArticleCard: (articleData: Article) => React.ReactElement;
-};
+}
 
 const SENTENCE_ITEM_HEIGHT = 70;
 

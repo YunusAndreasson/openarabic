@@ -17,9 +17,9 @@ export interface ArticleListProps {
   /** Callback when an article is pressed */
   onArticlePress: (article: Article) => void;
   /** Optional component to render at the top of the list */
-  ListHeaderComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListHeaderComponent?: React.ComponentType<object> | React.ReactElement | null;
   /** Optional component to render when the list is empty */
-  ListEmptyComponent?: React.ComponentType<any> | React.ReactElement | null;
+  ListEmptyComponent?: React.ComponentType<object> | React.ReactElement | null;
   /** Optional style for the list content container */
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Whether to hide the main list of articles and only show header sections */

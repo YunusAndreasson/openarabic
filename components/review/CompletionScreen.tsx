@@ -65,7 +65,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose, onMount })
 
           <AnimatedItem delay={500}>
             <ThemedText type="heading3" variant="primary" style={styles.subtitleText}>
-              You've completed your review session.
+              You completed your review session.
             </ThemedText>
           </AnimatedItem>
         </View>

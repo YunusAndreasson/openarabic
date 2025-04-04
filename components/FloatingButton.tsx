@@ -7,6 +7,7 @@ import { FloatingButtonProps } from '@/types/ui/button.types';
 import { usePressAnimation } from '@/hooks/animations';
 import { lightFeedback } from '@/utils/haptics';
 import { useToast } from './ToastProvider';
+import { AnimatedStyleProp } from '@/types/ui/base.types';
 
 const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM;
 
@@ -128,7 +129,9 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
   }, [isBookmarked, isDarkMode, colors]);
 
   return (
-    <Animated.View style={[containerStyle, combinedAnimatedStyle as any, style]}>
+    <Animated.View
+      style={[containerStyle, combinedAnimatedStyle as AnimatedStyleProp<ViewStyle>, style]}
+    >
       <Pressable
         style={[
           styles.button,
@@ -143,7 +146,12 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
         accessibilityLabel={accessibilityLabel}
         accessibilityRole="button"
       >
-        <Ionicons name={iconName as any} size={24} color={iconColor} style={styles.buttonIcon} />
+        <Ionicons
+          name={iconName as keyof typeof Ionicons.glyphMap}
+          size={24}
+          color={iconColor}
+          style={styles.buttonIcon}
+        />
       </Pressable>
     </Animated.View>
   );

@@ -4,6 +4,7 @@ import { useNavigationWithDebounce } from './useNavigationWithDebounce';
 import { handleError } from '@/utils/errorHandling';
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
+import type { Route } from '@/types/navigation.types';
 
 /**
  * Hook for article rendering functions
@@ -72,7 +73,7 @@ export const useArticleRenderers = (
             params: {
               id: articleId.toString(),
             },
-          } as any); // Cast to any to fix type issue temporarily
+          } as Route<'/article/[id]'>);
         } else {
           // For normal navigation, use the debounce hook
           navigateTo({

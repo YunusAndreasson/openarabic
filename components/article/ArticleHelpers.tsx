@@ -109,20 +109,12 @@ const styles = StyleSheet.create({
   difficultyTextContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  starsContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
   starIcon: {
     marginRight: LAYOUT.SPACING.TINY,
   },
-  timeAgoContainer: {
+  starsContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    paddingLeft: 0,
-  },
-  timeIcon: {
-    marginRight: LAYOUT.SPACING.TINY,
   },
   summaryIndicatorContainer: {
     alignItems: 'flex-start',
@@ -131,5 +123,13 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     lineHeight: 14,
+  },
+  timeAgoContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    paddingLeft: 0,
+  },
+  timeIcon: {
+    marginRight: LAYOUT.SPACING.TINY,
   },
 });

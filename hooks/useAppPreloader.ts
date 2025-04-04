@@ -6,6 +6,7 @@ import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { useAuth } from './useAuth';
 import { handleError } from '@/utils/errorHandling';
+
 /**
  * Hook to preload app data during initialization
  */
@@ -27,7 +28,7 @@ export const useAppPreloader = () => {
     setIsLoaded(false);
 
     try {
-      const promises: Promise<any>[] = [
+      const promises: Promise<unknown>[] = [
         queryClient.fetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),

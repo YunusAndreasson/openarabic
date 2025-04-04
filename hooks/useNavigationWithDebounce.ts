@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { router } from 'expo-router';
 import { handleError } from '@/utils/errorHandling';
+import type { Route, RoutePath } from '@/types/navigation.types';
+
 interface NavigationOptions {
   /**
    * Debounce duration in milliseconds
@@ -15,7 +17,7 @@ interface NavigateToOptions {
   replace?: boolean;
 }
 
-type NavigationRoute = string | { pathname: string; params?: Record<string, string | number> };
+type NavigationRoute = Route<RoutePath>;
 
 interface NavigationWithDebounceReturn {
   isNavigating: boolean;
@@ -73,9 +75,9 @@ export const useNavigationWithDebounce = (
       // Navigate immediately
       try {
         if (navigateOptions?.replace) {
-          router.replace(route as any);
+          router.replace(route as Parameters<typeof router.replace>[0]);
         } else {
-          router.push(route as any);
+          router.push(route as Parameters<typeof router.push>[0]);
         }
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));

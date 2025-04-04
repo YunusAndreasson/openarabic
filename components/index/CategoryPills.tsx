@@ -99,10 +99,10 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   rightFadeGradient: {
+    bottom: 0,
     position: 'absolute',
     right: 0,
     top: 0,
-    bottom: 0,
     width: `${LAYOUT.WIDTH_RATIOS.TWO_FIFTHS * 100}%`, // Better than hardcoded 40%
     zIndex: 1,
   },

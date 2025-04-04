@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform, ViewStyle } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { StudyWord } from '../../types/vocabulary.types';
-import Animated from 'react-native-reanimated';
+import Animated, { AnimatedStyle } from 'react-native-reanimated';
 import { usePressAnimation } from '../../hooks/animations';
 import { State } from 'ts-fsrs';
 import { format } from 'date-fns';
@@ -113,7 +113,7 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
   // Get learning state label
 
   return (
-    <Animated.View style={animatedStyle as any}>
+    <Animated.View style={animatedStyle as AnimatedStyle<ViewStyle>}>
       <TouchableOpacity
         style={containerStyle}
         onPress={handlePress}

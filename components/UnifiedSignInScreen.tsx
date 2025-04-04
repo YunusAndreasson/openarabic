@@ -9,6 +9,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import PageHeader from './PageHeader';
 import { withOpacity } from '../utils/colorUtils';
 import Auth from './Auth';
+import { ThemeColors } from '../types/ui/theme.types';
 
 interface UnifiedSignInScreenProps {
   /**
@@ -18,7 +19,7 @@ interface UnifiedSignInScreenProps {
   /**
    * Theme colors object
    */
-  colors: any;
+  colors: ThemeColors;
 }
 
 /**

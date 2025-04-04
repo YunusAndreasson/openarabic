@@ -1,4 +1,5 @@
 import { TextProps, TextStyle, StyleProp } from 'react-native';
+import { SentenceWord } from '../vocabulary.types';
 
 export type TextTypeName =
   | 'arabic'
@@ -67,33 +68,30 @@ export interface ThemedTextProps extends TextProps {
  * Props for the ArabicWord component
  */
 export interface ArabicWordProps {
-  /** The word object with details */
-  word: {
-    word_form: string;
-    english?: string;
-    id?: number;
-    [key: string]: any;
-  };
-  /** Whether this word is selected */
+  word: SentenceWord;
   isSelected?: boolean;
-  /** Function called when word is pressed */
-  onPress: (word: any) => void;
-  /** Scaling factor for the word size */
+  onPress: (word: SentenceWord) => void;
   scale?: number;
-  /** Base size for the word display */
   baseSize?: number;
-  /** Whether the word is interactive */
   interactive?: boolean;
-  /** Whether a long press should show word info */
   showInfoOnLongPress?: boolean;
-  /** Whether to highlight the word */
   highlighted?: boolean;
-  /** Color when the word is highlighted */
   highlightColor?: string;
-  /** Size of text (normal, large) */
   size?: 'normal' | 'large' | 'small';
-  /** Custom font size */
   fontSize?: number;
-  /** Custom line height */
   lineHeight?: number;
+}
+
+export interface TextStyleProps {
+  style?: StyleProp<TextStyle>;
+  color?: string;
+  fontSize?: number;
+  fontFamily?: string;
+  textAlign?: 'left' | 'center' | 'right';
+  lineHeight?: number;
+  letterSpacing?: number;
+}
+
+export interface WordPressProps {
+  onPress: (word: SentenceWord) => void;
 }

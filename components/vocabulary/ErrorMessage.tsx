@@ -8,6 +8,13 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useNavigation } from 'expo-router';
 import { ErrorMessageProps } from '@/types/ui/review.types';
 
+type TabParamList = {
+  index: undefined;
+  vocabulary: undefined;
+  bookmarks: undefined;
+  settings: undefined;
+};
+
 /**
  * Displays an error message with a retry button
  */
@@ -17,7 +24,7 @@ const ErrorMessage = React.memo(
     customMessage = 'Unable to load data. Please try again.',
   }: ErrorMessageProps) => {
     const colors = useColors();
-    const navigation = useNavigation<BottomTabNavigationProp<any>>();
+    const navigation = useNavigation<BottomTabNavigationProp<TabParamList>>();
 
     return (
       <View style={styles.messageContainer} accessibilityRole="alert">
@@ -29,7 +36,7 @@ const ErrorMessage = React.memo(
         </ThemedText>
         <ThemedButton
           title="Try Again"
-          onPress={() => navigation.navigate(screenName as never)}
+          onPress={() => navigation.navigate(screenName as keyof TabParamList)}
           style={styles.retryButton}
           accessibilityLabel="Reload this screen"
         />

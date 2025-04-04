@@ -1,92 +1,68 @@
 /* eslint-disable no-unused-vars */
+import { ThemeColors } from '../types/ui/theme.types';
+
 export const Colors = {
   light: {
-    text: '#212121', // Dark charcoal for primary text
-    textSecondary: '#424242', // Medium charcoal for secondary text
-    textTertiary: '#606060', // Lighter charcoal for tertiary text
-    background: '#FAFAFA', // Soft near-white for background
-    tint: '#333333', // Neutral dark tint for interactive elements
-    icon: '#6E6E6E', // Medium gray for icons
-    tabIconDefault: '#888888', // Slightly muted gray for inactive tabs
-    tabIconSelected: '#2E7D32', // Signature green for selected tab
-    link: '#2E7D32', // Signature green for links
-    cardBackground: '#FFFFFF', // Pure white for cards
-    cardBorder: '#E0E0E0', // Light gray for card borders
-    cardShadow: '#999999', // Subtle gray for card shadow
-    categoryText: '#212121', // Dark charcoal for category text
-    authorText: '#606060', // Darker gray for author text (increased contrast)
-    arabicText: '#101010', // Pure black for Arabic text (brighter than regular text)
-    highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
-    englishText: '#424242', // Medium charcoal for English text (dimmer than Arabic)
-    titleText: '#212121', // Dark charcoal for title text
-    white: '#FFFFFF', // Using cardBackground color for consistency
-    success: '#2E7D32', // Signature green for success messages
-    warning: '#FCC419', // Muted amber/yellow for warning messages
-    error: '#D95040', // Soft red for error messages
-    info: '#339AF0', // Light blue for informational messages
-    shadow: '#999999', // Subtle gray shadow
-    overlay: 'rgba(0, 0, 0, 0.05)', // Light overlay for background elements
-    successOverlay: 'rgba(46, 125, 50, 0.2)', // Semi-transparent green for success overlay
-    warningOverlay: 'rgba(252, 196, 25, 0.2)', // Semi-transparent yellow for warning overlay
-    textOverlay: 'rgba(0, 0, 0, 0.1)', // Light text overlay for darkening
-    borderOverlay: 'rgba(255, 255, 255, 0.2)', // Darker border overlay
-    gradientStart: 'rgba(250, 250, 250, 0)',
-    gradientMiddle: 'rgba(240, 240, 240, 0.7)', // Light gradient middle
-    gradientEnd: 'rgba(240, 240, 240, 1)', // Full opacity gradient end
-    elevation1: '#F0F0F0', // Light elevation
-    elevation2: '#E0E0E0', // Slightly darker elevation
-    elevation3: '#D0D0D0', // Darker elevation
-    imagePlaceholder: 'rgba(0, 0, 0, 0.05)', // Light image placeholder
-    textShadowLight: 'rgba(0, 0, 0, 0.2)', // Light text shadow
-    textShadowDark: 'rgba(0, 0, 0, 0.5)', // Dark text shadow
-    modalOverlay: 'rgba(0, 0, 0, 0.5)', // Modal overlay
-    black: '#212121', // Using text color for consistency
-    transparent: 'transparent', // Transparent color
-  },
+    primary: '#333333',
+    background: '#FAFAFA',
+    text: '#212121',
+    secondaryText: '#424242',
+    border: '#E0E0E0',
+    card: '#FFFFFF',
+    cardBorder: '#F0F0F0',
+    error: '#D32F2F',
+    success: '#388E3C',
+    warning: '#F57C00',
+    englishText: '#424242',
+    authorText: '#757575',
+    tint: '#333333',
+    tabIconDefault: '#6E6E6E',
+    tabIconSelected: '#333333',
+    icon: '#6E6E6E',
+    transparent: 'transparent',
+    overlay: 'rgba(255, 255, 255, 0.8)',
+    modalOverlay: 'rgba(255, 255, 255, 0.95)',
+    borderOverlay: 'rgba(0, 0, 0, 0.1)',
+    shadow: '#000000',
+    elevation1: '#F5F5F5',
+    elevation2: '#EEEEEE',
+    elevation3: '#E0E0E0',
+    white: '#FFFFFF',
+    black: '#000000',
+    textOverlay: 'rgba(0, 0, 0, 0.1)',
+    info: '#2196F3',
+  } as ThemeColors,
   dark: {
-    text: '#E0E0E0', // Light gray for primary text
-    textSecondary: '#BBBBBB', // Medium light gray for secondary text
-    textTertiary: '#999999', // Darker gray for tertiary text
-    background: '#121212', // Near-black background
-    tint: '#CCCCCC', // Muted light gray for interactive elements
-    icon: '#BBBBBB', // Light gray for icons
-    tabIconDefault: '#888888', // Slightly muted gray for inactive tabs
-    tabIconSelected: '#2E7D32', // Signature green for selected tab
-    link: '#2E7D32', // Signature green for links
-    cardBackground: '#1E1E1E', // Dark gray card background
-    cardBorder: '#333333', // Darker gray for card borders
-    cardShadow: '#000000', // Dark shadow for depth
-    categoryText: '#E0E0E0', // Light gray for category text
-    authorText: '#CCCCCC', // Lighter gray for author text (improved contrast)
-    arabicText: '#F0F0F0', // Pure white for Arabic text (brighter than regular text)
-    highlightedArabicText: '#2E7D32', // Signature green for highlighted Arabic text
-    englishText: '#BBBBBB', // Medium light gray for English text (dimmer than Arabic)
-    titleText: '#E0E0E0', // Light gray for title text
-    white: '#1E1E1E', // Using cardBackground color for consistency
-    success: '#2E7D32', // Signature green for success messages
-    warning: '#FCC419', // Muted amber/yellow for warning messages
+    primary: '#FFFFFF',
+    background: '#121212',
+    text: '#FFFFFF',
+    secondaryText: '#CCCCCC',
+    border: '#333333',
+    card: '#1E1E1E',
+    cardBorder: '#2C2C2C',
     error: '#EF5350',
-    info: '#339AF0', // Light blue for informational messages
-    shadow: '#000000', // Dark shadow for depth
-    overlay: 'rgba(255, 255, 255, 0.05)', // Light overlay for background elements
-    successOverlay: 'rgba(64, 192, 87, 0.2)', // Semi-transparent green for success overlay
-    warningOverlay: 'rgba(252, 196, 25, 0.2)', // Semi-transparent yellow for warning overlay
-    textOverlay: 'rgba(255, 255, 255, 0.1)', // Light text overlay for dark mode
-    borderOverlay: 'rgba(255, 255, 255, 0.2)', // Darker border overlay for dark mode
-    gradientStart: 'rgba(18, 18, 18, 0)', // Transparent gradient start
-    gradientMiddle: 'rgba(30, 30, 30, 0.7)', // Dark gradient middle
-    gradientEnd: 'rgba(30, 30, 30, 1)', // Full opacity gradient end
-    elevation1: '#1E1E1E', // Dark elevation
-    elevation2: '#2C2C2C', // Slightly lighter dark elevation
-    elevation3: '#3A3A3A', // Lighter dark elevation
-    imagePlaceholder: 'rgba(255, 255, 255, 0.05)', // Light image placeholder
-    textShadowLight: 'rgba(255, 255, 255, 0.2)', // Light text shadow
-    textShadowDark: 'rgba(255, 255, 255, 0.5)', // Dark text shadow
-    modalOverlay: 'rgba(0, 0, 0, 0.8)', // Modal overlay
-    black: '#121212', // Using background color for consistency
-    transparent: 'transparent', // Transparent color
-  },
-} as const;
+    success: '#4CAF50',
+    warning: '#FFA726',
+    englishText: '#CCCCCC',
+    authorText: '#9E9E9E',
+    tint: '#FFFFFF',
+    tabIconDefault: '#888888',
+    tabIconSelected: '#FFFFFF',
+    icon: '#888888',
+    transparent: 'transparent',
+    overlay: 'rgba(0, 0, 0, 0.8)',
+    modalOverlay: 'rgba(0, 0, 0, 0.95)',
+    borderOverlay: 'rgba(255, 255, 255, 0.1)',
+    shadow: '#000000',
+    elevation1: '#1E1E1E',
+    elevation2: '#242424',
+    elevation3: '#2C2C2C',
+    white: '#FFFFFF',
+    black: '#000000',
+    textOverlay: 'rgba(255, 255, 255, 0.1)',
+    info: '#64B5F6',
+  } as ThemeColors,
+};
 
 export enum Theme {
   Light = 'light',

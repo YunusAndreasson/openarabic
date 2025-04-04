@@ -9,7 +9,20 @@ import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-// Define a type for FSRS study word to avoid any
+interface SentenceWordExtended {
+  id: number;
+  word_form: string;
+  english: string;
+  position: number;
+  root_id: number;
+  word_type_id: number;
+  lemma?: string;
+  pos?: string;
+  tashkeel?: string;
+  translation?: string;
+  notes?: string;
+}
+
 interface FSRSStudyWord {
   sentence_word_id: number;
   user_id: string;
@@ -22,13 +35,14 @@ interface FSRSStudyWord {
   fsrs_lapses: number;
   fsrs_state: number;
   fsrs_last_review: string | null;
-  sentence_word: {
-    id: number;
-    word_form: string;
-    english: string;
-    [key: string]: any;
-  };
-  [key: string]: any; // Allow other properties
+  sentence_word: SentenceWordExtended;
+  created_at?: string;
+  updated_at?: string;
+  next_review?: string;
+  review_history?: {
+    rating: number;
+    timestamp: string;
+  }[];
 }
 
 /**

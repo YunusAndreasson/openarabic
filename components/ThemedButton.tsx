@@ -3,7 +3,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
-  Platform,
   GestureResponderEvent,
   ActivityIndicator,
 } from 'react-native';
@@ -15,7 +14,8 @@ import { lightFeedback } from '@/utils/haptics';
 import Animated from 'react-native-reanimated';
 import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
 import { ThemedButtonProps } from '@/types/ui/button.types';
-import { AnimatedStyleProp } from '@/types/ui/base.types';
+
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 /**
  * A themed button component that supports different visual styles,
@@ -104,55 +104,6 @@ export function ThemedButton({
     }
   };
 
-  // Get button dimensions based on size
-  const buttonHeight = useMemo(() => {
-    switch (size) {
-      case 'small':
-        return LAYOUT.BUTTON.HEIGHT.SMALL;
-      case 'large':
-        return LAYOUT.BUTTON.HEIGHT.LARGE;
-      case 'medium':
-      default:
-        return LAYOUT.BUTTON.HEIGHT.MEDIUM;
-    }
-  }, [size]);
-
-  const paddingVertical = useMemo(() => {
-    switch (size) {
-      case 'small':
-        return LAYOUT.BUTTON.PADDING.VERTICAL.SMALL;
-      case 'large':
-        return LAYOUT.BUTTON.PADDING.VERTICAL.LARGE;
-      case 'medium':
-      default:
-        return LAYOUT.BUTTON.PADDING.VERTICAL.MEDIUM;
-    }
-  }, [size]);
-
-  const paddingHorizontal = useMemo(() => {
-    switch (size) {
-      case 'small':
-        return LAYOUT.BUTTON.PADDING.HORIZONTAL.SMALL;
-      case 'large':
-        return LAYOUT.BUTTON.PADDING.HORIZONTAL.LARGE;
-      case 'medium':
-      default:
-        return LAYOUT.BUTTON.PADDING.HORIZONTAL.MEDIUM;
-    }
-  }, [size]);
-
-  const borderRadius = useMemo(() => {
-    switch (size) {
-      case 'small':
-        return LAYOUT.BUTTON.BORDER_RADIUS.SMALL;
-      case 'large':
-        return LAYOUT.BUTTON.BORDER_RADIUS.LARGE;
-      case 'medium':
-      default:
-        return LAYOUT.BUTTON.BORDER_RADIUS.MEDIUM;
-    }
-  }, [size]);
-
   // Determine icon size based on button size
   const actualIconSize = useMemo(() => {
     if (iconSize !== 24) return iconSize; // User-specified size takes precedence
@@ -169,45 +120,6 @@ export function ThemedButton({
   }, [size, iconSize]);
 
   // Memoize derived styles to avoid recalculation on every render
-  const buttonStyles = useMemo(() => {
-    // Determine colors based on variant
-    const isFilled = variant === 'filled';
-    const backgroundColor = isFilled ? colors.tint : colors.transparent;
-
-    // Apply border for outlined variant consistently across platforms
-    // This matches the ThemedCard border style
-    const borderWidth = isFilled ? 0 : LAYOUT.BORDER.WIDTH.NORMAL;
-
-    return [
-      styles.button,
-      {
-        backgroundColor,
-        borderWidth,
-        borderColor: colors.tint,
-        shadowColor: colors.cardShadow,
-        minHeight: buttonHeight,
-        paddingVertical,
-        paddingHorizontal,
-        borderRadius,
-      },
-      // Apply shadow consistently with ThemedCard
-      isFilled && styles.buttonShadow,
-      (disabled || loading) && styles.buttonDisabled,
-      // Platform specific elevation
-      Platform.OS === 'android' && isFilled && { elevation: 4 },
-      style, // User style comes last to override default styles
-    ];
-  }, [
-    variant,
-    colors,
-    disabled,
-    loading,
-    style,
-    buttonHeight,
-    paddingVertical,
-    paddingHorizontal,
-    borderRadius,
-  ]);
 
   // Determine text color based on variant
   const textColor = variant === 'filled' ? colors.background : colors.tint;
@@ -240,68 +152,54 @@ export function ThemedButton({
   ];
 
   return (
-    <Animated.View style={animatedStyle as AnimatedStyleProp<any>}>
-      <TouchableOpacity
-        style={buttonStyles as AnimatedStyleProp<any>}
-        disabled={disabled || loading}
-        activeOpacity={1}
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={onPressOut}
-        accessibilityRole="button"
-        accessibilityLabel={finalAccessibilityLabel}
-        accessibilityState={accessibilityState}
-        accessibilityHint={accessibilityHint}
-        {...props}
-      >
-        <View style={[styles.innerContainer, innerContainerStyle]}>
-          {hasIcon && (
-            <View
-              style={[styles.iconContainer, size === 'small' ? styles.iconContainerSmall : null]}
-            >
-              {loading ? (
-                <ActivityIndicator size={size === 'small' ? 'small' : 'small'} color={textColor} />
-              ) : iconComponent ? (
-                iconComponent
-              ) : (
-                <Ionicons name={icon as any} size={actualIconSize} color={textColor} />
-              )}
-            </View>
-          )}
-
-          <View style={[styles.contentContainer, contentContainerStyle]}>
-            <ThemedText
-              type={getTextType(size, textWeight)}
-              colorName={variant === 'filled' ? 'background' : 'tint'}
-              skipDefaultColor
-              style={buttonTextStyle}
-            >
-              {textWeight === 'normal' ? title : title?.toUpperCase()}
-            </ThemedText>
-            {children}
+    <AnimatedTouchable
+      // @ts-expect-error - Known type issue with Reanimated's animated style
+      style={animatedStyle}
+      disabled={disabled || loading}
+      activeOpacity={1}
+      onPress={handlePress}
+      onPressIn={handlePressIn}
+      onPressOut={onPressOut}
+      accessibilityRole="button"
+      accessibilityLabel={finalAccessibilityLabel}
+      accessibilityState={accessibilityState}
+      accessibilityHint={accessibilityHint}
+      {...props}
+    >
+      <View style={[styles.innerContainer, innerContainerStyle]}>
+        {hasIcon && (
+          <View style={[styles.iconContainer, size === 'small' ? styles.iconContainerSmall : null]}>
+            {loading ? (
+              <ActivityIndicator size={size === 'small' ? 'small' : 'small'} color={textColor} />
+            ) : iconComponent ? (
+              iconComponent
+            ) : (
+              <Ionicons
+                name={icon as keyof typeof Ionicons.glyphMap}
+                size={actualIconSize}
+                color={textColor}
+              />
+            )}
           </View>
+        )}
+
+        <View style={[styles.contentContainer, contentContainerStyle]}>
+          <ThemedText
+            type={getTextType(size, textWeight)}
+            colorName={variant === 'filled' ? 'background' : 'tint'}
+            skipDefaultColor
+            style={buttonTextStyle}
+          >
+            {textWeight === 'normal' ? title : title?.toUpperCase()}
+          </ThemedText>
+          {children}
         </View>
-      </TouchableOpacity>
-    </Animated.View>
+      </View>
+    </AnimatedTouchable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  buttonDisabled: {
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  buttonShadow: {
-    ...LAYOUT.SHADOW.MEDIUM,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-  },
   buttonText: {
     fontWeight: '800',
     letterSpacing: 1.5,

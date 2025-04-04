@@ -2,8 +2,8 @@ import { useCallback, useRef, useEffect } from 'react';
 import { useLayoutReady } from '../useLayoutReady';
 import { useOpacityAnimation } from './useOpacityAnimation';
 import { useAnimationTrigger } from './useAnimationTrigger';
-import { AnimatedStyle } from './types';
-import { runOnUI } from 'react-native-reanimated';
+import Animated, { runOnUI } from 'react-native-reanimated';
+import type { StyleProp } from 'react-native';
 
 /**
  * Return type for useScreenAnimation hook
@@ -14,7 +14,7 @@ export interface ScreenAnimationResult {
   /** Whether animations have been triggered */
   animationsTriggered: boolean;
   /** Animated style for fade-in effect */
-  fadeInStyle: AnimatedStyle<any>;
+  fadeInStyle: StyleProp<Animated.AnimateStyle<{ opacity?: number }>>;
   /** Function to manually trigger animations */
   triggerAnimations: () => void;
   /** Function to reset animation state */
@@ -102,7 +102,8 @@ export const useScreenAnimation = (
   return {
     isLayoutReady,
     animationsTriggered,
-    fadeInStyle,
+    // TODO: Fix type assertion when upgrading react-native-reanimated
+    fadeInStyle: fadeInStyle as unknown as StyleProp<Animated.AnimateStyle<{ opacity?: number }>>,
     triggerAnimations,
     resetAnimations,
     reset,

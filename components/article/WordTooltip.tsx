@@ -237,11 +237,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   arrow: {
+    borderStyle: 'solid',
+    height: 0,
+    left: 0,
+    marginLeft: -2.5, // Half of arrow size for perfect centering
     position: 'absolute',
     width: 0,
-    height: 0,
-    marginLeft: -2.5, // Half of arrow size for perfect centering
-    borderStyle: 'solid',
   },
   tooltip: {
     alignSelf: 'flex-start',

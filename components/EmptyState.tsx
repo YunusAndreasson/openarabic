@@ -6,6 +6,8 @@ import { LAYOUT } from '../constants/layout';
 import { EmptyStateProps } from '@/types/ui/layout.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentType } from 'react';
+import type { ComponentProps } from 'react';
 
 /**
  * A reusable empty state component that displays a title, message, and optional action button
@@ -25,7 +27,9 @@ const EmptyState = React.memo(
     iconSize = 24,
     iconContainerStyle,
   }: EmptyStateProps) => {
-    const IconComponent = icon && typeof icon !== 'string' ? icon : Ionicons;
+    const IconComponent = (icon && typeof icon !== 'string' ? icon : Ionicons) as ComponentType<
+      ComponentProps<typeof Ionicons>
+    >;
     const iconName = typeof icon === 'string' ? icon : 'alert-circle-outline';
 
     return (

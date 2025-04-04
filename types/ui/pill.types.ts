@@ -1,6 +1,8 @@
 /**
  * Pill variant types
  */
+import { StyleProp, ViewStyle, TextStyle } from 'react-native';
+
 export type PillVariant = 'filter' | 'category' | 'horizontal-category';
 
 /**
@@ -99,7 +101,7 @@ export interface FilterItem {
   /**
    * Allow for additional properties
    */
-  [key: string]: any;
+  [key: string]: string | number;
 }
 
 /**
@@ -140,4 +142,17 @@ export interface FilterListProps<T extends FilterItem> {
    * Base animation delay for individual items
    */
   itemAnimationDelay?: number;
+}
+
+export interface PillStyleProps {
+  style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
+  backgroundColor?: string;
+  textColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  padding?: number;
+  margin?: number;
+  [key: string]: StyleProp<ViewStyle | TextStyle> | string | number | undefined;
 }

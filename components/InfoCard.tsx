@@ -6,6 +6,7 @@ import { useColors } from '../hooks/useColors';
 import { ThemedText } from './ThemedText';
 import BaseCard from './BaseCard';
 import { withOpacity } from '@/utils/colorUtils';
+import type { ComponentProps } from 'react';
 
 interface InfoCardProps {
   /**
@@ -132,7 +133,11 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
     return (
       <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
-        <Ionicons name={icon as any} size={22} color={iconClr} />
+        <Ionicons
+          name={icon as ComponentProps<typeof Ionicons>['name']}
+          size={22}
+          color={iconClr}
+        />
       </View>
     );
   };

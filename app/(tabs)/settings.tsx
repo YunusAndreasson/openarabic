@@ -27,17 +27,19 @@ import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Memoize static components to prevent unnecessary re-renders
-const SettingLabel = React.memo(({ icon, text }: { icon: string; text: string }) => {
-  const colors = useColors();
-  return (
-    <View style={styles.settingLabelContainer}>
-      <Ionicons name={icon as any} size={20} color={colors.tabIconDefault} />
-      <View style={styles.settingLabelTextContainer}>
-        <ThemedText type="body">{text}</ThemedText>
+const SettingLabel = React.memo(
+  ({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }) => {
+    const colors = useColors();
+    return (
+      <View style={styles.settingLabelContainer}>
+        <Ionicons name={icon} size={20} color={colors.tabIconDefault} />
+        <View style={styles.settingLabelTextContainer}>
+          <ThemedText type="body">{text}</ThemedText>
+        </View>
       </View>
-    </View>
-  );
-});
+    );
+  }
+);
 SettingLabel.displayName = 'SettingLabel';
 
 // Memoize divider component
