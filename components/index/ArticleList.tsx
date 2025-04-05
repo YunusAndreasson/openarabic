@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticleListProps } from '@/types/ui/article.types';
 
-import { LAYOUT } from '../../constants/layout';
+import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
 import ThemedCard from '../ThemedCard';
@@ -108,6 +108,16 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const displayData = shouldHideContent ? [] : articles;
     const displayHeader = shouldHideContent ? null : ListHeaderComponent;
 
+    // Create insets-aware content container style
+    const safeContentContainerStyle = useMemo(
+      () => ({
+        ...(contentContainerStyle as ContentStyle),
+        paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
+        paddingTop: getHeaderHeight(insets),
+      }),
+      [contentContainerStyle, insets.bottom, insets.top]
+    );
+
     // Create a wrapper View to handle the background color and padding
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -118,7 +128,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           keyExtractor={keyExtractor}
           estimatedItemSize={ITEM_HEIGHT}
           showsVerticalScrollIndicator={true}
-          contentContainerStyle={contentContainerStyle as ContentStyle}
+          contentContainerStyle={safeContentContainerStyle}
           ListHeaderComponent={displayHeader}
           ListEmptyComponent={isLoading ? null : ListEmptyComponent}
           ListFooterComponent={footerElement}
