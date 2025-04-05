@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import Toast from 'react-native-toast-message';
 
 // Services
+import { useToast } from '@/components/ToastProvider';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
@@ -30,6 +30,7 @@ export const useArticleMutations = (
   refetchReadingListStatus: () => void
 ): ArticleMutationsResult => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
 
   // Add to reading list mutation
   const addToReadingListMutation = useMutation({
@@ -40,15 +41,19 @@ export const useArticleMutations = (
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
 
       // Show success toast
-      Toast.show({
-        type: 'success',
-        text1: 'Added to bookmarks',
-        position: 'bottom',
-        visibilityTime: 2000,
-      });
+      showToast('Added to bookmarks');
     },
-    onError: () => {
-      // Error handled silently
+    onError: error => {
+      // Check for the specific constraint error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (
+        errorMessage.includes('reading_list_position_unique') ||
+        errorMessage.includes('duplicate key value')
+      ) {
+        showToast('Article already in bookmarks');
+      } else {
+        showToast('Failed to add to bookmarks');
+      }
     },
   });
 
@@ -61,12 +66,7 @@ export const useArticleMutations = (
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
 
       // Show success toast
-      Toast.show({
-        type: 'success',
-        text1: 'Removed from bookmarks',
-        position: 'bottom',
-        visibilityTime: 2000,
-      });
+      showToast('Removed from bookmarks');
     },
     onError: () => {
       // Error handled silently
@@ -94,23 +94,12 @@ export const useArticleMutations = (
       });
 
       // Show success toast
-      Toast.show({
-        type: 'success',
-        text1: result ? 'Word added to study list' : 'Word removed from study list',
-        position: 'bottom',
-        visibilityTime: 2000,
-      });
+      showToast(result ? 'Word added to study list' : 'Word removed from study list');
     },
     onError: error => {
       handleError(error instanceof Error ? error : String(error));
       // Show error toast to user
-      Toast.show({
-        type: 'error',
-        text1: 'Error updating study list',
-        text2: 'Please try again later',
-        position: 'bottom',
-        visibilityTime: 3000,
-      });
+      showToast('Error updating study list');
 
       // Refresh study words data anyway to ensure UI is consistent
       queryClient.invalidateQueries({

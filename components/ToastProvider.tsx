@@ -40,6 +40,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Register the toast handler globally when the component mounts
   useEffect(() => {
     setGlobalToastHandler(showToast);
+
+    return () => {
+      // Use an empty function to clear the handler
+      setGlobalToastHandler(() => {});
+    };
   }, [showToast]);
 
   const contextValue = useMemo(() => ({ showToast }), [showToast]);

@@ -24,6 +24,7 @@ export { usePressAnimation } from './usePressAnimation';
 export { usePulseAnimation } from './usePulseAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
+export { useComponentAnimation } from './useComponentAnimation';
 // Export screen animations hooks
 export { useScreenAnimations } from './useScreenAnimations';
 // For backward compatibility, re-export useScreenAnimations as useScreenAnimation

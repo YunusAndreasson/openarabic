@@ -105,9 +105,10 @@ module.exports = {
         extensions: ['.js', '.jsx', '.ts', '.tsx'],
         moduleDirectory: ['node_modules', '.'],
       },
-      alias: {
-        map: [['@', './']],
-        extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      'babel-module': {
+        alias: {
+          '@': './',
+        },
       },
     },
   },

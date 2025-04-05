@@ -22,7 +22,7 @@ export const readingListService = {
       `
       )
       .match({ user_id: userId, completed: false })
-      .order('position', { ascending: true });
+      .order('position', { ascending: false });
 
     if (error) {
       handleError(error, {
@@ -86,10 +86,41 @@ export const readingListService = {
    * @param articleId - The article ID to add to reading list
    */
   async addToReadingList(userId: string, articleId: number): Promise<void> {
+    // First check if the article is already in the reading list
+    const { data, error: checkError } = await supabase
+      .from('reading_list')
+      .select('article_id')
+      .match({ user_id: userId, article_id: articleId })
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      // Real error (not just "no rows found")
+      handleError(checkError);
+      throw checkError;
+    }
+
+    // If article already exists, do nothing
+    if (data) {
+      return;
+    }
+
+    // Get the current maximum position to put the new article at the end
+    const { data: positionData } = await supabase
+      .from('reading_list')
+      .select('position')
+      .match({ user_id: userId })
+      .order('position', { ascending: false })
+      .limit(1);
+
+    // Calculate the new position (one more than the current maximum, or 0 if no items exist)
+    const newPosition =
+      positionData && positionData.length > 0 ? (positionData[0]?.position ?? 0) + 1 : 0;
+
+    // Add to reading list with a position that will be at the end
     const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
-      position: 0, // Add to top of list
+      position: newPosition, // Use calculated position
       completed: false,
       read_count: 0,
     });

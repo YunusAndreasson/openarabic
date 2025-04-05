@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
 
-import { Colors } from '../constants/Colors';
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
@@ -21,24 +20,24 @@ interface ToastProps {
   onClose: () => void;
 }
 
-const DEFAULT_DURATION = 2500;
+const DEFAULT_DURATION = 3500;
 
 const styles = StyleSheet.create({
   toast: {
     alignSelf: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+    borderRadius: 50,
+    minWidth: 120,
     overflow: 'hidden',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM + 8,
+    paddingVertical: LAYOUT.SPACING.SMALL + 4,
     ...Platform.select({
       ios: {
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOpacity: 0.2,
+        shadowRadius: 5,
       },
       android: {
-        elevation: 3,
+        elevation: 5,
       },
     }),
   },
@@ -51,7 +50,7 @@ const styles = StyleSheet.create({
   },
   toastText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
-    fontWeight: '500',
+    fontWeight: '600',
     lineHeight: (LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1) * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textAlign: 'center',
   },
@@ -104,14 +103,22 @@ export const Toast = memo(
         reverseScaleAnimation();
         return () => undefined;
       }
-    }, [visible, fadeIn, fadeOut, startScaleAnimation, reverseScaleAnimation, onClose, duration]);
+    }, [
+      visible,
+      fadeIn,
+      fadeOut,
+      startScaleAnimation,
+      reverseScaleAnimation,
+      onClose,
+      duration,
+      message,
+    ]);
 
-    // In dark mode: light background with dark text
-    // In light mode: dark background with light text
-    const lightColors = Colors.light;
-    const backgroundColor = isDarkMode ? lightColors.cardBackground : colors.black;
-    const textColor = isDarkMode ? colors.black : colors.white;
-    const borderColor = isDarkMode ? colors.cardBorder : colors.borderOverlay;
+    // Color scheme:
+    // Dark mode: Card background with white text
+    // Light mode: Tint background with white text
+    const backgroundColor = isDarkMode ? colors.card : colors.tint;
+    const textColor = isDarkMode ? colors.text : colors.white;
     const shadowColor = colors.shadow;
 
     const { width: screenWidth } = Dimensions.get('window');
@@ -152,7 +159,6 @@ export const Toast = memo(
             {
               maxWidth: MAX_TOAST_WIDTH,
               backgroundColor,
-              borderColor,
               shadowColor,
             },
           ]}

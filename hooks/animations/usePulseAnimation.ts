@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from 'react';
-import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -8,8 +7,6 @@ import {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
-
-import { TIMING_CONFIG } from './animationConfigs';
 
 export type PulseStyle = 'gentle' | 'dramatic' | 'bounce';
 

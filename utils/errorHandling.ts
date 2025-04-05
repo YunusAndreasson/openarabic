@@ -49,15 +49,12 @@ const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
   }
 };
 
-const trackInAnalytics = (errorObj: Error): void => {
+const trackInAnalytics = (_errorObj: Error): void => {
   try {
-    if (__DEV__) {
-      console.error('Analytics error:', errorObj);
-    }
-  } catch (analyticsError) {
-    if (__DEV__) {
-      console.error('Failed to track error:', analyticsError);
-    }
+    // Analytics tracking logic would go here
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_analyticsError) {
+    // Silent fail if analytics tracking fails
   }
 };
 
@@ -92,17 +89,9 @@ export const handleError = async (
     if (opts.showToast) {
       showToastMessage(errorObj, opts.toastMessage, opts.toastDuration);
     }
-
-    // Log to console in development
-    if (__DEV__) {
-      console.error(errorObj);
-    }
-  } catch (handlingError) {
-    // If error handling itself fails, log to console in development
-    if (__DEV__) {
-      console.error('Error while handling error:', handlingError);
-      console.error('Original error:', errorObj);
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_handlingError) {
+    // Silent fail if error handling itself fails
   }
 };
 
