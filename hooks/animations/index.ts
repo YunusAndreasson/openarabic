@@ -25,13 +25,9 @@ export { usePulseAnimation } from './usePulseAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
-// Export screen animations hooks
-export { useScreenAnimations } from './useScreenAnimations';
-// For backward compatibility, re-export useScreenAnimations as useScreenAnimation
-export { useScreenAnimations as useScreenAnimation } from './useScreenAnimations';
+export { useScreenAnimation } from './useScreenAnimation';
 export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useToggleAnimation } from './useToggleAnimation';
-// export { useTooltipAnimation } from './useTooltipAnimation';
 
 // Export animation configs
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';

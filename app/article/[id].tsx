@@ -16,7 +16,7 @@ import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations/useScreenAnimation';
+import { useScreenAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
