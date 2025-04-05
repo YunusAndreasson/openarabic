@@ -1,8 +1,9 @@
+import { FlashList } from '@shopify/flash-list';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useRef, useMemo, memo } from 'react';
-import { StyleSheet, View, FlatList, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -452,7 +453,7 @@ export default function ArticlesScreen(): JSX.Element {
       <View style={styles.sectionContainer}>
         <SectionTitle title="Beginner Friendly" />
         <View style={styles.beginnerContainer}>
-          <FlatList
+          <FlashList
             data={beginnerArticles.slice(0, 20)}
             renderItem={({ item }) => (
               <View style={styles.horizontalArticleContainer}>
@@ -468,6 +469,7 @@ export default function ArticlesScreen(): JSX.Element {
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalList}
+            estimatedItemSize={200}
           />
         </View>
       </View>
