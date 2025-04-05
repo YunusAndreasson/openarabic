@@ -95,6 +95,7 @@ function ArticleSentenceComponent({
             {
               fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * (settings.fontScale || 1),
               color: colors.text,
+              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * (settings.fontScale || 1),
             },
           ]}
         >
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     paddingBottom: LAYOUT.SPACING.SMALL,
     paddingLeft: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   sentenceBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -126,7 +128,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
-    gap: LAYOUT.SPACING.SMALL / 2,
+    gap: 4,
     justifyContent: 'flex-start',
     minHeight: 40,
     paddingRight: LAYOUT.SPACING.SMALL,

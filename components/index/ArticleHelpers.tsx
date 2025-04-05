@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.TINY,
   },
   summaryText: {
-    lineHeight: 14,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
   },
   timeAgoContainer: {
     alignItems: 'center',

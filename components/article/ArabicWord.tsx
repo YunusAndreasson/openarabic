@@ -155,7 +155,7 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
   }, []);
 
   // Calculate font size once outside the memo to avoid recalculations
-  const calculatedFontSize = settings.fontScale * 32;
+  const calculatedFontSize = settings.fontScale * 24;
 
   // Memoize text props to prevent unnecessary recalculations
   const textProps = useMemo(
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     flexShrink: 0,
     marginHorizontal: 1,
-    marginVertical: LAYOUT.SPACING.TINY / 2,
+    marginVertical: 1,
     maxWidth: 150,
     paddingHorizontal: 1,
     paddingVertical: 3,

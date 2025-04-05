@@ -174,6 +174,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
                 type="caption"
                 colorName={isDarkMode ? 'secondaryText' : 'textTertiary'}
                 numberOfLines={3}
+                style={{
+                  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
+                }}
               >
                 {summary}
               </ThemedText>

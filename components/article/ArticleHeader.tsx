@@ -171,6 +171,9 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             type="body"
             variant="subtle"
             accessibilityLabel={`Article summary: ${article.summary}`}
+            style={{
+              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+            }}
           >
             {article.summary}
           </ThemedText>
