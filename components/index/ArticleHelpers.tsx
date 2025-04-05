@@ -107,8 +107,6 @@ DifficultyIndicator.displayName = 'DifficultyIndicator';
  * SummaryIndicator component to display article summary in compact views
  */
 export const SummaryIndicator = memo(({ summary }: { summary: string | null }) => {
-  const isDarkMode = useIsDarkMode();
-
   if (!summary) return null;
 
   return (

@@ -115,7 +115,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
         paddingTop: getHeaderHeight(insets),
       }),
-      [contentContainerStyle, insets.bottom, insets.top]
+      [contentContainerStyle, insets]
     );
 
     // Create a wrapper View to handle the background color and padding

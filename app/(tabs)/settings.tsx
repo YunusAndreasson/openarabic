@@ -201,8 +201,7 @@ export default function SettingsScreen(): JSX.Element {
     innerContainer: {
       justifyContent: 'flex-start' as const,
       alignItems: 'flex-start' as const,
-      paddingVertical: LAYOUT.SPACING.SMALL,
-      paddingLeft: LAYOUT.SPACING.MEDIUM,
+      paddingVertical: LAYOUT.SPACING.TINY,
     },
     contentContainer: {
       justifyContent: 'flex-start' as const,
@@ -280,11 +279,6 @@ export default function SettingsScreen(): JSX.Element {
               </View>
               <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
               <View style={styles.previewContainer}>
-                <View style={styles.previewLabelContainer}>
-                  <ThemedText type="caption" variant="secondary">
-                    Preview
-                  </ThemedText>
-                </View>
                 <View style={styles.previewWrapper}>
                   <View style={styles.previewContent}>
                     <ThemedText
@@ -402,7 +396,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   actionsContainer: {
     overflow: 'hidden',
@@ -451,9 +445,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
-  },
-  previewLabelContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
   },
   previewWrapper: {
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,

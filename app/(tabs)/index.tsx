@@ -36,7 +36,6 @@ import {
 } from '@/utils/articleUtils';
 import { getDayOfYear, formatTimeAgo } from '@/utils/dateUtils';
 import { handleError } from '@/utils/errorHandling';
-import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import { useAppLoading } from '../../app/_layout';
@@ -99,7 +98,6 @@ const styles = StyleSheet.create({
   },
   loaderContainer: {
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.1)',
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     justifyContent: 'center',
     padding: LAYOUT.SPACING.LARGE,
@@ -643,11 +641,11 @@ export default function ArticlesScreen(): JSX.Element {
         {/* Loading overlay that fades out rather than jumps */}
         {showLoadingOverlay ? (
           <Animated.View
-            style={[styles.loadingOverlay, { backgroundColor: 'transparent' }]}
+            style={styles.loadingOverlay}
             entering={FadeIn.duration(200)}
             exiting={FadeOut.duration(300)}
           >
-            <View style={[styles.loaderContainer, { backgroundColor: colors.card + '99' }]}>
+            <View style={[styles.loaderContainer, { backgroundColor: colors.overlay }]}>
               <Loader size="large" color={colors.tint} />
             </View>
           </Animated.View>
