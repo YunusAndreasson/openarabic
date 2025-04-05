@@ -116,12 +116,14 @@ export function ThemedButton({
   });
 
   const handlePressIn = () => {
-    lightFeedback();
     onPressIn();
   };
 
   const handlePress = (event: GestureResponderEvent) => {
-    if (onPress && !disabled && !loading) onPress(event);
+    if (onPress && !disabled && !loading) {
+      lightFeedback();
+      onPress(event);
+    }
   };
 
   const textColor = variant === 'filled' ? colors.background : colors.tint;
@@ -134,10 +136,24 @@ export function ThemedButton({
     textWeight === 'normal' && styles.normalText,
   ];
 
+  const buttonStyle = [
+    styles.button,
+    variant === 'filled'
+      ? { backgroundColor: disabled ? colors.disabled : colors.tint }
+      : {
+          backgroundColor: 'transparent',
+          borderWidth: 1,
+          borderColor: disabled ? colors.disabled : colors.tint,
+        },
+    size === 'small' && styles.buttonSmall,
+    size === 'large' && styles.buttonLarge,
+    style,
+  ];
+
   return (
     <AnimatedTouchable
       // @ts-expect-error - Known type issue with Reanimated's animated style
-      style={animatedStyle}
+      style={[buttonStyle, animatedStyle]}
       disabled={disabled || loading}
       activeOpacity={1}
       onPress={handlePress}
@@ -172,7 +188,7 @@ export function ThemedButton({
             type={getTextType(size, textWeight)}
             colorName={variant === 'filled' ? 'background' : 'tint'}
             skipDefaultColor
-            style={buttonTextStyle}
+            style={[buttonTextStyle, disabled && { color: colors.disabled }]}
           >
             {textWeight === 'normal' ? title : title?.toUpperCase()}
           </ThemedText>
@@ -184,6 +200,20 @@ export function ThemedButton({
 }
 
 const styles = StyleSheet.create({
+  button: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    overflow: 'hidden',
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  buttonLarge: {
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
+    paddingVertical: LAYOUT.SPACING.LARGE,
+  },
+  buttonSmall: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+  },
   buttonText: {
     fontWeight: '800',
     letterSpacing: 1.5,
