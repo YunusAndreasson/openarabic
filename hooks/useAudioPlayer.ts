@@ -66,10 +66,23 @@ export function useAudioPlayer(): AudioPlayerResult {
     // Unload sound if it exists
     if (soundRef.current) {
       try {
-        await soundRef.current.stopAsync().catch(_e => {});
-        await soundRef.current.unloadAsync().catch(_e => {});
+        await soundRef.current.stopAsync().catch(error => {
+          handleError(error instanceof Error ? error : String(error), {
+            analyticsEventName: 'Audio_Stop_Error',
+            sentrySeverity: 'warning',
+          });
+        });
+        await soundRef.current.unloadAsync().catch(error => {
+          handleError(error instanceof Error ? error : String(error), {
+            analyticsEventName: 'Audio_Unload_Error',
+            sentrySeverity: 'warning',
+          });
+        });
       } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
+        handleError(error instanceof Error ? error : String(error), {
+          analyticsEventName: 'Audio_Cleanup_Error',
+          sentrySeverity: 'error',
+        });
       } finally {
         soundRef.current = null;
       }
@@ -220,8 +233,11 @@ export function useAudioPlayer(): AudioPlayerResult {
     async (tracks: AudioTrack[], index: number) => {
       if (index < 0 || index >= tracks.length) return false;
 
+      const track = tracks[index];
+      if (!track) return false;
+
       setCurrentTrackIndex(index);
-      return await loadAndPlayAudio(tracks[index].audioUrl);
+      return await loadAndPlayAudio(track.audioUrl);
     },
     [loadAndPlayAudio]
   );
@@ -253,16 +269,22 @@ export function useAudioPlayer(): AudioPlayerResult {
     async (tracks: AudioTrack[]) => {
       if (!tracks || tracks.length === 0) return false;
 
-      // Create shuffled playlist
-      const shuffledIndices = [...Array(tracks.length).keys()];
-      for (let i = shuffledIndices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
+      // Create array of indices
+      const indices: number[] = [];
+      for (let i = 0; i < tracks.length; i++) {
+        indices.push(i);
       }
 
-      // Set to playlist mode
+      // Fisher-Yates shuffle
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = indices[i] as number;
+        indices[i] = indices[j] as number;
+        indices[j] = temp;
+      }
+
       setPlaylistMode(true);
-      return await playTrack(tracks, shuffledIndices[0]);
+      return await playTrack(tracks, indices[0] as number);
     },
     [playTrack]
   );

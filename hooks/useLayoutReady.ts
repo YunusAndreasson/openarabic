@@ -21,35 +21,12 @@ export const useLayoutReady = (
   }, []);
 
   useEffect(() => {
+    let mounted = true;
     let timeoutId: NodeJS.Timeout | undefined;
     let frameId: number | undefined;
 
-    // Check if requestAnimationFrame is available (it's not in some test environments)
-    if (typeof requestAnimationFrame === 'function') {
-      // Use requestAnimationFrame to ensure layout is calculated
-      frameId = requestAnimationFrame(() => {
-        if (delay > 0) {
-          // Add optional delay if needed
-          timeoutId = setTimeout(() => {
-            setIsLayoutReady(true);
-          }, delay);
-        } else {
-          setIsLayoutReady(true);
-        }
-      });
-    } else {
-      // Fallback for test environments
-      if (delay > 0) {
-        timeoutId = setTimeout(() => {
-          setIsLayoutReady(true);
-        }, delay);
-      } else {
-        setIsLayoutReady(true);
-      }
-    }
-
-    return () => {
-      // Clean up
+    const cleanup = () => {
+      mounted = false;
       if (typeof cancelAnimationFrame === 'function' && frameId !== undefined) {
         cancelAnimationFrame(frameId);
       }
@@ -57,6 +34,37 @@ export const useLayoutReady = (
         clearTimeout(timeoutId);
       }
     };
+
+    // Function to set layout ready if component is still mounted
+    const setLayoutReadyIfMounted = () => {
+      if (mounted) {
+        setIsLayoutReady(true);
+      }
+    };
+
+    // Check if requestAnimationFrame is available (it's not in some test environments)
+    if (typeof requestAnimationFrame === 'function') {
+      // Use requestAnimationFrame to ensure layout is calculated
+      frameId = requestAnimationFrame(() => {
+        if (!mounted) return;
+
+        if (delay > 0) {
+          // Add optional delay if needed
+          timeoutId = setTimeout(setLayoutReadyIfMounted, delay);
+        } else {
+          setLayoutReadyIfMounted();
+        }
+      });
+    } else {
+      // Fallback for test environments
+      if (delay > 0) {
+        timeoutId = setTimeout(setLayoutReadyIfMounted, delay);
+      } else {
+        setLayoutReadyIfMounted();
+      }
+    }
+
+    return cleanup;
   }, [delay]);
 
   return { isLayoutReady, resetLayout };

@@ -1,6 +1,8 @@
 import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { handleError } from '@/utils/errorHandling';
+
 import { LAYOUT } from '../../constants/layout';
 import { ThemedText } from '../ThemedText';
 
@@ -8,17 +10,19 @@ import { ThemedText } from '../ThemedText';
  * A component that displays a copyright notice with the current Hijri year
  */
 export const CopyrightFooter = memo(() => {
-  // Get current Hijri year
+  // Get current Hijri year using Intl.DateTimeFormat
   const getHijriYear = (): number => {
-    // Simple calculation for Hijri year (approximate)
-    const today = new Date();
-    const gregorianYear = today.getFullYear();
-
-    // Formula to approximate Hijri year
-    // (Gregorian year - 622) * 33/32
-    const hijriYear = Math.floor((gregorianYear - 622) * (33 / 32));
-
-    return hijriYear;
+    try {
+      const date = new Date();
+      const hijriDate = new Intl.DateTimeFormat('en-u-ca-islamic', {
+        year: 'numeric',
+      }).format(date);
+      return parseInt(hijriDate, 10);
+    } catch (error) {
+      handleError(error as Error);
+      const gregorianYear = new Date().getFullYear();
+      return Math.floor((gregorianYear - 622) * (33 / 32));
+    }
   };
 
   const hijriYear = getHijriYear();

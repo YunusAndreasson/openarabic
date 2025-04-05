@@ -2,8 +2,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleNotFound } from '@/components/NotFound';
@@ -14,7 +16,7 @@ import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ArticleContent } from '@/components/article/ArticleContent';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useScreenAnimations } from '@/hooks/animations';
+import { useScreenAnimation } from '@/hooks/animations/useScreenAnimation';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
@@ -154,15 +156,16 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, isInReadingList, isLoadingReadingList, user]);
 
-  // Use animation hook for content and button visibility on scroll
-  const {
-    footerStyle,
-    backButtonStyle,
-    bookmarkButtonStyle,
-    playButtonStyle,
-    startAllAnimations,
-    handleScroll: handleAnimationScroll,
-  } = useScreenAnimations(true);
+  // Use animation hooks for screen and buttons
+  const { fadeInStyle, triggerAnimations } = useScreenAnimation(true);
+  const buttonStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(isHeaderVisible ? 1 : 0, { duration: 200 }),
+  }));
+
+  // Use the same animated style for all buttons since they share the same visibility
+  const backButtonStyle = buttonStyle;
+  const bookmarkButtonStyle = buttonStyle;
+  const playButtonStyle = buttonStyle;
 
   // Track article completion and handle animations on scroll
   const handleScroll = useCallback(
@@ -191,9 +194,8 @@ export default function ArticleScreen(): JSX.Element {
       if (event.nativeEvent.contentOffset.y <= 0) {
         prevScrollYValue.current = 0;
       }
-      handleAnimationScroll(event, prevScrollYValue);
     },
-    [article, user, selectedWordIds, handleAnimationScroll, isHeaderVisible, prevScrollYValue]
+    [article, user, selectedWordIds, isHeaderVisible]
   );
 
   // Update bookmark icon when reading list status changes
@@ -228,8 +230,8 @@ export default function ArticleScreen(): JSX.Element {
 
   // Start content animations when mounted
   useEffect(() => {
-    startAllAnimations();
-  }, [startAllAnimations]);
+    triggerAnimations();
+  }, [triggerAnimations]);
 
   // Handle article data hook callbacks
   const { handleToggleReadingList, handleWordPress } = useArticleMutations(
@@ -446,7 +448,7 @@ export default function ArticleScreen(): JSX.Element {
             renderSentenceItem={renderSentenceItem}
             handleScroll={handleScroll}
             colors={colors}
-            footerStyle={footerStyle}
+            footerStyle={fadeInStyle as AnimatedStyleProp<ViewStyle>}
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
