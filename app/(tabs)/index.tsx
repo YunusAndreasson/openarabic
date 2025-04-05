@@ -87,11 +87,19 @@ const styles = StyleSheet.create({
   },
   listContentContainer: {
     flexGrow: 1,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.SPACING.MEDIUM,
+  },
+  loaderContainer: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    justifyContent: 'center',
+    padding: LAYOUT.SPACING.LARGE,
   },
   loadingOverlay: {
     alignItems: 'center',
     bottom: 0,
+    elevation: 10,
     justifyContent: 'center',
     left: 0,
     position: 'absolute',
@@ -257,12 +265,18 @@ export default function ArticlesScreen(): JSX.Element {
   // Combined loading and fetching states for better UX
   const isFetching = isArticlesFetching;
 
+  // Use state to control loading overlay visibility
+  const [showLoadingOverlay, setShowLoadingOverlay] = useState(
+    !wasPreloaded && ((isArticlesLoading && articlesData.length === 0) || isRefreshing)
+  );
+
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
     if (isFetching) return;
 
-    mediumFeedback();
+    // Start refresh without haptic feedback
     setIsRefreshing(true);
+    setShowLoadingOverlay(true); // Show loading overlay during refresh
 
     try {
       // Invalidate all related queries at once
@@ -273,7 +287,11 @@ export default function ArticlesScreen(): JSX.Element {
         },
       });
     } finally {
-      setIsRefreshing(false);
+      // End refresh with a bit of delay for a smoother transition
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setShowLoadingOverlay(false);
+      }, 300);
     }
   }, [queryClient, isFetching]);
 
@@ -553,27 +571,19 @@ export default function ArticlesScreen(): JSX.Element {
     () => ({
       ...styles.listContentContainer,
       backgroundColor: colors.background,
-      paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.LARGE * 3, // Triple the top padding
+      paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.MEDIUM, // Reduced from LARGE*3
     }),
     [insets, colors.background]
   );
 
-  // Use state to control loading overlay visibility
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(
-    !wasPreloaded && ((isArticlesLoading && articlesData.length === 0) || isRefreshing)
-  );
-
   // Update loading overlay visibility when loading state changes
   useEffect(() => {
-    // Only show the loader if:
-    // 1. Articles weren't preloaded during app initialization
-    // 2. Articles are still loading and we don't have cached data
-    // 3. We're refreshing the data
-    // This prevents showing the loader twice in a row
-    setShowLoadingOverlay(
-      !wasPreloaded && ((isArticlesLoading && articlesData.length === 0) || isRefreshing)
-    );
-  }, [isArticlesLoading, articlesData.length, isRefreshing, wasPreloaded]);
+    // Show loader on initial load, but not during refreshes
+    const shouldShowLoader = isArticlesLoading && !isDataCached;
+    if (!isRefreshing) {
+      setShowLoadingOverlay(shouldShowLoader);
+    }
+  }, [isArticlesLoading, isRefreshing, isDataCached]);
 
   // Show error state only if there's no cached data
   if (articlesError && !isRefreshing && !isDataCached) {
@@ -606,21 +616,24 @@ export default function ArticlesScreen(): JSX.Element {
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
           onArticlePress={handleArticlePress}
-          ListHeaderComponent={ListHeaderComponent}
+          ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
           ListEmptyComponent={EmptyStateComponent}
           contentContainerStyle={contentContainerStyle}
-          hideMainList={true}
+          hideMainList={isArticlesLoading && !isDataCached ? true : false}
+          hideWhileRefreshing={false}
         />
         <PageHeader title="Texts" />
 
         {/* Loading overlay that fades out rather than jumps */}
         {showLoadingOverlay ? (
           <Animated.View
-            style={[styles.loadingOverlay, { backgroundColor: colors.background }]}
+            style={[styles.loadingOverlay, { backgroundColor: 'transparent' }]}
             entering={FadeIn.duration(200)}
             exiting={FadeOut.duration(300)}
           >
-            <Loader size="large" color={colors.tint} />
+            <View style={[styles.loaderContainer, { backgroundColor: colors.card + '99' }]}>
+              <Loader size="large" color={colors.tint} />
+            </View>
           </Animated.View>
         ) : null}
       </ThemedView>

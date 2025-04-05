@@ -26,6 +26,8 @@ export interface ArticleListProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   /** Whether to hide the main list of articles and only show header sections */
   hideMainList?: boolean;
+  /** Whether to hide all content while refreshing */
+  hideWhileRefreshing?: boolean;
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { ListRenderItem } from '@shopify/flash-list';
+import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle, memo } from 'react';
 import { StyleSheet, Platform, View, RefreshControl } from 'react-native';
@@ -63,6 +63,8 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       ListHeaderComponent,
       ListEmptyComponent,
       hideMainList = false,
+      hideWhileRefreshing = false,
+      contentContainerStyle,
     },
     ref
   ) => {
@@ -101,25 +103,23 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [isRefreshing, onRefresh, colors.tint, colors.background]
     );
 
+    // Determine if content should be hidden
+    const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
+    const displayData = shouldHideContent ? [] : articles;
+    const displayHeader = shouldHideContent ? null : ListHeaderComponent;
+
     // Create a wrapper View to handle the background color and padding
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <FlashList
           ref={listRef}
-          data={hideMainList ? [] : articles}
+          data={displayData}
           renderItem={renderItem}
           keyExtractor={keyExtractor}
           estimatedItemSize={ITEM_HEIGHT}
           showsVerticalScrollIndicator={true}
-          contentContainerStyle={{
-            paddingTop: Math.max(insets.top + LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.MEDIUM),
-            paddingBottom:
-              LAYOUT.CONTENT_SPACING.BOTTOM +
-              LAYOUT.BOTTOM_BAR.HEIGHT +
-              insets.bottom +
-              LAYOUT.SPACING.SMALL,
-          }}
-          ListHeaderComponent={ListHeaderComponent}
+          contentContainerStyle={contentContainerStyle as ContentStyle}
+          ListHeaderComponent={displayHeader}
           ListEmptyComponent={isLoading ? null : ListEmptyComponent}
           ListFooterComponent={footerElement}
           refreshControl={refreshControl}
