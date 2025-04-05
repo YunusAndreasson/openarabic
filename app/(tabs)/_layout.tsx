@@ -78,7 +78,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
     () => [
       styles.blurContainer,
       {
-        backgroundColor: isDarkMode ? colors.modalOverlay : colors.overlay,
+        backgroundColor: colors.transparent,
         height: LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset,
         paddingBottom: bottomInset,
         ...PLATFORM_STYLES,
@@ -88,14 +88,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         }),
       },
     ],
-    [
-      colors.shadow,
-      colors.modalOverlay,
-      colors.overlay,
-      colors.borderOverlay,
-      bottomInset,
-      isDarkMode,
-    ]
+    [colors.shadow, colors.transparent, colors.borderOverlay, bottomInset, isDarkMode]
   );
 
   // Memoize tab button styles

@@ -35,12 +35,12 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
     () => [
       styles.container,
       {
-        backgroundColor, // Fallback background color
+        backgroundColor: colors.transparent, // Allow blur to work through
         borderBottomColor: colors.borderOverlay,
       },
       onBackPress && styles.wrapperWithBack,
     ],
-    [backgroundColor, colors.borderOverlay, onBackPress]
+    [colors.transparent, colors.borderOverlay, onBackPress]
   );
 
   // Memoize blur container styles for performance
