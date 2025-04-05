@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import EmptyState from '@/components/EmptyState';
+import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
@@ -524,6 +525,11 @@ export default function BookmarksScreen(): JSX.Element {
   // Require sign in
   if (!user) {
     return <UnifiedSignInScreen headerTitle="Bookmarks" colors={colors} />;
+  }
+
+  // Show loading screen during initial load
+  if (isDataLoading) {
+    return <LoadingScreen />;
   }
 
   // Empty reading list

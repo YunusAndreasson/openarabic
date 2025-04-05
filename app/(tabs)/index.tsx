@@ -2,13 +2,13 @@ import { FlashList } from '@shopify/flash-list';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import React, { useEffect, useState, useCallback, useRef, useMemo, memo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
-import { Loader } from '@/components/Loader';
+import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import Pill from '@/components/Pill';
 import SectionTitle from '@/components/SectionTitle';
@@ -37,9 +37,9 @@ import {
 } from '@/utils/articleUtils';
 import { getDayOfYear, formatTimeAgo } from '@/utils/dateUtils';
 import { handleError } from '@/utils/errorHandling';
+import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
-import { useAppLoading } from '../../app/_layout';
 import ErrorState from '../../components/ErrorState';
 import { ArticleSection } from '../../components/article';
 import DailyPickSection from '../../components/index/DailyPickSection';
@@ -96,23 +96,6 @@ const styles = StyleSheet.create({
   listContentContainer: {
     flexGrow: 1,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.SPACING.MEDIUM,
-  },
-  loaderContainer: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-  },
-  loadingOverlay: {
-    alignItems: 'center',
-    bottom: 0,
-    elevation: 10,
-    justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 100,
   },
   metadataText: {
     marginTop: LAYOUT.SPACING.TINY / 2,
@@ -190,13 +173,9 @@ export default function ArticlesScreen(): JSX.Element {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  const { wasPreloaded } = useAppLoading();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
-
-  // Refs
-  const isInitialMount = useRef(true);
 
   // Use React Query instead of local state for articles
   const {
@@ -278,18 +257,15 @@ export default function ArticlesScreen(): JSX.Element {
   // Combined loading and fetching states for better UX
   const isFetching = isArticlesFetching;
 
-  // Use state to control loading overlay visibility
-  const [showLoadingOverlay, setShowLoadingOverlay] = useState(
-    !wasPreloaded && ((isArticlesLoading && articlesData.length === 0) || isRefreshing)
-  );
-
   // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
     if (isFetching) return;
 
-    // Start refresh without haptic feedback
+    // Add haptic feedback for better user experience
+    mediumFeedback();
+
+    // Start refresh
     setIsRefreshing(true);
-    setShowLoadingOverlay(true); // Show loading overlay during refresh
 
     try {
       // Invalidate all related queries at once
@@ -303,7 +279,6 @@ export default function ArticlesScreen(): JSX.Element {
       // End refresh with a bit of delay for a smoother transition
       setTimeout(() => {
         setIsRefreshing(false);
-        setShowLoadingOverlay(false);
       }, 300);
     }
   }, [queryClient, isFetching]);
@@ -366,14 +341,6 @@ export default function ArticlesScreen(): JSX.Element {
     // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
-
-  // Add effect to handle first load
-  useEffect(() => {
-    if (isInitialMount.current) {
-      handleRefresh();
-      isInitialMount.current = false;
-    }
-  }, [handleRefresh]);
 
   // Update the loading check to consider preloader state
   const isDataReady = useMemo(() => {
@@ -592,15 +559,6 @@ export default function ArticlesScreen(): JSX.Element {
     [insets, colors.background]
   );
 
-  // Update loading overlay visibility when loading state changes
-  useEffect(() => {
-    // Show loader on initial load, but not during refreshes
-    const shouldShowLoader = isArticlesLoading && !isDataCached;
-    if (!isRefreshing) {
-      setShowLoadingOverlay(shouldShowLoader);
-    }
-  }, [isArticlesLoading, isRefreshing, isDataCached]);
-
   // Show error state only if there's no cached data
   if (articlesError && !isRefreshing && !isDataCached) {
     return (
@@ -613,7 +571,16 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }
 
-  // Main content view with loading overlay when needed
+  // Show loading screen during initial load or when refreshing
+  const shouldShowLoading =
+    (isArticlesLoading && !isDataCached) || // Initial load
+    isRefreshing; // Pull-to-refresh
+
+  if (shouldShowLoading) {
+    return <LoadingScreen />;
+  }
+
+  // Main content view without any loading overlay
   return (
     <Animated.View
       style={[styles.container, fadeInStyle]}
@@ -639,19 +606,6 @@ export default function ArticlesScreen(): JSX.Element {
           hideWhileRefreshing={false}
         />
         <PageHeader title="Texts" />
-
-        {/* Loading overlay that fades out rather than jumps */}
-        {showLoadingOverlay ? (
-          <Animated.View
-            style={styles.loadingOverlay}
-            entering={FadeIn.duration(200)}
-            exiting={FadeOut.duration(300)}
-          >
-            <View style={[styles.loaderContainer, { backgroundColor: colors.overlay }]}>
-              <Loader size="large" color={colors.tint} />
-            </View>
-          </Animated.View>
-        ) : null}
       </ThemedView>
     </Animated.View>
   );

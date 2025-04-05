@@ -6,6 +6,7 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
+import { LoadingScreen } from '@/components/Loader';
 import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import { useScreenAnimation, useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/useAuth';
@@ -182,13 +183,7 @@ export default function SettingsScreen(): JSX.Element {
 
   // Show loading if we don't have valid settings
   if (!hasConcreteValues) {
-    return (
-      <Animated.View style={[styles.flexOne, fadeInStyle]}>
-        <ThemedView style={styles.container}>
-          <PageHeader title="Settings" />
-        </ThemedView>
-      </Animated.View>
-    );
+    return <LoadingScreen />;
   }
 
   // Show if not signed in
