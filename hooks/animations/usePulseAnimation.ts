@@ -1,517 +1,220 @@
 import { useCallback, useEffect } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  withSequence,
   withRepeat,
-  withDelay,
+  withTiming,
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
 
-import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
-import { withOpacity } from '../../utils/colorUtils';
-
 import { TIMING_CONFIG } from './animationConfigs';
-import type { SharedValue } from './types';
 
-export type PulseStyle = 'standard' | 'dramatic' | 'gentle' | 'halo';
+export type PulseStyle = 'gentle' | 'dramatic' | 'bounce';
 
 export interface PulseAnimationOptions {
   /**
    * Style of pulse animation
-   * - 'standard': Simple scale pulse
-   * - 'dramatic': More complex pulse with opacity changes
-   * - 'gentle': Smoother, more subtle pulse with longer duration
-   * - 'halo': Elegant halo effect with subtle glow
+   * - 'gentle': Subtle pulsing suitable for loaders
+   * - 'dramatic': More pronounced scaling for attention-grabbing elements
+   * - 'bounce': Elastic bounce effect for playful interactions
+   * @default 'gentle'
    */
   style?: PulseStyle;
 
   /**
-   * Maximum scale during pulse (default 1.1 for standard, 1.25 for dramatic, 1.15 for gentle, 1.18 for halo)
-   */
-  pulseMagnitude?: number;
-
-  /**
-   * Whether to automatically start the animation on mount
-   */
-  autoStart?: boolean;
-
-  /**
-   * Animation duration in milliseconds (default depends on style)
+   * Animation duration in milliseconds
+   * @default 1000
    */
   duration?: number;
 
   /**
-   * Minimum opacity for pulse animation (default depends on style)
+   * Maximum scale value during pulse
+   * For 'gentle' style, a value between 1.05-1.1 is recommended
+   * For 'dramatic' style, a value between 1.1-1.2 is recommended
+   * For 'bounce' style, a value between 1.2-1.3 is recommended
+   * @default 1.05 for gentle, 1.15 for dramatic, 1.25 for bounce
    */
-  minOpacity?: number;
+  pulseMagnitude?: number;
 
   /**
-   * Halo color (only used in halo style)
+   * Auto-start animation on mount
+   * @default false
    */
-  haloColor?: string;
+  autoStart?: boolean;
 
   /**
-   * Halo intensity (0.0-1.0, default 0.5)
+   * Whether to use transform scale or opacity for animation
+   * @default 'scale'
    */
-  haloIntensity?: number;
+  type?: 'scale' | 'opacity' | 'both';
 }
 
 export interface PulseAnimationResult {
   /**
-   * Shared value for scale animation
+   * Animated style to apply to component
    */
-  scale: SharedValue<number>;
+  animatedStyle: {
+    transform?: { scale: number }[];
+    opacity?: number;
+  };
 
   /**
-   * Shared value for opacity animation (only used in dramatic style)
+   * Start the pulse animation
    */
-  opacity: SharedValue<number>;
+  start: () => void;
 
   /**
-   * Shared value for halo scale (only used in halo style)
+   * Stop the pulse animation
    */
-  haloScale: SharedValue<number>;
+  stop: () => void;
 
   /**
-   * Shared value for halo opacity (only used in halo style)
+   * Reset animation to initial state
    */
-  haloOpacity: SharedValue<number>;
+  reset: () => void;
 
   /**
-   * Animated style to apply to the component
+   * Whether animation is currently running
    */
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
-
-  /**
-   * Animated style to apply to the halo component (only used in halo style)
-   */
-  haloAnimatedStyle: ReturnType<typeof useAnimatedStyle>;
-
-  /**
-   * Function to trigger a single pulse
-   */
-  pulse: () => void;
-
-  /**
-   * Function to start continuous pulse animation
-   */
-  startAnimation: (repetitions?: number) => void;
-
-  /**
-   * Function to stop the animation
-   */
-  stopAnimation: () => void;
+  isRunning: boolean;
 }
 
 /**
- * Hook for creating pulse animation effects with different styles
- * @param options - Configuration options for the pulse animation
- * @returns Animation controls and style
+ * Hook for creating pulse animations (scale or opacity)
+ * Useful for loaders, notifications, and other attention-grabbing elements
+ *
+ * @example
+ * const { animatedStyle, start, stop } = usePulseAnimation({
+ *   style: 'gentle',
+ *   pulseMagnitude: 1.05,
+ *   duration: 1000,
+ *   autoStart: true
+ * });
+ *
+ * // In your component
+ * return (
+ *   <Animated.View style={[styles.circle, animatedStyle]}>
+ *     {children}
+ *   </Animated.View>
+ * );
  */
 export const usePulseAnimation = (options: PulseAnimationOptions = {}): PulseAnimationResult => {
-  const colors = useColors();
   const {
-    style = 'standard',
-    pulseMagnitude,
+    style = 'gentle',
+    duration = 1000,
     autoStart = false,
-    haloColor = withOpacity(colors.white, 0.8),
-    haloIntensity = 0.5,
+    type = 'scale',
+    pulseMagnitude: customMagnitude,
   } = options;
 
-  // Set default magnitude based on style
-  const defaultMagnitude =
-    style === 'dramatic' ? 1.25 : style === 'gentle' ? 1.15 : style === 'halo' ? 1.18 : 1.1;
-  const magnitude = pulseMagnitude ?? defaultMagnitude;
+  // Determine scale magnitude based on style if not provided
+  const pulseMagnitude =
+    customMagnitude ?? (style === 'gentle' ? 1.05 : style === 'dramatic' ? 1.15 : 1.25);
 
-  // Initial values based on style
-  const initialScale = style === 'dramatic' ? 0.3 : 1;
-  const initialOpacity = style === 'dramatic' ? 0.5 : style === 'gentle' ? 0.5 : 1;
+  // Animation shared values
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
 
-  // Animation values - always create all shared values to avoid conditional hook calls
-  const scale = useSharedValue(initialScale);
-  const opacity = useSharedValue(initialOpacity);
-  const haloScale = useSharedValue(1.3);
-  const haloOpacity = useSharedValue(0);
+  // Track if animation is running
+  const isRunningRef = useSharedValue(false);
 
-  // Stop the animation - defined first to avoid reference issues
-  const stopAnimation = useCallback(() => {
-    'worklet';
-    // Cancel any ongoing animations
-    cancelAnimation(scale);
-    cancelAnimation(opacity);
-    cancelAnimation(haloScale);
-    cancelAnimation(haloOpacity);
+  // Determine easing function based on style
+  const easingFunction =
+    style === 'bounce'
+      ? Easing.elastic(1.2)
+      : style === 'dramatic'
+        ? Easing.bezier(0.25, 0.1, 0.25, 1)
+        : Easing.inOut(Easing.ease);
 
-    // Reset to initial values
-    scale.value = initialScale;
-    opacity.value = initialOpacity;
+  // Create animated style
+  const animatedStyle = useAnimatedStyle(() => {
+    const styleObj: {
+      transform?: { scale: number }[];
+      opacity?: number;
+    } = {};
 
-    if (style === 'halo') {
-      haloScale.value = 1.3;
-      haloOpacity.value = 0;
+    if (type === 'scale' || type === 'both') {
+      styleObj.transform = [{ scale: scale.value }];
     }
-  }, [scale, opacity, haloScale, haloOpacity, initialScale, initialOpacity, style]);
 
-  // Standard pulse function
-  const standardPulse = useCallback(() => {
-    'worklet';
-    // Reset to initial state
+    if (type === 'opacity' || type === 'both') {
+      styleObj.opacity = opacity.value;
+    }
+
+    return styleObj;
+  });
+
+  // Start animation
+  const start = useCallback(() => {
+    // Reset values first
     scale.value = 1;
+    opacity.value = 1;
 
-    // Use withSequence for smoother animation
-    scale.value = withSequence(
-      // Grow to magnitude
-      withTiming(magnitude, {
-        duration: TIMING_CONFIG.FAST.duration,
-        easing: TIMING_CONFIG.FAST.easing,
-      }),
-      // Shrink back to normal
-      withTiming(1, {
-        duration: TIMING_CONFIG.FAST.duration,
-        easing: TIMING_CONFIG.FAST.easing,
-      })
-    );
-  }, [scale, magnitude]);
+    // Mark as running
+    isRunningRef.value = true;
 
-  // Dramatic pulse function
-  const dramaticPulse = useCallback(() => {
-    'worklet';
-
-    // Animate scale with dramatic zoom effect
-    scale.value = withSequence(
-      withTiming(0.7, {
-        duration: 200,
-        easing: TIMING_CONFIG.FAST.easing,
-      }),
-      withTiming(magnitude, {
-        duration: 300,
-        easing: TIMING_CONFIG.MEDIUM.easing,
-      }),
-      withDelay(
-        150,
-        withTiming(initialScale, {
-          duration: 500,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        })
-      )
-    );
-
-    // Animate opacity in sync with scale
-    opacity.value = withSequence(
-      withTiming(0.8, {
-        duration: 200,
-        easing: TIMING_CONFIG.FAST.easing,
-      }),
-      withTiming(1, {
-        duration: 300,
-        easing: TIMING_CONFIG.MEDIUM.easing,
-      }),
-      withDelay(
-        150,
-        withTiming(initialOpacity, {
-          duration: 500,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        })
-      )
-    );
-  }, [scale, opacity, magnitude, initialScale, initialOpacity]);
-
-  // Gentle pulse function - new smoother animation option
-  const gentlePulse = useCallback(() => {
-    'worklet';
-    const pulseDuration = options.duration || 1200;
-    const minOpacity = options.minOpacity || 0.4;
-
-    // Animate scale with gentle, smooth effect
-    scale.value = withSequence(
-      withTiming(magnitude, {
-        duration: pulseDuration * 0.5,
-        easing: TIMING_CONFIG.GENTLE.easing,
-      }),
-      withTiming(1, {
-        duration: pulseDuration * 0.5,
-        easing: TIMING_CONFIG.GENTLE.easing,
-      })
-    );
-
-    // Animate opacity in sync with scale - subtle changes
-    opacity.value = withSequence(
-      withTiming(minOpacity, {
-        duration: pulseDuration * 0.4,
-        easing: TIMING_CONFIG.GENTLE.easing,
-      }),
-      withTiming(1, {
-        duration: pulseDuration * 0.6,
-        easing: TIMING_CONFIG.GENTLE.easing,
-      })
-    );
-  }, [scale, opacity, magnitude, options.duration, options.minOpacity]);
-
-  // Halo pulse function - new elegant halo effect
-  const haloPulse = useCallback(() => {
-    'worklet';
-    const pulseDuration = options.duration || 1400;
-
-    // Main element animation
-    scale.value = withSequence(
-      withTiming(magnitude, {
-        duration: pulseDuration * 0.4,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      }),
-      withTiming(1, {
-        duration: pulseDuration * 0.6,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      })
-    );
-
-    // Halo animations
-    haloScale.value = withSequence(
-      withTiming(1.5, {
-        duration: pulseDuration * 0.5,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      }),
-      withTiming(1.3, {
-        duration: pulseDuration * 0.5,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      })
-    );
-
-    haloOpacity.value = withSequence(
-      withTiming(haloIntensity, {
-        duration: pulseDuration * 0.3,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      }),
-      withTiming(0.1, {
-        duration: pulseDuration * 0.7,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      })
-    );
-  }, [scale, haloScale, haloOpacity, magnitude, haloIntensity, options.duration]);
-
-  // Unified pulse function that calls the appropriate style
-  const pulse = useCallback(() => {
-    'worklet';
-    if (style === 'dramatic') {
-      dramaticPulse();
-    } else if (style === 'gentle') {
-      gentlePulse();
-    } else if (style === 'halo') {
-      haloPulse();
-    } else {
-      standardPulse();
+    // Apply appropriate animation based on type
+    if (type === 'scale' || type === 'both') {
+      scale.value = withRepeat(
+        withTiming(pulseMagnitude, {
+          duration: duration / 2,
+          easing: easingFunction,
+        }),
+        -1, // Infinite repetition
+        true // Reverse on each iteration
+      );
     }
-  }, [style, dramaticPulse, gentlePulse, haloPulse, standardPulse]);
 
-  // Calculate animation cycle duration for each style
-
-  // Start the pulse animation
-  const startAnimation = useCallback(() => {
-    'worklet';
-    // Cancel any running animations first
-    stopAnimation();
-
-    // Different animation based on selected style
-    if (style === 'standard') {
-      // Standard pulse: Simple scale pulsing
-      scale.value = withRepeat(
-        withSequence(
-          withTiming(magnitude, {
-            duration: 700,
-            easing: Easing.out(Easing.ease),
-          }),
-          withTiming(1, {
-            duration: 700,
-            easing: Easing.in(Easing.ease),
-          })
-        ),
-        -1,
-        false // don't reverse the animation
-      );
-    } else if (style === 'dramatic') {
-      // Dramatic pulse: More noticeable with opacity changes
-      scale.value = withSequence(
-        withTiming(0.3, {
-          duration: 100,
-          easing: Easing.out(Easing.ease),
-        }),
-        withTiming(magnitude, {
-          duration: 200,
-          easing: Easing.bounce,
-        }),
-        withRepeat(
-          withSequence(
-            withTiming(magnitude * 0.9, {
-              duration: 600,
-              easing: Easing.out(Easing.ease),
-            }),
-            withTiming(magnitude, {
-              duration: 600,
-              easing: Easing.in(Easing.ease),
-            })
-          ),
-          -1,
-          false
-        )
-      );
-
-      opacity.value = withSequence(
-        withTiming(0.5, {
-          duration: 100,
-        }),
-        withTiming(1, {
-          duration: 200,
-        })
-      );
-    } else if (style === 'gentle') {
-      // Gentle pulse: Smoother and more subtle
-      scale.value = withRepeat(
-        withSequence(
-          withTiming(magnitude, {
-            duration: 1500,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          }),
-          withTiming(1, {
-            duration: 1500,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          })
-        ),
-        -1,
-        false
-      );
+    if (type === 'opacity' || type === 'both') {
+      // For opacity, use different ranges based on style
+      const opacityMin = style === 'gentle' ? 0.7 : style === 'dramatic' ? 0.5 : 0.6;
 
       opacity.value = withRepeat(
-        withSequence(
-          withTiming(1, {
-            duration: 1500,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          }),
-          withTiming(0.7, {
-            duration: 1500,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          })
-        ),
-        -1,
-        false
-      );
-    } else if (style === 'halo') {
-      // Halo effect: Main element scales slightly while halo expands and fades
-      scale.value = withRepeat(
-        withSequence(
-          withTiming(magnitude, {
-            duration: 1000,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          }),
-          withTiming(1, {
-            duration: 1000,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          })
-        ),
-        -1,
-        false
-      );
-
-      // Halo animation
-      haloScale.value = withRepeat(
-        withSequence(
-          withTiming(1.3, {
-            duration: 200,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          }),
-          withTiming(1.7, {
-            duration: 1800,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          })
-        ),
-        -1,
-        false
-      );
-
-      haloOpacity.value = withRepeat(
-        withSequence(
-          withTiming(haloIntensity, {
-            duration: 200,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          }),
-          withTiming(0, {
-            duration: 1800,
-            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          })
-        ),
-        -1,
-        false
+        withTiming(opacityMin, {
+          duration: duration / 2,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        -1, // Infinite repetition
+        true // Reverse on each iteration
       );
     }
-  }, [style, magnitude, stopAnimation, scale, opacity, haloScale, haloOpacity, haloIntensity]);
+  }, [scale, opacity, pulseMagnitude, duration, type, style, easingFunction, isRunningRef]);
 
-  // Clean up on unmount
+  // Stop animation
+  const stop = useCallback(() => {
+    if (isRunningRef.value) {
+      cancelAnimation(scale);
+      cancelAnimation(opacity);
+      isRunningRef.value = false;
+    }
+  }, [scale, opacity, isRunningRef]);
+
+  // Reset to initial state
+  const reset = useCallback(() => {
+    stop();
+    scale.value = 1;
+    opacity.value = 1;
+  }, [scale, opacity, stop]);
+
+  // Auto-start if enabled
   useEffect(() => {
-    // Auto-start if enabled
     if (autoStart) {
-      startAnimation();
+      start();
     }
 
     return () => {
-      stopAnimation();
+      // Clean up animations on unmount
+      stop();
     };
-  }, [autoStart, startAnimation, stopAnimation]);
-
-  // Dynamic styles based on animation style
-  const animatedStyle = useAnimatedStyle(() => {
-    if (style === 'dramatic') {
-      const scaleProgress = (scale.value - initialScale) / (magnitude - initialScale);
-
-      return {
-        transform: [{ scale: scale.value }],
-        opacity: opacity.value,
-        borderWidth: 4 * (0.6 + scaleProgress * 0.8),
-        shadowRadius: 4 + scaleProgress * 15,
-        shadowOpacity: 0.2 + scaleProgress * 0.5,
-        elevation: Math.round(4 + scaleProgress * 15),
-      };
-    }
-
-    return {
-      transform: [{ scale: scale.value }],
-      opacity: style === 'gentle' ? opacity.value : undefined,
-    };
-  });
-
-  // Halo-specific animated style
-  const haloAnimatedStyle = useAnimatedStyle(() => {
-    if (style === 'halo') {
-      return {
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        borderRadius: LAYOUT.BORDER_RADIUS.PILL, // Large value ensures circular shape
-        transform: [{ scale: haloScale.value }],
-        opacity: haloOpacity.value,
-        backgroundColor: 'transparent',
-        borderWidth: 0,
-        shadowColor: haloColor,
-        shadowOffset: { width: 0, height: 0 },
-        shadowRadius: 15,
-        shadowOpacity: haloOpacity.value,
-        elevation: 6,
-      };
-    }
-
-    return {};
-  });
+  }, [autoStart, start, stop]);
 
   return {
-    scale,
-    opacity,
-    haloScale,
-    haloOpacity,
     animatedStyle,
-    haloAnimatedStyle,
-    pulse,
-    startAnimation,
-    stopAnimation,
+    start,
+    stop,
+    reset,
+    isRunning: isRunningRef.value,
   };
 };

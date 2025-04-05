@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useTransformAnimation, useOpacityAnimation } from '@/hooks/animations';
+import { useTransformAnimation, useOpacityAnimation, SPRING_CONFIG } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -14,26 +14,32 @@ import type { WordTooltipProps } from '@/types/ui/modal.types';
  * A tooltip component that displays above an Arabic word
  * Shows the English translation of the word with minimal visual design
  * Ensures the arrow tip is precisely centered over the word regardless of screen position
+ * Now with spring animations for a more natural feel
  */
 export const WordTooltip = memo(
   ({ visible, text = '', layout, onClose, zIndex }: WordTooltipProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
-    // Setup transform animation for scale effect
+    // Setup transform animation for scale effect with spring animation
     const { startAnimation: startScaleAnimation, animatedStyle: transformStyle } =
       useTransformAnimation({
         type: 'scale',
-        initialValue: 1,
+        initialValue: 0.8,
         targetValue: 1,
-        duration: 0,
-        useSpring: false,
+        duration: 300,
+        useSpring: true,
+        springConfig: {
+          ...SPRING_CONFIG.CARD,
+          damping: 12, // Slightly bouncier for the tooltip pop
+          mass: 0.6, // Lighter mass for quicker movement
+        },
       });
 
-    // Setup opacity animation for subtle fade effect
+    // Setup opacity animation for fade effect
     const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation({
-      initialOpacity: 1,
-      duration: 0,
+      initialOpacity: 0,
+      duration: 200,
     });
 
     // Handle closing the tooltip with animation sequence
@@ -45,7 +51,7 @@ export const WordTooltip = memo(
     // Trigger animations based on visibility
     useEffect(() => {
       if (visible) {
-        // Start both animations
+        // Start both animations for a combined effect
         startScaleAnimation();
         fadeIn();
 
@@ -74,7 +80,7 @@ export const WordTooltip = memo(
     const { width: screenWidth } = Dimensions.get('window');
 
     // Harmonious spacing values
-    const SPACING = LAYOUT.SPACING.SMALL; // Consistent spacing for harmony
+    const SPACING = LAYOUT.SPACING.SMALL;
     const ARROW_SIZE = 5; // Arrow size
     const TOOLTIP_MARGIN = SPACING; // Gap between word and tooltip (same as internal padding)
     const TOOLTIP_HEIGHT = 30; // Slightly reduced height for tighter appearance

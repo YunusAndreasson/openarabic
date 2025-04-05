@@ -171,6 +171,12 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
     [isSelected, calculatedFontSize]
   );
 
+  // Handle tooltip close
+  const handleTooltipClose = useCallback(() => {
+    // Gradually hide the tooltip
+    setTooltipVisible(false);
+  }, []);
+
   // Show tooltip on quick press with fade animation
   const handlePress = useCallback(() => {
     if (!layout) return;
@@ -179,14 +185,9 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
     tooltipZIndexCounter += 1;
     setTooltipZIndex(tooltipZIndexCounter);
 
-    // Show tooltip immediately
+    // Show tooltip immediately with animation handled in WordTooltip
     setTooltipVisible(true);
   }, [layout]);
-
-  // Handle tooltip close
-  const handleTooltipClose = useCallback(() => {
-    setTooltipVisible(false);
-  }, []);
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {

@@ -18,25 +18,19 @@
  * - useSlideAnimation → useTransformAnimation({ type: 'slide' })
  */
 
-// Export main hooks
+// Export all animation hooks
 export { useOpacityAnimation } from './useOpacityAnimation';
-export { usePulseAnimation } from './usePulseAnimation';
 export { usePressAnimation } from './usePressAnimation';
+export { usePulseAnimation } from './usePulseAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
-export { useComponentAnimation } from './useComponentAnimation';
-export { useAnimationTrigger } from './useAnimationTrigger';
-export { useToggleAnimation } from './useToggleAnimation';
-export { useGraphAnimation } from './useGraphAnimation';
-export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
-export { useScreenAnimation } from './useScreenAnimation';
+// Export screen animations hooks
 export { useScreenAnimations } from './useScreenAnimations';
-
-// Export types
-export type { PulseStyle, PulseAnimationOptions, PulseAnimationResult } from './usePulseAnimation';
-export type { PressAnimationType } from './usePressAnimation';
-export type { SharedValue } from './types';
-export type { ScreenAnimationResult } from './useScreenAnimation';
+// For backward compatibility, re-export useScreenAnimations as useScreenAnimation
+export { useScreenAnimations as useScreenAnimation } from './useScreenAnimations';
+export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
+export { useToggleAnimation } from './useToggleAnimation';
+// export { useTooltipAnimation } from './useTooltipAnimation';
 
 // Export animation configs
 export { TIMING_CONFIG, SPRING_CONFIG } from './animationConfigs';

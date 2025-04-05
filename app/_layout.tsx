@@ -23,6 +23,7 @@ import 'react-native-reanimated';
 import { useColorScheme, AppState, View, Text, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
@@ -232,6 +233,7 @@ function AppContent() {
           </View>
         </AppLoadingContext.Provider>
       </ToastProvider>
+      <Toast />
     </NavigationThemeProvider>
   );
 }

@@ -38,6 +38,14 @@ export const useArticleMutations = (
     onSuccess: () => {
       refetchReadingListStatus();
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
+
+      // Show success toast
+      Toast.show({
+        type: 'success',
+        text1: 'Added to bookmarks',
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     },
     onError: () => {
       // Error handled silently
@@ -51,6 +59,14 @@ export const useArticleMutations = (
     onSuccess: () => {
       refetchReadingListStatus();
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
+
+      // Show success toast
+      Toast.show({
+        type: 'success',
+        text1: 'Removed from bookmarks',
+        position: 'bottom',
+        visibilityTime: 2000,
+      });
     },
     onError: () => {
       // Error handled silently
