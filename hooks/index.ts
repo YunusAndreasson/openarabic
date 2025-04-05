@@ -7,7 +7,6 @@ export * from './animations/useTransformAnimation';
 export * from './animations/useComponentAnimation';
 export * from './animations/useAnimationTrigger';
 export * from './animations/useToggleAnimation';
-export * from './animations/useFloatingButtonAnimation';
 export * from './animations/useProgressAnimation';
 
 // Auth hooks

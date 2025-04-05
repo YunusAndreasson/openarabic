@@ -26,7 +26,6 @@ export { useTransformAnimation } from './useTransformAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
 export { useScreenAnimation } from './useScreenAnimation';
-export { useFloatingButtonAnimation } from './useFloatingButtonAnimation';
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs
