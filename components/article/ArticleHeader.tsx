@@ -163,6 +163,27 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             </ThemedText>
           </View>
         </View>
+
+        {typeof article.source === 'string' && article.source.trim() ? (
+          <View style={styles.articleInfoItem}>
+            <Ionicons
+              name="link-outline"
+              size={16}
+              color={colors.text}
+              style={styles.infoIcon}
+              accessibilityLabel="Source"
+            />
+            <View style={styles.infoTextContainer}>
+              <ThemedText
+                type="caption"
+                variant="secondary"
+                accessibilityLabel={`Source: ${article.source}`}
+              >
+                {article.source}
+              </ThemedText>
+            </View>
+          </View>
+        ) : null}
       </View>
 
       {article.summary ? (

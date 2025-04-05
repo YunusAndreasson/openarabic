@@ -12,21 +12,12 @@ import { ThemedText } from '../ThemedText';
  * TimeAgo component to show when an article was published or last opened
  */
 export const TimeAgo = memo(({ date }: { date: string }) => {
-  const colors = useColors();
-  const isDarkMode = useIsDarkMode();
-
   // Ensure we have a valid date
   const validDate = date ? date : new Date().toISOString();
   const timeAgoText = formatTimeAgo(validDate);
 
   return (
     <View style={styles.timeAgoContainer}>
-      <Ionicons
-        name="time-outline"
-        size={14}
-        color={isDarkMode ? colors.text : colors.textSecondary}
-        style={styles.timeIcon}
-      />
       <ThemedText type="caption" weight="500" colorName="textTertiary" skipDefaultColor>
         {timeAgoText}
       </ThemedText>

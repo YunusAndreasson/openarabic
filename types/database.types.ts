@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable no-unused-vars */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -47,6 +46,7 @@ export type Database = {
           difficulty_level: number;
           id: number;
           image_url: string | null;
+          source: string | null;
           summary: string | null;
           title: string;
         };
@@ -59,6 +59,7 @@ export type Database = {
           difficulty_level: number;
           id?: number;
           image_url?: string | null;
+          source?: string | null;
           summary?: string | null;
           title: string;
         };
@@ -71,6 +72,7 @@ export type Database = {
           difficulty_level?: number;
           id?: number;
           image_url?: string | null;
+          source?: string | null;
           summary?: string | null;
           title?: string;
         };
@@ -525,24 +527,3 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof PublicSchema['CompositeTypes']
     ? PublicSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never;
-
-/**
- * Simplified helper type to get a table's row type
- * Example: DbRow<'articles'> instead of Database['public']['Tables']['articles']['Row']
- */
-export type DbRow<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Row'];
-
-/**
- * Simplified helper type to get a table's insert type
- * Example: DbInsert<'articles'> instead of Database['public']['Tables']['articles']['Insert']
- */
-export type DbInsert<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Insert'];
-
-/**
- * Simplified helper type to get a table's update type
- * Example: DbUpdate<'articles'> instead of Database['public']['Tables']['articles']['Update']
- */
-export type DbUpdate<T extends keyof Database['public']['Tables']> =
-  Database['public']['Tables'][T]['Update'];

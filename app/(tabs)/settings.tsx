@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
 import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
-import { useScreenAnimation, useOpacityAnimation } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/useAuth';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -73,9 +73,6 @@ export default function SettingsScreen(): JSX.Element {
     settings.fontScale >= 0.8 &&
     settings.fontScale <= 1.3 &&
     typeof settings.showEnglish === 'boolean';
-
-  // Simple fade animation
-  const { fadeInStyle } = useScreenAnimation(true, isLoadingState);
 
   // Fade animations for UI elements that depend on Redux store data
   const { animatedStyle: themeToggleFade } = useOpacityAnimation({
