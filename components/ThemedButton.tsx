@@ -7,7 +7,7 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
-import type { ThemedButtonProps } from '@/types/ui/button.types';
+import type { ThemedButtonProps, ButtonVariant } from '@/types/ui/button.types';
 import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
@@ -79,6 +79,35 @@ const IconContent = ({
   return null;
 };
 
+// Style generator functions
+const getButtonStyle = (
+  variant: ButtonVariant,
+  size: 'small' | 'medium' | 'large',
+  disabled: boolean,
+  colors: ReturnType<typeof useColors>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  style?: any
+) => [
+  styles.button,
+  variant === 'filled'
+    ? { backgroundColor: disabled ? colors.disabled : colors.tint }
+    : {
+        backgroundColor: 'transparent',
+        borderWidth: 1,
+        borderColor: disabled ? colors.disabled : colors.tint,
+      },
+  size === 'small' && styles.buttonSmall,
+  size === 'large' && styles.buttonLarge,
+  style,
+];
+
+const getButtonTextStyle = (size: 'small' | 'medium' | 'large', textWeight: 'normal' | 'bold') => [
+  styles.buttonText,
+  size === 'small' && styles.buttonTextSmall,
+  size === 'large' && styles.buttonTextLarge,
+  textWeight === 'normal' && styles.normalText,
+];
+
 export function ThemedButton({
   variant = 'filled',
   title,
@@ -105,19 +134,12 @@ export function ThemedButton({
     mass: 0.8,
     overshootClamping: true,
   };
-  const {
-    animatedStyle,
-    handlePressIn: onPressIn,
-    handlePressOut,
-  } = usePressAnimation({
+
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'custom',
     scaleAmount: 0.98,
     springConfig: buttonSpringConfig,
   });
-
-  const handlePressIn = () => {
-    onPressIn();
-  };
 
   const handlePress = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !loading) {
@@ -129,26 +151,16 @@ export function ThemedButton({
   const textColor = variant === 'filled' ? colors.background : colors.tint;
   const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
   const hasIcon = loading || iconComponent || icon;
-  const buttonTextStyle = [
-    styles.buttonText,
-    size === 'small' && styles.buttonTextSmall,
-    size === 'large' && styles.buttonTextLarge,
-    textWeight === 'normal' && styles.normalText,
-  ];
 
-  const buttonStyle = [
-    styles.button,
-    variant === 'filled'
-      ? { backgroundColor: disabled ? colors.disabled : colors.tint }
-      : {
-          backgroundColor: 'transparent',
-          borderWidth: 1,
-          borderColor: disabled ? colors.disabled : colors.tint,
-        },
-    size === 'small' && styles.buttonSmall,
-    size === 'large' && styles.buttonLarge,
-    style,
-  ];
+  // Use extracted style functions
+  const buttonTextStyle = getButtonTextStyle(size, textWeight);
+  const buttonStyle = getButtonStyle(variant, size, disabled, colors, style);
+
+  const accessibilityHintValue = disabled
+    ? 'This button is currently disabled'
+    : loading
+      ? 'This button is currently loading'
+      : undefined;
 
   return (
     <AnimatedTouchable
@@ -162,13 +174,7 @@ export function ThemedButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel || title}
       accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      accessibilityHint={
-        disabled
-          ? 'This button is currently disabled'
-          : loading
-            ? 'This button is currently loading'
-            : undefined
-      }
+      accessibilityHint={accessibilityHintValue}
       {...props}
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>

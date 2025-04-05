@@ -59,7 +59,7 @@ const WordItem = memo(
           </View>
         </View>
         <View style={styles.statusContainer}>
-          <BlurView intensity={10} tint={isDarkMode ? 'dark' : 'light'} style={styles.statusPill}>
+          <BlurView intensity={isDarkMode ? 3 : 10} tint="light" style={styles.statusPill}>
             <View
               style={[
                 styles.statusBackground,

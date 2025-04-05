@@ -35,6 +35,7 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear, formatTimeAgo } from '@/utils/dateUtils';
+import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -306,9 +307,19 @@ export default function ArticlesScreen(): JSX.Element {
         }
       }
 
-      navigateTo({ pathname: '/article/[id]', params: { id: article.id } }, () => {
+      navigateTo({ pathname: '/article/[id]', params: { id: article.id } }, async () => {
         if (session?.user) {
-          dispatch(addToReadingList(article.id));
+          try {
+            // Check if article is already in reading list before adding
+            const userId = session.user.id;
+            const isInReadingList = await readingListService.isInReadingList(userId, article.id);
+            if (!isInReadingList) {
+              dispatch(addToReadingList(article.id));
+            }
+          } catch (error) {
+            // If there's an error checking status, we'll skip adding to avoid duplicates
+            handleError(error as Error);
+          }
         }
       });
     },
@@ -417,7 +428,7 @@ export default function ArticlesScreen(): JSX.Element {
               <ThemedCard
                 variant="compact"
                 article={item}
-                handlePress={() => handleArticlePress(item)}
+                onPress={() => handleArticlePress(item)}
                 hideDifficulty={true}
               />
             </View>

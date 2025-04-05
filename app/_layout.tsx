@@ -75,7 +75,6 @@ Sentry.init({
 // Static stack options
 const stackScreenOptions = {
   headerShown: true,
-  animation: 'slide_from_right',
 } as const;
 
 const reviewScreenOptions = {

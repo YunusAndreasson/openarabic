@@ -33,11 +33,15 @@ const GOLDEN_RATIO_ADJUSTED = 1.5;
 
 type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
   handlePress?: () => void;
+  onPress?: () => void;
 } & (ArticleCardProps | CompactCardProps | BasicCardProps);
 
 function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Extract common props
-  const { handlePress, style, isLoading = false, variant = 'article' } = props;
+  const { handlePress, onPress, style, isLoading = false, variant = 'article' } = props;
+
+  // Prioritize onPress over handlePress for compatibility
+  const pressHandler = onPress || handlePress;
 
   // Type guards
   const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
@@ -289,7 +293,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     return (
       <BaseCard
         isLoading={true}
-        onPress={handlePress}
+        onPress={pressHandler}
         style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
         loadingComponent={renderLoading()}
       >
@@ -301,7 +305,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Use the BaseCard with the appropriate content
   return (
     <BaseCard
-      onPress={handlePress}
+      onPress={pressHandler}
       style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
       includePressAnimation={true}
     >

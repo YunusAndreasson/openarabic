@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
@@ -53,6 +53,7 @@ export default function ArticleScreen(): JSX.Element {
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   // Track previous audio state to detect transitions
 
@@ -69,7 +70,7 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   // Navigation hook
-  const { navigateTo } = useNavigationWithDebounce();
+  useNavigationWithDebounce();
 
   // Audio player hook
   const { loadAndPlayAudio, stopPlayback, audioState } = useAudioPlayer();
@@ -253,8 +254,8 @@ export default function ArticleScreen(): JSX.Element {
         handleError(error);
       });
     }
-    navigateTo({ pathname: '/' }); // Navigate to root
-  }, [navigateTo, isPlaying, stopPlayback]);
+    router.back(); // Use router.back() for proper back navigation
+  }, [isPlaying, router, stopPlayback]);
 
   // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {

@@ -28,9 +28,6 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
     }
   }, [onBackPress]);
 
-  // Consistent background color with tabbar
-  const backgroundColor = isDarkMode ? colors.modalOverlay : colors.overlay;
-
   const containerStyle = useMemo(
     () => [
       styles.container,

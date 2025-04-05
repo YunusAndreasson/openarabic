@@ -88,7 +88,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         }),
       },
     ],
-    [colors.shadow, colors.transparent, colors.borderOverlay, bottomInset, isDarkMode]
+    [colors.shadow, colors.transparent, colors.borderOverlay, bottomInset]
   );
 
   // Memoize tab button styles

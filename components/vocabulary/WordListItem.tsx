@@ -108,7 +108,7 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
   const containerStyle = [
     styles.container,
     {
-      backgroundColor: colors.cardBackground,
+      backgroundColor: colors.card,
       borderColor: colors.cardBorder,
     },
   ];
@@ -118,7 +118,7 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
   return (
     <Animated.View style={animatedStyle as AnimatedStyle<ViewStyle>}>
       <TouchableOpacity
-        style={containerStyle}
+        style={[containerStyle, styles.cardContent]}
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
@@ -128,84 +128,68 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
         accessibilityHint="Tap to view in article context"
         accessibilityRole="button"
       >
-        <View style={styles.cardContent}>
-          {/* Main content row */}
-          <View style={styles.content}>
-            {/* Left side with English text and metadata */}
-            <View style={styles.leftContent}>
-              <View style={styles.textContainer}>
-                {/* English translation with word type tag */}
-                <View style={styles.translationRow}>
-                  <ThemedText
-                    type="body"
-                    variant="secondary"
-                    weight="500"
-                    numberOfLines={2}
-                    style={styles.englishText}
-                  >
-                    {english || 'No translation available'}
-                  </ThemedText>
-                </View>
-              </View>
-            </View>
+        {/* Main content row */}
+        <View style={styles.content}>
+          {/* Left side with English text */}
+          <ThemedText
+            type="body"
+            variant="secondary"
+            weight="500"
+            numberOfLines={2}
+            style={styles.englishText}
+          >
+            {english || 'No translation available'}
+          </ThemedText>
 
-            {/* Arabic text on the right */}
-            <View style={styles.arabicContainer}>
-              <ThemedText
-                type="arabic"
-                arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-                weight="600"
-                align="right"
-                skipDefaultColor
-                colorName="arabicText"
-              >
-                {word_form}
-              </ThemedText>
-            </View>
-          </View>
+          {/* Arabic text on the right */}
+          <ThemedText
+            type="arabic"
+            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
+            weight="600"
+            align="right"
+            skipDefaultColor
+            colorName="arabicText"
+            style={styles.arabicText}
+          >
+            {word_form}
+          </ThemedText>
+        </View>
 
-          {/* Divider */}
-          <View style={[styles.divider, { backgroundColor: colors.overlay }]} />
+        {/* Memory Strength section */}
+        <View style={styles.progressBarLabelContainer}>
+          <ThemedText type="caption" variant="subtle" style={styles.memoryStrengthLabel}>
+            MEMORY STRENGTH
+          </ThemedText>
+          <ThemedText type="caption" variant="subtle">
+            {wordStatus.progress.value}%
+          </ThemedText>
+        </View>
 
-          {/* Memory Strength label and progress bar */}
-          <View style={styles.progressBarContainer}>
-            {/* Memory Strength caption and percentage side by side */}
-            <View style={styles.progressBarLabelContainer}>
-              <ThemedText type="caption" variant="subtle" style={styles.memoryStrengthLabel}>
-                MEMORY STRENGTH
-              </ThemedText>
-              <ThemedText type="caption" variant="subtle">
-                {wordStatus.progress.value}%
-              </ThemedText>
-            </View>
+        <View style={[styles.progressBar, { backgroundColor: `${colors.border}40` }]}>
+          <Animated.View
+            style={[
+              styles.progressFill,
+              {
+                width: `${wordStatus.progress.width}%`,
+                backgroundColor: wordStatus.progress.color,
+              },
+            ]}
+          />
+        </View>
 
-            <View style={[styles.progressBar, { backgroundColor: colors.overlay }]}>
-              <Animated.View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${wordStatus.progress.width}%`,
-                    backgroundColor: wordStatus.progress.color,
-                  },
-                ]}
-              />
-            </View>
+        {/* Review info and streak below progress bar */}
+        <View style={styles.learningInfoContainer}>
+          {wordStatus.lastReview ? (
+            <ThemedText type="caption" variant="subtle" style={styles.lastReview}>
+              Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
+            </ThemedText>
+          ) : null}
 
-            {/* Review info and streak below progress bar */}
-            <View style={styles.learningInfoContainer}>
-              {wordStatus.lastReview ? (
-                <ThemedText type="caption" variant="subtle" style={styles.lastReview}>
-                  Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
-                </ThemedText>
-              ) : null}
-
-              {wordStatus.successStreak > 0 ? (
-                <ThemedText type="caption" variant="subtle" style={styles.streakText}>
-                  🔥 {wordStatus.successStreak} streak
-                </ThemedText>
-              ) : null}
-            </View>
-          </View>
+          {wordStatus.successStreak > 0 ? (
+            <ThemedText type="caption" variant="subtle" style={styles.streakText}>
+              🔥 {wordStatus.successStreak} streak
+            </ThemedText>
+          ) : null}
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -213,11 +197,9 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
 });
 
 const styles = StyleSheet.create({
-  arabicContainer: {
-    alignItems: 'flex-end',
+  arabicText: {
     flex: 0.5,
-    justifyContent: 'center',
-    minHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+    textAlign: 'right',
   },
   cardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
@@ -246,9 +228,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   englishText: {
+    flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
     lineHeight: Platform.OS === 'ios' ? 24 : 26,
+    marginRight: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   lastReview: {
@@ -261,12 +245,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: LAYOUT.SPACING.SMALL / 2,
   },
-  leftContent: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
   memoryStrengthLabel: {
     fontWeight: '500',
     letterSpacing: 0.5,
@@ -277,9 +255,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.SMALL / 2,
     overflow: 'hidden',
     width: '100%',
-  },
-  progressBarContainer: {
-    marginTop: LAYOUT.SPACING.SMALL / 2,
   },
   progressBarLabelContainer: {
     alignItems: 'center',
@@ -295,15 +270,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  translationRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: LAYOUT.SPACING.SMALL / 2,
   },
 });
 
