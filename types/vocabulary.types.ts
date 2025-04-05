@@ -17,7 +17,7 @@ export interface SentenceWord extends Tables<'sentence_words'> {
 export interface StudyWord {
   sentence_word_id: number;
   user_id: string;
-  sentence_word: SentenceWord;
+  sentence_word?: SentenceWord;
 
   // Legacy fields (kept for compatibility)
   interval_days: number;
@@ -54,14 +54,12 @@ export interface StudyWord {
 }
 
 /**
- * Statistics used by vocabulary dashboard, graphs, and components
+ * Base statistics shared across vocabulary-related statistics interfaces
  */
-export interface VocabularyStats {
+export interface BaseVocabularyStats {
   totalWords: number;
   masteredWords: number;
   learningWords: number;
-  dueWords: number;
-  streak: number;
   successRate: number;
   averageInterval: number;
   averageEaseFactor: number;
@@ -71,6 +69,25 @@ export interface VocabularyStats {
   longestSuccessStreak: number;
   wordsWithStreaks: number;
   averageDifficulty: number;
+}
+
+/**
+ * Statistics used by vocabulary dashboard, graphs, and components
+ */
+export interface VocabularyStats extends BaseVocabularyStats {
+  dueWords: number;
+  streak: number;
+}
+
+/**
+ * Statistics about the spaced repetition system
+ * Used by vocabulary dashboard components and screens
+ */
+export interface SrsStats extends BaseVocabularyStats {
+  averageStability: number;
+  masteredCount: number;
+  learningCount: number;
+  failedWordsRemaining: number;
 }
 
 /**
@@ -103,25 +120,4 @@ export interface GraphPaths {
   totalWordsLearned: number;
   dailyAverage: number;
   maxValue: number;
-}
-
-/**
- * Statistics about the spaced repetition system
- * Used by vocabulary dashboard components and screens
- */
-export interface SrsStats {
-  totalWords: number;
-  averageInterval: number;
-  averageStability: number;
-  averageEaseFactor: number;
-  successRate: number;
-  masteredCount: number;
-  learningCount: number;
-  averageLapses: number;
-  failedWordsRemaining: number;
-  newWordsCount: number;
-  failedInSessionCount: number;
-  averageDifficulty: number;
-  longestSuccessStreak: number;
-  wordsWithStreaks: number;
 }

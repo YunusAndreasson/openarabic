@@ -4,6 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
 import type { Article } from '../types/articles.types';
 import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
+import { mapToArticle, mapToArticles } from '../utils/typeMappers';
 
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -72,7 +73,7 @@ export const articlesService = {
       });
       throw error;
     }
-    return data as unknown as Article[];
+    return mapToArticles(data || []);
   },
 
   async getArticleById(id: number): Promise<Article> {
@@ -103,20 +104,7 @@ export const articlesService = {
       throw error;
     }
 
-    // Initialize empty arrays for data consistency
-    if (!data.article_sentences) {
-      data.article_sentences = [];
-    }
-
-    if (data.article_sentences && data.article_sentences.length > 0) {
-      data.article_sentences.forEach(sentence => {
-        if (!sentence.sentence_words) {
-          sentence.sentence_words = [];
-        }
-      });
-    }
-
-    return data as unknown as Article;
+    return mapToArticle(data);
   },
 
   async getRelatedArticles(articleId: number): Promise<Article[]> {
@@ -161,7 +149,7 @@ export const articlesService = {
         return [];
       }
 
-      return data as unknown as Article[];
+      return mapToArticles(data || []);
     } catch (err) {
       const error =
         err instanceof Error ? err : new Error('Unknown error loading related articles');
@@ -194,7 +182,7 @@ export const articlesService = {
         return [];
       }
 
-      return data as unknown as Article[];
+      return mapToArticles(data || []);
     } catch (err) {
       const error =
         err instanceof Error ? err : new Error('Unknown error loading category articles');

@@ -7,7 +7,12 @@ import Animated from 'react-native-reanimated';
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
-import type { ThemedButtonProps, ButtonVariant } from '@/types/ui/button.types';
+import type {
+  ThemedButtonProps,
+  ButtonVariant,
+  ButtonSize,
+  ButtonTextWeight,
+} from '@/types/ui/button.types';
 import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
@@ -24,7 +29,7 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
  * - Types from ui.types.ts
  * - Animations from hooks/animations
  */
-const getTextType = (size: 'small' | 'medium' | 'large', weight: 'normal' | 'bold') => {
+const getTextType = (size: ButtonSize, weight: ButtonTextWeight) => {
   if (weight === 'normal') {
     switch (size) {
       case 'small':
@@ -45,7 +50,7 @@ const getTextType = (size: 'small' | 'medium' | 'large', weight: 'normal' | 'bol
   }
 };
 
-const getIconSize = (size: 'small' | 'medium' | 'large', customSize?: number) => {
+const getIconSize = (size: ButtonSize, customSize?: number) => {
   if (customSize) return customSize;
   switch (size) {
     case 'small':
@@ -82,7 +87,7 @@ const IconContent = ({
 // Style generator functions
 const getButtonStyle = (
   variant: ButtonVariant,
-  size: 'small' | 'medium' | 'large',
+  size: ButtonSize,
   disabled: boolean,
   colors: ReturnType<typeof useColors>,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,7 +106,7 @@ const getButtonStyle = (
   style,
 ];
 
-const getButtonTextStyle = (size: 'small' | 'medium' | 'large', textWeight: 'normal' | 'bold') => [
+const getButtonTextStyle = (size: ButtonSize, textWeight: ButtonTextWeight) => [
   styles.buttonText,
   size === 'small' && styles.buttonTextSmall,
   size === 'large' && styles.buttonTextLarge,

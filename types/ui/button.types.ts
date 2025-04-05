@@ -9,7 +9,17 @@ import type { BaseAnimatedStyleProps } from './base.types';
 export type ButtonVariant = 'filled' | 'outlined';
 
 /**
- * Base button props
+ * Button size options
+ */
+export type ButtonSize = 'small' | 'medium' | 'large';
+
+/**
+ * Button text weight options
+ */
+export type ButtonTextWeight = 'normal' | 'bold';
+
+/**
+ * Base button props shared across all button variants
  */
 export interface BaseButtonProps
   extends Omit<TouchableOpacityProps, 'style'>,
@@ -29,33 +39,35 @@ export interface BaseButtonProps
   /** Additional content to render inside the button */
   children?: React.ReactNode;
   /** Size variant of the button */
-  size?: 'small' | 'medium' | 'large';
+  size?: ButtonSize;
   /** Text weight for the button text */
-  textWeight?: 'normal' | 'bold';
+  textWeight?: ButtonTextWeight;
+}
+
+/**
+ * Props for icon buttons (shared across variants)
+ */
+export interface IconButtonProps {
+  /** Optional Ionicons icon name to display before the title */
+  icon?: string;
+  /** Optional custom icon component (overrides icon prop if both are provided) */
+  iconComponent?: React.ReactNode;
 }
 
 /**
  * Props for filled variant of ThemedButton
  */
-export interface FilledButtonProps extends BaseButtonProps {
+export interface FilledButtonProps extends BaseButtonProps, IconButtonProps {
   /** Visual style variant of the button */
   variant: 'filled';
-  /** Optional Ionicons icon name to display before the title */
-  icon?: string;
-  /** Optional custom icon component (overrides icon prop if both are provided) */
-  iconComponent?: React.ReactNode;
 }
 
 /**
  * Props for outlined variant of ThemedButton
  */
-export interface OutlinedButtonProps extends BaseButtonProps {
+export interface OutlinedButtonProps extends BaseButtonProps, IconButtonProps {
   /** Visual style variant of the button */
   variant: 'outlined';
-  /** Optional Ionicons icon name to display before the title */
-  icon?: string;
-  /** Optional custom icon component (overrides icon prop if both are provided) */
-  iconComponent?: React.ReactNode;
 }
 
 /**
@@ -65,13 +77,10 @@ export interface OutlinedButtonProps extends BaseButtonProps {
 export type ThemedButtonProps =
   | FilledButtonProps
   | OutlinedButtonProps
-  | (BaseButtonProps & {
-      variant?: ButtonVariant;
-      /** Optional Ionicons icon name to display before the title */
-      icon?: string;
-      /** Optional custom icon component (overrides icon prop if both are provided) */
-      iconComponent?: React.ReactNode;
-    });
+  | (BaseButtonProps &
+      IconButtonProps & {
+        variant?: ButtonVariant;
+      });
 
 /**
  * Props for the CloseButton component
@@ -80,9 +89,9 @@ export interface CloseButtonProps {
   /** Function to call when button is pressed */
   onPress: () => void;
   /** Size of the button container */
-  size?: number | 'small' | 'medium' | 'large';
+  size?: number | ButtonSize;
   /** Size of the close icon */
-  iconSize?: number | 'small' | 'medium' | 'large';
+  iconSize?: number | ButtonSize;
   /** Color of the close icon */
   color?: string;
   /** Additional styles for the button */
@@ -92,11 +101,21 @@ export interface CloseButtonProps {
 }
 
 /**
+ * Position options for floating buttons
+ */
+export type FloatingButtonPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+/**
+ * Button type options for floating buttons
+ */
+export type FloatingButtonType = 'back' | 'bookmark' | 'play';
+
+/**
  * Props for the FloatingButton component
  */
 export interface FloatingButtonProps {
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  buttonType?: 'back' | 'bookmark' | 'play';
+  position: FloatingButtonPosition;
+  buttonType?: FloatingButtonType;
   top?: number;
   iconName: string;
   accessibilityLabel: string;

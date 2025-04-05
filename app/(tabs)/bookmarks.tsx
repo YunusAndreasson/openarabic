@@ -548,6 +548,7 @@ export default function BookmarksScreen(): JSX.Element {
               title="No Bookmarks Found"
               description="Bookmark articles to listen to them later or save them for reference."
               actionText="Browse Articles"
+              iconType="props"
               icon={{ name: 'book', size: 48 }}
               onAction={() => router.push('/(tabs)')}
               colors={colors}

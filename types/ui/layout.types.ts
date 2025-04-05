@@ -110,10 +110,12 @@ export interface IconProps {
   color?: string;
 }
 
-export interface EmptyStateProps extends BaseLayoutProps {
+/**
+ * Base empty state props shared by both variants
+ */
+export interface BaseEmptyStateProps extends BaseLayoutProps {
   title: string;
   description: string;
-  icon: IconProps | ComponentProps<typeof Ionicons>['name'];
   actionText?: string;
   onAction?: () => void;
   submessage?: string;
@@ -122,6 +124,28 @@ export interface EmptyStateProps extends BaseLayoutProps {
   iconContainerStyle?: ViewStyle;
   containerStyle?: ViewStyle;
 }
+
+/**
+ * Empty state props with an icon name string
+ */
+export interface EmptyStateWithIconNameProps extends BaseEmptyStateProps {
+  iconType: 'name';
+  icon: ComponentProps<typeof Ionicons>['name'];
+}
+
+/**
+ * Empty state props with an IconProps object
+ */
+export interface EmptyStateWithIconPropsProps extends BaseEmptyStateProps {
+  iconType: 'props';
+  icon: IconProps;
+}
+
+/**
+ * Props for the EmptyState component using a discriminated union
+ * for better type safety of the icon property
+ */
+export type EmptyStateProps = EmptyStateWithIconNameProps | EmptyStateWithIconPropsProps;
 
 /**
  * Props for the ErrorState component

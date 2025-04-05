@@ -1,21 +1,14 @@
 import { createEmptyCard } from 'ts-fsrs';
 
+import type { DbInsert, DbUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
+import { mapToStudyWords } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';
 
-interface WordReviewUpdate {
-  interval_days: number;
-  ease_factor: number;
-  next_review_at: string;
-  review_count: number;
-  lapses: number;
-  stability: number;
-  previous_interval: number;
-  difficulty?: number;
-  success_streak?: number;
-  failure_streak?: number;
-}
+// Use database types instead of custom interface
+type WordReviewUpdate = DbUpdate<'study_words'>;
+type StudyWordInsert = DbInsert<'study_words'>;
 
 // Define an options interface for getStudyWords
 interface GetStudyWordsOptions {
@@ -44,7 +37,7 @@ export const studyWordsService = {
     if (options.forStats) {
       // For stats, we only need core fields, not all the relationships
       selectQuery = query.select(
-        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability'
+        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability, lapses, previous_interval'
       );
     } else {
       // Full data with relationships
@@ -73,7 +66,8 @@ export const studyWordsService = {
       throw error;
     }
 
-    return data;
+    // Convert DB results to StudyWord type using our mapper
+    return mapToStudyWords(data || []);
   },
 
   async updateWordReview(sentenceWordId: number, update: WordReviewUpdate): Promise<void> {
@@ -155,7 +149,7 @@ export const studyWordsService = {
       // Use createEmptyCard from ts-fsrs to initialize a new FSRS card
       const fsrsCard = createEmptyCard(now);
 
-      const newWord = {
+      const newWord: StudyWordInsert = {
         user_id: userId,
         sentence_word_id: sentenceWordId,
         // Legacy fields (kept for compatibility)
