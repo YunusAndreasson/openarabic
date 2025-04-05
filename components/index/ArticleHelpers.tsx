@@ -24,15 +24,10 @@ export const TimeAgo = memo(({ date }: { date: string }) => {
       <Ionicons
         name="time-outline"
         size={14}
-        color={isDarkMode ? colors.white : colors.tint}
+        color={isDarkMode ? colors.text : colors.textSecondary}
         style={styles.timeIcon}
       />
-      <ThemedText
-        type="caption"
-        weight="500"
-        colorName={isDarkMode ? 'text' : 'tint'}
-        skipDefaultColor
-      >
+      <ThemedText type="caption" weight="500" colorName="textTertiary" skipDefaultColor>
         {timeAgoText}
       </ThemedText>
     </View>
@@ -118,12 +113,7 @@ export const SummaryIndicator = memo(({ summary }: { summary: string | null }) =
 
   return (
     <View style={styles.summaryIndicatorContainer}>
-      <ThemedText
-        type="caption"
-        colorName={isDarkMode ? 'text' : undefined}
-        variant={isDarkMode ? undefined : 'subtle'}
-        style={styles.summaryText}
-      >
+      <ThemedText type="caption" colorName="textTertiary" style={styles.summaryText}>
         {summary}
       </ThemedText>
     </View>

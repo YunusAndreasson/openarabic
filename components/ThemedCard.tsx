@@ -161,11 +161,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {/* Author */}
           {author ? (
             <View style={styles.authorContainer}>
-              <ThemedText
-                type="label"
-                colorName={isDarkMode ? 'text' : 'textSecondary'}
-                numberOfLines={1}
-              >
+              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
                 By {author}
               </ThemedText>
             </View>
@@ -243,11 +239,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           {props.article.author ? (
             <View style={styles.authorContainer}>
-              <ThemedText
-                type="label"
-                colorName={isDarkMode ? 'text' : 'textSecondary'}
-                numberOfLines={1}
-              >
+              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
                 By {props.article.author.name}
               </ThemedText>
             </View>

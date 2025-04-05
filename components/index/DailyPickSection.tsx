@@ -67,15 +67,20 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         author={article.author?.name || 'Unknown'}
         summary={article.summary || undefined}
         onPress={handlePress}
+        style={styles.cardStyle}
       />
     </Section>
   );
 };
 
 const styles = StyleSheet.create({
+  cardStyle: {
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    shadowOpacity: 0.15, // Slightly increased shadow for emphasis
+  },
   container: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM, // Increased from SMALL to LARGE to match vocabulary screen
+    marginBottom: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
 

@@ -14,7 +14,7 @@ import { ThemedText } from './ThemedText';
 const SectionTitle: React.FC<SectionTitleProps> = ({ title, containerStyle }) => {
   return (
     <View style={[styles.container, containerStyle]}>
-      <ThemedText type="label" colorName="text" style={styles.titleText}>
+      <ThemedText type="label" colorName="text" weight="600" style={styles.titleText}>
         {title}
       </ThemedText>
     </View>
@@ -27,7 +27,8 @@ export default memo(SectionTitle);
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   titleText: {

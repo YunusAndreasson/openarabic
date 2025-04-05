@@ -106,12 +106,12 @@ const Pill = memo(
       ...Platform.select({
         ios: {
           shadowColor: isDarkMode ? colors.black : colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDarkMode ? 0.25 : 0.1,
-          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: isDarkMode ? 0.2 : 0.08,
+          shadowRadius: 3,
         },
         android: {
-          elevation: isSelected ? 3 : 2,
+          elevation: isSelected ? 2 : 1,
         },
       }),
     });
@@ -136,7 +136,7 @@ const Pill = memo(
         >
           <ThemedText
             type="overline"
-            colorName="textSecondary"
+            colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
             style={isDarkMode ? { color: colors.text } : null}
@@ -181,7 +181,7 @@ const Pill = memo(
         >
           <ThemedText
             type="overline"
-            colorName={isSelected ? 'tint' : isDarkMode ? 'text' : 'textSecondary'}
+            colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
           >

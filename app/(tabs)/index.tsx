@@ -61,6 +61,9 @@ const styles = StyleSheet.create({
   articleItemPadding: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
+  beginnerContainer: {
+    marginTop: LAYOUT.SPACING.TINY,
+  },
   card: {
     overflow: 'hidden',
   },
@@ -73,12 +76,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  filterSectionContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
   horizontalArticleContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
   },
   horizontalList: {
     paddingLeft: LAYOUT.SPACING.MEDIUM,
     paddingRight: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
   },
   iconContainer: {
     alignItems: 'center',
@@ -106,6 +114,10 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     zIndex: 100,
+  },
+  metadataText: {
+    marginTop: LAYOUT.SPACING.TINY / 2,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   sectionContainer: {
     marginBottom: LAYOUT.SPACING.LARGE,
@@ -140,14 +152,16 @@ const ArticleItem = memo(
                 type="bodyBold"
                 numberOfLines={2}
                 colorName="text"
+                weight="600"
                 style={styles.titleText}
               >
                 {article.title}
               </ThemedText>
               <ThemedText
                 type="caption"
-                colorName={isDarkMode ? 'text' : 'textSecondary'}
+                colorName="textTertiary"
                 numberOfLines={1}
+                style={styles.metadataText}
               >
                 {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
               </ThemedText>
@@ -155,7 +169,7 @@ const ArticleItem = memo(
             <View style={styles.iconContainer}>
               <ThemedText
                 type="label"
-                colorName={isDarkMode ? 'text' : 'textSecondary'}
+                colorName="textTertiary"
                 variant={isDarkMode ? 'primary' : 'secondary'}
                 style={styles.arrowText}
               >
@@ -439,30 +453,32 @@ export default function ArticlesScreen(): JSX.Element {
     return (
       <View style={styles.sectionContainer}>
         <SectionTitle title="Beginner Friendly" />
-        <FlatList
-          data={beginnerArticles.slice(0, 20)}
-          renderItem={({ item }) => (
-            <View style={styles.horizontalArticleContainer}>
-              <ThemedCard
-                variant="compact"
-                article={item}
-                onPress={() => handleArticlePress(item)}
-                hideDifficulty={true}
-              />
-            </View>
-          )}
-          keyExtractor={item => `beginner-${item.id}`}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        />
+        <View style={styles.beginnerContainer}>
+          <FlatList
+            data={beginnerArticles.slice(0, 20)}
+            renderItem={({ item }) => (
+              <View style={styles.horizontalArticleContainer}>
+                <ThemedCard
+                  variant="compact"
+                  article={item}
+                  onPress={() => handleArticlePress(item)}
+                  hideDifficulty={true}
+                />
+              </View>
+            )}
+            keyExtractor={item => `beginner-${item.id}`}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalList}
+          />
+        </View>
       </View>
     );
   }, [beginnerArticles, handleArticlePress]);
 
   const AuthorFilterSection = useMemo(() => {
     return (
-      <View style={styles.sectionContainer}>
+      <View style={styles.filterSectionContainer}>
         <SectionTitle title="Authors" />
         <ScrollView
           horizontal
@@ -486,7 +502,7 @@ export default function ArticlesScreen(): JSX.Element {
 
   const CategoryFilterSection = useMemo(() => {
     return (
-      <View style={styles.sectionContainer}>
+      <View style={styles.filterSectionContainer}>
         <SectionTitle title="Categories" />
         <ScrollView
           horizontal
