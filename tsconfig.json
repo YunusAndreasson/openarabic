@@ -1,23 +1,46 @@
 {
-  "extends": "expo/tsconfig.base.json",
+  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "noImplicitAny": true,
-    "strictNullChecks": true,
-    "strictFunctionTypes": true,
-    "strictPropertyInitialization": true,
     "noImplicitThis": true,
-    "alwaysStrict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "allowJs": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "verbatimModuleSyntax": true,
+    "jsx": "react-native",
+    "target": "ES2024",
+    "useDefineForClassFields": true,
+    "incremental": true,
+    "composite": true,
+    "removeComments": true
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  "exclude": [
+    "node_modules",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js",
+    "build",
+    "dist",
+    ".expo",
+    "coverage",
+    "translate",
+    "assets",
+    ".venv"
+  ]
 }

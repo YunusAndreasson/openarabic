@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { studyWordsFSRSService } from '../services/studyWordsFSRS';
-import { StudyWord } from '../types/vocabulary.types';
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { State } from 'ts-fsrs';
+
+import { studyWordsFSRSService } from '../services/studyWordsFSRS';
+import type { StudyWord } from '../types/vocabulary.types';
 
 // Enhanced study word with retention score
 export interface EnhancedStudyWord extends StudyWord {
@@ -15,14 +16,17 @@ type WordListCategory = 'total' | 'mastered' | 'learning';
  * This directly uses the key metrics from FSRS algorithm
  */
 const calculateRetentionScore = (word: StudyWord): number => {
-  const stabilityScore = Math.min(word.fsrs_stability / 100, 1) * 70;
+  const stabilityScore = Math.min((word.fsrs_stability ?? 0) / 100, 1) * 70;
   const difficultyFactor = 1 - word.fsrs_difficulty;
   const difficultyScore = difficultyFactor * 20;
-  const lapsesPenalty = Math.min(word.fsrs_lapses / 10, 1) * 10;
+  const lapsesPenalty = Math.min((word.fsrs_lapses ?? 0) / 10, 1) * 10;
   return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
 };
 
-export function useWordList(userId: string | undefined, category: WordListCategory) {
+export function useWordList(
+  userId: string | undefined,
+  category: WordListCategory
+): UseQueryResult<EnhancedStudyWord[]> {
   const queryClient = useQueryClient();
 
   return useQuery<EnhancedStudyWord[]>({
@@ -59,7 +63,7 @@ export function useWordList(userId: string | undefined, category: WordListCatego
             break;
           case 'mastered':
             result = filteredWords.filter(
-              word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
+              word => word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= 30
             );
             break;
           case 'learning':
@@ -68,7 +72,7 @@ export function useWordList(userId: string | undefined, category: WordListCatego
                 word.fsrs_state === State.New ||
                 word.fsrs_state === State.Learning ||
                 word.fsrs_state === State.Relearning ||
-                (word.fsrs_state === State.Review && word.fsrs_stability < 30)
+                (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 30)
             );
             break;
           default:
@@ -106,7 +110,7 @@ export function useWordList(userId: string | undefined, category: WordListCatego
       switch (category) {
         case 'mastered':
           filteredWords = validStudyWords.filter(
-            word => word.fsrs_state === State.Review && word.fsrs_stability >= 30
+            word => word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= 30
           );
           break;
         case 'learning':
@@ -115,7 +119,7 @@ export function useWordList(userId: string | undefined, category: WordListCatego
               word.fsrs_state === State.New ||
               word.fsrs_state === State.Learning ||
               word.fsrs_state === State.Relearning ||
-              (word.fsrs_state === State.Review && word.fsrs_stability < 30)
+              (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 30)
           );
           break;
       }

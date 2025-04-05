@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from '../ThemedText';
+
 import { useColors } from '@/hooks/useColors';
+
+import { ThemedText } from '../ThemedText';
 
 // Define state names for clearer display
 const STATE_NAMES = ['New', 'Learning', 'Review', 'Relearning'];
@@ -22,7 +24,7 @@ export function FSRSWordStats({
   nextReview,
   reviewCount,
   lapses,
-}: FSRSWordStatsProps) {
+}: FSRSWordStatsProps): JSX.Element {
   const colors = useColors();
 
   // Format the next review date

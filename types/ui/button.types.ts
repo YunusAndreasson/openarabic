@@ -1,6 +1,7 @@
-import { TouchableOpacityProps, ViewStyle, StyleProp } from 'react-native';
-import { BaseAnimatedStyleProps } from './base.types';
-import { AnimatedStyleProp } from 'react-native-reanimated';
+import type { TouchableOpacityProps, ViewStyle, StyleProp } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+
+import type { BaseAnimatedStyleProps } from './base.types';
 
 /**
  * Button variant types

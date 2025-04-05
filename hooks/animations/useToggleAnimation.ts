@@ -7,8 +7,18 @@ import {
   withTiming,
   withSequence,
   runOnUI,
+  type SharedValue,
 } from 'react-native-reanimated';
+
 import { SPRING_CONFIG, TIMING_CONFIG } from './animationConfigs';
+
+interface ToggleAnimationResult {
+  containerAnimatedStyle: { transform: { scale: number }[] };
+  handleAnimatedStyle: { transform: { translateX: number }[] };
+  translateX: SharedValue<number>;
+  toggleScale: SharedValue<number>;
+  forceAnimateToInitialState: (toActive: boolean) => void;
+}
 
 /**
  * Hook for toggle component animations with translation and scale effects
@@ -16,7 +26,10 @@ import { SPRING_CONFIG, TIMING_CONFIG } from './animationConfigs';
  * @param travelDistance - Distance the toggle handle should travel
  * @returns Animation controls and styles for the toggle
  */
-export const useToggleAnimation = (isActive: boolean, travelDistance: number) => {
+export const useToggleAnimation = (
+  isActive: boolean,
+  travelDistance: number
+): ToggleAnimationResult => {
   const translateX = useSharedValue(isActive ? travelDistance : 0);
   const toggleScale = useSharedValue(1);
 

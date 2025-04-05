@@ -1,5 +1,8 @@
-import { supabase } from './supabase';
 import { createEmptyCard } from 'ts-fsrs';
+
+import type { StudyWord } from '@/types/vocabulary.types';
+
+import { supabase } from './supabase';
 
 interface WordReviewUpdate {
   interval_days: number;
@@ -21,7 +24,7 @@ interface GetStudyWordsOptions {
 }
 
 export const studyWordsService = {
-  async getStudyWords(userId: string, options: GetStudyWordsOptions = {}) {
+  async getStudyWords(userId: string, options: GetStudyWordsOptions = {}): Promise<StudyWord[]> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -41,20 +44,16 @@ export const studyWordsService = {
     if (options.forStats) {
       // For stats, we only need core fields, not all the relationships
       selectQuery = query.select(
-        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review'
+        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability'
       );
     } else {
       // Full data with relationships
       selectQuery = query.select(`
-        *,
-        sentence_word:sentence_words (
-          *,
-          root:roots (*),
-          word_type:word_types (*),
-          sentence:article_sentences (
-            *
-          )
-        )
+        interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability, lapses, previous_interval,
+        sentence_word:sentence_words (*),
+        root:roots (*),
+        word_type:word_types (*),
+        sentence:article_sentences (*)
       `);
     }
 
@@ -77,7 +76,7 @@ export const studyWordsService = {
     return data;
   },
 
-  async updateWordReview(sentenceWordId: number, update: WordReviewUpdate) {
+  async updateWordReview(sentenceWordId: number, update: WordReviewUpdate): Promise<void> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -112,7 +111,7 @@ export const studyWordsService = {
     }
   },
 
-  async toggleStudyWord(userId: string, sentenceWordId: number) {
+  async toggleStudyWord(userId: string, sentenceWordId: number): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();

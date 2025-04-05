@@ -1,7 +1,14 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { Article } from '../types/articles.types';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+
 import { readingListService } from '../services/readingList';
 import { checkAuthentication } from '../services/supabase';
+import type { Article } from '../types/articles.types';
+
+// Type for actions that include a payload
+type PayloadAction<P> = {
+  payload: P;
+  type: string;
+};
 
 interface ReadingListState {
   inProgressArticles: Article[];

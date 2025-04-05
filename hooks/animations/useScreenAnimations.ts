@@ -1,7 +1,22 @@
 import { useState, useCallback, useMemo } from 'react';
+import type { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+
 import { useOpacityAnimation } from './useOpacityAnimation';
-import { NativeSyntheticEvent, NativeScrollEvent, ViewStyle } from 'react-native';
-import { AnimatedStyleProp } from 'react-native-reanimated';
+
+interface ScreenAnimationsResult {
+  contentStyle: AnimatedStyleProp<ViewStyle>;
+  headerStyle: AnimatedStyleProp<ViewStyle>;
+  footerStyle: AnimatedStyleProp<ViewStyle>;
+  backButtonStyle: AnimatedStyleProp<ViewStyle>;
+  bookmarkButtonStyle: AnimatedStyleProp<ViewStyle>;
+  playButtonStyle: AnimatedStyleProp<ViewStyle>;
+  startAllAnimations: () => void;
+  handleScroll: (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+    prevScrollYRef: React.MutableRefObject<number>
+  ) => void;
+}
 
 /**
  * Custom hook that unifies all animations for the article screen.
@@ -10,7 +25,7 @@ import { AnimatedStyleProp } from 'react-native-reanimated';
  * @param initialButtonsVisibility - Whether the buttons should be visible initially
  * @returns Object containing all animation styles and controls
  */
-export const useScreenAnimations = (initialButtonsVisibility = true) => {
+export const useScreenAnimations = (initialButtonsVisibility = true): ScreenAnimationsResult => {
   // Animation visibility state
   const [isButtonsVisible, setIsButtonsVisible] = useState(initialButtonsVisibility);
 

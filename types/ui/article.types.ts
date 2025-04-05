@@ -1,6 +1,8 @@
-import { Article } from '../articles.types';
-import { BaseThemedProps } from './base.types';
-import { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
+
+import type { Article } from '../articles.types';
+
+import type { BaseThemedProps } from './base.types';
 
 /**
  * Props for the ArticleList component

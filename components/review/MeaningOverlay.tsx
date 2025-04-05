@@ -1,18 +1,21 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, memo } from 'react';
 import { StyleSheet } from 'react-native';
-import Animated, { StyleProps } from 'react-native-reanimated';
+import type { StyleProps } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+
+import type { MeaningOverlayProps } from '@/types/ui/review.types';
+
 import { ThemedText } from '../../components/ThemedText';
-import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation } from '../../hooks/animations';
+import { useColors } from '../../hooks/useColors';
 import { lightFeedback } from '../../utils/haptics';
-import { MeaningOverlayProps } from '@/types/ui/review.types';
 
 /**
  * Component that displays the meaning of a word with a fade animation
  * without changing the background brightness
  */
-const MeaningOverlay: React.FC<MeaningOverlayProps> = React.memo(
+const MeaningOverlay: React.FC<MeaningOverlayProps> = memo(
   // eslint-disable-next-line react/prop-types
   ({ visible, meaning, isWarning = false, duration = 150, animate = true, onClose }) => {
     const colors = useColors();

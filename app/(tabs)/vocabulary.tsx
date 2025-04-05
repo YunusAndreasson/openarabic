@@ -1,30 +1,31 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
-import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
-import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
-import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
-import { useAuth } from '@/hooks/useAuth';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
+import React, { useState, useCallback, useMemo } from 'react';
+import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedView } from '@/components/ThemedView';
+import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
-import { mediumFeedback } from '@/utils/haptics';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
+import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
+import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
+import { useScreenAnimation } from '@/hooks/animations';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
-import { useFocusEffect } from '@react-navigation/native';
-import { LoadingScreen } from '@/components/Loader';
+import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import { mediumFeedback } from '@/utils/haptics';
 
-export default function VocabularyScreen() {
+export default function VocabularyScreen(): JSX.Element {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const queryClient = useQueryClient();
@@ -39,7 +40,7 @@ export default function VocabularyScreen() {
 
   // Combine focus effects for better performance
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       if (!user?.id) return;
 
       const hasStudyWords = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
@@ -70,7 +71,7 @@ export default function VocabularyScreen() {
   );
 
   // Combine query invalidation into a single function
-  const invalidateVocabularyQueries = React.useCallback(async () => {
+  const invalidateVocabularyQueries = useCallback(async () => {
     if (!user?.id) return;
     await queryClient.invalidateQueries({
       predicate: query => {
@@ -91,7 +92,7 @@ export default function VocabularyScreen() {
 
   // Invalidate queries on focus with optimized function
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       invalidateVocabularyQueries();
     }, [invalidateVocabularyQueries])
   );
@@ -110,7 +111,7 @@ export default function VocabularyScreen() {
   };
 
   // Check if data is ready to display with loading protection
-  const isDataReady = React.useMemo(() => {
+  const isDataReady = useMemo(() => {
     if (!user?.id) return false;
     // Check cache first for instant feedback
     const hasCachedData = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
@@ -201,13 +202,7 @@ export default function VocabularyScreen() {
             masteredWords={stats.masteredWords}
             learningWords={stats.learningWords}
             dueWords={stats.dueWords}
-            animationTriggered={true}
             onStatPress={handleStatPress}
-            streakStats={{
-              longestSuccessStreak: stats.longestSuccessStreak || 0,
-              wordsWithStreaks: stats.wordsWithStreaks || 0,
-              averageDifficulty: stats.averageDifficulty || 0,
-            }}
           />
 
           {/* Weekly Progress Graph */}

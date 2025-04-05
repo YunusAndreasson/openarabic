@@ -1,6 +1,8 @@
-import { ViewStyle, StyleProp } from 'react-native';
-import { BaseAnimatedStyleProps, BaseOptionalPressableProps } from './base.types';
-import { Article } from '../articles.types';
+import type { ViewStyle, StyleProp } from 'react-native';
+
+import type { Article } from '../articles.types';
+
+import type { BaseAnimatedStyleProps, BaseOptionalPressableProps } from './base.types';
 
 /**
  * Props for card components with basic styling and functionality

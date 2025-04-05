@@ -1,18 +1,21 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, StyleSheet, Pressable, Platform } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { LAYOUT } from '../constants/layout';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '../hooks/useColors';
-import { PageHeaderProps } from '@/types/ui/layout.types';
 import { BlurView } from 'expo-blur';
+import React, { memo, useCallback, useMemo } from 'react';
+import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import type { PageHeaderProps } from '@/types/ui/layout.types';
+
+import { LAYOUT } from '../constants/layout';
+import { useColors } from '../hooks/useColors';
+
+import { ThemedText } from './ThemedText';
 
 /**
  * Page header with styled blur effect
  */
-const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
+const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   // Match tabbar intensity values for consistency
@@ -76,7 +79,7 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
           ]}
         >
           <View style={styles.headerRow}>
-            {onBackPress && (
+            {onBackPress ? (
               <Pressable
                 onPress={handleBackPress}
                 style={({ pressed }) => [
@@ -90,7 +93,7 @@ const PageHeader = React.memo(({ title, onBackPress }: PageHeaderProps) => {
               >
                 <Ionicons name="chevron-back" size={24} color={colors.tint} />
               </Pressable>
-            )}
+            ) : null}
             <View style={[styles.titleContainer, onBackPress && styles.titleWithBack]}>
               <ThemedText type="heading3">{title}</ThemedText>
             </View>

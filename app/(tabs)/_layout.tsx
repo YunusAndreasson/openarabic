@@ -1,15 +1,17 @@
-import { Tabs } from 'expo-router';
-import React, { useMemo, useCallback } from 'react';
-import { Platform, StyleSheet, ViewStyle } from 'react-native';
-import { useColors } from '@/hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '@/constants/layout';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { PlatformPressable } from '@react-navigation/elements';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Route } from '@react-navigation/native';
+import type { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
-import { ThemedText } from '@/components/ThemedText';
+import { Tabs } from 'expo-router';
+import React, { useMemo, useCallback, memo } from 'react';
+import { Platform, StyleSheet } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
 
@@ -60,7 +62,7 @@ const PLATFORM_STYLES = Platform.select({
   },
 }) as ViewStyle;
 
-const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
+const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const intensity = Platform.OS === 'ios' ? 55 : 80;
@@ -138,7 +140,10 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
   return (
     <BlurView intensity={intensity} tint={isDarkMode ? 'dark' : 'light'} style={blurContainerStyle}>
       {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
+        const descriptor = descriptors[route.key];
+        if (!descriptor) return null;
+
+        const { options } = descriptor;
         const label = options.title ?? route.name;
         const isFocused = state.index === index;
 
@@ -177,7 +182,7 @@ const CustomTabBar = React.memo(({ state, descriptors, navigation }: BottomTabBa
 });
 CustomTabBar.displayName = 'CustomTabBar';
 
-export default function TabLayout() {
+export default function TabLayout(): JSX.Element {
   const colors = useColors();
 
   const screenOptions = useMemo(

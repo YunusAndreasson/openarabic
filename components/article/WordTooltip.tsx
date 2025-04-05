@@ -1,19 +1,21 @@
-import React, { useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
+import React, { useEffect, useMemo, useCallback, memo } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import Animated from 'react-native-reanimated';
+
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { useColors } from '@/hooks/useColors';
-import { WordTooltipProps } from '@/types/ui/modal.types';
-import Animated from 'react-native-reanimated';
 import { useTransformAnimation, useOpacityAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import type { WordTooltipProps } from '@/types/ui/modal.types';
 
 /**
  * A tooltip component that displays above an Arabic word
  * Shows the English translation of the word with minimal visual design
  * Ensures the arrow tip is precisely centered over the word regardless of screen position
  */
-export const WordTooltip = React.memo(
+export const WordTooltip = memo(
   ({ visible, text = '', layout, onClose, zIndex }: WordTooltipProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();

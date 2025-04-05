@@ -9,11 +9,13 @@ import {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
-import { TIMING_CONFIG } from './animationConfigs';
-import { SharedValue } from './types';
+
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import { withOpacity } from '../../utils/colorUtils';
+
+import { TIMING_CONFIG } from './animationConfigs';
+import type { SharedValue } from './types';
 
 export type PulseStyle = 'standard' | 'dramatic' | 'gentle' | 'halo';
 

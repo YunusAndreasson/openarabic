@@ -1,5 +1,6 @@
-import { ViewStyle } from 'react-native';
-import { BaseAnimatedStyleProps } from './base.types';
+import type { ViewStyle } from 'react-native';
+
+import type { BaseAnimatedStyleProps } from './base.types';
 
 /**
  * Props for the Loader component

@@ -1,5 +1,13 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Colors, Theme } from '@/constants/Colors';
+import { createSlice } from '@reduxjs/toolkit';
+
+import type { Theme } from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
+
+// Type for actions that include a payload
+type PayloadAction<P> = {
+  payload: P;
+  type: string;
+};
 
 type ThemeColors = (typeof Colors)[Theme];
 

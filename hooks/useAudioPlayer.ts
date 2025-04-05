@@ -1,6 +1,8 @@
+import { Audio } from 'expo-av';
+import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Audio, AVPlaybackStatus } from 'expo-av';
 import { AppState } from 'react-native';
+
 import { handleError } from '@/utils/errorHandling';
 
 // Audio player states
@@ -19,7 +21,24 @@ export type AudioTrack = {
   // Add other track properties as needed
 };
 
-export function useAudioPlayer() {
+interface AudioPlayerResult {
+  audioState: string;
+  currentTrackIndex: number;
+  progress: number;
+  duration: number;
+  playlistMode: boolean;
+  loadAndPlayAudio: (audioUrl: string) => Promise<boolean>;
+  togglePlayPause: () => Promise<void>;
+  playTrack: (tracks: AudioTrack[], index: number) => Promise<boolean>;
+  startPlayback: (tracks: AudioTrack[], startIndex?: number) => Promise<boolean>;
+  stopPlayback: () => Promise<void>;
+  startShufflePlayback: (tracks: AudioTrack[]) => Promise<boolean>;
+  playNextTrack: (tracks?: AudioTrack[]) => Promise<boolean>;
+  playPreviousTrack: (tracks?: AudioTrack[]) => Promise<boolean>;
+  seekToPosition: (position: number) => Promise<boolean>;
+}
+
+export function useAudioPlayer(): AudioPlayerResult {
   // State for the audio player
   const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
@@ -76,8 +95,10 @@ export function useAudioPlayer() {
 
     const intervalId = setInterval(async () => {
       if (!soundRef.current) {
-        clearInterval(progressIntervalRef.current!);
-        progressIntervalRef.current = null;
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
         return;
       }
 

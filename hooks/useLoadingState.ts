@@ -6,7 +6,16 @@ import { useState, useCallback, useMemo } from 'react';
  * @param initialLoadingState - Initial loading state (default: true)
  * @returns Object with loading state and functions to control it
  */
-export const useLoadingState = (initialLoadingState = true) => {
+export const useLoadingState = (
+  initialLoadingState = true
+): {
+  isLoading: boolean;
+  dataLoaded: boolean;
+  startLoading: () => void;
+  stopLoading: () => void;
+  setDataLoaded: (loaded: boolean) => void;
+  reset: () => void;
+} => {
   const [isLoading, setIsLoading] = useState(initialLoadingState);
   const [dataLoaded, setDataLoadedState] = useState(false);
 

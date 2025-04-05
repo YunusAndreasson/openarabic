@@ -21,7 +21,7 @@ type NotFoundProps = {
   message?: string;
 };
 
-export const NotFound = ({ message = 'Not found' }: NotFoundProps) => {
+export const NotFound = ({ message = 'Not found' }: NotFoundProps): JSX.Element => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -33,6 +33,6 @@ export const NotFound = ({ message = 'Not found' }: NotFoundProps) => {
   );
 };
 
-export const ArticleNotFound = () => {
+export const ArticleNotFound = (): JSX.Element => {
   return <NotFound message="Article not found" />;
 };

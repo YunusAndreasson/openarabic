@@ -1,5 +1,6 @@
-import { ViewStyle, TextStyle } from 'react-native';
-import { BaseChildrenProps } from './base.types';
+import type { ViewStyle, TextStyle } from 'react-native';
+
+import type { BaseChildrenProps } from './base.types';
 
 /**
  * Props for the ThemedModal component

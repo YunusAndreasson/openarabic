@@ -1,11 +1,12 @@
-import { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
-import { Article, ArticleSentence } from '../articles.types';
-import { BaseStyleProps } from './base.types';
-import { Ionicons } from '@expo/vector-icons';
-import { ThemeColors } from './theme.types';
-import { Category } from '../articles.types';
-import { ComponentProps } from 'react';
-import { SentenceWord } from '../vocabulary.types';
+import type { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+import type { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
+
+import type { Article, ArticleSentence, Category } from '../articles.types';
+import type { SentenceWord } from '../vocabulary.types';
+
+import type { BaseStyleProps } from './base.types';
+import type { ThemeColors } from './theme.types';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors

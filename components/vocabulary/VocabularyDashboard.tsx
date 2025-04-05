@@ -1,28 +1,25 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, ViewStyle } from 'react-native';
-import { ThemedText } from '../ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '../../constants/layout';
-import { VocabularyStats } from '@/types/vocabulary.types';
+import React, { memo, useMemo } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+
 import { usePressAnimation } from '@/hooks/animations';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
-import BaseCard from '../BaseCard';
 import { useColors } from '@/hooks/useColors';
+import type { VocabularyStats } from '@/types/vocabulary.types';
 import { withOpacity } from '@/utils/colorUtils';
+
+import { LAYOUT } from '../../constants/layout';
+import BaseCard from '../BaseCard';
+import { ThemedText } from '../ThemedText';
 
 // Using subset of properties from the VocabularyStats type for this component
 interface VocabularyDashboardProps
   extends Pick<VocabularyStats, 'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords'> {
-  /** Flag to trigger animations when parent component is ready */
-  animationTriggered?: boolean;
   /** Callback for when a stat item is pressed */
   onStatPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
-  /** Streak and difficulty statistics */
-  streakStats?: {
-    longestSuccessStreak: number;
-    wordsWithStreaks: number;
-    averageDifficulty: number;
-  };
+  /** Stats related to streaks and difficulty */
 }
 
 interface StatItemProps {
@@ -31,13 +28,12 @@ interface StatItemProps {
   icon: string;
   iconColor: string;
   bgColor: string;
-  animateValue: boolean;
   category: 'total' | 'mastered' | 'learning' | 'due';
   onPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
 }
 
 // Separate StatItem component for better reusability and memoization
-const StatItem = React.memo(
+const StatItem = memo(
   ({ value, label, icon, iconColor, bgColor, category, onPress }: StatItemProps) => {
     // Use the standard press animation hook
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
@@ -81,13 +77,12 @@ const StatItem = React.memo(
 
 StatItem.displayName = 'StatItem';
 
-export const VocabularyDashboard = React.memo(
+export const VocabularyDashboard = memo(
   ({
     totalWords = 0,
     masteredWords = 0,
     learningWords = 0,
     dueWords = 0,
-    animationTriggered = false,
     onStatPress,
   }: VocabularyDashboardProps) => {
     const colors = useColors();
@@ -101,7 +96,6 @@ export const VocabularyDashboard = React.memo(
           icon: 'book',
           iconColor: colors.text,
           bgColor: withOpacity(colors.text, 0.19),
-          animateValue: animationTriggered,
           category: 'total' as const,
         },
         {
@@ -110,7 +104,6 @@ export const VocabularyDashboard = React.memo(
           icon: 'checkmark-circle',
           iconColor: colors.success,
           bgColor: withOpacity(colors.success, 0.19),
-          animateValue: animationTriggered,
           category: 'mastered' as const,
         },
         {
@@ -119,7 +112,6 @@ export const VocabularyDashboard = React.memo(
           icon: 'school',
           iconColor: colors.info,
           bgColor: withOpacity(colors.info, 0.19),
-          animateValue: animationTriggered,
           category: 'learning' as const,
         },
         {
@@ -128,26 +120,24 @@ export const VocabularyDashboard = React.memo(
           icon: 'alarm',
           iconColor: colors.warning,
           bgColor: withOpacity(colors.warning, 0.19),
-          animateValue: animationTriggered,
           category: 'due' as const,
         },
       ],
-      [totalWords, masteredWords, learningWords, dueWords, colors, animationTriggered]
+      [totalWords, masteredWords, learningWords, dueWords, colors]
     );
 
     return (
       <BaseCard style={styles.mainCard} includePressAnimation={false} shadowSize="medium">
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          {statItems.map((item, index) => (
+          {statItems.map(item => (
             <StatItem
-              key={index}
+              key={`vocab-stat-${item.category}`}
               value={item.value}
               label={item.label}
               icon={item.icon}
               iconColor={item.iconColor}
               bgColor={item.bgColor}
-              animateValue={item.animateValue}
               category={item.category}
               onPress={onStatPress}
             />

@@ -1,17 +1,20 @@
-import React from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { ThemedButton } from './ThemedButton';
-import { ThemedView } from './ThemedView';
-import { LAYOUT } from '../constants/layout';
-import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import React, { memo } from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import PageHeader from './PageHeader';
-import { SignInRequiredProps } from '@/types/ui/layout.types';
+
+import type { SignInRequiredProps } from '@/types/ui/layout.types';
 import { withOpacity } from '@/utils/colorUtils';
 
-export const SignInRequired = React.memo(
+import { LAYOUT } from '../constants/layout';
+
+import PageHeader from './PageHeader';
+import { ThemedButton } from './ThemedButton';
+import { ThemedText } from './ThemedText';
+import { ThemedView } from './ThemedView';
+
+export const SignInRequired = memo(
   ({
     title = 'Sign In Required',
     message = 'Sign in to access this feature',
@@ -24,7 +27,7 @@ export const SignInRequired = React.memo(
     return (
       <Animated.View style={styles.container} entering={FadeIn.duration(300)}>
         <ThemedView style={styles.container} contentContainerStyle={styles.noPadding}>
-          {headerTitle && <PageHeader title={headerTitle} />}
+          {headerTitle ? <PageHeader title={headerTitle} /> : null}
           <View style={styles.emptyStateContainer}>
             <View
               style={[styles.iconContainer, { backgroundColor: withOpacity(colors.text, 0.1) }]}
@@ -42,24 +45,24 @@ export const SignInRequired = React.memo(
               </ThemedText>
             </View>
 
-            {(benefitTitle || benefitDescription) && (
+            {benefitTitle || benefitDescription ? (
               <View style={[styles.benefitContainer, { borderColor: colors.cardBorder }]}>
-                {benefitTitle && (
+                {benefitTitle ? (
                   <View style={styles.benefitTitleContainer}>
                     <ThemedText type="body" weight="600">
                       {benefitTitle}
                     </ThemedText>
                   </View>
-                )}
-                {benefitDescription && (
+                ) : null}
+                {benefitDescription ? (
                   <View style={styles.benefitDescriptionContainer}>
                     <ThemedText type="caption" variant="secondary">
                       {benefitDescription}
                     </ThemedText>
                   </View>
-                )}
+                ) : null}
               </View>
-            )}
+            ) : null}
 
             <ThemedButton
               title="Sign In"

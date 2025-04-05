@@ -1,15 +1,24 @@
 import { useEffect } from 'react';
+import type { ViewStyle } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
 import { useAnimatedStyle, withTiming, runOnUI } from 'react-native-reanimated';
-import { useTransformAnimation } from './useTransformAnimation';
-import { useOpacityAnimation } from './useOpacityAnimation';
+
 import { TIMING_CONFIG } from './animationConfigs';
+import { useOpacityAnimation } from './useOpacityAnimation';
+import { useTransformAnimation } from './useTransformAnimation';
+
+interface FloatingButtonAnimationResult {
+  combinedBackButtonStyle: AnimatedStyleProp<ViewStyle>;
+  combinedBookmarkButtonStyle: AnimatedStyleProp<ViewStyle>;
+  combinedPlayButtonStyle: AnimatedStyleProp<ViewStyle>;
+}
 
 /**
  * Hook for floating button animations that combines slide and opacity effects
  * @param isVisible - Whether the buttons should be visible
  * @returns Combined animated styles for back, bookmark, and play buttons
  */
-export const useFloatingButtonAnimation = (isVisible: boolean) => {
+export const useFloatingButtonAnimation = (isVisible: boolean): FloatingButtonAnimationResult => {
   // Animation hooks
   const {
     value: backButtonValue,

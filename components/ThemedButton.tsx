@@ -1,19 +1,16 @@
-import React, { useMemo } from 'react';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  GestureResponderEvent,
-  ActivityIndicator,
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
-import { ThemedText } from './ThemedText';
-import { LAYOUT } from '@/constants/layout';
-import { lightFeedback } from '@/utils/haptics';
+import React, { useMemo } from 'react';
+import type { GestureResponderEvent } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
+
+import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
-import { ThemedButtonProps } from '@/types/ui/button.types';
+import { useColors } from '@/hooks/useColors';
+import type { ThemedButtonProps } from '@/types/ui/button.types';
+import { lightFeedback } from '@/utils/haptics';
+
+import { ThemedText } from './ThemedText';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
@@ -27,6 +24,61 @@ const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
  * - Types from ui.types.ts
  * - Animations from hooks/animations
  */
+const getTextType = (size: 'small' | 'medium' | 'large', weight: 'normal' | 'bold') => {
+  if (weight === 'normal') {
+    switch (size) {
+      case 'small':
+        return 'caption';
+      case 'large':
+        return 'heading3';
+      default:
+        return 'body';
+    }
+  }
+  switch (size) {
+    case 'small':
+      return 'label';
+    case 'large':
+      return 'heading3';
+    default:
+      return 'bodyBold';
+  }
+};
+
+const getIconSize = (size: 'small' | 'medium' | 'large', customSize?: number) => {
+  if (customSize) return customSize;
+  switch (size) {
+    case 'small':
+      return 18;
+    case 'large':
+      return 28;
+    default:
+      return 24;
+  }
+};
+
+const IconContent = ({
+  loading,
+  iconComponent,
+  icon,
+  textColor,
+  iconSize,
+}: {
+  loading: boolean;
+  iconComponent?: React.ReactNode;
+  icon?: string;
+  textColor: string;
+  iconSize: number;
+}) => {
+  if (loading) return <ActivityIndicator size="small" color={textColor} />;
+  if (iconComponent) return iconComponent;
+  if (icon)
+    return (
+      <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={iconSize} color={textColor} />
+    );
+  return null;
+};
+
 export function ThemedButton({
   variant = 'filled',
   title,
@@ -36,7 +88,7 @@ export function ThemedButton({
   style,
   disabled = false,
   children,
-  iconSize = 24,
+  iconSize: customIconSize = 24,
   onPress,
   contentContainerStyle,
   innerContainerStyle,
@@ -44,111 +96,42 @@ export function ThemedButton({
   size = 'medium',
   textWeight = 'bold',
   ...props
-}: ThemedButtonProps) {
+}: ThemedButtonProps): JSX.Element {
   const colors = useColors();
-
-  // Custom spring config for button with minimal animation and no "pulsating"
   const buttonSpringConfig = {
     ...SPRING_CONFIG.BUTTON,
     damping: 25,
     stiffness: 300,
     mass: 0.8,
-    overshootClamping: true, // Prevent any "bounciness"
+    overshootClamping: true,
   };
-
-  // Use the standard press animation hook with custom config
   const {
     animatedStyle,
     handlePressIn: onPressIn,
-    handlePressOut: onPressOut,
+    handlePressOut,
   } = usePressAnimation({
     type: 'custom',
-    scaleAmount: 0.98, // Subtle scale effect
+    scaleAmount: 0.98,
     springConfig: buttonSpringConfig,
   });
 
-  // Add haptic feedback
   const handlePressIn = () => {
     lightFeedback();
     onPressIn();
   };
 
   const handlePress = (event: GestureResponderEvent) => {
-    if (onPress && !disabled && !loading) {
-      onPress(event);
-    }
+    if (onPress && !disabled && !loading) onPress(event);
   };
 
-  // Determine text size based on button size
-  const getTextType = (size: 'small' | 'medium' | 'large', weight: 'normal' | 'bold') => {
-    if (weight === 'normal') {
-      switch (size) {
-        case 'small':
-          return 'caption';
-        case 'large':
-          return 'heading3';
-        case 'medium':
-        default:
-          return 'body';
-      }
-    } else {
-      switch (size) {
-        case 'small':
-          return 'label';
-        case 'large':
-          return 'heading3';
-        case 'medium':
-        default:
-          return 'bodyBold';
-      }
-    }
-  };
-
-  // Determine icon size based on button size
-  const actualIconSize = useMemo(() => {
-    if (iconSize !== 24) return iconSize; // User-specified size takes precedence
-
-    switch (size) {
-      case 'small':
-        return 18;
-      case 'large':
-        return 28;
-      case 'medium':
-      default:
-        return 24;
-    }
-  }, [size, iconSize]);
-
-  // Memoize derived styles to avoid recalculation on every render
-
-  // Determine text color based on variant
   const textColor = variant === 'filled' ? colors.background : colors.tint;
-
-  // Default accessibility label to the title if not provided
-  const finalAccessibilityLabel = accessibilityLabel || title;
-
-  // Add loading/disabled state to accessibility label if needed
-  const accessibilityState = {
-    disabled: disabled || loading,
-    busy: loading,
-  };
-
-  // Add accessibility hint for screen readers
-  const accessibilityHint = disabled
-    ? 'This button is currently disabled'
-    : loading
-      ? 'This button is currently loading'
-      : undefined;
-
-  // Determine if we need to render an icon container
+  const iconSize = useMemo(() => getIconSize(size, customIconSize), [size, customIconSize]);
   const hasIcon = loading || iconComponent || icon;
-
-  // Determine text style based on weight
   const buttonTextStyle = [
     styles.buttonText,
-    size === 'small' ? styles.buttonTextSmall : null,
-    size === 'large' ? styles.buttonTextLarge : null,
-    textWeight === 'normal' ? styles.normalText : null,
+    size === 'small' && styles.buttonTextSmall,
+    size === 'large' && styles.buttonTextLarge,
+    textWeight === 'normal' && styles.normalText,
   ];
 
   return (
@@ -159,30 +142,31 @@ export function ThemedButton({
       activeOpacity={1}
       onPress={handlePress}
       onPressIn={handlePressIn}
-      onPressOut={onPressOut}
+      onPressOut={handlePressOut}
       accessibilityRole="button"
-      accessibilityLabel={finalAccessibilityLabel}
-      accessibilityState={accessibilityState}
-      accessibilityHint={accessibilityHint}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
+      accessibilityHint={
+        disabled
+          ? 'This button is currently disabled'
+          : loading
+            ? 'This button is currently loading'
+            : undefined
+      }
       {...props}
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>
-        {hasIcon && (
-          <View style={[styles.iconContainer, size === 'small' ? styles.iconContainerSmall : null]}>
-            {loading ? (
-              <ActivityIndicator size={size === 'small' ? 'small' : 'small'} color={textColor} />
-            ) : iconComponent ? (
-              iconComponent
-            ) : (
-              <Ionicons
-                name={icon as keyof typeof Ionicons.glyphMap}
-                size={actualIconSize}
-                color={textColor}
-              />
-            )}
+        {hasIcon ? (
+          <View style={[styles.iconContainer, size === 'small' && styles.iconContainerSmall]}>
+            <IconContent
+              loading={loading}
+              iconComponent={iconComponent}
+              icon={icon}
+              textColor={textColor}
+              iconSize={iconSize}
+            />
           </View>
-        )}
-
+        ) : null}
         <View style={[styles.contentContainer, contentContainerStyle]}>
           <ThemedText
             type={getTextType(size, textWeight)}

@@ -1,14 +1,17 @@
-import React, { useMemo } from 'react';
-import { View, Platform, StyleSheet, TextStyle } from 'react-native';
+import React, { useMemo, memo } from 'react';
+import type { TextStyle } from 'react-native';
+import { View, Platform, StyleSheet } from 'react-native';
+
+import type { WordDisplayProps } from '@/types/ui/review.types';
+
 import { ThemedText } from '../../components/ThemedText';
 import { useColors } from '../../hooks/useColors';
-import { WordDisplayProps } from '@/types/ui/review.types';
 
 /**
  * Component to display a word with optimal styling and sizing
  * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
-const WordDisplay = React.memo(
+const WordDisplay = memo(
   ({ word, fontSize, style }: WordDisplayProps) => {
     const colors = useColors();
 

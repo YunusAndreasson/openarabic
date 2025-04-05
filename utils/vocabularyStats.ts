@@ -1,4 +1,4 @@
-import { StudyWord } from '../types/vocabulary.types';
+import type { StudyWord } from '../types/vocabulary.types';
 
 export interface WeeklyProgressData {
   date: string;

@@ -1,50 +1,48 @@
-import { StyleSheet, View, FlatList, ScrollView } from 'react-native';
-import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
-import { router } from 'expo-router';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
+import React, { useEffect, useState, useCallback, useRef, useMemo, memo } from 'react';
+import { StyleSheet, View, FlatList, ScrollView } from 'react-native';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedView } from '@/components/ThemedView';
+
+import BaseCard from '@/components/BaseCard';
 import { Loader } from '@/components/Loader';
-import ArticleList from '@/components/index/ArticleList';
 import PageHeader from '@/components/PageHeader';
+import Pill from '@/components/Pill';
+import SectionTitle from '@/components/SectionTitle';
+import ThemedCard from '@/components/ThemedCard';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import ArticleList from '@/components/index/ArticleList';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
+import { useScreenAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
-import { useAuth } from '../../hooks/useAuth';
-import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { readingListService } from '@/services/readingList';
-import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations';
+import { setDailyPick } from '@/store/featuredContentSlice';
+import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { addToReadingList } from '@/store/readingListSlice';
-import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import type { Article } from '@/types/articles.types';
 import {
   filterArticles,
   getLatestArticles,
   getBeginnerArticles,
   getDailyPickArticle,
 } from '@/utils/articleUtils';
-import { getDayOfYear } from '@/utils/dateUtils';
-import { ArticleSection } from '../../components/article';
+import { getDayOfYear, formatTimeAgo } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
-import { setDailyPick } from '@/store/featuredContentSlice';
-import BaseCard from '@/components/BaseCard';
-import { ThemedText } from '@/components/ThemedText';
-import SectionTitle from '@/components/SectionTitle';
-import { formatTimeAgo } from '@/utils/dateUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import ThemedCard from '@/components/ThemedCard';
-import Pill from '@/components/Pill';
-import { useAppLoading } from '../../app/_layout'; // Import the app loading context hook
 
-// Types
-import { Article } from '@/types/articles.types';
-
-// Import the extracted components
-import DailyPickSection from '../../components/index/DailyPickSection';
+import { useAppLoading } from '../../app/_layout';
 import ErrorState from '../../components/ErrorState';
+import { ArticleSection } from '../../components/article';
+import DailyPickSection from '../../components/index/DailyPickSection';
+import { useAuth } from '../../hooks/useAuth';
 
 // Cache duration constants
 
@@ -113,11 +111,13 @@ const styles = StyleSheet.create({
 });
 
 // Add ArticleItem component outside of the main component
-const ArticleItem = React.memo(
+const ArticleItem = memo(
   ({ article, onPress }: { article: Article; onPress: (article: Article) => void }) => {
     const categoryName = article.category?.name
       ? capitalizeFirstLetter(article.category.name)
       : 'Uncategorized';
+
+    const isDarkMode = useIsDarkMode();
 
     // Format time directly without TimeAgo component
     const timeAgoText = formatTimeAgo(article.created_at);
@@ -135,12 +135,21 @@ const ArticleItem = React.memo(
               >
                 {article.title}
               </ThemedText>
-              <ThemedText type="caption" colorName="textSecondary" numberOfLines={1}>
+              <ThemedText
+                type="caption"
+                colorName={isDarkMode ? 'text' : 'textSecondary'}
+                numberOfLines={1}
+              >
                 {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
               </ThemedText>
             </View>
             <View style={styles.iconContainer}>
-              <ThemedText type="label" variant="secondary" style={styles.arrowText}>
+              <ThemedText
+                type="label"
+                colorName={isDarkMode ? 'text' : 'textSecondary'}
+                variant={isDarkMode ? 'primary' : 'secondary'}
+                style={styles.arrowText}
+              >
                 →
               </ThemedText>
             </View>
@@ -153,7 +162,7 @@ const ArticleItem = React.memo(
 
 ArticleItem.displayName = 'ArticleItem';
 
-export default function ArticlesScreen() {
+export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
@@ -233,8 +242,10 @@ export default function ArticlesScreen() {
 
     return [...inProgressArticles]
       .sort((a, b) => {
-        const aTime = lastOpenedArticles?.[a.id] ? new Date(lastOpenedArticles[a.id]).getTime() : 0;
-        const bTime = lastOpenedArticles?.[b.id] ? new Date(lastOpenedArticles[b.id]).getTime() : 0;
+        const aDate = lastOpenedArticles?.[a.id] || '';
+        const bDate = lastOpenedArticles?.[b.id] || '';
+        const aTime = aDate ? new Date(aDate).getTime() : 0;
+        const bTime = bDate ? new Date(bDate).getTime() : 0;
 
         // Sort by last opened time (most recent first)
         return bTime - aTime;
@@ -283,15 +294,12 @@ export default function ArticlesScreen() {
 
       // Only prefetch reading list status if user is logged in and not in cache
       if (session?.user) {
-        const readingListQuery = queryClient.getQueryData([
-          'isInReadingList',
-          session.user.id,
-          article.id,
-        ]);
+        const userId = session.user.id;
+        const readingListQuery = queryClient.getQueryData(['isInReadingList', userId, article.id]);
         if (!readingListQuery) {
           queryClient.prefetchQuery({
-            queryKey: ['isInReadingList', session.user.id, article.id],
-            queryFn: () => readingListService.isInReadingList(session.user.id, article.id),
+            queryKey: ['isInReadingList', userId, article.id],
+            queryFn: () => readingListService.isInReadingList(userId, article.id),
             staleTime: 300000,
             gcTime: 600000,
           });
@@ -343,8 +351,8 @@ export default function ArticlesScreen() {
     const today = new Date().toISOString().split('T')[0];
     if (dailyPick.date !== today) {
       const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
-      if (dailyPickArticle) {
-        dispatch(setDailyPick({ articleId: dailyPickArticle.id, date: today }));
+      if (dailyPickArticle?.id && today) {
+        dispatch(setDailyPick({ articleId: Number(dailyPickArticle.id), date: today }));
       }
     }
   }, [articlesData, articlesError, dailyPick.date, dispatch]);
@@ -409,7 +417,7 @@ export default function ArticlesScreen() {
               <ThemedCard
                 variant="compact"
                 article={item}
-                onPress={() => handleArticlePress(item)}
+                handlePress={() => handleArticlePress(item)}
                 hideDifficulty={true}
               />
             </View>
@@ -474,20 +482,20 @@ export default function ArticlesScreen() {
   // Create a pre-rendered header component for the Flash to avoid re-rendering the entire list
   const ListHeaderComponent = useMemo(() => {
     const orderedSections = [
-      DailyPick,
-      ContinueReadingSection,
-      LatestTextsSection,
-      BeginnerFriendlySection,
-      AuthorFilterSection,
-      CategoryFilterSection,
+      { id: 'daily-pick', component: DailyPick },
+      { id: 'continue-reading', component: ContinueReadingSection },
+      { id: 'latest-texts', component: LatestTextsSection },
+      { id: 'beginner-friendly', component: BeginnerFriendlySection },
+      { id: 'author-filter', component: AuthorFilterSection },
+      { id: 'category-filter', component: CategoryFilterSection },
     ];
 
     return (
       <>
         {orderedSections
-          .filter(section => section !== null)
-          .map((section, index) => (
-            <React.Fragment key={index}>{section}</React.Fragment>
+          .filter(section => section.component !== null)
+          .map(section => (
+            <React.Fragment key={section.id}>{section.component}</React.Fragment>
           ))}
       </>
     );
@@ -502,8 +510,8 @@ export default function ArticlesScreen() {
 
   // Create an empty state component
   const EmptyStateComponent = useMemo(() => {
-    // Return an empty fragment as a React element
-    return <></>;
+    // Return null when there's no content to display
+    return null;
   }, []);
 
   // Check if data is already in cache to optimize loading behavior
@@ -595,7 +603,7 @@ export default function ArticlesScreen() {
         <PageHeader title="Texts" />
 
         {/* Loading overlay that fades out rather than jumps */}
-        {showLoadingOverlay && (
+        {showLoadingOverlay ? (
           <Animated.View
             style={[styles.loadingOverlay, { backgroundColor: colors.background }]}
             entering={FadeIn.duration(200)}
@@ -603,7 +611,7 @@ export default function ArticlesScreen() {
           >
             <Loader size="large" color={colors.tint} />
           </Animated.View>
-        )}
+        ) : null}
       </ThemedView>
     </Animated.View>
   );

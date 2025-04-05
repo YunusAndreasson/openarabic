@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+
+import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import type { StudyWord, VocabularyStats, WeeklyProgressData } from '../types/vocabulary.types';
 import { calculateWeeklyProgressData } from '../utils/vocabularyStats';
-import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 
 // Split stats calculation into smaller chunks for better memoization
 const getBaseStats = (validStudyWords: StudyWord[], dueWordsData: StudyWord[]) => {
@@ -89,7 +90,14 @@ const getAdvancedStats = (validStudyWords: StudyWord[]) => {
   };
 };
 
-export function useVocabularyStats(studyWords: StudyWord[], dueWordsData: StudyWord[]) {
+export function useVocabularyStats(
+  studyWords: StudyWord[],
+  dueWordsData: StudyWord[]
+): {
+  stats: VocabularyStats;
+  weeklyProgressData: WeeklyProgressData[];
+  validStudyWords: StudyWord[];
+} {
   const userId = studyWords[0]?.user_id;
 
   // Fetch review logs for weekly progress
@@ -102,7 +110,7 @@ export function useVocabularyStats(studyWords: StudyWord[], dueWordsData: StudyW
   // Filter valid study words with error protection
   const validStudyWords = useMemo(() => {
     if (!Array.isArray(studyWords)) return [] as StudyWord[];
-    return studyWords.filter(word => word?.sentence_word != null) as StudyWord[];
+    return studyWords.filter(word => word?.sentence_word != null);
   }, [studyWords]);
 
   // Split stats calculation into smaller memoized chunks - optimized with calculation key

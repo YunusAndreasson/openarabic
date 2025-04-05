@@ -1,19 +1,19 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { useColors } from '@/hooks/useColors';
-import { useAuth } from '@/hooks/useAuth';
-import { useFSRS } from '@/hooks/useFSRS';
-import { router, useLocalSearchParams } from 'expo-router';
-import { LAYOUT } from '@/constants/layout';
-import { Loader } from '@/components/Loader';
 import { useQueryClient } from '@tanstack/react-query';
-import { lightFeedback } from '@/utils/haptics';
-import { useWordSizing } from '../hooks/useWordSizing';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { Loader } from '@/components/Loader';
+import { ThemedView } from '@/components/ThemedView';
+import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
+import { useFSRS } from '@/hooks/useFSRS';
+import { lightFeedback } from '@/utils/haptics';
 
-// Import our components
 import {
   ReviewCard,
   ReviewHeader,
@@ -21,6 +21,9 @@ import {
   MeaningOverlay,
   InstructionFooter,
 } from '../components/review';
+import { useWordSizing } from '../hooks/useWordSizing';
+
+// Import our components
 
 const baseStyles = StyleSheet.create({
   centered: {
@@ -51,7 +54,7 @@ const baseStyles = StyleSheet.create({
   } as ViewStyle,
 });
 
-export default function ReviewScreen() {
+export default function ReviewScreen(): JSX.Element {
   const colors = useColors();
   const params = useLocalSearchParams();
   const fromVocabulary = params.fromVocabulary === 'true';
@@ -441,7 +444,7 @@ export default function ReviewScreen() {
       // Continue to the main return below
     } else {
       // Otherwise show the completion screen
-      return <CompletionScreen onClose={handleClose} onMount={stopPlayback} />;
+      return <CompletionScreen onClose={handleClose} onMount={handleClose} />;
     }
   }
 
@@ -453,7 +456,7 @@ export default function ReviewScreen() {
         {showInitialLoading ? (
           <Loader />
         ) : isComplete ? (
-          <CompletionScreen onClose={handleClose} onMount={stopPlayback} />
+          <CompletionScreen onClose={handleClose} onMount={handleClose} />
         ) : (
           <>
             {/* Header with progress bar */}

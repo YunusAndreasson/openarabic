@@ -1,10 +1,11 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import themeReducer from './themeSlice';
-import settingsReducer from './settingsSlice';
-import readingListReducer from './readingListSlice';
-import featuredContentReducer from './featuredContentSlice';
-import { persistStore, persistReducer } from 'redux-persist';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { persistStore, persistReducer } from 'redux-persist';
+
+import featuredContentReducer from './featuredContentSlice';
+import readingListReducer from './readingListSlice';
+import settingsReducer from './settingsSlice';
+import themeReducer from './themeSlice';
 
 // Combine reducers (even if there's only one) so we can use a whitelist.
 const rootReducer = combineReducers({

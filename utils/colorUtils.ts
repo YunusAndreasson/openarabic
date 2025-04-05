@@ -23,7 +23,7 @@ export function hexToRgb(hex: string): string {
   }
 
   // Validate hex format
-  if (!/^[0-9A-Fa-f]{6}$/.test(hex)) {
+  if (!/^[\dA-Fa-f]{6}$/.test(hex)) {
     return '0,0,0'; // Return black as fallback
   }
 

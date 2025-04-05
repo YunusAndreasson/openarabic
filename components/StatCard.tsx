@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet } from 'react-native';
-import { StatCardProps } from '@/types/ui/layout.types';
-import InfoCard from './InfoCard';
-import { withOpacity } from '@/utils/colorUtils';
+
 import { LAYOUT } from '@/constants/layout';
+import type { StatCardProps } from '@/types/ui/layout.types';
+import { withOpacity } from '@/utils/colorUtils';
+
+import InfoCard from './InfoCard';
 
 const styles = StyleSheet.create({
   cardStyle: {
@@ -12,24 +14,21 @@ const styles = StyleSheet.create({
   },
 });
 
-export const StatCard = React.memo(
-  ({ label, value, icon, colors, animateValue = false, onPress }: StatCardProps) => {
-    return (
-      <InfoCard
-        title={label}
-        value={value}
-        icon={icon}
-        iconBgColor={withOpacity(colors.text, 0.1)}
-        iconColor={colors.icon}
-        style={styles.cardStyle}
-        includePressAnimation={false}
-        shadowSize="small"
-        animateValue={animateValue}
-        layoutMode="row-reversed"
-        onPress={onPress}
-      />
-    );
-  }
-);
+export const StatCard = memo(({ label, value, icon, colors, onPress }: StatCardProps) => {
+  return (
+    <InfoCard
+      title={label}
+      value={value}
+      icon={icon}
+      iconBgColor={withOpacity(colors.text, 0.1)}
+      iconColor={colors.icon}
+      style={styles.cardStyle}
+      includePressAnimation={false}
+      shadowSize="small"
+      layoutMode="row-reversed"
+      onPress={onPress}
+    />
+  );
+});
 
 StatCard.displayName = 'StatCard';

@@ -1,18 +1,22 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, RefreshControl, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import { Article } from '../../types/articles.types';
-import BaseCard from '../BaseCard';
+import React, { useMemo, useCallback, memo } from 'react';
+import { StyleSheet, RefreshControl, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
-import { CopyrightFooter } from './CopyrightFooter';
-import { Tables } from '../../types/database.types';
+import type { Article } from '../../types/articles.types';
+import type { Tables } from '../../types/database.types';
+import { formatTimeAgo } from '../../utils/dateUtils';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import BaseCard from '../BaseCard';
+import PageHeader from '../PageHeader';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
-import PageHeader from '../PageHeader';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { formatTimeAgo } from '../../utils/dateUtils';
+
+import { CopyrightFooter } from './CopyrightFooter';
 
 interface FilteredArticleViewProps {
   /**
@@ -56,6 +60,84 @@ interface FilteredArticleViewProps {
   onClearFilter?: () => void;
 }
 
+// Move components outside of the parent component
+interface ArticleItemProps {
+  article: Article;
+  onPress?: (article: Article) => void;
+  isDarkMode: boolean;
+}
+
+const ArticleItem = memo(({ article, onPress, isDarkMode }: ArticleItemProps) => {
+  const categoryName = article.category?.name
+    ? capitalizeFirstLetter(article.category.name)
+    : 'Uncategorized';
+
+  // Format time directly without TimeAgo component
+  const timeAgoText = formatTimeAgo(article.created_at);
+
+  return (
+    <View style={styles.articleContainer}>
+      <BaseCard onPress={() => onPress?.(article)} style={styles.card} shadowSize="small">
+        <View style={styles.cardContent}>
+          <View style={styles.textContent}>
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={styles.titleText}>
+              {article.title}
+            </ThemedText>
+            <ThemedText
+              type="caption"
+              colorName={isDarkMode ? 'text' : 'textSecondary'}
+              numberOfLines={1}
+            >
+              {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
+            </ThemedText>
+          </View>
+          <View style={styles.iconContainer}>
+            <ThemedText
+              type="label"
+              colorName={isDarkMode ? 'text' : undefined}
+              variant={isDarkMode ? undefined : 'secondary'}
+              style={styles.arrowText}
+            >
+              →
+            </ThemedText>
+          </View>
+        </View>
+      </BaseCard>
+    </View>
+  );
+});
+ArticleItem.displayName = 'ArticleItem';
+
+interface RenderItemProps {
+  item: Article;
+  onPress?: (article: Article) => void;
+  isDarkMode: boolean;
+}
+
+const RenderItem = ({ item, onPress, isDarkMode }: RenderItemProps) => (
+  <ArticleItem article={item} onPress={onPress} isDarkMode={isDarkMode} />
+);
+RenderItem.displayName = 'RenderItem';
+
+interface EmptyViewProps {
+  isLoading?: boolean;
+}
+
+const EmptyView = ({ isLoading }: EmptyViewProps) => {
+  if (isLoading) return null;
+  return (
+    <View style={styles.noResultsContainer}>
+      <ThemedText
+        style={styles.noResultsText}
+        accessibilityLabel="No articles found with the current filter"
+      >
+        No articles found
+      </ThemedText>
+    </View>
+  );
+};
+EmptyView.displayName = 'EmptyView';
+
 /**
  * A specialized component for displaying filtered articles
  * Uses a simple ScrollView instead of FlashList to avoid recycling issues
@@ -72,6 +154,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 }) => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const isDarkMode = useIsDarkMode();
 
   // Determine the header title based on selected filters
   const headerTitle = useMemo(() => {
@@ -91,66 +174,13 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   // Calculate header height for spacer
   const headerHeight = useMemo(() => getHeaderHeight(insets), [insets]);
 
-  const ArticleItem = React.memo(({ article }: { article: Article }) => {
-    const categoryName = article.category?.name
-      ? capitalizeFirstLetter(article.category.name)
-      : 'Uncategorized';
-
-    // Format time directly without TimeAgo component
-    const timeAgoText = formatTimeAgo(article.created_at);
-
-    return (
-      <View style={styles.articleContainer}>
-        <BaseCard onPress={() => onArticlePress?.(article)} style={styles.card} shadowSize="small">
-          <View style={styles.cardContent}>
-            <View style={styles.textContent}>
-              <ThemedText
-                type="bodyBold"
-                numberOfLines={2}
-                colorName="text"
-                style={styles.titleText}
-              >
-                {article.title}
-              </ThemedText>
-              <ThemedText type="caption" colorName="textSecondary" numberOfLines={1}>
-                {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
-              </ThemedText>
-            </View>
-            <View style={styles.iconContainer}>
-              <ThemedText type="label" variant="secondary" style={styles.arrowText}>
-                →
-              </ThemedText>
-            </View>
-          </View>
-        </BaseCard>
-      </View>
-    );
-  });
-  ArticleItem.displayName = 'ArticleItem';
-
-  const renderItem = useMemo(() => {
-    const RenderItem = ({ item }: { item: Article }) => <ArticleItem article={item} />;
-    RenderItem.displayName = 'RenderItem';
-    return RenderItem;
-  }, [ArticleItem]);
-
-  const ListEmptyComponent = useMemo(() => {
-    const EmptyView = () => {
-      if (isLoading) return null;
-      return (
-        <View style={styles.noResultsContainer}>
-          <ThemedText
-            style={styles.noResultsText}
-            accessibilityLabel="No articles found with the current filter"
-          >
-            No articles found
-          </ThemedText>
-        </View>
-      );
-    };
-    EmptyView.displayName = 'EmptyView';
-    return EmptyView;
-  }, [isLoading]);
+  const renderItemCallback = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
+    ({ item }: { item: Article }) => (
+      <RenderItem item={item} onPress={onArticlePress} isDarkMode={isDarkMode} />
+    ),
+    [onArticlePress, isDarkMode]
+  );
 
   const ListFooterComponent = useMemo(() => {
     if (!articles.length) return null;
@@ -178,12 +208,12 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
     >
       <FlashList
         data={articles}
-        renderItem={renderItem}
+        renderItem={renderItemCallback}
         estimatedItemSize={ITEM_HEIGHT}
         keyExtractor={(_, index) => String(index)}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={HeaderSpacer}
-        ListEmptyComponent={ListEmptyComponent}
+        ListEmptyComponent={<EmptyView isLoading={isLoading} />}
         ListFooterComponent={ListFooterComponent}
         showsVerticalScrollIndicator={true}
         drawDistance={ITEM_HEIGHT * 5}

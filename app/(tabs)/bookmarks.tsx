@@ -1,27 +1,30 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { readingListService } from '@/services/readingList';
-import { useAuth } from '@/hooks/useAuth';
 import { router, useFocusEffect } from 'expo-router';
+import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import BaseCard from '@/components/BaseCard';
+import EmptyState from '@/components/EmptyState';
+import PageHeader from '@/components/PageHeader';
+import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedButton } from '@/components/ThemedButton';
 import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import { Ionicons } from '@expo/vector-icons';
-import Animated from 'react-native-reanimated';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import EmptyState from '@/components/EmptyState';
-import { AUDIO_STATES, useAudioPlayer, AudioTrack } from '@/hooks/useAudioPlayer';
-import PageHeader from '@/components/PageHeader';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import BaseCard from '@/components/BaseCard';
-import { Article } from '../../types/articles.types';
-import { Tables } from '../../types/database.types';
+import { AUDIO_STATES, useAudioPlayer } from '@/hooks/useAudioPlayer';
+import type { AudioTrack } from '@/hooks/useAudioPlayer';
+import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
+import { readingListService } from '@/services/readingList';
+
+import type { Article } from '../../types/articles.types';
+import type { Tables } from '../../types/database.types';
 
 type ReadingListItem = Tables<'reading_list'> & {
   articles: Article & {
@@ -128,7 +131,7 @@ const styles = StyleSheet.create({
 const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding and margins
 
 // Memory-optimized component for reading list items
-const BookmarkListItem = React.memo(
+const BookmarkListItem = memo(
   ({
     item,
     progress,
@@ -136,7 +139,6 @@ const BookmarkListItem = React.memo(
     isActive,
   }: {
     item: ReadingListItem;
-    audioState: string;
     progress: number;
     duration: number;
     isActive: boolean;
@@ -188,7 +190,7 @@ const BookmarkListItem = React.memo(
             </View>
           </View>
 
-          {isActive && (
+          {isActive ? (
             <View style={[styles.cardProgressContainer, { backgroundColor: colors.transparent }]}>
               <View
                 style={[
@@ -200,7 +202,7 @@ const BookmarkListItem = React.memo(
                 ]}
               />
             </View>
-          )}
+          ) : null}
         </BaseCard>
       </View>
     );
@@ -212,11 +214,7 @@ const BookmarkListItem = React.memo(
 
     // If this item is active, re-render when audio state or progress changes
     if (nextProps.isActive) {
-      return (
-        prevProps.audioState === nextProps.audioState &&
-        prevProps.progress === nextProps.progress &&
-        prevProps.duration === nextProps.duration
-      );
+      return prevProps.progress === nextProps.progress && prevProps.duration === nextProps.duration;
     }
 
     // Otherwise, only re-render if basic props change
@@ -227,7 +225,7 @@ const BookmarkListItem = React.memo(
 BookmarkListItem.displayName = 'BookmarkListItem';
 
 // Bottom Action Buttons component
-const BottomControls = React.memo(
+const BottomControls = memo(
   ({
     onPlayAll,
     onShuffle,
@@ -283,7 +281,7 @@ const BottomControls = React.memo(
 
 BottomControls.displayName = 'BottomControls';
 
-export default function BookmarksScreen() {
+export default function BookmarksScreen(): JSX.Element {
   const colors = useColors();
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
@@ -381,7 +379,7 @@ export default function BookmarksScreen() {
 
   // Handle component focus and cleanup
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       // Refresh reading list when screen is focused
       if (user?.id) {
         // First check if we already have data
@@ -573,12 +571,11 @@ export default function BookmarksScreen() {
           <FlashList
             ref={flashListRef}
             data={readingList}
-            extraData={[audioState, currentTrackIndex, progress]}
+            extraData={[currentTrackIndex, progress]}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (
               <BookmarkListItem
                 item={item}
-                audioState={audioState}
                 progress={progress}
                 duration={duration}
                 isActive={isActiveTrack(item.article_id)}

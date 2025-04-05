@@ -1,6 +1,8 @@
-import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
-import { Toast } from './Toast';
+import React, { createContext, useCallback, useContext, useState, useEffect, useMemo } from 'react';
+
 import { setGlobalToastHandler } from '../utils/errorHandling';
+
+import { Toast } from './Toast';
 
 interface ToastContextType {
   showToast: (message: string, duration?: number) => void;
@@ -8,7 +10,7 @@ interface ToastContextType {
 
 const ToastContext = createContext<ToastContextType | null>(null);
 
-export const useToast = () => {
+export const useToast = (): ToastContextType => {
   const context = useContext(ToastContext);
   if (!context) {
     throw new Error('useToast must be used within a ToastProvider');
@@ -40,8 +42,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setGlobalToastHandler(showToast);
   }, [showToast]);
 
+  const contextValue = useMemo(() => ({ showToast }), [showToast]);
+
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       <Toast
         visible={toastState.visible}

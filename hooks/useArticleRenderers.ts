@@ -1,10 +1,11 @@
-import { useCallback } from 'react';
 import { router } from 'expo-router';
-import { useNavigationWithDebounce } from './useNavigationWithDebounce';
-import { handleError } from '@/utils/errorHandling';
+import { useCallback } from 'react';
+
 import type { Article } from '@/types/articles.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import type { Route } from '@/types/navigation.types';
+import { handleError } from '@/utils/errorHandling';
+
+import { useNavigationWithDebounce } from './useNavigationWithDebounce';
 
 /**
  * Hook for article rendering functions
@@ -24,7 +25,18 @@ export const useArticleRenderers = (
   selectedWordIds: Set<number | string>,
   sentenceWordsMap: Map<number, SentenceWord[]>,
   handleWordPress: (word: SentenceWord) => void
-) => {
+): {
+  prepareWord: (word: SentenceWord) => {
+    word: SentenceWord;
+    isSelected: boolean;
+    key: number | string;
+    onPress: (word: SentenceWord) => void;
+    scale: number;
+    baseSize: number;
+  };
+  handleArticlePress: (articleOrId: Article | number, isRelatedArticle?: boolean) => void;
+  getWordsForSentence: (sentenceId: number) => SentenceWord[];
+} => {
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
@@ -73,7 +85,7 @@ export const useArticleRenderers = (
             params: {
               id: articleId.toString(),
             },
-          } as Route<'/article/[id]'>);
+          });
         } else {
           // For normal navigation, use the debounce hook
           navigateTo({

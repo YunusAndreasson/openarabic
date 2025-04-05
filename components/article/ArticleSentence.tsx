@@ -1,18 +1,21 @@
+import { useLocalSearchParams } from 'expo-router';
 import React, { memo, useEffect } from 'react';
-import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
-import { ArabicWord } from './ArabicWord';
-import { Colors } from '../../constants/Colors';
-import { LAYOUT } from '../../constants/layout';
-import { useColors } from '../../hooks/useColors';
+import type { ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
   withSequence,
   withTiming,
   useAnimatedStyle,
 } from 'react-native-reanimated';
-import { useLocalSearchParams } from 'expo-router';
-import { ThemeColors } from '../../types/ui/theme.types';
-import { SentenceWord } from '../../types/vocabulary.types';
+
+import { Colors } from '../../constants/Colors';
+import { LAYOUT } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
+import type { ThemeColors } from '../../types/ui/theme.types';
+import type { SentenceWord } from '../../types/vocabulary.types';
+
+import { ArabicWord } from './ArabicWord';
 
 interface ArticleSentenceProps {
   sentence: {
@@ -76,16 +79,16 @@ function ArticleSentenceComponent({
       <View style={styles.wordsContainer}>
         {renderWord
           ? words.map(word => renderWord(word))
-          : words.map((word, index) => (
+          : words.map(word => (
               <ArabicWord
-                key={`${word.id}-${index}`}
+                key={`word-${word.id}-${word.position || sentence.id}`}
                 word={word}
-                onPress={onWordPress!}
+                onPress={word => onWordPress?.(word)}
                 settings={settings}
               />
             ))}
       </View>
-      {settings?.showEnglish && sentence.english && (
+      {settings?.showEnglish && sentence.english ? (
         <Animated.Text
           style={[
             styles.englishText,
@@ -97,7 +100,7 @@ function ArticleSentenceComponent({
         >
           {sentence.english}
         </Animated.Text>
-      )}
+      ) : null}
     </View>
   );
 }

@@ -1,13 +1,14 @@
-import React, { useCallback } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { Article } from '../../types/articles.types';
-import { LAYOUT } from '../../constants/layout';
-import { ThemedText } from '../../components/ThemedText';
-import { articlesService } from '../../services/articles';
-import ThemedCard from '../../components/ThemedCard';
+import React, { memo, useCallback } from 'react';
+import { FlatList, StyleSheet, View } from 'react-native';
+
 import { LoadingContainer } from '../../components/Loader';
 import SectionTitle from '../../components/SectionTitle';
+import ThemedCard from '../../components/ThemedCard';
+import { ThemedText } from '../../components/ThemedText';
+import { LAYOUT } from '../../constants/layout';
+import { articlesService } from '../../services/articles';
+import type { Article } from '../../types/articles.types';
 
 interface ArticleSectionProps {
   /**
@@ -69,7 +70,7 @@ interface ArticleSectionProps {
 /**
  * Displays a section of articles
  */
-const ArticleSection = React.memo(
+const ArticleSection = memo(
   ({
     title,
     articles,
@@ -115,18 +116,18 @@ const ArticleSection = React.memo(
 
     // Render each article item
     const renderItem = useCallback(
-      ({ item }: { item: Article }) => (
+      (props: { item: Article }) => (
         <View
           style={vertical ? styles.verticalArticleContainer : styles.horizontalArticleContainer}
         >
           <ThemedCard
             variant="compact"
-            article={item}
-            onPress={() => handleItemPress(item)}
+            article={props.item}
+            onPress={() => handleItemPress(props.item)}
             showTimeAgo={showTimeAgo}
             hideDifficultyLabel={hideDifficultyLabel}
             hideDifficulty={hideDifficulty}
-            lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(item.id) : undefined}
+            lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(props.item.id) : undefined}
           />
         </View>
       ),

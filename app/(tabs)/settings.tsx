@@ -1,55 +1,60 @@
-import React, { useCallback, useEffect } from 'react';
-import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { createClient } from '@supabase/supabase-js';
+import React, { useCallback, useEffect, memo } from 'react';
+import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { createClient } from '@supabase/supabase-js';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
-import { useColors } from '../../hooks/useColors';
+
+import BaseCard from '@/components/BaseCard';
+import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
+import { useScreenAnimation, useOpacityAnimation } from '@/hooks/animations';
+import { useAuth } from '@/hooks/useAuth';
+import { lightFeedback } from '@/utils/haptics';
+
+import PageHeader from '../../components/PageHeader';
+import { CustomSlider } from '../../components/Slider';
+import { ThemeToggle } from '../../components/ThemeToggle';
+import { ThemedButton } from '../../components/ThemedButton';
+import { ThemedText } from '../../components/ThemedText';
+import { ThemedView } from '../../components/ThemedView';
+import { Toggle } from '../../components/Toggle';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useLoadingState } from '../../hooks';
-import { useAuth } from '@/hooks/useAuth';
-import { useScreenAnimation, useOpacityAnimation } from '@/hooks/animations';
-import PageHeader from '../../components/PageHeader';
-import { lightFeedback } from '@/utils/haptics';
-import BaseCard from '@/components/BaseCard';
-import { ThemedView } from '../../components/ThemedView';
-import { ThemedText } from '../../components/ThemedText';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../constants/Supabase';
-import { ThemeToggle } from '../../components/ThemeToggle';
-import { CustomSlider } from '../../components/Slider';
-import { Toggle } from '../../components/Toggle';
-import { ThemedButton } from '../../components/ThemedButton';
-import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
+import { useColors } from '../../hooks/useColors';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
 
 // Create a Supabase client
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Memoize static components to prevent unnecessary re-renders
-const SettingLabel = React.memo(
-  ({ icon, text }: { icon: keyof typeof Ionicons.glyphMap; text: string }) => {
-    const colors = useColors();
-    return (
-      <View style={styles.settingLabelContainer}>
-        <Ionicons name={icon} size={20} color={colors.tabIconDefault} />
-        <View style={styles.settingLabelTextContainer}>
-          <ThemedText type="body">{text}</ThemedText>
-        </View>
+interface SettingLabelProps {
+  readonly icon: keyof typeof Ionicons.glyphMap;
+  readonly text: string;
+}
+
+const SettingLabel = memo(({ icon, text }: SettingLabelProps) => {
+  const colors = useColors();
+  return (
+    <View style={styles.settingLabelContainer}>
+      <Ionicons name={icon} size={20} color={colors.tabIconDefault} />
+      <View style={styles.settingLabelTextContainer}>
+        <ThemedText type="body">{text}</ThemedText>
       </View>
-    );
-  }
-);
+    </View>
+  );
+});
 SettingLabel.displayName = 'SettingLabel';
 
 // Memoize divider component
-const Divider = React.memo(() => {
+const Divider = memo(() => {
   const colors = useColors();
   return <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />;
 });
 Divider.displayName = 'Divider';
 
-export default function SettingsScreen() {
+export default function SettingsScreen(): JSX.Element {
   const { user, isLoading: isAuthLoading } = useAuth();
   const colors = useColors();
   const dispatch = useAppDispatch();
@@ -196,10 +201,13 @@ export default function SettingsScreen() {
     innerContainer: {
       justifyContent: 'flex-start' as const,
       alignItems: 'flex-start' as const,
+      paddingVertical: LAYOUT.SPACING.SMALL,
+      paddingLeft: LAYOUT.SPACING.MEDIUM,
     },
     contentContainer: {
       justifyContent: 'flex-start' as const,
       alignItems: 'flex-start' as const,
+      paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     },
   };
 

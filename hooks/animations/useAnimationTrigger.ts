@@ -1,6 +1,7 @@
-import { handleError } from '@/utils/errorHandling';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { runOnUI, isWorkletFunction } from 'react-native-reanimated';
+
+import { handleError } from '@/utils/errorHandling';
 
 /**
  * Return type for useAnimationTrigger hook

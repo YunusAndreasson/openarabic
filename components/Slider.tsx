@@ -1,9 +1,10 @@
+import Slider from '@react-native-community/slider';
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
-import Slider from '@react-native-community/slider';
-import { useColors } from '@/hooks/useColors';
+
 import { LAYOUT } from '@/constants/layout';
-import { CustomSliderProps } from '@/types/ui/form.types';
+import { useColors } from '@/hooks/useColors';
+import type { CustomSliderProps } from '@/types/ui/form.types';
 
 export function CustomSlider({
   value,
@@ -12,7 +13,7 @@ export function CustomSlider({
   maximumValue = 1,
   step = 0.1,
   style,
-}: CustomSliderProps) {
+}: CustomSliderProps): JSX.Element {
   const colors = useColors();
 
   // Use a conditional to apply platform-specific styles

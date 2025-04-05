@@ -1,8 +1,11 @@
-import React, { useMemo } from 'react';
-import { ScrollView, View, StyleSheet, ViewStyle, StyleProp } from 'react-native';
-import { SafeAreaView, Edge } from 'react-native-safe-area-context';
+import React, { useMemo, memo } from 'react';
+import type { ViewStyle, StyleProp } from 'react-native';
+import { ScrollView, View, StyleSheet } from 'react-native';
+import type { Edge } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
 import { useColors } from '@/hooks/useColors';
-import { ThemedViewProps } from '@/types/ui/layout.types';
+import type { ThemedViewProps } from '@/types/ui/layout.types';
 
 /**
  * ThemedView is a flexible container component that automatically applies theme colors
@@ -103,4 +106,4 @@ const styles = StyleSheet.create({
 });
 
 // Memoize the component to prevent unnecessary rerenders
-export const ThemedView = React.memo(ThemedViewComponent);
+export const ThemedView = memo(ThemedViewComponent);

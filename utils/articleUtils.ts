@@ -1,4 +1,4 @@
-import { Article } from '../types/articles.types';
+import type { Article } from '../types/articles.types';
 
 /**
  * Filters articles by author ID

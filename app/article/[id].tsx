@@ -1,36 +1,35 @@
-import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
 import { useQueryClient } from '@tanstack/react-query';
-import { analytics } from '@/services/analytics';
+import { useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-// Components
-import { ThemedView } from '@/components/ThemedView';
-import { ArabicWord } from '@/components/article/ArabicWord';
 import { LoadingScreen } from '@/components/Loader';
-import { ArticleSentence } from '@/components/article';
+import { ArticleNotFound } from '@/components/NotFound';
 import ThemedCard from '@/components/ThemedCard';
+import { ThemedView } from '@/components/ThemedView';
+import { ArticleSentence } from '@/components/article';
+import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ArticleContent } from '@/components/article/ArticleContent';
-import { ArticleNotFound } from '@/components/NotFound';
-
-// Hooks
-import { useColors } from '@/hooks/useColors';
-import { useAppSelector } from '@/store/hooks';
-import { useAuth } from '@/hooks/useAuth';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimations } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
-import { useNavigationWithDebounce } from '@/hooks';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
-import { lightFeedback } from '@/utils/haptics';
+import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { useAppSelector } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
-import { Article } from '../../types/articles.types';
+import { lightFeedback } from '@/utils/haptics';
+
+import type { Article } from '../../types/articles.types';
 
 const styles = StyleSheet.create({
   container: {
@@ -47,7 +46,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function ArticleScreen() {
+export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
   const { user } = useAuth();
@@ -78,7 +77,7 @@ export default function ArticleScreen() {
   // Parse article ID
   const articleId = useMemo(() => {
     if (!id) return undefined;
-    const parsed = parseInt(id as string, 10);
+    const parsed = parseInt(id, 10);
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
@@ -134,14 +133,15 @@ export default function ArticleScreen() {
   useEffect(() => {
     if (article && !isLoadingArticle && user) {
       analytics.trackViewArticle(article.id, {
-        title: article.title,
-        category: article.category?.name,
-        wordCount:
-          article.article_sentences?.reduce(
+        ...(article.title && { title: article.title }),
+        ...(article.category?.name && { category: article.category.name }),
+        ...(article.article_sentences && {
+          wordCount: article.article_sentences.reduce(
             (total, sentence) => total + (sentence.sentence_words?.length || 0),
             0
-          ) || 0,
-        sentenceCount: article.article_sentences?.length || 0,
+          ),
+          sentenceCount: article.article_sentences.length,
+        }),
       });
     }
   }, [article, isLoadingArticle, user]);
@@ -318,6 +318,7 @@ export default function ArticleScreen() {
 
   // Render article list item with optimized settings
   const renderSentenceItem = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
     ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(sentence.id);
       return (
@@ -373,7 +374,6 @@ export default function ArticleScreen() {
           onBookmarkPress={handleBookmarkPress}
           onPlayPress={handlePlayPress}
           isInReadingList={isInReadingList}
-          isBookmarked={isInReadingList}
           initialBookmarkIcon={initialBookmarkIcon}
           isPlaying={isPlaying}
           colors={colors}
@@ -400,7 +400,6 @@ export default function ArticleScreen() {
           onBookmarkPress={handleBookmarkPress}
           onPlayPress={handlePlayPress}
           isInReadingList={isInReadingList}
-          isBookmarked={isInReadingList}
           initialBookmarkIcon={initialBookmarkIcon}
           isPlaying={isPlaying}
           colors={colors}
@@ -429,31 +428,29 @@ export default function ArticleScreen() {
         onBookmarkPress={handleBookmarkPress}
         onPlayPress={handlePlayPress}
         isInReadingList={isInReadingList}
-        isBookmarked={isInReadingList}
         initialBookmarkIcon={initialBookmarkIcon}
         isPlaying={isPlaying}
         colors={colors}
-        isDarkMode={isDarkMode}
         user={user}
+        isDarkMode={isDarkMode}
       />
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        {sortedSentences && sortedSentences.length > 0 && (
+        {sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
-            id={id as string}
+            id={id}
             article={article}
             sortedSentences={sortedSentences}
             renderSentenceItem={renderSentenceItem}
             handleScroll={handleScroll}
             colors={colors}
-            isDarkMode={isDarkMode}
             footerStyle={footerStyle}
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
           />
-        )}
+        ) : null}
       </View>
     </ThemedView>
   );

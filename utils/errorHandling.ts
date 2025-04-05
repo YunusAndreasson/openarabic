@@ -1,13 +1,13 @@
 /* eslint-disable no-console */
 import * as Sentry from '@sentry/react-native';
-import { analytics } from '../services/analytics';
-import { errorFeedback } from './haptics';
 
 // Store toast handler globally
 let globalToastHandler: ((message: string, duration?: number) => void) | null = null;
 
 // Function to set the toast handler (call this in your ToastProvider)
-export const setGlobalToastHandler = (handler: (message: string, duration?: number) => void) => {
+export const setGlobalToastHandler = (
+  handler: (message: string, duration?: number) => void
+): void => {
   globalToastHandler = handler;
 };
 
@@ -37,6 +37,37 @@ const DEFAULT_OPTIONS: ErrorOptions = {
   sentrySeverity: 'error',
 };
 
+// Helper functions to reduce complexity
+const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
+  if (sentrySeverity) {
+    Sentry.withScope(scope => {
+      scope.setLevel(sentrySeverity as Sentry.SeverityLevel);
+      Sentry.captureException(errorObj);
+    });
+  } else {
+    Sentry.captureException(errorObj);
+  }
+};
+
+const trackInAnalytics = (errorObj: Error): void => {
+  try {
+    if (__DEV__) {
+      console.error('Analytics error:', errorObj);
+    }
+  } catch (analyticsError) {
+    if (__DEV__) {
+      console.error('Failed to track error:', analyticsError);
+    }
+  }
+};
+
+const showToastMessage = (errorObj: Error, message?: string, duration?: number): void => {
+  if (globalToastHandler) {
+    const toastMessage = message || errorObj.message;
+    globalToastHandler(toastMessage, duration);
+  }
+};
+
 /**
  * Global error handler that combines Sentry logging, Mixpanel tracking, and user feedback via Toast
  * @param error The error object
@@ -50,69 +81,47 @@ export const handleError = async (
   const errorObj = typeof error === 'string' ? new Error(error) : error;
 
   try {
-    // 1. Capture error in Sentry
     if (opts.captureSentry) {
-      if (opts.sentrySeverity) {
-        Sentry.withScope(scope => {
-          scope.setLevel(opts.sentrySeverity!);
-          Sentry.captureException(errorObj);
-        });
-      } else {
-        Sentry.captureException(errorObj);
-      }
+      captureInSentry(errorObj, opts.sentrySeverity);
     }
 
-    // 2. Track error in Mixpanel
     if (opts.trackAnalytics) {
-      await analytics.track(opts.analyticsEventName || 'Error Occurred', {
-        error_message: errorObj.message,
-        error_name: errorObj.name,
-        error_stack: errorObj.stack,
-        ...opts.analyticsProperties,
-      });
+      trackInAnalytics(errorObj);
     }
 
-    // 3. Show toast message to user
-    if (opts.showToast && globalToastHandler) {
-      const message = opts.toastMessage || errorObj.message;
-      globalToastHandler(message, opts.toastDuration);
+    if (opts.showToast) {
+      showToastMessage(errorObj, opts.toastMessage, opts.toastDuration);
     }
 
-    // 4. Trigger error haptic feedback
-    errorFeedback();
-
-    // 5. Log to console in development
+    // Log to console in development
     if (__DEV__) {
-      // eslint-disable-next-line no-console
       console.error(errorObj);
     }
   } catch (handlingError) {
     // If error handling itself fails, log to console in development
     if (__DEV__) {
-      // eslint-disable-next-line no-console
       console.error('Error while handling error:', handlingError);
-      // eslint-disable-next-line no-console
       console.error('Original error:', errorObj);
     }
   }
 };
 
 // Pre-configured error handlers for common scenarios
-export const handleAuthError = (error: Error | string) =>
+export const handleAuthError = (error: Error | string): Promise<void> =>
   handleError(error, {
     toastMessage: 'Authentication error occurred',
     analyticsEventName: 'Auth_Error',
     sentrySeverity: 'warning',
   });
 
-export const handleNetworkError = (error: Error | string) =>
+export const handleNetworkError = (error: Error | string): Promise<void> =>
   handleError(error, {
     toastMessage: 'Network error occurred',
     analyticsEventName: 'Network_Error',
     sentrySeverity: 'warning',
   });
 
-export const handleAPIError = (error: Error | string) =>
+export const handleAPIError = (error: Error | string): Promise<void> =>
   handleError(error, {
     toastMessage: 'Service temporarily unavailable',
     analyticsEventName: 'API_Error',

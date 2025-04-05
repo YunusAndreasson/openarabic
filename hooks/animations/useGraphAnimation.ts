@@ -1,5 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
-import { useSharedValue, withTiming, runOnJS, SharedValue } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import { useSharedValue, withTiming, runOnJS } from 'react-native-reanimated';
+
 import { TIMING_CONFIG } from './animationConfigs';
 
 interface GraphAnimationResult {

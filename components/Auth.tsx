@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { supabase } from '@/services/supabase';
-import { ThemedInput } from './ThemedInput';
-import { ThemedButton } from './ThemedButton';
-import { ThemedText } from './ThemedText';
+
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
+import { supabase } from '@/services/supabase';
+
+import { ThemedButton } from './ThemedButton';
+import { ThemedInput } from './ThemedInput';
+import { ThemedText } from './ThemedText';
 
 /**
  * Email validation regex and password requirements
@@ -15,13 +17,13 @@ const PASSWORD_REQUIREMENTS = {
   minLength: 8,
   hasUpperCase: /[A-Z]/,
   hasLowerCase: /[a-z]/,
-  hasNumber: /[0-9]/,
+  hasNumber: /\d/,
 } as const;
 
 /**
  * Authentication component that handles both sign in and sign up
  */
-export default function Auth() {
+export default function Auth(): JSX.Element {
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

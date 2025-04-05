@@ -1,16 +1,30 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { createEmptyCard, fsrs, Rating, Card, State } from 'ts-fsrs';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { StudyWord } from '@/types/vocabulary.types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { Card } from 'ts-fsrs';
+import { createEmptyCard, fsrs, Rating, State } from 'ts-fsrs';
+
 import { studyWordsService } from '@/services/studyWords';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import type { StudyWord } from '@/types/vocabulary.types';
 
 interface UseFSRSOptions {
   userId: string | undefined;
   onComplete?: () => void;
 }
 
-export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
+type UseFSRSResult = {
+  currentWord: StudyWord | null;
+  wordQueue: StudyWord[];
+  isLoading: boolean;
+  isComplete: boolean;
+  progress: number;
+  updateWord: (sentenceWordId: number, success: boolean) => Promise<void>;
+  invalidateQueries: () => void;
+  refetchDueWords: () => Promise<unknown>;
+  resetQueue: () => void;
+};
+
+export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   // Use React state for queue to improve concurrency safety
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
@@ -43,7 +57,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions) {
     queryFn: async () => {
       if (!userId) return [];
       const data = await studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit: 50 });
-      return data as StudyWord[];
+      return data;
     },
     enabled: !!userId,
     // Always fetch fresh data

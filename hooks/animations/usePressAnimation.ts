@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef } from 'react';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -5,10 +6,11 @@ import {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
-import { SPRING_CONFIG } from './animationConfigs';
-import { SharedValue } from './types';
-import { useCallback, useEffect, useRef } from 'react';
+
 import { handleError } from '@/utils/errorHandling';
+
+import { SPRING_CONFIG } from './animationConfigs';
+import type { SharedValue } from './types';
 
 export type PressAnimationType = 'button' | 'card' | 'custom';
 

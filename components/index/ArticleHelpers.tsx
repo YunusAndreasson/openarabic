@@ -1,16 +1,19 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '../ThemedText';
-import { formatTimeAgo } from '../../utils/dateUtils';
-import { useColors } from '../../hooks/useColors';
+import React, { useMemo, memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+
 import { LAYOUT } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
+import { useIsDarkMode } from '../../hooks/useThemeDetection';
+import { formatTimeAgo } from '../../utils/dateUtils';
+import { ThemedText } from '../ThemedText';
 
 /**
  * TimeAgo component to show when an article was published or last opened
  */
-export const TimeAgo = React.memo(({ date }: { date: string; isLastOpened?: boolean }) => {
+export const TimeAgo = memo(({ date }: { date: string }) => {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
   // Ensure we have a valid date
   const validDate = date ? date : new Date().toISOString();
@@ -18,8 +21,18 @@ export const TimeAgo = React.memo(({ date }: { date: string; isLastOpened?: bool
 
   return (
     <View style={styles.timeAgoContainer}>
-      <Ionicons name="time-outline" size={14} color={colors.tint} style={styles.timeIcon} />
-      <ThemedText type="caption" weight="500" colorName="tint" skipDefaultColor>
+      <Ionicons
+        name="time-outline"
+        size={14}
+        color={isDarkMode ? colors.white : colors.tint}
+        style={styles.timeIcon}
+      />
+      <ThemedText
+        type="caption"
+        weight="500"
+        colorName={isDarkMode ? 'text' : 'tint'}
+        skipDefaultColor
+      >
         {timeAgoText}
       </ThemedText>
     </View>
@@ -31,9 +44,10 @@ TimeAgo.displayName = 'TimeAgo';
 /**
  * DifficultyIndicator component to display article difficulty
  */
-export const DifficultyIndicator = React.memo(
+export const DifficultyIndicator = memo(
   ({ level, hideLabel = false }: { level: number; hideLabel?: boolean }) => {
     const colors = useColors();
+    const isDarkMode = useIsDarkMode();
 
     // Normalize level to be between 1-5
     const normalizedLevel = Math.max(1, Math.min(5, level));
@@ -64,18 +78,29 @@ export const DifficultyIndicator = React.memo(
               key={star}
               name="star"
               size={12}
-              color={star <= normalizedLevel ? colors.tint : colors.cardBorder}
+              color={
+                star <= normalizedLevel
+                  ? colors.tint
+                  : isDarkMode
+                    ? colors.white + '40'
+                    : colors.cardBorder
+              }
               style={styles.starIcon}
             />
           ))}
         </View>
-        {!hideLabel && (
+        {!hideLabel ? (
           <View style={styles.difficultyTextContainer}>
-            <ThemedText type="caption" variant="subtle" skipDefaultColor>
+            <ThemedText
+              type="caption"
+              colorName={isDarkMode ? 'text' : undefined}
+              variant={isDarkMode ? undefined : 'subtle'}
+              skipDefaultColor={!isDarkMode}
+            >
               {difficultyLabel}
             </ThemedText>
           </View>
-        )}
+        ) : null}
       </View>
     );
   }
@@ -86,12 +111,19 @@ DifficultyIndicator.displayName = 'DifficultyIndicator';
 /**
  * SummaryIndicator component to display article summary in compact views
  */
-export const SummaryIndicator = React.memo(({ summary }: { summary: string | null }) => {
+export const SummaryIndicator = memo(({ summary }: { summary: string | null }) => {
+  const isDarkMode = useIsDarkMode();
+
   if (!summary) return null;
 
   return (
     <View style={styles.summaryIndicatorContainer}>
-      <ThemedText type="caption" variant="subtle" style={styles.summaryText}>
+      <ThemedText
+        type="caption"
+        colorName={isDarkMode ? 'text' : undefined}
+        variant={isDarkMode ? undefined : 'subtle'}
+        style={styles.summaryText}
+      >
         {summary}
       </ThemedText>
     </View>

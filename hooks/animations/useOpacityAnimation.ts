@@ -10,8 +10,9 @@ import {
   runOnUI,
   cancelAnimation,
 } from 'react-native-reanimated';
+
 import { TIMING_CONFIG } from './animationConfigs';
-import { SharedValue } from './types';
+import type { SharedValue } from './types';
 
 export type FadeAnimationStyle = 'standard' | 'entrance-only';
 

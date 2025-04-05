@@ -1,6 +1,6 @@
-import { useCallback, useRef, useEffect, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { QueryClient, QueryKey } from '@tanstack/react-query';
+import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 
 /**
  * Hook to refresh data when a screen comes into focus

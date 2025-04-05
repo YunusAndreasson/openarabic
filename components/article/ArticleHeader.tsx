@@ -1,10 +1,11 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+
 import { ThemedText } from '../../components/ThemedText';
-import { capitalizeFirstLetter } from '../../utils/stringUtils';
 import { LAYOUT } from '../../constants/layout';
-import { Article } from '../../types/articles.types';
+import type { Article } from '../../types/articles.types';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
 
 // Define the props interface locally
 interface ArticleHeaderProps {
@@ -164,7 +165,7 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
         </View>
       </View>
 
-      {article.summary && (
+      {article.summary ? (
         <View style={styles.summaryContainer}>
           <ThemedText
             type="body"
@@ -174,7 +175,7 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             {article.summary}
           </ThemedText>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };

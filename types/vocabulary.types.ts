@@ -29,8 +29,8 @@ export interface StudyWord {
   previous_interval: number;
 
   // FSRS fields
-  fsrs_due: string;
-  fsrs_stability: number;
+  fsrs_due: string | null;
+  fsrs_stability: number | null;
   fsrs_difficulty: number;
   fsrs_elapsed_days: number;
   fsrs_scheduled_days: number;

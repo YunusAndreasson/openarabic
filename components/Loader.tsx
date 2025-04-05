@@ -1,16 +1,21 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
-import { useColors } from '@/hooks/useColors';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import type { AnimatedStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+
 import { LAYOUT } from '@/constants/layout';
-import { ThemedView } from './ThemedView';
-import Animated, { AnimatedStyle } from 'react-native-reanimated';
-import { usePulseAnimation } from '../hooks/animations';
-import {
+import { useColors } from '@/hooks/useColors';
+import type {
   LoaderProps,
   LoadingScreenProps,
   LoadingContainerProps,
   AppLoaderProps,
 } from '@/types/ui/loader.types';
+
+import { usePulseAnimation } from '../hooks/animations';
+
+import { ThemedView } from './ThemedView';
 
 /**
  * Loader component that displays a pulsating circle

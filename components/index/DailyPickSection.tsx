@@ -1,11 +1,13 @@
-import React from 'react';
-import { StyleSheet } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
-import { LAYOUT } from '../../constants/layout';
-import ThemedCard from '../ThemedCard';
-import Section from '../Section';
-import { DailyPickSectionProps } from '@/types/ui/layout.types';
+import React, { useCallback, useEffect } from 'react';
+import { StyleSheet } from 'react-native';
+
 import { articlesService } from '@/services/articles';
+import type { DailyPickSectionProps } from '@/types/ui/layout.types';
+
+import { LAYOUT } from '../../constants/layout';
+import Section from '../Section';
+import ThemedCard from '../ThemedCard';
 
 /**
  * A section displaying the daily pick article
@@ -19,7 +21,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   const queryClient = useQueryClient();
 
   // Handle the press with prefetching
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     if (!article) return;
 
     // Always prefetch article data with no caching
@@ -36,7 +38,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 
   // Daily pick should be pre-loaded at startup since it's important
   // This ensures it's ready when the user sees it
-  React.useEffect(() => {
+  useEffect(() => {
     if (article) {
       queryClient.prefetchQuery({
         queryKey: ['article', article.id],

@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { ThemedText } from './ThemedText';
+
+import type { SectionTitleProps } from '@/types/ui/layout.types';
+
 import { LAYOUT } from '../constants/layout';
-import { SectionTitleProps } from '@/types/ui/layout.types';
+
+import { ThemedText } from './ThemedText';
 
 /**
  * A minimal, refined section title component
@@ -20,7 +23,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({ title, containerStyle }) =>
 
 SectionTitle.displayName = 'SectionTitle';
 
-export default React.memo(SectionTitle);
+export default memo(SectionTitle);
 
 const styles = StyleSheet.create({
   container: {

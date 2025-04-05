@@ -1,13 +1,16 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '../hooks/useColors';
-import { LAYOUT } from '../constants/layout';
-import { lightFeedback } from '../utils/haptics';
-import { getTouchableProps } from '../utils/accessibility';
-import { CloseButtonProps } from '@/types/ui/button.types';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
+import React, { useMemo } from 'react';
+import type { ViewStyle } from 'react-native';
+import { TouchableOpacity, StyleSheet } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+
 import { usePressAnimation } from '@/hooks/animations';
+import type { CloseButtonProps } from '@/types/ui/button.types';
+
+import { LAYOUT } from '../constants/layout';
+import { useColors } from '../hooks/useColors';
+import { lightFeedback } from '../utils/haptics';
 
 const styles = StyleSheet.create({
   buttonContainer: {
@@ -30,7 +33,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
 }) => {
   const colors = useColors();
 
-  const buttonSize = React.useMemo(() => {
+  const buttonSize = useMemo(() => {
     if (typeof size === 'number') return size;
 
     switch (size) {
@@ -44,7 +47,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
     }
   }, [size]);
 
-  const finalIconSize = React.useMemo(() => {
+  const finalIconSize = useMemo(() => {
     if (typeof iconSize === 'number') return iconSize;
 
     switch (iconSize) {
@@ -80,7 +83,6 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         activeOpacity={0.7}
-        {...getTouchableProps('Close', 'large')}
         style={[
           {
             width: buttonSize,

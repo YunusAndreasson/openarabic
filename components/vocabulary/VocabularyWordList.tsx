@@ -1,15 +1,20 @@
-import React, { useCallback, ComponentProps } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { useColors } from '@/hooks/useColors';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import ThemedCard from '../ThemedCard';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { StudyWord } from '@/types/vocabulary.types';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import type { ListRenderItem } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
+import { BlurView } from 'expo-blur';
+import type { ComponentProps } from 'react';
+import React, { memo, useCallback } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import type { StudyWord } from '@/types/vocabulary.types';
+
+import ThemedCard from '../ThemedCard';
+import { ThemedText } from '../ThemedText';
 
 interface VocabularyWordListProps {
   title: string;
@@ -18,7 +23,7 @@ interface VocabularyWordListProps {
 }
 
 // Separate word item component for better performance
-const WordItem = React.memo(
+const WordItem = memo(
   ({
     studyWord,
     onPress,
@@ -85,7 +90,11 @@ const WordItem = React.memo(
 
 WordItem.displayName = 'WordItem';
 
-export function VocabularyWordList({ title, words, onWordPress }: VocabularyWordListProps) {
+export function VocabularyWordList({
+  title,
+  words,
+  onWordPress,
+}: VocabularyWordListProps): JSX.Element {
   const colors = useColors();
   const insets = useSafeAreaInsets();
 

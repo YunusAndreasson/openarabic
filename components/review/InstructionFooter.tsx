@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ViewStyle, TextStyle, Platform } from 'react-native';
-import { ThemedText } from '../../components/ThemedText';
-import { useColors } from '../../hooks/useColors';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '../../constants/layout';
+import React, { useEffect } from 'react';
+import type { ViewStyle, TextStyle } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
+
+import type { InstructionFooterProps } from '@/types/ui/review.types';
+
+import { ThemedText } from '../../components/ThemedText';
+import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation } from '../../hooks/animations';
-import { InstructionFooterProps } from '@/types/ui/review.types';
+import { useColors } from '../../hooks/useColors';
 
 // Define a union type for the container style
 type ContainerStyle = ViewStyle & {

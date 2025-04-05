@@ -1,25 +1,23 @@
-import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  LayoutRectangle,
-  Platform,
-  LayoutChangeEvent,
-} from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { useColors } from '../../hooks/useColors';
-import { LAYOUT } from '../../constants/layout';
-import { Colors } from '../../constants/Colors';
-import { useIsDarkMode } from '../../hooks/useThemeDetection';
-import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { useAuth } from '../../hooks/useAuth';
-import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
-import { WordTooltip } from './WordTooltip';
-import { lightFeedback } from '@/utils/haptics';
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
+import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
+import type { LayoutRectangle, LayoutChangeEvent } from 'react-native';
+import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
+
 import { analytics } from '@/services/analytics';
-import { SentenceWord } from '../../types/vocabulary.types';
+import { lightFeedback } from '@/utils/haptics';
+
+import { Colors } from '../../constants/Colors';
+import { LAYOUT } from '../../constants/layout';
+import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
+import { useAuth } from '../../hooks/useAuth';
+import { useColors } from '../../hooks/useColors';
+import { useIsDarkMode } from '../../hooks/useThemeDetection';
+import type { SentenceWord } from '../../types/vocabulary.types';
+import { ThemedText } from '../ThemedText';
+
+import { WordTooltip } from './WordTooltip';
 
 // Global counter for tooltip zIndex values
 let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
@@ -232,7 +230,7 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
         analytics.trackAddStudyWord(wordId, {
           word: word.word_form,
           english: word.english,
-          articleId: word.sentence?.article_id,
+          ...(word.sentence?.article_id && { articleId: word.sentence.article_id }),
         });
       } else {
         analytics.trackRemoveStudyWord(wordId, {
@@ -262,7 +260,7 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
         </Animated.View>
       </TouchableOpacity>
 
-      {layout && (
+      {layout ? (
         <WordTooltip
           visible={tooltipVisible}
           text={word.english}
@@ -270,7 +268,7 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
           onClose={handleTooltipClose}
           zIndex={tooltipZIndex}
         />
-      )}
+      ) : null}
     </>
   );
 }

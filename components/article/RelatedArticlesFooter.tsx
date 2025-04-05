@@ -1,9 +1,11 @@
 import React from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
-import { RelatedArticlesSection } from './RelatedArticlesSection';
+
 import { LAYOUT } from '../../constants/layout';
+import type { Article } from '../../types/articles.types';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
-import { Article } from '../../types/articles.types';
+
+import { RelatedArticlesSection } from './RelatedArticlesSection';
 
 interface RelatedArticlesFooterProps {
   otherArticles: Article[];
@@ -31,21 +33,21 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
 
   return (
     <View style={styles.container}>
-      {otherArticles.length > 0 && (
+      {otherArticles.length > 0 ? (
         <RelatedArticlesSection
           title={`By ${article?.author?.name}`}
           articles={otherArticles}
           renderArticleCard={renderArticleCard}
         />
-      )}
+      ) : null}
 
-      {otherCategoryArticles.length > 0 && (
+      {otherCategoryArticles.length > 0 ? (
         <RelatedArticlesSection
           title={`In ${article?.category?.name ? capitalizeFirstLetter(article.category.name) : ''}`}
           articles={otherCategoryArticles}
           renderArticleCard={renderArticleCard}
         />
-      )}
+      ) : null}
     </View>
   );
 };

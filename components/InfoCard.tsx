@@ -1,12 +1,16 @@
-import React from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { memo } from 'react';
+import type { ComponentProps } from 'react';
+import type { StyleProp, ViewStyle, TextStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { withOpacity } from '@/utils/colorUtils';
+
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
-import { ThemedText } from './ThemedText';
+
 import BaseCard from './BaseCard';
-import { withOpacity } from '@/utils/colorUtils';
-import type { ComponentProps } from 'react';
+import { ThemedText } from './ThemedText';
 
 interface InfoCardProps {
   /**
@@ -43,11 +47,6 @@ interface InfoCardProps {
    * Optional callback when card is pressed
    */
   onPress?: () => void;
-
-  /**
-   * Whether to animate the value (for stat cards)
-   */
-  animateValue?: boolean;
 
   /**
    * Additional styles for the container
@@ -112,6 +111,8 @@ const InfoCard: React.FC<InfoCardProps> = ({
   onPress,
   style,
   titleStyle,
+  valueStyle,
+  descriptionStyle,
   layoutMode = 'row',
   children,
   hideTitle = false,
@@ -148,11 +149,11 @@ const InfoCard: React.FC<InfoCardProps> = ({
 
     return (
       <View style={styles.headerRow}>
-        {layoutMode !== 'row-reversed' && renderIcon()}
+        {layoutMode !== 'row-reversed' ? renderIcon() : null}
         <View style={[styles.titleWrapper, titleStyle && { marginLeft: LAYOUT.SPACING.SMALL }]}>
           <ThemedText type="heading3">{title}</ThemedText>
         </View>
-        {layoutMode === 'row-reversed' && renderIcon()}
+        {layoutMode === 'row-reversed' ? renderIcon() : null}
       </View>
     );
   };
@@ -173,7 +174,9 @@ const InfoCard: React.FC<InfoCardProps> = ({
         ]}
       >
         {/* For layout modes that need the icon in the content area */}
-        {(hideTitle || layoutMode === 'column') && layoutMode !== 'row-reversed' && renderIcon()}
+        {(hideTitle || layoutMode === 'column') && layoutMode !== 'row-reversed'
+          ? renderIcon()
+          : null}
 
         <View
           style={[
@@ -183,31 +186,35 @@ const InfoCard: React.FC<InfoCardProps> = ({
           ]}
         >
           {/* Show value for stat cards */}
-          {isStatCard && (
+          {isStatCard ? (
             <View style={styles.valueWrapper}>
-              <ThemedText type="heading2">{value}</ThemedText>
+              <ThemedText type="heading2" style={valueStyle}>
+                {value}
+              </ThemedText>
             </View>
-          )}
+          ) : null}
 
           {/* Show title here if hideTitle is true (for column layout) */}
-          {hideTitle && title && layoutMode === 'column' && (
+          {hideTitle && title && layoutMode === 'column' ? (
             <View style={styles.contentTitleWrapper}>
               <ThemedText type="heading3">{title}</ThemedText>
             </View>
-          )}
+          ) : null}
 
           {/* Description text */}
-          {description && (
-            <View style={styles.descriptionWrapper}>
+          {description ? (
+            <View style={[styles.descriptionWrapper, descriptionStyle]}>
               <ThemedText type="body" variant="subtle">
                 {description}
               </ThemedText>
             </View>
-          )}
+          ) : null}
         </View>
 
         {/* For reversed layout, icon goes at the end */}
-        {(hideTitle || layoutMode === 'column') && layoutMode === 'row-reversed' && renderIcon()}
+        {(hideTitle || layoutMode === 'column') && layoutMode === 'row-reversed'
+          ? renderIcon()
+          : null}
       </View>
     );
   };
@@ -273,4 +280,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default React.memo(InfoCard);
+export default memo(InfoCard);

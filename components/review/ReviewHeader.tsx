@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
-import { LAYOUT } from '@/constants/layout';
+import type { ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+
+import { CloseButton } from '@/components/CloseButton';
 import { ProgressBar } from '@/components/ProgressBar';
-import CloseButton from '@/components/CloseButton';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 
 interface ReviewHeaderProps {

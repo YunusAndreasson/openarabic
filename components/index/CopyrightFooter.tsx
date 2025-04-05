@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
+
 import { LAYOUT } from '../../constants/layout';
 import { ThemedText } from '../ThemedText';
 
 /**
  * A component that displays a copyright notice with the current Hijri year
  */
-export const CopyrightFooter = React.memo(() => {
+export const CopyrightFooter = memo(() => {
   // Get current Hijri year
   const getHijriYear = (): number => {
     // Simple calculation for Hijri year (approximate)

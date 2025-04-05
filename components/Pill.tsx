@@ -1,18 +1,21 @@
-import React, { useCallback, useMemo } from 'react';
-import { Pressable, StyleSheet, View, Platform, ViewStyle } from 'react-native';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
-import { useTransformAnimation } from '../hooks/animations';
+import React, { useCallback, useMemo, memo } from 'react';
+import { Pressable, StyleSheet, View, Platform } from 'react-native';
+import Animated from 'react-native-reanimated';
+
+import type { PillProps } from '@/types/ui/pill.types';
+
 import { LAYOUT } from '../constants/layout';
+import { useTransformAnimation } from '../hooks/animations';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { ThemedText } from './ThemedText';
 import { capitalizeFirstLetter } from '../utils/stringUtils';
-import { PillProps } from '@/types/ui/pill.types';
+
+import { ThemedText } from './ThemedText';
 
 /**
  * A unified pill component that can be used for filters, categories, and other selectable items
  */
-const Pill = React.memo(
+const Pill = memo(
   ({
     id,
     label,
@@ -47,71 +50,77 @@ const Pill = React.memo(
     const isCategory = variant === 'category';
     const isHorizontalCategory = variant === 'horizontal-category';
 
+    // Get category pill styles
+    const getCategoryStyle = (
+      isDarkMode: boolean,
+      isSelected: boolean,
+      colors: ReturnType<typeof useColors>
+    ) => ({
+      backgroundColor: isSelected
+        ? isDarkMode
+          ? `${colors.tint}85`
+          : `${colors.tint}90`
+        : isDarkMode
+          ? `${colors.elevation3}95`
+          : `${colors.elevation1}98`,
+      borderColor: isSelected
+        ? isDarkMode
+          ? `${colors.tint}80`
+          : `${colors.tint}60`
+        : isDarkMode
+          ? colors.white + '30'
+          : colors.cardBorder,
+      borderWidth: isSelected ? 1 : 0.5,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+      paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+      paddingVertical: LAYOUT.SPACING.TINY + 2,
+      ...Platform.select({
+        ios: {
+          shadowColor: isDarkMode ? colors.black : colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDarkMode ? 0.25 : 0.1,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: isSelected ? 3 : 2,
+        },
+      }),
+    });
+
+    // Get filter pill styles
+    const getFilterStyle = (
+      isDarkMode: boolean,
+      isSelected: boolean,
+      colors: ReturnType<typeof useColors>
+    ) => ({
+      backgroundColor: isSelected
+        ? isDarkMode
+          ? `${colors.tint}15`
+          : `${colors.tint}10`
+        : isDarkMode
+          ? colors.elevation2
+          : colors.elevation1,
+      borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN,
+      borderColor: isSelected ? colors.tint : colors.cardBorder,
+      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+      ...Platform.select({
+        ios: {
+          shadowColor: isDarkMode ? colors.black : colors.shadow,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isDarkMode ? 0.25 : 0.1,
+          shadowRadius: 4,
+        },
+        android: {
+          elevation: isSelected ? 3 : 2,
+        },
+      }),
+    });
+
     // Get container style based on variant and selection state
     const containerStyle = useMemo(() => {
-      if (isCategory || isHorizontalCategory) {
-        // Enhanced category pill styling for better visibility
-        return {
-          backgroundColor: isSelected
-            ? isDarkMode
-              ? `${colors.tint}85` // Selected, dark mode - slightly more vibrant
-              : `${colors.tint}90` // Selected, light mode - more opaque for better contrast
-            : isDarkMode
-              ? `${colors.elevation2}95` // Unselected, dark mode - using elevation2 for better contrast
-              : `${colors.elevation1}98`, // Unselected, light mode - more opaque for better visibility
-          borderColor: isSelected
-            ? isDarkMode
-              ? `${colors.tint}80` // Selected in dark mode - more visible border
-              : `${colors.tint}60` // Selected in light mode - subtle border
-            : isDarkMode
-              ? colors.elevation3 // Unselected in dark mode - subtle border
-              : colors.cardBorder, // Unselected in light mode - default border
-          borderWidth: isSelected ? 1 : 0.5, // Thinner border for cleaner look
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Match card border radius
-          paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-          paddingVertical: LAYOUT.SPACING.TINY + 2,
-          // Enhanced shadow for better visibility against any background
-          ...Platform.select({
-            ios: {
-              shadowColor: isDarkMode ? colors.black : colors.shadow,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: isDarkMode ? 0.25 : 0.1,
-              shadowRadius: 4,
-            },
-            android: {
-              elevation: isSelected ? 3 : 2,
-            },
-          }),
-        };
-      }
-
-      // Enhanced filter pill styling for better readability
-      return {
-        backgroundColor: isSelected
-          ? isDarkMode
-            ? `${colors.tint}15` // Selected, dark mode - subtle tint background
-            : `${colors.tint}10` // Selected, light mode - very subtle tint background
-          : isDarkMode
-            ? colors.elevation2 // Unselected, dark mode - use elevation2 for subtle contrast
-            : colors.elevation1, // Unselected, light mode - use elevation1 for subtle contrast
-        borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN, // Use constants
-        borderColor: isSelected
-          ? colors.tint // Selected - use tint color for border to make selection obvious
-          : colors.cardBorder, // Unselected - use cardBorder for consistency with cards
-        borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM, // Match card border radius
-        // Add shadow for better visibility
-        ...Platform.select({
-          ios: {
-            shadowColor: isDarkMode ? colors.black : colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: isDarkMode ? 0.25 : 0.1,
-            shadowRadius: 4,
-          },
-          android: {
-            elevation: isSelected ? 3 : 2,
-          },
-        }),
-      };
+      return isCategory || isHorizontalCategory
+        ? getCategoryStyle(isDarkMode, isSelected, colors)
+        : getFilterStyle(isDarkMode, isSelected, colors);
     }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
 
     // For category pills that don't need interaction
@@ -130,6 +139,7 @@ const Pill = React.memo(
             colorName="textSecondary"
             numberOfLines={1}
             ellipsizeMode="tail"
+            style={isDarkMode ? { color: colors.text } : null}
           >
             {capitalizeFirstLetter(label.toLowerCase())}
           </ThemedText>
@@ -139,7 +149,7 @@ const Pill = React.memo(
 
     // For interactive pills
     return (
-      <Animated.View style={scaleStyle as AnimatedStyleProp<ViewStyle>}>
+      <Animated.View style={scaleStyle}>
         <Pressable
           style={({ pressed: isPressedState }) => [
             styles.pill,
@@ -171,7 +181,7 @@ const Pill = React.memo(
         >
           <ThemedText
             type="overline"
-            colorName={isSelected ? 'tint' : 'textSecondary'}
+            colorName={isSelected ? 'tint' : isDarkMode ? 'text' : 'textSecondary'}
             numberOfLines={1}
             ellipsizeMode="tail"
           >

@@ -1,6 +1,7 @@
-import { supabase } from './supabase';
-import { Article } from '../types/articles.types';
+import type { Article } from '../types/articles.types';
 import { handleError } from '../utils/errorHandling';
+
+import { supabase } from './supabase';
 
 export const readingListService = {
   /**

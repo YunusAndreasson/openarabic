@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { WeeklyProgressData, GraphPaths, GraphProcessedPoint } from '@/types/vocabulary.types';
+
+import type { WeeklyProgressData, GraphPaths, GraphProcessedPoint } from '@/types/vocabulary.types';
 
 /**
  * Hook to process graph data and generate path strings for SVG

@@ -1,9 +1,12 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
+
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { Database } from '../types/database.types';
+
+import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
 /**
@@ -36,7 +39,10 @@ AppState.addEventListener('change', state => {
  * @returns The authenticated user's session and user object
  * @throws Error if user is not authenticated or IDs don't match
  */
-export async function checkAuthentication(expectedUserId?: string) {
+export async function checkAuthentication(expectedUserId?: string): Promise<{
+  session: Session;
+  user: User;
+}> {
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {

@@ -1,19 +1,21 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { ThemedButton } from './ThemedButton';
-import { LAYOUT } from '../constants/layout';
-import { EmptyStateProps } from '@/types/ui/layout.types';
-import { withOpacity } from '@/utils/colorUtils';
 import { Ionicons } from '@expo/vector-icons';
-import type { ComponentType } from 'react';
-import type { ComponentProps } from 'react';
+import React, { memo } from 'react';
+import type { ComponentType, ComponentProps } from 'react';
+import { View, StyleSheet } from 'react-native';
+
+import type { EmptyStateProps } from '@/types/ui/layout.types';
+import { withOpacity } from '@/utils/colorUtils';
+
+import { LAYOUT } from '../constants/layout';
+
+import { ThemedButton } from './ThemedButton';
+import { ThemedText } from './ThemedText';
 
 /**
  * A reusable empty state component that displays a title, message, and optional action button
  * Supports both standard button and custom action button layouts
  */
-const EmptyState = React.memo(
+const EmptyState = memo(
   ({
     title,
     description,
@@ -34,7 +36,7 @@ const EmptyState = React.memo(
 
     return (
       <View style={[styles.container, containerStyle]}>
-        {icon && (
+        {icon ? (
           <View
             style={[
               styles.iconContainer,
@@ -50,7 +52,7 @@ const EmptyState = React.memo(
               accessibilityLabel={`Empty state icon for ${title}`}
             />
           </View>
-        )}
+        ) : null}
 
         <View style={styles.titleContainer}>
           <ThemedText type="heading2" align="center" accessibilityRole="header">
@@ -64,13 +66,13 @@ const EmptyState = React.memo(
           </ThemedText>
         </View>
 
-        {submessage && (
+        {submessage ? (
           <View style={styles.submessageContainer}>
             <ThemedText type="body" variant="subtle" align="center">
               {submessage}
             </ThemedText>
           </View>
-        )}
+        ) : null}
 
         {customActionButton
           ? customActionButton

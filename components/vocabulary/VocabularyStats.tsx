@@ -1,14 +1,16 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { useColors } from '@/hooks/useColors';
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
+import React, { useMemo, useState, memo, useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+
 import { LAYOUT } from '@/constants/layout';
-import { LoadingContainer } from '../Loader';
 import { useComponentAnimation, useProgressAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/useColors';
+import type { VocabularyStatsProps } from '@/types/ui/layout.types';
 import { createArcPath } from '@/utils/graphUtils';
-import { VocabularyStatsProps } from '@/types/ui/layout.types';
+
 import BaseCard from '../BaseCard';
+import { LoadingContainer } from '../Loader';
+import { ThemedText } from '../ThemedText';
 
 function VocabularyStatsComponent({
   totalWords,
@@ -17,10 +19,10 @@ function VocabularyStatsComponent({
 }: VocabularyStatsProps) {
   const colors = useColors();
   const { startAnimation } = useComponentAnimation();
-  const [isReady, setIsReady] = React.useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   // Start animation when component mounts
-  React.useEffect(() => {
+  useEffect(() => {
     startAnimation();
     // Set component as ready after a delay
     const timer = setTimeout(() => {
@@ -102,7 +104,7 @@ function VocabularyStatsComponent({
 }
 
 // Memoize the entire component
-export const VocabularyStats = React.memo(VocabularyStatsComponent);
+export const VocabularyStats = memo(VocabularyStatsComponent);
 
 const styles = StyleSheet.create({
   circleCanvas: {

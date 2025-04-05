@@ -1,11 +1,23 @@
+import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 
 // Services
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { readingListService } from '@/services/readingList';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { handleError } from '@/utils/errorHandling';
+
+interface ArticleMutationsResult {
+  handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
+  handleWordPress: (wordId: number) => void;
+  addToReadingListMutation: UseMutationResult<void, Error, { userId: string; articleId: number }>;
+  removeFromReadingListMutation: UseMutationResult<
+    void,
+    Error,
+    { userId: string; articleId: number }
+  >;
+  toggleWordMutation: UseMutationResult<boolean, Error, { userId: string; wordId: number }>;
+}
 
 /**
  * Hook for article-related mutations
@@ -16,7 +28,7 @@ import { handleError } from '@/utils/errorHandling';
 export const useArticleMutations = (
   userId: string | undefined,
   refetchReadingListStatus: () => void
-) => {
+): ArticleMutationsResult => {
   const queryClient = useQueryClient();
 
   // Add to reading list mutation

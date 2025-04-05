@@ -1,13 +1,17 @@
-import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
+import type { ListRenderItem } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
+import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle, memo } from 'react';
 import { StyleSheet, Platform, View, RefreshControl } from 'react-native';
-import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import type { ArticleListProps } from '@/types/ui/article.types';
+
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
-import { Article } from '../../types/articles.types';
+import type { Article } from '../../types/articles.types';
 import ThemedCard from '../ThemedCard';
+
 import { CopyrightFooter } from './CopyrightFooter';
-import { ArticleListProps } from '@/types/ui/article.types';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const ITEM_HEIGHT = 360;
 
@@ -22,6 +26,31 @@ const ListFooter: React.FC<ListFooterProps> = ({ isLoading, articlesLength }) =>
 };
 
 ListFooter.displayName = 'ListFooter';
+
+// Move ArticleItem outside the parent component
+interface ArticleItemProps {
+  item: Article;
+  onPress: (article: Article) => void;
+}
+
+const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
+  return (
+    <View style={styles.articleItemContainer}>
+      <ThemedCard
+        variant="article"
+        imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+        title={item.title}
+        category={item.category?.name ?? 'Uncategorized'}
+        author={item.author?.name ?? 'Anonymous'}
+        onPress={() => onPress(item)}
+        style={styles.articleCard}
+        shadowSize="medium"
+      />
+    </View>
+  );
+});
+
+ArticleItem.displayName = 'ArticleItem';
 
 const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
   (
@@ -41,36 +70,16 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const listRef = useRef<FlashList<Article>>(null);
     const insets = useSafeAreaInsets();
 
-    // Forward the ref to the parent component
-    useImperativeHandle(ref, () => listRef.current!, []);
+    // Forward the ref to the parent component with type assertion
+    useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
     // Memoize the key extractor for better performance
     const keyExtractor = useCallback((item: Article) => `article-${item.id}`, []);
 
-    // Create a simplified article item component
-    const ArticleItem = React.memo(({ item }: { item: Article }) => {
-      return (
-        <View style={styles.articleItemContainer}>
-          <ThemedCard
-            variant="article"
-            imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-            title={item.title}
-            category={item.category?.name ?? 'Uncategorized'}
-            author={item.author?.name ?? 'Anonymous'}
-            onPress={() => onArticlePress(item)}
-            style={styles.articleCard}
-            shadowSize="medium"
-          />
-        </View>
-      );
-    });
-
-    ArticleItem.displayName = 'ArticleItem';
-
     // Render item function with better memoization
     const renderItem: ListRenderItem<Article> = useCallback(
-      ({ item }) => <ArticleItem item={item} />,
-      [ArticleItem]
+      ({ item }) => <ArticleItem item={item} onPress={onArticlePress} />,
+      [onArticlePress]
     );
 
     const footerElement = useMemo(

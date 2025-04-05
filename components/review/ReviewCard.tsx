@@ -1,13 +1,16 @@
 import React, { useCallback } from 'react';
-import { StyleSheet, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+
 import { SCREEN_WIDTH } from '@/constants/layout';
+
 import WordDisplay from './WordDisplay';
 
 // Animation config constants

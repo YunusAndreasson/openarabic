@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
   withTiming,
@@ -8,14 +9,25 @@ import {
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
+import type { AnimatedStyleProp, SharedValue } from 'react-native-reanimated';
+
 import { TIMING_CONFIG } from './animationConfigs';
+
+interface ComponentAnimationResult {
+  animatedStyle: AnimatedStyleProp<ViewStyle>;
+  startAnimation: () => void;
+  resetAnimation: () => void;
+  opacity: SharedValue<number>;
+  entering: ReturnType<typeof FadeIn.duration>;
+  exiting: ReturnType<typeof FadeOut.duration>;
+}
 
 /**
  * Hook for managing component animation states with delayed readiness
  * @param delay - Delay in ms before component is considered ready
  * @returns Object with animation state and animated style
  */
-export const useComponentAnimation = (delay = 300) => {
+export const useComponentAnimation = (delay = 300): ComponentAnimationResult => {
   const opacity = useSharedValue(0);
 
   // Create optimized entering and exiting animations using Reanimated 3 built-ins

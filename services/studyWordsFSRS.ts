@@ -1,6 +1,9 @@
+import type { Rating } from 'ts-fsrs';
+import { createEmptyCard } from 'ts-fsrs';
+
+import type { StudyWord } from '@/types/vocabulary.types';
+
 import { supabase, checkAuthentication } from './supabase';
-import { createEmptyCard, Rating } from 'ts-fsrs';
-import { StudyWord } from '@/types/vocabulary.types';
 
 // Interface for FSRS-specific update fields
 interface FSRSWordUpdate {
@@ -106,7 +109,11 @@ export const studyWordsFSRSService = {
   },
 
   // Update word with FSRS parameters
-  async updateFSRSWord(userId: string, sentenceWordId: number, update: FSRSWordUpdate) {
+  async updateFSRSWord(
+    userId: string,
+    sentenceWordId: number,
+    update: FSRSWordUpdate
+  ): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -148,7 +155,7 @@ export const studyWordsFSRSService = {
   },
 
   // Record a review with FSRS parameters
-  async recordFSRSReview(userId: string, sentenceWordId: number, rating: Rating) {
+  async recordFSRSReview(userId: string, sentenceWordId: number, rating: Rating): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -176,7 +183,7 @@ export const studyWordsFSRSService = {
   },
 
   // Toggle study word with FSRS initialization
-  async toggleFSRSStudyWord(userId: string, sentenceWordId: number) {
+  async toggleFSRSStudyWord(userId: string, sentenceWordId: number): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();

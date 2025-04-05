@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
 import type { StudyWord } from '../types/vocabulary.types';
 
@@ -8,36 +9,61 @@ interface UseFSRSQueriesOptions {
   limit?: number;
 }
 
+interface FSRSQueriesResult {
+  allWords: StudyWord[] | undefined;
+  dueWords: StudyWord[] | undefined;
+  statsWords: StudyWord[] | undefined;
+  filteredWords: StudyWord[] | undefined;
+  isLoading: boolean;
+  isFetching: boolean;
+  error: unknown;
+  invalidateAllQueries: () => void;
+}
+
 /**
  * Centralized hook for managing FSRS word queries
  * This hook provides access to all FSRS word data with proper caching and deduplication
  */
-export function useFSRSQueries({ userId, category, limit }: UseFSRSQueriesOptions) {
+export function useFSRSQueries({
+  userId,
+  category,
+  limit,
+}: UseFSRSQueriesOptions): FSRSQueriesResult {
   const queryClient = useQueryClient();
 
   // Base query for all words - used as a foundation for other queries
   const allWordsQuery = useQuery({
     queryKey: userId ? FSRS_QUERY_KEYS.all(userId) : ['fsrs-words'],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(userId!, { forStats: false }),
+    queryFn: () => {
+      if (!userId) throw new Error('User ID is required');
+      return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
+    },
     enabled: !!userId,
     staleTime: 300000, // 5 minutes
     gcTime: 600000, // 10 minutes
-    initialData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
+    initialData: () => {
+      if (!userId) return undefined;
+      return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
+    },
   });
 
   // Query for due words - uses shorter stale time since it's more time-sensitive
   const dueWordsQuery = useQuery({
     queryKey: userId ? FSRS_QUERY_KEYS.due(userId) : ['fsrs-words', 'due'],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(userId!, { onlyDue: true, limit }),
+    queryFn: () => {
+      if (!userId) throw new Error('User ID is required');
+      return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit });
+    },
     enabled: !!userId,
     staleTime: 180000, // 3 minutes
     gcTime: 300000, // 5 minutes
     // Use data from allWordsQuery if available and filter client-side
     initialData: () => {
-      const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId!));
+      if (!userId) return undefined;
+      const allWords = queryClient.getQueryData<StudyWord[]>(FSRS_QUERY_KEYS.all(userId));
       if (allWords) {
         const now = new Date().toISOString();
-        return allWords.filter(word => word.fsrs_due <= now).slice(0, limit);
+        return allWords.filter(word => (word.fsrs_due ?? '9999-12-31') <= now).slice(0, limit);
       }
       return undefined;
     },
@@ -46,24 +72,36 @@ export function useFSRSQueries({ userId, category, limit }: UseFSRSQueriesOption
   // Query for stats - can use longer cache times since stats update less frequently
   const statsQuery = useQuery({
     queryKey: userId ? FSRS_QUERY_KEYS.stats(userId) : ['fsrs-words', 'stats'],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(userId!, { forStats: true }),
+    queryFn: () => {
+      if (!userId) throw new Error('User ID is required');
+      return studyWordsFSRSService.getFSRSWords(userId, { forStats: true });
+    },
     enabled: !!userId,
     staleTime: 600000, // 10 minutes
     gcTime: 1800000, // 30 minutes
     // Use data from allWordsQuery if available
-    initialData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
+    initialData: () => {
+      if (!userId) return undefined;
+      return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
+    },
   });
 
   // Query for filtered words (by category) - uses moderate cache times
   const filteredWordsQuery = useQuery({
     queryKey:
       userId && category ? FSRS_QUERY_KEYS.filtered(userId, category) : ['fsrs-words', 'filtered'],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(userId!),
+    queryFn: () => {
+      if (!userId) throw new Error('User ID is required');
+      return studyWordsFSRSService.getFSRSWords(userId);
+    },
     enabled: !!userId && !!category,
     staleTime: 300000, // 5 minutes
     gcTime: 600000, // 10 minutes
     // Use data from allWordsQuery if available
-    initialData: () => queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId!)),
+    initialData: () => {
+      if (!userId) return undefined;
+      return queryClient.getQueryData(FSRS_QUERY_KEYS.all(userId));
+    },
   });
 
   // Function to invalidate all FSRS queries

@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedButton } from '@/components/ThemedButton';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
-import AnimatedItem from '@/components/AnimatedItem';
 import { useQueryClient } from '@tanstack/react-query';
+import React, { useEffect } from 'react';
+import type { ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+
+import AnimatedItem from '@/components/AnimatedItem';
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
+import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
 
 interface CompletionScreenProps {
   onClose: () => void;

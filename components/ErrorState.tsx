@@ -1,15 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { memo, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ThemedText } from './ThemedText';
+
+import type { ErrorStateProps } from '@/types/ui/layout.types';
+
 import { LAYOUT } from '../constants/layout';
-import { ThemedButton } from './ThemedButton';
 import { errorFeedback } from '../utils/haptics';
-import { ErrorStateProps } from '@/types/ui/layout.types';
+
+import { ThemedButton } from './ThemedButton';
+import { ThemedText } from './ThemedText';
 
 /**
  * A component for displaying error messages
  */
-const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => {
+const ErrorState = memo(({ message, onRetry }: ErrorStateProps) => {
   // Provide haptic feedback when error state is shown
   useEffect(() => {
     errorFeedback();
@@ -27,7 +30,7 @@ const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => {
           {message}
         </ThemedText>
       </View>
-      {onRetry && (
+      {onRetry ? (
         <View style={styles.buttonContainer}>
           <ThemedButton
             title="Try Again"
@@ -36,7 +39,7 @@ const ErrorState = React.memo(({ message, onRetry }: ErrorStateProps) => {
             accessibilityLabel="Attempt to reload content"
           />
         </View>
-      )}
+      ) : null}
     </View>
   );
 });

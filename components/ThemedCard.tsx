@@ -1,17 +1,25 @@
-import React from 'react';
-import { StyleSheet, View, StyleProp, ViewStyle } from 'react-native';
-import { useColors } from '@/hooks/useColors';
-import { ThemedText } from './ThemedText';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { memo } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import Pill from './Pill';
-import { LoadingContainer } from './Loader';
+import type {
+  ThemedCardProps as BaseThemedCardProps,
+  ArticleCardProps,
+  CompactCardProps,
+  BasicCardProps,
+} from '@/types/ui/card.types';
+
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
-import { ThemedCardProps, ArticleCardProps, CompactCardProps } from '@/types/ui/card.types';
-import { TimeAgo, SummaryIndicator } from './article/ArticleHelpers';
-import { DEFAULT_IMAGES } from '@/constants/images';
+import { LoadingContainer } from './Loader';
+import Pill from './Pill';
+import { ThemedText } from './ThemedText';
+import { TimeAgo, SummaryIndicator } from './index/ArticleHelpers';
 
 /**
  * ThemedCard is a reusable card component that can display content in different variants.
@@ -23,9 +31,13 @@ import { DEFAULT_IMAGES } from '@/constants/images';
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
 
+type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
+  handlePress?: () => void;
+} & (ArticleCardProps | CompactCardProps | BasicCardProps);
+
 function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Extract common props
-  const { onPress, style, isLoading = false, variant = 'article' } = props;
+  const { handlePress, style, isLoading = false, variant = 'article' } = props;
 
   // Type guards
   const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
@@ -64,14 +76,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     if (isDarkMode) {
       return [
         'rgba(0,0,0,0)', // Start transparent
-        'rgba(30,30,30,0.85)', // Dark theme mid-fade
-        colors.cardBackground, // End with exact card background color
+        'rgba(30,30,30,0.95)', // Dark theme mid-fade - increased opacity
+        colors.card, // End with exact card background color
       ] as GradientColors;
     } else {
       return [
         'rgba(255,255,255,0)', // Start transparent
-        'rgba(250,250,250,0.85)', // Light theme mid-fade
-        colors.cardBackground, // End with exact card background color
+        'rgba(250,250,250,0.95)', // Light theme mid-fade - increased opacity
+        colors.card, // End with exact card background color
       ] as GradientColors;
     }
   };
@@ -120,18 +132,18 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <LinearGradient
             colors={createCardGradient()}
             style={styles.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+            start={{ x: 0, y: 0.3 }}
+            end={{ x: 0, y: 0.9 }}
             pointerEvents="none"
           />
         </View>
 
         {/* Category pill moved outside the image container for consistent positioning */}
-        {category && (
+        {category ? (
           <View style={styles.pillContainer}>
             <Pill id={category} label={category} variant="category" />
           </View>
-        )}
+        ) : null}
 
         {/* Content container */}
         <View style={styles.contentContainer}>
@@ -143,22 +155,30 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           </View>
 
           {/* Author */}
-          {author && (
+          {author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="textSecondary" numberOfLines={1}>
+              <ThemedText
+                type="label"
+                colorName={isDarkMode ? 'text' : 'textSecondary'}
+                numberOfLines={1}
+              >
                 By {author}
               </ThemedText>
             </View>
-          )}
+          ) : null}
 
           {/* Summary */}
-          {summary && (
+          {summary ? (
             <View style={styles.summaryContainer}>
-              <ThemedText type="caption" colorName="textTertiary" numberOfLines={3}>
+              <ThemedText
+                type="caption"
+                colorName={isDarkMode ? 'secondaryText' : 'textTertiary'}
+                numberOfLines={3}
+              >
                 {summary}
               </ThemedText>
             </View>
-          )}
+          ) : null}
         </View>
       </>
     );
@@ -193,14 +213,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <LinearGradient
             colors={createCardGradient()}
             style={styles.gradient}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
+            start={{ x: 0, y: 0.3 }}
+            end={{ x: 0, y: 0.9 }}
             pointerEvents="none"
           />
         </View>
 
         {/* Render the category pill outside the imageContainer */}
-        {props.article.category && (
+        {props.article.category ? (
           <View style={styles.pillContainerCompact}>
             <Pill
               id={props.article.category.id}
@@ -208,7 +228,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
               variant="category"
             />
           </View>
-        )}
+        ) : null}
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
@@ -217,20 +237,21 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </ThemedText>
           </View>
 
-          {props.article.author && (
+          {props.article.author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="textSecondary" numberOfLines={1}>
+              <ThemedText
+                type="label"
+                colorName={isDarkMode ? 'text' : 'textSecondary'}
+                numberOfLines={1}
+              >
                 By {props.article.author.name}
               </ThemedText>
             </View>
-          )}
+          ) : null}
 
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
-              <TimeAgo
-                date={lastOpenedAt || props.article.created_at}
-                isLastOpened={!!lastOpenedAt}
-              />
+              <TimeAgo date={lastOpenedAt || props.article.created_at} />
             ) : hideDifficulty ? null : (
               <SummaryIndicator summary={props.article.summary} />
             )}
@@ -268,7 +289,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     return (
       <BaseCard
         isLoading={true}
-        onPress={onPress}
+        onPress={handlePress}
         style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
         loadingComponent={renderLoading()}
       >
@@ -280,7 +301,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   // Use the BaseCard with the appropriate content
   return (
     <BaseCard
-      onPress={onPress}
+      onPress={handlePress}
       style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
       includePressAnimation={true}
     >
@@ -292,8 +313,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 // Styles
 const styles = StyleSheet.create({
   authorContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
-    marginTop: 0,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 0,
+    marginTop: LAYOUT.SPACING.TINY,
+    position: 'relative',
+    zIndex: 20,
   },
   cardFooter: {
     alignItems: 'center',
@@ -314,25 +339,28 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     width: '100%',
-    zIndex: LAYOUT.Z_INDEX.BASE,
+    zIndex: 1,
   },
   contentContainer: {
     marginTop: -LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
+    position: 'relative',
+    zIndex: 15,
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
-    bottom: -LAYOUT.SPACING.XLARGE * 2,
-    height: '200%',
-    zIndex: LAYOUT.Z_INDEX.OVERLAY,
+    bottom: -LAYOUT.SPACING.XLARGE,
+    height: '150%',
+    zIndex: 5,
   },
   image: {
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     height: '100%',
     width: '100%',
+    zIndex: 1,
   },
   imageContainer: {
     borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -341,6 +369,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     width: '100%',
+    zIndex: 1,
   },
   loadingComponentContainer: {
     alignItems: 'center',
@@ -353,26 +382,30 @@ const styles = StyleSheet.create({
     maxWidth: '70%',
     position: 'absolute',
     top: LAYOUT.SPACING.MEDIUM,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    zIndex: 25,
   },
   pillContainerCompact: {
     left: LAYOUT.SPACING.MEDIUM,
     maxWidth: '70%',
     position: 'absolute',
     top: LAYOUT.SPACING.MEDIUM,
-    zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
+    zIndex: 25,
   },
   summaryContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
     marginTop: LAYOUT.SPACING.SMALL - 2,
+    position: 'relative',
+    zIndex: 20,
   },
   titleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL - 2,
+    position: 'relative',
+    zIndex: 20,
   },
 });
 
 // Use memo to prevent unnecessary re-renders
-const ThemedCard = React.memo(ThemedCardComponent);
+const ThemedCard = memo(ThemedCardComponent);
 
 // Export the component
 export default ThemedCard;

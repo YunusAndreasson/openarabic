@@ -1,13 +1,18 @@
-import React, { useEffect, useMemo } from 'react';
-import { StyleSheet, View, Dimensions, Platform, ViewStyle } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { LAYOUT } from '../constants/layout';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { useColors } from '../hooks/useColors';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
-import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+import React, { useEffect, useMemo, memo } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { useOpacityAnimation, useTransformAnimation } from '@/hooks/animations';
+
 import { Colors } from '../constants/Colors';
+import { LAYOUT } from '../constants/layout';
+import { useColors } from '../hooks/useColors';
+import { useIsDarkMode } from '../hooks/useThemeDetection';
+
+import { ThemedText } from './ThemedText';
 
 interface ToastProps {
   visible: boolean;
@@ -52,7 +57,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export const Toast = React.memo(
+export const Toast = memo(
   ({ visible, message, duration = DEFAULT_DURATION, onClose }: ToastProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
@@ -138,11 +143,7 @@ export const Toast = React.memo(
 
     return (
       <Animated.View
-        style={[
-          containerStyle,
-          opacityStyle as AnimatedStyleProp<ViewStyle>,
-          scaleStyle as AnimatedStyleProp<ViewStyle>,
-        ]}
+        style={[containerStyle, opacityStyle as AnimatedStyleProp<ViewStyle>, scaleStyle]}
         pointerEvents="none"
       >
         <View

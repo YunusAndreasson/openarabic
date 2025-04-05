@@ -1,9 +1,12 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { useLayoutReady } from '../useLayoutReady';
-import { useOpacityAnimation } from './useOpacityAnimation';
-import { useAnimationTrigger } from './useAnimationTrigger';
-import Animated, { runOnUI } from 'react-native-reanimated';
 import type { StyleProp } from 'react-native';
+import type Animated from 'react-native-reanimated';
+import { runOnUI } from 'react-native-reanimated';
+
+import { useLayoutReady } from '../useLayoutReady';
+
+import { useAnimationTrigger } from './useAnimationTrigger';
+import { useOpacityAnimation } from './useOpacityAnimation';
 
 /**
  * Return type for useScreenAnimation hook

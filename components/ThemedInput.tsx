@@ -1,21 +1,20 @@
-import {
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect, forwardRef } from 'react';
+import type { ComponentProps } from 'react';
+import type {
   TextInputProps,
   NativeSyntheticEvent,
   TextInputFocusEventData,
   GestureResponderEvent,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useColors } from '@/hooks/useColors';
-import { useState, useEffect } from 'react';
-import { ThemedText } from './ThemedText';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+
 import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+
 import { errorFeedback } from '../utils/haptics';
-import React from 'react';
-import type { ComponentProps } from 'react';
+
+import { ThemedText } from './ThemedText';
 
 interface ThemedInputProps extends TextInputProps {
   icon?: ComponentProps<typeof Ionicons>['name'];
@@ -28,7 +27,48 @@ interface ThemedInputProps extends TextInputProps {
   style?: TextInputProps['style'];
 }
 
-export const ThemedInput = React.forwardRef<TextInput, ThemedInputProps>(
+const InputIcon = ({
+  name,
+  isFocused,
+  error,
+  colors,
+}: {
+  name: ComponentProps<typeof Ionicons>['name'];
+  isFocused: boolean;
+  error?: string;
+  colors: ReturnType<typeof useColors>;
+}) => (
+  <Ionicons
+    name={name}
+    size={20}
+    color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
+    style={styles.leftIcon}
+  />
+);
+
+const RightInputIcon = ({
+  name,
+  isFocused,
+  error,
+  colors,
+  onPress,
+}: {
+  name: ComponentProps<typeof Ionicons>['name'];
+  isFocused: boolean;
+  error?: string;
+  colors: ReturnType<typeof useColors>;
+  onPress?: (e: GestureResponderEvent) => void;
+}) => (
+  <TouchableOpacity onPress={onPress} hitSlop={styles.hitSlop} style={styles.rightIcon}>
+    <Ionicons
+      name={name}
+      size={20}
+      color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
+    />
+  </TouchableOpacity>
+);
+
+export const ThemedInput = forwardRef<TextInput, ThemedInputProps>(
   ({ icon, rightIcon, onRightIconPress, style, onFocus, onBlur, error, hint, ...props }, ref) => {
     const colors = useColors();
     const [isFocused, setIsFocused] = useState(false);
@@ -63,14 +103,9 @@ export const ThemedInput = React.forwardRef<TextInput, ThemedInputProps>(
     return (
       <View style={styles.wrapper}>
         <View style={containerStyles}>
-          {icon && (
-            <Ionicons
-              name={icon}
-              size={20}
-              color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
-              style={styles.leftIcon}
-            />
-          )}
+          {icon ? (
+            <InputIcon name={icon} isFocused={isFocused} error={error} colors={colors} />
+          ) : null}
           <TextInput
             style={[styles.input, { color: colors.text }, style]}
             placeholderTextColor={colors.icon}
@@ -83,27 +118,23 @@ export const ThemedInput = React.forwardRef<TextInput, ThemedInputProps>(
             ref={ref}
             {...props}
           />
-          {rightIcon && (
-            <TouchableOpacity
+          {rightIcon ? (
+            <RightInputIcon
+              name={rightIcon}
+              isFocused={isFocused}
+              error={error}
+              colors={colors}
               onPress={onRightIconPress}
-              hitSlop={styles.hitSlop}
-              style={styles.rightIcon}
-            >
-              <Ionicons
-                name={rightIcon}
-                size={20}
-                color={error ? colors.tabIconSelected : isFocused ? colors.tint : colors.icon}
-              />
-            </TouchableOpacity>
-          )}
+            />
+          ) : null}
         </View>
-        {(error || hint) && (
+        {error || hint ? (
           <View style={styles.helperTextContainer}>
             <ThemedText type="caption" variant={error ? 'error' : 'secondary'}>
               {error || hint}
             </ThemedText>
           </View>
-        )}
+        ) : null}
       </View>
     );
   }

@@ -1,14 +1,16 @@
-import React, { useCallback } from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LAYOUT } from '@/constants/layout';
 import { router } from 'expo-router';
-import { VocabularyEmptyStateProps } from '@/types/ui/layout.types';
-import { withOpacity } from '@/utils/colorUtils';
-import { ThemedText } from '../ThemedText';
-import EmptyState from '../EmptyState';
+import React, { useCallback, memo } from 'react';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 
-export const VocabularyEmptyState = React.memo(({ colors }: VocabularyEmptyStateProps) => {
+import { LAYOUT } from '@/constants/layout';
+import type { VocabularyEmptyStateProps } from '@/types/ui/layout.types';
+import { withOpacity } from '@/utils/colorUtils';
+
+import EmptyState from '../EmptyState';
+import { ThemedText } from '../ThemedText';
+
+export const VocabularyEmptyState = memo(({ colors }: VocabularyEmptyStateProps) => {
   const handleBrowseArticles = useCallback(() => {
     router.push('/(tabs)');
   }, []);

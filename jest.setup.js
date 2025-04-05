@@ -2,8 +2,9 @@
  * @jest-environment node
  */
 
-import { jest } from '@jest/globals';
 import { TextEncoder, TextDecoder } from 'util';
+
+import { jest } from '@jest/globals';
 
 // eslint-disable-next-line no-undef
 if (typeof global.jest === 'undefined') {

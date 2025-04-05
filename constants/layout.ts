@@ -1,5 +1,5 @@
+import type { TextStyle } from 'react-native';
 import { Dimensions, Platform } from 'react-native';
-import { TextStyle } from 'react-native';
 
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -273,7 +273,7 @@ export const getArabicTextStyle = (
 };
 
 // Helper function to calculate consistent header height and spacing
-export const getHeaderHeight = (insets: { top: number }) => {
+export const getHeaderHeight = (insets: { top: number }): number => {
   // Updated calculation to account for the new spacing in PageHeader
   return (
     insets.top +

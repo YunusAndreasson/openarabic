@@ -1,9 +1,12 @@
 /* eslint-disable react-native/no-unused-styles */
-import { Text, StyleSheet, StyleProp, TextStyle } from 'react-native';
-import { useColors } from '@/hooks/useColors';
+import React, { useMemo, memo } from 'react';
+import type { StyleProp, TextStyle } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
+
 import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
-import React, { useMemo } from 'react';
-import { ThemedTextProps } from '@/types/ui/text.types';
+import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import type { ThemedTextProps } from '@/types/ui/text.types';
 
 /**
  * ThemedText component provides consistent typography across the app
@@ -36,82 +39,79 @@ function ThemedTextComponent({
   ...rest
 }: ThemedTextProps) {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
 
-  // Consolidated style computation - combines both type mapping and style generation
-  const { finalStyle } = useMemo(() => {
-    // Get color based on variant or colorName
-    let textColor;
-    // colorName takes precedence
-    if (colorName) {
-      textColor = colors[colorName];
-    }
-    // Then check for variant
-    else if (variant) {
+  // Get text color based on props
+  const getTextColor = (
+    colors: ReturnType<typeof useColors>,
+    variant?: ThemedTextProps['variant'],
+    colorName?: ThemedTextProps['colorName'],
+    skipDefaultColor?: boolean,
+    isDarkMode?: boolean
+  ) => {
+    if (colorName) return colors[colorName];
+    if (variant) {
       const variantColorMap = {
         error: colors.error,
         warning: colors.warning,
         success: colors.success,
         info: colors.info,
         primary: colors.text,
-        secondary: colors.authorText,
-        subtle: colors.authorText,
+        secondary: isDarkMode ? colors.secondaryText : colors.authorText,
+        subtle: isDarkMode ? colors.secondaryText : colors.authorText,
         disabled: colors.tabIconDefault,
-      };
-      textColor = variantColorMap[variant];
+      } as const;
+      return variantColorMap[variant];
     }
-    // Default text color if not skipped
-    else if (!skipDefaultColor) {
-      textColor = colors.text;
-    }
+    return !skipDefaultColor ? colors.text : undefined;
+  };
 
-    // Style generation
-    let computedStyle;
-    // Special handling for arabic type
+  // Get base style for text type
+  const getBaseStyle = (type: ThemedTextProps['type']) => {
+    if (type === 'body') return styles.body;
+    if (type === 'heading1') return styles.heading1;
+    if (type === 'heading2') return styles.heading2;
+    return styles[type as keyof typeof styles] || styles.body;
+  };
+
+  // Consolidated style computation
+  const { finalStyle } = useMemo(() => {
+    const textColor = getTextColor(colors, variant, colorName, skipDefaultColor, isDarkMode);
+
     if (type === 'arabic') {
-      // Filter out undefined values to reduce style array size
-      computedStyle = [
-        getArabicTextStyle(arabicFontSize),
-        textColor && { color: textColor },
-        weight && { fontWeight: weight },
-        align && { textAlign: align },
-        style,
-      ].filter(Boolean) as StyleProp<TextStyle>;
-    } else {
-      // Get base style from styles object, safely handle type
-      // Fast-path for common types to avoid switch overhead
-      const baseStyle =
-        type === 'body'
-          ? styles.body
-          : type === 'heading1'
-            ? styles.heading1
-            : type === 'heading2'
-              ? styles.heading2
-              : styles[type as keyof typeof styles] || styles.body;
-
-      // Special handling for link type (includes color)
-      if (type === 'link' && !textColor) {
-        // Filter out undefined values
-        computedStyle = [
-          baseStyle,
-          { color: colors.link },
-          weight && { fontWeight: weight },
-          align && { textAlign: align },
-          style,
-        ].filter(Boolean) as StyleProp<TextStyle>;
-      } else {
-        // Standard case - filter out undefined values
-        computedStyle = [
-          baseStyle,
+      return {
+        finalStyle: [
+          getArabicTextStyle(arabicFontSize),
           textColor && { color: textColor },
           weight && { fontWeight: weight },
           align && { textAlign: align },
           style,
-        ].filter(Boolean) as StyleProp<TextStyle>;
-      }
+        ].filter(Boolean) as StyleProp<TextStyle>,
+      };
     }
 
+    const baseStyle = getBaseStyle(type);
+    const computedStyle = [
+      baseStyle,
+      type === 'link' && !textColor ? { color: colors.link } : textColor && { color: textColor },
+      weight && { fontWeight: weight },
+      align && { textAlign: align },
+      style,
+    ].filter(Boolean) as StyleProp<TextStyle>;
+
     return { finalStyle: computedStyle };
-  }, [type, variant, colorName, skipDefaultColor, colors, arabicFontSize, weight, align, style]);
+  }, [
+    type,
+    variant,
+    colorName,
+    skipDefaultColor,
+    colors,
+    arabicFontSize,
+    weight,
+    align,
+    style,
+    isDarkMode,
+  ]);
 
   return (
     <Text
@@ -124,7 +124,7 @@ function ThemedTextComponent({
 }
 
 // Memoize the component to prevent unnecessary rerenders
-export const ThemedText = React.memo(ThemedTextComponent);
+export const ThemedText = memo(ThemedTextComponent);
 
 // Typography styles object using consistent line height calculations
 const styles = StyleSheet.create({

@@ -1,12 +1,14 @@
-import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 import { useCallback, memo, useMemo, useEffect, useRef } from 'react';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
+import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { lightFeedback } from '../utils/haptics';
+
+import { LAYOUT } from '@/constants/layout';
 import { useToggleAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { ToggleProps } from '@/types/ui/form.types';
+import type { ToggleProps } from '@/types/ui/form.types';
+
+import { lightFeedback } from '../utils/haptics';
 
 function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const colors = useColors();

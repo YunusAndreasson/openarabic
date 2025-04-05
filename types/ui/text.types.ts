@@ -1,5 +1,7 @@
-import { TextProps, TextStyle, StyleProp } from 'react-native';
-import { SentenceWord } from '../vocabulary.types';
+import type { TextProps, TextStyle, StyleProp } from 'react-native';
+
+import type { ColorName } from '../../constants/Colors';
+import type { SentenceWord } from '../vocabulary.types';
 
 export type TextTypeName =
   | 'arabic'
@@ -49,7 +51,7 @@ export interface ThemedTextProps extends TextProps {
   /** Alignment of the text */
   align?: TextAlign;
   /** Custom color to apply to text - use theme colors when possible */
-  colorName?: keyof typeof import('../../constants/Colors').Colors.light;
+  colorName?: ColorName;
   /** Skip applying the default text color */
   skipDefaultColor?: boolean;
   /** Maximum number of lines to show */

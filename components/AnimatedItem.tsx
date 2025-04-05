@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { AnimatedItemProps } from '@/types/ui/layout.types';
+
 import { LAYOUT } from '@/constants/layout';
+import type { AnimatedItemProps } from '@/types/ui/layout.types';
+
 import SectionTitle from './SectionTitle';
 
 /**
@@ -23,7 +25,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const AnimatedItem = React.memo(
+const AnimatedItem = memo(
   ({
     children,
     delay = 0,
@@ -43,7 +45,7 @@ const AnimatedItem = React.memo(
 
     return (
       <Animated.View style={[fullWidth && styles.fullWidth, style]} entering={entering}>
-        {showTitle && title && <SectionTitle title={title} />}
+        {showTitle && title ? <SectionTitle title={title} /> : null}
         {paddingHorizontal ? <View style={styles.paddedContent}>{children}</View> : children}
       </Animated.View>
     );

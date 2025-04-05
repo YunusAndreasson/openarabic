@@ -1,5 +1,5 @@
 import * as Haptics from 'expo-haptics';
-import { handleError } from '@/utils/errorHandling';
+
 /**
  * Standardized haptic feedback patterns for consistent user experience
  */
@@ -10,12 +10,8 @@ import { handleError } from '@/utils/errorHandling';
  * - Toggle switches
  * - Pills/filters
  */
-export const lightFeedback = () => {
-  try {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  } catch (error) {
-    handleError(error instanceof Error ? error : String(error));
-  }
+export const lightFeedback = (): void => {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 };
 
 /**
@@ -24,12 +20,8 @@ export const lightFeedback = () => {
  * - Item selection
  * - Dialog confirmations
  */
-export const mediumFeedback = () => {
-  try {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  } catch (error) {
-    handleError(error instanceof Error ? error : String(error));
-  }
+export const mediumFeedback = (): void => {
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 };
 
 /**
@@ -37,10 +29,6 @@ export const mediumFeedback = () => {
  * - Failed operations
  * - Input validation errors
  */
-export const errorFeedback = () => {
-  try {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  } catch (error) {
-    handleError(error instanceof Error ? error : String(error));
-  }
+export const errorFeedback = (): void => {
+  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
 };

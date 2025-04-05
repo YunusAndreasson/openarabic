@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/database.types';
-import type { Tables } from '../types/database.types';
+
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import type { Database, Tables } from '../types/database.types';
 
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export const categoriesService = {
-  async getCategories() {
+  async getCategories(): Promise<Tables<'categories'>[]> {
     const { data, error } = await supabase.from('categories').select('*').order('name');
 
     if (error) throw error;

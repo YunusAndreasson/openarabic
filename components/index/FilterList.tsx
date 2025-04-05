@@ -1,19 +1,21 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
-import PropTypes from 'prop-types';
+import * as PropTypes from 'prop-types';
+import React, { useCallback, useMemo, memo } from 'react';
+import { View, Pressable, StyleSheet } from 'react-native';
+
+import type { FilterItem, FilterListProps } from '@/types/ui/pill.types';
+
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
+import { capitalizeFirstLetter } from '../../utils/stringUtils';
+import Pill from '../Pill';
 import SectionTitle from '../SectionTitle';
 import { ThemedText } from '../ThemedText';
-import Pill from '../Pill';
-import { capitalizeFirstLetter } from '../../utils/stringUtils';
-import { FilterItem, FilterListProps } from '@/types/ui/pill.types';
 
 /**
  * A generic filter list component that can be used for both author and category filters
  */
-function FilterList<T extends FilterItem>({
+function FilterListComponent<T extends FilterItem>({
   title,
   items,
   selectedId,
@@ -39,6 +41,7 @@ function FilterList<T extends FilterItem>({
 
   // Render each filter item with staggered animation
   const renderItem = useCallback(
+    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: T }) => {
       return (
         <Pill
@@ -60,7 +63,7 @@ function FilterList<T extends FilterItem>({
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <SectionTitle title={title} />
-        {selectedId !== null && onClearFilter && (
+        {selectedId !== null && onClearFilter ? (
           <Pressable
             style={[styles.clearButton, clearButtonStyle]}
             onPress={onClearFilter}
@@ -71,7 +74,7 @@ function FilterList<T extends FilterItem>({
               CLEAR FILTER
             </ThemedText>
           </Pressable>
-        )}
+        ) : null}
       </View>
       <View style={styles.listContainer}>
         <FlashList
@@ -93,8 +96,8 @@ function FilterList<T extends FilterItem>({
   );
 }
 
-// Add PropTypes validation
-FilterList.propTypes = {
+// Define prop types for the component
+FilterListComponent.propTypes = {
   title: PropTypes.string.isRequired,
   items: PropTypes.arrayOf(
     PropTypes.shape({
@@ -129,5 +132,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 });
+
+// Use generic memo with proper type definition
+const FilterList = memo(FilterListComponent) as <T extends FilterItem>(
+  props: FilterListProps<T>
+) => React.ReactElement | null;
 
 export default FilterList;

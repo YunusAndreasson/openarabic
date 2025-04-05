@@ -1,19 +1,21 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { createClient } from '@supabase/supabase-js';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useFocusEffect } from '@react-navigation/native';
-import { useQueryClient, useQuery } from '@tanstack/react-query';
-import FilteredArticleView from '../components/index/FilteredArticleView';
-import { LoadingScreen } from '../components/Loader';
-import ErrorState from '../components/ErrorState';
-import { articlesService } from '../services/articles';
-import { createClient } from '@supabase/supabase-js';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+
 import { useScreenAnimation } from '@/hooks/animations';
-import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
-import { Article } from '../types/articles.types';
 import { handleError } from '@/utils/errorHandling';
+
+import ErrorState from '../components/ErrorState';
+import { LoadingScreen } from '../components/Loader';
+import FilteredArticleView from '../components/index/FilteredArticleView';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
+import { articlesService } from '../services/articles';
+import type { Article } from '../types/articles.types';
 
 // Create a supabase client for fetching data directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -28,7 +30,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function FilterScreen() {
+export default function FilterScreen(): JSX.Element {
   // Hide the native header
   return (
     <>
@@ -43,7 +45,7 @@ function FilterScreenContent() {
   const params = useGlobalSearchParams();
   const type = params.type as string;
   const id = params.id as string;
-  const numericId = parseInt(id as string, 10);
+  const numericId = parseInt(id, 10);
 
   // For caching purposes
   const queryClient = useQueryClient();

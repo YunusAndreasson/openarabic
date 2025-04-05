@@ -1,9 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Session } from '@supabase/supabase-js';
+
 import { supabase } from '../services/supabase';
 
-export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
+// Define session type based on properties we use
+type UserSession = {
+  user: {
+    id: string;
+    email?: string;
+    app_metadata: Record<string, unknown>;
+    user_metadata: Record<string, unknown>;
+  } | null;
+  expires_at?: number;
+};
+
+type AuthResult = {
+  session: UserSession | null;
+  user: UserSession['user'] | null;
+  isLoading: boolean;
+  authError: Error | null;
+};
+
+export function useAuth(): AuthResult {
+  const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
 

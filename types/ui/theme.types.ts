@@ -3,6 +3,7 @@ export interface ThemeColors {
   background: string;
   text: string;
   secondaryText: string;
+  textTertiary: string;
   border: string;
   card: string;
   cardBorder: string;
@@ -10,6 +11,7 @@ export interface ThemeColors {
   success: string;
   warning: string;
   englishText: string;
+  arabicText: string;
   authorText: string;
   tint: string;
   tabIconDefault: string;

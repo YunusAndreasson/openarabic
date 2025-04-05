@@ -1,12 +1,13 @@
 import { useCallback, useRef, useEffect } from 'react';
+import type { SharedValue } from 'react-native-reanimated';
 import {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  SharedValue,
   runOnJS,
   cancelAnimation,
 } from 'react-native-reanimated';
+
 import { TIMING_CONFIG } from './animationConfigs';
 
 /**

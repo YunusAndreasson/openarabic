@@ -1,4 +1,11 @@
 import { useCallback } from 'react';
+import type { ViewStyle } from 'react-native';
+import type {
+  AnimatedStyleProp,
+  WithTimingConfig,
+  WithSpringConfig,
+  BaseAnimationBuilder,
+} from 'react-native-reanimated';
 import {
   useSharedValue,
   useAnimatedStyle,
@@ -11,18 +18,16 @@ import {
   SlideInLeft,
   SlideOutRight,
   SlideOutLeft,
-  AnimatedStyleProp,
   withDelay,
   cancelAnimation,
-  WithTimingConfig,
-  WithSpringConfig,
-  BaseAnimationBuilder,
 } from 'react-native-reanimated';
-import { ViewStyle } from 'react-native';
-import { TIMING_CONFIG } from './animationConfigs';
-import { SCREEN_WIDTH } from '../../constants/layout';
-import { SharedValue } from './types';
+
 import { handleError } from '@/utils/errorHandling';
+
+import { SCREEN_WIDTH } from '../../constants/layout';
+
+import { TIMING_CONFIG } from './animationConfigs';
+import type { SharedValue } from './types';
 
 export type TransformType = 'scale' | 'slide' | 'translateY' | 'translateX' | 'rotate';
 export type SlideDirection = 'right' | 'left';

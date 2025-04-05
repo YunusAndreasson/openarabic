@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
-import { Database } from '../types/database.types';
-import { Article } from '../types/articles.types';
+
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import type { Article } from '../types/articles.types';
+import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -64,7 +65,10 @@ export const articlesService = {
         toastMessage: 'Failed to load articles',
         analyticsEventName: 'Articles_Load_Error',
         sentrySeverity: 'error',
-        analyticsProperties: { categoryId, authorId },
+        analyticsProperties: {
+          ...(categoryId !== undefined && { categoryId }),
+          ...(authorId !== undefined && { authorId }),
+        },
       });
       throw error;
     }

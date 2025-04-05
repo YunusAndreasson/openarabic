@@ -1,5 +1,6 @@
-import { TextInputProps } from 'react-native';
-import { BaseStyleProps } from './base.types';
+import type { TextInputProps } from 'react-native';
+
+import type { BaseStyleProps } from './base.types';
 
 /**
  * Props for the ThemedInput component

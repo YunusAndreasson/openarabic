@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
 interface FeaturedContentState {
   dailyPick: {
@@ -14,11 +14,17 @@ const initialState: FeaturedContentState = {
   },
 };
 
+// Type for actions that include a payload
+type Action<P> = {
+  payload: P;
+  type: string;
+};
+
 const featuredContentSlice = createSlice({
   name: 'featuredContent',
   initialState,
   reducers: {
-    setDailyPick: (state, action: PayloadAction<{ articleId: number; date: string }>) => {
+    setDailyPick: (state, action: Action<{ articleId: number; date: string }>) => {
       state.dailyPick = action.payload;
     },
   },

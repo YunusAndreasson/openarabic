@@ -1,6 +1,13 @@
-import { Platform } from 'react-native';
 import { Mixpanel } from 'mixpanel-react-native';
-import { handleError } from '@/utils/errorHandling';
+import { Platform } from 'react-native';
+
+// Local error handling to avoid dependency cycle
+const logError = (error: unknown): void => {
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.error(error);
+  }
+};
 
 type AnalyticsProperties =
   | string
@@ -101,7 +108,7 @@ class Analytics {
         this.mixpanel.setLoggingEnabled(true);
       }
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -115,7 +122,7 @@ class Analytics {
         await this.mixpanel.getPeople().set(userProperties);
       }
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -134,7 +141,7 @@ class Analytics {
         environment: __DEV__ ? 'development' : 'production',
       });
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -145,7 +152,7 @@ class Analytics {
     try {
       await this.mixpanel.getPeople().set(properties);
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -164,7 +171,7 @@ class Analytics {
     try {
       await this.mixpanel.reset();
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -175,7 +182,7 @@ class Analytics {
     try {
       await this.mixpanel.registerSuperProperties(properties);
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -186,7 +193,7 @@ class Analytics {
     try {
       await this.mixpanel.timeEvent(eventName);
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -197,7 +204,7 @@ class Analytics {
     try {
       await this.mixpanel.optOutTracking();
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -208,7 +215,7 @@ class Analytics {
     try {
       await this.mixpanel.optInTracking();
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
     }
   }
 
@@ -219,7 +226,7 @@ class Analytics {
     try {
       return await this.mixpanel.getDistinctId();
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      logError(error);
       return null;
     }
   }

@@ -1,7 +1,7 @@
 /**
  * Pill variant types
  */
-import { StyleProp, ViewStyle, TextStyle } from 'react-native';
+import type { StyleProp, ViewStyle, TextStyle } from 'react-native';
 
 export type PillVariant = 'filter' | 'category' | 'horizontal-category';
 

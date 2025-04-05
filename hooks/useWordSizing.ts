@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+
 import { SCREEN_WIDTH } from '../constants/layout';
 
 interface WordSizingOptions {
@@ -10,7 +11,10 @@ interface WordSizingOptions {
  * Custom hook to calculate the optimal font size for a word based on its length
  * Only scales down for very long words (over 15 characters)
  */
-export const useWordSizing = (word: string | undefined, options: WordSizingOptions = {}) => {
+export const useWordSizing = (
+  word: string | undefined,
+  options: WordSizingOptions = {}
+): number => {
   const { minFontSize = 50, maxFontSize = 100 } = options;
   const [fontSize, setFontSize] = useState(maxFontSize);
 

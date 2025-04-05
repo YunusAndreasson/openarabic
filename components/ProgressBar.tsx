@@ -1,12 +1,15 @@
-import React, { useMemo, useEffect, useRef } from 'react';
-import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
-import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { LAYOUT } from '@/constants/layout';
+import React, { useMemo, useEffect, useRef, memo } from 'react';
+import type { ViewStyle, StyleProp } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { cancelAnimation } from 'react-native-reanimated';
+
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { ProgressBarProps } from '@/types/ui/loader.types';
+
 import { useProgressAnimation } from '../hooks/animations';
-import { ProgressBarProps } from '@/types/ui/loader.types';
-import { AnimatedStyleProp } from '@/types/ui/base.types';
+import { useIsDarkMode } from '../hooks/useThemeDetection';
 
 /**
  * A customizable progress bar component that can be used to display the
@@ -144,4 +147,4 @@ const styles = StyleSheet.create({
 });
 
 // Memoize the component to prevent unnecessary re-renders
-export const ProgressBar = React.memo(ProgressBarComponent);
+export const ProgressBar = memo(ProgressBarComponent);

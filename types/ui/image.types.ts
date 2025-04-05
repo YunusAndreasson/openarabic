@@ -1,5 +1,6 @@
-import { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
-import { ImageContentPosition, ImageTransition } from 'expo-image';
+import type { ImageContentPosition, ImageTransition } from 'expo-image';
+
+import type { BaseStyleProps, BaseOptionalPressableProps } from './base.types';
 
 /**
  * Image configuration options

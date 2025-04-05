@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { LAYOUT } from '../../constants/layout';
-import { Article } from '../../types/articles.types';
+
 import SectionTitle from '../../components/SectionTitle';
+import { LAYOUT } from '../../constants/layout';
+import type { Article } from '../../types/articles.types';
 
 export interface RelatedArticlesSectionProps {
   title: string;
@@ -25,7 +26,7 @@ const styles = StyleSheet.create({
 });
 
 // Memoized related articles section for better performance
-export const RelatedArticlesSection = React.memo(
+export const RelatedArticlesSection = memo(
   ({ title, articles, renderArticleCard }: RelatedArticlesSectionProps) => {
     return (
       <View style={styles.container}>

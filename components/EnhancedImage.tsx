@@ -1,11 +1,13 @@
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Image, ImageContentPosition, ImageTransition } from 'expo-image';
-import { LAYOUT } from '@/constants/layout';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { EnhancedImageProps } from '@/types/ui/image.types';
 import { Ionicons } from '@expo/vector-icons';
+import type { ImageTransition } from 'expo-image';
+import { Image } from 'expo-image';
+import React, { useState, useMemo, useCallback, memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import type { EnhancedImageProps } from '@/types/ui/image.types';
 
 /**
  * EnhancedImage component with essential optimizations
@@ -35,10 +37,10 @@ function EnhancedImageInternal({
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
-  const [isError, setIsError] = React.useState(false);
+  const [isError, setIsError] = useState(false);
 
   // Process transition into object if it's a number, or null if skipTransition is true
-  const transitionObject: ImageTransition | null = React.useMemo(() => {
+  const transitionObject: ImageTransition | null = useMemo(() => {
     if (skipTransition) return null;
     if (typeof transition === 'object') return transition;
     return {
@@ -49,12 +51,12 @@ function EnhancedImageInternal({
   }, [transition, skipTransition]);
 
   // Process placeholder with thumbhash support
-  const processedPlaceholder = React.useMemo(() => {
+  const processedPlaceholder = useMemo(() => {
     if (thumbhash) return { thumbhash };
     return placeholder;
   }, [thumbhash, placeholder]);
 
-  const handleError = React.useCallback(() => {
+  const handleError = useCallback(() => {
     setIsError(true);
     onError?.();
   }, [onError]);
@@ -65,7 +67,7 @@ function EnhancedImageInternal({
         source={source}
         style={styles.image}
         contentFit={contentFit}
-        contentPosition={contentPosition as ImageContentPosition}
+        contentPosition={contentPosition}
         transition={transitionObject}
         onLoad={onLoad}
         onError={handleError}
@@ -79,7 +81,7 @@ function EnhancedImageInternal({
         autoplay={autoplay}
       />
 
-      {isError && (
+      {isError ? (
         <View style={[styles.errorContainer, { backgroundColor: colors.imagePlaceholder }]}>
           <Ionicons
             name="alert-circle-outline"
@@ -87,13 +89,13 @@ function EnhancedImageInternal({
             color={isDarkMode ? colors.white : colors.black}
           />
         </View>
-      )}
+      ) : null}
     </View>
   );
 }
 
 // Wrap with React.memo to prevent unnecessary re-renders
-export const EnhancedImage = React.memo(EnhancedImageInternal);
+export const EnhancedImage = memo(EnhancedImageInternal);
 
 const styles = StyleSheet.create({
   container: {

@@ -1,23 +1,26 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, Platform, ViewStyle } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { useColors } from '../../hooks/useColors';
-import { LAYOUT } from '../../constants/layout';
-import { StudyWord } from '../../types/vocabulary.types';
-import Animated, { AnimatedStyle } from 'react-native-reanimated';
-import { usePressAnimation } from '../../hooks/animations';
-import { State } from 'ts-fsrs';
+/* eslint-disable sonarjs/no-duplicate-string */
 import { format } from 'date-fns';
 import { router } from 'expo-router';
+import React, { memo, useMemo } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import type { AnimatedStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { State } from 'ts-fsrs';
+
+import { LAYOUT } from '../../constants/layout';
+import { usePressAnimation } from '../../hooks/animations';
+import { useColors } from '../../hooks/useColors';
+import type { StudyWord } from '../../types/vocabulary.types';
+import { ThemedText } from '../ThemedText';
 
 interface WordListItemProps {
   word: StudyWord;
   onPress: () => void;
-  masteryScore?: number;
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const WordListItem = React.memo(function WordListItem({ word, onPress }: WordListItemProps) {
+const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemProps) {
   const colors = useColors();
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
@@ -190,17 +193,17 @@ const WordListItem = React.memo(function WordListItem({ word, onPress }: WordLis
 
             {/* Review info and streak below progress bar */}
             <View style={styles.learningInfoContainer}>
-              {wordStatus.lastReview && (
+              {wordStatus.lastReview ? (
                 <ThemedText type="caption" variant="subtle" style={styles.lastReview}>
                   Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
                 </ThemedText>
-              )}
+              ) : null}
 
-              {wordStatus.successStreak > 0 && (
+              {wordStatus.successStreak > 0 ? (
                 <ThemedText type="caption" variant="subtle" style={styles.streakText}>
                   🔥 {wordStatus.successStreak} streak
                 </ThemedText>
-              )}
+              ) : null}
             </View>
           </View>
         </View>

@@ -1,13 +1,15 @@
 /* eslint-disable react-native/no-unused-styles */
-import React, { useMemo, useCallback } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import { useColors } from '@/hooks/useColors';
-import { LAYOUT } from '@/constants/layout';
 import { LinearGradient } from 'expo-linear-gradient';
-import Pill from '../Pill';
+import React, { useMemo, useCallback, memo } from 'react';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
+import type { CategoryPillsProps } from '@/types/ui/layout.types';
+
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
-import { CategoryPillsProps } from '@/types/ui/layout.types';
+import Pill from '../Pill';
 
 function CategoryPillsComponent({
   categories,
@@ -80,7 +82,7 @@ function CategoryPillsComponent({
 }
 
 // Memoize the entire component
-export const CategoryPills = React.memo(CategoryPillsComponent);
+export const CategoryPills = memo(CategoryPillsComponent);
 
 const styles = StyleSheet.create({
   container: {

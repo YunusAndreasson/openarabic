@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
 import { router } from 'expo-router';
-import { handleError } from '@/utils/errorHandling';
+import { useState, useCallback, useRef, useEffect } from 'react';
+
 import type { Route, RoutePath } from '@/types/navigation.types';
+import { handleError } from '@/utils/errorHandling';
 
 interface NavigationOptions {
   /**

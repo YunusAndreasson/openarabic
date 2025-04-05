@@ -1,15 +1,15 @@
-import React from 'react';
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider as NavigationThemeProvider,
 } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import { Stack, useNavigationContainerRef } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import {
+import React, {
   useCallback,
   useEffect,
   useState,
@@ -20,25 +20,26 @@ import {
   useContext,
 } from 'react';
 import 'react-native-reanimated';
-import { Provider } from 'react-redux';
-import { store, persistor } from '../store/store';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { setTheme } from '../store/themeSlice';
 import { useColorScheme, AppState, View, Text, StyleSheet } from 'react-native';
-import { PersistGate } from 'redux-persist/integration/react';
-import { Theme } from '@/constants/Colors';
-import { useColors } from '@/hooks/useColors';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { useAppPreloader } from '../hooks/useAppPreloader';
-import { AppLoader } from '@/components/Loader';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+
+import { AppLoader } from '@/components/Loader';
 import { ToastProvider } from '@/components/ToastProvider';
-import { useAuth } from '../hooks/useAuth';
+import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
-import * as Sentry from '@sentry/react-native';
-import { analytics } from '../services/analytics';
-import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
+import { useColors } from '@/hooks/useColors';
+
 import madinaFont from '../assets/fonts/Madina.otf';
+import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
+import { useAppPreloader } from '../hooks/useAppPreloader';
+import { useAuth } from '../hooks/useAuth';
+import { analytics } from '../services/analytics';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { store, persistor } from '../store/store';
+import { setTheme } from '../store/themeSlice';
 
 // Prevent splash screen from auto-hiding
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -97,7 +98,7 @@ export const AppLoadingContext = createContext<AppLoadingContextType>({
 });
 
 // Hook to use the app loading context
-export const useAppLoading = () => useContext(AppLoadingContext);
+export const useAppLoading = (): AppLoadingContextType => useContext(AppLoadingContext);
 
 function AppContent() {
   const colorScheme = useColorScheme();
@@ -189,7 +190,7 @@ function AppContent() {
     };
   }, [appReady, preloadAppData]);
 
-  const onLayoutRootView = useCallback(async () => {
+  const handleLayout = useCallback(async () => {
     if (!hasHiddenSplash.current && fontsLoaded && isLoaded && !isAuthLoading) {
       hasHiddenSplash.current = true;
       try {
@@ -216,7 +217,7 @@ function AppContent() {
     <NavigationThemeProvider value={navigationTheme}>
       <ToastProvider>
         <AppLoadingContext.Provider value={appLoadingContext}>
-          <View style={styles.container} onLayout={onLayoutRootView}>
+          <View style={styles.container} onLayout={handleLayout}>
             {!showLoader ? (
               <>
                 <Stack screenOptions={stackScreenOptions}>
@@ -268,7 +269,7 @@ class ErrorBoundary extends Component<
 }
 
 interface FallbackProps {
-  error: Error;
+  readonly error: Error;
 }
 
 const styles = StyleSheet.create({

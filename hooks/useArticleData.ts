@@ -1,48 +1,27 @@
-import { useMemo, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useEffect } from 'react';
+
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-
-// Types
 import type { Article } from '@/types/articles.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
+import type { SentenceWord, StudyWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
-interface SentenceWordExtended {
-  id: number;
-  word_form: string;
-  english: string;
-  position: number;
-  root_id: number;
-  word_type_id: number;
-  lemma?: string;
-  pos?: string;
-  tashkeel?: string;
-  translation?: string;
-  notes?: string;
-}
-
-interface FSRSStudyWord {
-  sentence_word_id: number;
-  user_id: string;
-  fsrs_due: string;
-  fsrs_stability: number;
-  fsrs_difficulty: number;
-  fsrs_elapsed_days: number;
-  fsrs_scheduled_days: number;
-  fsrs_reps: number;
-  fsrs_lapses: number;
-  fsrs_state: number;
-  fsrs_last_review: string | null;
-  sentence_word: SentenceWordExtended;
-  created_at?: string;
-  updated_at?: string;
-  next_review?: string;
-  review_history?: {
-    rating: number;
-    timestamp: string;
-  }[];
+interface ArticleDataResult {
+  article: Article | undefined;
+  isLoadingArticle: boolean;
+  articleError: Error | null;
+  isInReadingList: boolean;
+  refetchReadingListStatus: () => void;
+  isLoadingReadingList: boolean;
+  selectedWordIds: Set<number>;
+  sortedSentences: Required<Article>['article_sentences'];
+  sentenceWordsMap: Map<number, SentenceWord[]>;
+  otherArticles: Article[];
+  isLoadingOtherArticles: boolean;
+  otherCategoryArticles: Article[];
+  isLoadingOtherCategoryArticles: boolean;
 }
 
 /**
@@ -50,7 +29,10 @@ interface FSRSStudyWord {
  * @param articleId - The ID of the article to fetch
  * @param userId - The current user ID
  */
-export const useArticleData = (articleId: number | undefined, userId: string | undefined) => {
+export const useArticleData = (
+  articleId: number | undefined,
+  userId: string | undefined
+): ArticleDataResult => {
   const queryClient = useQueryClient();
 
   // Fetch article data with optimized caching
@@ -60,7 +42,10 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     error: articleError,
   } = useQuery({
     queryKey: ['article', articleId],
-    queryFn: () => articlesService.getArticleById(articleId!),
+    queryFn: () => {
+      if (!articleId) throw new Error('Article ID is required');
+      return articlesService.getArticleById(articleId);
+    },
     enabled: !!articleId,
     staleTime: 300000, // Cache for 5 minutes
     gcTime: 600000, // Keep in garbage collection for 10 minutes
@@ -75,7 +60,10 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
     isLoading: isLoadingReadingList,
   } = useQuery({
     queryKey: ['readingList', userId, articleId],
-    queryFn: () => readingListService.isInReadingList(userId!, articleId!),
+    queryFn: () => {
+      if (!userId || !articleId) throw new Error('User ID and Article ID are required');
+      return readingListService.isInReadingList(userId, articleId);
+    },
     enabled: !!userId && !!articleId,
     staleTime: 300000, // Cache for 5 minutes
     gcTime: 600000, // Keep in garbage collection for 10 minutes
@@ -83,7 +71,7 @@ export const useArticleData = (articleId: number | undefined, userId: string | u
   });
 
   // Fetch study words with optimized caching
-  const { data: studyWords = [] } = useQuery<FSRSStudyWord[]>({
+  const { data: studyWords = [] } = useQuery<StudyWord[]>({
     queryKey: ['studyWords', userId],
     queryFn: async () => {
       if (!userId) return [];

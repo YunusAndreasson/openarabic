@@ -1,15 +1,19 @@
-import React, { useRef, useEffect } from 'react';
-import { StyleSheet, NativeScrollEvent, NativeSyntheticEvent, View, ViewStyle } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { AnimatedStyleProp } from 'react-native-reanimated';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
+import React, { useRef, useEffect } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ArticleHeader, RelatedArticlesFooter } from '@/components/article';
+import { ArticleHeader } from '@/components/article/ArticleHeader';
+import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { Tables } from '@/types/database.types';
-import { Article } from '@/types/articles.types';
-import { ThemeColors } from '../../types/ui/theme.types';
+import type { Article } from '@/types/articles.types';
+import type { Tables } from '@/types/database.types';
+
+import type { ThemeColors } from '../../types/ui/theme.types';
 
 const styles = StyleSheet.create({
   content: {
@@ -31,7 +35,6 @@ interface ArticleContentProps {
   renderSentenceItem: ({ item }: { item: Tables<'article_sentences'> }) => React.ReactElement;
   handleScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void;
   colors: ThemeColors;
-  isDarkMode: boolean;
   footerStyle?: AnimatedStyleProp<ViewStyle>;
   otherArticles?: Article[];
   otherCategoryArticles?: Article[];
@@ -39,6 +42,7 @@ interface ArticleContentProps {
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
+const EMPTY_ARTICLES: Article[] = [];
 
 export const ArticleContent = ({
   id,
@@ -49,9 +53,9 @@ export const ArticleContent = ({
   colors,
   footerStyle,
   otherArticles,
-  otherCategoryArticles = [],
+  otherCategoryArticles = EMPTY_ARTICLES,
   renderArticleCard,
-}: ArticleContentProps) => {
+}: ArticleContentProps): JSX.Element => {
   const insets = useSafeAreaInsets();
   const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
   const { scrollToSentence } = useLocalSearchParams<{
@@ -82,7 +86,7 @@ export const ArticleContent = ({
 
   return (
     <Animated.View style={styles.flexOne}>
-      {sortedSentences && sortedSentences.length > 0 && (
+      {sortedSentences && sortedSentences.length > 0 ? (
         <View style={styles.listContainer}>
           <FlashList
             key={`article-${id}`}
@@ -124,7 +128,7 @@ export const ArticleContent = ({
             }
           />
         </View>
-      )}
+      ) : null}
     </Animated.View>
   );
 };

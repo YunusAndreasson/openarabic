@@ -1,16 +1,28 @@
-import { useState, useCallback, useRef, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useState, useCallback, useRef, useMemo } from 'react';
+
+import { handleError } from '@/utils/errorHandling';
+
 import { articlesService } from '../services/articles';
-import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
+
 import { useAuth } from './useAuth';
-import { handleError } from '@/utils/errorHandling';
+
+interface AppPreloaderResult {
+  isPreloading: boolean;
+  isLoaded: boolean;
+  preloadAppData: () => Promise<void>;
+  prefetchArticle: (articleId: number) => Promise<boolean>;
+  prefetchVocabularyData: () => Promise<boolean>;
+  refreshPreloadedData: () => Promise<void>;
+}
 
 /**
  * Hook to preload app data during initialization
  */
-export const useAppPreloader = () => {
+export const useAppPreloader = (): AppPreloaderResult => {
   const queryClient = useQueryClient();
   const { user, isLoading: isAuthLoading } = useAuth();
   const [isPreloading, setIsPreloading] = useState(false);

@@ -1,29 +1,34 @@
-import React, { useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
-import { ThemedView } from '../components/ThemedView';
-import { ThemedText } from '../components/ThemedText';
-import { useColors } from '../hooks/useColors';
 import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { LAYOUT, getHeaderHeight } from '../constants/layout';
-import { useAuth } from '../hooks/useAuth';
+import React, { useCallback, useMemo, memo } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { Loader } from '../components/Loader';
 import PageHeader from '../components/PageHeader';
-import { Ionicons } from '@expo/vector-icons';
-import WordListItem from '../components/vocabulary/WordListItem';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import { ThemedText } from '../components/ThemedText';
+import { ThemedView } from '../components/ThemedView';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useWordList, EnhancedStudyWord } from '../hooks/useWordList';
+import WordListItem from '../components/vocabulary/WordListItem';
+import { LAYOUT, getHeaderHeight } from '../constants/layout';
+import { useAuth } from '../hooks/useAuth';
+import { useColors } from '../hooks/useColors';
+import type { EnhancedStudyWord } from '../hooks/useWordList';
+import { useWordList } from '../hooks/useWordList';
 
 const ITEM_HEIGHT = 60;
 
 // Move WordListItem component definition outside to optimize recycling
-const WordListItemMemo = React.memo(({ item }: { item: EnhancedStudyWord }) => (
+interface WordListItemMemoProps {
+  readonly item: EnhancedStudyWord;
+}
+
+const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => (
   <View style={styles.wordItemContainer}>
     <WordListItem
       word={item}
-      masteryScore={item.retentionScore}
       onPress={() => {}} // Empty function since we don't want any action on press
     />
   </View>
@@ -31,14 +36,14 @@ const WordListItemMemo = React.memo(({ item }: { item: EnhancedStudyWord }) => (
 
 WordListItemMemo.displayName = 'WordListItemMemo';
 
-export default function WordListScreen() {
+export default function WordListScreen(): JSX.Element {
   const { category } = useLocalSearchParams();
   const colors = useColors();
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
   // Get the title and icon based on the category
-  const { title } = React.useMemo(() => {
+  const { title } = useMemo(() => {
     switch (category) {
       case 'total':
         return {
@@ -76,7 +81,8 @@ export default function WordListScreen() {
 
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
-    ({ item }: { item: EnhancedStudyWord }) => <WordListItemMemo item={item} />,
+    // eslint-disable-next-line react/no-unused-prop-types
+    ({ item }: { readonly item: EnhancedStudyWord }) => <WordListItemMemo item={item} />,
     []
   );
 

@@ -1,10 +1,13 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import FloatingButton from '@/components/FloatingButton';
 import { LAYOUT } from '@/constants/layout';
-import { ThemeColors } from '../../types/ui/theme.types';
-import { AnimatedStyleProp } from 'react-native-reanimated';
+
+import type { ThemeColors } from '../../types/ui/theme.types';
 
 const styles = StyleSheet.create({
   floatingButton: {
@@ -33,7 +36,6 @@ interface ArticleButtonsProps {
   onBookmarkPress: () => void;
   onPlayPress: () => void;
   colors: ThemeColors;
-  isBookmarked: boolean;
   user: { id: string } | null;
   isInReadingList: boolean | undefined;
   initialBookmarkIcon: 'bookmark-outline' | 'bookmark';
@@ -54,7 +56,7 @@ export const ArticleButtons = ({
   initialBookmarkIcon,
   isPlaying,
   isDarkMode,
-}: ArticleButtonsProps) => {
+}: ArticleButtonsProps): JSX.Element => {
   const insets = useSafeAreaInsets();
 
   return (

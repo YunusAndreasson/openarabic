@@ -1,7 +1,3 @@
-import React, { useMemo, useEffect } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
-import { ThemedText } from '../ThemedText';
-import { useColors } from '../../hooks/useColors';
 import {
   Canvas,
   Path,
@@ -12,14 +8,20 @@ import {
   LinearGradient,
   vec,
 } from '@shopify/react-native-skia';
+import React, { useMemo, useEffect, memo, useState } from 'react';
+import { StyleSheet, View, Dimensions } from 'react-native';
 import { useSharedValue, withTiming, useDerivedValue } from 'react-native-reanimated';
-import { LAYOUT } from '../../constants/layout';
-import { LoadingContainer } from '../Loader';
+
 import { useGraphData } from '@/hooks/useGraphData';
-import { WeeklyProgressData } from '@/types/vocabulary.types';
-import BaseCard from '../BaseCard';
+import type { WeeklyProgressData } from '@/types/vocabulary.types';
 import { withOpacity } from '@/utils/colorUtils';
 import { handleError } from '@/utils/errorHandling';
+
+import { LAYOUT } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
+import BaseCard from '../BaseCard';
+import { LoadingContainer } from '../Loader';
+import { ThemedText } from '../ThemedText';
 
 interface VocabularyGraphProps {
   // Data for the last 7 days
@@ -30,7 +32,7 @@ interface VocabularyGraphProps {
   animationTriggered?: boolean;
 }
 
-export const VocabularyGraph = React.memo(
+export const VocabularyGraph = memo(
   ({
     data = [],
     title = 'Progress',
@@ -38,8 +40,8 @@ export const VocabularyGraph = React.memo(
     animationTriggered = false,
   }: VocabularyGraphProps) => {
     const colors = useColors();
-    const [isReady, setIsReady] = React.useState(false);
-    const [hasError, setHasError] = React.useState(false);
+    const [isReady, setIsReady] = useState(false);
+    const [hasError, setHasError] = useState(false);
 
     // Use Reanimated's shared value for animation
     const progress = useSharedValue(0);
@@ -195,11 +197,11 @@ export const VocabularyGraph = React.memo(
           >
             <Canvas style={canvasStyle}>
               {/* Grid lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio, index) => {
+              {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
                 const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
                 return (
                   <Line
-                    key={index}
+                    key={`grid-line-${ratio}`}
                     p1={{ x: 0, y }}
                     p2={{ x: GRAPH_WIDTH, y }}
                     color={withOpacity(colors.text, 0.08)}
@@ -236,8 +238,8 @@ export const VocabularyGraph = React.memo(
 
               {/* Data points */}
               <Group opacity={opacity} transform={[{ translateX: POINT_RADIUS * 2 }]}>
-                {points.map((point, index) => (
-                  <Group key={index}>
+                {points.map(point => (
+                  <Group key={`data-point-${point.x}-${point.y}`}>
                     <Circle
                       cx={point.x}
                       cy={point.y + TOP_PADDING}
@@ -262,9 +264,9 @@ export const VocabularyGraph = React.memo(
               accessible={true}
               accessibilityLabel="Date and word count labels"
             >
-              {validData.map((item, index) => (
+              {validData.map(item => (
                 <View
-                  key={index}
+                  key={`x-axis-label-${item.date}`}
                   style={styles.labelContainer}
                   accessible={true}
                   accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}

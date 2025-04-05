@@ -1,14 +1,18 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+
+import type { WordReviewCardProps } from '@/types/ui/layout.types';
+
 import { LAYOUT } from '../../constants/layout';
-import { WordReviewCardProps } from '@/types/ui/layout.types';
 import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
 
 /**
  * A card component for displaying a word during review
  */
-export function WordReviewCard({ word }: Omit<WordReviewCardProps, 'transitionType'>) {
+export function WordReviewCard({
+  word,
+}: Omit<WordReviewCardProps, 'transitionType'>): JSX.Element | null {
   if (!word) return null;
 
   return (

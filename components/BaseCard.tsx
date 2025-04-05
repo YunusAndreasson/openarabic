@@ -1,13 +1,17 @@
-import React, { useMemo } from 'react';
-import { StyleSheet, Pressable, View, ViewStyle } from 'react-native';
+import React, { memo, useMemo } from 'react';
+import type { ViewStyle } from 'react-native';
+import { StyleSheet, Pressable, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
-import { usePressAnimation } from '../hooks/animations';
-import { LoadingContainer } from './Loader';
-import { BaseCardProps } from '@/types/ui/card.types';
-import { AnimatedStyleProp } from '@/types/ui/base.types';
+
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
+import type { BaseCardProps } from '@/types/ui/card.types';
+
+import { LAYOUT } from '../constants/layout';
+import { usePressAnimation } from '../hooks/animations';
+import { useColors } from '../hooks/useColors';
+
+import { LoadingContainer } from './Loader';
 
 /**
  * BaseCard is the foundation component for all card-type UI elements
@@ -64,7 +68,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
   // Card border style with increased visibility
   const borderStyle = useMemo(
     () => ({
-      borderWidth: 0.5,
+      borderWidth: isDarkMode ? 1 : 0.5,
       borderColor: isDarkMode ? colors.elevation3 : colors.cardBorder,
     }),
     [isDarkMode, colors.elevation3, colors.cardBorder]
@@ -75,13 +79,13 @@ const BaseCard: React.FC<BaseCardProps> = ({
     () => [
       styles.card,
       {
-        backgroundColor: colors.cardBackground,
+        backgroundColor: colors.card,
       },
       shadowStyle,
       borderStyle,
       style,
     ],
-    [colors.cardBackground, shadowStyle, borderStyle, style]
+    [colors.card, shadowStyle, borderStyle, style]
   );
 
   // Combine content style
@@ -133,10 +137,14 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+    position: 'relative',
+    zIndex: LAYOUT.Z_INDEX.CARD,
   },
   content: {
     overflow: 'hidden',
+    position: 'relative',
+    zIndex: LAYOUT.Z_INDEX.BASE,
   },
 });
 
-export default React.memo(BaseCard);
+export default memo(BaseCard);
