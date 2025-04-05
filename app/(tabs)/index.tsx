@@ -571,7 +571,7 @@ export default function ArticlesScreen(): JSX.Element {
     () => ({
       ...styles.listContentContainer,
       backgroundColor: colors.background,
-      paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.MEDIUM, // Reduced from LARGE*3
+      paddingTop: getHeaderHeight(insets), // Match vocabulary.tsx exactly
     }),
     [insets, colors.background]
   );
@@ -611,7 +611,7 @@ export default function ArticlesScreen(): JSX.Element {
         accessibilityRole="scrollbar"
       >
         <ArticleList
-          articles={articlesData}
+          articles={[]}
           isLoading={isArticlesLoading}
           isRefreshing={isRefreshing}
           onRefresh={handleRefresh}
