@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { persistStore, persistReducer } from 'redux-persist';
 
+import audioReducer from './audioSlice';
 import featuredContentReducer from './featuredContentSlice';
 import readingListReducer from './readingListSlice';
 import settingsReducer from './settingsSlice';
@@ -13,6 +14,7 @@ const rootReducer = combineReducers({
   settings: settingsReducer,
   readingList: readingListReducer,
   featuredContent: featuredContentReducer,
+  audio: audioReducer,
 });
 
 // Configure redux-persist

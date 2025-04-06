@@ -6,7 +6,7 @@ type PayloadAction<P> = {
   type: string;
 };
 
-interface SettingsState {
+export interface SettingsState {
   fontScale: number;
   showEnglish: boolean;
 }

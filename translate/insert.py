@@ -9,7 +9,6 @@ import hashlib
 import base64
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
-import mutagen
 from mutagen.mp3 import MP3
 import io
 

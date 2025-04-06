@@ -10,8 +10,19 @@ type PayloadAction<P> = {
   type: string;
 };
 
-interface ReadingListState {
-  inProgressArticles: Article[];
+// Simplified article type for the reading list state
+type SimpleArticle = {
+  id: number;
+  title: string;
+  category_id: number;
+  author_id: number;
+  created_at: string;
+  audio_url: string | null;
+  image_url: string | null;
+};
+
+export interface ReadingListState {
+  inProgressArticles: SimpleArticle[];
   isLoading: boolean;
   error: string | null;
   lastUpdated: string | null;
@@ -108,7 +119,15 @@ const readingListSlice = createSlice({
       })
       .addCase(fetchInProgressArticles.fulfilled, (state, action: PayloadAction<Article[]>) => {
         state.isLoading = false;
-        state.inProgressArticles = action.payload;
+        state.inProgressArticles = action.payload.map(article => ({
+          id: article.id,
+          title: article.title,
+          category_id: article.category_id,
+          author_id: article.author_id,
+          created_at: article.created_at,
+          audio_url: article.audio_url,
+          image_url: article.image_url,
+        }));
         state.lastUpdated = new Date().toISOString();
       })
       .addCase(fetchInProgressArticles.rejected, (state, action) => {

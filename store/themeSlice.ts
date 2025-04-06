@@ -11,7 +11,7 @@ type PayloadAction<P> = {
 
 type ThemeColors = (typeof Colors)[Theme];
 
-interface ThemeState {
+export interface ThemeState {
   theme: Theme | null;
   colors: ThemeColors;
 }

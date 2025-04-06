@@ -5,16 +5,17 @@ import type { ComponentRef } from 'react';
 import type { LayoutRectangle, LayoutChangeEvent } from 'react-native';
 import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-
-import { analytics } from '@/services/analytics';
-import { lightFeedback } from '@/utils/haptics';
+import { useSelector } from 'react-redux';
 
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
 import { useAuth } from '../../hooks/useAuth';
 import { useColors } from '../../hooks/useColors';
 import { useIsDarkMode } from '../../hooks/useThemeDetection';
+import { analytics } from '../../services/analytics';
+import type { RootState } from '../../store/store';
 import type { SentenceWord } from '../../types/vocabulary.types';
+import { lightFeedback } from '../../utils/haptics';
 import { ThemedText } from '../ThemedText';
 
 import { WordTooltip } from './WordTooltip';
@@ -25,23 +26,18 @@ let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
 interface ArabicWordProps {
   word: SentenceWord;
   onPress: (word: SentenceWord) => void;
+  position?: number;
   settings: {
     showEnglish: boolean;
     fontScale: number;
     showTransliteration?: boolean;
     showWordType?: boolean;
   };
-  isAudioHighlighted?: boolean;
   wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>;
+  isAudioHighlighted?: boolean;
 }
 
-function ArabicWordComponent({
-  word,
-  onPress,
-  settings,
-  isAudioHighlighted = false,
-  wordRef,
-}: ArabicWordProps) {
+function ArabicWordComponent({ word, onPress, position, settings, wordRef }: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
@@ -52,6 +48,27 @@ function ArabicWordComponent({
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
   const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
   const [forceSelected, setForceSelected] = useState<boolean | null>(null);
+
+  // Get audio state with robust selector
+  const audioState = useSelector((state: RootState) => ({
+    wordId: state.audio.currentWordId,
+    position: state.audio.currentPosition,
+    isPlaying: state.audio.isPlaying,
+  }));
+
+  // Determine highlighting with fallbacks for backward compatibility
+  // Case 1: If both component and Redux have position - check both ID and position
+  // Case 2: If position is missing on either side - fall back to ID-only comparison
+  const isAudioHighlighted = useMemo(() => {
+    // If this component has position info and Redux has position info
+    if (position !== undefined && audioState.position !== null) {
+      // Check both word ID and position (precise mode for duplicates)
+      return audioState.wordId === word.id && audioState.position === position;
+    }
+
+    // Fallback to ID-only comparison (backward compatible)
+    return audioState.wordId === word.id;
+  }, [audioState, word.id, position]);
 
   // Directly get selected status from cache to bypass potential stale props
   const studyWords = queryClient.getQueryData(['studyWords', user?.id]);
@@ -229,35 +246,19 @@ function ArabicWordComponent({
       borderBottomWidth: isSelected ? 2 : 0,
     };
 
-    // Audio highlight styles take precedence with enhanced visibility
+    // Audio highlight styles using only background color
     if (isAudioHighlighted) {
       return {
         ...baseStyle,
-        backgroundColor: colors.info + (isDarkMode ? '80' : '40'), // Using info color with theme-appropriate opacity
-        borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-        borderColor: colors.info + (isDarkMode ? '40' : '20'),
-        borderWidth: 1,
-        elevation: 2,
-        shadowColor: colors.info,
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: isDarkMode ? 0.4 : 0.2,
-        shadowRadius: 3,
-        zIndex: LAYOUT.Z_INDEX.CARD,
+        backgroundColor: colors.info + (isDarkMode ? '20' : '15'), // Subtle background only
       };
     }
 
     return baseStyle;
   }, [isSelected, isAudioHighlighted, colors.tint, colors.info, isDarkMode]);
 
-  // Calculate scale style for audio highlight with smoother animation
-  const scaleStyle = useMemo(() => {
-    if (isAudioHighlighted) {
-      return {
-        transform: [{ scale: 1.05 }], // Slightly reduced scale for better readability
-      };
-    }
-    return {};
-  }, [isAudioHighlighted]);
+  // Remove scale style completely as it's no longer needed
+  const scaleStyle = useMemo(() => ({}), []);
 
   // Track word selection changes
   useEffect(() => {

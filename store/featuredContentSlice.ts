@@ -1,6 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-interface FeaturedContentState {
+export interface FeaturedContentState {
   dailyPick: {
     articleId: number | null;
     date: string | null;

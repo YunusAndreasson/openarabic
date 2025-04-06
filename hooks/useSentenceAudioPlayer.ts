@@ -1,12 +1,19 @@
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { setCurrentWord, setPlayingState, setCurrentSentence } from '../store/audioSlice';
+import type { RootState } from '../store/store';
+import { handleError } from '../utils/errorHandling';
 
 // Define types
 export type WordTiming = {
   wordId: number;
-  startTime: number;
-  endTime: number;
+  startTime: number; // Always in milliseconds
+  endTime: number; // Always in milliseconds
+  // Add a unique key for each word occurrence
+  uniqueKey?: string;
 };
 
 export type SentenceAudio = {
@@ -17,16 +24,48 @@ export type SentenceAudio = {
 
 type TrackWordTimingFunction = () => () => void;
 
-export function useSentenceAudioPlayer() {
-  // Component state
-  const [currentWordId, setCurrentWordId] = useState<number | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+// Helper function to normalize timing values to milliseconds
+const normalizeTimingToMs = (time: string | number): number => {
+  if (typeof time === 'string') {
+    // Convert string seconds to milliseconds
+    return Math.round(parseFloat(time) * 1000);
+  }
+  // Assume number is already in milliseconds
+  return time;
+};
+
+export function useSentenceAudioPlayer(): {
+  currentWordId: number | null;
+  isPlaying: boolean;
+  audioState: 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+  progress: number;
+  duration: number;
+  currentSentenceIndex: number | null;
+  startPlayback: (sentences: SentenceAudio[]) => Promise<boolean>;
+  stopPlayback: () => Promise<boolean>;
+  trackWordTiming: TrackWordTimingFunction;
+  soundRef: React.RefObject<Audio.Sound | null>;
+  wordTimingRef: React.RefObject<WordTiming[]>;
+  animationFrameRef: React.RefObject<number | null>;
+  playNextSentenceRef: React.RefObject<(() => Promise<boolean>) | null>;
+  setAudioState: (state: 'idle' | 'loading' | 'playing' | 'paused' | 'error') => void;
+  setProgress: (progress: number) => void;
+  setDuration: (duration: number) => void;
+  setCurrentSentenceIndex: (value: number | null) => void;
+} {
+  const dispatch = useDispatch();
+
+  // Get state from Redux instead of local state
+  const currentWordId = useSelector((state: RootState) => state.audio.currentWordId);
+  const isPlaying = useSelector((state: RootState) => state.audio.isPlaying);
+  const currentSentenceIndex = useSelector((state: RootState) => state.audio.currentSentenceId);
+
+  // Remove useState hooks that are now managed by Redux
   const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'error'>(
     'idle'
   );
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [currentSentenceIndex, setCurrentSentenceIndex] = useState(-1);
 
   // Refs
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -34,116 +73,183 @@ export function useSentenceAudioPlayer() {
   const animationFrameRef = useRef<number | null>(null);
   const sentencesRef = useRef<SentenceAudio[]>([]);
   const playNextSentenceRef = useRef<(() => Promise<boolean>) | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
 
-  // Track word timing during playback
+  // More resilient word timing tracking with better initialization
   const trackWordTiming: TrackWordTimingFunction = useCallback(() => {
     let frameId: number | null = null;
-    const WORD_OVERLAP_MS = 200; // Overlap between words to prevent flicker
-    let lastActiveWord: WordTiming | null = null;
+    const WORD_OVERLAP_MS = 200;
+    let lastHighlightInfo = { wordId: null as number | null, position: null as number | null };
+    let lastUpdateTime = 0;
 
-    const updateWordHighlight = async () => {
+    // Immediately check for first word on start
+    const checkFirstWord = (): void => {
+      if (wordTimingRef.current.length > 0) {
+        const firstWord = wordTimingRef.current[0];
+        if (!firstWord) return;
+
+        if (firstWord.startTime <= 50) {
+          dispatch(
+            setCurrentWord({
+              wordId: firstWord.wordId,
+              position: 0,
+            })
+          );
+          lastHighlightInfo = { wordId: firstWord.wordId, position: 0 };
+          lastUpdateTime = Date.now();
+        }
+      }
+    };
+
+    checkFirstWord();
+
+    // eslint-disable-next-line sonarjs/cognitive-complexity
+    const updateWordHighlight = async (): Promise<void> => {
       try {
-        // Skip if there's no sound to check or no timing data
         if (!soundRef.current || wordTimingRef.current.length === 0) {
           return;
         }
 
-        // Get current playback status
         const status = await soundRef.current.getStatusAsync();
-        if (!status.isLoaded) {
+        if (!status.isLoaded || !status.isPlaying) {
           return;
         }
 
-        // Get current playback time in milliseconds
         const currentTimeMs = status.positionMillis;
+        const now = Date.now();
 
-        // Find the word that should be highlighted at the current time
-        // Include overlap to prevent gaps between words
-        const activeWord = wordTimingRef.current.find(timing => {
-          const isWithinMainTiming =
-            currentTimeMs >= timing.startTime && currentTimeMs <= timing.endTime + WORD_OVERLAP_MS;
-
-          // If we're in a gap between words, keep the last word highlighted
-          // until we find the next word
-          const isInGapAfterWord =
-            lastActiveWord?.wordId === timing.wordId &&
-            currentTimeMs > timing.endTime &&
-            currentTimeMs <= timing.endTime + WORD_OVERLAP_MS;
-
-          return isWithinMainTiming || isInGapAfterWord;
-        });
-
-        // Update current word if changed
-        if (activeWord?.wordId !== currentWordId) {
-          const newWordId = activeWord?.wordId;
-
-          // Update the current playing word ID - ensure it's a number
-          setCurrentWordId(newWordId !== undefined ? Number(newWordId) : null);
-
-          // Update last active word for gap handling
-          lastActiveWord = activeWord || null;
-        }
-
-        // Schedule next frame only if we're still playing
-        if (status.isPlaying) {
+        // Throttle updates to prevent too frequent state changes
+        if (now - lastUpdateTime < 50) {
           frameId = requestAnimationFrame(updateWordHighlight);
-          animationFrameRef.current = frameId;
+          return;
         }
+
+        // Find the active word by scanning forward from last known position
+        const startIndex = lastHighlightInfo.position !== null ? lastHighlightInfo.position : 0;
+        let foundActiveWord = false;
+        let activeWordIndex = -1;
+        let activeWord = null;
+
+        // Scan forward from last position
+        for (let i = startIndex; i < wordTimingRef.current.length; i++) {
+          const timing = wordTimingRef.current[i];
+          if (!timing) continue;
+
+          // Check if current time is within this word's timing range
+          if (
+            currentTimeMs >= timing.startTime &&
+            currentTimeMs <= timing.endTime + WORD_OVERLAP_MS
+          ) {
+            activeWord = timing;
+            activeWordIndex = i;
+            foundActiveWord = true;
+            break;
+          }
+
+          // If we've gone past the current time, stop searching
+          if (timing.startTime > currentTimeMs) {
+            break;
+          }
+        }
+
+        // Update state if needed
+        if (foundActiveWord && activeWord) {
+          if (
+            activeWordIndex !== lastHighlightInfo.position ||
+            activeWord.wordId !== lastHighlightInfo.wordId
+          ) {
+            dispatch(
+              setCurrentWord({
+                wordId: activeWord.wordId,
+                position: activeWordIndex,
+              })
+            );
+
+            lastHighlightInfo = {
+              wordId: activeWord.wordId,
+              position: activeWordIndex,
+            };
+            lastUpdateTime = now;
+          }
+        } else if (lastHighlightInfo.wordId !== null) {
+          // Only clear highlight if we're past the last word's end time
+          const lastWord = wordTimingRef.current[wordTimingRef.current.length - 1];
+          if (lastWord && currentTimeMs > lastWord.endTime + WORD_OVERLAP_MS) {
+            dispatch(
+              setCurrentWord({
+                wordId: null,
+                position: null,
+              })
+            );
+
+            lastHighlightInfo = { wordId: null, position: null };
+            lastUpdateTime = now;
+          }
+        }
+
+        frameId = requestAnimationFrame(updateWordHighlight);
+        animationFrameRef.current = frameId;
       } catch (error) {
-        // Cancel animation on error
         if (frameId) {
+          handleError(error as Error);
           cancelAnimationFrame(frameId);
           animationFrameRef.current = null;
         }
       }
     };
 
-    // Start the animation frame loop
     frameId = requestAnimationFrame(updateWordHighlight);
     animationFrameRef.current = frameId;
 
-    // Cleanup function
     return () => {
       if (frameId) {
         cancelAnimationFrame(frameId);
         animationFrameRef.current = null;
       }
     };
-  }, [currentWordId]);
+  }, [dispatch]);
 
   // Handle playback status updates
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus): void => {
-    if (!status.isLoaded) {
-      if (status.error) {
-        setAudioState('error');
-        setIsPlaying(false);
+  const onPlaybackStatusUpdate = useCallback(
+    (status: AVPlaybackStatus): void => {
+      if (!status.isLoaded) {
+        if (status.error) {
+          setAudioState('error');
+          dispatch(setCurrentWord({ wordId: null, position: null }));
+          dispatch(setPlayingState(false));
+        }
+        return;
       }
-      return;
-    }
 
-    // Update progress and duration
-    setProgress(status.positionMillis);
-    setDuration(status.durationMillis || 0);
+      setProgress(status.positionMillis);
+      setDuration(status.durationMillis || 0);
 
-    // Handle playback state
-    if (status.isPlaying) {
-      setAudioState('playing');
-      setIsPlaying(true);
-    } else if (status.isBuffering) {
-      setAudioState('loading');
-    } else if (status.didJustFinish) {
-      // When a sentence finishes, immediately trigger the next one
-      // We keep the playing state true during the transition
-      playNextSentenceRef.current?.();
-    } else {
-      // Only set to paused if we're not at the end and not transitioning
-      setAudioState('paused');
-      setIsPlaying(false);
-    }
-  }, []);
+      if (status.isPlaying) {
+        setAudioState('playing');
+        dispatch(setPlayingState(true));
+      } else if (status.isBuffering) {
+        setAudioState('loading');
+      } else if (status.didJustFinish) {
+        // When a sentence finishes, explicitly call playNextSentence
+        // Keep isPlaying true during the transition
+        setAudioState('loading'); // Show loading state during transition
+
+        // Call with a slight delay to ensure proper cleanup
+        setTimeout(() => {
+          if (playNextSentenceRef.current) {
+            playNextSentenceRef.current();
+          }
+        }, 50);
+      } else {
+        setAudioState('paused');
+        dispatch(setPlayingState(false));
+      }
+    },
+    [dispatch]
+  );
 
   // Initialize audio session
-  const initAudioSession = useCallback(async () => {
+  const initAudioSession = useCallback(async (): Promise<boolean> => {
     try {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
@@ -152,19 +258,18 @@ export function useSentenceAudioPlayer() {
       });
       return true;
     } catch (error) {
+      handleError(error as Error);
       return false;
     }
   }, []);
 
   // Clean up audio resources
-  const cleanupAudio = useCallback(async () => {
-    // Cancel animation frame
+  const cleanupAudio = useCallback(async (): Promise<void> => {
     if (animationFrameRef.current !== null) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
 
-    // Unload sound if it exists
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync();
@@ -174,14 +279,14 @@ export function useSentenceAudioPlayer() {
       }
     }
 
-    // Reset state
-    setCurrentWordId(null);
-    setIsPlaying(false);
+    dispatch(setCurrentWord({ wordId: null, position: null }));
+    dispatch(setPlayingState(false));
+    dispatch(setCurrentSentence(null));
     setAudioState('idle');
-  }, []);
+  }, [dispatch]);
 
   // Stop playback
-  const stopPlayback = useCallback(async () => {
+  const stopPlayback = useCallback(async (): Promise<boolean> => {
     try {
       if (soundRef.current) {
         await soundRef.current.stopAsync();
@@ -189,33 +294,38 @@ export function useSentenceAudioPlayer() {
       await cleanupAudio();
       return true;
     } catch (error) {
+      handleError(error as Error);
       return false;
     }
   }, [cleanupAudio]);
 
-  // Play next sentence in the queue
-  const playNextSentence = useCallback(async () => {
+  // Improve playNextSentence to ensure reliable transitions
+  const playNextSentence = useCallback(async (): Promise<boolean> => {
     try {
-      // Reset word highlighting
-      setCurrentWordId(null);
+      // Reset word highlighting and cancel any ongoing animation frame
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      dispatch(setCurrentWord({ wordId: null, position: null }));
 
       // Increment sentence index
-      const nextIndex = currentSentenceIndex + 1;
+      const nextIndex = (currentSentenceIndex ?? -1) + 1;
 
       // Check if we have more sentences
       if (nextIndex >= sentencesRef.current.length) {
         // End of article reached
         setAudioState('idle');
-        setCurrentSentenceIndex(-1);
-        setIsPlaying(false);
+        dispatch(setCurrentSentence(null));
+        dispatch(setPlayingState(false));
         await cleanupAudio();
         return false;
       }
 
       // Load the next sentence
-      setCurrentSentenceIndex(nextIndex);
+      dispatch(setCurrentSentence(nextIndex));
       const nextSentence = sentencesRef.current[nextIndex];
-      if (!nextSentence) {
+      if (!nextSentence || !nextSentence.audioUrl) {
         await cleanupAudio();
         return false;
       }
@@ -223,53 +333,92 @@ export function useSentenceAudioPlayer() {
       // Clean up previous sound if it exists
       if (soundRef.current) {
         try {
+          await soundRef.current.stopAsync();
           await soundRef.current.unloadAsync();
+        } catch (error) {
+          handleError(error as Error);
         } finally {
           soundRef.current = null;
         }
       }
 
       // Keep playing state active during transition
-      setIsPlaying(true);
+      dispatch(setPlayingState(true));
       setAudioState('loading');
 
-      // Update word timing reference
-      wordTimingRef.current = nextSentence.wordTimings;
+      // Update word timing reference - ensure it's an array and validate timings
+      if (Array.isArray(nextSentence.wordTimings)) {
+        // Validate and normalize word timings
+        wordTimingRef.current = nextSentence.wordTimings.map((timing, index) => ({
+          ...timing,
+          startTime: normalizeTimingToMs(timing.startTime),
+          endTime: normalizeTimingToMs(timing.endTime),
+          wordId: Number(timing.wordId),
+          position: index, // Ensure each word has its position
+        }));
+      } else {
+        wordTimingRef.current = [];
+      }
 
-      // Create and load the sound
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: nextSentence.audioUrl },
-        { shouldPlay: true, progressUpdateIntervalMillis: 50 }, // Faster updates for smoother transitions
-        onPlaybackStatusUpdate
-      );
+      // Create and load the sound with more reliable configuration
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: nextSentence.audioUrl },
+          {
+            shouldPlay: true,
+            progressUpdateIntervalMillis: 50,
+            positionMillis: 0, // Explicitly start from beginning
+          },
+          onPlaybackStatusUpdate
+        );
 
-      // Store reference to the sound
-      soundRef.current = sound;
+        // Store reference to the sound
+        soundRef.current = sound;
 
-      // Start word timing tracking
-      trackWordTiming();
+        // Explicitly start tracking to ensure highlighting begins immediately
+        if (wordTimingRef.current.length > 0) {
+          const cleanup = trackWordTiming();
+          // Store cleanup function in ref
+          cleanupRef.current = () => {
+            cleanup();
+            if (soundRef.current) {
+              soundRef.current.unloadAsync();
+            }
+          };
+          return true;
+        }
 
-      // Ensure we're still in playing state
-      setIsPlaying(true);
-      setAudioState('playing');
+        // Ensure we're still in playing state
+        dispatch(setPlayingState(true));
+        setAudioState('playing');
 
-      return true;
+        return true;
+      } catch (audioError) {
+        handleError(audioError as Error);
+        await cleanupAudio();
+        return false;
+      }
     } catch (error) {
+      handleError(error as Error);
       await cleanupAudio();
       return false;
     }
-  }, [currentSentenceIndex, cleanupAudio, onPlaybackStatusUpdate, trackWordTiming]);
+  }, [currentSentenceIndex, cleanupAudio, onPlaybackStatusUpdate, trackWordTiming, dispatch]);
 
-  // Start playback of sentences
+  // Improve startPlayback for more reliable initialization
   const startPlayback = useCallback(
-    async (sentences: SentenceAudio[]) => {
+    async (sentences: SentenceAudio[]): Promise<boolean> => {
       if (!Array.isArray(sentences) || sentences.length === 0) {
         return false;
       }
 
       const firstSentence = sentences[0];
-      if (!firstSentence?.audioUrl || !Array.isArray(firstSentence.wordTimings)) {
+      if (!firstSentence?.audioUrl) {
         return false;
+      }
+
+      if (!Array.isArray(firstSentence.wordTimings) || firstSentence.wordTimings.length === 0) {
+        // Continue without word timings
       }
 
       try {
@@ -284,49 +433,69 @@ export function useSentenceAudioPlayer() {
 
         // Reset state
         await cleanupAudio();
-        setCurrentSentenceIndex(-1);
-        setCurrentWordId(null);
+        dispatch(setCurrentSentence(null));
+        dispatch(setCurrentWord({ wordId: null, position: null }));
 
-        // Start with first sentence
-        setCurrentSentenceIndex(0);
+        // Start with first sentence (explicitly set to 0 to ensure it's a number)
+        dispatch(setCurrentSentence(0));
 
         // Keep playing state active during initial load
-        setIsPlaying(true);
+        dispatch(setPlayingState(true));
         setAudioState('loading');
 
-        // Update word timing reference
-        wordTimingRef.current = firstSentence.wordTimings;
+        // Update word timing reference - ensure it's an array
+        if (Array.isArray(firstSentence.wordTimings)) {
+          wordTimingRef.current = firstSentence.wordTimings;
+        } else {
+          wordTimingRef.current = [];
+        }
 
-        // Create and load the sound with the same configuration as playNextSentence
+        // Create and load the sound with more reliable configuration
         const { sound } = await Audio.Sound.createAsync(
           { uri: firstSentence.audioUrl },
-          { shouldPlay: true, progressUpdateIntervalMillis: 50 }, // Match playNextSentence configuration
+          {
+            shouldPlay: true,
+            progressUpdateIntervalMillis: 50,
+            positionMillis: 0, // Explicitly start from beginning
+          },
           onPlaybackStatusUpdate
         );
 
         // Store reference to the sound
         soundRef.current = sound;
 
-        // Start word timing tracking
-        trackWordTiming();
+        // Explicitly start tracking to ensure highlighting begins immediately
+        if (wordTimingRef.current.length > 0) {
+          trackWordTiming();
+        }
 
         // Ensure we're in playing state
-        setIsPlaying(true);
+        dispatch(setPlayingState(true));
         setAudioState('playing');
 
         return true;
       } catch (error) {
-        await cleanupAudio();
+        handleError(error as Error);
         return false;
       }
     },
-    [initAudioSession, onPlaybackStatusUpdate, trackWordTiming, cleanupAudio]
+    [initAudioSession, onPlaybackStatusUpdate, trackWordTiming, cleanupAudio, dispatch]
   );
 
   // Update playNextSentence ref
   useEffect(() => {
     playNextSentenceRef.current = playNextSentence;
   }, [playNextSentence]);
+
+  // Add cleanup effect
+  useEffect(() => {
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+    };
+  }, []);
 
   return {
     currentWordId,
@@ -342,11 +511,9 @@ export function useSentenceAudioPlayer() {
     wordTimingRef,
     animationFrameRef,
     playNextSentenceRef,
-    setCurrentWordId,
-    setIsPlaying,
     setAudioState,
     setProgress,
     setDuration,
-    setCurrentSentenceIndex,
+    setCurrentSentenceIndex: (value: number | null) => dispatch(setCurrentSentence(value)),
   };
 }
