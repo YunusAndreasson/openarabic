@@ -22,7 +22,11 @@ import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { useSentenceAudioPlayer, type WordTiming } from '@/hooks/useSentenceAudioPlayer';
+import {
+  useSentenceAudioPlayer,
+  type WordTiming,
+  type SentenceWordsMap,
+} from '@/hooks/useSentenceAudioPlayer';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -71,6 +75,9 @@ export default function ArticleScreen(): JSX.Element {
   useNavigationWithDebounce();
 
   // Get audio player hook - use its state directly
+  const audioPlayer = useSentenceAudioPlayer();
+
+  // Memoize audio player state to prevent unnecessary rerenders
   const {
     currentWordId,
     currentPosition,
@@ -78,7 +85,27 @@ export default function ArticleScreen(): JSX.Element {
     currentSentenceIndex,
     startPlayback,
     stopPlayback,
-  } = useSentenceAudioPlayer();
+    findWordById,
+  } = useMemo(
+    () => ({
+      currentWordId: audioPlayer.currentWordId,
+      currentPosition: audioPlayer.currentPosition,
+      isPlaying: audioPlayer.isPlaying,
+      currentSentenceIndex: audioPlayer.currentSentenceIndex,
+      startPlayback: audioPlayer.startPlayback,
+      stopPlayback: audioPlayer.stopPlayback,
+      findWordById: audioPlayer.findWordById,
+    }),
+    [
+      audioPlayer.currentWordId,
+      audioPlayer.currentPosition,
+      audioPlayer.isPlaying,
+      audioPlayer.currentSentenceIndex,
+      audioPlayer.startPlayback,
+      audioPlayer.stopPlayback,
+      audioPlayer.findWordById,
+    ]
+  );
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -200,37 +227,21 @@ export default function ArticleScreen(): JSX.Element {
     return audioData;
   }, [sortedSentences, sentenceWordsMap]);
 
-  // Find a word by ID from all sentences
-  const findWordById = useCallback(
-    (wordId: number): Tables<'sentence_words'> | undefined => {
-      if (!sentenceWordsMap) return undefined;
-
-      // Iterate through all sentences to find the word
-      for (const words of sentenceWordsMap.values()) {
-        const word = words.find(w => w.id === wordId);
-        if (word) return word;
-      }
-
-      return undefined;
-    },
-    [sentenceWordsMap]
-  );
-
   // Auto-scroll to the currently highlighted word
   useEffect(() => {
-    if (!currentWordId || !articleContentRef.current) {
+    if (!currentWordId || !articleContentRef.current || !sentenceWordsMap) {
       return;
     }
 
-    // Find the sentence that contains this word
-    const word = findWordById(currentWordId);
+    // Find the sentence that contains this word using the hook's function
+    const word = findWordById(currentWordId, sentenceWordsMap as SentenceWordsMap);
     if (!word) {
       return;
     }
 
     // Use the ArticleContent ref to scroll to the sentence
     articleContentRef.current.scrollToSentence(word.sentence_id);
-  }, [currentWordId, findWordById]);
+  }, [currentWordId, sentenceWordsMap, findWordById]);
 
   // Track article completion and handle animations on scroll
   const handleScroll = useCallback(
@@ -267,6 +278,15 @@ export default function ArticleScreen(): JSX.Element {
       setInitialBookmarkIcon(isInReadingList ? 'bookmark' : 'bookmark-outline');
     }
   }, [isLoadingReadingList, isInReadingList]);
+
+  // Preload audio when article loads
+  useEffect(() => {
+    if (sentenceAudioData.length > 0) {
+      audioPlayer.preloadAudioFiles(sentenceAudioData).catch(error => {
+        handleError(error);
+      });
+    }
+  }, [sentenceAudioData, audioPlayer]);
 
   // Check if all data is loaded with optimized loading states
   const isLoading = useMemo(() => {
@@ -338,15 +358,34 @@ export default function ArticleScreen(): JSX.Element {
 
   // Handle play button press for article-level play/pause
   const handlePlayPress = useCallback(async () => {
+    lightFeedback();
+
     if (isPlaying) {
-      lightFeedback();
       await stopPlayback();
     } else {
-      lightFeedback();
-      // Start playing from the beginning
-      await startPlayback(sentenceAudioData);
+      try {
+        const success = await startPlayback(sentenceAudioData);
+        if (!success) {
+          // Could provide feedback here if needed
+          handleError(new Error('Failed to start audio playback'));
+        }
+      } catch (error) {
+        handleError(error as Error);
+      }
     }
   }, [isPlaying, stopPlayback, startPlayback, sentenceAudioData]);
+
+  // Memoize rendering-related props to prevent unnecessary rerenders
+  const articleUIProps = useMemo(
+    () => ({
+      colors,
+      settings,
+      currentSentenceIndex,
+      currentWordId,
+      currentPosition,
+    }),
+    [colors, settings, currentSentenceIndex, currentWordId, currentPosition]
+  );
 
   // Component renderers
   const renderWord = useCallback(
@@ -393,24 +432,17 @@ export default function ArticleScreen(): JSX.Element {
           }}
           words={words}
           renderWord={renderWord}
-          settings={settings}
-          colors={colors}
+          settings={articleUIProps.settings}
+          colors={articleUIProps.colors}
           containerStyle={{ backgroundColor: colors.transparent }}
-          currentPlayingSentenceId={currentSentenceIndex}
-          currentPlayingWordId={currentWordId}
-          currentPlayingPosition={currentPosition}
+          currentPlayingSentenceId={articleUIProps.currentSentenceIndex}
+          currentPlayingWordId={articleUIProps.currentWordId}
+          currentPlayingPosition={articleUIProps.currentPosition}
         />
       );
     },
-    [
-      getWordsForSentence,
-      renderWord,
-      settings,
-      colors,
-      currentSentenceIndex,
-      currentWordId,
-      currentPosition,
-    ]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [getWordsForSentence, renderWord, articleUIProps]
   );
 
   // Render article card with memoization

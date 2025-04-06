@@ -10,6 +10,7 @@ import {
   updateAudioState,
 } from '../store/audioSlice';
 import type { RootState } from '../store/store';
+import type { Tables } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
 export type WordTiming = {
@@ -26,6 +27,8 @@ export type SentenceAudio = {
   wordTimings: WordTiming[];
 };
 
+export type SentenceWordsMap = Map<number, Tables<'sentence_words'>[]>;
+
 export function useSentenceAudioPlayer(): {
   currentWordId: number | null;
   currentPosition: number | null;
@@ -38,6 +41,10 @@ export function useSentenceAudioPlayer(): {
   startPlayback: (sentences: SentenceAudio[]) => Promise<boolean>;
   stopPlayback: () => Promise<boolean>;
   preloadAudioFiles: (sentences: SentenceAudio[]) => Promise<boolean>;
+  findWordById: (
+    wordId: number,
+    sentenceWordsMap: SentenceWordsMap
+  ) => Tables<'sentence_words'> | undefined;
   setAudioState: (state: 'idle' | 'loading' | 'playing' | 'paused' | 'error') => void;
   setProgress: (progress: number) => void;
   setDuration: (duration: number) => void;
@@ -73,6 +80,22 @@ export function useSentenceAudioPlayer(): {
 
   // We keep a forward-only pointer
   const lastActiveIndex = useRef(0);
+
+  // ---- HELPER: Find a word by ID from all sentences ----
+  const findWordById = useCallback(
+    (wordId: number, sentenceWordsMap: SentenceWordsMap): Tables<'sentence_words'> | undefined => {
+      if (!sentenceWordsMap) return undefined;
+
+      // Iterate through all sentences to find the word
+      for (const words of sentenceWordsMap.values()) {
+        const word = words.find(w => w.id === wordId);
+        if (word) return word;
+      }
+
+      return undefined;
+    },
+    []
+  );
 
   // ---- HELPER: Convert timing to ms if needed ----
   const normalizeTimingToMs = useCallback((time: number | string): number => {
@@ -623,6 +646,7 @@ export function useSentenceAudioPlayer(): {
     startPlayback,
     stopPlayback,
     preloadAudioFiles,
+    findWordById,
 
     // Debug or advanced
     setAudioState,
