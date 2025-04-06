@@ -179,10 +179,10 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
     }
   }, []);
 
-  // Calculate font size once outside the memo to avoid recalculations
-  const calculatedFontSize = settings.fontScale * 24;
+  // Pre-calculate text size once when component mounts (will never change)
+  const calculatedFontSize = useMemo(() => settings.fontScale * 24, []);
 
-  // Memoize text props to prevent unnecessary recalculations
+  // More aggressively memoized text props (only depends on selection)
   const textProps = useMemo(
     () => ({
       type: 'arabic' as const,
@@ -193,7 +193,13 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
       weight: isSelected ? ('600' as const) : ('normal' as const),
       style: styles.textStyle,
     }),
-    [isSelected, calculatedFontSize]
+    [isSelected]
+  );
+
+  // Pre-calculate the transliteration font size too
+  const transliterationFontSize = useMemo(
+    () => Math.max(10, calculatedFontSize * 0.5),
+    [calculatedFontSize]
   );
 
   // Handle tooltip close
@@ -297,7 +303,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
               type="body"
               variant="subtle"
               style={styles.transliteration}
-              arabicFontSize={Math.max(10, calculatedFontSize * 0.5)}
+              arabicFontSize={transliterationFontSize}
             >
               {word.grammar_note}
             </ThemedText>
@@ -334,4 +340,17 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ArabicWord = memo(ArabicWordComponent);
+export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
+  // Since text size never changes during runtime, we can optimize further
+  return (
+    // Check if audio highlighting changed (most frequent change)
+    prevProps.isAudioHighlighted === nextProps.isAudioHighlighted &&
+    // Check word identity (rarely changes)
+    prevProps.word.id === nextProps.word.id &&
+    // Check if transliteration visibility changed (rarely changes)
+    prevProps.settings.showTransliteration === nextProps.settings.showTransliteration &&
+    // Check if position changed (shouldn't change)
+    prevProps.position === nextProps.position
+    // FontScale check removed since we know it never changes
+  );
+});

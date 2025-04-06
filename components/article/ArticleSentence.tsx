@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef } from 'react';
-import React, { createRef, memo, useEffect, useRef } from 'react';
+import React, { createRef, memo, useEffect, useRef, useMemo } from 'react';
 import type { ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -85,57 +85,78 @@ function ArticleSentenceComponent({
 
   previousWordIdRef.current = currentPlayingWordId || null;
 
+  // Pre-calculate text styles since font size never changes
+  const englishTextStyle = useMemo(
+    () => [
+      styles.englishText,
+      {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * (settings.fontScale || 1),
+        color: colors.text,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * (settings.fontScale || 1),
+      },
+    ],
+    [colors.text, settings.fontScale]
+  );
+
+  // Memoize sentence background style to prevent recalculation
+  const backgroundStyle = useMemo(
+    () => [
+      styles.sentenceBackground,
+      {
+        backgroundColor: colors.tint ? `${colors.tint}40` : Colors.light.transparent,
+      },
+      animatedHighlightStyle,
+      isPlaying && styles.playingBackground,
+    ],
+    [colors.tint, animatedHighlightStyle, isPlaying]
+  );
+
+  // Memoize word rendering to prevent unnecessary re-renders
+  const renderedWords = useMemo(() => {
+    if (renderWord) {
+      return words.map((word, index) => {
+        const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
+        const isWordHighlighted =
+          currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
+        return renderWord(word, isWordHighlighted, wordRefs.current[index]);
+      });
+    }
+
+    return words.map((word, index) => {
+      const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
+      const isWordHighlighted =
+        currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
+      return (
+        <ArabicWord
+          key={`word-${word.id}-${word.position || sentence.id}`}
+          word={word}
+          onPress={word => onWordPress?.(word)}
+          settings={settings}
+          isAudioHighlighted={isWordHighlighted}
+          wordRef={wordRefs.current[index]}
+          position={index}
+        />
+      );
+    });
+  }, [
+    renderWord,
+    words,
+    currentPlayingWordId,
+    currentPlayingPosition,
+    isPlaying,
+    sentence.id,
+    settings,
+    onWordPress,
+  ]);
+
   return (
     <View style={[styles.container, containerStyle]}>
-      <Animated.View
-        style={[
-          styles.sentenceBackground,
-          {
-            backgroundColor: colors.tint ? `${colors.tint}40` : Colors.light.transparent,
-          },
-          animatedHighlightStyle,
-          isPlaying && styles.playingBackground,
-        ]}
-      />
+      <Animated.View style={backgroundStyle} />
 
-      <View style={styles.wordsContainer}>
-        {renderWord
-          ? words.map((word, index) => {
-              const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-              const isWordHighlighted =
-                currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
-              return renderWord(word, isWordHighlighted, wordRefs.current[index]);
-            })
-          : words.map((word, index) => {
-              const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-              const isWordHighlighted =
-                currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
-              return (
-                <ArabicWord
-                  key={`word-${word.id}-${word.position || sentence.id}`}
-                  word={word}
-                  onPress={word => onWordPress?.(word)}
-                  settings={settings}
-                  isAudioHighlighted={isWordHighlighted}
-                  wordRef={wordRefs.current[index]}
-                  position={index}
-                />
-              );
-            })}
-      </View>
+      <View style={styles.wordsContainer}>{renderedWords}</View>
+
       {settings?.showEnglish && sentence.english ? (
-        <Animated.Text
-          style={[
-            styles.englishText,
-            {
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * (settings.fontScale || 1),
-              color: colors.text,
-              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * (settings.fontScale || 1),
-            },
-          ]}
-        >
-          {sentence.english}
-        </Animated.Text>
+        <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
       ) : null}
     </View>
   );
@@ -176,4 +197,19 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ArticleSentence = memo(ArticleSentenceComponent);
+export const ArticleSentence = memo(ArticleSentenceComponent, (prevProps, nextProps) => {
+  // Only re-render on changes that actually affect rendering
+  return (
+    // Check playing state
+    prevProps.currentPlayingSentenceId === nextProps.currentPlayingSentenceId &&
+    prevProps.currentPlayingWordId === nextProps.currentPlayingWordId &&
+    prevProps.currentPlayingPosition === nextProps.currentPlayingPosition &&
+    // Check sentence identity
+    prevProps.sentence.id === nextProps.sentence.id &&
+    // Skip font scale check since it never changes
+    prevProps.settings.showEnglish === nextProps.settings.showEnglish &&
+    prevProps.settings.showTransliteration === nextProps.settings.showTransliteration &&
+    // If words array changed - we need to re-render
+    prevProps.words === nextProps.words
+  );
+});
