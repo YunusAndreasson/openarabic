@@ -10,19 +10,6 @@ import base64
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
 
-# Check ElevenLabs version
-try:
-    import elevenlabs
-
-    elevenlabs_version = getattr(elevenlabs, "__version__", "unknown")
-    print(f"Using ElevenLabs version: {elevenlabs_version}")
-except ImportError:
-    print("Could not determine ElevenLabs version")
-    elevenlabs_version = "unknown"
-
-min_required_version = (
-    "1.50.0"  # Minimum version that should support the timestamps API
-)
 
 # Execute set_keys.py to set environment variables
 set_keys_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "set_keys.py")
@@ -108,35 +95,68 @@ def generate_audio_filename() -> str:
     return f"{uuid.uuid4()}.mp3"
 
 
-def _generate_audio_common(text: str, filename: str) -> Optional[Dict]:
-    """Common function for generating audio files using ElevenLabs API with word timings."""
+def generate_word_audio(word: str, filename: str) -> Optional[Dict]:
+    """Generate audio file for a single Arabic word using ElevenLabs API and upload to Supabase storage."""
     try:
-        # Use the multilingual v2 model which has good support for Arabic
-        print(f"Calling ElevenLabs API with text: '{text[:30]}...'")
+        # For single words, we don't need timestamps, just generate the audio
+        audio_response = eleven_labs.text_to_speech.convert(
+            text=word,
+            voice_id="nPczCjzI2devNBz1zQrb",
+            model_id="eleven_multilingual_v2",
+            output_format="mp3_44100_128",
+            voice_settings=VoiceSettings(
+                stability=0.8,
+                similarity_boost=0.9,
+                style=0.0,
+                use_speaker_boost=True,
+                speed=0.8,
+            ),
+        )
 
-        # Check if convert_with_timestamps method exists
-        if hasattr(eleven_labs.text_to_speech, "convert_with_timestamps"):
-            print("Using convert_with_timestamps API...")
-            audio_response = eleven_labs.text_to_speech.convert_with_timestamps(
-                text=text,
-                voice_id="nPczCjzI2devNBz1zQrb",
-                model_id="eleven_multilingual_v2",
-                output_format="mp3_44100_128",
-                voice_settings=VoiceSettings(
-                    stability=0.8,
-                    similarity_boost=0.9,
-                    style=0.0,
-                    use_speaker_boost=True,
-                    speed=0.8,
-                ),
-            )
+        # The response is likely just bytes for regular convert()
+        if isinstance(audio_response, bytes):
+            audio_data = audio_response
         else:
-            # Fall back to standard convert method if timestamp API isn't available
-            print(
-                "convert_with_timestamps not found, falling back to regular convert..."
-            )
-            print("Available methods:", dir(eleven_labs.text_to_speech))
-            audio_response = eleven_labs.text_to_speech.convert(
+            # Handle object-style response
+            if hasattr(audio_response, "audio"):
+                audio_data = audio_response.audio
+            elif hasattr(audio_response, "audio_base_64"):
+                audio_data = base64.b64decode(audio_response.audio_base_64)
+            else:
+                print(
+                    f"Unexpected response type for word '{word}': {type(audio_response)}"
+                )
+                print(f"Available attributes: {dir(audio_response)}")
+                return None
+
+        # Save and upload the audio file
+        temp_audio_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "audio", filename
+        )
+        os.makedirs(os.path.dirname(temp_audio_path), exist_ok=True)
+
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_data)
+
+        with open(temp_audio_path, "rb") as f:
+            supabase.storage.from_("audio").upload(filename, f)
+
+        os.remove(temp_audio_path)
+
+        return {"url": f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"}
+
+    except Exception as e:
+        print(f"Error generating/uploading word audio for '{word}': {str(e)}")
+        return None
+
+
+def generate_sentence_audio(text: str, filename: str) -> Optional[Dict]:
+    """Generate audio file for an Arabic sentence using ElevenLabs API with word timings."""
+    try:
+        print(f"\nGenerating sentence audio with timestamps for: '{text}'")
+
+        # We know convert_with_timestamps exists because we checked at startup
+        audio_response = eleven_labs.text_to_speech.convert_with_timestamps(
             text=text,
             voice_id="nPczCjzI2devNBz1zQrb",
             model_id="eleven_multilingual_v2",
@@ -150,381 +170,327 @@ def _generate_audio_common(text: str, filename: str) -> Optional[Dict]:
             ),
         )
 
-        # Debug the response
-        print(f"ElevenLabs API response type: {type(audio_response)}")
-        print(f"Response attributes: {dir(audio_response)}")
-
-        # Validate audio response
         if not audio_response:
             print("Error: Empty audio response from ElevenLabs API")
             return None
 
-        # Extract audio data - check for both audio and audio_base_64 attributes
+        # Extract audio data
         audio_data = None
         if hasattr(audio_response, "audio"):
             audio_data = audio_response.audio
+            print("Found audio data in audio attribute")
         elif hasattr(audio_response, "audio_base_64"):
-            # Decode base64 audio data
-            print("Found audio_base_64 attribute, decoding...")
-            try:
-                audio_data = base64.b64decode(audio_response.audio_base_64)
-            except Exception as e:
-                print(f"Error decoding base64 audio: {str(e)}")
-                return None
-        else:
-            print(
-                f"Error: Response doesn't have 'audio' or 'audio_base_64' attribute. Available attributes: {dir(audio_response)}"
-            )
+            audio_data = base64.b64decode(audio_response.audio_base_64)
+            print("Found audio data in audio_base_64 attribute")
+        elif isinstance(audio_response, bytes):
+            audio_data = audio_response
+            print("Found raw audio bytes")
 
-            # Try alternative attribute names that might contain the audio data
-            audio_data = None
-            for attr in ["audio_content", "content", "data", "audio_data"]:
-                if hasattr(audio_response, attr):
-                    print(f"Found alternative audio attribute: {attr}")
-                    audio_data = getattr(audio_response, attr)
-                    break
+        if not audio_data:
+            print("No suitable audio data found in response")
+            return None
 
-            # If using standard convert, the response may be the audio bytes directly
-            if audio_data is None and isinstance(audio_response, bytes):
-                print("Response appears to be raw audio bytes")
-                audio_data = audio_response
-
-            if audio_data is None:
-                print("No suitable audio data found in response")
-                return None
-
-        # Save the audio file temporarily
+        # Save and upload the audio file
         temp_audio_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), "audio", filename
         )
         os.makedirs(os.path.dirname(temp_audio_path), exist_ok=True)
 
-        # Write the complete audio data to temporary file
         with open(temp_audio_path, "wb") as f:
             f.write(audio_data)
 
-        # Upload to Supabase storage
         with open(temp_audio_path, "rb") as f:
             supabase.storage.from_("audio").upload(filename, f)
 
-        # Clean up temporary file
         os.remove(temp_audio_path)
-
-        # Construct the complete storage URL
         storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
 
-        # Process the alignment data to extract word-level timings
+        # Process word timings - we expect these to always be available now
         word_timings = []
-
-        # Check for alignment data (safely with getattr)
         alignment = getattr(audio_response, "alignment", None)
+
         if not alignment:
-            print("No alignment data found in response")
+            print("❌ No alignment data found in response despite using timestamps API")
+            print("Response type:", type(audio_response))
+            print("Available attributes:", dir(audio_response))
+            raise ValueError("Missing alignment data in API response")
 
-            # Try alternative attribute names that might contain the alignment data
-            for attr in [
-                "timestamps",
-                "word_timestamps",
-                "timing_data",
-                "time_alignments",
-            ]:
-                if hasattr(audio_response, attr):
-                    print(f"Found alternative alignment attribute: {attr}")
-                    alignment = getattr(audio_response, attr)
-                    break
+        print("Found alignment data")
+        chars = getattr(alignment, "characters", [])
+        start_times = getattr(alignment, "character_start_times_seconds", [])
+        end_times = getattr(alignment, "character_end_times_seconds", [])
 
-        if alignment:
-            # Safely extract alignment properties
-            print(f"Alignment type: {type(alignment)}")
-            print(f"Alignment attributes: {dir(alignment)}")
-
-            # Check if we have the expected character timing data
-            chars = getattr(alignment, "characters", [])
-            start_times = getattr(alignment, "character_start_times_seconds", [])
-            end_times = getattr(alignment, "character_end_times_seconds", [])
-
-            # ElevenLabs might return a dict with these properties instead of object attributes
-            if not (chars and start_times and end_times) and hasattr(alignment, "dict"):
-                print("Using alignment.dict() method to extract data")
+        if not (chars and start_times and end_times):
+            if hasattr(alignment, "dict"):
+                print("Using alignment.dict() method")
                 alignment_dict = alignment.dict()
                 chars = alignment_dict.get("characters", [])
                 start_times = alignment_dict.get("character_start_times_seconds", [])
                 end_times = alignment_dict.get("character_end_times_seconds", [])
 
-            # Another possibility - alignment properties are directly accessible as dict
-            if not (chars and start_times and end_times) and isinstance(
-                alignment, dict
-            ):
-                print("Alignment is a dict, extracting directly")
-                chars = alignment.get("characters", [])
-                start_times = alignment.get("character_start_times_seconds", [])
-                end_times = alignment.get("character_end_times_seconds", [])
+        if not (
+            chars
+            and start_times
+            and end_times
+            and len(chars) == len(start_times) == len(end_times)
+        ):
+            print("❌ Invalid alignment data structure:")
+            print(f"Characters: {len(chars)}")
+            print(f"Start times: {len(start_times)}")
+            print(f"End times: {len(end_times)}")
+            raise ValueError("Invalid or missing timing data in API response")
 
-            # Add explicit debug information about what we found
-            print(f"Characters found: {len(chars) if chars else 0}")
-            print(f"Start times found: {len(start_times) if start_times else 0}")
-            print(f"End times found: {len(end_times) if end_times else 0}")
+        print(f"Processing {len(chars)} characters for timing extraction")
 
-            if (
-                chars
-                and start_times
-                and end_times
-                and len(chars) == len(start_times) == len(end_times)
-            ):
-                # Process character timings to extract word timings
+        current_word = ""
+        current_word_start_time = None
+
+        for i, char in enumerate(chars):
+            is_word_boundary = char == " " or i == len(chars) - 1
+
+            if is_word_boundary:
+                if i == len(chars) - 1 and char != " ":
+                    current_word += char
+
+                if current_word:
+                    word_end_idx = i if char == " " else i + 1
+                    word_end_time = end_times[word_end_idx - 1]
+
+                    if (
+                        current_word_start_time is not None
+                        and current_word_start_time < word_end_time
+                    ):
+                        word_timings.append(
+                            {
+                                "word": current_word,
+                                "start_time": str(current_word_start_time),
+                                "end_time": str(word_end_time),
+                            }
+                        )
+                        print(
+                            f"Added timing for word: {current_word} ({current_word_start_time:.2f}s - {word_end_time:.2f}s)"
+                        )
+
                 current_word = ""
                 current_word_start_time = None
-
-                # For Arabic text, words are separated by spaces but may have different
-                # characteristics than English, so we're still detecting words by spaces
-                # but with enhanced validation
-                for i, char in enumerate(chars):
-                    # Check if this is a word boundary (space or end of text)
-                    is_word_boundary = char == " " or i == len(chars) - 1
-
-                    if is_word_boundary:
-                        # If we're at the end of text, include the last character
-                        if i == len(chars) - 1 and char != " ":
-                            current_word += char
-
-                        # End of a word - record its timing if we've collected characters
-                        if current_word:
-                            word_end_idx = i if char == " " else i + 1
-                            word_end_time = end_times[word_end_idx - 1]
-
-                            # Validate timing values
-                            if (
-                                current_word_start_time is not None
-                                and current_word_start_time < word_end_time
-                            ):
-                                word_timings.append(
-                                    {
-                                        "word": current_word,
-                                        "start_time": current_word_start_time,
-                                        "end_time": word_end_time,
-                                    }
-                                )
-
-                            # Reset for next word
-                            current_word = ""
-                            current_word_start_time = None
-                    else:
-                        # Part of a word
-                        if not current_word:  # First character of the word
-                            current_word_start_time = start_times[i]
-                        current_word += char
             else:
-                print(
-                    f"Missing or mismatched alignment data - chars: {len(chars) if chars else 0}, start_times: {len(start_times) if start_times else 0}, end_times: {len(end_times) if end_times else 0}"
-                )
+                if not current_word:
+                    current_word_start_time = start_times[i]
+                current_word += char
 
-        # Add explicit logging at the end to show if we got word timings
-        if word_timings:
-            print(f"✅ Successfully extracted {len(word_timings)} word timings")
-            for i, timing in enumerate(word_timings[:3]):  # Show first 3 examples
-                print(
-                    f"  Word: '{timing['word']}', Start: {timing['start_time']:.2f}s, End: {timing['end_time']:.2f}s"
-                )
-            if len(word_timings) > 3:
-                print(f"  ... and {len(word_timings) - 3} more words")
-        else:
-            print("❌ No word timings were extracted. Possible causes:")
+        if not word_timings:
+            raise ValueError("Failed to extract any word timings from the response")
+
+        print(f"\n✅ Successfully extracted {len(word_timings)} word timings")
+        print("First few word timings:")
+        for timing in word_timings[:3]:
             print(
-                "  - ElevenLabs API might not support timestamps in your current plan"
+                f"  {timing['word']}: {timing['start_time']}s - {timing['end_time']}s"
             )
-            print(
-                "  - Using fallback to regular convert() method which doesn't support timestamps"
-            )
-            print("  - The response format doesn't match what we're expecting")
-            print("  - No alignment data was returned in the response")
 
         return {"url": storage_url, "word_timings": word_timings}
 
     except Exception as e:
-        print(f"Error generating/uploading audio: {str(e)}")
+        print(f"\n❌ Error generating/uploading sentence audio: {str(e)}")
         import traceback
 
         traceback.print_exc()
         return None
 
 
-def generate_audio(text: str, filename: str) -> Optional[Dict]:
-    """Generate audio file for Arabic text using ElevenLabs API and upload to Supabase storage."""
-    return _generate_audio_common(text, filename)
+def _normalize_arabic_word(word: str) -> str:
+    """
+    Normalize an Arabic word by removing all diacritics and normalizing characters.
+    This is more thorough than _remove_final_haraka as it handles all positions.
+    """
+    # All diacritics/tashkeel
+    diacritics = {
+        "َ",
+        "ً",
+        "ُ",
+        "ٌ",
+        "ِ",
+        "ٍ",
+        "ّ",
+        "ْ",  # Basic diacritics
+        "ٰ",
+        "ٓ",
+        "ٔ",
+        "ٕ",
+        "ٖ",
+        "ٗ",
+        "٨",
+        "٩",
+        "ٚ",
+        "ٛ",
+        "ٜ",
+        "ٝ",
+        "ٞ",
+        "ٟ",  # Extended diacritics
+    }
 
+    # Normalize characters (e.g., different forms of alef)
+    char_map = {
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ٱ": "ا",  # Alef forms
+        "ى": "ي",  # Yeh forms
+        "ة": "ه",  # Teh marbuta to heh
+    }
 
-def get_category_id(name: str = "aqeedah") -> int:
-    """Get category ID by name."""
-    result = supabase.table("categories").select("id").eq("name", name).execute()
-    if not result.data:
-        raise ValueError(f"Category '{name}' not found")
-    return result.data[0]["id"]
+    # Remove all diacritics
+    chars = [c for c in word if c not in diacritics]
 
+    # Normalize characters
+    chars = [char_map.get(c, c) for c in chars]
 
-def get_author_id(name: str = "Ibn Kathir") -> int:
-    """Get author ID by name."""
-    result = supabase.table("authors").select("id").eq("name", name).execute()
-    if not result.data:
-        raise ValueError(f"Author '{name}' not found")
-    return result.data[0]["id"]
-
-
-def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
-    """Get existing root or create a new one."""
-    # Clean up letters (remove extra spaces)
-    letters = " ".join(letters.split())
-
-    # Check if root exists
-    result = supabase.table("roots").select("id").eq("letters", letters).execute()
-    if result.data:
-        return result.data[0]["id"]
-
-    # Create new root
-    root_data = {"letters": letters, "meaning": meaning}
-    result = supabase.table("roots").insert(root_data).execute()
-    return result.data[0]["id"]
-
-
-def get_word_type_id(pos: str) -> int:
-    """Get word type ID from POS."""
-    word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
-    if word_type_id is None:
-        # Default to noun if POS not found
-        return WORD_TYPE_MAPPING["noun"]
-    return word_type_id
-
-
-def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
-    """Extract root information from a word."""
-    # If root is directly specified, use it
-    if word.get("root"):
-        return word["root"], word.get("notes")
-
-    # If no root is specified, create one based on the word form
-    # For Arabic words, we'll use the word form itself as the root
-    # This is a simplification but ensures we meet the not-null constraint
-    return word["arabic"], f"Auto-generated root for: {word['english']}"
-
-
-def generate_word_audio(word: str, filename: str) -> Optional[Dict]:
-    """Generate audio file for a single Arabic word using ElevenLabs API and upload to Supabase storage."""
-    return _generate_audio_common(word, filename)
+    return "".join(chars)
 
 
 def insert_sentence_words(
-    sentence_id: int, translation: Dict, article_word_timings: List[Dict] = None
+    sentence_id: int, translation: Dict, word_timings: List[Dict] = None
 ) -> None:
     """Insert words from a sentence with their roots and relationships."""
     word_by_word = translation.get("word_by_word", [])
 
+    # Create a mapping of both normalized words and positions to their timings
+    word_timing_map = {}
+    position_timing_map = {}
+    if word_timings:
+        print("\nProcessing word timings:")
+        for idx, timing in enumerate(word_timings):
+            word = timing["word"]
+            normalized_word = _normalize_arabic_word(word)
+            word_timing_map[normalized_word] = {
+                "start_time": timing["start_time"],
+                "end_time": timing["end_time"],
+            }
+            position_timing_map[idx] = {
+                "word": word,
+                "normalized": normalized_word,
+                "start_time": timing["start_time"],
+                "end_time": timing["end_time"],
+            }
+            print(
+                f"Timing {idx}: Original='{word}', Normalized='{normalized_word}', Time={timing['start_time']}s-{timing['end_time']}s"
+            )
+
+    print(f"\nProcessing {len(word_by_word)} words for sentence...")
     for position, word in enumerate(word_by_word):
         # Extract root information
         root_letters, root_meaning = extract_root_info(word)
-
-        # Get or create root
         root_id = get_or_create_root(root_letters, root_meaning)
-
-        # Get word type ID
         word_type_id = get_word_type_id(word.get("pos", "noun"))
 
-        # Generate audio for the individual word - for playback purposes only
+        # Generate individual word audio (no timestamps needed)
         audio_filename = generate_audio_filename()
         audio_result = generate_word_audio(word["arabic"], audio_filename)
-        audio_url = None
+        audio_url = audio_result.get("url") if audio_result else None
 
-        if audio_result is not None:
-            audio_url = audio_result.get("url")
+        # Clean and normalize the word form
+        original_word = word["arabic"]
+        cleaned_word_form = _remove_final_haraka(original_word)
+        normalized_word = _normalize_arabic_word(original_word)
 
-        # Remove final haraka from word form before saving
-        cleaned_word_form = _remove_final_haraka(word["arabic"])
+        # Try to get timing information in order of preference:
+        # 1. Match by normalized word
+        # 2. Match by position if available
+        timing_info = word_timing_map.get(normalized_word, {})
+        if not timing_info and position in position_timing_map:
+            timing_info = {
+                "start_time": position_timing_map[position]["start_time"],
+                "end_time": position_timing_map[position]["end_time"],
+            }
+            print(
+                f"Used position-based timing for word '{original_word}' (normalized: '{normalized_word}')"
+            )
+            print(
+                f"Matched with timing word: '{position_timing_map[position]['word']}' (normalized: '{position_timing_map[position]['normalized']}')"
+            )
 
-        # Prepare word data
+        # Debug timing info
+        print(f"\nWord {position + 1}/{len(word_by_word)}:")
+        print(f"  Original: '{original_word}'")
+        print(f"  Cleaned: '{cleaned_word_form}'")
+        print(f"  Normalized: '{normalized_word}'")
+        if timing_info:
+            print(
+                f"  ✅ Found timing: {timing_info['start_time']}s - {timing_info['end_time']}s"
+            )
+        else:
+            print("  ⚠️ No timing found")
+
         word_data = {
             "sentence_id": sentence_id,
             "position": position,
-            "word_form": cleaned_word_form,  # Use the cleaned word form
+            "word_form": cleaned_word_form,
             "english": word["english"],
             "word_type_id": word_type_id,
             "root_id": root_id,
-            "difficulty_level": 1,  # Default difficulty
+            "difficulty_level": 1,
             "grammar_note": word.get("notes"),
-            "audio_url": audio_url,  # Add the audio URL
+            "audio_url": audio_url,
+            "audio_start": timing_info.get("start_time"),
+            "audio_end": timing_info.get("end_time"),
         }
 
-        # Insert word
-        supabase.table("sentence_words").insert(word_data).execute()
+        try:
+            supabase.table("sentence_words").insert(word_data).execute()
+            print("  ✅ Inserted into database")
+        except Exception as e:
+            if "audio_start" in str(e) or "audio_end" in str(e):
+                word_data.pop("audio_start", None)
+                word_data.pop("audio_end", None)
+                print(
+                    "Note: audio_start/audio_end columns not available in sentence_words table"
+                )
+                print(
+                    "To add them, run: ALTER TABLE sentence_words ADD COLUMN audio_start TEXT, ADD COLUMN audio_end TEXT;"
+                )
+                supabase.table("sentence_words").insert(word_data).execute()
+            else:
+                raise e
 
 
 def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
     """Insert article sentences into the database."""
-    # Combine all Arabic text for audio generation
-    full_arabic_text = " ".join(t["original"] for t in translations)
-
-    # Generate audio file and get storage URL
-    audio_filename = generate_audio_filename()
-    audio_result = generate_audio(full_arabic_text, audio_filename)
-    storage_url = None
-    word_timings = []
-
-    if audio_result is not None:
-        storage_url = audio_result.get("url")
-        # Get word timings data for later storage in article record
-        word_timings = audio_result.get("word_timings", [])
-
-        if word_timings:
-            print(f"✅ Got {len(word_timings)} word timings for article audio")
-        else:
-            print("⚠️ No word timings found for article audio")
-
     for idx, translation in enumerate(translations):
-        # Insert sentence
+        print(f"\nProcessing sentence {idx}: {translation['original'][:50]}...")
+
+        # Generate audio for this individual sentence with timestamps
+        audio_filename = generate_audio_filename()
+        audio_result = generate_sentence_audio(translation["original"], audio_filename)
+        storage_url = None
+        word_timings = []
+
+        if audio_result is not None:
+            storage_url = audio_result.get("url")
+            word_timings = audio_result.get("word_timings", [])
+
+            if word_timings:
+                print(f"✅ Got {len(word_timings)} word timings for sentence {idx}")
+                print("Sample timings:")
+                for timing in word_timings[:2]:
+                    print(
+                        f"  {timing['word']}: {timing['start_time']}s - {timing['end_time']}s"
+                    )
+            else:
+                print(f"⚠️ No word timings found for sentence {idx}")
+
+        # Insert sentence with audio URL
         sentence_data = {
             "article_id": article_id,
             "position": idx,
             "arabic": translation["original"],
             "english": translation["full_translation"],
+            "audio_url": storage_url,
         }
         result = supabase.table("article_sentences").insert(sentence_data).execute()
         sentence_id = result.data[0]["id"]
 
-        # Insert words for this sentence
-        insert_sentence_words(sentence_id, translation)
-
-    # Update article with storage URL and word timing data if generated successfully
-    if storage_url:
-        update_data = {"audio_url": storage_url}
-
-        # Store the complete word timing data as JSON in the article record
-        if word_timings:
-            try:
-                update_data["word_timings"] = json.dumps(word_timings)
-                print(
-                    f"Storing word timings JSON data in article record (id: {article_id})"
-                )
-                supabase.table("articles").update(update_data).eq(
-                    "id", article_id
-                ).execute()
-            except Exception as e:
-                # If word_timings column doesn't exist, just update the audio_url
-                if "word_timings" in str(e):
-                    print(
-                        "Warning: word_timings column not available in articles table."
-                    )
-                    print(
-                        "To add it, run: ALTER TABLE articles ADD COLUMN word_timings JSONB;"
-                    )
-                    # Still update the audio_url
-                    supabase.table("articles").update({"audio_url": storage_url}).eq(
-                        "id", article_id
-                    ).execute()
-                else:
-                    # If it's some other error, re-raise
-                    raise e
-        else:
-            # If no word timings, just update audio_url
-        supabase.table("articles").update({"audio_url": storage_url}).eq(
-            "id", article_id
-        ).execute()
+        # Insert words with their individual audio and timing information from sentence audio
+        insert_sentence_words(sentence_id, translation, word_timings)
 
 
 def validate_article_data(data: Dict) -> None:
@@ -600,7 +566,7 @@ def process_json_file(file_path: str) -> None:
             print("Generating missing audio for existing article...")
             full_arabic_text = " ".join(t["original"] for t in data["translations"])
             audio_filename = generate_audio_filename()
-            storage_url = generate_audio(full_arabic_text, audio_filename)
+            storage_url = generate_sentence_audio(full_arabic_text, audio_filename)
             if storage_url:
                 supabase.table("articles").update({"audio_url": storage_url}).eq(
                     "id", existing_article_id
@@ -672,6 +638,59 @@ def archive_files(json_path: str, article_id: int) -> None:
     if os.path.exists(output_file):
         shutil.move(output_file, archived_output)
         print(f"Moved output file to {archived_output}")
+
+
+def get_category_id(name: str = "aqeedah") -> int:
+    """Get category ID by name."""
+    result = supabase.table("categories").select("id").eq("name", name).execute()
+    if not result.data:
+        raise ValueError(f"Category '{name}' not found")
+    return result.data[0]["id"]
+
+
+def get_author_id(name: str = "Ibn Kathir") -> int:
+    """Get author ID by name."""
+    result = supabase.table("authors").select("id").eq("name", name).execute()
+    if not result.data:
+        raise ValueError(f"Author '{name}' not found")
+    return result.data[0]["id"]
+
+
+def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
+    """Get existing root or create a new one."""
+    # Clean up letters (remove extra spaces)
+    letters = " ".join(letters.split())
+
+    # Check if root exists
+    result = supabase.table("roots").select("id").eq("letters", letters).execute()
+    if result.data:
+        return result.data[0]["id"]
+
+    # Create new root
+    root_data = {"letters": letters, "meaning": meaning}
+    result = supabase.table("roots").insert(root_data).execute()
+    return result.data[0]["id"]
+
+
+def get_word_type_id(pos: str) -> int:
+    """Get word type ID from POS."""
+    word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
+    if word_type_id is None:
+        # Default to noun if POS not found
+        return WORD_TYPE_MAPPING["noun"]
+    return word_type_id
+
+
+def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
+    """Extract root information from a word."""
+    # If root is directly specified, use it
+    if word.get("root"):
+        return word["root"], word.get("notes")
+
+    # If no root is specified, create one based on the word form
+    # For Arabic words, we'll use the word form itself as the root
+    # This is a simplification but ensures we meet the not-null constraint
+    return word["arabic"], f"Auto-generated root for: {word['english']}"
 
 
 def main():
