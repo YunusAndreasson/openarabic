@@ -44,7 +44,7 @@ export function useSentenceAudioPlayer(): {
   setCurrentSentenceIndex: (idx: number | null) => void;
   soundRef: React.MutableRefObject<Audio.Sound | null>;
   wordTimingRef: React.MutableRefObject<WordTiming[]>;
-  animationFrameRef: React.MutableRefObject<number | null>;
+  animationFrameRef: React.MutableRefObject<NodeJS.Timeout | null>;
 } {
   const dispatch = useDispatch();
 
@@ -65,7 +65,7 @@ export function useSentenceAudioPlayer(): {
   // Refs
   const soundRef = useRef<Audio.Sound | null>(null);
   const wordTimingRef = useRef<WordTiming[]>([]);
-  const animationFrameRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<NodeJS.Timeout | null>(null);
   const sentencesRef = useRef<SentenceAudio[]>([]);
   const cleanupRef = useRef<(() => void) | null>(null);
   const preloadedSoundsRef = useRef<(Audio.Sound | null)[]>([]);
@@ -94,7 +94,7 @@ export function useSentenceAudioPlayer(): {
   // ---- Cleanup function ----
   const cleanupAudio = useCallback(async (): Promise<void> => {
     if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
+      clearInterval(animationFrameRef.current);
       animationFrameRef.current = null;
     }
     if (soundRef.current) {
@@ -127,7 +127,7 @@ export function useSentenceAudioPlayer(): {
   // ---- Word tracking with efficient interval-based approach ----
   const trackWordTiming = useCallback((): (() => void) => {
     // Use interval instead of requestAnimationFrame to reduce CPU usage
-    const INTERVAL_MS = 250; // Check every 250ms instead of every frame (~16ms)
+    const INTERVAL_MS = 400; // Increased from 250ms to 400ms for better performance
     const WORD_OVERLAP_MS = 200;
     const MAX_CHECKS_PER_INTERVAL = 5;
 
@@ -183,7 +183,7 @@ export function useSentenceAudioPlayer(): {
     intervalId = setInterval(updateWordHighlight, INTERVAL_MS);
 
     // Store reference for cleanup
-    animationFrameRef.current = intervalId as unknown as number;
+    animationFrameRef.current = intervalId;
 
     // Return cleanup function
     return () => {
@@ -221,14 +221,6 @@ export function useSentenceAudioPlayer(): {
       } else if (status.isBuffering) {
         setAudioState('loading');
       } else if (status.didJustFinish) {
-        console.log(
-          '[Audio Debug] didJustFinish:',
-          status.didJustFinish,
-          'positionMillis:',
-          status.positionMillis,
-          'durationMillis:',
-          status.durationMillis
-        );
         // Move to the next sentence immediately
         playNextSentenceRef.current();
       } else {
@@ -241,6 +233,7 @@ export function useSentenceAudioPlayer(): {
 
   // ---- Preload all audio files ----
   const preloadAudioFiles = useCallback(
+    // eslint-disable-next-line sonarjs/cognitive-complexity
     async (sentences: SentenceAudio[]): Promise<boolean> => {
       if (!sentences?.length) return false;
 
@@ -261,24 +254,50 @@ export function useSentenceAudioPlayer(): {
 
         preloadedSoundsRef.current = [];
 
-        // Preload all audio files in parallel
-        const preloadPromises = sentences.map(async (sentence, index) => {
-          if (!sentence.audioUrl) {
-            preloadedSoundsRef.current[index] = null;
-            return;
-          }
+        // Use sliding window approach - only preload current and next 2 sentences
+        // This saves memory and improves performance
+        const PRELOAD_WINDOW_SIZE = 3;
+        const currentIndex = currentSentenceIndex ?? 0;
+        const startIdx = currentIndex;
+        const endIdx = Math.min(startIdx + PRELOAD_WINDOW_SIZE, sentences.length);
 
-          try {
-            const { sound } = await Audio.Sound.createAsync(
-              { uri: sentence.audioUrl },
-              { shouldPlay: false }
-            );
-            preloadedSoundsRef.current[index] = sound;
-          } catch (error) {
-            handleError(error as Error);
-            preloadedSoundsRef.current[index] = null;
+        // Preload only window of audio files in parallel
+        const preloadPromises = [];
+
+        for (let i = 0; i < sentences.length; i++) {
+          // Only preload if in our sliding window
+          if (i >= startIdx && i < endIdx) {
+            const sentence = sentences[i];
+            if (!sentence?.audioUrl) {
+              preloadedSoundsRef.current[i] = null;
+              continue;
+            }
+
+            const promise = (async (idx: number) => {
+              try {
+                const sentenceToLoad = sentences[idx];
+                if (!sentenceToLoad?.audioUrl) {
+                  preloadedSoundsRef.current[idx] = null;
+                  return;
+                }
+
+                const { sound } = await Audio.Sound.createAsync(
+                  { uri: sentenceToLoad.audioUrl },
+                  { shouldPlay: false }
+                );
+                preloadedSoundsRef.current[idx] = sound;
+              } catch (error) {
+                handleError(error as Error);
+                preloadedSoundsRef.current[idx] = null;
+              }
+            })(i);
+
+            preloadPromises.push(promise);
+          } else {
+            // Set to null for positions outside window
+            preloadedSoundsRef.current[i] = null;
           }
-        });
+        }
 
         await Promise.all(preloadPromises);
         setIsPreloading(false);
@@ -289,8 +308,67 @@ export function useSentenceAudioPlayer(): {
         return false;
       }
     },
-    [initAudioSession]
+    [initAudioSession, currentSentenceIndex]
   );
+
+  // Helper function to load next sentences in window (called after sentence change)
+  const updatePreloadingWindow = useCallback(async (): Promise<void> => {
+    if (!sentencesRef.current.length) return;
+
+    const PRELOAD_WINDOW_SIZE = 3;
+    const currentIdx = currentSentenceIndex ?? 0;
+
+    // Unload sentences that are too far behind
+    for (let i = 0; i < currentIdx - 1; i++) {
+      const sound = preloadedSoundsRef.current[i];
+      if (sound) {
+        try {
+          await sound.unloadAsync();
+          preloadedSoundsRef.current[i] = null;
+        } catch (err) {
+          handleError(err as Error);
+        }
+      }
+    }
+
+    // Preload sentences ahead
+    for (
+      let i = currentIdx + 1;
+      i < Math.min(currentIdx + PRELOAD_WINDOW_SIZE, sentencesRef.current.length);
+      i++
+    ) {
+      // Skip if already loaded or no URL
+      const nextSentence = sentencesRef.current[i];
+      if (preloadedSoundsRef.current[i] || !nextSentence?.audioUrl) continue;
+
+      try {
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: nextSentence.audioUrl },
+          { shouldPlay: false }
+        );
+        preloadedSoundsRef.current[i] = sound;
+      } catch (error) {
+        handleError(error as Error);
+      }
+    }
+  }, [currentSentenceIndex]);
+
+  // Update preloading window when sentence changes
+  useEffect(() => {
+    if (currentSentenceIndex !== null) {
+      // Use requestIdleCallback to avoid blocking the main thread
+      if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(() => {
+          updatePreloadingWindow();
+        });
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(() => {
+          updatePreloadingWindow();
+        }, 0);
+      }
+    }
+  }, [currentSentenceIndex, updatePreloadingWindow]);
 
   // ---- Function to move to the NEXT sentence ----
   const playNextSentence = useCallback(async (): Promise<void> => {
@@ -349,7 +427,7 @@ export function useSentenceAudioPlayer(): {
         sound = preloadedSound;
         await sound.setStatusAsync({
           shouldPlay: true,
-          progressUpdateIntervalMillis: 25,
+          progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms for better performance
           positionMillis: 0,
         });
         sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
@@ -359,7 +437,7 @@ export function useSentenceAudioPlayer(): {
           { uri: nextSentence.audioUrl },
           {
             shouldPlay: true,
-            progressUpdateIntervalMillis: 50,
+            progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms
             positionMillis: 0,
           },
           onPlaybackStatusUpdate
@@ -443,7 +521,7 @@ export function useSentenceAudioPlayer(): {
           sound = firstPreloadedSound;
           await sound.setStatusAsync({
             shouldPlay: true,
-            progressUpdateIntervalMillis: 50,
+            progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms for better performance
             positionMillis: 0,
           });
           sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
@@ -453,7 +531,7 @@ export function useSentenceAudioPlayer(): {
             { uri: firstSentence.audioUrl },
             {
               shouldPlay: true,
-              progressUpdateIntervalMillis: 50,
+              progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms
               positionMillis: 0,
             },
             onPlaybackStatusUpdate
@@ -514,10 +592,16 @@ export function useSentenceAudioPlayer(): {
       // Unload all preloaded sounds
       for (const sound of preloadedSoundsRef.current) {
         if (sound) {
-          sound.unloadAsync().catch((): void => {
-            /* ignore */
+          sound.unloadAsync().catch((error): void => {
+            handleError(error as Error);
           });
         }
+      }
+
+      // Clear any remaining intervals
+      if (animationFrameRef.current) {
+        clearInterval(animationFrameRef.current);
+        animationFrameRef.current = null;
       }
     };
   }, []);
