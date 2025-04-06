@@ -41,6 +41,7 @@ interface ArticleSentenceProps {
   containerStyle?: StyleProp<ViewStyle>;
   currentPlayingSentenceId?: number | null;
   currentPlayingWordId?: number | null;
+  currentPlayingPosition?: number | null;
 }
 
 function ArticleSentenceComponent({
@@ -53,6 +54,7 @@ function ArticleSentenceComponent({
   containerStyle,
   currentPlayingSentenceId,
   currentPlayingWordId,
+  currentPlayingPosition,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
@@ -100,12 +102,14 @@ function ArticleSentenceComponent({
         {renderWord
           ? words.map((word, index) => {
               const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-              const isWordHighlighted = currentPlayingWordId === wordId && isPlaying;
+              const isWordHighlighted =
+                currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
               return renderWord(word, isWordHighlighted, wordRefs.current[index]);
             })
           : words.map((word, index) => {
               const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-              const isWordHighlighted = currentPlayingWordId === wordId && isPlaying;
+              const isWordHighlighted =
+                currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
               return (
                 <ArabicWord
                   key={`word-${word.id}-${word.position || sentence.id}`}
@@ -114,6 +118,7 @@ function ArticleSentenceComponent({
                   settings={settings}
                   isAudioHighlighted={isWordHighlighted}
                   wordRef={wordRefs.current[index]}
+                  position={index}
                 />
               );
             })}
@@ -151,7 +156,7 @@ const styles = StyleSheet.create({
     paddingTop: LAYOUT.SPACING.TINY,
   },
   playingBackground: {
-    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderColor: Colors.light.border,
     borderWidth: 1,
   },
   sentenceBackground: {

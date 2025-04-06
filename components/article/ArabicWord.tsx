@@ -68,7 +68,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
     // Fallback to ID-only comparison (backward compatible)
     return audioState.wordId === word.id;
-  }, [audioState, word.id, position]);
+  }, [audioState.wordId, audioState.position, word.id, position]);
 
   // Directly get selected status from cache to bypass potential stale props
   const studyWords = queryClient.getQueryData(['studyWords', user?.id]);

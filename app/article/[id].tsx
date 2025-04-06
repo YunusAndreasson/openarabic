@@ -198,10 +198,11 @@ export default function ArticleScreen(): JSX.Element {
             const isValid = !isNaN(start) && !isNaN(end) && start < end;
             return isValid;
           })
-          .map(word => ({
+          .map((word, index) => ({
             wordId: word.id,
             startTime: parseFloat(word.audio_start || '0') * 1000, // Convert to milliseconds
             endTime: parseFloat(word.audio_end || '0') * 1000, // Convert to milliseconds
+            position: index, // Add position information
           }));
 
         return {
@@ -425,6 +426,7 @@ export default function ArticleScreen(): JSX.Element {
           containerStyle={{ backgroundColor: colors.transparent }}
           currentPlayingSentenceId={currentPlayingSentenceId}
           currentPlayingWordId={sentenceAudioPlayer.currentWordId}
+          currentPlayingPosition={sentenceAudioPlayer.currentPosition}
         />
       );
     },
@@ -435,6 +437,7 @@ export default function ArticleScreen(): JSX.Element {
       colors,
       currentPlayingSentenceId,
       sentenceAudioPlayer.currentWordId,
+      sentenceAudioPlayer.currentPosition,
     ]
   );
 
