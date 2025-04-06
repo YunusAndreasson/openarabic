@@ -180,6 +180,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   }, []);
 
   // Pre-calculate text size once when component mounts (will never change)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const calculatedFontSize = useMemo(() => settings.fontScale * 24, []);
 
   // More aggressively memoized text props (only depends on selection)
@@ -193,6 +194,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
       weight: isSelected ? ('600' as const) : ('normal' as const),
       style: styles.textStyle,
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [isSelected]
   );
 

@@ -26,7 +26,26 @@ export type SentenceAudio = {
   wordTimings: WordTiming[];
 };
 
-export function useSentenceAudioPlayer() {
+export function useSentenceAudioPlayer(): {
+  currentWordId: number | null;
+  currentPosition: number | null;
+  isPlaying: boolean;
+  currentSentenceIndex: number | null;
+  audioState: 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+  progress: number;
+  duration: number;
+  isPreloading: boolean;
+  startPlayback: (sentences: SentenceAudio[]) => Promise<boolean>;
+  stopPlayback: () => Promise<boolean>;
+  preloadAudioFiles: (sentences: SentenceAudio[]) => Promise<boolean>;
+  setAudioState: (state: 'idle' | 'loading' | 'playing' | 'paused' | 'error') => void;
+  setProgress: (progress: number) => void;
+  setDuration: (duration: number) => void;
+  setCurrentSentenceIndex: (idx: number | null) => void;
+  soundRef: React.MutableRefObject<Audio.Sound | null>;
+  wordTimingRef: React.MutableRefObject<WordTiming[]>;
+  animationFrameRef: React.MutableRefObject<number | null>;
+} {
   const dispatch = useDispatch();
 
   // Redux states
@@ -50,13 +69,13 @@ export function useSentenceAudioPlayer() {
   const sentencesRef = useRef<SentenceAudio[]>([]);
   const cleanupRef = useRef<(() => void) | null>(null);
   const preloadedSoundsRef = useRef<(Audio.Sound | null)[]>([]);
-  const playNextSentenceRef = useRef<() => Promise<void>>(async () => {});
+  const playNextSentenceRef = useRef<() => Promise<void>>(async (): Promise<void> => {});
 
   // We keep a forward-only pointer
   const lastActiveIndex = useRef(0);
 
   // ---- HELPER: Convert timing to ms if needed ----
-  const normalizeTimingToMs = useCallback((time: number | string) => {
+  const normalizeTimingToMs = useCallback((time: number | string): number => {
     if (typeof time === 'string') {
       return Math.round(parseFloat(time) * 1000);
     }
@@ -73,7 +92,7 @@ export function useSentenceAudioPlayer() {
   }, []);
 
   // ---- Cleanup function ----
-  const cleanupAudio = useCallback(async () => {
+  const cleanupAudio = useCallback(async (): Promise<void> => {
     if (animationFrameRef.current !== null) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -83,7 +102,7 @@ export function useSentenceAudioPlayer() {
         await soundRef.current.stopAsync();
         await soundRef.current.unloadAsync();
       } catch (err) {
-        // ignore
+        handleError(err as Error);
       }
       soundRef.current = null;
     }
@@ -106,14 +125,15 @@ export function useSentenceAudioPlayer() {
   }, [dispatch]);
 
   // ---- Word tracking with efficient interval-based approach ----
-  const trackWordTiming = useCallback(() => {
+  const trackWordTiming = useCallback((): (() => void) => {
     // Use interval instead of requestAnimationFrame to reduce CPU usage
     const INTERVAL_MS = 250; // Check every 250ms instead of every frame (~16ms)
     const WORD_OVERLAP_MS = 200;
+    const MAX_CHECKS_PER_INTERVAL = 5;
 
     let intervalId: NodeJS.Timeout | null = null;
 
-    const updateWordHighlight = async () => {
+    const updateWordHighlight = async (): Promise<void> => {
       try {
         // If no audio or no words, skip this update
         if (!soundRef.current || wordTimingRef.current.length === 0) {
@@ -130,13 +150,12 @@ export function useSentenceAudioPlayer() {
         const timings = wordTimingRef.current;
 
         // We'll limit how many words we check per interval to reduce processing
-        const maxChecksPerInterval = 5;
         let checksPerformed = 0;
 
         // Start from lastActiveIndex and move forward until we find a match
         for (let i = lastActiveIndex.current; i < timings.length; i++) {
           // Limit number of checks per interval to reduce CPU usage
-          if (checksPerformed >= maxChecksPerInterval) break;
+          if (checksPerformed >= MAX_CHECKS_PER_INTERVAL) break;
           checksPerformed++;
 
           const word = timings[i];
@@ -177,7 +196,7 @@ export function useSentenceAudioPlayer() {
 
   // ---- Playback status callback ----
   const onPlaybackStatusUpdate = useCallback(
-    (status: AVPlaybackStatus) => {
+    (status: AVPlaybackStatus): void => {
       if (!status.isLoaded) {
         if (status.error) {
           setAudioState('error');
@@ -202,6 +221,14 @@ export function useSentenceAudioPlayer() {
       } else if (status.isBuffering) {
         setAudioState('loading');
       } else if (status.didJustFinish) {
+        console.log(
+          '[Audio Debug] didJustFinish:',
+          status.didJustFinish,
+          'positionMillis:',
+          status.positionMillis,
+          'durationMillis:',
+          status.durationMillis
+        );
         // Move to the next sentence immediately
         playNextSentenceRef.current();
       } else {
@@ -227,7 +254,7 @@ export function useSentenceAudioPlayer() {
             try {
               await sound.unloadAsync();
             } catch (err) {
-              // ignore
+              handleError(err as Error);
             }
           }
         }
@@ -300,15 +327,15 @@ export function useSentenceAudioPlayer() {
 
       // Prepare word timings (forward-only)
       const mappedTimings: WordTiming[] = nextSentence.wordTimings
-        .map((timing, i) => {
-          return {
+        .map(
+          (timing, i): WordTiming => ({
             wordId: timing.wordId,
             startTime: normalizeTimingToMs(timing.startTime),
             endTime: normalizeTimingToMs(timing.endTime),
             position: i,
-          };
-        })
-        .filter(t => t.startTime < t.endTime);
+          })
+        )
+        .filter((t): boolean => t.startTime < t.endTime);
 
       wordTimingRef.current = mappedTimings;
 
@@ -322,7 +349,7 @@ export function useSentenceAudioPlayer() {
         sound = preloadedSound;
         await sound.setStatusAsync({
           shouldPlay: true,
-          progressUpdateIntervalMillis: 50,
+          progressUpdateIntervalMillis: 25,
           positionMillis: 0,
         });
         sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
@@ -345,7 +372,7 @@ export function useSentenceAudioPlayer() {
       // Start word tracking if we have timings
       if (mappedTimings.length > 0) {
         const trackingCleanup = trackWordTiming();
-        cleanupRef.current = () => {
+        cleanupRef.current = (): void => {
           trackingCleanup();
           // Don't unload the sound as it might be preloaded and reused
         };
@@ -366,7 +393,7 @@ export function useSentenceAudioPlayer() {
   ]);
 
   // Update the ref with the latest function
-  useEffect(() => {
+  useEffect((): void => {
     playNextSentenceRef.current = playNextSentence;
   }, [playNextSentence]);
 
@@ -397,13 +424,15 @@ export function useSentenceAudioPlayer() {
 
         const firstSentence = sentences[0];
         wordTimingRef.current = firstSentence.wordTimings
-          .map((timing, i) => ({
-            wordId: timing.wordId,
-            startTime: normalizeTimingToMs(timing.startTime),
-            endTime: normalizeTimingToMs(timing.endTime),
-            position: i,
-          }))
-          .filter(t => t.startTime < t.endTime);
+          .map(
+            (timing, i): WordTiming => ({
+              wordId: timing.wordId,
+              startTime: normalizeTimingToMs(timing.startTime),
+              endTime: normalizeTimingToMs(timing.endTime),
+              position: i,
+            })
+          )
+          .filter((t): boolean => t.startTime < t.endTime);
 
         lastActiveIndex.current = 0;
 
@@ -436,7 +465,7 @@ export function useSentenceAudioPlayer() {
 
         if (wordTimingRef.current.length > 0) {
           const trackingCleanup = trackWordTiming();
-          cleanupRef.current = () => {
+          cleanupRef.current = (): void => {
             trackingCleanup();
             // Don't unload as it might be preloaded
           };
@@ -476,7 +505,7 @@ export function useSentenceAudioPlayer() {
 
   useEffect(() => {
     // On unmount, do final cleanup
-    return () => {
+    return (): void => {
       if (cleanupRef.current) {
         cleanupRef.current();
         cleanupRef.current = null;
@@ -485,7 +514,7 @@ export function useSentenceAudioPlayer() {
       // Unload all preloaded sounds
       for (const sound of preloadedSoundsRef.current) {
         if (sound) {
-          sound.unloadAsync().catch(() => {
+          sound.unloadAsync().catch((): void => {
             /* ignore */
           });
         }
