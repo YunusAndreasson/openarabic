@@ -82,17 +82,38 @@ export function useSentenceAudioPlayer(): {
   const trackWordTiming: TrackWordTimingFunction = useCallback(() => {
     let frameId: number | null = null;
     const WORD_OVERLAP_MS = 200;
+    let lastActiveIndex = 0; // Only look forward from this index
+
+    // Helper to check if a word is active at the current time
+    const isWordActiveAtTime = (word: WordTiming, timeMs: number): boolean => {
+      return timeMs >= word.startTime && timeMs <= word.endTime + WORD_OVERLAP_MS;
+    };
+
+    // Helper to find the active word starting from a position
+    const findActiveWordFromIndex = (
+      startIndex: number,
+      timeMs: number
+    ): { id: number | null; position: number | null } => {
+      for (let i = startIndex; i < wordTimingRef.current.length; i++) {
+        const word = wordTimingRef.current[i];
+        if (!word) continue;
+
+        if (isWordActiveAtTime(word, timeMs)) {
+          lastActiveIndex = i; // Update last active index
+          return { id: word.wordId, position: i };
+        }
+      }
+      return { id: null, position: null };
+    };
 
     const updateWordHighlight = async (): Promise<void> => {
       try {
-        // If no sound or no word timings, just exit
         if (!soundRef.current || !wordTimingRef.current || wordTimingRef.current.length === 0) {
           frameId = requestAnimationFrame(updateWordHighlight);
           animationFrameRef.current = frameId;
           return;
         }
 
-        // Get current playback status
         const status = await soundRef.current.getStatusAsync();
         if (!status.isLoaded) {
           frameId = requestAnimationFrame(updateWordHighlight);
@@ -100,31 +121,22 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
-        // Get current time
         const currentTimeMs = status.positionMillis;
 
-        // Find active word
-        let activeWordId = null;
-        let activePosition = null;
+        // Find active word from last position
+        let result = findActiveWordFromIndex(lastActiveIndex, currentTimeMs);
 
-        // Check every word's timing
-        for (let i = 0; i < wordTimingRef.current.length; i++) {
-          const word = wordTimingRef.current[i];
-          if (!word) continue;
-
-          // If current time is within this word's range
-          if (currentTimeMs >= word.startTime && currentTimeMs <= word.endTime + WORD_OVERLAP_MS) {
-            activeWordId = word.wordId;
-            activePosition = i;
-            break;
-          }
+        // If not found and we're at the beginning, try from start
+        if (!result.id && currentTimeMs < 1000) {
+          lastActiveIndex = 0; // Reset
+          result = findActiveWordFromIndex(0, currentTimeMs);
         }
 
         // Update Redux state
         dispatch(
           setCurrentWord({
-            wordId: activeWordId,
-            position: activePosition,
+            wordId: result.id,
+            position: result.position,
           })
         );
 
@@ -133,18 +145,14 @@ export function useSentenceAudioPlayer(): {
         animationFrameRef.current = frameId;
       } catch (error) {
         handleError(error as Error);
-
-        // Keep the animation going even if there's an error
         frameId = requestAnimationFrame(updateWordHighlight);
         animationFrameRef.current = frameId;
       }
     };
 
-    // Start the animation loop
     frameId = requestAnimationFrame(updateWordHighlight);
     animationFrameRef.current = frameId;
 
-    // Cleanup function
     return () => {
       if (frameId) {
         cancelAnimationFrame(frameId);
