@@ -62,9 +62,6 @@ export default function ArticleScreen(): JSX.Element {
   const prevScrollYValue = useRef(0);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
 
-  // Play/Stop button state
-  const [isPlaying, setIsPlaying] = useState(false);
-
   // FORCE a default bookmark icon to ensure it's always visible
   const [initialBookmarkIcon, setInitialBookmarkIcon] = useState<'bookmark-outline' | 'bookmark'>(
     'bookmark-outline'
@@ -73,11 +70,15 @@ export default function ArticleScreen(): JSX.Element {
   // Navigation hook
   useNavigationWithDebounce();
 
-  // New sentence audio player hook
-  const sentenceAudioPlayer = useSentenceAudioPlayer();
-
-  // Audio playback states for sentences
-  const [currentPlayingSentenceId, setCurrentPlayingSentenceId] = useState<number | null>(null);
+  // Get audio player hook - use its state directly
+  const {
+    currentWordId,
+    currentPosition,
+    isPlaying,
+    currentSentenceIndex,
+    startPlayback,
+    stopPlayback,
+  } = useSentenceAudioPlayer();
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -85,22 +86,6 @@ export default function ArticleScreen(): JSX.Element {
     const parsed = parseInt(id, 10);
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
-
-  // Stabilize audio state changes
-  const stableAudioState = useMemo(() => {
-    if (sentenceAudioPlayer.isPlaying) {
-      return 'playing';
-    } else if (sentenceAudioPlayer.audioState === 'loading') {
-      return 'loading';
-    } else {
-      return 'stopped';
-    }
-  }, [sentenceAudioPlayer.isPlaying, sentenceAudioPlayer.audioState]);
-
-  // Update isPlaying state when stable audio state changes
-  useEffect(() => {
-    setIsPlaying(stableAudioState === 'playing');
-  }, [stableAudioState]);
 
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
@@ -233,7 +218,6 @@ export default function ArticleScreen(): JSX.Element {
 
   // Auto-scroll to the currently highlighted word
   useEffect(() => {
-    const currentWordId = sentenceAudioPlayer.currentWordId;
     if (!currentWordId || !articleContentRef.current) {
       return;
     }
@@ -244,12 +228,9 @@ export default function ArticleScreen(): JSX.Element {
       return;
     }
 
-    // Set the current playing sentence ID
-    setCurrentPlayingSentenceId(word.sentence_id);
-
     // Use the ArticleContent ref to scroll to the sentence
     articleContentRef.current.scrollToSentence(word.sentence_id);
-  }, [sentenceAudioPlayer.currentWordId, findWordById]);
+  }, [currentWordId, findWordById]);
 
   // Track article completion and handle animations on scroll
   const handleScroll = useCallback(
@@ -334,12 +315,12 @@ export default function ArticleScreen(): JSX.Element {
   const handleBackPress = useCallback(() => {
     if (isPlaying) {
       // Run audio cleanup in parallel
-      sentenceAudioPlayer.stopPlayback().catch(error => {
+      stopPlayback().catch(error => {
         handleError(error);
       });
     }
     router.back(); // Use router.back() for proper back navigation
-  }, [isPlaying, router, sentenceAudioPlayer]);
+  }, [isPlaying, router, stopPlayback]);
 
   // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
@@ -359,22 +340,13 @@ export default function ArticleScreen(): JSX.Element {
   const handlePlayPress = useCallback(async () => {
     if (isPlaying) {
       lightFeedback();
-      setIsPlaying(false);
-      await sentenceAudioPlayer.stopPlayback();
-      setCurrentPlayingSentenceId(null);
+      await stopPlayback();
     } else {
       lightFeedback();
-
       // Start playing from the beginning
-      const success = await sentenceAudioPlayer.startPlayback(sentenceAudioData);
-
-      if (success) {
-        setIsPlaying(true);
-      } else {
-        lightFeedback();
-      }
+      await startPlayback(sentenceAudioData);
     }
-  }, [isPlaying, sentenceAudioPlayer, sentenceAudioData]);
+  }, [isPlaying, stopPlayback, startPlayback, sentenceAudioData]);
 
   // Component renderers
   const renderWord = useCallback(
@@ -424,9 +396,9 @@ export default function ArticleScreen(): JSX.Element {
           settings={settings}
           colors={colors}
           containerStyle={{ backgroundColor: colors.transparent }}
-          currentPlayingSentenceId={currentPlayingSentenceId}
-          currentPlayingWordId={sentenceAudioPlayer.currentWordId}
-          currentPlayingPosition={sentenceAudioPlayer.currentPosition}
+          currentPlayingSentenceId={currentSentenceIndex}
+          currentPlayingWordId={currentWordId}
+          currentPlayingPosition={currentPosition}
         />
       );
     },
@@ -435,9 +407,9 @@ export default function ArticleScreen(): JSX.Element {
       renderWord,
       settings,
       colors,
-      currentPlayingSentenceId,
-      sentenceAudioPlayer.currentWordId,
-      sentenceAudioPlayer.currentPosition,
+      currentSentenceIndex,
+      currentWordId,
+      currentPosition,
     ]
   );
 
@@ -555,7 +527,7 @@ export default function ArticleScreen(): JSX.Element {
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
-            currentPlayingSentenceId={currentPlayingSentenceId}
+            currentPlayingSentenceId={currentSentenceIndex}
           />
         ) : null}
       </View>
