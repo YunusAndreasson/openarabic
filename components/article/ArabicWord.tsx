@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import type { ComponentRef } from 'react';
 import type { LayoutRectangle, LayoutChangeEvent } from 'react-native';
-import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import { useSelector } from 'react-redux';
 
@@ -22,6 +22,8 @@ import { WordTooltip } from './WordTooltip';
 
 // Global counter for tooltip zIndex values
 let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
+// Maximum z-index value to prevent potential integer overflow
+const MAX_Z_INDEX = 10000;
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -44,7 +46,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   const queryClient = useQueryClient();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
-  const [pageLayout, setPageLayout] = useState<{ x: number; y: number } | null>(null);
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
   const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
   const [forceSelected, setForceSelected] = useState<boolean | null>(null);
@@ -147,14 +148,14 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   // Calculate absolute position considering page scroll - memoized for performance
   const absoluteLayout = useMemo(
     () =>
-      layout && pageLayout
+      layout
         ? {
             ...layout,
-            x: layout.x + pageLayout.x,
-            y: layout.y + pageLayout.y,
+            x: layout.x,
+            y: layout.y,
           }
         : null,
-    [layout, pageLayout]
+    [layout]
   );
 
   // Update border opacity when selection changes
@@ -171,12 +172,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   // Capture layout on mount and when window resizes
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     setLayout(event.nativeEvent.layout);
-
-    if (Platform.OS === 'web') {
-      setPageLayout({ x: window.pageXOffset, y: window.pageYOffset });
-    } else {
-      setPageLayout({ x: 0, y: 0 });
-    }
   }, []);
 
   // Pre-calculate text size once when component mounts (will never change)
@@ -216,6 +211,10 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
     // Increment global counter and set new zIndex
     tooltipZIndexCounter += 1;
+    // Reset if it gets too high to prevent potential issues
+    if (tooltipZIndexCounter > MAX_Z_INDEX) {
+      tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
+    }
     setTooltipZIndex(tooltipZIndexCounter);
 
     // Show tooltip immediately with animation handled in WordTooltip
@@ -265,9 +264,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
     return baseStyle;
   }, [isSelected, isAudioHighlighted, colors.tint, colors.info, isDarkMode]);
 
-  // Remove scale style completely as it's no longer needed
-  const scaleStyle = useMemo(() => ({}), []);
-
   // Track word selection changes
   useEffect(() => {
     if (user && word.id) {
@@ -298,7 +294,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
         onLayout={handleLayout}
         style={finalStyles}
       >
-        <Animated.View style={[scaleStyle, pressStyle]}>
+        <Animated.View style={[{}, pressStyle]}>
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
           {settings.showTransliteration && word.grammar_note ? (
             <ThemedText
