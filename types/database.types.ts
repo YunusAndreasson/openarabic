@@ -49,6 +49,7 @@ export type Database = {
           source: string | null;
           summary: string | null;
           title: string;
+          word_timings: Json | null;
         };
         Insert: {
           audio_url?: string | null;
@@ -62,6 +63,7 @@ export type Database = {
           source?: string | null;
           summary?: string | null;
           title: string;
+          word_timings?: Json | null;
         };
         Update: {
           audio_url?: string | null;
@@ -75,6 +77,7 @@ export type Database = {
           source?: string | null;
           summary?: string | null;
           title?: string;
+          word_timings?: Json | null;
         };
         Relationships: [
           {
@@ -276,6 +279,8 @@ export type Database = {
           sentence_id: number;
           word_form: string;
           word_type_id: number;
+          audio_start_time: number | null;
+          audio_end_time: number | null;
         };
         Insert: {
           audio_url?: string | null;
@@ -288,6 +293,8 @@ export type Database = {
           sentence_id: number;
           word_form: string;
           word_type_id: number;
+          audio_start_time?: number | null;
+          audio_end_time?: number | null;
         };
         Update: {
           audio_url?: string | null;
@@ -300,6 +307,8 @@ export type Database = {
           sentence_id?: number;
           word_form?: string;
           word_type_id?: number;
+          audio_start_time?: number | null;
+          audio_end_time?: number | null;
         };
         Relationships: [
           {

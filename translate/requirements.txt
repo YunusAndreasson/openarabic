@@ -4,3 +4,4 @@ tqdm
 supabase
 python-dotenv
 elevenlabs
+setuptools
