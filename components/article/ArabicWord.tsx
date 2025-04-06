@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
+import type { ComponentRef } from 'react';
 import type { LayoutRectangle, LayoutChangeEvent } from 'react-native';
 import { StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
@@ -8,7 +9,6 @@ import Animated, { useSharedValue, withSequence, withTiming } from 'react-native
 import { analytics } from '@/services/analytics';
 import { lightFeedback } from '@/utils/haptics';
 
-import { Colors } from '../../constants/Colors';
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
 import { useAuth } from '../../hooks/useAuth';
@@ -31,9 +31,17 @@ interface ArabicWordProps {
     showTransliteration?: boolean;
     showWordType?: boolean;
   };
+  isAudioHighlighted?: boolean;
+  wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>;
 }
 
-function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
+function ArabicWordComponent({
+  word,
+  onPress,
+  settings,
+  isAudioHighlighted = false,
+  wordRef,
+}: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const { user } = useAuth();
@@ -212,16 +220,44 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
     onPress(word);
   }, [onPress, word, startPressAnimation, isSelected, user]);
 
-  // Update styling for border based on selection and highlight state
-  const borderStyle = useMemo(() => {
-    const highlightColor = colors.tint ? `${colors.tint}40` : Colors.light.transparent;
-
-    return {
-      borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
-      borderBottomColor: isSelected ? colors.textOverlay : Colors.light.transparent,
-      backgroundColor: isHighlighted ? highlightColor : Colors.light.transparent,
+  // Calculate styles based on state
+  const finalStyles = useMemo(() => {
+    const baseStyle = {
+      ...styles.wordContainer,
+      backgroundColor: isSelected ? colors.tint + '10' : undefined,
+      borderBottomColor: isSelected ? colors.tint : undefined,
+      borderBottomWidth: isSelected ? 2 : 0,
     };
-  }, [isSelected, isHighlighted, colors.textOverlay, colors.tint]);
+
+    // Audio highlight styles take precedence with enhanced visibility
+    if (isAudioHighlighted) {
+      return {
+        ...baseStyle,
+        backgroundColor: colors.info + (isDarkMode ? '80' : '40'), // Using info color with theme-appropriate opacity
+        borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+        borderColor: colors.info + (isDarkMode ? '40' : '20'),
+        borderWidth: 1,
+        elevation: 2,
+        shadowColor: colors.info,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: isDarkMode ? 0.4 : 0.2,
+        shadowRadius: 3,
+        zIndex: LAYOUT.Z_INDEX.CARD,
+      };
+    }
+
+    return baseStyle;
+  }, [isSelected, isAudioHighlighted, colors.tint, colors.info, isDarkMode]);
+
+  // Calculate scale style for audio highlight with smoother animation
+  const scaleStyle = useMemo(() => {
+    if (isAudioHighlighted) {
+      return {
+        transform: [{ scale: 1.05 }], // Slightly reduced scale for better readability
+      };
+    }
+    return {};
+  }, [isAudioHighlighted]);
 
   // Track word selection changes
   useEffect(() => {
@@ -245,26 +281,32 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
   return (
     <>
       <TouchableOpacity
+        ref={wordRef}
         onPress={handlePress}
         onLongPress={handleLongPress}
         delayLongPress={250}
-        style={[
-          styles.wordContainer,
-          // Add offsetY adjustment for first sentence positioning
-          highlightWord ? styles.highlightedWord : null,
-        ]}
         activeOpacity={0.7}
         onLayout={handleLayout}
+        style={finalStyles}
       >
-        <Animated.View style={[styles.container, pressStyle, borderStyle]}>
+        <Animated.View style={[scaleStyle, pressStyle]}>
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
+          {settings.showTransliteration && word.grammar_note ? (
+            <ThemedText
+              type="body"
+              variant="subtle"
+              style={styles.transliteration}
+              arabicFontSize={Math.max(10, calculatedFontSize * 0.5)}
+            >
+              {word.grammar_note}
+            </ThemedText>
+          ) : null}
         </Animated.View>
       </TouchableOpacity>
-
-      {layout ? (
+      {tooltipVisible && absoluteLayout ? (
         <WordTooltip
           visible={tooltipVisible}
-          text={word.english}
+          text={word.word_form}
           layout={absoluteLayout}
           onClose={handleTooltipClose}
           zIndex={tooltipZIndex}
@@ -275,29 +317,19 @@ function ArabicWordComponent({ word, onPress, settings }: ArabicWordProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    borderBottomWidth: LAYOUT.BORDER.WIDTH.NORMAL + LAYOUT.BORDER.WIDTH.THIN,
-    justifyContent: 'center',
-  },
-  highlightedWord: {
-    marginTop: 2,
-  },
   textStyle: {
-    marginBottom: 0,
-    paddingVertical: 0,
-    textAlign: 'right',
+    textAlign: 'center',
+  },
+  transliteration: {
+    marginTop: -4,
+    textAlign: 'center',
   },
   wordContainer: {
-    alignSelf: 'flex-start',
+    alignItems: 'center',
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    flexGrow: 0,
-    flexShrink: 0,
-    marginHorizontal: 1,
-    marginVertical: 1,
-    maxWidth: 150,
-    paddingHorizontal: 1,
-    paddingVertical: 3,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+    paddingVertical: 4,
   },
 });
 

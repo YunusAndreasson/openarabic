@@ -9,6 +9,9 @@ import hashlib
 import base64
 from elevenlabs.client import ElevenLabs
 from elevenlabs import VoiceSettings
+import mutagen
+from mutagen.mp3 import MP3
+import io
 
 
 # Execute set_keys.py to set environment variables
@@ -95,10 +98,33 @@ def generate_audio_filename() -> str:
     return f"{uuid.uuid4()}.mp3"
 
 
+def validate_mp3(audio_data: bytes) -> bool:
+    """Validate that the audio data is a valid MP3 file."""
+    try:
+        # Create a BytesIO object to read the audio data
+        audio_file = io.BytesIO(audio_data)
+
+        # Try to load it as an MP3
+        mp3 = MP3(audio_file)
+
+        # Check if it has basic MP3 attributes
+        if mp3.info.length > 0 and mp3.info.bitrate > 0:
+            print(
+                f"✅ Valid MP3: Length={mp3.info.length:.2f}s, Bitrate={mp3.info.bitrate / 1000:.0f}kbps"
+            )
+            return True
+        else:
+            print("❌ Invalid MP3: Missing audio properties")
+            return False
+    except Exception as e:
+        print(f"❌ Invalid MP3: {str(e)}")
+        return False
+
+
 def generate_word_audio(word: str, filename: str) -> Optional[Dict]:
     """Generate audio file for a single Arabic word using ElevenLabs API and upload to Supabase storage."""
     try:
-        # For single words, we don't need timestamps, just generate the audio
+        # For single words, use the regular convert endpoint since we don't need timestamps
         audio_response = eleven_labs.text_to_speech.convert(
             text=word,
             voice_id="nPczCjzI2devNBz1zQrb",
@@ -113,21 +139,22 @@ def generate_word_audio(word: str, filename: str) -> Optional[Dict]:
             ),
         )
 
-        # The response is likely just bytes for regular convert()
+        if not audio_response:
+            print(f"Error: Empty audio response from ElevenLabs API for word '{word}'")
+            return None
+
+        # For the regular convert endpoint, the response should be raw audio bytes
         if isinstance(audio_response, bytes):
             audio_data = audio_response
         else:
-            # Handle object-style response
-            if hasattr(audio_response, "audio"):
-                audio_data = audio_response.audio
-            elif hasattr(audio_response, "audio_base_64"):
-                audio_data = base64.b64decode(audio_response.audio_base_64)
-            else:
-                print(
-                    f"Unexpected response type for word '{word}': {type(audio_response)}"
-                )
-                print(f"Available attributes: {dir(audio_response)}")
-                return None
+            print(f"Unexpected response type for word '{word}': {type(audio_response)}")
+            print(f"Available attributes: {dir(audio_response)}")
+            return None
+
+        # Validate the MP3 data
+        if not validate_mp3(audio_data):
+            print(f"Skipping upload of invalid MP3 file for word '{word}'")
+            return None
 
         # Save and upload the audio file
         temp_audio_path = os.path.join(
@@ -139,7 +166,10 @@ def generate_word_audio(word: str, filename: str) -> Optional[Dict]:
             f.write(audio_data)
 
         with open(temp_audio_path, "rb") as f:
-            supabase.storage.from_("audio").upload(filename, f)
+            # Upload with content-type header for MP3
+            supabase.storage.from_("audio").upload(
+                filename, f, file_options={"content-type": "audio/mpeg"}
+            )
 
         os.remove(temp_audio_path)
 
@@ -155,7 +185,6 @@ def generate_sentence_audio(text: str, filename: str) -> Optional[Dict]:
     try:
         print(f"\nGenerating sentence audio with timestamps for: '{text}'")
 
-        # We know convert_with_timestamps exists because we checked at startup
         audio_response = eleven_labs.text_to_speech.convert_with_timestamps(
             text=text,
             voice_id="nPczCjzI2devNBz1zQrb",
@@ -174,20 +203,32 @@ def generate_sentence_audio(text: str, filename: str) -> Optional[Dict]:
             print("Error: Empty audio response from ElevenLabs API")
             return None
 
-        # Extract audio data
-        audio_data = None
-        if hasattr(audio_response, "audio"):
-            audio_data = audio_response.audio
-            print("Found audio data in audio attribute")
-        elif hasattr(audio_response, "audio_base_64"):
-            audio_data = base64.b64decode(audio_response.audio_base_64)
-            print("Found audio data in audio_base_64 attribute")
-        elif isinstance(audio_response, bytes):
-            audio_data = audio_response
-            print("Found raw audio bytes")
+        # Extract audio data according to API documentation
+        if hasattr(audio_response, "dict"):
+            # Handle Pydantic model response
+            response_dict = audio_response.dict()
+            audio_base64 = response_dict.get("audio_base64")
+            if not audio_base64:
+                print("Error: No audio_base64 found in response")
+                print("Response structure:", response_dict.keys())
+                return None
+            audio_data = base64.b64decode(audio_base64)
+        elif isinstance(audio_response, dict):
+            # Handle direct dictionary response
+            audio_base64 = audio_response.get("audio_base64")
+            if not audio_base64:
+                print("Error: No audio_base64 found in response")
+                print("Response structure:", audio_response.keys())
+                return None
+            audio_data = base64.b64decode(audio_base64)
+        else:
+            print(f"Unexpected response type: {type(audio_response)}")
+            print("Available attributes:", dir(audio_response))
+            return None
 
-        if not audio_data:
-            print("No suitable audio data found in response")
+        # Validate the MP3 data
+        if not validate_mp3(audio_data):
+            print("Skipping upload of invalid MP3 file")
             return None
 
         # Save and upload the audio file
@@ -200,33 +241,39 @@ def generate_sentence_audio(text: str, filename: str) -> Optional[Dict]:
             f.write(audio_data)
 
         with open(temp_audio_path, "rb") as f:
-            supabase.storage.from_("audio").upload(filename, f)
+            # Upload with content-type header for MP3
+            supabase.storage.from_("audio").upload(
+                filename, f, file_options={"content-type": "audio/mpeg"}
+            )
 
         os.remove(temp_audio_path)
         storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
 
-        # Process word timings - we expect these to always be available now
+        # Process word timings from the alignment data
         word_timings = []
-        alignment = getattr(audio_response, "alignment", None)
+        alignment = None
+
+        if hasattr(audio_response, "dict"):
+            response_dict = audio_response.dict()
+            alignment = response_dict.get("alignment")
+        elif isinstance(audio_response, dict):
+            alignment = audio_response.get("alignment")
 
         if not alignment:
-            print("❌ No alignment data found in response despite using timestamps API")
+            print("❌ No alignment data found in response")
             print("Response type:", type(audio_response))
-            print("Available attributes:", dir(audio_response))
+            if hasattr(audio_response, "dict"):
+                print("Response keys:", audio_response.dict().keys())
+            elif isinstance(audio_response, dict):
+                print("Response keys:", audio_response.keys())
+            else:
+                print("Available attributes:", dir(audio_response))
             raise ValueError("Missing alignment data in API response")
 
         print("Found alignment data")
-        chars = getattr(alignment, "characters", [])
-        start_times = getattr(alignment, "character_start_times_seconds", [])
-        end_times = getattr(alignment, "character_end_times_seconds", [])
-
-        if not (chars and start_times and end_times):
-            if hasattr(alignment, "dict"):
-                print("Using alignment.dict() method")
-                alignment_dict = alignment.dict()
-                chars = alignment_dict.get("characters", [])
-                start_times = alignment_dict.get("character_start_times_seconds", [])
-                end_times = alignment_dict.get("character_end_times_seconds", [])
+        chars = alignment.get("characters", [])
+        start_times = alignment.get("character_start_times_seconds", [])
+        end_times = alignment.get("character_end_times_seconds", [])
 
         if not (
             chars

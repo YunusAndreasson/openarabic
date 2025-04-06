@@ -35,6 +35,7 @@ const DETAIL_VIEW_COLUMNS = `
     arabic,
     english,
     article_id,
+    audio_url,
     sentence_words(
       id,
       position,
@@ -45,6 +46,9 @@ const DETAIL_VIEW_COLUMNS = `
       root_id,
       sentence_id,
       word_type_id,
+      audio_start,
+      audio_end,
+      audio_url,
       root:roots(id, letters, meaning),
       word_type:word_types(id, name)
     )

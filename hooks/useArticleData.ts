@@ -53,6 +53,18 @@ export const useArticleData = (
     placeholderData: old => old, // Keep old data while fetching
   });
 
+  // Log article data for debugging
+  useEffect(() => {
+    if (article) {
+      console.log('Article data loaded:', {
+        id: article.id,
+        hasSentences: !!article.article_sentences,
+        sentenceCount: article.article_sentences?.length,
+        firstSentence: article.article_sentences?.[0],
+      });
+    }
+  }, [article]);
+
   // Check if article is in user's reading list - optimized caching
   const {
     data: isInReadingList = false,
@@ -88,8 +100,16 @@ export const useArticleData = (
 
   // Process sentences from article data - no additional fetch needed
   const sortedSentences = useMemo(() => {
-    if (!article?.article_sentences) return [];
-    return [...article.article_sentences].sort((a, b) => a.position - b.position);
+    if (!article?.article_sentences) {
+      console.log('No article sentences available');
+      return [];
+    }
+    const sorted = [...article.article_sentences].sort((a, b) => a.position - b.position);
+    console.log('Sorted sentences:', {
+      count: sorted.length,
+      firstSentence: sorted[0],
+    });
+    return sorted;
   }, [article?.article_sentences]);
 
   // Extract selected word IDs
@@ -106,6 +126,7 @@ export const useArticleData = (
   // Create sentence words map from article data - no additional fetch needed
   const sentenceWordsMap = useMemo(() => {
     if (!sortedSentences.length) {
+      console.log('No sorted sentences available for word map');
       return {
         data: new Map(),
         isLoading: false,
@@ -133,6 +154,11 @@ export const useArticleData = (
             }))
         );
       }
+    });
+
+    console.log('Sentence words map created:', {
+      mapSize: map.size,
+      firstSentenceWords: sortedSentences[0]?.id ? map.get(sortedSentences[0].id)?.length : 0,
     });
 
     return {
@@ -192,22 +218,26 @@ export const useArticleData = (
         // Prefetch next article
         if (currentIndex < otherArticles.length - 1) {
           const nextArticle = otherArticles[currentIndex + 1];
-          queryClient.prefetchQuery({
-            queryKey: ['article', nextArticle.id],
-            queryFn: () => articlesService.getArticleById(nextArticle.id),
-            staleTime: 300000,
-            gcTime: 600000,
-          });
+          if (nextArticle) {
+            queryClient.prefetchQuery({
+              queryKey: ['article', nextArticle.id],
+              queryFn: () => articlesService.getArticleById(nextArticle.id),
+              staleTime: 300000,
+              gcTime: 600000,
+            });
+          }
         }
         // Prefetch previous article
         if (currentIndex > 0) {
           const prevArticle = otherArticles[currentIndex - 1];
-          queryClient.prefetchQuery({
-            queryKey: ['article', prevArticle.id],
-            queryFn: () => articlesService.getArticleById(prevArticle.id),
-            staleTime: 300000,
-            gcTime: 600000,
-          });
+          if (prevArticle) {
+            queryClient.prefetchQuery({
+              queryKey: ['article', prevArticle.id],
+              queryFn: () => articlesService.getArticleById(prevArticle.id),
+              staleTime: 300000,
+              gcTime: 600000,
+            });
+          }
         }
       }
     }

@@ -100,6 +100,9 @@ export function mapToSentenceWord(item: Record<string, any>): SentenceWord {
   result.root = safeGet(item, 'root', null);
   result.word_type = safeGet(item, 'word_type', null);
   result.sentence = safeGet(item, 'sentence', null);
+  result.audio_url = safeGet(item, 'audio_url', null);
+  result.audio_start = safeGet(item, 'audio_start', null);
+  result.audio_end = safeGet(item, 'audio_end', null);
   return result;
 }
 
@@ -137,9 +140,10 @@ export function mapToArticles(items: Record<string, any>[]): Article[] {
  */
 export function mapToArticleSentence(item: Record<string, any>): ArticleSentence {
   const result = item as ArticleSentence;
-  // Ensure sentence_words is always an array
+  // Ensure sentence_words is always an array and audio_url is present
   result.sentence_words = safeGet(item, 'sentence_words', [], val =>
     Array.isArray(val) ? val.map(mapToSentenceWord) : []
   );
+  result.audio_url = safeGet(item, 'audio_url', null);
   return result;
 }

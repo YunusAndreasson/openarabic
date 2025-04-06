@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
-import React, { memo, useEffect } from 'react';
-import type { ViewStyle, StyleProp } from 'react-native';
+import type { ComponentRef } from 'react';
+import React, { createRef, memo, useEffect, useRef } from 'react';
+import type { ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -21,9 +22,14 @@ interface ArticleSentenceProps {
   sentence: {
     id: string | number;
     english?: string;
+    audio_url?: string;
   };
   words: SentenceWord[];
-  renderWord?: (word: SentenceWord) => React.ReactNode;
+  renderWord?: (
+    word: SentenceWord,
+    isAudioHighlighted?: boolean,
+    wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>
+  ) => React.ReactNode;
   onWordPress?: (word: SentenceWord) => void;
   settings: {
     showEnglish: boolean;
@@ -33,6 +39,8 @@ interface ArticleSentenceProps {
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
+  currentPlayingSentenceId?: number | null;
+  currentPlayingWordId?: number | null;
 }
 
 function ArticleSentenceComponent({
@@ -43,13 +51,21 @@ function ArticleSentenceComponent({
   settings,
   colors: propColors,
   containerStyle,
+  currentPlayingSentenceId,
+  currentPlayingWordId,
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
   const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
   const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
+  const isPlaying = currentPlayingSentenceId === Number(sentence.id);
 
-  // Use highlight animation with Reanimated
+  const previousWordIdRef = useRef<number | null>(null);
+
+  const wordRefs = useRef<React.RefObject<ComponentRef<typeof TouchableOpacity>>[]>(
+    words.map(() => createRef<ComponentRef<typeof TouchableOpacity>>())
+  );
+
   const highlightOpacity = useSharedValue(0);
 
   useEffect(() => {
@@ -65,6 +81,8 @@ function ArticleSentenceComponent({
     opacity: highlightOpacity.value,
   }));
 
+  previousWordIdRef.current = currentPlayingWordId || null;
+
   return (
     <View style={[styles.container, containerStyle]}>
       <Animated.View
@@ -74,19 +92,31 @@ function ArticleSentenceComponent({
             backgroundColor: colors.tint ? `${colors.tint}40` : Colors.light.transparent,
           },
           animatedHighlightStyle,
+          isPlaying && styles.playingBackground,
         ]}
       />
+
       <View style={styles.wordsContainer}>
         {renderWord
-          ? words.map(word => renderWord(word))
-          : words.map(word => (
-              <ArabicWord
-                key={`word-${word.id}-${word.position || sentence.id}`}
-                word={word}
-                onPress={word => onWordPress?.(word)}
-                settings={settings}
-              />
-            ))}
+          ? words.map((word, index) => {
+              const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
+              const isWordHighlighted = currentPlayingWordId === wordId && isPlaying;
+              return renderWord(word, isWordHighlighted, wordRefs.current[index]);
+            })
+          : words.map((word, index) => {
+              const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
+              const isWordHighlighted = currentPlayingWordId === wordId && isPlaying;
+              return (
+                <ArabicWord
+                  key={`word-${word.id}-${word.position || sentence.id}`}
+                  word={word}
+                  onPress={word => onWordPress?.(word)}
+                  settings={settings}
+                  isAudioHighlighted={isWordHighlighted}
+                  wordRef={wordRefs.current[index]}
+                />
+              );
+            })}
       </View>
       {settings?.showEnglish && sentence.english ? (
         <Animated.Text
@@ -119,6 +149,10 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.SMALL,
     paddingLeft: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.TINY,
+  },
+  playingBackground: {
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    borderWidth: 1,
   },
   sentenceBackground: {
     ...StyleSheet.absoluteFillObject,

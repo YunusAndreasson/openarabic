@@ -14,15 +14,15 @@ import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
-import { ArticleContent } from '@/components/article/ArticleContent';
+import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
+import { useSentenceAudioPlayer, type WordTiming } from '@/hooks/useSentenceAudioPlayer';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -56,8 +56,7 @@ export default function ArticleScreen(): JSX.Element {
   const isDarkMode = useIsDarkMode();
   const queryClient = useQueryClient();
   const router = useRouter();
-
-  // Track previous audio state to detect transitions
+  const articleContentRef = useRef<ArticleContentRef>(null);
 
   // Scroll position tracking
   const prevScrollYValue = useRef(0);
@@ -74,8 +73,11 @@ export default function ArticleScreen(): JSX.Element {
   // Navigation hook
   useNavigationWithDebounce();
 
-  // Audio player hook
-  const { loadAndPlayAudio, stopPlayback, audioState } = useAudioPlayer();
+  // New sentence audio player hook
+  const sentenceAudioPlayer = useSentenceAudioPlayer();
+
+  // Audio playback states for sentences
+  const [currentPlayingSentenceId, setCurrentPlayingSentenceId] = useState<number | null>(null);
 
   // Parse article ID
   const articleId = useMemo(() => {
@@ -86,16 +88,14 @@ export default function ArticleScreen(): JSX.Element {
 
   // Stabilize audio state changes
   const stableAudioState = useMemo(() => {
-    // When audio finishes, it might rapidly transition through states
-    // We want to stabilize this by treating certain state combinations as "stopped"
-    if (audioState === 'idle' || audioState === 'error') {
-      return 'stopped';
-    } else if (audioState === 'playing') {
+    if (sentenceAudioPlayer.isPlaying) {
       return 'playing';
+    } else if (sentenceAudioPlayer.audioState === 'loading') {
+      return 'loading';
     } else {
       return 'stopped';
     }
-  }, [audioState]);
+  }, [sentenceAudioPlayer.isPlaying, sentenceAudioPlayer.audioState]);
 
   // Update isPlaying state when stable audio state changes
   useEffect(() => {
@@ -167,6 +167,89 @@ export default function ArticleScreen(): JSX.Element {
   const bookmarkButtonStyle = buttonStyle;
   const playButtonStyle = buttonStyle;
 
+  // Prepare audio data for sentence-by-sentence playback
+  const sentenceAudioData = useMemo(() => {
+    if (!sortedSentences || !sentenceWordsMap) {
+      return [];
+    }
+
+    const audioData = sortedSentences
+      .filter(sentence => {
+        // Only include sentences with valid audio URLs
+        const audioUrl = sentence.audio_url;
+        const isValid =
+          audioUrl &&
+          audioUrl.trim().length > 0 &&
+          (audioUrl.startsWith('http://') ||
+            audioUrl.startsWith('https://') ||
+            audioUrl.startsWith('file://'));
+
+        return isValid;
+      })
+      .map(sentence => {
+        const sentenceId = sentence.id;
+        const words = sentenceWordsMap.get(sentenceId) || [];
+
+        // Create word timings from the words that have audio_start and audio_end
+        const wordTimings: WordTiming[] = words
+          .filter(word => {
+            const start = parseFloat(word.audio_start || '');
+            const end = parseFloat(word.audio_end || '');
+            const isValid = !isNaN(start) && !isNaN(end) && start < end;
+            return isValid;
+          })
+          .map(word => ({
+            wordId: word.id,
+            startTime: parseFloat(word.audio_start || '0') * 1000, // Convert to milliseconds
+            endTime: parseFloat(word.audio_end || '0') * 1000, // Convert to milliseconds
+          }));
+
+        return {
+          sentenceId,
+          audioUrl: sentence.audio_url || '',
+          wordTimings,
+        };
+      });
+
+    return audioData;
+  }, [sortedSentences, sentenceWordsMap]);
+
+  // Find a word by ID from all sentences
+  const findWordById = useCallback(
+    (wordId: number): Tables<'sentence_words'> | undefined => {
+      if (!sentenceWordsMap) return undefined;
+
+      // Iterate through all sentences to find the word
+      for (const words of sentenceWordsMap.values()) {
+        const word = words.find(w => w.id === wordId);
+        if (word) return word;
+      }
+
+      return undefined;
+    },
+    [sentenceWordsMap]
+  );
+
+  // Auto-scroll to the currently highlighted word
+  useEffect(() => {
+    const currentWordId = sentenceAudioPlayer.currentWordId;
+    if (!currentWordId || !articleContentRef.current) {
+      return;
+    }
+
+    // Find the sentence that contains this word
+    const word = findWordById(currentWordId);
+    if (!word) {
+      return;
+    }
+
+    // Set the current playing sentence ID
+    setCurrentPlayingSentenceId(word.sentence_id);
+
+    // Use the ArticleContent ref to scroll to the sentence
+    articleContentRef.current.scrollToSentence(word.sentence_id);
+  }, [sentenceAudioPlayer.currentWordId, findWordById]);
+
   // Track article completion and handle animations on scroll
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -191,9 +274,7 @@ export default function ArticleScreen(): JSX.Element {
         setIsHeaderVisible(shouldBeVisible);
       }
 
-      if (event.nativeEvent.contentOffset.y <= 0) {
-        prevScrollYValue.current = 0;
-      }
+      prevScrollYValue.current = currentScrollY;
     },
     [article, user, selectedWordIds, isHeaderVisible]
   );
@@ -252,12 +333,12 @@ export default function ArticleScreen(): JSX.Element {
   const handleBackPress = useCallback(() => {
     if (isPlaying) {
       // Run audio cleanup in parallel
-      stopPlayback().catch(error => {
+      sentenceAudioPlayer.stopPlayback().catch(error => {
         handleError(error);
       });
     }
     router.back(); // Use router.back() for proper back navigation
-  }, [isPlaying, router, stopPlayback]);
+  }, [isPlaying, router, sentenceAudioPlayer]);
 
   // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
@@ -273,26 +354,26 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [articleId, isInReadingList, handleToggleReadingList, user]);
 
-  // Handle play button press
+  // Handle play button press for article-level play/pause
   const handlePlayPress = useCallback(async () => {
     if (isPlaying) {
       lightFeedback();
       setIsPlaying(false);
-      await stopPlayback();
+      await sentenceAudioPlayer.stopPlayback();
+      setCurrentPlayingSentenceId(null);
     } else {
-      const audioUrl = article?.audio_url ?? null;
-      if (!audioUrl) return;
-
       lightFeedback();
-      setIsPlaying(true);
-      const success = await loadAndPlayAudio(audioUrl);
 
-      if (!success) {
-        setIsPlaying(false);
+      // Start playing from the beginning
+      const success = await sentenceAudioPlayer.startPlayback(sentenceAudioData);
+
+      if (success) {
+        setIsPlaying(true);
+      } else {
         lightFeedback();
       }
     }
-  }, [isPlaying, article, loadAndPlayAudio, stopPlayback]);
+  }, [isPlaying, sentenceAudioPlayer, sentenceAudioData]);
 
   // Component renderers
   const renderWord = useCallback(
@@ -300,7 +381,10 @@ export default function ArticleScreen(): JSX.Element {
       word: Tables<'sentence_words'> & {
         root: Tables<'roots'> | null;
         word_type: Tables<'word_types'> | null;
-      }
+      },
+      isAudioHighlighted = false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      wordRef?: any
     ) => {
       return (
         <ArabicWord
@@ -313,6 +397,8 @@ export default function ArticleScreen(): JSX.Element {
             showTransliteration: false,
             showWordType: false,
           }}
+          isAudioHighlighted={isAudioHighlighted}
+          wordRef={wordRef}
         />
       );
     },
@@ -327,16 +413,29 @@ export default function ArticleScreen(): JSX.Element {
       return (
         <ArticleSentence
           key={sentence.id}
-          sentence={sentence}
+          sentence={{
+            id: sentence.id,
+            english: sentence.english,
+            audio_url: sentence.audio_url || undefined,
+          }}
           words={words}
           renderWord={renderWord}
           settings={settings}
           colors={colors}
           containerStyle={{ backgroundColor: colors.transparent }}
+          currentPlayingSentenceId={currentPlayingSentenceId}
+          currentPlayingWordId={sentenceAudioPlayer.currentWordId}
         />
       );
     },
-    [getWordsForSentence, renderWord, settings, colors]
+    [
+      getWordsForSentence,
+      renderWord,
+      settings,
+      colors,
+      currentPlayingSentenceId,
+      sentenceAudioPlayer.currentWordId,
+    ]
   );
 
   // Render article card with memoization
@@ -442,6 +541,7 @@ export default function ArticleScreen(): JSX.Element {
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
         {sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
+            ref={articleContentRef}
             id={id}
             article={article}
             sortedSentences={sortedSentences}
@@ -452,6 +552,7 @@ export default function ArticleScreen(): JSX.Element {
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
+            currentPlayingSentenceId={currentPlayingSentenceId}
           />
         ) : null}
       </View>
