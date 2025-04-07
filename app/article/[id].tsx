@@ -119,16 +119,14 @@ export default function ArticleScreen(): JSX.Element {
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
     if (user?.id) {
-      const studyWordsQuery = queryClient.getQueryData(['studyWords', user.id]);
-      if (!studyWordsQuery) {
-        queryClient.prefetchQuery({
-          queryKey: ['studyWords', user.id],
-          queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-          staleTime: 300000, // Cache for 5 minutes
-          gcTime: 600000, // Keep in garbage collection for 10 minutes
-          retry: 2,
-        });
-      }
+      // Immediately fetch study words - don't wait for cached data check
+      queryClient.fetchQuery({
+        queryKey: ['studyWords', user.id],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
+        staleTime: 300000, // Cache for 5 minutes
+        gcTime: 600000, // Keep in garbage collection for 10 minutes
+        retry: 3,
+      });
     }
   }, [user?.id, queryClient]);
 

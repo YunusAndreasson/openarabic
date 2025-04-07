@@ -54,10 +54,10 @@ const queryClient = new QueryClient({
       gcTime: 300000,
       refetchOnMount: true,
       refetchOnReconnect: true,
-      retry: 1,
+      retry: 3,
     },
     mutations: {
-      retry: 1,
+      retry: 3,
       gcTime: 0,
     },
   },

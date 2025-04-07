@@ -107,6 +107,7 @@ const ArticleSection = memo(
               queryFn: () => articlesService.getArticleById(item.id),
               staleTime: 0,
               gcTime: 0,
+              retry: 3,
             });
           }
         });

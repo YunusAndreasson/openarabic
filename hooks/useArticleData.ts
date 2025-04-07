@@ -81,7 +81,7 @@ export const useArticleData = (
     staleTime: 300000, // Cache for 5 minutes
     gcTime: 600000, // Keep in garbage collection for 10 minutes
     networkMode: 'always',
-    retry: 2,
+    retry: 3,
     refetchOnMount: false,
     placeholderData: old => old,
   });
@@ -194,6 +194,7 @@ export const useArticleData = (
         queryFn: () => articlesService.getArticleById(articleId),
         staleTime: 300000,
         gcTime: 600000,
+        retry: 3,
       });
     },
     [queryClient]

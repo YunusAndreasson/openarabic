@@ -46,7 +46,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryFn: () => articlesService.getArticles(),
           staleTime: 300000, // 5 minutes
           gcTime: 600000, // 10 minutes
-          retry: 1,
+          retry: 3,
         }),
 
         queryClient.fetchQuery({
@@ -54,7 +54,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryFn: () => categoriesService.getCategories(),
           staleTime: 600000, // 10 minutes
           gcTime: 900000, // 15 minutes
-          retry: 1,
+          retry: 3,
         }),
       ];
 
@@ -65,7 +65,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             queryFn: () => readingListService.getReadingList(user.id),
             staleTime: 180000, // 3 minutes
             gcTime: 300000, // 5 minutes
-            retry: 1,
+            retry: 3,
           }),
 
           queryClient.fetchQuery({
@@ -73,7 +73,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
             staleTime: 180000, // 3 minutes
             gcTime: 300000, // 5 minutes
-            retry: 1,
+            retry: 3,
           }),
 
           queryClient.fetchQuery({
@@ -81,7 +81,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
             staleTime: 300000, // 5 minutes
             gcTime: 600000, // 10 minutes
-            retry: 1,
+            retry: 3,
           })
         );
       }
@@ -145,14 +145,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
           staleTime: 120000,
           gcTime: 300000,
-          retry: 1,
+          retry: 3,
         }),
         queryClient.prefetchQuery({
           queryKey: FSRS_QUERY_KEYS.all(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
           staleTime: 180000,
           gcTime: 600000,
-          retry: 1,
+          retry: 3,
         }),
       ]);
 

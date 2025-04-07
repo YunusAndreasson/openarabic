@@ -393,6 +393,7 @@ export default function BookmarksScreen(): JSX.Element {
             queryFn: () => readingListService.getReadingList(user.id),
             staleTime: 60000, // Match the query staleTime
             gcTime: 300000, // Match the query gcTime
+            retry: 3,
           });
         } else {
           // Otherwise just invalidate to refresh in background

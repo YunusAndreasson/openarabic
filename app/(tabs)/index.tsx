@@ -188,7 +188,7 @@ export default function ArticlesScreen(): JSX.Element {
     queryFn: () => articlesService.getArticles(),
     staleTime: 300000, // Cache for 5 minutes
     gcTime: 600000, // Keep in garbage collection for 10 minutes
-    retry: 2,
+    retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: old => old,
@@ -200,7 +200,7 @@ export default function ArticlesScreen(): JSX.Element {
     queryFn: () => categoriesService.getCategories(),
     staleTime: 1800000,
     gcTime: 3600000,
-    retry: 2,
+    retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
@@ -214,7 +214,7 @@ export default function ArticlesScreen(): JSX.Element {
     },
     staleTime: 1800000,
     gcTime: 3600000,
-    retry: 2,
+    retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
@@ -296,6 +296,7 @@ export default function ArticlesScreen(): JSX.Element {
           queryFn: () => articlesService.getArticleById(article.id),
           staleTime: 300000, // Cache for 5 minutes
           gcTime: 600000, // Keep in garbage collection for 10 minutes
+          retry: 3,
         });
       }
 
@@ -309,6 +310,7 @@ export default function ArticlesScreen(): JSX.Element {
             queryFn: () => readingListService.isInReadingList(userId, article.id),
             staleTime: 300000,
             gcTime: 600000,
+            retry: 3,
           });
         }
       }

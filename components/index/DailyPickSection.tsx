@@ -30,6 +30,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
       queryFn: () => articlesService.getArticleById(article.id),
       staleTime: 0, // No caching
       gcTime: 0, // No cache retention
+      retry: 3,
     });
 
     // Call the original onPress handler
@@ -45,6 +46,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         queryFn: () => articlesService.getArticleById(article.id),
         staleTime: 0, // No caching
         gcTime: 0, // No cache retention
+        retry: 3,
       });
     }
   }, [article, queryClient]);

@@ -189,6 +189,7 @@ function FilterScreenContent() {
       queryClient.prefetchQuery({
         queryKey: ['article', article.id],
         queryFn: () => articlesService.getArticleById(article.id),
+        retry: 3,
       });
 
       // Use the navigation with debounce for smoother transitions

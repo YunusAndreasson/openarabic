@@ -29,6 +29,43 @@ export type SentenceAudio = {
 
 export type SentenceWordsMap = Map<number, Tables<'sentence_words'>[]>;
 
+/**
+ * Helper function to retry an async operation with exponential backoff
+ * @param operation Function to retry
+ * @param maxRetries Maximum number of retries
+ * @param baseDelay Initial delay in ms
+ * @param _retryLog Description for logging purposes
+ * @returns Promise resolving to operation result
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  maxRetries = 3,
+  baseDelay = 300,
+  _retryLog = 'operation'
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        // Retry silently
+      }
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+
+      if (attempt < maxRetries) {
+        // Calculate exponential backoff delay with small jitter
+        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 100;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+
+  // If we've exhausted all retries, throw the last error
+  throw lastError;
+}
+
 export function useSentenceAudioPlayer(): {
   currentWordId: number | null;
   currentPosition: number | null;
@@ -77,6 +114,8 @@ export function useSentenceAudioPlayer(): {
   const cleanupRef = useRef<(() => void) | null>(null);
   const preloadedSoundsRef = useRef<(Audio.Sound | null)[]>([]);
   const playNextSentenceRef = useRef<() => Promise<void>>(async (): Promise<void> => {});
+  // Add a ref to track if we're already transitioning between sentences
+  const isTransitioningRef = useRef<boolean>(false);
 
   // We keep a forward-only pointer
   const lastActiveIndex = useRef(0);
@@ -238,6 +277,22 @@ export function useSentenceAudioPlayer(): {
       setProgress(status.positionMillis);
       setDuration(status.durationMillis ?? 0);
 
+      // Check if audio has reached the end but didJustFinish wasn't triggered
+      // This handles the "stuck at the end" case
+      if (
+        status.positionMillis > 0 &&
+        status.durationMillis != null &&
+        status.durationMillis > 0 &&
+        status.positionMillis === status.durationMillis &&
+        !status.isPlaying &&
+        !status.didJustFinish
+      ) {
+        playNextSentenceRef.current().catch(error => {
+          handleError(error);
+        });
+        return;
+      }
+
       if (status.isPlaying) {
         setAudioState('playing');
         dispatch(setPlayingState(true));
@@ -245,7 +300,9 @@ export function useSentenceAudioPlayer(): {
         setAudioState('loading');
       } else if (status.didJustFinish) {
         // Move to the next sentence immediately
-        playNextSentenceRef.current();
+        playNextSentenceRef.current().catch(error => {
+          handleError(error);
+        });
       } else {
         setAudioState('paused');
         dispatch(setPlayingState(false));
@@ -253,6 +310,55 @@ export function useSentenceAudioPlayer(): {
     },
     [dispatch]
   );
+
+  // Add a safety timer to detect and recover from stuck playback
+  useEffect(() => {
+    let safetyTimer: NodeJS.Timeout | null = null;
+
+    // Only set up the timer when actually playing
+    if (isPlaying && currentSentenceIndex !== null) {
+      safetyTimer = setTimeout(() => {
+        // Check if we're still on the same sentence after a delay
+        if (soundRef.current && isPlaying) {
+          soundRef.current
+            .getStatusAsync()
+            .then(status => {
+              if (status.isLoaded) {
+                const { positionMillis, durationMillis, isPlaying: stillPlaying } = status;
+
+                // More aggressive check - either we're at the end or just not making progress
+                const isAtEnd =
+                  positionMillis > 0 &&
+                  durationMillis != null &&
+                  durationMillis > 0 &&
+                  positionMillis >= durationMillis * 0.95;
+
+                const isStuck = !stillPlaying || isAtEnd;
+
+                if (isStuck) {
+                  // Force next sentence regardless of current position
+                  playNextSentenceRef.current().catch(error => {
+                    handleError(error);
+                  });
+                }
+              }
+            })
+            .catch(_err => {
+              // If we can't even check status, assume we need to move forward
+              playNextSentenceRef.current().catch(error => {
+                handleError(error);
+              });
+            });
+        }
+      }, 800); // Reduced from 5000ms to 800ms (less than 1 second)
+    }
+
+    return () => {
+      if (safetyTimer) {
+        clearTimeout(safetyTimer);
+      }
+    };
+  }, [isPlaying, currentSentenceIndex]);
 
   // ---- Preload all audio files ----
   const preloadAudioFiles = useCallback(
@@ -277,49 +383,47 @@ export function useSentenceAudioPlayer(): {
 
         preloadedSoundsRef.current = [];
 
-        // Use sliding window approach - only preload current and next 2 sentences
-        // This saves memory and improves performance
-        const PRELOAD_WINDOW_SIZE = 3;
-        const currentIndex = currentSentenceIndex ?? 0;
-        const startIdx = currentIndex;
-        const endIdx = Math.min(startIdx + PRELOAD_WINDOW_SIZE, sentences.length);
-
-        // Preload only window of audio files in parallel
+        // Preload all audio files for smoother playback between sentences
+        // This is especially important for continuous playback
         const preloadPromises = [];
 
         for (let i = 0; i < sentences.length; i++) {
-          // Only preload if in our sliding window
-          if (i >= startIdx && i < endIdx) {
-            const sentence = sentences[i];
-            if (!sentence?.audioUrl) {
-              preloadedSoundsRef.current[i] = null;
-              continue;
-            }
-
-            const promise = (async (idx: number) => {
-              try {
-                const sentenceToLoad = sentences[idx];
-                if (!sentenceToLoad?.audioUrl) {
-                  preloadedSoundsRef.current[idx] = null;
-                  return;
-                }
-
-                const { sound } = await Audio.Sound.createAsync(
-                  { uri: sentenceToLoad.audioUrl },
-                  { shouldPlay: false }
-                );
-                preloadedSoundsRef.current[idx] = sound;
-              } catch (error) {
-                handleError(error as Error);
-                preloadedSoundsRef.current[idx] = null;
-              }
-            })(i);
-
-            preloadPromises.push(promise);
-          } else {
-            // Set to null for positions outside window
+          const sentence = sentences[i];
+          if (!sentence?.audioUrl) {
             preloadedSoundsRef.current[i] = null;
+            continue;
           }
+
+          const promise = (async (idx: number) => {
+            try {
+              const sentenceToLoad = sentences[idx];
+              if (!sentenceToLoad?.audioUrl) {
+                preloadedSoundsRef.current[idx] = null;
+                return;
+              }
+
+              // Use retry with backoff for preloading
+              const sound = await retryWithBackoff(
+                async () => {
+                  const { sound } = await Audio.Sound.createAsync(
+                    { uri: sentenceToLoad.audioUrl },
+                    { shouldPlay: false }
+                  );
+                  return sound;
+                },
+                3, // Max 3 retries
+                300, // Start with 300ms delay
+                `preloading sentence ${idx}`
+              );
+
+              preloadedSoundsRef.current[idx] = sound;
+            } catch (error) {
+              handleError(error as Error);
+              preloadedSoundsRef.current[idx] = null;
+            }
+          })(i);
+
+          preloadPromises.push(promise);
         }
 
         await Promise.all(preloadPromises);
@@ -331,6 +435,7 @@ export function useSentenceAudioPlayer(): {
         return false;
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [initAudioSession, currentSentenceIndex]
   );
 
@@ -393,41 +498,70 @@ export function useSentenceAudioPlayer(): {
     }
   }, [currentSentenceIndex, updatePreloadingWindow]);
 
-  // ---- Function to move to the NEXT sentence ----
-  const playNextSentence = useCallback(async (): Promise<void> => {
+  // Helper functions to reduce cognitive complexity in playNextSentence
+  const releaseCurrentSound = useCallback(async (): Promise<void> => {
+    if (!soundRef.current) return;
+
     try {
-      // If there's an existing cleanup callback (word-tracking cleanup, etc.), call it
-      if (cleanupRef.current) {
-        cleanupRef.current();
-        cleanupRef.current = null;
+      const status = await soundRef.current.getStatusAsync();
+      if (status.isLoaded) {
+        await soundRef.current.stopAsync();
+
+        const isPreloaded = preloadedSoundsRef.current.includes(soundRef.current);
+        if (!isPreloaded) {
+          await soundRef.current.unloadAsync();
+        }
+      }
+    } catch (err) {
+      handleError(err as Error);
+    }
+    soundRef.current = null;
+  }, []);
+
+  const loadSoundForSentence = useCallback(
+    async (sentenceIndex: number, sentence: SentenceAudio): Promise<Audio.Sound> => {
+      const preloadedSound = preloadedSoundsRef.current[sentenceIndex];
+
+      if (preloadedSound) {
+        const status = await preloadedSound.getStatusAsync();
+        if (!status.isLoaded) {
+          throw new Error('Preloaded sound not actually loaded');
+        }
+
+        await preloadedSound.setStatusAsync({
+          shouldPlay: true,
+          progressUpdateIntervalMillis: 100,
+          positionMillis: 0,
+        });
+        preloadedSound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+        return preloadedSound;
       }
 
-      // nextIndex
-      const nextIndex = (currentSentenceIndex ?? -1) + 1;
-      if (nextIndex >= sentencesRef.current.length) {
-        // We've finished all sentences
-        await cleanupAudio();
-        return;
-      }
-
-      // Move forward to next sentence
-      const nextSentence = sentencesRef.current[nextIndex];
-      if (!nextSentence?.audioUrl) {
-        await cleanupAudio();
-        return;
-      }
-
-      // Update Redux (batch update instead of multiple dispatches)
-      dispatch(
-        updateAudioState({
-          sentenceId: nextIndex,
-          isPlaying: true,
-        })
+      // Load on demand with retry
+      return retryWithBackoff(
+        async () => {
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: sentence.audioUrl },
+            {
+              shouldPlay: true,
+              progressUpdateIntervalMillis: 100,
+              positionMillis: 0,
+            },
+            onPlaybackStatusUpdate
+          );
+          return sound;
+        },
+        3,
+        300,
+        `loading sentence ${sentenceIndex}`
       );
-      setAudioState('loading');
+    },
+    [onPlaybackStatusUpdate]
+  );
 
-      // Prepare word timings (forward-only)
-      const mappedTimings: WordTiming[] = nextSentence.wordTimings
+  const prepareWordTimings = useCallback(
+    (sentence: SentenceAudio): WordTiming[] => {
+      return sentence.wordTimings
         .map(
           (timing, i): WordTiming => ({
             wordId: timing.wordId,
@@ -437,49 +571,105 @@ export function useSentenceAudioPlayer(): {
           })
         )
         .filter((t): boolean => t.startTime < t.endTime);
+    },
+    [normalizeTimingToMs]
+  );
 
-      wordTimingRef.current = mappedTimings;
+  const validateSentenceData = useCallback((nextIndex: number): SentenceAudio | null => {
+    if (!sentencesRef.current || sentencesRef.current.length === 0) {
+      return null;
+    }
 
-      // Reset the "lastActiveIndex" to 0 for the new sentence
-      lastActiveIndex.current = 0;
+    if (nextIndex >= sentencesRef.current.length) {
+      return null;
+    }
 
-      // Use preloaded sound if available, otherwise load on demand
-      let sound: Audio.Sound;
-      const preloadedSound = preloadedSoundsRef.current[nextIndex];
-      if (preloadedSound) {
-        sound = preloadedSound;
-        await sound.setStatusAsync({
-          shouldPlay: true,
-          progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms for better performance
-          positionMillis: 0,
-        });
-        sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
-      } else {
-        // Fallback to loading on demand if preload failed
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: nextSentence.audioUrl },
-          {
-            shouldPlay: true,
-            progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms
-            positionMillis: 0,
-          },
-          onPlaybackStatusUpdate
+    const nextSentence = sentencesRef.current[nextIndex];
+    if (!nextSentence || !nextSentence.audioUrl) {
+      return null;
+    }
+
+    return nextSentence;
+  }, []);
+
+  // ---- Function to move to the NEXT sentence ----
+  const playNextSentence = useCallback(async (): Promise<void> => {
+    try {
+      // Prevent multiple simultaneous calls
+      if (isTransitioningRef.current) return;
+      isTransitioningRef.current = true;
+
+      try {
+        // Add delay for clean transition
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Clean up previous sentence resources
+        if (cleanupRef.current) {
+          cleanupRef.current();
+          cleanupRef.current = null;
+        }
+
+        // Get and validate next sentence
+        const nextIndex = (currentSentenceIndex ?? -1) + 1;
+        const nextSentence = validateSentenceData(nextIndex);
+
+        if (!nextSentence) {
+          await cleanupAudio();
+          return;
+        }
+
+        // Update Redux state
+        dispatch(
+          updateAudioState({
+            sentenceId: nextIndex,
+            isPlaying: true,
+            wordId: null,
+            position: null,
+          })
         );
-        sound = newSound;
+
+        setAudioState('loading');
+
+        // Prepare word timings
+        const mappedTimings = prepareWordTimings(nextSentence);
+        wordTimingRef.current = mappedTimings;
+        lastActiveIndex.current = 0;
+
+        // Release previous sound
+        await releaseCurrentSound();
+
+        try {
+          // Load sound for this sentence
+          const sound = await loadSoundForSentence(nextIndex, nextSentence);
+
+          // Verify sound loaded correctly
+          const status = await sound.getStatusAsync();
+          if (!status.isLoaded) {
+            throw new Error('Sound failed to load properly');
+          }
+
+          soundRef.current = sound;
+
+          // Set up word tracking
+          if (mappedTimings.length > 0) {
+            const trackingCleanup = trackWordTiming();
+            cleanupRef.current = trackingCleanup;
+          }
+
+          setAudioState('playing');
+        } catch (error) {
+          // Try to skip to next sentence on error
+          handleError(error as Error);
+
+          if (nextIndex + 1 < sentencesRef.current.length) {
+            dispatch(updateAudioState({ sentenceId: nextIndex + 1 }));
+          } else {
+            await cleanupAudio();
+          }
+        }
+      } finally {
+        isTransitioningRef.current = false;
       }
-
-      soundRef.current = sound;
-
-      // Start word tracking if we have timings
-      if (mappedTimings.length > 0) {
-        const trackingCleanup = trackWordTiming();
-        cleanupRef.current = (): void => {
-          trackingCleanup();
-          // Don't unload the sound as it might be preloaded and reused
-        };
-      }
-
-      setAudioState('playing');
     } catch (error) {
       handleError(error as Error);
       await cleanupAudio();
@@ -489,8 +679,10 @@ export function useSentenceAudioPlayer(): {
     cleanupAudio,
     trackWordTiming,
     dispatch,
-    normalizeTimingToMs,
-    onPlaybackStatusUpdate,
+    validateSentenceData,
+    prepareWordTimings,
+    releaseCurrentSound,
+    loadSoundForSentence,
   ]);
 
   // Update the ref with the latest function
@@ -544,21 +736,31 @@ export function useSentenceAudioPlayer(): {
           sound = firstPreloadedSound;
           await sound.setStatusAsync({
             shouldPlay: true,
-            progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms for better performance
+            progressUpdateIntervalMillis: 100,
             positionMillis: 0,
           });
           sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
         } else {
           // Fallback to loading on demand
-          const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri: firstSentence.audioUrl },
-            {
-              shouldPlay: true,
-              progressUpdateIntervalMillis: 100, // Increased from 50ms to 100ms
-              positionMillis: 0,
+          // Use retry with backoff for first sentence
+          const newSound = await retryWithBackoff(
+            async () => {
+              const { sound } = await Audio.Sound.createAsync(
+                { uri: firstSentence.audioUrl },
+                {
+                  shouldPlay: true,
+                  progressUpdateIntervalMillis: 100,
+                  positionMillis: 0,
+                },
+                onPlaybackStatusUpdate
+              );
+              return sound;
             },
-            onPlaybackStatusUpdate
+            3, // Max 3 retries
+            300, // Start with 300ms delay
+            'loading first sentence'
           );
+
           sound = newSound;
         }
 
