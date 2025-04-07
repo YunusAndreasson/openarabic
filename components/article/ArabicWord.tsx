@@ -1,19 +1,15 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import type { ComponentRef } from 'react';
 import type { LayoutRectangle, LayoutChangeEvent } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
-import { useSelector } from 'react-redux';
 
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animations';
-import { useAuth } from '../../hooks/useAuth';
+import { useArabicWord } from '../../hooks/useArabicWord';
 import { useColors } from '../../hooks/useColors';
 import { useIsDarkMode } from '../../hooks/useThemeDetection';
-import { analytics } from '../../services/analytics';
-import type { RootState } from '../../store/store';
 import type { SentenceWord } from '../../types/vocabulary.types';
 import { lightFeedback } from '../../utils/haptics';
 import { ThemedText } from '../ThemedText';
@@ -42,51 +38,17 @@ interface ArabicWordProps {
 function ArabicWordComponent({ word, onPress, position, settings, wordRef }: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [layout, setLayout] = useState<LayoutRectangle | null>(null);
   const [needsReverseAnimation, setNeedsReverseAnimation] = useState(false);
   const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
-  const [forceSelected, setForceSelected] = useState<boolean | null>(null);
 
-  // Get audio state with robust selector
-  const audioState = useSelector((state: RootState) => ({
-    wordId: state.audio.currentWordId,
-    position: state.audio.currentPosition,
-    isPlaying: state.audio.isPlaying,
-  }));
-
-  // Determine highlighting with fallbacks for backward compatibility
-  // Case 1: If both component and Redux have position - check both ID and position
-  // Case 2: If position is missing on either side - fall back to ID-only comparison
-  const isAudioHighlighted = useMemo(() => {
-    // If this component has position info and Redux has position info
-    if (position !== undefined && audioState.position !== null) {
-      // Check both word ID and position (precise mode for duplicates)
-      return audioState.wordId === word.id && audioState.position === position;
-    }
-
-    // Fallback to ID-only comparison (backward compatible)
-    return audioState.wordId === word.id;
-  }, [audioState.wordId, audioState.position, word.id, position]);
-
-  // Directly get selected status from cache to bypass potential stale props
-  const studyWords = queryClient.getQueryData(['studyWords', user?.id]);
-
-  // Determine if this word is selected by checking if it exists in study words
-  const directlySelected = useMemo(() => {
-    if (!studyWords || !Array.isArray(studyWords)) return false;
-
-    const wordId = word.id;
-    return studyWords.some(sw => {
-      const swId = sw.sentence_word_id;
-      return swId === wordId || String(swId) === String(wordId);
-    });
-  }, [studyWords, word.id]);
-
-  // Use directly checked selection status OR forced selection OR prop
-  const isSelected = forceSelected !== null ? forceSelected : directlySelected;
+  // Use our new hook
+  const { isAudioHighlighted, isSelected, setForceSelected } = useArabicWord({
+    word,
+    position,
+    onPress,
+  });
 
   // Use transform animation for press feedback
   const {
@@ -165,7 +127,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Update word opacity based on tooltip visibility
   useEffect(() => {
-    // Original effect for word opacity animation
     setWordOpacity(tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1);
   }, [tooltipVisible, isDarkMode, setWordOpacity]);
 
@@ -175,8 +136,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   }, []);
 
   // Pre-calculate text size once when component mounts (will never change)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const calculatedFontSize = useMemo(() => settings.fontScale * 24, []);
+  const calculatedFontSize = useMemo(() => settings.fontScale * 24, [settings.fontScale]);
 
   // More aggressively memoized text props (only depends on selection)
   const textProps = useMemo(
@@ -189,8 +149,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
       weight: isSelected ? ('600' as const) : ('normal' as const),
       style: styles.textStyle,
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isSelected]
+    [isSelected, calculatedFontSize]
   );
 
   // Pre-calculate the transliteration font size too
@@ -201,7 +160,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Handle tooltip close
   const handleTooltipClose = useCallback(() => {
-    // Gradually hide the tooltip
     setTooltipVisible(false);
   }, []);
 
@@ -223,11 +181,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
-    // If no user, do nothing on long press
-    if (!user) {
-      return;
-    }
-
     // Provide haptic feedback
     lightFeedback();
 
@@ -242,7 +195,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
     // Then handle selection
     onPress(word);
-  }, [onPress, word, startPressAnimation, isSelected, user]);
+  }, [onPress, word, startPressAnimation, isSelected, setForceSelected]);
 
   // Calculate styles based on state
   const finalStyles = useMemo(() => {
@@ -263,25 +216,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
     return baseStyle;
   }, [isSelected, isAudioHighlighted, colors.tint, colors.info, isDarkMode]);
-
-  // Track word selection changes
-  useEffect(() => {
-    if (user && word.id) {
-      const wordId = typeof word.id === 'string' ? parseInt(word.id, 10) : word.id;
-      if (isSelected) {
-        analytics.trackAddStudyWord(wordId, {
-          word: word.word_form,
-          english: word.english,
-          ...(word.sentence?.article_id && { articleId: word.sentence.article_id }),
-        });
-      } else {
-        analytics.trackRemoveStudyWord(wordId, {
-          word: word.word_form,
-          english: word.english,
-        });
-      }
-    }
-  }, [isSelected, user, word]);
 
   return (
     <>
@@ -339,16 +273,10 @@ const styles = StyleSheet.create({
 });
 
 export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {
-  // Since text size never changes during runtime, we can optimize further
   return (
-    // Check if audio highlighting changed (most frequent change)
     prevProps.isAudioHighlighted === nextProps.isAudioHighlighted &&
-    // Check word identity (rarely changes)
     prevProps.word.id === nextProps.word.id &&
-    // Check if transliteration visibility changed (rarely changes)
     prevProps.settings.showTransliteration === nextProps.settings.showTransliteration &&
-    // Check if position changed (shouldn't change)
     prevProps.position === nextProps.position
-    // FontScale check removed since we know it never changes
   );
 });

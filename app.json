@@ -9,13 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
+    "platforms": ["ios", "android"],
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.openarabic.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1E1E1E"
-      }
+      },
+      "package": "com.openarabic.app"
     },
     "plugins": [
       "expo-router",

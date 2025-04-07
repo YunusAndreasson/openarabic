@@ -45,8 +45,8 @@ importers:
         specifier: ^2.49.4
         version: 2.49.4
       '@tanstack/react-query':
-        specifier: ^5.71.5
-        version: 5.71.5(react@18.3.1)
+        specifier: ^5.72.0
+        version: 5.72.0(react@18.3.1)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0
@@ -123,15 +123,15 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0(react@18.3.1)(redux@5.0.1)
       ts-fsrs:
-        specifier: ^4.7.0
-        version: 4.7.0
+        specifier: ^4.7.1
+        version: 4.7.1
     devDependencies:
       '@babel/core':
         specifier: ^7.26.10
         version: 7.26.10
       '@dev-plugins/react-query':
         specifier: ~0.2.0
-        version: 0.2.0(@tanstack/react-query@5.71.5(react@18.3.1))(expo@52.0.43(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1)))(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))
+        version: 0.2.0(@tanstack/react-query@5.72.0(react@18.3.1))(expo@52.0.43(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1)))(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))
       '@expo/metro-config':
         specifier: ^0.19.12
         version: 0.19.12
@@ -1571,11 +1571,11 @@ packages:
   '@supabase/supabase-js@2.49.4':
     resolution: {integrity: sha512-jUF0uRUmS8BKt37t01qaZ88H9yV1mbGYnqLeuFWLcdV+x1P4fl0yP9DGtaEhFPZcwSom7u16GkLEH9QJZOqOkw==}
 
-  '@tanstack/query-core@5.71.5':
-    resolution: {integrity: sha512-XOQ5SyjCdwhxyLksGKWSL5poqyEXYPDnsrZAzJm2LgrMm4Yh6VOrfC+IFosXreDw9HNqC11YAMY3HlfHjNzuaA==}
+  '@tanstack/query-core@5.72.0':
+    resolution: {integrity: sha512-aa3p6Mou++JLLxxxVX9AB9uGeRIGc0JWkw96GASXuMG8K3D+JpYbSFcqXbkGFJ1eX2jKHPurmCBoO43RjjXJCA==}
 
-  '@tanstack/react-query@5.71.5':
-    resolution: {integrity: sha512-WpxZWy4fDASjY+iAaXB+aY+LC95PQ34W6EWVkjJ0hdzWWbczFnr9nHvHkVDpwdR18I1NO8igNGQJFrLrgyzI8Q==}
+  '@tanstack/react-query@5.72.0':
+    resolution: {integrity: sha512-4Dejq/IiXrPlr/0xxj4H2GbC6KckwfTCoHWbd02+UoIV0laC9yke0d0KegmFdXJA712I6UCuy8WpPM76uuPJ+w==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -5588,8 +5588,8 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-fsrs@4.7.0:
-    resolution: {integrity: sha512-Id54a0p8djfautVNyRhph5uD8fGiYjR1IfMRMTzd1nZm3wPhlCPj0vcXleF/rBybPumbcQmsO9PI+XkM7ivwrQ==}
+  ts-fsrs@4.7.1:
+    resolution: {integrity: sha512-uYqKbSCNWLRPT0PfqFFy2rn0YuYz2fKmtgpgHOBd5/DP14oj6diG7P271AwJ8iGrKnmIspzXCF+nTKxict+Lcg==}
     engines: {node: '>=18.0.0'}
 
   ts-interface-checker@0.1.13:
@@ -6919,9 +6919,9 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@dev-plugins/react-query@0.2.0(@tanstack/react-query@5.71.5(react@18.3.1))(expo@52.0.43(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1)))(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))':
+  '@dev-plugins/react-query@0.2.0(@tanstack/react-query@5.72.0(react@18.3.1))(expo@52.0.43(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1)))(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))':
     dependencies:
-      '@tanstack/react-query': 5.71.5(react@18.3.1)
+      '@tanstack/react-query': 5.72.0(react@18.3.1)
       expo: 52.0.43(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@expo/metro-runtime@4.0.1(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1)))(react-native-webview@13.12.5(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1))(react-native@0.76.9(@babel/core@7.26.10)(@babel/preset-env@7.26.9(@babel/core@7.26.10))(@types/react@18.3.20)(react@18.3.1))(react@18.3.1)
       flatted: 3.3.3
 
@@ -7989,11 +7989,11 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@tanstack/query-core@5.71.5': {}
+  '@tanstack/query-core@5.72.0': {}
 
-  '@tanstack/react-query@5.71.5(react@18.3.1)':
+  '@tanstack/react-query@5.72.0(react@18.3.1)':
     dependencies:
-      '@tanstack/query-core': 5.71.5
+      '@tanstack/query-core': 5.72.0
       react: 18.3.1
 
   '@testing-library/react-hooks@8.0.1(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react-test-renderer@19.0.0(react@18.3.1))(react@18.3.1)':
@@ -12763,7 +12763,7 @@ snapshots:
     dependencies:
       typescript: 5.8.2
 
-  ts-fsrs@4.7.0: {}
+  ts-fsrs@4.7.1: {}
 
   ts-interface-checker@0.1.13: {}
 

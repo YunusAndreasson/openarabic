@@ -10,8 +10,8 @@ module.exports = {
   clearMocks: true,
   // Bail after the first test failure
   bail: false,
-  // Use a more realistic test environment for React Native components
-  testEnvironment: 'jsdom',
+  // Use a more realistic test environment for React Native
+  testEnvironment: 'node',
   // Ignore specific paths for tests
   testPathIgnorePatterns: ['/node_modules/', '__mocks__'],
   // Mock modules that cause issues
@@ -19,8 +19,6 @@ module.exports = {
     // Mock static file imports
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       'identity-obj-proxy',
-    // Mock style imports
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     // Mock problematic libraries
     '@shopify/react-native-skia': '<rootDir>/__mocks__/react-native-skia.js',
     '@testing-library/react-native': '<rootDir>/__mocks__/@testing-library/react-native.js',

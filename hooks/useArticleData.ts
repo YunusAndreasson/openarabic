@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useEffect } from 'react';
+import { useMemo, useEffect, useCallback } from 'react';
 
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
@@ -53,18 +53,6 @@ export const useArticleData = (
     placeholderData: old => old, // Keep old data while fetching
   });
 
-  // Log article data for debugging
-  useEffect(() => {
-    if (article) {
-      console.log('Article data loaded:', {
-        id: article.id,
-        hasSentences: !!article.article_sentences,
-        sentenceCount: article.article_sentences?.length,
-        firstSentence: article.article_sentences?.[0],
-      });
-    }
-  }, [article]);
-
   // Check if article is in user's reading list - optimized caching
   const {
     data: isInReadingList = false,
@@ -101,14 +89,9 @@ export const useArticleData = (
   // Process sentences from article data - no additional fetch needed
   const sortedSentences = useMemo(() => {
     if (!article?.article_sentences) {
-      console.log('No article sentences available');
       return [];
     }
     const sorted = [...article.article_sentences].sort((a, b) => a.position - b.position);
-    console.log('Sorted sentences:', {
-      count: sorted.length,
-      firstSentence: sorted[0],
-    });
     return sorted;
   }, [article?.article_sentences]);
 
@@ -126,7 +109,6 @@ export const useArticleData = (
   // Create sentence words map from article data - no additional fetch needed
   const sentenceWordsMap = useMemo(() => {
     if (!sortedSentences.length) {
-      console.log('No sorted sentences available for word map');
       return {
         data: new Map(),
         isLoading: false,
@@ -154,11 +136,6 @@ export const useArticleData = (
             }))
         );
       }
-    });
-
-    console.log('Sentence words map created:', {
-      mapSize: map.size,
-      firstSentenceWords: sortedSentences[0]?.id ? map.get(sortedSentences[0].id)?.length : 0,
     });
 
     return {
@@ -210,38 +187,30 @@ export const useArticleData = (
   });
 
   // Prefetch next and previous articles when current article loads
+  const prefetchArticle = useCallback(
+    (articleId: number) => {
+      queryClient.prefetchQuery({
+        queryKey: ['article', articleId],
+        queryFn: () => articlesService.getArticleById(articleId),
+        staleTime: 300000,
+        gcTime: 600000,
+      });
+    },
+    [queryClient]
+  );
+
   useEffect(() => {
-    if (article?.id && otherArticles.length > 0) {
-      // Find current article index
-      const currentIndex = otherArticles.findIndex(a => a.id === article.id);
-      if (currentIndex !== -1) {
-        // Prefetch next article
-        if (currentIndex < otherArticles.length - 1) {
-          const nextArticle = otherArticles[currentIndex + 1];
-          if (nextArticle) {
-            queryClient.prefetchQuery({
-              queryKey: ['article', nextArticle.id],
-              queryFn: () => articlesService.getArticleById(nextArticle.id),
-              staleTime: 300000,
-              gcTime: 600000,
-            });
-          }
-        }
-        // Prefetch previous article
-        if (currentIndex > 0) {
-          const prevArticle = otherArticles[currentIndex - 1];
-          if (prevArticle) {
-            queryClient.prefetchQuery({
-              queryKey: ['article', prevArticle.id],
-              queryFn: () => articlesService.getArticleById(prevArticle.id),
-              staleTime: 300000,
-              gcTime: 600000,
-            });
-          }
-        }
-      }
-    }
-  }, [article?.id, otherArticles, queryClient]);
+    if (!article?.id || otherArticles.length === 0) return;
+
+    const currentIndex = otherArticles.findIndex(a => a.id === article.id);
+    if (currentIndex === -1) return;
+
+    const nextArticle = otherArticles[currentIndex + 1];
+    const prevArticle = otherArticles[currentIndex - 1];
+
+    if (nextArticle) prefetchArticle(nextArticle.id);
+    if (prevArticle) prefetchArticle(prevArticle.id);
+  }, [article?.id, otherArticles, prefetchArticle]);
 
   return {
     article,

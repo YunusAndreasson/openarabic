@@ -100,8 +100,8 @@ const ArticleSection = memo(
     // Handle viewability change for prefetching
     const handleViewableItemsChanged = useCallback(
       ({ viewableItems }: { viewableItems: { item: Article }[] }) => {
-        for (const { item } of viewableItems) {
-          if (item && item.id) {
+        viewableItems.forEach(({ item }) => {
+          if (item?.id) {
             queryClient.prefetchQuery({
               queryKey: ['article', item.id],
               queryFn: () => articlesService.getArticleById(item.id),
@@ -109,7 +109,7 @@ const ArticleSection = memo(
               gcTime: 0,
             });
           }
-        }
+        });
       },
       [queryClient]
     );
@@ -173,6 +173,10 @@ const ArticleSection = memo(
           viewabilityConfig={{
             viewAreaCoveragePercentThreshold: 50,
           }}
+          removeClippedSubviews
+          maxToRenderPerBatch={5}
+          initialNumToRender={4}
+          windowSize={3}
         />
       </View>
     );
