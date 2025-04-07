@@ -78,6 +78,43 @@ export const useArticleMutations = (
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
       return studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId);
     },
+    onMutate: async ({ userId, wordId }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
+
+      // Snapshot the previous value
+      const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
+        sentence_word_id: number;
+      }[];
+
+      // Optimistically update the cache
+      queryClient.setQueryData(
+        ['studyWords', userId],
+        (old: { sentence_word_id: number }[] = []) => {
+          const exists = old.some(sw => sw.sentence_word_id === wordId);
+          if (exists) {
+            return old.filter(sw => sw.sentence_word_id !== wordId);
+          } else {
+            return [...old, { sentence_word_id: wordId }];
+          }
+        }
+      );
+
+      return { previousStudyWords };
+    },
+    onError: (error, { userId }, context) => {
+      // If the mutation fails, use the context returned from onMutate to roll back
+      queryClient.setQueryData(['studyWords', userId], context?.previousStudyWords);
+
+      handleError(error instanceof Error ? error : String(error));
+      // Show error toast to user
+      showToast('Error updating study list');
+
+      // Refresh study words data anyway to ensure UI is consistent
+      queryClient.invalidateQueries({
+        queryKey: ['studyWords', userId],
+      });
+    },
     onSuccess: result => {
       // Invalidate queries to update UI
       queryClient.invalidateQueries({
@@ -91,19 +128,6 @@ export const useArticleMutations = (
       // Always refetch stats
       queryClient.invalidateQueries({
         queryKey: ['vocabularyStats'],
-      });
-
-      // Show success toast
-      showToast(result ? 'Word added to study list' : 'Word removed from study list');
-    },
-    onError: error => {
-      handleError(error instanceof Error ? error : String(error));
-      // Show error toast to user
-      showToast('Error updating study list');
-
-      // Refresh study words data anyway to ensure UI is consistent
-      queryClient.invalidateQueries({
-        queryKey: ['studyWords', userId],
       });
     },
   });

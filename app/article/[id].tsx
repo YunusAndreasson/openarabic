@@ -279,15 +279,6 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [isLoadingReadingList, isInReadingList]);
 
-  // Preload audio when article loads
-  useEffect(() => {
-    if (sentenceAudioData.length > 0) {
-      audioPlayer.preloadAudioFiles(sentenceAudioData).catch(error => {
-        handleError(error);
-      });
-    }
-  }, [sentenceAudioData, audioPlayer]);
-
   // Check if all data is loaded with optimized loading states
   const isLoading = useMemo(() => {
     // Consider data ready if we have article data in cache
@@ -364,6 +355,10 @@ export default function ArticleScreen(): JSX.Element {
       await stopPlayback();
     } else {
       try {
+        // First preload the audio files
+        await audioPlayer.preloadAudioFiles(sentenceAudioData);
+
+        // Then start playback
         const success = await startPlayback(sentenceAudioData);
         if (!success) {
           // Could provide feedback here if needed
@@ -373,7 +368,7 @@ export default function ArticleScreen(): JSX.Element {
         handleError(error as Error);
       }
     }
-  }, [isPlaying, stopPlayback, startPlayback, sentenceAudioData]);
+  }, [isPlaying, stopPlayback, startPlayback, sentenceAudioData, audioPlayer]);
 
   // Memoize rendering-related props to prevent unnecessary rerenders
   const articleUIProps = useMemo(
