@@ -15,6 +15,7 @@ import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
+import AudioControlPanel from '@/components/article/AudioControlPanel';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
@@ -322,6 +323,20 @@ export default function ArticleScreen(): JSX.Element {
     (word: Tables<'sentence_words'>) => handleWordPress(word.id)
   );
 
+  // New state to track if audio control panel should be visible
+  const [audioControlVisible, setAudioControlVisible] = useState(false);
+
+  // Keep track of the current sentence data for resuming playback
+  const pausedAudioStateRef = useRef<{
+    sentenceIndex: number | null;
+    wordId: number | null;
+    position: number | null;
+  }>({
+    sentenceIndex: null,
+    wordId: null,
+    position: null,
+  });
+
   // Handle back button press with optimized cleanup
   const handleBackPress = useCallback(() => {
     // Stop audio playback if it's playing
@@ -330,6 +345,16 @@ export default function ArticleScreen(): JSX.Element {
         handleError(error);
       });
     }
+
+    // Reset saved position
+    pausedAudioStateRef.current = {
+      sentenceIndex: null,
+      wordId: null,
+      position: null,
+    };
+
+    // Hide audio controls
+    setAudioControlVisible(false);
 
     // Cancel any in-flight animations or timers
     if (audioPlayer.animationFrameRef && audioPlayer.animationFrameRef.current) {
@@ -392,23 +417,193 @@ export default function ArticleScreen(): JSX.Element {
     lightFeedback();
 
     if (isPlaying) {
-      await stopPlayback();
+      // When pausing, keep the highlight on the current word but stop playback
+      try {
+        // Save current position for resume
+        pausedAudioStateRef.current = {
+          sentenceIndex: currentSentenceIndex,
+          wordId: currentWordId,
+          position: currentPosition,
+        };
+
+        // Just stop the playback but maintain UI state
+        await stopPlayback();
+
+        // Dispatch Redux update to indicate paused state but keep current positions
+        dispatch(
+          updateAudioState({
+            wordId: currentWordId,
+            position: currentPosition,
+            isPlaying: false,
+            sentenceId: currentSentenceIndex,
+          })
+        );
+      } catch (error) {
+        handleError(error as Error);
+      }
     } else {
       try {
-        // First preload the audio files
-        await audioPlayer.preloadAudioFiles(sentenceAudioData);
+        // Show the controls when starting playback
+        setAudioControlVisible(true);
 
-        // Then start playback
-        const success = await startPlayback(sentenceAudioData);
-        if (!success) {
-          // Could provide feedback here if needed
-          handleError(new Error('Failed to start audio playback'));
+        // Check if we have a saved position to resume from
+        const savedState = pausedAudioStateRef.current;
+
+        if (savedState.sentenceIndex !== null && savedState.sentenceIndex >= 0) {
+          // We have a saved position, resume from there
+
+          // Update Redux state to indicate playback is starting
+          dispatch(
+            updateAudioState({
+              wordId: savedState.wordId,
+              position: savedState.position,
+              isPlaying: true,
+              sentenceId: savedState.sentenceIndex,
+            })
+          );
+
+          // Start playback from the saved sentence
+          if (savedState.sentenceIndex < sentenceAudioData.length) {
+            const resumeFromIndex = savedState.sentenceIndex;
+            const startFromSentences = sentenceAudioData.slice(resumeFromIndex);
+
+            // First preload audio
+            await audioPlayer.preloadAudioFiles(startFromSentences);
+
+            // Start playback from where we left off
+            const success = await startPlayback(startFromSentences);
+            if (!success) {
+              handleError(new Error('Failed to resume audio playback'));
+            }
+          } else {
+            // Index is out of bounds, start from beginning
+            await audioPlayer.preloadAudioFiles(sentenceAudioData);
+            const success = await startPlayback(sentenceAudioData);
+            if (!success) {
+              handleError(new Error('Failed to start audio playback'));
+            }
+          }
+        } else {
+          // No saved position, start from beginning
+          await audioPlayer.preloadAudioFiles(sentenceAudioData);
+          const success = await startPlayback(sentenceAudioData);
+          if (!success) {
+            handleError(new Error('Failed to start audio playback'));
+          }
         }
       } catch (error) {
         handleError(error as Error);
       }
     }
-  }, [isPlaying, stopPlayback, startPlayback, sentenceAudioData, audioPlayer]);
+  }, [
+    isPlaying,
+    stopPlayback,
+    startPlayback,
+    sentenceAudioData,
+    audioPlayer,
+    currentWordId,
+    currentPosition,
+    currentSentenceIndex,
+    dispatch,
+  ]);
+
+  // Handle explicit stop of playback
+  const handleStopPlayback = useCallback(async () => {
+    lightFeedback();
+
+    // Reset saved position
+    pausedAudioStateRef.current = {
+      sentenceIndex: null,
+      wordId: null,
+      position: null,
+    };
+
+    // Hide controls and stop playback
+    setAudioControlVisible(false);
+    await stopPlayback();
+
+    // Reset audio state in Redux
+    dispatch(
+      updateAudioState({
+        wordId: null,
+        position: null,
+        isPlaying: false,
+        sentenceId: null,
+      })
+    );
+  }, [stopPlayback, dispatch]);
+
+  // Handle next sentence button press
+  const handleNextSentence = useCallback(async () => {
+    lightFeedback();
+
+    if (currentSentenceIndex === null || !sentenceAudioData.length) {
+      return;
+    }
+
+    // If not at the last sentence, go to the next one
+    if (currentSentenceIndex < sentenceAudioData.length - 1) {
+      try {
+        // Stop current playback
+        await stopPlayback();
+
+        // Update saved state to next sentence
+        const nextSentenceIndex = currentSentenceIndex + 1;
+        pausedAudioStateRef.current = {
+          sentenceIndex: nextSentenceIndex,
+          wordId: null,
+          position: null,
+        };
+
+        // Start playback from the next sentence
+        const nextSentences = sentenceAudioData.slice(nextSentenceIndex);
+        await audioPlayer.preloadAudioFiles(nextSentences);
+        const success = await startPlayback(nextSentences);
+
+        if (!success) {
+          handleError(new Error('Failed to play next sentence'));
+        }
+      } catch (error) {
+        handleError(error as Error);
+      }
+    }
+  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
+
+  // Handle previous sentence button press
+  const handlePreviousSentence = useCallback(async () => {
+    lightFeedback();
+
+    if (currentSentenceIndex === null || !sentenceAudioData.length) {
+      return;
+    }
+
+    // If not at the first sentence, go to the previous one
+    if (currentSentenceIndex > 0) {
+      try {
+        // Stop current playback
+        await stopPlayback();
+
+        // Update saved state to previous sentence
+        const prevSentenceIndex = currentSentenceIndex - 1;
+        pausedAudioStateRef.current = {
+          sentenceIndex: prevSentenceIndex,
+          wordId: null,
+          position: null,
+        };
+
+        // Start playback from the previous sentence
+        const prevSentences = sentenceAudioData.slice(prevSentenceIndex);
+        await audioPlayer.preloadAudioFiles(prevSentences);
+        const success = await startPlayback(prevSentences);
+
+        if (!success) {
+          handleError(new Error('Failed to play previous sentence'));
+        }
+      } catch (error) {
+        handleError(error as Error);
+      }
+    }
+  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
   // Memoize rendering-related props to prevent unnecessary rerenders
   const articleUIProps = useMemo(
@@ -598,6 +793,18 @@ export default function ArticleScreen(): JSX.Element {
           />
         ) : null}
       </View>
+
+      {/* Audio Control Panel */}
+      <AudioControlPanel
+        isVisible={audioControlVisible}
+        isPlaying={isPlaying}
+        onPlayPause={handlePlayPress}
+        onStop={handleStopPlayback}
+        onPrevious={handlePreviousSentence}
+        onNext={handleNextSentence}
+        currentSentenceIndex={currentSentenceIndex}
+        totalSentences={sentenceAudioData.length}
+      />
     </ThemedView>
   );
 }
