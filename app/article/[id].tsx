@@ -30,7 +30,8 @@ import {
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import { useAppSelector } from '@/store/hooks';
+import { updateAudioState } from '@/store/audioSlice';
+import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
@@ -61,6 +62,7 @@ export default function ArticleScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const articleContentRef = useRef<ArticleContentRef>(null);
+  const dispatch = useAppDispatch();
 
   // Scroll position tracking
   const prevScrollYValue = useRef(0);
@@ -324,14 +326,54 @@ export default function ArticleScreen(): JSX.Element {
 
   // Handle back button press with optimized cleanup
   const handleBackPress = useCallback(() => {
+    // Stop audio playback if it's playing
     if (isPlaying) {
-      // Run audio cleanup in parallel
       stopPlayback().catch(error => {
         handleError(error);
       });
     }
-    router.back(); // Use router.back() for proper back navigation
-  }, [isPlaying, router, stopPlayback]);
+
+    // Cancel any in-flight animations or timers
+    if (audioPlayer.animationFrameRef && audioPlayer.animationFrameRef.current) {
+      clearInterval(audioPlayer.animationFrameRef.current);
+      audioPlayer.animationFrameRef.current = null;
+    }
+
+    // Unload any audio resources
+    if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
+      audioPlayer.soundRef.current.unloadAsync().catch(error => {
+        handleError(error);
+      });
+    }
+
+    // Reset screen animations
+    const resetAnimations = () => {
+      // Reset any active animations
+      if (triggerAnimations && typeof triggerAnimations === 'function') {
+        triggerAnimations();
+      }
+    };
+    resetAnimations();
+
+    // Clear any pending callbacks
+    prevScrollYValue.current = 0;
+
+    // Reset audio state in Redux
+    dispatch(
+      updateAudioState({
+        wordId: null,
+        position: null,
+        isPlaying: false,
+        sentenceId: null,
+      })
+    );
+
+    // Cancel any pending React Query mutations
+    queryClient.cancelQueries();
+
+    // Navigate back
+    router.back();
+  }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, triggerAnimations, queryClient]);
 
   // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
