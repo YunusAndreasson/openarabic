@@ -326,15 +326,17 @@ export default function ArticleScreen(): JSX.Element {
   // New state to track if audio control panel should be visible
   const [audioControlVisible, setAudioControlVisible] = useState(false);
 
-  // Keep track of the current sentence data for resuming playback
+  // Update the type of pausedAudioStateRef for audio position tracking
   const pausedAudioStateRef = useRef<{
     sentenceIndex: number | null;
     wordId: number | null;
     position: number | null;
+    audioPositionMs?: number;
   }>({
     sentenceIndex: null,
     wordId: null,
     position: null,
+    audioPositionMs: 0,
   });
 
   // Handle back button press with optimized cleanup
@@ -417,17 +419,31 @@ export default function ArticleScreen(): JSX.Element {
     lightFeedback();
 
     if (isPlaying) {
-      // When pausing, keep the highlight on the current word but stop playback
       try {
-        // Save current position for resume
+        // Get current audio position in milliseconds for precise resumption
+        let currentAudioPositionMs = 0;
+        if (audioPlayer.soundRef.current) {
+          try {
+            const status = await audioPlayer.soundRef.current.getStatusAsync();
+            if (status.isLoaded) {
+              currentAudioPositionMs = status.positionMillis;
+            }
+          } catch (audioError) {
+            handleError(audioError as Error);
+          }
+        }
+
+        // Save complete state for resumption
         pausedAudioStateRef.current = {
           sentenceIndex: currentSentenceIndex,
           wordId: currentWordId,
           position: currentPosition,
+          audioPositionMs: currentAudioPositionMs,
         };
 
-        // Just stop the playback but maintain UI state
-        await stopPlayback();
+        // MODIFIED: Stop playback but DON'T unload the sound
+        // Using the direct reference to audioPlayer's stopPlayback to avoid the memoized version
+        await audioPlayer.stopPlayback(false);
 
         // Dispatch Redux update to indicate paused state but keep current positions
         dispatch(
@@ -462,25 +478,22 @@ export default function ArticleScreen(): JSX.Element {
             })
           );
 
-          // Start playback from the saved sentence
-          if (savedState.sentenceIndex < sentenceAudioData.length) {
-            const resumeFromIndex = savedState.sentenceIndex;
-            const startFromSentences = sentenceAudioData.slice(resumeFromIndex);
+          // Use the resumePlayback function to continue exact sentence
+          const resumeSuccess = await audioPlayer.resumePlayback(
+            savedState.sentenceIndex,
+            savedState.audioPositionMs || 0
+          );
 
-            // First preload audio
-            await audioPlayer.preloadAudioFiles(startFromSentences);
+          if (!resumeSuccess) {
+            // If resume fails, try starting from beginning of current sentence
+            await audioPlayer.preloadAudioFiles(sentenceAudioData);
+            const success = await startPlayback(sentenceAudioData, {
+              sentenceOffset: savedState.sentenceIndex,
+            });
 
-            // Start playback from where we left off
-            const success = await startPlayback(startFromSentences);
             if (!success) {
               handleError(new Error('Failed to resume audio playback'));
-            }
-          } else {
-            // Index is out of bounds, start from beginning
-            await audioPlayer.preloadAudioFiles(sentenceAudioData);
-            const success = await startPlayback(sentenceAudioData);
-            if (!success) {
-              handleError(new Error('Failed to start audio playback'));
+              setAudioControlVisible(false);
             }
           }
         } else {
@@ -489,48 +502,55 @@ export default function ArticleScreen(): JSX.Element {
           const success = await startPlayback(sentenceAudioData);
           if (!success) {
             handleError(new Error('Failed to start audio playback'));
+            setAudioControlVisible(false);
           }
         }
       } catch (error) {
         handleError(error as Error);
+        // Reset UI state on error
+        setAudioControlVisible(false);
       }
     }
   }, [
     isPlaying,
-    stopPlayback,
-    startPlayback,
-    sentenceAudioData,
     audioPlayer,
     currentWordId,
     currentPosition,
     currentSentenceIndex,
     dispatch,
+    startPlayback,
+    sentenceAudioData,
   ]);
 
   // Handle explicit stop of playback
   const handleStopPlayback = useCallback(async () => {
     lightFeedback();
 
-    // Reset saved position
-    pausedAudioStateRef.current = {
-      sentenceIndex: null,
-      wordId: null,
-      position: null,
-    };
-
-    // Hide controls and stop playback
-    setAudioControlVisible(false);
-    await stopPlayback();
-
-    // Reset audio state in Redux
-    dispatch(
-      updateAudioState({
+    try {
+      // Reset saved position
+      pausedAudioStateRef.current = {
+        sentenceIndex: null,
         wordId: null,
         position: null,
-        isPlaying: false,
-        sentenceId: null,
-      })
-    );
+        audioPositionMs: 0,
+      };
+
+      // Hide controls and stop playback
+      setAudioControlVisible(false);
+      await stopPlayback();
+
+      // Reset audio state in Redux
+      dispatch(
+        updateAudioState({
+          wordId: null,
+          position: null,
+          isPlaying: false,
+          sentenceId: null,
+        })
+      );
+    } catch (error) {
+      handleError(error as Error);
+    }
   }, [stopPlayback, dispatch]);
 
   // Handle next sentence button press
@@ -553,18 +573,31 @@ export default function ArticleScreen(): JSX.Element {
           sentenceIndex: nextSentenceIndex,
           wordId: null,
           position: null,
+          audioPositionMs: 0,
         };
 
-        // Start playback from the next sentence
+        // Start playback from the next sentence - use a slice but keep proper index
         const nextSentences = sentenceAudioData.slice(nextSentenceIndex);
         await audioPlayer.preloadAudioFiles(nextSentences);
-        const success = await startPlayback(nextSentences);
+        const success = await startPlayback(nextSentences, {
+          sentenceOffset: nextSentenceIndex, // Pass the absolute index in the original array
+        });
 
         if (!success) {
-          handleError(new Error('Failed to play next sentence'));
+          // Try one more sentence ahead if this fails
+          if (nextSentenceIndex + 1 < sentenceAudioData.length) {
+            const skipAheadSentences = sentenceAudioData.slice(nextSentenceIndex + 1);
+            await startPlayback(skipAheadSentences, {
+              sentenceOffset: nextSentenceIndex + 1, // Pass the absolute index
+            });
+          } else {
+            handleError(new Error('Failed to play next sentence'));
+            setAudioControlVisible(false);
+          }
         }
       } catch (error) {
         handleError(error as Error);
+        setAudioControlVisible(false);
       }
     }
   }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
@@ -589,18 +622,23 @@ export default function ArticleScreen(): JSX.Element {
           sentenceIndex: prevSentenceIndex,
           wordId: null,
           position: null,
+          audioPositionMs: 0,
         };
 
-        // Start playback from the previous sentence
+        // Start playback from the previous sentence - use a slice but keep proper index
         const prevSentences = sentenceAudioData.slice(prevSentenceIndex);
         await audioPlayer.preloadAudioFiles(prevSentences);
-        const success = await startPlayback(prevSentences);
+        const success = await startPlayback(prevSentences, {
+          sentenceOffset: prevSentenceIndex, // Pass the absolute index in the original array
+        });
 
         if (!success) {
           handleError(new Error('Failed to play previous sentence'));
+          setAudioControlVisible(false);
         }
       } catch (error) {
         handleError(error as Error);
+        setAudioControlVisible(false);
       }
     }
   }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
