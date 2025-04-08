@@ -326,7 +326,10 @@ export default function ArticleScreen(): JSX.Element {
   // New state to track if audio control panel should be visible
   const [audioControlVisible, setAudioControlVisible] = useState(false);
 
-  // Update the type of pausedAudioStateRef for audio position tracking
+  // New ref to prevent rapid navigation actions
+  const isNavigatingRef = useRef(false);
+
+  // Pause audio state tracking
   const pausedAudioStateRef = useRef<{
     sentenceIndex: number | null;
     wordId: number | null;
@@ -553,11 +556,26 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [stopPlayback, dispatch]);
 
+  // Add effect to handle audio control panel visibility changes
+  useEffect(() => {
+    // When control panel becomes invisible and playback is still active, stop playback
+    if (!audioControlVisible && isPlaying) {
+      handleStopPlayback();
+    }
+  }, [audioControlVisible, isPlaying, handleStopPlayback]);
+
   // Handle next sentence button press
   const handleNextSentence = useCallback(async () => {
+    // Prevent rapid multiple clicks
+    if (isNavigatingRef.current) {
+      console.log('Navigation already in progress, ignoring request');
+      return;
+    }
+    isNavigatingRef.current = true;
     lightFeedback();
 
     if (currentSentenceIndex === null || !sentenceAudioData.length) {
+      isNavigatingRef.current = false;
       return;
     }
 
@@ -598,15 +616,30 @@ export default function ArticleScreen(): JSX.Element {
       } catch (error) {
         handleError(error as Error);
         setAudioControlVisible(false);
+      } finally {
+        // Reset navigation state after a delay to prevent rapid transitions
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 500);
       }
+    } else {
+      // Already at last sentence
+      isNavigatingRef.current = false;
     }
   }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
   // Handle previous sentence button press
   const handlePreviousSentence = useCallback(async () => {
+    // Prevent rapid multiple clicks
+    if (isNavigatingRef.current) {
+      console.log('Navigation already in progress, ignoring request');
+      return;
+    }
+    isNavigatingRef.current = true;
     lightFeedback();
 
     if (currentSentenceIndex === null || !sentenceAudioData.length) {
+      isNavigatingRef.current = false;
       return;
     }
 
@@ -639,7 +672,15 @@ export default function ArticleScreen(): JSX.Element {
       } catch (error) {
         handleError(error as Error);
         setAudioControlVisible(false);
+      } finally {
+        // Reset navigation state after a delay to prevent rapid transitions
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 500);
       }
+    } else {
+      // Already at first sentence
+      isNavigatingRef.current = false;
     }
   }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
