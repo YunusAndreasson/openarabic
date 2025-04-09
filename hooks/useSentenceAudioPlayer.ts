@@ -160,6 +160,10 @@ export function useSentenceAudioPlayer(): {
   // Add a ref for the safety timer
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Add a ref to track the last progress update time for throttling
+  const lastProgressUpdateRef = useRef<number>(0);
+  const PROGRESS_UPDATE_THRESHOLD_MS = 250; // Minimum ms between progress updates
+
   // ---- HELPER: Find a word by ID from all sentences ----
   const findWordById = useCallback(
     (wordId: number, sentenceWordsMap: SentenceWordsMap): Tables<'sentence_words'> | undefined => {
@@ -271,9 +275,9 @@ export function useSentenceAudioPlayer(): {
   // ---- Word tracking with efficient interval-based approach ----
   const trackWordTiming = useCallback((): (() => void) => {
     // Use interval instead of requestAnimationFrame to reduce CPU usage
-    const INTERVAL_MS = 400; // Increased from 250ms to 400ms for better performance
+    const INTERVAL_MS = 450;
     const WORD_OVERLAP_MS = 200;
-    const MAX_CHECKS_PER_INTERVAL = 5;
+    const MAX_CHECKS_PER_INTERVAL = 4;
 
     // Clear any existing timing interval
     if (timingIntervalRef.current !== null) {
@@ -365,8 +369,13 @@ export function useSentenceAudioPlayer(): {
         return;
       }
 
-      setProgress(status.positionMillis);
-      setDuration(status.durationMillis ?? 0);
+      // Throttle progress updates to reduce unnecessary renders
+      const now = Date.now();
+      if (now - lastProgressUpdateRef.current > PROGRESS_UPDATE_THRESHOLD_MS) {
+        setProgress(status.positionMillis);
+        setDuration(status.durationMillis ?? 0);
+        lastProgressUpdateRef.current = now;
+      }
 
       // REVISED: Improved completion detection logic, relying primarily on didJustFinish
       // This is the canonical source of truth for when to move to the next sentence
