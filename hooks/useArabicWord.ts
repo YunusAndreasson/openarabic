@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import { analytics } from '../services/analytics';
+import { selectAudioState } from '../store/audioSlice';
 import type { RootState } from '../store/store';
 import type { SentenceWord } from '../types/vocabulary.types';
 
@@ -29,12 +30,8 @@ export function useArabicWord({
   const { user } = useAuth();
   const [forceSelected, setForceSelected] = useState<boolean | null>(null);
 
-  // Get audio state with robust selector
-  const audioState = useSelector((state: RootState) => ({
-    wordId: state.audio.currentWordId,
-    position: state.audio.currentPosition,
-    isPlaying: state.audio.isPlaying,
-  }));
+  // Use the memoized selector instead of creating a new object
+  const audioState = useSelector(selectAudioState);
 
   // Selection state management
   const studyWords = queryClient.getQueryData(['studyWords', user?.id]);

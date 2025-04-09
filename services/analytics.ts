@@ -105,7 +105,7 @@ class Analytics {
 
       // Enable debug logs in development
       if (__DEV__) {
-        this.mixpanel.setLoggingEnabled(true);
+        this.mixpanel.setLoggingEnabled(false);
       }
     } catch (error) {
       logError(error);

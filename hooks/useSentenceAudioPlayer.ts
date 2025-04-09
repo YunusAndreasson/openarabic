@@ -4,6 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
+  selectCurrentWordId,
+  selectCurrentPosition,
+  selectIsPlaying,
+  selectCurrentSentenceId,
   setCurrentWord,
   setPlayingState,
   setCurrentSentence,
@@ -108,10 +112,10 @@ export function useSentenceAudioPlayer(): {
   const dispatch = useDispatch();
 
   // Redux states
-  const currentWordId = useSelector((state: RootState) => state.audio.currentWordId);
-  const currentPosition = useSelector((state: RootState) => state.audio.currentPosition);
-  const isPlaying = useSelector((state: RootState) => state.audio.isPlaying);
-  const currentSentenceIndex = useSelector((state: RootState) => state.audio.currentSentenceId);
+  const currentWordId = useSelector(selectCurrentWordId);
+  const currentPosition = useSelector(selectCurrentPosition);
+  const isPlaying = useSelector(selectIsPlaying);
+  const currentSentenceIndex = useSelector(selectCurrentSentenceId);
 
   // Local states
   const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'error'>(

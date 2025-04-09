@@ -1,5 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createSelector } from '@reduxjs/toolkit';
+
+import type { RootState } from './store';
 
 export interface AudioState {
   currentWordId: number | null;
@@ -66,6 +68,7 @@ const audioSlice = createSlice({
   },
 });
 
+// Export actions
 export const {
   setCurrentWord,
   setPlayingState,
@@ -73,4 +76,31 @@ export const {
   resetAudioState,
   updateAudioState,
 } = audioSlice.actions;
+
+// Memoized selectors
+export const selectCurrentWordId = (state: RootState) => state.audio.currentWordId;
+export const selectCurrentPosition = (state: RootState) => state.audio.currentPosition;
+export const selectIsPlaying = (state: RootState) => state.audio.isPlaying;
+export const selectCurrentSentenceId = (state: RootState) => state.audio.currentSentenceId;
+
+// Memoized composite selectors
+export const selectAudioState = createSelector(
+  [selectCurrentWordId, selectCurrentPosition, selectIsPlaying],
+  (wordId, position, isPlaying) => ({
+    wordId,
+    position,
+    isPlaying,
+  })
+);
+
+export const selectFullAudioState = createSelector(
+  [selectCurrentWordId, selectCurrentPosition, selectIsPlaying, selectCurrentSentenceId],
+  (wordId, position, isPlaying, sentenceId) => ({
+    wordId,
+    position,
+    isPlaying,
+    sentenceId,
+  })
+);
+
 export default audioSlice.reducer;
