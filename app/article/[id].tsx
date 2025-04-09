@@ -345,6 +345,188 @@ export default function ArticleScreen(): JSX.Element {
     audioPositionMs: 0,
   });
 
+  // Define a type for the saved audio state
+  type SavedAudioState = {
+    sentenceIndex: number | null;
+    wordId: number | null;
+    position: number | null;
+    audioPositionMs?: number;
+  };
+
+  // Helper to check if we should resume from saved position
+  const shouldResumeFromSavedPosition = useCallback(
+    (savedState: SavedAudioState) => {
+      // Early return if no valid sentence index
+      if (savedState.sentenceIndex === null) return false;
+      if (savedState.sentenceIndex < 0) return false;
+
+      // Now TypeScript knows sentenceIndex is a number
+      // Check if at end of article
+      return savedState.sentenceIndex < sentenceAudioData.length - 1;
+    },
+    [sentenceAudioData]
+  );
+
+  // Helper to resume from saved position
+  const resumeFromSavedPosition = useCallback(
+    async (savedState: SavedAudioState) => {
+      if (savedState.sentenceIndex === null) {
+        throw new Error('Cannot resume playback with null sentence index');
+      }
+
+      // Update Redux state to indicate playback is starting
+      dispatch(
+        updateAudioState({
+          wordId: savedState.wordId,
+          position: savedState.position,
+          isPlaying: true,
+          sentenceId: savedState.sentenceIndex,
+        })
+      );
+
+      // Use the resumePlayback function to continue exact sentence
+      const resumeSuccess = await audioPlayer.resumePlayback(
+        savedState.sentenceIndex, // Now safe to use directly since we checked above
+        savedState.audioPositionMs || 0
+      );
+
+      if (!resumeSuccess) {
+        // If resume fails, try starting from beginning of current sentence
+        await audioPlayer.preloadAudioFiles(sentenceAudioData);
+        const success = await startPlayback(sentenceAudioData, {
+          sentenceOffset: savedState.sentenceIndex,
+        });
+
+        if (!success) {
+          handleError(new Error('Failed to resume audio playback'));
+          setAudioControlVisible(false);
+        }
+      }
+    },
+    [audioPlayer, sentenceAudioData, startPlayback, dispatch]
+  );
+
+  // Helper to start fresh playback
+  const startFreshPlayback = useCallback(async () => {
+    // Clear any saved state to ensure we start fresh
+    pausedAudioStateRef.current = {
+      sentenceIndex: null,
+      wordId: null,
+      position: null,
+      audioPositionMs: 0,
+    };
+
+    // Reset Redux state before starting new playback
+    dispatch(
+      updateAudioState({
+        wordId: null,
+        position: null,
+        isPlaying: true,
+        sentenceId: 0, // Start from first sentence (index 0)
+      })
+    );
+
+    await audioPlayer.preloadAudioFiles(sentenceAudioData);
+    const success = await startPlayback(sentenceAudioData);
+    if (!success) {
+      handleError(new Error('Failed to start audio playback'));
+      setAudioControlVisible(false);
+    }
+  }, [audioPlayer, sentenceAudioData, startPlayback, dispatch]);
+
+  // Helper function to handle pausing audio
+  const handlePauseAudio = useCallback(async () => {
+    try {
+      // Get current audio position in milliseconds for precise resumption
+      let currentAudioPositionMs = 0;
+      if (audioPlayer.soundRef.current) {
+        try {
+          const status = await audioPlayer.soundRef.current.getStatusAsync();
+          if (status.isLoaded) {
+            currentAudioPositionMs = status.positionMillis;
+          }
+        } catch (audioError) {
+          handleError(audioError as Error);
+        }
+      }
+
+      // Save complete state for resumption
+      pausedAudioStateRef.current = {
+        sentenceIndex: currentSentenceIndex,
+        wordId: currentWordId,
+        position: currentPosition,
+        audioPositionMs: currentAudioPositionMs,
+      };
+
+      // MODIFIED: Stop playback but DON'T unload the sound
+      await audioPlayer.stopPlayback(false);
+
+      // Update wasPlayingRef to reflect the current state
+      wasPlayingRef.current = false;
+
+      // Dispatch Redux update to indicate paused state but keep current positions
+      dispatch(
+        updateAudioState({
+          wordId: currentWordId,
+          position: currentPosition,
+          isPlaying: false,
+          sentenceId: currentSentenceIndex,
+        })
+      );
+    } catch (error) {
+      handleError(error as Error);
+    }
+  }, [audioPlayer, currentSentenceIndex, currentWordId, currentPosition, dispatch]);
+
+  // Helper function to handle starting/resuming audio
+  const handleStartAudio = useCallback(async () => {
+    try {
+      // Show the controls when starting playback
+      setAudioControlVisible(true);
+
+      // Update wasPlayingRef to reflect that we're now playing
+      wasPlayingRef.current = true;
+
+      // Check if we have a saved position to resume from
+      const savedState = pausedAudioStateRef.current;
+
+      if (shouldResumeFromSavedPosition(savedState)) {
+        await resumeFromSavedPosition(savedState);
+      } else {
+        await startFreshPlayback();
+      }
+    } catch (error) {
+      handleError(error as Error);
+      // Reset UI state on error
+      setAudioControlVisible(false);
+    }
+  }, [shouldResumeFromSavedPosition, resumeFromSavedPosition, startFreshPlayback]);
+
+  // Handle play button press for article-level play/pause
+  const handlePlayPress = useCallback(async () => {
+    lightFeedback();
+
+    if (isPlaying) {
+      await handlePauseAudio();
+    } else {
+      await handleStartAudio();
+    }
+  }, [isPlaying, handlePauseAudio, handleStartAudio]);
+
+  // Handle bookmark toggle with optimistic updates
+  const handleBookmarkPress = useCallback(() => {
+    // Add this check: If no user, do nothing
+    if (!user) {
+      return;
+    }
+
+    if (articleId) {
+      lightFeedback();
+      setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
+      handleToggleReadingList(articleId, Boolean(isInReadingList));
+    }
+  }, [articleId, isInReadingList, handleToggleReadingList, user]);
+
   // Handle back button press with optimized cleanup
   const handleBackPress = useCallback(() => {
     // Stop audio playback if it's playing
@@ -399,367 +581,6 @@ export default function ArticleScreen(): JSX.Element {
     // Navigate back
     router.back();
   }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, triggerAnimations, queryClient]);
-
-  // Handle bookmark toggle with optimistic updates
-  const handleBookmarkPress = useCallback(() => {
-    // Add this check: If no user, do nothing
-    if (!user) {
-      return;
-    }
-
-    if (articleId) {
-      lightFeedback();
-      setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
-      handleToggleReadingList(articleId, Boolean(isInReadingList));
-    }
-  }, [articleId, isInReadingList, handleToggleReadingList, user]);
-
-  // Handle play button press for article-level play/pause
-  const handlePlayPress = useCallback(async () => {
-    lightFeedback();
-
-    if (isPlaying) {
-      try {
-        // Get current audio position in milliseconds for precise resumption
-        let currentAudioPositionMs = 0;
-        if (audioPlayer.soundRef.current) {
-          try {
-            const status = await audioPlayer.soundRef.current.getStatusAsync();
-            if (status.isLoaded) {
-              currentAudioPositionMs = status.positionMillis;
-            }
-          } catch (audioError) {
-            handleError(audioError as Error);
-          }
-        }
-
-        // Save complete state for resumption
-        pausedAudioStateRef.current = {
-          sentenceIndex: currentSentenceIndex,
-          wordId: currentWordId,
-          position: currentPosition,
-          audioPositionMs: currentAudioPositionMs,
-        };
-
-        // MODIFIED: Stop playback but DON'T unload the sound
-        // Using the direct reference to audioPlayer's stopPlayback to avoid the memoized version
-        await audioPlayer.stopPlayback(false);
-
-        // Update wasPlayingRef to reflect the current state
-        wasPlayingRef.current = false;
-
-        // Dispatch Redux update to indicate paused state but keep current positions
-        dispatch(
-          updateAudioState({
-            wordId: currentWordId,
-            position: currentPosition,
-            isPlaying: false,
-            sentenceId: currentSentenceIndex,
-          })
-        );
-      } catch (error) {
-        handleError(error as Error);
-      }
-    } else {
-      try {
-        // Show the controls when starting playback
-        setAudioControlVisible(true);
-
-        // Update wasPlayingRef to reflect that we're now playing
-        wasPlayingRef.current = true;
-
-        // Check if we have a saved position to resume from
-        const savedState = pausedAudioStateRef.current;
-
-        // Check if we're at the last sentence and article is complete
-        const isArticleComplete =
-          savedState.sentenceIndex !== null &&
-          sentenceAudioData.length > 0 &&
-          savedState.sentenceIndex >= sentenceAudioData.length - 1;
-
-        if (
-          savedState.sentenceIndex !== null &&
-          savedState.sentenceIndex >= 0 &&
-          !isArticleComplete
-        ) {
-          // We have a saved position and it's not the end of the article, resume from there
-
-          // Update Redux state to indicate playback is starting
-          dispatch(
-            updateAudioState({
-              wordId: savedState.wordId,
-              position: savedState.position,
-              isPlaying: true,
-              sentenceId: savedState.sentenceIndex,
-            })
-          );
-
-          // Use the resumePlayback function to continue exact sentence
-          const resumeSuccess = await audioPlayer.resumePlayback(
-            savedState.sentenceIndex,
-            savedState.audioPositionMs || 0
-          );
-
-          if (!resumeSuccess) {
-            // If resume fails, try starting from beginning of current sentence
-            await audioPlayer.preloadAudioFiles(sentenceAudioData);
-            const success = await startPlayback(sentenceAudioData, {
-              sentenceOffset: savedState.sentenceIndex,
-            });
-
-            if (!success) {
-              handleError(new Error('Failed to resume audio playback'));
-              setAudioControlVisible(false);
-            }
-          }
-        } else {
-          // No saved position or we're at end of article, start from beginning
-
-          // Clear any saved state to ensure we start fresh
-          pausedAudioStateRef.current = {
-            sentenceIndex: null,
-            wordId: null,
-            position: null,
-            audioPositionMs: 0,
-          };
-
-          // Reset Redux state before starting new playback
-          dispatch(
-            updateAudioState({
-              wordId: null,
-              position: null,
-              isPlaying: true,
-              sentenceId: 0, // Start from first sentence (index 0)
-            })
-          );
-
-          await audioPlayer.preloadAudioFiles(sentenceAudioData);
-          const success = await startPlayback(sentenceAudioData);
-          if (!success) {
-            handleError(new Error('Failed to start audio playback'));
-            setAudioControlVisible(false);
-          }
-        }
-      } catch (error) {
-        handleError(error as Error);
-        // Reset UI state on error
-        setAudioControlVisible(false);
-      }
-    }
-  }, [
-    isPlaying,
-    audioPlayer,
-    currentWordId,
-    currentPosition,
-    currentSentenceIndex,
-    dispatch,
-    startPlayback,
-    sentenceAudioData,
-  ]);
-
-  // Handle explicit stop of playback
-  const handleStopPlayback = useCallback(async () => {
-    lightFeedback();
-
-    try {
-      // Reset saved position
-      pausedAudioStateRef.current = {
-        sentenceIndex: null,
-        wordId: null,
-        position: null,
-        audioPositionMs: 0,
-      };
-
-      // Hide controls and stop playback
-      setAudioControlVisible(false);
-
-      // Update wasPlayingRef to reflect that we're stopping playback
-      wasPlayingRef.current = false;
-
-      await stopPlayback();
-
-      // Reset audio state in Redux
-      dispatch(
-        updateAudioState({
-          wordId: null,
-          position: null,
-          isPlaying: false,
-          sentenceId: null,
-        })
-      );
-    } catch (error) {
-      handleError(error as Error);
-    }
-  }, [stopPlayback, dispatch]);
-
-  // Initialize wasPlayingRef when the component mounts
-  useEffect(() => {
-    wasPlayingRef.current = isPlaying;
-  }, []);
-
-  // Add effect to handle audio control panel visibility changes
-  useEffect(() => {
-    // When control panel becomes invisible and playback is still active, stop playback
-    if (!audioControlVisible && isPlaying) {
-      handleStopPlayback();
-    }
-  }, [audioControlVisible, isPlaying, handleStopPlayback]);
-
-  // Watch for article playback completion
-  useEffect(() => {
-    // Create a timeout to check the state after a delay to avoid race conditions
-    const timeoutId = setTimeout(() => {
-      // Only consider it complete if:
-      // 1. It was previously playing
-      // 2. Now it's not playing
-      // 3. currentSentenceIndex is null (indicating we're not just paused)
-      // 4. Audio controls are visible
-      if (
-        wasPlayingRef.current &&
-        !isPlaying &&
-        currentSentenceIndex === null &&
-        audioControlVisible
-      ) {
-        // When article playback is complete, hide the control panel
-        setAudioControlVisible(false);
-
-        // Reset the saved position state
-        pausedAudioStateRef.current = {
-          sentenceIndex: null,
-          wordId: null,
-          position: null,
-          audioPositionMs: 0,
-        };
-      }
-
-      // Update previous state
-      wasPlayingRef.current = isPlaying;
-    }, 300); // Short delay to allow state to settle
-
-    return () => {
-      clearTimeout(timeoutId);
-    };
-  }, [isPlaying, currentSentenceIndex, audioControlVisible]);
-
-  // Handle next sentence button press
-  const handleNextSentence = useCallback(async () => {
-    // Prevent rapid multiple clicks
-    if (isNavigatingRef.current) {
-      console.log('Navigation already in progress, ignoring request');
-      return;
-    }
-    isNavigatingRef.current = true;
-    lightFeedback();
-
-    if (currentSentenceIndex === null || !sentenceAudioData.length) {
-      isNavigatingRef.current = false;
-      return;
-    }
-
-    // If not at the last sentence, go to the next one
-    if (currentSentenceIndex < sentenceAudioData.length - 1) {
-      try {
-        // Stop current playback
-        await stopPlayback();
-
-        // Update saved state to next sentence
-        const nextSentenceIndex = currentSentenceIndex + 1;
-        pausedAudioStateRef.current = {
-          sentenceIndex: nextSentenceIndex,
-          wordId: null,
-          position: null,
-          audioPositionMs: 0,
-        };
-
-        // Start playback from the next sentence - use a slice but keep proper index
-        const nextSentences = sentenceAudioData.slice(nextSentenceIndex);
-        await audioPlayer.preloadAudioFiles(nextSentences);
-        const success = await startPlayback(nextSentences, {
-          sentenceOffset: nextSentenceIndex, // Pass the absolute index in the original array
-        });
-
-        if (!success) {
-          // Try one more sentence ahead if this fails
-          if (nextSentenceIndex + 1 < sentenceAudioData.length) {
-            const skipAheadSentences = sentenceAudioData.slice(nextSentenceIndex + 1);
-            await startPlayback(skipAheadSentences, {
-              sentenceOffset: nextSentenceIndex + 1, // Pass the absolute index
-            });
-          } else {
-            handleError(new Error('Failed to play next sentence'));
-            setAudioControlVisible(false);
-          }
-        }
-      } catch (error) {
-        handleError(error as Error);
-        setAudioControlVisible(false);
-      } finally {
-        // Reset navigation state after a delay to prevent rapid transitions
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-        }, 500);
-      }
-    } else {
-      // Already at last sentence
-      isNavigatingRef.current = false;
-    }
-  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
-
-  // Handle previous sentence button press
-  const handlePreviousSentence = useCallback(async () => {
-    // Prevent rapid multiple clicks
-    if (isNavigatingRef.current) {
-      console.log('Navigation already in progress, ignoring request');
-      return;
-    }
-    isNavigatingRef.current = true;
-    lightFeedback();
-
-    if (currentSentenceIndex === null || !sentenceAudioData.length) {
-      isNavigatingRef.current = false;
-      return;
-    }
-
-    // If not at the first sentence, go to the previous one
-    if (currentSentenceIndex > 0) {
-      try {
-        // Stop current playback
-        await stopPlayback();
-
-        // Update saved state to previous sentence
-        const prevSentenceIndex = currentSentenceIndex - 1;
-        pausedAudioStateRef.current = {
-          sentenceIndex: prevSentenceIndex,
-          wordId: null,
-          position: null,
-          audioPositionMs: 0,
-        };
-
-        // Start playback from the previous sentence - use a slice but keep proper index
-        const prevSentences = sentenceAudioData.slice(prevSentenceIndex);
-        await audioPlayer.preloadAudioFiles(prevSentences);
-        const success = await startPlayback(prevSentences, {
-          sentenceOffset: prevSentenceIndex, // Pass the absolute index in the original array
-        });
-
-        if (!success) {
-          handleError(new Error('Failed to play previous sentence'));
-          setAudioControlVisible(false);
-        }
-      } catch (error) {
-        handleError(error as Error);
-        setAudioControlVisible(false);
-      } finally {
-        // Reset navigation state after a delay to prevent rapid transitions
-        setTimeout(() => {
-          isNavigatingRef.current = false;
-        }, 500);
-      }
-    } else {
-      // Already at first sentence
-      isNavigatingRef.current = false;
-    }
-  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
   // Memoize rendering-related props to prevent unnecessary rerenders
   const articleUIProps = useMemo(
@@ -843,6 +664,169 @@ export default function ArticleScreen(): JSX.Element {
     ),
     [handleArticlePress]
   );
+
+  // Handle explicit stop of playback
+  const handleStopPlayback = useCallback(async () => {
+    lightFeedback();
+
+    try {
+      // Reset saved position
+      pausedAudioStateRef.current = {
+        sentenceIndex: null,
+        wordId: null,
+        position: null,
+        audioPositionMs: 0,
+      };
+
+      // Hide controls and stop playback
+      setAudioControlVisible(false);
+
+      // Update wasPlayingRef to reflect that we're stopping playback
+      wasPlayingRef.current = false;
+
+      // Fully stop and unload all audio resources
+      await stopPlayback();
+
+      // Explicitly unload any audio resources to ensure complete cleanup
+      if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
+        try {
+          await audioPlayer.soundRef.current.unloadAsync();
+        } catch (error) {
+          handleError(error as Error);
+        }
+      }
+
+      // Reset audio state in Redux
+      dispatch(
+        updateAudioState({
+          wordId: null,
+          position: null,
+          isPlaying: false,
+          sentenceId: null,
+        })
+      );
+    } catch (error) {
+      handleError(error as Error);
+    }
+  }, [stopPlayback, dispatch, audioPlayer]);
+
+  // Handle next sentence button press
+  const handleNextSentence = useCallback(async () => {
+    // Prevent rapid multiple clicks
+    if (isNavigatingRef.current) {
+      return;
+    }
+    isNavigatingRef.current = true;
+    lightFeedback();
+
+    if (currentSentenceIndex === null || !sentenceAudioData.length) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
+    // If not at the last sentence, go to the next one
+    if (currentSentenceIndex < sentenceAudioData.length - 1) {
+      try {
+        // Stop current playback
+        await stopPlayback();
+
+        // Update saved state to next sentence
+        const nextSentenceIndex = currentSentenceIndex + 1;
+        pausedAudioStateRef.current = {
+          sentenceIndex: nextSentenceIndex,
+          wordId: null,
+          position: null,
+          audioPositionMs: 0,
+        };
+
+        // Start playback from the next sentence - use a slice but keep proper index
+        const nextSentences = sentenceAudioData.slice(nextSentenceIndex);
+        await audioPlayer.preloadAudioFiles(nextSentences);
+        const success = await startPlayback(nextSentences, {
+          sentenceOffset: nextSentenceIndex, // Pass the absolute index in the original array
+        });
+
+        if (!success) {
+          // Try one more sentence ahead if this fails
+          if (nextSentenceIndex + 1 < sentenceAudioData.length) {
+            const skipAheadSentences = sentenceAudioData.slice(nextSentenceIndex + 1);
+            await startPlayback(skipAheadSentences, {
+              sentenceOffset: nextSentenceIndex + 1, // Pass the absolute index
+            });
+          } else {
+            handleError(new Error('Failed to play next sentence'));
+            setAudioControlVisible(false);
+          }
+        }
+      } catch (error) {
+        handleError(error as Error);
+        setAudioControlVisible(false);
+      } finally {
+        // Reset navigation state after a delay to prevent rapid transitions
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 500);
+      }
+    } else {
+      // Already at last sentence
+      isNavigatingRef.current = false;
+    }
+  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
+
+  // Handle previous sentence button press
+  const handlePreviousSentence = useCallback(async () => {
+    // Prevent rapid multiple clicks
+    if (isNavigatingRef.current) {
+      return;
+    }
+    isNavigatingRef.current = true;
+    lightFeedback();
+
+    if (currentSentenceIndex === null || !sentenceAudioData.length) {
+      isNavigatingRef.current = false;
+      return;
+    }
+
+    // If not at the first sentence, go to the previous one
+    if (currentSentenceIndex > 0) {
+      try {
+        // Stop current playback
+        await stopPlayback();
+
+        // Update saved state to previous sentence
+        const prevSentenceIndex = currentSentenceIndex - 1;
+        pausedAudioStateRef.current = {
+          sentenceIndex: prevSentenceIndex,
+          wordId: null,
+          position: null,
+          audioPositionMs: 0,
+        };
+
+        // Start playback from the previous sentence - use a slice but keep proper index
+        const prevSentences = sentenceAudioData.slice(prevSentenceIndex);
+        await audioPlayer.preloadAudioFiles(prevSentences);
+        const success = await startPlayback(prevSentences, {
+          sentenceOffset: prevSentenceIndex, // Pass the absolute index in the original array
+        });
+
+        if (!success) {
+          handleError(new Error('Failed to play previous sentence'));
+          setAudioControlVisible(false);
+        }
+      } catch (error) {
+        handleError(error as Error);
+        setAudioControlVisible(false);
+      } finally {
+        // Reset navigation state after a delay to prevent rapid transitions
+        setTimeout(() => {
+          isNavigatingRef.current = false;
+        }, 500);
+      }
+    } else {
+      // Already at first sentence
+      isNavigatingRef.current = false;
+    }
+  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
   // Main render - loading state
   if (isLoading) {
