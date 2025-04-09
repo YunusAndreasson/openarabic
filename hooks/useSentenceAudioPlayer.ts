@@ -157,6 +157,9 @@ export function useSentenceAudioPlayer(): {
   // Add a timeout ref to clear the manual navigation flag
   const manualNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Add a ref for the safety timer
+  const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // ---- HELPER: Find a word by ID from all sentences ----
   const findWordById = useCallback(
     (wordId: number, sentenceWordsMap: SentenceWordsMap): Tables<'sentence_words'> | undefined => {
@@ -424,11 +427,8 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
-        // IMPORTANT: For auto-advance, double check the current sentence before advancing
-        // This ensures we don't get out of sync with Redux
-        const nextSentenceIndex = currentSentenceIndex !== null ? currentSentenceIndex + 1 : 0;
-
-        // Handle next sentence with better error recovery
+        // IMPORTANT: Let playNextSentence handle all index calculations
+        // This ensures there's a single source of truth for advancing sentences
         playNextSentenceRef
           .current()
           .catch(error => {
@@ -440,24 +440,6 @@ export function useSentenceAudioPlayer(): {
             // Ensure completion flag is always reset
             setTimeout(() => {
               isHandlingCompletionRef.current = false;
-
-              // Additional safety check to ensure the UI and audio are in sync
-              // If we're still playing but current sentence is wrong, force update
-              if (soundRef.current && isPlaying) {
-                soundRef.current
-                  .getStatusAsync()
-                  .then(currentStatus => {
-                    if (currentStatus.isLoaded && currentStatus.isPlaying) {
-                      // Verify that UI matches the actual playing sentence
-                      if (currentSentenceIndex !== nextSentenceIndex) {
-                        dispatch(setCurrentSentence(nextSentenceIndex));
-                      }
-                    }
-                  })
-                  .catch(() => {
-                    /* ignore errors here */
-                  });
-              }
             }, 500);
           });
         return;
@@ -590,6 +572,9 @@ export function useSentenceAudioPlayer(): {
         }
       }, 1500); // Increased from 1000ms to 1500ms to give more time for normal completion
 
+      // Store reference to the timer
+      safetyTimerRef.current = safetyTimer;
+
       // Register the timer for cleanup
       if (registerTimer) {
         registerTimer(safetyTimer);
@@ -599,6 +584,7 @@ export function useSentenceAudioPlayer(): {
     return () => {
       if (safetyTimer) {
         clearTimer(safetyTimer);
+        safetyTimerRef.current = null;
       }
     };
   }, [isPlaying, currentSentenceIndex, clearTimer, registerTimer]);
@@ -823,10 +809,13 @@ export function useSentenceAudioPlayer(): {
 
       // Check if we're at the end
       if (!nextSentence) {
+        // IMPROVEMENT: Use a single atomic update with all needed properties
         dispatch(
           updateAudioState({
             sentenceId: fromIndex,
             isPlaying: false,
+            wordId: null,
+            position: null,
           })
         );
         setAudioState('idle');
@@ -837,12 +826,7 @@ export function useSentenceAudioPlayer(): {
 
       // IMPORTANT: Explicitly set the current sentence index in Redux before processing
       // This ensures UI and audio are always synchronized
-      dispatch(setCurrentSentence(nextIndex));
-
-      // Wait a frame to allow Redux state to update
-      await new Promise(resolve => setTimeout(resolve, 0));
-
-      // Update Redux state with all properties
+      // IMPROVEMENT: Use a single updateAudioState instead of separate dispatches
       dispatch(
         updateAudioState({
           sentenceId: nextIndex,
@@ -953,9 +937,6 @@ export function useSentenceAudioPlayer(): {
   const playSentenceAtIndex = useCallback(
     async (targetIndex: number): Promise<void> => {
       try {
-        // Reset word highlight
-        dispatch(setCurrentWord({ wordId: null, position: null }));
-
         // Validate sentence exists
         const sentenceData = validateSentenceData(targetIndex);
         if (!sentenceData) {
@@ -963,6 +944,8 @@ export function useSentenceAudioPlayer(): {
             updateAudioState({
               sentenceId: null,
               isPlaying: false,
+              wordId: null,
+              position: null,
             })
           );
           setAudioState('idle');
@@ -1396,24 +1379,34 @@ export function useSentenceAudioPlayer(): {
   }, []);
 
   // Helper to set manual navigation mode with automatic timeout
-  const setManualNavigation = useCallback((isManual: boolean, timeoutMs = 2000) => {
-    // Clear any existing timeout
-    if (manualNavigationTimeoutRef.current) {
-      clearTimeout(manualNavigationTimeoutRef.current);
-      manualNavigationTimeoutRef.current = null;
-    }
-
-    // Set the flag immediately
-    isManualNavigationRef.current = isManual;
-
-    // If turning on manual navigation, set a timeout to turn it off
-    if (isManual && timeoutMs > 0) {
-      manualNavigationTimeoutRef.current = setTimeout(() => {
-        isManualNavigationRef.current = false;
+  const setManualNavigation = useCallback(
+    (isManual: boolean, timeoutMs = 2000) => {
+      // Clear any existing timeout
+      if (manualNavigationTimeoutRef.current) {
+        clearTimeout(manualNavigationTimeoutRef.current);
         manualNavigationTimeoutRef.current = null;
-      }, timeoutMs);
-    }
-  }, []);
+      }
+
+      // Set the flag immediately
+      isManualNavigationRef.current = isManual;
+
+      // IMPROVEMENT: Clear stalling detection timer during manual navigation
+      // to prevent unwanted auto-advancement
+      if (isManual && safetyTimerRef.current) {
+        clearTimer(safetyTimerRef.current);
+        safetyTimerRef.current = null;
+      }
+
+      // If turning on manual navigation, set a timeout to turn it off
+      if (isManual && timeoutMs > 0) {
+        manualNavigationTimeoutRef.current = setTimeout(() => {
+          isManualNavigationRef.current = false;
+          manualNavigationTimeoutRef.current = null;
+        }, timeoutMs);
+      }
+    },
+    [clearTimer]
+  );
 
   return {
     // Redux-based states
