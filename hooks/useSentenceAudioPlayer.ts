@@ -262,8 +262,8 @@ export function useSentenceAudioPlayer(): {
 
     const updateWordHighlight = async (): Promise<void> => {
       try {
-        // If no audio or no words, skip this update
-        if (!soundRef.current || wordTimingRef.current.length === 0) {
+        // More resilient ref handling - ensure all refs exist before proceeding
+        if (!soundRef.current || !wordTimingRef.current || wordTimingRef.current.length === 0) {
           return;
         }
 
@@ -272,7 +272,15 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
+        // Audio position validation - ensure position is valid and doesn't exceed duration
         const currentTimeMs = status.positionMillis;
+        const duration = status.durationMillis || 0;
+
+        // Skip processing if we have an invalid position or duration
+        if (currentTimeMs < 0 || (duration > 0 && currentTimeMs > duration + 500)) {
+          return;
+        }
+
         const timings = wordTimingRef.current;
 
         // Optimization: If we're already at the last word, nothing more to do
@@ -280,12 +288,15 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
+        // Add jitter protection constant to prevent small fluctuations from causing word changes
+        const JITTER_THRESHOLD_MS = 40;
+
         // Fast check: if current word is still active, exit early
         const currentWord = timings[lastActiveIndex.current];
         if (
           currentWord &&
-          currentTimeMs >= currentWord.startTime &&
-          currentTimeMs <= currentWord.endTime + WORD_OVERLAP_MS
+          currentTimeMs >= currentWord.startTime - JITTER_THRESHOLD_MS &&
+          currentTimeMs <= currentWord.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
         ) {
           return; // Still on the same word, no need to update
         }
@@ -300,7 +311,11 @@ export function useSentenceAudioPlayer(): {
           const word = timings[i];
           if (!word) continue;
 
-          if (currentTimeMs >= word.startTime && currentTimeMs <= word.endTime + WORD_OVERLAP_MS) {
+          // Add jitter protection to word boundary checks
+          if (
+            currentTimeMs >= word.startTime - JITTER_THRESHOLD_MS &&
+            currentTimeMs <= word.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
+          ) {
             // Found the current word - update state and exit
             dispatch(setCurrentWord({ wordId: word.wordId, position: i }));
             lastActiveIndex.current = i;
@@ -324,16 +339,21 @@ export function useSentenceAudioPlayer(): {
           while (jumpIndex < timings.length) {
             const jumpWord = timings[jumpIndex];
 
+            // Ensure the jumpWord exists before accessing properties
+            if (!jumpWord) {
+              jumpIndex += JUMP_SIZE;
+              continue;
+            }
+
             // If this word is in the future, we've gone too far - back up
-            if (jumpWord && currentTimeMs < jumpWord.startTime) {
+            if (currentTimeMs < jumpWord.startTime - JITTER_THRESHOLD_MS) {
               break;
             }
 
-            // If we found a word that contains the current time, use it
+            // If we found a word that contains the current time
             if (
-              jumpWord &&
-              currentTimeMs >= jumpWord.startTime &&
-              currentTimeMs <= jumpWord.endTime + WORD_OVERLAP_MS
+              currentTimeMs >= jumpWord.startTime - JITTER_THRESHOLD_MS &&
+              currentTimeMs <= jumpWord.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
             ) {
               dispatch(setCurrentWord({ wordId: jumpWord.wordId, position: jumpIndex }));
               lastActiveIndex.current = jumpIndex;
@@ -354,7 +374,7 @@ export function useSentenceAudioPlayer(): {
               if (!word) continue;
 
               // If this word starts after current time, we've gone too far
-              if (word.startTime > currentTimeMs) {
+              if (word.startTime > currentTimeMs + JITTER_THRESHOLD_MS) {
                 break;
               }
 
