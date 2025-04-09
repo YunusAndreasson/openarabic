@@ -1051,20 +1051,28 @@ export function useSentenceAudioPlayer(): {
     async (shouldUnload = true): Promise<boolean> => {
       try {
         if (soundRef.current) {
-          // Always stop playback
-          await soundRef.current.stopAsync();
+          // Immediately set state to stop UI updates
+          dispatch(setPlayingState(false));
 
-          // Only unload if explicitly requested - for pause we want to keep the sound loaded
-          if (shouldUnload) {
-            await cleanupAudio();
-          } else {
-            // Just update Redux state but keep the sound loaded
-            dispatch(
-              updateAudioState({
-                isPlaying: false,
-              })
-            );
-            setAudioState('paused');
+          // Try normal cleanup
+          try {
+            await soundRef.current.stopAsync();
+            await soundRef.current.unloadAsync();
+            soundRef.current = null;
+          } catch (error) {
+            // If normal cleanup fails, ensure ref is nullified
+            soundRef.current = null;
+          }
+
+          // Failsafe: force Audio module to release audio session
+          try {
+            await Audio.setAudioModeAsync({
+              playsInSilentModeIOS: false,
+              staysActiveInBackground: false,
+              shouldDuckAndroid: false,
+            });
+          } catch (e) {
+            // Ignore errors from audio mode change
           }
         }
         return true;
@@ -1073,7 +1081,7 @@ export function useSentenceAudioPlayer(): {
         return false;
       }
     },
-    [cleanupAudio, dispatch]
+    [dispatch]
   );
 
   // For public API - add resumePlayback
