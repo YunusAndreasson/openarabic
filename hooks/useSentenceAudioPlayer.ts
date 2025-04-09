@@ -108,6 +108,7 @@ export function useSentenceAudioPlayer(): {
   soundRef: React.MutableRefObject<Audio.Sound | null>;
   wordTimingRef: React.MutableRefObject<WordTiming[]>;
   timingIntervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
+  setManualNavigation: (isManual: boolean, timeoutMs?: number) => void;
 } {
   const dispatch = useDispatch();
 
@@ -149,6 +150,12 @@ export function useSentenceAudioPlayer(): {
 
   // Add a new ref to track the original index offset
   const sentenceIndexOffsetRef = useRef<number>(0);
+
+  // Add a ref to track manual navigation
+  const isManualNavigationRef = useRef<boolean>(false);
+
+  // Add a timeout ref to clear the manual navigation flag
+  const manualNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ---- HELPER: Find a word by ID from all sentences ----
   const findWordById = useCallback(
@@ -358,14 +365,14 @@ export function useSentenceAudioPlayer(): {
       setProgress(status.positionMillis);
       setDuration(status.durationMillis ?? 0);
 
-      // REVISED: Centralized completion detection logic
-      const isAtEnd =
-        status.didJustFinish ||
-        (status.durationMillis != null &&
-          status.durationMillis > 0 &&
-          status.positionMillis >= status.durationMillis - 50);
+      // REVISED: Improved completion detection logic, relying primarily on didJustFinish
+      // This is the canonical source of truth for when to move to the next sentence
+      if (status.didJustFinish) {
+        // Skip automatic next sentence if manual navigation is in progress
+        if (isManualNavigationRef.current) {
+          return;
+        }
 
-      if (isAtEnd) {
         // Debounce completion handling
         const now = Date.now();
         if (now - lastCompletionTimeRef.current < 1000) {
@@ -383,7 +390,7 @@ export function useSentenceAudioPlayer(): {
         const isAtLastSentence =
           currentSentenceIndex !== null &&
           sentencesRef.current.length > 0 &&
-          currentSentenceIndex >= sentencesRef.current.length - 1;
+          currentSentenceIndex >= sentencesRef.current.length - 1 + sentenceIndexOffsetRef.current;
 
         if (isAtLastSentence) {
           // Use a separate async function to handle cleanup
@@ -417,12 +424,42 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
-        // Handle next sentence
-        playNextSentenceRef.current().catch(error => {
-          handleError(error);
-          dispatch(setPlayingState(false));
-          isHandlingCompletionRef.current = false;
-        });
+        // IMPORTANT: For auto-advance, double check the current sentence before advancing
+        // This ensures we don't get out of sync with Redux
+        const nextSentenceIndex = currentSentenceIndex !== null ? currentSentenceIndex + 1 : 0;
+
+        // Handle next sentence with better error recovery
+        playNextSentenceRef
+          .current()
+          .catch(error => {
+            handleError(error);
+            dispatch(setPlayingState(false));
+            isHandlingCompletionRef.current = false;
+          })
+          .finally(() => {
+            // Ensure completion flag is always reset
+            setTimeout(() => {
+              isHandlingCompletionRef.current = false;
+
+              // Additional safety check to ensure the UI and audio are in sync
+              // If we're still playing but current sentence is wrong, force update
+              if (soundRef.current && isPlaying) {
+                soundRef.current
+                  .getStatusAsync()
+                  .then(currentStatus => {
+                    if (currentStatus.isLoaded && currentStatus.isPlaying) {
+                      // Verify that UI matches the actual playing sentence
+                      if (currentSentenceIndex !== nextSentenceIndex) {
+                        dispatch(setCurrentSentence(nextSentenceIndex));
+                      }
+                    }
+                  })
+                  .catch(() => {
+                    /* ignore errors here */
+                  });
+              }
+            }, 500);
+          });
         return;
       }
 
@@ -439,7 +476,7 @@ export function useSentenceAudioPlayer(): {
         !status.didJustFinish &&
         status.positionMillis > 0 && // Only care if we've actually started playing
         status.durationMillis &&
-        status.positionMillis < status.durationMillis - 200 // Not near the end
+        status.positionMillis < status.durationMillis - 400 // Increased margin to avoid conflict with end detection
       ) {
         // Audio has genuinely stopped unexpectedly
         dispatch(setPlayingState(false));
@@ -457,7 +494,7 @@ export function useSentenceAudioPlayer(): {
         dispatch(setPlayingState(false));
       }
     },
-    [dispatch, isPlaying, currentSentenceIndex]
+    [dispatch, isPlaying, currentSentenceIndex, sentenceIndexOffsetRef]
   );
 
   // Add effect to detect stalled transitions
@@ -487,6 +524,11 @@ export function useSentenceAudioPlayer(): {
     // Only set up the timer when actually playing
     if (isPlaying && currentSentenceIndex !== null) {
       safetyTimer = setTimeout(() => {
+        // Skip stalling detection if manual navigation is in progress
+        if (isManualNavigationRef.current) {
+          return;
+        }
+
         // Check if we're still on the same sentence after a delay
         if (soundRef.current && isPlaying) {
           soundRef.current
@@ -495,14 +537,19 @@ export function useSentenceAudioPlayer(): {
               if (status.isLoaded) {
                 const { positionMillis, durationMillis, isPlaying: stillPlaying } = status;
 
-                // More aggressive check - either we're at the end or just not making progress
-                const isAtEnd =
+                // Check if we're near the end - if so, let the normal didJustFinish handle it
+                // Now we only consider playback stuck if we're not within 90% of the duration
+                // This avoids overlap with the normal end-of-track detection in onPlaybackStatusUpdate
+                const isNearEnd =
                   positionMillis > 0 &&
                   durationMillis != null &&
                   durationMillis > 0 &&
-                  positionMillis >= durationMillis * 0.95;
+                  positionMillis >= durationMillis * 0.9;
 
-                const isStuck = !stillPlaying || isAtEnd;
+                // Only consider it stuck if:
+                // 1. It's not playing AND
+                // 2. We're NOT near the end (let didJustFinish handle end-of-track cases)
+                const isStuck = !stillPlaying && !isNearEnd;
 
                 if (isStuck) {
                   // Prevent race conditions with onPlaybackStatusUpdate by using the same flags
@@ -541,7 +588,12 @@ export function useSentenceAudioPlayer(): {
               });
             });
         }
-      }, 1000);
+      }, 1500); // Increased from 1000ms to 1500ms to give more time for normal completion
+
+      // Register the timer for cleanup
+      if (registerTimer) {
+        registerTimer(safetyTimer);
+      }
     }
 
     return () => {
@@ -549,7 +601,7 @@ export function useSentenceAudioPlayer(): {
         clearTimer(safetyTimer);
       }
     };
-  }, [isPlaying, currentSentenceIndex]);
+  }, [isPlaying, currentSentenceIndex, clearTimer, registerTimer]);
 
   // ---- Preload all audio files ----
   const preloadAudioFiles = useCallback(
@@ -747,171 +799,155 @@ export function useSentenceAudioPlayer(): {
     return nextSentence;
   }, []);
 
-  // ---- Function to move to the NEXT sentence ----
-  const playNextSentence = useCallback(
-    async (fromIndex: number = currentSentenceIndex ?? -1): Promise<void> => {
-      try {
-        // Reset completion flag at the start of playing next sentence
+  // ---- Play next sentence (recursive playback) ----
+  const playNextSentence = useCallback(async (): Promise<void> => {
+    if (isTransitioning) {
+      return;
+    }
+
+    try {
+      // Ensure we clean up completion flags regardless of success or failure
+      const cleanupCompletionState = () => {
         isHandlingCompletionRef.current = false;
+      };
 
-        // Reset word highlight
-        dispatch(setCurrentWord({ wordId: null, position: null }));
+      // Properly track transition state
+      setIsTransitioning(true);
 
-        const nextIndex = fromIndex + 1;
+      // Get the next sentence index (null by default)
+      const fromIndex = currentSentenceIndex;
+      const nextIndex = fromIndex !== null ? fromIndex + 1 : 0;
 
-        // Properly convert between absolute indices and relative indices
-        const maxSentenceIndex = sentencesRef.current.length - 1 + sentenceIndexOffsetRef.current;
+      // Only validate the sentence if we have a current index
+      const nextSentence = validateSentenceData(nextIndex);
 
-        // Check if we're at or beyond the last sentence to prevent infinite loop
-        if (sentencesRef.current.length > 0 && nextIndex > maxSentenceIndex) {
-          // Full cleanup
-          if (soundRef.current) {
-            try {
-              await soundRef.current.stopAsync();
-              await soundRef.current.unloadAsync();
-              soundRef.current = null;
-            } catch (err) {
-              handleError(err as Error);
-            }
-          }
-
-          // Reset state
-          dispatch(
-            updateAudioState({
-              sentenceId: null, // Changed from 'fromIndex' to null to indicate complete end
-              isPlaying: false,
-              wordId: null,
-              position: null,
-            })
-          );
-          setAudioState('idle');
-
-          // Clear any timers
-          if (timingIntervalRef.current) {
-            clearTimer(timingIntervalRef.current);
-            timingIntervalRef.current = null;
-          }
-
-          return;
-        }
-
-        // Validate next sentence exists
-        const nextSentence = validateSentenceData(nextIndex);
-        if (!nextSentence) {
-          dispatch(
-            updateAudioState({
-              sentenceId: fromIndex,
-              isPlaying: false,
-            })
-          );
-          setAudioState('idle');
-          return;
-        }
-
-        // Set transitioning state
-        setIsTransitioning(true);
-
-        // Update Redux state
+      // Check if we're at the end
+      if (!nextSentence) {
         dispatch(
           updateAudioState({
-            sentenceId: nextIndex,
-            isPlaying: true,
-            wordId: null,
-            position: null,
-          })
-        );
-
-        setAudioState('loading');
-
-        // Prepare word timings
-        const mappedTimings = prepareWordTimings(nextSentence);
-        wordTimingRef.current = mappedTimings;
-        lastActiveIndex.current = 0;
-
-        // REVISED: Make sound cleanup more reliable with a timeout
-        try {
-          if (soundRef.current) {
-            const unloadPromise = soundRef.current.unloadAsync();
-            const timeoutPromise = new Promise<void>(resolve => {
-              setTimeout(resolve, 1000);
-            });
-            await Promise.race([unloadPromise, timeoutPromise]);
-            soundRef.current = null;
-          }
-        } catch (err) {
-          soundRef.current = null;
-        }
-
-        // REVISED: More robust sound loading
-        let sound: Audio.Sound;
-        const adjustedIndex = nextIndex - sentenceIndexOffsetRef.current;
-        const preloadedSound = preloadedSoundsRef.current[adjustedIndex];
-
-        if (preloadedSound) {
-          sound = preloadedSound;
-          await sound.setStatusAsync({
-            shouldPlay: true,
-            progressUpdateIntervalMillis: 100,
-            positionMillis: 0,
-          });
-          sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
-        } else {
-          const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri: nextSentence.audioUrl },
-            { progressUpdateIntervalMillis: 100 },
-            onPlaybackStatusUpdate
-          );
-          sound = newSound;
-          await sound.playAsync();
-        }
-
-        // Store the sound and clear transition state
-        soundRef.current = sound;
-        setAudioState('playing');
-        setIsTransitioning(false);
-
-        // Ensure playback actually starts and completion detection works
-        setTimeout(async () => {
-          if (soundRef.current) {
-            try {
-              const checkStatus = await soundRef.current.getStatusAsync();
-              if (checkStatus.isLoaded && !checkStatus.isPlaying) {
-                await soundRef.current.playAsync();
-              }
-
-              // Note: The 5-second completion check has been removed to rely on
-              // the other check mechanisms (onPlaybackStatusUpdate)
-            } catch (err) {
-              handleError(err as Error);
-            }
-          }
-        }, 500);
-
-        // Initialize word tracking with cleanup
-        if (mappedTimings.length > 0) {
-          const trackingCleanup = trackWordTiming();
-          cleanupRef.current = trackingCleanup;
-        }
-      } catch (error) {
-        setAudioState('error');
-        setIsTransitioning(false);
-        dispatch(
-          updateAudioState({
+            sentenceId: fromIndex,
             isPlaying: false,
           })
         );
-        handleError(error as Error);
+        setAudioState('idle');
+        setIsTransitioning(false);
+        cleanupCompletionState();
+        return;
       }
-    },
-    [
-      dispatch,
-      validateSentenceData,
-      prepareWordTimings,
-      onPlaybackStatusUpdate,
-      currentSentenceIndex,
-      sentenceIndexOffsetRef,
-    ]
-  );
+
+      // IMPORTANT: Explicitly set the current sentence index in Redux before processing
+      // This ensures UI and audio are always synchronized
+      dispatch(setCurrentSentence(nextIndex));
+
+      // Wait a frame to allow Redux state to update
+      await new Promise(resolve => setTimeout(resolve, 0));
+
+      // Update Redux state with all properties
+      dispatch(
+        updateAudioState({
+          sentenceId: nextIndex,
+          isPlaying: true,
+          wordId: null,
+          position: null,
+        })
+      );
+
+      setAudioState('loading');
+
+      // Prepare word timings
+      const mappedTimings = prepareWordTimings(nextSentence);
+      wordTimingRef.current = mappedTimings;
+      lastActiveIndex.current = 0;
+
+      // REVISED: Make sound cleanup more reliable with a timeout
+      try {
+        if (soundRef.current) {
+          const unloadPromise = soundRef.current.unloadAsync();
+          const timeoutPromise = new Promise<void>(resolve => {
+            setTimeout(resolve, 1000);
+          });
+          await Promise.race([unloadPromise, timeoutPromise]);
+          soundRef.current = null;
+        }
+      } catch (err) {
+        soundRef.current = null;
+      }
+
+      // REVISED: More robust sound loading
+      let sound: Audio.Sound;
+      const adjustedIndex = nextIndex - sentenceIndexOffsetRef.current;
+      const preloadedSound = preloadedSoundsRef.current[adjustedIndex];
+
+      if (preloadedSound) {
+        sound = preloadedSound;
+        await sound.setStatusAsync({
+          shouldPlay: true,
+          progressUpdateIntervalMillis: 100,
+          positionMillis: 0,
+        });
+        sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
+      } else {
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: nextSentence.audioUrl },
+          { progressUpdateIntervalMillis: 100 },
+          onPlaybackStatusUpdate
+        );
+        sound = newSound;
+        await sound.playAsync();
+      }
+
+      // Store the sound and clear transition state
+      soundRef.current = sound;
+      setAudioState('playing');
+      setIsTransitioning(false);
+
+      // Ensure playback actually starts and completion detection works
+      setTimeout(async () => {
+        if (soundRef.current) {
+          try {
+            const checkStatus = await soundRef.current.getStatusAsync();
+            if (checkStatus.isLoaded && !checkStatus.isPlaying) {
+              await soundRef.current.playAsync();
+            }
+
+            // Note: The 5-second completion check has been removed to rely on
+            // the other check mechanisms (onPlaybackStatusUpdate)
+          } catch (err) {
+            handleError(err as Error);
+          }
+        }
+      }, 500);
+
+      // Initialize word tracking with cleanup
+      if (mappedTimings.length > 0) {
+        const trackingCleanup = trackWordTiming();
+        cleanupRef.current = trackingCleanup;
+      }
+
+      // Ensure the transition state is cleared and completion flags are reset
+      setIsTransitioning(false);
+      cleanupCompletionState();
+    } catch (error) {
+      setAudioState('error');
+      setIsTransitioning(false);
+      dispatch(
+        updateAudioState({
+          isPlaying: false,
+        })
+      );
+      // Ensure completion flags are reset even on error
+      isHandlingCompletionRef.current = false;
+      handleError(error as Error);
+    }
+  }, [
+    dispatch,
+    validateSentenceData,
+    prepareWordTimings,
+    onPlaybackStatusUpdate,
+    currentSentenceIndex,
+    sentenceIndexOffsetRef,
+    isTransitioning,
+  ]);
 
   // Add a new function to resume at a specific sentence without incrementing
   const playSentenceAtIndex = useCallback(
@@ -1359,7 +1395,25 @@ export function useSentenceAudioPlayer(): {
     };
   }, []);
 
-  // ---- Handle audio completion ----
+  // Helper to set manual navigation mode with automatic timeout
+  const setManualNavigation = useCallback((isManual: boolean, timeoutMs = 2000) => {
+    // Clear any existing timeout
+    if (manualNavigationTimeoutRef.current) {
+      clearTimeout(manualNavigationTimeoutRef.current);
+      manualNavigationTimeoutRef.current = null;
+    }
+
+    // Set the flag immediately
+    isManualNavigationRef.current = isManual;
+
+    // If turning on manual navigation, set a timeout to turn it off
+    if (isManual && timeoutMs > 0) {
+      manualNavigationTimeoutRef.current = setTimeout(() => {
+        isManualNavigationRef.current = false;
+        manualNavigationTimeoutRef.current = null;
+      }, timeoutMs);
+    }
+  }, []);
 
   return {
     // Redux-based states
@@ -1391,5 +1445,8 @@ export function useSentenceAudioPlayer(): {
     soundRef,
     wordTimingRef,
     timingIntervalRef,
+
+    // New method
+    setManualNavigation,
   };
 }

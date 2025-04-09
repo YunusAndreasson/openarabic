@@ -89,6 +89,7 @@ export default function ArticleScreen(): JSX.Element {
     startPlayback,
     stopPlayback,
     findWordById,
+    setManualNavigation,
   } = useMemo(
     () => ({
       currentWordId: audioPlayer.currentWordId,
@@ -98,6 +99,7 @@ export default function ArticleScreen(): JSX.Element {
       startPlayback: audioPlayer.startPlayback,
       stopPlayback: audioPlayer.stopPlayback,
       findWordById: audioPlayer.findWordById,
+      setManualNavigation: audioPlayer.setManualNavigation,
     }),
     [
       audioPlayer.currentWordId,
@@ -107,6 +109,7 @@ export default function ArticleScreen(): JSX.Element {
       audioPlayer.startPlayback,
       audioPlayer.stopPlayback,
       audioPlayer.findWordById,
+      audioPlayer.setManualNavigation,
     ]
   );
 
@@ -361,8 +364,8 @@ export default function ArticleScreen(): JSX.Element {
       if (savedState.sentenceIndex < 0) return false;
 
       // Now TypeScript knows sentenceIndex is a number
-      // Check if at end of article
-      return savedState.sentenceIndex < sentenceAudioData.length - 1;
+      // Check if index is valid (within array bounds)
+      return savedState.sentenceIndex >= 0 && savedState.sentenceIndex < sentenceAudioData.length;
     },
     [sentenceAudioData]
   );
@@ -727,6 +730,9 @@ export default function ArticleScreen(): JSX.Element {
     // If not at the last sentence, go to the next one
     if (currentSentenceIndex < sentenceAudioData.length - 1) {
       try {
+        // Set manual navigation flag to prevent auto-advancement from old audio
+        setManualNavigation(true);
+
         // Stop current playback
         await stopPlayback();
 
@@ -771,7 +777,14 @@ export default function ArticleScreen(): JSX.Element {
       // Already at last sentence
       isNavigatingRef.current = false;
     }
-  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
+  }, [
+    currentSentenceIndex,
+    sentenceAudioData,
+    stopPlayback,
+    startPlayback,
+    audioPlayer,
+    setManualNavigation,
+  ]);
 
   // Handle previous sentence button press
   const handlePreviousSentence = useCallback(async () => {
@@ -790,6 +803,9 @@ export default function ArticleScreen(): JSX.Element {
     // If not at the first sentence, go to the previous one
     if (currentSentenceIndex > 0) {
       try {
+        // Set manual navigation flag to prevent auto-advancement from old audio
+        setManualNavigation(true);
+
         // Stop current playback
         await stopPlayback();
 
@@ -826,7 +842,14 @@ export default function ArticleScreen(): JSX.Element {
       // Already at first sentence
       isNavigatingRef.current = false;
     }
-  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
+  }, [
+    currentSentenceIndex,
+    sentenceAudioData,
+    stopPlayback,
+    startPlayback,
+    audioPlayer,
+    setManualNavigation,
+  ]);
 
   // Main render - loading state
   if (isLoading) {
