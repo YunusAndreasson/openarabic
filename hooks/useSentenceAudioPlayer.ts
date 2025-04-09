@@ -500,17 +500,39 @@ export function useSentenceAudioPlayer(): {
                 const isStuck = !stillPlaying || isAtEnd;
 
                 if (isStuck) {
+                  // Prevent race conditions with onPlaybackStatusUpdate by using the same flags
+                  if (isHandlingCompletionRef.current) {
+                    return; // Skip if already handling completion
+                  }
+
+                  // Use atomic flag to prevent duplicate calls
+                  isHandlingCompletionRef.current = true;
+                  lastCompletionTimeRef.current = Date.now();
+
                   // Force next sentence regardless of current position
                   playNextSentenceRef.current().catch(error => {
                     handleError(error);
+                    // Reset the flag in case of error
+                    isHandlingCompletionRef.current = false;
                   });
                 }
               }
             })
             .catch(_err => {
               // If we can't even check status, assume we need to move forward
+              // But first check if we're already handling completion
+              if (isHandlingCompletionRef.current) {
+                return; // Skip if already handling completion
+              }
+
+              // Use atomic flag to prevent duplicate calls
+              isHandlingCompletionRef.current = true;
+              lastCompletionTimeRef.current = Date.now();
+
               playNextSentenceRef.current().catch(error => {
                 handleError(error);
+                // Reset the flag in case of error
+                isHandlingCompletionRef.current = false;
               });
             });
         }
@@ -842,6 +864,29 @@ export function useSentenceAudioPlayer(): {
         soundRef.current = sound;
         setAudioState('playing');
         setIsTransitioning(false);
+
+        // Ensure playback actually starts and completion detection works
+        setTimeout(async () => {
+          if (soundRef.current) {
+            try {
+              const checkStatus = await soundRef.current.getStatusAsync();
+              if (checkStatus.isLoaded && !checkStatus.isPlaying) {
+                await soundRef.current.playAsync();
+              }
+
+              // Note: The 5-second completion check has been removed to rely on
+              // the other check mechanisms (onPlaybackStatusUpdate)
+            } catch (err) {
+              handleError(err as Error);
+            }
+          }
+        }, 500);
+
+        // Initialize word tracking with cleanup
+        if (mappedTimings.length > 0) {
+          const trackingCleanup = trackWordTiming();
+          cleanupRef.current = trackingCleanup;
+        }
       } catch (error) {
         setAudioState('error');
         setIsTransitioning(false);
@@ -1218,22 +1263,8 @@ export function useSentenceAudioPlayer(): {
                 await soundRef.current.playAsync();
               }
 
-              // Set up a completion check for this sound directly
-              setTimeout(async () => {
-                try {
-                  if (!soundRef.current) return;
-                  const finalCheck = await soundRef.current.getStatusAsync();
-                  if (
-                    finalCheck.isLoaded &&
-                    finalCheck.durationMillis &&
-                    finalCheck.positionMillis >= finalCheck.durationMillis - 100
-                  ) {
-                    playNextSentenceRef.current().catch(handleError);
-                  }
-                } catch (err) {
-                  handleError(err as Error);
-                }
-              }, 5000); // Check 5 seconds after starting playback
+              // Note: The 5-second completion check has been removed to rely on
+              // the other check mechanisms (onPlaybackStatusUpdate)
             } catch (err) {
               handleError(err as Error);
             }
