@@ -100,7 +100,8 @@ export function useSentenceAudioPlayer(): {
   const isPlaying = useSelector(selectIsPlaying);
   const currentSentenceIndex = useSelector(selectCurrentSentenceId);
 
-  // Local states
+  // Local states - we can keep these for backward compatibility
+  // but they're less important now that we have Reanimated shared values
   const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'error'>(
     'idle'
   );
@@ -207,24 +208,8 @@ export function useSentenceAudioPlayer(): {
     []
   );
 
-  // Effect to clean up all active timers on unmount
-  useEffect(() => {
-    return () => {
-      activeTimersRef.current.forEach(timerId => {
-        clearTimer(timerId);
-      });
-      activeTimersRef.current.clear();
-    };
-  }, [clearTimer]);
-
   // ---- Cleanup function ----
   const cleanupAudio = useCallback(async (): Promise<void> => {
-    // Clear timing interval
-    if (timingIntervalRef.current !== null) {
-      clearTimer(timingIntervalRef.current);
-      timingIntervalRef.current = null;
-    }
-
     // Reset Reanimated shared values
     isPlayerActive.value = false;
     progressAnimValue.value = 0;
@@ -259,13 +244,7 @@ export function useSentenceAudioPlayer(): {
     setProgress(0);
     setDuration(0);
     lastActiveIndex.current = 0;
-
-    // Clear all active timers
-    activeTimersRef.current.forEach(timerId => {
-      clearTimer(timerId);
-    });
-    activeTimersRef.current.clear();
-  }, [dispatch, clearTimer]);
+  }, [dispatch]);
 
   // Use Reanimated's shared values for better performance
   const trackWordTimingWithReanimated = useCallback((): (() => void) => {
@@ -500,6 +479,30 @@ export function useSentenceAudioPlayer(): {
     progressAnimValue,
     durationAnimValue,
   ]);
+
+  // Effect to clean up all active timers on unmount
+  useEffect(() => {
+    // Also clean up any active animation frames
+    let rafCleanup: (() => void) | null = null;
+
+    // Start word tracking with Reanimated on mount
+    if (isPlaying) {
+      rafCleanup = trackWordTimingWithReanimated();
+    }
+
+    return () => {
+      // Clean up RAF tracking
+      if (rafCleanup) {
+        rafCleanup();
+      }
+
+      // Clean up all timers
+      activeTimersRef.current.forEach(timerId => {
+        clearTimer(timerId);
+      });
+      activeTimersRef.current.clear();
+    };
+  }, [isPlaying, trackWordTimingWithReanimated, clearTimer]);
 
   // Replace the current trackWordTiming with the Reanimated version
   // Comment this out to revert back to the old version if needed
