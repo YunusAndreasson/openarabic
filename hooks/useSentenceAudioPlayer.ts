@@ -33,40 +33,19 @@ export type SentenceAudio = {
 export type SentenceWordsMap = Map<number, Tables<'sentence_words'>[]>;
 
 /**
- * Helper function to retry an async operation with exponential backoff
+ * Helper function for a simple retry of an async operation
  * @param operation Function to retry
- * @param maxRetries Maximum number of retries
- * @param baseDelay Initial delay in ms
- * @param _retryLog Description for logging purposes
  * @returns Promise resolving to operation result
  */
-async function retryWithBackoff<T>(
-  operation: () => Promise<T>,
-  maxRetries = 3,
-  baseDelay = 300,
-  _retryLog = 'operation'
-): Promise<T> {
-  let lastError: Error | null = null;
-
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      if (attempt > 0) {
-        // Retry silently
-      }
-      return await operation();
-    } catch (error) {
-      lastError = error as Error;
-
-      if (attempt < maxRetries) {
-        // Calculate exponential backoff delay with small jitter
-        const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 100;
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
+async function simpleRetry<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    // Wait a short time before retrying
+    await new Promise(resolve => setTimeout(resolve, 500));
+    // One simple retry
+    return await operation();
   }
-
-  // If we've exhausted all retries, throw the last error
-  throw lastError;
 }
 
 // Define a proper type for the playNextSentence function
@@ -140,8 +119,6 @@ export function useSentenceAudioPlayer(): {
   const lastCompletionTimeRef = useRef(0);
   // We keep a forward-only pointer
   const lastActiveIndex = useRef(0);
-  // Add a ref to track previous position for detecting backward seeks
-  const prevPositionRef = useRef(0);
   // Add refs to track all active timers
   const activeTimersRef = useRef<
     Set<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>>
@@ -271,12 +248,11 @@ export function useSentenceAudioPlayer(): {
     activeTimersRef.current.clear();
   }, [dispatch, clearTimer]);
 
-  // ---- Word tracking with efficient interval-based approach ----
+  // ---- Word tracking with efficient forward-only approach ----
   const trackWordTiming = useCallback((): (() => void) => {
     // Use interval instead of requestAnimationFrame to reduce CPU usage
     const INTERVAL_MS = 250;
     const WORD_OVERLAP_MS = 250;
-    const MAX_CHECKS_PER_INTERVAL = 8;
 
     // Clear any existing timing interval
     if (timingIntervalRef.current !== null) {
@@ -299,37 +275,98 @@ export function useSentenceAudioPlayer(): {
         const currentTimeMs = status.positionMillis;
         const timings = wordTimingRef.current;
 
-        // Detect backward seeking by comparing with previous position
-        if (currentTimeMs < prevPositionRef.current - 100) {
-          // 100ms threshold to avoid minor fluctuations
-          // Reset lastActiveIndex to start searching from beginning
-          lastActiveIndex.current = 0;
+        // Optimization: If we're already at the last word, nothing more to do
+        if (lastActiveIndex.current >= timings.length - 1) {
+          return;
         }
-        prevPositionRef.current = currentTimeMs;
 
-        // We'll limit how many words we check per interval to reduce processing
-        let checksPerformed = 0;
+        // Fast check: if current word is still active, exit early
+        const currentWord = timings[lastActiveIndex.current];
+        if (
+          currentWord &&
+          currentTimeMs >= currentWord.startTime &&
+          currentTimeMs <= currentWord.endTime + WORD_OVERLAP_MS
+        ) {
+          return; // Still on the same word, no need to update
+        }
 
-        // Start from lastActiveIndex and move forward until we find a match
-        for (let i = lastActiveIndex.current; i < timings.length; i++) {
-          // Limit number of checks per interval to reduce CPU usage
-          if (checksPerformed >= MAX_CHECKS_PER_INTERVAL) break;
-          checksPerformed++;
+        // Optimization: Only check a small window of upcoming words
+        // This avoids unnecessary iterations for long sentences
+        const MAX_WORDS_TO_CHECK = 4;
+        const endIndex = Math.min(lastActiveIndex.current + MAX_WORDS_TO_CHECK, timings.length);
 
+        // Check if we need to advance to the next word(s)
+        for (let i = lastActiveIndex.current + 1; i < endIndex; i++) {
           const word = timings[i];
-          // Skip if word is undefined (TypeScript safety)
           if (!word) continue;
 
-          // If the "word" is in range, highlight it
           if (currentTimeMs >= word.startTime && currentTimeMs <= word.endTime + WORD_OVERLAP_MS) {
+            // Found the current word - update state and exit
             dispatch(setCurrentWord({ wordId: word.wordId, position: i }));
             lastActiveIndex.current = i;
-            break;
+            return;
           }
-          // If the current time is beyond this word's range, keep going.
-          if (currentTimeMs > word.endTime + WORD_OVERLAP_MS) {
-            // We can advance lastActiveIndex. This effectively "skips" past words we've passed.
-            lastActiveIndex.current = i;
+        }
+
+        // If we get here, either:
+        // 1. We're between words (after current word but before next)
+        // 2. We've jumped far ahead and need to catch up
+
+        // Check if we've moved past the window of words we checked
+        const lastCheckedWord = timings[endIndex - 1];
+        if (lastCheckedWord && currentTimeMs > lastCheckedWord.endTime + WORD_OVERLAP_MS) {
+          // We're beyond our checking window, need to jump ahead
+
+          // Find a suitable word to jump to by scanning ahead in larger increments
+          const JUMP_SIZE = 5; // Check every 5th word
+          let jumpIndex = endIndex;
+
+          while (jumpIndex < timings.length) {
+            const jumpWord = timings[jumpIndex];
+
+            // If this word is in the future, we've gone too far - back up
+            if (jumpWord && currentTimeMs < jumpWord.startTime) {
+              break;
+            }
+
+            // If we found a word that contains the current time, use it
+            if (
+              jumpWord &&
+              currentTimeMs >= jumpWord.startTime &&
+              currentTimeMs <= jumpWord.endTime + WORD_OVERLAP_MS
+            ) {
+              dispatch(setCurrentWord({ wordId: jumpWord.wordId, position: jumpIndex }));
+              lastActiveIndex.current = jumpIndex;
+              return;
+            }
+
+            jumpIndex += JUMP_SIZE;
+          }
+
+          // If we jumped past without finding a match, use binary search to find
+          // the closest word to the current time
+          if (jumpIndex >= timings.length) {
+            // Find the last word before current time
+            let closestIndex = lastActiveIndex.current;
+
+            for (let i = lastActiveIndex.current + 1; i < timings.length; i++) {
+              const word = timings[i];
+              if (!word) continue;
+
+              // If this word starts after current time, we've gone too far
+              if (word.startTime > currentTimeMs) {
+                break;
+              }
+
+              closestIndex = i;
+            }
+
+            // Update to the closest word we found
+            const closestWord = timings[closestIndex];
+            if (closestWord) {
+              dispatch(setCurrentWord({ wordId: closestWord.wordId, position: closestIndex }));
+              lastActiveIndex.current = closestIndex;
+            }
           }
         }
       } catch (error) {
@@ -639,25 +676,20 @@ export function useSentenceAudioPlayer(): {
                 return;
               }
 
-              // Direct sound creation without retry mechanism
+              // Use simpleRetry for more stable audio loading
               try {
-                const { sound } = await Audio.Sound.createAsync(
-                  { uri: sentenceToLoad.audioUrl },
-                  { shouldPlay: false }
-                );
-                preloadedSoundsRef.current[idx] = sound;
-              } catch (soundError) {
-                // Simple retry once if first attempt fails
-                try {
-                  const { sound } = await Audio.Sound.createAsync(
+                const loadSound = async () => {
+                  return await Audio.Sound.createAsync(
                     { uri: sentenceToLoad.audioUrl },
                     { shouldPlay: false }
                   );
-                  preloadedSoundsRef.current[idx] = sound;
-                } catch (retryError) {
-                  handleError(retryError as Error);
-                  preloadedSoundsRef.current[idx] = null;
-                }
+                };
+
+                const { sound } = await simpleRetry(loadSound);
+                preloadedSoundsRef.current[idx] = sound;
+              } catch (soundError) {
+                handleError(soundError as Error);
+                preloadedSoundsRef.current[idx] = null;
               }
             } catch (error) {
               handleError(error as Error);
@@ -730,10 +762,14 @@ export function useSentenceAudioPlayer(): {
       if (preloadedSoundsRef.current[i] || !nextSentence?.audioUrl) continue;
 
       try {
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: nextSentence.audioUrl },
-          { shouldPlay: false }
-        );
+        const loadSound = async () => {
+          return await Audio.Sound.createAsync(
+            { uri: nextSentence.audioUrl },
+            { shouldPlay: false }
+          );
+        };
+
+        const { sound } = await simpleRetry(loadSound);
         preloadedSoundsRef.current[i] = sound;
       } catch (error) {
         handleError(error as Error);
@@ -883,11 +919,15 @@ export function useSentenceAudioPlayer(): {
         });
         sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
       } else {
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: nextSentence.audioUrl },
-          { progressUpdateIntervalMillis: 100 },
-          onPlaybackStatusUpdate
-        );
+        const loadSound = async () => {
+          return await Audio.Sound.createAsync(
+            { uri: nextSentence.audioUrl },
+            { progressUpdateIntervalMillis: 100 },
+            onPlaybackStatusUpdate
+          );
+        };
+
+        const { sound: newSound } = await simpleRetry(loadSound);
         sound = newSound;
         await sound.playAsync();
       }
@@ -1009,11 +1049,15 @@ export function useSentenceAudioPlayer(): {
           });
           sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
         } else {
-          const { sound: newSound } = await Audio.Sound.createAsync(
-            { uri: sentenceData.audioUrl },
-            { progressUpdateIntervalMillis: 100 },
-            onPlaybackStatusUpdate
-          );
+          const loadSound = async () => {
+            return await Audio.Sound.createAsync(
+              { uri: sentenceData.audioUrl },
+              { progressUpdateIntervalMillis: 100 },
+              onPlaybackStatusUpdate
+            );
+          };
+
+          const { sound: newSound } = await simpleRetry(loadSound);
           sound = newSound;
           await sound.playAsync();
         }
@@ -1061,22 +1105,34 @@ export function useSentenceAudioPlayer(): {
           // Try normal cleanup
           try {
             await soundRef.current.stopAsync();
-            await soundRef.current.unloadAsync();
-            soundRef.current = null;
+
+            // Only unload the audio if shouldUnload is true
+            if (shouldUnload) {
+              await soundRef.current.unloadAsync();
+              soundRef.current = null;
+            } else {
+              // Just pause but keep the sound loaded for resumePlayback
+              setAudioState('paused');
+            }
           } catch (error) {
             // If normal cleanup fails, ensure ref is nullified
-            soundRef.current = null;
+            if (shouldUnload) {
+              soundRef.current = null;
+            }
           }
 
           // Failsafe: force Audio module to release audio session
-          try {
-            await Audio.setAudioModeAsync({
-              playsInSilentModeIOS: false,
-              staysActiveInBackground: false,
-              shouldDuckAndroid: false,
-            });
-          } catch (e) {
-            // Ignore errors from audio mode change
+          // but only if we're fully unloading
+          if (shouldUnload) {
+            try {
+              await Audio.setAudioModeAsync({
+                playsInSilentModeIOS: false,
+                staysActiveInBackground: false,
+                shouldDuckAndroid: false,
+              });
+            } catch (e) {
+              // Ignore errors from audio mode change
+            }
           }
         }
         return true;
@@ -1276,30 +1332,25 @@ export function useSentenceAudioPlayer(): {
           });
           sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
         } else {
-          // Direct sound creation without complex retry logic
+          // Use simpleRetry for more stable audio loading
           try {
-            const { sound: newSound } = await Audio.Sound.createAsync(
-              { uri: firstSentence.audioUrl },
-              {
-                shouldPlay: true,
-                progressUpdateIntervalMillis: 100,
-                positionMillis: finalPositionMs,
-              },
-              onPlaybackStatusUpdate
-            );
+            const loadSound = async () => {
+              return await Audio.Sound.createAsync(
+                { uri: firstSentence.audioUrl },
+                {
+                  shouldPlay: true,
+                  progressUpdateIntervalMillis: 100,
+                  positionMillis: finalPositionMs,
+                },
+                onPlaybackStatusUpdate
+              );
+            };
+
+            const { sound: newSound } = await simpleRetry(loadSound);
             sound = newSound;
-          } catch (firstError) {
-            // Simple single retry if first attempt fails
-            const { sound: newSound } = await Audio.Sound.createAsync(
-              { uri: firstSentence.audioUrl },
-              {
-                shouldPlay: true,
-                progressUpdateIntervalMillis: 100,
-                positionMillis: finalPositionMs,
-              },
-              onPlaybackStatusUpdate
-            );
-            sound = newSound;
+          } catch (error) {
+            handleError(error as Error);
+            throw error; // Rethrow to allow fallback handling in the catch block
           }
         }
 
