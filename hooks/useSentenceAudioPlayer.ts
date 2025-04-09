@@ -1,6 +1,7 @@
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { runOnJS, useSharedValue, useDerivedValue, cancelAnimation } from 'react-native-reanimated';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -87,6 +88,9 @@ export function useSentenceAudioPlayer(): {
   wordTimingRef: React.MutableRefObject<WordTiming[]>;
   timingIntervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
   setManualNavigation: (isManual: boolean, timeoutMs?: number) => void;
+  progressAnimValue: { value: number };
+  durationAnimValue: { value: number };
+  audioStateAnimValue: { value: string };
 } {
   const dispatch = useDispatch();
 
@@ -139,6 +143,15 @@ export function useSentenceAudioPlayer(): {
   // Add a ref to track the last progress update time for throttling
   const lastProgressUpdateRef = useRef<number>(0);
   const PROGRESS_UPDATE_THRESHOLD_MS = 250; // Minimum ms between progress updates
+
+  // Add Reanimated shared values for tracking
+  const isPlayerActive = useSharedValue(false);
+  const lastCheckTime = useSharedValue(0);
+
+  // Add Reanimated shared values for smoother animations
+  const progressAnimValue = useSharedValue(0);
+  const durationAnimValue = useSharedValue(0);
+  const audioStateAnimValue = useSharedValue('idle');
 
   // ---- HELPER: Find a word by ID from all sentences ----
   const findWordById = useCallback(
@@ -212,6 +225,12 @@ export function useSentenceAudioPlayer(): {
       timingIntervalRef.current = null;
     }
 
+    // Reset Reanimated shared values
+    isPlayerActive.value = false;
+    progressAnimValue.value = 0;
+    durationAnimValue.value = 0;
+    audioStateAnimValue.value = 'idle';
+
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync();
@@ -248,11 +267,12 @@ export function useSentenceAudioPlayer(): {
     activeTimersRef.current.clear();
   }, [dispatch, clearTimer]);
 
-  // ---- Word tracking with efficient forward-only approach ----
-  const trackWordTiming = useCallback((): (() => void) => {
-    // Use interval instead of requestAnimationFrame to reduce CPU usage
+  // Use Reanimated's shared values for better performance
+  const trackWordTimingWithReanimated = useCallback((): (() => void) => {
+    // Constants
     const INTERVAL_MS = 250;
     const WORD_OVERLAP_MS = 250;
+    const JITTER_THRESHOLD_MS = 40;
 
     // Clear any existing timing interval
     if (timingIntervalRef.current !== null) {
@@ -260,15 +280,37 @@ export function useSentenceAudioPlayer(): {
       timingIntervalRef.current = null;
     }
 
-    const updateWordHighlight = async (): Promise<void> => {
+    // Set player as active for Reanimated
+    isPlayerActive.value = true;
+
+    // Create a flag to track if processing is in progress
+    let isProcessing = false;
+
+    const checkWordPosition = async (): Promise<void> => {
+      // Skip if already processing or player is not active
+      if (isProcessing || !isPlayerActive.value) return;
+
       try {
+        isProcessing = true;
+
         // More resilient ref handling - ensure all refs exist before proceeding
         if (!soundRef.current || !wordTimingRef.current || wordTimingRef.current.length === 0) {
+          isProcessing = false;
           return;
         }
 
-        const status = await soundRef.current.getStatusAsync();
-        if (!status.isLoaded) {
+        // Get status with error handling
+        let status;
+        try {
+          status = await soundRef.current.getStatusAsync();
+          if (!status.isLoaded) {
+            isProcessing = false;
+            return;
+          }
+        } catch (err) {
+          // Handle errors gracefully - particularly important for status calls
+          handleError(err as Error);
+          isProcessing = false;
           return;
         }
 
@@ -278,18 +320,21 @@ export function useSentenceAudioPlayer(): {
 
         // Skip processing if we have an invalid position or duration
         if (currentTimeMs < 0 || (duration > 0 && currentTimeMs > duration + 500)) {
+          isProcessing = false;
           return;
         }
+
+        // Update shared values for animations
+        progressAnimValue.value = currentTimeMs;
+        durationAnimValue.value = duration;
 
         const timings = wordTimingRef.current;
 
         // Optimization: If we're already at the last word, nothing more to do
         if (lastActiveIndex.current >= timings.length - 1) {
+          isProcessing = false;
           return;
         }
-
-        // Add jitter protection constant to prevent small fluctuations from causing word changes
-        const JITTER_THRESHOLD_MS = 40;
 
         // Fast check: if current word is still active, exit early
         const currentWord = timings[lastActiveIndex.current];
@@ -298,6 +343,7 @@ export function useSentenceAudioPlayer(): {
           currentTimeMs >= currentWord.startTime - JITTER_THRESHOLD_MS &&
           currentTimeMs <= currentWord.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
         ) {
+          isProcessing = false;
           return; // Still on the same word, no need to update
         }
 
@@ -319,6 +365,7 @@ export function useSentenceAudioPlayer(): {
             // Found the current word - update state and exit
             dispatch(setCurrentWord({ wordId: word.wordId, position: i }));
             lastActiveIndex.current = i;
+            isProcessing = false;
             return;
           }
         }
@@ -357,14 +404,14 @@ export function useSentenceAudioPlayer(): {
             ) {
               dispatch(setCurrentWord({ wordId: jumpWord.wordId, position: jumpIndex }));
               lastActiveIndex.current = jumpIndex;
+              isProcessing = false;
               return;
             }
 
             jumpIndex += JUMP_SIZE;
           }
 
-          // If we jumped past without finding a match, use binary search to find
-          // the closest word to the current time
+          // If we jumped past without finding a match, find the closest word
           if (jumpIndex >= timings.length) {
             // Find the last word before current time
             let closestIndex = lastActiveIndex.current;
@@ -389,30 +436,82 @@ export function useSentenceAudioPlayer(): {
             }
           }
         }
+
+        isProcessing = false;
       } catch (error) {
         handleError(error as Error);
+        isProcessing = false;
       }
     };
 
-    // Start the interval and register it
-    const intervalId = setInterval(updateWordHighlight, INTERVAL_MS);
-    timingIntervalRef.current = registerTimer(intervalId);
+    // Use requestAnimationFrame for timing instead of intervals
+    // This provides more reliable timing especially during animations
+    let rafId: number | null = null;
+    lastCheckTime.value = Date.now();
+
+    const scheduleNextCheck = () => {
+      // Schedule the next frame
+      rafId = requestAnimationFrame(() => {
+        const now = Date.now();
+
+        // Only run every INTERVAL_MS milliseconds
+        if (now - lastCheckTime.value >= INTERVAL_MS) {
+          lastCheckTime.value = now;
+
+          // Run check and capture any errors to prevent breaking the loop
+          checkWordPosition().catch(error => {
+            handleError(error as Error);
+          });
+        }
+
+        // Always schedule next check if player is active
+        if (isPlayerActive.value) {
+          scheduleNextCheck();
+        }
+      });
+    };
+
+    // Start the loop
+    scheduleNextCheck();
 
     // Return cleanup function
     return () => {
+      // Signal player is inactive
+      isPlayerActive.value = false;
+
+      // Cancel the animation frame if it exists
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      // Also clean up interval as fallback
       if (timingIntervalRef.current) {
         clearTimer(timingIntervalRef.current);
         timingIntervalRef.current = null;
       }
     };
-  }, [dispatch, clearTimer, registerTimer]);
+  }, [
+    dispatch,
+    clearTimer,
+    registerTimer,
+    isPlayerActive,
+    lastCheckTime,
+    progressAnimValue,
+    durationAnimValue,
+  ]);
 
-  // ---- Playback status callback ----
+  // Replace the current trackWordTiming with the Reanimated version
+  // Comment this out to revert back to the old version if needed
+  const trackWordTiming = trackWordTimingWithReanimated;
+
+  // ---- Playback status callback with Reanimated optimization ----
   const onPlaybackStatusUpdate = useCallback(
     (status: AVPlaybackStatus): void => {
       if (!status.isLoaded) {
         if (status.error) {
           setAudioState('error');
+          audioStateAnimValue.value = 'error';
           // Batch update instead of multiple dispatches
           dispatch(
             updateAudioState({
@@ -425,7 +524,11 @@ export function useSentenceAudioPlayer(): {
         return;
       }
 
-      // Throttle progress updates to reduce unnecessary renders
+      // Update shared values directly for smoother UI
+      progressAnimValue.value = status.positionMillis;
+      durationAnimValue.value = status.durationMillis ?? 0;
+
+      // Throttle React state updates to reduce unnecessary renders
       const now = Date.now();
       if (now - lastProgressUpdateRef.current > PROGRESS_UPDATE_THRESHOLD_MS) {
         setProgress(status.positionMillis);
@@ -528,16 +631,20 @@ export function useSentenceAudioPlayer(): {
         // Audio has genuinely stopped unexpectedly
         dispatch(setPlayingState(false));
         setAudioState('paused');
+        audioStateAnimValue.value = 'paused';
         return;
       }
 
       if (status.isPlaying) {
         setAudioState('playing');
+        audioStateAnimValue.value = 'playing';
         dispatch(setPlayingState(true));
       } else if (status.isBuffering) {
         setAudioState('loading');
+        audioStateAnimValue.value = 'loading';
       } else {
         setAudioState('paused');
+        audioStateAnimValue.value = 'paused';
         dispatch(setPlayingState(false));
       }
     },
@@ -1118,6 +1225,16 @@ export function useSentenceAudioPlayer(): {
   const stopPlayback = useCallback(
     async (shouldUnload = true): Promise<boolean> => {
       try {
+        // Reset Reanimated state for UI immediately
+        if (shouldUnload) {
+          // If fully unloading, reset all values
+          isPlayerActive.value = false;
+          audioStateAnimValue.value = 'idle';
+        } else {
+          // If just pausing, update state but keep progress
+          audioStateAnimValue.value = 'paused';
+        }
+
         if (soundRef.current) {
           // Immediately set state to stop UI updates
           dispatch(setPlayingState(false));
@@ -1525,5 +1642,10 @@ export function useSentenceAudioPlayer(): {
 
     // New method
     setManualNavigation,
+
+    // New Reanimated values
+    progressAnimValue,
+    durationAnimValue,
+    audioStateAnimValue,
   };
 }
