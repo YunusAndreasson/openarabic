@@ -639,21 +639,26 @@ export function useSentenceAudioPlayer(): {
                 return;
               }
 
-              // Use retry with backoff for preloading
-              const sound = await retryWithBackoff(
-                async () => {
+              // Direct sound creation without retry mechanism
+              try {
+                const { sound } = await Audio.Sound.createAsync(
+                  { uri: sentenceToLoad.audioUrl },
+                  { shouldPlay: false }
+                );
+                preloadedSoundsRef.current[idx] = sound;
+              } catch (soundError) {
+                // Simple retry once if first attempt fails
+                try {
                   const { sound } = await Audio.Sound.createAsync(
                     { uri: sentenceToLoad.audioUrl },
                     { shouldPlay: false }
                   );
-                  return sound;
-                },
-                3, // Max 3 retries
-                300, // Start with 300ms delay
-                `preloading sentence ${idx}`
-              );
-
-              preloadedSoundsRef.current[idx] = sound;
+                  preloadedSoundsRef.current[idx] = sound;
+                } catch (retryError) {
+                  handleError(retryError as Error);
+                  preloadedSoundsRef.current[idx] = null;
+                }
+              }
             } catch (error) {
               handleError(error as Error);
               preloadedSoundsRef.current[idx] = null;
@@ -672,7 +677,6 @@ export function useSentenceAudioPlayer(): {
         return false;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [initAudioSession, currentSentenceIndex]
   );
 
@@ -1272,24 +1276,31 @@ export function useSentenceAudioPlayer(): {
           });
           sound.setOnPlaybackStatusUpdate(onPlaybackStatusUpdate);
         } else {
-          // Fallback with retry mechanism
-          sound = await retryWithBackoff(
-            async () => {
-              const { sound } = await Audio.Sound.createAsync(
-                { uri: firstSentence.audioUrl },
-                {
-                  shouldPlay: true,
-                  progressUpdateIntervalMillis: 100,
-                  positionMillis: finalPositionMs,
-                },
-                onPlaybackStatusUpdate
-              );
-              return sound;
-            },
-            3,
-            300,
-            'loading first sentence'
-          );
+          // Direct sound creation without complex retry logic
+          try {
+            const { sound: newSound } = await Audio.Sound.createAsync(
+              { uri: firstSentence.audioUrl },
+              {
+                shouldPlay: true,
+                progressUpdateIntervalMillis: 100,
+                positionMillis: finalPositionMs,
+              },
+              onPlaybackStatusUpdate
+            );
+            sound = newSound;
+          } catch (firstError) {
+            // Simple single retry if first attempt fails
+            const { sound: newSound } = await Audio.Sound.createAsync(
+              { uri: firstSentence.audioUrl },
+              {
+                shouldPlay: true,
+                progressUpdateIntervalMillis: 100,
+                positionMillis: finalPositionMs,
+              },
+              onPlaybackStatusUpdate
+            );
+            sound = newSound;
+          }
         }
 
         soundRef.current = sound;
@@ -1302,9 +1313,6 @@ export function useSentenceAudioPlayer(): {
               if (checkStatus.isLoaded && !checkStatus.isPlaying) {
                 await soundRef.current.playAsync();
               }
-
-              // Note: The 5-second completion check has been removed to rely on
-              // the other check mechanisms (onPlaybackStatusUpdate)
             } catch (err) {
               handleError(err as Error);
             }
@@ -1323,7 +1331,7 @@ export function useSentenceAudioPlayer(): {
         handleError(error as Error);
         await cleanupAudio();
 
-        // Instead of skipping to the next sentence, retry the current one with exponential backoff
+        // Instead of complex retry logic, do a simple one-time retry
         if (!forceReset) {
           try {
             // Wait a bit before retrying to allow for transient issues to resolve
@@ -1336,24 +1344,13 @@ export function useSentenceAudioPlayer(): {
             });
           } catch (retryError) {
             handleError(retryError as Error);
-            // Update state to show error
-            dispatch(
-              updateAudioState({
-                isPlaying: false,
-                sentenceId: sentenceOffset,
-              })
-            );
+            dispatch(updateAudioState({ isPlaying: false, sentenceId: sentenceOffset }));
             setAudioState('error');
           }
         }
 
         // If we get here, all retries failed
-        dispatch(
-          updateAudioState({
-            isPlaying: false,
-            sentenceId: sentenceOffset,
-          })
-        );
+        dispatch(updateAudioState({ isPlaying: false, sentenceId: sentenceOffset }));
         setAudioState('error');
         return false;
       }
