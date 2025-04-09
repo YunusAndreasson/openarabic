@@ -405,6 +405,7 @@ export function useSentenceAudioPlayer(): {
               })
             );
             setAudioState('idle');
+
             isHandlingCompletionRef.current = false;
           })().catch(() => {
             isHandlingCompletionRef.current = false;
@@ -773,7 +774,7 @@ export function useSentenceAudioPlayer(): {
           // Reset state
           dispatch(
             updateAudioState({
-              sentenceId: fromIndex,
+              sentenceId: null, // Changed from 'fromIndex' to null to indicate complete end
               isPlaying: false,
               wordId: null,
               position: null,

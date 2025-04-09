@@ -329,6 +329,9 @@ export default function ArticleScreen(): JSX.Element {
   // New ref to prevent rapid navigation actions
   const isNavigatingRef = useRef(false);
 
+  // Add a ref to track previous playing state
+  const wasPlayingRef = useRef(false);
+
   // Pause audio state tracking
   const pausedAudioStateRef = useRef<{
     sentenceIndex: number | null;
@@ -360,12 +363,6 @@ export default function ArticleScreen(): JSX.Element {
 
     // Hide audio controls
     setAudioControlVisible(false);
-
-    // Cancel any in-flight animations or timers
-    if (audioPlayer.animationFrameRef && audioPlayer.animationFrameRef.current) {
-      clearInterval(audioPlayer.animationFrameRef.current);
-      audioPlayer.animationFrameRef.current = null;
-    }
 
     // Unload any audio resources
     if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
@@ -448,6 +445,9 @@ export default function ArticleScreen(): JSX.Element {
         // Using the direct reference to audioPlayer's stopPlayback to avoid the memoized version
         await audioPlayer.stopPlayback(false);
 
+        // Update wasPlayingRef to reflect the current state
+        wasPlayingRef.current = false;
+
         // Dispatch Redux update to indicate paused state but keep current positions
         dispatch(
           updateAudioState({
@@ -465,11 +465,24 @@ export default function ArticleScreen(): JSX.Element {
         // Show the controls when starting playback
         setAudioControlVisible(true);
 
+        // Update wasPlayingRef to reflect that we're now playing
+        wasPlayingRef.current = true;
+
         // Check if we have a saved position to resume from
         const savedState = pausedAudioStateRef.current;
 
-        if (savedState.sentenceIndex !== null && savedState.sentenceIndex >= 0) {
-          // We have a saved position, resume from there
+        // Check if we're at the last sentence and article is complete
+        const isArticleComplete =
+          savedState.sentenceIndex !== null &&
+          sentenceAudioData.length > 0 &&
+          savedState.sentenceIndex >= sentenceAudioData.length - 1;
+
+        if (
+          savedState.sentenceIndex !== null &&
+          savedState.sentenceIndex >= 0 &&
+          !isArticleComplete
+        ) {
+          // We have a saved position and it's not the end of the article, resume from there
 
           // Update Redux state to indicate playback is starting
           dispatch(
@@ -500,7 +513,26 @@ export default function ArticleScreen(): JSX.Element {
             }
           }
         } else {
-          // No saved position, start from beginning
+          // No saved position or we're at end of article, start from beginning
+
+          // Clear any saved state to ensure we start fresh
+          pausedAudioStateRef.current = {
+            sentenceIndex: null,
+            wordId: null,
+            position: null,
+            audioPositionMs: 0,
+          };
+
+          // Reset Redux state before starting new playback
+          dispatch(
+            updateAudioState({
+              wordId: null,
+              position: null,
+              isPlaying: true,
+              sentenceId: 0, // Start from first sentence (index 0)
+            })
+          );
+
           await audioPlayer.preloadAudioFiles(sentenceAudioData);
           const success = await startPlayback(sentenceAudioData);
           if (!success) {
@@ -540,6 +572,10 @@ export default function ArticleScreen(): JSX.Element {
 
       // Hide controls and stop playback
       setAudioControlVisible(false);
+
+      // Update wasPlayingRef to reflect that we're stopping playback
+      wasPlayingRef.current = false;
+
       await stopPlayback();
 
       // Reset audio state in Redux
@@ -556,6 +592,11 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [stopPlayback, dispatch]);
 
+  // Initialize wasPlayingRef when the component mounts
+  useEffect(() => {
+    wasPlayingRef.current = isPlaying;
+  }, []);
+
   // Add effect to handle audio control panel visibility changes
   useEffect(() => {
     // When control panel becomes invisible and playback is still active, stop playback
@@ -563,6 +604,42 @@ export default function ArticleScreen(): JSX.Element {
       handleStopPlayback();
     }
   }, [audioControlVisible, isPlaying, handleStopPlayback]);
+
+  // Watch for article playback completion
+  useEffect(() => {
+    // Create a timeout to check the state after a delay to avoid race conditions
+    const timeoutId = setTimeout(() => {
+      // Only consider it complete if:
+      // 1. It was previously playing
+      // 2. Now it's not playing
+      // 3. currentSentenceIndex is null (indicating we're not just paused)
+      // 4. Audio controls are visible
+      if (
+        wasPlayingRef.current &&
+        !isPlaying &&
+        currentSentenceIndex === null &&
+        audioControlVisible
+      ) {
+        // When article playback is complete, hide the control panel
+        setAudioControlVisible(false);
+
+        // Reset the saved position state
+        pausedAudioStateRef.current = {
+          sentenceIndex: null,
+          wordId: null,
+          position: null,
+          audioPositionMs: 0,
+        };
+      }
+
+      // Update previous state
+      wasPlayingRef.current = isPlaying;
+    }, 300); // Short delay to allow state to settle
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isPlaying, currentSentenceIndex, audioControlVisible]);
 
   // Handle next sentence button press
   const handleNextSentence = useCallback(async () => {
