@@ -32,3 +32,6 @@ export * from './useLoadingState';
 export * from './useLayoutReady';
 export * from './useScreenFocusRefresh';
 export * from './useWordSizing';
+
+// UI interaction hooks
+export * from './useButtonAction';

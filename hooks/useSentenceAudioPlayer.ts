@@ -13,7 +13,6 @@ import {
   setCurrentSentence,
   updateAudioState,
 } from '../store/audioSlice';
-import type { RootState } from '../store/store';
 import type { Tables } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
@@ -275,9 +274,9 @@ export function useSentenceAudioPlayer(): {
   // ---- Word tracking with efficient interval-based approach ----
   const trackWordTiming = useCallback((): (() => void) => {
     // Use interval instead of requestAnimationFrame to reduce CPU usage
-    const INTERVAL_MS = 450;
-    const WORD_OVERLAP_MS = 200;
-    const MAX_CHECKS_PER_INTERVAL = 4;
+    const INTERVAL_MS = 250;
+    const WORD_OVERLAP_MS = 250;
+    const MAX_CHECKS_PER_INTERVAL = 8;
 
     // Clear any existing timing interval
     if (timingIntervalRef.current !== null) {

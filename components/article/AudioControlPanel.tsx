@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, memo, useState, useMemo } from 'react';
+import React, { useEffect, memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native';
 import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
+import { ANIMATION_TIMING } from '@/constants/animations';
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
+import { useButtonAction } from '@/hooks/useButtonAction';
 import { useColors } from '@/hooks/useColors';
-import { lightFeedback } from '@/utils/haptics';
 
 interface AudioControlPanelProps {
   isVisible: boolean;
@@ -32,8 +33,6 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
   totalSentences,
 }) => {
   const colors = useColors();
-  // Track button press states to prevent multiple rapid presses
-  const [isActionInProgress, setIsActionInProgress] = useState(false);
 
   // Use opacity animation hook with slower duration for smoother transitions
   const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
@@ -59,41 +58,11 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
     }
   }, [isVisible, fadeIn, fadeOut]);
 
-  // Prevent multiple rapid button presses
-  const handleButtonAction = useCallback(
-    (action: () => void) => {
-      if (isActionInProgress) return;
-
-      // Set action in progress to prevent rapid clicks
-      setIsActionInProgress(true);
-      lightFeedback();
-
-      // Perform the action
-      action();
-
-      // Reset after a short delay
-      setTimeout(() => {
-        setIsActionInProgress(false);
-      }, 300);
-    },
-    [isActionInProgress]
-  );
-
-  const handlePlayPause = useCallback(() => {
-    handleButtonAction(onPlayPause);
-  }, [handleButtonAction, onPlayPause]);
-
-  const handleStop = useCallback(() => {
-    handleButtonAction(onStop);
-  }, [handleButtonAction, onStop]);
-
-  const handlePrevious = useCallback(() => {
-    handleButtonAction(onPrevious);
-  }, [handleButtonAction, onPrevious]);
-
-  const handleNext = useCallback(() => {
-    handleButtonAction(onNext);
-  }, [handleButtonAction, onNext]);
+  // Create debounced handlers using useButtonAction hook
+  const handlePlayPause = useButtonAction(onPlayPause, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+  const handleStop = useButtonAction(onStop, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+  const handlePrevious = useButtonAction(onPrevious, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+  const handleNext = useButtonAction(onNext, ANIMATION_TIMING.DEBOUNCE.STANDARD);
 
   // Maintain component mounted but hidden when not visible
   // This prevents flash on reappearance
@@ -104,17 +73,14 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
   }
 
   return (
-    <Animated.View
-      style={[styles.container, animatedStyle as AnimatedStyleProp<ViewStyle>]}
-      pointerEvents={isActionInProgress ? 'none' : 'auto'}
-    >
+    <Animated.View style={[styles.container, animatedStyle as AnimatedStyleProp<ViewStyle>]}>
       <BaseCard style={[styles.card, { backgroundColor: colors.elevation2 }]} shadowSize="medium">
         <View style={styles.contentContainer}>
           <View style={styles.controlsContainer}>
             <TouchableOpacity
               style={styles.iconButton}
               onPress={handlePrevious}
-              disabled={currentSentenceIndex === 0 || isActionInProgress}
+              disabled={currentSentenceIndex === 0}
             >
               <Ionicons
                 name="play-skip-back"
@@ -124,13 +90,8 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.playButton,
-                { backgroundColor: colors.card },
-                isActionInProgress && styles.buttonPressed,
-              ]}
+              style={[styles.playButton, { backgroundColor: colors.card }]}
               onPress={handlePlayPause}
-              disabled={isActionInProgress}
             >
               <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
             </TouchableOpacity>
@@ -138,7 +99,7 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
             <TouchableOpacity
               style={styles.iconButton}
               onPress={handleNext}
-              disabled={currentSentenceIndex === totalSentences - 1 || isActionInProgress}
+              disabled={currentSentenceIndex === totalSentences - 1}
             >
               <Ionicons
                 name="play-skip-forward"
@@ -157,11 +118,7 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
             </ThemedText>
           </View>
 
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={handleStop}
-            disabled={isActionInProgress}
-          >
+          <TouchableOpacity style={styles.closeButton} onPress={handleStop}>
             <Ionicons name="close-circle" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -171,9 +128,6 @@ const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
 };
 
 const styles = StyleSheet.create({
-  buttonPressed: {
-    opacity: 0.8,
-  },
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
