@@ -24,6 +24,8 @@ import {
 import type { Tables } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
+import { useDebounce, useThrottle } from './useBounce';
+
 export type WordTiming = {
   wordId: number;
   startTime: number; // ms
@@ -150,10 +152,6 @@ export function useSentenceAudioPlayer(): {
   // Add a ref for the safety timer
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Add a ref to track the last progress update time for throttling
-  const lastProgressUpdateRef = useRef<number>(0);
-  const PROGRESS_UPDATE_THRESHOLD_MS = 250; // Minimum ms between progress updates
-
   // Add Reanimated shared values for tracking
   const isPlayerActive = useSharedValue(false);
   const lastCheckTime = useSharedValue(0);
@@ -270,6 +268,26 @@ export function useSentenceAudioPlayer(): {
     []
   );
 
+  // Add an effect to detect stalled transitions
+  useEffect(() => {
+    let transitionTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    if (isTransitioning) {
+      transitionTimeout = setTimeout(() => {
+        setIsTransitioning(false);
+        dispatch(updateAudioState({ isPlaying: false }));
+        setAudioState('paused');
+      }, 3000);
+      registerTimer(transitionTimeout);
+    }
+
+    return () => {
+      if (transitionTimeout) {
+        clearTimer(transitionTimeout);
+      }
+    };
+  }, [isTransitioning, dispatch, clearTimer, registerTimer]);
+
   // ---- Cleanup function ----
   const cleanupAudio = useCallback(async (): Promise<void> => {
     // Reset Reanimated shared values with animations for smoother transitions
@@ -278,15 +296,14 @@ export function useSentenceAudioPlayer(): {
     durationAnimValue.value = withTiming(0, { duration: 300 });
     audioStateAnimValue.value = withTiming('idle', { duration: 300 });
 
-    if (soundRef.current) {
-      try {
-        await soundRef.current.stopAsync();
-        await soundRef.current.unloadAsync();
-      } catch (err) {
-        handleError(err as Error);
-      }
-      soundRef.current = null;
+    // Clean up the sound instance
+    try {
+      await soundRef.current?.stopAsync();
+      await soundRef.current?.unloadAsync();
+    } catch (err) {
+      handleError(err as Error);
     }
+    soundRef.current = null;
 
     // Reset store (batch update instead of multiple dispatches)
     dispatch(
@@ -306,7 +323,7 @@ export function useSentenceAudioPlayer(): {
     setProgress(0);
     setDuration(0);
     lastActiveIndex.current = 0;
-  }, [dispatch]);
+  }, [dispatch, isPlayerActive, progressAnimValue, durationAnimValue, audioStateAnimValue]);
 
   // Use Reanimated's shared values for better performance
   const trackWordTimingWithReanimated = useCallback((): (() => void) => {
@@ -369,8 +386,19 @@ export function useSentenceAudioPlayer(): {
         }
 
         // Update shared values via worklet-compatible animation methods
-        progressAnimValue.value = withTiming(currentTimeMs, { duration: 100 });
-        durationAnimValue.value = withTiming(duration, { duration: 100 });
+        // Only animate large position changes, use direct updates for small increments
+        if (Math.abs(progressAnimValue.value - currentTimeMs) > 1000) {
+          // Use animation for big jumps (seeking)
+          progressAnimValue.value = withTiming(currentTimeMs, { duration: 100 });
+        } else {
+          // Direct update for small incremental changes (normal playback)
+          progressAnimValue.value = currentTimeMs;
+        }
+
+        // Only animate duration if it actually changed
+        if (durationAnimValue.value !== duration) {
+          durationAnimValue.value = withTiming(duration, { duration: 100 });
+        }
 
         const timings = wordTimingRef.current;
 
@@ -583,7 +611,8 @@ export function useSentenceAudioPlayer(): {
   const onPlaybackStatusUpdate = useCallback(
     (status: AVPlaybackStatus): void => {
       if (!status.isLoaded) {
-        if (status.error) {
+        // Check for error in a safer way
+        if ('error' in status && status.error) {
           setAudioState('error');
           audioStateAnimValue.value = withTiming('error', { duration: 200 });
           // Batch update instead of multiple dispatches
@@ -599,16 +628,23 @@ export function useSentenceAudioPlayer(): {
       }
 
       // Update shared values with animations for smoother UI
-      progressAnimValue.value = withTiming(status.positionMillis, { duration: 100 });
-      durationAnimValue.value = withTiming(status.durationMillis ?? 0, { duration: 100 });
-
-      // Throttle React state updates to reduce unnecessary renders
-      const now = Date.now();
-      if (now - lastProgressUpdateRef.current > PROGRESS_UPDATE_THRESHOLD_MS) {
-        setProgress(status.positionMillis);
-        setDuration(status.durationMillis ?? 0);
-        lastProgressUpdateRef.current = now;
+      // Only animate large position changes, use direct updates for small increments
+      if (Math.abs(progressAnimValue.value - status.positionMillis) > 1000) {
+        // Use animation for big jumps (seeking)
+        progressAnimValue.value = withTiming(status.positionMillis, { duration: 100 });
+      } else {
+        // Direct update for small incremental changes (normal playback)
+        progressAnimValue.value = status.positionMillis;
       }
+
+      // Only animate duration if it actually changed
+      const durationMs = status.durationMillis ?? 0;
+      if (durationAnimValue.value !== durationMs) {
+        durationAnimValue.value = withTiming(durationMs, { duration: 100 });
+      }
+
+      // Use throttled function for React state updates
+      throttledProgressUpdate(status.positionMillis, status.durationMillis ?? 0);
 
       // REVISED: Improved completion detection logic, relying primarily on didJustFinish
       // This is the canonical source of truth for when to move to the next sentence
@@ -618,73 +654,8 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
-        // Debounce completion handling
-        const now = Date.now();
-        if (now - lastCompletionTimeRef.current < 1000) {
-          return; // Skip if we handled completion recently
-        }
-
-        // Use atomic flag to prevent duplicate calls
-        if (isHandlingCompletionRef.current) {
-          return;
-        }
-        isHandlingCompletionRef.current = true;
-        lastCompletionTimeRef.current = now;
-
-        // Check if we're already at the last sentence to prevent infinite loop
-        const isAtLastSentence =
-          currentSentenceIndex !== null &&
-          sentencesRef.current.length > 0 &&
-          currentSentenceIndex >= sentencesRef.current.length - 1 + sentenceIndexOffsetRef.current;
-
-        if (isAtLastSentence) {
-          // Use a separate async function to handle cleanup
-          (async () => {
-            // Stop all playback and reset state
-            if (soundRef.current) {
-              try {
-                await soundRef.current.stopAsync();
-                await soundRef.current.unloadAsync();
-                soundRef.current = null;
-              } catch (error) {
-                handleError(error as Error);
-              }
-            }
-
-            // Reset state
-            dispatch(
-              updateAudioState({
-                wordId: null,
-                position: null,
-                isPlaying: false,
-                sentenceId: null,
-              })
-            );
-            setAudioState('idle');
-
-            isHandlingCompletionRef.current = false;
-          })().catch(() => {
-            isHandlingCompletionRef.current = false;
-          });
-          return;
-        }
-
-        // IMPORTANT: Let playNextSentence handle all index calculations
-        // This ensures there's a single source of truth for advancing sentences
-        playNextSentenceRef
-          .current()
-          .catch(error => {
-            handleError(error);
-            dispatch(setPlayingState(false));
-            isHandlingCompletionRef.current = false;
-          })
-          .finally(() => {
-            // Ensure completion flag is always reset
-            setTimeout(() => {
-              isHandlingCompletionRef.current = false;
-            }, 500);
-          });
-        return;
+        // Use throttled completion handling
+        throttledHandleCompletion();
       }
 
       // Completely revised state synchronization check to avoid "unexpected stop" errors
@@ -736,25 +707,65 @@ export function useSentenceAudioPlayer(): {
     [dispatch, isPlaying, currentSentenceIndex, sentenceIndexOffsetRef, playbackRate]
   );
 
-  // Add effect to detect stalled transitions
-  useEffect(() => {
-    let transitionTimeout: ReturnType<typeof setTimeout> | null = null;
+  // Throttle React state updates to reduce renders
+  const throttledProgressUpdate = useThrottle<(positionMs: number, durationMs: number) => void>(
+    (positionMs: number, durationMs: number) => {
+      setProgress(positionMs);
+      setDuration(durationMs);
+    },
+    250,
+    []
+  );
 
-    if (isTransitioning) {
-      transitionTimeout = setTimeout(() => {
-        setIsTransitioning(false);
-        dispatch(updateAudioState({ isPlaying: false }));
-        setAudioState('paused');
-      }, 3000);
-      registerTimer(transitionTimeout);
-    }
+  // Throttle completion handling to prevent duplicate calls
+  const throttledHandleCompletion = useThrottle(
+    () => {
+      // No need for flag check - throttle already prevents concurrent calls
 
-    return () => {
-      if (transitionTimeout) {
-        clearTimer(transitionTimeout);
+      // Check if we're already at the last sentence to prevent infinite loop
+      const isAtLastSentence =
+        currentSentenceIndex !== null &&
+        sentencesRef.current.length > 0 &&
+        currentSentenceIndex >= sentencesRef.current.length - 1 + sentenceIndexOffsetRef.current;
+
+      if (isAtLastSentence) {
+        // Use a separate async function to handle cleanup
+        (async () => {
+          // Stop all playback and reset state
+          if (soundRef.current) {
+            try {
+              await soundRef.current.stopAsync();
+              await soundRef.current.unloadAsync();
+              soundRef.current = null;
+            } catch (error) {
+              handleError(error as Error);
+            }
+          }
+
+          // Reset state
+          dispatch(
+            updateAudioState({
+              wordId: null,
+              position: null,
+              isPlaying: false,
+              sentenceId: null,
+            })
+          );
+          setAudioState('idle');
+        })().catch(handleError);
+        return;
       }
-    };
-  }, [isTransitioning, dispatch, clearTimer, registerTimer]);
+
+      // IMPORTANT: Let playNextSentence handle all index calculations
+      // This ensures there's a single source of truth for advancing sentences
+      playNextSentenceRef.current().catch(error => {
+        handleError(error);
+        dispatch(setPlayingState(false));
+      });
+    },
+    1000,
+    [currentSentenceIndex]
+  );
 
   // Add a safety timer to detect and recover from stuck playback - make more robust
   useEffect(() => {
@@ -768,65 +779,8 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
-        // Check if we're still on the same sentence after a delay
-        if (soundRef.current && isPlaying) {
-          soundRef.current
-            .getStatusAsync()
-            .then(status => {
-              if (status.isLoaded) {
-                const { positionMillis, durationMillis, isPlaying: stillPlaying } = status;
-
-                // Check if we're near the end - if so, let the normal didJustFinish handle it
-                // Now we only consider playback stuck if we're not within 90% of the duration
-                // This avoids overlap with the normal end-of-track detection in onPlaybackStatusUpdate
-                const isNearEnd =
-                  positionMillis > 0 &&
-                  durationMillis != null &&
-                  durationMillis > 0 &&
-                  positionMillis >= durationMillis * 0.9;
-
-                // Only consider it stuck if:
-                // 1. It's not playing AND
-                // 2. We're NOT near the end (let didJustFinish handle end-of-track cases)
-                const isStuck = !stillPlaying && !isNearEnd;
-
-                if (isStuck) {
-                  // Prevent race conditions with onPlaybackStatusUpdate by using the same flags
-                  if (isHandlingCompletionRef.current) {
-                    return; // Skip if already handling completion
-                  }
-
-                  // Use atomic flag to prevent duplicate calls
-                  isHandlingCompletionRef.current = true;
-                  lastCompletionTimeRef.current = Date.now();
-
-                  // Force next sentence regardless of current position
-                  playNextSentenceRef.current().catch(error => {
-                    handleError(error);
-                    // Reset the flag in case of error
-                    isHandlingCompletionRef.current = false;
-                  });
-                }
-              }
-            })
-            .catch(_err => {
-              // If we can't even check status, assume we need to move forward
-              // But first check if we're already handling completion
-              if (isHandlingCompletionRef.current) {
-                return; // Skip if already handling completion
-              }
-
-              // Use atomic flag to prevent duplicate calls
-              isHandlingCompletionRef.current = true;
-              lastCompletionTimeRef.current = Date.now();
-
-              playNextSentenceRef.current().catch(error => {
-                handleError(error);
-                // Reset the flag in case of error
-                isHandlingCompletionRef.current = false;
-              });
-            });
-        }
+        // Use debounced check for stalled playback
+        debouncedCheckStalled();
       }, 1500); // Increased from 1000ms to 1500ms to give more time for normal completion
 
       // Store reference to the timer
@@ -845,6 +799,53 @@ export function useSentenceAudioPlayer(): {
       }
     };
   }, [isPlaying, currentSentenceIndex, clearTimer, registerTimer, handleError]);
+
+  // Debounced function to check for stalled playback
+  const debouncedCheckStalled = useDebounce(
+    async () => {
+      // Check if we're still on the same sentence after a delay
+      try {
+        const status = await soundRef.current?.getStatusAsync();
+        if (!status?.isLoaded || !isPlaying) return;
+
+        const { positionMillis, durationMillis, isPlaying: stillPlaying } = status;
+
+        // Check if we're near the end - if so, let the normal didJustFinish handle it
+        // Now we only consider playback stuck if we're not within 90% of the duration
+        // This avoids overlap with the normal end-of-track detection in onPlaybackStatusUpdate
+        const isNearEnd =
+          positionMillis > 0 &&
+          durationMillis != null &&
+          durationMillis > 0 &&
+          positionMillis >= durationMillis * 0.9;
+
+        // Only consider it stuck if:
+        // 1. It's not playing AND
+        // 2. We're NOT near the end (let didJustFinish handle end-of-track cases)
+        const isStuck = !stillPlaying && !isNearEnd;
+
+        if (isStuck && !isHandlingCompletionRef.current) {
+          // Use atomic flag to prevent duplicate calls
+          isHandlingCompletionRef.current = true;
+          // Force next sentence regardless of current position
+          await playNextSentenceRef.current();
+        }
+      } catch (error) {
+        // If we can't check status or encounter an error and we're not already handling completion
+        if (!isHandlingCompletionRef.current) {
+          isHandlingCompletionRef.current = true;
+          try {
+            await playNextSentenceRef.current();
+          } catch (err) {
+            handleError(err as Error);
+            isHandlingCompletionRef.current = false;
+          }
+        }
+      }
+    },
+    500,
+    [isPlaying]
+  );
 
   // ---- Preload all audio files ----
   const preloadAudioFiles = useCallback(
@@ -989,17 +990,15 @@ export function useSentenceAudioPlayer(): {
     }
   }, [currentSentenceIndex, sentenceIndexOffsetRef.current, handleError]);
 
-  // Update preloading window when sentence changes - use a longer timeout to ensure playback is stable first
+  // Use debounced update for preloading window
+  const debouncedUpdatePreloadWindow = useDebounce(updatePreloadingWindow, 500, []);
+
+  // Update preloading window when sentence changes using debounced function
   useEffect(() => {
     if (currentSentenceIndex !== null) {
-      // Add a delay before updating the preload window to prevent race conditions
-      const timeoutId = setTimeout(() => {
-        updatePreloadingWindow();
-      }, 500); // 500ms delay to ensure the current audio is stable
-
-      return () => clearTimer(timeoutId);
+      debouncedUpdatePreloadWindow();
     }
-  }, [currentSentenceIndex, updatePreloadingWindow, clearTimer]);
+  }, [currentSentenceIndex, debouncedUpdatePreloadWindow]);
 
   // Helper functions to reduce cognitive complexity in playNextSentence
 
