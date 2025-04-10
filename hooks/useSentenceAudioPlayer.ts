@@ -303,7 +303,7 @@ export function useSentenceAudioPlayer(): {
     }
     soundRef.current = null;
 
-    // Reset store (batch update instead of multiple dispatches)
+    // Batch update all Redux state changes
     dispatch(
       updateAudioState({
         wordId: null,
@@ -674,17 +674,18 @@ export function useSentenceAudioPlayer(): {
         status.durationMillis &&
         status.positionMillis < status.durationMillis - 400 // Increased margin to avoid conflict with end detection
       ) {
-        // Audio has genuinely stopped unexpectedly
-        dispatch(setPlayingState(false));
+        // Update Redux and local state together
+        dispatch(updateAudioState({ isPlaying: false }));
         setAudioState('paused');
         audioStateAnimValue.value = withTiming('paused', { duration: 200 });
         return;
       }
 
+      // Handle playback state changes
       if (status.isPlaying) {
         setAudioState('playing');
-        audioStateAnimValue.value = withSpring('playing'); // Use spring for natural state transitions
-        dispatch(setPlayingState(true));
+        audioStateAnimValue.value = withSpring('playing');
+        dispatch(updateAudioState({ isPlaying: true }));
 
         // Ensure playback rate is maintained if it was changed
         if (playbackRate.value !== 1.0 && soundRef.current) {
@@ -702,7 +703,7 @@ export function useSentenceAudioPlayer(): {
       } else {
         setAudioState('paused');
         audioStateAnimValue.value = withTiming('paused', { duration: 200 });
-        dispatch(setPlayingState(false));
+        dispatch(updateAudioState({ isPlaying: false }));
       }
     },
     [dispatch, isPlaying, currentSentenceIndex, sentenceIndexOffsetRef, playbackRate]
@@ -1079,7 +1080,7 @@ export function useSentenceAudioPlayer(): {
 
       // Check if we're at the end
       if (!nextSentence) {
-        // IMPROVEMENT: Use a single atomic update with all needed properties
+        // Batch update all state changes
         dispatch(
           updateAudioState({
             sentenceId: fromIndex,
@@ -1094,9 +1095,7 @@ export function useSentenceAudioPlayer(): {
         return;
       }
 
-      // IMPORTANT: Explicitly set the current sentence index in Redux before processing
-      // This ensures UI and audio are always synchronized
-      // IMPROVEMENT: Use a single updateAudioState instead of separate dispatches
+      // IMPORTANT: Batch update Redux state before processing
       dispatch(
         updateAudioState({
           sentenceId: nextIndex,
