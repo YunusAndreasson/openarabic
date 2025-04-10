@@ -93,7 +93,6 @@ export function useSentenceAudioPlayer(): {
   setCurrentSentenceIndex: (idx: number | null) => void;
   soundRef: React.MutableRefObject<Audio.Sound | null>;
   wordTimingRef: React.MutableRefObject<WordTiming[]>;
-  timingIntervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>;
   setManualNavigation: (isManual: boolean, timeoutMs?: number) => void;
   progressAnimValue: { value: number };
   durationAnimValue: { value: number };
@@ -124,7 +123,6 @@ export function useSentenceAudioPlayer(): {
   // Refs
   const soundRef = useRef<Audio.Sound | null>(null);
   const wordTimingRef = useRef<WordTiming[]>([]);
-  const timingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sentencesRef = useRef<SentenceAudio[]>([]);
   const cleanupRef = useRef<(() => void) | null>(null);
   const preloadedSoundsRef = useRef<(Audio.Sound | null)[]>([]);
@@ -167,6 +165,9 @@ export function useSentenceAudioPlayer(): {
 
   // Add playback rate shared value
   const playbackRate = useSharedValue(1.0);
+
+  // Add a shared value to track when a check is needed
+  const needsStatusCheck = useSharedValue(true);
 
   // Helper function to format time in MM:SS format
   const formatTimeDisplay = (timeMs: number): string => {
@@ -314,168 +315,143 @@ export function useSentenceAudioPlayer(): {
     const WORD_OVERLAP_MS = 250;
     const JITTER_THRESHOLD_MS = 40;
 
-    // Clear any existing timing interval
-    if (timingIntervalRef.current !== null) {
-      clearTimer(timingIntervalRef.current);
-      timingIntervalRef.current = null;
-    }
-
     // Set player as active for Reanimated
     isPlayerActive.value = true;
 
-    // Create a flag to track if processing is in progress
-    let isProcessing = false;
+    // Flag to track if we're already processing
+    const isProcessing = { value: false };
 
-    const checkWordPosition = async (): Promise<void> => {
-      'worklet'; // Add worklet directive to run on UI thread
+    // Reset the check state at the start
+    needsStatusCheck.value = true;
 
-      // Skip if already processing or player is not active
-      if (isProcessing || !isPlayerActive.value) return;
+    // JS thread function to get sound status
+    const getSoundStatus = async () => {
+      if (!soundRef.current) {
+        return { isLoaded: false } as AVPlaybackStatus;
+      }
 
       try {
-        isProcessing = true;
+        return await soundRef.current.getStatusAsync();
+      } catch (error) {
+        handleError(error as Error);
+        return { isLoaded: false } as AVPlaybackStatus;
+      }
+    };
 
-        // More resilient ref handling - ensure all refs exist before proceeding
-        if (!soundRef.current || !wordTimingRef.current || wordTimingRef.current.length === 0) {
-          isProcessing = false;
+    // JS thread function to process word positions based on status
+    const processWordPosition = async () => {
+      // Skip if already processing
+      if (isProcessing.value) return;
+      isProcessing.value = true;
+
+      try {
+        // Get sound status on JS thread
+        const status = await getSoundStatus();
+
+        if (!status.isLoaded) {
+          isProcessing.value = false;
           return;
         }
 
-        // Get status with error handling
-        let status;
-        try {
-          // We need to use runOnJS for async operations that can't run in worklets
-          const getStatusPromise = new Promise<AVPlaybackStatus>(resolve => {
-            runOnJS(async () => {
-              if (soundRef.current) {
-                const result = await soundRef.current.getStatusAsync();
-                resolve(result);
-              } else {
-                resolve({ isLoaded: false } as AVPlaybackStatus);
-              }
-            })();
-          });
-
-          status = await getStatusPromise;
-
-          if (!status.isLoaded) {
-            isProcessing = false;
-            return;
-          }
-        } catch (err) {
-          // Handle errors gracefully - particularly important for status calls
-          runOnJS(handleError)(err as Error);
-          isProcessing = false;
+        // Check if we still have valid refs
+        if (!wordTimingRef.current || wordTimingRef.current.length === 0) {
+          isProcessing.value = false;
           return;
         }
 
-        // Audio position validation - ensure position is valid and doesn't exceed duration
         const currentTimeMs = status.positionMillis;
         const duration = status.durationMillis || 0;
 
         // Skip processing if we have an invalid position or duration
         if (currentTimeMs < 0 || (duration > 0 && currentTimeMs > duration + 500)) {
-          isProcessing = false;
+          isProcessing.value = false;
           return;
         }
 
-        // Update shared values for animations with smooth transitions
+        // Update shared values via worklet-compatible animation methods
         progressAnimValue.value = withTiming(currentTimeMs, { duration: 100 });
         durationAnimValue.value = withTiming(duration, { duration: 100 });
 
         const timings = wordTimingRef.current;
 
-        // Optimization: If we're already at the last word, nothing more to do
+        // Exit early if at the last word
         if (lastActiveIndex.current >= timings.length - 1) {
-          isProcessing = false;
+          isProcessing.value = false;
           return;
         }
 
-        // Fast check: if current word is still active, exit early
+        // Check if current word is still active
         const currentWord = timings[lastActiveIndex.current];
         if (
           currentWord &&
           currentTimeMs >= currentWord.startTime - JITTER_THRESHOLD_MS &&
           currentTimeMs <= currentWord.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
         ) {
-          isProcessing = false;
-          return; // Still on the same word, no need to update
+          isProcessing.value = false;
+          return; // Still on the same word
         }
 
-        // Optimization: Only check a small window of upcoming words
-        // This avoids unnecessary iterations for long sentences
+        // Check a small window of upcoming words
         const MAX_WORDS_TO_CHECK = 4;
         const endIndex = Math.min(lastActiveIndex.current + MAX_WORDS_TO_CHECK, timings.length);
 
-        // Check if we need to advance to the next word(s)
+        // Find the current word
         for (let i = lastActiveIndex.current + 1; i < endIndex; i++) {
           const word = timings[i];
           if (!word) continue;
 
-          // Add jitter protection to word boundary checks
           if (
             currentTimeMs >= word.startTime - JITTER_THRESHOLD_MS &&
             currentTimeMs <= word.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
           ) {
-            // Found the current word - update state and exit
+            // Found the current word - update state
             dispatch(setCurrentWord({ wordId: word.wordId, position: i }));
             lastActiveIndex.current = i;
-            isProcessing = false;
+            isProcessing.value = false;
             return;
           }
         }
 
-        // If we get here, either:
-        // 1. We're between words (after current word but before next)
-        // 2. We've jumped far ahead and need to catch up
-
-        // Check if we've moved past the window of words we checked
+        // Handle the case where we need to look further ahead
         const lastCheckedWord = timings[endIndex - 1];
         if (lastCheckedWord && currentTimeMs > lastCheckedWord.endTime + WORD_OVERLAP_MS) {
-          // We're beyond our checking window, need to jump ahead
-
-          // Find a suitable word to jump to by scanning ahead in larger increments
-          const JUMP_SIZE = 5; // Check every 5th word
+          // Jump ahead in larger increments
+          const JUMP_SIZE = 5;
           let jumpIndex = endIndex;
 
           while (jumpIndex < timings.length) {
             const jumpWord = timings[jumpIndex];
 
-            // Ensure the jumpWord exists before accessing properties
             if (!jumpWord) {
               jumpIndex += JUMP_SIZE;
               continue;
             }
 
-            // If this word is in the future, we've gone too far - back up
             if (currentTimeMs < jumpWord.startTime - JITTER_THRESHOLD_MS) {
               break;
             }
 
-            // If we found a word that contains the current time
             if (
               currentTimeMs >= jumpWord.startTime - JITTER_THRESHOLD_MS &&
               currentTimeMs <= jumpWord.endTime + WORD_OVERLAP_MS + JITTER_THRESHOLD_MS
             ) {
               dispatch(setCurrentWord({ wordId: jumpWord.wordId, position: jumpIndex }));
               lastActiveIndex.current = jumpIndex;
-              isProcessing = false;
+              isProcessing.value = false;
               return;
             }
 
             jumpIndex += JUMP_SIZE;
           }
 
-          // If we jumped past without finding a match, find the closest word
+          // Find closest word if we jumped past
           if (jumpIndex >= timings.length) {
-            // Find the last word before current time
             let closestIndex = lastActiveIndex.current;
 
             for (let i = lastActiveIndex.current + 1; i < timings.length; i++) {
               const word = timings[i];
               if (!word) continue;
 
-              // If this word starts after current time, we've gone too far
               if (word.startTime > currentTimeMs + JITTER_THRESHOLD_MS) {
                 break;
               }
@@ -483,7 +459,6 @@ export function useSentenceAudioPlayer(): {
               closestIndex = i;
             }
 
-            // Update to the closest word we found
             const closestWord = timings[closestIndex];
             if (closestWord) {
               dispatch(setCurrentWord({ wordId: closestWord.wordId, position: closestIndex }));
@@ -491,20 +466,38 @@ export function useSentenceAudioPlayer(): {
             }
           }
         }
-
-        isProcessing = false;
       } catch (error) {
-        runOnJS(handleError)(error as Error);
-        isProcessing = false;
+        handleError(error as Error);
+      } finally {
+        isProcessing.value = false;
+        // Signal that we've completed this check
+        needsStatusCheck.value = true;
+      }
+    };
+
+    // This is a pure worklet that triggers JS thread operations when needed
+    const checkWordPosition = () => {
+      'worklet';
+
+      // Only trigger JS processing if:
+      // 1. The player is active
+      // 2. We're not already processing
+      // 3. A check is needed
+      if (isPlayerActive.value && needsStatusCheck.value && !isProcessing.value) {
+        // Mark that we've started a check
+        needsStatusCheck.value = false;
+        // Run the actual processing on the JS thread
+        runOnJS(processWordPosition)();
       }
     };
 
     // Use requestAnimationFrame for timing instead of intervals
-    // This provides more reliable timing especially during animations
     let rafId: number | null = null;
     lastCheckTime.value = Date.now();
 
     const scheduleNextCheck = () => {
+      'worklet';
+
       // Schedule the next frame
       rafId = requestAnimationFrame(() => {
         const now = Date.now();
@@ -512,11 +505,7 @@ export function useSentenceAudioPlayer(): {
         // Only run every INTERVAL_MS milliseconds
         if (now - lastCheckTime.value >= INTERVAL_MS) {
           lastCheckTime.value = now;
-
-          // Run check and capture any errors to prevent breaking the loop
-          checkWordPosition().catch(error => {
-            runOnJS(handleError)(error as Error);
-          });
+          checkWordPosition();
         }
 
         // Always schedule next check if player is active
@@ -531,6 +520,7 @@ export function useSentenceAudioPlayer(): {
 
     // Return cleanup function
     return () => {
+      'worklet';
       // Signal player is inactive
       isPlayerActive.value = false;
 
@@ -539,21 +529,15 @@ export function useSentenceAudioPlayer(): {
         cancelAnimationFrame(rafId);
         rafId = null;
       }
-
-      // Also clean up interval as fallback
-      if (timingIntervalRef.current) {
-        clearTimer(timingIntervalRef.current);
-        timingIntervalRef.current = null;
-      }
     };
   }, [
     dispatch,
-    clearTimer,
-    registerTimer,
     isPlayerActive,
     lastCheckTime,
     progressAnimValue,
     durationAnimValue,
+    handleError,
+    needsStatusCheck,
   ]);
 
   // Effect to clean up all active timers on unmount
@@ -583,10 +567,16 @@ export function useSentenceAudioPlayer(): {
       });
       activeTimersRef.current.clear();
     };
-  }, [isPlaying, trackWordTimingWithReanimated, clearTimer]);
+  }, [
+    isPlaying,
+    trackWordTimingWithReanimated,
+    clearTimer,
+    progressAnimValue,
+    durationAnimValue,
+    audioStateAnimValue,
+  ]);
 
-  // Replace the current trackWordTiming with the Reanimated version
-  // Comment this out to revert back to the old version if needed
+  // Use the Reanimated version for word timing
   const trackWordTiming = trackWordTimingWithReanimated;
 
   // ---- Playback status callback with Reanimated optimization ----
@@ -854,7 +844,7 @@ export function useSentenceAudioPlayer(): {
         safetyTimerRef.current = null;
       }
     };
-  }, [isPlaying, currentSentenceIndex, clearTimer, registerTimer]);
+  }, [isPlaying, currentSentenceIndex, clearTimer, registerTimer, handleError]);
 
   // ---- Preload all audio files ----
   const preloadAudioFiles = useCallback(
@@ -1009,7 +999,7 @@ export function useSentenceAudioPlayer(): {
 
       return () => clearTimer(timeoutId);
     }
-  }, [currentSentenceIndex, updatePreloadingWindow]);
+  }, [currentSentenceIndex, updatePreloadingWindow, clearTimer]);
 
   // Helper functions to reduce cognitive complexity in playNextSentence
 
@@ -1500,8 +1490,18 @@ export function useSentenceAudioPlayer(): {
         // Clean up previous playback state
         await cleanupAudio();
 
-        // First sentence to play
-        const firstSentence = sentences[0];
+        // First sentence to play - use the targetIndex from sentenceOffset
+        const targetIndex = sentenceOffset;
+        // Make sure the targetIndex is within bounds
+        if (targetIndex < 0 || targetIndex >= sentences.length) {
+          throw new Error(
+            `Invalid sentenceOffset: ${sentenceOffset}. Array length: ${sentences.length}`
+          );
+        }
+        const firstSentence = sentences[targetIndex];
+        if (!firstSentence?.audioUrl) {
+          throw new Error(`No audio URL for sentence at index ${targetIndex}`);
+        }
 
         // Prepare word timings with validation
         const validTimings = firstSentence.wordTimings
@@ -1553,7 +1553,7 @@ export function useSentenceAudioPlayer(): {
 
         // Load and play audio with appropriate position
         let sound: Audio.Sound;
-        const firstPreloadedSound = preloadedSoundsRef.current[0];
+        const firstPreloadedSound = preloadedSoundsRef.current[targetIndex];
 
         if (firstPreloadedSound) {
           sound = firstPreloadedSound;
@@ -1665,14 +1665,8 @@ export function useSentenceAudioPlayer(): {
           });
         }
       }
-
-      // Clear any remaining intervals
-      if (timingIntervalRef.current) {
-        clearTimer(timingIntervalRef.current);
-        timingIntervalRef.current = null;
-      }
     };
-  }, []);
+  }, [handleError]);
 
   // Helper to set manual navigation mode with automatic timeout
   const setManualNavigation = useCallback(
@@ -1733,7 +1727,6 @@ export function useSentenceAudioPlayer(): {
     // Refs if needed
     soundRef,
     wordTimingRef,
-    timingIntervalRef,
 
     // New method
     setManualNavigation,
