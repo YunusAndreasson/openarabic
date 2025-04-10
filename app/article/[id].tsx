@@ -419,6 +419,9 @@ export default function ArticleScreen(): JSX.Element {
       audioPositionMs: 0,
     };
 
+    // First stop any existing playback to ensure clean state
+    await stopPlayback();
+
     // Reset Redux state before starting new playback
     dispatch(
       updateAudioState({
@@ -429,13 +432,22 @@ export default function ArticleScreen(): JSX.Element {
       })
     );
 
+    // Reset the sentence index offset to ensure we start from the beginning
+    if (audioPlayer.setCurrentSentenceIndex) {
+      audioPlayer.setCurrentSentenceIndex(0);
+    }
+
     await audioPlayer.preloadAudioFiles(sentenceAudioData);
-    const success = await startPlayback(sentenceAudioData);
+    const success = await startPlayback(sentenceAudioData, {
+      sentenceOffset: 0, // Explicitly set to start from first sentence
+      forceReset: true, // Force a reset of the playback state
+    });
+
     if (!success) {
       handleError(new Error('Failed to start audio playback'));
       setAudioControlVisible(false);
     }
-  }, [audioPlayer, sentenceAudioData, startPlayback, dispatch]);
+  }, [audioPlayer, sentenceAudioData, startPlayback, dispatch, stopPlayback]);
 
   // Helper function to handle pausing audio
   const handlePauseAudio = useCallback(async () => {

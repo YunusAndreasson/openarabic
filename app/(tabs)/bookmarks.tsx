@@ -23,6 +23,7 @@ import type { AudioTrack } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { readingListService } from '@/services/readingList';
+import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -51,6 +52,9 @@ const styles = StyleSheet.create({
   },
   activeIcon: {
     opacity: LAYOUT.OPACITY.DIMMED,
+  },
+  authorText: {
+    flex: 1,
   },
   bottomControlsContainer: {
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
@@ -112,11 +116,24 @@ const styles = StyleSheet.create({
   listContentWithHeader: {
     paddingTop: 0,
   },
-  mediumOpacity: {
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  metaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  },
+  studyWordsPill: {
+    borderRadius: 12,
+    borderWidth: 1,
+    marginLeft: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: 2,
+  },
+  studyWordsPillText: {
+    fontSize: 10,
+    lineHeight: 14,
   },
   textContent: {
     flex: 1,
@@ -138,27 +155,27 @@ const BookmarkListItem = memo(
     progress,
     duration,
     isActive,
+    studyWordsCount,
+    isLoading,
   }: {
     item: ReadingListItem;
     progress: number;
     duration: number;
     isActive: boolean;
+    studyWordsCount: number;
+    isLoading: boolean;
   }) => {
     const colors = useColors();
-
-    // Calculate progress percentage
     const playbackProgress = duration > 0 ? progress / duration : 0;
-
-    // Prepare styles explicitly for clarity
     const activeCardStyle = isActive
       ? {
           ...styles.activeCard,
           borderColor: colors.tint,
-          borderLeftWidth: 3, // Force border width
+          borderLeftWidth: 3,
         }
       : undefined;
-
     const activeTitleStyle = isActive ? { color: colors.tint } : undefined;
+    const showPill = studyWordsCount > 0 || isLoading;
 
     return (
       <View style={styles.cardContainer}>
@@ -172,14 +189,34 @@ const BookmarkListItem = memo(
               <ThemedText type="bodyBold" style={[styles.titleText, activeTitleStyle]}>
                 {item.articles?.title || 'Untitled'}
               </ThemedText>
-              <ThemedText
-                type="label"
-                variant="secondary"
-                numberOfLines={1}
-                style={isActive ? styles.mediumOpacity : undefined}
-              >
-                {item.articles?.author?.name || 'Unknown Author'}
-              </ThemedText>
+              <View style={styles.metaRow}>
+                <ThemedText
+                  type="label"
+                  numberOfLines={1}
+                  style={[styles.authorText, { color: colors.authorText }]}
+                  skipDefaultColor
+                >
+                  {item.articles?.author?.name || 'Unknown Author'}
+                </ThemedText>
+                {showPill ? (
+                  <View
+                    style={[
+                      styles.studyWordsPill,
+                      { borderColor: colors.tint, backgroundColor: colors.transparent },
+                    ]}
+                  >
+                    <ThemedText
+                      type="label"
+                      style={[styles.studyWordsPillText, { color: colors.tint }]}
+                      skipDefaultColor
+                    >
+                      {isLoading
+                        ? '...'
+                        : `${studyWordsCount} ${studyWordsCount === 1 ? 'word' : 'words'}`}
+                    </ThemedText>
+                  </View>
+                ) : null}
+              </View>
             </View>
             <View style={styles.iconContainer}>
               <Ionicons
@@ -208,18 +245,17 @@ const BookmarkListItem = memo(
       </View>
     );
   },
-  // Custom equality function to ensure re-rendering when audio state changes
   (prevProps, nextProps) => {
-    // Always re-render if active state changes
-    if (prevProps.isActive !== nextProps.isActive) return false;
-
-    // If this item is active, re-render when audio state or progress changes
-    if (nextProps.isActive) {
-      return prevProps.progress === nextProps.progress && prevProps.duration === nextProps.duration;
+    if (
+      prevProps.isActive !== nextProps.isActive ||
+      prevProps.studyWordsCount !== nextProps.studyWordsCount ||
+      prevProps.isLoading !== nextProps.isLoading
+    ) {
+      return false;
     }
-
-    // Otherwise, only re-render if basic props change
-    return prevProps.item.article_id === nextProps.item.article_id;
+    return nextProps.isActive
+      ? prevProps.progress === nextProps.progress && prevProps.duration === nextProps.duration
+      : prevProps.item.article_id === nextProps.item.article_id;
   }
 );
 
@@ -287,13 +323,8 @@ export default function BookmarksScreen(): JSX.Element {
   const { user, isLoading: isAuthLoading } = useAuth();
   const queryClient = useQueryClient();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
-  // Store the current playlist
   const currentPlaylistRef = useRef<AudioTrack[]>([]);
-
-  // Use the new loading state hook with optimized defaults
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
-
-  // Use the AudioPlayer hook
   const {
     audioState,
     currentTrackIndex,
@@ -305,13 +336,11 @@ export default function BookmarksScreen(): JSX.Element {
     startShufflePlayback,
     playNextTrack,
   } = useAudioPlayer();
-
-  // Maintain shuffled mode state separately
   const [isShuffleMode, setIsShuffleMode] = useState(false);
 
   // Query for reading list
   const {
-    data: readingList = [], // Default to empty array to avoid undefined
+    data: readingList = [],
     isLoading: isDataLoading,
     isFetching,
     isError,
@@ -322,12 +351,32 @@ export default function BookmarksScreen(): JSX.Element {
       if (!user?.id) return Promise.resolve([]);
       return readingListService.getReadingList(user.id);
     },
-    enabled: !!user?.id && !isAuthLoading, // Only enable when auth is resolved and user exists
-    staleTime: 60000, // Cache for 1 minute rather than no caching
-    gcTime: 300000, // Keep in cache for 5 minutes
-    retry: 3, // Retry failed requests up to 3 times
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000), // Exponential backoff
+    enabled: !!user?.id && !isAuthLoading,
+    staleTime: 60000,
+    gcTime: 300000,
+    retry: 3,
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
     placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
+  });
+
+  // Query for study words counts
+  const { data: studyWordsCounts = {}, isLoading: isStudyWordsLoading } = useQuery({
+    queryKey: ['studyWordsCounts', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return {};
+      const studyWords = await studyWordsFSRSService.getFSRSWords(user.id);
+      const countsByArticle: Record<number, number> = {};
+      studyWords.forEach(word => {
+        if (word.sentence_word?.sentence?.article_id) {
+          const articleId = word.sentence_word.sentence.article_id;
+          countsByArticle[articleId] = (countsByArticle[articleId] || 0) + 1;
+        }
+      });
+      return countsByArticle;
+    },
+    enabled: !!user?.id && !isAuthLoading,
+    staleTime: 60000,
+    gcTime: 300000,
   });
 
   // Use the screen focus refresh hook
@@ -579,7 +628,7 @@ export default function BookmarksScreen(): JSX.Element {
           <FlashList
             ref={flashListRef}
             data={readingList}
-            extraData={[currentTrackIndex, progress]}
+            extraData={[currentTrackIndex, progress, studyWordsCounts, isStudyWordsLoading]}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (
               <BookmarkListItem
@@ -587,6 +636,8 @@ export default function BookmarksScreen(): JSX.Element {
                 progress={progress}
                 duration={duration}
                 isActive={isActiveTrack(item.article_id)}
+                studyWordsCount={studyWordsCounts[item.article_id] || 0}
+                isLoading={isStudyWordsLoading}
               />
             )}
             estimatedItemSize={ITEM_HEIGHT}
@@ -601,6 +652,25 @@ export default function BookmarksScreen(): JSX.Element {
             }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={null}
+            ListFooterComponent={() => (
+              <View
+                style={{
+                  paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+                  paddingBottom: LAYOUT.SPACING.MEDIUM,
+                }}
+              >
+                <ThemedText
+                  type="label"
+                  style={{
+                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+                    color: colors.textTertiary,
+                  }}
+                  skipDefaultColor
+                >
+                  Word count shows saved study words that will be played during article listening
+                </ThemedText>
+              </View>
+            )}
             drawDistance={ITEM_HEIGHT * 10}
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;

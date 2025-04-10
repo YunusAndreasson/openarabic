@@ -274,6 +274,14 @@ export const VocabularyGraph = memo(
                   <ThemedText type="caption" variant="primary" weight="500">
                     {item.date}
                   </ThemedText>
+                  <ThemedText
+                    type="caption"
+                    variant="secondary"
+                    weight="400"
+                    style={styles.wordCount}
+                  >
+                    {item.wordsLearned}
+                  </ThemedText>
                 </View>
               ))}
             </View>
@@ -304,6 +312,7 @@ const styles = StyleSheet.create({
   },
   labelContainer: {
     alignItems: 'center',
+    gap: LAYOUT.SPACING.TINY / 2,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -314,6 +323,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  wordCount: {
+    fontSize: 10,
+    opacity: 0.7,
   },
   xAxisLabels: {
     flexDirection: 'row',

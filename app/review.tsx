@@ -12,6 +12,7 @@ import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useFSRS } from '@/hooks/useFSRS';
+import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
 import {
@@ -147,7 +148,7 @@ export default function ReviewScreen(): JSX.Element {
   };
 
   // Use our custom hook for word sizing with simplified approach
-  const wordFontSize = useWordSizing(currentWord?.sentence_word.word_form, dynamicFontConfig);
+  const wordFontSize = useWordSizing(currentWord?.sentence_word?.word_form, dynamicFontConfig);
 
   // Hide initial loading after a short delay
   useEffect(() => {
@@ -186,7 +187,7 @@ export default function ReviewScreen(): JSX.Element {
       return;
     }
 
-    if (currentWord && !isComplete && !isTransitioningToCompletion) {
+    if (currentWord?.sentence_word && !isComplete && !isTransitioningToCompletion) {
       const wordForm = currentWord.sentence_word.word_form;
       const audioUrl = currentWord.sentence_word.audio_url;
       setCurrentSentence({ wordForm });
@@ -363,40 +364,57 @@ export default function ReviewScreen(): JSX.Element {
     const mounted = { current: true };
     lightFeedback();
 
-    // First invalidate queries
-    invalidateQueries();
+    // Stop audio playback first and wait for it to complete
+    stopPlayback()
+      .then(() => {
+        if (!mounted.current) return;
 
-    if (user?.id) {
-      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-      queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
-      queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
-      queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
-    }
+        // Then invalidate queries
+        invalidateQueries();
 
-    // Wait for queries to be invalidated before navigating
-    const navigationTimer = setTimeout(() => {
-      if (mounted.current) {
-        router.back();
-      }
-    }, 100);
+        if (user?.id) {
+          queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+          queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
+          queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
+          queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
+        }
+
+        // Wait for queries to be invalidated before navigating
+        setTimeout(() => {
+          if (mounted.current) {
+            router.back();
+          }
+        }, 100);
+      })
+      .catch(error => {
+        // If there's an error during cleanup, still try to navigate away
+        handleError(error);
+        if (mounted.current) {
+          router.back();
+        }
+      });
 
     return () => {
       mounted.current = false;
-      clearTimeout(navigationTimer);
     };
-  }, [invalidateQueries, user?.id, queryClient]);
+  }, [invalidateQueries, user?.id, queryClient, stopPlayback]);
 
   // Clean up all timeouts when component unmounts
   useEffect(() => {
     return () => {
+      // Set completion flag to prevent any pending operations
+      completionTriggeredRef.current = true;
+
       // Cancel any ongoing animations
       fadeIn();
 
-      // Stop any playing audio
-      stopPlayback();
-
+      // Stop any playing audio and ensure proper cleanup order
+      stopPlayback().catch(error => {
+        // Log but don't throw - we're cleaning up anyway
+        handleError(error);
+      });
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
         meaningTimeoutRef.current = null;
@@ -408,7 +426,6 @@ export default function ReviewScreen(): JSX.Element {
       }
 
       // Reset all refs
-      completionTriggeredRef.current = false;
       isUpdatingWordRef.current = false;
       maxProgressRef.current = 0;
       totalWordsRef.current = 0;
