@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -90,8 +92,6 @@ export function useSentenceAudioPlayer(): {
     sentenceWordsMap: SentenceWordsMap
   ) => Tables<'sentence_words'> | undefined;
   setAudioState: (state: 'idle' | 'loading' | 'playing' | 'paused' | 'error') => void;
-  setProgress: (progress: number) => void;
-  setDuration: (duration: number) => void;
   setCurrentSentenceIndex: (idx: number | null) => void;
   soundRef: React.MutableRefObject<Audio.Sound | null>;
   wordTimingRef: React.MutableRefObject<WordTiming[]>;
@@ -112,15 +112,24 @@ export function useSentenceAudioPlayer(): {
   const isPlaying = useSelector(selectIsPlaying);
   const currentSentenceIndex = useSelector(selectCurrentSentenceId);
 
-  // Local states - we can keep these for backward compatibility
-  // but they're less important now that we have Reanimated shared values
+  // Reanimated shared values
+  const isPlayerActive = useSharedValue(false);
+  const lastCheckTime = useSharedValue(0);
+  const progressAnimValue = useSharedValue(0);
+  const durationAnimValue = useSharedValue(0);
+  const audioStateAnimValue = useSharedValue('idle');
+  const playbackRate = useSharedValue(1.0);
+  const needsStatusCheck = useSharedValue(true);
+
+  // Local states - keep only what's necessary
   const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'error'>(
     'idle'
   );
-  const [progress, setProgress] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [isPreloading, setIsPreloading] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Computed values from shared values
+  const progress = progressAnimValue.value;
+  const duration = durationAnimValue.value;
 
   // Refs
   const soundRef = useRef<Audio.Sound | null>(null);
@@ -150,21 +159,6 @@ export function useSentenceAudioPlayer(): {
   // Add a ref for the safety timer
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Add Reanimated shared values for tracking
-  const isPlayerActive = useSharedValue(false);
-  const lastCheckTime = useSharedValue(0);
-
-  // Add Reanimated shared values for smoother animations
-  const progressAnimValue = useSharedValue(0);
-  const durationAnimValue = useSharedValue(0);
-  const audioStateAnimValue = useSharedValue('idle');
-
-  // Add playback rate shared value
-  const playbackRate = useSharedValue(1.0);
-
-  // Add a shared value to track when a check is needed
-  const needsStatusCheck = useSharedValue(true);
-
   // Helper function to format time in MM:SS format
   const formatTimeDisplay = (timeMs: number): string => {
     'worklet';
@@ -190,7 +184,6 @@ export function useSentenceAudioPlayer(): {
   const setPlaybackRate = useCallback(
     (rate: number) => {
       if (rate < 0.5 || rate > 2.0) {
-        console.warn('Playback rate must be between 0.5 and 2.0');
         return;
       }
 
@@ -270,9 +263,8 @@ export function useSentenceAudioPlayer(): {
   useEffect(() => {
     let transitionTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    if (isTransitioning) {
+    if (!isPlayerActive.value) {
       transitionTimeout = setTimeout(() => {
-        setIsTransitioning(false);
         dispatch(updateAudioState({ isPlaying: false }));
         setAudioState('paused');
       }, 3000);
@@ -284,7 +276,7 @@ export function useSentenceAudioPlayer(): {
         clearTimer(transitionTimeout);
       }
     };
-  }, [isTransitioning, dispatch, clearTimer, registerTimer]);
+  }, [isPlayerActive, dispatch, clearTimer, registerTimer]);
 
   // ---- Cleanup function ----
   const cleanupAudio = useCallback(async (): Promise<void> => {
@@ -318,8 +310,6 @@ export function useSentenceAudioPlayer(): {
 
     // Reset local states
     setAudioState('idle');
-    setProgress(0);
-    setDuration(0);
     lastActiveIndex.current = 0;
   }, [dispatch, isPlayerActive, progressAnimValue, durationAnimValue, audioStateAnimValue]);
 
@@ -562,7 +552,6 @@ export function useSentenceAudioPlayer(): {
     lastCheckTime,
     progressAnimValue,
     durationAnimValue,
-    handleError,
     needsStatusCheck,
   ]);
 
@@ -712,8 +701,16 @@ export function useSentenceAudioPlayer(): {
   // Throttle React state updates to reduce renders
   const throttledProgressUpdate = useThrottle<(positionMs: number, durationMs: number) => void>(
     (positionMs: number, durationMs: number) => {
-      setProgress(positionMs);
-      setDuration(durationMs);
+      // No need to update local state anymore, just update shared values
+      if (Math.abs(progressAnimValue.value - positionMs) > 1000) {
+        progressAnimValue.value = withTiming(positionMs, { duration: 100 });
+      } else {
+        progressAnimValue.value = positionMs;
+      }
+
+      if (durationAnimValue.value !== durationMs) {
+        durationAnimValue.value = withTiming(durationMs, { duration: 100 });
+      }
     },
     250,
     []
@@ -1000,7 +997,7 @@ export function useSentenceAudioPlayer(): {
         handleError(error as Error);
       }
     }
-  }, [currentSentenceIndex, sentenceIndexOffsetRef.current, handleError]);
+  }, [currentSentenceIndex]);
 
   // Use debounced update for preloading window
   const debouncedUpdatePreloadWindow = useDebounce(updatePreloadingWindow, 500, []);
@@ -1058,7 +1055,7 @@ export function useSentenceAudioPlayer(): {
 
   // ---- Play next sentence (recursive playback) ----
   const playNextSentence = useCallback(async (): Promise<void> => {
-    if (isTransitioning) {
+    if (!isPlayerActive.value) {
       return;
     }
 
@@ -1067,9 +1064,6 @@ export function useSentenceAudioPlayer(): {
       const cleanupCompletionState = () => {
         isHandlingCompletionRef.current = false;
       };
-
-      // Properly track transition state
-      setIsTransitioning(true);
 
       // Get the next sentence index (null by default)
       const fromIndex = currentSentenceIndex;
@@ -1090,7 +1084,6 @@ export function useSentenceAudioPlayer(): {
           })
         );
         setAudioState('idle');
-        setIsTransitioning(false);
         cleanupCompletionState();
         return;
       }
@@ -1156,7 +1149,6 @@ export function useSentenceAudioPlayer(): {
       // Store the sound and clear transition state
       soundRef.current = sound;
       setAudioState('playing');
-      setIsTransitioning(false);
 
       // Ensure playback actually starts and completion detection works
       setTimeout(async () => {
@@ -1182,11 +1174,9 @@ export function useSentenceAudioPlayer(): {
       }
 
       // Ensure the transition state is cleared and completion flags are reset
-      setIsTransitioning(false);
       cleanupCompletionState();
     } catch (error) {
       setAudioState('error');
-      setIsTransitioning(false);
       dispatch(
         updateAudioState({
           isPlaying: false,
@@ -1203,7 +1193,7 @@ export function useSentenceAudioPlayer(): {
     onPlaybackStatusUpdate,
     currentSentenceIndex,
     sentenceIndexOffsetRef,
-    isTransitioning,
+    isPlayerActive,
   ]);
 
   // Add a new function to resume at a specific sentence without incrementing
@@ -1485,8 +1475,8 @@ export function useSentenceAudioPlayer(): {
         sentencesRef.current = sentences;
         sentenceIndexOffsetRef.current = sentenceOffset;
 
-        // Reset transition state
-        setIsTransitioning(false);
+        // Reset player state
+        isPlayerActive.value = false;
 
         // Preload audio with error handling
         setAudioState('loading');
@@ -1729,8 +1719,6 @@ export function useSentenceAudioPlayer(): {
 
     // Debug or advanced
     setAudioState,
-    setProgress,
-    setDuration,
     setCurrentSentenceIndex: (idx: number | null) => dispatch(setCurrentSentence(idx)),
 
     // Refs if needed
@@ -1740,12 +1728,12 @@ export function useSentenceAudioPlayer(): {
     // New method
     setManualNavigation,
 
-    // New Reanimated values
+    // Reanimated values
     progressAnimValue,
     durationAnimValue,
     audioStateAnimValue,
 
-    // New derived values and playback rate
+    // Derived values and playback rate
     formattedProgressTime,
     formattedDurationTime,
     playbackRate,
