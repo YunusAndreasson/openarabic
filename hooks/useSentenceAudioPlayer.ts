@@ -1,7 +1,14 @@
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { runOnJS, useSharedValue, useDerivedValue, cancelAnimation } from 'react-native-reanimated';
+import {
+  runOnJS,
+  useSharedValue,
+  useDerivedValue,
+  cancelAnimation,
+  withTiming,
+  withSpring,
+} from 'react-native-reanimated';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
@@ -91,6 +98,10 @@ export function useSentenceAudioPlayer(): {
   progressAnimValue: { value: number };
   durationAnimValue: { value: number };
   audioStateAnimValue: { value: string };
+  formattedProgressTime: { value: string };
+  formattedDurationTime: { value: string };
+  playbackRate: { value: number };
+  setPlaybackRate: (rate: number) => void;
 } {
   const dispatch = useDispatch();
 
@@ -154,6 +165,56 @@ export function useSentenceAudioPlayer(): {
   const durationAnimValue = useSharedValue(0);
   const audioStateAnimValue = useSharedValue('idle');
 
+  // Add playback rate shared value
+  const playbackRate = useSharedValue(1.0);
+
+  // Helper function to format time in MM:SS format
+  const formatTimeDisplay = (timeMs: number): string => {
+    'worklet';
+    if (isNaN(timeMs) || timeMs < 0) return '0:00';
+
+    const totalSeconds = Math.floor(timeMs / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  };
+
+  // Add derived values for formatted time displays
+  const formattedProgressTime = useDerivedValue(() => {
+    return formatTimeDisplay(progressAnimValue.value);
+  });
+
+  const formattedDurationTime = useDerivedValue(() => {
+    return formatTimeDisplay(durationAnimValue.value);
+  });
+
+  // Add a function to set playback rate
+  const setPlaybackRate = useCallback(
+    (rate: number) => {
+      if (rate < 0.5 || rate > 2.0) {
+        console.warn('Playback rate must be between 0.5 and 2.0');
+        return;
+      }
+
+      // Animate the rate change for UI
+      playbackRate.value = withTiming(rate, { duration: 200 });
+
+      // Apply the rate change to the actual sound
+      if (soundRef.current) {
+        // Need to run on JS thread since this is an async operation
+        (async () => {
+          try {
+            await soundRef.current?.setRateAsync(rate, true); // true preserves pitch
+          } catch (error) {
+            handleError(error as Error);
+          }
+        })();
+      }
+    },
+    [playbackRate]
+  );
+
   // ---- HELPER: Find a word by ID from all sentences ----
   const findWordById = useCallback(
     (wordId: number, sentenceWordsMap: SentenceWordsMap): Tables<'sentence_words'> | undefined => {
@@ -210,11 +271,11 @@ export function useSentenceAudioPlayer(): {
 
   // ---- Cleanup function ----
   const cleanupAudio = useCallback(async (): Promise<void> => {
-    // Reset Reanimated shared values
+    // Reset Reanimated shared values with animations for smoother transitions
     isPlayerActive.value = false;
-    progressAnimValue.value = 0;
-    durationAnimValue.value = 0;
-    audioStateAnimValue.value = 'idle';
+    progressAnimValue.value = withTiming(0, { duration: 300 });
+    durationAnimValue.value = withTiming(0, { duration: 300 });
+    audioStateAnimValue.value = withTiming('idle', { duration: 300 });
 
     if (soundRef.current) {
       try {
@@ -266,6 +327,8 @@ export function useSentenceAudioPlayer(): {
     let isProcessing = false;
 
     const checkWordPosition = async (): Promise<void> => {
+      'worklet'; // Add worklet directive to run on UI thread
+
       // Skip if already processing or player is not active
       if (isProcessing || !isPlayerActive.value) return;
 
@@ -281,14 +344,27 @@ export function useSentenceAudioPlayer(): {
         // Get status with error handling
         let status;
         try {
-          status = await soundRef.current.getStatusAsync();
+          // We need to use runOnJS for async operations that can't run in worklets
+          const getStatusPromise = new Promise<AVPlaybackStatus>(resolve => {
+            runOnJS(async () => {
+              if (soundRef.current) {
+                const result = await soundRef.current.getStatusAsync();
+                resolve(result);
+              } else {
+                resolve({ isLoaded: false } as AVPlaybackStatus);
+              }
+            })();
+          });
+
+          status = await getStatusPromise;
+
           if (!status.isLoaded) {
             isProcessing = false;
             return;
           }
         } catch (err) {
           // Handle errors gracefully - particularly important for status calls
-          handleError(err as Error);
+          runOnJS(handleError)(err as Error);
           isProcessing = false;
           return;
         }
@@ -303,9 +379,9 @@ export function useSentenceAudioPlayer(): {
           return;
         }
 
-        // Update shared values for animations
-        progressAnimValue.value = currentTimeMs;
-        durationAnimValue.value = duration;
+        // Update shared values for animations with smooth transitions
+        progressAnimValue.value = withTiming(currentTimeMs, { duration: 100 });
+        durationAnimValue.value = withTiming(duration, { duration: 100 });
 
         const timings = wordTimingRef.current;
 
@@ -418,7 +494,7 @@ export function useSentenceAudioPlayer(): {
 
         isProcessing = false;
       } catch (error) {
-        handleError(error as Error);
+        runOnJS(handleError)(error as Error);
         isProcessing = false;
       }
     };
@@ -439,7 +515,7 @@ export function useSentenceAudioPlayer(): {
 
           // Run check and capture any errors to prevent breaking the loop
           checkWordPosition().catch(error => {
-            handleError(error as Error);
+            runOnJS(handleError)(error as Error);
           });
         }
 
@@ -491,6 +567,11 @@ export function useSentenceAudioPlayer(): {
     }
 
     return () => {
+      // Cancel any active animations
+      cancelAnimation(progressAnimValue);
+      cancelAnimation(durationAnimValue);
+      cancelAnimation(audioStateAnimValue);
+
       // Clean up RAF tracking
       if (rafCleanup) {
         rafCleanup();
@@ -514,7 +595,7 @@ export function useSentenceAudioPlayer(): {
       if (!status.isLoaded) {
         if (status.error) {
           setAudioState('error');
-          audioStateAnimValue.value = 'error';
+          audioStateAnimValue.value = withTiming('error', { duration: 200 });
           // Batch update instead of multiple dispatches
           dispatch(
             updateAudioState({
@@ -527,9 +608,9 @@ export function useSentenceAudioPlayer(): {
         return;
       }
 
-      // Update shared values directly for smoother UI
-      progressAnimValue.value = status.positionMillis;
-      durationAnimValue.value = status.durationMillis ?? 0;
+      // Update shared values with animations for smoother UI
+      progressAnimValue.value = withTiming(status.positionMillis, { duration: 100 });
+      durationAnimValue.value = withTiming(status.durationMillis ?? 0, { duration: 100 });
 
       // Throttle React state updates to reduce unnecessary renders
       const now = Date.now();
@@ -634,24 +715,35 @@ export function useSentenceAudioPlayer(): {
         // Audio has genuinely stopped unexpectedly
         dispatch(setPlayingState(false));
         setAudioState('paused');
-        audioStateAnimValue.value = 'paused';
+        audioStateAnimValue.value = withTiming('paused', { duration: 200 });
         return;
       }
 
       if (status.isPlaying) {
         setAudioState('playing');
-        audioStateAnimValue.value = 'playing';
+        audioStateAnimValue.value = withSpring('playing'); // Use spring for natural state transitions
         dispatch(setPlayingState(true));
+
+        // Ensure playback rate is maintained if it was changed
+        if (playbackRate.value !== 1.0 && soundRef.current) {
+          (async () => {
+            try {
+              await soundRef.current?.setRateAsync(playbackRate.value, true);
+            } catch (error) {
+              // Ignore errors from rate setting
+            }
+          })();
+        }
       } else if (status.isBuffering) {
         setAudioState('loading');
-        audioStateAnimValue.value = 'loading';
+        audioStateAnimValue.value = withTiming('loading', { duration: 150 });
       } else {
         setAudioState('paused');
-        audioStateAnimValue.value = 'paused';
+        audioStateAnimValue.value = withTiming('paused', { duration: 200 });
         dispatch(setPlayingState(false));
       }
     },
-    [dispatch, isPlaying, currentSentenceIndex, sentenceIndexOffsetRef]
+    [dispatch, isPlaying, currentSentenceIndex, sentenceIndexOffsetRef, playbackRate]
   );
 
   // Add effect to detect stalled transitions
@@ -1232,10 +1324,10 @@ export function useSentenceAudioPlayer(): {
         if (shouldUnload) {
           // If fully unloading, reset all values
           isPlayerActive.value = false;
-          audioStateAnimValue.value = 'idle';
+          audioStateAnimValue.value = withTiming('idle', { duration: 200 });
         } else {
           // If just pausing, update state but keep progress
-          audioStateAnimValue.value = 'paused';
+          audioStateAnimValue.value = withTiming('paused', { duration: 200 });
         }
 
         if (soundRef.current) {
@@ -1650,5 +1742,11 @@ export function useSentenceAudioPlayer(): {
     progressAnimValue,
     durationAnimValue,
     audioStateAnimValue,
+
+    // New derived values and playback rate
+    formattedProgressTime,
+    formattedDurationTime,
+    playbackRate,
+    setPlaybackRate,
   };
 }
