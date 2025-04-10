@@ -493,7 +493,20 @@ export default function ArticleScreen(): JSX.Element {
       // Check if we have a saved position to resume from
       const savedState = pausedAudioStateRef.current;
 
-      if (shouldResumeFromSavedPosition(savedState)) {
+      // If we're at the last sentence or finished playing, start from beginning
+      if (
+        savedState.sentenceIndex === null ||
+        savedState.sentenceIndex >= sentenceAudioData.length - 1
+      ) {
+        // Clear all states and start fresh
+        pausedAudioStateRef.current = {
+          sentenceIndex: null,
+          wordId: null,
+          position: null,
+          audioPositionMs: 0,
+        };
+        await startFreshPlayback();
+      } else if (shouldResumeFromSavedPosition(savedState)) {
         await resumeFromSavedPosition(savedState);
       } else {
         await startFreshPlayback();
@@ -503,7 +516,12 @@ export default function ArticleScreen(): JSX.Element {
       // Reset UI state on error
       setAudioControlVisible(false);
     }
-  }, [shouldResumeFromSavedPosition, resumeFromSavedPosition, startFreshPlayback]);
+  }, [
+    shouldResumeFromSavedPosition,
+    resumeFromSavedPosition,
+    startFreshPlayback,
+    sentenceAudioData.length,
+  ]);
 
   // Handle play button press for article-level play/pause
   const handlePlayPress = useCallback(async () => {
@@ -745,24 +763,15 @@ export default function ArticleScreen(): JSX.Element {
           audioPositionMs: 0,
         };
 
-        // Start playback from the next sentence - use a slice but keep proper index
-        const nextSentences = sentenceAudioData.slice(nextSentenceIndex);
-        await audioPlayer.preloadAudioFiles(nextSentences);
-        const success = await startPlayback(nextSentences, {
-          sentenceOffset: nextSentenceIndex, // Pass the absolute index in the original array
+        // Start playback using the full audio data array with correct offset
+        await audioPlayer.preloadAudioFiles(sentenceAudioData);
+        const success = await startPlayback(sentenceAudioData, {
+          sentenceOffset: nextSentenceIndex, // This maintains the correct sentence index
         });
 
         if (!success) {
-          // Try one more sentence ahead if this fails
-          if (nextSentenceIndex + 1 < sentenceAudioData.length) {
-            const skipAheadSentences = sentenceAudioData.slice(nextSentenceIndex + 1);
-            await startPlayback(skipAheadSentences, {
-              sentenceOffset: nextSentenceIndex + 1, // Pass the absolute index
-            });
-          } else {
-            handleError(new Error('Failed to play next sentence'));
-            setAudioControlVisible(false);
-          }
+          handleError(new Error('Failed to play next sentence'));
+          setAudioControlVisible(false);
         }
       } catch (error) {
         handleError(error as Error);
@@ -818,11 +827,10 @@ export default function ArticleScreen(): JSX.Element {
           audioPositionMs: 0,
         };
 
-        // Start playback from the previous sentence - use a slice but keep proper index
-        const prevSentences = sentenceAudioData.slice(prevSentenceIndex);
-        await audioPlayer.preloadAudioFiles(prevSentences);
-        const success = await startPlayback(prevSentences, {
-          sentenceOffset: prevSentenceIndex, // Pass the absolute index in the original array
+        // Start playback from the previous sentence
+        await audioPlayer.preloadAudioFiles(sentenceAudioData);
+        const success = await startPlayback(sentenceAudioData, {
+          sentenceOffset: prevSentenceIndex, // Pass the absolute index
         });
 
         if (!success) {

@@ -131,8 +131,6 @@ export function useSentenceAudioPlayer(): {
   const playNextSentenceRef = useRef<PlayNextSentenceFunction>(async (): Promise<void> => {});
   // Add completion flag ref to prevent duplicate next sentence calls
   const isHandlingCompletionRef = useRef(false);
-  // Add ref to track when completion was last handled
-  const lastCompletionTimeRef = useRef(0);
   // We keep a forward-only pointer
   const lastActiveIndex = useRef(0);
   // Add refs to track all active timers
@@ -578,6 +576,9 @@ export function useSentenceAudioPlayer(): {
       rafCleanup = trackWordTimingWithReanimated();
     }
 
+    // Capture the ref value inside the effect
+    const timers = activeTimersRef.current;
+
     return () => {
       // Cancel any active animations
       cancelAnimation(progressAnimValue);
@@ -589,11 +590,11 @@ export function useSentenceAudioPlayer(): {
         rafCleanup();
       }
 
-      // Clean up all timers
-      activeTimersRef.current.forEach(timerId => {
+      // Clean up all timers using the captured value
+      timers.forEach(timerId => {
         clearTimer(timerId);
       });
-      activeTimersRef.current.clear();
+      timers.clear();
     };
   }, [
     isPlaying,
@@ -742,7 +743,7 @@ export function useSentenceAudioPlayer(): {
             }
           }
 
-          // Reset state
+          // Reset state completely
           dispatch(
             updateAudioState({
               wordId: null,
@@ -752,6 +753,16 @@ export function useSentenceAudioPlayer(): {
             })
           );
           setAudioState('idle');
+
+          // Reset all refs and offsets
+          lastActiveIndex.current = 0;
+          sentenceIndexOffsetRef.current = 0;
+          isHandlingCompletionRef.current = false;
+
+          // Cancel any active animations
+          cancelAnimation(progressAnimValue);
+          cancelAnimation(durationAnimValue);
+          cancelAnimation(audioStateAnimValue);
         })().catch(handleError);
         return;
       }
