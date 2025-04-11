@@ -34,6 +34,7 @@ export const useArticleData = (
   userId: string | undefined
 ): ArticleDataResult => {
   const queryClient = useQueryClient();
+  console.log('[DEBUG] useArticleData hook called with articleId:', articleId, 'userId:', userId);
 
   // Fetch article data with optimized caching
   const {
@@ -43,8 +44,21 @@ export const useArticleData = (
   } = useQuery({
     queryKey: ['article', articleId],
     queryFn: () => {
+      console.log('[DEBUG] Executing article query function for ID:', articleId);
       if (!articleId) throw new Error('Article ID is required');
-      return articlesService.getArticleById(articleId);
+      return articlesService.getArticleById(articleId).catch(error => {
+        console.error('[DEBUG] Error fetching article:', error.message);
+        if (
+          error.message &&
+          error.message.includes('column') &&
+          error.message.includes('does not exist')
+        ) {
+          console.error(
+            '[DEBUG] This appears to be a database schema error. Please check that your database schema matches the queries.'
+          );
+        }
+        throw error;
+      });
     },
     enabled: !!articleId,
     staleTime: 300000, // Cache for 5 minutes
@@ -52,6 +66,23 @@ export const useArticleData = (
     refetchOnMount: false, // Don't refetch on mount if we have data
     placeholderData: old => old, // Keep old data while fetching
   });
+
+  // Log article data changes
+  useEffect(() => {
+    if (articleError) {
+      console.error(
+        '[DEBUG] Article error in useArticleData:',
+        articleError instanceof Error ? articleError.message : String(articleError)
+      );
+    }
+    console.log(
+      '[DEBUG] Article data state:',
+      isLoadingArticle ? 'loading' : article ? 'loaded' : 'not loaded'
+    );
+    if (article) {
+      console.log('[DEBUG] Received article data for ID:', article.id);
+    }
+  }, [article, isLoadingArticle, articleError]);
 
   // Check if article is in user's reading list - optimized caching
   const {

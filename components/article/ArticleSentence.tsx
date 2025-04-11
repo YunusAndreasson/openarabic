@@ -25,7 +25,6 @@ interface ArticleSentenceProps {
     arabic?: string;
     audio_url?: string | null;
     arabic_audio_url?: string | null;
-    english_audio_url?: string | null;
   };
   words: SentenceWord[];
   renderWord?: (
