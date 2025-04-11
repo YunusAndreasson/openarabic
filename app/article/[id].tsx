@@ -191,8 +191,8 @@ export default function ArticleScreen(): JSX.Element {
 
     const audioData = sortedSentences
       .filter(sentence => {
-        // Only include sentences with valid audio URLs
-        const audioUrl = sentence.audio_url;
+        // Check for both old and new audio URL fields
+        const audioUrl = sentence.audio_url || sentence.arabic_audio_url;
         const isValid =
           audioUrl &&
           audioUrl.trim().length > 0 &&
@@ -223,7 +223,7 @@ export default function ArticleScreen(): JSX.Element {
 
         return {
           sentenceId,
-          audioUrl: sentence.audio_url || '',
+          audioUrl: sentence.audio_url || sentence.arabic_audio_url || '',
           wordTimings,
         };
       });

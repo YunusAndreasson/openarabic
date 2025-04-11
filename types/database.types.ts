@@ -5,28 +5,34 @@ export type Database = {
     Tables: {
       article_sentences: {
         Row: {
-          arabic: string;
-          article_id: number;
-          audio_url: string | null;
-          english: string;
           id: number;
+          article_id: number;
+          arabic: string;
+          english: string;
           position: number;
+          audio_url: string | null;
+          arabic_audio_url: string | null;
+          english_audio_url: string | null;
         };
         Insert: {
-          arabic: string;
-          article_id: number;
-          audio_url?: string | null;
-          english: string;
           id?: number;
+          article_id: number;
+          arabic: string;
+          english: string;
           position: number;
+          audio_url?: string | null;
+          arabic_audio_url?: string | null;
+          english_audio_url?: string | null;
         };
         Update: {
-          arabic?: string;
-          article_id?: number;
-          audio_url?: string | null;
-          english?: string;
           id?: number;
+          article_id?: number;
+          arabic?: string;
+          english?: string;
           position?: number;
+          audio_url?: string | null;
+          arabic_audio_url?: string | null;
+          english_audio_url?: string | null;
         };
         Relationships: [
           {

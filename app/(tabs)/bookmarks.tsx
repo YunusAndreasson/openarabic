@@ -17,10 +17,13 @@ import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
-import { AUDIO_STATES, useAudioPlayer } from '@/hooks/useAudioPlayer';
+import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import type { AudioTrack } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
+import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
+import { enhancedAudioService } from '@/services/enhancedAudioService';
+import type { EnhancedAudioTrack } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
@@ -322,19 +325,21 @@ export default function BookmarksScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
-  const currentPlaylistRef = useRef<AudioTrack[]>([]);
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+
+  // Use the enhanced audio player
+  const enhancedAudioPlayer = useEnhancedAudioPlayer();
   const {
     audioState,
     currentTrackIndex,
     progress,
     duration,
     playlistMode,
-    startPlayback,
     stopPlayback,
-    startShufflePlayback,
     playNextTrack,
-  } = useAudioPlayer();
+    metadata,
+  } = enhancedAudioPlayer;
+
   const [isShuffleMode, setIsShuffleMode] = useState(false);
 
   // Query for reading list
@@ -358,20 +363,26 @@ export default function BookmarksScreen(): JSX.Element {
     placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
   });
 
-  // Query for study words counts
-  const { data: studyWordsCounts = {}, isLoading: isStudyWordsLoading } = useQuery({
+  // Query for study words counts - We'll now get this from the enhancedAudioPlayer
+  const { isLoading: isStudyWordsLoading } = useQuery({
     queryKey: ['studyWordsCounts', user?.id],
     queryFn: async () => {
       if (!user?.id) return {};
-      const studyWords = await studyWordsFSRSService.getFSRSWords(user.id);
-      const countsByArticle: Record<number, number> = {};
-      studyWords.forEach(word => {
-        if (word.sentence_word?.sentence?.article_id) {
-          const articleId = word.sentence_word.sentence.article_id;
-          countsByArticle[articleId] = (countsByArticle[articleId] || 0) + 1;
-        }
-      });
-      return countsByArticle;
+      // We need to still fetch this for initial loading state
+      // but will use the enhanced tracks for the actual counts
+      return studyWordsFSRSService.getFSRSWords(user.id);
+    },
+    enabled: !!user?.id,
+    staleTime: 60000,
+    gcTime: 300000,
+  });
+
+  // Enhanced tracks for reading list
+  const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = useQuery({
+    queryKey: ['enhancedAudioTracks', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      return enhancedAudioService.getReadingListEnhancedTracks(user.id);
     },
     enabled: !!user?.id,
     staleTime: 60000,
@@ -448,36 +459,26 @@ export default function BookmarksScreen(): JSX.Element {
     }, [user?.id, queryClient, isDataLoading, stopPlayback])
   );
 
-  // Convert reading list to audio tracks
-  const readingListTracks = useMemo((): AudioTrack[] => {
-    if (!readingList || readingList.length === 0) return [];
-
-    return readingList
-      .filter(item => !!item.articles?.audio_url)
-      .map(item => ({
-        id: item.article_id,
-        audioUrl: item.articles.audio_url as string, // Cast to string since we filtered nulls
-        title: item.articles.title || 'Untitled',
-        // Add other needed properties
-      }));
-  }, [readingList]);
-
   // Check if an item is the currently playing track
   const isActiveTrack = useCallback(
     (articleId: number): boolean => {
       // First check if we're playing at all
-      if (audioState === AUDIO_STATES.IDLE || currentTrackIndex < 0) {
+      if (audioState === AUDIO_STATES.IDLE) {
         return false;
       }
 
-      // Get the current track
-      const currentTrack = readingListTracks[currentTrackIndex];
-      if (!currentTrack) return false;
-
-      // Compare IDs directly
-      return currentTrack.id === articleId;
+      // Check if article ID matches the one in metadata
+      return metadata.articleId === articleId;
     },
-    [audioState, currentTrackIndex, readingListTracks]
+    [audioState, metadata]
+  );
+
+  // Get study word count for an article
+  const getArticleStudyWordsCount = useCallback(
+    (articleId: number): number => {
+      return enhancedAudioPlayer.getStudyWordsCount(articleId);
+    },
+    [enhancedAudioPlayer]
   );
 
   // Check if something is currently playing
@@ -509,10 +510,10 @@ export default function BookmarksScreen(): JSX.Element {
       endOfTrackReachedRef.current = false;
 
       // Check if we have more tracks
-      if (currentTrackIndex < currentPlaylistRef.current.length - 1) {
+      if (currentTrackIndex < enhancedTracks.length - 1) {
         // Small delay to allow state to settle
         setTimeout(() => {
-          playNextTrack(currentPlaylistRef.current);
+          playNextTrack();
         }, 300);
       }
     }
@@ -523,46 +524,34 @@ export default function BookmarksScreen(): JSX.Element {
     if (isCurrentlyPlaying) {
       stopPlayback();
       setIsShuffleMode(false);
-      currentPlaylistRef.current = [];
     } else {
-      // Make sure we have valid audio tracks
-      const validTracks = readingListTracks.filter(track => !!track.audioUrl);
+      // Make sure we have valid enhanced tracks
+      if (enhancedTracks.length === 0) return;
 
-      if (validTracks.length === 0) return;
-
-      // Store the current playlist
-      currentPlaylistRef.current = validTracks;
-
-      // Start playback with the valid tracks
-      startPlayback(validTracks, 0); // Explicitly start at index 0
+      // Start playback with the enhanced tracks
+      enhancedAudioPlayer.startEnhancedPlayback(enhancedTracks, 0);
       setIsShuffleMode(false);
     }
-  }, [isCurrentlyPlaying, readingListTracks, startPlayback, stopPlayback]);
+  }, [isCurrentlyPlaying, enhancedTracks, enhancedAudioPlayer, stopPlayback]);
 
   // Handle "Shuffle" button
   const handleShuffle = useCallback(() => {
     if (isCurrentlyPlaying) {
       stopPlayback();
       setIsShuffleMode(false);
-      currentPlaylistRef.current = [];
     } else {
       // Make sure we have valid audio tracks
-      const validTracks = readingListTracks.filter(track => !!track.audioUrl);
+      if (enhancedTracks.length === 0) return;
 
-      if (validTracks.length === 0) return;
-
-      // Store the current playlist (shuffled version will be created internally)
-      currentPlaylistRef.current = validTracks;
-
-      startShufflePlayback(validTracks);
+      enhancedAudioPlayer.startEnhancedShufflePlayback(enhancedTracks);
       setIsShuffleMode(true);
     }
-  }, [isCurrentlyPlaying, readingListTracks, startShufflePlayback, stopPlayback]);
+  }, [isCurrentlyPlaying, enhancedTracks, enhancedAudioPlayer, stopPlayback]);
 
   const insets = useSafeAreaInsets();
 
   // Show loading screen during initial load
-  if (isDataLoading) {
+  if (isDataLoading || isEnhancedTracksLoading) {
     return <LoadingScreen />;
   }
 
@@ -612,7 +601,7 @@ export default function BookmarksScreen(): JSX.Element {
           <FlashList
             ref={flashListRef}
             data={readingList}
-            extraData={[currentTrackIndex, progress, studyWordsCounts, isStudyWordsLoading]}
+            extraData={[currentTrackIndex, progress, metadata, enhancedTracks, isStudyWordsLoading]}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (
               <BookmarkListItem
@@ -620,7 +609,7 @@ export default function BookmarksScreen(): JSX.Element {
                 progress={progress}
                 duration={duration}
                 isActive={isActiveTrack(item.article_id)}
-                studyWordsCount={studyWordsCounts[item.article_id] || 0}
+                studyWordsCount={getArticleStudyWordsCount(item.article_id)}
                 isLoading={isStudyWordsLoading}
               />
             )}

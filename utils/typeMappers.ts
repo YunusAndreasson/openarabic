@@ -100,7 +100,9 @@ export function mapToSentenceWord(item: Record<string, any>): SentenceWord {
   result.root = safeGet(item, 'root', null);
   result.word_type = safeGet(item, 'word_type', null);
   result.sentence = safeGet(item, 'sentence', null);
-  result.audio_url = safeGet(item, 'audio_url', null);
+  // Handle the new audio URL fields
+  result.arabic_audio_url = safeGet(item, 'arabic_audio_url', null);
+  result.english_audio_url = safeGet(item, 'english_audio_url', null);
   result.audio_start = safeGet(item, 'audio_start', null);
   result.audio_end = safeGet(item, 'audio_end', null);
   return result;
@@ -140,10 +142,15 @@ export function mapToArticles(items: Record<string, any>[]): Article[] {
  */
 export function mapToArticleSentence(item: Record<string, any>): ArticleSentence {
   const result = item as ArticleSentence;
-  // Ensure sentence_words is always an array and audio_url is present
+  // Ensure sentence_words is always an array and audio URLs are present
   result.sentence_words = safeGet(item, 'sentence_words', [], val =>
     Array.isArray(val) ? val.map(mapToSentenceWord) : []
   );
-  result.audio_url = safeGet(item, 'audio_url', null);
+
+  // The audio_url might still exist for backward compatibility
+  if ('audio_url' in item) {
+    result.audio_url = safeGet(item, 'audio_url', null);
+  }
+
   return result;
 }

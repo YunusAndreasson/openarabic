@@ -172,6 +172,7 @@ export function useReview({
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, stopPlayback]);
 
   // Update current sentence and handle audio
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
       return;
