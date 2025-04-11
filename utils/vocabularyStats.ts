@@ -34,7 +34,8 @@ export function calculateWeeklyProgressData(
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
-    const dateString = date.toISOString().split('T')[0];
+    // Get YYYY-MM-DD part of the ISO string
+    const dateString = date.toISOString().slice(0, 10);
     dateMap.set(dateString, {
       date: dayNames[date.getDay()],
       count: 0,
@@ -61,7 +62,7 @@ export function calculateWeeklyProgressData(
       reviewDate.setHours(0, 0, 0, 0);
 
       if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
-        const dateString = reviewDate.toISOString().split('T')[0];
+        const dateString = reviewDate.toISOString().slice(0, 10);
         const dateData = dateMap.get(dateString);
         if (dateData) {
           dateData.count++;

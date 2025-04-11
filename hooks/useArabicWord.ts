@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 
 import { analytics } from '../services/analytics';
 import { selectAudioState } from '../store/audioSlice';
-import type { RootState } from '../store/store';
 import type { SentenceWord } from '../types/vocabulary.types';
 
 import { useAuth } from './useAuth';

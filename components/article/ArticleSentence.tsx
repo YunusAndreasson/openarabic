@@ -22,7 +22,7 @@ interface ArticleSentenceProps {
   sentence: {
     id: string | number;
     english?: string;
-    audio_url?: string;
+    arabic_audio_url?: string;
   };
   words: SentenceWord[];
   renderWord?: (

@@ -6,7 +6,6 @@ import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// Components
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
@@ -16,12 +15,9 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Toggle } from '@/components/Toggle';
-
-// Internal Imports
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
@@ -56,7 +52,6 @@ const Divider = memo(() => {
 Divider.displayName = 'Divider';
 
 export default function SettingsScreen(): JSX.Element {
-  const { user } = useAuth();
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);

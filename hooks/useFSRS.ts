@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State } from 'ts-fsrs';
 
@@ -45,7 +45,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
   // Initialize FSRS algorithm with standard parameters
   // This properly creates the FSRS scheduler with default weights
-  const fsrsInstance = fsrs();
+  const fsrsInstance = useMemo(() => fsrs(), []);
 
   // Fetch due words
   const {
@@ -79,7 +79,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       stateTrackingRef.current.isProcessingUpdate = false;
 
       // Set the first word
-      setCurrentWord(dueWords[0]);
+      setCurrentWord(dueWords[0] ?? null);
       stateTrackingRef.current.queueInitialized = true;
     } else if (
       dueWords &&
@@ -233,7 +233,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
             }
           } else {
             // Set the next word - do this AFTER the database updates are complete
-            const nextWord = newQueue[0];
+            const nextWord = newQueue[0] ?? null;
             setCurrentWord(nextWord);
           }
 

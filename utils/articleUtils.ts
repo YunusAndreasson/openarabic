@@ -82,7 +82,8 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    // TypeScript doesn't track that j < i+1, but we know this is safe
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]] as [T, T];
   }
 
   return shuffled;
@@ -114,5 +115,5 @@ export function getDailyPickArticle(articles: Article[], dayOfYear: number): Art
   const shuffledArticles = seededShuffle(articles, dayOfYear);
 
   // Return the first article from the shuffled array
-  return shuffledArticles[0];
+  return shuffledArticles[0] ?? null;
 }

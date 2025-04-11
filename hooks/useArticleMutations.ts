@@ -115,7 +115,7 @@ export const useArticleMutations = (
         queryKey: ['studyWords', userId],
       });
     },
-    onSuccess: result => {
+    onSuccess: () => {
       // Invalidate queries to update UI
       queryClient.invalidateQueries({
         queryKey: ['studyWords', userId],

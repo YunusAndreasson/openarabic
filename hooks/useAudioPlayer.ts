@@ -33,8 +33,8 @@ interface AudioPlayerResult {
   startPlayback: (tracks: AudioTrack[], startIndex?: number) => Promise<boolean>;
   stopPlayback: () => Promise<void>;
   startShufflePlayback: (tracks: AudioTrack[]) => Promise<boolean>;
-  playNextTrack: (tracks?: AudioTrack[]) => Promise<boolean>;
-  playPreviousTrack: (tracks?: AudioTrack[]) => Promise<boolean>;
+  playNextTrack: () => Promise<boolean>;
+  playPreviousTrack: () => Promise<boolean>;
   seekToPosition: (position: number) => Promise<boolean>;
 }
 
@@ -51,9 +51,10 @@ export function useAudioPlayer(): AudioPlayerResult {
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastActionTimeRef = useRef<number>(0);
   const appStateRef = useRef(AppState.currentState);
+  const currentPlaylistRef = useRef<AudioTrack[]>([]);
 
   // Forward declaration for functions that have circular dependencies
-  const playNextTrackRef = useRef<(tracks?: AudioTrack[]) => Promise<boolean>>(async () => false);
+  const playNextTrackRef = useRef<() => Promise<boolean>>(async () => false);
 
   // Clean up all audio resources
   const cleanupAudio = useCallback(async () => {
@@ -249,6 +250,7 @@ export function useAudioPlayer(): AudioPlayerResult {
 
       // Set to playlist mode
       setPlaylistMode(true);
+      currentPlaylistRef.current = tracks;
       return await playTrack(tracks, startIndex);
     },
     [playTrack]
@@ -262,6 +264,7 @@ export function useAudioPlayer(): AudioPlayerResult {
     setPlaylistMode(false);
     setProgress(0);
     setDuration(0);
+    currentPlaylistRef.current = [];
   }, [cleanupAudio]);
 
   // Start shuffle playback
@@ -284,45 +287,42 @@ export function useAudioPlayer(): AudioPlayerResult {
       }
 
       setPlaylistMode(true);
+      currentPlaylistRef.current = tracks;
       return await playTrack(tracks, indices[0] as number);
     },
     [playTrack]
   );
 
   // Play next track in playlist
-  const playNextTrack = useCallback(
-    async (tracks?: AudioTrack[]) => {
-      if (
-        !tracks ||
-        !playlistMode ||
-        currentTrackIndex < 0 ||
-        currentTrackIndex >= tracks.length - 1
-      ) {
-        await stopPlayback();
-        return false;
-      }
+  const playNextTrack = useCallback(async () => {
+    const tracks = currentPlaylistRef.current;
+    if (
+      !tracks ||
+      !playlistMode ||
+      currentTrackIndex < 0 ||
+      currentTrackIndex >= tracks.length - 1
+    ) {
+      await stopPlayback();
+      return false;
+    }
 
-      return await playTrack(tracks, currentTrackIndex + 1);
-    },
-    [playlistMode, currentTrackIndex, playTrack, stopPlayback]
-  );
+    return await playTrack(tracks, currentTrackIndex + 1);
+  }, [playlistMode, currentTrackIndex, playTrack, stopPlayback]);
 
   // Play previous track in playlist
-  const playPreviousTrack = useCallback(
-    async (tracks?: AudioTrack[]) => {
-      if (!tracks || !playlistMode || currentTrackIndex <= 0) {
-        // If at beginning of playlist, restart current track
-        if (soundRef.current && currentTrackIndex === 0) {
-          await soundRef.current.setPositionAsync(0);
-          return true;
-        }
-        return false;
+  const playPreviousTrack = useCallback(async () => {
+    const tracks = currentPlaylistRef.current;
+    if (!tracks || !playlistMode || currentTrackIndex <= 0) {
+      // If at beginning of playlist, restart current track
+      if (soundRef.current && currentTrackIndex === 0) {
+        await soundRef.current.setPositionAsync(0);
+        return true;
       }
+      return false;
+    }
 
-      return await playTrack(tracks, currentTrackIndex - 1);
-    },
-    [playlistMode, currentTrackIndex, playTrack]
-  );
+    return await playTrack(tracks, currentTrackIndex - 1);
+  }, [playlistMode, currentTrackIndex, playTrack]);
 
   // Seek to position
   const seekToPosition = useCallback(async (position: number) => {

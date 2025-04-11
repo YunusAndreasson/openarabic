@@ -89,7 +89,7 @@ export const articlesService = {
 
     if (error) {
       handleError(error, {
-        toastMessage: 'Failed to load article',
+        toastMessage: 'Failed to load article' + id,
         analyticsEventName: 'Article_Load_Error',
         sentrySeverity: 'error',
         analyticsProperties: { articleId: id },

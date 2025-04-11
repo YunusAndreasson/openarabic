@@ -6,7 +6,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef, Redirect, Slot } from 'expo-router';
+import { Stack, useNavigationContainerRef } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, {
@@ -45,8 +45,12 @@ import { setTheme } from '../store/themeSlice';
 try {
   SplashScreen.preventAutoHideAsync();
 } catch (err) {
-  // Ignore errors with splash screen
-  console.warn('Error preventing splash screen auto-hide:', err);
+  // Report splash screen prevention error to Sentry
+  Sentry.captureException(err, {
+    tags: {
+      location: 'splash_screen_prevention',
+    },
+  });
 }
 
 // Create React Query client with balanced caching defaults
@@ -76,9 +80,6 @@ Sentry.init({
 });
 
 // Static stack options
-const stackScreenOptions = {
-  headerShown: true,
-} as const;
 
 const reviewScreenOptions = {
   headerShown: false,
@@ -111,7 +112,7 @@ function AppContent() {
   const [appReady, setAppReady] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   const appState = useRef(AppState.currentState);
-  const { isLoading: isAuthLoading, session, user } = useAuth();
+  const { isLoading: isAuthLoading, session } = useAuth();
   const hasHiddenSplash = useRef(false);
   const navigationRef = useNavigationContainerRef();
 
@@ -153,8 +154,14 @@ function AppContent() {
             last_active: new Date().toISOString(),
           });
         }
-      } catch {
-        /* Ignore analytics errors */
+      } catch (err) {
+        // Report analytics errors to Sentry but don't block app flow
+        Sentry.captureException(err, {
+          tags: {
+            location: 'analytics_identify',
+          },
+          level: 'warning',
+        });
       }
     };
 
@@ -192,15 +199,36 @@ function AppContent() {
     };
   }, [appReady, preloadAppData]);
 
+  const SPLASH_SCREEN_TIMEOUT = 5000; // 5 seconds maximum
   const handleLayout = useCallback(async () => {
     if (!hasHiddenSplash.current && fontsLoaded) {
       hasHiddenSplash.current = true;
+
+      // Create a timeout promise
+      const timeoutPromise = new Promise(resolve => {
+        setTimeout(() => {
+          Sentry.captureMessage('Splash screen hide timed out', {
+            level: 'warning',
+            tags: {
+              location: 'splash_screen_hide',
+            },
+          });
+          resolve(null);
+        }, SPLASH_SCREEN_TIMEOUT);
+      });
+
       try {
-        await SplashScreen.hideAsync();
+        // Race between splash screen hide and timeout
+        await Promise.race([SplashScreen.hideAsync(), timeoutPromise]);
       } catch (err) {
-        console.warn('Error hiding splash screen:', err);
+        // Report splash screen hide error to Sentry
+        Sentry.captureException(err, {
+          tags: {
+            location: 'splash_screen_hide',
+          },
+        });
       } finally {
-        // Proceed with app initialization once fonts are loaded
+        // Ensure we always proceed with app initialization
         setShowLoader(false);
         setAppReady(true);
       }

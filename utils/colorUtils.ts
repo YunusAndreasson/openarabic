@@ -19,7 +19,8 @@ export function hexToRgb(hex: string): string {
 
   // Handle shorthand hex (e.g., #F50)
   if (hex.length === 3) {
-    hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    const [h1 = '0', h2 = '0', h3 = '0'] = hex;
+    hex = h1 + h1 + h2 + h2 + h3 + h3;
   }
 
   // Validate hex format

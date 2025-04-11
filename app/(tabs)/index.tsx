@@ -40,7 +40,6 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import ErrorState from '../../components/ErrorState';
 import { ArticleSection } from '../../components/article';
 import DailyPickSection from '../../components/index/DailyPickSection';
-import { useAuth } from '../../hooks/useAuth';
 
 // Cache duration constants
 
@@ -169,7 +168,6 @@ export default function ArticlesScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
@@ -354,10 +352,22 @@ export default function ArticlesScreen(): JSX.Element {
   const ContinueReadingSection = useMemo(() => {
     if (sortedInProgressArticles.length === 0) return null;
 
+    // Map SimpleArticle to Article
+    const mappedArticles = sortedInProgressArticles.map(article => ({
+      ...article,
+      author: null,
+      content_hash: '',
+      difficulty_level: 0,
+      source: '',
+      summary: '',
+      category: undefined,
+      word_timings: [],
+    }));
+
     return (
       <ArticleSection
         title="Continue Reading"
-        articles={sortedInProgressArticles}
+        articles={mappedArticles}
         onArticlePress={article => router.push(`/article/${article.id}`)}
         showTimeAgo={true}
         getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}

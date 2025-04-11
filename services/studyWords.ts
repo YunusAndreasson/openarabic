@@ -1,14 +1,14 @@
 import { createEmptyCard } from 'ts-fsrs';
 
-import type { DbInsert, DbUpdate } from '@/types/database.types';
+import type { TablesInsert, TablesUpdate } from '@/types/database.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { mapToStudyWords } from '@/utils/typeMappers';
 
 import { supabase } from './supabase';
 
 // Use database types instead of custom interface
-type WordReviewUpdate = DbUpdate<'study_words'>;
-type StudyWordInsert = DbInsert<'study_words'>;
+type WordReviewUpdate = TablesUpdate<'study_words'>;
+type StudyWordInsert = TablesInsert<'study_words'>;
 
 // Define an options interface for getStudyWords
 interface GetStudyWordsOptions {
