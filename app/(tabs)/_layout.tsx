@@ -3,8 +3,8 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { PlatformPressable } from '@react-navigation/elements';
 import type { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
-import { Tabs } from 'expo-router';
-import React, { useMemo, useCallback, memo } from 'react';
+import { Tabs, router } from 'expo-router';
+import React, { useMemo, useCallback, memo, useEffect } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +14,8 @@ import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
+
+import { useAuth } from '../../hooks/useAuth';
 
 const TAB_SCREENS = [
   {
@@ -175,9 +177,11 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 });
 CustomTabBar.displayName = 'CustomTabBar';
 
-export default function TabLayout(): JSX.Element {
+export default function TabLayout(): JSX.Element | null {
+  const { session, isLoading } = useAuth();
   const colors = useColors();
 
+  // Memoize screen options before any early returns
   const screenOptions = useMemo(
     () => ({
       headerShown: false,
@@ -200,6 +204,18 @@ export default function TabLayout(): JSX.Element {
     }),
     [colors.tint, colors.tabIconDefault]
   );
+
+  // Auth guard - redirect to auth if not authenticated
+  useEffect(() => {
+    if (!isLoading && !session?.user) {
+      router.replace('/auth');
+    }
+  }, [session, isLoading]);
+
+  // If not authenticated, render nothing while redirecting
+  if (!session?.user) {
+    return null;
+  }
 
   return (
     <Tabs tabBar={props => <CustomTabBar {...props} />} screenOptions={screenOptions}>

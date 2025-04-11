@@ -18,16 +18,14 @@ import { ThemedView } from '@/components/ThemedView';
 import ArticleList from '@/components/index/ArticleList';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { useLoadingState, useNavigationWithDebounce, useScreenFocusRefresh } from '@/hooks';
+import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { readingListService } from '@/services/readingList';
 import { setDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
-import { addToReadingList } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
 import {
   filterArticles,
@@ -36,7 +34,6 @@ import {
   getDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear, formatTimeAgo } from '@/utils/dateUtils';
-import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
@@ -172,7 +169,7 @@ export default function ArticlesScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const { session } = useAuth();
+  const { user } = useAuth();
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
@@ -193,6 +190,17 @@ export default function ArticlesScreen(): JSX.Element {
     refetchOnMount: false,
     placeholderData: old => old,
   });
+
+  // Configure router screen options to disable animations on initial load
+  useEffect(() => {
+    // Set screen options programmatically to disable slide animation
+    router.setParams({
+      animation: 'none',
+    });
+  }, []);
+
+  // Simple loading state - only show loading on initial data load
+  const isInitialLoading = isArticlesLoading && articlesData.length === 0;
 
   // Use React Query for categories with longer cache times
   const { data: categoriesData = [] } = useQuery({
@@ -283,56 +291,10 @@ export default function ArticlesScreen(): JSX.Element {
     }
   }, [queryClient, isFetching]);
 
-  // Use the navigation with debounce hook
-  const { navigateTo } = useNavigationWithDebounce();
-
-  const handleArticlePress = useCallback(
-    (article: Article) => {
-      // Only prefetch if not already in cache
-      const articleQuery = queryClient.getQueryData(['article', article.id]);
-      if (!articleQuery) {
-        queryClient.prefetchQuery({
-          queryKey: ['article', article.id],
-          queryFn: () => articlesService.getArticleById(article.id),
-          staleTime: 300000, // Cache for 5 minutes
-          gcTime: 600000, // Keep in garbage collection for 10 minutes
-          retry: 3,
-        });
-      }
-
-      // Only prefetch reading list status if user is logged in and not in cache
-      if (session?.user) {
-        const userId = session.user.id;
-        const readingListQuery = queryClient.getQueryData(['isInReadingList', userId, article.id]);
-        if (!readingListQuery) {
-          queryClient.prefetchQuery({
-            queryKey: ['isInReadingList', userId, article.id],
-            queryFn: () => readingListService.isInReadingList(userId, article.id),
-            staleTime: 300000,
-            gcTime: 600000,
-            retry: 3,
-          });
-        }
-      }
-
-      navigateTo({ pathname: '/article/[id]', params: { id: article.id } }, async () => {
-        if (session?.user) {
-          try {
-            // Check if article is already in reading list before adding
-            const userId = session.user.id;
-            const isInReadingList = await readingListService.isInReadingList(userId, article.id);
-            if (!isInReadingList) {
-              dispatch(addToReadingList(article.id));
-            }
-          } catch (error) {
-            // If there's an error checking status, we'll skip adding to avoid duplicates
-            handleError(error as Error);
-          }
-        }
-      });
-    },
-    [dispatch, session?.user, navigateTo, queryClient]
-  );
+  const handleArticlePress = useCallback((article: Article) => {
+    // Navigate to article detail
+    router.push(`/article/${article.id}`);
+  }, []);
 
   const handleSelectAuthor = useCallback((authorId: number) => {
     // Use simple direct URL string for consistent behavior across platforms
@@ -561,6 +523,11 @@ export default function ArticlesScreen(): JSX.Element {
     [insets, colors.background]
   );
 
+  // Show loading screen only during first data load
+  if (isInitialLoading) {
+    return <LoadingScreen />;
+  }
+
   // Show error state only if there's no cached data
   if (articlesError && !isRefreshing && !isDataCached) {
     return (
@@ -571,15 +538,6 @@ export default function ArticlesScreen(): JSX.Element {
         }}
       />
     );
-  }
-
-  // Show loading screen during initial load or when refreshing
-  const shouldShowLoading =
-    (isArticlesLoading && !isDataCached) || // Initial load
-    isRefreshing; // Pull-to-refresh
-
-  if (shouldShowLoading) {
-    return <LoadingScreen />;
   }
 
   // Main content view without any loading overlay

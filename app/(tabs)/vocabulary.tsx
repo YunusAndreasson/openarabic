@@ -9,7 +9,6 @@ import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedView } from '@/components/ThemedView';
-import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
 import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
@@ -26,7 +25,7 @@ import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { mediumFeedback } from '@/utils/haptics';
 
 export default function VocabularyScreen(): JSX.Element {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const colors = useColors();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
@@ -117,8 +116,8 @@ export default function VocabularyScreen(): JSX.Element {
     const hasCachedData = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
     if (hasCachedData) return true;
     // Only check loading states if no cached data
-    return !isAuthLoading && !isDataLoading && validStudyWords.length > 0;
-  }, [user?.id, validStudyWords.length, isAuthLoading, isDataLoading, queryClient]);
+    return !isDataLoading && validStudyWords.length > 0;
+  }, [user?.id, validStudyWords.length, isDataLoading, queryClient]);
 
   // Add screen animation hook to match other tab screens
   const { fadeInStyle } = useScreenAnimation(isDataReady, isRefreshing);
@@ -147,11 +146,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Show loading screen only during initial uncached load
   if (!isDataCached && isDataLoading && !isRefreshing) {
     return <LoadingScreen />;
-  }
-
-  // Show sign-in message if not authenticated
-  if (!user) {
-    return <UnifiedSignInScreen headerTitle="Words" colors={colors} />;
   }
 
   // Show error message if there was an error loading data

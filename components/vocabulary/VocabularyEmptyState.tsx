@@ -32,6 +32,7 @@ export const VocabularyEmptyState = memo(({ colors }: VocabularyEmptyStateProps)
       title="Begin Words Journey"
       description="No saved words"
       submessage="Tap words while reading to add to your study list"
+      iconType="name"
       icon="book-outline"
       colors={colors}
       iconSize={48}

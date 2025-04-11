@@ -29,6 +29,7 @@ export function useAuth(): AuthResult {
     // Get initial session
     const initSession = async () => {
       try {
+        setIsLoading(true);
         // Run auth initialization and session fetch in parallel
         const [
           ,
@@ -39,6 +40,7 @@ export function useAuth(): AuthResult {
         ] = await Promise.all([supabase.auth.initialize(), supabase.auth.getSession()]);
 
         if (error) {
+          console.error('Auth initialization error:', error.message);
           setAuthError(error);
           setSession(null);
         } else {
@@ -46,6 +48,7 @@ export function useAuth(): AuthResult {
           setAuthError(null);
         }
       } catch (error) {
+        console.error('Unexpected auth error:', error);
         setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
         setSession(null);
       } finally {
@@ -65,7 +68,9 @@ export function useAuth(): AuthResult {
       setAuthError(null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   return {

@@ -1,9 +1,11 @@
+import { router } from 'expo-router';
 import React, { useState, useCallback } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
+import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
 import { ThemedInput } from './ThemedInput';
@@ -21,15 +23,23 @@ const PASSWORD_REQUIREMENTS = {
 } as const;
 
 /**
+ * Authentication component props
+ */
+interface AuthProps {
+  /** Disable loading indicators */
+  disableLoading?: boolean;
+}
+
+/**
  * Authentication component that handles both sign in and sign up
  */
-export default function Auth(): JSX.Element {
+export default function Auth({ disableLoading = false }: AuthProps): JSX.Element {
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(true); // Default to create account
 
   // Validation state
   const [emailError, setEmailError] = useState('');
@@ -115,6 +125,12 @@ export default function Auth(): JSX.Element {
         last_sign_in: new Date().toISOString(),
       });
       await analytics.trackSignIn('email');
+
+      // Provide haptic feedback on successful login
+      lightFeedback();
+
+      // Redirect to main app immediately
+      router.replace('/(tabs)');
     }
     setLoading(false);
   }, [email, password, validateEmail, validatePassword]);
@@ -143,6 +159,10 @@ export default function Auth(): JSX.Element {
         });
       }
       await analytics.trackSignUp('email');
+
+      // Provide haptic feedback on successful account creation
+      lightFeedback();
+
       Alert.alert('Success', 'Check your email for the confirmation link!');
     }
     setLoading(false);
@@ -156,10 +176,6 @@ export default function Auth(): JSX.Element {
 
   return (
     <View style={styles.container}>
-      <ThemedText type="heading3" align="center" style={styles.formTitle}>
-        {isRegistering ? 'Create Account' : 'Sign In'}
-      </ThemedText>
-
       <View style={styles.inputsButtonGroup}>
         <View style={styles.inputWrapper}>
           <ThemedInput
@@ -171,6 +187,9 @@ export default function Auth(): JSX.Element {
             keyboardType="email-address"
             returnKeyType="next"
             autoComplete="email"
+            autoCapitalize="none"
+            textContentType="emailAddress"
+            importantForAutofill="yes"
             error={emailError}
             textAlignVertical="center"
           />
@@ -187,7 +206,10 @@ export default function Auth(): JSX.Element {
             rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
             onRightIconPress={() => setShowPassword(!showPassword)}
             returnKeyType="done"
-            autoComplete="password"
+            autoComplete={isRegistering ? 'password-new' : 'password'}
+            autoCapitalize="none"
+            textContentType={isRegistering ? 'newPassword' : 'password'}
+            importantForAutofill="yes"
             error={passwordError}
             hint={
               isRegistering
@@ -202,6 +224,7 @@ export default function Auth(): JSX.Element {
           title={isRegistering ? 'Create Account' : 'Sign In'}
           onPress={isRegistering ? signUpWithEmail : signInWithEmail}
           disabled={loading}
+          loading={disableLoading ? false : loading}
           style={styles.button}
         />
       </View>
@@ -217,25 +240,21 @@ export default function Auth(): JSX.Element {
 
 const styles = StyleSheet.create({
   button: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
   container: {
     alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
-  },
-  formTitle: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
   inputWrapper: {
     marginBottom: LAYOUT.SPACING.TINY,
+    width: '100%',
   },
   inputsButtonGroup: {
+    marginBottom: LAYOUT.SPACING.SMALL,
     maxWidth: 400,
     width: '100%',
   },

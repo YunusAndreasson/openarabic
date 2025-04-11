@@ -14,7 +14,6 @@ import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
@@ -320,7 +319,7 @@ BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen(): JSX.Element {
   const colors = useColors();
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
   const currentPlaylistRef = useRef<AudioTrack[]>([]);
@@ -351,7 +350,7 @@ export default function BookmarksScreen(): JSX.Element {
       if (!user?.id) return Promise.resolve([]);
       return readingListService.getReadingList(user.id);
     },
-    enabled: !!user?.id && !isAuthLoading,
+    enabled: !!user?.id,
     staleTime: 60000,
     gcTime: 300000,
     retry: 3,
@@ -374,7 +373,7 @@ export default function BookmarksScreen(): JSX.Element {
       });
       return countsByArticle;
     },
-    enabled: !!user?.id && !isAuthLoading,
+    enabled: !!user?.id,
     staleTime: 60000,
     gcTime: 300000,
   });
@@ -391,8 +390,8 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Check if data is ready to display
   const isDataReady = useMemo(() => {
-    return !!user && !isDataLoading && !!readingList;
-  }, [user, isDataLoading, readingList]);
+    return !isDataLoading && !!readingList;
+  }, [isDataLoading, readingList]);
 
   // Use improved screen animation with data-ready check
   const { fadeInStyle } = useScreenAnimation(
@@ -403,22 +402,12 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Update loading state based on data loading
   useEffect(() => {
-    if (isAuthLoading || isDataLoading || isFetching) {
+    if (isDataLoading || isFetching) {
       startLoading();
     } else {
       stopLoading();
     }
-  }, [
-    isAuthLoading,
-    isDataLoading,
-    isFetching,
-    startLoading,
-    stopLoading,
-    isError,
-    error,
-    readingList,
-    user,
-  ]);
+  }, [isDataLoading, isFetching, startLoading, stopLoading, isError, error, readingList]);
 
   // Add an extra effect to force refresh reading list data when auth state changes
   useEffect(() => {
@@ -572,11 +561,6 @@ export default function BookmarksScreen(): JSX.Element {
 
   const insets = useSafeAreaInsets();
 
-  // Require sign in
-  if (!user) {
-    return <UnifiedSignInScreen headerTitle="Bookmarks" colors={colors} />;
-  }
-
   // Show loading screen during initial load
   if (isDataLoading) {
     return <LoadingScreen />;
@@ -604,8 +588,8 @@ export default function BookmarksScreen(): JSX.Element {
               title="No Bookmarks Found"
               description="Bookmark articles to listen to them later or save them for reference."
               actionText="Browse Articles"
-              iconType="props"
-              icon={{ name: 'book', size: 48 }}
+              iconType="name"
+              icon="book"
               onAction={() => router.push('/(tabs)')}
               colors={colors}
             />

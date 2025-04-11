@@ -1,4 +1,14 @@
 ---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
 description: Guidelines for good code
 globs: *.tsx, *.ts, *.js
 ---
@@ -54,6 +64,80 @@ globs: *.tsx, *.ts, *.js
 - Don't create new top-level directories without discussion
 - Use feature-based organization within directories
 - Use layout margins and paddings in constants/layout.ts
+
+# Code Quality and Linting
+
+## ESLint Configuration
+- All code must pass ESLint checks before committing
+- Key ESLint rules enforced:
+  - No explicit `any` types
+  - No non-null assertions
+  - Consistent type imports
+  - No unnecessary type assertions
+  - No console.log statements in production
+  - Proper React hooks usage
+  - No inline styles in React Native
+  - No color literals (use theme system)
+  - Proper import ordering
+  - Performance optimizations for React components
+  - Maximum cognitive complexity of 15
+  - No identical functions (DRY principle)
+
+## Code Formatting
+- Prettier is configured and enforced
+- 100 character line length limit
+- 2 spaces for indentation
+- Single quotes for strings
+- Semicolons required
+- Trailing commas in objects and arrays
+- No bracket spacing in JSX
+- Arrow function parentheses avoided when possible
+
+## TypeScript Best Practices
+- Strict TypeScript checks enabled
+- Type imports must be explicit
+- All exports must have explicit type declarations
+- No unnecessary type assertions
+- Use TypeScript path aliases (@/ prefix) for internal imports
+
+## Performance Guidelines
+- No unstable nested components
+- No constructed context values
+- No useless fragments
+- Proper handling of conditional rendering
+- Optimized regular expressions
+- No object type default props
+
+## Testing
+- Jest configuration is set up
+- All tests must follow Jest recommended practices
+- Mock external dependencies appropriately
+- Test files should be co-located with source files
+- Required test coverage:
+  - Minimum 80% coverage for business logic
+  - All Redux reducers must be tested
+  - All API service functions must have tests
+- Naming conventions:
+  - Test files: `*.test.ts` or `*.test.tsx`
+  - Test suites: describe('ComponentName' or 'functionName')
+  - Test cases: it('should do something specific')
+- Testing patterns:
+  - Use React Testing Library for component tests
+  - Group related tests in describe blocks
+  - Use beforeEach for common setup
+  - Clean up after each test
+  - Avoid testing implementation details
+
+## Import Organization
+- Imports are automatically organized in groups:
+  1. Built-in Node modules
+  2. External dependencies
+  3. Internal modules (@/ imports)
+  4. Parent directory imports
+  5. Sibling imports
+  6. Index imports
+- Newlines between import groups
+- Alphabetical ordering within groups
 
 # React and React Native
 
@@ -115,3 +199,64 @@ globs: *.tsx, *.ts, *.js
   ```typescript
   dispatch(setTheme(Theme.Dark)); // or Theme.Light
   ```
+
+# State Management
+
+## Redux Guidelines
+- Follow Redux Toolkit patterns
+- Use typed selectors
+- Implement proper error handling in thunks
+- Keep state normalized
+- Use proper action naming conventions
+- Implement proper loading states
+
+## Local State
+- Use appropriate React hooks
+- Avoid redundant state
+- Implement proper state initialization
+- Handle cleanup in useEffect
+
+# Error Handling
+
+## Guidelines
+- Use typed error handling with custom error classes
+- Avoid try/catch blocks without specific error types
+- Log errors appropriately (no console.error)
+- Handle all Promise rejections
+- Use Error Boundaries for React components
+- Provide user-friendly error messages
+- Include error recovery mechanisms where possible
+
+## Security Guidelines
+- Sensitive Data:
+  - Never store sensitive data in Redux store
+  - Use SecureStore for sensitive information
+  - Never log sensitive information
+  - Clear sensitive data on logout
+- Authentication:
+  - Always use HTTPS for API calls
+  - Implement token refresh mechanism
+  - Clear auth tokens on app close
+  - Validate all user input
+- Environment Variables:
+  - Store API keys in .env files
+  - Never commit .env files
+  - Use different .env files per environment
+  - Document all required env variables
+
+## API Integration
+- Service Structure:
+  - One service file per API domain
+  - Use TypeScript interfaces for request/response
+  - Implement retry logic for failed requests
+  - Default timeout of 30 seconds
+- Error Handling:
+  - Create custom error types per service
+  - Handle network errors gracefully
+  - Implement offline support where possible
+  - Show user-friendly error messages
+- Data Management:
+  - Use React Query for caching
+  - Implement optimistic updates
+  - Handle loading states consistently
+  - Cache invalidation strategies

@@ -6,7 +6,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef } from 'expo-router';
+import { Stack, useNavigationContainerRef, Redirect, Slot } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, {
@@ -42,9 +42,12 @@ import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
 
 // Prevent splash screen from auto-hiding
-SplashScreen.preventAutoHideAsync().catch(() => {
-  /* Ignore errors */
-});
+try {
+  SplashScreen.preventAutoHideAsync();
+} catch (err) {
+  // Ignore errors with splash screen
+  console.warn('Error preventing splash screen auto-hide:', err);
+}
 
 // Create React Query client with balanced caching defaults
 const queryClient = new QueryClient({
@@ -108,7 +111,7 @@ function AppContent() {
   const [appReady, setAppReady] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
   const appState = useRef(AppState.currentState);
-  const { isLoading: isAuthLoading, session } = useAuth();
+  const { isLoading: isAuthLoading, session, user } = useAuth();
   const hasHiddenSplash = useRef(false);
   const navigationRef = useNavigationContainerRef();
 
@@ -190,25 +193,22 @@ function AppContent() {
   }, [appReady, preloadAppData]);
 
   const handleLayout = useCallback(async () => {
-    if (!hasHiddenSplash.current && fontsLoaded && isLoaded && !isAuthLoading) {
+    if (!hasHiddenSplash.current && fontsLoaded) {
       hasHiddenSplash.current = true;
       try {
         await SplashScreen.hideAsync();
-        // Hide loader after a small delay to ensure smooth transition
-        setTimeout(() => {
-          setShowLoader(false);
-          setAppReady(true);
-        }, 100);
-      } catch {
-        /* Ignore splash screen errors */
+      } catch (err) {
+        console.warn('Error hiding splash screen:', err);
+      } finally {
+        // Proceed with app initialization once fonts are loaded
         setShowLoader(false);
         setAppReady(true);
       }
     }
-  }, [fontsLoaded, isLoaded, isAuthLoading]);
+  }, [fontsLoaded]);
 
-  // Don't render anything until initial resources are loaded
-  if (!fontsLoaded || !isLoaded || isAuthLoading) {
+  // Show app loader only until fonts are loaded
+  if (!fontsLoaded) {
     return <AppLoader color={colors.tint} />;
   }
 
@@ -219,10 +219,32 @@ function AppContent() {
           <View style={styles.container} onLayout={handleLayout}>
             {!showLoader ? (
               <>
-                <Stack screenOptions={stackScreenOptions}>
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen
+                    name="(tabs)"
+                    options={{
+                      headerShown: false,
+                      animation: 'none',
+                    }}
+                  />
+                  <Stack.Screen
+                    name="auth"
+                    options={{
+                      headerShown: false,
+                      animation: 'none',
+                    }}
+                  />
                   <Stack.Screen name="article" options={{ headerShown: false }} />
                   <Stack.Screen name="review" options={reviewScreenOptions} />
+                  <Stack.Screen
+                    name="index"
+                    options={
+                      {
+                        // Redirect index to tabs or auth based on auth state
+                        // Redirect using useRootNavigationState in route component
+                      }
+                    }
+                  />
                 </Stack>
                 <StatusBar style={isDark ? 'light' : 'dark'} />
               </>

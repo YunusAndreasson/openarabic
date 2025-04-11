@@ -122,8 +122,8 @@ export default function ArticleScreen(): JSX.Element {
 
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
+    // User will always be authenticated by this point
     if (user?.id) {
-      // Immediately fetch study words - don't wait for cached data check
       queryClient.fetchQuery({
         queryKey: ['studyWords', user.id],
         queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
@@ -150,7 +150,7 @@ export default function ArticleScreen(): JSX.Element {
 
   // Track article view when article data loads
   useEffect(() => {
-    if (article && !isLoadingArticle && user) {
+    if (article && !isLoadingArticle) {
       analytics.trackViewArticle(article.id, {
         ...(article.title && { title: article.title }),
         ...(article.category?.name && { category: article.category.name }),
@@ -163,14 +163,14 @@ export default function ArticleScreen(): JSX.Element {
         }),
       });
     }
-  }, [article, isLoadingArticle, user]);
+  }, [article, isLoadingArticle]);
 
   // Track reading list changes
   useEffect(() => {
-    if (article && user && !isLoadingReadingList) {
+    if (article && !isLoadingReadingList) {
       analytics.trackToggleReadingList(article.id, isInReadingList);
     }
-  }, [article, isInReadingList, isLoadingReadingList, user]);
+  }, [article, isInReadingList, isLoadingReadingList]);
 
   // Use animation hooks for screen and buttons
   const { fadeInStyle, triggerAnimations } = useScreenAnimation(true);
@@ -247,33 +247,34 @@ export default function ArticleScreen(): JSX.Element {
     articleContentRef.current.scrollToSentence(word.sentence_id);
   }, [currentWordId, sentenceWordsMap, findWordById]);
 
-  // Track article completion and handle animations on scroll
+  // Handle scroll events
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-      const paddingToBottom = 20;
+      const currentScrollY = event.nativeEvent.contentOffset.y;
+      const isScrollingDown = currentScrollY > prevScrollYValue.current;
+      const isScrollingUp = currentScrollY < prevScrollYValue.current;
       const isCloseToBottom =
-        layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+        event.nativeEvent.layoutMeasurement.height + currentScrollY >=
+        event.nativeEvent.contentSize.height - 200;
 
-      if (isCloseToBottom && article && user) {
-        analytics.trackCompleteArticle(article.id, {
-          wordsAdded: selectedWordIds.size,
-        });
+      // Toggle header visibility based on scroll direction
+      if (isScrollingDown && isHeaderVisible && currentScrollY > 50) {
+        setIsHeaderVisible(false);
+      } else if (isScrollingUp && !isHeaderVisible) {
+        setIsHeaderVisible(true);
       }
 
-      // Handle scroll animations
-      const currentScrollY = event.nativeEvent.contentOffset.y;
-      const isScrollingUp = currentScrollY < prevScrollYValue.current;
-      const isAtTop = currentScrollY <= 0;
-      const shouldBeVisible = isScrollingUp || isAtTop;
-
-      if (isHeaderVisible !== shouldBeVisible) {
-        setIsHeaderVisible(shouldBeVisible);
+      // Track article completion
+      if (isCloseToBottom && article) {
+        // No need to check for user as we know they're authenticated
+        analytics.trackCompleteArticle(article.id, {
+          wordsAdded: selectedWordIds?.size || 0,
+        });
       }
 
       prevScrollYValue.current = currentScrollY;
     },
-    [article, user, selectedWordIds, isHeaderVisible]
+    [isHeaderVisible, article, selectedWordIds]
   );
 
   // Update bookmark icon when reading list status changes
@@ -548,17 +549,14 @@ export default function ArticleScreen(): JSX.Element {
 
   // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
-    // Add this check: If no user, do nothing
-    if (!user) {
-      return;
-    }
-
+    // The user will always be authenticated by this point due to our auth redirect
+    // so we don't need to check for user existence
     if (articleId) {
       lightFeedback();
       setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
       handleToggleReadingList(articleId, Boolean(isInReadingList));
     }
-  }, [articleId, isInReadingList, handleToggleReadingList, user]);
+  }, [articleId, isInReadingList, handleToggleReadingList]);
 
   // Handle back button press with optimized cleanup
   const handleBackPress = useCallback(() => {

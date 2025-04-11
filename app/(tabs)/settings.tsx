@@ -1,33 +1,33 @@
+// External Libraries
 import { Ionicons } from '@expo/vector-icons';
-import { createClient } from '@supabase/supabase-js';
+import { router } from 'expo-router';
 import React, { useCallback, useEffect, memo } from 'react';
-import { StyleSheet, Alert, Linking, View, ScrollView } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+// Components
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
-import { UnifiedSignInScreen } from '@/components/UnifiedSignInScreen';
+import PageHeader from '@/components/PageHeader';
+import { CustomSlider } from '@/components/Slider';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Toggle } from '@/components/Toggle';
+
+// Internal Imports
+import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { useLoadingState } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useAuth } from '@/hooks/useAuth';
+import { useColors } from '@/hooks/useColors';
+import { analytics } from '@/services/analytics';
+import { supabase } from '@/services/supabase';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
-
-import PageHeader from '../../components/PageHeader';
-import { CustomSlider } from '../../components/Slider';
-import { ThemeToggle } from '../../components/ThemeToggle';
-import { ThemedButton } from '../../components/ThemedButton';
-import { ThemedText } from '../../components/ThemedText';
-import { ThemedView } from '../../components/ThemedView';
-import { Toggle } from '../../components/Toggle';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../../constants/Supabase';
-import { LAYOUT, getHeaderHeight } from '../../constants/layout';
-import { useLoadingState } from '../../hooks';
-import { useColors } from '../../hooks/useColors';
-import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setFontScale, setShowEnglish } from '../../store/settingsSlice';
-
-// Create a Supabase client
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Memoize static components to prevent unnecessary re-renders
 interface SettingLabelProps {
@@ -56,7 +56,7 @@ const Divider = memo(() => {
 Divider.displayName = 'Divider';
 
 export default function SettingsScreen(): JSX.Element {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { user } = useAuth();
   const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
@@ -78,39 +78,30 @@ export default function SettingsScreen(): JSX.Element {
   const { animatedStyle: themeToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues && !isLoadingState && !isAuthLoading,
+    autoStart: hasConcreteValues && !isLoadingState,
     delay: 100,
   });
 
   const { animatedStyle: englishToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues && !isLoadingState && !isAuthLoading,
+    autoStart: hasConcreteValues && !isLoadingState,
     delay: 150,
   });
 
   const { animatedStyle: sliderFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues && !isLoadingState && !isAuthLoading,
+    autoStart: hasConcreteValues && !isLoadingState,
     delay: 200,
   });
 
   // Empty style object for animated views
   const emptyStyle = {};
 
-  // Load session effect replaced with useAuth hook
-  useEffect(() => {
-    if (isAuthLoading) {
-      startLoading();
-    } else {
-      stopLoading();
-    }
-  }, [isAuthLoading, startLoading, stopLoading]);
-
   // Add effect to ensure animations start properly after settings are loaded
   useEffect(() => {
-    if (hasConcreteValues && !isLoadingState && !isAuthLoading) {
+    if (hasConcreteValues && !isLoadingState) {
       // Small delay to ensure animations run smoothly
       const timer = setTimeout(() => {
         // Re-trigger animations if needed
@@ -121,14 +112,7 @@ export default function SettingsScreen(): JSX.Element {
       return () => clearTimeout(timer);
     }
     return undefined; // Add return for when condition is not met
-  }, [
-    hasConcreteValues,
-    isLoadingState,
-    isAuthLoading,
-    themeToggleFade,
-    englishToggleFade,
-    sliderFade,
-  ]);
+  }, [hasConcreteValues, isLoadingState, themeToggleFade, englishToggleFade, sliderFade]);
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
@@ -157,8 +141,23 @@ export default function SettingsScreen(): JSX.Element {
           onPress: async () => {
             startLoading();
             try {
+              // Track sign out event before signing out
+              await analytics.trackSignOut();
+
+              // Sign out from Supabase
               const { error } = await supabase.auth.signOut();
-              if (error) Alert.alert('Error', error.message);
+              if (error) {
+                Alert.alert('Error', error.message);
+                return;
+              }
+
+              // Reset analytics
+              await analytics.reset();
+
+              // Navigate to auth screen (no leading slash)
+              router.replace('auth');
+            } catch (error) {
+              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to sign out');
             } finally {
               stopLoading();
             }
@@ -181,11 +180,6 @@ export default function SettingsScreen(): JSX.Element {
   // Show loading if we don't have valid settings
   if (!hasConcreteValues) {
     return <LoadingScreen />;
-  }
-
-  // Show if not signed in
-  if (!user) {
-    return <UnifiedSignInScreen headerTitle="Settings" colors={colors} />;
   }
 
   // Button styles
