@@ -6,24 +6,7 @@ import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../utils/typeMappers';
 
-console.log('[DEBUG] Initializing Supabase client with URL:', SUPABASE_URL);
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Test the Supabase connection
-(async () => {
-  try {
-    console.log('[DEBUG] Testing Supabase connection...');
-    const { error } = await supabase.from('articles').select('id').limit(1);
-    if (error) {
-      console.error('[DEBUG] Supabase connection error:', error.message);
-      console.error('[DEBUG] Error details:', JSON.stringify(error));
-    } else {
-      console.log('[DEBUG] Supabase connection successful');
-    }
-  } catch (err) {
-    console.error('[DEBUG] Unexpected error testing Supabase:', err);
-  }
-})();
 
 // Define the columns needed for list view for better performance
 const LIST_VIEW_COLUMNS = `
@@ -99,44 +82,34 @@ export const articlesService = {
   },
 
   async getArticleById(id: number): Promise<Article> {
-    console.log('[DEBUG] Fetching article by ID:', id);
-    try {
-      const { data, error } = await supabase
-        .from('articles')
-        .select(DETAIL_VIEW_COLUMNS)
-        .eq('id', id)
-        .single();
+    const { data, error } = await supabase
+      .from('articles')
+      .select(DETAIL_VIEW_COLUMNS)
+      .eq('id', id)
+      .single();
 
-      if (error) {
-        console.error('[DEBUG] Supabase error fetching article:', error.message);
-        console.error('[DEBUG] Error details:', JSON.stringify(error));
-        handleError(error, {
-          toastMessage: 'Failed to load article ' + id,
-          analyticsEventName: 'Article_Load_Error',
-          sentrySeverity: 'error',
-          analyticsProperties: { articleId: id },
-        });
-        throw error;
-      }
-
-      if (!data) {
-        console.error('[DEBUG] No article data returned for ID:', id);
-        const error = new Error(`Article with id ${id} not found`);
-        handleError(error, {
-          toastMessage: 'Article not found',
-          analyticsEventName: 'Article_Not_Found',
-          sentrySeverity: 'warning',
-          analyticsProperties: { articleId: id },
-        });
-        throw error;
-      }
-
-      console.log('[DEBUG] Article data successfully fetched, ID:', id);
-      return mapToArticle(data);
-    } catch (err) {
-      console.error('[DEBUG] Unexpected error fetching article:', err);
-      throw err;
+    if (error) {
+      handleError(error, {
+        toastMessage: 'Failed to load article ' + id,
+        analyticsEventName: 'Article_Load_Error',
+        sentrySeverity: 'error',
+        analyticsProperties: { articleId: id },
+      });
+      throw error;
     }
+
+    if (!data) {
+      const error = new Error(`Article with id ${id} not found`);
+      handleError(error, {
+        toastMessage: 'Article not found',
+        analyticsEventName: 'Article_Not_Found',
+        sentrySeverity: 'warning',
+        analyticsProperties: { articleId: id },
+      });
+      throw error;
+    }
+
+    return mapToArticle(data);
   },
 
   async getRelatedArticles(articleId: number): Promise<Article[]> {

@@ -150,7 +150,11 @@ export const useArticleMutations = (
   // Handler for word press
   const handleWordPress = useCallback(
     (wordId: number) => {
-      if (!userId) return;
+      console.log('handleWordPress called with wordId:', wordId, 'userId:', userId);
+      if (!userId) {
+        console.error('Cannot add study word: No user ID available');
+        return;
+      }
       toggleWordMutation.mutate({ userId, wordId });
     },
     [userId, toggleWordMutation]

@@ -18,12 +18,10 @@ import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { useScreenAnimation } from '@/hooks/animations';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
-import type { AudioTrack } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
-import type { EnhancedAudioTrack } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
@@ -167,6 +165,13 @@ const BookmarkListItem = memo(
     studyWordsCount: number;
     isLoading: boolean;
   }) => {
+    console.log('[BookmarkListItem] Rendering', {
+      articleId: item.article_id,
+      isActive,
+      progress,
+      studyWordsCount,
+    });
+
     const colors = useColors();
     const playbackProgress = duration > 0 ? progress / duration : 0;
     const activeCardStyle = isActive
@@ -248,16 +253,26 @@ const BookmarkListItem = memo(
     );
   },
   (prevProps, nextProps) => {
-    if (
+    const shouldUpdate =
       prevProps.isActive !== nextProps.isActive ||
       prevProps.studyWordsCount !== nextProps.studyWordsCount ||
-      prevProps.isLoading !== nextProps.isLoading
-    ) {
-      return false;
-    }
-    return nextProps.isActive
-      ? prevProps.progress === nextProps.progress && prevProps.duration === nextProps.duration
-      : prevProps.item.article_id === nextProps.item.article_id;
+      prevProps.isLoading !== nextProps.isLoading ||
+      (nextProps.isActive &&
+        (prevProps.progress !== nextProps.progress || prevProps.duration !== nextProps.duration));
+
+    console.log('[BookmarkListItem] shouldUpdate check', {
+      articleId: nextProps.item.article_id,
+      shouldUpdate,
+      changes: {
+        isActive: prevProps.isActive !== nextProps.isActive,
+        studyWordsCount: prevProps.studyWordsCount !== nextProps.studyWordsCount,
+        isLoading: prevProps.isLoading !== nextProps.isLoading,
+        progress: prevProps.progress !== nextProps.progress,
+        duration: prevProps.duration !== nextProps.duration,
+      },
+    });
+
+    return !shouldUpdate;
   }
 );
 
@@ -321,37 +336,44 @@ const BottomControls = memo(
 BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen(): JSX.Element {
+  // --- Debugging Setup ---
+  const renderId = useRef(0);
+  renderId.current += 1;
+  const currentRenderId = renderId.current;
+  console.log(`[BookmarksScreen] Render #${currentRenderId} START`);
+  // --- End Debugging Setup ---
+
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
 
-  // Use the enhanced audio player
+  // --- State Hooks ---
+  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
+  const [isShuffleMode, setIsShuffleMode] = useState(false);
+  // --- End State Hooks ---
+
+  // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
   const {
-    audioState,
-    currentTrackIndex,
+    // State values
     progress,
     duration,
-    playlistMode,
-    stopPlayback,
-    playNextTrack,
     metadata,
+    audioState,
+    currentTrackIndex,
+    // Stable actions object
+    actions,
   } = enhancedAudioPlayer;
+  // --- End Enhanced Audio Player ---
 
-  const [isShuffleMode, setIsShuffleMode] = useState(false);
-
-  // Query for reading list
-  const {
-    data: readingList = [],
-    isLoading: isDataLoading,
-    isFetching,
-    isError,
-    error,
-  } = useQuery({
+  // --- TanStack Query Hooks ---
+  const readingListQuery = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => {
+      console.log(`[BookmarksScreen #${currentRenderId}] Query readingList - START`, {
+        userId: user?.id,
+      });
       if (!user?.id) return Promise.resolve([]);
       return readingListService.getReadingList(user.id);
     },
@@ -360,203 +382,222 @@ export default function BookmarksScreen(): JSX.Element {
     gcTime: 300000,
     retry: 3,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
-    placeholderData: () => queryClient.getQueryData(['readingList', user?.id]) || [],
+    placeholderData: () =>
+      queryClient.getQueryData<ReadingListItem[]>(['readingList', user?.id]) || [],
   });
+  const {
+    data: readingList = [],
+    isLoading: isReadingListLoading,
+    isFetching: isReadingListFetching,
+    isError: isReadingListError,
+  } = readingListQuery;
 
-  // Query for study words counts - We'll now get this from the enhancedAudioPlayer
-  const { isLoading: isStudyWordsLoading } = useQuery({
+  const studyWordsQuery = useQuery({
     queryKey: ['studyWordsCounts', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return {};
-      // We need to still fetch this for initial loading state
-      // but will use the enhanced tracks for the actual counts
-      return studyWordsFSRSService.getFSRSWords(user.id);
-    },
+    queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id),
     enabled: !!user?.id,
     staleTime: 60000,
     gcTime: 300000,
   });
+  const { isLoading: isStudyWordsLoading } = studyWordsQuery;
 
-  // Enhanced tracks for reading list
-  const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = useQuery({
+  const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      return enhancedAudioService.getReadingListEnhancedTracks(user.id);
-    },
+    queryFn: () => enhancedAudioService.getReadingListEnhancedTracks(user!.id),
     enabled: !!user?.id,
     staleTime: 60000,
     gcTime: 300000,
   });
+  const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = enhancedTracksQuery;
 
-  // Use the screen focus refresh hook
+  // Log query status changes
+  useEffect(() => {
+    console.log(`[BookmarksScreen #${currentRenderId}] Query Status Changed`, {
+      readingList: {
+        loading: isReadingListLoading,
+        fetching: isReadingListFetching,
+        error: isReadingListError,
+      },
+      studyWords: { loading: isStudyWordsLoading },
+      enhancedTracks: { loading: isEnhancedTracksLoading },
+    });
+  }, [
+    isReadingListLoading,
+    isReadingListFetching,
+    isReadingListError,
+    isStudyWordsLoading,
+    isEnhancedTracksLoading,
+  ]);
+  // --- End TanStack Query Hooks ---
+
+  // --- Derived State & Memos (using direct state values) ---
+  const metadataValues = useMemo(
+    () => ({
+      articleId: metadata.articleId,
+      articleTitle: metadata.articleTitle,
+    }),
+    [metadata.articleId, metadata.articleTitle]
+  );
+
+  const flashListExtraData = useMemo(
+    () => ({
+      currentTrackIndex, // Direct state value
+      progress, // Direct state value
+      metadataValues, // Derived from metadata
+      enhancedTracksLength: enhancedTracks.length,
+      isStudyWordsLoading,
+    }),
+    [currentTrackIndex, progress, metadataValues, enhancedTracks.length, isStudyWordsLoading]
+  );
+  // --- End Derived State & Memos ---
+
+  // --- Effects ---
+  // Loading State Synchronization Effect
+  useEffect(() => {
+    const shouldBeLoading =
+      isReadingListLoading || isReadingListFetching || isEnhancedTracksLoading; // Simplified logic based on primary queries
+
+    console.log(`[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Check`, {
+      shouldBeLoading,
+      isLoadingState,
+      deps: { isReadingListLoading, isReadingListFetching, isEnhancedTracksLoading },
+    });
+
+    if (shouldBeLoading === isLoadingState) {
+      console.log(`[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Skip update`);
+      return;
+    }
+
+    // Debounce the state update slightly
+    const timeoutId = setTimeout(() => {
+      if (shouldBeLoading) {
+        console.log(
+          `[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Calling startLoading()`
+        );
+        startLoading();
+      } else {
+        console.log(
+          `[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Calling stopLoading()`
+        );
+        stopLoading();
+      }
+    }, 50); // Reduced debounce slightly
+
+    return () => clearTimeout(timeoutId);
+    // Dependencies MUST accurately reflect what's used to calculate shouldBeLoading and what triggers updates
+  }, [
+    isReadingListLoading,
+    isReadingListFetching,
+    isEnhancedTracksLoading,
+    isLoadingState,
+    startLoading,
+    stopLoading,
+  ]);
+
+  // Screen Focus Refresh Hook
   useScreenFocusRefresh(
     queryClient,
-    'readingList',
+    'bookmarks',
     user?.id,
-    0, // No caching
-    false, // Don't skip initial focus
-    true // Force refresh on focus
-  );
+    1000 * 60 * 5, // 5 minutes
+    true,
+    false
+  ); // Stabilized
 
-  // Check if data is ready to display
-  const isDataReady = useMemo(() => {
-    return !isDataLoading && !!readingList;
-  }, [isDataLoading, readingList]);
+  // Focus Effect - uses stable actions.stopPlayback
+  const focusEffectCallback = useCallback(() => {
+    console.log(`[BookmarksScreen #${currentRenderId}] EFFECT: Focus Effect RUN`, {
+      userId: user?.id,
+      isReadingListLoading,
+    });
+    if (!user?.id) return;
 
-  // Use improved screen animation with data-ready check
+    const existingData = queryClient.getQueryData(['readingList', user.id]);
+    if (!existingData || isReadingListLoading) {
+      console.log(
+        `[BookmarksScreen #${currentRenderId}] EFFECT: Focus Effect - Prefetching readingList`
+      );
+      queryClient.prefetchQuery({
+        queryKey: ['readingList', user.id],
+        queryFn: () => readingListService.getReadingList(user.id),
+        staleTime: 60000,
+        gcTime: 300000,
+        retry: 3,
+      });
+    }
+
+    return () => {
+      console.log(
+        `[BookmarksScreen #${currentRenderId}] EFFECT: Focus Effect CLEANUP - Stopping playback`
+      );
+      actions.stopPlayback(); // Use stable action
+    };
+  }, [user?.id, queryClient, isReadingListLoading, actions.stopPlayback]); // Use stable action
+  useFocusEffect(focusEffectCallback);
+
+  // Screen Animation Hook
+  console.log(`[BookmarksScreen #${currentRenderId}] Animation Hook Call`, {
+    dataReady: !isReadingListLoading && !!readingList,
+    isLoadingState,
+  });
   const { fadeInStyle } = useScreenAnimation(
-    isDataReady,
+    !isReadingListLoading && readingList.length > 0, // Ensure readingList is checked correctly
     isLoadingState
-    // Using default values for remaining parameters
   );
+  // --- End Effects ---
 
-  // Update loading state based on data loading
-  useEffect(() => {
-    if (isDataLoading || isFetching) {
-      startLoading();
-    } else {
-      stopLoading();
-    }
-  }, [isDataLoading, isFetching, startLoading, stopLoading, isError, error, readingList]);
-
-  // Add an extra effect to force refresh reading list data when auth state changes
-  useEffect(() => {
-    if (user?.id && !isDataLoading) {
-      queryClient.invalidateQueries({ queryKey: ['readingList', user.id] });
-    }
-  }, [user?.id, queryClient, isDataLoading]);
-
-  // Handle component focus and cleanup
-  useFocusEffect(
-    useCallback(() => {
-      // Refresh reading list when screen is focused
-      if (user?.id) {
-        // First check if we already have data
-        const existingData = queryClient.getQueryData(['readingList', user.id]);
-
-        // If we need fresh data, trigger prefetch instead of invalidation
-        if (!existingData || isDataLoading) {
-          queryClient.prefetchQuery({
-            queryKey: ['readingList', user.id],
-            queryFn: () => readingListService.getReadingList(user.id),
-            staleTime: 60000, // Match the query staleTime
-            gcTime: 300000, // Match the query gcTime
-            retry: 3,
-          });
-        } else {
-          // Otherwise just invalidate to refresh in background
-          queryClient.invalidateQueries({ queryKey: ['readingList', user.id] }).catch(error => {
-            throw error;
-          });
-        }
-      }
-
-      return () => {
-        // Stop playback when leaving the screen
-        stopPlayback();
-      };
-    }, [user?.id, queryClient, isDataLoading, stopPlayback])
-  );
-
-  // Check if an item is the currently playing track
-  const isActiveTrack = useCallback(
-    (articleId: number): boolean => {
-      // First check if we're playing at all
-      if (audioState === AUDIO_STATES.IDLE) {
-        return false;
-      }
-
-      // Check if article ID matches the one in metadata
-      return metadata.articleId === articleId;
-    },
-    [audioState, metadata]
-  );
-
-  // Get study word count for an article
-  const getArticleStudyWordsCount = useCallback(
-    (articleId: number): number => {
-      return enhancedAudioPlayer.getStudyWordsCount(articleId);
-    },
-    [enhancedAudioPlayer]
-  );
-
-  // Check if something is currently playing
+  // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
-  // Add an effect to monitor track completion and handle next track
-  useEffect(() => {
-    // If we're not in playlist mode, don't do anything
-    if (!playlistMode || audioState !== AUDIO_STATES.PLAYING) return;
-
-    // If we're at the end of the track (progress close to duration)
-    if (duration > 0 && progress > 0 && progress / duration > 0.99) {
-      // Only track completion once
-      if (!endOfTrackReachedRef.current) {
-        endOfTrackReachedRef.current = true;
-      }
-    } else {
-      // Reset flag when not at end of track
-      endOfTrackReachedRef.current = false;
-    }
-  }, [progress, duration, playlistMode, currentTrackIndex, audioState]);
-
-  // Add a separate effect for actual track transitions
-  // This addresses a timing issue where the status update in the hook doesn't always trigger
-  const endOfTrackReachedRef = useRef(false);
-  useEffect(() => {
-    // If track just changed to PAUSED and we were near the end, try to play next track
-    if (audioState === AUDIO_STATES.PAUSED && endOfTrackReachedRef.current && playlistMode) {
-      endOfTrackReachedRef.current = false;
-
-      // Check if we have more tracks
-      if (currentTrackIndex < enhancedTracks.length - 1) {
-        // Small delay to allow state to settle
-        setTimeout(() => {
-          playNextTrack();
-        }, 300);
-      }
-    }
-  }, [audioState, playlistMode, currentTrackIndex, playNextTrack]);
-
-  // Handle "Play All" button
   const handlePlayAll = useCallback(() => {
+    console.log(`[BookmarksScreen #${currentRenderId}] ACTION: handlePlayAll`, {
+      isCurrentlyPlaying,
+    });
     if (isCurrentlyPlaying) {
-      stopPlayback();
+      actions.stopPlayback(); // Use stable action
       setIsShuffleMode(false);
-    } else {
-      // Make sure we have valid enhanced tracks
-      if (enhancedTracks.length === 0) return;
-
-      // Start playback with the enhanced tracks
-      enhancedAudioPlayer.startEnhancedPlayback(enhancedTracks, 0);
+    } else if (enhancedTracks.length) {
+      actions.startEnhancedPlayback(enhancedTracks, 0); // Use stable action
       setIsShuffleMode(false);
     }
-  }, [isCurrentlyPlaying, enhancedTracks, enhancedAudioPlayer, stopPlayback]);
+  }, [isCurrentlyPlaying, enhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]); // Use stable actions
 
-  // Handle "Shuffle" button
   const handleShuffle = useCallback(() => {
+    console.log(`[BookmarksScreen #${currentRenderId}] ACTION: handleShuffle`, {
+      isCurrentlyPlaying,
+    });
     if (isCurrentlyPlaying) {
-      stopPlayback();
+      actions.stopPlayback(); // Use stable action
       setIsShuffleMode(false);
-    } else {
-      // Make sure we have valid audio tracks
-      if (enhancedTracks.length === 0) return;
-
-      enhancedAudioPlayer.startEnhancedShufflePlayback(enhancedTracks);
+    } else if (enhancedTracks.length) {
+      actions.startEnhancedShufflePlayback(enhancedTracks); // Use stable action
       setIsShuffleMode(true);
     }
-  }, [isCurrentlyPlaying, enhancedTracks, enhancedAudioPlayer, stopPlayback]);
+  }, [
+    isCurrentlyPlaying,
+    enhancedTracks,
+    actions.startEnhancedShufflePlayback,
+    actions.stopPlayback,
+  ]); // Use stable actions
+
+  const getArticleStudyWordsCount = useCallback(
+    (articleId: number): number => {
+      return actions.getStudyWordsCount(articleId); // Use stable action
+    },
+    [actions.getStudyWordsCount]
+  ); // Use stable action
+  // --- End Event Handlers ---
 
   const insets = useSafeAreaInsets();
 
-  // Show loading screen during initial load
-  if (isDataLoading || isEnhancedTracksLoading) {
+  // --- Render Logic ---
+  if (isReadingListLoading || isEnhancedTracksLoading) {
+    console.log(`[BookmarksScreen #${currentRenderId}] Rendering LoadingScreen`);
     return <LoadingScreen />;
   }
 
-  // Empty reading list
   if (readingList.length === 0) {
+    console.log(`[BookmarksScreen #${currentRenderId}] Rendering EmptyState`);
     return (
       <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView
@@ -589,7 +630,7 @@ export default function BookmarksScreen(): JSX.Element {
     );
   }
 
-  // Normal display with playlist
+  console.log(`[BookmarksScreen #${currentRenderId}] Rendering FlashList`);
   return (
     <Animated.View style={[styles.flexOne, fadeInStyle]}>
       <ThemedView
@@ -601,14 +642,14 @@ export default function BookmarksScreen(): JSX.Element {
           <FlashList
             ref={flashListRef}
             data={readingList}
-            extraData={[currentTrackIndex, progress, metadata, enhancedTracks, isStudyWordsLoading]}
+            extraData={flashListExtraData}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (
               <BookmarkListItem
                 item={item}
                 progress={progress}
                 duration={duration}
-                isActive={isActiveTrack(item.article_id)}
+                isActive={actions.isActiveArticle(item.article_id)}
                 studyWordsCount={getArticleStudyWordsCount(item.article_id)}
                 isLoading={isStudyWordsLoading}
               />
@@ -634,10 +675,7 @@ export default function BookmarksScreen(): JSX.Element {
               >
                 <ThemedText
                   type="label"
-                  style={{
-                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-                    color: colors.textTertiary,
-                  }}
+                  style={{ fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, color: colors.textTertiary }}
                   skipDefaultColor
                 >
                   Word count shows saved study words that will be played during article listening

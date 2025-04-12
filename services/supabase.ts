@@ -20,7 +20,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     detectSessionInUrl: false,
     flowType: 'pkce',
-    debug: __DEV__,
+    debug: false,
   },
 });
 

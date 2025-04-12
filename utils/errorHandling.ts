@@ -39,7 +39,6 @@ const DEFAULT_OPTIONS: ErrorOptions = {
 
 // Helper functions to reduce complexity
 const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
-  console.log('[DEBUG] Capturing error in Sentry:', errorObj.message);
   if (sentrySeverity) {
     Sentry.withScope(scope => {
       scope.setLevel(sentrySeverity as Sentry.SeverityLevel);
@@ -52,23 +51,17 @@ const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
 
 const trackInAnalytics = (_errorObj: Error): void => {
   try {
-    console.log('[DEBUG] Would track error in analytics');
     // Analytics tracking logic would go here
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_analyticsError) {
     // Silent fail if analytics tracking fails
-    console.error('[DEBUG] Failed to track error in analytics');
   }
 };
 
 const showToastMessage = (errorObj: Error, message?: string, duration?: number): void => {
-  console.log('[DEBUG] Attempting to show toast message:', message || errorObj.message);
-  console.log('[DEBUG] Toast handler available:', !!globalToastHandler);
   if (globalToastHandler) {
     const toastMessage = message || errorObj.message;
     globalToastHandler(toastMessage, duration);
-  } else {
-    console.error('[DEBUG] No toast handler set, error message not displayed to user');
   }
 };
 
@@ -83,9 +76,6 @@ export const handleError = async (
 ): Promise<void> => {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const errorObj = typeof error === 'string' ? new Error(error) : error;
-
-  console.log('[DEBUG] handleError called with message:', errorObj.message);
-  console.log('[DEBUG] Error options:', JSON.stringify(opts));
 
   try {
     if (opts.captureSentry) {
@@ -102,7 +92,6 @@ export const handleError = async (
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_handlingError) {
     // Silent fail if error handling itself fails
-    console.error('[DEBUG] Error occurred within handleError itself');
   }
 };
 

@@ -1,108 +1,105 @@
 import { useFocusEffect } from '@react-navigation/native';
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
-import { useCallback, useRef, useEffect, useMemo } from 'react';
+import { useCallback, useRef } from 'react';
 
 /**
- * Hook to refresh data when a screen comes into focus
- * Prevents unnecessary refreshes on initial mount
+ * Hook to refresh data when a screen comes into focus.
+ * Uses a ref to store state and props, ensuring stable callbacks
+ * and preventing the hook from causing unnecessary re-renders in the parent component.
  *
- * @param queryClient - React Query client instance
- * @param queryKey - Query key to invalidate
- * @param userId - User ID to include in query key
- * @param staleTime - Time in ms after which data is considered stale (default: 60000ms)
- * @param skipInitialFocus - Whether to skip refresh on initial focus (default: true)
- * @param forceRefreshOnFocus - Force refresh even if data is not stale (default: false)
- * @returns Object with manual refresh function
+ * @param queryClient React Query client instance.
+ * @param queryKey Base query key (string) for the data to refresh.
+ * @param userId Optional user ID to include in the query key.
+ * @param staleTime Time in ms after which data is considered stale (default: 60000ms).
+ * @param skipInitialFocus Whether to skip refresh on the very first focus event after mount (default: true).
+ * @param forceRefreshOnFocus Force refresh on every focus, regardless of staleness (default: false).
+ * @returns Object with a stable `refreshData` function.
  */
 export const useScreenFocusRefresh = (
   queryClient: QueryClient,
   queryKey: string,
   userId: string | undefined,
-  staleTime = 60000, // Default to 1 minute cache
+  staleTime = 60000,
   skipInitialFocus = true,
-  forceRefreshOnFocus = false // Only refresh if data is stale by default
+  forceRefreshOnFocus = false
 ): { refreshData: () => void } => {
-  // Track if this is the initial mount
-  const isInitialMount = useRef(true);
+  // Ref holds all hook state and props to ensure stability of callbacks.
+  const stateRef = useRef({
+    isInitialMount: true,
+    lastRefreshTime: 0,
+    // Store props in ref
+    queryClient,
+    queryKey,
+    userId,
+    staleTime,
+    skipInitialFocus,
+    forceRefreshOnFocus,
+    // Derived state
+    fullQueryKey: [] as QueryKey,
+  });
 
-  // Store the previous query key and userId to detect changes
-  const prevQueryKey = useRef(queryKey);
-  const prevUserId = useRef(userId);
+  // Update ref with the latest props on each render.
+  // This does not trigger re-renders but ensures callbacks access fresh values.
+  stateRef.current.queryClient = queryClient;
+  stateRef.current.queryKey = queryKey;
+  stateRef.current.userId = userId;
+  stateRef.current.staleTime = staleTime;
+  stateRef.current.skipInitialFocus = skipInitialFocus;
+  stateRef.current.forceRefreshOnFocus = forceRefreshOnFocus;
+  stateRef.current.fullQueryKey = (userId ? [queryKey, userId] : [queryKey]) as QueryKey;
 
-  // Create the full query key
-  const fullQueryKey = useMemo(() => [queryKey, userId] as QueryKey, [queryKey, userId]);
-
-  // Function to check if data is stale and refresh if needed
-  const checkAndRefreshData = useCallback(() => {
-    // Only refresh if we have a user ID
-    if (!userId) return;
-
-    // Check if data is stale before refreshing
-    const queryData = queryClient.getQueryState(fullQueryKey);
-
-    // Consider data stale if:
-    // 1. queryData is null (query doesn't exist)
-    // 2. dataUpdatedAt is undefined
-    // 3. dataUpdatedAt is older than staleTime
-    const isDataStale =
-      !queryData || !queryData.dataUpdatedAt || Date.now() - queryData.dataUpdatedAt > staleTime;
-
-    // Force refresh if requested or if data is stale
-    if (forceRefreshOnFocus || isDataStale) {
-      queryClient.invalidateQueries({ queryKey: fullQueryKey });
-    }
-  }, [queryClient, fullQueryKey, userId, staleTime, forceRefreshOnFocus]);
-
-  // Manual refresh function that bypasses stale check
+  // Stable refresh function that reads current state from the ref.
+  // Dependency array is empty, making this function reference stable.
   const refreshData = useCallback(() => {
-    if (userId) {
-      queryClient.invalidateQueries({ queryKey: fullQueryKey });
-    }
-  }, [queryClient, fullQueryKey, userId]);
+    const state = stateRef.current;
+    // Skip if no user ID is provided
+    if (!state.userId) return;
 
-  // Check if queryKey or userId has changed
-  useEffect(() => {
-    // Skip on initial mount
-    if (isInitialMount.current) {
-      return;
-    }
+    // Throttle refreshes to prevent rapid calls
+    const now = Date.now();
+    if (now - state.lastRefreshTime < 1000) return; // Throttle for 1 second
 
-    // If queryKey or userId changed, check if we need to refresh
-    if (prevQueryKey.current !== queryKey || prevUserId.current !== userId) {
-      // Only refresh if we have a userId
-      if (userId) {
-        // Create the new query key with the updated values
-        const newQueryKey: QueryKey = [queryKey, userId];
-        queryClient.invalidateQueries({ queryKey: newQueryKey });
+    state.lastRefreshTime = now;
+    // Invalidate the query to trigger a refetch
+    state.queryClient.invalidateQueries({ queryKey: state.fullQueryKey });
+  }, []);
+
+  // Focus effect using the stable refreshData callback.
+  // The outer useCallback has refreshData as a dependency, but since
+  // refreshData itself is stable, this outer callback is also stable.
+  useFocusEffect(
+    useCallback(() => {
+      const state = stateRef.current;
+
+      // Skip the effect on the initial mount/focus if configured
+      if (state.isInitialMount && state.skipInitialFocus) {
+        state.isInitialMount = false; // Mark initial mount as passed
+        return; // Skip the first execution
       }
 
-      // Update refs with new values
-      prevQueryKey.current = queryKey;
-      prevUserId.current = userId;
-    }
-  }, [queryKey, userId, queryClient]);
+      // Determine if a refresh is needed based on configuration and data staleness
+      let shouldRefresh = state.forceRefreshOnFocus;
+      if (!shouldRefresh) {
+        const now = Date.now();
+        const queryState = state.queryClient.getQueryState(state.fullQueryKey);
+        const isStale =
+          !queryState?.dataUpdatedAt || // No data exists yet
+          now - queryState.dataUpdatedAt > state.staleTime; // Data is older than staleTime
+        shouldRefresh = isStale;
+      }
 
-  // Use a separate callback for the focus effect to ensure proper dependency tracking
-  const handleFocusEffect = useCallback(() => {
-    // Skip refresh on initial focus if requested
-    if (isInitialMount.current && skipInitialFocus) {
-      isInitialMount.current = false;
-      return;
-    }
+      // Trigger refresh if needed
+      if (shouldRefresh) {
+        refreshData();
+      }
 
-    // Check if data needs refreshing
-    checkAndRefreshData();
+      // Ensure subsequent focus events aren't treated as initial
+      state.isInitialMount = false;
 
-    // Mark as not initial mount after first focus
-    isInitialMount.current = false;
+      // No cleanup needed for this effect
+    }, [refreshData]) // Dependency is stable
+  );
 
-    // Update refs with current values
-    prevQueryKey.current = queryKey;
-    prevUserId.current = userId;
-  }, [checkAndRefreshData, skipInitialFocus, queryKey, userId]);
-
-  // Register the focus effect
-  useFocusEffect(handleFocusEffect);
-
+  // Return the stable refresh function for potential manual triggering
   return { refreshData };
 };

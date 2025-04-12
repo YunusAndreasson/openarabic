@@ -37,10 +37,11 @@ export function useArabicWord({
   const directlySelected = useMemo(() => {
     if (!studyWords || !Array.isArray(studyWords)) return false;
     const wordId = word.id;
-    return studyWords.some(sw => {
+    const isSelected = studyWords.some(sw => {
       const swId = sw.sentence_word_id;
       return swId === wordId || String(swId) === String(wordId);
     });
+    return isSelected;
   }, [studyWords, word.id]);
 
   // Audio highlight state
@@ -58,6 +59,7 @@ export function useArabicWord({
   const handleSelectionChange = useCallback(() => {
     if (user && word.id && onPress) {
       const wordId = typeof word.id === 'string' ? parseInt(word.id, 10) : word.id;
+
       if (isSelected) {
         analytics.trackAddStudyWord(wordId, {
           word: word.word_form,

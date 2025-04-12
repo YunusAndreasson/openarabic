@@ -9,9 +9,7 @@ import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleNotFound } from '@/components/NotFound';
-import { ThemedButton } from '@/components/ThemedButton';
 import ThemedCard from '@/components/ThemedCard';
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
@@ -117,20 +115,14 @@ export default function ArticleScreen(): JSX.Element {
 
   // Parse article ID
   const articleId = useMemo(() => {
-    console.log('[DEBUG] Article screen - ID from params:', id);
-    if (!id) {
-      console.log('[DEBUG] Article ID is undefined');
-      return undefined;
-    }
+    if (!id) return undefined;
     const parsed = parseInt(id, 10);
-    console.log('[DEBUG] Parsed article ID:', parsed, isNaN(parsed) ? '(invalid)' : '(valid)');
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
     // User will always be authenticated by this point
-    console.log('[DEBUG] User auth state:', user?.id ? 'authenticated' : 'not authenticated');
     if (user?.id) {
       queryClient.fetchQuery({
         queryKey: ['studyWords', user.id],
@@ -146,7 +138,6 @@ export default function ArticleScreen(): JSX.Element {
   const {
     article,
     isLoadingArticle,
-    articleError,
     isInReadingList,
     refetchReadingListStatus,
     isLoadingReadingList,
@@ -156,18 +147,6 @@ export default function ArticleScreen(): JSX.Element {
     otherArticles,
     otherCategoryArticles,
   } = useArticleData(articleId, user?.id);
-
-  // Add debug logging after data is loaded
-  useEffect(() => {
-    console.log('[DEBUG] Article loading state:', isLoadingArticle);
-    console.log('[DEBUG] Article error:', articleError);
-    console.log('[DEBUG] Article data received:', article ? 'yes' : 'no');
-    if (article) {
-      console.log('[DEBUG] Article ID:', article.id);
-      console.log('[DEBUG] Article title:', article.title);
-      console.log('[DEBUG] Article sentences:', article.article_sentences?.length || 0);
-    }
-  }, [article, isLoadingArticle, articleError]);
 
   // Track article view when article data loads
   useEffect(() => {
@@ -327,23 +306,6 @@ export default function ArticleScreen(): JSX.Element {
     articleId,
     queryClient,
   ]);
-
-  // For debugging purposes, show an error view if there's an error
-  if (articleError) {
-    return (
-      <ThemedView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ThemedText type="bodyBold" colorName="error">
-            Error Loading Article
-          </ThemedText>
-          <ThemedText type="body" colorName="error" style={{ marginTop: 8, marginBottom: 20 }}>
-            {articleError instanceof Error ? articleError.message : String(articleError)}
-          </ThemedText>
-          <ThemedButton title="Go Back" onPress={() => router.back()} variant="filled" />
-        </View>
-      </ThemedView>
-    );
-  }
 
   // Start content animations when mounted
   useEffect(() => {
@@ -678,7 +640,15 @@ export default function ArticleScreen(): JSX.Element {
         <ArabicWord
           key={word.id}
           word={word}
-          onPress={word => handleWordPress(word.id)}
+          onPress={word => {
+            console.log('Word pressed in article view:', {
+              wordId: word.id,
+              wordForm: word.word_form,
+              english: word.english,
+              userId: user?.id,
+            });
+            handleWordPress(word.id);
+          }}
           settings={{
             showEnglish: false,
             fontScale: settings.fontScale,

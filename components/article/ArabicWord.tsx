@@ -175,6 +175,13 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
+    console.log('Word long-pressed in ArabicWord component:', {
+      wordId: word.id,
+      wordForm: word.word_form,
+      english: word.english,
+      isSelected,
+    });
+
     // Provide haptic feedback
     lightFeedback();
 

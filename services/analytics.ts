@@ -22,7 +22,7 @@ type AnalyticsProperties =
 const MIXPANEL_TOKEN = process.env.EXPO_PUBLIC_MIXPANEL_TOKEN || 'YOUR_MIXPANEL_TOKEN';
 
 // Option to disable tracking in development
-const ENABLE_DEV_TRACKING = true; // Set this to false to disable tracking in development
+const ENABLE_DEV_TRACKING = false; // Set this to false to disable tracking in development
 
 // Event Names
 const EVENTS = {

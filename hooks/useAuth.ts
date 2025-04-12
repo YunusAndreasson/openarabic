@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 import { supabase } from '../services/supabase';
 
@@ -26,55 +26,67 @@ export function useAuth(): AuthResult {
   const [authError, setAuthError] = useState<Error | null>(null);
 
   useEffect(() => {
-    // Get initial session
-    const initSession = async () => {
-      try {
-        setIsLoading(true);
-        // Run auth initialization and session fetch in parallel
-        const [
-          ,
-          {
-            data: { session },
-            error,
-          },
-        ] = await Promise.all([supabase.auth.initialize(), supabase.auth.getSession()]);
+    let isMounted = true;
 
-        if (error) {
-          setAuthError(error);
-          setSession(null);
-        } else {
-          setSession(session);
-          setAuthError(null);
-        }
+    const initSession = async () => {
+      if (!isMounted) return;
+
+      // Ensure loading state is set at the start
+      setIsLoading(true);
+
+      try {
+        await supabase.auth.initialize();
+        if (!isMounted) return;
+
+        const {
+          data: { session: fetchedSession },
+          error,
+        } = await supabase.auth.getSession();
+        if (!isMounted) return;
+
+        // Batch state updates
+        setSession(fetchedSession);
+        setAuthError(error ? new Error(error.message) : null);
       } catch (error) {
+        if (!isMounted) return;
+        setSession(null); // Clear session on error
         setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
-        setSession(null);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    // Initialize immediately
     initSession();
 
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setIsLoading(false);
-      setAuthError(null);
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!isMounted) return;
+      // Batch state updates on auth change
+      setSession(newSession);
+      setAuthError(null); // Clear previous errors on successful change
+      setIsLoading(false); // Ensure loading is false after update
     });
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
-  return {
-    session,
-    user: session?.user ?? null,
-    isLoading,
-    authError,
-  };
+  // Memoize the returned object to ensure reference stability.
+  // It only creates a new object when session, isLoading, or authError changes.
+  const authResult = useMemo(
+    () => ({
+      session,
+      user: session?.user ?? null,
+      isLoading,
+      authError,
+    }),
+    [session, isLoading, authError]
+  );
+
+  return authResult;
 }

@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 
 /**
  * Hook for managing loading states with simplified control.
  *
  * @param initialLoadingState - Initial loading state (default: true)
- * @returns Object with loading state and functions to control it
+ * @returns Object with loading state and stable functions to control it
  */
 export const useLoadingState = (
   initialLoadingState = true
@@ -19,46 +19,54 @@ export const useLoadingState = (
   const [isLoading, setIsLoading] = useState(initialLoadingState);
   const [dataLoaded, setDataLoadedState] = useState(false);
 
-  // Start loading
-  const startLoading = useCallback(() => {
+  // Use refs to hold stable callbacks to avoid including them in dependencies
+  const callbacksRef = useRef({
+    startLoading: () => {},
+    stopLoading: () => {},
+    setDataLoaded: (_loaded: boolean) => {},
+    reset: () => {},
+  });
+
+  // Define the actual logic, these will be assigned to the ref
+  const startLoadingLogic = useCallback(() => {
     setIsLoading(true);
-    setDataLoadedState(false);
+    setDataLoadedState(false); // Reset data loaded when starting load
   }, []);
 
-  // Stop loading
-  const stopLoading = useCallback(() => {
+  const stopLoadingLogic = useCallback(() => {
+    // Only set data loaded to true when explicitly stopped
     setDataLoadedState(true);
     setIsLoading(false);
   }, []);
 
-  // Set data loaded state
-  const setDataLoaded = useCallback(
-    (loaded: boolean) => {
-      setDataLoadedState(loaded);
-      if (loaded) {
-        stopLoading();
-      } else {
-        startLoading();
-      }
-    },
-    [startLoading, stopLoading]
-  );
+  const setDataLoadedLogic = useCallback((loaded: boolean) => {
+    setDataLoadedState(loaded);
+    // Sync isLoading state based on explicit data loaded status
+    setIsLoading(!loaded);
+  }, []);
 
-  // Reset the loading state
-  const reset = useCallback(() => {
+  const resetLogic = useCallback(() => {
     setDataLoadedState(false);
     setIsLoading(initialLoadingState);
   }, [initialLoadingState]);
 
+  // Assign logic to the ref's stable callbacks
+  callbacksRef.current.startLoading = startLoadingLogic;
+  callbacksRef.current.stopLoading = stopLoadingLogic;
+  callbacksRef.current.setDataLoaded = setDataLoadedLogic;
+  callbacksRef.current.reset = resetLogic;
+
+  // Return state values and stable callback references from the ref
   return useMemo(
     () => ({
       isLoading,
-      startLoading,
-      stopLoading,
-      reset,
       dataLoaded,
-      setDataLoaded,
+      // Return the stable functions from the ref
+      startLoading: callbacksRef.current.startLoading,
+      stopLoading: callbacksRef.current.stopLoading,
+      setDataLoaded: callbacksRef.current.setDataLoaded,
+      reset: callbacksRef.current.reset,
     }),
-    [isLoading, startLoading, stopLoading, reset, dataLoaded, setDataLoaded]
+    [isLoading, dataLoaded] // Only re-memoize when state values change
   );
 };
