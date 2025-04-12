@@ -160,8 +160,6 @@ export const useArticleMutations = (
   // Handler for word press
   const handleWordPress = useCallback(
     async (wordId: number) => {
-      console.log('handleWordPress called with wordId:', wordId, 'userId:', userId);
-
       // If userId is not available from context, try to get it from supabase auth
       let effectiveUserId = userId;
 
@@ -169,14 +167,12 @@ export const useArticleMutations = (
         try {
           const { data } = await supabase.auth.getSession();
           effectiveUserId = data.session?.user?.id;
-          console.log('Retrieved userId from auth session:', effectiveUserId);
         } catch (error) {
-          console.error('Error retrieving auth session:', error);
+          handleError(error instanceof Error ? error : String(error));
         }
       }
 
       if (!effectiveUserId) {
-        console.error('Cannot add study word: No user ID available');
         showToast('Please sign in to add study words');
         return;
       }

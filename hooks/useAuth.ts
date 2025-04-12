@@ -35,13 +35,11 @@ export function useAuth(): AuthResult {
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Auth session fetch error:', error.message);
         return null;
       }
 
       return fetchedSession;
     } catch (error) {
-      console.error('Unexpected auth error:', error);
       return null;
     }
   }, []);
@@ -107,9 +105,6 @@ export function useAuth(): AuthResult {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!isMounted) return;
-
-      // Log auth state changes to help with debugging
-      console.log('Auth state changed:', _event, 'User ID:', newSession?.user?.id);
 
       // Batch state updates on auth change
       setSession(newSession);
