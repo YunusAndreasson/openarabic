@@ -422,7 +422,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   );
 
   actionsRef.current.getStudyWordsCount = useCallback(articleId => {
-    return (
+    return Math.floor(
       (currentPlaylistRef.current || []).filter(
         track =>
           track.articleId === articleId &&

@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 import { useToast } from '@/components/ToastProvider';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
+import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 
 interface ArticleMutationsResult {
@@ -125,6 +126,15 @@ export const useArticleMutations = (
         queryKey: ['dueWords', userId],
       });
 
+      // Also invalidate the queries used in bookmarks screen
+      queryClient.invalidateQueries({
+        queryKey: ['studyWordsCounts', userId],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: ['enhancedAudioTracks', userId],
+      });
+
       // Always refetch stats
       queryClient.invalidateQueries({
         queryKey: ['vocabularyStats'],
@@ -149,15 +159,31 @@ export const useArticleMutations = (
 
   // Handler for word press
   const handleWordPress = useCallback(
-    (wordId: number) => {
+    async (wordId: number) => {
       console.log('handleWordPress called with wordId:', wordId, 'userId:', userId);
-      if (!userId) {
+
+      // If userId is not available from context, try to get it from supabase auth
+      let effectiveUserId = userId;
+
+      if (!effectiveUserId) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          effectiveUserId = data.session?.user?.id;
+          console.log('Retrieved userId from auth session:', effectiveUserId);
+        } catch (error) {
+          console.error('Error retrieving auth session:', error);
+        }
+      }
+
+      if (!effectiveUserId) {
         console.error('Cannot add study word: No user ID available');
+        showToast('Please sign in to add study words');
         return;
       }
-      toggleWordMutation.mutate({ userId, wordId });
+
+      toggleWordMutation.mutate({ userId: effectiveUserId, wordId });
     },
-    [userId, toggleWordMutation]
+    [userId, toggleWordMutation, showToast]
   );
 
   return {

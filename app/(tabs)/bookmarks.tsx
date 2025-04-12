@@ -25,6 +25,7 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
+import type { EnhancedAudioTrack } from '@/types/audio.types';
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
 
@@ -330,6 +331,8 @@ export default function BookmarksScreen(): JSX.Element {
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
   const [isShuffleMode, setIsShuffleMode] = useState(false);
+  // For tracking study words without affecting audio state
+  const [tracksForWordCounts, setTracksForWordCounts] = useState<EnhancedAudioTrack[]>([]);
   // --- End State Hooks ---
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
@@ -399,10 +402,10 @@ export default function BookmarksScreen(): JSX.Element {
       currentTrackIndex, // Direct state value
       progress, // Direct state value
       metadataValues, // Derived from metadata
-      enhancedTracksLength: enhancedTracks.length,
+      tracksForWordCounts, // Local state for calculating word counts
       isStudyWordsLoading,
     }),
-    [currentTrackIndex, progress, metadataValues, enhancedTracks.length, isStudyWordsLoading]
+    [currentTrackIndex, progress, metadataValues, tracksForWordCounts, isStudyWordsLoading]
   );
   // --- End Derived State & Memos ---
 
@@ -435,6 +438,14 @@ export default function BookmarksScreen(): JSX.Element {
     startLoading,
     stopLoading,
   ]);
+
+  // Initialize study word counts when enhanced tracks are loaded
+  useEffect(() => {
+    if (!isEnhancedTracksLoading && enhancedTracks.length > 0) {
+      // Store enhanced tracks for word count calculations without affecting audio state
+      setTracksForWordCounts(enhancedTracks);
+    }
+  }, [isEnhancedTracksLoading, enhancedTracks]);
 
   // Screen Focus Refresh Hook
   useScreenFocusRefresh(
@@ -530,10 +541,25 @@ export default function BookmarksScreen(): JSX.Element {
 
   const getArticleStudyWordsCount = useCallback(
     (articleId: number): number => {
-      return actions.getStudyWordsCount(articleId); // Use stable action
+      // First use the stable action from the player
+      const countFromPlayer = actions.getStudyWordsCount(articleId);
+
+      // If no count is available from the player, calculate it directly from our saved tracks data
+      if (countFromPlayer === 0 && tracksForWordCounts.length > 0) {
+        const studyWordTracksCount = tracksForWordCounts.filter(
+          track =>
+            track.articleId === articleId &&
+            (track.type === 'study_word_english' || track.type === 'study_word_arabic')
+        ).length;
+
+        // Use Math.floor to ensure we always get a whole number
+        return Math.floor(studyWordTracksCount / 2);
+      }
+
+      return countFromPlayer;
     },
-    [actions.getStudyWordsCount]
-  ); // Use stable action
+    [actions.getStudyWordsCount, tracksForWordCounts]
+  );
   // --- End Event Handlers ---
 
   const insets = useSafeAreaInsets();

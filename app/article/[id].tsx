@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-  const { user } = useAuth();
+  const { user, refreshSession } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
   const queryClient = useQueryClient();
@@ -122,17 +122,28 @@ export default function ArticleScreen(): JSX.Element {
 
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
-    // User will always be authenticated by this point
-    if (user?.id) {
-      queryClient.fetchQuery({
-        queryKey: ['studyWords', user.id],
-        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 300000, // Cache for 5 minutes
-        gcTime: 600000, // Keep in garbage collection for 10 minutes
-        retry: 3,
-      });
-    }
-  }, [user?.id, queryClient]);
+    const loadStudyWords = async () => {
+      // If user is not available, try to refresh the session
+      let currentUser = user;
+      if (!currentUser?.id) {
+        const session = await refreshSession();
+        currentUser = session?.user || null;
+      }
+
+      // User should be authenticated by this point
+      if (currentUser?.id) {
+        queryClient.fetchQuery({
+          queryKey: ['studyWords', currentUser.id],
+          queryFn: () => studyWordsFSRSService.getFSRSWords(currentUser.id),
+          staleTime: 300000, // Cache for 5 minutes
+          gcTime: 600000, // Keep in garbage collection for 10 minutes
+          retry: 3,
+        });
+      }
+    };
+
+    loadStudyWords();
+  }, [user, refreshSession, queryClient]);
 
   // Extract article data hook before using any results
   const {

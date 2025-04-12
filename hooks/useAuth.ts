@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 
 import { supabase } from '../services/supabase';
 
@@ -18,12 +18,53 @@ type AuthResult = {
   user: UserSession['user'] | null;
   isLoading: boolean;
   authError: Error | null;
+  refreshSession: () => Promise<UserSession | null>;
 };
 
 export function useAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
+
+  // Function to fetch the session that can be called on demand
+  const fetchSession = useCallback(async (): Promise<UserSession | null> => {
+    try {
+      const {
+        data: { session: fetchedSession },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error('Auth session fetch error:', error.message);
+        return null;
+      }
+
+      return fetchedSession;
+    } catch (error) {
+      console.error('Unexpected auth error:', error);
+      return null;
+    }
+  }, []);
+
+  // Refresh session function that can be called from components
+  const refreshSession = useCallback(async (): Promise<UserSession | null> => {
+    setIsLoading(true);
+    try {
+      const fetchedSession = await fetchSession();
+
+      if (fetchedSession) {
+        setSession(fetchedSession);
+        setAuthError(null);
+      }
+
+      return fetchedSession;
+    } catch (error) {
+      setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchSession]);
 
   useEffect(() => {
     let isMounted = true;
@@ -38,15 +79,17 @@ export function useAuth(): AuthResult {
         await supabase.auth.initialize();
         if (!isMounted) return;
 
-        const {
-          data: { session: fetchedSession },
-          error,
-        } = await supabase.auth.getSession();
+        const fetchedSession = await fetchSession();
         if (!isMounted) return;
 
         // Batch state updates
-        setSession(fetchedSession);
-        setAuthError(error ? new Error(error.message) : null);
+        if (fetchedSession) {
+          setSession(fetchedSession);
+          setAuthError(null);
+        } else {
+          setSession(null);
+          // Don't set an error here, it's normal to have no session initially
+        }
       } catch (error) {
         if (!isMounted) return;
         setSession(null); // Clear session on error
@@ -62,8 +105,12 @@ export function useAuth(): AuthResult {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!isMounted) return;
+
+      // Log auth state changes to help with debugging
+      console.log('Auth state changed:', _event, 'User ID:', newSession?.user?.id);
+
       // Batch state updates on auth change
       setSession(newSession);
       setAuthError(null); // Clear previous errors on successful change
@@ -84,8 +131,9 @@ export function useAuth(): AuthResult {
       user: session?.user ?? null,
       isLoading,
       authError,
+      refreshSession,
     }),
-    [session, isLoading, authError]
+    [session, isLoading, authError, refreshSession]
   );
 
   return authResult;
