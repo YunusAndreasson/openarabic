@@ -1,4 +1,7 @@
+// Import correctly from expo-av using default import syntax
+import { Audio } from 'expo-av';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+// Import correctly from expo-av using default import syntax
 
 // Import EnhancedAudioTrack from its central definition
 import { handleError } from '@/utils/errorHandling';
@@ -25,7 +28,7 @@ interface PlaybackMetadata {
 interface QueuedAudioItem {
   track: EnhancedAudioTrack;
   index: number;
-  sound?: HTMLAudioElement;
+  sound?: Audio.Sound | null;
   isPreloaded: boolean;
 }
 
@@ -91,6 +94,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   const preloadBatchSizeRef = useRef(3);
   const currentPlaylistRef = useRef<EnhancedAudioTrack[]>([]);
   const lastStateUpdateRef = useRef(Date.now());
+  const currentSoundRef = useRef<Audio.Sound | null>(null);
 
   // Ref to hold stable callbacks implementing the Actions interface
   const actionsRef = useRef<EnhancedPlayerActions>({
@@ -157,7 +161,6 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   }, []);
 
   const preloadTracksLogic = useCallback(async () => {
-    // ... (Full preload logic using refs as before)
     if (preloadInProgressRef.current || !isPlayingRef.current) return;
     preloadInProgressRef.current = true;
     try {
@@ -171,28 +174,28 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       }
       for (let i = startIndex; i < endIndex; i++) {
         const queueItem = queue[i];
-        if (!queueItem || queueItem.isPreloaded) continue;
-        const sound = new Audio(queueItem.track.audioUrl);
-        await new Promise<void>(resolve => {
-          sound.oncanplaythrough = () => {
-            if (queueItem) {
-              queueItem.sound = sound;
-              queueItem.isPreloaded = true;
-            }
-            resolve();
-          };
-          sound.onerror = () => {
-            if (queueItem) queueItem.isPreloaded = true;
-            resolve();
-          };
-          sound.load();
-          setTimeout(() => {
-            if (queueItem && !queueItem.isPreloaded) {
-              queueItem.isPreloaded = true;
-              resolve();
-            }
-          }, 3000);
-        });
+        if (!queueItem || queueItem.isPreloaded || !queueItem.track.audioUrl) continue;
+
+        // Use expo-av for preloading
+        try {
+          // Only prepare, don't play yet
+          const { sound } = await Audio.Sound.createAsync(
+            { uri: queueItem.track.audioUrl },
+            { shouldPlay: false }
+          );
+          if (queueItem) {
+            queueItem.sound = sound;
+            queueItem.isPreloaded = true;
+          } else {
+            // If queueItem became null somehow, unload immediately
+            await sound.unloadAsync();
+          }
+        } catch (preloadError) {
+          handleError(preloadError as Error, { toastMessage: `Preloading track ${i} failed` });
+          if (queueItem) {
+            queueItem.isPreloaded = true;
+          }
+        }
       }
     } catch (error) {
       handleError(error as Error);
@@ -203,35 +206,74 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
   const playQueuedTrackLogic = useCallback(
     async (index: number): Promise<boolean> => {
-      // ... (Full playQueuedTrack logic using refs, updateExposedState, updateMetadata)
       const queue = audioQueueRef.current;
       if (index < 0 || index >= queue.length || !queue[index]) return false;
+
+      if (currentSoundRef.current) {
+        try {
+          await currentSoundRef.current.stopAsync();
+          await currentSoundRef.current.unloadAsync();
+        } catch (e) {
+          handleError(e as Error, { toastMessage: 'Error stopping/unloading previous sound' });
+        } finally {
+          currentSoundRef.current = null;
+        }
+      }
+
       const queueItem = queue[index];
+      if (!queueItem || !queueItem.track.audioUrl) {
+        setIsTrackEnded(true);
+        updateExposedState();
+        return false;
+      }
+
       currentIndexRef.current = index;
       updateExposedState();
       updateMetadata(queueItem.track);
       try {
+        let soundObject: Audio.Sound | null = null;
+        let durationMillis: number | null = null;
+
         if (queueItem.isPreloaded && queueItem.sound) {
-          const sound = queueItem.sound;
-          sound.currentTime = 0;
-          await sound.play();
+          soundObject = queueItem.sound;
+          await soundObject.replayAsync();
+          const status = await soundObject.getStatusAsync();
+          if (status.isLoaded) {
+            durationMillis = status.durationMillis ?? null;
+          }
+        } else {
+          // Load and play on demand
+          try {
+            const { sound, status } = await Audio.Sound.createAsync(
+              { uri: queueItem.track.audioUrl },
+              { shouldPlay: true }
+            );
+            soundObject = sound;
+            if (status.isLoaded) {
+              durationMillis = status.durationMillis ?? null;
+            }
+            // Update queue item if it was loaded on demand
+            if (queueItem) {
+              queueItem.sound = sound;
+              queueItem.isPreloaded = true;
+            }
+          } catch (loadError) {
+            setIsTrackEnded(true);
+            return false;
+          }
+        }
+
+        if (soundObject) {
+          await soundObject.playAsync();
           isPlayingRef.current = true;
           updateExposedState();
-          await new Promise<void>(resolve => {
-            const durationMs =
-              sound.duration && isFinite(sound.duration) ? sound.duration * 1000 : 3000;
-            let ended = false;
-            const onEnd = () => {
-              if (!ended) {
-                ended = true;
+          if (durationMillis && isFinite(durationMillis)) {
+            setTimeout(() => {
+              if (isPlayingRef.current && currentIndexRef.current === index) {
                 setIsTrackEnded(true);
-                resolve();
               }
-            };
-            sound.onended = onEnd;
-            sound.onerror = onEnd;
-            setTimeout(onEnd, durationMs + 500);
-          });
+            }, durationMillis + 500);
+          }
           return true;
         } else {
           const baseTracks = convertToBaseTracks([queueItem.track]);
@@ -264,22 +306,46 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   );
 
   const stopPlaybackLogic = useCallback(async (): Promise<boolean> => {
-    // ... (Full stopPlayback logic using refs, updateExposedState, updateMetadata)
     isPlayingRef.current = false;
     setIsTrackEnded(false);
-    if (audioPlayer && typeof audioPlayer.stopPlayback === 'function') {
-      await audioPlayer.stopPlayback();
+
+    if (currentSoundRef.current) {
+      try {
+        await currentSoundRef.current.stopAsync();
+        await currentSoundRef.current.unloadAsync();
+      } catch (error) {
+        handleError(error as Error, { toastMessage: 'Error unloading current sound during stop' });
+      } finally {
+        currentSoundRef.current = null;
+      }
     }
-    audioQueueRef.current.forEach(item => {
-      item.sound?.pause();
-      if (item.sound) item.sound.src = '';
-    });
+
+    // Unload any preloaded sounds in the queue properly
+    const unloadPromises = audioQueueRef.current
+      .filter(item => item.sound)
+      .map(async item => {
+        try {
+          if (item.sound) {
+            await item.sound.stopAsync(); // Stop first
+            await item.sound.unloadAsync(); // Then unload
+            item.sound = null;
+          }
+          item.isPreloaded = false;
+        } catch (error) {
+          handleError(error as Error, {
+            toastMessage: `Error unloading preloaded sound for track ${item.index}`,
+          });
+        }
+      });
+
+    await Promise.allSettled(unloadPromises);
+
     audioQueueRef.current = [];
     currentIndexRef.current = -1;
     updateMetadata(null);
     updateExposedState();
     return true;
-  }, [audioPlayer, updateExposedState, updateMetadata]);
+  }, [updateExposedState, updateMetadata]);
 
   const initializeQueueLogic = useCallback(
     (tracks: EnhancedAudioTrack[], _startIndex = 0): boolean => {
@@ -303,13 +369,27 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   actionsRef.current.stopPlayback = stopPlaybackLogic;
 
   actionsRef.current.playNextTrack = useCallback(async () => {
-    if (!isPlayingRef.current) return false;
-    const nextIndex = currentIndexRef.current + 1;
-    if (nextIndex >= audioQueueRef.current.length) {
-      await actionsRef.current.stopPlayback();
+    const currentIndex = currentIndexRef.current;
+    const nextIndex = currentIndex + 1;
+
+    try {
+      if (!isPlayingRef.current) {
+        return false;
+      }
+
+      if (nextIndex >= audioQueueRef.current.length) {
+        await actionsRef.current.stopPlayback();
+        return false;
+      }
+
+      return await playQueuedTrackLogic(nextIndex);
+    } catch (error) {
+      handleError(error as Error, { toastMessage: 'Error advancing to next track' });
+      if (nextIndex + 1 < audioQueueRef.current.length) {
+        return playQueuedTrackLogic(nextIndex + 1);
+      }
       return false;
     }
-    return await actionsRef.current.playQueuedTrack(nextIndex);
   }, []);
 
   actionsRef.current.startEnhancedPlayback = useCallback(
@@ -363,11 +443,11 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   // Effect to advance track when one ends
   useEffect(() => {
     if (!isTrackEnded || !isPlayingRef.current) return;
+
     setIsTrackEnded(false);
-    const timer = setTimeout(() => {
-      actionsRef.current.playNextTrack().catch(handleError);
-    }, 100);
-    return () => clearTimeout(timer);
+
+    // Call playNextTrack directly without a console.log
+    actionsRef.current.playNextTrack().catch(e => handleError(e as Error));
   }, [isTrackEnded]);
 
   // Effect to trigger preload when index changes

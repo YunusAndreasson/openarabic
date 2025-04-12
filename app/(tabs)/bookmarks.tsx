@@ -165,13 +165,6 @@ const BookmarkListItem = memo(
     studyWordsCount: number;
     isLoading: boolean;
   }) => {
-    console.log('[BookmarkListItem] Rendering', {
-      articleId: item.article_id,
-      isActive,
-      progress,
-      studyWordsCount,
-    });
-
     const colors = useColors();
     const playbackProgress = duration > 0 ? progress / duration : 0;
     const activeCardStyle = isActive
@@ -260,18 +253,6 @@ const BookmarkListItem = memo(
       (nextProps.isActive &&
         (prevProps.progress !== nextProps.progress || prevProps.duration !== nextProps.duration));
 
-    console.log('[BookmarkListItem] shouldUpdate check', {
-      articleId: nextProps.item.article_id,
-      shouldUpdate,
-      changes: {
-        isActive: prevProps.isActive !== nextProps.isActive,
-        studyWordsCount: prevProps.studyWordsCount !== nextProps.studyWordsCount,
-        isLoading: prevProps.isLoading !== nextProps.isLoading,
-        progress: prevProps.progress !== nextProps.progress,
-        duration: prevProps.duration !== nextProps.duration,
-      },
-    });
-
     return !shouldUpdate;
   }
 );
@@ -340,8 +321,6 @@ export default function BookmarksScreen(): JSX.Element {
   const renderId = useRef(0);
   renderId.current += 1;
   const currentRenderId = renderId.current;
-  console.log(`[BookmarksScreen] Render #${currentRenderId} START`);
-  // --- End Debugging Setup ---
 
   const colors = useColors();
   const { user } = useAuth();
@@ -371,9 +350,6 @@ export default function BookmarksScreen(): JSX.Element {
   const readingListQuery = useQuery({
     queryKey: ['readingList', user?.id],
     queryFn: () => {
-      console.log(`[BookmarksScreen #${currentRenderId}] Query readingList - START`, {
-        userId: user?.id,
-      });
       if (!user?.id) return Promise.resolve([]);
       return readingListService.getReadingList(user.id);
     },
@@ -389,7 +365,6 @@ export default function BookmarksScreen(): JSX.Element {
     data: readingList = [],
     isLoading: isReadingListLoading,
     isFetching: isReadingListFetching,
-    isError: isReadingListError,
   } = readingListQuery;
 
   const studyWordsQuery = useQuery({
@@ -409,26 +384,6 @@ export default function BookmarksScreen(): JSX.Element {
     gcTime: 300000,
   });
   const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = enhancedTracksQuery;
-
-  // Log query status changes
-  useEffect(() => {
-    console.log(`[BookmarksScreen #${currentRenderId}] Query Status Changed`, {
-      readingList: {
-        loading: isReadingListLoading,
-        fetching: isReadingListFetching,
-        error: isReadingListError,
-      },
-      studyWords: { loading: isStudyWordsLoading },
-      enhancedTracks: { loading: isEnhancedTracksLoading },
-    });
-  }, [
-    isReadingListLoading,
-    isReadingListFetching,
-    isReadingListError,
-    isStudyWordsLoading,
-    isEnhancedTracksLoading,
-  ]);
-  // --- End TanStack Query Hooks ---
 
   // --- Derived State & Memos (using direct state values) ---
   const metadataValues = useMemo(
@@ -457,28 +412,15 @@ export default function BookmarksScreen(): JSX.Element {
     const shouldBeLoading =
       isReadingListLoading || isReadingListFetching || isEnhancedTracksLoading; // Simplified logic based on primary queries
 
-    console.log(`[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Check`, {
-      shouldBeLoading,
-      isLoadingState,
-      deps: { isReadingListLoading, isReadingListFetching, isEnhancedTracksLoading },
-    });
-
     if (shouldBeLoading === isLoadingState) {
-      console.log(`[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Skip update`);
       return;
     }
 
     // Debounce the state update slightly
     const timeoutId = setTimeout(() => {
       if (shouldBeLoading) {
-        console.log(
-          `[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Calling startLoading()`
-        );
         startLoading();
       } else {
-        console.log(
-          `[BookmarksScreen #${currentRenderId}] EFFECT: Loading Sync - Calling stopLoading()`
-        );
         stopLoading();
       }
     }, 50); // Reduced debounce slightly
@@ -506,17 +448,10 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Focus Effect - uses stable actions.stopPlayback
   const focusEffectCallback = useCallback(() => {
-    console.log(`[BookmarksScreen #${currentRenderId}] EFFECT: Focus Effect RUN`, {
-      userId: user?.id,
-      isReadingListLoading,
-    });
     if (!user?.id) return;
 
     const existingData = queryClient.getQueryData(['readingList', user.id]);
     if (!existingData || isReadingListLoading) {
-      console.log(
-        `[BookmarksScreen #${currentRenderId}] EFFECT: Focus Effect - Prefetching readingList`
-      );
       queryClient.prefetchQuery({
         queryKey: ['readingList', user.id],
         queryFn: () => readingListService.getReadingList(user.id),
@@ -527,19 +462,11 @@ export default function BookmarksScreen(): JSX.Element {
     }
 
     return () => {
-      console.log(
-        `[BookmarksScreen #${currentRenderId}] EFFECT: Focus Effect CLEANUP - Stopping playback`
-      );
       actions.stopPlayback(); // Use stable action
     };
   }, [user?.id, queryClient, isReadingListLoading, actions.stopPlayback]); // Use stable action
   useFocusEffect(focusEffectCallback);
 
-  // Screen Animation Hook
-  console.log(`[BookmarksScreen #${currentRenderId}] Animation Hook Call`, {
-    dataReady: !isReadingListLoading && !!readingList,
-    isLoadingState,
-  });
   const { fadeInStyle } = useScreenAnimation(
     !isReadingListLoading && readingList.length > 0, // Ensure readingList is checked correctly
     isLoadingState
@@ -549,36 +476,57 @@ export default function BookmarksScreen(): JSX.Element {
   // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
+  // Ref to track last invocation time for debouncing
+  const lastActionTimeRef = useRef(0);
+  const ACTION_DEBOUNCE_MS = 1000; // Prevent actions within 1 second of each other
+
   const handlePlayAll = useCallback(() => {
-    console.log(`[BookmarksScreen #${currentRenderId}] ACTION: handlePlayAll`, {
-      isCurrentlyPlaying,
-    });
+    // Debounce mechanism to prevent multiple rapid calls
+    const now = Date.now();
+    if (now - lastActionTimeRef.current < ACTION_DEBOUNCE_MS) {
+      return;
+    }
+    lastActionTimeRef.current = now;
+
     if (isCurrentlyPlaying) {
       actions.stopPlayback(); // Use stable action
       setIsShuffleMode(false);
     } else if (enhancedTracks.length) {
       actions.startEnhancedPlayback(enhancedTracks, 0); // Use stable action
       setIsShuffleMode(false);
+    } else {
     }
-  }, [isCurrentlyPlaying, enhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]); // Use stable actions
+  }, [
+    isCurrentlyPlaying,
+    enhancedTracks,
+    actions.startEnhancedPlayback,
+    actions.stopPlayback,
+    currentRenderId,
+  ]); // Added currentRenderId for logging
 
   const handleShuffle = useCallback(() => {
-    console.log(`[BookmarksScreen #${currentRenderId}] ACTION: handleShuffle`, {
-      isCurrentlyPlaying,
-    });
+    // Debounce mechanism to prevent multiple rapid calls
+    const now = Date.now();
+    if (now - lastActionTimeRef.current < ACTION_DEBOUNCE_MS) {
+      return;
+    }
+    lastActionTimeRef.current = now;
+
     if (isCurrentlyPlaying) {
       actions.stopPlayback(); // Use stable action
       setIsShuffleMode(false);
     } else if (enhancedTracks.length) {
       actions.startEnhancedShufflePlayback(enhancedTracks); // Use stable action
       setIsShuffleMode(true);
+    } else {
     }
   }, [
     isCurrentlyPlaying,
     enhancedTracks,
     actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
-  ]); // Use stable actions
+    currentRenderId, // Added currentRenderId for logging
+  ]);
 
   const getArticleStudyWordsCount = useCallback(
     (articleId: number): number => {
@@ -592,12 +540,10 @@ export default function BookmarksScreen(): JSX.Element {
 
   // --- Render Logic ---
   if (isReadingListLoading || isEnhancedTracksLoading) {
-    console.log(`[BookmarksScreen #${currentRenderId}] Rendering LoadingScreen`);
     return <LoadingScreen />;
   }
 
   if (readingList.length === 0) {
-    console.log(`[BookmarksScreen #${currentRenderId}] Rendering EmptyState`);
     return (
       <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView
@@ -630,7 +576,6 @@ export default function BookmarksScreen(): JSX.Element {
     );
   }
 
-  console.log(`[BookmarksScreen #${currentRenderId}] Rendering FlashList`);
   return (
     <Animated.View style={[styles.flexOne, fadeInStyle]}>
       <ThemedView
