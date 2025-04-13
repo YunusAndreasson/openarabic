@@ -1,0 +1,50 @@
+name: Expo EAS Build and Update
+
+on:
+  push:
+    branches:
+      - root
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI: 1
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Setup Expo and EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+          packager: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Install additional Expo and Babel packages
+        run: |
+          pnpm add -D babel-preset-expo @babel/plugin-transform-runtime metro-react-native-babel-preset
+          pnpm add expo-updates@~0.27.4 expo-asset
+
+      - name: Clean cache
+        run: |
+          pnpm store prune
+          rm -rf node_modules/.cache
+
+      - name: Publish update to Expo Go
+        run: eas update --auto
