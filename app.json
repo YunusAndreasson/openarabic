@@ -9,10 +9,16 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.openarabic.app"
+      "bundleIdentifier": "com.openarabic.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -43,6 +49,21 @@
     },
     "splash": {
       "backgroundColor": "#1E1E1E"
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "644480e0-3ac0-4ce6-b6ca-b950f62ca438"
+      }
+    },
+    "owner": "edenmind",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/644480e0-3ac0-4ce6-b6ca-b950f62ca438"
     }
   }
 }

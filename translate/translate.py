@@ -578,7 +578,7 @@ For each subtask (sentence splitting, diacritics, word analysis, verification), 
 # Function for splitting text into sentences
 SPLIT_TEXT_FUNCTION = {
     "name": "split_text_into_sentences",
-    "description": "Split the Arabic text into small, learner-friendly units and analyze content metadata",
+    "description": "Split the Arabic text into as small units as possiblt and analyze content metadata",
     "parameters": {
         "type": "object",
         "properties": {
@@ -597,7 +597,7 @@ SPLIT_TEXT_FUNCTION = {
             },
             "sentences": {
                 "type": "array",
-                "description": "Array of small, manageable text units split from the input text",
+                "description": "Array of very small text units split from the input text",
                 "items": {"type": "string"},
             },
             "unit_types": {
@@ -659,33 +659,29 @@ SENTENCE_SPLITTING_USER_PROMPT = (
     CONTENT_ANALYSIS_PROMPT
     + """
 
-Now, split the text into small, learner-friendly units.
+Now, split the text into verysmall, learner-friendly units.
 
 Rules for Language Learning Focus:
-1. Prioritize shorter units (5-10 words) that maintain complete meaning
-2. Split at natural pause points:
-   - After complete thoughts
-   - At coordinating conjunctions (و، ف، ثم)
-   - Between independent clauses
-   - At punctuation marks
-3. Keep these units together:
-   - Subject-verb pairs
-   - Noun-adjective pairs
-   - Idiomatic expressions
-   - Short conditional statements
-4. Special handling:
-   - Preserve Quranic verses as single units
-   - Split long narrator chains at natural breaks
-   - Keep short prayers/supplications intact
-5. Mark unit types for learning progression:
-   - simple_clause: Basic subject-verb statements
-   - compound: Coordinated clauses
-   - conditional: If-then statements
-   - quote: Reported speech
-   - verse: Quranic verses
-   - phrase: Other grammatical units
+1. Keep units very short (3-7 words) while preserving meaning
+2. Split at these points:
+   - After each complete thought
+   - At conjunctions (و، ف، ثم)
+   - Between clauses
+   - At punctuation
+   - After 3-7 words
+3. Handle special cases:
+   - Keep Quran verses together
+   - Break up long chains
+   - Keep brief prayers whole
+4. Mark unit types:
+   - simple: Basic statements
+   - compound: Multiple clauses
+   - condition: If-then
+   - quote: Speech
+   - verse: Quran
+   - phrase: Other
 
-Return each unit with its type in the specified JSON format.
+Return units in JSON format.
 
 Input text: 
 """
@@ -727,6 +723,8 @@ WORD_BY_WORD_USER_PROMPT = (
 2. Diacritical text
 3. Full translation
 4. Previous uncertainty notes
+
+IMPORTANT: For the Arabic conjunction "و" (wa/and), do NOT separate it as its own word if it appears attached to the following word in the original text. Instead, treat connected words like "وشيخ" as a single word. Only treat "و" as a separate word if it appears standalone with spaces around it.
 
 Per word, specify:
 - Arabic with diacritics
@@ -1534,12 +1532,14 @@ def process_batch(
                 if resolved:
                     notes.append("- Resolved:")
                     for r in resolved:
-                        notes.append(f"  * {r['explanation']}")
+                        notes.append(
+                            f"  * {r.get('explanation', 'Uncertainty resolved but explanation missing')}"
+                        )
                 if remaining:
                     notes.append("- Remaining:")
                     for r in remaining:
                         notes.append(
-                            f"  * {r['description']} ({r['reason_unresolved']})"
+                            f"  * {r.get('description', 'Unknown issue')} ({r.get('reason_unresolved', 'No reason provided')})"
                         )
 
             # Process refined word translations
@@ -1582,7 +1582,9 @@ def process_batch(
                 verification_status="Refined"
                 if refinement.get("changes_made")
                 else "Verified",
-                verification_issues=[u["description"] for u in remaining]
+                verification_issues=[
+                    u.get("description", "Unspecified issue") for u in remaining
+                ]
                 if remaining
                 else None,
             )

@@ -24,8 +24,8 @@ import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
 
@@ -361,8 +361,7 @@ export default function BookmarksScreen(): JSX.Element {
     gcTime: 300000,
     retry: 3,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
-    placeholderData: () =>
-      queryClient.getQueryData<ReadingListItem[]>(['readingList', user?.id]) || [],
+    placeholderData: [], // Ensure we always have an array, even if empty
   });
   const {
     data: readingList = [],
@@ -372,7 +371,10 @@ export default function BookmarksScreen(): JSX.Element {
 
   const studyWordsQuery = useQuery({
     queryKey: ['studyWordsCounts', user?.id],
-    queryFn: () => studyWordsFSRSService.getFSRSWords(user!.id),
+    queryFn: () => {
+      if (!user?.id) return Promise.resolve([]);
+      return studyWordsFSRSService.getFSRSWords(user.id);
+    },
     enabled: !!user?.id,
     staleTime: 60000,
     gcTime: 300000,
@@ -381,7 +383,10 @@ export default function BookmarksScreen(): JSX.Element {
 
   const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],
-    queryFn: () => enhancedAudioService.getReadingListEnhancedTracks(user!.id),
+    queryFn: () => {
+      if (!user?.id) return Promise.resolve([]);
+      return enhancedAudioService.getReadingListEnhancedTracks(user.id);
+    },
     enabled: !!user?.id,
     staleTime: 60000,
     gcTime: 300000,
@@ -491,6 +496,32 @@ export default function BookmarksScreen(): JSX.Element {
   const lastActionTimeRef = useRef(0);
   const ACTION_DEBOUNCE_MS = 1000; // Prevent actions within 1 second of each other
 
+  const getArticleStudyWordsCount = useCallback(
+    (articleId: number): number => {
+      // Add debug logging
+      console.log('Calculating study words for article:', articleId, {
+        tracksForWordCounts: tracksForWordCounts.length,
+        playerCount: actions.getStudyWordsCount(articleId),
+      });
+
+      // First check tracks directly
+      if (tracksForWordCounts.length > 0) {
+        const studyWordTracksCount = tracksForWordCounts.filter(
+          track =>
+            track.articleId === articleId &&
+            (track.type === 'study_word_english' || track.type === 'study_word_arabic')
+        ).length;
+
+        const count = Math.floor(studyWordTracksCount / 2);
+        if (count > 0) return count;
+      }
+
+      // Fallback to player count
+      return actions.getStudyWordsCount(articleId);
+    },
+    [actions.getStudyWordsCount, tracksForWordCounts]
+  );
+
   const handlePlayAll = useCallback(() => {
     // Debounce mechanism to prevent multiple rapid calls
     const now = Date.now();
@@ -500,20 +531,23 @@ export default function BookmarksScreen(): JSX.Element {
     lastActionTimeRef.current = now;
 
     if (isCurrentlyPlaying) {
-      actions.stopPlayback(); // Use stable action
+      actions.stopPlayback();
       setIsShuffleMode(false);
     } else if (enhancedTracks.length) {
-      actions.startEnhancedPlayback(enhancedTracks, 0); // Use stable action
-      setIsShuffleMode(false);
+      console.log('Starting playback with tracks:', {
+        trackCount: enhancedTracks.length,
+        firstTrack: enhancedTracks[0],
+      });
+      try {
+        actions.startEnhancedPlayback(enhancedTracks, 0);
+        setIsShuffleMode(false);
+      } catch (error) {
+        console.error('Failed to start playback:', error);
+      }
     } else {
+      console.log('No tracks available for playback');
     }
-  }, [
-    isCurrentlyPlaying,
-    enhancedTracks,
-    actions.startEnhancedPlayback,
-    actions.stopPlayback,
-    currentRenderId,
-  ]); // Added currentRenderId for logging
+  }, [isCurrentlyPlaying, enhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]);
 
   const handleShuffle = useCallback(() => {
     // Debounce mechanism to prevent multiple rapid calls
@@ -529,76 +563,52 @@ export default function BookmarksScreen(): JSX.Element {
     } else if (enhancedTracks.length) {
       actions.startEnhancedShufflePlayback(enhancedTracks); // Use stable action
       setIsShuffleMode(true);
-    } else {
     }
   }, [
     isCurrentlyPlaying,
     enhancedTracks,
     actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
-    currentRenderId, // Added currentRenderId for logging
+    currentRenderId,
   ]);
-
-  const getArticleStudyWordsCount = useCallback(
-    (articleId: number): number => {
-      // First use the stable action from the player
-      const countFromPlayer = actions.getStudyWordsCount(articleId);
-
-      // If no count is available from the player, calculate it directly from our saved tracks data
-      if (countFromPlayer === 0 && tracksForWordCounts.length > 0) {
-        const studyWordTracksCount = tracksForWordCounts.filter(
-          track =>
-            track.articleId === articleId &&
-            (track.type === 'study_word_english' || track.type === 'study_word_arabic')
-        ).length;
-
-        // Use Math.floor to ensure we always get a whole number
-        return Math.floor(studyWordTracksCount / 2);
-      }
-
-      return countFromPlayer;
-    },
-    [actions.getStudyWordsCount, tracksForWordCounts]
-  );
   // --- End Event Handlers ---
 
   const insets = useSafeAreaInsets();
 
   // --- Render Logic ---
-  if (isReadingListLoading || isEnhancedTracksLoading) {
+  const isLoading = isReadingListLoading || isEnhancedTracksLoading;
+  const hasNoBookmarks = !isLoading && (!readingList || readingList.length === 0);
+
+  if (isLoading) {
     return <LoadingScreen />;
   }
 
-  if (readingList.length === 0) {
+  if (hasNoBookmarks) {
     return (
-      <Animated.View style={[styles.flexOne, fadeInStyle]}>
+      <ThemedView
+        style={styles.container}
+        includeBottomInset={false}
+        safeAreaEdges={['left', 'right']}
+      >
         <ThemedView
-          style={styles.container}
+          useSafeArea={false}
           includeBottomInset={false}
-          safeAreaEdges={['left', 'right']}
+          style={styles.flexOne}
+          contentContainerStyle={[
+            styles.listContentWithHeader,
+            { paddingTop: getHeaderHeight(insets) },
+          ]}
         >
-          <ThemedView
-            useSafeArea={false}
-            includeBottomInset={false}
-            style={styles.flexOne}
-            contentContainerStyle={[
-              styles.listContentWithHeader,
-              { paddingTop: getHeaderHeight(insets) },
-            ]}
-          >
-            <EmptyState
-              title="No Bookmarks Found"
-              description="Bookmark articles to listen to them later or save them for reference."
-              actionText="Browse Articles"
-              iconType="name"
-              icon="book"
-              onAction={() => router.push('/(tabs)')}
-              colors={colors}
-            />
-          </ThemedView>
-          <PageHeader title="Bookmarks" />
+          <EmptyState
+            title="No Bookmarks Found"
+            description="Bookmark articles to listen to them later or save them for reference."
+            iconType="name"
+            icon="book"
+            colors={colors}
+          />
         </ThemedView>
-      </Animated.View>
+        <PageHeader title="Bookmarks" />
+      </ThemedView>
     );
   }
 

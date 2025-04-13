@@ -1,0 +1,15 @@
+article_id,title,timestamp,total_sentences,sentences_with_audio,total_words,words_with_timing,timing_percentage,quality
+35,"Biography of a Renowned Islamic Scholar",2025-04-12T17:10:16.687914+00:00,15,15,255,255,100.0,EXCELLENT
+37,"Biography of a Renowned Islamic Scholar",2025-04-12T18:17:49.549738+00:00,15,15,13,0,255,248,97.3,EXCELLENT
+41,"Biography of a Prominent Islamic Scholar",2025-04-12T20:01:42.129865+00:00,15,15,15,0,231,231,100.0,EXCELLENT
+43,"Biography of a Prominent Islamic Scholar",2025-04-12T20:40:12.446517+00:00,15,15,15,0,231,231,100.0,EXCELLENT
+44,"Biography of a Prominent Islamic Scholar",2025-04-12T21:23:24.068251+00:00,15,15,15,0,231,231,100.0,EXCELLENT
+47,"Biography of a Prominent Islamic Scholar",2025-04-12T22:12:24.400039+00:00,15,15,15,0,231,231,100.0,EXCELLENT
+49,"Biography of a Prominent Islamic Scholar",2025-04-12T22:33:13.735000+00:00,2,2,2,0,37,37,100.0,EXCELLENT
+50,"Biography of a Prominent Islamic Scholar",2025-04-12T22:41:36.697486+00:00,2,2,2,0,37,37,100.0,EXCELLENT
+51,"Biography of a Prominent Islamic Scholar",2025-04-12T22:48:21.595448+00:00,2,2,2,0,37,37,100.0,EXCELLENT
+53,"Biography of a Prominent Islamic Scholar",2025-04-12T23:02:29.362296+00:00,2,2,2,0,37,37,100.0,EXCELLENT
+54,"Biography of a Prominent Islamic Scholar",2025-04-12T23:09:32.899308+00:00,2,2,2,0,37,37,100.0,EXCELLENT
+55,"Biography of a Prominent Islamic Scholar",2025-04-12T23:29:41.060099+00:00,15,15,15,0,231,231,100.0,EXCELLENT
+56,"Divine Wisdom in Dietary Laws",2025-04-12T23:55:20.461061+00:00,31,30,30,0,179,174,97.2,EXCELLENT
+57,"Fear of Hypocrisy Among Believers",2025-04-13T00:03:18.561926+00:00,8,8,8,0,58,58,100.0,EXCELLENT

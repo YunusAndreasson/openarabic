@@ -13,6 +13,7 @@ from mutagen.mp3 import MP3
 import io
 import time
 import functools
+import re
 
 
 # Execute set_keys.py to set environment variables
@@ -50,8 +51,11 @@ WORD_TYPE_MAPPING = {
 }
 
 # Constants for voice IDs
-ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic
-ENGLISH_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Voice ID for English (Rachel)
+ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic sentences
+ARABIC_WORD_VOICE_ID = (
+    "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
+)
+ENGLISH_VOICE_ID = "pqHfZKP75CvOlQylNhV4"  # Voice ID for English
 
 # Add after other constants
 AUDIO_CACHE_DIR = os.path.join(
@@ -93,42 +97,152 @@ def retry_operation(max_attempts=3, delay=1, backoff=2):
     return decorator
 
 
-# Apply retry to Supabase and ElevenLabs operations
+@retry_operation(max_attempts=3, delay=1, backoff=2)
+def check_file_exists(bucket: str, file_path: str) -> bool:
+    """Check if a file exists in Supabase storage using multiple methods."""
+    # Method 1: Using list
+    try:
+        # Get the directory path and filename
+        path_parts = file_path.rsplit("/", 1)
+
+        if len(path_parts) > 1:
+            dir_path, filename = path_parts
+            # List files in directory with search option
+            response = supabase.storage.from_(bucket).list(dir_path)
+        else:
+            # If no directory part, search in root
+            filename = path_parts[0]
+            response = supabase.storage.from_(bucket).list()
+
+        # Debug the response
+        if not response:
+            print(f"Empty response when listing files in {bucket}")
+        else:
+            # Print first item format to help debug
+            if len(response) > 0:
+                print(f"File list response format sample: {type(response[0])}")
+                if isinstance(response[0], dict):
+                    print(f"Sample keys: {response[0].keys()}")
+
+            # Check if the file exists in the response
+            for item in response:
+                if isinstance(item, dict) and item.get("name") == filename:
+                    print(f"Found file {filename} in {bucket} using list method")
+                    return True
+                elif isinstance(item, str) and item == filename:
+                    print(f"Found file {filename} in {bucket} using list method")
+                    return True
+    except Exception as e:
+        print(f"List method failed for {file_path}: {str(e)}")
+
+    # Method 2: Using signed URL creation
+    try:
+        # Try to get the file metadata using createSignedUrl with very short expiry
+        # This is a lightweight way to check existence
+        supabase.storage.from_(bucket).create_signed_url(
+            file_path, 1
+        )  # 1 second expiry
+        print(f"Found file {file_path} in {bucket} using signed URL method")
+        return True
+    except Exception as e:
+        if "The specified key does not exist" in str(e) or "Object not found" in str(e):
+            print(f"File {file_path} confirmed not found in {bucket}")
+            return False
+        print(f"Signed URL method failed: {str(e)}")
+
+    # Method 3: Final fallback - try to get the public URL and retrieve headers
+    try:
+        # Get public URL then try a HEAD request
+        public_url = supabase.storage.from_(bucket).get_public_url(file_path)
+        if public_url:
+            print(f"Found file {file_path} in {bucket} using public URL method")
+            return True
+    except Exception as e:
+        print(f"Public URL method failed for {file_path}: {str(e)}")
+        return False
+
+
 @retry_operation(max_attempts=3, delay=1, backoff=2)
 def upload_to_storage(
     bucket: str, file_path: str, file_data, content_type: str = "audio/mpeg"
 ):
-    """Upload a file to Supabase storage with retries."""
+    """Upload a file to Supabase storage with retries and return the public URL."""
+    # First check if file already exists
+    if check_file_exists(bucket, file_path):
+        print(f"File {file_path} already exists in storage")
+        return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+
+    # If file doesn't exist, upload it
     try:
+        print(f"Uploading file {file_path} to {bucket}...")
         supabase.storage.from_(bucket).upload(
             file_path, file_data, file_options={"content-type": content_type}
         )
-        return True
+
+        # Give storage a moment to process
+        time.sleep(0.5)
+
+        # Verify the file was uploaded successfully
+        for attempt in range(3):
+            if check_file_exists(bucket, file_path):
+                public_url = (
+                    f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+                )
+                print(f"Successfully uploaded and verified {file_path} to {bucket}")
+                return public_url
+            print(f"Upload verification attempt {attempt + 1} failed, retrying...")
+            time.sleep(1)  # Wait a bit longer before next check
+
+        raise Exception(
+            f"File upload verification failed after 3 attempts for {file_path}"
+        )
     except Exception as e:
-        # If error is 409 (already exists), that's fine
+        # If error is 409 (already exists), that's fine - another process may have uploaded it
         if hasattr(e, "statusCode") and e.statusCode == 409:
-            print("File already exists in storage, using existing URL")
-            return True
+            return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
         # Otherwise, propagate the exception to trigger retry
+        print(f"Upload failed: {str(e)}")
         raise
 
 
 @retry_operation(max_attempts=3, delay=1, backoff=2)
-def generate_speech(text: str, voice_id: str, speed: float = 1.0):
+def generate_speech(
+    text: str,
+    voice_id: str,
+    speed: float = 1.0,
+    previous_text: str = None,
+    next_text: str = None,
+    voice_settings: Optional[VoiceSettings] = None,
+):
     """Generate speech using ElevenLabs API with retries."""
-    audio_generator = eleven_labs.text_to_speech.convert(
-        text=text,
-        voice_id=voice_id,
-        model_id="eleven_multilingual_v2",
-        output_format="mp3_44100_128",
-        voice_settings=VoiceSettings(
-            stability=0.8,
-            similarity_boost=0.9,
+    # Add SSML tags for better language handling if it's Arabic
+    if voice_id == ARABIC_VOICE_ID:
+        text = f'<speak><lang xml:lang="ar-AR">{text}</lang></speak>'
+
+    # Use provided voice settings or default ones
+    if voice_settings is None:
+        voice_settings = VoiceSettings(
+            stability=0.9,  # Increased for more consistent output
+            similarity_boost=0.8,  # Reduced for better pronunciation
             style=0.0,
             use_speaker_boost=True,
             speed=speed,
-        ),
-    )
+        )
+
+    # Base parameters
+    params = {
+        "text": text,
+        "voice_id": voice_id,
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "voice_settings": voice_settings,
+        "apply_text_normalization": "on",
+        "previous_text": previous_text,
+        "next_text": next_text,
+        "seed": hash(text) % 4294967295,  # Consistent seed for same text
+    }
+
+    audio_generator = eleven_labs.text_to_speech.convert(**params)
 
     if not audio_generator:
         raise ValueError("Empty audio response from ElevenLabs API")
@@ -146,21 +260,38 @@ def generate_speech(text: str, voice_id: str, speed: float = 1.0):
 
 
 @retry_operation(max_attempts=3, delay=1, backoff=2)
-def generate_speech_with_timestamps(text: str, voice_id: str, speed: float = 0.8):
+def generate_speech_with_timestamps(
+    text: str,
+    voice_id: str,
+    speed: float = 0.8,
+    previous_text: str = None,
+    next_text: str = None,
+):
     """Generate speech with timestamps using ElevenLabs API with retries."""
-    audio_response = eleven_labs.text_to_speech.convert_with_timestamps(
-        text=text,
-        voice_id=voice_id,
-        model_id="eleven_multilingual_v2",
-        output_format="mp3_44100_128",
-        voice_settings=VoiceSettings(
-            stability=0.8,
-            similarity_boost=0.9,
+    # Add SSML tags for better language handling if it's Arabic
+    if voice_id == ARABIC_VOICE_ID:
+        text = f'<speak><lang xml:lang="ar-AR">{text}</lang></speak>'
+
+    # Base parameters
+    params = {
+        "text": text,
+        "voice_id": voice_id,
+        "model_id": "eleven_multilingual_v2",
+        "output_format": "mp3_44100_128",
+        "voice_settings": VoiceSettings(
+            stability=0.9,
+            similarity_boost=0.8,
             style=0.0,
             use_speaker_boost=True,
             speed=speed,
         ),
-    )
+        "apply_text_normalization": "on",
+        "previous_text": previous_text,
+        "next_text": next_text,
+        "seed": hash(text) % 4294967295,
+    }
+
+    audio_response = eleven_labs.text_to_speech.convert_with_timestamps(**params)
 
     if not audio_response:
         raise ValueError("Empty audio response from ElevenLabs API")
@@ -185,369 +316,6 @@ def _remove_final_haraka(word: str) -> str:
 
     # Reconstruct the word after stripping final diacritics
     return "".join(chars)
-
-
-def generate_content_hash(data: Dict) -> str:
-    """Generate a unique hash for the article content."""
-    content = json.dumps(data, sort_keys=True)
-    return hashlib.sha256(content.encode()).hexdigest()
-
-
-def check_article_exists(content_hash: str) -> tuple[Optional[int], Optional[str]]:
-    """Check if an article with this content hash already exists and return its ID and audio_url."""
-    try:
-        result = (
-            supabase.table("articles")
-            .select("id, audio_url")
-            .eq("content_hash", content_hash)
-            .execute()
-        )
-        if result.data:
-            return result.data[0]["id"], result.data[0].get("audio_url")
-        return None, None
-    except Exception as e:
-        if "content_hash" in str(e):
-            # Column doesn't exist yet, so no duplicates possible
-            return None, None
-        raise e
-
-
-def generate_audio_filename() -> str:
-    """Generate a unique filename for the audio file."""
-    return f"{uuid.uuid4()}.mp3"
-
-
-def validate_mp3(audio_data: bytes) -> bool:
-    """Validate that the audio data is a valid MP3 file."""
-    try:
-        # Create a BytesIO object to read the audio data
-        audio_file = io.BytesIO(audio_data)
-
-        # Try to load it as an MP3
-        mp3 = MP3(audio_file)
-
-        # Check if it has basic MP3 attributes
-        if mp3.info.length > 0 and mp3.info.bitrate > 0:
-            print(
-                f"✅ Valid MP3: Length={mp3.info.length:.2f}s, Bitrate={mp3.info.bitrate / 1000:.0f}kbps"
-            )
-            return True
-        else:
-            print("❌ Invalid MP3: Missing audio properties")
-            return False
-    except Exception as e:
-        print(f"❌ Invalid MP3: {str(e)}")
-        return False
-
-
-def get_cache_key(word: str, is_arabic: bool) -> str:
-    """Generate a unique cache key for a word."""
-    # Create a hash of the word to use as filename
-    word_hash = hashlib.sha256(word.encode()).hexdigest()[:12]
-    prefix = "ar" if is_arabic else "en"
-    return f"{prefix}_{word_hash}.mp3"
-
-
-def get_or_generate_word_audio(word: str, is_arabic: bool) -> Optional[str]:
-    """Get cached audio URL or generate new one for a word."""
-    cache_key = get_cache_key(word, is_arabic)
-    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
-    storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
-
-    # Check if file exists in cache
-    cache_valid = False
-    if os.path.exists(cache_path):
-        try:
-            # Verify the cached file is valid
-            if validate_mp3(open(cache_path, "rb").read()):
-                # Try to upload with retries
-                try:
-                    with open(cache_path, "rb") as f:
-                        upload_to_storage("audio", cache_key, f)
-                except Exception as e:
-                    print(f"Warning: Cache upload failed despite retries: {str(e)}")
-                    # Continue anyway - we have the file locally
-                cache_valid = True
-                return storage_url
-            else:
-                # Invalid cache file, remove it
-                os.remove(cache_path)
-                print(f"Removed invalid cache file for word: {word}")
-        except Exception as e:
-            print(f"Error with cache file: {str(e)}")
-            if os.path.exists(cache_path):
-                os.remove(cache_path)
-                print(f"Removed problematic cache file for word: {word}")
-
-    # If we reach here, we need to generate new audio
-    if not cache_valid:
-        print(f"Generating new audio for word: {word}")
-        if is_arabic:
-            result = generate_arabic_word_audio(word, cache_key)
-        else:
-            result = generate_english_word_audio(word, cache_key)
-
-        if result and result.get("url"):
-            # Save to cache
-            temp_path = os.path.join(AUDIO_TEMP_DIR, cache_key)
-            if os.path.exists(temp_path):
-                try:
-                    shutil.copy2(temp_path, cache_path)
-                    print(
-                        f"✅ Cached audio for {'Arabic' if is_arabic else 'English'} word: {word}"
-                    )
-                    # Only remove temp file if successfully copied to cache
-                    os.remove(temp_path)
-                except Exception as e:
-                    print(f"Error caching audio file: {str(e)}")
-                    # Don't remove temp file if copying failed - we can use it directly
-            return result["url"]
-
-    return None
-
-
-def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
-    """Generate audio file for an Arabic word using ElevenLabs API."""
-    temp_audio_path = None
-    try:
-        print(f"\nGenerating Arabic audio for word: '{word}'")
-
-        try:
-            audio_response = generate_speech(word, ARABIC_VOICE_ID, speed=0.8)
-        except Exception as e:
-            print(f"Error generating Arabic speech: {str(e)}")
-            return None
-
-        # Validate the MP3 data
-        if not validate_mp3(audio_response):
-            print(f"Skipping upload of invalid MP3 file for word '{word}'")
-            return None
-
-        # Save and upload the audio file
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-
-        print(f"Saving temp file to: {temp_audio_path}")
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_response)
-
-        print("Uploading to Supabase storage...")
-        try:
-            with open(temp_audio_path, "rb") as f:
-                upload_to_storage("audio", filename, f)
-        except Exception as e:
-            print(f"Upload failed despite retries: {str(e)}")
-            return None
-
-        # Don't remove the temp file - it will be used for caching in get_or_generate_word_audio
-        url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-        print(f"✅ Successfully generated and uploaded Arabic audio. URL: {url}")
-        return {"url": url}
-
-    except Exception as e:
-        print(f"❌ Error generating/uploading Arabic word audio for '{word}': {str(e)}")
-        if temp_audio_path and os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-        return None
-
-
-def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
-    """Generate audio file for an English word using ElevenLabs API."""
-    temp_audio_path = None
-    try:
-        print(f"\nGenerating English audio for word: '{word}'")
-
-        try:
-            audio_response = generate_speech(word, ENGLISH_VOICE_ID, speed=1.0)
-        except Exception as e:
-            print(f"Error generating English speech: {str(e)}")
-            return None
-
-        # Validate the MP3 data
-        if not validate_mp3(audio_response):
-            print(f"Skipping upload of invalid MP3 file for word '{word}'")
-            return None
-
-        # Save and upload the audio file
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-
-        print(f"Saving temp file to: {temp_audio_path}")
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_response)
-
-        print("Uploading to Supabase storage...")
-        try:
-            with open(temp_audio_path, "rb") as f:
-                upload_to_storage("audio", filename, f)
-        except Exception as e:
-            print(f"Upload failed despite retries: {str(e)}")
-            return None
-
-        # Don't remove the temp file - it will be used for caching in get_or_generate_word_audio
-        url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-        print(f"✅ Successfully generated and uploaded English audio. URL: {url}")
-        return {"url": url}
-
-    except Exception as e:
-        print(
-            f"❌ Error generating/uploading English word audio for '{word}': {str(e)}"
-        )
-        if temp_audio_path and os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-        return None
-
-
-def generate_sentence_audio(text: str, filename: str) -> Optional[Dict]:
-    """Generate audio file for an Arabic sentence using ElevenLabs API with word timings."""
-    temp_audio_path = None
-    try:
-        print(f"\nGenerating sentence audio with timestamps for: '{text}'")
-
-        try:
-            audio_response = generate_speech_with_timestamps(text, ARABIC_VOICE_ID)
-        except Exception as e:
-            print(f"Error generating sentence audio: {str(e)}")
-            return None
-
-        # Extract audio data according to API documentation
-        if hasattr(audio_response, "dict"):
-            # Handle Pydantic model response
-            response_dict = audio_response.dict()
-            audio_base64 = response_dict.get("audio_base64")
-            if not audio_base64:
-                print("Error: No audio_base64 found in response")
-                print("Response structure:", response_dict.keys())
-                return None
-            audio_data = base64.b64decode(audio_base64)
-        elif isinstance(audio_response, dict):
-            # Handle direct dictionary response
-            audio_base64 = audio_response.get("audio_base64")
-            if not audio_base64:
-                print("Error: No audio_base64 found in response")
-                print("Response structure:", audio_response.keys())
-                return None
-            audio_data = base64.b64decode(audio_base64)
-        else:
-            print(f"Unexpected response type: {type(audio_response)}")
-            print("Available attributes:", dir(audio_response))
-            return None
-
-        # Validate the MP3 data
-        if not validate_mp3(audio_data):
-            print("Skipping upload of invalid MP3 file")
-            return None
-
-        # Save and upload the audio file using consistent path handling
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_data)
-
-        try:
-            with open(temp_audio_path, "rb") as f:
-                upload_to_storage("audio", filename, f)
-        except Exception as e:
-            print(f"Upload failed despite retries: {str(e)}")
-            return None
-
-        os.remove(temp_audio_path)
-        storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
-
-        # Process word timings from the alignment data
-        word_timings = []
-        alignment = None
-
-        if hasattr(audio_response, "dict"):
-            response_dict = audio_response.dict()
-            alignment = response_dict.get("alignment")
-        elif isinstance(audio_response, dict):
-            alignment = audio_response.get("alignment")
-
-        if not alignment:
-            print("❌ No alignment data found in response")
-            print("Response type:", type(audio_response))
-            if hasattr(audio_response, "dict"):
-                print("Response keys:", audio_response.dict().keys())
-            elif isinstance(audio_response, dict):
-                print("Response keys:", audio_response.keys())
-            else:
-                print("Available attributes:", dir(audio_response))
-            raise ValueError("Missing alignment data in API response")
-
-        print("Found alignment data")
-        chars = alignment.get("characters", [])
-        start_times = alignment.get("character_start_times_seconds", [])
-        end_times = alignment.get("character_end_times_seconds", [])
-
-        if not (
-            chars
-            and start_times
-            and end_times
-            and len(chars) == len(start_times) == len(end_times)
-        ):
-            print("❌ Invalid alignment data structure:")
-            print(f"Characters: {len(chars)}")
-            print(f"Start times: {len(start_times)}")
-            print(f"End times: {len(end_times)}")
-            raise ValueError("Invalid or missing timing data in API response")
-
-        print(f"Processing {len(chars)} characters for timing extraction")
-
-        current_word = ""
-        current_word_start_time = None
-
-        for i, char in enumerate(chars):
-            is_word_boundary = char == " " or i == len(chars) - 1
-
-            if is_word_boundary:
-                if i == len(chars) - 1 and char != " ":
-                    current_word += char
-
-                if current_word:
-                    word_end_idx = i if char == " " else i + 1
-                    word_end_time = end_times[word_end_idx - 1]
-
-                    if (
-                        current_word_start_time is not None
-                        and current_word_start_time < word_end_time
-                    ):
-                        word_timings.append(
-                            {
-                                "word": current_word,
-                                "start_time": str(current_word_start_time),
-                                "end_time": str(word_end_time),
-                            }
-                        )
-                        print(
-                            f"Added timing for word: {current_word} ({current_word_start_time:.2f}s - {word_end_time:.2f}s)"
-                        )
-
-                current_word = ""
-                current_word_start_time = None
-            else:
-                if not current_word:
-                    current_word_start_time = start_times[i]
-                current_word += char
-
-        if not word_timings:
-            raise ValueError("Failed to extract any word timings from the response")
-
-        print(f"\n✅ Successfully extracted {len(word_timings)} word timings")
-        print("First few word timings:")
-        for timing in word_timings[:3]:
-            print(
-                f"  {timing['word']}: {timing['start_time']}s - {timing['end_time']}s"
-            )
-
-        return {"url": storage_url, "word_timings": word_timings}
-
-    except Exception as e:
-        print(f"\n❌ Error generating/uploading sentence audio: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
-        if temp_audio_path and os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-        return None
 
 
 def _normalize_arabic_word(word: str) -> str:
@@ -600,61 +368,873 @@ def _normalize_arabic_word(word: str) -> str:
     return "".join(chars)
 
 
+def generate_content_hash(data: Dict) -> str:
+    """Generate a unique hash for the article content."""
+    content = json.dumps(data, sort_keys=True)
+    return hashlib.sha256(content.encode()).hexdigest()
+
+
+def check_article_exists(content_hash: str) -> tuple[Optional[int], Optional[str]]:
+    """Check if an article with this content hash already exists and return its ID and audio_url."""
+    try:
+        result = (
+            supabase.table("articles")
+            .select("id, audio_url")
+            .eq("content_hash", content_hash)
+            .execute()
+        )
+        if result.data:
+            return result.data[0]["id"], result.data[0].get("audio_url")
+        return None, None
+    except Exception as e:
+        if "content_hash" in str(e):
+            # Column doesn't exist yet, so no duplicates possible
+            return None, None
+        raise e
+
+
+def generate_audio_filename() -> str:
+    """Generate a unique filename for the audio file."""
+    return f"{uuid.uuid4()}.mp3"
+
+
+def validate_mp3(audio_data: bytes, is_cached_file: bool = False) -> bool:
+    """
+    Validate that the audio data is a valid MP3 file.
+
+    Args:
+        audio_data: The MP3 data to validate
+        is_cached_file: If True, apply more lenient validation for files from cache
+    """
+    try:
+        # For cached files, we can be more lenient - just check basic format indicators
+        if is_cached_file:
+            # Most MP3 files start with ID3 or with an MPEG frame sync marker
+            if len(audio_data) < 10:
+                print("❌ Cached file too small to be valid MP3")
+                return False
+
+            header = audio_data[:10]
+            # Check for ID3 tag
+            if header[:3] == b"ID3":
+                print("✅ Cached file has ID3 header - treating as valid")
+                return True
+
+            # Look for MPEG frame sync marker (1111 1111 111)
+            for i in range(min(len(audio_data) - 2, 1000)):  # Check first 1000 bytes
+                if audio_data[i] == 0xFF and (audio_data[i + 1] & 0xE0) == 0xE0:
+                    print("✅ Cached file has MP3 frame marker - treating as valid")
+                    return True
+
+            # If it's cached and we have a reasonable size, trust it's valid
+            if len(audio_data) > 1000:
+                print(
+                    "⚠️ Cached file doesn't have standard markers but has reasonable size - treating as valid"
+                )
+                return True
+
+            print("❌ Cached file has no MP3 markers and is too small")
+            return False
+
+        # For non-cached files, do more thorough validation
+        # Create a BytesIO object to read the audio data
+        audio_file = io.BytesIO(audio_data)
+
+        # Check if the data starts with an MP3 header marker
+        header = audio_data[:10]
+        is_id3 = header[:3] == b"ID3"
+
+        # If no ID3 tag, check for MPEG frame sync bytes
+        if not is_id3:
+            # Look for MPEG frame sync marker
+            for i in range(min(len(audio_data) - 2, 1000)):
+                if audio_data[i] == 0xFF and (audio_data[i + 1] & 0xE0) == 0xE0:
+                    print("✅ Found MP3 frame marker without ID3 tag")
+                    return True
+            print("❌ Invalid MP3: No ID3 tag or frame sync marker found")
+            return False
+
+        # Try to load it as an MP3
+        try:
+            mp3 = MP3(audio_file)
+
+            # Check if it has basic MP3 attributes
+            if mp3.info.length > 0 and mp3.info.bitrate > 0:
+                print(
+                    f"✅ Valid MP3: Length={mp3.info.length:.2f}s, Bitrate={mp3.info.bitrate / 1000:.0f}kbps"
+                )
+                return True
+            else:
+                print("❌ Invalid MP3: Missing audio properties")
+                return False
+        except Exception as inner_e:
+            print(f"❌ MP3 parsing failed: {str(inner_e)}")
+            # Return True for ID3 files even if mutagen fails, since it might still be valid
+            if is_id3:
+                print(
+                    "⚠️ File has ID3 header so treating as valid despite parsing error"
+                )
+                return True
+            return False
+
+    except Exception as e:
+        print(f"❌ Invalid MP3: {str(e)}")
+        return False
+
+
+def get_cache_key(word: str, is_arabic: bool) -> str:
+    """Generate a unique cache key for a word."""
+    # Create a hash of the word to use as filename
+    word_hash = hashlib.sha256(word.encode()).hexdigest()[:12]
+    prefix = "ar" if is_arabic else "en"
+    return f"{prefix}_{word_hash}.mp3"
+
+
+def ensure_valid_cache_files():
+    """Scan cache directory to ensure all files have .mp3 extension."""
+    fixed_count = 0
+    for filename in os.listdir(AUDIO_CACHE_DIR):
+        if not filename.endswith(".mp3") and not filename.startswith("."):
+            # Fix filenames without extensions
+            basename, ext = os.path.splitext(filename)
+            if not ext:
+                new_filename = f"{basename}.mp3"
+                old_path = os.path.join(AUDIO_CACHE_DIR, filename)
+                new_path = os.path.join(AUDIO_CACHE_DIR, new_filename)
+
+                try:
+                    shutil.move(old_path, new_path)
+                    fixed_count += 1
+                    print(f"Fixed cache file extension: {filename} → {new_filename}")
+                except Exception as e:
+                    print(f"Error fixing cache file {filename}: {str(e)}")
+
+    if fixed_count > 0:
+        print(f"Fixed {fixed_count} cache files with missing extensions")
+
+
+def get_or_generate_word_audio(word: str, is_arabic: bool) -> Optional[str]:
+    """Get cached audio URL or generate new one for a word."""
+    cache_key = get_cache_key(word, is_arabic)
+    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
+    storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
+
+    print(
+        f"\nProcessing {'Arabic' if is_arabic else 'English'} word: '{word}' (cache_key: {cache_key})"
+    )
+
+    # First check if file exists in storage
+    if check_file_exists("audio", cache_key):
+        print(f"✅ Found file in Supabase storage: {cache_key}")
+        # If already in storage, just check if we have local cache
+        if not os.path.exists(cache_path):
+            # Try to download and save to local cache for future use
+            try:
+                response = supabase.storage.from_("audio").download(cache_key)
+                if response:
+                    with open(cache_path, "wb") as f:
+                        f.write(response)
+                    print(f"Downloaded {cache_key} to local cache")
+            except Exception as e:
+                # If download fails, just continue - we know it's on the server
+                print(f"Warning: Failed to download to cache: {str(e)}")
+        else:
+            print("✅ File exists both in storage and local cache")
+        return storage_url
+
+    # Check if file exists in local cache but not on server
+    if os.path.exists(cache_path):
+        print(f"Found in local cache but not in storage: {cache_key}")
+        try:
+            # Get file size for debugging
+            file_size = os.path.getsize(cache_path)
+            print(f"Cache file size: {file_size} bytes")
+
+            # Verify the cached file is valid
+            with open(cache_path, "rb") as f:
+                file_content = f.read()
+
+            # Use more lenient validation for cached files
+            if validate_mp3(file_content, is_cached_file=True):
+                print(f"Validated cached file, uploading to storage: {cache_key}")
+                # Upload to storage
+                try:
+                    with open(cache_path, "rb") as f:
+                        result_url = upload_to_storage("audio", cache_key, f)
+                        if result_url:
+                            print("✅ Successfully uploaded cached file to storage")
+                            return result_url
+                except Exception as e:
+                    print(f"Warning: Cache upload failed: {str(e)}")
+            else:
+                # Invalid cache file, remove it
+                os.remove(cache_path)
+                print(f"Removed invalid cache file for word: {word}")
+        except Exception as e:
+            print(f"Error with cache file: {str(e)}")
+            if os.path.exists(cache_path):
+                os.remove(cache_path)
+                print(f"Removed problematic cache file for word: {word}")
+
+    # If we reach here, we need to generate new audio
+    print(f"Generating new audio for word: {word}")
+    if is_arabic:
+        result = generate_arabic_word_audio(word, cache_key)
+    else:
+        result = generate_english_word_audio(word, cache_key)
+
+    if result and result.get("url"):
+        # Save to cache
+        temp_path = os.path.join(AUDIO_TEMP_DIR, cache_key)
+        if os.path.exists(temp_path):
+            try:
+                shutil.copy2(temp_path, cache_path)
+                print(
+                    f"✅ Cached audio for {'Arabic' if is_arabic else 'English'} word: {word}"
+                )
+                # Only remove temp file if successfully copied to cache
+                os.remove(temp_path)
+            except Exception as e:
+                print(f"Error caching audio file: {str(e)}")
+                # Don't remove temp file if copying failed - we can use it directly
+        return result["url"]
+
+    return None
+
+
+def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
+    """Generate audio file for an Arabic word using ElevenLabs API."""
+    temp_audio_path = None
+    try:
+        print(f"\nGenerating Arabic audio for word: '{word}'")
+
+        try:
+            # Simple SSML with just the target word
+            formatted_text = f'<speak><lang xml:lang="ar-AR">{word}</lang></speak>'
+
+            # Use default voice settings with just speed adjustment
+            voice_settings = VoiceSettings(
+                stability=0.8,
+                similarity_boost=0.9,
+                style=0.0,
+                use_speaker_boost=True,
+                speed=1.0,  # Normal speed
+            )
+
+            # Generate audio with the special voice for single words
+            audio_response = generate_speech(
+                text=formatted_text,
+                voice_id=ARABIC_WORD_VOICE_ID,  # Use the special voice for single words
+                voice_settings=voice_settings,
+            )
+
+            if not audio_response:
+                print("Error: Empty audio response from ElevenLabs API")
+                return None
+
+            # Validate the MP3 data
+            if not validate_mp3(audio_response):
+                print(f"Skipping upload of invalid MP3 file for word '{word}'")
+                return None
+
+            # Save and upload the audio file
+            temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
+            print(f"Saving temp file to: {temp_audio_path}")
+            with open(temp_audio_path, "wb") as f:
+                f.write(audio_response)
+
+            print("Uploading to Supabase storage...")
+            try:
+                with open(temp_audio_path, "rb") as f:
+                    url = upload_to_storage("audio", filename, f)
+                    if not url:
+                        raise Exception("Failed to get URL from upload")
+            except Exception as e:
+                print(f"Upload failed despite retries: {str(e)}")
+                return None
+
+            print(f"✅ Successfully generated and uploaded Arabic audio. URL: {url}")
+            return {"url": url}
+
+        except Exception as e:
+            print(f"Error generating Arabic speech: {str(e)}")
+            return None
+
+    except Exception as e:
+        print(f"❌ Error generating/uploading Arabic word audio for '{word}': {str(e)}")
+        if temp_audio_path and os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
+        return None
+
+
+def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
+    """Generate audio file for an English word using ElevenLabs API."""
+    temp_audio_path = None
+    try:
+        print(f"\nGenerating English audio for word: '{word}'")
+
+        try:
+            # For single words, we don't need previous/next context
+            audio_response = generate_speech(
+                text=word, voice_id=ENGLISH_VOICE_ID, speed=1.0
+            )
+        except Exception as e:
+            print(f"Error generating English speech: {str(e)}")
+            return None
+
+        # Validate the MP3 data
+        if not validate_mp3(audio_response):
+            print(f"Skipping upload of invalid MP3 file for word '{word}'")
+            return None
+
+        # Save and upload the audio file
+        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
+
+        print(f"Saving temp file to: {temp_audio_path}")
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_response)
+
+        print("Uploading to Supabase storage...")
+        try:
+            with open(temp_audio_path, "rb") as f:
+                url = upload_to_storage("audio", filename, f)
+                if not url:
+                    raise Exception("Failed to get URL from upload")
+        except Exception as e:
+            print(f"Upload failed despite retries: {str(e)}")
+            return None
+
+        # Don't remove the temp file - it will be used for caching in get_or_generate_word_audio
+        print(f"✅ Successfully generated and uploaded English audio. URL: {url}")
+        return {"url": url}
+
+    except Exception as e:
+        print(
+            f"❌ Error generating/uploading English word audio for '{word}': {str(e)}"
+        )
+        if temp_audio_path and os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
+        return None
+
+
+def clean_word_for_matching(word: str) -> str:
+    """
+    Clean and normalize a word for better timing matching.
+    Removes invisible characters, normalizes whitespace, and standardizes Arabic characters.
+    """
+    if not word:
+        return word
+
+    # Remove zero-width and invisible control characters
+    invisible_chars = {
+        "\u200b": "",  # zero-width space
+        "\u200c": "",  # zero-width non-joiner
+        "\u200d": "",  # zero-width joiner
+        "\ufeff": "",  # zero-width no-break space (BOM)
+        "\u2028": " ",  # line separator
+        "\u2029": " ",  # paragraph separator
+    }
+    for char, replacement in invisible_chars.items():
+        word = word.replace(char, replacement)
+
+    # Standardize whitespace
+    word = " ".join(word.split())
+
+    # Trim any leading/trailing whitespace
+    word = word.strip()
+
+    # Remove common punctuation for matching purposes
+    punctuation = ".,;:!?\"'()[]{}،؟''»«"
+    for p in punctuation:
+        word = word.replace(p, "")
+
+    return word
+
+
+def pre_tokenize_arabic(text: str) -> List[str]:
+    """
+    Pre-tokenize Arabic text in a consistent way that matches how ElevenLabs processes it.
+    This ensures that word boundaries are handled similarly in both systems.
+
+    Args:
+        text: The Arabic text to tokenize
+
+    Returns:
+        List of tokens (words)
+    """
+    tokens = []
+
+    # Split on whitespace and punctuation but keep them as separate tokens
+    # Fixed escape sequence with double backslash for \s
+    segments = re.split(r"([.,;:!?\"\'()[\]{}،؟" "»«\s]+)", text)
+
+    # Process each segment
+    for segment in segments:
+        # Skip empty segments
+        if not segment.strip():
+            continue
+
+        # If it's punctuation or whitespace, add it as is (or skip)
+        if all(c in " .,;:!?\"'()[]{}،؟''»«" for c in segment):
+            continue
+
+        # Handle common Arabic prefixes that should stay attached
+        # This matches ElevenLabs' tendency to keep و, ب, ل, etc. attached to words
+        if segment.startswith("و") and len(segment) > 1:
+            # Keep و attached to the following word
+            tokens.append(segment)
+        else:
+            # Check if other prefixes should be handled
+            tokens.append(segment)
+
+    return tokens
+
+
+def generate_sentence_audio(
+    text: str, filename: str, previous_text: str = None, next_text: str = None
+) -> Optional[Dict]:
+    """Generate audio file for an Arabic sentence using ElevenLabs API with word timings."""
+    try:
+        print(f"\nGenerating sentence audio with timestamps for: '{text}'")
+
+        audio_response = generate_speech_with_timestamps(
+            text=text,
+            voice_id=ARABIC_VOICE_ID,
+            speed=0.8,
+            previous_text=previous_text,
+            next_text=next_text,
+        )
+
+        if not audio_response:
+            print("Error: Empty audio response from ElevenLabs API")
+            return None
+
+        # Extract audio data according to API documentation
+        if hasattr(audio_response, "dict"):
+            # Handle Pydantic model response
+            response_dict = audio_response.dict()
+            audio_base64 = response_dict.get("audio_base64")
+            if not audio_base64:
+                print("Error: No audio_base64 found in response")
+                print("Response structure:", response_dict.keys())
+                return None
+            audio_data = base64.b64decode(audio_base64)
+        elif isinstance(audio_response, dict):
+            # Handle direct dictionary response
+            audio_base64 = audio_response.get("audio_base64")
+            if not audio_base64:
+                print("Error: No audio_base64 found in response")
+                print("Response structure:", audio_response.keys())
+                return None
+            audio_data = base64.b64decode(audio_base64)
+        else:
+            print(f"Unexpected response type: {type(audio_response)}")
+            print("Available attributes:", dir(audio_response))
+            return None
+
+        # Validate the MP3 data
+        if not validate_mp3(audio_data):
+            print("Skipping upload of invalid MP3 file")
+            return None
+
+        # Save and upload the audio file
+        temp_audio_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "audio", filename
+        )
+        os.makedirs(os.path.dirname(temp_audio_path), exist_ok=True)
+
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_data)
+
+        with open(temp_audio_path, "rb") as f:
+            # Upload with content-type header for MP3
+            supabase.storage.from_("audio").upload(
+                filename, f, file_options={"content-type": "audio/mpeg"}
+            )
+
+        os.remove(temp_audio_path)
+        storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+
+        # Process word timings from the alignment data
+        word_timings = []
+        alignment = None
+
+        if hasattr(audio_response, "dict"):
+            response_dict = audio_response.dict()
+            alignment = response_dict.get("alignment")
+        elif isinstance(audio_response, dict):
+            alignment = audio_response.get("alignment")
+
+        if not alignment:
+            print("❌ No alignment data found in response")
+            print("Response type:", type(audio_response))
+            if hasattr(audio_response, "dict"):
+                print("Response keys:", audio_response.dict().keys())
+            elif isinstance(audio_response, dict):
+                print("Response keys:", audio_response.keys())
+            else:
+                print("Available attributes:", dir(audio_response))
+            raise ValueError("Missing alignment data in API response")
+
+        # Print raw alignment data for diagnostics
+        print("\n=== RAW ELEVENLABS ALIGNMENT DATA ===")
+        print(f"Characters count: {len(alignment.get('characters', []))}")
+        print(
+            f"Start times count: {len(alignment.get('character_start_times_seconds', []))}"
+        )
+        print(
+            f"End times count: {len(alignment.get('character_end_times_seconds', []))}"
+        )
+
+        # Print sample of the raw characters and their timing
+        sample_size = min(20, len(alignment.get("characters", [])))
+        if sample_size > 0:
+            print("\nSample of character timing data:")
+            for i in range(sample_size):
+                try:
+                    char = alignment["characters"][i]
+                    start = alignment["character_start_times_seconds"][i]
+                    end = alignment["character_end_times_seconds"][i]
+                    print(f"  '{char}': {start:.3f}s - {end:.3f}s")
+                except (IndexError, KeyError):
+                    print("  Error accessing character data at index", i)
+        print("======================================\n")
+
+        # ENHANCED LOGGING: Add visualization of word boundaries
+        print("\n=== ELEVENLABS WORD BOUNDARY DETECTION ===")
+        chars = alignment.get("characters", [])
+        start_times = alignment.get("character_start_times_seconds", [])
+        end_times = alignment.get("character_end_times_seconds", [])
+
+        # Show the entire text with character positions for reference
+        print("Original text with character positions:")
+        formatted_text = ""
+        for i, char in enumerate(chars):
+            if i > 0 and i % 50 == 0:  # Line break every 50 chars for readability
+                formatted_text += "\n"
+            formatted_text += char
+        print(formatted_text)
+        print()
+
+        # Identify potential word boundaries based on timing gaps
+        print("Potential word boundaries based on timing gaps:")
+        potential_boundaries = []
+        for i in range(1, len(chars)):
+            # If there's a significant gap between characters, it might be a word boundary
+            if start_times[i] - end_times[i - 1] > 0.08:  # 80ms gap threshold
+                potential_boundaries.append(i)
+                boundary_char = chars[i - 1] + "|" + chars[i]
+                boundary_gap = start_times[i] - end_times[i - 1]
+                print(
+                    f"  Gap after char {i - 1}: '{boundary_char}' - {boundary_gap:.3f}s"
+                )
+
+        # Visualize the text with detected word boundaries
+        if potential_boundaries:
+            print("\nVisualizing detected word boundaries:")
+            boundary_text = ""
+            for i, char in enumerate(chars):
+                if i in potential_boundaries:
+                    boundary_text += " | "  # Add visible boundary marker
+                boundary_text += char
+            print(boundary_text)
+
+        # Compare with whitespace boundaries in original text
+        print("\nWhitespace boundaries in original text:")
+        space_boundaries = [i for i, char in enumerate(chars) if char in " ،.!؟:;"]
+        space_boundary_text = ""
+        for i, char in enumerate(chars):
+            if i in space_boundaries:
+                space_boundary_text += "[" + char + "]"  # Mark space characters
+            else:
+                space_boundary_text += char
+        print(space_boundary_text)
+
+        print("\nComparison of detected vs. whitespace boundaries:")
+        for pb in potential_boundaries:
+            is_at_whitespace = any(abs(pb - sb) <= 1 for sb in space_boundaries)
+            marker = "✓" if is_at_whitespace else "✗"
+            context = chars[max(0, pb - 5) : min(len(chars), pb + 5)]
+            print(f"  {marker} Boundary at position {pb}: '...{context}...'")
+
+        print("===========================================\n")
+
+        print("Found alignment data")
+        chars = alignment.get("characters", [])
+        start_times = alignment.get("character_start_times_seconds", [])
+        end_times = alignment.get("character_end_times_seconds", [])
+
+        if not (
+            chars
+            and start_times
+            and end_times
+            and len(chars) == len(start_times) == len(end_times)
+        ):
+            print("❌ Invalid alignment data structure:")
+            print(f"Characters: {len(chars)}")
+            print(f"Start times: {len(start_times)}")
+            print(f"End times: {len(end_times)}")
+            raise ValueError("Invalid or missing timing data in API response")
+
+        print(f"Processing {len(chars)} characters for timing extraction")
+
+        # Pre-tokenize the text using our consistent method
+        expected_tokens = pre_tokenize_arabic(text)
+        print(f"\nPre-tokenized text into {len(expected_tokens)} tokens:")
+        for i, token in enumerate(expected_tokens):
+            print(f"  {i}: '{token}'")
+
+        # Improved word timing extraction
+        # Define Arabic word boundary characters (spaces and punctuation)
+        boundaries = {" ", ".", ",", "!", "?", "؟", "،", ":", ";", "-", "\n", "\t"}
+
+        word_start_idx = None
+        current_word = ""
+        word_timings = []
+
+        for i, char in enumerate(chars):
+            is_boundary = char in boundaries
+            is_last_char = i == len(chars) - 1
+
+            # If this is the start of a new word
+            if word_start_idx is None and not is_boundary:
+                word_start_idx = i
+                current_word = char
+            # If we're continuing a word
+            elif word_start_idx is not None and not is_boundary:
+                current_word += char
+
+            # Word boundary or last character - save the completed word
+            if (is_boundary or is_last_char) and word_start_idx is not None:
+                # Add last character if it's part of the word and we're at the end
+                if is_last_char and not is_boundary:
+                    current_word += char
+
+                # Only process non-empty words
+                if current_word.strip():
+                    # Calculate word timing
+                    word_start_time = start_times[word_start_idx]
+                    word_end_time = end_times[i - 1] if is_boundary else end_times[i]
+
+                    # Ensure valid timing values
+                    if word_start_time < word_end_time:
+                        # Clean the word for better matching later
+                        clean_word = clean_word_for_matching(current_word)
+
+                        word_timings.append(
+                            {
+                                "word": current_word,
+                                "cleaned_word": clean_word,
+                                "start_time": str(word_start_time),
+                                "end_time": str(word_end_time),
+                            }
+                        )
+
+                        print(
+                            f"Added timing for word: '{current_word}' → '{clean_word}' ({word_start_time:.2f}s - {word_end_time:.2f}s)"
+                        )
+
+                # Reset for next word
+                word_start_idx = None
+                current_word = ""
+
+        if not word_timings:
+            raise ValueError("Failed to extract any word timings from the response")
+
+        # Sort word timings by start time to ensure proper sequencing
+        word_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
+
+        print(f"\n✅ Successfully extracted {len(word_timings)} word timings")
+        print("First few word timings:")
+        for timing in word_timings[:3]:
+            print(
+                f"  '{timing['word']}' (cleaned: '{timing['cleaned_word']}'): {timing['start_time']}s - {timing['end_time']}s"
+            )
+
+        return {"url": storage_url, "word_timings": word_timings}
+
+    except Exception as e:
+        print(f"\n❌ Error generating/uploading sentence audio: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
+        return None
+
+
 def insert_sentence_words(
     sentence_id: int, translation: Dict, word_timings: List[Dict] = None
-) -> None:
-    """Insert words from a sentence with their roots and relationships."""
+) -> Dict:
+    """
+    Insert words from a sentence with their roots and relationships.
+
+    Returns:
+        Dict with statistics about word timing matches
+    """
     word_by_word = translation.get("word_by_word", [])
 
-    # Create a mapping of both normalized words and positions to their timings
-    word_timing_map = {}
-    position_timing_map = {}
+    # Track timing match statistics
+    match_stats = {"exact": 0, "position": 0, "fuzzy": 0, "none": 0}
+    total_words = len(word_by_word)
+    words_with_timing = 0
+
+    # Check if we have word timings and output a clear warning if we have fewer timings than words
     if word_timings:
-        print("\nProcessing word timings:")
-        for idx, timing in enumerate(word_timings):
-            word = timing["word"]
-            normalized_word = _normalize_arabic_word(word)
-            word_timing_map[normalized_word] = {
-                "start_time": timing["start_time"],
-                "end_time": timing["end_time"],
-            }
-            position_timing_map[idx] = {
-                "word": word,
-                "normalized": normalized_word,
-                "start_time": timing["start_time"],
-                "end_time": timing["end_time"],
+        if len(word_timings) < len(word_by_word):
+            print(
+                f"\n⚠️ WARNING: Fewer word timings ({len(word_timings)}) than words in sentence ({len(word_by_word)})."
+            )
+            print("   Some words will not have accurate audio timing markers.")
+    else:
+        print(
+            f"\n⚠️ WARNING: No word timings available for sentence with {len(word_by_word)} words."
+        )
+        # Early return with empty stats if no timings
+        for position, word in enumerate(word_by_word):
+            # Process words without timing info
+            root_letters, root_meaning = extract_root_info(word)
+            root_id = get_or_create_root(root_letters, root_meaning)
+            word_type_id = get_word_type_id(word.get("pos", "noun"))
+
+            # Get or generate word audio URLs using cache
+            arabic_audio_url = get_or_generate_word_audio(
+                word["arabic"], is_arabic=True
+            )
+            english_audio_url = get_or_generate_word_audio(
+                word["english"], is_arabic=False
+            )
+
+            # Clean and normalize the word form
+            original_word = word["arabic"]
+            cleaned_word_form = _remove_final_haraka(original_word)
+
+            word_data = {
+                "sentence_id": sentence_id,
+                "position": position,
+                "word_form": cleaned_word_form,
+                "english": word["english"],
+                "word_type_id": word_type_id,
+                "root_id": root_id,
+                "difficulty_level": 1,
+                "grammar_note": word.get("notes"),
+                "arabic_audio_url": arabic_audio_url,
+                "english_audio_url": english_audio_url,
+                # No timing info
             }
 
-    print(f"\nProcessing {len(word_by_word)} words for sentence...")
+            supabase.table("sentence_words").insert(word_data).execute()
+            print(f"  ✅ Inserted word {position} without timing info")
+            match_stats["none"] += 1
+
+        return {
+            "total_words": total_words,
+            "words_with_timing": 0,
+            "match_stats": match_stats,
+        }
+
+    # If we have word timings, prepare for matching
+    # Pre-tokenize the original words using the same method for consistency
+    original_tokens = []
+    for word_info in word_by_word:
+        # Get the original Arabic word
+        original_word = word_info["arabic"]
+        # Pre-process with the same method we'd expect ElevenLabs to use
+        original_tokens.append(original_word)
+
+    print("\nPre-tokenized original words:")
+    for idx, token in enumerate(original_tokens):
+        print(f"  {idx}: '{token}'")
+
+    # Extract words from word timings for comparison
+    timing_words = [timing["word"] for timing in word_timings]
+
+    print("\nWords from timing data:")
+    for idx, word in enumerate(timing_words):
+        print(f"  {idx}: '{word}'")
+
+    # 1. Sort word timings by start time to ensure proper sequencing
+    sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
+
+    print("\nTimings sorted by start time:")
+    for idx, timing in enumerate(sorted_timings):
+        print(
+            f"  {idx}: '{timing['word']}' → {timing['start_time']}s - {timing['end_time']}s"
+        )
+
+    # Store the word data before inserting to validate timestamps
+    words_data = []
+
+    # Use a simpler, more direct matching approach
+    # In the vast majority of cases, the order of words should match
+    # We'll use position-based matching by default, but check for exact matches
+    timing_position = 0
+    last_end_time = 0.0
+
     for position, word in enumerate(word_by_word):
-        # Extract root information
+        # Extract metadata
         root_letters, root_meaning = extract_root_info(word)
         root_id = get_or_create_root(root_letters, root_meaning)
         word_type_id = get_word_type_id(word.get("pos", "noun"))
 
         # Get or generate word audio URLs using cache
-        arabic_audio_url = get_or_generate_word_audio(word["arabic"], is_arabic=True)
+        original_word = word["arabic"]
+        arabic_audio_url = get_or_generate_word_audio(original_word, is_arabic=True)
         english_audio_url = get_or_generate_word_audio(word["english"], is_arabic=False)
 
-        # Clean and normalize the word form
-        original_word = word["arabic"]
-        cleaned_word_form = _remove_final_haraka(original_word)
-        normalized_word = _normalize_arabic_word(original_word)
+        # Clean the word for matching
+        cleaned_word = clean_word_for_matching(original_word)
 
-        # Get timing information from sentence audio if available
+        print(
+            f"\n  Processing word {position}: '{original_word}' → cleaned: '{cleaned_word}'"
+        )
+
+        # Initialize with no timing info
         timing_info = {}
-        if word_timings:  # Only try to match timings if we have sentence audio
-            timing_info = word_timing_map.get(normalized_word, {})
-            if not timing_info and position in position_timing_map:
-                timing_info = {
-                    "start_time": position_timing_map[position]["start_time"],
-                    "end_time": position_timing_map[position]["end_time"],
-                }
+        match_method = "none"
 
+        # If we have a timing position available
+        if timing_position < len(sorted_timings):
+            # Use position-based matching - simplest and most reliable approach
+            timing_data = sorted_timings[timing_position]
+            timing_info = {
+                "start_time": timing_data["start_time"],
+                "end_time": timing_data["end_time"],
+            }
+            match_method = "position"
+            print(
+                f"    ✓ Used sequential position match: '{timing_data['word']}' at index {timing_position}"
+            )
+            timing_position += 1  # Move to next position
+
+            # Ensure timestamps are monotonically increasing
+            start_time = float(timing_info.get("start_time", 0))
+            end_time = float(timing_info.get("end_time", 0))
+
+            if start_time < last_end_time:
+                original_start = start_time
+                start_time = last_end_time
+                timing_info["start_time"] = str(start_time)
+                print(
+                    f"    ⚠️ Fixed start time to maintain sequence: {original_start} → {start_time}"
+                )
+
+                # Ensure end time is after start time
+                if end_time <= start_time:
+                    end_time = start_time + 0.3  # Add minimum duration
+                    timing_info["end_time"] = str(end_time)
+                    print(f"    ⚠️ Adjusted end time: → {end_time}")
+
+            last_end_time = end_time
+
+        # Update match statistics
+        match_stats[match_method] += 1
+        if match_method != "none":
+            words_with_timing += 1
+
+        # Create the word data
         word_data = {
             "sentence_id": sentence_id,
             "position": position,
-            "word_form": cleaned_word_form,
+            "word_form": _remove_final_haraka(original_word),
             "english": word["english"],
             "word_type_id": word_type_id,
             "root_id": root_id,
@@ -666,28 +1246,75 @@ def insert_sentence_words(
             "audio_end": timing_info.get("end_time"),
         }
 
+        words_data.append(word_data)
+
+    # Now insert all words with validated timestamps
+    print("\nInserting words into database:")
+    for idx, word_data in enumerate(words_data):
         try:
             supabase.table("sentence_words").insert(word_data).execute()
-            print("  ✅ Inserted into database")
+            print(f"  ✅ Inserted word {idx} into database")
         except Exception as e:
-            print(f"  ❌ Error inserting into database: {str(e)}")
+            print(f"  ❌ Error inserting word {idx} into database: {str(e)}")
             raise
+
+    # Print summary of timing match results
+    print("\nWord timing match summary:")
+    for method, count in match_stats.items():
+        percentage = (count / total_words) * 100 if total_words > 0 else 0
+        print(
+            f"  {method.capitalize()} matches: {count}/{total_words} ({percentage:.1f}%)"
+        )
+
+    if match_stats["none"] > 0:
+        print(f"⚠️ {match_stats['none']} words have no timing information.")
+    else:
+        print("✅ All words have timing information assigned.")
+
+    # Return statistics for reporting
+    return {
+        "total_words": total_words,
+        "words_with_timing": words_with_timing,
+        "match_stats": match_stats,
+    }
 
 
 def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
     """Insert article sentences into the database."""
+    timing_stats = {
+        "total_sentences": len(translations),
+        "sentences_with_audio": 0,
+        "sentences_with_timings": 0,
+        "sentences_without_timings": 0,
+        "total_words": 0,
+        "words_with_timings": 0,
+    }
+
     for idx, translation in enumerate(translations):
         print(f"\nProcessing sentence {idx}: {translation['original'][:50]}...")
 
+        # Get previous and next sentences for context
+        previous_text = translations[idx - 1]["original"] if idx > 0 else None
+        next_text = (
+            translations[idx + 1]["original"] if idx < len(translations) - 1 else None
+        )
+
         # Generate audio for this individual sentence with timestamps
         audio_filename = generate_audio_filename()
-        audio_result = generate_sentence_audio(translation["original"], audio_filename)
+        audio_result = generate_sentence_audio(
+            translation["original"],
+            audio_filename,
+            previous_text=previous_text,
+            next_text=next_text,
+        )
         storage_url = None
         word_timings = []
 
+        # If we have an audio result, extract URL and timings
         if audio_result is not None:
             storage_url = audio_result.get("url")
             word_timings = audio_result.get("word_timings", [])
+            timing_stats["sentences_with_audio"] += 1
 
             if word_timings:
                 print(f"✅ Got {len(word_timings)} word timings for sentence {idx}")
@@ -698,6 +1325,7 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
                     )
             else:
                 print(f"⚠️ No word timings found for sentence {idx}")
+                timing_stats["sentences_without_timings"] += 1
 
         # Insert sentence with audio URL
         sentence_data = {
@@ -711,7 +1339,43 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
         sentence_id = result.data[0]["id"]
 
         # Insert words with their individual audio and timing information from sentence audio
-        insert_sentence_words(sentence_id, translation, word_timings)
+        if translation.get("word_by_word"):
+            word_stats = insert_sentence_words(sentence_id, translation, word_timings)
+
+            # Update statistics
+            timing_stats["total_words"] += word_stats["total_words"]
+            timing_stats["words_with_timings"] += word_stats["words_with_timing"]
+
+            # Update sentence-level statistics
+            if word_stats["match_stats"]["none"] == 0:
+                timing_stats["sentences_with_timings"] += 1
+        else:
+            print("⚠️ No word-by-word translation found, skipping word insertion")
+            timing_stats["sentences_without_timings"] += 1
+
+    # Print summary statistics
+    print("\n" + "=" * 60)
+    print("ARTICLE TIMING STATISTICS SUMMARY")
+    print("=" * 60)
+    print(f"Total sentences: {timing_stats['total_sentences']}")
+    print(f"Sentences with audio: {timing_stats['sentences_with_audio']}")
+    print(f"Sentences with word timings: {timing_stats['sentences_with_timings']}")
+    print(
+        f"Sentences without word timings: {timing_stats['sentences_without_timings']}"
+    )
+
+    if timing_stats["total_words"] > 0:
+        words_with_timing_pct = (
+            timing_stats["words_with_timings"] / timing_stats["total_words"]
+        ) * 100
+        print(f"Total words: {timing_stats['total_words']}")
+        print(
+            f"Words with timing information: {timing_stats['words_with_timings']} ({words_with_timing_pct:.1f}%)"
+        )
+
+    print("=" * 60)
+
+    return timing_stats
 
 
 def validate_article_data(data: Dict) -> None:
@@ -826,13 +1490,77 @@ def process_json_file(file_path: str) -> None:
     article_id = result.data[0]["id"]
 
     # Insert sentences and their words
-    insert_article_sentences(article_id, data["translations"])
+    timing_stats = insert_article_sentences(article_id, data["translations"])
 
     # Move files to archive with new article ID
     archive_files(file_path, article_id)
 
+    # Save timing statistics to a report file
+    save_timing_report(article_id, data["metadata"]["title"], file_path, timing_stats)
+
     print(f"Successfully inserted article with ID: {article_id}")
     return article_id
+
+
+def save_timing_report(
+    article_id: int, title: str, json_path: str, timing_stats: Dict
+) -> None:
+    """Save timing statistics to a CSV report file."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    reports_dir = os.path.join(script_dir, "reports")
+    os.makedirs(reports_dir, exist_ok=True)
+
+    report_file = os.path.join(reports_dir, "timing_reports.csv")
+    file_exists = os.path.exists(report_file)
+
+    now = datetime.now(UTC).isoformat()
+
+    try:
+        # Calculate quality rating
+        words_with_timing_pct = 0
+        if timing_stats["total_words"] > 0:
+            words_with_timing_pct = (
+                timing_stats["words_with_timings"] / timing_stats["total_words"]
+            ) * 100
+
+        # Quality rating
+        if words_with_timing_pct >= 90:
+            quality = "EXCELLENT"
+        elif words_with_timing_pct >= 75:
+            quality = "GOOD"
+        elif words_with_timing_pct >= 50:
+            quality = "FAIR"
+        else:
+            quality = "POOR"
+
+        # Write to CSV
+        with open(report_file, "a", encoding="utf-8", newline="") as f:
+            # Write header if file is new
+            if not file_exists:
+                f.write(
+                    "article_id,title,timestamp,total_sentences,sentences_with_audio,sentences_with_timings,sentences_with_partial_timings,sentences_without_timings,total_words,words_with_timing,timing_percentage,quality\n"
+                )
+
+            # Write data row with all the detailed statistics
+            f.write(
+                f'{article_id},"{title.replace('"', '""')}",{now},'
+                f"{timing_stats['total_sentences']},"
+                f"{timing_stats['sentences_with_audio']},"
+                f"{timing_stats['sentences_with_timings']},"
+                f"{timing_stats['sentences_without_timings']},"
+                f"{timing_stats['total_words']},"
+                f"{timing_stats['words_with_timings']},"
+                f"{words_with_timing_pct:.1f},"
+                f"{quality}\n"
+            )
+
+        print(f"\n✅ Saved timing report to {report_file}")
+
+    except Exception as e:
+        print(f"\n❌ Failed to save timing report: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
 
 
 def archive_files(json_path: str, article_id: int) -> None:
@@ -917,6 +1645,9 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
 
 def main():
     """Main function to run the script."""
+    # Ensure all cache files have proper extensions
+    ensure_valid_cache_files()
+
     script_dir = os.path.dirname(os.path.abspath(__file__))
     articles_dir = os.path.join(script_dir, "article")
 
