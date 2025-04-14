@@ -9,6 +9,7 @@ import type { ArticleListProps } from '@/types/ui/article.types';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
+import { LoadingContainer } from '../Loader';
 import ThemedCard from '../ThemedCard';
 
 import { CopyrightFooter } from './CopyrightFooter';
@@ -91,14 +92,21 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
     const refreshControl = useMemo(
       () => (
-        <RefreshControl
-          refreshing={isRefreshing}
-          onRefresh={onRefresh}
-          colors={[colors.tint]}
-          tintColor={colors.tint}
-          progressBackgroundColor={colors.background}
-          progressViewOffset={Platform.OS === 'android' ? 20 : 0}
-        />
+        <View>
+          {isRefreshing ? (
+            <View style={styles.loaderContainer}>
+              <LoadingContainer size="large" color={colors.tint} />
+            </View>
+          ) : null}
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            colors={[colors.tint]}
+            tintColor={colors.tint}
+            progressBackgroundColor={colors.background}
+            progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+          />
+        </View>
       ),
       [isRefreshing, onRefresh, colors.tint, colors.background]
     );
@@ -158,6 +166,16 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
+  },
+  loaderContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    left: 0,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 1,
   },
 });
 
