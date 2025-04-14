@@ -49,77 +49,15 @@ const Pill = memo(
     const isCategory = variant === 'category';
     const isHorizontalCategory = variant === 'horizontal-category';
 
-    // Get category pill styles
-    const getCategoryStyle = (
-      isDarkMode: boolean,
-      isSelected: boolean,
-      colors: ReturnType<typeof useColors>
-    ) => ({
-      backgroundColor: isSelected
-        ? isDarkMode
-          ? `${colors.tint}85`
-          : `${colors.tint}90`
-        : isDarkMode
-          ? `${colors.elevation3}95`
-          : `${colors.elevation1}98`,
-      borderColor: isSelected
-        ? isDarkMode
-          ? `${colors.tint}80`
-          : `${colors.tint}60`
-        : isDarkMode
-          ? colors.white + '30'
-          : colors.cardBorder,
-      borderWidth: isSelected ? 1 : 0.5,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-      paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-      paddingVertical: LAYOUT.SPACING.TINY + 2,
-      ...Platform.select({
-        ios: {
-          shadowColor: isDarkMode ? colors.black : colors.shadow,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isDarkMode ? 0.25 : 0.1,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: isSelected ? 3 : 2,
-        },
-      }),
-    });
+    // Determine text type based on variant
+    const textType = isCategory || isHorizontalCategory ? 'overline' : 'label';
 
-    // Get filter pill styles
-    const getFilterStyle = (
-      isDarkMode: boolean,
-      isSelected: boolean,
-      colors: ReturnType<typeof useColors>
-    ) => ({
-      backgroundColor: isSelected
-        ? isDarkMode
-          ? `${colors.tint}15`
-          : `${colors.tint}10`
-        : isDarkMode
-          ? colors.elevation2
-          : colors.elevation1,
-      borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN,
-      borderColor: isSelected ? colors.tint : colors.cardBorder,
-      borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-      ...Platform.select({
-        ios: {
-          shadowColor: isDarkMode ? colors.black : colors.shadow,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: isDarkMode ? 0.2 : 0.08,
-          shadowRadius: 3,
-        },
-        android: {
-          elevation: isSelected ? 2 : 1,
-        },
-      }),
-    });
+    // Get text style based on dark mode
+    const textStyle = isDarkMode ? { color: colors.text } : null;
 
     // Get container style based on variant and selection state
     const containerStyle = useMemo(() => {
-      return isCategory || isHorizontalCategory
-        ? getCategoryStyle(isDarkMode, isSelected, colors)
-        : getFilterStyle(isDarkMode, isSelected, colors);
+      return getContainerStyle(isCategory, isHorizontalCategory, isDarkMode, isSelected, colors);
     }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
 
     // For category pills that don't need interaction
@@ -134,17 +72,26 @@ const Pill = memo(
           ]}
         >
           <ThemedText
-            type={isCategory || isHorizontalCategory ? 'overline' : 'label'}
+            type={textType}
             colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={isDarkMode ? { color: colors.text } : null}
+            style={textStyle}
           >
             {label}
           </ThemedText>
         </View>
       );
     }
+
+    // Get android ripple config
+    const androidRipple = !isSelected
+      ? {
+          color: isDarkMode ? colors.textOverlay : colors.overlay,
+          borderless: false,
+          radius: -5,
+        }
+      : null;
 
     // For interactive pills
     return (
@@ -153,37 +100,22 @@ const Pill = memo(
           style={({ pressed: isPressedState }) => [
             styles.pill,
             containerStyle,
-            isPressedState &&
-              !isSelected && {
-                backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
-              },
+            isPressedState && !isSelected && getPressedStyle(isDarkMode, colors),
             isSelected && styles.pillSelected,
             absolute && styles.absoluteContainer,
           ]}
           onPress={handlePress}
-          onPressIn={() => {
-            startScaleDown();
-          }}
-          onPressOut={() => {
-            resetScale();
-          }}
+          onPressIn={() => startScaleDown()}
+          onPressOut={() => resetScale()}
           disabled={!onSelect}
-          android_ripple={
-            isSelected
-              ? null
-              : {
-                  color: isDarkMode ? colors.textOverlay : colors.overlay,
-                  borderless: false,
-                  radius: -5,
-                }
-          }
+          android_ripple={androidRipple}
         >
           <ThemedText
-            type={isCategory || isHorizontalCategory ? 'overline' : 'label'}
+            type={textType}
             colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
-            style={isDarkMode ? { color: colors.text } : null}
+            style={textStyle}
           >
             {label}
           </ThemedText>
@@ -192,6 +124,97 @@ const Pill = memo(
     );
   }
 );
+
+/**
+ * Helper function to get the correct container style based on variant
+ */
+function getContainerStyle(
+  isCategory: boolean,
+  isHorizontalCategory: boolean,
+  isDarkMode: boolean,
+  isSelected: boolean,
+  colors: ReturnType<typeof useColors>
+) {
+  if (isCategory || isHorizontalCategory) {
+    return getCategoryStyle(isDarkMode, isSelected, colors);
+  }
+  return getFilterStyle(isDarkMode, isSelected, colors);
+}
+
+/**
+ * Helper function to get pressed state style
+ */
+function getPressedStyle(isDarkMode: boolean, colors: ReturnType<typeof useColors>) {
+  return {
+    backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
+  };
+}
+
+// Get category pill styles
+const getCategoryStyle = (
+  isDarkMode: boolean,
+  isSelected: boolean,
+  colors: ReturnType<typeof useColors>
+) => ({
+  backgroundColor: isSelected
+    ? isDarkMode
+      ? `${colors.tint}85`
+      : `${colors.tint}90`
+    : isDarkMode
+      ? `${colors.elevation3}95`
+      : `${colors.elevation1}98`,
+  borderColor: isSelected
+    ? isDarkMode
+      ? `${colors.tint}80`
+      : `${colors.tint}60`
+    : isDarkMode
+      ? colors.white + '30'
+      : colors.cardBorder,
+  borderWidth: isSelected ? 1 : 0.5,
+  borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  paddingVertical: LAYOUT.SPACING.TINY + 2,
+  ...Platform.select({
+    ios: {
+      shadowColor: isDarkMode ? colors.black : colors.shadow,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isDarkMode ? 0.25 : 0.1,
+      shadowRadius: 4,
+    },
+    android: {
+      elevation: isSelected ? 3 : 2,
+    },
+  }),
+});
+
+// Get filter pill styles
+const getFilterStyle = (
+  isDarkMode: boolean,
+  isSelected: boolean,
+  colors: ReturnType<typeof useColors>
+) => ({
+  backgroundColor: isSelected
+    ? isDarkMode
+      ? `${colors.tint}15`
+      : `${colors.tint}10`
+    : isDarkMode
+      ? colors.elevation2
+      : colors.elevation1,
+  borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN,
+  borderColor: isSelected ? colors.tint : colors.cardBorder,
+  borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  ...Platform.select({
+    ios: {
+      shadowColor: isDarkMode ? colors.black : colors.shadow,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: isDarkMode ? 0.2 : 0.08,
+      shadowRadius: 3,
+    },
+    android: {
+      elevation: isSelected ? 2 : 1,
+    },
+  }),
+});
 
 const styles = StyleSheet.create({
   absoluteContainer: {

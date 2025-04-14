@@ -1,6 +1,7 @@
+import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { LoadingContainer } from '../../components/Loader';
 import SectionTitle from '../../components/SectionTitle';
@@ -162,7 +163,7 @@ const ArticleSection = memo(
     return (
       <View style={styles.container}>
         <SectionTitle title={title} />
-        <FlatList
+        <FlashList
           data={displayedArticles}
           renderItem={renderItem}
           keyExtractor={item => `article-${item.id}`}
@@ -174,10 +175,8 @@ const ArticleSection = memo(
           viewabilityConfig={{
             viewAreaCoveragePercentThreshold: 50,
           }}
+          estimatedItemSize={vertical ? 150 : 200}
           removeClippedSubviews
-          maxToRenderPerBatch={5}
-          initialNumToRender={4}
-          windowSize={3}
         />
       </View>
     );

@@ -1,4 +1,3 @@
-import { FlashList } from '@shopify/flash-list';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -12,9 +11,9 @@ import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import Pill from '@/components/Pill';
 import SectionTitle from '@/components/SectionTitle';
-import ThemedCard from '@/components/ThemedCard';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ArticleSection } from '@/components/article';
 import ArticleList from '@/components/index/ArticleList';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
@@ -39,7 +38,6 @@ import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../../components/ErrorState';
-import { ArticleSection } from '../../components/article';
 import DailyPickSection from '../../components/index/DailyPickSection';
 
 // Cache duration constants
@@ -58,9 +56,6 @@ const styles = StyleSheet.create({
   articleItemPadding: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
-  beginnerContainer: {
-    marginTop: LAYOUT.SPACING.TINY,
-  },
   card: {
     overflow: 'hidden',
   },
@@ -76,9 +71,6 @@ const styles = StyleSheet.create({
   filterSectionContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     marginTop: LAYOUT.SPACING.SMALL,
-  },
-  horizontalArticleContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
   },
   horizontalList: {
     paddingLeft: LAYOUT.SPACING.MEDIUM,
@@ -110,7 +102,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// Add ArticleItem component outside of the main component
+// Simple ArticleItem component for text-only cards
 const ArticleItem = memo(
   ({ article, onPress }: { article: Article; onPress: (article: Article) => void }) => {
     const categoryName = article.category?.name
@@ -345,41 +337,40 @@ export default function ArticlesScreen(): JSX.Element {
     }
 
     return dailyPickArticle ? (
-      <View style={styles.sectionContainer}>
-        <DailyPickSection
-          article={dailyPickArticle}
-          onPress={handleArticlePress}
-          showTitle={false}
-        />
-      </View>
+      <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={false} />
     ) : null;
   }, [articlesData, articlesError, handleArticlePress, dailyPick.articleId]);
 
   const ContinueReadingSection = useMemo(() => {
     if (sortedInProgressArticles.length === 0) return null;
 
-    // Map SimpleArticle to Article
-    const mappedArticles = sortedInProgressArticles.map(article => ({
-      ...article,
-      author: null,
-      content_hash: '',
-      difficulty_level: 0,
-      source: '',
-      summary: '',
-      category: undefined,
-      word_timings: [],
-    }));
+    // Map SimpleArticle to Article, finding the original article to get its category
+    const mappedArticles = sortedInProgressArticles.map(inProgressArticle => {
+      // Try to find the full article data to get the category
+      const fullArticle = articlesData.find(a => a.id === inProgressArticle.id);
+
+      return {
+        ...inProgressArticle,
+        author: fullArticle?.author || null,
+        content_hash: '',
+        difficulty_level: 0,
+        source: '',
+        summary: '',
+        category: fullArticle?.category || { id: 0, name: 'Uncategorized' },
+        word_timings: [],
+      };
+    });
 
     return (
       <ArticleSection
         title="Continue Reading"
         articles={mappedArticles}
-        onArticlePress={article => router.push(`/article/${article.id}`)}
-        showTimeAgo={true}
+        onArticlePress={handleArticlePress}
+        hideDifficulty={true}
         getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
       />
     );
-  }, [sortedInProgressArticles, lastOpenedArticles]);
+  }, [sortedInProgressArticles, lastOpenedArticles, handleArticlePress, articlesData]);
 
   const LatestTextsSection = useMemo(() => {
     const latestArticles = getLatestArticles(articlesData, 20);
@@ -396,30 +387,14 @@ export default function ArticlesScreen(): JSX.Element {
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
+
     return (
-      <View style={styles.sectionContainer}>
-        <SectionTitle title="Beginner Friendly" />
-        <View style={styles.beginnerContainer}>
-          <FlashList
-            data={beginnerArticles.slice(0, 20)}
-            renderItem={({ item }) => (
-              <View style={styles.horizontalArticleContainer}>
-                <ThemedCard
-                  variant="compact"
-                  article={item}
-                  onPress={() => handleArticlePress(item)}
-                  hideDifficulty={true}
-                />
-              </View>
-            )}
-            keyExtractor={item => `beginner-${item.id}`}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalList}
-            estimatedItemSize={200}
-          />
-        </View>
-      </View>
+      <ArticleSection
+        title="Beginner Friendly"
+        articles={beginnerArticles.slice(0, 20)}
+        onArticlePress={handleArticlePress}
+        hideDifficulty={true}
+      />
     );
   }, [beginnerArticles, handleArticlePress]);
 
