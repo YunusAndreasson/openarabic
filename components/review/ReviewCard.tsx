@@ -7,7 +7,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
-} from 'react-native-reanimated';
+} from 'react-native-reanimated'; // TODO: Use hooks
 
 import { SCREEN_WIDTH } from '@/constants/layout';
 

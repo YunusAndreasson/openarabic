@@ -74,7 +74,7 @@ const MeaningOverlay: React.FC<MeaningOverlayProps> = memo(
     if (!shouldRender) return null;
 
     // Use warning color and larger font size when isWarning is true
-    const textColor = isWarning ? colors.warning : colors.tint;
+    const textColor = isWarning ? colors.error : colors.tint;
     const fontSize = isWarning
       ? LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2
       : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;

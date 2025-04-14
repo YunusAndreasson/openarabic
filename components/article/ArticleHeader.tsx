@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '../../components/ThemedText';
 import { LAYOUT } from '../../constants/layout';
+import { formatDifficultyLevel } from '../../services/difficultyLevel';
 import type { Article } from '../../types/articles.types';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
 
@@ -157,9 +158,9 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
             <ThemedText
               type="caption"
               variant="secondary"
-              accessibilityLabel={`Difficulty level: ${article.difficulty_level}`}
+              accessibilityLabel={`Difficulty level: ${formatDifficultyLevel(article.difficulty_level)}`}
             >
-              Level {article.difficulty_level}
+              {formatDifficultyLevel(article.difficulty_level)}
             </ThemedText>
           </View>
         </View>

@@ -652,12 +652,6 @@ export default function ArticleScreen(): JSX.Element {
           key={word.id}
           word={word}
           onPress={word => {
-            console.log('Word pressed in article view:', {
-              wordId: word.id,
-              wordForm: word.word_form,
-              english: word.english,
-              userId: user?.id,
-            });
             handleWordPress(word.id);
           }}
           settings={{

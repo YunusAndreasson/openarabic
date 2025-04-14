@@ -136,7 +136,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   }, []);
 
   // Pre-calculate text size once when component mounts (will never change)
-  const calculatedFontSize = useMemo(() => settings.fontScale * 24, [settings.fontScale]);
+  const calculatedFontSize = useMemo(() => settings.fontScale * 32, [settings.fontScale]);
 
   // More aggressively memoized text props (only depends on selection)
   const textProps = useMemo(
@@ -175,13 +175,6 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Add to study list on long press with animated feedback
   const handleLongPress = useCallback(() => {
-    console.log('Word long-pressed in ArabicWord component:', {
-      wordId: word.id,
-      wordForm: word.word_form,
-      english: word.english,
-      isSelected,
-    });
-
     // Provide haptic feedback
     lightFeedback();
 
