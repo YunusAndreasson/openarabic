@@ -8,7 +8,6 @@ import { LAYOUT } from '../constants/layout';
 import { useTransformAnimation } from '../hooks/animations';
 import { useColors } from '../hooks/useColors';
 import { useIsDarkMode } from '../hooks/useThemeDetection';
-import { capitalizeFirstLetter } from '../utils/stringUtils';
 
 import { ThemedText } from './ThemedText';
 
@@ -135,13 +134,13 @@ const Pill = memo(
           ]}
         >
           <ThemedText
-            type="label"
+            type={isCategory || isHorizontalCategory ? 'overline' : 'label'}
             colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
             style={isDarkMode ? { color: colors.text } : null}
           >
-            {capitalizeFirstLetter(label.toLowerCase())}
+            {label}
           </ThemedText>
         </View>
       );
@@ -180,13 +179,13 @@ const Pill = memo(
           }
         >
           <ThemedText
-            type="label"
+            type={isCategory || isHorizontalCategory ? 'overline' : 'label'}
             colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
             style={isDarkMode ? { color: colors.text } : null}
           >
-            {capitalizeFirstLetter(label.toLowerCase())}
+            {label}
           </ThemedText>
         </Pressable>
       </Animated.View>

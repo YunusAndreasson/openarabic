@@ -1,7 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, RefreshControl, ScrollView, Text } from 'react-native';
+import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

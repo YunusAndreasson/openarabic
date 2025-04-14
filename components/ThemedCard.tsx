@@ -13,6 +13,7 @@ import type {
   CompactCardProps,
   BasicCardProps,
 } from '@/types/ui/card.types';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';

@@ -7,11 +7,13 @@ import type { AnimatedStyleProp } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ThemedText } from '@/components/ThemedText';
 import { ArticleHeader } from '@/components/article/ArticleHeader';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import type { ThemeColors } from '../../types/ui/theme.types';
 
@@ -158,16 +160,30 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                 </Animated.View>
               }
               ListFooterComponent={
-                otherArticles && otherArticles.length > 0 ? (
-                  <Animated.View style={footerStyle}>
-                    <RelatedArticlesFooter
-                      otherArticles={otherArticles}
-                      otherCategoryArticles={otherCategoryArticles || []}
-                      article={article}
-                      renderArticleCard={renderArticleCard}
-                    />
-                  </Animated.View>
-                ) : null
+                <>
+                  {article.source ? (
+                    <View
+                      style={{
+                        paddingHorizontal: LAYOUT.SPACING.SMALL,
+                        marginBottom: LAYOUT.SPACING.MEDIUM,
+                      }}
+                    >
+                      <ThemedText type="label" variant="secondary">
+                        Source: {capitalizeFirstLetter(article.source)}
+                      </ThemedText>
+                    </View>
+                  ) : null}
+                  {otherArticles && otherArticles.length > 0 ? (
+                    <Animated.View style={footerStyle}>
+                      <RelatedArticlesFooter
+                        otherArticles={otherArticles}
+                        otherCategoryArticles={otherCategoryArticles || []}
+                        article={article}
+                        renderArticleCard={renderArticleCard}
+                      />
+                    </Animated.View>
+                  ) : null}
+                </>
               }
             />
           </View>
