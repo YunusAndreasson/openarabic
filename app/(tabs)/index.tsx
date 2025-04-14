@@ -26,6 +26,7 @@ import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { setDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
+import { fetchInProgressArticles } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
 import {
   filterArticles,
@@ -168,6 +169,11 @@ export default function ArticlesScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+
+  // Fetch in-progress articles when component mounts
+  useEffect(() => {
+    dispatch(fetchInProgressArticles());
+  }, [dispatch]);
 
   // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
