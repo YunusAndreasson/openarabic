@@ -5,7 +5,7 @@ import Animated from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
-import { useTransformAnimation, useOpacityAnimation, SPRING_CONFIG } from '@/hooks/animations';
+import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { WordTooltipProps } from '@/types/ui/modal.types';
@@ -14,32 +14,16 @@ import type { WordTooltipProps } from '@/types/ui/modal.types';
  * A tooltip component that displays above an Arabic word
  * Shows the English translation of the word with minimal visual design
  * Ensures the arrow tip is precisely centered over the word regardless of screen position
- * Now with spring animations for a more natural feel
  */
 export const WordTooltip = memo(
   ({ visible, text = '', layout, onClose, zIndex }: WordTooltipProps) => {
     const isDarkMode = useIsDarkMode();
     const colors = useColors();
 
-    // Setup transform animation for scale effect with spring animation
-    const { startAnimation: startScaleAnimation, animatedStyle: transformStyle } =
-      useTransformAnimation({
-        type: 'scale',
-        initialValue: 0.8,
-        targetValue: 1,
-        duration: 300,
-        useSpring: true,
-        springConfig: {
-          ...SPRING_CONFIG.CARD,
-          damping: 12, // Slightly bouncier for the tooltip pop
-          mass: 0.6, // Lighter mass for quicker movement
-        },
-      });
-
-    // Setup opacity animation for fade effect
+    // Setup opacity animation for fade effect with quick timing
     const { fadeIn, animatedStyle: opacityStyle } = useOpacityAnimation({
       initialOpacity: 0,
-      duration: 200,
+      duration: 100, // Reduced from 200ms
     });
 
     // Handle closing the tooltip with animation sequence
@@ -51,8 +35,7 @@ export const WordTooltip = memo(
     // Trigger animations based on visibility
     useEffect(() => {
       if (visible) {
-        // Start both animations for a combined effect
-        startScaleAnimation();
+        // Start fade animation
         fadeIn();
 
         // Auto-close tooltip after standardized delay
@@ -65,7 +48,7 @@ export const WordTooltip = memo(
         handleClose();
         return () => {}; // Empty cleanup for else path
       }
-    }, [visible, startScaleAnimation, fadeIn, handleClose]);
+    }, [visible, fadeIn, handleClose]);
 
     // Get colors based on theme - using colors from Colors.ts
     const backgroundColor = isDarkMode ? colors.elevation2 : colors.elevation1;
@@ -74,17 +57,17 @@ export const WordTooltip = memo(
       : colors.textSecondary; // More subtle text color for better contrast
     const borderColor = isDarkMode
       ? colors.elevation3 // slightly lighter border for dark mode
-      : colors.elevation2; // slightly darker border for light mode
+      : colors.elevation2;
 
     // Size and position calculations
     const { width: screenWidth } = Dimensions.get('window');
 
     // Harmonious spacing values
     const SPACING = LAYOUT.SPACING.SMALL;
-    const ARROW_SIZE = 5; // Arrow size
-    const TOOLTIP_MARGIN = SPACING; // Gap between word and tooltip (same as internal padding)
-    const TOOLTIP_HEIGHT = 30; // Slightly reduced height for tighter appearance
-    const SCREEN_MARGIN = 16; // Margin from screen edges
+    const ARROW_SIZE = 5;
+    const TOOLTIP_MARGIN = 1;
+    const TOOLTIP_HEIGHT = 30;
+    const SCREEN_MARGIN = 16;
 
     // Character width multipliers for width calculation
     const CHAR_WIDTH = 5.5; // Base width per character
@@ -191,7 +174,6 @@ export const WordTooltip = memo(
             top: tooltipTop,
             zIndex: zIndex ?? 999999, // Use provided zIndex or fallback to default
           },
-          transformStyle as unknown as ViewStyle,
           opacityStyle as unknown as ViewStyle,
         ]}
         pointerEvents="none"
@@ -273,6 +255,7 @@ const styles = StyleSheet.create({
     zIndex: 999999, // Ensure tooltips are always on top
   },
   tooltipText: {
+    flexWrap: 'nowrap',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,

@@ -142,7 +142,7 @@ const ArticleItem = memo(
                 numberOfLines={1}
                 style={styles.metadataText}
               >
-                {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
+                {timeAgoText} · {categoryName} · by {article.author?.name || 'Anonymous'}
               </ThemedText>
             </View>
             <View style={styles.iconContainer}>
