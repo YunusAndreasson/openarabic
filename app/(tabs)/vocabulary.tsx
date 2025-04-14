@@ -1,13 +1,14 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo } from 'react';
-import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
+import { StyleSheet, View, RefreshControl, ScrollView, Text } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
+import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
@@ -216,6 +217,11 @@ export default function VocabularyScreen(): JSX.Element {
                 style={styles.reviewButton}
                 accessibilityLabel={`Review ${stats.dueWords} words`}
               />
+              {stats.dueWords > 150 ? (
+                <ThemedText type="label" variant="warning" style={styles.warningText}>
+                  You are reviewing many words. Please catch up before adding more.
+                </ThemedText>
+              ) : null}
             </View>
           ) : (
             <View style={styles.reviewButtonWrapper}>
@@ -264,5 +270,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
     width: '100%',
+  },
+  warningText: {
+    marginTop: LAYOUT.SPACING.SMALL,
+    textAlign: 'center',
   },
 });

@@ -135,7 +135,7 @@ const Pill = memo(
           ]}
         >
           <ThemedText
-            type="overline"
+            type="label"
             colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -180,12 +180,13 @@ const Pill = memo(
           }
         >
           <ThemedText
-            type="overline"
+            type="label"
             colorName={isSelected ? 'tint' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
+            style={isDarkMode ? { color: colors.text } : null}
           >
-            {isCategory ? capitalizeFirstLetter(label.toLowerCase()) : label.toUpperCase()}
+            {capitalizeFirstLetter(label.toLowerCase())}
           </ThemedText>
         </Pressable>
       </Animated.View>
