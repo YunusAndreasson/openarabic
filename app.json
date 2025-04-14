@@ -9,22 +9,27 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.openarabic.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": ["audio"]
       }
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1E1E1E"
       },
-      "package": "com.openarabic.app"
+      "package": "com.openarabic.app",
+      "permissions": ["android.permission.FOREGROUND_SERVICE", "android.permission.WAKE_LOCK"],
+      "foregroundService": {
+        "name": "Audio Playback",
+        "notificationTitle": "Open Arabic Audio",
+        "notificationColor": "#1E1E1E",
+        "notificationIcon": "./assets/images/icon.png"
+      }
     },
     "plugins": [
       "expo-router",
@@ -41,6 +46,13 @@
           "url": "https://sentry.io/",
           "project": "react-native",
           "organization": "openarabic"
+        }
+      ],
+      [
+        "expo-av",
+        {
+          "microphonePermission": false,
+          "androidScreenCapture": false
         }
       ]
     ],

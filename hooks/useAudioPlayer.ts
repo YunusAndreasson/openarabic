@@ -1,7 +1,8 @@
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
+import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
 
@@ -96,6 +97,9 @@ export function useAudioPlayer(): AudioPlayerResult {
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
       shouldDuckAndroid: true,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+      playThroughEarpieceAndroid: false,
     });
     return true;
   }, []);
@@ -182,15 +186,26 @@ export function useAudioPlayer(): AudioPlayerResult {
         // Clean up any existing audio first
         await cleanupAudio().catch(_e => {});
 
-        // Run audio setup and sound creation in parallel
-        const [, { sound }] = await Promise.all([
-          Audio.setAudioModeAsync({
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: true,
-            shouldDuckAndroid: true,
-          }),
-          Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false }, onPlaybackStatusUpdate),
-        ]);
+        // Initialize audio session first to ensure proper configuration
+        await initAudioSession();
+
+        // Create and load the sound with notification configuration for Android
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          {
+            shouldPlay: false,
+            progressUpdateIntervalMillis: 500,
+            positionMillis: 0,
+            // Android notification configuration
+            androidImplementation: 'MediaPlayer',
+            ...(Platform.OS === 'android'
+              ? {
+                  androidAudioSessionId: Math.round(Math.random() * 10000),
+                }
+              : {}),
+          },
+          onPlaybackStatusUpdate
+        );
 
         soundRef.current = sound;
 
@@ -208,7 +223,7 @@ export function useAudioPlayer(): AudioPlayerResult {
         return false;
       }
     },
-    [cleanupAudio, onPlaybackStatusUpdate, startProgressTracking]
+    [cleanupAudio, onPlaybackStatusUpdate, startProgressTracking, initAudioSession]
   );
 
   // Toggle play/pause for a track
@@ -340,13 +355,35 @@ export function useAudioPlayer(): AudioPlayerResult {
 
   // Handle app state changes
   useEffect(() => {
+    // Set up audio session initially
+    initAudioSession();
+
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
         // App has come to the foreground
+        // Ensure audio session is properly configured
         initAudioSession();
+
+        // If we were playing audio before going to background, check if it's still playing
+        if (audioState === AUDIO_STATES.PLAYING && soundRef.current) {
+          soundRef.current
+            .getStatusAsync()
+            .then(status => {
+              if (status.isLoaded && !status.isPlaying) {
+                // If audio was playing but stopped when app went to background, restart it
+                soundRef.current?.playAsync().catch(error => {
+                  handleError(error instanceof Error ? error : String(error));
+                });
+              }
+            })
+            .catch(error => {
+              handleError(error instanceof Error ? error : String(error));
+            });
+        }
       } else if (appStateRef.current === 'active' && nextAppState.match(/inactive|background/)) {
         // App has gone to the background
-        // Optionally pause audio here
+        // Make sure audio session is configured for background playback
+        initAudioSession();
       }
 
       appStateRef.current = nextAppState;
@@ -354,17 +391,9 @@ export function useAudioPlayer(): AudioPlayerResult {
 
     return () => {
       subscription.remove();
-    };
-  }, [initAudioSession]);
-
-  // Initialize audio session on mount
-  useEffect(() => {
-    initAudioSession();
-
-    return () => {
       cleanupAudio();
     };
-  }, [initAudioSession, cleanupAudio]);
+  }, [initAudioSession, cleanupAudio, audioState]);
 
   // Update the ref with the latest implementation
   useEffect(() => {
