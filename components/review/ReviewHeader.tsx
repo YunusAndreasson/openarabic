@@ -26,7 +26,7 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
     <View style={styles.header}>
       <View style={styles.progressContainer}>
         <ProgressBar
-          progress={Math.max(Math.round(progress), maxProgress)}
+          progress={Math.max(progress, maxProgress)}
           animationTriggered={animationKey > 1}
           key={animationKey}
           animationDuration={500}

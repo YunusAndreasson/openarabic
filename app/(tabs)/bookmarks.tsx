@@ -25,6 +25,7 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { handleError } from '@/utils/errorHandling';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -498,12 +499,6 @@ export default function BookmarksScreen(): JSX.Element {
 
   const getArticleStudyWordsCount = useCallback(
     (articleId: number): number => {
-      // Add debug logging
-      console.log('Calculating study words for article:', articleId, {
-        tracksForWordCounts: tracksForWordCounts.length,
-        playerCount: actions.getStudyWordsCount(articleId),
-      });
-
       // First check tracks directly
       if (tracksForWordCounts.length > 0) {
         const studyWordTracksCount = tracksForWordCounts.filter(
@@ -534,18 +529,14 @@ export default function BookmarksScreen(): JSX.Element {
       actions.stopPlayback();
       setIsShuffleMode(false);
     } else if (enhancedTracks.length) {
-      console.log('Starting playback with tracks:', {
-        trackCount: enhancedTracks.length,
-        firstTrack: enhancedTracks[0],
-      });
       try {
         actions.startEnhancedPlayback(enhancedTracks, 0);
         setIsShuffleMode(false);
       } catch (error) {
-        console.error('Failed to start playback:', error);
+        handleError(error as Error);
       }
     } else {
-      console.log('No tracks available for playback');
+      handleError('No tracks available for playback');
     }
   }, [isCurrentlyPlaying, enhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]);
 
