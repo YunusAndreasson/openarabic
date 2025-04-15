@@ -253,7 +253,6 @@ export function useReview({
 
     isUpdatingWordRef.current = true;
     stopPlayback();
-    lightFeedback();
     fadeOut();
 
     setTimeout(() => {
