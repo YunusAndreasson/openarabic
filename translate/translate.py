@@ -292,11 +292,13 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
     return issues
 
 
-# Configuration
-MODEL = "gpt-4.1"
+# Configuration constants
+MODEL_ANALYSIS = "gpt-4.1"  # For text splitting and analysis
+MODEL_TRANSLATION = "gpt-4.1"  # For English translation and word translation
+MODEL_OTHER = "gpt-4o"  # For tashkeel, refinement, and other tasks
 CHECKPOINT_FILE = "translation_checkpoint.json"
 MAX_SENTENCE_LENGTH = 500  # characters
-MAX_BATCH_SIZE = 5  # Increased from 3 to 7 for better efficiency with GPT-4o
+MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
 CONTEXT_WINDOW_SIZE = 2  # Number of sentences before and after to include as context
 
 
@@ -357,6 +359,7 @@ def call_openai_api(
     function_name: Optional[str] = None,
     temperature: float = 0.3,
     max_retries: int = 3,
+    model: str = MODEL_OTHER,  # Default to MODEL_OTHER
 ) -> Dict[str, Any]:
     """Make OpenAI API call with function calling, retry logic and error handling"""
     retry_count = 0
@@ -367,7 +370,7 @@ def call_openai_api(
             # Configure API call based on whether we're using function calling
             if function_schema:
                 response = client.chat.completions.create(
-                    model=MODEL,
+                    model=model,
                     messages=messages,
                     temperature=temperature,
                     functions=[function_schema],
@@ -376,7 +379,7 @@ def call_openai_api(
             else:
                 # Fall back to regular JSON response if no function schema provided
                 response = client.chat.completions.create(
-                    model=MODEL,
+                    model=model,
                     messages=messages,
                     temperature=temperature,
                     response_format={"type": "json_object"},
@@ -429,7 +432,7 @@ def call_openai_api(
 
 
 def split_text_into_sentences(text: str) -> List[str]:
-    """Use GPT-4o to intelligently split text into learner-friendly units and analyze content"""
+    """Use GPT-4.1 to intelligently split text into learner-friendly units and analyze content"""
     if not text or len(text.strip()) == 0:
         return []
 
@@ -445,6 +448,7 @@ def split_text_into_sentences(text: str) -> List[str]:
         messages,
         function_schema=SPLIT_TEXT_FUNCTION,
         function_name="split_text_into_sentences",
+        model=MODEL_ANALYSIS,  # Use the analysis model
     )
 
     if "sentences" in response and isinstance(response["sentences"], list):
@@ -570,6 +574,7 @@ def batch_translate_full_sentences(
             messages,
             function_schema=TRANSLATE_SENTENCES_FUNCTION,
             function_name="translate_sentences",
+            model=MODEL_TRANSLATION,  # Use the translation model
         )
 
     # First try with context
@@ -693,7 +698,10 @@ def batch_add_tashkeel(
     ]
 
     response = call_openai_api(
-        messages, function_schema=TASHKEEL_FUNCTION, function_name="add_tashkeel"
+        messages,
+        function_schema=TASHKEEL_FUNCTION,
+        function_name="add_tashkeel",
+        model=MODEL_OTHER,  # Use MODEL_OTHER for tashkeel
     )
 
     if "tashkeels" in response and isinstance(response["tashkeels"], list):
@@ -809,6 +817,7 @@ def batch_translate_words(
         messages,
         function_schema=WORD_TRANSLATION_FUNCTION,
         function_name="translate_words",
+        model=MODEL_TRANSLATION,  # Use the translation model for word translations
     )
 
     if "results" in response and isinstance(response["results"], list):
@@ -935,6 +944,7 @@ def batch_refine_translations(
         messages,
         function_schema=REFINEMENT_FUNCTION,
         function_name="refine_translations",
+        model=MODEL_OTHER,  # Use MODEL_OTHER for refinement
     )
 
     if "refinements" in response and isinstance(response["refinements"], list):
@@ -1265,6 +1275,7 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
             ],
             function_schema=SPLIT_TEXT_FUNCTION,
             function_name="split_text_into_sentences",
+            model=MODEL_ANALYSIS,  # Use the analysis model for text splitting
         )
 
         if "error" in response:
