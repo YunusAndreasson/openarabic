@@ -32,68 +32,20 @@ exec(open("set_keys.py").read())
 
 def clean_text(text: str) -> str:
     """
-    Clean and standardize text formatting while preserving all Arabic characters and diacritics.
-    Focuses on structural and formatting issues only.
-
-    Cleaning operations:
-    1. Remove zero-width and control characters
-    2. Standardize whitespace and empty lines
-    3. Fix sentence boundaries and punctuation
-    4. Standardize brackets and quotations
-    5. Clean up parenthetical references
+    Keeps only Arabic characters, numbers, and basic punctuation.
+    Normalizes whitespace to single spaces.
     """
     if not text:
         return text
 
-    # 1. Remove zero-width and invisible control characters
-    # Keep RTL/LTR marks as they might be important for proper display
-    invisible_chars = {
-        "\u200b": "",  # zero-width space
-        "\u200c": "",  # zero-width non-joiner
-        "\u200d": "",  # zero-width joiner
-        "\ufeff": "",  # zero-width no-break space (BOM)
-        "\u2028": " ",  # line separator
-        "\u2029": " ",  # paragraph separator
-    }
-    for char, replacement in invisible_chars.items():
-        text = text.replace(char, replacement)
+    # Arabic chars, numbers and punctuation only
+    arabic_pattern = r"[^\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF.,!?؟:;0-9\s]"
+    cleaned = re.sub(arabic_pattern, "", text)
 
-    # 2. Standardize line breaks and remove empty lines
-    # Replace multiple newlines with a single newline
-    text = re.sub(r"\n\s*\n+", "\n", text)
+    # Normalize whitespace
+    cleaned = " ".join(cleaned.split())
 
-    # 3. Fix spacing around punctuation
-    # Remove spaces before punctuation and ensure single space after
-    text = re.sub(r"\s+([.،,!?؟:;])", r"\1", text)  # remove space before
-    text = re.sub(r"([.،,!?؟:;])(?!\s|$)", r"\1 ", text)  # add space after if missing
-
-    # 4. Standardize multiple spaces into single space
-    text = " ".join(text.split())
-
-    # 5. Fix sentence boundaries
-    # Handle multiple periods/question marks/exclamation marks
-    text = re.sub(r"([.!?؟])\1+", r"\1", text)
-
-    # 6. Standardize brackets and quotations
-    # Ensure proper spacing around brackets and quotes
-    text = re.sub(r"\(\s+", "(", text)  # Remove space after opening bracket
-    text = re.sub(r"\s+\)", ")", text)  # Remove space before closing bracket
-    text = re.sub(r"\[\s+", "[", text)  # Remove space after opening square bracket
-    text = re.sub(r"\s+\]", "]", text)  # Remove space before closing square bracket
-
-    # 7. Clean up parenthetical references
-    # Standardize common reference patterns
-    text = re.sub(
-        r"\(\s*ref\s*[:.]?\s*([^)]+)\)", r"(ref: \1)", text, flags=re.IGNORECASE
-    )
-    text = re.sub(
-        r"\(\s*see\s*[:.]?\s*([^)]+)\)", r"(see: \1)", text, flags=re.IGNORECASE
-    )
-
-    # 9. Final cleanup of any remaining whitespace issues
-    text = text.strip()
-
-    return text
+    return cleaned
 
 
 # Configure logging to show only errors and final output
@@ -976,7 +928,7 @@ def process_batch(
         return []
 
     try:
-        # Step 1: Batch full translation with uncertainty tracking
+        # Step 1: Batch full translation with uncertainty tracking - use original text
         translation_results = batch_translate_full_sentences(
             batch_sentences, batch_contexts
         )
@@ -985,10 +937,10 @@ def process_batch(
             batch_sentences, translation_results, "Full Translation"
         )
 
-        # Step 2: Batch add tashkeel with translation context and uncertainties
+        # Step 2: Batch add tashkeel with translation context and uncertainties - use original text
         tashkeel_results = batch_add_tashkeel(
             batch_sentences,
-            translation_results,  # Pass full translation results including uncertainties
+            translation_results,
             all_sentences,
             batch_indices,
         )
@@ -997,11 +949,11 @@ def process_batch(
             batch_sentences, tashkeel_results, "Tashkeel Addition"
         )
 
-        # Step 3: Batch word-by-word translation with full context
+        # Step 3: Batch word-by-word translation with full context - use original text
         word_results = batch_translate_words(
             batch_sentences,
-            tashkeel_results,  # Pass full tashkeel results
-            translation_results,  # Pass full translation results
+            tashkeel_results,
+            translation_results,
             all_sentences,
             batch_indices,
         )
@@ -1013,12 +965,12 @@ def process_batch(
             check_word_translations=True,
         )
 
-        # Step 4: Final verification with all previous results and uncertainties
+        # Step 4: Final verification with all previous results and uncertainties - use original text
         refinement_input = []
         for i in range(batch_size):
             refinement_input.append(
                 {
-                    "original": batch_sentences[i],
+                    "original": batch_sentences[i],  # Keep original text
                     "translation": translation_results[i],
                     "tashkeel": tashkeel_results[i],
                     "word_translations": word_results[i].get("word_translations", []),
@@ -1045,7 +997,7 @@ def process_batch(
                 else {}
             )
 
-            # Get the refined components
+            # Get the refined components - keep original text until final storage
             refined_tashkeel = refinement.get(
                 "improved_tashkeel", tashkeel_results[i].get("tashkeel", "")
             )
@@ -1079,14 +1031,14 @@ def process_batch(
                             f"  * {r.get('description', 'Unknown issue')} ({r.get('reason_unresolved', 'No reason provided')})"
                         )
 
-            # Process refined word translations
+            # Process refined word translations - keep original text
             word_translations = []
             refined_words = refinement.get("improved_word_translations", [])
             if refined_words:
                 for word_data in refined_words:
                     word_translations.append(
                         WordTranslation(
-                            arabic=word_data.get("a", ""),
+                            arabic=word_data.get("a", ""),  # Original text preserved
                             english=word_data.get("e", ""),
                             pos=word_data.get("p"),
                             essential=word_data.get("essential")
@@ -1103,7 +1055,9 @@ def process_batch(
                 for word_data in word_results[i].get("word_translations", []):
                     word_translations.append(
                         WordTranslation(
-                            arabic=word_data.get("arabic", "")
+                            arabic=word_data.get(
+                                "arabic", ""
+                            )  # Original text preserved
                             or word_data.get("a", ""),
                             english=word_data.get("english", "")
                             or word_data.get("e", ""),
@@ -1117,12 +1071,12 @@ def process_batch(
                         )
                     )
 
-            # Create sentence translation object with refined data
+            # Create sentence translation object with original text
             sentence_translation = SentenceTranslation(
                 index=index,
-                original=batch_sentences[i],
-                tashkeel=refined_tashkeel,
-                word_by_word=word_translations,
+                original=batch_sentences[i],  # Original text preserved
+                tashkeel=refined_tashkeel,  # Original tashkeel preserved
+                word_by_word=word_translations,  # Original word text preserved
                 full_translation=refined_translation,
                 notes="\n".join(notes) if notes else None,
                 verification_status="Refined"
@@ -1157,7 +1111,7 @@ def process_batch(
         return [
             SentenceTranslation(
                 index=start_index + i,
-                original=sentence,
+                original=sentence,  # Original text preserved for error cases
                 tashkeel=sentence,
                 word_by_word=[],
                 full_translation="[VALIDATION ERROR]",
@@ -1173,7 +1127,7 @@ def process_batch(
         return [
             SentenceTranslation(
                 index=start_index + i,
-                original=sentence,
+                original=sentence,  # Original text preserved for error cases
                 tashkeel=sentence,
                 word_by_word=[],
                 full_translation="[BATCH PROCESSING ERROR]",
@@ -1279,14 +1233,11 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
         with open(input_file, encoding="utf-8") as f:
             full_text = f.read()
 
-        # Clean the input text
-        full_text = clean_text(full_text)
-
         # Load checkpoint if exists
         results = load_checkpoint()
         start_index = len(results)
 
-        # Split text into sentences if not already processed
+        # Split text into sentences if not already processed - use original text
         print("Analyzing text and splitting into sentences...")
         response = call_openai_api(
             [
@@ -1317,6 +1268,7 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
         print(f"Total Units: {metadata.total_units}")
         print("-" * 80)
 
+        # Keep original sentences for AI processing
         all_sentences = response.get("sentences", [])
         if not all_sentences:
             raise ValueError("No sentences found to translate in the input file")
@@ -1346,6 +1298,7 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
         with tqdm(total=len(remaining_sentences), desc="Translating") as pbar:
             for batch in remaining_batches:
                 try:
+                    # Process batch with original text
                     batch_results = process_batch(
                         batch["sentences"],
                         batch["start_index"],
@@ -1353,6 +1306,19 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                         all_sentences,
                         batch["indices"],
                     )
+
+                    # Clean text only when storing in results
+                    for result in batch_results:
+                        # Store cleaned version of original text
+                        result.original = clean_text(result.original)
+                        # Clean tashkeel text if present
+                        if result.tashkeel:
+                            result.tashkeel = clean_text(result.tashkeel)
+                        # Clean word-by-word translations
+                        if result.word_by_word:
+                            for word in result.word_by_word:
+                                if word.arabic:
+                                    word.arabic = clean_text(word.arabic)
 
                     # Add batch results
                     results.extend(batch_results)
@@ -1372,8 +1338,12 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                         results.append(
                             SentenceTranslation(
                                 index=batch["start_index"] + i,
-                                original=sentence,
-                                tashkeel=sentence,
+                                original=clean_text(
+                                    sentence
+                                ),  # Clean only when storing
+                                tashkeel=clean_text(
+                                    sentence
+                                ),  # Clean only when storing
                                 word_by_word=[],
                                 full_translation="[BATCH PROCESSING ERROR]",
                                 notes=f"Error: {str(e)}",

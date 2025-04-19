@@ -236,9 +236,6 @@ def generate_speech(
         "model_id": "eleven_multilingual_v2",
         "output_format": "mp3_44100_128",
         "voice_settings": voice_settings,
-        "apply_text_normalization": "on",
-        "previous_text": previous_text,
-        "next_text": next_text,
         "seed": hash(text) % 4294967295,  # Consistent seed for same text
     }
 
@@ -264,8 +261,6 @@ def generate_speech_with_timestamps(
     text: str,
     voice_id: str,
     speed: float = 0.8,
-    previous_text: str = None,
-    next_text: str = None,
 ):
     """Generate speech with timestamps using ElevenLabs API with retries."""
     # Add SSML tags for better language handling if it's Arabic
@@ -285,9 +280,6 @@ def generate_speech_with_timestamps(
             use_speaker_boost=True,
             speed=speed,
         ),
-        "apply_text_normalization": "on",
-        "previous_text": previous_text,
-        "next_text": next_text,
         "seed": hash(text) % 4294967295,
     }
 
@@ -315,56 +307,6 @@ def _remove_final_haraka(word: str) -> str:
         chars.pop()
 
     # Reconstruct the word after stripping final diacritics
-    return "".join(chars)
-
-
-def _normalize_arabic_word(word: str) -> str:
-    """
-    Normalize an Arabic word by removing all diacritics and normalizing characters.
-    This is more thorough than _remove_final_haraka as it handles all positions.
-    """
-    # All diacritics/tashkeel
-    diacritics = {
-        "َ",
-        "ً",
-        "ُ",
-        "ٌ",
-        "ِ",
-        "ٍ",
-        "ّ",
-        "ْ",  # Basic diacritics
-        "ٰ",
-        "ٓ",
-        "ٔ",
-        "ٕ",
-        "ٖ",
-        "ٗ",
-        "٨",
-        "٩",
-        "ٚ",
-        "ٛ",
-        "ٜ",
-        "ٝ",
-        "ٞ",
-        "ٟ",  # Extended diacritics
-    }
-
-    # Normalize characters (e.g., different forms of alef)
-    char_map = {
-        "أ": "ا",
-        "إ": "ا",
-        "آ": "ا",
-        "ٱ": "ا",  # Alef forms
-        "ى": "ي",  # Yeh forms
-        "ة": "ه",  # Teh marbuta to heh
-    }
-
-    # Remove all diacritics
-    chars = [c for c in word if c not in diacritics]
-
-    # Normalize characters
-    chars = [char_map.get(c, c) for c in chars]
-
     return "".join(chars)
 
 
@@ -791,18 +733,15 @@ def pre_tokenize_arabic(text: str) -> List[str]:
 
 
 def generate_sentence_audio(
-    text: str, filename: str, previous_text: str = None, next_text: str = None
+    text: str,
+    filename: str,
 ) -> Optional[Dict]:
     """Generate audio file for an Arabic sentence using ElevenLabs API with word timings."""
     try:
         print(f"\nGenerating sentence audio with timestamps for: '{text}'")
 
         audio_response = generate_speech_with_timestamps(
-            text=text,
-            voice_id=ARABIC_VOICE_ID,
-            speed=0.8,
-            previous_text=previous_text,
-            next_text=next_text,
+            text=text, voice_id=ARABIC_VOICE_ID, speed=0.8
         )
 
         if not audio_response:
@@ -1293,20 +1232,9 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
     for idx, translation in enumerate(translations):
         print(f"\nProcessing sentence {idx}: {translation['original'][:50]}...")
 
-        # Get previous and next sentences for context
-        previous_text = translations[idx - 1]["original"] if idx > 0 else None
-        next_text = (
-            translations[idx + 1]["original"] if idx < len(translations) - 1 else None
-        )
-
         # Generate audio for this individual sentence with timestamps
         audio_filename = generate_audio_filename()
-        audio_result = generate_sentence_audio(
-            translation["original"],
-            audio_filename,
-            previous_text=previous_text,
-            next_text=next_text,
-        )
+        audio_result = generate_sentence_audio(translation["original"], audio_filename)
         storage_url = None
         word_timings = []
 

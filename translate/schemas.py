@@ -394,19 +394,22 @@ SENTENCE_SPLITTING_USER_PROMPT = (
 Split the Islamic text into learner-friendly units:
 
 Rules:
-1. Create moderate units preserving complete meaning
+1. Create short learner-friendly units
 2. Split at:
-   - Complete Islamic thoughts
+   - Complete thoughts
    - Distinct complete clauses
-   - Significant punctuation
+   - Natural stops such as punctation
+   - Learning firendly units
 3. Special handling:
    - Keep Quran verses intact
    - Break long narrator chains
    - Keep brief prayers whole
    - Keep related phrases conveying single concepts together
 4. Mark unit types: simple, compound, condition, quote, verse, phrase
+5. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله، فمن صبر واحتسب فله الأجر العظيم من الله سبحانه وتعالى."
 
-AVOID units that are too short (3-4 words) - prioritize complete concepts.
+
+AVOID units that are too short (3-4 words).
 
 Input text: 
 """
