@@ -9,7 +9,7 @@ export interface EnhancedStudyWord extends StudyWord {
   retentionScore: number;
 }
 
-type WordListCategory = 'total' | 'mastered' | 'learning';
+type WordListCategory = 'total' | 'mastered' | 'learning' | 'due';
 
 /**
  * Calculate a retention score based on FSRS parameters
@@ -55,6 +55,8 @@ export function useWordList(
 
         // Filter words based on category using FSRS states
         let result: StudyWord[] = [];
+        const now = new Date().toISOString();
+
         switch (category) {
           case 'total':
             result = filteredWords;
@@ -72,6 +74,9 @@ export function useWordList(
                 word.fsrs_state === State.Relearning ||
                 (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 30)
             );
+            break;
+          case 'due':
+            result = filteredWords.filter(word => word.fsrs_due && word.fsrs_due <= now);
             break;
           default:
             result = filteredWords;
