@@ -350,7 +350,7 @@ export default function ArticleScreen(): JSX.Element {
   const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     selectedWordIds,
-    sentenceWordsMap || new Map(),
+    sentenceWordsMap,
     noopWordPress,
     handleRootPress
   );
@@ -681,7 +681,7 @@ export default function ArticleScreen(): JSX.Element {
     [handleRootPress, settings]
   );
 
-  // Render article list item with optimized settings
+  // Render sentence item with optimized settings
   const renderSentenceItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
     ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
@@ -705,8 +705,7 @@ export default function ArticleScreen(): JSX.Element {
         />
       );
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [getWordsForSentence, renderWord, articleUIProps]
+    [getWordsForSentence, renderWord, articleUIProps, colors]
   );
 
   // Render article card with memoization

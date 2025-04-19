@@ -11,7 +11,7 @@ import { useAuth } from './useAuth';
 
 // Define an extended type to handle legacy study words that might have sentence_word_id
 interface ExtendedStudyWord extends StudyWord {
-  sentence_word_id?: number;
+  sentence_word_id: number | null;
 }
 
 export interface UseArabicWordProps {

@@ -1,0 +1,24 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Cleanup
+
+You mission is to search for clear issues that needs to be fixed. You are not supposed to fix possible hypothetical minor issues. Only do changes that would have a real world impact.
+
+## Guidelines
+
+### What to fix
+- Remove console.log
+- Remove debug code
+- Remove code obviously not used
+- Move in-line styles to StyleSheet
+- Make sure we never use color literals
+- Remove obvious over engineering
+- Make sure we use types from /types directory
+- Make sure we use modern ans safe TypeScript
+- Make sure we have no code intended for webusage
+- Make sure we do not use `any`
+- Use layout constraint from [layout.ts](mdc:constants/layout.ts)
+- Make sure we use colors from [Colors.ts](mdc:constants/Colors.ts)
