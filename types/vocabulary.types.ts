@@ -15,6 +15,10 @@ export interface SentenceWord extends Tables<'sentence_words'> {
  * Used across vocabulary-related components, screens, and the spaced repetition system
  */
 export interface StudyWord {
+  sentence_word_id: number | null;
+  sentence_word?: Tables<'sentence_words'> & {
+    sentence?: Tables<'article_sentences'>;
+  };
   root_id: number;
   root?: Tables<'roots'> | null;
   user_id: string;

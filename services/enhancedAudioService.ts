@@ -1,6 +1,5 @@
 // Import the type from the central location
 import type { EnhancedAudioTrack } from '../types/audio.types';
-import type { Tables } from '../types/database.types'; // Corrected path
 import { handleError } from '../utils/errorHandling';
 
 import { articlesService } from './articles';
@@ -295,6 +294,3 @@ export const enhancedAudioService = {
     }
   },
 };
-
-// Correct type alias - Assuming 'study_words' is the correct table name
-export type StudyWordItem = Tables<'study_words'>;

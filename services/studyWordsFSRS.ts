@@ -175,112 +175,86 @@ export const studyWordsFSRSService = {
 
   // Toggle FSRS study for roots
   async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
-    // Authenticate user with better error handling
-    try {
-      const {
-        data: { session },
-        error: sessionError,
-      } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
 
-      console.log(
-        'Session check in toggleFSRSStudyRoot:',
-        session ? 'Valid session' : 'No session'
-      );
-
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        throw new Error(`Authentication error: ${sessionError.message}`);
-      }
-
-      if (!session?.user) {
-        console.error('No active session found');
-        throw new Error('User must be authenticated to manage study words');
-      }
-
-      if (session.user.id !== userId) {
-        console.error('User ID mismatch:', session.user.id, 'vs', userId);
-        throw new Error('User ID mismatch');
-      }
-
-      // Check if a study entry already exists for this root
-      const { data: existing, error: checkError } = await supabase
-        .from('study_words')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('root_id', rootId)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing study word:', checkError);
-        throw checkError;
-      }
-
-      if (existing) {
-        // Remove existing root study entry
-        const { error: deleteError } = await supabase
-          .from('study_words')
-          .delete()
-          .eq('user_id', userId)
-          .eq('root_id', rootId);
-
-        if (deleteError) {
-          console.error('Error deleting study word:', deleteError);
-          throw deleteError;
-        }
-        return false;
-      }
-
-      // Create a new FSRS card for the root
-      const now = new Date();
-      const emptyCard = createEmptyCard(now);
-
-      // Create entry matching the actual database schema columns
-      const newEntry = {
-        user_id: userId,
-        root_id: rootId,
-        next_review_at: now.toISOString(),
-        created_at: now.toISOString(),
-        ease_factor: 2.5,
-        interval_days: 1,
-        stability: 0,
-        lapses: 0,
-        review_count: 0,
-        previous_interval: 0,
-        difficulty: 0.3,
-        success_streak: 0,
-        failure_streak: 0,
-        fsrs_due: now.toISOString(),
-        fsrs_stability: emptyCard.stability,
-        fsrs_difficulty: emptyCard.difficulty,
-        fsrs_elapsed_days: emptyCard.elapsed_days,
-        fsrs_scheduled_days: emptyCard.scheduled_days,
-        fsrs_reps: emptyCard.reps,
-        fsrs_lapses: emptyCard.lapses,
-        fsrs_state: emptyCard.state,
-        fsrs_last_review: null,
-      };
-
-      // Debug logs
-      console.log('Attempting to insert new study word entry:', JSON.stringify(newEntry, null, 2));
-
-      try {
-        const { data, error: insertError } = await supabase.from('study_words').insert(newEntry);
-
-        if (insertError) {
-          console.error('Error inserting study word:', insertError);
-          throw insertError;
-        }
-
-        console.log('Successfully inserted study word:', data);
-        return true;
-      } catch (error) {
-        console.error('Exception caught when inserting study word:', error);
-        throw error;
-      }
-    } catch (error) {
-      console.error('Exception in toggleFSRSStudyRoot:', error);
-      throw error;
+    if (sessionError) {
+      throw new Error(`Authentication error: ${sessionError.message}`);
     }
+
+    if (!session?.user) {
+      throw new Error('User must be authenticated to manage study words');
+    }
+
+    if (session.user.id !== userId) {
+      throw new Error('User ID mismatch');
+    }
+
+    // Check if a study entry already exists for this root
+    const { data: existing, error: checkError } = await supabase
+      .from('study_words')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('root_id', rootId)
+      .single();
+
+    if (checkError && checkError.code !== 'PGRST116') {
+      throw checkError;
+    }
+
+    if (existing) {
+      // Remove existing root study entry
+      const { error: deleteError } = await supabase
+        .from('study_words')
+        .delete()
+        .eq('user_id', userId)
+        .eq('root_id', rootId);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+      return false;
+    }
+
+    // Create a new FSRS card for the root
+    const now = new Date();
+    const emptyCard = createEmptyCard(now);
+
+    // Create entry matching the actual database schema columns
+    const newEntry = {
+      user_id: userId,
+      root_id: rootId,
+      next_review_at: now.toISOString(),
+      created_at: now.toISOString(),
+      ease_factor: 2.5,
+      interval_days: 1,
+      stability: 0,
+      lapses: 0,
+      review_count: 0,
+      previous_interval: 0,
+      difficulty: 0.3,
+      success_streak: 0,
+      failure_streak: 0,
+      fsrs_due: now.toISOString(),
+      fsrs_stability: emptyCard.stability,
+      fsrs_difficulty: emptyCard.difficulty,
+      fsrs_elapsed_days: emptyCard.elapsed_days,
+      fsrs_scheduled_days: emptyCard.scheduled_days,
+      fsrs_reps: emptyCard.reps,
+      fsrs_lapses: emptyCard.lapses,
+      fsrs_state: emptyCard.state,
+      fsrs_last_review: null,
+    };
+
+    const { error: insertError } = await supabase.from('study_words').insert(newEntry);
+
+    if (insertError) {
+      throw insertError;
+    }
+
+    return true;
   },
 
   // Get review logs for weekly progress
@@ -310,7 +284,7 @@ export const studyWordsFSRSService = {
    * @param wordId - The word ID to toggle
    * @returns true if added, false if removed
    */
-  async toggleFSRSStudyWord(userId: string, wordId: number): Promise<boolean> {
+  async toggleFSRSStudyWord(): Promise<boolean> {
     // This method is now deprecated - use toggleFSRSStudyRoot instead
     throw new Error('toggleFSRSStudyWord is deprecated, use toggleFSRSStudyRoot instead');
   },
