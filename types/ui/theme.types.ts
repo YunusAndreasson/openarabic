@@ -17,6 +17,7 @@ export interface ThemeColors {
   tabIconDefault: string;
   tabIconSelected: string;
   icon: string;
+  disabled: string;
   transparent: string;
   overlay: string;
   modalOverlay: string;

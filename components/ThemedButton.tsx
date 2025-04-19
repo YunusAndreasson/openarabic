@@ -185,9 +185,9 @@ export function ThemedButton({
         <View style={[styles.contentContainer, contentContainerStyle]}>
           <ThemedText
             type={getTextType(size, textWeight)}
-            colorName={variant === 'filled' ? 'background' : 'tint'}
+            colorName={disabled ? 'disabled' : variant === 'filled' ? 'background' : 'tint'}
             skipDefaultColor
-            style={[buttonTextStyle, disabled && { color: colors.disabled }]}
+            style={buttonTextStyle}
           >
             {textWeight === 'normal' ? title : title?.toUpperCase()}
           </ThemedText>
