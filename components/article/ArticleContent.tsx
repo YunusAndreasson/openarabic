@@ -96,13 +96,12 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     const scrollToIndex = (index: number) => {
       // Add a small delay to ensure the list is rendered
       setTimeout(() => {
-        // Adjust viewPosition based on sentence index to prevent edge cases
-        const viewPosition = index < 3 ? 0.15 : 0.3; // Show less space above for early sentences
-
         flashListRef.current?.scrollToIndex({
           index: index,
           animated: true,
-          viewPosition: viewPosition, // Dynamic position based on index
+          viewPosition: 0.3,
+          // Push first sentence higher to ensure visibility above the header
+          viewOffset: index === 0 ? getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE : 0,
         });
       }, 100);
     };

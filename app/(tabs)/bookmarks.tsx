@@ -545,9 +545,6 @@ export default function BookmarksScreen(): JSX.Element {
 
   const insets = useSafeAreaInsets();
 
-  // --- Render Logic ---
-  const isLoading = isReadingListLoading || isEnhancedTracksLoading;
-
   // Show loading screen only during initial uncached load
   if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
     return <LoadingScreen />;
