@@ -6,6 +6,9 @@ import { AppState, Platform } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
 
+// Debug tag for filtering logs
+const DEBUG_TAG = '[AudioPlayerDebug]';
+
 // Audio player states
 export const AUDIO_STATES = {
   IDLE: 'idle', // Not playing anything
@@ -59,6 +62,7 @@ export function useAudioPlayer(): AudioPlayerResult {
 
   // Clean up all audio resources
   const cleanupAudio = useCallback(async () => {
+    console.log(`${DEBUG_TAG} Cleaning up audio resources`);
     // Clear any timers
     if (progressIntervalRef.current) {
       clearInterval(progressIntervalRef.current);
@@ -68,24 +72,30 @@ export function useAudioPlayer(): AudioPlayerResult {
     // Unload sound if it exists
     if (soundRef.current) {
       try {
+        console.log(`${DEBUG_TAG} Stopping sound during cleanup`);
         await soundRef.current.stopAsync().catch(error => {
+          console.error(`${DEBUG_TAG} Error stopping sound:`, error);
           handleError(error instanceof Error ? error : String(error), {
             analyticsEventName: 'Audio_Stop_Error',
             sentrySeverity: 'warning',
           });
         });
+        console.log(`${DEBUG_TAG} Unloading sound during cleanup`);
         await soundRef.current.unloadAsync().catch(error => {
+          console.error(`${DEBUG_TAG} Error unloading sound:`, error);
           handleError(error instanceof Error ? error : String(error), {
             analyticsEventName: 'Audio_Unload_Error',
             sentrySeverity: 'warning',
           });
         });
       } catch (error) {
+        console.error(`${DEBUG_TAG} Critical error during sound cleanup:`, error);
         handleError(error instanceof Error ? error : String(error), {
           analyticsEventName: 'Audio_Cleanup_Error',
           sentrySeverity: 'error',
         });
       } finally {
+        console.log(`${DEBUG_TAG} Sound cleanup complete, setting ref to null`);
         soundRef.current = null;
       }
     }
@@ -93,6 +103,7 @@ export function useAudioPlayer(): AudioPlayerResult {
 
   // Initialize audio session
   const initAudioSession = useCallback(async () => {
+    console.log(`${DEBUG_TAG} Initializing audio session on ${Platform.OS}`);
     await Audio.setAudioModeAsync({
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
@@ -101,6 +112,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
       playThroughEarpieceAndroid: false,
     });
+    console.log(`${DEBUG_TAG} Audio session initialized successfully`);
     return true;
   }, []);
 
@@ -111,11 +123,13 @@ export function useAudioPlayer(): AudioPlayerResult {
       progressIntervalRef.current = null;
     }
 
+    console.log(`${DEBUG_TAG} Starting progress tracking interval`);
     const intervalId = setInterval(async () => {
       if (!soundRef.current) {
         if (progressIntervalRef.current) {
           clearInterval(progressIntervalRef.current);
           progressIntervalRef.current = null;
+          console.log(`${DEBUG_TAG} Stopped progress tracking - no sound ref`);
         }
         return;
       }
@@ -125,8 +139,21 @@ export function useAudioPlayer(): AudioPlayerResult {
         if (status.isLoaded) {
           setProgress(status.positionMillis);
           setDuration(status.durationMillis || 0);
+
+          // Detailed logging only every 2 seconds to avoid spam
+          if (
+            Math.floor(status.positionMillis / 2000) !==
+            Math.floor((status.positionMillis - 500) / 2000)
+          ) {
+            console.log(
+              `${DEBUG_TAG} Playback progress: ${status.positionMillis}/${status.durationMillis}ms`,
+              `(${Math.round((status.positionMillis / (status.durationMillis || 1)) * 100)}%),`,
+              `Playing: ${status.isPlaying}`
+            );
+          }
         }
-      } catch {
+      } catch (error) {
+        console.error(`${DEBUG_TAG} Error checking sound status:`, error);
         // Ignore status check errors - they will be handled by the status update callback
       }
     }, 500);
@@ -139,61 +166,87 @@ export function useAudioPlayer(): AudioPlayerResult {
     (status: AVPlaybackStatus) => {
       if (!status.isLoaded) {
         if (status.error) {
+          console.error(`${DEBUG_TAG} Playback error:`, status.error);
           setAudioState(AUDIO_STATES.ERROR);
         }
         return;
       }
 
+      // Log state transitions
+      let newState = '';
       if (status.isPlaying) {
-        setAudioState(AUDIO_STATES.PLAYING);
+        newState = AUDIO_STATES.PLAYING;
       } else if (status.isBuffering) {
-        setAudioState(AUDIO_STATES.LOADING);
+        newState = AUDIO_STATES.LOADING;
       } else {
-        setAudioState(AUDIO_STATES.PAUSED);
+        newState = AUDIO_STATES.PAUSED;
+      }
+
+      if (newState !== audioState) {
+        console.log(`${DEBUG_TAG} Audio state changed: ${audioState} -> ${newState}`);
+        setAudioState(newState);
       }
 
       // Update progress and duration
       setProgress(status.positionMillis);
       setDuration(status.durationMillis || 0);
 
+      // Log key status changes
+      if (status.didJustFinish) {
+        console.log(
+          `${DEBUG_TAG} Audio playback finished naturally, duration: ${status.durationMillis}ms`
+        );
+      }
+
+      if (status.isBuffering) {
+        console.log(`${DEBUG_TAG} Audio is buffering`);
+      }
+
       // Handle track completion
       if (status.didJustFinish && !status.isLooping) {
         if (!playlistMode) {
           // Single track mode - just stop
+          console.log(`${DEBUG_TAG} Single track completed, resetting state`);
           setAudioState(AUDIO_STATES.IDLE);
           setProgress(0);
         } else {
           // In playlist mode, proceed to next track
+          console.log(`${DEBUG_TAG} Track completed in playlist mode, moving to next`);
           playNextTrackRef.current();
         }
       }
     },
-    [playlistMode]
+    [playlistMode, audioState]
   );
 
   // Load and play audio with the specified URL
   const loadAndPlayAudio = useCallback(
     async (audioUrl: string) => {
       if (!audioUrl) {
+        console.error(`${DEBUG_TAG} Invalid audio URL provided`);
         setAudioState(AUDIO_STATES.ERROR);
         return false;
       }
 
       try {
+        console.log(`${DEBUG_TAG} Loading audio: ${audioUrl}`);
         setAudioState(AUDIO_STATES.LOADING);
         lastActionTimeRef.current = Date.now();
 
         // Clean up any existing audio first
-        await cleanupAudio().catch(_e => {});
+        await cleanupAudio().catch(e => {
+          console.error(`${DEBUG_TAG} Error during audio cleanup:`, e);
+        });
 
         // Initialize audio session first to ensure proper configuration
         await initAudioSession();
 
         // Create and load the sound with notification configuration for Android
+        console.log(`${DEBUG_TAG} Creating sound object`);
         const { sound } = await Audio.Sound.createAsync(
           { uri: audioUrl },
           {
-            shouldPlay: false,
+            shouldPlay: true,
             progressUpdateIntervalMillis: 500,
             positionMillis: 0,
             // Android notification configuration
@@ -209,14 +262,67 @@ export function useAudioPlayer(): AudioPlayerResult {
 
         soundRef.current = sound;
 
-        // Start playback
+        // Get initial status to log duration
+        const initialStatus = await sound.getStatusAsync();
+        const duration = initialStatus.isLoaded ? initialStatus.durationMillis : 0;
+        console.log(`${DEBUG_TAG} Sound loaded successfully, duration: ${duration}ms`);
+
+        // Make sure we're in playing state
+        console.log(`${DEBUG_TAG} Ensuring audio is playing...`);
+        // Force playback to start (needed because the shouldPlay flag isn't always respected)
         await sound.playAsync();
 
+        // Explicitly track playback state
         setAudioState(AUDIO_STATES.PLAYING);
+        console.log(`${DEBUG_TAG} Audio playback confirmed starting`);
         startProgressTracking();
+
+        // For short audio, ensure it completes before potential cleanup
+        if (duration && duration < 1500) {
+          console.log(`${DEBUG_TAG} Short audio detected (${duration}ms), ensuring it completes`);
+
+          // Calculate a safe duration to wait - at least 1500ms to ensure it plays
+          const safeWaitTime = Math.max(duration + 500, 1500);
+
+          // Create a flag to track if playback was interrupted
+          let playbackInterrupted = false;
+
+          // Set up an interrupt listener
+          const listener = () => {
+            playbackInterrupted = true;
+          };
+
+          // Subscribe to the audio object updates
+          if (soundRef.current) {
+            sound.setOnPlaybackStatusUpdate(status => {
+              if (status.isLoaded && status.didJustFinish) {
+                playbackInterrupted = true;
+                console.log(`${DEBUG_TAG} Audio playback completed naturally`);
+              }
+            });
+
+            // Wait for audio to complete
+            await new Promise(resolve => setTimeout(resolve, safeWaitTime));
+
+            if (!playbackInterrupted) {
+              console.log(`${DEBUG_TAG} Audio playback wait time completed (${safeWaitTime}ms)`);
+            }
+
+            // Clean up subscription if needed
+            try {
+              sound.setOnPlaybackStatusUpdate(null);
+            } catch (e) {
+              // Ignore errors on cleanup
+            }
+          }
+        }
 
         return true;
       } catch (error) {
+        console.error(
+          `${DEBUG_TAG} Critical error loading audio:`,
+          error instanceof Error ? error.message : String(error)
+        );
         handleError(error instanceof Error ? error : String(error));
         setAudioState(AUDIO_STATES.ERROR);
         await cleanupAudio().catch(() => {});
@@ -355,33 +461,50 @@ export function useAudioPlayer(): AudioPlayerResult {
 
   // Handle app state changes
   useEffect(() => {
+    console.log(`${DEBUG_TAG} Setting up audio session and app state listener`);
     // Set up audio session initially
     initAudioSession();
 
     const subscription = AppState.addEventListener('change', nextAppState => {
+      console.log(`${DEBUG_TAG} App state changed: ${appStateRef.current} -> ${nextAppState}`);
+
       if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
         // App has come to the foreground
+        console.log(`${DEBUG_TAG} App returned to foreground, reinitializing audio`);
+
         // Ensure audio session is properly configured
         initAudioSession();
 
         // If we were playing audio before going to background, check if it's still playing
         if (audioState === AUDIO_STATES.PLAYING && soundRef.current) {
+          console.log(`${DEBUG_TAG} Checking if background audio is still playing`);
           soundRef.current
             .getStatusAsync()
             .then(status => {
+              console.log(
+                `${DEBUG_TAG} Background audio status:`,
+                status.isLoaded
+                  ? `Playing: ${status.isPlaying}, Position: ${status.positionMillis}/${status.durationMillis}ms`
+                  : 'Not loaded'
+              );
+
               if (status.isLoaded && !status.isPlaying) {
                 // If audio was playing but stopped when app went to background, restart it
+                console.log(`${DEBUG_TAG} Restarting audio that stopped in background`);
                 soundRef.current?.playAsync().catch(error => {
+                  console.error(`${DEBUG_TAG} Error restarting background audio:`, error);
                   handleError(error instanceof Error ? error : String(error));
                 });
               }
             })
             .catch(error => {
+              console.error(`${DEBUG_TAG} Error checking background audio status:`, error);
               handleError(error instanceof Error ? error : String(error));
             });
         }
       } else if (appStateRef.current === 'active' && nextAppState.match(/inactive|background/)) {
         // App has gone to the background
+        console.log(`${DEBUG_TAG} App going to background, ensuring audio can continue`);
         // Make sure audio session is configured for background playback
         initAudioSession();
       }
@@ -390,6 +513,7 @@ export function useAudioPlayer(): AudioPlayerResult {
     });
 
     return () => {
+      console.log(`${DEBUG_TAG} Cleaning up app state listener and audio resources`);
       subscription.remove();
       cleanupAudio();
     };

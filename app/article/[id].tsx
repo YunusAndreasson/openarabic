@@ -2,11 +2,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
+import type { ComponentRef } from 'react';
 import { StyleSheet, View } from 'react-native';
+import type {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  ViewStyle,
+  TouchableOpacity,
+} from 'react-native';
 import type { AnimatedStyleProp } from 'react-native-reanimated';
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
+import AuthDebugger from '@/components/AuthDebugger';
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleNotFound } from '@/components/NotFound';
 import ThemedCard from '@/components/ThemedCard';
@@ -34,6 +41,7 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { updateAudioState } from '@/store/audioSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
+import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -324,10 +332,13 @@ export default function ArticleScreen(): JSX.Element {
   }, [triggerAnimations]);
 
   // Handle article data hook callbacks
-  const { handleToggleReadingList, handleWordPress } = useArticleMutations(
+  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
     user?.id,
     refetchReadingListStatus
   );
+
+  // We override default word handling to use long-press for root toggles
+  const noopWordPress = useCallback((w: SentenceWord) => {}, []);
 
   // Use the article renderers hook
   const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
@@ -335,7 +346,7 @@ export default function ArticleScreen(): JSX.Element {
     colors,
     selectedWordIds,
     sentenceWordsMap || new Map(),
-    (word: Tables<'sentence_words'>) => handleWordPress(word.id)
+    noopWordPress
   );
 
   // New state to track if audio control panel should be visible
@@ -639,33 +650,29 @@ export default function ArticleScreen(): JSX.Element {
   // Component renderers
   const renderWord = useCallback(
     (
-      word: Tables<'sentence_words'> & {
-        root: Tables<'roots'> | null;
-        word_type: Tables<'word_types'> | null;
-      },
+      word: SentenceWord,
       isAudioHighlighted = false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      wordRef?: any
-    ) => {
-      return (
-        <ArabicWord
-          key={word.id}
-          word={word}
-          onPress={word => {
-            handleWordPress(word.id);
-          }}
-          settings={{
-            showEnglish: false,
-            fontScale: settings.fontScale,
-            showTransliteration: false,
-            showWordType: false,
-          }}
-          isAudioHighlighted={isAudioHighlighted}
-          wordRef={wordRef}
-        />
-      );
-    },
-    [handleWordPress, settings]
+      wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>
+    ) => (
+      <ArabicWord
+        key={word.id}
+        word={word}
+        onPress={() => {
+          if (word.root) {
+            handleRootPress(word.root.id);
+          }
+        }}
+        settings={{
+          showEnglish: false,
+          fontScale: settings.fontScale,
+          showTransliteration: false,
+          showWordType: false,
+        }}
+        isAudioHighlighted={isAudioHighlighted}
+        wordRef={wordRef}
+      />
+    ),
+    [handleRootPress, settings]
   );
 
   // Render article list item with optimized settings
@@ -970,6 +977,9 @@ export default function ArticleScreen(): JSX.Element {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
+        {/* Auth debugger - Remove this after fixing the issue */}
+        <AuthDebugger />
+
         {sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}

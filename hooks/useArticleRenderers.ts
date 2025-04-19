@@ -1,19 +1,23 @@
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
-import type { Article } from '@/types/articles.types';
-import type { SentenceWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
+import type { Article } from '../types/articles.types';
+import type { ThemeColors } from '../types/ui/theme.types';
+import type { SentenceWord } from '../types/vocabulary.types';
+import { handleError } from '../utils/errorHandling';
 
 import { useNavigationWithDebounce } from './useNavigationWithDebounce';
+
+type SentenceWordsMap = Map<number, SentenceWord[]>;
 
 /**
  * Hook for article rendering functions
  * @param settings - App settings
- * @param _colors - Theme colors
+ * @param colors - Theme colors
  * @param selectedWordIds - Set of selected word IDs (can be number or string)
  * @param sentenceWordsMap - Map of sentence IDs to words
  * @param handleWordPress - Function to handle word press
+ * @param handleRootPress - Function to handle root press
  * @returns Object with rendering functions
  */
 export const useArticleRenderers = (
@@ -21,10 +25,11 @@ export const useArticleRenderers = (
     fontScale: number;
     showEnglish: boolean;
   },
-  _colors: Record<string, string>,
-  selectedWordIds: Set<number | string>,
-  sentenceWordsMap: Map<number, SentenceWord[]>,
-  handleWordPress: (word: SentenceWord) => void
+  colors: ThemeColors,
+  selectedWordIds: Set<number> | undefined,
+  sentenceWordsMap: SentenceWordsMap,
+  handleWordPress: (word: SentenceWord) => void,
+  handleRootPress?: (rootId: number) => void
 ): {
   prepareWord: (word: SentenceWord) => {
     word: SentenceWord;
@@ -33,36 +38,34 @@ export const useArticleRenderers = (
     onPress: (word: SentenceWord) => void;
     scale: number;
     baseSize: number;
+    onLongPress?: () => void;
   };
   handleArticlePress: (articleOrId: Article | number, isRelatedArticle?: boolean) => void;
   getWordsForSentence: (sentenceId: number) => SentenceWord[];
 } => {
+  const router = useRouter();
+
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
 
   // Prepare word for rendering
   const prepareWord = useCallback(
     (word: SentenceWord) => {
-      // Extract the word ID as both number and string representations for checking
-      const wordId = word.id;
-      const stringWordId = String(wordId);
-
-      // Check both number and string formats to ensure robust matching
-      const isSelected =
-        selectedWordIds.has(wordId) ||
-        selectedWordIds.has(Number(wordId)) ||
-        (typeof wordId === 'number' && selectedWordIds.has(stringWordId));
+      // Check if the word's root is selected
+      const isSelected = selectedWordIds?.has(word.root_id) ?? false;
 
       return {
         word,
         isSelected,
         key: word.id,
-        onPress: handleWordPress,
         scale: settings.fontScale,
-        baseSize: 24,
+        baseSize: 16,
+        onPress: () => handleWordPress(word),
+        onLongPress:
+          handleRootPress && word.root_id ? () => handleRootPress(word.root_id) : undefined,
       };
     },
-    [handleWordPress, selectedWordIds, settings.fontScale]
+    [selectedWordIds, handleWordPress, handleRootPress, settings.fontScale]
   );
 
   /**
@@ -99,10 +102,10 @@ export const useArticleRenderers = (
         router.push(`/article/${articleId}`);
       }
     },
-    [navigateTo]
+    [navigateTo, router]
   );
 
-  // Get words for a given sentence ID
+  // Get words for a sentence
   const getWordsForSentence = useCallback(
     (sentenceId: number) => {
       return sentenceWordsMap.get(sentenceId) || [];

@@ -95,14 +95,14 @@ export const useArticleData = (
     return sorted;
   }, [article?.article_sentences]);
 
-  // Extract selected word IDs
+  // Extract selected root IDs since study is now root-based
   const selectedWordIds = useMemo(() => {
-    const ids = new Set(
-      (studyWords || []).map(w => {
-        const id = w.sentence_word_id;
-        return typeof id === 'string' ? parseInt(id, 10) : id;
-      })
-    );
+    const ids = new Set<number>();
+    (studyWords || []).forEach(w => {
+      if (w.root_id != null) {
+        ids.add(w.root_id);
+      }
+    });
     return ids;
   }, [studyWords]);
 
@@ -133,7 +133,7 @@ export const useArticleData = (
                 id: word.word_type_id,
                 name: '',
               },
-            }))
+            })) as unknown as SentenceWord[]
         );
       }
     });

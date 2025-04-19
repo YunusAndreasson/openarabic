@@ -109,7 +109,10 @@ class WordTranslation(BaseModel):
     arabic: str
     english: str
     pos: Optional[str] = None  # Part of speech
-    root: Optional[str] = None  # Root word for verbs
+    essential: Optional[str] = None  # Essential letters for flashcards
+    essential_translation: Optional[str] = (
+        None  # One-word English meaning of the essential letters
+    )
     notes: Optional[str] = None  # Any special notes about the translation
 
 
@@ -238,7 +241,19 @@ def is_valid_pos(pos: str) -> bool:
         return False
 
     pos = pos.lower().strip()
-    return pos in VALID_POS
+
+    # Check if it's one of our exact valid POS categories
+    if pos in VALID_POS:
+        return True
+
+    # If there are parentheses, the model might have included additional information
+    # Strip this out to check the base POS (e.g., "verb (past)" -> "verb")
+    if "(" in pos:
+        base_pos = pos.split("(")[0].strip()
+        if base_pos in VALID_POS:
+            return False  # We explicitly don't want modifiers in parentheses
+
+    return False
 
 
 def validate_final_translation(translation: SentenceTranslation) -> List[str]:
@@ -279,13 +294,8 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
                 issues.append(
                     f"Word {i + 1}: Missing {'Arabic' if not word.arabic else 'English'} text"
                 )
-            if not word.pos or not is_valid_pos(word.pos):
-                issues.append(
-                    f"Word {i + 1}: Invalid part of speech: {word.pos}. Must be one of:\n"
-                    "- verb (any verb form)\n"
-                    "- noun (nouns, pronouns, adjectives, adverbs)\n"
-                    "- particle (particles, prepositions, conjunctions, etc.)"
-                )
+            # Skipping part-of-speech validation to allow the model to use any POS tag freely
+
     else:
         issues.append("Missing word-by-word translations")
 
@@ -293,9 +303,10 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
 
 
 # Configuration constants
-MODEL_ANALYSIS = "gpt-4.1"  # For text splitting and analysis
-MODEL_TRANSLATION = "gpt-4.1"  # For English translation and word translation
-MODEL_OTHER = "gpt-4o"  # For tashkeel, refinement, and other tasks
+MODEL_ANALYSIS = "gpt-4o"  # For text splitting and analysis
+MODEL_TRANSLATION = "gpt-4o"  # For English translation and word translation
+MODEL_OTHER = "gpt-4o"  # For tashkeel and support tasks
+MODEL_VERIFICATION = "o4-mini"  # For final verification/refinement step
 CHECKPOINT_FILE = "translation_checkpoint.json"
 MAX_SENTENCE_LENGTH = 500  # characters
 MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
@@ -795,8 +806,7 @@ def batch_translate_words(
 
         formatted_inputs.append(
             f"Set {i + 1}:\n"
-            f"Original: {sentence}\n"
-            f"With tashkeel: {tashkeel}\n"
+            f"Arabic (with tashkeel): {tashkeel}\n"
             f"Translation: {translation}"
             f"{semantic_context}"
             f"{tashkeel_notes}"
@@ -821,45 +831,40 @@ def batch_translate_words(
     )
 
     if "results" in response and isinstance(response["results"], list):
-        # Convert compact format to full format if needed
+        # Simplified mapping: always include essential letters and translations
         processed_results = []
         for i, result in enumerate(response["results"]):
             if i >= len(sentences):
                 break
-            if isinstance(result, dict) and "word_translations" in result:
-                word_translations = []
-                for word in result["word_translations"]:
-                    if "a" in word:  # Compact format
-                        # Only include root if it's a verb or derived noun
-                        pos = word.get("p", "")
-                        pos_lower = pos.lower() if pos else ""
-
-                        notes = word.get("n", "")
-                        notes_lower = notes.lower() if notes else ""
-
-                        should_include_root = pos_lower == "verb" or (
-                            pos_lower == "noun" and "derived" in notes_lower
-                        )
-                        word_translations.append(
-                            {
-                                "arabic": word.get("a", ""),
-                                "english": word.get("e", ""),
-                                "pos": pos,
-                                "root": word.get("r") if should_include_root else None,
-                                "notes": notes,
-                                "uncertainties": word.get("uncertainties", []),
-                            }
-                        )
-                    else:  # Already full format
-                        word_translations.append(word)
-                processed_results.append({"word_translations": word_translations})
-            else:
-                processed_results.append({"word_translations": []})
-
-        # Make sure we have a result for each input sentence
+            word_translations = []
+            for word in result.get("word_translations", []):
+                # Normalize both old and new field names for arabic and english
+                arabic_text = word.get("arabic") or word.get("a", "")
+                english_text = word.get("english") or word.get("e", "")
+                pos_tag = word.get("pos") or word.get("p", "")
+                notes_text = word.get("notes") or word.get("n", "")
+                # Always include essential letters; fallback to arabic if missing
+                essential_letters = (
+                    word.get("essential") or word.get("r") or arabic_text
+                )
+                essential_translation = word.get("essential_translation") or word.get(
+                    "root_translation", ""
+                )
+                word_translations.append(
+                    {
+                        "arabic": arabic_text,
+                        "english": english_text,
+                        "pos": pos_tag,
+                        "essential": essential_letters,
+                        "essential_translation": essential_translation,
+                        "notes": notes_text,
+                        "uncertainties": word.get("uncertainties", []),
+                    }
+                )
+            processed_results.append({"word_translations": word_translations})
+        # Ensure alignment: one list per sentence
         while len(processed_results) < len(sentences):
             processed_results.append({"word_translations": []})
-
         return processed_results
     elif "error" in response:
         logging.error(f"Error in word translation: {response['error']}")
@@ -889,8 +894,8 @@ def batch_refine_translations(
             entry = f"{word.get('arabic', '')}: {word.get('english', '')}"
             if word.get("pos"):
                 entry += f" ({word.get('pos')})"
-            if word.get("root"):
-                entry += f" [root: {word.get('root')}]"
+            if word.get("essential"):
+                entry += f" [essential: {word.get('essential')}]"
             word_trans_formatted.append(entry)
 
         # Format all uncertainties for resolution
@@ -944,7 +949,8 @@ def batch_refine_translations(
         messages,
         function_schema=REFINEMENT_FUNCTION,
         function_name="refine_translations",
-        model=MODEL_OTHER,  # Use MODEL_OTHER for refinement
+        model=MODEL_VERIFICATION,  # Use the mini model for final verification
+        temperature=1.0,  # Must use default temperature for this model
     )
 
     if "refinements" in response and isinstance(response["refinements"], list):
@@ -1083,7 +1089,12 @@ def process_batch(
                             arabic=word_data.get("a", ""),
                             english=word_data.get("e", ""),
                             pos=word_data.get("p"),
-                            root=word_data.get("r"),
+                            essential=word_data.get("essential")
+                            or word_data.get("r", ""),
+                            essential_translation=(
+                                word_data.get("essential_translation")
+                                or word_data.get("root_translation", "")
+                            ),
                             notes=word_data.get("n"),
                         )
                     )
@@ -1097,7 +1108,11 @@ def process_batch(
                             english=word_data.get("english", "")
                             or word_data.get("e", ""),
                             pos=word_data.get("pos") or word_data.get("p"),
-                            root=word_data.get("root") or word_data.get("r"),
+                            essential=word_data.get("essential") or word_data.get("r"),
+                            essential_translation=(
+                                word_data.get("essential_translation")
+                                or word_data.get("root_translation", "")
+                            ),
                             notes=word_data.get("notes") or word_data.get("n"),
                         )
                     )
@@ -1202,6 +1217,11 @@ def load_checkpoint() -> List[SentenceTranslation]:
                 # Handle word_by_word as list of dictionaries
                 word_by_word = []
                 for word in item.get("word_by_word", []):
+                    # Remap old root fields for backward compatibility
+                    if "root" in word:
+                        word["essential"] = word.pop("root")
+                    if "root_translation" in word:
+                        word["essential_translation"] = word.pop("root_translation")
                     word_by_word.append(WordTranslation(**word))
 
                 # Create SentenceTranslation object

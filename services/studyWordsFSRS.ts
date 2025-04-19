@@ -1,7 +1,7 @@
 import type { Rating } from 'ts-fsrs';
 import { createEmptyCard } from 'ts-fsrs';
 
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord } from '../types/vocabulary.types';
 
 import { supabase, checkAuthentication } from './supabase';
 
@@ -37,7 +37,7 @@ export const FSRS_QUERY_KEYS = {
 interface ReviewLog {
   reviewed_at: string;
   grade: number;
-  sentence_word_id: number;
+  root_id: number;
 }
 
 export const studyWordsFSRSService = {
@@ -64,22 +64,17 @@ export const studyWordsFSRSService = {
         fsrs_lapses, 
         fsrs_state, 
         fsrs_last_review, 
-        sentence_word_id, 
+        root_id,
         created_at`
       );
     } else {
-      // Full data with relationships
-      selectQuery = query.select(`
+      // Get full data with relationships - root is the only relation we need
+      selectQuery = query.select(
+        `
         *,
-        sentence_word:sentence_words (
-          *,
-          root:roots (*),
-          word_type:word_types (*),
-          sentence:article_sentences (
-            *
-          )
-        )
-      `);
+        root:roots (*)
+      `
+      );
     }
 
     // Add filters after the select
@@ -109,11 +104,7 @@ export const studyWordsFSRSService = {
   },
 
   // Update word with FSRS parameters
-  async updateFSRSWord(
-    userId: string,
-    sentenceWordId: number,
-    update: FSRSWordUpdate
-  ): Promise<boolean> {
+  async updateFSRSWord(userId: string, rootId: number, update: FSRSWordUpdate): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -125,11 +116,11 @@ export const studyWordsFSRSService = {
       throw new Error('User ID mismatch');
     }
 
-    // First verify the word exists and belongs to the user
+    // First verify the root entry exists and belongs to the user
     const { data: existingWord, error: checkError } = await supabase
       .from('study_words')
       .select('*')
-      .eq('sentence_word_id', sentenceWordId)
+      .eq('root_id', rootId)
       .eq('user_id', userId)
       .single();
 
@@ -138,13 +129,13 @@ export const studyWordsFSRSService = {
     }
 
     if (!existingWord) {
-      throw new Error('Word not found or does not belong to user');
+      throw new Error('Root entry not found or does not belong to user');
     }
 
     const { error } = await supabase
       .from('study_words')
       .update(update)
-      .eq('sentence_word_id', sentenceWordId)
+      .eq('root_id', rootId)
       .eq('user_id', userId);
 
     if (error) {
@@ -155,7 +146,7 @@ export const studyWordsFSRSService = {
   },
 
   // Record a review with FSRS parameters
-  async recordFSRSReview(userId: string, sentenceWordId: number, rating: Rating): Promise<boolean> {
+  async recordFSRSReview(userId: string, rootId: number, rating: Rating): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -170,7 +161,7 @@ export const studyWordsFSRSService = {
     // Add the review record
     const { error } = await supabase.from('reviews').insert({
       user_id: userId,
-      sentence_word_id: sentenceWordId,
+      root_id: rootId,
       grade: rating,
       reviewed_at: new Date().toISOString(),
     });
@@ -182,142 +173,126 @@ export const studyWordsFSRSService = {
     return true;
   },
 
-  // Toggle study word with FSRS initialization
-  async toggleFSRSStudyWord(userId: string, sentenceWordId: number): Promise<boolean> {
-    console.log('toggleFSRSStudyWord called with:', { userId, sentenceWordId });
-
+  // Toggle FSRS study for roots
+  async toggleFSRSStudyRoot(userId: string, rootId: number): Promise<boolean> {
+    // Authenticate user with better error handling
     try {
       const {
         data: { session },
+        error: sessionError,
       } = await supabase.auth.getSession();
 
-      console.log('Auth session:', session ? 'exists' : 'null', 'User:', session?.user?.id);
+      console.log(
+        'Session check in toggleFSRSStudyRoot:',
+        session ? 'Valid session' : 'No session'
+      );
+
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw new Error(`Authentication error: ${sessionError.message}`);
+      }
 
       if (!session?.user) {
-        console.error('Authentication error: No session or user');
+        console.error('No active session found');
         throw new Error('User must be authenticated to manage study words');
       }
 
       if (session.user.id !== userId) {
-        console.error('User ID mismatch:', {
-          sessionUserId: session.user.id,
-          providedUserId: userId,
-        });
+        console.error('User ID mismatch:', session.user.id, 'vs', userId);
         throw new Error('User ID mismatch');
       }
 
-      // First check if the word is already being studied
-      const { data: existingWord, error: checkError } = await supabase
+      // Check if a study entry already exists for this root
+      const { data: existing, error: checkError } = await supabase
         .from('study_words')
         .select('*')
         .eq('user_id', userId)
-        .eq('sentence_word_id', sentenceWordId)
+        .eq('root_id', rootId)
         .single();
 
-      console.log('Check existing word result:', {
-        existingWord: !!existingWord,
-        error: checkError?.message,
-      });
-
       if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing word:', checkError);
+        console.error('Error checking existing study word:', checkError);
         throw checkError;
       }
 
-      if (existingWord) {
-        console.log('Word exists, removing from study words');
-        // First, delete all reviews related to this study word to avoid foreign key constraint errors
-        const { error: reviewsDeleteError } = await supabase
-          .from('reviews')
-          .delete()
-          .eq('user_id', userId)
-          .eq('sentence_word_id', sentenceWordId);
-
-        if (reviewsDeleteError) {
-          console.error('Error deleting reviews:', reviewsDeleteError);
-          throw new Error(`Failed to delete reviews: ${reviewsDeleteError.message}`);
-        }
-
-        // After deleting reviews, delete the study word
+      if (existing) {
+        // Remove existing root study entry
         const { error: deleteError } = await supabase
           .from('study_words')
           .delete()
           .eq('user_id', userId)
-          .eq('sentence_word_id', sentenceWordId);
+          .eq('root_id', rootId);
 
         if (deleteError) {
           console.error('Error deleting study word:', deleteError);
-          throw new Error(`Failed to delete study word: ${deleteError.message}`);
+          throw deleteError;
         }
-
-        console.log('Successfully removed word from study words');
         return false;
-      } else {
-        console.log('Word does not exist, adding to study words');
-        // Get current time
-        const now = new Date();
+      }
 
-        // Create an empty FSRS card
-        const emptyCard = createEmptyCard(now);
+      // Create a new FSRS card for the root
+      const now = new Date();
+      const emptyCard = createEmptyCard(now);
 
-        // Initialize new study word with FSRS parameters
-        const newWord = {
-          user_id: userId,
-          sentence_word_id: sentenceWordId,
-          // Legacy fields (kept for compatibility)
-          next_review_at: now.toISOString(),
-          created_at: now.toISOString(),
-          ease_factor: 2.5,
-          interval_days: 1,
-          stability: 0,
-          lapses: 0,
-          review_count: 0,
-          previous_interval: 0,
-          difficulty: 0.3,
-          success_streak: 0,
-          failure_streak: 0,
-          // FSRS fields
-          fsrs_due: now.toISOString(),
-          fsrs_stability: emptyCard.stability,
-          fsrs_difficulty: emptyCard.difficulty,
-          fsrs_elapsed_days: emptyCard.elapsed_days,
-          fsrs_scheduled_days: emptyCard.scheduled_days,
-          fsrs_reps: emptyCard.reps,
-          fsrs_lapses: emptyCard.lapses,
-          fsrs_state: emptyCard.state,
-          fsrs_last_review: null, // No review yet
-        };
+      // Create entry matching the actual database schema columns
+      const newEntry = {
+        user_id: userId,
+        root_id: rootId,
+        next_review_at: now.toISOString(),
+        created_at: now.toISOString(),
+        ease_factor: 2.5,
+        interval_days: 1,
+        stability: 0,
+        lapses: 0,
+        review_count: 0,
+        previous_interval: 0,
+        difficulty: 0.3,
+        success_streak: 0,
+        failure_streak: 0,
+        fsrs_due: now.toISOString(),
+        fsrs_stability: emptyCard.stability,
+        fsrs_difficulty: emptyCard.difficulty,
+        fsrs_elapsed_days: emptyCard.elapsed_days,
+        fsrs_scheduled_days: emptyCard.scheduled_days,
+        fsrs_reps: emptyCard.reps,
+        fsrs_lapses: emptyCard.lapses,
+        fsrs_state: emptyCard.state,
+        fsrs_last_review: null,
+      };
 
-        console.log('Inserting new study word:', { ...newWord, user_id: 'REDACTED' });
-        const { error: insertError } = await supabase
-          .from('study_words')
-          .insert(newWord)
-          .select()
-          .single();
+      // Debug logs
+      console.log('Attempting to insert new study word entry:', JSON.stringify(newEntry, null, 2));
+
+      try {
+        const { data, error: insertError } = await supabase.from('study_words').insert(newEntry);
 
         if (insertError) {
           console.error('Error inserting study word:', insertError);
           throw insertError;
         }
 
-        console.log('Successfully added word to study words');
+        console.log('Successfully inserted study word:', data);
         return true;
+      } catch (error) {
+        console.error('Exception caught when inserting study word:', error);
+        throw error;
       }
     } catch (error) {
-      console.error('Error in toggleFSRSStudyWord:', error);
+      console.error('Exception in toggleFSRSStudyRoot:', error);
       throw error;
     }
   },
 
-  // New function to get review logs for weekly progress
+  // Get review logs for weekly progress
   async getReviewLogs(userId: string, daysBack: number = 7): Promise<ReviewLog[]> {
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (daysBack - 1));
 
     const { data, error } = await supabase
       .from('reviews')
-      .select('reviewed_at, grade, sentence_word_id')
+      .select('reviewed_at, grade, root_id')
       .eq('user_id', userId)
+      .not('root_id', 'is', null)
       .gte('reviewed_at', startDate.toISOString())
       .lte('reviewed_at', now.toISOString())
       .order('reviewed_at', { ascending: true });
@@ -326,6 +301,17 @@ export const studyWordsFSRSService = {
       throw error;
     }
 
-    return data;
+    return data as ReviewLog[];
+  },
+
+  /**
+   * Toggle a word's study status in FSRS
+   * @param userId - The user ID
+   * @param wordId - The word ID to toggle
+   * @returns true if added, false if removed
+   */
+  async toggleFSRSStudyWord(userId: string, wordId: number): Promise<boolean> {
+    // This method is now deprecated - use toggleFSRSStudyRoot instead
+    throw new Error('toggleFSRSStudyWord is deprecated, use toggleFSRSStudyRoot instead');
   },
 };

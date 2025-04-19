@@ -15,9 +15,9 @@ export interface SentenceWord extends Tables<'sentence_words'> {
  * Used across vocabulary-related components, screens, and the spaced repetition system
  */
 export interface StudyWord {
-  sentence_word_id: number;
+  root_id: number;
+  root?: Tables<'roots'> | null;
   user_id: string;
-  sentence_word?: SentenceWord;
 
   // Legacy fields (kept for compatibility)
   interval_days: number;

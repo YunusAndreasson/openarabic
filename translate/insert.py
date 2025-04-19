@@ -1607,19 +1607,48 @@ def get_author_id(name: str = "Ibn Kathir") -> int:
 
 
 def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
-    """Get existing root or create a new one."""
+    """Get existing root or create a new one, and generate audio URL for the root."""
     # Clean up letters (remove extra spaces)
     letters = " ".join(letters.split())
 
-    # Check if root exists
-    result = supabase.table("roots").select("id").eq("letters", letters).execute()
+    # Check if root exists, include audio_url
+    result = (
+        supabase.table("roots")
+        .select("id", "audio_url")
+        .eq("letters", letters)
+        .execute()
+    )
     if result.data:
-        return result.data[0]["id"]
+        root = result.data[0]
+        root_id = root["id"]
+        # Generate and update audio_url if missing
+        if not root.get("audio_url"):
+            try:
+                audio_url = get_or_generate_word_audio(letters, is_arabic=True)
+                if audio_url:
+                    supabase.table("roots").update({"audio_url": audio_url}).eq(
+                        "id", root_id
+                    ).execute()
+            except Exception as e:
+                print(f"Error generating audio for root '{letters}': {e}")
+        return root_id
 
-    # Create new root
+    # Create new root without audio_url first
     root_data = {"letters": letters, "meaning": meaning}
     result = supabase.table("roots").insert(root_data).execute()
-    return result.data[0]["id"]
+    root_id = result.data[0]["id"]
+
+    # Generate and update audio_url for the new root
+    try:
+        audio_url = get_or_generate_word_audio(letters, is_arabic=True)
+        if audio_url:
+            supabase.table("roots").update({"audio_url": audio_url}).eq(
+                "id", root_id
+            ).execute()
+    except Exception as e:
+        print(f"Error generating audio for new root '{letters}': {e}")
+
+    return root_id
 
 
 def get_word_type_id(pos: str) -> int:
@@ -1637,10 +1666,13 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
     if word.get("root"):
         return word["root"], word.get("notes")
 
-    # If no root is specified, create one based on the word form
-    # For Arabic words, we'll use the word form itself as the root
-    # This is a simplification but ensures we meet the not-null constraint
-    return word["arabic"], f"Auto-generated root for: {word['english']}"
+    # Use essential letters and translation as the root when available
+    letters = word.get("essential", word.get("arabic"))
+    meaning = (
+        word.get("essential_translation")
+        or f"Auto-generated root for: {word.get('english', '')}"
+    )
+    return letters, meaning
 
 
 def main():

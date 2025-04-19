@@ -41,11 +41,9 @@ function safeGet<T>(
  */
 export function mapToStudyWord(item: Record<string, any>): StudyWord {
   return {
-    sentence_word_id: safeGet(item, 'sentence_word_id', 0, Number),
+    root_id: safeGet(item, 'root_id', 0, Number),
+    root: safeGet(item, 'root', undefined),
     user_id: safeGet(item, 'user_id', '', String),
-    sentence_word: safeGet(item, 'sentence_word', undefined, val =>
-      val ? mapToSentenceWord(val) : undefined
-    ),
 
     // Legacy fields
     interval_days: safeGet(item, 'interval_days', 0, Number),

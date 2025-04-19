@@ -35,11 +35,24 @@ export function useAuth(): AuthResult {
       } = await supabase.auth.getSession();
 
       if (error) {
+        console.error('Failed to fetch session:', error.message);
         return null;
+      }
+
+      if (fetchedSession) {
+        console.log(
+          'Session fetched successfully. Expires at:',
+          fetchedSession.expires_at
+            ? new Date(fetchedSession.expires_at * 1000).toISOString()
+            : 'unknown'
+        );
+      } else {
+        console.log('No active session found during fetch');
       }
 
       return fetchedSession;
     } catch (error) {
+      console.error('Exception during fetchSession:', error);
       return null;
     }
   }, []);
@@ -48,21 +61,68 @@ export function useAuth(): AuthResult {
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
     try {
-      const fetchedSession = await fetchSession();
+      console.log('Manually refreshing session...');
 
-      if (fetchedSession) {
-        setSession(fetchedSession);
-        setAuthError(null);
+      // First try refreshing the token
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+      if (refreshError) {
+        console.error('Error refreshing session:', refreshError);
+        // If refresh fails, try getting the current session
+        const fetchedSession = await fetchSession();
+
+        if (fetchedSession) {
+          setSession(fetchedSession);
+          setAuthError(null);
+          return fetchedSession;
+        } else {
+          throw new Error('Could not refresh or retrieve session');
+        }
       }
 
-      return fetchedSession;
+      if (refreshData.session) {
+        console.log('Session refreshed successfully');
+        setSession(refreshData.session);
+        setAuthError(null);
+        return refreshData.session;
+      } else {
+        console.log('No session returned after refresh');
+        return null;
+      }
     } catch (error) {
+      console.error('Error during refreshSession:', error);
       setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
       return null;
     } finally {
       setIsLoading(false);
     }
   }, [fetchSession]);
+
+  // Set up automatic token refresh
+  useEffect(() => {
+    // Check if session is about to expire and refresh it
+    const checkTokenExpiration = () => {
+      if (!session?.expires_at) return;
+
+      const expiresAt = session.expires_at * 1000; // Convert to milliseconds
+      const now = Date.now();
+      const timeUntilExpiry = expiresAt - now;
+
+      // If token expires in less than 5 minutes, refresh it
+      if (timeUntilExpiry < 5 * 60 * 1000) {
+        console.log('Token expires soon. Refreshing...');
+        refreshSession();
+      }
+    };
+
+    // Check on mount and then periodically
+    checkTokenExpiration();
+    const intervalId = setInterval(checkTokenExpiration, 60 * 1000); // Check every minute
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [session, refreshSession]);
 
   useEffect(() => {
     let isMounted = true;
@@ -90,6 +150,7 @@ export function useAuth(): AuthResult {
         }
       } catch (error) {
         if (!isMounted) return;
+        console.error('Error initializing auth:', error);
         setSession(null); // Clear session on error
         setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
       } finally {
@@ -103,8 +164,10 @@ export function useAuth(): AuthResult {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
+
+      console.log('Auth state changed:', event);
 
       // Batch state updates on auth change
       setSession(newSession);

@@ -37,16 +37,13 @@ export const studyWordsService = {
     if (options.forStats) {
       // For stats, we only need core fields, not all the relationships
       selectQuery = query.select(
-        'interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability, lapses, previous_interval'
+        'interval_days, next_review_at, review_count, created_at, root_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability, lapses, previous_interval'
       );
     } else {
       // Full data with relationships
       selectQuery = query.select(`
-        interval_days, next_review_at, review_count, created_at, sentence_word_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability, lapses, previous_interval,
-        sentence_word:sentence_words (*),
-        root:roots (*),
-        word_type:word_types (*),
-        sentence:article_sentences (*)
+        interval_days, next_review_at, review_count, created_at, root_id, difficulty, success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, stability, lapses, previous_interval,
+        root:roots (*)
       `);
     }
 
@@ -70,7 +67,7 @@ export const studyWordsService = {
     return mapToStudyWords(data || []);
   },
 
-  async updateWordReview(sentenceWordId: number, update: WordReviewUpdate): Promise<void> {
+  async updateWordReview(rootId: number, update: WordReviewUpdate): Promise<void> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -82,7 +79,7 @@ export const studyWordsService = {
     const { data: existingWord, error: checkError } = await supabase
       .from('study_words')
       .select('*')
-      .eq('sentence_word_id', sentenceWordId)
+      .eq('root_id', rootId)
       .eq('user_id', session.user.id)
       .single();
 
@@ -94,18 +91,41 @@ export const studyWordsService = {
       throw new Error('Word not found or does not belong to user');
     }
 
-    const { error } = await supabase
+    // Only include valid fields from the update object
+    const validUpdate = {
+      success_streak: update.success_streak,
+      failure_streak: update.failure_streak,
+      interval_days: update.interval_days,
+      ease_factor: update.ease_factor,
+      next_review_at: update.next_review_at,
+      review_count: update.review_count,
+      lapses: update.lapses,
+      stability: update.stability,
+      previous_interval: update.previous_interval,
+      difficulty: update.difficulty,
+      fsrs_due: update.fsrs_due,
+      fsrs_stability: update.fsrs_stability,
+      fsrs_difficulty: update.fsrs_difficulty,
+      fsrs_elapsed_days: update.fsrs_elapsed_days,
+      fsrs_scheduled_days: update.fsrs_scheduled_days,
+      fsrs_reps: update.fsrs_reps,
+      fsrs_lapses: update.fsrs_lapses,
+      fsrs_state: update.fsrs_state,
+      fsrs_last_review: update.fsrs_last_review,
+    };
+
+    const { error: updateError } = await supabase
       .from('study_words')
-      .update(update)
-      .eq('sentence_word_id', sentenceWordId)
+      .update(validUpdate)
+      .eq('root_id', rootId)
       .eq('user_id', session.user.id);
 
-    if (error) {
-      throw error;
+    if (updateError) {
+      throw updateError;
     }
   },
 
-  async toggleStudyWord(userId: string, sentenceWordId: number): Promise<boolean> {
+  async toggleStudyWord(userId: string, rootId: number): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -117,24 +137,25 @@ export const studyWordsService = {
       throw new Error('User ID mismatch');
     }
 
-    // First check if the word is already being studied
+    // Check if word is already being studied
     const { data: existingWord, error: checkError } = await supabase
       .from('study_words')
       .select('*')
       .eq('user_id', userId)
-      .eq('sentence_word_id', sentenceWordId)
+      .eq('root_id', rootId)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError) {
       throw checkError;
     }
 
+    // If word exists, delete it
     if (existingWord) {
       const { error: deleteError } = await supabase
         .from('study_words')
         .delete()
         .eq('user_id', userId)
-        .eq('sentence_word_id', sentenceWordId);
+        .eq('root_id', rootId);
 
       if (deleteError) {
         throw deleteError;
@@ -151,7 +172,7 @@ export const studyWordsService = {
 
       const newWord: StudyWordInsert = {
         user_id: userId,
-        sentence_word_id: sentenceWordId,
+        root_id: rootId,
         // Legacy fields (kept for compatibility)
         next_review_at: currentTime,
         created_at: currentTime,
@@ -176,11 +197,7 @@ export const studyWordsService = {
         fsrs_last_review: null, // No reviews yet
       };
 
-      const { error: insertError } = await supabase
-        .from('study_words')
-        .insert(newWord)
-        .select()
-        .single();
+      const { error: insertError } = await supabase.from('study_words').insert(newWord);
 
       if (insertError) {
         throw insertError;

@@ -18,7 +18,7 @@ type UseFSRSResult = {
   isLoading: boolean;
   isComplete: boolean;
   progress: number;
-  updateWord: (sentenceWordId: number, success: boolean) => Promise<void>;
+  updateWord: (rootId: number, success: boolean) => Promise<void>;
   invalidateQueries: () => void;
   refetchDueWords: () => Promise<unknown>;
   resetQueue: () => void;
@@ -162,13 +162,13 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       };
 
       // Update the word with FSRS data
-      await studyWordsFSRSService.updateFSRSWord(userId, word.sentence_word_id, wordUpdateData);
+      await studyWordsFSRSService.updateFSRSWord(userId, word.root_id, wordUpdateData);
 
       // Record the review
-      await studyWordsFSRSService.recordFSRSReview(userId, word.sentence_word_id, rating);
+      await studyWordsFSRSService.recordFSRSReview(userId, word.root_id, rating);
 
       // Update streak counters
-      await studyWordsService.updateWordReview(word.sentence_word_id, {
+      await studyWordsService.updateWordReview(word.root_id, {
         success_streak: success ? (word.success_streak || 0) + 1 : 0,
         failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
         interval_days: word.interval_days,
@@ -185,13 +185,14 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
   // Update the word in the database based on swipe direction
   const updateWord = useCallback(
-    async (sentenceWordId: number, success: boolean) => {
+    async (rootId: number, success: boolean) => {
       // Basic validation
       if (!userId || !currentWord) {
         return;
       }
 
-      if (currentWord.sentence_word_id !== sentenceWordId) {
+      // Ensure we match current entry
+      if (currentWord.root_id !== rootId) {
         return;
       }
 
@@ -204,10 +205,62 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       }
 
       stateTrackingRef.current.isProcessingUpdate = true;
-
       try {
-        // Update the word in the database
-        await updateWordInDatabase(currentWord, success);
+        // Get the current word
+        const word = currentWord;
+
+        // Convert database word to FSRS Card
+        const card = convertToFSRSCard(word);
+        const now = new Date();
+
+        // Determine appropriate rating based on card state and success
+        let rating: Rating;
+        if (
+          card.state === State.New ||
+          card.state === State.Learning ||
+          card.state === State.Relearning
+        ) {
+          rating = success ? Rating.Hard : Rating.Again;
+        } else {
+          rating = success ? Rating.Good : Rating.Again;
+        }
+
+        // Get next card state from FSRS
+        const result = fsrsInstance.next(card, now, rating);
+        const { card: newCard } = result;
+        const lastReview = now.toISOString();
+
+        // Prepare update data from FSRS calculation result
+        const wordUpdateData = {
+          fsrs_due: newCard.due.toISOString(),
+          fsrs_stability: newCard.stability,
+          fsrs_difficulty: newCard.difficulty,
+          fsrs_elapsed_days: newCard.elapsed_days,
+          fsrs_scheduled_days: newCard.scheduled_days,
+          fsrs_reps: newCard.reps,
+          fsrs_lapses: newCard.lapses,
+          fsrs_state: newCard.state,
+          fsrs_last_review: lastReview,
+        };
+
+        // Update the word with FSRS data
+        await studyWordsFSRSService.updateFSRSWord(userId, rootId, wordUpdateData);
+
+        // Record the review
+        await studyWordsFSRSService.recordFSRSReview(userId, rootId, rating);
+
+        // Update streak counters
+        await studyWordsService.updateWordReview(rootId, {
+          success_streak: success ? (word.success_streak || 0) + 1 : 0,
+          failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
+          interval_days: word.interval_days,
+          ease_factor: word.ease_factor,
+          next_review_at: word.next_review_at,
+          review_count: word.review_count,
+          lapses: word.lapses,
+          stability: word.stability,
+          previous_interval: word.previous_interval,
+        });
 
         // Update queue and track progress
         setWordQueue(prevQueue => {
@@ -244,7 +297,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         stateTrackingRef.current.isProcessingUpdate = false;
       }
     },
-    [userId, currentWord, isComplete, updateWordInDatabase, onComplete]
+    [userId, currentWord, isComplete, convertToFSRSCard, fsrsInstance]
   );
 
   // Reset the queue when the component unmounts or when explicitly called

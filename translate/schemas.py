@@ -31,35 +31,42 @@ TRANSLATE_SENTENCES_FUNCTION = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "t": {
+                        "translation": {
                             "type": "string",
                             "description": "The English translation of the sentence",
                         },
-                        "n": {
-                            "type": ["string", "null"],
-                            "description": "Notes about the translation or null if none",
+                        "notes": {
+                            "type": "string",
+                            "description": "Notes about the translation",
                         },
                         "uncertainties": {
-                            "type": ["array", "null"],
-                            "description": "List of specific parts with uncertain translation or null if none",
+                            "type": "array",
+                            "description": "List of specific parts with uncertain translation",
                             "items": {
                                 "type": "object",
                                 "properties": {
                                     "text": {"type": "string"},
                                     "reason": {"type": "string"},
-                                    "alternatives": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                    },
                                 },
                             },
                         },
                     },
-                    "required": ["t"],
+                    "required": ["translation", "notes"],
                 },
             }
         },
         "required": ["translations"],
+        "examples": [
+            {
+                "translations": [
+                    {
+                        "translation": "And the Prophet [Muhammad], peace be upon him, said",
+                        "notes": "",
+                        "uncertainties": [],
+                    }
+                ]
+            }
+        ],
     },
 }
 
@@ -76,34 +83,31 @@ TASHKEEL_FUNCTION = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "t": {
+                        "tashkeel": {
                             "type": "string",
                             "description": "The text with diacritical marks",
                         },
                         "uncertainties": {
-                            "type": ["array", "null"],
+                            "type": "array",
                             "description": "List of specific diacritical marks that are uncertain",
                             "items": {
                                 "type": "object",
                                 "properties": {
                                     "word": {"type": "string"},
                                     "reason": {"type": "string"},
-                                    "alternatives": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                    },
                                     "related_translation_uncertainty": {
-                                        "type": ["string", "null"]
+                                        "type": "string"
                                     },
                                 },
                             },
                         },
                     },
-                    "required": ["t"],
+                    "required": ["tashkeel"],
                 },
             }
         },
         "required": ["tashkeels"],
+        "examples": [{"tashkeels": [{"tashkeel": "قَالَ النَّبِيُّ", "uncertainties": []}]}],
     },
 }
 
@@ -126,56 +130,55 @@ WORD_TRANSLATION_FUNCTION = {
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "a": {
+                                    "arabic": {
                                         "type": "string",
                                         "description": "The Arabic word",
                                     },
-                                    "e": {
+                                    "english": {
                                         "type": "string",
                                         "description": "The English translation",
                                     },
-                                    "p": {
+                                    "pos": {
                                         "type": "string",
-                                        "enum": list(VALID_POS),
-                                        "description": "Part of speech - MUST be one of the valid parts of speech defined in the enums",
+                                        "enum": [
+                                            "verb",
+                                            "noun",
+                                            "particle",
+                                            "adjective",
+                                            "pronoun",
+                                            "adverb",
+                                            "preposition",
+                                            "conjunction",
+                                            "interjection",
+                                            "numeral",
+                                        ],
+                                        "description": "Part of speech (must match VALID_POS)",
                                     },
-                                    "r": {
-                                        "type": ["string", "null"],
-                                        "description": "Root word (only for verbs and derived nouns)",
+                                    "essential": {
+                                        "type": "string",
+                                        "description": "Flashcard essential letters: stripped of affixes (wa-/fa-/bi-/-hum/-tum etc.) and diacritized without case endings for flashcard memorization",
                                     },
-                                    "n": {
-                                        "type": ["string", "null"],
-                                        "description": "Notes about this word",
+                                    "essential_translation": {
+                                        "type": "string",
+                                        "description": "One-word English meaning of the essential letters for spaced-repetition flashcards",
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "description": "Additional grammar notes or context",
                                     },
                                     "uncertainties": {
-                                        "type": ["array", "null"],
-                                        "description": "List of uncertainties for this word",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "type": {"type": "string"},
-                                                "description": {"type": "string"},
-                                                "alternatives": {
-                                                    "type": "array",
-                                                    "items": {"type": "string"},
-                                                },
-                                                "related_uncertainties": {
-                                                    "type": ["array", "null"],
-                                                    "items": {
-                                                        "type": "object",
-                                                        "properties": {
-                                                            "step": {"type": "string"},
-                                                            "uncertainty_id": {
-                                                                "type": "string"
-                                                            },
-                                                        },
-                                                    },
-                                                },
-                                            },
-                                        },
+                                        "type": "array",
+                                        "items": {"type": "object"},
                                     },
                                 },
-                                "required": ["a", "e", "p"],
+                                "required": [
+                                    "arabic",
+                                    "english",
+                                    "pos",
+                                    "essential",
+                                    "essential_translation",
+                                    "notes",
+                                ],
                             },
                         }
                     },
@@ -184,6 +187,24 @@ WORD_TRANSLATION_FUNCTION = {
             }
         },
         "required": ["results"],
+        "examples": [
+            {
+                "results": [
+                    {
+                        "word_translations": [
+                            {
+                                "arabic": "قَالَ",
+                                "english": "he said",
+                                "pos": "verb",
+                                "essential": "قَال",
+                                "essential_translation": "he said",
+                                "notes": "",
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
     },
 }
 
@@ -223,19 +244,29 @@ REFINEMENT_FUNCTION = {
                                         "description": "The English translation",
                                     },
                                     "p": {
-                                        "type": ["string", "null"],
+                                        "type": "string",
                                         "description": "Part of speech",
                                     },
-                                    "r": {
-                                        "type": ["string", "null"],
-                                        "description": "Root word",
+                                    "essential": {
+                                        "type": "string",
+                                        "description": "Flashcard essential letters",
+                                    },
+                                    "essential_translation": {
+                                        "type": "string",
+                                        "description": "One-word English meaning of the essential letters",
                                     },
                                     "n": {
-                                        "type": ["string", "null"],
+                                        "type": "string",
                                         "description": "Notes",
                                     },
                                 },
-                                "required": ["a", "e"],
+                                "required": [
+                                    "a",
+                                    "e",
+                                    "p",
+                                    "essential",
+                                    "essential_translation",
+                                ],
                             },
                         },
                         "resolved_uncertainties": {
@@ -252,7 +283,7 @@ REFINEMENT_FUNCTION = {
                             },
                         },
                         "remaining_uncertainties": {
-                            "type": ["array", "null"],
+                            "type": "array",
                             "description": "Uncertainties that couldn't be fully resolved",
                             "items": {
                                 "type": "object",
@@ -264,7 +295,7 @@ REFINEMENT_FUNCTION = {
                             },
                         },
                         "changes_made": {
-                            "type": ["array", "null"],
+                            "type": "array",
                             "description": "Descriptions of changes made",
                             "items": {"type": "string"},
                         },
@@ -274,6 +305,8 @@ REFINEMENT_FUNCTION = {
                         "improved_translation",
                         "improved_word_translations",
                         "resolved_uncertainties",
+                        "remaining_uncertainties",
+                        "changes_made",
                     ],
                 },
             }
@@ -381,10 +414,10 @@ Input text:
 
 SENTENCE_TRANSLATION_USER_PROMPT = """Translate Islamic Arabic to English:
 
-1. Use formal but accessible English, preserving Arabic word order where possible
+1. Use accessible English, preserving Arabic word order as much as possible
 2. Use simple vocabulary appropriate for Islamic content (no obscure terms)
-3. ALWAYS add bracketed words [like this] for grammatical completion
-4. Document alternative interpretations with Islamic context
+3. Add bracketed words [like this] for words needed to complete the sentence but that is not present in the original text
+4. Document uncertainties only (do not list alternatives)
 5. Match register: solemn for supplications, precise for hadith
 6. Preserve original punctuation and structure
 7. Use appropriate Islamic terminology
@@ -424,31 +457,26 @@ Verification steps:
 IMPORTANT: Partial vocalization is NOT acceptable - every eligible consonant must receive appropriate diacritics."""
 
 WORD_BY_WORD_USER_PROMPT = (
-    """Analyze each word in Islamic Arabic:
+    "IMPORTANT: Return only a JSON object matching the function schema.\n"
+    "ENSURE: The `essential` and `essential_translation` fields must be populated for every word; never return null for these.\n"
+    "ENSURE: The `essential` field must retain all original diacritical marks (tashkeel) exactly as in the Arabic word.\n"
+    """Analyze each word in Islamic Arabic and extract flashcard-friendly essential letters:
 
-1. For attached conjunctions: DO NOT separate "و" (wa/and) when attached (e.g., "وشيخ" remains one word)
-2. Only treat "و" as separate when standalone with spaces
+Rules for the `essential` field:
+- Strip common Arabic prefixes attached (و, ف, ب, ك, ل, س, etc.).
+- Strip common suffixes (object pronouns و, ه, ك, ي, نا, etc.).
+- Preserve the core internal letters in their original order.
+- Provide the fully diacritized form of the essential letters using a simple pattern (e.g., فَعَل) without case endings for flashcard memorization tailored for learning Arabic.
 
-For each word provide:
-- Arabic with diacritics
-- Simple English equivalent (avoid complex vocabulary)
-- Part of speech - ONLY use these categories:
-"""
-    + "".join(f"  - {pos}\n" for pos in sorted(VALID_POS))
-    + """- Root (for verbs and derived nouns only)
-- Notes: Include grammatical information and Islamic context
+For each word provide a JSON object with these keys:
+- `arabic`: Arabic text with diacritics
+- `english`: Simple English equivalent in context
+- `pos`: Part of speech tag (must be one of the VALID_POS enum)
+- `essential`: Flashcard letters, stripped of affixes and diacritized without case endings
+- `essential_translation`: One-word English meaning of the essential letters
+- `notes`: Any additional grammatical or contextual details (optional)
 
-Note: Put grammatical function in notes field, NOT in part of speech field.
-
-Example:
-For "فيها":
-{
-  "a": "فيها",
-  "e": "in it",
-  "p": "particle",
-  "n": "Preposition في with attached pronoun ها"
-}
-"""
+Output MUST be a JSON array where each element corresponds to one word in original order, with fields exactly matching the schema."""
 )
 
 FINAL_VERIFICATION_USER_PROMPT = """Review and resolve Islamic Arabic translation components:
