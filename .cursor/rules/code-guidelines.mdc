@@ -44,7 +44,8 @@ alwaysApply: true
 - Use consistent naming conventions: PascalCase for components, camelCase for functions
 - Style using StyleSheet.create() for static styles, inline for dynamic
 - Handle errors with try/catch in services, Sentry for logging
-- Structure Supabase queries in services/ with typed responses using database.types.ts
+- Structure Supabase queries in `services/` with typed responses using database.types.ts
+- Use currect types and never `any`
 
 ## Constraints
 - Don't be overly strict about linting issues
