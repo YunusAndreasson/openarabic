@@ -63,8 +63,10 @@ export default function ReviewScreen(): JSX.Element {
     maxProgress,
     progressAnimationKey,
     wordFontSize,
+    isVagueMeaning,
     handleSwipeLeft,
     handleSwipeRight,
+    handleTap,
     handleClose,
   } = useReview({ fromVocabulary });
 
@@ -115,6 +117,7 @@ export default function ReviewScreen(): JSX.Element {
                 fontSize={wordFontSize}
                 onSwipeLeft={handleSwipeLeft}
                 onSwipeRight={handleSwipeRight}
+                onTap={handleTap}
                 isUpdating={false}
                 isTransitioning={isTransitioningToCompletion}
                 opacity={opacity}
@@ -123,7 +126,8 @@ export default function ReviewScreen(): JSX.Element {
               <MeaningOverlay
                 visible={showMeaningOverlay}
                 meaning={currentMeaning}
-                isWarning={true}
+                isWarning={!isVagueMeaning}
+                isVague={isVagueMeaning}
               />
             </View>
 

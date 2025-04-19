@@ -15,94 +15,105 @@ import { lightFeedback } from '../../utils/haptics';
  * Component that displays the meaning of a word with a fade animation
  * without changing the background brightness
  */
-const MeaningOverlay: React.FC<MeaningOverlayProps> = memo(
-  // eslint-disable-next-line react/prop-types
-  ({ visible, meaning, isWarning = false, duration = 150, animate = true, onClose }) => {
-    const colors = useColors();
-    const [shouldRender, setShouldRender] = useState(visible);
-    const isMountedRef = useRef(true);
+const MeaningOverlay = memo((props: MeaningOverlayProps) => {
+  const {
+    visible,
+    meaning,
+    isWarning = false,
+    isVague = false,
+    duration = 150,
+    animate = true,
+    onClose,
+  } = props;
 
-    useEffect(() => {
-      return () => {
-        isMountedRef.current = false;
-      };
-    }, []);
+  const colors = useColors();
+  const [shouldRender, setShouldRender] = useState(visible);
+  const isMountedRef = useRef(true);
 
-    const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
-      initialOpacity: 0,
-      delay: 0,
-      duration: animate ? duration : 0,
-    });
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
-    // Watch for visibility changes
-    useEffect(() => {
-      if (visible) {
-        setShouldRender(true);
-        startAnimation();
+  const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
+    initialOpacity: 0,
+    delay: 0,
+    duration: animate ? duration : 0,
+  });
 
-        if (isWarning) {
-          lightFeedback();
-        }
-        return () => {};
-      } else if (shouldRender) {
-        reverseAnimation();
-        onClose?.();
+  // Watch for visibility changes
+  useEffect(() => {
+    if (visible) {
+      setShouldRender(true);
+      startAnimation();
 
-        const timeout = setTimeout(
-          () => {
-            if (isMountedRef.current) {
-              setShouldRender(false);
-            }
-          },
-          animate ? duration + 50 : 0
-        );
-
-        return () => clearTimeout(timeout);
+      if (isWarning || isVague) {
+        lightFeedback();
       }
       return () => {};
-    }, [
-      visible,
-      startAnimation,
-      reverseAnimation,
-      isWarning,
-      shouldRender,
-      duration,
-      animate,
-      onClose,
-    ]);
+    } else if (shouldRender) {
+      reverseAnimation();
+      onClose?.();
 
-    if (!shouldRender) return null;
+      const timeout = setTimeout(
+        () => {
+          if (isMountedRef.current) {
+            setShouldRender(false);
+          }
+        },
+        animate ? duration + 50 : 0
+      );
 
-    // Use warning color and larger font size when isWarning is true
-    const textColor = isWarning ? colors.error : colors.tint;
-    const fontSize = isWarning
-      ? LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2
-      : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;
+      return () => clearTimeout(timeout);
+    }
+    return () => {};
+  }, [
+    visible,
+    startAnimation,
+    reverseAnimation,
+    isWarning,
+    isVague,
+    shouldRender,
+    duration,
+    animate,
+    onClose,
+  ]);
 
-    return (
-      <Animated.View
-        style={[
-          styles.overlay,
-          { backgroundColor: colors.background },
-          animatedStyle as StyleProps,
-        ]}
-      >
-        <ThemedText
-          style={[
-            styles.text,
-            {
-              color: textColor,
-              fontSize: fontSize,
-            },
-          ]}
-          skipDefaultColor
-        >
-          {meaning || 'No translation available'}
-        </ThemedText>
-      </Animated.View>
-    );
+  if (!shouldRender) return null;
+
+  // Determine text color based on state
+  let textColor;
+  if (isWarning) {
+    textColor = colors.error;
+  } else if (isVague) {
+    textColor = colors.warning; // Use orange/yellow for vague
+  } else {
+    textColor = colors.tint;
   }
-);
+
+  const fontSize =
+    isWarning || isVague ? LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2 : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;
+
+  return (
+    <Animated.View
+      style={[styles.overlay, { backgroundColor: colors.background }, animatedStyle as StyleProps]}
+    >
+      <ThemedText
+        style={[
+          styles.text,
+          {
+            color: textColor,
+            fontSize: fontSize,
+          },
+        ]}
+        skipDefaultColor
+      >
+        {meaning || 'No translation available'}
+      </ThemedText>
+    </Animated.View>
+  );
+});
 
 // Use separate style objects for view and text styles to avoid TypeScript errors
 const styles = StyleSheet.create({

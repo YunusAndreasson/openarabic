@@ -14,12 +14,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.openarabic.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["audio", "processing"],
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
-        },
-        "LSApplicationCategoryType": "public.app-category.education"
+        "UIBackgroundModes": ["audio", "processing"]
       }
     },
     "android": {

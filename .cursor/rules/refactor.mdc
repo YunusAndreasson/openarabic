@@ -17,3 +17,4 @@ alwaysApply: false
 - Use memoise only when it provides measurable value
 - Never reference color literals, use Colors.ts
 - Evaluate if we are using functionality in /utils correctly
+- Never change functionality when refactoring so that code breaks

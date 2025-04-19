@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Code Review
+
+You are reviewing the introduction of a new features in the latest uncommited changes.
+
+# Guidelines
+- Check if any unecessary code has been added
+- Check if any old code should have been reused
+- Check for obvious bugs
+- Check for obvious performance improvements
+- Check that types are used from /types
+- Validate that [code-guidelines.mdc](mdc:.cursor/rules/code-guidelines.mdc) are implemented
+- Only suggest changes that are clear violitions or that would bring real life imporvements
+- If everything is fine, then to not go into unecessary details
+- Avoid adding unecessary code
+- Remove old code when possible
+- Do not add documentation

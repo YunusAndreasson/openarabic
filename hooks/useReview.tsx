@@ -14,6 +14,7 @@ import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
 // Create a standalone audio player outside of React component lifecycle
+// TODO: Use hooks instead
 const standaloneAudioPlayer: {
   sound: Audio.Sound | null;
   lastUrl: string | null;
@@ -102,10 +103,12 @@ interface UseReviewReturn {
   maxProgress: number;
   progressAnimationKey: number;
   wordFontSize: number;
+  isVagueMeaning: boolean;
 
   // Handlers
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
+  handleTap: () => void;
   handleClose: () => void;
 }
 
@@ -129,6 +132,7 @@ export function useReview({
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
+  const [isVagueMeaning, setIsVagueMeaning] = useState(false);
 
   // Refs for state management
   const meaningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -287,99 +291,87 @@ export function useReview({
     }
   }, [currentWord?.root_id, isComplete, isTransitioningToCompletion, wordQueue, preloadNextAudio]);
 
+  // Helper function to handle knowledge response with different confidence levels
+  const handleKnowledgeResponse = useCallback(
+    (confidence: 'known' | 'vague' | 'unknown') => {
+      if (
+        isUpdatingWordRef.current ||
+        isTransitioningToCompletion ||
+        isComplete ||
+        completionTriggeredRef.current
+      ) {
+        return;
+      }
+
+      isUpdatingWordRef.current = true;
+      setTimeout(() => {
+        standaloneAudioPlayer.cleanup();
+        fadeOut();
+
+        setTimeout(() => {
+          // Only show meaning overlay for 'unknown' or 'vague'
+          if (confidence === 'unknown' || confidence === 'vague') {
+            const meaning = currentWord?.root?.meaning || 'No translation available';
+            setCurrentMeaning(meaning);
+            setIsVagueMeaning(confidence === 'vague');
+            setShowMeaningOverlay(true);
+          }
+
+          const processFeedback = () => {
+            if (currentWord?.root_id) {
+              updateWord(currentWord.root_id, confidence)
+                .then(() => {
+                  if (!isUpdatingWordRef.current) return;
+                  setTimeout(() => {
+                    fadeIn();
+                  }, 150);
+                })
+                .catch(error => {
+                  handleError(error);
+                  if (!isUpdatingWordRef.current) return;
+                  fadeIn();
+                })
+                .finally(() => {
+                  isUpdatingWordRef.current = false;
+                  if (meaningTimeoutRef.current) {
+                    clearTimeout(meaningTimeoutRef.current);
+                    meaningTimeoutRef.current = null;
+                  }
+                });
+            } else {
+              fadeIn();
+              isUpdatingWordRef.current = false;
+            }
+          };
+
+          if (confidence === 'unknown' || confidence === 'vague') {
+            meaningTimeoutRef.current = setTimeout(() => {
+              setShowMeaningOverlay(false);
+              processFeedback();
+            }, 2000);
+          } else {
+            processFeedback();
+          }
+        }, 300);
+      }, 200);
+    },
+    [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]
+  );
+
   // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
-    if (
-      isUpdatingWordRef.current ||
-      isTransitioningToCompletion ||
-      isComplete ||
-      completionTriggeredRef.current
-    ) {
-      return;
-    }
-
-    isUpdatingWordRef.current = true;
-    setTimeout(() => {
-      standaloneAudioPlayer.cleanup();
-      fadeOut();
-
-      setTimeout(() => {
-        const meaning = currentWord?.root?.meaning || 'No translation available';
-        setCurrentMeaning(meaning);
-        setShowMeaningOverlay(true);
-
-        meaningTimeoutRef.current = setTimeout(() => {
-          setShowMeaningOverlay(false);
-
-          if (currentWord?.root_id) {
-            updateWord(currentWord.root_id, false)
-              .then(() => {
-                if (!isUpdatingWordRef.current) return;
-                setTimeout(() => {
-                  fadeIn();
-                }, 150);
-              })
-              .catch(error => {
-                handleError(error);
-                if (!isUpdatingWordRef.current) return;
-                fadeIn();
-              })
-              .finally(() => {
-                isUpdatingWordRef.current = false;
-                if (meaningTimeoutRef.current) {
-                  clearTimeout(meaningTimeoutRef.current);
-                  meaningTimeoutRef.current = null;
-                }
-              });
-          } else {
-            fadeIn();
-            isUpdatingWordRef.current = false;
-          }
-        }, 2000);
-      }, 300);
-    }, 200);
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
+    handleKnowledgeResponse('unknown');
+  }, [handleKnowledgeResponse]);
 
   // Handle swipe right (know)
   const handleSwipeRight = useCallback(() => {
-    if (
-      isUpdatingWordRef.current ||
-      isTransitioningToCompletion ||
-      isComplete ||
-      completionTriggeredRef.current
-    ) {
-      return;
-    }
+    handleKnowledgeResponse('known');
+  }, [handleKnowledgeResponse]);
 
-    isUpdatingWordRef.current = true;
-    setTimeout(() => {
-      standaloneAudioPlayer.cleanup();
-      fadeOut();
-
-      setTimeout(() => {
-        if (currentWord?.root_id) {
-          updateWord(currentWord.root_id, true)
-            .then(() => {
-              if (!isUpdatingWordRef.current) return;
-              setTimeout(() => {
-                fadeIn();
-              }, 150);
-            })
-            .catch(error => {
-              handleError(error);
-              if (!isUpdatingWordRef.current) return;
-              fadeIn();
-            })
-            .finally(() => {
-              isUpdatingWordRef.current = false;
-            });
-        } else {
-          fadeIn();
-          isUpdatingWordRef.current = false;
-        }
-      }, 300);
-    }, 200);
-  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
+  // Handle tap (vaguely know)
+  const handleTap = useCallback(() => {
+    handleKnowledgeResponse('vague');
+  }, [handleKnowledgeResponse]);
 
   // Handle close
   const handleClose = useCallback(() => {
@@ -459,10 +451,12 @@ export function useReview({
     maxProgress: maxProgressRef.current,
     progressAnimationKey,
     wordFontSize,
+    isVagueMeaning,
 
     // Handlers
     handleSwipeLeft,
     handleSwipeRight,
+    handleTap,
     handleClose,
   };
 }

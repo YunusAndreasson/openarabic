@@ -32,6 +32,8 @@ export interface MeaningOverlayProps {
   meaning: string;
   /** Whether this is a warning message */
   isWarning?: boolean;
+  /** Whether this is a vague knowledge indicator */
+  isVague?: boolean;
   /** Animation duration in milliseconds */
   duration?: number;
   /** Whether to animate the overlay */

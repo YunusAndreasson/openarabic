@@ -22,6 +22,7 @@ interface ReviewCardProps {
   fontSize: number;
   onSwipeLeft: () => void;
   onSwipeRight: () => void;
+  onTap: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
   opacity: Animated.SharedValue<number>;
@@ -32,6 +33,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   fontSize,
   onSwipeLeft,
   onSwipeRight,
+  onTap,
   isUpdating,
   isTransitioning,
   opacity,
@@ -90,6 +92,18 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       }
     });
 
+  // Create tap gesture
+  const tapGesture = Gesture.Tap()
+    .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+    .onEnd(() => {
+      if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
+        runOnJS(onTap)();
+      }
+    });
+
+  // Combine gestures
+  const combinedGestures = Gesture.Exclusive(panGesture, tapGesture);
+
   // Create animated style for the swipe container
   const swipeContainerStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -101,7 +115,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   }));
 
   return (
-    <GestureDetector gesture={panGesture}>
+    <GestureDetector gesture={combinedGestures}>
       <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
         <Animated.View style={[styles.wordContainer, wordContainerStyle]}>
           <WordDisplay word={word} fontSize={fontSize} />

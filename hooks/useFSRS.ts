@@ -18,7 +18,7 @@ type UseFSRSResult = {
   isLoading: boolean;
   isComplete: boolean;
   progress: number;
-  updateWord: (rootId: number, success: boolean) => Promise<void>;
+  updateWord: (rootId: number, confidence: 'known' | 'vague' | 'unknown') => Promise<void>;
   invalidateQueries: () => void;
   refetchDueWords: () => Promise<unknown>;
   resetQueue: () => void;
@@ -121,9 +121,9 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     };
   }, []);
 
-  // Update the word in the database based on swipe direction
+  // Update the word in the database based on confidence level
   const updateWord = useCallback(
-    async (rootId: number, success: boolean) => {
+    async (rootId: number, confidence: 'known' | 'vague' | 'unknown') => {
       // Basic validation
       if (!userId || !currentWord) {
         return;
@@ -151,16 +151,30 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         const card = convertToFSRSCard(word);
         const now = new Date();
 
-        // Determine appropriate rating based on card state and success
+        // Determine appropriate rating based on card state and confidence
         let rating: Rating;
         if (
           card.state === State.New ||
           card.state === State.Learning ||
           card.state === State.Relearning
         ) {
-          rating = success ? Rating.Hard : Rating.Again;
+          // For new/learning cards
+          if (confidence === 'known') {
+            rating = Rating.Good;
+          } else if (confidence === 'vague') {
+            rating = Rating.Hard; // Hard indicates partial knowledge
+          } else {
+            rating = Rating.Again;
+          }
         } else {
-          rating = success ? Rating.Good : Rating.Again;
+          // For review cards
+          if (confidence === 'known') {
+            rating = Rating.Good;
+          } else if (confidence === 'vague') {
+            rating = Rating.Hard; // Hard indicates partial knowledge
+          } else {
+            rating = Rating.Again;
+          }
         }
 
         // Get next card state from FSRS
@@ -187,10 +201,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         // Record the review
         await studyWordsFSRSService.recordFSRSReview(userId, rootId, rating);
 
-        // Update streak counters
+        // Update streak counters - only increment success streak for 'known'
         await studyWordsService.updateWordReview(rootId, {
-          success_streak: success ? (word.success_streak || 0) + 1 : 0,
-          failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
+          success_streak: confidence === 'known' ? (word.success_streak || 0) + 1 : 0,
+          failure_streak: confidence === 'unknown' ? (word.failure_streak || 0) + 1 : 0,
           interval_days: word.interval_days,
           ease_factor: word.ease_factor,
           next_review_at: word.next_review_at,

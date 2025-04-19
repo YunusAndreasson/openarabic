@@ -85,14 +85,22 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
       <Animated.View style={[containerStyle, animatedStyle]}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
-            <Ionicons name="arrow-back" size={16} color={colors.tabIconDefault} />
+            <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText style={textStyle}>Swipe left{'\n'}Dont know</ThemedText>
+          <ThemedText style={textStyle}>Don&apos;t know</ThemedText>
         </View>
+
         <View style={styles.instructionItem}>
-          <ThemedText style={textStyle}>Swipe right{'\n'}Know</ThemedText>
           <View style={iconStyle}>
-            <Ionicons name="arrow-forward" size={16} color={colors.tabIconDefault} />
+            <Ionicons name="finger-print" size={18} color={colors.tabIconDefault} />
+          </View>
+          <ThemedText style={textStyle}>Vaguely know</ThemedText>
+        </View>
+
+        <View style={styles.instructionItem}>
+          <ThemedText style={textStyle}>Know</ThemedText>
+          <View style={iconStyle}>
+            <Ionicons name="arrow-forward" size={18} color={colors.tabIconDefault} />
           </View>
         </View>
       </Animated.View>
@@ -128,7 +136,7 @@ const styles = StyleSheet.create({
     height: 40,
   } as ViewStyle,
   instructionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
     opacity: LAYOUT.OPACITY.DIMMED,
