@@ -113,6 +113,7 @@ function AppContent() {
   const colors = useColors();
   const [appReady, setAppReady] = useState(false);
   const [showLoader, setShowLoader] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const appState = useRef(AppState.currentState);
   const { isLoading: isAuthLoading, session } = useAuth();
   const hasHiddenSplash = useRef(false);
@@ -204,41 +205,38 @@ function AppContent() {
   const SPLASH_SCREEN_TIMEOUT = 5000; // 5 seconds maximum
   const handleLayout = useCallback(async () => {
     if (!hasHiddenSplash.current && fontsLoaded) {
+      setIsTransitioning(true); // Start transition
       hasHiddenSplash.current = true;
 
-      // Create a timeout promise
       const timeoutPromise = new Promise(resolve => {
         setTimeout(() => {
           Sentry.captureMessage('Splash screen hide timed out', {
             level: 'warning',
-            tags: {
-              location: 'splash_screen_hide',
-            },
+            tags: { location: 'splash_screen_hide' },
           });
           resolve(null);
         }, SPLASH_SCREEN_TIMEOUT);
       });
 
       try {
-        // Race between splash screen hide and timeout
         await Promise.race([SplashScreen.hideAsync(), timeoutPromise]);
+        // Add small delay before state changes
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setShowLoader(false);
+        await new Promise(resolve => setTimeout(resolve, 50));
+        setAppReady(true);
       } catch (err) {
-        // Report splash screen hide error to Sentry
         Sentry.captureException(err, {
-          tags: {
-            location: 'splash_screen_hide',
-          },
+          tags: { location: 'splash_screen_hide' },
         });
       } finally {
-        // Ensure we always proceed with app initialization
-        setShowLoader(false);
-        setAppReady(true);
+        setIsTransitioning(false); // End transition
       }
     }
   }, [fontsLoaded]);
 
-  // Show app loader only until fonts are loaded
-  if (!fontsLoaded) {
+  // Modify the loading check
+  if (!fontsLoaded || isTransitioning) {
     return <AppLoader color={colors.tint} />;
   }
 

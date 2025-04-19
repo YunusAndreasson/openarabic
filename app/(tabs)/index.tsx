@@ -39,6 +39,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../../components/ErrorState';
 import DailyPickSection from '../../components/index/DailyPickSection';
+import { useAppLoading } from '../_layout';
 
 // Cache duration constants
 
@@ -161,6 +162,7 @@ export default function ArticlesScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
+  const { initialLoadComplete } = useAppLoading();
 
   // Fetch in-progress articles when component mounts
   useEffect(() => {
@@ -514,8 +516,8 @@ export default function ArticlesScreen(): JSX.Element {
     [insets, colors.background]
   );
 
-  // Show loading screen only during first data load
-  if (isInitialLoading) {
+  // Show loading screen only during first data load and not during transition
+  if (isInitialLoading && initialLoadComplete) {
     return <LoadingScreen />;
   }
 
