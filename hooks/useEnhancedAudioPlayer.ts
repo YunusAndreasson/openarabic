@@ -98,6 +98,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   const lastStateUpdateRef = useRef(Date.now());
   const currentSoundRef = useRef<Audio.Sound | null>(null);
   const appStateRef = useRef(AppState.currentState);
+  const trackEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Ref to hold stable callbacks implementing the Actions interface
   const actionsRef = useRef<EnhancedPlayerActions>({
@@ -239,6 +240,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
         if (queueItem.isPreloaded && queueItem.sound) {
           soundObject = queueItem.sound;
+          currentSoundRef.current = soundObject;
           await soundObject.replayAsync();
           const status = await soundObject.getStatusAsync();
           if (status.isLoaded) {
@@ -252,6 +254,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
               { shouldPlay: true }
             );
             soundObject = sound;
+            currentSoundRef.current = sound;
             if (status.isLoaded) {
               durationMillis = status.durationMillis ?? null;
             }
@@ -271,7 +274,13 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
           isPlayingRef.current = true;
           updateExposedState();
           if (durationMillis && isFinite(durationMillis)) {
-            setTimeout(() => {
+            // Clear any existing timeouts
+            if (trackEndTimeoutRef.current) {
+              clearTimeout(trackEndTimeoutRef.current);
+              trackEndTimeoutRef.current = null;
+            }
+            // Store the timeout ID so we can clear it if needed
+            trackEndTimeoutRef.current = setTimeout(() => {
               if (isPlayingRef.current && currentIndexRef.current === index) {
                 setIsTrackEnded(true);
               }
@@ -289,7 +298,13 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
           updateExposedState();
           if (success) {
             const trackDuration = queueItem.track.duration ?? 3000;
-            setTimeout(() => {
+            // Clear any existing timeouts
+            if (trackEndTimeoutRef.current) {
+              clearTimeout(trackEndTimeoutRef.current);
+              trackEndTimeoutRef.current = null;
+            }
+            // Store the timeout ID so we can clear it if needed
+            trackEndTimeoutRef.current = setTimeout(() => {
               if (isPlayingRef.current && currentIndexRef.current === index) {
                 setIsTrackEnded(true);
               }
@@ -309,9 +324,18 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   );
 
   const stopPlaybackLogic = useCallback(async (): Promise<boolean> => {
+    // First, clear any pending timeout that might trigger track ended
+    if (trackEndTimeoutRef.current) {
+      clearTimeout(trackEndTimeoutRef.current);
+      trackEndTimeoutRef.current = null;
+    }
+
+    // Reset all state immediately to prevent any pending updates
     isPlayingRef.current = false;
     setIsTrackEnded(false);
+    currentIndexRef.current = -1;
 
+    // Stop and unload the current sound if it exists
     if (currentSoundRef.current) {
       try {
         await currentSoundRef.current.stopAsync();
@@ -322,6 +346,9 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
         currentSoundRef.current = null;
       }
     }
+
+    // Let base audio player handle its own cleanup as needed
+    // The base player should respond to the state changes we've made
 
     // Unload any preloaded sounds in the queue properly
     const unloadPromises = audioQueueRef.current
@@ -343,10 +370,15 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
     await Promise.allSettled(unloadPromises);
 
+    // Clear the queue and reset all state variables
     audioQueueRef.current = [];
-    currentIndexRef.current = -1;
+    currentPlaylistRef.current = [];
+    preloadInProgressRef.current = false;
+
+    // Reset metadata
     updateMetadata(null);
     updateExposedState();
+
     return true;
   }, [updateExposedState, updateMetadata]);
 
