@@ -9,6 +9,11 @@ import { useNavigationWithDebounce } from './useNavigationWithDebounce';
 
 type SentenceWordsMap = Map<number, SentenceWord[]>;
 
+interface ArticleSettings {
+  fontScale: number;
+  showEnglish: boolean;
+}
+
 /**
  * Hook for article rendering functions
  * @param settings - App settings
@@ -20,10 +25,7 @@ type SentenceWordsMap = Map<number, SentenceWord[]>;
  * @returns Object with rendering functions
  */
 export const useArticleRenderers = (
-  settings: {
-    fontScale: number;
-    showEnglish: boolean;
-  },
+  settings: ArticleSettings,
   selectedWordIds: Set<number> | undefined,
   sentenceWordsMap: SentenceWordsMap,
   handleWordPress: (word: SentenceWord) => void,
@@ -94,8 +96,10 @@ export const useArticleRenderers = (
             params: { id: articleId.toString() },
           });
         }
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
+      } catch (error: unknown) {
+        // Ensure error is properly typed before handling
+        const errorMessage = error instanceof Error ? error : new Error(String(error));
+        handleError(errorMessage);
         // Fallback to most basic navigation if all else fails
         router.push(`/article/${articleId}`);
       }

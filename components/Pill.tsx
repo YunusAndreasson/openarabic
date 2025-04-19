@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, memo } from 'react';
-import { Pressable, StyleSheet, View, Platform } from 'react-native';
+import { Pressable, StyleSheet, View, Platform, type TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { PillProps } from '@/types/ui/pill.types';
@@ -33,34 +33,34 @@ const Pill = memo(
       reverseAnimation: resetScale,
     } = useTransformAnimation({
       type: 'scale',
-      initialValue: 0.98, // Scale down to 98%
-      targetValue: 1, // Scale up to 100%
-      duration: LAYOUT.ANIMATION.DURATION.FAST / 2, // Faster duration for responsive feel
+      initialValue: 0.98,
+      targetValue: 1,
+      duration: LAYOUT.ANIMATION.DURATION.FAST / 2,
     });
 
-    // Memoize the press handler
     const handlePress = useCallback(() => {
       if (onSelect) {
         onSelect(id);
       }
     }, [id, onSelect]);
 
-    // Determine if this is a category pill (which has different styling)
     const isCategory = variant === 'category';
     const isHorizontalCategory = variant === 'horizontal-category';
-
-    // Determine text type based on variant
     const textType = isCategory || isHorizontalCategory ? 'overline' : 'label';
 
-    // Get text style based on dark mode
-    const textStyle = isDarkMode ? { color: colors.text } : null;
+    const textStyle: TextStyle = isDarkMode ? { color: colors.text } : {};
 
-    // Get container style based on variant and selection state
     const containerStyle = useMemo(() => {
       return getContainerStyle(isCategory, isHorizontalCategory, isDarkMode, isSelected, colors);
     }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
 
-    // For category pills that don't need interaction
+    const pressedStyle = useMemo(
+      () => ({
+        backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
+      }),
+      [isDarkMode, colors]
+    );
+
     if (isCategory && !onSelect) {
       return (
         <View
@@ -84,7 +84,6 @@ const Pill = memo(
       );
     }
 
-    // Get android ripple config
     const androidRipple = !isSelected
       ? {
           color: isDarkMode ? colors.textOverlay : colors.overlay,
@@ -93,14 +92,13 @@ const Pill = memo(
         }
       : null;
 
-    // For interactive pills
     return (
       <Animated.View style={scaleStyle}>
         <Pressable
           style={({ pressed: isPressedState }) => [
             styles.pill,
             containerStyle,
-            isPressedState && !isSelected && getPressedStyle(isDarkMode, colors),
+            isPressedState && !isSelected && pressedStyle,
             isSelected && styles.pillSelected,
             absolute && styles.absoluteContainer,
           ]}
@@ -125,9 +123,6 @@ const Pill = memo(
   }
 );
 
-/**
- * Helper function to get the correct container style based on variant
- */
 function getContainerStyle(
   isCategory: boolean,
   isHorizontalCategory: boolean,
@@ -141,16 +136,6 @@ function getContainerStyle(
   return getFilterStyle(isDarkMode, isSelected, colors);
 }
 
-/**
- * Helper function to get pressed state style
- */
-function getPressedStyle(isDarkMode: boolean, colors: ReturnType<typeof useColors>) {
-  return {
-    backgroundColor: isDarkMode ? `${colors.elevation2}80` : `${colors.elevation1}80`,
-  };
-}
-
-// Get category pill styles
 const getCategoryStyle = (
   isDarkMode: boolean,
   isSelected: boolean,
@@ -168,7 +153,7 @@ const getCategoryStyle = (
       ? `${colors.tint}80`
       : `${colors.tint}60`
     : isDarkMode
-      ? colors.white + '30'
+      ? `${colors.white}30`
       : colors.cardBorder,
   borderWidth: isSelected ? 1 : 0.5,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -187,7 +172,6 @@ const getCategoryStyle = (
   }),
 });
 
-// Get filter pill styles
 const getFilterStyle = (
   isDarkMode: boolean,
   isSelected: boolean,
@@ -240,11 +224,11 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.SMALL - 1,
   },
   pillSelected: {
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN, // Use constant
+    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
   pillText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9, // Slightly smaller font size
-    fontWeight: '500', // Add medium font weight for better readability
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9,
+    fontWeight: '500',
   },
 });
 

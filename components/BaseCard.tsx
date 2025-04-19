@@ -13,6 +13,8 @@ import { useColors } from '../hooks/useColors';
 
 import { LoadingContainer } from './Loader';
 
+type AnimatedViewStyle = AnimatedStyleProp<ViewStyle>;
+
 /**
  * BaseCard is the foundation component for all card-type UI elements
  * in the application. It handles border radius, shadows, press animations, and loading states.
@@ -94,7 +96,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
   // Render loading state if needed
   if (isLoading) {
     return (
-      <Animated.View style={combinedCardStyle as AnimatedStyleProp<ViewStyle>}>
+      <Animated.View style={combinedCardStyle as AnimatedViewStyle}>
         {loadingComponent || <LoadingContainer size="medium" />}
       </Animated.View>
     );
@@ -103,7 +105,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
   // Non-interactive card
   if (!onPress) {
     return (
-      <Animated.View style={combinedCardStyle as AnimatedStyleProp<ViewStyle>} testID={testID}>
+      <Animated.View style={combinedCardStyle as AnimatedViewStyle} testID={testID}>
         <View style={combinedContentStyle}>{children}</View>
       </Animated.View>
     );
@@ -122,7 +124,7 @@ const BaseCard: React.FC<BaseCardProps> = ({
         borderless: false,
         foreground: true,
       }}
-      style={({ pressed }) => [
+      style={({ pressed }: { pressed: boolean }) => [
         combinedCardStyle,
         pressed && !disabled && { opacity: LAYOUT.OPACITY.PRESSED },
         disabled && { opacity: LAYOUT.OPACITY.DISABLED },

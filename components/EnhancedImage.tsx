@@ -9,15 +9,6 @@ import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { EnhancedImageProps } from '@/types/ui/image.types';
 
-/**
- * EnhancedImage component with essential optimizations
- * - Error handling
- * - Caching
- * - Accessibility support
- * - Blur transitions
- * - Placeholder support (ThumbHash/BlurHash)
- * - Transition effects (optional)
- */
 function EnhancedImageInternal({
   source,
   style,

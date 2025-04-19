@@ -45,7 +45,6 @@ import { setTheme } from '../store/themeSlice';
 try {
   SplashScreen.preventAutoHideAsync();
 } catch (err) {
-  // Report splash screen prevention error to Sentry
   Sentry.captureException(err, {
     tags: {
       location: 'splash_screen_prevention',
@@ -53,7 +52,6 @@ try {
   });
 }
 
-// Create React Query client with balanced caching defaults
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -70,18 +68,12 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize Sentry navigation integration
 const navigationIntegration = Sentry.reactNavigationIntegration();
 Sentry.init({
   dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
   integrations: [navigationIntegration],
-  // Disable Sentry in development to reduce console noise
   enabled: !__DEV__,
-  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
-  // spotlight: __DEV__,
 });
-
-// Static stack options
 
 const reviewScreenOptions = {
   headerShown: false,
@@ -90,19 +82,16 @@ const reviewScreenOptions = {
   gestureEnabled: false,
 } as const;
 
-// App loading context type
 interface AppLoadingContextType {
   initialLoadComplete: boolean;
   wasPreloaded: boolean;
 }
 
-// Create context with default values
 export const AppLoadingContext = createContext<AppLoadingContextType>({
   initialLoadComplete: false,
   wasPreloaded: false,
 });
 
-// Hook to use the app loading context
 export const useAppLoading = (): AppLoadingContextType => useContext(AppLoadingContext);
 
 function AppContent() {
@@ -119,16 +108,13 @@ function AppContent() {
   const hasHiddenSplash = useRef(false);
   const navigationRef = useNavigationContainerRef();
 
-  // Load fonts
   const [fontsLoaded] = useFonts({
     Philosopher: philosopherFont,
     NotoNaskhArabic: madinaFont,
   });
 
-  // Use the app preloader hook to preload data
   const { preloadAppData, isLoaded } = useAppPreloader();
 
-  // Make this available to child components via context
   const appLoadingContext = useMemo(
     () => ({
       initialLoadComplete: appReady,
@@ -137,7 +123,6 @@ function AppContent() {
     [appReady, isLoaded]
   );
 
-  // Register navigation container with Sentry
   useEffect(() => {
     if (navigationRef?.current) {
       const navigationIntegration = Sentry.reactNavigationIntegration();
@@ -145,7 +130,6 @@ function AppContent() {
     }
   }, [navigationRef]);
 
-  // Identify user in Mixpanel when auth state changes
   useEffect(() => {
     if (!appReady || isAuthLoading) return;
 
@@ -158,7 +142,6 @@ function AppContent() {
           });
         }
       } catch (err) {
-        // Report analytics errors to Sentry but don't block app flow
         Sentry.captureException(err, {
           tags: {
             location: 'analytics_identify',
@@ -171,24 +154,20 @@ function AppContent() {
     identifyUser();
   }, [session, appReady, isAuthLoading]);
 
-  // Memoize navigation theme to prevent recalculation
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
 
-  // Sync theme with system on first load and changes
   useEffect(() => {
     if (colorScheme && !theme) {
       dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
     }
   }, [colorScheme, dispatch, theme]);
 
-  // Start preloading app data after authentication is resolved
   useEffect(() => {
     if (!isAuthLoading && !isLoaded) {
       preloadAppData();
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
-  // Watch for app state changes
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (appState.current === 'background' && nextAppState === 'active' && appReady) {
@@ -202,10 +181,10 @@ function AppContent() {
     };
   }, [appReady, preloadAppData]);
 
-  const SPLASH_SCREEN_TIMEOUT = 5000; // 5 seconds maximum
+  const SPLASH_SCREEN_TIMEOUT = 5000;
   const handleLayout = useCallback(async () => {
     if (!hasHiddenSplash.current && fontsLoaded) {
-      setIsTransitioning(true); // Start transition
+      setIsTransitioning(true);
       hasHiddenSplash.current = true;
 
       const timeoutPromise = new Promise(resolve => {
@@ -220,7 +199,6 @@ function AppContent() {
 
       try {
         await Promise.race([SplashScreen.hideAsync(), timeoutPromise]);
-        // Add small delay before state changes
         await new Promise(resolve => setTimeout(resolve, 100));
         setShowLoader(false);
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -230,12 +208,11 @@ function AppContent() {
           tags: { location: 'splash_screen_hide' },
         });
       } finally {
-        setIsTransitioning(false); // End transition
+        setIsTransitioning(false);
       }
     }
   }, [fontsLoaded]);
 
-  // Modify the loading check
   if (!fontsLoaded || isTransitioning) {
     return <AppLoader color={colors.tint} />;
   }
@@ -264,15 +241,7 @@ function AppContent() {
                   />
                   <Stack.Screen name="article" options={{ headerShown: false }} />
                   <Stack.Screen name="review" options={reviewScreenOptions} />
-                  <Stack.Screen
-                    name="index"
-                    options={
-                      {
-                        // Redirect index to tabs or auth based on auth state
-                        // Redirect using useRootNavigationState in route component
-                      }
-                    }
-                  />
+                  <Stack.Screen name="index" />
                 </Stack>
                 <StatusBar style={isDark ? 'light' : 'dark'} />
               </>
@@ -286,24 +255,26 @@ function AppContent() {
   );
 }
 
-// Custom error boundary implementation
-class ErrorBoundary extends Component<
-  { children: React.ReactNode; FallbackComponent: React.ComponentType<{ error: Error }> },
-  { hasError: boolean; error: Error | null }
-> {
-  static defaultState = { hasError: false, error: null };
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+  FallbackComponent: React.ComponentType<{ error: Error }>;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  static defaultState: ErrorBoundaryState = { hasError: false, error: null };
 
   state = ErrorBoundary.defaultState;
 
-  static getDerivedStateFromError(error: Error) {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
   }
 
-  // Only update state if error changes
-  shouldComponentUpdate(
-    _prevProps: unknown,
-    nextState: { hasError: boolean; error: Error | null }
-  ) {
+  shouldComponentUpdate(_prevProps: ErrorBoundaryProps, nextState: ErrorBoundaryState): boolean {
     if (this.state.hasError !== nextState.hasError) return true;
     if (this.state.error !== nextState.error) return true;
     return false;
@@ -311,7 +282,8 @@ class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError && this.state.error) {
-      return <this.props.FallbackComponent error={this.state.error} />;
+      const { FallbackComponent } = this.props;
+      return <FallbackComponent error={this.state.error} />;
     }
     return this.props.children;
   }

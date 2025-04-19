@@ -10,10 +10,10 @@ import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
 // Constant for session refresh interval (every 6 days to stay within 7-day max)
-const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
+const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 
 // Store refresh interval ID
-let refreshIntervalId: NodeJS.Timeout | null = null;
+let refreshIntervalId: ReturnType<typeof setInterval> | null = null;
 
 /**
  * Supabase client configuration and initialization
@@ -26,8 +26,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     detectSessionInUrl: false,
     flowType: 'pkce',
-    debug: false,
-    // Set session parameters to match server config
+    // More aggressive session refresh settings
     storageKey: 'supabase.auth.token',
   },
 });
@@ -46,10 +45,12 @@ supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session 
 
     // Set up periodic session refresh to prevent expiration
     if (session) {
+      // More frequent refresh interval
       refreshIntervalId = setInterval(async () => {
         try {
           const { error } = await supabase.auth.refreshSession();
           if (error) {
+            // If refresh fails, try to get current session
             const { data } = await supabase.auth.getSession();
             if (!data.session && refreshIntervalId) {
               clearInterval(refreshIntervalId);
@@ -63,7 +64,7 @@ supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session 
             sentrySeverity: 'warning',
           });
         }
-      }, SIX_DAYS_MS);
+      }, THIRTY_MINUTES_MS); // Refresh every 30 minutes instead of 6 days
     }
   } else if (event === 'SIGNED_OUT') {
     // Stop auto-refresh when signed out

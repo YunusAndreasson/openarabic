@@ -13,76 +13,87 @@ import { useWordSizing } from '@/hooks/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
-// Create a standalone audio player outside of React component lifecycle
-// TODO: Use hooks instead
-const standaloneAudioPlayer: {
+interface AudioPlayerState {
   sound: Audio.Sound | null;
   lastUrl: string | null;
   isPlaying: boolean;
-  playAudio: (url: string) => Promise<void>;
-  cleanup: () => Promise<void>;
-} = {
-  sound: null,
-  lastUrl: null,
-  isPlaying: false,
+}
 
-  playAudio: async (url: string) => {
-    try {
-      if (standaloneAudioPlayer.lastUrl === url && standaloneAudioPlayer.isPlaying) {
-        return;
-      }
+function useAudioPlayer() {
+  const audioState = useRef<AudioPlayerState>({
+    sound: null,
+    lastUrl: null,
+    isPlaying: false,
+  });
 
-      await standaloneAudioPlayer.cleanup();
-
-      standaloneAudioPlayer.lastUrl = url;
-      standaloneAudioPlayer.isPlaying = true;
-
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        shouldDuckAndroid: true,
-        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-        playThroughEarpieceAndroid: false,
-      });
-
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: url },
-        { shouldPlay: true },
-        status => {
-          if (!status.isLoaded) return;
-          if (status.didJustFinish) {
-            standaloneAudioPlayer.isPlaying = false;
-          }
-        }
-      );
-
-      standaloneAudioPlayer.sound = sound;
-
-      setTimeout(() => {
-        if (standaloneAudioPlayer.lastUrl === url) {
-          standaloneAudioPlayer.isPlaying = false;
-        }
-      }, 3000);
-    } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
-      standaloneAudioPlayer.isPlaying = false;
-    }
-  },
-
-  cleanup: async () => {
-    if (standaloneAudioPlayer.sound) {
+  const cleanup = useCallback(async () => {
+    if (audioState.current.sound) {
       try {
-        await standaloneAudioPlayer.sound.stopAsync().catch(() => {});
-        await standaloneAudioPlayer.sound.unloadAsync().catch(() => {});
+        await audioState.current.sound.stopAsync().catch(() => {});
+        await audioState.current.sound.unloadAsync().catch(() => {});
       } catch (e) {
         handleError(e instanceof Error ? e : new Error(String(e)));
       }
-      standaloneAudioPlayer.sound = null;
+      audioState.current.sound = null;
     }
-    standaloneAudioPlayer.isPlaying = false;
-  },
-};
+    audioState.current.isPlaying = false;
+  }, []);
+
+  const playAudio = useCallback(
+    async (url: string) => {
+      try {
+        if (audioState.current.lastUrl === url && audioState.current.isPlaying) {
+          return;
+        }
+
+        await cleanup();
+
+        audioState.current.lastUrl = url;
+        audioState.current.isPlaying = true;
+
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+          playThroughEarpieceAndroid: false,
+        });
+
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: url },
+          { shouldPlay: true },
+          status => {
+            if (!status.isLoaded) return;
+            if (status.didJustFinish) {
+              audioState.current.isPlaying = false;
+            }
+          }
+        );
+
+        audioState.current.sound = sound;
+
+        setTimeout(() => {
+          if (audioState.current.lastUrl === url) {
+            audioState.current.isPlaying = false;
+          }
+        }, 3000);
+      } catch (error) {
+        handleError(error instanceof Error ? error : String(error));
+        audioState.current.isPlaying = false;
+      }
+    },
+    [cleanup]
+  );
+
+  useEffect(() => {
+    return () => {
+      cleanup();
+    };
+  }, [cleanup]);
+
+  return { playAudio, cleanup };
+}
 
 interface UseReviewProps {
   fromVocabulary?: boolean;
@@ -90,7 +101,6 @@ interface UseReviewProps {
 }
 
 interface UseReviewReturn {
-  // States
   showMeaningOverlay: boolean;
   currentMeaning: string;
   currentSentence: { wordForm: string };
@@ -104,13 +114,25 @@ interface UseReviewReturn {
   progressAnimationKey: number;
   wordFontSize: number;
   isVagueMeaning: boolean;
-
-  // Handlers
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
   handleTap: () => void;
   handleClose: () => void;
 }
+
+interface WordSizingConfig {
+  minFontSize: number;
+  maxFontSize: number;
+  minScreenWidth: number;
+  maxScreenWidth: number;
+}
+
+const fontConfig: WordSizingConfig = {
+  minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6,
+  maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3,
+  minScreenWidth: 320,
+  maxScreenWidth: 500,
+};
 
 export function useReview({
   fromVocabulary = false,
@@ -118,14 +140,13 @@ export function useReview({
 }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { playAudio, cleanup: cleanupAudio } = useAudioPlayer();
 
-  // Animation and audio state
   const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
   const nextWordAudioRef = useRef<{ url: string; loaded: boolean; sound?: Audio.Sound } | null>(
     null
   );
 
-  // UI state
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
   const [currentSentence, setCurrentSentence] = useState({ wordForm: '' });
@@ -134,7 +155,6 @@ export function useReview({
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
 
-  // Refs for state management
   const meaningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completionTransitionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxProgressRef = useRef(0);
@@ -143,12 +163,11 @@ export function useReview({
   const lastProgressUpdateRef = useRef(Date.now());
   const lastProcessedWordIdRef = useRef<string | null>(null);
 
-  // Define completion transition function
   const triggerCompletionTransition = useCallback(() => {
     if (completionTriggeredRef.current) return;
     completionTriggeredRef.current = true;
 
-    standaloneAudioPlayer.cleanup();
+    cleanupAudio();
 
     maxProgressRef.current = 100;
     setProgressAnimationKey(prev => prev + 1);
@@ -162,30 +181,19 @@ export function useReview({
     completionTransitionRef.current = setTimeout(() => {
       if (completionTriggeredRef.current) {
         setIsTransitioningToCompletion(false);
-        standaloneAudioPlayer.cleanup();
+        cleanupAudio();
       }
     }, 350);
-  }, [fadeOut]);
+  }, [fadeOut, cleanupAudio]);
 
-  // Initialize FSRS hook
   const { currentWord, wordQueue, isLoading, isComplete, progress, updateWord, invalidateQueries } =
     useFSRS({
       userId: user?.id,
       onComplete: triggerCompletionTransition,
     });
 
-  // Calculate dynamic font size for Arabic words based on window width
-  const dynamicFontConfig = {
-    minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6,
-    maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3,
-    minScreenWidth: 320,
-    maxScreenWidth: 500,
-  };
+  const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
-  // Use our custom hook for word sizing with simplified approach
-  const wordFontSize = useWordSizing(currentWord?.root?.letters, dynamicFontConfig);
-
-  // Preload audio function
   const preloadNextAudio = useCallback(async (audioUrl: string) => {
     if (!audioUrl) return;
 
@@ -214,7 +222,6 @@ export function useReview({
     }
   }, []);
 
-  // Hide initial loading after delay
   useEffect(() => {
     if (showInitialLoading) {
       const mounted = { current: true };
@@ -232,18 +239,16 @@ export function useReview({
     return () => {};
   }, [showInitialLoading]);
 
-  // Handle completion state
   useEffect(() => {
     if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
       triggerCompletionTransition();
     }
 
     if (isComplete) {
-      standaloneAudioPlayer.cleanup();
+      cleanupAudio();
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, cleanupAudio]);
 
-  // Update progress tracking
   useEffect(() => {
     if (!isLoading && progress !== undefined) {
       const now = Date.now();
@@ -260,7 +265,6 @@ export function useReview({
     }
   }, [isLoading, progress, isComplete]);
 
-  // Update current sentence and handle audio
   useEffect(() => {
     if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
       return;
@@ -279,7 +283,7 @@ export function useReview({
       setCurrentSentence({ wordForm });
 
       if (audioUrl) {
-        standaloneAudioPlayer.playAudio(audioUrl).catch(handleError);
+        playAudio(audioUrl).catch(handleError);
       }
 
       setTimeout(() => {
@@ -289,9 +293,15 @@ export function useReview({
         }
       }, 300);
     }
-  }, [currentWord?.root_id, isComplete, isTransitioningToCompletion, wordQueue, preloadNextAudio]);
+  }, [
+    currentWord?.root_id,
+    isComplete,
+    isTransitioningToCompletion,
+    wordQueue,
+    preloadNextAudio,
+    playAudio,
+  ]);
 
-  // Helper function to handle knowledge response with different confidence levels
   const handleKnowledgeResponse = useCallback(
     (confidence: 'known' | 'vague' | 'unknown') => {
       if (
@@ -305,11 +315,10 @@ export function useReview({
 
       isUpdatingWordRef.current = true;
       setTimeout(() => {
-        standaloneAudioPlayer.cleanup();
+        cleanupAudio();
         fadeOut();
 
         setTimeout(() => {
-          // Only show meaning overlay for 'unknown' or 'vague'
           if (confidence === 'unknown' || confidence === 'vague') {
             const meaning = currentWord?.root?.meaning || 'No translation available';
             setCurrentMeaning(meaning);
@@ -355,30 +364,34 @@ export function useReview({
         }, 300);
       }, 200);
     },
-    [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]
+    [
+      currentWord,
+      updateWord,
+      isTransitioningToCompletion,
+      isComplete,
+      fadeIn,
+      fadeOut,
+      cleanupAudio,
+    ]
   );
 
-  // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse]);
 
-  // Handle swipe right (know)
   const handleSwipeRight = useCallback(() => {
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse]);
 
-  // Handle tap (vaguely know)
   const handleTap = useCallback(() => {
     handleKnowledgeResponse('vague');
   }, [handleKnowledgeResponse]);
 
-  // Handle close
   const handleClose = useCallback(() => {
     const mounted = { current: true };
     lightFeedback();
 
-    standaloneAudioPlayer.cleanup();
+    cleanupAudio();
 
     if (!mounted.current) return;
 
@@ -406,15 +419,14 @@ export function useReview({
     return () => {
       mounted.current = false;
     };
-  }, [invalidateQueries, user?.id, queryClient, onClose]);
+  }, [invalidateQueries, user?.id, queryClient, onClose, cleanupAudio]);
 
-  // Cleanup effect
   useEffect(() => {
     return () => {
       completionTriggeredRef.current = true;
       fadeIn();
 
-      standaloneAudioPlayer.cleanup();
+      cleanupAudio();
 
       if (meaningTimeoutRef.current) {
         clearTimeout(meaningTimeoutRef.current);
@@ -435,10 +447,9 @@ export function useReview({
       nextWordAudioRef.current = null;
       lastProcessedWordIdRef.current = null;
     };
-  }, [fadeIn]);
+  }, [fadeIn, cleanupAudio]);
 
   return {
-    // States
     showMeaningOverlay,
     currentMeaning,
     currentSentence,
@@ -452,8 +463,6 @@ export function useReview({
     progressAnimationKey,
     wordFontSize,
     isVagueMeaning,
-
-    // Handlers
     handleSwipeLeft,
     handleSwipeRight,
     handleTap,

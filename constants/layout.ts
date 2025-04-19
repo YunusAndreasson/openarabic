@@ -19,6 +19,13 @@ export const LAYOUT = {
     BOTTOM: 12,
   },
 
+  // Loader sizes
+  LOADER: {
+    SMALL: 28,
+    MEDIUM: 40,
+    LARGE: 52,
+  },
+
   // Element spacing
   SPACING: {
     TINY: 4,

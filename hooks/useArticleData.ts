@@ -106,14 +106,13 @@ export const useArticleData = (
     if (!article?.article_sentences) {
       return [];
     }
-    const sorted = [...article.article_sentences].sort((a, b) => a.position - b.position);
-    return sorted;
+    return [...article.article_sentences].sort((a, b) => a.position - b.position);
   }, [article?.article_sentences]);
 
   // Extract selected root IDs since study is now root-based
   const selectedWordIds = useMemo(() => {
     const ids = new Set<number>();
-    (studyWords || []).forEach(w => {
+    studyWords.forEach(w => {
       if (w.root_id != null) {
         ids.add(w.root_id);
       }
@@ -123,14 +122,11 @@ export const useArticleData = (
 
   // Create sentence words map from article data - no additional fetch needed
   const sentenceWordsMap = useMemo(() => {
+    const map = new Map<number, SentenceWord[]>();
     if (!sortedSentences.length) {
-      return {
-        data: new Map(),
-        isLoading: false,
-      };
+      return map;
     }
 
-    const map = new Map<number, SentenceWord[]>();
     sortedSentences.forEach(sentence => {
       if (sentence.sentence_words) {
         map.set(
@@ -148,15 +144,12 @@ export const useArticleData = (
                 id: word.word_type_id,
                 name: '',
               },
-            })) as unknown as SentenceWord[]
+            })) as SentenceWord[]
         );
       }
     });
 
-    return {
-      data: map,
-      isLoading: false,
-    };
+    return map;
   }, [sortedSentences]);
 
   // Get related articles with optimized caching
@@ -165,8 +158,7 @@ export const useArticleData = (
     queryFn: async () => {
       if (!article?.category_id) return [];
       try {
-        const relatedArticles = await articlesService.getRelatedArticles(article.id);
-        return relatedArticles;
+        return await articlesService.getRelatedArticles(article.id);
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
         return [];
@@ -185,10 +177,9 @@ export const useArticleData = (
   >({
     queryKey: ['otherCategoryArticles', article?.id],
     queryFn: async () => {
-      if (!article?.id) return [];
+      if (!article?.id || !article.category_id) return [];
       try {
-        const otherArticles = await articlesService.getOtherCategoryArticles(article.category_id);
-        return otherArticles;
+        return await articlesService.getOtherCategoryArticles(article.category_id);
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
         return [];
@@ -237,7 +228,7 @@ export const useArticleData = (
     isLoadingReadingList,
     selectedWordIds,
     sortedSentences,
-    sentenceWordsMap: sentenceWordsMap.data,
+    sentenceWordsMap,
     otherArticles,
     isLoadingOtherArticles,
     otherCategoryArticles,

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import type { GestureResponderEvent } from 'react-native';
+import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -90,8 +90,7 @@ const getButtonStyle = (
   size: ButtonSize,
   disabled: boolean,
   colors: ReturnType<typeof useColors>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  style?: any
+  style?: StyleProp<ViewStyle> | Animated.AnimateStyle<StyleProp<ViewStyle>>
 ) => [
   styles.button,
   variant === 'filled'
@@ -126,7 +125,6 @@ export function ThemedButton({
   onPress,
   contentContainerStyle,
   innerContainerStyle,
-  accessibilityLabel,
   size = 'medium',
   textWeight = 'bold',
   ...props
@@ -161,12 +159,6 @@ export function ThemedButton({
   const buttonTextStyle = getButtonTextStyle(size, textWeight);
   const buttonStyle = getButtonStyle(variant, size, disabled, colors, style);
 
-  const accessibilityHintValue = disabled
-    ? 'This button is currently disabled'
-    : loading
-      ? 'This button is currently loading'
-      : undefined;
-
   return (
     <AnimatedTouchable
       // @ts-expect-error - Known type issue with Reanimated's animated style
@@ -176,10 +168,6 @@ export function ThemedButton({
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel || title}
-      accessibilityState={{ disabled: disabled || loading, busy: loading }}
-      accessibilityHint={accessibilityHintValue}
       {...props}
     >
       <View style={[styles.innerContainer, innerContainerStyle]}>

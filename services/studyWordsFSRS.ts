@@ -277,15 +277,4 @@ export const studyWordsFSRSService = {
 
     return data as ReviewLog[];
   },
-
-  /**
-   * Toggle a word's study status in FSRS
-   * @param userId - The user ID
-   * @param wordId - The word ID to toggle
-   * @returns true if added, false if removed
-   */
-  async toggleFSRSStudyWord(): Promise<boolean> {
-    // This method is now deprecated - use toggleFSRSStudyRoot instead
-    throw new Error('toggleFSRSStudyWord is deprecated, use toggleFSRSStudyRoot instead');
-  },
 };

@@ -68,27 +68,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   /**
    * Creates a platform and theme-aware gradient for card overlays
-   *
-   * Create a gradient that perfectly blends with the card background color
-   * for a seamless transition between image and content.
    */
   const createCardGradient = () => {
-    // Define gradient types as readonly arrays for type safety
     type GradientColors = readonly [string, string, string];
 
-    // Use theme-specific values for better visibility
     if (isDarkMode) {
-      return [
-        'rgba(0,0,0,0)', // Start transparent
-        'rgba(30,30,30,0.95)', // Dark theme mid-fade - increased opacity
-        colors.card, // End with exact card background color
-      ] as GradientColors;
+      return ['rgba(0,0,0,0)', 'rgba(30,30,30,0.95)', colors.card] as GradientColors;
     } else {
-      return [
-        'rgba(255,255,255,0)', // Start transparent
-        'rgba(250,250,250,0.95)', // Light theme mid-fade - increased opacity
-        colors.card, // End with exact card background color
-      ] as GradientColors;
+      return ['rgba(255,255,255,0)', 'rgba(250,250,250,0.95)', colors.card] as GradientColors;
     }
   };
 
@@ -115,9 +102,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <EnhancedImage
             source={props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
             style={styles.image}
-            onError={() => {
-              /* Handle image load error silently */
-            }}
             contentFit="cover"
             skipTransition={true}
             cachePolicy="memory-disk"
@@ -132,7 +116,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             prefetch={true}
           />
 
-          {/* Gradient overlay */}
           <LinearGradient
             colors={createCardGradient()}
             style={styles.gradient}
@@ -142,23 +125,19 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           />
         </View>
 
-        {/* Category pill moved outside the image container for consistent positioning */}
         {category ? (
           <View style={styles.pillContainer}>
             <Pill id={category} label={category} variant="category" />
           </View>
         ) : null}
 
-        {/* Content container */}
         <View style={styles.contentContainer}>
-          {/* Title */}
           <View style={styles.titleContainer}>
             <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
               {title}
             </ThemedText>
           </View>
 
-          {/* Author */}
           {author ? (
             <View style={styles.authorContainer}>
               <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
@@ -167,7 +146,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </View>
           ) : null}
 
-          {/* Summary */}
           {summary ? (
             <View style={styles.summaryContainer}>
               <ThemedText
@@ -198,9 +176,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             style={styles.image}
             contentFit="cover"
             skipTransition={true}
-            onError={() => {
-              /* Handle image load error silently */
-            }}
             blurRadius={1}
             priority="high"
             placeholder={
@@ -212,7 +187,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             alt={`Image for ${props.article.title}`}
           />
 
-          {/* Add gradient overlay to compact card for better text contrast */}
           <LinearGradient
             colors={createCardGradient()}
             style={styles.gradient}
@@ -222,9 +196,8 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           />
         </View>
 
-        {/* Render the category pill outside the imageContainer */}
         {props.article.category ? (
-          <View style={styles.pillContainerCompact}>
+          <View style={styles.pillContainer}>
             <Pill
               id={props.article.category.id}
               label={props.article.category.name}
@@ -262,12 +235,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
   // Render compact content
   const renderCompactContent = () => {
-    // If article is provided, render compact article layout
     if (article) {
       return renderCompactArticleContent();
     }
 
-    // Otherwise render custom children
     if (!children) {
       return null;
     }
@@ -283,7 +254,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     return renderArticleContent();
   };
 
-  // If loading, use the BaseCard to show a loading state
   if (isLoading) {
     return (
       <BaseCard
@@ -297,7 +267,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     );
   }
 
-  // Use the BaseCard with the appropriate content
   return (
     <BaseCard
       onPress={pressHandler}
@@ -309,7 +278,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   );
 }
 
-// Styles
+// Styles organized by component section
 const styles = StyleSheet.create({
   authorContainer: {
     flexDirection: 'row',
@@ -383,13 +352,6 @@ const styles = StyleSheet.create({
     top: LAYOUT.SPACING.MEDIUM,
     zIndex: 25,
   },
-  pillContainerCompact: {
-    left: LAYOUT.SPACING.MEDIUM,
-    maxWidth: '70%',
-    position: 'absolute',
-    top: LAYOUT.SPACING.MEDIUM,
-    zIndex: 25,
-  },
   summaryContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
     marginTop: LAYOUT.SPACING.SMALL - 2,
@@ -403,8 +365,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Use memo to prevent unnecessary re-renders
 const ThemedCard = memo(ThemedCardComponent);
 
-// Export the component
 export default ThemedCard;

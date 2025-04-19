@@ -14,7 +14,7 @@ export function useButtonAction<T extends (...args: unknown[]) => unknown>(
   fn: T,
   delay = ANIMATION_TIMING.DEBOUNCE.STANDARD
 ): (...args: Parameters<T>) => void {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExecutingRef = useRef(false);
 
   // Clean up timeout when component unmounts

@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import type { ComponentRef } from 'react';
-import type { LayoutRectangle, LayoutChangeEvent } from 'react-native';
+import type { LayoutRectangle, LayoutChangeEvent, ViewStyle, TextStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import Animated, { useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 
@@ -20,6 +20,14 @@ import { WordTooltip } from './WordTooltip';
 let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
 // Maximum z-index value to prevent potential integer overflow
 const MAX_Z_INDEX = 10000;
+
+const OPACITY = {
+  HIGHLIGHTED: '30',
+  UNDERLINE_DARK: '30',
+  UNDERLINE_LIGHT: '20',
+  TOOLTIP_DARK: 0.7,
+  TOOLTIP_LIGHT: 0.5,
+} as const;
 
 interface ArabicWordProps {
   word: SentenceWord;
@@ -93,7 +101,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Handle the animation reversal after a brief delay
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
 
     if (needsReverseAnimation) {
       timer = setTimeout(() => {
@@ -127,7 +135,9 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Update word opacity based on tooltip visibility
   useEffect(() => {
-    setWordOpacity(tooltipVisible ? (isDarkMode ? 0.7 : 0.5) : 1);
+    setWordOpacity(
+      tooltipVisible ? (isDarkMode ? OPACITY.TOOLTIP_DARK : OPACITY.TOOLTIP_LIGHT) : 1
+    );
   }, [tooltipVisible, isDarkMode, setWordOpacity]);
 
   // Capture layout on mount and when window resizes
@@ -147,7 +157,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
       colorName: 'arabicText' as const,
       arabicFontSize: calculatedFontSize,
       weight: isSelected ? ('600' as const) : ('normal' as const),
-      style: styles.textStyle,
+      style: styles.textStyle as TextStyle,
     }),
     [isSelected, calculatedFontSize]
   );
@@ -191,21 +201,31 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
     onPress(word);
   }, [onPress, word, startPressAnimation, isSelected, setForceSelected]);
 
+  // Generate dynamic styles
+  const getAudioHighlightedStyle = useCallback(
+    (): ViewStyle => ({
+      backgroundColor: `${colors.primary}${OPACITY.HIGHLIGHTED}`,
+    }),
+    [colors.primary]
+  );
+
+  const getSelectedStyle = useCallback(
+    (): ViewStyle => ({
+      borderBottomWidth: 1,
+      borderBottomColor: `${colors.tint}${isDarkMode ? OPACITY.UNDERLINE_DARK : OPACITY.UNDERLINE_LIGHT}`,
+      paddingBottom: 0,
+    }),
+    [colors.tint, isDarkMode]
+  );
+
   // Compute final styles for the word container
-  const finalStyles = useMemo(
+  const containerStyle = useMemo(
     () => [
       styles.wordContainer,
-      {
-        backgroundColor: isAudioHighlighted ? colors.primary + '30' : 'transparent',
-        // Add a straight underline for selected words with dimmed opacity
-        ...(isSelected && {
-          borderBottomWidth: 1,
-          borderBottomColor: colors.tint + (isDarkMode ? '30' : '20'),
-          paddingBottom: 0,
-        }),
-      },
+      isAudioHighlighted && getAudioHighlightedStyle(),
+      isSelected && getSelectedStyle(),
     ],
-    [isAudioHighlighted, isSelected, colors.primary, colors.tint, isDarkMode]
+    [isAudioHighlighted, isSelected, getAudioHighlightedStyle, getSelectedStyle]
   );
 
   return (
@@ -217,9 +237,9 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
         delayLongPress={250}
         activeOpacity={0.7}
         onLayout={handleLayout}
-        style={finalStyles}
+        style={containerStyle}
       >
-        <Animated.View style={[{}, pressStyle]}>
+        <Animated.View style={[styles.wordView, pressStyle]}>
           <ThemedText {...textProps}>{word.word_form}</ThemedText>
         </Animated.View>
       </TouchableOpacity>
@@ -247,6 +267,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     paddingVertical: 4,
   },
+  wordView: {},
 });
 
 export const ArabicWord = memo(ArabicWordComponent, (prevProps, nextProps) => {

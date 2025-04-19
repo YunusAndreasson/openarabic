@@ -15,18 +15,8 @@ import ThemedCard from '../ThemedCard';
 import { CopyrightFooter } from './CopyrightFooter';
 
 const ITEM_HEIGHT = 360;
-
-interface ListFooterProps {
-  isLoading: boolean;
-  articlesLength: number;
-}
-
-const ListFooter: React.FC<ListFooterProps> = ({ isLoading, articlesLength }) => {
-  if (isLoading && articlesLength === 0) return null;
-  return <CopyrightFooter />;
-};
-
-ListFooter.displayName = 'ListFooter';
+const DRAW_DISTANCE = ITEM_HEIGHT * 5;
+const ESTIMATED_LIST_SIZE = { height: ITEM_HEIGHT * 10, width: 0 };
 
 // Move ArticleItem outside the parent component
 interface ArticleItemProps {
@@ -73,13 +63,10 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const listRef = useRef<FlashList<Article>>(null);
     const insets = useSafeAreaInsets();
 
-    // Forward the ref to the parent component with type assertion
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
-    // Memoize the key extractor for better performance
     const keyExtractor = useCallback((item: Article) => `article-${item.id}`, []);
 
-    // Render item function with better memoization
     const renderItem: ListRenderItem<Article> = useCallback(
       ({ item }) => <ArticleItem item={item} onPress={onArticlePress} />,
       [onArticlePress]
@@ -92,31 +79,22 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
     const refreshControl = useMemo(
       () => (
-        <View>
-          {isRefreshing ? (
-            <View style={styles.loaderContainer}>
-              <LoadingContainer size="large" color={colors.tint} />
-            </View>
-          ) : null}
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={onRefresh}
-            colors={[colors.tint]}
-            tintColor={colors.tint}
-            progressBackgroundColor={colors.background}
-            progressViewOffset={Platform.OS === 'android' ? 20 : 0}
-          />
-        </View>
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[colors.tint]}
+          tintColor={colors.tint}
+          progressBackgroundColor={colors.background}
+          progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+        />
       ),
       [isRefreshing, onRefresh, colors.tint, colors.background]
     );
 
-    // Determine if content should be hidden
     const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
     const displayData = shouldHideContent ? [] : articles;
     const displayHeader = shouldHideContent ? null : ListHeaderComponent;
 
-    // Create insets-aware content container style
     const safeContentContainerStyle = useMemo(
       () => ({
         ...(contentContainerStyle as ContentStyle),
@@ -126,9 +104,13 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [contentContainerStyle, insets]
     );
 
-    // Create a wrapper View to handle the background color and padding
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {isRefreshing && (
+          <View style={styles.loaderContainer}>
+            <LoadingContainer size="large" color={colors.tint} />
+          </View>
+        )}
         <FlashList
           ref={listRef}
           data={displayData}
@@ -145,8 +127,8 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           overrideItemLayout={(layout, _item) => {
             layout.size = ITEM_HEIGHT;
           }}
-          drawDistance={ITEM_HEIGHT * 5}
-          estimatedListSize={{ height: ITEM_HEIGHT * 10, width: 0 }}
+          drawDistance={DRAW_DISTANCE}
+          estimatedListSize={ESTIMATED_LIST_SIZE}
         />
       </View>
     );

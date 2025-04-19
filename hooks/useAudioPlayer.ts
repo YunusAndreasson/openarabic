@@ -49,7 +49,7 @@ export function useAudioPlayer(): AudioPlayerResult {
 
   // Refs for audio player
   const soundRef = useRef<Audio.Sound | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastActionTimeRef = useRef<number>(0);
   const appStateRef = useRef(AppState.currentState);
   const currentPlaylistRef = useRef<AudioTrack[]>([]);

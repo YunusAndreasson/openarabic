@@ -9,11 +9,6 @@ import type { SentenceWord, StudyWord } from '../types/vocabulary.types';
 
 import { useAuth } from './useAuth';
 
-// Define an extended type to handle legacy study words that might have sentence_word_id
-interface ExtendedStudyWord extends StudyWord {
-  sentence_word_id: number | null;
-}
-
 export interface UseArabicWordProps {
   word: SentenceWord;
   position?: number;
@@ -33,44 +28,23 @@ export function useArabicWord({
 }: UseArabicWordProps): UseArabicWordReturn {
   const { user } = useAuth();
   const [forceSelected, setForceSelected] = useState<boolean | null>(null);
-
-  // Use the memoized selector instead of creating a new object
   const audioState = useSelector(selectAudioState);
 
-  // Use useQuery with a proper queryFn to ensure we have the most up-to-date data
-  const { data: studyWords } = useQuery<ExtendedStudyWord[]>({
+  const { data: studyWords } = useQuery<StudyWord[]>({
     queryKey: ['studyWords', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return studyWordsFSRSService.getFSRSWords(user.id) as Promise<ExtendedStudyWord[]>;
+      return studyWordsFSRSService.getFSRSWords(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 0, // Always fetch fresh data
   });
 
-  // Selection state management
   const directlySelected = useMemo(() => {
-    if (!studyWords || !Array.isArray(studyWords)) return false;
-    const wordId = word.id;
+    if (!studyWords?.length) return false;
 
-    // Check if the word is directly selected - accounting for both old and new formats
-    const isDirectlySelected = studyWords.some(sw => {
-      // Check for sentence_word_id (legacy format)
-      if (sw.sentence_word_id !== undefined) {
-        return sw.sentence_word_id === wordId || String(sw.sentence_word_id) === String(wordId);
-      }
-      return false;
-    });
+    return studyWords.some(sw => sw.root_id === word.root_id);
+  }, [studyWords, word.root_id]);
 
-    // Also check if the word's root is selected
-    const isRootSelected = studyWords.some(sw => {
-      return sw.root_id === word.root_id;
-    });
-
-    return isDirectlySelected || isRootSelected;
-  }, [studyWords, word.id, word.root_id]);
-
-  // Audio highlight state
   const isAudioHighlighted = useMemo(() => {
     if (position !== undefined && audioState.position !== null) {
       return audioState.wordId === word.id && audioState.position === position;
@@ -78,30 +52,26 @@ export function useArabicWord({
     return audioState.wordId === word.id;
   }, [audioState.wordId, audioState.position, word.id, position]);
 
-  // Selection state
-  const isSelected = forceSelected !== null ? forceSelected : directlySelected;
+  const isSelected = forceSelected ?? directlySelected;
 
-  // Handle selection changes
   const handleSelectionChange = useCallback(() => {
-    if (user && word.id && onPress) {
-      const wordId = typeof word.id === 'string' ? parseInt(word.id, 10) : word.id;
+    if (!user?.id || !word.id || !onPress) return;
 
-      if (isSelected) {
-        analytics.trackAddStudyWord(wordId, {
-          word: word.word_form,
-          english: word.english,
-          ...(word.sentence?.article_id && { articleId: word.sentence.article_id }),
-        });
-      } else {
-        analytics.trackRemoveStudyWord(wordId, {
-          word: word.word_form,
-          english: word.english,
-        });
-      }
+    const analyticsData = {
+      word: word.word_form,
+      english: word.english,
+      ...(word.sentence?.article_id && { articleId: word.sentence.article_id }),
+    };
+
+    const wordId = Number(word.id);
+
+    if (isSelected) {
+      analytics.trackAddStudyWord(wordId, analyticsData);
+    } else {
+      analytics.trackRemoveStudyWord(wordId, analyticsData);
     }
-  }, [isSelected, user, word, onPress]);
+  }, [isSelected, user?.id, word, onPress]);
 
-  // Update analytics when selection changes
   useMemo(() => {
     handleSelectionChange();
   }, [handleSelectionChange]);

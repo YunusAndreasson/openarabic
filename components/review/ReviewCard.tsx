@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react';
-import type { ViewStyle } from 'react-native';
 import { StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -7,7 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   runOnJS,
-} from 'react-native-reanimated'; // TODO: Use hooks
+} from 'react-native-reanimated';
 
 import { SCREEN_WIDTH } from '@/constants/layout';
 
@@ -127,20 +126,20 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
 
 const styles = StyleSheet.create({
   swipeContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
     alignItems: 'center',
+    bottom: 0,
     justifyContent: 'center',
-  } as ViewStyle,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
   wordContainer: {
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 280,
-  } as ViewStyle,
+    width: '100%',
+  },
 });
 
 export default ReviewCard;

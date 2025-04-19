@@ -68,6 +68,12 @@ interface ArticleSectionProps {
   isLoading?: boolean;
 }
 
+const QUERY_CONFIG = {
+  staleTime: 0,
+  gcTime: 0,
+  retry: 3,
+};
+
 /**
  * Displays a section of articles
  */
@@ -86,8 +92,6 @@ const ArticleSection = memo(
     isLoading = false,
   }: ArticleSectionProps) => {
     const queryClient = useQueryClient();
-
-    // Limit the number of articles if maxItems is specified
     const displayedArticles = maxItems ? articles.slice(0, maxItems) : articles;
 
     // Handle item press
@@ -106,9 +110,7 @@ const ArticleSection = memo(
             queryClient.prefetchQuery({
               queryKey: ['article', item.id],
               queryFn: () => articlesService.getArticleById(item.id),
-              staleTime: 0,
-              gcTime: 0,
-              retry: 3,
+              ...QUERY_CONFIG,
             });
           }
         });

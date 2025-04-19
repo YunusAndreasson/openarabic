@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import type { ViewStyle, TextStyle } from 'react-native';
 import { View, StyleSheet, Platform } from 'react-native';
+import type { ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { InstructionFooterProps } from '@/types/ui/review.types';
@@ -10,12 +11,6 @@ import { ThemedText } from '../../components/ThemedText';
 import { LAYOUT } from '../../constants/layout';
 import { useOpacityAnimation } from '../../hooks/animations';
 import { useColors } from '../../hooks/useColors';
-
-// Define a union type for the container style
-type ContainerStyle = ViewStyle & {
-  shadowColor?: string;
-  shadowOpacity?: number;
-};
 
 /**
  * Footer component that displays swipe instructions
@@ -61,12 +56,12 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   };
 
   // Use ContainerStyle type for the container
-  const containerStyle: ContainerStyle = {
+  const containerStyle: ViewStyle = {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     ...LAYOUT.SHADOW.SMALL,
@@ -81,8 +76,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
 
   return (
     <View style={[styles.footer, style]}>
-      {/* @ts-expect-error Type issues with Animated.View style props - functionally works correctly */}
-      <Animated.View style={[containerStyle, animatedStyle]}>
+      <Animated.View style={[containerStyle, animatedStyle] as any}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
             <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />
@@ -97,7 +91,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
           <ThemedText style={textStyle}>Vaguely know</ThemedText>
         </View>
 
-        <View style={styles.instructionItem}>
+        <View style={[styles.instructionItem, styles.instructionItemRight]}>
           <ThemedText style={textStyle}>Know</ThemedText>
           <View style={iconStyle}>
             <Ionicons name="arrow-forward" size={18} color={colors.tabIconDefault} />
@@ -132,8 +126,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
     height: 40,
+    flex: 1,
+  } as ViewStyle,
+  instructionItemRight: {
+    justifyContent: 'flex-end',
   } as ViewStyle,
   instructionText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

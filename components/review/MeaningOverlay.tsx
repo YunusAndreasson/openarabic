@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, memo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { StyleSheet } from 'react-native';
 import type { StyleProps } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
@@ -28,13 +28,6 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
 
   const colors = useColors();
   const [shouldRender, setShouldRender] = useState(visible);
-  const isMountedRef = useRef(true);
-
-  useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
 
   const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
     initialOpacity: 0,
@@ -44,6 +37,8 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
 
   // Watch for visibility changes
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     if (visible) {
       setShouldRender(true);
       startAnimation();
@@ -51,23 +46,18 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
       if (isWarning || isVague) {
         lightFeedback();
       }
-      return () => {};
     } else if (shouldRender) {
       reverseAnimation();
       onClose?.();
 
-      const timeout = setTimeout(
-        () => {
-          if (isMountedRef.current) {
-            setShouldRender(false);
-          }
-        },
-        animate ? duration + 50 : 0
-      );
-
-      return () => clearTimeout(timeout);
+      timeoutId = setTimeout(() => setShouldRender(false), animate ? duration + 50 : 0);
     }
-    return () => {};
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   }, [
     visible,
     startAnimation,
@@ -83,14 +73,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
   if (!shouldRender) return null;
 
   // Determine text color based on state
-  let textColor;
-  if (isWarning) {
-    textColor = colors.error;
-  } else if (isVague) {
-    textColor = colors.warning; // Use orange/yellow for vague
-  } else {
-    textColor = colors.tint;
-  }
+  const textColor = isWarning ? colors.error : isVague ? colors.warning : colors.tint;
 
   const fontSize =
     isWarning || isVague ? LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2 : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;

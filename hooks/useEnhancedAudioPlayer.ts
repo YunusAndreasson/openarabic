@@ -98,7 +98,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   const lastStateUpdateRef = useRef(Date.now());
   const currentSoundRef = useRef<Audio.Sound | null>(null);
   const appStateRef = useRef(AppState.currentState);
-  const trackEndTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const trackEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Ref to hold stable callbacks implementing the Actions interface
   const actionsRef = useRef<EnhancedPlayerActions>({

@@ -37,12 +37,13 @@ export function filterArticles(
   authorId: number | null,
   categoryId: number | null
 ): Article[] {
-  if (authorId !== null) {
-    return filterArticlesByAuthor(articles, authorId);
-  } else if (categoryId !== null) {
-    return filterArticlesByCategory(articles, categoryId);
-  }
-  return articles;
+  if (!articles.length) return [];
+
+  return articles.filter(article => {
+    if (authorId !== null && article.author_id !== authorId) return false;
+    if (categoryId !== null && article.category_id !== categoryId) return false;
+    return true;
+  });
 }
 
 /**
@@ -52,8 +53,9 @@ export function filterArticles(
  * @returns Latest articles sorted by creation date (newest first)
  */
 export function getLatestArticles(articles: Article[], limit = 10): Article[] {
-  return articles
-    .slice(0) // Create a copy to avoid mutating the original array
+  if (!articles.length) return [];
+
+  return [...articles] // Using spread operator for clarity
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, limit);
 }
@@ -96,8 +98,9 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
  * @returns Beginner-friendly articles sorted by difficulty level (lowest first)
  */
 export function getBeginnerArticles(articles: Article[], limit = 20): Article[] {
-  return articles
-    .slice(0) // Create a copy to avoid mutating the original array
+  if (!articles.length) return [];
+
+  return [...articles] // Using spread operator for clarity
     .sort((a, b) => a.difficulty_level - b.difficulty_level)
     .slice(0, limit);
 }

@@ -49,7 +49,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Define styles before components that use them
 const styles = StyleSheet.create({
   arrowText: {
-    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -111,8 +111,6 @@ const ArticleItem = memo(
       : 'Uncategorized';
 
     const isDarkMode = useIsDarkMode();
-
-    // Format time directly without TimeAgo component
     const timeAgoText = formatTimeAgo(article.created_at);
 
     return (
@@ -164,15 +162,12 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { initialLoadComplete } = useAppLoading();
 
-  // Fetch in-progress articles when component mounts
   useEffect(() => {
     dispatch(fetchInProgressArticles());
   }, [dispatch]);
 
-  // Use the new loading state hook
   const { isLoading: isLoadingState } = useLoadingState();
 
-  // Use React Query instead of local state for articles
   const {
     data: articlesData = [],
     isLoading: isArticlesLoading,
@@ -181,26 +176,22 @@ export default function ArticlesScreen(): JSX.Element {
   } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    staleTime: 300000,
+    gcTime: 600000,
     retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: old => old,
   });
 
-  // Configure router screen options to disable animations on initial load
   useEffect(() => {
-    // Set screen options programmatically to disable slide animation
     router.setParams({
       animation: 'none',
     });
   }, []);
 
-  // Simple loading state - only show loading on initial data load
   const isInitialLoading = isArticlesLoading && articlesData.length === 0;
 
-  // Use React Query for categories with longer cache times
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
@@ -211,7 +202,6 @@ export default function ArticlesScreen(): JSX.Element {
     refetchOnMount: false,
   });
 
-  // Use React Query for authors with proper caching
   const { data: authors = [] } = useQuery({
     queryKey: ['authors'],
     queryFn: async () => {
@@ -227,23 +217,18 @@ export default function ArticlesScreen(): JSX.Element {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Get inProgressArticles from Redux
   const { inProgressArticles = [], lastOpenedArticles = {} } = useAppSelectorMemo(
     state => state.readingList
   );
 
-  // Get the daily pick state from Redux
   const { dailyPick } = useAppSelectorMemo(state => state.featuredContent);
 
-  // Filter articles by selected author or category
   const filteredArticles = useMemo(() => {
     return filterArticles(articlesData, null, null);
   }, [articlesData]);
 
-  // Organized articles by category
   const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
 
-  // Sort in-progress articles by last opened time
   const sortedInProgressArticles = useMemo(() => {
     if (!inProgressArticles?.length) return [];
 
@@ -253,28 +238,20 @@ export default function ArticlesScreen(): JSX.Element {
         const bDate = lastOpenedArticles?.[b.id] || '';
         const aTime = aDate ? new Date(aDate).getTime() : 0;
         const bTime = bDate ? new Date(bDate).getTime() : 0;
-
-        // Sort by last opened time (most recent first)
         return bTime - aTime;
       })
-      .slice(0, 20); // Limit to 20 articles
+      .slice(0, 20);
   }, [inProgressArticles, lastOpenedArticles]);
 
-  // Combined loading and fetching states for better UX
   const isFetching = isArticlesFetching;
 
-  // Handler for pull-to-refresh
   const handleRefresh = useCallback(async () => {
     if (isFetching) return;
 
-    // Add haptic feedback for better user experience
     mediumFeedback();
-
-    // Start refresh
     setIsRefreshing(true);
 
     try {
-      // Invalidate all related queries at once
       await queryClient.invalidateQueries({
         predicate: query => {
           const key = query.queryKey[0];
@@ -282,7 +259,6 @@ export default function ArticlesScreen(): JSX.Element {
         },
       });
     } finally {
-      // End refresh with a bit of delay for a smoother transition
       setTimeout(() => {
         setIsRefreshing(false);
       }, 300);
@@ -290,32 +266,23 @@ export default function ArticlesScreen(): JSX.Element {
   }, [queryClient, isFetching]);
 
   const handleArticlePress = useCallback((article: Article) => {
-    // Navigate to article detail
     router.push(`/article/${article.id}`);
   }, []);
 
   const handleSelectAuthor = useCallback((authorId: number) => {
-    // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=author&id=${authorId}`);
   }, []);
 
   const handleSelectCategory = useCallback((categoryId: number) => {
-    // Use simple direct URL string for consistent behavior across platforms
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
 
-  // Update the loading check to consider preloader state
   const isDataReady = useMemo(() => {
-    // Consider data ready in any of these conditions:
-    // 1. We have articles data
-    // 2. We have an error to display
     return articlesData.length > 0 || (!isArticlesLoading && !!articlesError);
   }, [articlesData.length, isArticlesLoading, articlesError]);
 
-  // Use the screen animation hook
   const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
 
-  // Effect to handle daily pick updates
   useEffect(() => {
     if (articlesError || articlesData.length === 0) return;
 
@@ -328,9 +295,7 @@ export default function ArticlesScreen(): JSX.Element {
     }
   }, [articlesData, articlesError, dailyPick.date, dispatch]);
 
-  // Memoized child components to prevent re-renders
   const DailyPick = useMemo(() => {
-    // Don't show daily pick if there's an error or no articles
     if (articlesError || articlesData.length === 0) return null;
 
     let dailyPickArticle: Article | null = null;
@@ -346,9 +311,7 @@ export default function ArticlesScreen(): JSX.Element {
   const ContinueReadingSection = useMemo(() => {
     if (sortedInProgressArticles.length === 0) return null;
 
-    // Map SimpleArticle to Article, finding the original article to get its category
     const mappedArticles = sortedInProgressArticles.map(inProgressArticle => {
-      // Try to find the full article data to get the category
       const fullArticle = articlesData.find(a => a.id === inProgressArticle.id);
 
       return {
@@ -369,7 +332,7 @@ export default function ArticlesScreen(): JSX.Element {
         articles={mappedArticles}
         onArticlePress={handleArticlePress}
         hideDifficulty={true}
-        getLastOpenedAt={articleId => lastOpenedArticles && lastOpenedArticles[articleId]}
+        getLastOpenedAt={articleId => lastOpenedArticles?.[articleId]}
       />
     );
   }, [sortedInProgressArticles, lastOpenedArticles, handleArticlePress, articlesData]);
@@ -448,7 +411,6 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [categoriesData, handleSelectCategory]);
 
-  // Create a pre-rendered header component for the Flash to avoid re-rendering the entire list
   const ListHeaderComponent = useMemo(() => {
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
@@ -477,51 +439,24 @@ export default function ArticlesScreen(): JSX.Element {
     CategoryFilterSection,
   ]);
 
-  // Create an empty state component
-  const EmptyStateComponent = useMemo(() => {
-    // Return null when there's no content to display
-    return null;
-  }, []);
+  const EmptyStateComponent = useMemo(() => null, []);
 
-  // Check if data is already in cache to optimize loading behavior
   const articlesQuery = queryClient.getQueryState(['articles']);
   const isDataCached = articlesQuery?.data !== undefined;
 
-  // Use the screen focus refresh hook with debounce - with proper caching
-  useScreenFocusRefresh(
-    queryClient,
-    'articles',
-    undefined,
-    300000, // Cache for 5 minutes (same as query)
-    true, // Skip initial focus
-    false // Only refresh if stale
-  );
+  useScreenFocusRefresh(queryClient, 'articles', undefined, 300000, true, false);
+  useScreenFocusRefresh(queryClient, 'categories', undefined, 600000, true, false);
 
-  useScreenFocusRefresh(
-    queryClient,
-    'categories',
-    undefined,
-    600000, // Cache for 10 minutes (same as query)
-    true, // Skip initial focus
-    false // Only refresh if stale
-  );
+  const getContentContainerStyle = (colors: { background: string }, insets: { top: number }) => ({
+    ...styles.listContentContainer,
+    backgroundColor: colors.background,
+    paddingTop: getHeaderHeight(insets),
+  });
 
-  // Compute dynamic styles based on insets with all necessary styles
-  const contentContainerStyle = useMemo(
-    () => ({
-      ...styles.listContentContainer,
-      backgroundColor: colors.background,
-      paddingTop: getHeaderHeight(insets), // Match vocabulary.tsx exactly
-    }),
-    [insets, colors.background]
-  );
-
-  // Show loading screen only during first data load and not during transition
   if (isInitialLoading && initialLoadComplete) {
     return <LoadingScreen />;
   }
 
-  // Show error state only if there's no cached data
   if (articlesError && !isRefreshing && !isDataCached) {
     return (
       <ErrorState
@@ -533,7 +468,6 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }
 
-  // Main content view without any loading overlay
   return (
     <Animated.View
       style={[styles.container, fadeInStyle]}
@@ -554,8 +488,8 @@ export default function ArticlesScreen(): JSX.Element {
           onArticlePress={handleArticlePress}
           ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
           ListEmptyComponent={EmptyStateComponent}
-          contentContainerStyle={contentContainerStyle}
-          hideMainList={isArticlesLoading && !isDataCached ? true : false}
+          contentContainerStyle={getContentContainerStyle(colors, insets)}
+          hideMainList={isArticlesLoading && !isDataCached}
           hideWhileRefreshing={false}
         />
         <PageHeader title="Texts" />

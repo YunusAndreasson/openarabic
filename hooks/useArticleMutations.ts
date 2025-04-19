@@ -78,7 +78,7 @@ export const useArticleMutations = (
   // Toggle word study status mutation
   const toggleWordMutation = useMutation({
     mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
-      return studyWordsFSRSService.toggleFSRSStudyWord(userId, wordId);
+      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, wordId);
     },
     onMutate: async ({ userId, wordId }) => {
       // Cancel any outgoing refetches
@@ -86,21 +86,18 @@ export const useArticleMutations = (
 
       // Snapshot the previous value
       const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
-        sentence_word_id: number;
+        root_id: number;
       }[];
 
       // Optimistically update the cache
-      queryClient.setQueryData(
-        ['studyWords', userId],
-        (old: { sentence_word_id: number }[] = []) => {
-          const exists = old.some(sw => sw.sentence_word_id === wordId);
-          if (exists) {
-            return old.filter(sw => sw.sentence_word_id !== wordId);
-          } else {
-            return [...old, { sentence_word_id: wordId }];
-          }
+      queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
+        const exists = old.some(sw => sw.root_id === wordId);
+        if (exists) {
+          return old.filter(sw => sw.root_id !== wordId);
+        } else {
+          return [...old, { root_id: wordId }];
         }
-      );
+      });
 
       return { previousStudyWords };
     },
@@ -329,11 +326,7 @@ export const useArticleMutations = (
           toggleRootMutation.mutate(
             { userId: refreshData.session.user.id, rootId },
             {
-              onError: error => {
-                console.error(
-                  'Root toggle error:',
-                  error instanceof Error ? error.message : String(error)
-                );
+              onError: () => {
                 showToast('Error updating study list');
               },
             }
@@ -351,7 +344,7 @@ export const useArticleMutations = (
           }
         );
       } catch (error) {
-        showToast('Error adding root to study list');
+        showToast('Error updating study list');
       }
     },
     [toggleRootMutation, showToast]

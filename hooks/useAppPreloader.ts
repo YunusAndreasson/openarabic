@@ -10,6 +10,26 @@ import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFS
 
 import { useAuth } from './useAuth';
 
+// Cache time constants in milliseconds
+const CACHE_TIMES = {
+  SHORT: {
+    staleTime: 60000, // 1 minute
+    gcTime: 300000, // 5 minutes
+  },
+  MEDIUM: {
+    staleTime: 180000, // 3 minutes
+    gcTime: 300000, // 5 minutes
+  },
+  LONG: {
+    staleTime: 300000, // 5 minutes
+    gcTime: 600000, // 10 minutes
+  },
+  VERY_LONG: {
+    staleTime: 600000, // 10 minutes
+    gcTime: 900000, // 15 minutes
+  },
+} as const;
+
 interface AppPreloaderResult {
   isPreloading: boolean;
   isLoaded: boolean;
@@ -44,16 +64,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
         queryClient.fetchQuery({
           queryKey: ['articles'],
           queryFn: () => articlesService.getArticles(),
-          staleTime: 300000, // 5 minutes
-          gcTime: 600000, // 10 minutes
+          ...CACHE_TIMES.LONG,
           retry: 3,
         }),
 
         queryClient.fetchQuery({
           queryKey: ['categories'],
           queryFn: () => categoriesService.getCategories(),
-          staleTime: 600000, // 10 minutes
-          gcTime: 900000, // 15 minutes
+          ...CACHE_TIMES.VERY_LONG,
           retry: 3,
         }),
       ];
@@ -63,24 +81,21 @@ export const useAppPreloader = (): AppPreloaderResult => {
           queryClient.fetchQuery({
             queryKey: ['readingList', user.id],
             queryFn: () => readingListService.getReadingList(user.id),
-            staleTime: 180000, // 3 minutes
-            gcTime: 300000, // 5 minutes
+            ...CACHE_TIMES.MEDIUM,
             retry: 3,
           }),
 
           queryClient.fetchQuery({
             queryKey: FSRS_QUERY_KEYS.due(user.id),
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-            staleTime: 180000, // 3 minutes
-            gcTime: 300000, // 5 minutes
+            ...CACHE_TIMES.MEDIUM,
             retry: 3,
           }),
 
           queryClient.fetchQuery({
             queryKey: FSRS_QUERY_KEYS.all(user.id),
             queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-            staleTime: 300000, // 5 minutes
-            gcTime: 600000, // 10 minutes
+            ...CACHE_TIMES.LONG,
             retry: 3,
           })
         );
@@ -90,7 +105,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
       const articlesData = results[0];
       setIsLoaded(Array.isArray(articlesData) && articlesData.length > 0);
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      if (error instanceof Error) {
+        handleError(error);
+      } else {
+        handleError(new Error(String(error)));
+      }
       setIsLoaded(false);
     } finally {
       setIsPreloading(false);
@@ -101,15 +120,14 @@ export const useAppPreloader = (): AppPreloaderResult => {
   // Function to prefetch a specific article
   const prefetchArticle = useCallback(
     async (articleId: number) => {
-      if (!articleId) return false;
+      if (!articleId || articleId <= 0) return false;
 
       try {
         const prefetchPromises = [
           queryClient.prefetchQuery({
             queryKey: ['article', articleId],
             queryFn: () => articlesService.getArticleById(articleId),
-            staleTime: 60000,
-            gcTime: 300000,
+            ...CACHE_TIMES.SHORT,
           }),
         ];
 
@@ -118,8 +136,7 @@ export const useAppPreloader = (): AppPreloaderResult => {
             queryClient.prefetchQuery({
               queryKey: ['isInReadingList', user.id, articleId],
               queryFn: () => readingListService.isInReadingList(user.id, articleId),
-              staleTime: 60000,
-              gcTime: 300000,
+              ...CACHE_TIMES.SHORT,
             })
           );
         }
@@ -143,15 +160,13 @@ export const useAppPreloader = (): AppPreloaderResult => {
         queryClient.prefetchQuery({
           queryKey: FSRS_QUERY_KEYS.due(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-          staleTime: 120000,
-          gcTime: 300000,
+          ...CACHE_TIMES.SHORT,
           retry: 3,
         }),
         queryClient.prefetchQuery({
           queryKey: FSRS_QUERY_KEYS.all(user.id),
           queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-          staleTime: 180000,
-          gcTime: 600000,
+          ...CACHE_TIMES.MEDIUM,
           retry: 3,
         }),
       ]);

@@ -49,10 +49,7 @@ function ProgressBarComponent({
     animatedStyle,
     updateProgress,
     progress: animatedProgress,
-  } = useProgressAnimation(
-    normalizedProgress, // Always initialize with current progress to avoid flashing
-    animationDuration
-  );
+  } = useProgressAnimation(normalizedProgress, animationDuration);
 
   // Effect to handle animation when triggered or when progress changes
   useEffect(() => {
@@ -84,54 +81,60 @@ function ProgressBarComponent({
 
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {
-    return backgroundColor || (isDarkMode ? colors.elevation1 : `${colors.text}15`);
-  }, [backgroundColor, colors.elevation1, colors.text, isDarkMode]);
+    if (backgroundColor) return backgroundColor;
+    return isDarkMode ? colors.elevation1 : `${colors.text}15`;
+  }, [backgroundColor, isDarkMode, colors.elevation1, colors.text]);
 
   // Determine fill color based on theme if not provided
   const progressFillColor = useMemo(() => {
     return fillColor || colors.tint;
   }, [fillColor, colors.tint]);
 
-  // Memoize the container style to prevent unnecessary re-renders
-  const containerStyle = useMemo(() => {
-    return [
-      styles.container,
-      { height, backgroundColor: bgColor, borderRadius: height / 2 },
-      style,
-    ];
-  }, [height, bgColor, style]);
+  // Memoize all styles at once to prevent unnecessary style object creation
+  const styles = useMemo(
+    () => ({
+      container: [
+        defaultStyles.container,
+        {
+          height,
+          backgroundColor: bgColor,
+          borderRadius: height / 2,
+        },
+        style,
+      ],
+      fillContainer: [
+        defaultStyles.fillContainer,
+        {
+          borderRadius: height / 2,
+        },
+      ],
+      fill: [
+        defaultStyles.fill,
+        animatedStyle as AnimatedStyleProp<ViewStyle>,
+        {
+          backgroundColor: progressFillColor,
+          borderRadius: height / 2,
+        },
+        fillStyle,
+      ],
+    }),
+    [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
+  );
 
   return (
     <View
-      style={containerStyle as StyleProp<ViewStyle>}
+      style={styles.container as StyleProp<ViewStyle>}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: normalizedProgress }}
     >
-      <View
-        style={[
-          styles.fillContainer,
-          {
-            borderRadius: height / 2,
-          },
-        ]}
-      >
-        <Animated.View
-          style={[
-            styles.fill,
-            animatedStyle as AnimatedStyleProp<ViewStyle>,
-            {
-              backgroundColor: progressFillColor,
-              borderRadius: height / 2,
-            },
-            fillStyle,
-          ]}
-        />
+      <View style={styles.fillContainer}>
+        <Animated.View style={styles.fill} />
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const defaultStyles = StyleSheet.create({
   container: {
     overflow: 'hidden',
     width: '100%',

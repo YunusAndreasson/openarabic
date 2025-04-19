@@ -1,5 +1,4 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,6 +27,8 @@ import { handleError } from '../utils/errorHandling';
 
 import { useDebounce, useThrottle } from './useBounce';
 
+type AudioPlayerState = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+
 export type WordTiming = {
   wordId: number;
   startTime: number; // ms
@@ -43,6 +44,13 @@ export type SentenceAudio = {
 };
 
 export type SentenceWordsMap = Map<number, Tables<'sentence_words'>[]>;
+
+type PlaybackOptions = {
+  startPositionMs?: number;
+  initialWordId?: number | null;
+  sentenceOffset?: number;
+  forceReset?: boolean;
+};
 
 /**
  * Helper function for a simple retry of an async operation
@@ -71,19 +79,11 @@ export function useSentenceAudioPlayer(): {
   currentPosition: number | null;
   isPlaying: boolean;
   currentSentenceIndex: number | null;
-  audioState: 'idle' | 'loading' | 'playing' | 'paused' | 'error';
+  audioState: AudioPlayerState;
   progress: number;
   duration: number;
   isPreloading: boolean;
-  startPlayback: (
-    sentences: SentenceAudio[],
-    options?: {
-      startPositionMs?: number;
-      initialWordId?: number | null;
-      sentenceOffset?: number;
-      forceReset?: boolean;
-    }
-  ) => Promise<boolean>;
+  startPlayback: (sentences: SentenceAudio[], options?: PlaybackOptions) => Promise<boolean>;
   stopPlayback: (shouldUnload?: boolean) => Promise<boolean>;
   resumePlayback: (sentenceIndex: number, audioPositionMs?: number) => Promise<boolean>;
   preloadAudioFiles: (sentences: SentenceAudio[]) => Promise<boolean>;
@@ -91,7 +91,7 @@ export function useSentenceAudioPlayer(): {
     wordId: number,
     sentenceWordsMap: SentenceWordsMap
   ) => Tables<'sentence_words'> | undefined;
-  setAudioState: (state: 'idle' | 'loading' | 'playing' | 'paused' | 'error') => void;
+  setAudioState: (state: AudioPlayerState) => void;
   setCurrentSentenceIndex: (idx: number | null) => void;
   soundRef: React.MutableRefObject<Audio.Sound | null>;
   wordTimingRef: React.MutableRefObject<WordTiming[]>;
@@ -117,14 +117,12 @@ export function useSentenceAudioPlayer(): {
   const lastCheckTime = useSharedValue(0);
   const progressAnimValue = useSharedValue(0);
   const durationAnimValue = useSharedValue(0);
-  const audioStateAnimValue = useSharedValue('idle');
+  const audioStateAnimValue = useSharedValue<AudioPlayerState>('idle');
   const playbackRate = useSharedValue(1.0);
   const needsStatusCheck = useSharedValue(true);
 
   // Local states - keep only what's necessary
-  const [audioState, setAudioState] = useState<'idle' | 'loading' | 'playing' | 'paused' | 'error'>(
-    'idle'
-  );
+  const [audioState, setAudioState] = useState<AudioPlayerState>('idle');
   const [isPreloading, setIsPreloading] = useState(false);
 
   // Computed values from shared values
@@ -138,25 +136,14 @@ export function useSentenceAudioPlayer(): {
   const cleanupRef = useRef<(() => void) | null>(null);
   const preloadedSoundsRef = useRef<(Audio.Sound | null)[]>([]);
   const playNextSentenceRef = useRef<PlayNextSentenceFunction>(async (): Promise<void> => {});
-  // Add completion flag ref to prevent duplicate next sentence calls
-  const isHandlingCompletionRef = useRef(false);
-  // We keep a forward-only pointer
-  const lastActiveIndex = useRef(0);
-  // Add refs to track all active timers
+  const isHandlingCompletionRef = useRef<boolean>(false);
+  const lastActiveIndex = useRef<number>(0);
   const activeTimersRef = useRef<
     Set<ReturnType<typeof setTimeout> | ReturnType<typeof setInterval>>
   >(new Set());
-
-  // Add a new ref to track the original index offset
   const sentenceIndexOffsetRef = useRef<number>(0);
-
-  // Add a ref to track manual navigation
   const isManualNavigationRef = useRef<boolean>(false);
-
-  // Add a timeout ref to clear the manual navigation flag
   const manualNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Add a ref for the safety timer
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Helper function to format time in MM:SS format

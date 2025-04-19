@@ -52,7 +52,6 @@ const Divider = memo(() => {
 Divider.displayName = 'Divider';
 
 export default function SettingsScreen(): JSX.Element {
-  const colors = useColors();
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const insets = useSafeAreaInsets();
@@ -178,18 +177,6 @@ export default function SettingsScreen(): JSX.Element {
   }
 
   // Button styles
-  const buttonStyles = {
-    innerContainer: {
-      justifyContent: 'flex-start' as const,
-      alignItems: 'flex-start' as const,
-      paddingVertical: LAYOUT.SPACING.TINY,
-    },
-    contentContainer: {
-      justifyContent: 'flex-start' as const,
-      alignItems: 'flex-start' as const,
-      paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    },
-  };
 
   return (
     <ThemedView
@@ -258,7 +245,7 @@ export default function SettingsScreen(): JSX.Element {
                   </View>
                 </View>
               </View>
-              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
+              <Divider />
               <View style={styles.previewContainer}>
                 <View style={styles.previewWrapper}>
                   <View style={styles.previewContent}>
@@ -278,7 +265,7 @@ export default function SettingsScreen(): JSX.Element {
                         skipDefaultColor
                         colorName="text"
                         align="left"
-                        style={[styles.englishPreviewText, { opacity: LAYOUT.OPACITY.MEDIUM_HIGH }]}
+                        style={[styles.englishPreviewText, styles.mediumHighOpacity]}
                       >
                         Welcome to the Arabic language
                       </ThemedText>
@@ -306,31 +293,31 @@ export default function SettingsScreen(): JSX.Element {
                 onPress={() => handleSocialLink('https://twitter.com/OpenArabicApp')}
                 icon="logo-twitter"
                 textWeight="normal"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
+                style={styles.actionButton}
+                innerContainerStyle={styles.buttonInnerContainer}
+                contentContainerStyle={styles.buttonContentContainer}
               />
-              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
+              <Divider />
               <ThemedButton
                 variant="outlined"
                 title="Facebook"
                 onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
                 icon="logo-facebook"
                 textWeight="normal"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
+                style={styles.actionButton}
+                innerContainerStyle={styles.buttonInnerContainer}
+                contentContainerStyle={styles.buttonContentContainer}
               />
-              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
+              <Divider />
               <ThemedButton
                 variant="outlined"
                 title="Instagram"
                 onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
                 icon="logo-instagram"
                 textWeight="normal"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
+                style={styles.actionButton}
+                innerContainerStyle={styles.buttonInnerContainer}
+                contentContainerStyle={styles.buttonContentContainer}
               />
             </BaseCard>
           </View>
@@ -348,20 +335,20 @@ export default function SettingsScreen(): JSX.Element {
                 onPress={handleSupport}
                 icon="mail"
                 textWeight="normal"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
+                style={styles.actionButton}
+                innerContainerStyle={styles.buttonInnerContainer}
+                contentContainerStyle={styles.buttonContentContainer}
               />
-              <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />
+              <Divider />
               <ThemedButton
                 variant="outlined"
                 title="Sign Out"
                 onPress={handleSignOut}
                 icon="log-out"
                 textWeight="normal"
-                style={[styles.actionButton, { backgroundColor: colors.cardBackground }]}
-                innerContainerStyle={buttonStyles.innerContainer}
-                contentContainerStyle={buttonStyles.contentContainer}
+                style={styles.actionButton}
+                innerContainerStyle={styles.buttonInnerContainer}
+                contentContainerStyle={styles.buttonContentContainer}
               />
             </BaseCard>
           </View>
@@ -388,6 +375,16 @@ const styles = StyleSheet.create({
   arabicPreviewText: {
     flexShrink: 0,
     marginBottom: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
+  },
+  buttonContentContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  buttonInnerContainer: {
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
     paddingVertical: LAYOUT.SPACING.TINY,
   },
   commonDivider: {
@@ -418,6 +415,9 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
+  },
+  mediumHighOpacity: {
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   previewContainer: {
     padding: LAYOUT.SPACING.SMALL,

@@ -50,15 +50,22 @@ export const VocabularyGraph = memo(
     const opacity = useDerivedValue(() => progress.value);
 
     // Canvas dimensions with safe defaults
-    const PADDING = LAYOUT.SPACING.MEDIUM;
-    const TOP_PADDING = LAYOUT.SPACING.LARGE;
-    const BOTTOM_PADDING = LAYOUT.SPACING.LARGE;
-    const POINT_RADIUS = 2.5;
-    const POINT_STROKE = 1.5;
-    const GRAPH_HEIGHT = 120;
-    const GRAPH_WIDTH = Math.max(
-      100,
-      Dimensions.get('window').width - PADDING * 2 - LAYOUT.SCREEN_EDGE_PADDING * 2
+    const dimensions = useMemo(
+      () => ({
+        padding: LAYOUT.SPACING.MEDIUM,
+        topPadding: LAYOUT.SPACING.LARGE,
+        bottomPadding: LAYOUT.SPACING.LARGE,
+        pointRadius: 2.5,
+        pointStroke: 1.5,
+        graphHeight: 120,
+        graphWidth: Math.max(
+          100,
+          Dimensions.get('window').width -
+            LAYOUT.SPACING.MEDIUM * 2 -
+            LAYOUT.SCREEN_EDGE_PADDING * 2
+        ),
+      }),
+      []
     );
 
     // Validate data before processing
@@ -91,8 +98,8 @@ export const VocabularyGraph = memo(
     // Use graph data hook to generate points and paths with error handling
     const { points, areaPath, linePath } = useGraphData(
       validData,
-      GRAPH_WIDTH - POINT_RADIUS * 4,
-      GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING
+      dimensions.graphWidth - dimensions.pointRadius * 4,
+      dimensions.graphHeight - dimensions.topPadding - dimensions.bottomPadding
     );
 
     // Start the animation when the component is ready and parent signals animation
@@ -129,22 +136,22 @@ export const VocabularyGraph = memo(
       () => [
         styles.graphContainer,
         {
-          height: GRAPH_HEIGHT + 50,
+          height: dimensions.graphHeight + 50,
         },
       ],
-      [GRAPH_HEIGHT]
+      [dimensions.graphHeight]
     );
 
     const canvasStyle = useMemo(
       () => [
         styles.canvas,
         {
-          height: GRAPH_HEIGHT,
-          width: GRAPH_WIDTH,
+          height: dimensions.graphHeight,
+          width: dimensions.graphWidth,
           marginBottom: LAYOUT.SPACING.SMALL,
         },
       ],
-      [GRAPH_HEIGHT, GRAPH_WIDTH]
+      [dimensions.graphHeight, dimensions.graphWidth]
     );
 
     // Error state component
@@ -177,11 +184,7 @@ export const VocabularyGraph = memo(
     }
 
     return (
-      <View
-        accessible={true}
-        accessibilityLabel={`Vocabulary progress graph for the last ${validData.length} days`}
-        accessibilityHint="Shows your daily word learning progress"
-      >
+      <View>
         <BaseCard
           style={styles.card}
           isLoading={isLoading}
@@ -190,20 +193,18 @@ export const VocabularyGraph = memo(
           shadowSize="medium"
         >
           {cardHeader}
-          <View
-            style={graphContainerStyle}
-            accessible={true}
-            accessibilityLabel="Graph showing vocabulary progress over time"
-          >
+          <View style={graphContainerStyle}>
             <Canvas style={canvasStyle}>
               {/* Grid lines */}
               {[0, 0.25, 0.5, 0.75, 1].map(ratio => {
-                const y = ratio * (GRAPH_HEIGHT - BOTTOM_PADDING) + TOP_PADDING;
+                const y =
+                  ratio * (dimensions.graphHeight - dimensions.bottomPadding) +
+                  dimensions.topPadding;
                 return (
                   <Line
                     key={`grid-line-${ratio}`}
                     p1={{ x: 0, y }}
-                    p2={{ x: GRAPH_WIDTH, y }}
+                    p2={{ x: dimensions.graphWidth, y }}
                     color={withOpacity(colors.text, 0.08)}
                     strokeWidth={1}
                   />
@@ -211,10 +212,13 @@ export const VocabularyGraph = memo(
               })}
 
               {/* Area under the curve with gradient */}
-              <Group opacity={opacity} transform={[{ translateY: TOP_PADDING }]}>
+              <Group opacity={opacity} transform={[{ translateY: dimensions.topPadding }]}>
                 <LinearGradient
                   start={vec(0, 0)}
-                  end={vec(0, GRAPH_HEIGHT - TOP_PADDING - BOTTOM_PADDING)}
+                  end={vec(
+                    0,
+                    dimensions.graphHeight - dimensions.topPadding - dimensions.bottomPadding
+                  )}
                   colors={gradientColors}
                 />
                 <Path path={areaPath} />
@@ -222,7 +226,7 @@ export const VocabularyGraph = memo(
               </Group>
 
               {/* Line for the graph */}
-              <Group transform={[{ translateY: TOP_PADDING }]}>
+              <Group transform={[{ translateY: dimensions.topPadding }]}>
                 <Path
                   path={linePath}
                   style="stroke"
@@ -237,19 +241,19 @@ export const VocabularyGraph = memo(
               </Group>
 
               {/* Data points */}
-              <Group opacity={opacity} transform={[{ translateX: POINT_RADIUS * 2 }]}>
+              <Group opacity={opacity} transform={[{ translateX: dimensions.pointRadius * 2 }]}>
                 {points.map(point => (
                   <Group key={`data-point-${point.x}-${point.y}`}>
                     <Circle
                       cx={point.x}
-                      cy={point.y + TOP_PADDING}
-                      r={POINT_RADIUS + POINT_STROKE}
+                      cy={point.y + dimensions.topPadding}
+                      r={dimensions.pointRadius + dimensions.pointStroke}
                       color={colors.cardBackground}
                     />
                     <Circle
                       cx={point.x}
-                      cy={point.y + TOP_PADDING}
-                      r={POINT_RADIUS}
+                      cy={point.y + dimensions.topPadding}
+                      r={dimensions.pointRadius}
                       color={colors.text}
                       style="fill"
                     />
@@ -259,18 +263,9 @@ export const VocabularyGraph = memo(
             </Canvas>
 
             {/* X-axis labels */}
-            <View
-              style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}
-              accessible={true}
-              accessibilityLabel="Date and word count labels"
-            >
+            <View style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}>
               {validData.map(item => (
-                <View
-                  key={`x-axis-label-${item.date}`}
-                  style={styles.labelContainer}
-                  accessible={true}
-                  accessibilityLabel={`${item.date}: ${item.wordsLearned} words learned`}
-                >
+                <View key={`x-axis-label-${item.date}`} style={styles.labelContainer}>
                   <ThemedText type="caption" variant="primary" weight="500">
                     {item.date}
                   </ThemedText>

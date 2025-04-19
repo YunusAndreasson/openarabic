@@ -2,6 +2,7 @@ import React, { useMemo, memo } from 'react';
 import type { TextStyle } from 'react-native';
 import { View, Platform, StyleSheet } from 'react-native';
 
+import { LAYOUT } from '@/constants/layout';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
 import { ThemedText } from '../../components/ThemedText';
@@ -12,7 +13,7 @@ import { useColors } from '../../hooks/useColors';
  * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
 const WordDisplay = memo(
-  ({ word, fontSize, style }: WordDisplayProps) => {
+  ({ word, fontSize = 24, style }: WordDisplayProps) => {
     const colors = useColors();
 
     // Memoize the text style to prevent unnecessary re-renders
@@ -21,20 +22,18 @@ const WordDisplay = memo(
         color: colors.tint,
         fontWeight: '700',
         textAlign: 'center',
-        paddingBottom: 5,
-        ...Platform.select({
-          ios: {
-            shadowColor: colors.shadow,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-          },
-          android: {
-            elevation: 3,
-          },
-        }),
+        paddingVertical: LAYOUT.SPACING.MEDIUM,
+        lineHeight: fontSize * 1.5,
+        ...(Platform.OS === 'ios'
+          ? {
+              shadowColor: colors.shadow,
+              ...LAYOUT.SHADOW.SMALL,
+            }
+          : {
+              elevation: 2,
+            }),
       }),
-      [colors]
+      [colors, fontSize]
     );
 
     // Use a key based on the word to ensure React completely replaces the component
@@ -69,7 +68,8 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 280,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 5,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
 });

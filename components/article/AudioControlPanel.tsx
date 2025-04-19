@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, memo, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity, type ViewStyle } from 'react-native';
-import Animated, { type AnimatedStyleProp } from 'react-native-reanimated';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import type { ViewStyle } from 'react-native';
+import Animated from 'react-native-reanimated';
+import type { AnimateStyle } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
@@ -22,110 +24,106 @@ interface AudioControlPanelProps {
   totalSentences: number;
 }
 
-const AudioControlPanel: React.FC<AudioControlPanelProps> = ({
-  isVisible,
-  isPlaying,
-  onPlayPause,
-  onStop,
-  onPrevious,
-  onNext,
-  currentSentenceIndex,
-  totalSentences,
-}) => {
-  const colors = useColors();
+/* eslint-disable react/prop-types */
+const AudioControlPanel = memo<AudioControlPanelProps>(
+  ({
+    isVisible,
+    isPlaying,
+    onPlayPause,
+    onStop,
+    onPrevious,
+    onNext,
+    currentSentenceIndex,
+    totalSentences,
+  }) => {
+    const colors = useColors();
 
-  // Use opacity animation hook with slower duration for smoother transitions
-  const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 250, // Slightly longer duration for smoother appearance
-  });
+    const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
+      initialOpacity: 0,
+      duration: 250,
+    });
 
-  // Create a memoized hidden style to avoid inline style issues
-  const hiddenStyle = useMemo(
-    () => ({
-      ...styles.container,
-      opacity: 0,
-    }),
-    []
-  );
+    const hiddenStyle = useMemo(
+      () => ({
+        ...styles.container,
+        opacity: 0,
+      }),
+      []
+    ) as AnimateStyle<ViewStyle>;
 
-  // Handle visibility changes only when it actually changes
-  useEffect(() => {
-    if (isVisible) {
-      fadeIn();
-    } else {
-      fadeOut();
+    useEffect(() => {
+      if (isVisible) {
+        fadeIn();
+      } else {
+        fadeOut();
+      }
+    }, [isVisible, fadeIn, fadeOut]);
+
+    const handlePlayPause = useButtonAction(onPlayPause, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+    const handleStop = useButtonAction(onStop, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+    const handlePrevious = useButtonAction(onPrevious, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+    const handleNext = useButtonAction(onNext, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+
+    if (!isVisible) {
+      return <Animated.View style={hiddenStyle} pointerEvents="none" />;
     }
-  }, [isVisible, fadeIn, fadeOut]);
 
-  // Create debounced handlers using useButtonAction hook
-  const handlePlayPause = useButtonAction(onPlayPause, ANIMATION_TIMING.DEBOUNCE.STANDARD);
-  const handleStop = useButtonAction(onStop, ANIMATION_TIMING.DEBOUNCE.STANDARD);
-  const handlePrevious = useButtonAction(onPrevious, ANIMATION_TIMING.DEBOUNCE.STANDARD);
-  const handleNext = useButtonAction(onNext, ANIMATION_TIMING.DEBOUNCE.STANDARD);
+    const isFirstSentence = currentSentenceIndex === 0;
+    const isLastSentence = currentSentenceIndex === totalSentences - 1;
 
-  // Maintain component mounted but hidden when not visible
-  // This prevents flash on reappearance
-  if (!isVisible) {
     return (
-      <Animated.View style={hiddenStyle as AnimatedStyleProp<ViewStyle>} pointerEvents="none" />
+      <Animated.View style={[styles.container, animatedStyle as AnimateStyle<ViewStyle>]}>
+        <BaseCard style={[styles.card, { backgroundColor: colors.elevation2 }]} shadowSize="medium">
+          <View style={styles.contentContainer}>
+            <View style={styles.controlsContainer}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handlePrevious}
+                disabled={isFirstSentence}
+              >
+                <Ionicons
+                  name="play-skip-back"
+                  size={24}
+                  color={isFirstSentence ? colors.textTertiary : colors.text}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.playButton, { backgroundColor: colors.card }]}
+                onPress={handlePlayPause}
+              >
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleNext}
+                disabled={isLastSentence}
+              >
+                <Ionicons
+                  name="play-skip-forward"
+                  size={24}
+                  color={isLastSentence ? colors.textTertiary : colors.text}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.infoContainer}>
+              <ThemedText type="caption" style={styles.sentenceInfo}>
+                Sentence {currentSentenceIndex !== null ? currentSentenceIndex + 1 : 0}/
+                {totalSentences}
+              </ThemedText>
+            </View>
+
+            <TouchableOpacity style={styles.closeButton} onPress={handleStop}>
+              <Ionicons name="close-circle" size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        </BaseCard>
+      </Animated.View>
     );
   }
-
-  return (
-    <Animated.View style={[styles.container, animatedStyle as AnimatedStyleProp<ViewStyle>]}>
-      <BaseCard style={[styles.card, { backgroundColor: colors.elevation2 }]} shadowSize="medium">
-        <View style={styles.contentContainer}>
-          <View style={styles.controlsContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handlePrevious}
-              disabled={currentSentenceIndex === 0}
-            >
-              <Ionicons
-                name="play-skip-back"
-                size={24}
-                color={currentSentenceIndex === 0 ? colors.textTertiary : colors.text}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.playButton, { backgroundColor: colors.card }]}
-              onPress={handlePlayPause}
-            >
-              <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleNext}
-              disabled={currentSentenceIndex === totalSentences - 1}
-            >
-              <Ionicons
-                name="play-skip-forward"
-                size={24}
-                color={
-                  currentSentenceIndex === totalSentences - 1 ? colors.textTertiary : colors.text
-                }
-              />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.infoContainer}>
-            <ThemedText type="caption" style={styles.sentenceInfo}>
-              Sentence {currentSentenceIndex !== null ? currentSentenceIndex + 1 : 0}/
-              {totalSentences}
-            </ThemedText>
-          </View>
-
-          <TouchableOpacity style={styles.closeButton} onPress={handleStop}>
-            <Ionicons name="close-circle" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-      </BaseCard>
-    </Animated.View>
-  );
-};
+);
 
 const styles = StyleSheet.create({
   card: {
@@ -174,4 +172,6 @@ const styles = StyleSheet.create({
   },
 });
 
-export default memo(AudioControlPanel);
+AudioControlPanel.displayName = 'AudioControlPanel';
+
+export default AudioControlPanel;

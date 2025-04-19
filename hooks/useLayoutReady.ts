@@ -22,7 +22,7 @@ export const useLayoutReady = (
 
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let frameId: number | undefined;
 
     const cleanup = () => {

@@ -4,11 +4,10 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { PageHeaderProps } from '@/types/ui/layout.types';
-
-import { LAYOUT } from '../constants/layout';
-import { useColors } from '../hooks/useColors';
 
 import { ThemedText } from './ThemedText';
 
@@ -32,7 +31,7 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
     () => [
       styles.container,
       {
-        backgroundColor: colors.transparent, // Allow blur to work through
+        backgroundColor: colors.transparent,
         borderBottomColor: colors.borderOverlay,
       },
       onBackPress && styles.wrapperWithBack,
@@ -45,7 +44,7 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
     () => [
       styles.blurContainer,
       {
-        backgroundColor: colors.transparent, // Allow blur to work through
+        backgroundColor: colors.transparent,
         borderBottomColor: colors.borderOverlay,
         borderBottomWidth: StyleSheet.hairlineWidth,
         ...(Platform.OS === 'ios' && {
@@ -126,7 +125,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     width: '100%',
-    zIndex: LAYOUT.Z_INDEX.HEADER, // Ensure blur is contained
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   contentContainer: {
     paddingBottom: LAYOUT.SPACING.MEDIUM,

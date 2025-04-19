@@ -127,7 +127,7 @@ class Analytics {
   }
 
   // Track an event
-  async track(eventName: string, properties?: Record<string, AnalyticsProperties>) {
+  async track(eventName: keyof typeof EVENTS, properties?: Record<string, AnalyticsProperties>) {
     // Skip tracking in development if disabled
     if (__DEV__ && !ENABLE_DEV_TRACKING) {
       return;
@@ -136,7 +136,7 @@ class Analytics {
     if (!this.isInitialized) return;
 
     try {
-      await this.mixpanel.track(eventName, {
+      await this.mixpanel.track(EVENTS[eventName], {
         ...properties,
         environment: __DEV__ ? 'development' : 'production',
       });
@@ -158,7 +158,7 @@ class Analytics {
 
   // Track page/screen view
   async trackScreen(screenName: string, properties?: Record<string, AnalyticsProperties>) {
-    await this.track('Screen View', {
+    await this.track('VIEW_ARTICLE', {
       screen: screenName,
       ...properties,
     });
@@ -187,11 +187,11 @@ class Analytics {
   }
 
   // Time an event
-  async timeEvent(eventName: string) {
+  async timeEvent(eventName: keyof typeof EVENTS) {
     if (!this.isInitialized) return;
 
     try {
-      await this.mixpanel.timeEvent(eventName);
+      await this.mixpanel.timeEvent(EVENTS[eventName]);
     } catch (error) {
       logError(error);
     }
@@ -233,15 +233,15 @@ class Analytics {
 
   // Auth Events
   async trackSignUp(method: string = 'email') {
-    await this.track(EVENTS.SIGN_UP, { method });
+    await this.track('SIGN_UP', { method });
   }
 
   async trackSignIn(method: string = 'email') {
-    await this.track(EVENTS.SIGN_IN, { method });
+    await this.track('SIGN_IN', { method });
   }
 
   async trackSignOut() {
-    await this.track(EVENTS.SIGN_OUT);
+    await this.track('SIGN_OUT');
   }
 
   // Article Events
@@ -254,7 +254,7 @@ class Analytics {
       sentenceCount?: number;
     }
   ) {
-    await this.track(EVENTS.VIEW_ARTICLE, {
+    await this.track('VIEW_ARTICLE', {
       article_id: articleId,
       ...articleProperties,
     });
@@ -267,14 +267,14 @@ class Analytics {
       wordsAdded?: number;
     }
   ) {
-    await this.track(EVENTS.COMPLETE_ARTICLE, {
+    await this.track('COMPLETE_ARTICLE', {
       article_id: articleId,
       ...properties,
     });
   }
 
   async trackToggleReadingList(articleId: number, added: boolean) {
-    await this.track(EVENTS.TOGGLE_READING_LIST, {
+    await this.track('TOGGLE_READING_LIST', {
       article_id: articleId,
       action: added ? 'add' : 'remove',
     });
@@ -289,7 +289,7 @@ class Analytics {
       articleId?: number;
     }
   ) {
-    await this.track(EVENTS.ADD_STUDY_WORD, {
+    await this.track('ADD_STUDY_WORD', {
       word_id: wordId,
       ...properties,
     });
@@ -303,7 +303,7 @@ class Analytics {
       timeStudied?: number;
     }
   ) {
-    await this.track(EVENTS.REMOVE_STUDY_WORD, {
+    await this.track('REMOVE_STUDY_WORD', {
       word_id: wordId,
       ...properties,
     });
@@ -315,12 +315,12 @@ class Analytics {
     incorrectCount: number;
     timeSpent: number;
   }) {
-    await this.track(EVENTS.COMPLETE_REVIEW, properties);
+    await this.track('COMPLETE_REVIEW', properties);
   }
 
   // Reading List Events
   async trackViewReadingList(properties: { totalCount: number; completedCount: number }) {
-    await this.track(EVENTS.VIEW_READING_LIST, properties);
+    await this.track('VIEW_READING_LIST', properties);
   }
 
   // Update User Properties

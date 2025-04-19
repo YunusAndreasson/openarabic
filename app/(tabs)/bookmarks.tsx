@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
   activeCard: {
     borderLeftWidth: 3,
     elevation: 6,
-    shadowOpacity: 0.3,
+    shadowOpacity: LAYOUT.OPACITY.MEDIUM,
     shadowRadius: 8,
   },
   activeIcon: {
@@ -113,7 +114,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   inactiveIcon: {
-    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   listContentWithHeader: {
     paddingTop: 0,
@@ -319,11 +320,6 @@ const BottomControls = memo(
 BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen(): JSX.Element {
-  // --- Debugging Setup ---
-  const renderId = useRef(0);
-  renderId.current += 1;
-  const currentRenderId = renderId.current;
-
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -332,23 +328,13 @@ export default function BookmarksScreen(): JSX.Element {
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
   const [isShuffleMode, setIsShuffleMode] = useState(false);
-  // For tracking study words without affecting audio state
   const [tracksForWordCounts, setTracksForWordCounts] = useState<EnhancedAudioTrack[]>([]);
   // --- End State Hooks ---
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
-  const {
-    // State values
-    progress,
-    duration,
-    metadata,
-    audioState,
-    currentTrackIndex,
-    // Stable actions object
-    actions,
-  } = enhancedAudioPlayer;
-  // --- End Enhanced Audio Player ---
+  const { progress, duration, metadata, audioState, currentTrackIndex, actions } =
+    enhancedAudioPlayer;
 
   // --- TanStack Query Hooks ---
   const readingListQuery = useQuery({
@@ -493,38 +479,23 @@ export default function BookmarksScreen(): JSX.Element {
   // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
-  // Ref to track last invocation time for debouncing
-  const lastActionTimeRef = useRef(0);
-  const ACTION_DEBOUNCE_MS = 1000; // Prevent actions within 1 second of each other
-
   const getArticleStudyWordsCount = useCallback(
     (articleId: number): number => {
-      // First check tracks directly
       if (tracksForWordCounts.length > 0) {
-        const studyWordTracksCount = tracksForWordCounts.filter(
-          track =>
-            track.articleId === articleId &&
-            (track.type === 'study_word_english' || track.type === 'study_word_arabic')
-        ).length;
-
-        const count = Math.floor(studyWordTracksCount / 2);
-        if (count > 0) return count;
+        return Math.floor(
+          tracksForWordCounts.filter(
+            track =>
+              track.articleId === articleId &&
+              (track.type === 'study_word_english' || track.type === 'study_word_arabic')
+          ).length / 2
+        );
       }
-
-      // Fallback to player count
       return actions.getStudyWordsCount(articleId);
     },
     [actions.getStudyWordsCount, tracksForWordCounts]
   );
 
   const handlePlayAll = useCallback(() => {
-    // Debounce mechanism to prevent multiple rapid calls
-    const now = Date.now();
-    if (now - lastActionTimeRef.current < ACTION_DEBOUNCE_MS) {
-      return;
-    }
-    lastActionTimeRef.current = now;
-
     if (isCurrentlyPlaying) {
       actions.stopPlayback();
       setIsShuffleMode(false);
@@ -541,18 +512,11 @@ export default function BookmarksScreen(): JSX.Element {
   }, [isCurrentlyPlaying, enhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]);
 
   const handleShuffle = useCallback(() => {
-    // Debounce mechanism to prevent multiple rapid calls
-    const now = Date.now();
-    if (now - lastActionTimeRef.current < ACTION_DEBOUNCE_MS) {
-      return;
-    }
-    lastActionTimeRef.current = now;
-
     if (isCurrentlyPlaying) {
-      actions.stopPlayback(); // Use stable action
+      actions.stopPlayback();
       setIsShuffleMode(false);
     } else if (enhancedTracks.length) {
-      actions.startEnhancedShufflePlayback(enhancedTracks); // Use stable action
+      actions.startEnhancedShufflePlayback(enhancedTracks);
       setIsShuffleMode(true);
     }
   }, [
@@ -560,9 +524,7 @@ export default function BookmarksScreen(): JSX.Element {
     enhancedTracks,
     actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
-    currentRenderId,
   ]);
-  // --- End Event Handlers ---
 
   const insets = useSafeAreaInsets();
 

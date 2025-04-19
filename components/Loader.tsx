@@ -37,13 +37,13 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
     if (typeof size === 'number') return size;
     switch (size) {
       case 'large':
-        return 52;
+        return LAYOUT.LOADER.LARGE;
       case 'medium':
-        return 40;
+        return LAYOUT.LOADER.MEDIUM;
       case 'small':
-        return 28;
+        return LAYOUT.LOADER.SMALL;
       default:
-        return 52; // Default to large if invalid size
+        return LAYOUT.LOADER.LARGE; // Default to large if invalid size
     }
   }, [size]);
 
@@ -67,16 +67,12 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
       width: circleSize,
       height: circleSize,
       borderRadius: circleSize / 2,
-      backgroundColor: colors.transparent,
+      backgroundColor: 'transparent',
       borderColor: loaderColor,
       borderWidth,
-      shadowColor: loaderColor,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.6,
-      shadowRadius: 8,
-      elevation: 8,
+      ...styles.circleShadow,
     }),
-    [circleSize, loaderColor, borderWidth, colors.transparent]
+    [circleSize, loaderColor, borderWidth]
   );
 
   return (
@@ -93,11 +89,9 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
  */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ color, style }) => {
   const colors = useColors();
-
   // Handle paddingTop separately to properly position loader
   const loaderContainerStyle = style?.paddingTop ? { paddingTop: style.paddingTop } : undefined;
 
-  // Remove animation completely for instant display
   return (
     <ThemedView style={[styles.fullScreen, style]}>
       <View style={[styles.loaderContainer, loaderContainerStyle]}>
@@ -117,7 +111,6 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
   containerStyle,
 }) => {
   const colors = useColors();
-
   return (
     <View style={[styles.componentLoader, containerStyle]}>
       <Loader size={size} color={color || colors.text} style={style} />
@@ -132,7 +125,6 @@ export const LoadingContainer: React.FC<LoadingContainerProps> = ({
  */
 export const AppLoader: React.FC<AppLoaderProps> = ({ color }) => {
   const colors = useColors();
-
   return (
     <Animated.View style={[styles.appLoader, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
@@ -141,7 +133,7 @@ export const AppLoader: React.FC<AppLoaderProps> = ({ color }) => {
             styles.circle,
             styles.appLoaderCircle,
             {
-              backgroundColor: colors.transparent,
+              backgroundColor: 'transparent',
               borderColor: color || colors.tint,
             },
           ]}
@@ -163,13 +155,19 @@ const styles = StyleSheet.create({
     zIndex: LAYOUT.Z_INDEX.OVERLAY,
   },
   appLoaderCircle: {
-    borderRadius: 26,
+    borderRadius: LAYOUT.LOADER.LARGE / 2,
     borderWidth: 5,
-    height: 52,
-    width: 52,
+    height: LAYOUT.LOADER.LARGE,
+    width: LAYOUT.LOADER.LARGE,
   },
   circle: {
     // Base styles only - specific styles moved to circleStyle for better memoization
+  },
+  circleShadow: {
+    elevation: 8,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
   },
   componentLoader: {
     alignItems: 'center',
@@ -179,8 +177,8 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 64,
-    minWidth: 64,
+    minHeight: LAYOUT.SPACING.XLARGE,
+    minWidth: LAYOUT.SPACING.XLARGE,
     padding: LAYOUT.SPACING.SMALL,
   },
   fullScreen: {

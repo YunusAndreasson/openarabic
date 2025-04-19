@@ -3,6 +3,76 @@ import { handleError } from '../utils/errorHandling';
 
 import { supabase } from './supabase';
 
+// Define shared types to improve type safety
+type ReadingListItem = {
+  user_id: string;
+  article_id: number;
+  position: number;
+  completed: boolean;
+  completed_at: string | null;
+  read_count: number;
+  added_at: string;
+  articles: Article & {
+    author: {
+      id: number;
+      name: string;
+    };
+  };
+};
+
+type SupabaseArticleJoinResult = {
+  article_id: number;
+  completed_at?: string | null;
+  articles: Article;
+};
+
+// Shared error handling configuration
+const errorConfig = {
+  readingList: {
+    load: {
+      toastMessage: 'Failed to load reading list',
+      analyticsEventName: 'Reading_List_Load_Error',
+      sentrySeverity: 'error' as const,
+    },
+    add: {
+      toastMessage: 'Failed to add to reading list',
+      analyticsEventName: 'Reading_List_Add_Error',
+      sentrySeverity: 'error' as const,
+    },
+    remove: {
+      toastMessage: 'Failed to remove from reading list',
+      analyticsEventName: 'Reading_List_Remove_Error',
+      sentrySeverity: 'error' as const,
+    },
+    check: {
+      toastMessage: 'Failed to check reading list status',
+      analyticsEventName: 'Reading_List_Check_Error',
+      sentrySeverity: 'warning' as const,
+      showToast: false,
+    },
+    complete: {
+      toastMessage: 'Failed to mark article as completed',
+      analyticsEventName: 'Article_Complete_Error',
+      sentrySeverity: 'error' as const,
+    },
+    readCount: {
+      toastMessage: 'Failed to update read count',
+      analyticsEventName: 'Read_Count_Error',
+      sentrySeverity: 'warning' as const,
+    },
+  },
+};
+
+// Shared query fragments
+const articleJoinQuery = `
+  article_id,
+  articles:article_id(
+    *,
+    category:categories(*),
+    author:authors(*)
+  )
+`;
+
 export const readingListService = {
   /**
    * Gets articles that the user has started but not completed
@@ -11,33 +81,18 @@ export const readingListService = {
   async getInProgressArticles(userId: string): Promise<Article[]> {
     const { data, error } = await supabase
       .from('reading_list')
-      .select(
-        `
-        article_id,
-        articles:article_id(
-          *,
-          category:categories(*),
-          author:authors(*)
-        )
-      `
-      )
+      .select(articleJoinQuery)
       .match({ user_id: userId, completed: false })
       .order('position', { ascending: false });
 
     if (error) {
-      handleError(error, {
-        toastMessage: 'Failed to load reading list',
-        analyticsEventName: 'Reading_List_Load_Error',
-        sentrySeverity: 'error',
-      });
+      handleError(error, errorConfig.readingList.load);
       throw error;
     }
 
-    const articles = (data || [])
-      .filter(item => item.articles)
-      .map(item => item.articles as unknown as Article);
-
-    return articles;
+    return (data || [])
+      .filter((item: SupabaseArticleJoinResult) => item.articles)
+      .map((item: SupabaseArticleJoinResult) => item.articles);
   },
 
   /**
@@ -47,37 +102,25 @@ export const readingListService = {
   async getCompletedArticles(userId: string): Promise<(Article & { completed_at: string })[]> {
     const { data, error } = await supabase
       .from('reading_list')
-      .select(
-        `
-        article_id,
-        completed_at,
-        articles:article_id(
-          *,
-          category:categories(*),
-          author:authors(*)
-        )
-      `
-      )
+      .select(`${articleJoinQuery}, completed_at`)
       .match({ user_id: userId, completed: true })
       .order('completed_at', { ascending: false });
 
     if (error) {
       handleError(error, {
+        ...errorConfig.readingList.load,
         toastMessage: 'Failed to load completed articles',
-        analyticsEventName: 'Completed_Articles_Load_Error',
-        sentrySeverity: 'error',
       });
       throw error;
     }
 
-    const articles = (data || [])
-      .filter(item => item.articles && item.completed_at)
-      .map(item => ({
-        ...(item.articles as unknown as Article),
-        completed_at: item.completed_at as string,
+    return (data || [])
+      .filter((item: SupabaseArticleJoinResult) => item.articles && item.completed_at)
+      .map((item: SupabaseArticleJoinResult) => ({
+        ...item.articles,
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        completed_at: item.completed_at!,
       }));
-
-    return articles;
   },
 
   /**
@@ -94,7 +137,6 @@ export const readingListService = {
       .single();
 
     if (checkError && checkError.code !== 'PGRST116') {
-      // Real error (not just "no rows found")
       handleError(checkError);
       throw checkError;
     }
@@ -104,7 +146,7 @@ export const readingListService = {
       return;
     }
 
-    // Get the current maximum position to put the new article at the end
+    // Get the current maximum position
     const { data: positionData } = await supabase
       .from('reading_list')
       .select('position')
@@ -112,24 +154,19 @@ export const readingListService = {
       .order('position', { ascending: false })
       .limit(1);
 
-    // Calculate the new position (one more than the current maximum, or 0 if no items exist)
-    const newPosition =
-      positionData && positionData.length > 0 ? (positionData[0]?.position ?? 0) + 1 : 0;
+    const newPosition = positionData?.[0]?.position ?? -1;
 
-    // Add to reading list with a position that will be at the end
     const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
-      position: newPosition, // Use calculated position
+      position: newPosition + 1,
       completed: false,
       read_count: 0,
     });
 
     if (error) {
       handleError(error, {
-        toastMessage: 'Failed to add to reading list',
-        analyticsEventName: 'Reading_List_Add_Error',
-        sentrySeverity: 'error',
+        ...errorConfig.readingList.add,
         analyticsProperties: { articleId },
       });
       throw error;
@@ -147,9 +184,7 @@ export const readingListService = {
 
     if (error) {
       handleError(error, {
-        toastMessage: 'Failed to remove from reading list',
-        analyticsEventName: 'Reading_List_Remove_Error',
-        sentrySeverity: 'error',
+        ...errorConfig.readingList.remove,
         analyticsProperties: { articleId },
       });
       throw error;
@@ -168,10 +203,8 @@ export const readingListService = {
 
     if (error && error.code !== 'PGRST116') {
       handleError(error, {
-        toastMessage: 'Failed to check reading list status',
-        analyticsEventName: 'Reading_List_Check_Error',
-        sentrySeverity: 'warning',
-        showToast: false, // Don't show toast for this check
+        ...errorConfig.readingList.check,
+        analyticsProperties: { articleId },
       });
       throw error;
     }
@@ -182,18 +215,7 @@ export const readingListService = {
   /**
    * Gets the user's reading list
    */
-  async getReadingList(userId: string): Promise<
-    {
-      user_id: string;
-      article_id: number;
-      position: number;
-      completed: boolean;
-      completed_at: string | null;
-      read_count: number;
-      added_at: string;
-      articles: Article & { author: { id: number; name: string } };
-    }[]
-  > {
+  async getReadingList(userId: string): Promise<ReadingListItem[]> {
     const { data, error } = await supabase
       .from('reading_list')
       .select(
@@ -209,11 +231,7 @@ export const readingListService = {
       .order('added_at', { ascending: false });
 
     if (error) {
-      handleError(error, {
-        toastMessage: 'Failed to load reading list',
-        analyticsEventName: 'Reading_List_Load_Error',
-        sentrySeverity: 'error',
-      });
+      handleError(error, errorConfig.readingList.load);
       throw error;
     }
 
@@ -226,20 +244,19 @@ export const readingListService = {
    * @param articleId - The article ID to mark as completed
    */
   async markAsCompleted(userId: string, articleId: number): Promise<void> {
+    const now = new Date().toISOString();
     const { error } = await supabase
       .from('reading_list')
       .update({
         completed: true,
-        completed_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        completed_at: now,
+        updated_at: now,
       })
       .match({ user_id: userId, article_id: articleId });
 
     if (error) {
       handleError(error, {
-        toastMessage: 'Failed to mark article as completed',
-        analyticsEventName: 'Article_Complete_Error',
-        sentrySeverity: 'error',
+        ...errorConfig.readingList.complete,
         analyticsProperties: { articleId },
       });
       throw error;
@@ -259,26 +276,21 @@ export const readingListService = {
 
     if (fetchError) {
       if (fetchError.code === 'PGRST116') {
-        // No rows returned, add the article to the reading list
         await this.addToReadingList(userId, articleId);
         return;
       }
       handleError(fetchError, {
-        toastMessage: 'Failed to update read count',
-        analyticsEventName: 'Read_Count_Error',
-        sentrySeverity: 'warning',
+        ...errorConfig.readingList.readCount,
         analyticsProperties: { articleId },
       });
       throw fetchError;
     }
 
-    // If no data or empty array, add the article to the reading list
-    if (!data || data.length === 0) {
+    if (!data?.length) {
       await this.addToReadingList(userId, articleId);
       return;
     }
 
-    // Increment the read count
     const { error } = await supabase
       .from('reading_list')
       .update({
@@ -289,9 +301,7 @@ export const readingListService = {
 
     if (error) {
       handleError(error, {
-        toastMessage: 'Failed to update read count',
-        analyticsEventName: 'Read_Count_Update_Error',
-        sentrySeverity: 'error',
+        ...errorConfig.readingList.readCount,
         analyticsProperties: { articleId },
       });
       throw error;

@@ -1,5 +1,4 @@
 import React from 'react';
-import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
 import { CloseButton } from '@/components/CloseButton';
@@ -39,19 +38,19 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
 
 const styles = StyleSheet.create({
   header: {
-    width: '100%',
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
+    height: 44,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,
-    height: 44,
-    zIndex: 999,
-  } as ViewStyle,
+    width: '100%',
+    zIndex: 1,
+  },
   progressContainer: {
     flex: 1,
-    marginVertical: LAYOUT.SPACING.MEDIUM,
     marginRight: LAYOUT.SPACING.SMALL,
-  } as ViewStyle,
+    marginVertical: LAYOUT.SPACING.MEDIUM,
+  },
 });
 
 export default ReviewHeader;

@@ -2,7 +2,9 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/Loader';
@@ -24,6 +26,8 @@ import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { mediumFeedback } from '@/utils/haptics';
+
+type StatCategory = 'total' | 'mastered' | 'learning' | 'due';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -121,7 +125,9 @@ export default function VocabularyScreen(): JSX.Element {
   }, [user?.id, validStudyWords.length, isDataLoading, queryClient]);
 
   // Add screen animation hook to match other tab screens
-  const { fadeInStyle } = useScreenAnimation(isDataReady, isRefreshing);
+  const { fadeInStyle } = useScreenAnimation(isDataReady, isRefreshing) as {
+    fadeInStyle: AnimatedStyleProp<ViewStyle>;
+  };
 
   // Handle starting a review with optimized invalidation
   const handleStartReview = () => {
@@ -133,8 +139,8 @@ export default function VocabularyScreen(): JSX.Element {
     });
   };
 
-  // Handle stat press events
-  const handleStatPress = (category: 'total' | 'mastered' | 'learning' | 'due') => {
+  // Handle stat press events with proper typing
+  const handleStatPress = (category: StatCategory) => {
     navigateTo({
       pathname: '/wordList',
       params: { category },

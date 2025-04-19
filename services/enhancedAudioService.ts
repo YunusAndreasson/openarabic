@@ -22,7 +22,7 @@ interface StudyWordData {
   sentenceId: number;
 }
 
-// Interface for article audio data structure returned by articlesService.getArticleAudioData
+// Interface for article audio data structure
 interface ArticleAudioData {
   articleId: number;
   title: string;
@@ -89,19 +89,21 @@ export const enhancedAudioService = {
             position: sentence.position,
             audio_url: sentence.audio_url,
           })),
-        studyWords: articleStudyWords.map(word => ({
-          id: word.sentence_word_id,
-          word: word.sentence_word?.word_form || '',
-          audio_url_english: word.sentence_word?.english_audio_url || null,
-          audio_url_arabic: word.sentence_word?.arabic_audio_url || null,
-          sentenceId: word.sentence_word?.sentence_id || 0,
-        })),
+        studyWords: articleStudyWords
+          .filter(word => word.sentence_word_id !== null)
+          .map(word => ({
+            id: word.sentence_word_id as number,
+            word: word.sentence_word?.word_form || '',
+            audio_url_english: word.sentence_word?.english_audio_url || null,
+            audio_url_arabic: word.sentence_word?.arabic_audio_url || null,
+            sentenceId: word.sentence_word?.sentence_id || 0,
+          })),
       };
 
       // Generate enhanced tracks
       return this.createEnhancedTrackSequence(audioData);
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error), {
+      handleError(error instanceof Error ? error : new Error(String(error)), {
         toastMessage: 'Failed to generate audio tracks',
         analyticsEventName: 'Enhanced_Audio_Generation_Error',
         sentrySeverity: 'error',
@@ -225,16 +227,33 @@ export const enhancedAudioService = {
   // Fetches enhanced audio tracks for a single article
   async getArticleEnhancedTracks(articleId: number): Promise<EnhancedAudioTrack[]> {
     try {
-      // TODO: Ensure articlesService actually exports getArticleAudioData
-      // Casting the service type for now to proceed
-      const typedArticlesService = articlesService as typeof articlesService & {
-        getArticleAudioData: (id: number) => Promise<ArticleAudioData | null>;
-      };
-      const audioData = await typedArticlesService.getArticleAudioData(articleId);
+      // Get article details with sentences and words
+      const article = await articlesService.getArticleById(articleId);
 
-      if (!audioData) {
-        return [];
-      }
+      // Transform article data into audio data structure
+      const audioData: ArticleAudioData = {
+        articleId,
+        title: article.title,
+        sentences: (article.article_sentences || [])
+          .filter(sentence => sentence.audio_url)
+          .sort((a, b) => a.position - b.position)
+          .map(sentence => ({
+            id: sentence.id,
+            position: sentence.position,
+            audio_url: sentence.audio_url,
+          })),
+        studyWords: (article.article_sentences || []).flatMap(sentence =>
+          (sentence.sentence_words || [])
+            .filter(word => word.english_audio_url || word.arabic_audio_url)
+            .map(word => ({
+              id: word.id,
+              word: word.word_form,
+              audio_url_english: word.english_audio_url,
+              audio_url_arabic: word.arabic_audio_url,
+              sentenceId: sentence.id,
+            }))
+        ),
+      };
 
       const tracks: EnhancedAudioTrack[] = [];
       const sortedSentences = [...audioData.sentences].sort((a, b) => a.position - b.position);
@@ -254,6 +273,7 @@ export const enhancedAudioService = {
               title: generateTitle('study_word_english', word.word, word.id),
               wordId: word.id,
               sentenceId: sentence.id,
+              sentencePosition: sentence.position,
             });
           }
           if (word.audio_url_arabic) {
@@ -265,6 +285,7 @@ export const enhancedAudioService = {
               title: generateTitle('study_word_arabic', word.word, word.id),
               wordId: word.id,
               sentenceId: sentence.id,
+              sentencePosition: sentence.position,
             });
           }
         });
@@ -284,8 +305,7 @@ export const enhancedAudioService = {
 
       return tracks;
     } catch (error) {
-      // Correct handleError signature: error object and optional context string
-      handleError(error as Error, {
+      handleError(error instanceof Error ? error : new Error(String(error)), {
         toastMessage: 'Error fetching enhanced audio tracks for article',
         analyticsEventName: 'Enhanced_Audio_Playlist_Error',
         sentrySeverity: 'error',

@@ -12,13 +12,17 @@ You mission is to search for clear issues that needs to be fixed. You are not su
 ### What to fix
 - Remove console.log
 - Remove debug code
+- Evaluate if code can be consolidated
 - Remove code obviously not used
 - Move in-line styles to StyleSheet
 - Make sure we never use color literals
 - Remove obvious over engineering
-- Make sure we use types from /types directory
-- Make sure we use modern ans safe TypeScript
+- Remove unecessary comments
+- Make sure we check for null when necessary
+- Make sure we use modern and safe TypeScript
 - Make sure we have no code intended for webusage
+- Make and low effort but hight impact changes if they are safe
+- Remove accessablity
 - Make sure we do not use `any`
 - Use layout constraint from [layout.ts](mdc:constants/layout.ts)
 - Make sure we use colors from [Colors.ts](mdc:constants/Colors.ts)

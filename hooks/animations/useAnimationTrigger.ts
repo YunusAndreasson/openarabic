@@ -43,7 +43,7 @@ export const useAnimationTrigger = (
   const isDataReadyRef = useRef(isDataReady);
   const isLayoutReadyRef = useRef(isLayoutReady);
   const isLoadingRef = useRef(isLoading);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const didStartAnimationsRef = useRef(false);
   const isMountedRef = useRef(true);
 

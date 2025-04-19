@@ -14,22 +14,21 @@ import { LAYOUT } from '../../constants/layout';
 import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
 
-// Using subset of properties from the VocabularyStats type for this component
+type StatCategory = 'total' | 'mastered' | 'learning' | 'due';
+
 interface VocabularyDashboardProps
   extends Pick<VocabularyStats, 'totalWords' | 'dueWords' | 'masteredWords' | 'learningWords'> {
-  /** Callback for when a stat item is pressed */
-  onStatPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
-  /** Stats related to streaks and difficulty */
+  onStatPress?: (category: StatCategory) => void;
 }
 
 interface StatItemProps {
   value: number;
   label: string;
-  icon: string;
+  icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   bgColor: string;
-  category: 'total' | 'mastered' | 'learning' | 'due';
-  onPress?: (category: 'total' | 'mastered' | 'learning' | 'due') => void;
+  category: StatCategory;
+  onPress?: (category: StatCategory) => void;
 }
 
 // Separate StatItem component for better reusability and memoization
@@ -56,12 +55,9 @@ const StatItem = memo(
           onPressOut={handlePressOut}
           activeOpacity={0.7}
           disabled={!onPress}
-          accessibilityLabel={`${label}: ${value} words`}
-          accessibilityRole="button"
-          accessibilityHint={`Shows details about ${label.toLowerCase()} words`}
         >
           <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
-            <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={24} color={iconColor} />
+            <Ionicons name={icon} size={24} color={iconColor} />
           </View>
           <ThemedText type="body" weight="600" style={styles.statValue}>
             {value}
@@ -88,39 +84,39 @@ export const VocabularyDashboard = memo(
     const colors = useColors();
 
     // Prepare stat items data
-    const statItems = useMemo(
+    const statItems: StatItemProps[] = useMemo(
       () => [
         {
           value: totalWords,
           label: 'Total',
-          icon: 'book',
+          icon: 'book-outline',
           iconColor: colors.text,
           bgColor: withOpacity(colors.text, 0.19),
-          category: 'total' as const,
+          category: 'total',
         },
         {
           value: masteredWords,
           label: 'Mastered',
-          icon: 'checkmark-circle',
+          icon: 'checkmark-circle-outline',
           iconColor: colors.success,
           bgColor: withOpacity(colors.success, 0.19),
-          category: 'mastered' as const,
+          category: 'mastered',
         },
         {
           value: learningWords,
           label: 'Learning',
-          icon: 'school',
+          icon: 'school-outline',
           iconColor: colors.info,
           bgColor: withOpacity(colors.info, 0.19),
-          category: 'learning' as const,
+          category: 'learning',
         },
         {
           value: dueWords,
           label: 'Review',
-          icon: 'alarm',
+          icon: 'alarm-outline',
           iconColor: colors.warning,
           bgColor: withOpacity(colors.warning, 0.19),
-          category: 'due' as const,
+          category: 'due',
         },
       ],
       [totalWords, masteredWords, learningWords, dueWords, colors]
@@ -165,11 +161,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     paddingHorizontal: LAYOUT.SPACING.TINY,
-  },
-  statLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    fontWeight: '500',
-    opacity: LAYOUT.OPACITY.DIMMED,
   },
   statValue: {
     marginBottom: LAYOUT.SPACING.SMALL,

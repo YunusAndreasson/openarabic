@@ -25,7 +25,7 @@ function ThemedViewComponent({
   safeAreaEdges,
   scrollViewProps,
   ...otherProps
-}: ThemedViewProps) {
+}: ThemedViewProps): JSX.Element {
   const colors = useColors();
 
   // Apply theme-based styling

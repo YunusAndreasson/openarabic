@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-unused-styles */
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -46,24 +47,33 @@ import { lightFeedback } from '@/utils/haptics';
 
 import type { Article } from '../../types/articles.types';
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  contentContainer: {
-    flex: 1,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingTop: 0, // Remove the top padding since we're centering
-  },
-});
+// Move styles outside component but keep it as a function
+const createStyles = (colors: ReturnType<typeof useColors>) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: colors.background,
+      flex: 1,
+    },
+    contentContainer: {
+      backgroundColor: colors.background,
+      flex: 1,
+    },
+    loadingContainer: {
+      alignItems: 'center',
+      flex: 1,
+      justifyContent: 'center',
+      paddingTop: 0,
+    },
+    transparentBackground: {
+      backgroundColor: 'transparent',
+    },
+  });
 
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
+  // Create styles with current colors
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
@@ -683,29 +693,34 @@ export default function ArticleScreen(): JSX.Element {
 
   // Render sentence item with optimized settings
   const renderSentenceItem = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
-    ({ item: sentence }: { item: Tables<'article_sentences'> }) => {
-      const words = getWordsForSentence(sentence.id);
+    (props: { item: Tables<'article_sentences'> }) => {
+      const words = getWordsForSentence(props.item.id);
       return (
         <ArticleSentence
-          key={sentence.id}
+          key={props.item.id}
           sentence={{
-            id: sentence.id,
-            english: sentence.english,
-            audio_url: sentence.audio_url || undefined,
+            id: props.item.id,
+            english: props.item.english,
+            arabic: props.item.arabic,
+            audio_url: props.item.audio_url,
+            arabic_audio_url: null,
           }}
           words={words}
           renderWord={renderWord}
-          settings={articleUIProps.settings}
+          settings={{
+            ...settings,
+            showTransliteration: false,
+            showWordType: false,
+          }}
           colors={articleUIProps.colors}
-          containerStyle={{ backgroundColor: colors.transparent }}
+          containerStyle={styles.transparentBackground}
           currentPlayingSentenceId={articleUIProps.currentSentenceIndex}
           currentPlayingWordId={articleUIProps.currentWordId}
           currentPlayingPosition={articleUIProps.currentPosition}
         />
       );
     },
-    [getWordsForSentence, renderWord, articleUIProps, colors]
+    [getWordsForSentence, renderWord, articleUIProps, settings, styles]
   );
 
   // Render article card with memoization
@@ -981,7 +996,7 @@ export default function ArticleScreen(): JSX.Element {
       />
 
       {/* Article content */}
-      <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
+      <View style={styles.contentContainer}>
         {sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}

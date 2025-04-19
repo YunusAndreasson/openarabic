@@ -1,5 +1,9 @@
 import type { StudyWord } from '../types/vocabulary.types';
 
+// Move to constants if this is used elsewhere in the codebase
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+type DayName = (typeof DAY_NAMES)[number];
+
 export interface WeeklyProgressData {
   date: string;
   count: number;
@@ -26,9 +30,7 @@ export function calculateWeeklyProgressData(
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Create a map of dates and their corresponding day names
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const dateMap = new Map<string, { date: string; count: number; words: Set<number> }>();
+  const dateMap = new Map<string, { date: DayName; count: number; words: Set<number> }>();
 
   // Initialize the last 7 days
   for (let i = 6; i >= 0; i--) {
@@ -37,7 +39,7 @@ export function calculateWeeklyProgressData(
     // Get YYYY-MM-DD part of the ISO string
     const dateString = date.toISOString().slice(0, 10);
     dateMap.set(dateString, {
-      date: dayNames[date.getDay()] as string,
+      date: DAY_NAMES[date.getDay()] as DayName,
       count: 0,
       words: new Set(),
     });
@@ -50,27 +52,26 @@ export function calculateWeeklyProgressData(
 
   // First, get the count of words learned before the 7-day period
   const wordsLearnedBefore = studyWords.filter(word => {
-    if (!word?.fsrs_last_review) return false;
-    const reviewDate = new Date(word.fsrs_last_review);
+    const lastReview = word?.fsrs_last_review;
+    if (!lastReview) return false;
+    const reviewDate = new Date(lastReview);
     return reviewDate < sevenDaysAgo;
   }).length;
 
   // Process review logs to track daily progress
-  if (reviewLogs?.length > 0) {
-    reviewLogs.forEach(log => {
-      const reviewDate = new Date(log.reviewed_at);
-      reviewDate.setHours(0, 0, 0, 0);
+  reviewLogs.forEach(log => {
+    const reviewDate = new Date(log.reviewed_at);
+    reviewDate.setHours(0, 0, 0, 0);
 
-      if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
-        const dateString = reviewDate.toISOString().slice(0, 10);
-        const dateData = dateMap.get(dateString);
-        if (dateData) {
-          dateData.count++;
-          dateData.words.add(log.root_id);
-        }
+    if (reviewDate >= sevenDaysAgo && reviewDate <= today) {
+      const dateString = reviewDate.toISOString().slice(0, 10);
+      const dateData = dateMap.get(dateString);
+      if (dateData) {
+        dateData.count++;
+        dateData.words.add(log.root_id);
       }
-    });
-  }
+    }
+  });
 
   // Convert to array and calculate cumulative words learned
   let cumulativeWords = wordsLearnedBefore;

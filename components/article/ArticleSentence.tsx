@@ -21,29 +21,29 @@ import { ArabicWord } from './ArabicWord';
 interface ArticleSentenceProps {
   sentence: {
     id: string | number;
-    english?: string;
-    arabic?: string;
-    audio_url?: string | null;
-    arabic_audio_url?: string | null;
+    english: string;
+    arabic: string;
+    audio_url: string | null;
+    arabic_audio_url: string | null;
   };
   words: SentenceWord[];
   renderWord?: (
     word: SentenceWord,
-    isAudioHighlighted?: boolean,
-    wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>
+    isAudioHighlighted: boolean,
+    wordRef: React.RefObject<ComponentRef<typeof TouchableOpacity>>
   ) => React.ReactNode;
   onWordPress?: (word: SentenceWord) => void;
   settings: {
     showEnglish: boolean;
     fontScale: number;
-    showTransliteration?: boolean;
-    showWordType?: boolean;
+    showTransliteration: boolean;
+    showWordType: boolean;
   };
   colors: ThemeColors;
   containerStyle?: StyleProp<ViewStyle>;
-  currentPlayingSentenceId?: number | null;
-  currentPlayingWordId?: number | null;
-  currentPlayingPosition?: number | null;
+  currentPlayingSentenceId: number | null;
+  currentPlayingWordId: number | null;
+  currentPlayingPosition: number | null;
 }
 
 function ArticleSentenceComponent({
@@ -85,22 +85,20 @@ function ArticleSentenceComponent({
     opacity: highlightOpacity.value,
   }));
 
-  previousWordIdRef.current = currentPlayingWordId || null;
+  previousWordIdRef.current = currentPlayingWordId;
 
-  // Pre-calculate text styles since font size never changes
   const englishTextStyle = useMemo(
     () => [
       styles.englishText,
       {
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * (settings.fontScale || 1),
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
         color: colors.text,
-        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * (settings.fontScale || 1),
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
       },
     ],
     [colors.text, settings.fontScale]
   );
 
-  // Memoize sentence background style to prevent recalculation
   const backgroundStyle = useMemo(
     () => [
       styles.sentenceBackground,
@@ -113,24 +111,17 @@ function ArticleSentenceComponent({
     [colors.tint, animatedHighlightStyle, isPlaying]
   );
 
-  // Memoize word rendering to prevent unnecessary re-renders
   const renderedWords = useMemo(() => {
-    if (renderWord) {
-      return words.map((word, index) => {
-        const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-        const isWordHighlighted =
-          currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
-        return renderWord(word, isWordHighlighted, wordRefs.current[index]);
-      });
-    }
-
-    return words.map((word, index) => {
+    const renderWordWithProps = (word: SentenceWord, index: number, isWordHighlighted: boolean) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
-      const isWordHighlighted =
-        currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
-      return (
+      if (!wordRefs.current[index]) {
+        wordRefs.current[index] = createRef<ComponentRef<typeof TouchableOpacity>>();
+      }
+      return renderWord ? (
+        renderWord(word, isWordHighlighted, wordRefs.current[index])
+      ) : (
         <ArabicWord
-          key={`word-${word.id}-${word.position || sentence.id}`}
+          key={`word-${wordId}-${word.position || sentence.id}`}
           word={word}
           onPress={word => onWordPress?.(word)}
           settings={settings}
@@ -139,6 +130,13 @@ function ArticleSentenceComponent({
           position={index}
         />
       );
+    };
+
+    return words.map((word, index) => {
+      const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
+      const isWordHighlighted =
+        currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
+      return renderWordWithProps(word, index, isWordHighlighted);
     });
   }, [
     renderWord,
@@ -154,12 +152,10 @@ function ArticleSentenceComponent({
   return (
     <View style={[styles.container, containerStyle]}>
       <Animated.View style={backgroundStyle} />
-
       <View style={styles.wordsContainer}>{renderedWords}</View>
-
-      {settings?.showEnglish && sentence.english ? (
+      {settings.showEnglish && sentence.english && (
         <Animated.Text style={englishTextStyle}>{sentence.english}</Animated.Text>
-      ) : null}
+      )}
     </View>
   );
 }
@@ -190,9 +186,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row-reverse',
     flexWrap: 'wrap',
-    gap: 4,
+    gap: LAYOUT.SPACING.TINY,
     justifyContent: 'flex-start',
-    minHeight: 40,
+    minHeight: LAYOUT.SPACING.XLARGE * 2,
     paddingRight: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.SMALL,
     width: '100%',
@@ -200,18 +196,13 @@ const styles = StyleSheet.create({
 });
 
 export const ArticleSentence = memo(ArticleSentenceComponent, (prevProps, nextProps) => {
-  // Only re-render on changes that actually affect rendering
-  return (
-    // Check playing state
-    prevProps.currentPlayingSentenceId === nextProps.currentPlayingSentenceId &&
-    prevProps.currentPlayingWordId === nextProps.currentPlayingWordId &&
-    prevProps.currentPlayingPosition === nextProps.currentPlayingPosition &&
-    // Check sentence identity
-    prevProps.sentence.id === nextProps.sentence.id &&
-    // Skip font scale check since it never changes
-    prevProps.settings.showEnglish === nextProps.settings.showEnglish &&
-    prevProps.settings.showTransliteration === nextProps.settings.showTransliteration &&
-    // If words array changed - we need to re-render
-    prevProps.words === nextProps.words
-  );
+  if (prevProps.currentPlayingSentenceId !== nextProps.currentPlayingSentenceId) return false;
+  if (prevProps.currentPlayingWordId !== nextProps.currentPlayingWordId) return false;
+  if (prevProps.currentPlayingPosition !== nextProps.currentPlayingPosition) return false;
+  if (prevProps.sentence.id !== nextProps.sentence.id) return false;
+  if (prevProps.settings.showEnglish !== nextProps.settings.showEnglish) return false;
+  if (prevProps.settings.showTransliteration !== nextProps.settings.showTransliteration)
+    return false;
+  if (prevProps.words !== nextProps.words) return false;
+  return true;
 });

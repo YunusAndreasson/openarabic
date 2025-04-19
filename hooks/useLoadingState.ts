@@ -1,30 +1,40 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
 
-/**
- * Hook for managing loading states with simplified control.
- *
- * @param initialLoadingState - Initial loading state (default: true)
- * @returns Object with loading state and stable functions to control it
- */
-export const useLoadingState = (
-  initialLoadingState = true
-): {
+type LoadingState = {
   isLoading: boolean;
   dataLoaded: boolean;
   startLoading: () => void;
   stopLoading: () => void;
   setDataLoaded: (loaded: boolean) => void;
   reset: () => void;
-} => {
+};
+
+type LoadingCallbacks = {
+  startLoading: () => void;
+  stopLoading: () => void;
+  setDataLoaded: (loaded: boolean) => void;
+  reset: () => void;
+};
+
+const noop = () => {};
+const noopSetLoaded = (_loaded: boolean) => {};
+
+/**
+ * Hook for managing loading states with simplified control.
+ *
+ * @param initialLoadingState - Initial loading state (default: true)
+ * @returns Object with loading state and stable functions to control it
+ */
+export const useLoadingState = (initialLoadingState = true): LoadingState => {
   const [isLoading, setIsLoading] = useState(initialLoadingState);
   const [dataLoaded, setDataLoadedState] = useState(false);
 
   // Use refs to hold stable callbacks to avoid including them in dependencies
-  const callbacksRef = useRef({
-    startLoading: () => {},
-    stopLoading: () => {},
-    setDataLoaded: (_loaded: boolean) => {},
-    reset: () => {},
+  const callbacksRef = useRef<LoadingCallbacks>({
+    startLoading: noop,
+    stopLoading: noop,
+    setDataLoaded: noopSetLoaded,
+    reset: noop,
   });
 
   // Define the actual logic, these will be assigned to the ref
