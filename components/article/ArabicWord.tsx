@@ -197,15 +197,15 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
       styles.wordContainer,
       {
         backgroundColor: isAudioHighlighted ? colors.primary + '30' : 'transparent',
-        // Always add a border bottom for selected words, making it more visible
+        // Add a straight underline for selected words with dimmed opacity
         ...(isSelected && {
-          borderBottomWidth: 2,
-          borderBottomColor: colors.tint,
-          paddingBottom: 2,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.tint + (isDarkMode ? '30' : '20'),
+          paddingBottom: 0,
         }),
       },
     ],
-    [isAudioHighlighted, isSelected, colors.primary, colors.tint]
+    [isAudioHighlighted, isSelected, colors.primary, colors.tint, isDarkMode]
   );
 
   return (
