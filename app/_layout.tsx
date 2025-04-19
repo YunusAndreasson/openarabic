@@ -41,44 +41,6 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
 
-// Suppress Reanimated warning logs in development
-if (__DEV__) {
-  const originalWarn = console.warn;
-  console.warn = (...args) => {
-    // Filter out specific Reanimated warning messages
-    const warningString = typeof args[0] === 'string' ? args[0] : args.join(' ');
-    if (
-      warningString.includes('[Reanimated]') &&
-      (warningString.includes('Reading from `value`') || warningString.includes('strict mode'))
-    ) {
-      return;
-    }
-
-    // For max update depth errors, add special logging
-    if (warningString.includes('Maximum update depth exceeded')) {
-      // Get the component stack from the error
-      const stack = new Error().stack;
-      console.error('🔄 MAXIMUM UPDATE DEPTH ERROR DETECTED');
-      console.error('This usually happens when a component has an infinite state update loop.');
-      console.error('Check the following components and their hooks:');
-      console.error(stack);
-      return; // Don't show the standard warning
-    }
-
-    originalWarn(...args);
-  };
-
-  // Also suppress Supabase GoTrueClient logs
-  const originalLog = console.log;
-  console.log = (...args) => {
-    const logString = typeof args[0] === 'string' ? args[0] : args.join(' ');
-    if (logString.includes('GoTrueClient')) {
-      return;
-    }
-    originalLog(...args);
-  };
-}
-
 // Prevent splash screen from auto-hiding
 try {
   SplashScreen.preventAutoHideAsync();

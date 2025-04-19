@@ -121,68 +121,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     };
   }, []);
 
-  // Helper function to update word in database
-  const updateWordInDatabase = useCallback(
-    async (word: StudyWord, success: boolean) => {
-      if (!userId) {
-        throw new Error('Cannot update word: userId is missing');
-      }
-
-      const card = convertToFSRSCard(word);
-      const now = new Date();
-
-      // Determine appropriate rating based on card state and success
-      let rating: Rating;
-      if (
-        card.state === State.New ||
-        card.state === State.Learning ||
-        card.state === State.Relearning
-      ) {
-        rating = success ? Rating.Hard : Rating.Again;
-      } else {
-        rating = success ? Rating.Good : Rating.Again;
-      }
-
-      // Get next card state from FSRS
-      const result = fsrsInstance.next(card, now, rating);
-      const { card: newCard } = result;
-      const lastReview = now.toISOString();
-
-      // Prepare update data from FSRS calculation result
-      const wordUpdateData = {
-        fsrs_due: newCard.due.toISOString(),
-        fsrs_stability: newCard.stability,
-        fsrs_difficulty: newCard.difficulty,
-        fsrs_elapsed_days: newCard.elapsed_days,
-        fsrs_scheduled_days: newCard.scheduled_days,
-        fsrs_reps: newCard.reps,
-        fsrs_lapses: newCard.lapses,
-        fsrs_state: newCard.state,
-        fsrs_last_review: lastReview,
-      };
-
-      // Update the word with FSRS data
-      await studyWordsFSRSService.updateFSRSWord(userId, word.root_id, wordUpdateData);
-
-      // Record the review
-      await studyWordsFSRSService.recordFSRSReview(userId, word.root_id, rating);
-
-      // Update streak counters
-      await studyWordsService.updateWordReview(word.root_id, {
-        success_streak: success ? (word.success_streak || 0) + 1 : 0,
-        failure_streak: !success ? (word.failure_streak || 0) + 1 : 0,
-        interval_days: word.interval_days,
-        ease_factor: word.ease_factor,
-        next_review_at: word.next_review_at,
-        review_count: word.review_count,
-        lapses: word.lapses,
-        stability: word.stability,
-        previous_interval: word.previous_interval,
-      });
-    },
-    [convertToFSRSCard, fsrsInstance, userId]
-  );
-
   // Update the word in the database based on swipe direction
   const updateWord = useCallback(
     async (rootId: number, success: boolean) => {

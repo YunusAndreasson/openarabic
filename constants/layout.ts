@@ -261,12 +261,12 @@ export const getArabicTextStyle = (
   return {
     fontFamily: 'NotoNaskhArabic',
     fontSize,
-    lineHeight: Math.round(fontSize * 2.0), // Further reduced line height multiplier
+    lineHeight: Math.round(fontSize * 1.7),
     writingDirection: 'rtl',
     textAlign: 'right',
     includeFontPadding: true,
     paddingVertical: LAYOUT.SPACING.TINY,
-    paddingHorizontal: 0, // Remove horizontal padding to maintain natural spacing
+    paddingHorizontal: 0,
     textAlignVertical: 'center',
     ...additionalStyles,
   };

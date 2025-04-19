@@ -7,18 +7,13 @@ import type { SharedValue } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useFSRS } from '@/hooks/useFSRS';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
-// Add debug tag for filtering logs
-const DEBUG_TAG = '[AudioDebug]';
-
 // Create a standalone audio player outside of React component lifecycle
-// This prevents cleanup due to re-renders
 const standaloneAudioPlayer: {
   sound: Audio.Sound | null;
   lastUrl: string | null;
@@ -32,20 +27,15 @@ const standaloneAudioPlayer: {
 
   playAudio: async (url: string) => {
     try {
-      // Don't replay the same audio in quick succession
       if (standaloneAudioPlayer.lastUrl === url && standaloneAudioPlayer.isPlaying) {
-        console.log(`${DEBUG_TAG} Already playing this audio URL, skipping`);
         return;
       }
 
-      // Clean up previous sound
       await standaloneAudioPlayer.cleanup();
 
-      console.log(`${DEBUG_TAG} Standalone player loading: ${url}`);
       standaloneAudioPlayer.lastUrl = url;
       standaloneAudioPlayer.isPlaying = true;
 
-      // Configure audio session
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
@@ -55,32 +45,26 @@ const standaloneAudioPlayer: {
         playThroughEarpieceAndroid: false,
       });
 
-      // Load and play
       const { sound } = await Audio.Sound.createAsync(
         { uri: url },
         { shouldPlay: true },
         status => {
           if (!status.isLoaded) return;
-
-          // Handle completion
           if (status.didJustFinish) {
-            console.log(`${DEBUG_TAG} Standalone player: playback finished`);
             standaloneAudioPlayer.isPlaying = false;
           }
         }
       );
 
       standaloneAudioPlayer.sound = sound;
-      console.log(`${DEBUG_TAG} Standalone player: playback started`);
 
-      // Safety timeout to release resources after playback
       setTimeout(() => {
         if (standaloneAudioPlayer.lastUrl === url) {
           standaloneAudioPlayer.isPlaying = false;
         }
       }, 3000);
     } catch (error) {
-      console.error(`${DEBUG_TAG} Standalone player error:`, error);
+      handleError(error instanceof Error ? error : String(error));
       standaloneAudioPlayer.isPlaying = false;
     }
   },
@@ -91,7 +75,7 @@ const standaloneAudioPlayer: {
         await standaloneAudioPlayer.sound.stopAsync().catch(() => {});
         await standaloneAudioPlayer.sound.unloadAsync().catch(() => {});
       } catch (e) {
-        // Ignore errors
+        handleError(e instanceof Error ? e : new Error(String(e)));
       }
       standaloneAudioPlayer.sound = null;
     }
@@ -134,7 +118,6 @@ export function useReview({
 
   // Animation and audio state
   const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
-  const { loadAndPlayAudio, stopPlayback } = useAudioPlayer();
   const nextWordAudioRef = useRef<{ url: string; loaded: boolean; sound?: Audio.Sound } | null>(
     null
   );
@@ -161,9 +144,6 @@ export function useReview({
     if (completionTriggeredRef.current) return;
     completionTriggeredRef.current = true;
 
-    // Stop standard audio player
-    stopPlayback();
-    // Also stop standalone player
     standaloneAudioPlayer.cleanup();
 
     maxProgressRef.current = 100;
@@ -178,10 +158,10 @@ export function useReview({
     completionTransitionRef.current = setTimeout(() => {
       if (completionTriggeredRef.current) {
         setIsTransitioningToCompletion(false);
-        stopPlayback();
+        standaloneAudioPlayer.cleanup();
       }
     }, 350);
-  }, [fadeOut, stopPlayback]);
+  }, [fadeOut]);
 
   // Initialize FSRS hook
   const { currentWord, wordQueue, isLoading, isComplete, progress, updateWord, invalidateQueries } =
@@ -192,10 +172,10 @@ export function useReview({
 
   // Calculate dynamic font size for Arabic words based on window width
   const dynamicFontConfig = {
-    minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6, // For very small screens
-    maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3, // Fixed font size for most words
-    minScreenWidth: 320, // iPhone SE width
-    maxScreenWidth: 500, // Tablet width threshold
+    minFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 1.6,
+    maxFontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE * 3.3,
+    minScreenWidth: 320,
+    maxScreenWidth: 500,
   };
 
   // Use our custom hook for word sizing with simplified approach
@@ -205,21 +185,15 @@ export function useReview({
   const preloadNextAudio = useCallback(async (audioUrl: string) => {
     if (!audioUrl) return;
 
-    console.log(`${DEBUG_TAG} Preloading audio: ${audioUrl}`);
     try {
       if (nextWordAudioRef.current?.url === audioUrl && nextWordAudioRef.current.loaded) {
-        console.log(`${DEBUG_TAG} Audio already preloaded: ${audioUrl}`);
-        return; // Already loaded this audio
+        return;
       }
 
-      // Clean up previous preloaded audio if it exists
       if (nextWordAudioRef.current?.sound) {
-        console.log(`${DEBUG_TAG} Unloading previous preloaded audio`);
         await nextWordAudioRef.current.sound.unloadAsync().catch(() => {});
       }
 
-      // Create and load the sound but don't play it
-      console.log(`${DEBUG_TAG} Creating preloaded sound`);
       const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false });
 
       nextWordAudioRef.current = {
@@ -227,11 +201,7 @@ export function useReview({
         loaded: true,
         sound,
       };
-      console.log(`${DEBUG_TAG} Successfully preloaded audio: ${audioUrl}`);
     } catch (error) {
-      console.error(
-        `${DEBUG_TAG} Error preloading audio: ${error instanceof Error ? error.message : String(error)}`
-      );
       handleError(error instanceof Error ? error : String(error));
       nextWordAudioRef.current = {
         url: audioUrl,
@@ -255,7 +225,7 @@ export function useReview({
         clearTimeout(timer);
       };
     }
-    return () => {}; // Empty cleanup function for when showInitialLoading is false
+    return () => {};
   }, [showInitialLoading]);
 
   // Handle completion state
@@ -265,10 +235,9 @@ export function useReview({
     }
 
     if (isComplete) {
-      stopPlayback();
       standaloneAudioPlayer.cleanup();
     }
-  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, stopPlayback]);
+  }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition]);
 
   // Update progress tracking
   useEffect(() => {
@@ -290,7 +259,6 @@ export function useReview({
   // Update current sentence and handle audio
   useEffect(() => {
     if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
-      console.log(`${DEBUG_TAG} Skipping audio playback due to completion state`);
       return;
     }
 
@@ -299,52 +267,25 @@ export function useReview({
       const wordForm = currentWord.root.letters;
       const audioUrl = currentWord.root.audio_url;
 
-      console.log(
-        `${DEBUG_TAG} Processing word: ID=${wordId}, word="${wordForm}", length=${wordForm.length} chars`
-      );
-      console.log(`${DEBUG_TAG} Audio URL from root: ${audioUrl || 'None'}`);
-
-      // Check if we've already processed this word to prevent repeated processing
       if (lastProcessedWordIdRef.current === wordId && currentSentence.wordForm === wordForm) {
-        console.log(`${DEBUG_TAG} Skipping duplicate processing of word ID=${wordId}`);
         return;
       }
 
-      // Update tracking of processed word
       lastProcessedWordIdRef.current = wordId;
       setCurrentSentence({ wordForm });
 
-      // Use preloaded audio if available, otherwise load and play
       if (audioUrl) {
-        console.log(`${DEBUG_TAG} Attempting to play audio URL: ${audioUrl}`);
-
-        // Use the standalone player instead of the React hook-based player
-        standaloneAudioPlayer.playAudio(audioUrl).catch(error => {
-          console.error(`${DEBUG_TAG} Error playing audio: ${error}`);
-        });
-      } else {
-        console.log(`${DEBUG_TAG} No audio URL available for word: ${wordForm}`);
+        standaloneAudioPlayer.playAudio(audioUrl).catch(handleError);
       }
 
-      // Preload next word's audio after a delay
       setTimeout(() => {
         const nextWord = wordQueue[0];
         if (nextWord?.root?.audio_url) {
-          console.log(`${DEBUG_TAG} Preloading next word audio: ${nextWord.root.audio_url}`);
           preloadNextAudio(nextWord.root.audio_url);
         }
       }, 300);
-    } else if (!currentWord?.root) {
-      console.log(`${DEBUG_TAG} No current word available`);
     }
-  }, [
-    currentWord?.root_id,
-    isComplete,
-    isTransitioningToCompletion,
-    loadAndPlayAudio,
-    wordQueue,
-    preloadNextAudio,
-  ]);
+  }, [currentWord?.root_id, isComplete, isTransitioningToCompletion, wordQueue, preloadNextAudio]);
 
   // Handle swipe left (don't know)
   const handleSwipeLeft = useCallback(() => {
@@ -357,12 +298,8 @@ export function useReview({
       return;
     }
 
-    console.log(`${DEBUG_TAG} Handle swipe left - stopping playback for word transition`);
     isUpdatingWordRef.current = true;
-    // Add a small delay before stopping playback to allow very short audio to complete
     setTimeout(() => {
-      stopPlayback();
-      // Also stop standalone player
       standaloneAudioPlayer.cleanup();
       fadeOut();
 
@@ -375,23 +312,19 @@ export function useReview({
           setShowMeaningOverlay(false);
 
           if (currentWord?.root_id) {
-            console.log(`${DEBUG_TAG} Updating word after swipe left, ID=${currentWord.root_id}`);
             updateWord(currentWord.root_id, false)
               .then(() => {
                 if (!isUpdatingWordRef.current) return;
                 setTimeout(() => {
-                  console.log(`${DEBUG_TAG} Fading in after swipe left`);
                   fadeIn();
                 }, 150);
               })
               .catch(error => {
-                console.error(`${DEBUG_TAG} Error updating word:`, error);
+                handleError(error);
                 if (!isUpdatingWordRef.current) return;
-                console.log(`${DEBUG_TAG} Fading in after swipe left error`);
                 fadeIn();
               })
               .finally(() => {
-                console.log(`${DEBUG_TAG} Word update complete, resetting flags`);
                 isUpdatingWordRef.current = false;
                 if (meaningTimeoutRef.current) {
                   clearTimeout(meaningTimeoutRef.current);
@@ -399,22 +332,13 @@ export function useReview({
                 }
               });
           } else {
-            console.log(`${DEBUG_TAG} No word ID, just fading in after swipe left`);
             fadeIn();
             isUpdatingWordRef.current = false;
           }
         }, 2000);
       }, 300);
-    }, 200); // Short delay to allow audio to begin playing
-  }, [
-    currentWord,
-    updateWord,
-    isTransitioningToCompletion,
-    isComplete,
-    fadeIn,
-    fadeOut,
-    stopPlayback,
-  ]);
+    }, 200);
+  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
 
   // Handle swipe right (know)
   const handleSwipeRight = useCallback(() => {
@@ -427,115 +351,77 @@ export function useReview({
       return;
     }
 
-    console.log(`${DEBUG_TAG} Handle swipe right - stopping playback for word transition`);
     isUpdatingWordRef.current = true;
-    // Add a small delay before stopping playback to allow very short audio to complete
     setTimeout(() => {
-      stopPlayback();
-      // Also stop standalone player
       standaloneAudioPlayer.cleanup();
       fadeOut();
 
       setTimeout(() => {
         if (currentWord?.root_id) {
-          console.log(`${DEBUG_TAG} Updating word after swipe right, ID=${currentWord.root_id}`);
           updateWord(currentWord.root_id, true)
             .then(() => {
               if (!isUpdatingWordRef.current) return;
               setTimeout(() => {
-                console.log(`${DEBUG_TAG} Fading in after swipe right`);
                 fadeIn();
               }, 150);
             })
             .catch(error => {
-              console.error(`${DEBUG_TAG} Error updating word:`, error);
+              handleError(error);
               if (!isUpdatingWordRef.current) return;
-              console.log(`${DEBUG_TAG} Fading in after swipe right error`);
               fadeIn();
             })
             .finally(() => {
-              console.log(`${DEBUG_TAG} Word update complete, resetting flags`);
               isUpdatingWordRef.current = false;
             });
         } else {
-          console.log(`${DEBUG_TAG} No word ID, just fading in after swipe right`);
           fadeIn();
           isUpdatingWordRef.current = false;
         }
       }, 300);
-    }, 200); // Short delay to allow audio to begin playing
-  }, [
-    currentWord,
-    updateWord,
-    isTransitioningToCompletion,
-    isComplete,
-    fadeIn,
-    fadeOut,
-    stopPlayback,
-  ]);
+    }, 200);
+  }, [currentWord, updateWord, isTransitioningToCompletion, isComplete, fadeIn, fadeOut]);
 
   // Handle close
   const handleClose = useCallback(() => {
     const mounted = { current: true };
     lightFeedback();
 
-    // Stop both players
-    stopPlayback()
-      .then(() => {
-        standaloneAudioPlayer.cleanup();
+    standaloneAudioPlayer.cleanup();
 
-        if (!mounted.current) return;
+    if (!mounted.current) return;
 
-        invalidateQueries();
+    invalidateQueries();
 
-        if (user?.id) {
-          queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
-          queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
-          queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
-          queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
-          queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
-          queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
+    if (user?.id) {
+      queryClient.invalidateQueries({ queryKey: ['dueWords', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
+      queryClient.removeQueries({ queryKey: ['dueWords', user.id] });
+      queryClient.removeQueries({ queryKey: ['studyWords', user.id] });
+      queryClient.removeQueries({ queryKey: ['vocabularyStats'] });
+    }
+
+    setTimeout(() => {
+      if (mounted.current) {
+        if (onClose) {
+          onClose();
+        } else {
+          router.back();
         }
-
-        setTimeout(() => {
-          if (mounted.current) {
-            if (onClose) {
-              onClose();
-            } else {
-              router.back();
-            }
-          }
-        }, 100);
-      })
-      .catch(error => {
-        handleError(error);
-        if (mounted.current) {
-          if (onClose) {
-            onClose();
-          } else {
-            router.back();
-          }
-        }
-      });
+      }
+    }, 100);
 
     return () => {
       mounted.current = false;
     };
-  }, [invalidateQueries, user?.id, queryClient, stopPlayback, onClose]);
+  }, [invalidateQueries, user?.id, queryClient, onClose]);
 
   // Cleanup effect
   useEffect(() => {
     return () => {
-      console.log(`${DEBUG_TAG} Cleanup effect running`);
       completionTriggeredRef.current = true;
       fadeIn();
 
-      stopPlayback().catch(error => {
-        console.error(`${DEBUG_TAG} Error stopping playback during cleanup:`, error);
-        handleError(error);
-      });
-
-      // Clean up standalone player
       standaloneAudioPlayer.cleanup();
 
       if (meaningTimeoutRef.current) {
@@ -548,9 +434,7 @@ export function useReview({
         completionTransitionRef.current = null;
       }
 
-      // Clean up any preloaded audio
       if (nextWordAudioRef.current?.sound) {
-        console.log(`${DEBUG_TAG} Unloading preloaded sound during cleanup`);
         nextWordAudioRef.current.sound.unloadAsync().catch(() => {});
       }
 
@@ -559,7 +443,7 @@ export function useReview({
       nextWordAudioRef.current = null;
       lastProcessedWordIdRef.current = null;
     };
-  }, [fadeIn, stopPlayback]);
+  }, [fadeIn]);
 
   return {
     // States

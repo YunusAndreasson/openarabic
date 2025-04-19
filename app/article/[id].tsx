@@ -13,7 +13,6 @@ import type {
 import type { AnimatedStyleProp } from 'react-native-reanimated';
 import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-import AuthDebugger from '@/components/AuthDebugger';
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleNotFound } from '@/components/NotFound';
 import ThemedCard from '@/components/ThemedCard';
@@ -65,7 +64,7 @@ const styles = StyleSheet.create({
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-  const { user, refreshSession } = useAuth();
+  const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
   const isDarkMode = useIsDarkMode();
   const queryClient = useQueryClient();
@@ -130,28 +129,16 @@ export default function ArticleScreen(): JSX.Element {
 
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
-    const loadStudyWords = async () => {
-      // If user is not available, try to refresh the session
-      let currentUser = user;
-      if (!currentUser?.id) {
-        const session = await refreshSession();
-        currentUser = session?.user || null;
-      }
-
-      // User should be authenticated by this point
-      if (currentUser?.id) {
-        queryClient.fetchQuery({
-          queryKey: ['studyWords', currentUser.id],
-          queryFn: () => studyWordsFSRSService.getFSRSWords(currentUser.id),
-          staleTime: 300000, // Cache for 5 minutes
-          gcTime: 600000, // Keep in garbage collection for 10 minutes
-          retry: 3,
-        });
-      }
-    };
-
-    loadStudyWords();
-  }, [user, refreshSession, queryClient]);
+    if (user?.id) {
+      queryClient.fetchQuery({
+        queryKey: ['studyWords', user.id],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
+        staleTime: 300000, // Cache for 5 minutes
+        gcTime: 600000, // Keep in garbage collection for 10 minutes
+        retry: 3,
+      });
+    }
+  }, [user, queryClient]);
 
   // Extract article data hook before using any results
   const {
@@ -338,7 +325,7 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   // We override default word handling to use long-press for root toggles
-  const noopWordPress = useCallback((w: SentenceWord) => {}, []);
+  const noopWordPress = useCallback((_w: SentenceWord) => {}, []);
 
   // Use the article renderers hook
   const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
@@ -977,9 +964,6 @@ export default function ArticleScreen(): JSX.Element {
 
       {/* Article content */}
       <View style={[styles.contentContainer, { backgroundColor: colors.background }]}>
-        {/* Auth debugger - Remove this after fixing the issue */}
-        <AuthDebugger />
-
         {sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}
