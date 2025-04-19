@@ -27,10 +27,7 @@ interface WordListItemMemoProps {
 
 const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => (
   <View style={styles.wordItemContainer}>
-    <WordListItem
-      word={item}
-      onPress={() => {}} // Empty function since we don't want any action on press
-    />
+    <WordListItem word={item} />
   </View>
 ));
 

@@ -9,7 +9,7 @@ export interface WeeklyProgressData {
 interface ReviewLog {
   reviewed_at: string;
   grade: number;
-  sentence_word_id: number;
+  root_id: number;
 }
 
 /**
@@ -37,7 +37,7 @@ export function calculateWeeklyProgressData(
     // Get YYYY-MM-DD part of the ISO string
     const dateString = date.toISOString().slice(0, 10);
     dateMap.set(dateString, {
-      date: dayNames[date.getDay()],
+      date: dayNames[date.getDay()] as string,
       count: 0,
       words: new Set(),
     });
@@ -66,7 +66,7 @@ export function calculateWeeklyProgressData(
         const dateData = dateMap.get(dateString);
         if (dateData) {
           dateData.count++;
-          dateData.words.add(log.sentence_word_id);
+          dateData.words.add(log.root_id);
         }
       }
     });

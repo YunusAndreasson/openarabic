@@ -1,9 +1,8 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { format } from 'date-fns';
-import { router } from 'expo-router';
 import React, { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 import type { AnimatedStyle } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { State } from 'ts-fsrs';
@@ -16,20 +15,23 @@ import { ThemedText } from '../ThemedText';
 
 interface WordListItemProps {
   word: StudyWord;
-  onPress: () => void;
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemProps) {
+const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
+  const { animatedStyle } = usePressAnimation({
     type: 'card',
     scaleAmount: 0.97,
     opacityAmount: 0.95,
   });
 
-  // Get the actual word data
-  const { word_form, english, sentence } = word.sentence_word || {};
+  // Get the actual word data from root
+  const letters = word.root?.letters || '';
+  const meaning = word.root?.meaning || '';
+
+  // Capitalize first letter of meaning
+  const capitalizedMeaning = meaning ? meaning.charAt(0).toUpperCase() + meaning.slice(1) : '';
 
   // Calculate learning progress and status
   const wordStatus = useMemo(() => {
@@ -83,27 +85,8 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
     colors,
   ]);
 
-  // Handle navigation to the article
-  const handlePress = () => {
-    if (sentence?.article_id) {
-      router.push({
-        pathname: '/article/[id]',
-        params: {
-          id: sentence.article_id,
-          scrollToSentence: sentence.id,
-          highlightWord: word.sentence_word?.id,
-          wordPosition: word.sentence_word?.position,
-          scrollBehavior: 'smooth',
-          highlight: 'true',
-        },
-      });
-    } else {
-      onPress(); // Fallback to default behavior
-    }
-  };
-
   // Return null early if there's no word data
-  if (!word_form) return null;
+  if (!letters) return null;
 
   const containerStyle = [
     styles.container,
@@ -113,21 +96,9 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
     },
   ];
 
-  // Get learning state label
-
   return (
     <Animated.View style={animatedStyle as AnimatedStyle<ViewStyle>}>
-      <TouchableOpacity
-        style={[containerStyle, styles.cardContent]}
-        onPress={handlePress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.7}
-        accessible={true}
-        accessibilityLabel={`Word: ${word_form}. English: ${english}.`}
-        accessibilityHint="Tap to view in article context"
-        accessibilityRole="button"
-      >
+      <View style={[containerStyle, styles.cardContent]}>
         {/* Main content row */}
         <View style={styles.content}>
           {/* Left side with English text */}
@@ -138,7 +109,7 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
             numberOfLines={2}
             style={styles.englishText}
           >
-            {english || 'No translation available'}
+            {capitalizedMeaning || 'No translation available'}
           </ThemedText>
 
           {/* Arabic text on the right */}
@@ -151,7 +122,7 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
             colorName="arabicText"
             style={styles.arabicText}
           >
-            {word_form}
+            {letters}
           </ThemedText>
         </View>
 
@@ -191,7 +162,7 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
             </ThemedText>
           ) : null}
         </View>
-      </TouchableOpacity>
+      </View>
     </Animated.View>
   );
 });

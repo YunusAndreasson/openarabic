@@ -42,15 +42,13 @@ export function useWordList(
           (
             word
           ): word is StudyWord & {
-            sentence_word: NonNullable<typeof word.sentence_word> & {
-              word_form: NonNullable<typeof word.sentence_word.word_form>;
+            root: NonNullable<typeof word.root> & {
+              letters: string;
+              meaning: string | null;
             };
           } => {
             return Boolean(
-              word &&
-                word.sentence_word &&
-                word.sentence_word.word_form &&
-                typeof word.sentence_word.word_form === 'string'
+              word && word.root && word.root.letters && typeof word.root.letters === 'string'
             );
           }
         );
@@ -99,11 +97,8 @@ export function useWordList(
         (
           word
         ): word is NonNullable<typeof word> & {
-          sentence_word: NonNullable<StudyWord['sentence_word']> & { word_form: string };
-        } =>
-          Boolean(
-            word?.sentence_word?.word_form && typeof word.sentence_word.word_form === 'string'
-          )
+          root: NonNullable<StudyWord['root']> & { letters: string };
+        } => Boolean(word?.root?.letters && typeof word.root.letters === 'string')
       );
 
       let filteredWords = validStudyWords;

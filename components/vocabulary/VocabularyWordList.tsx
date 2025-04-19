@@ -34,8 +34,8 @@ const WordItem = memo(
     colors: ReturnType<typeof useColors>;
   }) => {
     const isDarkMode = useIsDarkMode();
-    const word = studyWord.sentence_word?.word_form || '...';
-    const english = studyWord.sentence_word?.english || '...';
+    const word = studyWord.root?.letters || '...';
+    const english = studyWord.root?.meaning || '...';
     const isLearning = studyWord.fsrs_state === 1 || studyWord.fsrs_state === 2;
     const isMastered = studyWord.fsrs_state === 3;
     const isOverdue = studyWord.fsrs_due ? new Date(studyWord.fsrs_due) < new Date() : false;
@@ -107,7 +107,7 @@ export function VocabularyWordList({
   );
 
   // Memoize key extractor for better performance
-  const keyExtractor = useCallback((item: StudyWord) => `${item.sentence_word_id}`, []);
+  const keyExtractor = useCallback((item: StudyWord) => `${item.root_id}`, []);
 
   // If there are no words, show a simple message
   if (words.length === 0) {
