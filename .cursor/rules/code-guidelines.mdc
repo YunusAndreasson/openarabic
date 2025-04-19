@@ -1,262 +1,51 @@
 ---
 description: 
 globs: 
-alwaysApply: false
----
----
-description: 
-globs: 
 alwaysApply: true
 ---
----
-description: Guidelines for good code
-globs: *.tsx, *.ts, *.js
----
+# React Native App Code Guidelines
 
-# Structure
+## Core Principles
+- Always investigate issues before proposing fixes
+- You are a senior React Native developer specialized in TypeScript
+- Focus on understanding root causes, not implementing workarounds
+- Reuse existing functionality before creating new functions
+- Place business logic in hooks, not components
+- The app is mobile-only, using Expo
+- Backend uses Supabase
+- Remove obsolete code when introducing new features
 
-## Core Directories
-- app/ (Expo Router app directory)
-  - _layout.tsx (root layout with theme and navigation setup)
-  - (tabs)/ (tab-based navigation)
-  - article/ (article-related screens)
-- components/ (reusable UI components)
-- constants/ (enums, constants, configuration)
-- hooks/ (reusable React hooks)
-- store/ (Redux store and slices)
-- services/ (API and external service integrations)
-- types/ (TypeScript type definitions)
-  - *.types.ts (type definitions for specific features)
-  - database.types.ts (database schema types)
+## Technical Stack
+- Navigation: Expo Router with bottom tabs (@react-navigation/bottom-tabs)
+- State Management: Redux Toolkit with Redux Persist
+- Data Fetching: TanStack Query (React Query)
+- UI Performance: @shopify/flash-list for optimized lists
+- Animation: react-native-reanimated and @shopify/react-native-skia
+- Analytics: Sentry for error tracking, Mixpanel for analytics
 
-## Assets and Config
-- assets/ (static assets like fonts and images)
-- .cursor/ (AI assistant rules and configuration)
+## Directory Structure
+- `app/(tabs)` - Main screen components
+- `hooks/` - Custom React hooks for shared logic
+- `components/` - Reusable UI components
+- `constants/` - App constants, theme values, and configuration
+- `lib/` - Utility functions and helpers
+- `services/` - External API communication (primarily Supabase)
+- `store/` - Redux state management
+- `types/` - TypeScript type definitions
+- `utils/` - helper functions
 
-# Stack
+## Best Practices
+- Use types from the `/types` directory for consistency
+- Leverage Expo features when they provide value
+- Keep components focused on presentation, hooks on logic
+- Only suggest performance optimizations with measurable impact
+- When adding new features, check if existing code can be consolidated
+- Follow existing patterns for state management with Redux
+- Use consistent naming conventions: PascalCase for components, camelCase for functions
+- Style using StyleSheet.create() for static styles, inline for dynamic
+- Handle errors with try/catch in services, Sentry for logging
+- Structure Supabase queries in services/ with typed responses using database.types.ts
 
-## Core Technologies
-- Expo (latest version)
-- React Native
-- TypeScript
-- Redux Toolkit for state management
-- Expo Router for navigation
-- React Query for data fetching
-
-## Development Guidelines
-- Use Expo features and APIs when available
-- Use modern React patterns (hooks, functional components)
-- Use Redux for global state, never Context API
-- Use TypeScript strictly - avoid any
-
-# General
-
-## Code Style
-- Keep code DRY (Don't Repeat Yourself)
-- Avoid unnecessary abstractions
-- Write simple, readable code
-- Minimize comments - write self-documenting code
-- Follow existing patterns in the codebase
-
-## Project Structure
-- Keep files in appropriate directories based on their purpose
-- Create new files in existing directories
-- Don't create new top-level directories without discussion
-- Use feature-based organization within directories
-- Use layout margins and paddings in constants/layout.ts
-
-# Code Quality and Linting
-
-## ESLint Configuration
-- All code must pass ESLint checks before committing
-- Key ESLint rules enforced:
-  - No explicit `any` types
-  - No non-null assertions
-  - Consistent type imports
-  - No unnecessary type assertions
-  - No console.log statements in production
-  - Proper React hooks usage
-  - No inline styles in React Native
-  - No color literals (use theme system)
-  - Proper import ordering
-  - Performance optimizations for React components
-  - Maximum cognitive complexity of 15
-  - No identical functions (DRY principle)
-
-## Code Formatting
-- Prettier is configured and enforced
-- 100 character line length limit
-- 2 spaces for indentation
-- Single quotes for strings
-- Semicolons required
-- Trailing commas in objects and arrays
-- No bracket spacing in JSX
-- Arrow function parentheses avoided when possible
-
-## TypeScript Best Practices
-- Strict TypeScript checks enabled
-- Type imports must be explicit
-- All exports must have explicit type declarations
-- No unnecessary type assertions
-- Use TypeScript path aliases (@/ prefix) for internal imports
-
-## Performance Guidelines
-- No unstable nested components
-- No constructed context values
-- No useless fragments
-- Proper handling of conditional rendering
-- Optimized regular expressions
-- No object type default props
-
-## Testing
-- Jest configuration is set up
-- All tests must follow Jest recommended practices
-- Mock external dependencies appropriately
-- Test files should be co-located with source files
-- Required test coverage:
-  - Minimum 80% coverage for business logic
-  - All Redux reducers must be tested
-  - All API service functions must have tests
-- Naming conventions:
-  - Test files: `*.test.ts` or `*.test.tsx`
-  - Test suites: describe('ComponentName' or 'functionName')
-  - Test cases: it('should do something specific')
-- Testing patterns:
-  - Use React Testing Library for component tests
-  - Group related tests in describe blocks
-  - Use beforeEach for common setup
-  - Clean up after each test
-  - Avoid testing implementation details
-
-## Import Organization
-- Imports are automatically organized in groups:
-  1. Built-in Node modules
-  2. External dependencies
-  3. Internal modules (@/ imports)
-  4. Parent directory imports
-  5. Sibling imports
-  6. Index imports
-- Newlines between import groups
-- Alphabetical ordering within groups
-
-# React and React Native
-
-## Component Guidelines
-- Use functional components
-- Use TypeScript interfaces for props
-- Avoid inline styles - use StyleSheet.create
-- Keep components focused and single-purpose
-- Don't use console.log in production code
-
-## Data Fetching
-- Use React Query for API calls
-- Define services in services/ directory
-- Define types in types/ directory
-- Handle loading and error states
-
-# Colors and Theming
-
-## Theme System
-- Theme state is managed by Redux via themeSlice
-- System theme is automatically synced unless explicitly overridden
-- All colors are defined in constants/Colors.ts for both light and dark themes
-- Colors are accessed via the useColors hook
-
-## Using Colors in Components
-- Always use the useColors hook from @/hooks/useColors
-  ```typescript
-  const colors = useColors();
-  ```
-- Never use Colors constants or useColorScheme directly
-- All components must support both light and dark themes
-- When adding new colors:
-  1. Add to both light and dark themes in Colors.ts
-  2. Add TypeScript types if needed
-
-## ThemedText Component
-- Use skipDefaultColor when providing custom colors:
-  ```typescript
-  // For custom colored text
-  <ThemedText 
-    style={[styles.category, { color: colors.categoryText }]}
-    skipDefaultColor
-  >
-    {text}
-  </ThemedText>
-
-  // For default text color
-  <ThemedText style={styles.title}>
-    {text}
-  </ThemedText>
-  ```
-- The component automatically handles default text colors if skipDefaultColor is not set
-
-## Theme State Management
-- Theme changes are handled in app/_layout.tsx
-- System theme changes are automatically applied
-- Theme state persists across app restarts
-- Theme can be manually controlled via the setTheme action:
-  ```typescript
-  dispatch(setTheme(Theme.Dark)); // or Theme.Light
-  ```
-
-# State Management
-
-## Redux Guidelines
-- Follow Redux Toolkit patterns
-- Use typed selectors
-- Implement proper error handling in thunks
-- Keep state normalized
-- Use proper action naming conventions
-- Implement proper loading states
-
-## Local State
-- Use appropriate React hooks
-- Avoid redundant state
-- Implement proper state initialization
-- Handle cleanup in useEffect
-
-# Error Handling
-
-## Guidelines
-- Use typed error handling with custom error classes
-- Avoid try/catch blocks without specific error types
-- Log errors appropriately (no console.error)
-- Handle all Promise rejections
-- Use Error Boundaries for React components
-- Provide user-friendly error messages
-- Include error recovery mechanisms where possible
-
-## Security Guidelines
-- Sensitive Data:
-  - Never store sensitive data in Redux store
-  - Use SecureStore for sensitive information
-  - Never log sensitive information
-  - Clear sensitive data on logout
-- Authentication:
-  - Always use HTTPS for API calls
-  - Implement token refresh mechanism
-  - Clear auth tokens on app close
-  - Validate all user input
-- Environment Variables:
-  - Store API keys in .env files
-  - Never commit .env files
-  - Use different .env files per environment
-  - Document all required env variables
-
-## API Integration
-- Service Structure:
-  - One service file per API domain
-  - Use TypeScript interfaces for request/response
-  - Implement retry logic for failed requests
-  - Default timeout of 30 seconds
-- Error Handling:
-  - Create custom error types per service
-  - Handle network errors gracefully
-  - Implement offline support where possible
-  - Show user-friendly error messages
-- Data Management:
-  - Use React Query for caching
-  - Implement optimistic updates
-  - Handle loading states consistently
-  - Cache invalidation strategies
+## Constraints
+- Don't be overly strict about linting issues
+- Focus on mobile UX patterns, not responsive web design

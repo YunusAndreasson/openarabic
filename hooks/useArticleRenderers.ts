@@ -2,7 +2,6 @@ import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
 import type { Article } from '../types/articles.types';
-import type { ThemeColors } from '../types/ui/theme.types';
 import type { SentenceWord } from '../types/vocabulary.types';
 import { handleError } from '../utils/errorHandling';
 
@@ -25,7 +24,6 @@ export const useArticleRenderers = (
     fontScale: number;
     showEnglish: boolean;
   },
-  colors: ThemeColors,
   selectedWordIds: Set<number> | undefined,
   sentenceWordsMap: SentenceWordsMap,
   handleWordPress: (word: SentenceWord) => void,
@@ -52,7 +50,7 @@ export const useArticleRenderers = (
   const prepareWord = useCallback(
     (word: SentenceWord) => {
       // Check if the word's root is selected
-      const isSelected = selectedWordIds?.has(word.root_id) ?? false;
+      const isSelected = word.root_id !== undefined && selectedWordIds?.has(word.root_id) === true;
 
       return {
         word,

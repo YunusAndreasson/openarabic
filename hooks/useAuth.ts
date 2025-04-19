@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
+import { AppState } from 'react-native';
 
 import { supabase } from '../services/supabase';
 
@@ -19,12 +20,14 @@ type AuthResult = {
   isLoading: boolean;
   authError: Error | null;
   refreshSession: () => Promise<UserSession | null>;
+  isAuthenticated: boolean; // New property to easily check auth state
 };
 
 export function useAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
 
   // Function to fetch the session that can be called on demand
   const fetchSession = useCallback(async (): Promise<UserSession | null> => {
@@ -35,24 +38,13 @@ export function useAuth(): AuthResult {
       } = await supabase.auth.getSession();
 
       if (error) {
-        console.error('Failed to fetch session:', error.message);
+        setAuthError(error);
         return null;
-      }
-
-      if (fetchedSession) {
-        console.log(
-          'Session fetched successfully. Expires at:',
-          fetchedSession.expires_at
-            ? new Date(fetchedSession.expires_at * 1000).toISOString()
-            : 'unknown'
-        );
-      } else {
-        console.log('No active session found during fetch');
       }
 
       return fetchedSession;
     } catch (error) {
-      console.error('Exception during fetchSession:', error);
+      setAuthError(error instanceof Error ? error : new Error('Failed to fetch session'));
       return null;
     }
   }, []);
@@ -61,19 +53,17 @@ export function useAuth(): AuthResult {
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
     try {
-      console.log('Manually refreshing session...');
-
       // First try refreshing the token
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError) {
-        console.error('Error refreshing session:', refreshError);
         // If refresh fails, try getting the current session
         const fetchedSession = await fetchSession();
 
         if (fetchedSession) {
           setSession(fetchedSession);
           setAuthError(null);
+          setLastRefresh(Date.now());
           return fetchedSession;
         } else {
           throw new Error('Could not refresh or retrieve session');
@@ -81,16 +71,15 @@ export function useAuth(): AuthResult {
       }
 
       if (refreshData.session) {
-        console.log('Session refreshed successfully');
         setSession(refreshData.session);
         setAuthError(null);
+        setLastRefresh(Date.now());
         return refreshData.session;
       } else {
-        console.log('No session returned after refresh');
+        setSession(null);
         return null;
       }
     } catch (error) {
-      console.error('Error during refreshSession:', error);
       setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
       return null;
     } finally {
@@ -101,17 +90,16 @@ export function useAuth(): AuthResult {
   // Set up automatic token refresh
   useEffect(() => {
     // Check if session is about to expire and refresh it
-    const checkTokenExpiration = () => {
+    const checkTokenExpiration = async () => {
       if (!session?.expires_at) return;
 
       const expiresAt = session.expires_at * 1000; // Convert to milliseconds
       const now = Date.now();
       const timeUntilExpiry = expiresAt - now;
 
-      // If token expires in less than 5 minutes, refresh it
-      if (timeUntilExpiry < 5 * 60 * 1000) {
-        console.log('Token expires soon. Refreshing...');
-        refreshSession();
+      // If token expires in less than 5 minutes or hasn't been refreshed in 30 minutes, refresh it
+      if (timeUntilExpiry < 5 * 60 * 1000 || now - lastRefresh > 30 * 60 * 1000) {
+        await refreshSession();
       }
     };
 
@@ -122,7 +110,7 @@ export function useAuth(): AuthResult {
     return () => {
       clearInterval(intervalId);
     };
-  }, [session, refreshSession]);
+  }, [session, refreshSession, lastRefresh]);
 
   useEffect(() => {
     let isMounted = true;
@@ -130,7 +118,6 @@ export function useAuth(): AuthResult {
     const initSession = async () => {
       if (!isMounted) return;
 
-      // Ensure loading state is set at the start
       setIsLoading(true);
 
       try {
@@ -140,18 +127,17 @@ export function useAuth(): AuthResult {
         const fetchedSession = await fetchSession();
         if (!isMounted) return;
 
-        // Batch state updates
         if (fetchedSession) {
           setSession(fetchedSession);
           setAuthError(null);
+          setLastRefresh(Date.now());
         } else {
           setSession(null);
-          // Don't set an error here, it's normal to have no session initially
         }
       } catch (error) {
         if (!isMounted) return;
-        console.error('Error initializing auth:', error);
-        setSession(null); // Clear session on error
+
+        setSession(null);
         setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
       } finally {
         if (isMounted) {
@@ -162,27 +148,36 @@ export function useAuth(): AuthResult {
 
     initSession();
 
+    // Handle app state changes
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        refreshSession();
+      }
+    });
+
     const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      data: { subscription: authSubscription },
+    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
       if (!isMounted) return;
 
-      console.log('Auth state changed:', event);
-
-      // Batch state updates on auth change
-      setSession(newSession);
-      setAuthError(null); // Clear previous errors on successful change
-      setIsLoading(false); // Ensure loading is false after update
+      if (newSession) {
+        setSession(newSession);
+        setAuthError(null);
+        setLastRefresh(Date.now());
+      } else {
+        setSession(null);
+      }
+      setIsLoading(false);
     });
 
     return () => {
       isMounted = false;
-      subscription.unsubscribe();
+      subscription.remove();
+      authSubscription.unsubscribe();
     };
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, [fetchSession, refreshSession]);
 
-  // Memoize the returned object to ensure reference stability.
-  // It only creates a new object when session, isLoading, or authError changes.
+  // Memoize the returned object to ensure reference stability
   const authResult = useMemo(
     () => ({
       session,
@@ -190,6 +185,7 @@ export function useAuth(): AuthResult {
       isLoading,
       authError,
       refreshSession,
+      isAuthenticated: !!session?.user,
     }),
     [session, isLoading, authError, refreshSession]
   );

@@ -191,25 +191,22 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
     onPress(word);
   }, [onPress, word, startPressAnimation, isSelected, setForceSelected]);
 
-  // Calculate styles based on state
-  const finalStyles = useMemo(() => {
-    const baseStyle = {
-      ...styles.wordContainer,
-      // Show border for all selected words (study words) with dimmed opacity
-      borderBottomColor: isSelected ? colors.tint + '40' : 'transparent',
-      borderBottomWidth: 1, // Keep consistent width to prevent layout shifts
-    };
-
-    // Audio highlight styles using only background color
-    if (isAudioHighlighted) {
-      return {
-        ...baseStyle,
-        backgroundColor: colors.info + (isDarkMode ? '20' : '15'), // Subtle background only
-      };
-    }
-
-    return baseStyle;
-  }, [isSelected, isAudioHighlighted, colors.tint, colors.info, isDarkMode]);
+  // Compute final styles for the word container
+  const finalStyles = useMemo(
+    () => [
+      styles.wordContainer,
+      {
+        backgroundColor: isAudioHighlighted ? colors.primary + '30' : 'transparent',
+        // Always add a border bottom for selected words, making it more visible
+        ...(isSelected && {
+          borderBottomWidth: 2,
+          borderBottomColor: colors.tint,
+          paddingBottom: 2,
+        }),
+      },
+    ],
+    [isAudioHighlighted, isSelected, colors.primary, colors.tint]
+  );
 
   return (
     <>

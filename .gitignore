@@ -48,3 +48,5 @@ translate/__pycache__/
 translate/audio_cache/
 .env.local
 .env
+translate/__pycache__/
+translate/reports/

@@ -1,12 +1,14 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { useCallback } from 'react';
 
 // Services
-import { useToast } from '@/components/ToastProvider';
 import { readingListService } from '@/services/readingList';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
+
+import { useToast } from '../components/ToastProvider';
 
 interface ArticleMutationsResult {
   handleToggleReadingList: (articleId: number | undefined, isInReadingList: boolean) => void;
@@ -24,30 +26,29 @@ interface ArticleMutationsResult {
 
 /**
  * Hook for article-related mutations
- * @param userId - The current user ID
+ * @param _userId - The current user ID (might be stale)
  * @param refetchReadingListStatus - Function to refetch reading list status
+ * @param refetchStudyWords - Function to refetch study words
  * @returns Object with mutation functions
  */
 export const useArticleMutations = (
-  userId: string | undefined,
-  refetchReadingListStatus: () => void
+  _userId: string | undefined,
+  refetchReadingListStatus: () => void,
+  refetchStudyWords?: () => void
 ): ArticleMutationsResult => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  // Add to reading list mutation
+  // Mutations setup - add to reading list
   const addToReadingListMutation = useMutation({
     mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
       readingListService.addToReadingList(userId, articleId),
     onSuccess: () => {
       refetchReadingListStatus();
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
-
-      // Show success toast
       showToast('Added to bookmarks');
     },
     onError: error => {
-      // Check for the specific constraint error
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (
         errorMessage.includes('reading_list_position_unique') ||
@@ -67,8 +68,6 @@ export const useArticleMutations = (
     onSuccess: () => {
       refetchReadingListStatus();
       queryClient.invalidateQueries({ queryKey: ['readingList'] });
-
-      // Show success toast
       showToast('Removed from bookmarks');
     },
     onError: () => {
@@ -118,17 +117,25 @@ export const useArticleMutations = (
         queryKey: ['studyWords', userId],
       });
     },
-    onSuccess: () => {
-      // Invalidate queries to update UI
+    onSuccess: (_, { userId }) => {
+      // Immediately invalidate and refetch study words
       queryClient.invalidateQueries({
         queryKey: ['studyWords', userId],
+        refetchType: 'all',
       });
 
+      // Call the refetchStudyWords function if provided
+      if (refetchStudyWords) {
+        setTimeout(() => {
+          refetchStudyWords();
+        }, 100); // Slight delay to ensure database has completed the operation
+      }
+
+      // Invalidate other related queries
       queryClient.invalidateQueries({
         queryKey: ['dueWords', userId],
       });
 
-      // Also invalidate the queries used in bookmarks screen
       queryClient.invalidateQueries({
         queryKey: ['studyWordsCounts', userId],
       });
@@ -137,7 +144,6 @@ export const useArticleMutations = (
         queryKey: ['enhancedAudioTracks', userId],
       });
 
-      // Always refetch stats
       queryClient.invalidateQueries({
         queryKey: ['vocabularyStats'],
       });
@@ -184,11 +190,20 @@ export const useArticleMutations = (
       });
     },
     onSuccess: (_, { userId }) => {
-      // Invalidate queries to update UI
+      // Immediately invalidate and refetch study words
       queryClient.invalidateQueries({
         queryKey: ['studyWords', userId],
+        refetchType: 'all',
       });
 
+      // Call the refetchStudyWords function if provided
+      if (refetchStudyWords) {
+        setTimeout(() => {
+          refetchStudyWords();
+        }, 100); // Slight delay to ensure database has completed the operation
+      }
+
+      // Invalidate other related queries
       queryClient.invalidateQueries({
         queryKey: ['dueWords', userId],
       });
@@ -197,7 +212,6 @@ export const useArticleMutations = (
         queryKey: ['fsrs-words', userId],
       });
 
-      // Also invalidate the queries used in bookmarks screen
       queryClient.invalidateQueries({
         queryKey: ['studyWordsCounts', userId],
       });
@@ -206,7 +220,6 @@ export const useArticleMutations = (
         queryKey: ['enhancedAudioTracks', userId],
       });
 
-      // Always refetch stats
       queryClient.invalidateQueries({
         queryKey: ['vocabularyStats'],
       });
@@ -215,71 +228,133 @@ export const useArticleMutations = (
 
   // Handle toggling reading list
   const handleToggleReadingList = useCallback(
-    (articleId: number | undefined, isInReadingList: boolean) => {
-      if (!userId || !articleId) return;
+    async (articleId: number | undefined, isInReadingList: boolean) => {
+      if (!articleId) return;
 
-      if (isInReadingList) {
-        removeFromReadingListMutation.mutate({ userId, articleId });
-      } else {
-        addToReadingListMutation.mutate({ userId, articleId });
+      try {
+        // Get the current session directly from Supabase
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError || !session?.user) {
+          // Try to refresh the session
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError || !refreshData.session) {
+            showToast('Please sign in to manage your reading list');
+            router.replace('/auth');
+            return;
+          }
+
+          // Use the refreshed user ID
+          if (isInReadingList) {
+            removeFromReadingListMutation.mutate({
+              userId: refreshData.session.user.id,
+              articleId,
+            });
+          } else {
+            addToReadingListMutation.mutate({ userId: refreshData.session.user.id, articleId });
+          }
+          return;
+        }
+
+        // Use the session user ID directly, not the potentially stale userId from props
+        if (isInReadingList) {
+          removeFromReadingListMutation.mutate({ userId: session.user.id, articleId });
+        } else {
+          addToReadingListMutation.mutate({ userId: session.user.id, articleId });
+        }
+      } catch (error) {
+        showToast('Failed to update reading list');
       }
     },
-    [userId, addToReadingListMutation, removeFromReadingListMutation]
+    [addToReadingListMutation, removeFromReadingListMutation, showToast]
   );
 
   // Handle word press
   const handleWordPress = useCallback(
-    (wordId: number) => {
-      if (!userId) {
-        showToast('Sign in to add words to your study list');
-        return;
-      }
+    async (wordId: number) => {
+      try {
+        // Always get fresh session from Supabase
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      toggleWordMutation.mutate({ userId, wordId });
+        if (!session?.user) {
+          // Try to refresh the session first
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+          if (refreshError || !refreshData.session) {
+            showToast('Please sign in to add words to your study list');
+            router.replace('/auth');
+            return;
+          }
+
+          // Use the refreshed session
+          toggleWordMutation.mutate({ userId: refreshData.session.user.id, wordId });
+          return;
+        }
+
+        // Always use the user ID from the session directly
+        toggleWordMutation.mutate({ userId: session.user.id, wordId });
+      } catch (error) {
+        showToast('Error adding word to study list');
+      }
     },
-    [userId, toggleWordMutation, showToast]
+    [toggleWordMutation, showToast]
   );
 
   // Handle root press
   const handleRootPress = useCallback(
-    (rootId: number) => {
-      console.log('handleRootPress called with rootId:', rootId);
-      console.log('Current userId:', userId);
+    async (rootId: number) => {
+      try {
+        // Always get fresh session from Supabase
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      // Check if user is authenticated via supabase directly
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('Current session:', session ? 'Active' : 'No session');
-        console.log('Session user ID:', session?.user?.id);
+        if (!session?.user) {
+          // Try to refresh the session first
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
-        if (session?.user && (!userId || userId !== session.user.id)) {
-          console.log('Session exists but userId state is not in sync');
-        }
-      });
+          if (refreshError || !refreshData.session) {
+            showToast('Please sign in to add roots to your study list');
+            router.replace('/auth');
+            return;
+          }
 
-      if (!userId) {
-        console.log('Authentication error: User not signed in');
-        showToast('Sign in to add roots to your study list');
-        return;
-      }
-
-      toggleRootMutation.mutate(
-        { userId, rootId },
-        {
-          onError: error => {
-            // Log detailed error
-            console.error(
-              'Root toggle error:',
-              error instanceof Error ? error.message : String(error)
-            );
-            if (error instanceof Error && error.message.includes('User must be authenticated')) {
-              console.log('Authentication error: User ID exists but session is invalid');
-              showToast('Your session has expired. Please sign in again.');
+          // Use the refreshed session
+          toggleRootMutation.mutate(
+            { userId: refreshData.session.user.id, rootId },
+            {
+              onError: error => {
+                console.error(
+                  'Root toggle error:',
+                  error instanceof Error ? error.message : String(error)
+                );
+                showToast('Error updating study list');
+              },
             }
-          },
+          );
+          return;
         }
-      );
+
+        // Always use the user ID from the session directly
+        toggleRootMutation.mutate(
+          { userId: session.user.id, rootId },
+          {
+            onError: () => {
+              showToast('Error updating study list');
+            },
+          }
+        );
+      } catch (error) {
+        showToast('Error adding root to study list');
+      }
     },
-    [userId, toggleRootMutation, showToast]
+    [toggleRootMutation, showToast]
   );
 
   return {

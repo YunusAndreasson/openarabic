@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, AppState } from 'react-native';
 import type {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -127,19 +127,6 @@ export default function ArticleScreen(): JSX.Element {
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
-  // Pre-fetch study words if user is logged in with optimized caching
-  useEffect(() => {
-    if (user?.id) {
-      queryClient.fetchQuery({
-        queryKey: ['studyWords', user.id],
-        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 300000, // Cache for 5 minutes
-        gcTime: 600000, // Keep in garbage collection for 10 minutes
-        retry: 3,
-      });
-    }
-  }, [user, queryClient]);
-
   // Extract article data hook before using any results
   const {
     article,
@@ -152,7 +139,38 @@ export default function ArticleScreen(): JSX.Element {
     sentenceWordsMap,
     otherArticles,
     otherCategoryArticles,
+    refetchStudyWords,
   } = useArticleData(articleId, user?.id);
+
+  // Pre-fetch study words if user is logged in with optimized caching
+  useEffect(() => {
+    if (user?.id) {
+      // Always fetch fresh data when this screen mounts
+      queryClient.fetchQuery({
+        queryKey: ['studyWords', user.id],
+        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
+        staleTime: 0, // No stale time - always fetch fresh data
+      });
+    }
+  }, [user, queryClient]);
+
+  // Set up AppState listener to refetch study words when app comes back to foreground
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // When the app comes back to foreground, refetch the study words
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'active') {
+        // Force refetch study words when returning to the app
+        queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
+        refetchStudyWords?.();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [user?.id, queryClient, refetchStudyWords]);
 
   // Track article view when article data loads
   useEffect(() => {
@@ -321,7 +339,8 @@ export default function ArticleScreen(): JSX.Element {
   // Handle article data hook callbacks
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
     user?.id,
-    refetchReadingListStatus
+    refetchReadingListStatus,
+    refetchStudyWords
   );
 
   // We override default word handling to use long-press for root toggles
@@ -330,10 +349,10 @@ export default function ArticleScreen(): JSX.Element {
   // Use the article renderers hook
   const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
-    colors,
     selectedWordIds,
     sentenceWordsMap || new Map(),
-    noopWordPress
+    noopWordPress,
+    handleRootPress
   );
 
   // New state to track if audio control panel should be visible

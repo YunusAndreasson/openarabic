@@ -22,6 +22,8 @@ interface ArticleDataResult {
   isLoadingOtherArticles: boolean;
   otherCategoryArticles: Article[];
   isLoadingOtherCategoryArticles: boolean;
+  refetchStudyWords: () => void;
+  isLoadingStudyWords: boolean;
 }
 
 /**
@@ -71,20 +73,33 @@ export const useArticleData = (
   });
 
   // Fetch study words with optimized caching
-  const { data: studyWords = [] } = useQuery<StudyWord[]>({
+  const {
+    data: studyWords = [],
+    refetch: refetchStudyWords,
+    isLoading: isLoadingStudyWords,
+  } = useQuery<StudyWord[]>({
     queryKey: ['studyWords', userId],
     queryFn: async () => {
       if (!userId) return [];
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId,
-    staleTime: 300000, // Cache for 5 minutes
+    staleTime: 0, // Always fetch fresh data when reopening article
     gcTime: 600000, // Keep in garbage collection for 10 minutes
     networkMode: 'always',
     retry: 3,
-    refetchOnMount: false,
+    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnWindowFocus: true, // Also refetch when window gets focus
     placeholderData: old => old,
   });
+
+  // Ensure study words are refetched when article ID changes
+  useEffect(() => {
+    if (userId && articleId) {
+      // Force refresh study words when article changes
+      refetchStudyWords();
+    }
+  }, [articleId, userId, refetchStudyWords]);
 
   // Process sentences from article data - no additional fetch needed
   const sortedSentences = useMemo(() => {
@@ -227,6 +242,8 @@ export const useArticleData = (
     isLoadingOtherArticles,
     otherCategoryArticles,
     isLoadingOtherCategoryArticles,
+    refetchStudyWords,
+    isLoadingStudyWords,
   };
 };
 

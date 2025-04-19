@@ -1,0 +1,19 @@
+---
+description: Refactoring
+globs: 
+alwaysApply: false
+---
+
+# Refactoring
+
+- Remove all console logging
+- Evalute if functions can be simplified without loosing functionality
+- Evaluate if parts of the code is over engineered
+- Evaluate that the correct compoenents from /componenets are used
+- Evaluate if the correct hooks from /hooks are used
+- Make sure colors are referenced from the constants/Colors.ts file
+- For animations use hooks/animations
+- Evaluate if types from /types are used correctly
+- Use memoise only when it provides measurable value
+- Never reference color literals, use Colors.ts
+- Evaluate if we are using functionality in /utils correctly
