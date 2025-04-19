@@ -1,18 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, Pressable } from 'react-native';
+import { StyleSheet, Pressable, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { FloatingButtonProps } from '@/types/ui/button.types';
 import { lightFeedback } from '@/utils/haptics';
 
 import { useToast } from './ToastProvider';
 
 const BUTTON_SIZE = LAYOUT.BUTTON.HEIGHT.MEDIUM;
+const BUTTON_OPACITY = 0.9; // 90% opacity (E6)
 
 const styles = StyleSheet.create({
   button: {
@@ -21,12 +22,17 @@ const styles = StyleSheet.create({
     elevation: 5,
     height: BUTTON_SIZE,
     justifyContent: 'center',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    ...Platform.select({
+      ios: {
+        shadowOffset: {
+          width: 0,
+          height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+      },
+      android: {},
+    }),
     width: BUTTON_SIZE,
   },
   buttonIcon: {
@@ -40,22 +46,20 @@ const styles = StyleSheet.create({
   },
 });
 
-const FloatingButton: React.FC<FloatingButtonProps> = ({
+const FloatingButton = ({
   position,
   buttonType = 'back',
   top,
   iconName,
-  accessibilityLabel,
   onPress,
   colors,
   isDarkMode,
   isBookmarked,
   animatedStyle,
   style,
-}) => {
+}: FloatingButtonProps) => {
   const { showToast } = useToast();
 
-  // Use standardized press animation
   const {
     animatedStyle: pressAnimatedStyle,
     handlePressIn,
@@ -65,35 +69,30 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
     scaleAmount: 0.95,
   });
 
-  // Memoize background color to prevent recalculation
   const buttonBackgroundColor = useMemo(
-    () => (isDarkMode ? colors.textOverlay : `${colors.background}E6`), // E6 = 90% opacity
+    () =>
+      isDarkMode
+        ? colors.textOverlay
+        : `${colors.background}${Math.floor(BUTTON_OPACITY * 255).toString(16)}`,
     [colors.textOverlay, colors.background, isDarkMode]
   );
 
-  // Combine external animation style with press animation style
-  const combinedAnimatedStyle = useMemo(() => {
-    if (animatedStyle) {
-      return [animatedStyle, pressAnimatedStyle];
-    }
-    return pressAnimatedStyle;
-  }, [animatedStyle, pressAnimatedStyle]);
+  const combinedAnimatedStyle = useMemo(
+    () => (animatedStyle ? [animatedStyle, pressAnimatedStyle] : pressAnimatedStyle),
+    [animatedStyle, pressAnimatedStyle]
+  ) as AnimatedStyleProp<ViewStyle>;
 
-  // Simple handler for button press with haptic feedback only for non-back buttons
   const handlePress = async () => {
-    if (onPress) {
-      // Only provide haptic feedback for non-back buttons
-      if (buttonType !== 'back') {
-        lightFeedback();
-      }
+    if (!onPress) return;
 
-      // Execute the press action
-      await onPress();
+    if (buttonType !== 'back') {
+      lightFeedback();
+    }
 
-      // Only show toast for bookmark actions
-      if (buttonType === 'bookmark' && isBookmarked !== undefined) {
-        showToast(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks');
-      }
+    await onPress();
+
+    if (buttonType === 'bookmark' && isBookmarked !== undefined) {
+      showToast(isBookmarked ? 'Removed from bookmarks' : 'Added to bookmarks');
     }
   };
 
@@ -103,19 +102,21 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
       top,
     };
 
+    const edgeSpacing = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+
     switch (position) {
       case 'top-left':
-        baseStyle.left = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        baseStyle.left = edgeSpacing;
         break;
       case 'top-right':
-        baseStyle.right = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        baseStyle.right = edgeSpacing;
         break;
       case 'bottom-left':
-        baseStyle.left = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        baseStyle.left = edgeSpacing;
         baseStyle.bottom = LAYOUT.SPACING.MEDIUM;
         break;
       case 'bottom-right':
-        baseStyle.right = LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY;
+        baseStyle.right = edgeSpacing;
         baseStyle.bottom = LAYOUT.SPACING.MEDIUM;
         break;
     }
@@ -123,18 +124,13 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
     return baseStyle;
   }, [position, top]);
 
-  // Determine icon color based on button type and state
-  const iconColor = useMemo(() => {
-    if (isBookmarked) {
-      return isDarkMode ? colors.text : colors.primary;
-    }
-    return colors.text;
-  }, [isBookmarked, isDarkMode, colors]);
+  const iconColor = useMemo(
+    () => (isBookmarked ? (isDarkMode ? colors.text : colors.primary) : colors.text),
+    [isBookmarked, isDarkMode, colors]
+  );
 
   return (
-    <Animated.View
-      style={[containerStyle, combinedAnimatedStyle as AnimatedStyleProp<ViewStyle>, style]}
-    >
+    <Animated.View style={[containerStyle, combinedAnimatedStyle, style]}>
       <Pressable
         style={[
           styles.button,
@@ -146,8 +142,6 @@ const FloatingButton: React.FC<FloatingButtonProps> = ({
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityRole="button"
       >
         <Ionicons
           name={iconName as keyof typeof Ionicons.glyphMap}

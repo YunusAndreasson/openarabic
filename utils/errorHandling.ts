@@ -49,15 +49,6 @@ const captureInSentry = (errorObj: Error, sentrySeverity?: string): void => {
   }
 };
 
-const trackInAnalytics = (_errorObj: Error): void => {
-  try {
-    // Analytics tracking logic would go here
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (_analyticsError) {
-    // Silent fail if analytics tracking fails
-  }
-};
-
 const showToastMessage = (errorObj: Error, message?: string, duration?: number): void => {
   if (globalToastHandler) {
     const toastMessage = message || errorObj.message;
@@ -80,10 +71,6 @@ export const handleError = async (
   try {
     if (opts.captureSentry) {
       captureInSentry(errorObj, opts.sentrySeverity);
-    }
-
-    if (opts.trackAnalytics) {
-      trackInAnalytics(errorObj);
     }
 
     if (opts.showToast) {

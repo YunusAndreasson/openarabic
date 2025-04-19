@@ -61,6 +61,36 @@ const Pill = memo(
       [isDarkMode, colors]
     );
 
+    const androidRipple = useMemo(
+      () =>
+        !isSelected
+          ? {
+              color: isDarkMode ? colors.textOverlay : colors.overlay,
+              borderless: false,
+              radius: -5,
+            }
+          : null,
+      [isDarkMode, isSelected, colors]
+    );
+
+    const handlePressIn = useCallback(() => {
+      startScaleDown();
+    }, [startScaleDown]);
+
+    const handlePressOut = useCallback(() => {
+      resetScale();
+    }, [resetScale]);
+
+    const shadowStyle = useMemo(
+      () => ({
+        shadowColor: isDarkMode ? colors.black : colors.shadow,
+        shadowOffset: { width: 0, height: isDarkMode ? 1 : 2 },
+        shadowOpacity: isDarkMode ? 0.25 : 0.1,
+        shadowRadius: isDarkMode ? 1 : 4,
+      }),
+      [isDarkMode, colors]
+    );
+
     if (isCategory && !onSelect) {
       return (
         <View
@@ -68,7 +98,7 @@ const Pill = memo(
             styles.container,
             absolute && styles.absoluteContainer,
             containerStyle,
-            isDarkMode && [styles.darkModeShadow, { shadowColor: colors.shadow }],
+            isDarkMode && shadowStyle,
           ]}
         >
           <ThemedText
@@ -84,14 +114,6 @@ const Pill = memo(
       );
     }
 
-    const androidRipple = !isSelected
-      ? {
-          color: isDarkMode ? colors.textOverlay : colors.overlay,
-          borderless: false,
-          radius: -5,
-        }
-      : null;
-
     return (
       <Animated.View style={scaleStyle}>
         <Pressable
@@ -103,8 +125,8 @@ const Pill = memo(
             absolute && styles.absoluteContainer,
           ]}
           onPress={handlePress}
-          onPressIn={() => startScaleDown()}
-          onPressOut={() => resetScale()}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           disabled={!onSelect}
           android_ripple={androidRipple}
         >
@@ -159,17 +181,16 @@ const getCategoryStyle = (
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   paddingVertical: LAYOUT.SPACING.TINY + 2,
-  ...Platform.select({
-    ios: {
-      shadowColor: isDarkMode ? colors.black : colors.shadow,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDarkMode ? 0.25 : 0.1,
-      shadowRadius: 4,
-    },
-    android: {
-      elevation: isSelected ? 3 : 2,
-    },
-  }),
+  ...(Platform.OS === 'ios'
+    ? {
+        shadowColor: isDarkMode ? colors.black : colors.shadow,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: isDarkMode ? 0.25 : 0.1,
+        shadowRadius: 4,
+      }
+    : {
+        elevation: isSelected ? 3 : 2,
+      }),
 });
 
 const getFilterStyle = (
@@ -187,17 +208,16 @@ const getFilterStyle = (
   borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN,
   borderColor: isSelected ? colors.tint : colors.cardBorder,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-  ...Platform.select({
-    ios: {
-      shadowColor: isDarkMode ? colors.black : colors.shadow,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: isDarkMode ? 0.2 : 0.08,
-      shadowRadius: 3,
-    },
-    android: {
-      elevation: isSelected ? 2 : 1,
-    },
-  }),
+  ...(Platform.OS === 'ios'
+    ? {
+        shadowColor: isDarkMode ? colors.black : colors.shadow,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: isDarkMode ? 0.2 : 0.08,
+        shadowRadius: 3,
+      }
+    : {
+        elevation: isSelected ? 2 : 1,
+      }),
 });
 
 const styles = StyleSheet.create({
@@ -211,11 +231,6 @@ const styles = StyleSheet.create({
     minWidth: 50,
     zIndex: LAYOUT.Z_INDEX.OVERLAY + 10,
   },
-  darkModeShadow: {
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 1,
-  },
   pill: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -225,10 +240,6 @@ const styles = StyleSheet.create({
   },
   pillSelected: {
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-  },
-  pillText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 0.9,
-    fontWeight: '500',
   },
 });
 

@@ -12,6 +12,12 @@ import BaseCard from '../BaseCard';
 import { LoadingContainer } from '../Loader';
 import { ThemedText } from '../ThemedText';
 
+const CIRCLE_RADIUS = 32;
+const CIRCLE_STROKE_WIDTH = 6;
+const CIRCLE_CENTER = 40;
+const ANIMATION_DELAY = 400;
+const PROGRESS_ANIMATION_DURATION = 1000;
+
 function VocabularyStatsComponent({
   totalWords,
   masteredWords,
@@ -21,37 +27,33 @@ function VocabularyStatsComponent({
   const { startAnimation } = useComponentAnimation();
   const [isReady, setIsReady] = useState(false);
 
-  // Start animation when component mounts
   useEffect(() => {
     startAnimation();
-    // Set component as ready after a delay
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 400); // Slightly longer than the animation delay
+    }, ANIMATION_DELAY);
 
     return () => clearTimeout(timer);
   }, [startAnimation]);
 
-  // Calculate progress as a percentage - protect against division by zero
   const progress = useMemo(
     () => (totalWords > 0 ? (masteredWords / totalWords) * 100 : 0),
     [totalWords, masteredWords]
   );
 
-  // Use the animation hook to animate the progress
-  const { progress: animatedProgressValue } = useProgressAnimation(progress, 1000);
+  const { progress: animatedProgressValue } = useProgressAnimation(
+    progress,
+    PROGRESS_ANIMATION_DURATION
+  );
   const animatedProgress = animatedProgressValue.value;
 
-  const circleBackgroundColor = useMemo(() => `${colors.text}10`, [colors.text]);
-
-  // Custom loading component
-  const loadingComponent = <LoadingContainer />;
+  const circleBackgroundColor = useMemo(() => colors.text + '1a', [colors.text]);
 
   return (
     <BaseCard
       style={styles.progressCard}
       isLoading={isLoading || !isReady}
-      loadingComponent={loadingComponent}
+      loadingComponent={<LoadingContainer />}
       includePressAnimation={false}
       {...{ animated: true }}
     >
@@ -71,30 +73,26 @@ function VocabularyStatsComponent({
             </View>
           </View>
 
-          {/* Circular Progress */}
           <View style={styles.circleContainer}>
             <Canvas style={styles.circleCanvas}>
-              {/* Background circle */}
               <Circle
-                cx={40}
-                cy={40}
-                r={32}
+                cx={CIRCLE_CENTER}
+                cy={CIRCLE_CENTER}
+                r={CIRCLE_RADIUS}
                 color={circleBackgroundColor}
                 style="stroke"
-                strokeWidth={6}
+                strokeWidth={CIRCLE_STROKE_WIDTH}
               />
 
-              {/* Progress arc - using animated progress */}
               <Path
-                path={createArcPath(animatedProgress, 32)}
+                path={createArcPath(animatedProgress, CIRCLE_RADIUS)}
                 color={colors.text}
                 style="stroke"
-                strokeWidth={6}
+                strokeWidth={CIRCLE_STROKE_WIDTH}
                 transform={[{ translateX: 8 }, { translateY: 8 }]}
               />
 
-              {/* Center dot */}
-              <Circle cx={40} cy={40} r={3} color={colors.text} />
+              <Circle cx={CIRCLE_CENTER} cy={CIRCLE_CENTER} r={3} color={colors.text} />
             </Canvas>
           </View>
         </View>
@@ -103,13 +101,15 @@ function VocabularyStatsComponent({
   );
 }
 
-// Memoize the entire component
 export const VocabularyStats = memo(VocabularyStatsComponent);
+
+const CIRCLE_SIZE = LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE;
+const CARD_HEIGHT = LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL;
 
 const styles = StyleSheet.create({
   circleCanvas: {
-    height: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
-    width: LAYOUT.BUTTON.HEIGHT.LARGE + LAYOUT.SPACING.XXLARGE,
+    height: CIRCLE_SIZE,
+    width: CIRCLE_SIZE,
   },
   circleContainer: {
     alignItems: 'center',
@@ -120,7 +120,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   progressCard: {
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 + LAYOUT.SPACING.XLARGE + LAYOUT.SPACING.SMALL,
+    height: CARD_HEIGHT,
   },
   progressContent: {
     flex: 1,

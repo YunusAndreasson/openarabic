@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, memo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, Dimensions, Platform } from 'react-native';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimateStyle } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +21,18 @@ interface ToastProps {
 }
 
 const DEFAULT_DURATION = 3500;
+const MAX_TOAST_WIDTH_RATIO = 0.9;
+
+const SHADOW_STYLES = Platform.select({
+  ios: {
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  android: {
+    elevation: 5,
+  },
+}) as ViewStyle;
 
 const styles = StyleSheet.create({
   toast: {
@@ -30,16 +42,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM + 8,
     paddingVertical: LAYOUT.SPACING.SMALL + 4,
-    ...Platform.select({
-      ios: {
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 5,
-      },
-      android: {
-        elevation: 5,
-      },
-    }),
+    ...SHADOW_STYLES,
   },
   toastContainer: {
     alignItems: 'center',
@@ -98,11 +101,11 @@ export const Toast = memo(
         }, duration);
 
         return () => clearTimeout(timer);
-      } else {
-        fadeOut();
-        reverseScaleAnimation();
-        return () => undefined;
       }
+
+      fadeOut();
+      reverseScaleAnimation();
+      return undefined;
     }, [
       visible,
       fadeIn,
@@ -114,15 +117,11 @@ export const Toast = memo(
       message,
     ]);
 
-    // Color scheme:
-    // Dark mode: Card background with white text
-    // Light mode: Tint background with white text
     const backgroundColor = isDarkMode ? colors.card : colors.tint;
     const textColor = isDarkMode ? colors.text : colors.white;
-    const shadowColor = colors.shadow;
 
     const { width: screenWidth } = Dimensions.get('window');
-    const MAX_TOAST_WIDTH = screenWidth * 0.9;
+    const maxToastWidth = screenWidth * MAX_TOAST_WIDTH_RATIO;
 
     const containerStyle = useMemo(
       () => ({
@@ -150,16 +149,16 @@ export const Toast = memo(
 
     return (
       <Animated.View
-        style={[containerStyle, opacityStyle as AnimatedStyleProp<ViewStyle>, scaleStyle]}
+        style={[containerStyle, opacityStyle, scaleStyle] as unknown as AnimateStyle<ViewStyle>}
         pointerEvents="none"
       >
         <View
           style={[
             styles.toast,
             {
-              maxWidth: MAX_TOAST_WIDTH,
+              maxWidth: maxToastWidth,
               backgroundColor,
-              shadowColor,
+              shadowColor: colors.shadow,
             },
           ]}
         >

@@ -26,6 +26,8 @@ from schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
 )
 
+from .utils import remove_final_haraka
+
 # Execute set_keys.py to set environment variables
 exec(open("set_keys.py").read())
 
@@ -1386,26 +1388,6 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
             save_checkpoint(results)
             print(f"Progress saved to {CHECKPOINT_FILE}")
         raise
-
-
-def _remove_final_haraka(word: str) -> str:
-    """
-    Remove the last short vowel (haraka) or tanween
-    from an Arabic word, if present.
-
-    """
-    # Set of diacritics we want to remove from the end
-    final_diacritics = {"َ", "ُ", "ِ", "ْ", "ً", "ٌ", "ٍ"}
-
-    # Convert to a list of characters for easy popping
-    chars = list(word)
-
-    # Remove diacritics while the last character is in our set
-    while chars and chars[-1] in final_diacritics:
-        chars.pop()
-
-    # Reconstruct the word after stripping final diacritics
-    return "".join(chars)
 
 
 def main():

@@ -14,6 +14,7 @@ import io
 import time
 import functools
 import re
+from .utils import remove_final_haraka
 
 
 # Execute set_keys.py to set environment variables
@@ -289,25 +290,6 @@ def generate_speech_with_timestamps(
         raise ValueError("Empty audio response from ElevenLabs API")
 
     return audio_response
-
-
-def _remove_final_haraka(word: str) -> str:
-    """
-    Remove the last short vowel (haraka) or tanween
-    from an Arabic word, if present.
-    """
-    # Set of diacritics we want to remove from the end
-    final_diacritics = {"َ", "ُ", "ِ", "ْ", "ً", "ٌ", "ٍ"}
-
-    # Convert to a list of characters for easy popping
-    chars = list(word)
-
-    # Remove diacritics while the last character is in our set
-    while chars and chars[-1] in final_diacritics:
-        chars.pop()
-
-    # Reconstruct the word after stripping final diacritics
-    return "".join(chars)
 
 
 def generate_content_hash(data: Dict) -> str:
@@ -1044,7 +1026,7 @@ def insert_sentence_words(
 
             # Clean and normalize the word form
             original_word = word["arabic"]
-            cleaned_word_form = _remove_final_haraka(original_word)
+            cleaned_word_form = remove_final_haraka(original_word)
 
             word_data = {
                 "sentence_id": sentence_id,
@@ -1173,7 +1155,7 @@ def insert_sentence_words(
         word_data = {
             "sentence_id": sentence_id,
             "position": position,
-            "word_form": _remove_final_haraka(original_word),
+            "word_form": remove_final_haraka(original_word),
             "english": word["english"],
             "word_type_id": word_type_id,
             "root_id": root_id,

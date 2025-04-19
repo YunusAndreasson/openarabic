@@ -6,7 +6,7 @@ import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import React, { useMemo, useCallback, memo, useEffect } from 'react';
 import { Platform, StyleSheet } from 'react-native';
-import type { TextStyle, ViewStyle } from 'react-native';
+import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
@@ -23,45 +23,50 @@ const TAB_SCREENS = [
     title: 'Texts',
     iconOutline: 'book-outline',
     iconFilled: 'book',
-    accessibilityLabel: 'Texts tab',
   },
   {
     name: 'vocabulary',
     title: 'Words',
     iconOutline: 'receipt-outline',
     iconFilled: 'receipt',
-    accessibilityLabel: 'Words tab',
   },
   {
     name: 'bookmarks',
     title: 'Bookmarks',
     iconOutline: 'bookmark-outline',
     iconFilled: 'bookmark',
-    accessibilityLabel: 'Bookmarks tab',
   },
   {
     name: 'settings',
     title: 'Settings',
     iconOutline: 'settings-outline',
     iconFilled: 'settings',
-    accessibilityLabel: 'Settings tab',
   },
 ] as const;
 
 const ICON_SIZE = 24;
 const BLUR_INTENSITY = Platform.OS === 'ios' ? 55 : 80;
 
-const PLATFORM_STYLES = Platform.select({
-  ios: {
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
-    shadowRadius: LAYOUT.SPACING.SMALL / 2,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  android: {
-    elevation: 8,
-  },
-}) as ViewStyle;
+type PlatformStyle = {
+  shadowOffset?: { width: number; height: number };
+  shadowOpacity?: number;
+  shadowRadius?: number;
+  borderTopWidth?: number;
+  elevation?: number;
+};
+
+const PLATFORM_STYLES: PlatformStyle =
+  Platform.select({
+    ios: {
+      shadowOffset: { width: 0, height: -2 },
+      shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
+      shadowRadius: LAYOUT.SPACING.SMALL / 2,
+      borderTopWidth: StyleSheet.hairlineWidth,
+    },
+    android: {
+      elevation: 8,
+    },
+  }) ?? {};
 
 const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
@@ -142,7 +147,6 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
             android_ripple={{ color: rippleColor, borderless: true }}
             accessibilityRole="tab"
             accessibilityState={{ selected: isFocused }}
-            accessibilityLabel={screen.accessibilityLabel || label}
           >
             <Ionicons
               name={isFocused ? screen.iconFilled : screen.iconOutline}
@@ -205,7 +209,7 @@ export default function TabLayout(): JSX.Element | null {
 const styles = StyleSheet.create({
   activeIcon: {
     opacity: 1,
-  } as const,
+  },
   blurContainer: {
     borderTopWidth: 0,
     bottom: 0,
@@ -214,15 +218,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
-  } as const,
+  },
   inactiveIcon: {
     opacity: 0.7,
-  } as const,
+  },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     marginTop: LAYOUT.SPACING.TINY / 2,
     textAlign: 'center',
-  } as const,
+  },
   labelPlatform: Platform.select({
     ios: {
       fontWeight: '500',
@@ -249,5 +253,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingBottom: LAYOUT.SPACING.TINY / 2,
     paddingTop: LAYOUT.SPACING.TINY,
-  } as const,
+  },
 });

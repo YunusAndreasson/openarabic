@@ -29,11 +29,8 @@ export default function AuthScreen(): JSX.Element {
   const colors = useColors();
   const isDark = useIsDarkMode();
   const insets = useSafeAreaInsets();
-
-  // Track keyboard height for proper avoidance
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
-  // Use a more interesting animation - scale up from slightly smaller with spring physics
   const { animatedStyle, startAnimation } = useTransformAnimation({
     type: 'scale',
     initialValue: 0.9,
@@ -44,24 +41,19 @@ export default function AuthScreen(): JSX.Element {
     stiffness: 100,
   });
 
-  // Start the animation when the component mounts and trigger haptic feedback
   useEffect(() => {
-    // Slight delay for the haptic to feel connected to the animation
     setTimeout(() => {
       lightFeedback();
     }, 50);
     startAnimation();
   }, [startAnimation]);
 
-  // Function to handle keyboard appearance
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', event => {
-      // Get keyboard height and adjust UI accordingly
       setKeyboardHeight(event.endCoordinates.height);
     });
 
     const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      // Reset keyboard height when hidden
       setKeyboardHeight(0);
     });
 
@@ -75,17 +67,12 @@ export default function AuthScreen(): JSX.Element {
     Linking.openURL('https://openarabic.io');
   };
 
-  // Function to dismiss keyboard when tapping outside inputs
   const dismissKeyboard = () => {
     Keyboard.dismiss();
   };
 
-  // Calculate appropriate spacing based on screen state
-  const getContentPadding = () => {
-    if (keyboardHeight > 0) {
-      return { paddingTop: LAYOUT.SPACING.SMALL };
-    }
-    return { paddingTop: LAYOUT.SPACING.MEDIUM };
+  const contentPadding = {
+    paddingTop: keyboardHeight > 0 ? LAYOUT.SPACING.SMALL : LAYOUT.SPACING.MEDIUM,
   };
 
   return (
@@ -97,7 +84,7 @@ export default function AuthScreen(): JSX.Element {
       <Stack.Screen
         options={{
           headerShown: false,
-          animation: 'none', // Disable the default screen transition animation
+          animation: 'none',
         }}
       />
       <KeyboardAvoidingView
@@ -106,16 +93,15 @@ export default function AuthScreen(): JSX.Element {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
         enabled
       >
-        <TouchableWithoutFeedback onPress={dismissKeyboard} accessible={false}>
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
           <ScrollView
             style={styles.container}
-            contentContainerStyle={[styles.scrollContent, getContentPadding()]}
+            contentContainerStyle={[styles.scrollContent, contentPadding]}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
             <Animated.View style={[styles.contentContainer, animatedStyle]}>
-              {/* Pulsating Logo */}
               <View style={styles.logoContainer}>
                 <PulsatingLogo size={120} />
                 <ThemedText
@@ -137,7 +123,6 @@ export default function AuthScreen(): JSX.Element {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {/* Fixed disclaimer at bottom */}
       <TouchableOpacity
         style={[
           styles.footerContainer,
@@ -161,7 +146,6 @@ const styles = StyleSheet.create({
   authContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 0, // No margin at top to keep it close to subtitle
     padding: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
@@ -186,7 +170,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   footerText: {
-    opacity: 0.5, // More dimmed text
+    opacity: 0.5,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -206,7 +190,6 @@ const styles = StyleSheet.create({
     flexGrow: 0,
     justifyContent: 'flex-start',
     paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   subtitleText: {
     lineHeight: 22,

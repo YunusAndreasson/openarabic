@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
@@ -8,9 +9,8 @@ import { useColors } from '@/hooks/useColors';
 
 interface PulsatingLogoProps {
   size?: number;
-  color?: string;
   borderWidth?: number;
-  style?: Record<string, unknown>;
+  style?: ViewStyle;
 }
 
 /**
