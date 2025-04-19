@@ -70,8 +70,8 @@ export const WordTooltip = memo(
     const SCREEN_MARGIN = 16;
 
     // Character width multipliers for width calculation
-    const CHAR_WIDTH = 5.5; // Base width per character
-    const PADDING_MULTIPLIER = 1.6; // Extra space multiplier for padding
+    const CHAR_WIDTH = 7; // Increased base width per character
+    const PADDING_MULTIPLIER = 1.5; // Extra space multiplier for padding
 
     // Memoize the tooltip content to reduce re-renders
     const tooltipContent = useMemo(() => {
@@ -79,8 +79,7 @@ export const WordTooltip = memo(
         <ThemedText
           style={[styles.tooltipText, { color: textColor }]}
           skipDefaultColor
-          numberOfLines={2}
-          ellipsizeMode="tail"
+          adjustsFontSizeToFit
         >
           {text}
         </ThemedText>
@@ -114,8 +113,8 @@ export const WordTooltip = memo(
         70
       );
 
-      // Cap maximum width
-      tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.5);
+      // Cap maximum width - increased to allow for more text
+      tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.7);
 
       // Calculate potential tooltip edges based on centered position
       const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
@@ -255,6 +254,7 @@ const styles = StyleSheet.create({
     zIndex: 999999, // Ensure tooltips are always on top
   },
   tooltipText: {
+    flexShrink: 1,
     flexWrap: 'nowrap',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
