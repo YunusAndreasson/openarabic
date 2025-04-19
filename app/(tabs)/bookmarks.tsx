@@ -356,6 +356,29 @@ export default function BookmarksScreen(): JSX.Element {
     isFetching: isReadingListFetching,
   } = readingListQuery;
 
+  // Check if data is already in cache
+  const isDataCached = useMemo(() => {
+    return !!(user?.id && queryClient.getQueryData(['readingList', user.id]));
+  }, [user?.id, queryClient]);
+
+  // Determine if we have a definitive empty state
+  const hasNoBookmarks = useMemo(() => {
+    // Only show empty state when we have definitive data
+    if (isReadingListLoading || (isReadingListFetching && !isDataCached)) return false;
+    return !readingList || readingList.length === 0;
+  }, [isReadingListLoading, isReadingListFetching, isDataCached, readingList]);
+
+  // Check if data is ready to display
+  const isDataReady = useMemo(() => {
+    if (!user?.id) return false;
+    if (isReadingListLoading) return false;
+    if (isReadingListFetching && !isDataCached) return false;
+    return true;
+  }, [user?.id, isReadingListLoading, isReadingListFetching, isDataCached]);
+
+  // Add screen animation hook
+  const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
+
   const studyWordsQuery = useQuery({
     queryKey: ['studyWordsCounts', user?.id],
     queryFn: () => {
@@ -470,12 +493,6 @@ export default function BookmarksScreen(): JSX.Element {
   }, [user?.id, queryClient, isReadingListLoading, actions.stopPlayback]); // Use stable action
   useFocusEffect(focusEffectCallback);
 
-  const { fadeInStyle } = useScreenAnimation(
-    !isReadingListLoading && readingList.length > 0, // Ensure readingList is checked correctly
-    isLoadingState
-  );
-  // --- End Effects ---
-
   // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
@@ -530,38 +547,41 @@ export default function BookmarksScreen(): JSX.Element {
 
   // --- Render Logic ---
   const isLoading = isReadingListLoading || isEnhancedTracksLoading;
-  const hasNoBookmarks = !isLoading && (!readingList || readingList.length === 0);
 
-  if (isLoading) {
+  // Show loading screen only during initial uncached load
+  if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
     return <LoadingScreen />;
   }
 
+  // Show empty state with animation
   if (hasNoBookmarks) {
     return (
-      <ThemedView
-        style={styles.container}
-        includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
-      >
+      <Animated.View style={[styles.flexOne, fadeInStyle]}>
         <ThemedView
-          useSafeArea={false}
+          style={styles.container}
           includeBottomInset={false}
-          style={styles.flexOne}
-          contentContainerStyle={[
-            styles.listContentWithHeader,
-            { paddingTop: getHeaderHeight(insets) },
-          ]}
+          safeAreaEdges={['left', 'right']}
         >
-          <EmptyState
-            title="No Bookmarks Found"
-            description="Bookmark articles to listen to them later or save them for reference."
-            iconType="name"
-            icon="book"
-            colors={colors}
-          />
+          <ThemedView
+            useSafeArea={false}
+            includeBottomInset={false}
+            style={styles.flexOne}
+            contentContainerStyle={[
+              styles.listContentWithHeader,
+              { paddingTop: getHeaderHeight(insets) },
+            ]}
+          >
+            <EmptyState
+              title="No Bookmarks Found"
+              description="Bookmark articles to listen to them later or save them for reference."
+              iconType="name"
+              icon="book"
+              colors={colors}
+            />
+          </ThemedView>
+          <PageHeader title="Bookmarks" />
         </ThemedView>
-        <PageHeader title="Bookmarks" />
-      </ThemedView>
+      </Animated.View>
     );
   }
 

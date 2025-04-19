@@ -114,15 +114,32 @@ export default function VocabularyScreen(): JSX.Element {
     }
   };
 
+  // Check if data is already in cache to optimize loading behavior
+  const isDataCached = useMemo(() => {
+    return !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
+  }, [user?.id, queryClient]);
+
   // Check if data is ready to display with loading protection
   const isDataReady = useMemo(() => {
     if (!user?.id) return false;
-    // Check cache first for instant feedback
-    const hasCachedData = queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id));
-    if (hasCachedData) return true;
-    // Only check loading states if no cached data
-    return !isDataLoading && validStudyWords.length > 0;
-  }, [user?.id, validStudyWords.length, isDataLoading, queryClient]);
+
+    // Consider data ready only when we have a definitive state
+    if (isDataLoading) return false;
+    if (isFetching && !isDataCached) return false;
+
+    return true;
+  }, [user?.id, isDataLoading, isFetching, isDataCached]);
+
+  // Determine if we should show empty state
+  const shouldShowEmptyState = useMemo(() => {
+    // Only show empty state when we have definitive data
+    if (isDataLoading || (isFetching && !isDataCached)) return false;
+
+    // Check both studyWords and validStudyWords to ensure consistency
+    return (
+      (!studyWords || studyWords.length === 0) && (!validStudyWords || validStudyWords.length === 0)
+    );
+  }, [isDataLoading, isFetching, isDataCached, studyWords, validStudyWords]);
 
   // Add screen animation hook to match other tab screens
   const { fadeInStyle } = useScreenAnimation(isDataReady, isRefreshing) as {
@@ -147,9 +164,6 @@ export default function VocabularyScreen(): JSX.Element {
     });
   };
 
-  // Check if data is already in cache to optimize loading behavior
-  const isDataCached = user?.id && queryClient.getQueryState(FSRS_QUERY_KEYS.all(user.id))?.data;
-
   // Show loading screen only during initial uncached load
   if (!isDataCached && isDataLoading && !isRefreshing) {
     return <LoadingScreen />;
@@ -164,15 +178,17 @@ export default function VocabularyScreen(): JSX.Element {
     );
   }
 
-  // Show empty state only if we have no words AND we're done loading
-  if (!isFetching && !isDataLoading && validStudyWords.length === 0 && studyWords?.length === 0) {
+  // Show empty state with animation
+  if (shouldShowEmptyState) {
     return (
-      <ThemedView style={styles.container}>
-        <PageHeader title="Words" />
-        <ThemedView style={styles.emptyStateContainer}>
-          <VocabularyEmptyState colors={colors} />
+      <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
+        <ThemedView style={styles.container}>
+          <PageHeader title="Words" />
+          <ThemedView style={styles.emptyStateContainer}>
+            <VocabularyEmptyState colors={colors} />
+          </ThemedView>
         </ThemedView>
-      </ThemedView>
+      </Animated.View>
     );
   }
 
