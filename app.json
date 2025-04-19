@@ -15,7 +15,11 @@
       "bundleIdentifier": "com.openarabic.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": ["audio", "processing"],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        },
+        "LSApplicationCategoryType": "public.app-category.education"
       }
     },
     "android": {
