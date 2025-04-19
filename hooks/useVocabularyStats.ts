@@ -110,7 +110,7 @@ export function useVocabularyStats(
   // Filter valid study words with error protection
   const validStudyWords = useMemo(() => {
     if (!Array.isArray(studyWords)) return [] as StudyWord[];
-    return studyWords.filter(word => word?.sentence_word != null);
+    return studyWords.filter(word => word != null && word.root_id != null);
   }, [studyWords]);
 
   // Split stats calculation into smaller memoized chunks - optimized with calculation key
