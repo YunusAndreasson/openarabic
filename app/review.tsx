@@ -87,7 +87,7 @@ export default function ReviewScreen(): JSX.Element {
       // Continue to the main return below
     } else {
       // Otherwise show the completion screen
-      return <CompletionScreen onClose={handleClose} onMount={handleClose} />;
+      return <CompletionScreen onClose={handleClose} />;
     }
   }
 
@@ -99,7 +99,7 @@ export default function ReviewScreen(): JSX.Element {
         {showInitialLoading ? (
           <Loader />
         ) : isComplete ? (
-          <CompletionScreen onClose={handleClose} onMount={handleClose} />
+          <CompletionScreen onClose={handleClose} />
         ) : (
           <>
             {/* Header with progress bar */}

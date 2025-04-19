@@ -13,21 +13,12 @@ import { useColors } from '@/hooks/useColors';
 
 interface CompletionScreenProps {
   onClose: () => void;
-  onMount?: () => void;
 }
 
-const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose, onMount }) => {
+const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
   const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-
-  // Call onMount when component mounts
-  useEffect(() => {
-    // Stop any audio playback when completion screen mounts
-    if (onMount) {
-      onMount();
-    }
-  }, [onMount]);
 
   // Ensure queries are invalidated when the component mounts
   useEffect(() => {

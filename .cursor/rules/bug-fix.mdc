@@ -1,0 +1,15 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Bug fix
+
+## Guidelines
+
+- Make sure you fully understand the issue before fixing
+- Do not suggest work arounds that do not solve the core issue
+- Make sure you understand the we use several hooks in the /hooks directory
+- At firs, do not try to fix the issude, just present the solution and I will ask you to fix it
+- Consider second order effects of your fix
+- We do not have tests so we must be careful to not break things

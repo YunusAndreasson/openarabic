@@ -15,6 +15,12 @@ alwaysApply: true
 - Backend uses Supabase
 - Remove obsolete code when introducing new features
 
+## Important files
+- Database strucure is available in [database.types.ts](mdc:lib/database.types.ts)  
+- Colors are available in [Colors.ts](mdc:constants/Colors.ts) 
+- Layout constraints are available in [layout.ts](mdc:constants/layout.ts) 
+- An MCP server for Supabase is available here [mcp.json](mdc:.cursor/mcp.json)
+
 ## Technical Stack
 - Navigation: Expo Router with bottom tabs (@react-navigation/bottom-tabs)
 - State Management: Redux Toolkit with Redux Persist
