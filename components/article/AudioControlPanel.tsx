@@ -2,27 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { ViewStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
 import type { AnimateStyle } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
-import BaseCard from '@/components/BaseCard';
-import { ThemedText } from '@/components/ThemedText';
-import { ANIMATION_TIMING } from '@/constants/animations';
-import { LAYOUT } from '@/constants/layout';
-import { useOpacityAnimation } from '@/hooks/animations/useOpacityAnimation';
-import { useButtonAction } from '@/hooks/useButtonAction';
-import { useColors } from '@/hooks/useColors';
-
-interface AudioControlPanelProps {
-  isVisible: boolean;
-  isPlaying: boolean;
-  onPlayPause: () => void;
-  onStop: () => void;
-  onPrevious: () => void;
-  onNext: () => void;
-  currentSentenceIndex: number | null;
-  totalSentences: number;
-}
+import BaseCard from '../../components/BaseCard';
+import { ThemedText } from '../../components/ThemedText';
+import { ANIMATION_TIMING } from '../../constants/animations';
+import { LAYOUT } from '../../constants/layout';
+import { useOpacityAnimation } from '../../hooks/animations';
+import { useButtonAction } from '../../hooks/useButtonAction';
+import { useColors } from '../../hooks/useColors';
+import type { AudioControlPanelProps } from '../../types/ui/audio.types';
 
 /* eslint-disable react/prop-types */
 const AudioControlPanel = memo<AudioControlPanelProps>(

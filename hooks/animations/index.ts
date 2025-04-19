@@ -4,20 +4,6 @@
  * import { useOpacityAnimation, usePressAnimation } from '@/hooks/animations';
  */
 
-/**
- * MIGRATION GUIDE
- *
- * The following hooks have been consolidated into unified hooks:
- *
- * - useButtonAnimation → usePressAnimation({ type: 'button' })
- * - useCardAnimation → usePressAnimation({ type: 'card' })
- * - useFadeInAnimation → useOpacityAnimation({ initialOpacity: 0 })
- * - useFadeInEntrance → useOpacityAnimation({ style: 'entrance-only' })
- * - useDramaticPulseAnimation → usePulseAnimation({ style: 'dramatic' })
- * - useScaleAnimation → useTransformAnimation({ type: 'scale' })
- * - useSlideAnimation → useTransformAnimation({ type: 'slide' })
- */
-
 // Export all animation hooks
 export { useOpacityAnimation } from './useOpacityAnimation';
 export { usePressAnimation } from './usePressAnimation';
