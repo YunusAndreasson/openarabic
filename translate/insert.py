@@ -56,6 +56,15 @@ ARABIC_WORD_VOICE_ID = (
     "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
 )
 
+# Default voice settings for consistent audio generation
+DEFAULT_VOICE_SETTINGS = VoiceSettings(
+    stability=1.0,  # Maximum stability for consistent output
+    similarity_boost=0.95,  # Higher similarity for consistent voice characteristics
+    style=0.0,  # No style variation to maintain consistent speed
+    use_speaker_boost=True,
+    stability_boost=0.95,  # Added to maintain consistent characteristics
+)
+
 # Add after other constants
 AUDIO_CACHE_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "audio_cache"
@@ -208,21 +217,17 @@ def upload_to_storage(
 def generate_speech(
     text: str,
     voice_id: str,
-    speed: float = 1.0,
+    speed: float = 0.8,
     voice_settings: Optional[VoiceSettings] = None,
 ):
     """Generate speech using ElevenLabs API with retries."""
-    # Add SSML tags for better language handling if it's Arabic
-    if voice_id == ARABIC_VOICE_ID:
-        text = f'<speak><lang xml:lang="ar-AR">{text}</lang></speak>'
+    # Always wrap in Arabic SSML tags since we're working with Arabic text
+    text = wrap_in_arabic_ssml(text)
 
-    # Use provided voice settings or default ones
+    # Use provided voice settings or create new ones with default settings plus speed
     if voice_settings is None:
         voice_settings = VoiceSettings(
-            stability=0.9,  # Increased for more consistent output
-            similarity_boost=0.8,  # Reduced for better pronunciation
-            style=0.0,
-            use_speaker_boost=True,
+            **DEFAULT_VOICE_SETTINGS.dict(),
             speed=speed,
         )
 
@@ -233,7 +238,9 @@ def generate_speech(
         "model_id": "eleven_multilingual_v2",
         "output_format": "mp3_44100_128",
         "voice_settings": voice_settings,
-        "seed": hash(text) % 4294967295,  # Consistent seed for same text
+        "seed": int(
+            hashlib.sha256(text.encode()).hexdigest()[:8], 16
+        ),  # More reliable seed generation
     }
 
     audio_generator = eleven_labs.text_to_speech.convert(**params)
@@ -260,9 +267,14 @@ def generate_speech_with_timestamps(
     speed: float = 0.8,
 ):
     """Generate speech with timestamps using ElevenLabs API with retries."""
-    # Add SSML tags for better language handling if it's Arabic
-    if voice_id == ARABIC_VOICE_ID:
-        text = f'<speak><lang xml:lang="ar-AR">{text}</lang></speak>'
+    # Always wrap in Arabic SSML tags since we're working with Arabic text
+    text = wrap_in_arabic_ssml(text)
+
+    # Create voice settings with default settings plus speed
+    voice_settings = VoiceSettings(
+        **DEFAULT_VOICE_SETTINGS.dict(),
+        speed=speed,
+    )
 
     # Base parameters
     params = {
@@ -270,14 +282,10 @@ def generate_speech_with_timestamps(
         "voice_id": voice_id,
         "model_id": "eleven_multilingual_v2",
         "output_format": "mp3_44100_128",
-        "voice_settings": VoiceSettings(
-            stability=0.9,
-            similarity_boost=0.8,
-            style=0.0,
-            use_speaker_boost=True,
-            speed=speed,
-        ),
-        "seed": hash(text) % 4294967295,
+        "voice_settings": voice_settings,
+        "seed": int(
+            hashlib.sha256(text.encode()).hexdigest()[:8], 16
+        ),  # More reliable seed generation
     }
 
     audio_response = eleven_labs.text_to_speech.convert_with_timestamps(**params)
@@ -444,16 +452,13 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         print(f"\nGenerating Arabic audio for word: '{word}'")
 
         try:
-            # Simple SSML with just the target word
-            formatted_text = f'<speak><lang xml:lang="ar-AR">{word}</lang></speak>'
+            # Wrap word in Arabic SSML tags
+            formatted_text = wrap_in_arabic_ssml(word)
 
-            # Use default voice settings with just speed adjustment
+            # Create voice settings with default settings plus speed
             voice_settings = VoiceSettings(
-                stability=0.8,
-                similarity_boost=0.9,
-                style=0.0,
-                use_speaker_boost=True,
-                speed=1.0,  # Normal speed
+                **DEFAULT_VOICE_SETTINGS.dict(),
+                speed=0.8,  # Use consistent slower speed
             )
 
             # Generate audio with the special voice for single words
@@ -539,6 +544,14 @@ def clean_word_for_matching(word: str) -> str:
         word = word.replace(p, "")
 
     return word
+
+
+def wrap_in_arabic_ssml(text: str) -> str:
+    """
+    Wrap text in Arabic SSML tags for proper language handling.
+    This ensures the text is properly pronounced as Arabic.
+    """
+    return f'<speak><lang xml:lang="ar-AR">{text}</lang></speak>'
 
 
 def pre_tokenize_arabic(text: str) -> List[str]:
@@ -1237,7 +1250,10 @@ def process_json_file(file_path: str) -> None:
     print("Generating audio for full article...")
     full_arabic_text = " ".join(t["original"] for t in data["translations"])
     audio_filename = generate_audio_filename()
-    audio_result = generate_sentence_audio(full_arabic_text, audio_filename)
+    audio_result = generate_sentence_audio(
+        text=full_arabic_text,
+        filename=audio_filename,
+    )
     if audio_result:
         article_data["audio_url"] = audio_result.get("url")
         print(f"Added audio URL to article: {article_data['audio_url']}")
