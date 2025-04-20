@@ -2,28 +2,40 @@ import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
 
-// Audio player states
+/**
+ * Audio player states
+ */
 export const AUDIO_STATES = {
   IDLE: 'idle', // Not playing anything
   LOADING: 'loading', // Loading audio
   PLAYING: 'playing', // Playing audio
   PAUSED: 'paused', // Audio loaded but paused
   ERROR: 'error', // Error occurred
-};
+} as const;
 
-export type AudioTrack = {
+export type AudioState = (typeof AUDIO_STATES)[keyof typeof AUDIO_STATES];
+
+/**
+ * Audio track information
+ */
+export interface AudioTrack {
   id: number;
   audioUrl: string;
   title: string;
-  // Add other track properties as needed
-};
+  duration?: number;
+  artist?: string;
+  artwork?: string;
+}
 
-interface AudioPlayerResult {
-  audioState: string;
+/**
+ * Audio player hook result
+ */
+export interface AudioPlayerResult {
+  audioState: AudioState;
   currentTrackIndex: number;
   progress: number;
   duration: number;
@@ -39,9 +51,12 @@ interface AudioPlayerResult {
   seekToPosition: (position: number) => Promise<boolean>;
 }
 
+/**
+ * Custom hook for audio playback functionality
+ */
 export function useAudioPlayer(): AudioPlayerResult {
   // State for the audio player
-  const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
+  const [audioState, setAudioState] = useState<AudioState>(AUDIO_STATES.IDLE);
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
   const [playlistMode, setPlaylistMode] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -69,20 +84,20 @@ export function useAudioPlayer(): AudioPlayerResult {
     if (soundRef.current) {
       try {
         await soundRef.current.stopAsync().catch(error => {
-          handleError(error instanceof Error ? error : String(error), {
+          handleError(error instanceof Error ? error : new Error('Failed to stop audio'), {
             analyticsEventName: 'Audio_Stop_Error',
             sentrySeverity: 'warning',
           });
         });
 
         await soundRef.current.unloadAsync().catch(error => {
-          handleError(error instanceof Error ? error : String(error), {
+          handleError(error instanceof Error ? error : new Error('Failed to unload audio'), {
             analyticsEventName: 'Audio_Unload_Error',
             sentrySeverity: 'warning',
           });
         });
       } catch (error) {
-        handleError(error instanceof Error ? error : String(error), {
+        handleError(error instanceof Error ? error : new Error('Failed to cleanup audio'), {
           analyticsEventName: 'Audio_Cleanup_Error',
           sentrySeverity: 'error',
         });
@@ -128,8 +143,7 @@ export function useAudioPlayer(): AudioPlayerResult {
           setProgress(status.positionMillis);
           setDuration(status.durationMillis || 0);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (error) {
+      } catch {
         // Ignore status check errors - they will be handled by the status update callback
       }
     }, 500);
@@ -148,14 +162,11 @@ export function useAudioPlayer(): AudioPlayerResult {
       }
 
       // Log state transitions
-      let newState = '';
-      if (status.isPlaying) {
-        newState = AUDIO_STATES.PLAYING;
-      } else if (status.isBuffering) {
-        newState = AUDIO_STATES.LOADING;
-      } else {
-        newState = AUDIO_STATES.PAUSED;
-      }
+      const newState: AudioState = status.isPlaying
+        ? AUDIO_STATES.PLAYING
+        : status.isBuffering
+          ? AUDIO_STATES.LOADING
+          : AUDIO_STATES.PAUSED;
 
       if (newState !== audioState) {
         setAudioState(newState);
@@ -173,7 +184,7 @@ export function useAudioPlayer(): AudioPlayerResult {
           setProgress(0);
         } else {
           // In playlist mode, proceed to next track
-          playNextTrackRef.current();
+          void playNextTrackRef.current();
         }
       }
     },
@@ -193,249 +204,219 @@ export function useAudioPlayer(): AudioPlayerResult {
         lastActionTimeRef.current = Date.now();
 
         // Clean up any existing audio first
-        await cleanupAudio().catch(e => {
-          handleError(e instanceof Error ? e : String(e));
+        await cleanupAudio().catch(error => {
+          handleError(error instanceof Error ? error : new Error('Failed to cleanup audio'));
         });
 
         // Initialize audio session first to ensure proper configuration
         await initAudioSession();
 
-        // Create and load the sound with notification configuration for Android
+        // Create and load the new sound
         const { sound } = await Audio.Sound.createAsync(
           { uri: audioUrl },
-          {
-            shouldPlay: true,
-            progressUpdateIntervalMillis: 500,
-            positionMillis: 0,
-            // Android notification configuration
-            androidImplementation: 'MediaPlayer',
-            ...(Platform.OS === 'android'
-              ? {
-                  androidAudioSessionId: Math.round(Math.random() * 10000),
-                }
-              : {}),
-          },
+          { shouldPlay: true },
           onPlaybackStatusUpdate
         );
 
         soundRef.current = sound;
-
-        // Get initial status to log duration
-        const initialStatus = await sound.getStatusAsync();
-        const duration = initialStatus.isLoaded ? initialStatus.durationMillis : 0;
-
-        // Force playback to start (needed because the shouldPlay flag isn't always respected)
-        await sound.playAsync();
-
-        // Explicitly track playback state
-        setAudioState(AUDIO_STATES.PLAYING);
-
         startProgressTracking();
-
-        // For short audio, ensure it completes before potential cleanup
-        if (duration && duration < 1500) {
-          // Calculate a safe duration to wait - at least 1500ms to ensure it plays
-          const safeWaitTime = Math.max(duration + 500, 1500);
-
-          if (soundRef.current) {
-            // Wait for audio to complete
-            await new Promise(resolve => setTimeout(resolve, safeWaitTime));
-
-            // Clean up subscription if needed
-            try {
-              sound.setOnPlaybackStatusUpdate(null);
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            } catch (e) {
-              // Ignore errors on cleanup
-            }
-          }
-        }
-
         return true;
       } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
+        handleError(error instanceof Error ? error : new Error('Failed to load audio'), {
+          analyticsEventName: 'Audio_Load_Error',
+          sentrySeverity: 'error',
+        });
         setAudioState(AUDIO_STATES.ERROR);
-        await cleanupAudio().catch(() => {});
         return false;
       }
     },
-    [cleanupAudio, onPlaybackStatusUpdate, startProgressTracking, initAudioSession]
+    [cleanupAudio, initAudioSession, onPlaybackStatusUpdate, startProgressTracking]
   );
 
-  // Toggle play/pause for a track
+  // Toggle play/pause state
   const togglePlayPause = useCallback(async () => {
     if (!soundRef.current) return;
 
     try {
-      if (audioState === AUDIO_STATES.PLAYING) {
+      const status = await soundRef.current.getStatusAsync();
+      if (!status.isLoaded) return;
+
+      if (status.isPlaying) {
         await soundRef.current.pauseAsync();
-        setAudioState(AUDIO_STATES.PAUSED);
-      } else if (audioState === AUDIO_STATES.PAUSED) {
+      } else {
         await soundRef.current.playAsync();
-        setAudioState(AUDIO_STATES.PLAYING);
       }
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
-      setAudioState(AUDIO_STATES.ERROR);
+      handleError(error instanceof Error ? error : new Error('Failed to toggle playback'), {
+        analyticsEventName: 'Audio_Toggle_Error',
+        sentrySeverity: 'warning',
+      });
     }
-  }, [audioState]);
+  }, []);
 
   // Play a specific track from a playlist
   const playTrack = useCallback(
-    async (tracks: AudioTrack[], index: number) => {
-      if (index < 0 || index >= tracks.length) return false;
+    async (tracks: AudioTrack[], index: number): Promise<boolean> => {
+      if (index < 0 || index >= tracks.length) {
+        return false;
+      }
 
-      const track = tracks[index];
-      if (!track) return false;
+      try {
+        const track = tracks[index];
+        if (!track) {
+          return false;
+        }
 
-      setCurrentTrackIndex(index);
-      return await loadAndPlayAudio(track.audioUrl);
+        currentPlaylistRef.current = tracks;
+        setCurrentTrackIndex(index);
+        setPlaylistMode(true);
+
+        return await loadAndPlayAudio(track.audioUrl);
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error('Failed to play track'), {
+          analyticsEventName: 'Audio_PlayTrack_Error',
+          sentrySeverity: 'error',
+        });
+        return false;
+      }
     },
     [loadAndPlayAudio]
   );
 
   // Start playback of a playlist
   const startPlayback = useCallback(
-    async (tracks: AudioTrack[], startIndex = 0) => {
-      if (!tracks || tracks.length === 0) return false;
+    async (tracks: AudioTrack[], startIndex = 0): Promise<boolean> => {
+      if (!tracks.length) return false;
 
-      // Set to playlist mode
-      setPlaylistMode(true);
-      currentPlaylistRef.current = tracks;
-      return await playTrack(tracks, startIndex);
+      try {
+        return await playTrack(tracks, startIndex);
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error('Failed to start playback'), {
+          analyticsEventName: 'Audio_StartPlayback_Error',
+          sentrySeverity: 'error',
+        });
+        return false;
+      }
     },
     [playTrack]
   );
 
-  // Stop playback
+  // Stop playback and cleanup
   const stopPlayback = useCallback(async () => {
-    await cleanupAudio();
-    setAudioState(AUDIO_STATES.IDLE);
-    setCurrentTrackIndex(-1);
-    setPlaylistMode(false);
-    setProgress(0);
-    setDuration(0);
-    currentPlaylistRef.current = [];
+    try {
+      await cleanupAudio();
+      setAudioState(AUDIO_STATES.IDLE);
+      setCurrentTrackIndex(-1);
+      setPlaylistMode(false);
+      setProgress(0);
+      setDuration(0);
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error('Failed to stop playback'), {
+        analyticsEventName: 'Audio_StopPlayback_Error',
+        sentrySeverity: 'error',
+      });
+    }
   }, [cleanupAudio]);
 
   // Start shuffle playback
   const startShufflePlayback = useCallback(
-    async (tracks: AudioTrack[]) => {
-      if (!tracks || tracks.length === 0) return false;
+    async (tracks: AudioTrack[]): Promise<boolean> => {
+      if (!tracks.length) return false;
 
-      // Create array of indices
-      const indices: number[] = [];
-      for (let i = 0; i < tracks.length; i++) {
-        indices.push(i);
+      try {
+        const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
+        return await startPlayback(shuffledTracks, 0);
+      } catch (error) {
+        handleError(
+          error instanceof Error ? error : new Error('Failed to start shuffle playback'),
+          {
+            analyticsEventName: 'Audio_ShufflePlayback_Error',
+            sentrySeverity: 'error',
+          }
+        );
+        return false;
       }
-
-      // Fisher-Yates shuffle
-      for (let i = indices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const temp = indices[i] as number;
-        indices[i] = indices[j] as number;
-        indices[j] = temp;
-      }
-
-      setPlaylistMode(true);
-      currentPlaylistRef.current = tracks;
-      return await playTrack(tracks, indices[0] as number);
     },
-    [playTrack]
+    [startPlayback]
   );
 
   // Play next track in playlist
-  const playNextTrack = useCallback(async () => {
-    const tracks = currentPlaylistRef.current;
-    if (
-      !tracks ||
-      !playlistMode ||
-      currentTrackIndex < 0 ||
-      currentTrackIndex >= tracks.length - 1
-    ) {
-      await stopPlayback();
+  const playNextTrack = useCallback(async (): Promise<boolean> => {
+    if (!playlistMode || !currentPlaylistRef.current.length) return false;
+
+    try {
+      const nextIndex = (currentTrackIndex + 1) % currentPlaylistRef.current.length;
+      return await playTrack(currentPlaylistRef.current, nextIndex);
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error('Failed to play next track'), {
+        analyticsEventName: 'Audio_NextTrack_Error',
+        sentrySeverity: 'error',
+      });
       return false;
     }
-
-    return await playTrack(tracks, currentTrackIndex + 1);
-  }, [playlistMode, currentTrackIndex, playTrack, stopPlayback]);
-
-  // Play previous track in playlist
-  const playPreviousTrack = useCallback(async () => {
-    const tracks = currentPlaylistRef.current;
-    if (!tracks || !playlistMode || currentTrackIndex <= 0) {
-      // If at beginning of playlist, restart current track
-      if (soundRef.current && currentTrackIndex === 0) {
-        await soundRef.current.setPositionAsync(0);
-        return true;
-      }
-      return false;
-    }
-
-    return await playTrack(tracks, currentTrackIndex - 1);
   }, [playlistMode, currentTrackIndex, playTrack]);
 
-  // Seek to position
-  const seekToPosition = useCallback(async (position: number) => {
+  // Play previous track in playlist
+  const playPreviousTrack = useCallback(async (): Promise<boolean> => {
+    if (!playlistMode || !currentPlaylistRef.current.length) return false;
+
+    try {
+      const prevIndex =
+        currentTrackIndex > 0 ? currentTrackIndex - 1 : currentPlaylistRef.current.length - 1;
+      return await playTrack(currentPlaylistRef.current, prevIndex);
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error('Failed to play previous track'), {
+        analyticsEventName: 'Audio_PreviousTrack_Error',
+        sentrySeverity: 'error',
+      });
+      return false;
+    }
+  }, [playlistMode, currentTrackIndex, playTrack]);
+
+  // Seek to a specific position
+  const seekToPosition = useCallback(async (position: number): Promise<boolean> => {
     if (!soundRef.current) return false;
 
     try {
+      const status = await soundRef.current.getStatusAsync();
+      if (!status.isLoaded) return false;
+
       await soundRef.current.setPositionAsync(position);
-      setProgress(position);
       return true;
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
+      handleError(error instanceof Error ? error : new Error('Failed to seek to position'), {
+        analyticsEventName: 'Audio_Seek_Error',
+        sentrySeverity: 'warning',
+      });
       return false;
     }
   }, []);
 
+  // Set up playNextTrack ref
+  useEffect(() => {
+    playNextTrackRef.current = playNextTrack;
+  }, [playNextTrack]);
+
   // Handle app state changes
   useEffect(() => {
-    // Set up audio session initially
-    initAudioSession();
-
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        // Ensure audio session is properly configured
-        initAudioSession();
-
-        // If we were playing audio before going to background, check if it's still playing
-        if (audioState === AUDIO_STATES.PLAYING && soundRef.current) {
-          soundRef.current
-            .getStatusAsync()
-            .then(status => {
-              if (status.isLoaded && !status.isPlaying) {
-                // If audio was playing but stopped when app went to background, restart it
-
-                soundRef.current?.playAsync().catch(error => {
-                  handleError(error instanceof Error ? error : String(error));
-                });
-              }
-            })
-            .catch(error => {
-              handleError(error instanceof Error ? error : String(error));
-            });
-        }
-      } else if (appStateRef.current === 'active' && nextAppState.match(/inactive|background/)) {
-        // App has gone to the background
-
-        // Make sure audio session is configured for background playback
-        initAudioSession();
+      if (appStateRef.current === 'active' && nextAppState.match(/inactive|background/)) {
+        void stopPlayback();
       }
-
       appStateRef.current = nextAppState;
     });
 
     return () => {
       subscription.remove();
-      cleanupAudio();
     };
-  }, [initAudioSession, cleanupAudio, audioState]);
+  }, [stopPlayback]);
 
-  // Update the ref with the latest implementation
+  // Cleanup on unmount
   useEffect(() => {
-    playNextTrackRef.current = playNextTrack;
-  }, [playNextTrack]);
+    return () => {
+      void cleanupAudio();
+    };
+  }, [cleanupAudio]);
 
   return {
     audioState,

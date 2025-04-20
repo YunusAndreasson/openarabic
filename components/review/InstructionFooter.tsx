@@ -22,7 +22,7 @@ import { useColors } from '../../hooks/useColors';
  */
 const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   const colors = useColors();
-  const { animatedStyle, startAnimation } = useOpacityAnimation({
+  const { startAnimation } = useOpacityAnimation({
     initialOpacity: 0,
     delay: 0,
     duration: 300,
@@ -38,7 +38,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   }, [startAnimation]);
 
   // Create themed styles for the icon
-  const iconStyle = {
+  const iconStyle: ViewStyle = {
     ...styles.instructionIcon,
     backgroundColor: colors.textOverlay,
     ...Platform.select({
@@ -50,7 +50,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   };
 
   // Create themed styles for the instruction text
-  const textStyle = {
+  const textStyle: TextStyle = {
     ...styles.instructionText,
     color: colors.tabIconDefault,
   };
@@ -76,7 +76,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
 
   return (
     <View style={[styles.footer, style]}>
-      <Animated.View style={[containerStyle, animatedStyle] as any}>
+      <Animated.View style={containerStyle}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
             <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />

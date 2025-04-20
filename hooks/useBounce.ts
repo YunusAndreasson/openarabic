@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useRef } from 'react';
 
 interface BounceOptions {
@@ -15,11 +14,11 @@ interface BounceOptions {
  * @param deps Optional dependencies to track
  * @returns Debounced function
  */
-export function useDebounce<T extends (...args: any[]) => any>(
-  callback: T,
+export function useDebounce<TArgs extends unknown[], TReturn>(
+  callback: (...args: TArgs) => TReturn,
   delay: number,
-  deps: any[] = []
-): (...args: Parameters<T>) => void {
+  deps: unknown[] = []
+): (...args: TArgs) => void {
   return useBounce(callback, { delay, leading: false, trailing: true }, deps);
 }
 
@@ -30,11 +29,11 @@ export function useDebounce<T extends (...args: any[]) => any>(
  * @param deps Optional dependencies to track
  * @returns Throttled function
  */
-export function useThrottle<T extends (...args: any[]) => any>(
-  callback: T,
+export function useThrottle<TArgs extends unknown[], TReturn>(
+  callback: (...args: TArgs) => TReturn,
   limit: number,
-  deps: any[] = []
-): (...args: Parameters<T>) => void {
+  deps: unknown[] = []
+): (...args: TArgs) => void {
   return useBounce(callback, { delay: limit, leading: true, trailing: true, maxWait: limit }, deps);
 }
 
@@ -42,20 +41,20 @@ export function useThrottle<T extends (...args: any[]) => any>(
  * Base hook for controlling function call timing
  * Can be configured for debounce or throttle behaviors
  */
-export function useBounce<T extends (...args: any[]) => any>(
-  callback: T,
+export function useBounce<TArgs extends unknown[], TReturn>(
+  callback: (...args: TArgs) => TReturn,
   options: BounceOptions,
-  deps: any[] = []
-): (...args: Parameters<T>) => void {
+  deps: unknown[] = []
+): (...args: TArgs) => void {
   const { delay, leading = false, trailing = true, maxWait } = options;
 
   // Refs to track callback, timer and last call time
   const callbackRef = useRef(callback);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastCallTimeRef = useRef<number | null>(null);
-  const lastArgsRef = useRef<Parameters<T> | null>(null);
+  const lastArgsRef = useRef<TArgs | null>(null);
   const lastInvokeTimeRef = useRef<number>(0);
-  const depsRef = useRef<any[]>(deps);
+  const depsRef = useRef<unknown[]>(deps);
 
   // Update the callback ref when callback changes
   useEffect(() => {
@@ -64,14 +63,14 @@ export function useBounce<T extends (...args: any[]) => any>(
   }, [callback, deps]);
 
   // Function to execute the callback
-  const invoke = useCallback((time: number, args: Parameters<T>) => {
+  const invoke = useCallback((time: number, args: TArgs) => {
     lastInvokeTimeRef.current = time;
     callbackRef.current(...args);
   }, []);
 
   // Main function returned by the hook
   const bounced = useCallback(
-    (...args: Parameters<T>): void => {
+    (...args: TArgs): void => {
       const time = Date.now();
       lastArgsRef.current = args;
 

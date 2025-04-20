@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
 import type { Article } from '../types/articles.types';
 import type { Database } from '../types/database.types';
+import { DatabaseError } from '../types/error.types';
 import { handleError } from '../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../utils/typeMappers';
 
@@ -56,77 +57,73 @@ const DETAIL_VIEW_COLUMNS = `
   )
 `;
 
-// Helper function to handle article-related errors
-const handleArticleError = (
-  error: Error,
-  context: {
-    operation: string;
-    articleId?: number;
-    categoryId?: number;
-    authorId?: number;
-    showToast?: boolean;
-  }
-) => {
-  const { operation, articleId, categoryId, authorId, showToast = true } = context;
-  handleError(error, {
-    toastMessage: `Failed to ${operation}`,
-    analyticsEventName: `${operation.replace(/\s/g, '_')}_Error`,
-    sentrySeverity: 'warning',
-    showToast,
-    analyticsProperties: {
-      ...(articleId !== undefined && { articleId }),
-      ...(categoryId !== undefined && { categoryId }),
-      ...(authorId !== undefined && { authorId }),
-    },
-  });
-};
-
 export const articlesService = {
   async getArticles(categoryId?: number, authorId?: number): Promise<Article[]> {
-    let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
+    try {
+      let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
 
-    if (categoryId) query = query.eq('category_id', categoryId);
-    if (authorId) query = query.eq('author_id', authorId);
+      if (categoryId) query = query.eq('category_id', categoryId);
+      if (authorId) query = query.eq('author_id', authorId);
 
-    query = query.order('created_at', { ascending: false });
+      query = query.order('created_at', { ascending: false });
 
-    const { data, error } = await query;
-    if (error) {
-      handleArticleError(error, {
-        operation: 'load articles',
-        categoryId,
-        authorId,
+      const { data, error } = await query;
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load articles',
+          analyticsProperties: {
+            ...(categoryId && { categoryId }),
+            ...(authorId && { authorId }),
+          },
+        });
+        throw error;
+      }
+      return mapToArticles(data || []);
+    } catch (err) {
+      await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
+        toastMessage: 'Failed to load articles',
+        analyticsProperties: {
+          ...(categoryId && { categoryId }),
+          ...(authorId && { authorId }),
+        },
       });
-      throw error;
+      throw err;
     }
-    return mapToArticles(data || []);
   },
 
   async getArticleById(id: number): Promise<Article> {
-    const { data, error } = await supabase
-      .from('articles')
-      .select(DETAIL_VIEW_COLUMNS)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(DETAIL_VIEW_COLUMNS)
+        .eq('id', id)
+        .single();
 
-    if (error) {
-      handleArticleError(error, {
-        operation: 'load article',
-        articleId: id,
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load article',
+          analyticsProperties: { id },
+        });
+        throw error;
+      }
+
+      if (!data) {
+        const notFoundError = new Error(`Article with id ${id} not found`);
+        await handleError(notFoundError, {
+          toastMessage: 'Article not found',
+          analyticsProperties: { id },
+        });
+        throw notFoundError;
+      }
+
+      return mapToArticle(data);
+    } catch (err) {
+      await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
+        toastMessage: 'Failed to load article',
+        analyticsProperties: { id },
       });
-      throw error;
+      throw err;
     }
-
-    if (!data) {
-      const error = new Error(`Article with id ${id} not found`);
-      handleArticleError(error, {
-        operation: 'find article',
-        articleId: id,
-      });
-      throw error;
-    }
-
-    return mapToArticle(data);
   },
 
   async getRelatedArticles(articleId: number): Promise<Article[]> {
@@ -138,9 +135,9 @@ export const articlesService = {
         .single();
 
       if (articleError) {
-        handleArticleError(articleError, {
-          operation: 'load related articles',
-          articleId,
+        await handleError(new Error(articleError.message), {
+          toastMessage: 'Failed to load related articles',
+          analyticsProperties: { articleId },
         });
         return [];
       }
@@ -156,23 +153,23 @@ export const articlesService = {
         .limit(5);
 
       if (error) {
-        handleArticleError(error, {
-          operation: 'load related articles',
-          articleId,
-          categoryId: article.category_id,
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load related articles',
+          analyticsProperties: { articleId, categoryId: article.category_id },
         });
         return [];
       }
 
       return mapToArticles(data || []);
     } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error('Unknown error loading related articles');
-      handleArticleError(error, {
-        operation: 'load related articles',
-        articleId,
-        showToast: false,
-      });
+      await handleError(
+        err instanceof Error ? err : new Error('Unknown error loading related articles'),
+        {
+          toastMessage: 'Failed to load related articles',
+          analyticsProperties: { articleId },
+          showToast: false,
+        }
+      );
       return [];
     }
   },
@@ -187,23 +184,47 @@ export const articlesService = {
         .limit(10);
 
       if (error) {
-        handleArticleError(error, {
-          operation: 'load category articles',
-          categoryId,
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load category articles',
+          analyticsProperties: { categoryId },
         });
         return [];
       }
 
       return mapToArticles(data || []);
     } catch (err) {
-      const error =
-        err instanceof Error ? err : new Error('Unknown error loading category articles');
-      handleArticleError(error, {
-        operation: 'load category articles',
-        categoryId,
-        showToast: false,
-      });
+      await handleError(
+        err instanceof Error ? err : new Error('Unknown error loading category articles'),
+        {
+          toastMessage: 'Failed to load category articles',
+          analyticsProperties: { categoryId },
+          showToast: false,
+        }
+      );
       return [];
+    }
+  },
+
+  async getCategoryArticles(categoryId: number, limit = 10): Promise<Article[]> {
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select('*')
+        .eq('category_id', categoryId)
+        .limit(limit);
+
+      if (error) {
+        throw new DatabaseError('Failed to load category articles', {
+          timestamp: new Date().toISOString(),
+          details: error,
+        });
+      }
+
+      return mapToArticles(data || []);
+    } catch (err) {
+      throw handleError(
+        err instanceof Error ? err : new Error('Unknown error loading category articles')
+      );
     }
   },
 };

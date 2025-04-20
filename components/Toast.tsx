@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, memo } from 'react';
-import type { ViewStyle } from 'react-native';
+import type { ViewStyle, StyleProp } from 'react-native';
 import { StyleSheet, View, Dimensions, Platform } from 'react-native';
-import type { AnimateStyle } from 'react-native-reanimated';
+import type { AnimatedStyle } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -145,13 +145,14 @@ export const Toast = memo(
       [message, textColor]
     );
 
+    const combinedStyle = useMemo(() => {
+      return [containerStyle, opacityStyle, scaleStyle] as StyleProp<AnimatedStyle<ViewStyle>>;
+    }, [containerStyle, opacityStyle, scaleStyle]);
+
     if (!visible) return null;
 
     return (
-      <Animated.View
-        style={[containerStyle, opacityStyle, scaleStyle] as unknown as AnimateStyle<ViewStyle>}
-        pointerEvents="none"
-      >
+      <Animated.View style={combinedStyle} pointerEvents="none">
         <View
           style={[
             styles.toast,

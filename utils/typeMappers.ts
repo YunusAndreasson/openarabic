@@ -6,8 +6,10 @@ import { handleError } from './errorHandling';
 
 type DatabaseRecord = Record<string, unknown>;
 
-// Disable the any rule for just these type mappers as they're designed to handle unknown shapes
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Type for transform functions used in safeGet
+ */
+type TransformFn<T> = (val: unknown) => T;
 
 /**
  * Safely maps values from a potentially unknown object shape
@@ -20,7 +22,7 @@ function safeGet<T>(
   obj: DatabaseRecord,
   key: string,
   defaultValue: T,
-  transform?: (val: unknown) => T
+  transform?: TransformFn<T>
 ): T {
   const value = obj[key];
   if (value === undefined || value === null) {
@@ -30,7 +32,7 @@ function safeGet<T>(
     try {
       return transform(value);
     } catch (e) {
-      handleError(e as Error);
+      handleError(e instanceof Error ? e : new Error('Transform error'));
       return defaultValue;
     }
   }
@@ -120,7 +122,7 @@ export function mapToArticle(item: DatabaseRecord): Article {
   const base = item as Tables<'articles'>;
   return {
     ...base,
-    article_sentences: safeGet(item, 'article_sentences', [], val =>
+    article_sentences: safeGet(item, 'article_sentences', [], (val: unknown): ArticleSentence[] =>
       Array.isArray(val) ? val.map(mapToArticleSentence) : []
     ),
     category: safeGet(item, 'category', undefined),
@@ -148,7 +150,7 @@ export function mapToArticleSentence(item: DatabaseRecord): ArticleSentence {
   const base = item as Tables<'article_sentences'>;
   return {
     ...base,
-    sentence_words: safeGet(item, 'sentence_words', [], val =>
+    sentence_words: safeGet(item, 'sentence_words', [], (val: unknown): SentenceWord[] =>
       Array.isArray(val) ? val.map(mapToSentenceWord) : []
     ),
   };

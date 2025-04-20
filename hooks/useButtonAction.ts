@@ -3,6 +3,13 @@ import { useRef, useCallback, useEffect } from 'react';
 import { ANIMATION_TIMING } from '../constants/animations';
 
 /**
+ * Type for functions that can be used with useButtonAction
+ */
+export type ButtonActionFunction<TArgs extends unknown[] = [], TReturn = void> = (
+  ...args: TArgs
+) => TReturn | Promise<TReturn>;
+
+/**
  * Custom hook for button actions with debounce
  * Prevents multiple rapid button presses
  *
@@ -10,10 +17,10 @@ import { ANIMATION_TIMING } from '../constants/animations';
  * @param delay Optional delay in milliseconds (defaults to STANDARD debounce time)
  * @returns A debounced function that executes the action
  */
-export function useButtonAction<T extends (...args: unknown[]) => unknown>(
-  fn: T,
+export function useButtonAction<TArgs extends unknown[] = [], TReturn = void>(
+  fn: ButtonActionFunction<TArgs, TReturn>,
   delay = ANIMATION_TIMING.DEBOUNCE.STANDARD
-): (...args: Parameters<T>) => void {
+): (...args: TArgs) => void {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isExecutingRef = useRef(false);
 
@@ -28,7 +35,7 @@ export function useButtonAction<T extends (...args: unknown[]) => unknown>(
   }, []);
 
   return useCallback(
-    (...args: Parameters<T>) => {
+    (...args: TArgs) => {
       // Skip if already executing
       if (isExecutingRef.current) return;
 
@@ -41,9 +48,15 @@ export function useButtonAction<T extends (...args: unknown[]) => unknown>(
       }
 
       // Set the timeout
-      timeoutRef.current = setTimeout(() => {
-        fn(...args);
-        isExecutingRef.current = false;
+      timeoutRef.current = setTimeout(async () => {
+        try {
+          await fn(...args);
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (error) {
+          // Log error but don't rethrow to prevent unhandled rejections
+        } finally {
+          isExecutingRef.current = false;
+        }
       }, delay);
     },
     [fn, delay]
