@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
@@ -31,254 +31,7 @@ import { TimeAgo, SummaryIndicator } from './index/ArticleHelpers';
 
 const GOLDEN_RATIO_ADJUSTED = 1.5;
 
-type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
-  handlePress?: () => void;
-  onPress?: () => void;
-} & (ArticleCardProps | CompactCardProps | BasicCardProps);
-
-function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
-  // Extract common props
-  const { handlePress, onPress, style, isLoading = false, variant = 'article' } = props;
-
-  // Prioritize onPress over handlePress for compatibility
-  const pressHandler = onPress || handlePress;
-
-  // Type guards
-  const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
-    'variant' in p && p.variant === 'article';
-  const isCompactVariant = (p: ThemedCardProps): p is CompactCardProps =>
-    'variant' in p && p.variant === 'compact';
-
-  // Extract variant-specific props based on type
-  const title = isArticleVariant(props) ? props.title : undefined;
-  const category = isArticleVariant(props) ? props.category : undefined;
-  const author = isArticleVariant(props) ? props.author : undefined;
-  const summary = isArticleVariant(props) ? props.summary : undefined;
-  const children = 'children' in props ? props.children : undefined;
-
-  // Extract compact article props
-  const article = isCompactVariant(props) ? props.article : undefined;
-  const showTimeAgo = isCompactVariant(props) ? props.showTimeAgo : false;
-  const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
-  const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
-
-  const colors = useColors();
-  const isDarkMode = useIsDarkMode();
-  const isCompact = variant === 'compact';
-
-  /**
-   * Creates a platform and theme-aware gradient for card overlays
-   */
-  const createCardGradient = () => {
-    type GradientColors = readonly [string, string, string];
-
-    if (isDarkMode) {
-      return ['rgba(0,0,0,0)', 'rgba(30,30,30,0.95)', colors.card] as GradientColors;
-    } else {
-      return ['rgba(255,255,255,0)', 'rgba(250,250,250,0.95)', colors.card] as GradientColors;
-    }
-  };
-
-  // Render loading state
-  const renderLoading = () => {
-    return (
-      <View
-        style={[
-          styles.loadingComponentContainer,
-          { backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay },
-        ]}
-      >
-        <LoadingContainer />
-      </View>
-    );
-  };
-
-  // Render article content
-  const renderArticleContent = () => {
-    if (!isArticleVariant(props)) return null;
-    return (
-      <>
-        <View style={styles.imageContainer}>
-          <EnhancedImage
-            source={props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
-            style={styles.image}
-            contentFit="cover"
-            skipTransition={true}
-            cachePolicy="memory-disk"
-            alt={`Image for ${props.title}`}
-            blurRadius={1}
-            priority="high"
-            placeholder={
-              props.placeholder || {
-                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
-              }
-            }
-            prefetch={true}
-          />
-
-          <LinearGradient
-            colors={createCardGradient()}
-            style={styles.gradient}
-            start={{ x: 0, y: 0.3 }}
-            end={{ x: 0, y: 0.9 }}
-            pointerEvents="none"
-          />
-        </View>
-
-        {category ? (
-          <View style={styles.pillContainer}>
-            <Pill id={category} label={category} variant="category" />
-          </View>
-        ) : null}
-
-        <View style={styles.contentContainer}>
-          <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
-              {title}
-            </ThemedText>
-          </View>
-
-          {author ? (
-            <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
-                By {author}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          {summary ? (
-            <View style={styles.summaryContainer}>
-              <ThemedText
-                type="caption"
-                colorName={isDarkMode ? 'secondaryText' : 'textTertiary'}
-                numberOfLines={3}
-                style={{
-                  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
-                }}
-              >
-                {summary}
-              </ThemedText>
-            </View>
-          ) : null}
-        </View>
-      </>
-    );
-  };
-
-  // Render compact article content
-  const renderCompactArticleContent = () => {
-    if (!isCompactVariant(props)) return null;
-    return (
-      <>
-        <View style={styles.compactImageContainer}>
-          <EnhancedImage
-            source={props.article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
-            style={styles.image}
-            contentFit="cover"
-            skipTransition={true}
-            blurRadius={1}
-            priority="high"
-            placeholder={
-              props.article.placeholder || {
-                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
-              }
-            }
-            prefetch={true}
-            alt={`Image for ${props.article.title}`}
-          />
-
-          <LinearGradient
-            colors={createCardGradient()}
-            style={styles.gradient}
-            start={{ x: 0, y: 0.3 }}
-            end={{ x: 0, y: 0.9 }}
-            pointerEvents="none"
-          />
-        </View>
-
-        {props.article.category ? (
-          <View style={styles.pillContainer}>
-            <Pill
-              id={props.article.category.id}
-              label={props.article.category.name}
-              variant="category"
-            />
-          </View>
-        ) : null}
-
-        <View style={styles.contentContainer}>
-          <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
-              {props.article.title}
-            </ThemedText>
-          </View>
-
-          {props.article.author ? (
-            <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
-                By {props.article.author.name}
-              </ThemedText>
-            </View>
-          ) : null}
-
-          <View style={styles.cardFooter}>
-            {showTimeAgo ? (
-              <TimeAgo date={lastOpenedAt || props.article.created_at} />
-            ) : hideDifficulty ? null : (
-              <SummaryIndicator summary={props.article.summary} />
-            )}
-          </View>
-        </View>
-      </>
-    );
-  };
-
-  // Render compact content
-  const renderCompactContent = () => {
-    if (article) {
-      return renderCompactArticleContent();
-    }
-
-    if (!children) {
-      return null;
-    }
-
-    return children;
-  };
-
-  // Render the appropriate content based on variant
-  const renderContent = () => {
-    if (isCompact) {
-      return renderCompactContent();
-    }
-    return renderArticleContent();
-  };
-
-  if (isLoading) {
-    return (
-      <BaseCard
-        isLoading={true}
-        onPress={pressHandler}
-        style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
-        loadingComponent={renderLoading()}
-      >
-        <View />
-      </BaseCard>
-    );
-  }
-
-  return (
-    <BaseCard
-      onPress={pressHandler}
-      style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
-      includePressAnimation={true}
-    >
-      {renderContent()}
-    </BaseCard>
-  );
-}
-
-// Styles organized by component section
+// Move styles outside component to prevent recreation
 const styles = StyleSheet.create({
   authorContainer: {
     flexDirection: 'row',
@@ -364,6 +117,230 @@ const styles = StyleSheet.create({
     zIndex: 20,
   },
 });
+
+type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
+  handlePress?: () => void;
+  onPress?: () => void;
+} & (ArticleCardProps | CompactCardProps | BasicCardProps);
+
+// Type guards moved outside component
+const isArticleVariant = (p: ThemedCardProps): p is ArticleCardProps =>
+  'variant' in p && p.variant === 'article';
+const isCompactVariant = (p: ThemedCardProps): p is CompactCardProps =>
+  'variant' in p && p.variant === 'compact';
+
+// Loading component moved outside to prevent recreation
+const LoadingComponent = ({ isDarkMode, colors }: { isDarkMode: boolean; colors: any }) => (
+  <View
+    style={[
+      styles.loadingComponentContainer,
+      { backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay },
+    ]}
+  >
+    <LoadingContainer />
+  </View>
+);
+
+function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
+  const { handlePress, onPress, style, isLoading = false, variant = 'article' } = props;
+  const pressHandler = onPress || handlePress;
+
+  const colors = useColors();
+  const isDarkMode = useIsDarkMode();
+  const isCompact = variant === 'compact';
+
+  // Memoize gradient colors
+  const gradientColors = useMemo(() => {
+    if (isDarkMode) {
+      return ['rgba(0,0,0,0)', 'rgba(30,30,30,0.95)', colors.card] as const;
+    }
+    return ['rgba(255,255,255,0)', 'rgba(250,250,250,0.95)', colors.card] as const;
+  }, [isDarkMode, colors.card]);
+
+  // Extract variant-specific props based on type
+  const title = isArticleVariant(props) ? props.title : undefined;
+  const category = isArticleVariant(props) ? props.category : undefined;
+  const author = isArticleVariant(props) ? props.author : undefined;
+  const summary = isArticleVariant(props) ? props.summary : undefined;
+  const children = 'children' in props ? props.children : undefined;
+
+  // Extract compact article props
+  const article = isCompactVariant(props) ? props.article : undefined;
+  const showTimeAgo = isCompactVariant(props) ? props.showTimeAgo : false;
+  const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
+  const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
+
+  // Memoize article content
+  const articleContent = useMemo(() => {
+    if (!isArticleVariant(props)) return null;
+    return (
+      <>
+        <View style={styles.imageContainer}>
+          <EnhancedImage
+            source={props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
+            style={styles.image}
+            contentFit="cover"
+            skipTransition={true}
+            cachePolicy="memory-disk"
+            alt={`Image for ${props.title}`}
+            blurRadius={1}
+            priority="high"
+            placeholder={
+              props.placeholder || {
+                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
+              }
+            }
+            prefetch={true}
+          />
+
+          <LinearGradient
+            colors={gradientColors}
+            style={styles.gradient}
+            start={{ x: 0, y: 0.3 }}
+            end={{ x: 0, y: 0.9 }}
+            pointerEvents="none"
+          />
+        </View>
+
+        {category ? (
+          <View style={styles.pillContainer}>
+            <Pill id={category} label={category} variant="category" />
+          </View>
+        ) : null}
+
+        <View style={styles.contentContainer}>
+          <View style={styles.titleContainer}>
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
+              {title}
+            </ThemedText>
+          </View>
+
+          {author ? (
+            <View style={styles.authorContainer}>
+              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
+                By {author}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          {summary ? (
+            <View style={styles.summaryContainer}>
+              <ThemedText
+                type="caption"
+                colorName={isDarkMode ? 'secondaryText' : 'textTertiary'}
+                numberOfLines={3}
+                style={{
+                  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
+                }}
+              >
+                {summary}
+              </ThemedText>
+            </View>
+          ) : null}
+        </View>
+      </>
+    );
+  }, [props, isDarkMode, gradientColors]);
+
+  // Memoize compact article content
+  const compactArticleContent = useMemo(() => {
+    if (!isCompactVariant(props)) return null;
+    return (
+      <>
+        <View style={styles.compactImageContainer}>
+          <EnhancedImage
+            source={props.article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
+            style={styles.image}
+            contentFit="cover"
+            skipTransition={true}
+            blurRadius={1}
+            priority="high"
+            placeholder={
+              props.article.placeholder || {
+                thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
+              }
+            }
+            prefetch={true}
+            alt={`Image for ${props.article.title}`}
+          />
+
+          <LinearGradient
+            colors={gradientColors}
+            style={styles.gradient}
+            start={{ x: 0, y: 0.3 }}
+            end={{ x: 0, y: 0.9 }}
+            pointerEvents="none"
+          />
+        </View>
+
+        {props.article.category ? (
+          <View style={styles.pillContainer}>
+            <Pill
+              id={props.article.category.id}
+              label={props.article.category.name}
+              variant="category"
+            />
+          </View>
+        ) : null}
+
+        <View style={styles.contentContainer}>
+          <View style={styles.titleContainer}>
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
+              {props.article.title}
+            </ThemedText>
+          </View>
+
+          {props.article.author ? (
+            <View style={styles.authorContainer}>
+              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
+                By {props.article.author.name}
+              </ThemedText>
+            </View>
+          ) : null}
+
+          <View style={styles.cardFooter}>
+            {showTimeAgo ? (
+              <TimeAgo date={lastOpenedAt || props.article.created_at} />
+            ) : hideDifficulty ? null : (
+              <SummaryIndicator summary={props.article.summary} />
+            )}
+          </View>
+        </View>
+      </>
+    );
+  }, [props, gradientColors]);
+
+  // Memoize compact content
+  const compactContent = useMemo(() => {
+    if (article) {
+      return compactArticleContent;
+    }
+    return children;
+  }, [article, compactArticleContent, children]);
+
+  if (isLoading) {
+    return (
+      <BaseCard
+        isLoading={true}
+        onPress={pressHandler}
+        style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+        loadingComponent={<LoadingComponent isDarkMode={isDarkMode} colors={colors} />}
+      >
+        <View />
+      </BaseCard>
+    );
+  }
+
+  return (
+    <BaseCard
+      onPress={pressHandler}
+      style={[isCompact && styles.compactContainer, style as StyleProp<ViewStyle>]}
+      includePressAnimation={true}
+    >
+      {isCompact ? compactContent : articleContent}
+    </BaseCard>
+  );
+}
 
 const ThemedCard = memo(ThemedCardComponent);
 

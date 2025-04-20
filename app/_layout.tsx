@@ -18,6 +18,7 @@ import React, {
   useMemo,
   createContext,
   useContext,
+  memo,
 } from 'react';
 import 'react-native-reanimated';
 import { useColorScheme, AppState, View, Text, StyleSheet } from 'react-native';
@@ -52,6 +53,7 @@ try {
   });
 }
 
+// Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -68,6 +70,7 @@ const queryClient = new QueryClient({
   },
 });
 
+// Memoize navigation integration for Sentry
 const navigationIntegration = Sentry.reactNavigationIntegration();
 Sentry.init({
   dsn: 'https://5ca58a5811a094515e346b0241e6a3f7@o1414696.ingest.us.sentry.io/4509090539831296',
@@ -168,27 +171,15 @@ function AppContent() {
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appState.current === 'background' && nextAppState === 'active' && appReady) {
-        setTimeout(preloadAppData, 300);
-      }
-      appState.current = nextAppState;
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [appReady, preloadAppData]);
-
   const SPLASH_SCREEN_TIMEOUT = 5000;
   const handleLayout = useCallback(async () => {
     if (!hasHiddenSplash.current && fontsLoaded) {
       setIsTransitioning(true);
       hasHiddenSplash.current = true;
 
+      let timeoutId: NodeJS.Timeout | undefined;
       const timeoutPromise = new Promise(resolve => {
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           Sentry.captureMessage('Splash screen hide timed out', {
             level: 'warning',
             tags: { location: 'splash_screen_hide' },
@@ -199,19 +190,40 @@ function AppContent() {
 
       try {
         await Promise.race([SplashScreen.hideAsync(), timeoutPromise]);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => {
+          timeoutId = setTimeout(resolve, 100);
+        });
         setShowLoader(false);
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => {
+          timeoutId = setTimeout(resolve, 50);
+        });
         setAppReady(true);
       } catch (err) {
         Sentry.captureException(err, {
           tags: { location: 'splash_screen_hide' },
         });
       } finally {
+        clearTimeout(timeoutId);
         setIsTransitioning(false);
       }
     }
   }, [fontsLoaded]);
+
+  // Cleanup effect for AppState subscription
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (appState.current === 'background' && nextAppState === 'active' && appReady) {
+        const timeoutId = setTimeout(preloadAppData, 300);
+        return () => clearTimeout(timeoutId);
+      }
+      appState.current = nextAppState;
+      return undefined;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [appReady, preloadAppData]);
 
   if (!fontsLoaded || isTransitioning) {
     return <AppLoader color={colors.tint} />;
@@ -319,7 +331,7 @@ const styles = StyleSheet.create({
   },
 });
 
-function ErrorFallback({ error }: FallbackProps) {
+const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
   const colors = useColors();
   return (
     <View style={styles.errorContainer}>
@@ -328,7 +340,7 @@ function ErrorFallback({ error }: FallbackProps) {
       <Text style={[styles.errorDetail, { color: colors.text }]}>{error.toString()}</Text>
     </View>
   );
-}
+});
 
 export default Sentry.wrap(function RootLayout() {
   return (

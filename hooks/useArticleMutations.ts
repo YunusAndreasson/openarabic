@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 // Services
 import { readingListService } from '@/services/readingList';
@@ -20,9 +20,23 @@ interface ArticleMutationsResult {
     Error,
     { userId: string; articleId: number }
   >;
-  toggleWordMutation: UseMutationResult<boolean, Error, { userId: string; wordId: number }>;
-  toggleRootMutation: UseMutationResult<boolean, Error, { userId: string; rootId: number }>;
+  toggleWordMutation: UseMutationResult<
+    boolean,
+    Error,
+    { userId: string; wordId: number },
+    StudyWordContext
+  >;
+  toggleRootMutation: UseMutationResult<
+    boolean,
+    Error,
+    { userId: string; rootId: number },
+    StudyWordContext
+  >;
 }
+
+type StudyWordContext = {
+  previousStudyWords: { root_id: number }[];
+};
 
 /**
  * Hook for article-related mutations
@@ -39,189 +53,180 @@ export const useArticleMutations = (
   const queryClient = useQueryClient();
   const { showToast } = useToast();
 
-  // Mutations setup - add to reading list
-  const addToReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
-      readingListService.addToReadingList(userId, articleId),
-    onSuccess: () => {
-      refetchReadingListStatus();
-      queryClient.invalidateQueries({ queryKey: ['readingList'] });
-      showToast('Added to bookmarks');
-    },
-    onError: error => {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (
-        errorMessage.includes('reading_list_position_unique') ||
-        errorMessage.includes('duplicate key value')
-      ) {
-        showToast('Article already in bookmarks');
-      } else {
-        showToast('Failed to add to bookmarks');
-      }
-    },
-  });
-
-  // Remove from reading list mutation
-  const removeFromReadingListMutation = useMutation({
-    mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
-      readingListService.removeFromReadingList(userId, articleId),
-    onSuccess: () => {
-      refetchReadingListStatus();
-      queryClient.invalidateQueries({ queryKey: ['readingList'] });
-      showToast('Removed from bookmarks');
-    },
-    onError: () => {
-      // Error handled silently
-    },
-  });
-
-  // Toggle word study status mutation
-  const toggleWordMutation = useMutation({
-    mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
-      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, wordId);
-    },
-    onMutate: async ({ userId, wordId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
-
-      // Snapshot the previous value
-      const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
-        root_id: number;
-      }[];
-
-      // Optimistically update the cache
-      queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
-        const exists = old.some(sw => sw.root_id === wordId);
-        if (exists) {
-          return old.filter(sw => sw.root_id !== wordId);
+  // Memoize mutation options for reading list
+  const addToReadingListOptions = useMemo(
+    () => ({
+      mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
+        readingListService.addToReadingList(userId, articleId),
+      onSuccess: () => {
+        refetchReadingListStatus();
+        queryClient.invalidateQueries({ queryKey: ['readingList'] });
+        showToast('Added to bookmarks');
+      },
+      onError: (error: Error) => {
+        const errorMessage = error.message;
+        if (
+          errorMessage.includes('reading_list_position_unique') ||
+          errorMessage.includes('duplicate key value')
+        ) {
+          showToast('Article already in bookmarks');
         } else {
-          return [...old, { root_id: wordId }];
+          showToast('Failed to add to bookmarks');
         }
-      });
+      },
+    }),
+    [queryClient, refetchReadingListStatus, showToast]
+  );
 
-      return { previousStudyWords };
-    },
-    onError: (error, { userId }, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(['studyWords', userId], context?.previousStudyWords);
+  // Memoize mutation options for removing from reading list
+  const removeFromReadingListOptions = useMemo(
+    () => ({
+      mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
+        readingListService.removeFromReadingList(userId, articleId),
+      onSuccess: () => {
+        refetchReadingListStatus();
+        queryClient.invalidateQueries({ queryKey: ['readingList'] });
+        showToast('Removed from bookmarks');
+      },
+      onError: () => {
+        // Error handled silently
+      },
+    }),
+    [queryClient, refetchReadingListStatus, showToast]
+  );
 
-      handleError(error instanceof Error ? error : String(error));
-      // Show error toast to user
-      showToast('Error updating study list');
+  // Memoize mutation options for toggling word study status
+  const toggleWordOptions = useMemo(
+    () => ({
+      mutationFn: async ({ userId, wordId }: { userId: string; wordId: number }) => {
+        return studyWordsFSRSService.toggleFSRSStudyRoot(userId, wordId);
+      },
+      onMutate: async ({
+        userId,
+        wordId,
+      }: {
+        userId: string;
+        wordId: number;
+      }): Promise<StudyWordContext> => {
+        await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
+        const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
+          root_id: number;
+        }[];
 
-      // Refresh study words data anyway to ensure UI is consistent
-      queryClient.invalidateQueries({
-        queryKey: ['studyWords', userId],
-      });
-    },
-    onSuccess: (_, { userId }) => {
-      // Immediately invalidate and refetch study words
-      queryClient.invalidateQueries({
-        queryKey: ['studyWords', userId],
-        refetchType: 'all',
-      });
+        queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
+          const exists = old.some(sw => sw.root_id === wordId);
+          return exists ? old.filter(sw => sw.root_id !== wordId) : [...old, { root_id: wordId }];
+        });
 
-      // Call the refetchStudyWords function if provided
-      if (refetchStudyWords) {
-        setTimeout(() => {
-          refetchStudyWords();
-        }, 100); // Slight delay to ensure database has completed the operation
-      }
-
-      // Invalidate other related queries
-      queryClient.invalidateQueries({
-        queryKey: ['dueWords', userId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['studyWordsCounts', userId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['enhancedAudioTracks', userId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['vocabularyStats'],
-      });
-    },
-  });
-
-  // Toggle root study status mutation
-  const toggleRootMutation = useMutation({
-    mutationFn: async ({ userId, rootId }: { userId: string; rootId: number }) => {
-      return studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
-    },
-    onMutate: async ({ userId, rootId }) => {
-      // Cancel any outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
-
-      // Snapshot the previous value
-      const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
-        root_id: number;
-      }[];
-
-      // Optimistically update the cache
-      queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
-        const exists = old.some(sw => sw.root_id === rootId);
-        if (exists) {
-          return old.filter(sw => sw.root_id !== rootId);
-        } else {
-          return [...old, { root_id: rootId }];
+        return { previousStudyWords };
+      },
+      onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
+        if (context?.previousStudyWords) {
+          queryClient.setQueryData(['studyWords', userId], context.previousStudyWords);
         }
-      });
+        handleError(error);
+        showToast('Error updating study list');
+        queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+      },
+      onSuccess: (_: boolean, { userId }: { userId: string }) => {
+        // Batch invalidate related queries
+        const relatedQueries = [
+          ['studyWords', userId],
+          ['dueWords', userId],
+          ['studyWordsCounts', userId],
+          ['enhancedAudioTracks', userId],
+          ['vocabularyStats'],
+        ];
 
-      return { previousStudyWords };
-    },
-    onError: (error, { userId }, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
-      queryClient.setQueryData(['studyWords', userId], context?.previousStudyWords);
+        relatedQueries.forEach(queryKey => {
+          queryClient.invalidateQueries({ queryKey });
+        });
 
-      handleError(error instanceof Error ? error : String(error));
-      // Show error toast to user
-      showToast('Error updating study list');
+        if (refetchStudyWords) {
+          setTimeout(refetchStudyWords, 100);
+        }
+      },
+    }),
+    [queryClient, refetchStudyWords, showToast]
+  );
 
-      // Refresh study words data anyway to ensure UI is consistent
-      queryClient.invalidateQueries({
-        queryKey: ['studyWords', userId],
-      });
-    },
-    onSuccess: (_, { userId }) => {
-      // Immediately invalidate and refetch study words
-      queryClient.invalidateQueries({
-        queryKey: ['studyWords', userId],
-        refetchType: 'all',
-      });
+  // Memoize mutation options for toggling root study status
+  const toggleRootOptions = useMemo(
+    () => ({
+      mutationFn: async ({ userId, rootId }: { userId: string; rootId: number }) => {
+        return studyWordsFSRSService.toggleFSRSStudyRoot(userId, rootId);
+      },
+      onMutate: async ({
+        userId,
+        rootId,
+      }: {
+        userId: string;
+        rootId: number;
+      }): Promise<StudyWordContext> => {
+        await queryClient.cancelQueries({ queryKey: ['studyWords', userId] });
+        const previousStudyWords = queryClient.getQueryData(['studyWords', userId]) as {
+          root_id: number;
+        }[];
 
-      // Call the refetchStudyWords function if provided
-      if (refetchStudyWords) {
-        setTimeout(() => {
-          refetchStudyWords();
-        }, 100); // Slight delay to ensure database has completed the operation
-      }
+        queryClient.setQueryData(['studyWords', userId], (old: { root_id: number }[] = []) => {
+          const exists = old.some(sw => sw.root_id === rootId);
+          return exists ? old.filter(sw => sw.root_id !== rootId) : [...old, { root_id: rootId }];
+        });
 
-      // Invalidate other related queries
-      queryClient.invalidateQueries({
-        queryKey: ['dueWords', userId],
-      });
+        return { previousStudyWords };
+      },
+      onError: (error: Error, { userId }: { userId: string }, context?: StudyWordContext) => {
+        if (context?.previousStudyWords) {
+          queryClient.setQueryData(['studyWords', userId], context.previousStudyWords);
+        }
+        handleError(error);
+        showToast('Error updating study list');
+        queryClient.invalidateQueries({ queryKey: ['studyWords', userId] });
+      },
+      onSuccess: (_: boolean, { userId }: { userId: string }) => {
+        // Batch invalidate related queries
+        const relatedQueries = [
+          ['studyWords', userId],
+          ['dueWords', userId],
+          ['fsrs-words', userId],
+          ['studyWordsCounts', userId],
+          ['enhancedAudioTracks', userId],
+          ['vocabularyStats'],
+        ];
 
-      queryClient.invalidateQueries({
-        queryKey: ['fsrs-words', userId],
-      });
+        relatedQueries.forEach(queryKey => {
+          queryClient.invalidateQueries({ queryKey });
+        });
 
-      queryClient.invalidateQueries({
-        queryKey: ['studyWordsCounts', userId],
-      });
+        if (refetchStudyWords) {
+          setTimeout(refetchStudyWords, 100);
+        }
+      },
+    }),
+    [queryClient, refetchStudyWords, showToast]
+  );
 
-      queryClient.invalidateQueries({
-        queryKey: ['enhancedAudioTracks', userId],
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: ['vocabularyStats'],
-      });
-    },
-  });
+  // Initialize mutations with memoized options
+  const addToReadingListMutation = useMutation<void, Error, { userId: string; articleId: number }>(
+    addToReadingListOptions
+  );
+  const removeFromReadingListMutation = useMutation<
+    void,
+    Error,
+    { userId: string; articleId: number }
+  >(removeFromReadingListOptions);
+  const toggleWordMutation = useMutation<
+    boolean,
+    Error,
+    { userId: string; wordId: number },
+    StudyWordContext
+  >(toggleWordOptions);
+  const toggleRootMutation = useMutation<
+    boolean,
+    Error,
+    { userId: string; rootId: number },
+    StudyWordContext
+  >(toggleRootOptions);
 
   // Handle toggling reading list
   const handleToggleReadingList = useCallback(

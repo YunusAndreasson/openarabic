@@ -111,6 +111,9 @@ export const useArticleData = (
 
   // Extract selected root IDs since study is now root-based
   const selectedWordIds = useMemo(() => {
+    // Skip recalculation if no study words
+    if (!studyWords.length) return new Set<number>();
+
     const ids = new Set<number>();
     studyWords.forEach(w => {
       if (w.root_id != null) {
@@ -123,15 +126,16 @@ export const useArticleData = (
   // Create sentence words map from article data - no additional fetch needed
   const sentenceWordsMap = useMemo(() => {
     const map = new Map<number, SentenceWord[]>();
-    if (!sortedSentences.length) {
-      return map;
-    }
+    // Early return if no sentences
+    if (!sortedSentences?.length) return map;
 
-    sortedSentences.forEach(sentence => {
-      if (sentence.sentence_words) {
-        map.set(
+    // Process all sentences in one pass
+    return sortedSentences.reduce((acc, sentence) => {
+      if (sentence.sentence_words?.length) {
+        acc.set(
           sentence.id,
-          [...sentence.sentence_words]
+          sentence.sentence_words
+            .slice() // Create a new array to avoid mutating the original
             .sort((a, b) => a.position - b.position)
             .map(word => ({
               ...word,
@@ -139,17 +143,17 @@ export const useArticleData = (
                 id: word.root_id,
                 letters: '',
                 meaning: null,
+                audio_url: null,
               },
               word_type: {
                 id: word.word_type_id,
                 name: '',
               },
-            })) as SentenceWord[]
+            }))
         );
       }
-    });
-
-    return map;
+      return acc;
+    }, new Map<number, SentenceWord[]>());
   }, [sortedSentences]);
 
   // Get related articles with optimized caching
@@ -207,16 +211,20 @@ export const useArticleData = (
   );
 
   useEffect(() => {
-    if (!article?.id || otherArticles.length === 0) return;
+    // Early return if we can't prefetch
+    if (!article?.id || !otherArticles?.length) return;
 
     const currentIndex = otherArticles.findIndex(a => a.id === article.id);
     if (currentIndex === -1) return;
 
+    // Prefetch both articles in parallel if they exist
     const nextArticle = otherArticles[currentIndex + 1];
     const prevArticle = otherArticles[currentIndex - 1];
 
-    if (nextArticle) prefetchArticle(nextArticle.id);
-    if (prevArticle) prefetchArticle(prevArticle.id);
+    Promise.all([
+      nextArticle && prefetchArticle(nextArticle.id),
+      prevArticle && prefetchArticle(prevArticle.id),
+    ]).catch(error => handleError(error));
   }, [article?.id, otherArticles, prefetchArticle]);
 
   return {

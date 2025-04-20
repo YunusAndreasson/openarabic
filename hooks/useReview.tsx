@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Audio } from 'expo-av';
 import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
@@ -27,10 +27,11 @@ function useAudioPlayer() {
   });
 
   const cleanup = useCallback(async () => {
-    if (audioState.current.sound) {
+    const { sound } = audioState.current;
+    if (sound) {
       try {
-        await audioState.current.sound.stopAsync().catch(() => {});
-        await audioState.current.sound.unloadAsync().catch(() => {});
+        const promises = [sound.stopAsync().catch(() => {}), sound.unloadAsync().catch(() => {})];
+        await Promise.all(promises);
       } catch (e) {
         handleError(e instanceof Error ? e : new Error(String(e)));
       }
@@ -51,14 +52,16 @@ function useAudioPlayer() {
         audioState.current.lastUrl = url;
         audioState.current.isPlaying = true;
 
-        await Audio.setAudioModeAsync({
+        const audioMode = {
           playsInSilentModeIOS: true,
           staysActiveInBackground: true,
           shouldDuckAndroid: true,
           interruptionModeIOS: InterruptionModeIOS.DoNotMix,
           interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
           playThroughEarpieceAndroid: false,
-        });
+        };
+
+        await Audio.setAudioModeAsync(audioMode);
 
         const { sound } = await Audio.Sound.createAsync(
           { uri: url },
@@ -73,14 +76,18 @@ function useAudioPlayer() {
 
         audioState.current.sound = sound;
 
+        const controller = new AbortController();
         setTimeout(() => {
-          if (audioState.current.lastUrl === url) {
+          if (!controller.signal.aborted && audioState.current.lastUrl === url) {
             audioState.current.isPlaying = false;
           }
         }, 3000);
+
+        return () => controller.abort();
       } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
+        handleError(error instanceof Error ? error : new Error(String(error)));
         audioState.current.isPlaying = false;
+        return () => {};
       }
     },
     [cleanup]
@@ -88,7 +95,7 @@ function useAudioPlayer() {
 
   useEffect(() => {
     return () => {
-      cleanup();
+      cleanup().catch(e => handleError(e instanceof Error ? e : new Error(String(e))));
     };
   }, [cleanup]);
 
@@ -162,6 +169,7 @@ export function useReview({
   const isUpdatingWordRef = useRef<boolean>(false);
   const lastProgressUpdateRef = useRef(Date.now());
   const lastProcessedWordIdRef = useRef<string | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   const triggerCompletionTransition = useCallback(() => {
     if (completionTriggeredRef.current) return;
@@ -197,29 +205,43 @@ export function useReview({
   const preloadNextAudio = useCallback(async (audioUrl: string) => {
     if (!audioUrl) return;
 
-    try {
-      if (nextWordAudioRef.current?.url === audioUrl && nextWordAudioRef.current.loaded) {
-        return;
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      try {
+        if (nextWordAudioRef.current?.url === audioUrl && nextWordAudioRef.current.loaded) {
+          return;
+        }
+
+        if (nextWordAudioRef.current?.sound) {
+          await nextWordAudioRef.current.sound.unloadAsync().catch(() => {});
+        }
+
+        const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false });
+
+        nextWordAudioRef.current = {
+          url: audioUrl,
+          loaded: true,
+          sound,
+        };
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+        nextWordAudioRef.current = {
+          url: audioUrl,
+          loaded: false,
+        };
       }
+    }, 300);
+  }, []);
 
-      if (nextWordAudioRef.current?.sound) {
-        await nextWordAudioRef.current.sound.unloadAsync().catch(() => {});
-      }
+  // Batch state updates for meaning overlay
+  const showMeaningWithTimeout = useCallback((meaning: string, isVague: boolean) => {
+    setCurrentMeaning(meaning);
+    setIsVagueMeaning(isVague);
+    setShowMeaningOverlay(true);
 
-      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false });
-
-      nextWordAudioRef.current = {
-        url: audioUrl,
-        loaded: true,
-        sound,
-      };
-    } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
-      nextWordAudioRef.current = {
-        url: audioUrl,
-        loaded: false,
-      };
-    }
+    return setTimeout(() => {
+      setShowMeaningOverlay(false);
+    }, 2000);
   }, []);
 
   useEffect(() => {
@@ -314,55 +336,51 @@ export function useReview({
       }
 
       isUpdatingWordRef.current = true;
+
+      const controller = new AbortController();
       setTimeout(() => {
+        if (controller.signal.aborted) return;
+
         cleanupAudio();
         fadeOut();
 
         setTimeout(() => {
+          if (controller.signal.aborted) return;
+
           if (confidence === 'unknown' || confidence === 'vague') {
             const meaning = currentWord?.root?.meaning || 'No translation available';
-            setCurrentMeaning(meaning);
-            setIsVagueMeaning(confidence === 'vague');
-            setShowMeaningOverlay(true);
+            meaningTimeoutRef.current = showMeaningWithTimeout(meaning, confidence === 'vague');
           }
 
-          const processFeedback = () => {
-            if (currentWord?.root_id) {
-              updateWord(currentWord.root_id, confidence)
-                .then(() => {
-                  if (!isUpdatingWordRef.current) return;
-                  setTimeout(() => {
-                    fadeIn();
-                  }, 150);
-                })
-                .catch(error => {
-                  handleError(error);
-                  if (!isUpdatingWordRef.current) return;
-                  fadeIn();
-                })
-                .finally(() => {
-                  isUpdatingWordRef.current = false;
-                  if (meaningTimeoutRef.current) {
-                    clearTimeout(meaningTimeoutRef.current);
-                    meaningTimeoutRef.current = null;
-                  }
-                });
-            } else {
+          const processFeedback = async () => {
+            if (!currentWord?.root_id || controller.signal.aborted) return;
+
+            try {
+              await updateWord(currentWord.root_id, confidence);
+              if (!isUpdatingWordRef.current) return;
+              setTimeout(() => fadeIn(), 150);
+            } catch (error) {
+              handleError(error instanceof Error ? error : new Error(String(error)));
+              if (!isUpdatingWordRef.current) return;
               fadeIn();
+            } finally {
               isUpdatingWordRef.current = false;
+              if (meaningTimeoutRef.current) {
+                clearTimeout(meaningTimeoutRef.current);
+                meaningTimeoutRef.current = null;
+              }
             }
           };
 
           if (confidence === 'unknown' || confidence === 'vague') {
-            meaningTimeoutRef.current = setTimeout(() => {
-              setShowMeaningOverlay(false);
-              processFeedback();
-            }, 2000);
+            meaningTimeoutRef.current = setTimeout(processFeedback, 2000);
           } else {
             processFeedback();
           }
         }, 300);
       }, 200);
+
+      return () => controller.abort();
     },
     [
       currentWord,
@@ -372,6 +390,7 @@ export function useReview({
       fadeIn,
       fadeOut,
       cleanupAudio,
+      showMeaningWithTimeout,
     ]
   );
 
@@ -421,11 +440,14 @@ export function useReview({
     };
   }, [invalidateQueries, user?.id, queryClient, onClose, cleanupAudio]);
 
+  // Cleanup effect
   useEffect(() => {
+    const controller = new AbortController();
+
     return () => {
+      controller.abort();
       completionTriggeredRef.current = true;
       fadeIn();
-
       cleanupAudio();
 
       if (meaningTimeoutRef.current) {

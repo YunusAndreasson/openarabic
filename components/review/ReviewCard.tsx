@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, memo } from 'react';
 import { StyleSheet } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -16,6 +16,25 @@ import WordDisplay from './WordDisplay';
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.04;
 const RESET_CONFIG = { duration: 150 }; // Faster reset animation
 
+// Styles moved outside component
+const styles = StyleSheet.create({
+  swipeContainer: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  wordContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 280,
+    width: '100%',
+  },
+});
+
 interface ReviewCardProps {
   word: string;
   fontSize: number;
@@ -27,7 +46,7 @@ interface ReviewCardProps {
   opacity: Animated.SharedValue<number>;
 }
 
-const ReviewCard: React.FC<ReviewCardProps> = ({
+const ReviewCard = memo(function ReviewCard({
   word,
   fontSize,
   onSwipeLeft,
@@ -36,7 +55,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   isUpdating,
   isTransitioning,
   opacity,
-}) => {
+}: ReviewCardProps) {
   // Animation values
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
@@ -72,36 +91,47 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
     [isAnimatingRef, onSwipeLeft, onSwipeRight, resetPosition]
   );
 
-  // Create pan gesture
-  const panGesture = Gesture.Pan()
-    .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
-    .minDistance(0.1)
-    .activeOffsetX([-1, 1])
-    .onUpdate(event => {
-      if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
-        translateX.value = event.translationX;
-      }
-    })
-    .onEnd(event => {
-      if (!isAnimatingRef.value && Math.abs(event.translationX) > SWIPE_THRESHOLD) {
-        const isRight = event.translationX > 0;
-        runOnJS(handleSwipeComplete)(isRight);
-      } else {
-        runOnJS(resetPosition)();
-      }
-    });
+  // Create pan gesture - memoized
+  const panGesture = useCallback(
+    () =>
+      Gesture.Pan()
+        .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+        .minDistance(0.1)
+        .activeOffsetX([-1, 1])
+        .onUpdate(event => {
+          if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
+            translateX.value = event.translationX;
+          }
+        })
+        .onEnd(event => {
+          if (!isAnimatingRef.value && Math.abs(event.translationX) > SWIPE_THRESHOLD) {
+            const isRight = event.translationX > 0;
+            runOnJS(handleSwipeComplete)(isRight);
+          } else {
+            runOnJS(resetPosition)();
+          }
+        }),
+    [isUpdating, isTransitioning, isAnimatingRef, translateX, handleSwipeComplete, resetPosition]
+  );
 
-  // Create tap gesture
-  const tapGesture = Gesture.Tap()
-    .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
-    .onEnd(() => {
-      if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
-        runOnJS(onTap)();
-      }
-    });
+  // Create tap gesture - memoized
+  const tapGesture = useCallback(
+    () =>
+      Gesture.Tap()
+        .enabled(!isUpdating && !isTransitioning && !isAnimatingRef.value)
+        .onEnd(() => {
+          if (!isUpdating && !isTransitioning && !isAnimatingRef.value) {
+            runOnJS(onTap)();
+          }
+        }),
+    [isUpdating, isTransitioning, isAnimatingRef, onTap]
+  );
 
-  // Combine gestures
-  const combinedGestures = Gesture.Exclusive(panGesture, tapGesture);
+  // Combine gestures - memoized
+  const combinedGestures = useCallback(
+    () => Gesture.Exclusive(panGesture(), tapGesture()),
+    [panGesture, tapGesture]
+  );
 
   // Create animated style for the swipe container
   const swipeContainerStyle = useAnimatedStyle(() => ({
@@ -114,7 +144,7 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
   }));
 
   return (
-    <GestureDetector gesture={combinedGestures}>
+    <GestureDetector gesture={combinedGestures()}>
       <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
         <Animated.View style={[styles.wordContainer, wordContainerStyle]}>
           <WordDisplay word={word} fontSize={fontSize} />
@@ -122,24 +152,8 @@ const ReviewCard: React.FC<ReviewCardProps> = ({
       </Animated.View>
     </GestureDetector>
   );
-};
-
-const styles = StyleSheet.create({
-  swipeContainer: {
-    alignItems: 'center',
-    bottom: 0,
-    justifyContent: 'center',
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-  },
-  wordContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 280,
-    width: '100%',
-  },
 });
+
+ReviewCard.displayName = 'ReviewCard';
 
 export default ReviewCard;

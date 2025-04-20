@@ -23,7 +23,7 @@ const WordDisplay = memo(
         fontWeight: '700',
         textAlign: 'center',
         paddingVertical: LAYOUT.SPACING.MEDIUM,
-        lineHeight: fontSize * 1.5,
+        lineHeight: fontSize * 1.7,
         ...(Platform.OS === 'ios'
           ? {
               shadowColor: colors.shadow,

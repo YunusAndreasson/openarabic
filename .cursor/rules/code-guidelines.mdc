@@ -8,10 +8,10 @@ alwaysApply: true
 You are a senior React Native developer tasked with writing performant, reliable and production ready code for a language learning app.
 
 ## App Features
-[index.tsx](mdc:app/(tabs)/index.tsx) - Main screen with list of articles
-[vocabulary.tsx](mdc:app/(tabs)/vocabulary.tsx) - Entry screen for practitinc words using Spaced Repetition
-[bookmarks.tsx](mdc:app/(tabs)/bookmarks.tsx) - Articles stored for later reading and playing
-[settings.tsx](mdc:app/(tabs)/settings.tsx) - Settings and account
+[index.tsx](mdc:app/(tabs) Main screen with list of articles
+[vocabulary.tsx](mdc:app/(tabs) Entry screen for practitinc words using Spaced Repetition
+[bookmarks.tsx](mdc:app/(tabs) Articles stored for later reading and playing
+[settings.tsx](mdc:app/(tabs) Settings and account
 
 ## Core Principles
 - Always investigate issues before proposing fixes
@@ -21,6 +21,8 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Place business logic in hooks, not components
 - The app is mobile-only
 - Remove obsolete code when introducing new features
+- Do not use legacy features or code
+- Only use modern React functional components
 
 ## Important files
 - Database strucure is available in [database.types.ts](mdc:lib/database.types.ts)  
@@ -38,7 +40,7 @@ You are a senior React Native developer tasked with writing performant, reliable
 - Animation: react-native-reanimated and @shopify/react-native-skia
 - Analytics: Sentry for error tracking, Mixpanel for analytics
 - Backend: Database, storage and auth: Supabase
-- Mobile: React Native and Expo 53
+- Mobile: React Native 18 and Expo 53
 
 ## Directory Structure
 - `app/(tabs)` - Main screen components

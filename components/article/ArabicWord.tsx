@@ -10,16 +10,23 @@ import { useOpacityAnimation, useTransformAnimation } from '../../hooks/animatio
 import { useArabicWord } from '../../hooks/useArabicWord';
 import { useColors } from '../../hooks/useColors';
 import { useIsDarkMode } from '../../hooks/useThemeDetection';
+import type { TextWeight } from '../../types/ui/text.types';
 import type { SentenceWord } from '../../types/vocabulary.types';
 import { lightFeedback } from '../../utils/haptics';
 import { ThemedText } from '../ThemedText';
 
 import { WordTooltip } from './WordTooltip';
 
-// Global counter for tooltip zIndex values
-let tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
-// Maximum z-index value to prevent potential integer overflow
+// Global counter for tooltip zIndex values with circular increment
+const MIN_Z_INDEX = LAYOUT.Z_INDEX.TOOLTIP;
 const MAX_Z_INDEX = 10000;
+let tooltipZIndexCounter = MIN_Z_INDEX;
+
+const getNextZIndex = () => {
+  tooltipZIndexCounter =
+    tooltipZIndexCounter >= MAX_Z_INDEX ? MIN_Z_INDEX : tooltipZIndexCounter + 1;
+  return tooltipZIndexCounter;
+};
 
 const OPACITY = {
   HIGHLIGHTED: '30',
@@ -101,18 +108,14 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   // Handle the animation reversal after a brief delay
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
+    if (!needsReverseAnimation) return;
 
-    if (needsReverseAnimation) {
-      timer = setTimeout(() => {
-        reversePressAnimation();
-        setNeedsReverseAnimation(false);
-      }, 200);
-    }
+    const timer = setTimeout(() => {
+      reversePressAnimation();
+      setNeedsReverseAnimation(false);
+    }, 200);
 
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [needsReverseAnimation, reversePressAnimation]);
 
   // Calculate absolute position considering page scroll - memoized for performance
@@ -156,7 +159,7 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
       skipDefaultColor: false,
       colorName: 'arabicText' as const,
       arabicFontSize: calculatedFontSize,
-      weight: isSelected ? ('600' as const) : ('normal' as const),
+      weight: (isSelected ? 'semibold' : 'normal') as TextWeight,
       style: styles.textStyle as TextStyle,
     }),
     [isSelected, calculatedFontSize]
@@ -171,13 +174,8 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
   const handlePress = useCallback(() => {
     if (!layout) return;
 
-    // Increment global counter and set new zIndex
-    tooltipZIndexCounter += 1;
-    // Reset if it gets too high to prevent potential issues
-    if (tooltipZIndexCounter > MAX_Z_INDEX) {
-      tooltipZIndexCounter = LAYOUT.Z_INDEX.TOOLTIP;
-    }
-    setTooltipZIndex(tooltipZIndexCounter);
+    // Set new zIndex using optimized counter
+    setTooltipZIndex(getNextZIndex());
 
     // Show tooltip immediately with animation handled in WordTooltip
     setTooltipVisible(true);

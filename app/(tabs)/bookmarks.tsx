@@ -340,10 +340,10 @@ export default function BookmarksScreen(): JSX.Element {
       return readingListService.getReadingList(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 60000,
-    gcTime: 300000,
-    retry: 3,
-    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 10000),
+    staleTime: 5 * 60 * 1000, // 5 minutes - increased from 1 minute for better caching
+    gcTime: 10 * 60 * 1000, // 10 minutes - increased for better memory management
+    retry: 2, // Reduced from 3 to fail faster on real errors
+    retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 5000), // Reduced max delay
     placeholderData: [], // Ensure we always have an array, even if empty
   });
   const {
@@ -382,8 +382,9 @@ export default function BookmarksScreen(): JSX.Element {
       return enhancedAudioService.getReadingListEnhancedTracks(user.id);
     },
     enabled: !!user?.id,
-    staleTime: 60000,
-    gcTime: 300000,
+    staleTime: 5 * 60 * 1000, // Align with readingList staleTime
+    gcTime: 10 * 60 * 1000, // Align with readingList gcTime
+    placeholderData: [], // Added for consistency
   });
   const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = enhancedTracksQuery;
 
@@ -410,15 +411,25 @@ export default function BookmarksScreen(): JSX.Element {
   // Loading State Synchronization Effect
   useEffect(() => {
     const shouldBeLoading =
-      isReadingListLoading || isReadingListFetching || isEnhancedTracksLoading;
+      (!isDataCached && isReadingListLoading) || // Only show loading for uncached initial load
+      isEnhancedTracksLoading;
+
     if (shouldBeLoading === isLoadingState) return;
 
-    const timeoutId = setTimeout(shouldBeLoading ? startLoading : stopLoading, 50);
+    if (shouldBeLoading) {
+      startLoading();
+    } else {
+      stopLoading();
+    }
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      if (isLoadingState) {
+        stopLoading();
+      }
+    };
   }, [
+    isDataCached,
     isReadingListLoading,
-    isReadingListFetching,
     isEnhancedTracksLoading,
     isLoadingState,
     startLoading,
@@ -564,10 +575,11 @@ export default function BookmarksScreen(): JSX.Element {
             }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={null}
-            drawDistance={ITEM_HEIGHT * 10}
+            drawDistance={ITEM_HEIGHT * 5}
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;
             }}
+            removeClippedSubviews={true}
           />
         </ThemedView>
 

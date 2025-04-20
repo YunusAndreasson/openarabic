@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import type { AnimateStyle } from 'react-native-reanimated';
 import { runOnUI } from 'react-native-reanimated';
@@ -48,8 +48,8 @@ export const useScreenAnimation = (
 ): ScreenAnimationResult => {
   const isMountedRef = useRef(true);
 
+  // Optimize cleanup to avoid closure issues
   useEffect(() => {
-    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
     };
@@ -68,15 +68,14 @@ export const useScreenAnimation = (
     duration: animationDuration,
   });
 
-  // Function to start the fade-in animation - ensure it's a worklet
-  const startFadeInAnimation = useCallback(() => {
-    if (!isMountedRef.current) return;
-
-    // Ensure this runs on the UI thread
-    runOnUI(() => {
+  // Memoize the worklet function to prevent unnecessary recreations
+  const startFadeInAnimation = useMemo(() => {
+    const worklet = () => {
       'worklet';
+      if (!isMountedRef.current) return;
       setOpacity(1);
-    })();
+    };
+    return () => runOnUI(worklet)();
   }, [setOpacity]);
 
   // Trigger animations when both data and layout are ready
@@ -88,27 +87,27 @@ export const useScreenAnimation = (
     animationDelay
   );
 
-  // Reset all animations and layout state
+  // Memoize reset callback
   const reset = useCallback(() => {
     resetAnimations();
     resetLayout();
-    // Ensure opacity reset runs on the UI thread
     runOnUI(() => {
       'worklet';
       resetOpacity();
     })();
   }, [resetAnimations, resetLayout, resetOpacity]);
 
-  // Helper for conditional rendering - only show content when layout is ready
-  const shouldRenderAnimatedContent = isLayoutReady;
-
-  return {
-    isLayoutReady,
-    animationsTriggered,
-    fadeInStyle: fadeInStyle as StyleProp<AnimateStyle<ViewStyle>>,
-    triggerAnimations,
-    resetAnimations,
-    reset,
-    shouldRenderAnimatedContent,
-  };
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(
+    () => ({
+      isLayoutReady,
+      animationsTriggered,
+      fadeInStyle: fadeInStyle as StyleProp<AnimateStyle<ViewStyle>>,
+      triggerAnimations,
+      resetAnimations,
+      reset,
+      shouldRenderAnimatedContent: isLayoutReady,
+    }),
+    [isLayoutReady, animationsTriggered, fadeInStyle, triggerAnimations, resetAnimations, reset]
+  );
 };

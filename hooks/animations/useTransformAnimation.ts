@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import type {
   AnimatedStyleProp,
@@ -160,30 +160,62 @@ export const useTransformAnimation = (
   } = options;
 
   // For slide animations, calculate the start position based on direction
-  const startPosition =
-    type === 'slide' ? (direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH) : initialValue;
+  const startPosition = useMemo(
+    () =>
+      type === 'slide' ? (direction === 'right' ? SCREEN_WIDTH : -SCREEN_WIDTH) : initialValue,
+    [type, direction, initialValue]
+  );
 
   // Initialize the shared value
   const value = useSharedValue(startPosition);
 
+  // Memoize animation configurations
+  const springConfig = useMemo(
+    () => ({
+      damping: damping ?? 15,
+      stiffness: stiffness ?? 120,
+    }),
+    [damping, stiffness]
+  );
+
+  const timingConfig = useMemo(
+    () => ({
+      duration,
+      easing: TIMING_CONFIG.MEDIUM.easing,
+    }),
+    [duration]
+  );
+
   // Create optimized entering and exiting animations based on transform type
-  let entering: BaseAnimationBuilder;
-  let exiting: BaseAnimationBuilder;
+  const { entering, exiting } = useMemo(() => {
+    if (type === 'scale') {
+      return {
+        entering: ZoomIn.duration(duration).delay(delay).springify(),
+        exiting: ZoomOut.duration(duration).springify(),
+      };
+    }
+    return {
+      entering:
+        direction === 'right'
+          ? SlideInRight.duration(duration).delay(delay).springify()
+          : SlideInLeft.duration(duration).delay(delay).springify(),
+      exiting:
+        direction === 'right'
+          ? SlideOutRight.duration(duration).springify()
+          : SlideOutLeft.duration(duration).springify(),
+    };
+  }, [type, direction, duration, delay]);
 
-  if (type === 'scale') {
-    entering = ZoomIn.duration(duration).delay(delay).springify();
-    exiting = ZoomOut.duration(duration).springify();
-  } else {
-    entering =
-      direction === 'right'
-        ? SlideInRight.duration(duration).delay(delay).springify()
-        : SlideInLeft.duration(duration).delay(delay).springify();
-
-    exiting =
-      direction === 'right'
-        ? SlideOutRight.duration(duration).springify()
-        : SlideOutLeft.duration(duration).springify();
-  }
+  // Memoized animation completion handler
+  const handleAnimationComplete = useCallback(
+    (finished: boolean | undefined, onComplete?: () => void) => {
+      'worklet';
+      if (finished && onComplete) {
+        runOnJS(onComplete)();
+      }
+    },
+    []
+  );
 
   // Function to start the animation
   const startAnimation = useCallback(
@@ -195,32 +227,14 @@ export const useTransformAnimation = (
 
         // Different animation based on type
         if (useSpring) {
-          // Use spring animation
-          const springConfig = {
-            damping: damping ?? 15,
-            stiffness: stiffness ?? 120,
-          };
-
-          value.value = withSpring(targetValue, springConfig, finished => {
-            if (finished && onComplete) {
-              runOnJS(onComplete)();
-            }
-          });
+          value.value = withSpring(targetValue, springConfig, finished =>
+            handleAnimationComplete(finished, onComplete)
+          );
         } else {
-          // Use timing animation
           value.value = withDelay(
             delay,
-            withTiming(
-              targetValue,
-              {
-                duration,
-                easing: TIMING_CONFIG.MEDIUM.easing,
-              },
-              finished => {
-                if (finished && onComplete) {
-                  runOnJS(onComplete)();
-                }
-              }
+            withTiming(targetValue, timingConfig, finished =>
+              handleAnimationComplete(finished, onComplete)
             )
           );
         }
@@ -231,7 +245,7 @@ export const useTransformAnimation = (
         }
       }
     },
-    [value, targetValue, duration, delay, useSpring, damping, stiffness]
+    [value, targetValue, delay, useSpring, springConfig, timingConfig, handleAnimationComplete]
   );
 
   // Function to reverse the animation
@@ -242,35 +256,15 @@ export const useTransformAnimation = (
         // First cancel any running animations
         cancelAnimation(value);
 
-        if (useSpring) {
-          // Use spring animation
-          const springConfig = {
-            damping: damping ?? 15,
-            stiffness: stiffness ?? 120,
-          };
+        const reverseTarget = type === 'slide' ? startPosition : initialValue;
 
-          value.value = withSpring(
-            type === 'slide' ? startPosition : initialValue,
-            springConfig,
-            finished => {
-              if (finished && onComplete) {
-                runOnJS(onComplete)();
-              }
-            }
+        if (useSpring) {
+          value.value = withSpring(reverseTarget, springConfig, finished =>
+            handleAnimationComplete(finished, onComplete)
           );
         } else {
-          // Use timing animation
-          value.value = withTiming(
-            type === 'slide' ? startPosition : initialValue,
-            {
-              duration,
-              easing: TIMING_CONFIG.MEDIUM.easing,
-            },
-            finished => {
-              if (finished && onComplete) {
-                runOnJS(onComplete)();
-              }
-            }
+          value.value = withTiming(reverseTarget, timingConfig, finished =>
+            handleAnimationComplete(finished, onComplete)
           );
         }
       } catch (error) {
@@ -280,36 +274,52 @@ export const useTransformAnimation = (
         }
       }
     },
-    [value, initialValue, startPosition, duration, type, useSpring, damping, stiffness]
+    [
+      value,
+      initialValue,
+      startPosition,
+      type,
+      useSpring,
+      springConfig,
+      timingConfig,
+      handleAnimationComplete,
+    ]
   );
 
   // Reset function
   const reset = useCallback(() => {
     'worklet';
+    cancelAnimation(value);
     value.value = startPosition;
   }, [value, startPosition]);
 
   // Create the appropriate animated style based on transform type
-  const animatedStyle = useAnimatedStyle(() => {
-    if (type === 'scale') {
-      return {
-        transform: [{ scale: value.value }],
-      };
-    } else {
-      return {
-        transform: [{ translateX: value.value }],
-      };
-    }
-  });
+  const animatedStyle = useAnimatedStyle(
+    () => ({
+      transform: [type === 'scale' ? { scale: value.value } : { translateX: value.value }],
+    }),
+    [type]
+  );
 
-  return {
-    value,
-    animatedStyle,
-    startAnimation,
-    reverseAnimation,
-    reset,
-    entering,
-    exiting,
-    transformType: type,
-  };
+  // Cleanup animations on unmount
+  useEffect(() => {
+    return () => {
+      cancelAnimation(value);
+    };
+  }, [value]);
+
+  // Memoize the return object to prevent unnecessary re-renders
+  return useMemo(
+    () => ({
+      value,
+      animatedStyle,
+      startAnimation,
+      reverseAnimation,
+      reset,
+      entering,
+      exiting,
+      transformType: type,
+    }),
+    [value, animatedStyle, startAnimation, reverseAnimation, reset, entering, exiting, type]
+  );
 };

@@ -155,11 +155,13 @@ export default function ArticleScreen(): JSX.Element {
   // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
     if (user?.id) {
-      // Always fetch fresh data when this screen mounts
+      // Add stale time and caching configuration for better performance
       queryClient.fetchQuery({
         queryKey: ['studyWords', user.id],
         queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 0, // No stale time - always fetch fresh data
+        staleTime: 5 * 60 * 1000, // 5 minutes stale time
+        gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
+        retry: 2, // Limit retries to avoid unnecessary network calls
       });
     }
   }, [user, queryClient]);
@@ -223,46 +225,53 @@ export default function ArticleScreen(): JSX.Element {
       return [];
     }
 
-    const audioData = sortedSentences
-      .filter(sentence => {
-        // Check for audio URL field - only use audio_url as that's all that exists
-        const audioUrl = sentence.audio_url;
-        const isValid =
-          audioUrl &&
-          audioUrl.trim().length > 0 &&
-          (audioUrl.startsWith('http://') ||
-            audioUrl.startsWith('https://') ||
-            audioUrl.startsWith('file://'));
+    // Early return for empty sentences
+    if (sortedSentences.length === 0) {
+      return [];
+    }
 
-        return isValid;
-      })
-      .map(sentence => {
-        const sentenceId = sentence.id;
-        const words = sentenceWordsMap.get(sentenceId) || [];
+    // Pre-filter valid audio URLs for better performance
+    const validSentences = sortedSentences.filter(sentence => {
+      const audioUrl = sentence.audio_url?.trim();
+      return (
+        audioUrl &&
+        (audioUrl.startsWith('http://') ||
+          audioUrl.startsWith('https://') ||
+          audioUrl.startsWith('file://'))
+      );
+    });
 
-        // Create word timings from the words that have audio_start and audio_end
-        const wordTimings: WordTiming[] = words
-          .filter(word => {
-            const start = parseFloat(word.audio_start || '');
-            const end = parseFloat(word.audio_end || '');
-            const isValid = !isNaN(start) && !isNaN(end) && start < end;
-            return isValid;
-          })
-          .map((word, index) => ({
+    // Early return if no valid audio sentences
+    if (validSentences.length === 0) {
+      return [];
+    }
+
+    return validSentences.map(sentence => {
+      const sentenceId = sentence.id;
+      const words = sentenceWordsMap.get(sentenceId) || [];
+
+      // Pre-filter valid word timings for better performance
+      const wordTimings = words.reduce<WordTiming[]>((acc, word, index) => {
+        const start = parseFloat(word.audio_start || '');
+        const end = parseFloat(word.audio_end || '');
+
+        if (!isNaN(start) && !isNaN(end) && start < end) {
+          acc.push({
             wordId: word.id,
-            startTime: parseFloat(word.audio_start || '0') * 1000, // Convert to milliseconds
-            endTime: parseFloat(word.audio_end || '0') * 1000, // Convert to milliseconds
-            position: index, // Add position information
-          }));
+            startTime: start * 1000,
+            endTime: end * 1000,
+            position: index,
+          });
+        }
+        return acc;
+      }, []);
 
-        return {
-          sentenceId,
-          audioUrl: sentence.audio_url || '',
-          wordTimings,
-        };
-      });
-
-    return audioData;
+      return {
+        sentenceId,
+        audioUrl: sentence.audio_url || '',
+        wordTimings,
+      };
+    });
   }, [sortedSentences, sentenceWordsMap]);
 
   // Auto-scroll to the currently highlighted word
@@ -651,18 +660,6 @@ export default function ArticleScreen(): JSX.Element {
     router.back();
   }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, triggerAnimations, queryClient]);
 
-  // Memoize rendering-related props to prevent unnecessary rerenders
-  const articleUIProps = useMemo(
-    () => ({
-      colors,
-      settings,
-      currentSentenceIndex,
-      currentWordId,
-      currentPosition,
-    }),
-    [colors, settings, currentSentenceIndex, currentWordId, currentPosition]
-  );
-
   // Component renderers
   const renderWord = useCallback(
     (
@@ -691,10 +688,12 @@ export default function ArticleScreen(): JSX.Element {
     [handleRootPress, settings]
   );
 
-  // Render sentence item with optimized settings
+  // Optimize sentence item rendering with better memoization
   const renderSentenceItem = useCallback(
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
+      const isCurrentSentence = props.item.id === currentSentenceIndex;
+
       return (
         <ArticleSentence
           key={props.item.id}
@@ -711,15 +710,24 @@ export default function ArticleScreen(): JSX.Element {
             showTransliteration: false,
             showWordType: false,
           }}
-          colors={articleUIProps.colors}
+          colors={colors}
           containerStyle={styles.transparentBackground}
-          currentPlayingSentenceId={articleUIProps.currentSentenceIndex}
-          currentPlayingWordId={articleUIProps.currentWordId}
-          currentPlayingPosition={articleUIProps.currentPosition}
+          currentPlayingSentenceId={isCurrentSentence ? currentSentenceIndex : null}
+          currentPlayingWordId={isCurrentSentence ? currentWordId : null}
+          currentPlayingPosition={isCurrentSentence ? currentPosition : null}
         />
       );
     },
-    [getWordsForSentence, renderWord, articleUIProps, settings, styles]
+    [
+      getWordsForSentence,
+      renderWord,
+      settings,
+      colors,
+      styles.transparentBackground,
+      currentSentenceIndex,
+      currentWordId,
+      currentPosition,
+    ]
   );
 
   // Render article card with memoization

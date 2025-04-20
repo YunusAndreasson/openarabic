@@ -20,120 +20,121 @@ type AnimatedViewStyle = AnimatedStyleProp<ViewStyle>;
  * in the application. It handles border radius, shadows, press animations, and loading states.
  */
 
-const BaseCard: React.FC<BaseCardProps> = ({
-  children,
-  style,
-  onPress,
-  isLoading = false,
-  shadowSize = 'medium',
-  loadingComponent,
-  contentStyle,
-  disabled = false,
-  testID,
-}) => {
-  const colors = useColors();
-  const isDarkMode = useIsDarkMode();
+// Disable prop-types validation since we're using TypeScript types
+/* eslint-disable react/prop-types */
+const BaseCard: React.FC<BaseCardProps> = memo(
+  ({
+    children,
+    style,
+    onPress,
+    isLoading = false,
+    shadowSize = 'medium',
+    loadingComponent,
+    contentStyle,
+    disabled = false,
+    testID,
+  }) => {
+    const colors = useColors();
+    const isDarkMode = useIsDarkMode();
 
-  // Use press animation hook for smooth press feedback
-  const { handlePressIn, handlePressOut } = usePressAnimation();
+    // Use press animation hook for smooth press feedback
+    const { handlePressIn, handlePressOut } = usePressAnimation();
 
-  // Memoize the shadow style calculation
-  const shadowStyle = useMemo(() => {
-    // Get shadow properties from LAYOUT constants
-    const baseShadow = {
-      shadowColor: colors.shadow,
-      ...LAYOUT.SHADOW.MEDIUM, // Use medium shadow as base
-      elevation: 3,
-    };
+    // Memoize both shadow and border styles together for better performance
+    const baseStyles = useMemo(() => {
+      // Get shadow properties from LAYOUT constants
+      let calculatedShadow = {};
 
-    switch (shadowSize) {
-      case 'none':
-        return {};
-      case 'small':
-        return {
-          ...baseShadow,
-          ...LAYOUT.SHADOW.SMALL,
-          elevation: 1,
+      if (shadowSize !== 'none') {
+        const baseShadow = {
+          shadowColor: colors.shadow,
+          ...LAYOUT.SHADOW.MEDIUM,
+          elevation: 3,
         };
-      case 'large':
-        return {
-          ...baseShadow,
-          ...LAYOUT.SHADOW.LARGE,
-          elevation: 5,
-        };
-      case 'medium':
-      default:
-        return baseShadow;
+
+        switch (shadowSize) {
+          case 'small':
+            calculatedShadow = {
+              ...baseShadow,
+              ...LAYOUT.SHADOW.SMALL,
+              elevation: 1,
+            };
+            break;
+          case 'large':
+            calculatedShadow = {
+              ...baseShadow,
+              ...LAYOUT.SHADOW.LARGE,
+              elevation: 5,
+            };
+            break;
+          default:
+            calculatedShadow = baseShadow;
+        }
+      }
+
+      return {
+        shadow: calculatedShadow,
+        border: {
+          borderWidth: isDarkMode ? 1 : 0.5,
+          borderColor: isDarkMode ? colors.elevation3 : colors.cardBorder,
+        },
+        background: {
+          backgroundColor: colors.card,
+        },
+      };
+    }, [colors.shadow, colors.elevation3, colors.cardBorder, colors.card, isDarkMode, shadowSize]);
+
+    // Combined card style with stable reference
+    const combinedCardStyle = useMemo(
+      () => [styles.card, baseStyles.background, baseStyles.shadow, baseStyles.border, style],
+      [baseStyles, style]
+    );
+
+    // Combine content style with stable reference
+    const combinedContentStyle = useMemo(() => [styles.content, contentStyle], [contentStyle]);
+
+    // Render loading state if needed
+    if (isLoading) {
+      return (
+        <Animated.View style={combinedCardStyle as AnimatedViewStyle}>
+          {loadingComponent || <LoadingContainer size="medium" />}
+        </Animated.View>
+      );
     }
-  }, [colors.shadow, shadowSize]);
 
-  // Card border style with increased visibility
-  const borderStyle = useMemo(
-    () => ({
-      borderWidth: isDarkMode ? 1 : 0.5,
-      borderColor: isDarkMode ? colors.elevation3 : colors.cardBorder,
-    }),
-    [isDarkMode, colors.elevation3, colors.cardBorder]
-  );
+    // Non-interactive card
+    if (!onPress) {
+      return (
+        <Animated.View style={combinedCardStyle as AnimatedViewStyle} testID={testID}>
+          <View style={combinedContentStyle}>{children}</View>
+        </Animated.View>
+      );
+    }
 
-  // Combined card style
-  const combinedCardStyle = useMemo(
-    () => [
-      styles.card,
-      {
-        backgroundColor: colors.card,
-      },
-      shadowStyle,
-      borderStyle,
-      style,
-    ],
-    [colors.card, shadowStyle, borderStyle, style]
-  );
-
-  // Combine content style
-  const combinedContentStyle = useMemo(() => [styles.content, contentStyle], [contentStyle]);
-
-  // Render loading state if needed
-  if (isLoading) {
+    // Interactive card with press handling
     return (
-      <Animated.View style={combinedCardStyle as AnimatedViewStyle}>
-        {loadingComponent || <LoadingContainer size="medium" />}
-      </Animated.View>
-    );
-  }
-
-  // Non-interactive card
-  if (!onPress) {
-    return (
-      <Animated.View style={combinedCardStyle as AnimatedViewStyle} testID={testID}>
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onPress}
+        disabled={disabled}
+        testID={testID}
+        android_ripple={{
+          color: colors.textOverlay,
+          borderless: false,
+          foreground: true,
+        }}
+        style={({ pressed }: { pressed: boolean }) => [
+          combinedCardStyle,
+          pressed && !disabled && { opacity: LAYOUT.OPACITY.PRESSED },
+          disabled && { opacity: LAYOUT.OPACITY.DISABLED },
+        ]}
+      >
         <View style={combinedContentStyle}>{children}</View>
-      </Animated.View>
+      </Pressable>
     );
   }
-
-  // Interactive card with press handling
-  return (
-    <Pressable
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={onPress}
-      disabled={disabled}
-      testID={testID}
-      android_ripple={{
-        color: colors.textOverlay,
-        borderless: false,
-        foreground: true,
-      }}
-      style={({ pressed }: { pressed: boolean }) => [
-        combinedCardStyle,
-        pressed && !disabled && { opacity: LAYOUT.OPACITY.PRESSED },
-        disabled && { opacity: LAYOUT.OPACITY.DISABLED },
-      ]}
-    >
-      <View style={combinedContentStyle}>{children}</View>
-    </Pressable>
-  );
-};
+);
 
 const styles = StyleSheet.create({
   card: {
@@ -149,4 +150,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export default memo(BaseCard);
+// Add display name for better debugging
+BaseCard.displayName = 'BaseCard';
+
+export default BaseCard;

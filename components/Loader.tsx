@@ -22,7 +22,7 @@ import { ThemedView } from './ThemedView';
  */
 export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) => {
   const colors = useColors();
-  const loaderColor = color || colors.text;
+  const loaderColor = useMemo(() => color || colors.text, [color, colors.text]);
 
   // Use pulse animation hook with gentle style for smooth scaling effect
   const { animatedStyle } = usePulseAnimation({
@@ -75,11 +75,16 @@ export const Loader: React.FC<LoaderProps> = ({ size = 'large', color, style }) 
     [circleSize, loaderColor, borderWidth]
   );
 
+  const containerStyle = useMemo(() => [styles.container, style] as ViewStyle[], [style]);
+
+  const animatedCircleStyle = useMemo(
+    () => [styles.circle, circleStyle, animatedStyle as AnimatedStyle<ViewStyle>],
+    [circleStyle, animatedStyle]
+  );
+
   return (
-    <View style={[styles.container, style as ViewStyle]}>
-      <Animated.View
-        style={[styles.circle, circleStyle, animatedStyle as AnimatedStyle<ViewStyle>]}
-      />
+    <View style={containerStyle}>
+      <Animated.View style={animatedCircleStyle} />
     </View>
   );
 };

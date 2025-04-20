@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import type { Article } from '../types/articles.types';
 import type { SentenceWord } from '../types/vocabulary.types';
@@ -17,7 +17,6 @@ interface ArticleSettings {
 /**
  * Hook for article rendering functions
  * @param settings - App settings
- * @param colors - Theme colors
  * @param selectedWordIds - Set of selected word IDs (can be number or string)
  * @param sentenceWordsMap - Map of sentence IDs to words
  * @param handleWordPress - Function to handle word press
@@ -44,6 +43,7 @@ export const useArticleRenderers = (
   getWordsForSentence: (sentenceId: number) => SentenceWord[];
 } => {
   const router = useRouter();
+  const { fontScale } = settings;
 
   // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
@@ -54,18 +54,21 @@ export const useArticleRenderers = (
       // Check if the word's root is selected
       const isSelected = word.root_id !== undefined && selectedWordIds?.has(word.root_id) === true;
 
+      // Memoize the long press handler if it exists
+      const onLongPress =
+        word.root_id && handleRootPress ? () => handleRootPress(word.root_id) : undefined;
+
       return {
         word,
         isSelected,
         key: word.id,
-        scale: settings.fontScale,
+        scale: fontScale,
         baseSize: 16,
         onPress: () => handleWordPress(word),
-        onLongPress:
-          handleRootPress && word.root_id ? () => handleRootPress(word.root_id) : undefined,
+        onLongPress,
       };
     },
-    [selectedWordIds, handleWordPress, handleRootPress, settings.fontScale]
+    [selectedWordIds, handleWordPress, handleRootPress, fontScale]
   );
 
   /**
@@ -77,23 +80,20 @@ export const useArticleRenderers = (
     (articleOrId: Article | number, isRelatedArticle = false) => {
       // Extract article ID whether an Article object or just an ID was passed
       const articleId = typeof articleOrId === 'number' ? articleOrId : articleOrId.id;
+      const params = { id: articleId.toString() };
 
-      // For all article navigation, use a simple approach without transitions
-      // This is more stable and less likely to cause crashes
       try {
         // Use replace for related articles to avoid building up the navigation stack
         if (isRelatedArticle) {
           router.replace({
             pathname: '/article/[id]',
-            params: {
-              id: articleId.toString(),
-            },
+            params,
           });
         } else {
           // For normal navigation, use the debounce hook
           navigateTo({
             pathname: '/article/[id]',
-            params: { id: articleId.toString() },
+            params,
           });
         }
       } catch (error: unknown) {
@@ -107,7 +107,7 @@ export const useArticleRenderers = (
     [navigateTo, router]
   );
 
-  // Get words for a sentence
+  // Get words for a sentence - memoize the map lookup function
   const getWordsForSentence = useCallback(
     (sentenceId: number) => {
       return sentenceWordsMap.get(sentenceId) || [];
@@ -115,11 +115,15 @@ export const useArticleRenderers = (
     [sentenceWordsMap]
   );
 
-  return {
-    prepareWord,
-    handleArticlePress,
-    getWordsForSentence,
-  };
+  // Return memoized object to prevent unnecessary re-renders
+  return useMemo(
+    () => ({
+      prepareWord,
+      handleArticlePress,
+      getWordsForSentence,
+    }),
+    [prepareWord, handleArticlePress, getWordsForSentence]
+  );
 };
 
 export default useArticleRenderers;

@@ -1,7 +1,8 @@
-import React, { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import type { StyleProps } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
 
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
 
@@ -28,6 +29,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
 
   const colors = useColors();
   const [shouldRender, setShouldRender] = useState(visible);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
     initialOpacity: 0,
@@ -35,10 +37,15 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     duration: animate ? duration : 0,
   });
 
+  const cleanup = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = undefined;
+    }
+  }, []);
+
   // Watch for visibility changes
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
     if (visible) {
       setShouldRender(true);
       startAnimation();
@@ -50,14 +57,11 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
       reverseAnimation();
       onClose?.();
 
-      timeoutId = setTimeout(() => setShouldRender(false), animate ? duration + 50 : 0);
+      cleanup();
+      timeoutRef.current = setTimeout(() => setShouldRender(false), animate ? duration + 50 : 0);
     }
 
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
+    return cleanup;
   }, [
     visible,
     startAnimation,
@@ -68,6 +72,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     duration,
     animate,
     onClose,
+    cleanup,
   ]);
 
   if (!shouldRender) return null;
@@ -80,7 +85,11 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
 
   return (
     <Animated.View
-      style={[styles.overlay, { backgroundColor: colors.background }, animatedStyle as StyleProps]}
+      style={[
+        styles.overlay,
+        { backgroundColor: colors.background },
+        animatedStyle as AnimatedStyleProp<ViewStyle>,
+      ]}
     >
       <ThemedText
         style={[

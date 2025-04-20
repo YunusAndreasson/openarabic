@@ -117,6 +117,16 @@ export interface FadeAnimationResult {
   exiting: ReturnType<typeof FadeOut.duration>;
 }
 
+// Constants moved outside to prevent recreation
+const MIN_DURATION = 1;
+const MIN_MOUNT_DELAY = 5;
+
+// Animation config memoized outside to prevent recreation
+const getTimingConfig = (duration: number) => ({
+  duration,
+  easing: TIMING_CONFIG.MEDIUM.easing,
+});
+
 /**
  * Unified hook for opacity and fade animations
  * Combines functionality from useFadeInAnimation, useOpacityAnimation, and useFadeInEntrance
@@ -132,38 +142,30 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     delay: rawDelay = 0,
   } = options;
 
-  // Validate parameters
-  const duration = Math.max(0, rawDuration);
-  const delay = Math.max(0, rawDelay);
-  const validInitialOpacity = Math.max(0, Math.min(1, initialOpacity));
+  // Validate parameters - memoized to prevent recalculation
+  const duration = useRef(Math.max(0, rawDuration)).current;
+  const delay = useRef(Math.max(0, rawDelay)).current;
+  const validInitialOpacity = useRef(Math.max(0, Math.min(1, initialOpacity))).current;
+  const safeDuration = useRef(Math.max(MIN_DURATION, duration)).current;
 
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
-  // Make sure duration is valid to avoid issues with built-in animations
-  const safeDuration = Math.max(1, duration); // Minimum 1ms to avoid division by zero in Reanimated
-
-  // Create standard entering and exiting animations
-  // Note: Layout animations should be applied directly on Animated.View components
-  // that use these animations, not here in the hook
-  const entering = FadeIn.duration(safeDuration).delay(delay);
-  const exiting = FadeOut.duration(safeDuration);
+  const entering = useRef(FadeIn.duration(safeDuration).delay(delay)).current;
+  const exiting = useRef(FadeOut.duration(safeDuration)).current;
 
   // Track if component is mounted to prevent callbacks after unmount
   const isMountedRef = useRef(true);
-
-  // Always create the shared value and all animation functions
   const opacity = useSharedValue(validInitialOpacity);
+  const timingConfig = useRef(getTimingConfig(duration)).current;
 
-  // Cleanup shared animation values on unmount
+  // Cleanup shared animation values on unmount - optimized with single cleanup function
   useEffect(() => {
-    isMountedRef.current = true;
-
-    return () => {
+    const cleanup = () => {
       isMountedRef.current = false;
-      // Cancel any pending animations and reset to initial value
       opacity.value = validInitialOpacity;
-      // Ensure any ongoing animations are stopped
       cancelAnimation(opacity);
     };
+
+    return cleanup;
   }, [opacity, validInitialOpacity]);
 
   // Safe callback runner that checks if component is still mounted
@@ -174,24 +176,17 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     }
   }, []);
 
-  // Common animation function to reduce code duplication
+  // Common animation function to reduce code duplication - memoized with useCallback
   const animateOpacityTo = useCallback(
     (targetValue: number, onComplete?: () => void) => {
       'worklet';
-      opacity.value = withTiming(
-        targetValue,
-        {
-          duration,
-          easing: TIMING_CONFIG.MEDIUM.easing,
-        },
-        finished => {
-          if (finished) {
-            safeRunCallback(onComplete);
-          }
+      opacity.value = withTiming(targetValue, timingConfig, finished => {
+        if (finished) {
+          safeRunCallback(onComplete);
         }
-      );
+      });
     },
-    [opacity, duration, safeRunCallback]
+    [opacity, timingConfig, safeRunCallback]
   );
 
   const fadeIn = useCallback(
@@ -213,7 +208,6 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const setOpacity = useCallback(
     (value: number, onComplete?: () => void) => {
       'worklet';
-      // Ensure opacity value is between 0 and 1
       const safeValue = Math.max(0, Math.min(1, value));
       animateOpacityTo(safeValue, onComplete);
     },
@@ -224,17 +218,14 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     opacity.value = validInitialOpacity;
   }, [opacity, validInitialOpacity]);
 
-  // These functions match the useFadeInAnimation API
   const startAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
       runOnUI(() => {
         'worklet';
-        // Ensure delay is not negative
         const safeDelay = Math.max(0, startDelay);
-
         opacity.value = withDelay(
           safeDelay,
-          withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing }, finished => {
+          withTiming(1, timingConfig, finished => {
             if (finished) {
               safeRunCallback(onComplete);
             }
@@ -242,58 +233,45 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
         );
       })();
     },
-    [opacity, duration, delay, safeRunCallback]
+    [opacity, delay, timingConfig, safeRunCallback]
   );
 
   const reverseAnimation = useCallback(
     (startDelay = delay, onComplete?: () => void) => {
       runOnUI(() => {
         'worklet';
-        // Ensure delay is not negative
         const safeDelay = Math.max(0, startDelay);
-
         opacity.value = withDelay(
           safeDelay,
-          withTiming(
-            validInitialOpacity,
-            { duration, easing: TIMING_CONFIG.MEDIUM.easing },
-            finished => {
-              if (finished) {
-                safeRunCallback(onComplete);
-              }
+          withTiming(validInitialOpacity, timingConfig, finished => {
+            if (finished) {
+              safeRunCallback(onComplete);
             }
-          )
+          })
         );
       })();
     },
-    [opacity, validInitialOpacity, duration, delay, safeRunCallback]
+    [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback]
   );
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
+  const animatedStyle = useAnimatedStyle(
+    () => ({
       opacity: opacity.value,
-    };
-  }, [opacity]);
+    }),
+    [opacity]
+  );
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {
     if (autoStart && isMountedRef.current) {
-      const minDelay = 5; // Small delay to ensure component is mounted properly
-
       runOnUI(() => {
         'worklet';
-        // Ensure we're at the starting opacity
         opacity.value = validInitialOpacity;
-        // Use withDelay to schedule the animation on the UI thread
-        opacity.value = withDelay(
-          minDelay,
-          withTiming(1, { duration, easing: TIMING_CONFIG.MEDIUM.easing })
-        );
+        opacity.value = withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig));
       })();
     }
-  }, [autoStart, duration, validInitialOpacity, opacity]);
+  }, [autoStart, validInitialOpacity, opacity, timingConfig]);
 
-  // For entrance-only style, we still return all functions but they won't be used
   return {
     opacity,
     animatedStyle,
