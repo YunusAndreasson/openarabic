@@ -443,7 +443,7 @@ export default function BookmarksScreen(): JSX.Element {
     user?.id,
     1000 * 60 * 5, // 5 minutes
     true,
-    false
+    true // Force refetch on focus
   );
 
   // Focus Effect - uses stable actions.stopPlayback
