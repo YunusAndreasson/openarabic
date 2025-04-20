@@ -41,8 +41,15 @@ const getAdvancedStats = (validStudyWords: StudyWord[]) => {
       }
 
       // Track mastery stats - use fsrs_state instead of 'state'
-      if (word.fsrs_state === 3) acc.masteredCount++; // Assuming state 3 is 'mastered'
-      if (word.fsrs_state === 1 || word.fsrs_state === 2) acc.learningCount++; // Assuming states 1-2 are 'learning'
+      if (word.fsrs_state === 3 && (word.fsrs_stability ?? 0) >= 30) acc.masteredCount++; // Mastered only if stability >= 30
+      if (
+        word.fsrs_state === 1 || // Learning
+        word.fsrs_state === 2 || // Relearning
+        word.fsrs_state === 0 || // New
+        (word.fsrs_state === 3 && (word.fsrs_stability ?? 0) < 30) // Review but low stability
+      ) {
+        acc.learningCount++;
+      }
 
       // Track streaks and difficulty
       acc.maxStreak = Math.max(acc.maxStreak, word.success_streak || 0);
