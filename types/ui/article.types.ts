@@ -1,6 +1,7 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import type { Article } from '../articles.types';
+import type { Tables } from '../database.types';
 
 import type { BaseThemedProps } from './base.types';
 
@@ -54,6 +55,8 @@ export interface DailyPickSectionProps {
    * @default true
    */
   showTitle?: boolean;
+
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -69,6 +72,9 @@ export interface ArticleHeaderProps extends BaseThemedProps {
    * Whether the app is in dark mode
    */
   isDarkMode: boolean;
+
+  onAuthorPress?: (author: Tables<'authors'>) => void;
+  onCategoryPress?: (category: Tables<'categories'>) => void;
 }
 
 /**
@@ -94,6 +100,9 @@ export interface RelatedArticlesFooterProps {
    * Function to render an article card
    */
   renderArticleCard: (article: Article) => React.ReactNode;
+
+  onAuthorPress?: (author: Tables<'authors'>) => void;
+  onCategoryPress?: (category: Tables<'categories'>) => void;
 }
 
 /**
@@ -114,4 +123,18 @@ export interface RelatedArticlesSectionProps {
    * Function to render an article card
    */
   renderArticleCard: (article: Article) => React.ReactNode;
+
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * Props for the ArticleItem component
+ */
+export interface ArticleItemProps {
+  article: Article;
+  onPress: (article: Article) => void;
+  showTimeAgo?: boolean;
+  hideDifficultyLabel?: boolean;
+  hideDifficulty?: boolean;
+  style?: StyleProp<ViewStyle>;
 }

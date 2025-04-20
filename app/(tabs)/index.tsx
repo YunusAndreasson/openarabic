@@ -110,7 +110,7 @@ const ArticleItem = memo(
                 type="bodyBold"
                 numberOfLines={2}
                 colorName="text"
-                weight="600"
+                weight="semibold"
                 style={styles.titleText}
               >
                 {article.title}

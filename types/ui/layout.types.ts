@@ -5,7 +5,9 @@ import type { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
 import type { Article, ArticleSentence, Category } from '../articles.types';
 import type { SentenceWord } from '../vocabulary.types';
 
-import type { BaseStyleProps } from './base.types';
+import type { DailyPickSectionProps } from './article.types';
+import type { BaseStyleProps, BaseThemedProps } from './base.types';
+import type { ThemedCardProps } from './card.types';
 import type { ThemeColors } from './theme.types';
 
 /**
@@ -89,19 +91,14 @@ export interface ArticleSentenceProps {
 /**
  * Props for the CategoryPills component
  */
-export interface CategoryPillsProps extends BaseLayoutProps {
+export interface CategoryPillsProps extends BaseThemedProps {
   categories: Category[];
   selectedCategoryId?: number | null;
   onSelectCategory: (categoryId: number | null) => void;
   includeAllOption?: boolean;
   allLabel?: string;
   disabled?: boolean;
-  containerStyle?: StyleProp<ViewStyle>;
-}
-
-export interface BaseLayoutProps extends ViewProps {
   style?: StyleProp<ViewStyle>;
-  colors: ThemeColors;
 }
 
 export interface IconProps {
@@ -113,7 +110,7 @@ export interface IconProps {
 /**
  * Base empty state props shared by both variants
  */
-export interface BaseEmptyStateProps extends BaseLayoutProps {
+export interface BaseEmptyStateProps extends BaseThemedProps {
   title: string;
   description: string;
   actionText?: string;
@@ -121,8 +118,7 @@ export interface BaseEmptyStateProps extends BaseLayoutProps {
   submessage?: string;
   customActionButton?: React.ReactNode;
   iconSize?: number;
-  iconContainerStyle?: ViewStyle;
-  containerStyle?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -158,7 +154,7 @@ export interface ErrorStateProps {
   /** Title text to display */
   title?: string;
   /** Additional container style */
-  containerStyle?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -172,38 +168,38 @@ export interface SectionTitleProps {
   /** Callback when action text is pressed */
   onAction?: () => void;
   /** Additional container style */
-  containerStyle?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
  * Props for the SignInRequired component
  */
-export interface SignInRequiredProps extends BaseLayoutProps {
+export interface SignInRequiredProps extends BaseThemedProps {
   title?: string;
   message?: string;
   benefitTitle?: string;
   benefitDescription?: string;
   headerTitle?: string;
   onSignIn?: () => void;
-  containerStyle?: StyleProp<ViewStyle>;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
  * Props for the StatCard component
  */
-export interface StatCardProps extends BaseLayoutProps {
+export interface StatCardProps extends BaseThemedProps {
   label: string;
   value: string | number;
   icon?: ComponentProps<typeof Ionicons>['name'];
   animateValue?: boolean;
-  onPress?: () => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
  * Props for the VocabularyEmptyState component
  */
-export interface VocabularyEmptyStateProps extends BaseLayoutProps {
-  containerStyle?: StyleProp<ViewStyle>;
+export interface VocabularyEmptyStateProps extends BaseThemedProps {
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -242,29 +238,11 @@ export interface WordReviewCardProps {
   containerStyle?: StyleProp<ViewStyle>;
 }
 
-/**
- * Props for the DailyPickSection component
- */
-export interface DailyPickSectionProps {
-  /** The article to display */
-  article: Article | null;
-  /** Callback when article is pressed */
-  onPress: (article: Article) => void;
-  /** Whether to show the section title */
-  showTitle?: boolean;
-}
-
-export interface CategoryListProps extends BaseLayoutProps {
+export interface CategoryListProps extends BaseThemedProps {
   categories: Category[];
   selectedCategoryId?: number | null;
   onSelectCategory: (categoryId: number | null) => void;
   includeAllOption?: boolean;
   allLabel?: string;
-  disabled?: boolean;
-}
-
-export interface ThemedCardProps extends BaseLayoutProps {
-  onPress?: () => void;
-  children?: React.ReactNode;
   disabled?: boolean;
 }

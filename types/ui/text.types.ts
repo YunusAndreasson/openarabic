@@ -4,39 +4,25 @@ import type { ColorName } from '../../constants/Colors';
 import type { SentenceWord } from '../vocabulary.types';
 
 export type TextTypeName =
-  | 'arabic'
   | 'body'
   | 'bodyBold'
-  | 'caption'
   | 'heading1'
   | 'heading2'
   | 'heading3'
+  | 'caption'
   | 'label'
-  | 'link'
-  | 'overline';
-
+  | 'arabic';
 export type TextVariant =
   | 'error'
-  | 'subtle'
-  | 'success'
   | 'warning'
+  | 'success'
   | 'info'
   | 'primary'
   | 'secondary'
+  | 'subtle'
   | 'disabled';
-
-export type TextWeight =
-  | 'normal'
-  | 'medium'
-  | 'semibold'
-  | 'bold'
-  | '300'
-  | '400'
-  | '500'
-  | '600'
-  | number; // Allow numeric weights for flexibility
-
-export type TextAlign = 'auto' | 'left' | 'right' | 'center' | 'justify';
+export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+export type TextAlign = 'left' | 'center' | 'right' | 'justify';
 
 /**
  * Props for the ThemedText component
@@ -82,18 +68,5 @@ export interface ArabicWordProps {
   size?: 'normal' | 'large' | 'small';
   fontSize?: number;
   lineHeight?: number;
-}
-
-export interface TextStyleProps {
   style?: StyleProp<TextStyle>;
-  color?: string;
-  fontSize?: number;
-  fontFamily?: string;
-  textAlign?: 'left' | 'center' | 'right';
-  lineHeight?: number;
-  letterSpacing?: number;
-}
-
-export interface WordPressProps {
-  onPress: (word: SentenceWord) => void;
 }

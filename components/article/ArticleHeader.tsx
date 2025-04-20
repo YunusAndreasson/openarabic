@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '../../components/ThemedText';
 import { LAYOUT } from '../../constants/layout';
@@ -15,6 +15,8 @@ interface ArticleHeaderProps {
     text: string;
     [key: string]: string;
   };
+  onAuthorPress?: (author: Article['author']) => void;
+  onCategoryPress?: (category: Article['category']) => void;
 }
 
 const styles = StyleSheet.create({
@@ -60,7 +62,12 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors }) => {
+export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
+  article,
+  colors,
+  onAuthorPress,
+  onCategoryPress,
+}) => {
   // Calculate reading time based on sentences count or summary length
   const readingTime = useMemo(() => {
     if (!article) return 2;
@@ -87,6 +94,18 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
     ? capitalizeFirstLetter(article.category.name)
     : 'Uncategorized';
 
+  const handleAuthorPress = () => {
+    if (onAuthorPress && article.author) {
+      onAuthorPress(article.author);
+    }
+  };
+
+  const handleCategoryPress = () => {
+    if (onCategoryPress && article.category) {
+      onCategoryPress(article.category);
+    }
+  };
+
   return (
     <View style={styles.articleHeaderContainer}>
       <View style={styles.titleContainer}>
@@ -96,7 +115,11 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
       </View>
 
       <View style={styles.articleMetaContainer}>
-        <View style={styles.authorContainer}>
+        <TouchableOpacity
+          style={styles.authorContainer}
+          onPress={article.author && onAuthorPress ? handleAuthorPress : undefined}
+          disabled={!article.author || !onAuthorPress}
+        >
           <ThemedText
             type="label"
             variant="secondary"
@@ -104,11 +127,15 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
           >
             {article.author?.name || 'Unknown Author'}
           </ThemedText>
-        </View>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.articleInfoContainer}>
-        <View style={styles.articleInfoItem}>
+        <TouchableOpacity
+          style={styles.articleInfoItem}
+          onPress={article.category && onCategoryPress ? handleCategoryPress : undefined}
+          disabled={!article.category || !onCategoryPress}
+        >
           <Ionicons
             name="folder-outline"
             size={16}
@@ -125,7 +152,7 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({ article, colors })
               {categoryName}
             </ThemedText>
           </View>
-        </View>
+        </TouchableOpacity>
 
         <View style={styles.articleInfoItem}>
           <Ionicons

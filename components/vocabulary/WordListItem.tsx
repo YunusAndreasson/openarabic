@@ -105,7 +105,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           <ThemedText
             type="body"
             variant="secondary"
-            weight="500"
+            weight="medium"
             numberOfLines={2}
             style={styles.englishText}
           >
@@ -116,7 +116,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           <ThemedText
             type="arabic"
             arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-            weight="600"
+            weight="semibold"
             align="right"
             skipDefaultColor
             colorName="arabicText"
@@ -128,10 +128,15 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
 
         {/* Memory Strength section */}
         <View style={styles.progressBarLabelContainer}>
-          <ThemedText type="caption" variant="subtle" style={styles.memoryStrengthLabel}>
+          <ThemedText
+            type="caption"
+            variant="subtle"
+            weight="medium"
+            style={styles.memoryStrengthLabel}
+          >
             MEMORY STRENGTH
           </ThemedText>
-          <ThemedText type="caption" variant="subtle">
+          <ThemedText type="caption" variant="subtle" weight="medium">
             {wordStatus.progress.value}%
           </ThemedText>
         </View>
@@ -151,13 +156,13 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
         {/* Review info and streak below progress bar */}
         <View style={styles.learningInfoContainer}>
           {wordStatus.lastReview ? (
-            <ThemedText type="caption" variant="subtle" style={styles.lastReview}>
+            <ThemedText type="caption" variant="subtle" weight="normal" style={styles.lastReview}>
               Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
             </ThemedText>
           ) : null}
 
           {wordStatus.successStreak > 0 ? (
-            <ThemedText type="caption" variant="subtle" style={styles.streakText}>
+            <ThemedText type="caption" variant="subtle" weight="medium" style={styles.streakText}>
               🔥 {wordStatus.successStreak} streak
             </ThemedText>
           ) : null}
@@ -201,7 +206,6 @@ const styles = StyleSheet.create({
   englishText: {
     flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    fontWeight: '600',
     lineHeight: Platform.OS === 'ios' ? 24 : 26,
     marginRight: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
@@ -217,7 +221,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.SMALL / 2,
   },
   memoryStrengthLabel: {
-    fontWeight: '500',
     letterSpacing: 0.5,
   },
   progressBar: {
@@ -239,7 +242,6 @@ const styles = StyleSheet.create({
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    fontWeight: '500',
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
 });

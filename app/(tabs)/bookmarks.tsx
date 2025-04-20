@@ -281,7 +281,7 @@ const BottomControls = memo(
       <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
           <View style={styles.controlsLabelContainer}>
-            <ThemedText type="overline" variant="secondary">
+            <ThemedText type="caption" variant="secondary">
               AUDIO CONTROLS
             </ThemedText>
           </View>

@@ -59,10 +59,10 @@ const StatItem = memo(
           <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
             <Ionicons name={icon} size={24} color={iconColor} />
           </View>
-          <ThemedText type="body" weight="600" style={styles.statValue}>
+          <ThemedText type="body" weight="bold" style={styles.statValue}>
             {value}
           </ThemedText>
-          <ThemedText type="caption" variant="secondary" weight="500">
+          <ThemedText type="caption" variant="secondary" weight="medium">
             {label}
           </ThemedText>
         </TouchableOpacity>
