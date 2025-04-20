@@ -11,7 +11,7 @@ import { handleError } from '@/utils/errorHandling';
 
 import type { EnhancedAudioTrack } from '../types/audio.types';
 
-import { AUDIO_STATES, useAudioPlayer } from './useAudioPlayer';
+import { AUDIO_STATES } from './useAudioPlayer';
 
 /**
  * Type for metadata about the current playback session
@@ -68,7 +68,6 @@ export type EnhancedPlayerAPI = EnhancedPlayerState & { actions: EnhancedPlayerA
  */
 export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   // Base audio player
-  const audioPlayer = useAudioPlayer();
   const [localDuration, setLocalDuration] = useState(0);
   const [localProgress, setLocalProgress] = useState(0);
 
