@@ -357,9 +357,10 @@ Priorities:
 1. Accuracy: Preserve authentic Islamic meaning
 2. Context: Consider historical-religious context
 3. Terminology: Handle Islamic terminology, honorifics, narrators accurately
-4. Ambiguity: Document uncertainties, resolve through context
-5. Consistency: Maintain consistent translations for Islamic concepts
-6. Accessibility: Use simple, clear English appropriate for Islamic context
+4. Text Preservation: Maintain ALL original text formatting, punctuation, and special characters
+5. Ambiguity: Document uncertainties, resolve through context
+6. Consistency: Maintain consistent translations for Islamic concepts
+7. Accessibility: Use simple, clear English appropriate for Islamic context
 
 Apply these principles to all translation tasks: splitting, diacritics, word analysis, and verification."""
 
@@ -384,6 +385,8 @@ CONTENT_ANALYSIS_PROMPT = """Analyze this Islamic text to provide:
    Level 4: Advanced - Specialized Islamic terminology, abstract concepts
    Level 5: Expert - Technical Islamic language, complex rhetorical devices
 
+IMPORTANT: Preserve ALL original text formatting, punctuation, and special characters throughout the analysis.
+
 Proceed to text splitting after analysis.
 """
 
@@ -405,11 +408,13 @@ Rules:
    - Break long narrator chains
    - Keep brief prayers whole
    - Keep related phrases conveying single concepts together
+   - Preserve ALL original punctuation and formatting
 4. Mark unit types: simple, compound, condition, quote, verse, phrase
 5. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله، فمن صبر واحتسب فله الأجر العظيم من الله سبحانه وتعالى."
 
-
-AVOID units that are too short (3-4 words).
+IMPORTANT: 
+- AVOID units that are too short (3-4 words)
+- Preserve ALL original text formatting, punctuation, and special characters in each unit
 
 Input text: 
 """
@@ -422,7 +427,7 @@ SENTENCE_TRANSLATION_USER_PROMPT = """Translate Islamic Arabic to English:
 3. Add bracketed words [like this] for words needed to complete the sentence but that is not present in the original text
 4. Document uncertainties only (do not list alternatives)
 5. Match register: solemn for supplications, precise for hadith
-6. Preserve original punctuation and structure
+6. Preserve ALL original punctuation, formatting, and special characters exactly as they appear
 7. Use appropriate Islamic terminology
 
 Example:
@@ -430,8 +435,10 @@ Arabic: وقال النبي صلى الله عليه وسلم
 ✓ "And the Prophet [Muhammad], peace be upon him, said"
 ✗ "And spoke the Prophet prayers and peace upon him"
 
+IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text.
+
 Return for each sentence:
-- Arabic text
+- Arabic text (exactly as provided, with all original formatting)
 - English translation with necessary bracketed words
 - Term/uncertainty notes
 """
@@ -446,6 +453,7 @@ TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY wor
    - Provide primary interpretation based on Islamic context
    - List alternatives
    - Link to translation uncertainties
+6. Preserve ALL original punctuation, formatting, and special characters
 
 Example:
 Without tashkeel: قال النبي صلى الله عليه وسلم
@@ -456,13 +464,17 @@ Verification steps:
 2. Verify all case endings match grammatical roles
 3. Confirm shadda is applied where required for doubled consonants
 4. Ensure all vowels are consistent with Islamic scholarly conventions
+5. Verify ALL original text formatting is preserved
 
-IMPORTANT: Partial vocalization is NOT acceptable - every eligible consonant must receive appropriate diacritics."""
+IMPORTANT: 
+- Partial vocalization is NOT acceptable - every eligible consonant must receive appropriate diacritics
+- Do not modify any original punctuation or formatting"""
 
 WORD_BY_WORD_USER_PROMPT = (
     "IMPORTANT: Return only a JSON object matching the function schema.\n"
     "ENSURE: The `essential` and `essential_translation` fields must be populated for every word; never return null for these.\n"
     "ENSURE: The `essential` field must retain all original diacritical marks (tashkeel) exactly as in the Arabic word.\n"
+    "ENSURE: Preserve ALL original text formatting, punctuation, and special characters in the arabic field.\n"
     """Analyze each word in Islamic Arabic and extract flashcard-friendly essential letters:
 
 Rules for the `essential` field:
@@ -472,11 +484,11 @@ Rules for the `essential` field:
 - Provide the fully diacritized form of the essential letters using a simple pattern (e.g., فَعَل) without case endings for flashcard memorization tailored for learning Arabic.
 
 For each word provide a JSON object with these keys:
-- `arabic`: Arabic text with diacritics
-- `english`: Simple English equivalent in context
+- `arabic`: Arabic text with diacritics (exactly as in original, with all formatting preserved)
+- `english`: Simple English equivalent in context to the sentence
 - `pos`: Part of speech tag (must be one of the VALID_POS enum)
 - `essential`: Flashcard letters, stripped of affixes and diacritized without case endings
-- `essential_translation`: One-word English meaning of the essential letters
+- `essential_translation`: One-word English meaning of the essential Arabic word close to lexical meaning but not in context of the sentence
 - `notes`: Any additional grammatical or contextual details (optional)
 
 Output MUST be a JSON array where each element corresponds to one word in original order, with fields exactly matching the schema."""
@@ -489,20 +501,21 @@ FINAL_VERIFICATION_USER_PROMPT = """Review and resolve Islamic Arabic translatio
    - Resolve word-level uncertainties
    - Select definitive interpretations
    - Standardize Islamic terminology consistently
+   - Verify ALL original text formatting is preserved
 
 2. Output Requirements:
-   - Definitive diacritical text
+   - Definitive diacritical text (with all original formatting preserved)
    - Final translation with:
      * Simple, accessible vocabulary
      * Required bracketed words for clarity
      * Appropriate Islamic terminology
-   - Finalized word-by-word analysis
+   - Finalized word-by-word analysis (with original text formatting preserved)
 
 3. Quality Checks:
    - Grammatical accuracy in both languages
    - Islamic terminology consistency
    - Appropriate register for text type
    - No unnecessarily complex vocabulary
+   - Verification that ALL original text formatting is maintained
 
-Return only the final diacritical text, translation with necessary brackets, and word analysis.
-"""
+IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting exactly as provided."""

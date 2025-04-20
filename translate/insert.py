@@ -58,11 +58,9 @@ ARABIC_WORD_VOICE_ID = (
 
 # Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
-    stability=1.0,  # Maximum stability for consistent output
-    similarity_boost=0.95,  # Higher similarity for consistent voice characteristics
-    style=0.0,  # No style variation to maintain consistent speed
+    stability=0.9,
+    style=0.1,
     use_speaker_boost=True,
-    stability_boost=0.95,  # Added to maintain consistent characteristics
 )
 
 # Add after other constants
@@ -283,9 +281,6 @@ def generate_speech_with_timestamps(
         "model_id": "eleven_multilingual_v2",
         "output_format": "mp3_44100_128",
         "voice_settings": voice_settings,
-        "seed": int(
-            hashlib.sha256(text.encode()).hexdigest()[:8], 16
-        ),  # More reliable seed generation
     }
 
     audio_response = eleven_labs.text_to_speech.convert_with_timestamps(**params)
@@ -544,6 +539,52 @@ def clean_word_for_matching(word: str) -> str:
         word = word.replace(p, "")
 
     return word
+
+
+def format_article_text_for_tts(translations: List[Dict]) -> str:
+    """
+    Format article text with SSML tags for better listening experience.
+    Uses the tashkeel (fully vowelized) version of the text for better pronunciation.
+    Adds appropriate pauses between sections and structures the text.
+    """
+    # Start with the main SSML wrapper and Arabic language
+    sections = ['<speak><lang xml:lang="ar">']
+
+    total_sections = len(translations)
+
+    for i, translation in enumerate(translations):
+        # Use tashkeel text if available, fallback to original if not
+        arabic_text = translation.get("tashkeel", translation["original"]).strip()
+
+        # Add slightly longer pause for sentence endings
+        arabic_text = arabic_text.replace(".", ".<break time='0.3s'/>")
+        arabic_text = arabic_text.replace("؟", "؟<break time='0.3s'/>")
+        arabic_text = arabic_text.replace("!", "!<break time='0.3s'/>")
+        # Add shorter pause for commas
+        arabic_text = arabic_text.replace("،", "،<break time='0.2s'/>")
+
+        # Last section: slightly softer and slower for conclusion
+        if i == total_sections - 1:
+            sections.append(f'<prosody rate="95%" volume="-5%">{arabic_text}</prosody>')
+        # All other sections: normal
+        else:
+            sections.append(arabic_text)
+
+        # Add pause between sections
+        if i < total_sections - 1:
+            # Longer pause if the next section starts with a new paragraph indicator
+            next_text = translations[i + 1].get(
+                "tashkeel", translations[i + 1]["original"]
+            )
+            if next_text.strip().startswith("*"):  # Assuming * marks new paragraphs
+                sections.append('<break time="0.8s"/>')
+            else:
+                sections.append('<break time="0.5s"/>')
+
+    # Close the main tags
+    sections.append("</lang></speak>")
+
+    return "".join(sections)
 
 
 def wrap_in_arabic_ssml(text: str) -> str:
@@ -1248,10 +1289,10 @@ def process_json_file(file_path: str) -> None:
 
     # Generate audio for the full article
     print("Generating audio for full article...")
-    full_arabic_text = " ".join(t["original"] for t in data["translations"])
+    formatted_text = format_article_text_for_tts(data["translations"])
     audio_filename = generate_audio_filename()
     audio_result = generate_sentence_audio(
-        text=full_arabic_text,
+        text=formatted_text,
         filename=audio_filename,
     )
     if audio_result:

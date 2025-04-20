@@ -29,28 +29,33 @@ from schemas import (
 # Execute set_keys.py to set environment variables
 exec(open("set_keys.py").read())
 
+# Configure logging to show only errors and final output
+logging.basicConfig(
+    level=logging.ERROR, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-def clean_text(text: str) -> str:
+
+def is_valid_pos(pos: str) -> bool:
     """
-    Keeps only Arabic characters and essential punctuation.
-    Normalizes whitespace to single spaces.
-    Removes numbers, parentheses, and other non-Arabic characters.
+    Validate if a part of speech is valid according to our word type mapping system.
     """
-    if not text:
-        return text
+    if not pos:
+        return False
 
-    # Only Arabic characters and essential punctuation
-    # \u0600-\u06FF: Arabic
-    # \uFB50-\uFDFF: Arabic Presentation Forms-A
-    # \uFE70-\uFEFF: Arabic Presentation Forms-B
-    # Specific punctuation: ،؟.!
-    arabic_pattern = r"[^\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF،؟.!\s]"
-    cleaned = re.sub(arabic_pattern, "", text)
+    pos = pos.lower().strip()
 
-    # Normalize whitespace
-    cleaned = " ".join(cleaned.split())
+    # Check if it's one of our exact valid POS categories
+    if pos in VALID_POS:
+        return True
 
-    return cleaned
+    # If there are parentheses, the model might have included additional information
+    # Strip this out to check the base POS (e.g., "verb (past)" -> "verb")
+    if "(" in pos:
+        base_pos = pos.split("(")[0].strip()
+        if base_pos in VALID_POS:
+            return False  # We explicitly don't want modifiers in parentheses
+
+    return False
 
 
 # Configure logging to show only errors and final output
@@ -188,29 +193,6 @@ def validate_translation_results(
         raise TranslationValidationError(
             f"{step_name} validation failed:\n" + "\n".join(errors)
         )
-
-
-def is_valid_pos(pos: str) -> bool:
-    """
-    Validate if a part of speech is valid according to our word type mapping system.
-    """
-    if not pos:
-        return False
-
-    pos = pos.lower().strip()
-
-    # Check if it's one of our exact valid POS categories
-    if pos in VALID_POS:
-        return True
-
-    # If there are parentheses, the model might have included additional information
-    # Strip this out to check the base POS (e.g., "verb (past)" -> "verb")
-    if "(" in pos:
-        base_pos = pos.split("(")[0].strip()
-        if base_pos in VALID_POS:
-            return False  # We explicitly don't want modifiers in parentheses
-
-    return False
 
 
 def validate_final_translation(translation: SentenceTranslation) -> List[str]:
@@ -1312,19 +1294,6 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                         batch["indices"],
                     )
 
-                    # Clean text only when storing in results
-                    for result in batch_results:
-                        # Store cleaned version of original text
-                        result.original = clean_text(result.original)
-                        # Clean tashkeel text if present
-                        if result.tashkeel:
-                            result.tashkeel = clean_text(result.tashkeel)
-                        # Clean word-by-word translations
-                        if result.word_by_word:
-                            for word in result.word_by_word:
-                                if word.arabic:
-                                    word.arabic = clean_text(word.arabic)
-
                     # Add batch results
                     results.extend(batch_results)
 
@@ -1343,12 +1312,8 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                         results.append(
                             SentenceTranslation(
                                 index=batch["start_index"] + i,
-                                original=clean_text(
-                                    sentence
-                                ),  # Clean only when storing
-                                tashkeel=clean_text(
-                                    sentence
-                                ),  # Clean only when storing
+                                original=sentence,  # Keep original text
+                                tashkeel=sentence,
                                 word_by_word=[],
                                 full_translation="[BATCH PROCESSING ERROR]",
                                 notes=f"Error: {str(e)}",
