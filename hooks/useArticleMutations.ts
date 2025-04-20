@@ -58,7 +58,7 @@ export const useArticleMutations = (
     () => ({
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
         readingListService.addToReadingList(userId, articleId),
-      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: number }) => {
+      onSuccess: (_: void, { userId }: { userId: string; articleId: number }) => {
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
         showToast('Added to bookmarks');
@@ -83,7 +83,7 @@ export const useArticleMutations = (
     () => ({
       mutationFn: async ({ userId, articleId }: { userId: string; articleId: number }) =>
         readingListService.removeFromReadingList(userId, articleId),
-      onSuccess: (_: void, { userId, articleId }: { userId: string; articleId: number }) => {
+      onSuccess: (_: void, { userId }: { userId: string; articleId: number }) => {
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
         showToast('Removed from bookmarks');
