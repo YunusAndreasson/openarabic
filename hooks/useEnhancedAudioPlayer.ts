@@ -87,7 +87,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   const isPlayingRef = useRef(false);
   const currentIndexRef = useRef(-1);
   const preloadInProgressRef = useRef(false);
-  const preloadBatchSizeRef = useRef(3);
+  const preloadBatchSizeRef = useRef(2);
   const currentPlaylistRef = useRef<EnhancedAudioTrack[]>([]);
   const lastStateUpdateRef = useRef(Date.now());
   const currentSoundRef = useRef<Audio.Sound | null>(null);
@@ -249,7 +249,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
               if (isPlayingRef.current && currentIndexRef.current === index) {
                 setIsTrackEnded(true);
               }
-            }, duration + 500);
+            }, duration + 100);
           }
         } else {
           // Load and play on demand
@@ -277,7 +277,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
                 if (isPlayingRef.current && currentIndexRef.current === index) {
                   setIsTrackEnded(true);
                 }
-              }, duration + 500);
+              }, duration + 100);
             }
           } catch (loadError) {
             setIsTrackEnded(true);

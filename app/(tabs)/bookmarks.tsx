@@ -183,7 +183,6 @@ const BookmarkListItem = memo(
 
     // Calculate remaining time in milliseconds
     const remainingTime = Math.max(0, duration - progress);
-    const totalTime = duration;
     const shouldShowTime = isActive && duration > 0;
 
     return (
@@ -215,7 +214,7 @@ const BookmarkListItem = memo(
                       style={[styles.timeText, { color: colors.tint }]}
                       skipDefaultColor
                     >
-                      {formatTime(remainingTime)} / {formatTime(totalTime)}
+                      {formatTime(remainingTime)}
                     </ThemedText>
                   </View>
                 )}

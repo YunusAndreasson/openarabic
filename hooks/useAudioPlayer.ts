@@ -146,7 +146,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       } catch {
         // Ignore status check errors - they will be handled by the status update callback
       }
-    }, 500);
+    }, 1000);
 
     progressIntervalRef.current = intervalId;
   }, []);
