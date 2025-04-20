@@ -339,6 +339,15 @@ export default function ArticlesScreen(): JSX.Element {
   }, [beginnerArticles, handleArticlePress]);
 
   const ListHeaderComponent = useMemo(() => {
+    // Filter out authors and categories with no articles
+    const authorsWithArticles = authors.filter(author =>
+      articlesData.some(article => article.author?.id === author.id)
+    );
+
+    const categoriesWithArticles = categoriesData.filter(category =>
+      articlesData.some(article => article.category?.id === category.id)
+    );
+
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
       { id: 'continue-reading', component: ContinueReadingSection },
@@ -354,17 +363,25 @@ export default function ArticlesScreen(): JSX.Element {
       { id: 'beginner-friendly', component: BeginnerFriendlySection },
       {
         id: 'author-filter',
-        component: <FilterSection title="Authors" items={authors} onSelect={handleSelectAuthor} />,
+        component:
+          authorsWithArticles.length > 0 ? (
+            <FilterSection
+              title="Authors"
+              items={authorsWithArticles}
+              onSelect={handleSelectAuthor}
+            />
+          ) : null,
       },
       {
         id: 'category-filter',
-        component: (
-          <FilterSection
-            title="Categories"
-            items={categoriesData}
-            onSelect={handleSelectCategory}
-          />
-        ),
+        component:
+          categoriesWithArticles.length > 0 ? (
+            <FilterSection
+              title="Categories"
+              items={categoriesWithArticles}
+              onSelect={handleSelectCategory}
+            />
+          ) : null,
       },
     ];
 

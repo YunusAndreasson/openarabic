@@ -242,8 +242,8 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
 
 
 # Configuration constants
-MODEL_ANALYSIS = "gpt-4o"  # For text splitting and analysis
-MODEL_TRANSLATION = "gpt-4o"  # For English translation and word translation
+MODEL_ANALYSIS = "gpt-4.1"  # For text splitting and analysis
+MODEL_TRANSLATION = "gpt-4.1"  # For English translation and word translation
 MODEL_OTHER = "gpt-4o"  # For tashkeel and support tasks
 MODEL_VERIFICATION = "o4-mini"  # For final verification/refinement step
 CHECKPOINT_FILE = "translation_checkpoint.json"
@@ -688,6 +688,29 @@ def batch_add_tashkeel(
         return [{"tashkeel": sentence, "uncertainties": []} for sentence in sentences]
 
 
+def is_arabic_word(word: str) -> bool:
+    """
+    Check if a word contains Arabic characters.
+    Returns True if the word contains at least one Arabic character.
+    """
+    # Arabic Unicode ranges
+    # Basic Arabic: \u0600-\u06FF
+    # Arabic Supplement: \uFB50-\uFDFF
+    # Arabic Extended: \uFE70-\uFEFF
+    return bool(re.search(r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]", word))
+
+
+def filter_arabic_words(text: str) -> List[str]:
+    """
+    Split text into words and return only those containing Arabic characters.
+    Preserves the exact Arabic words while filtering out punctuation and non-Arabic text.
+    """
+    # Split by whitespace while preserving the original words
+    words = text.split()
+    # Keep only words that contain Arabic characters
+    return [word for word in words if is_arabic_word(word)]
+
+
 def batch_translate_words(
     sentences: List[str],
     tashkeel_results: List[Dict[str, Any]],
@@ -700,6 +723,10 @@ def batch_translate_words(
     for i, (sentence, tashkeel_data, translation_data) in enumerate(
         zip(sentences, tashkeel_results, translations)
     ):
+        # Filter to get only Arabic words for word-by-word translation
+        tashkeel = tashkeel_data.get("tashkeel", "")
+        arabic_words = filter_arabic_words(tashkeel)
+
         # Add semantic context for word-level analysis if available
         semantic_context = ""
         if all_sentences and indices and i < len(indices):
@@ -709,7 +736,7 @@ def batch_translate_words(
             key_terms = set()
 
             # Words from the current sentence to look for in context
-            important_words = [w for w in sentence.split() if len(w) > 3]
+            important_words = [w for w in arabic_words if len(w) > 3]
 
             # Check previous and next sentences for related terms
             for j in range(
@@ -724,7 +751,6 @@ def batch_translate_words(
                 semantic_context = f"\nRelated terms in context: {', '.join(key_terms)}"
 
         # Extract tashkeel and its uncertainties
-        tashkeel = tashkeel_data.get("tashkeel", "")
         tashkeel_uncertainties = tashkeel_data.get("uncertainties", [])
         tashkeel_notes = ""
         if tashkeel_uncertainties:
@@ -745,7 +771,8 @@ def batch_translate_words(
 
         formatted_inputs.append(
             f"Set {i + 1}:\n"
-            f"Arabic (with tashkeel): {tashkeel}\n"
+            f"Arabic words to translate:\n{' '.join(arabic_words)}\n"
+            f"Full context (with tashkeel): {tashkeel}\n"
             f"Translation: {translation}"
             f"{semantic_context}"
             f"{tashkeel_notes}"

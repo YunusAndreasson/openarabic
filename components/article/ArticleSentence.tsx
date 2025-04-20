@@ -105,9 +105,8 @@ function ArticleSentenceComponent({
         backgroundColor: colors.tint ? `${colors.tint}40` : Colors.light.transparent,
       },
       animatedHighlightStyle,
-      isPlaying && styles.playingBackground,
     ],
-    [colors.tint, animatedHighlightStyle, isPlaying]
+    [colors.tint, animatedHighlightStyle]
   );
 
   const renderedWords = useMemo(() => {
@@ -172,10 +171,6 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.SPACING.SMALL,
     paddingLeft: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.TINY,
-  },
-  playingBackground: {
-    borderColor: Colors.light.border,
-    borderWidth: 1,
   },
   sentenceBackground: {
     ...StyleSheet.absoluteFillObject,

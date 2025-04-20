@@ -59,10 +59,14 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     return [
       containerAnimatedStyle,
       {
-        backgroundColor: value ? colors.tint : isDarkMode ? colors.elevation2 : colors.icon,
+        backgroundColor: value
+          ? colors.tint
+          : isDarkMode
+            ? colors.disabled
+            : `${colors.disabled}40`,
       },
     ];
-  }, [containerAnimatedStyle, value, colors.tint, colors.elevation2, colors.icon, isDarkMode]);
+  }, [containerAnimatedStyle, value, colors.tint, colors.disabled, isDarkMode]);
 
   // Memoize static styles to prevent new object creation on each render
   const containerStyle = useMemo(

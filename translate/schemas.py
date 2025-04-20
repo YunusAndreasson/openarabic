@@ -33,7 +33,7 @@ TRANSLATE_SENTENCES_FUNCTION = {
                     "properties": {
                         "translation": {
                             "type": "string",
-                            "description": "The English translation of the sentence",
+                            "description": "The English translation of the Arabic sentence",
                         },
                         "notes": {
                             "type": "string",
@@ -136,7 +136,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     },
                                     "english": {
                                         "type": "string",
-                                        "description": "The English translation",
+                                        "description": "The English translation of The Arabic word in context of the sentence",
                                     },
                                     "pos": {
                                         "type": "string",
@@ -160,7 +160,7 @@ WORD_TRANSLATION_FUNCTION = {
                                     },
                                     "essential_translation": {
                                         "type": "string",
-                                        "description": "One-word English meaning of the essential letters for spaced-repetition flashcards",
+                                        "description": "One-word English meaning of the essential words lexical meaning without grammar",
                                     },
                                     "notes": {
                                         "type": "string",
@@ -196,10 +196,18 @@ WORD_TRANSLATION_FUNCTION = {
                                 "arabic": "قَالَ",
                                 "english": "he said",
                                 "pos": "verb",
-                                "essential": "قَال",
+                                "essential": "قَالَ",
                                 "essential_translation": "he said",
-                                "notes": "",
-                            }
+                                "notes": "The word was in the masdar form so no need to remove prefix or suffix",
+                            },
+                            {
+                                "arabic": "النَّبِيُّ",
+                                "english": "the prophet",
+                                "pos": "noun",
+                                "essential": "نَبِيّ",
+                                "essential_translation": "prophet",
+                                "notes": "Remove the definite article",
+                            },
                         ]
                     }
                 ]
@@ -249,11 +257,11 @@ REFINEMENT_FUNCTION = {
                                     },
                                     "essential": {
                                         "type": "string",
-                                        "description": "Flashcard essential letters",
+                                        "description": "Arabic essential letters with affixes stripped",
                                     },
                                     "essential_translation": {
                                         "type": "string",
-                                        "description": "One-word English meaning of the essential letters",
+                                        "description": "One-word English lexical meaning of the essential Arabic word",
                                     },
                                     "n": {
                                         "type": "string",
@@ -351,7 +359,7 @@ SPLIT_TEXT_FUNCTION = {
 }
 
 # Prompt instructions
-GENERAL_SYSTEM_PROMPT = """Expert translator specializing in Classical Arabic Islamic texts.
+GENERAL_SYSTEM_PROMPT = """Expert translator specializing in Classical Arabic Islamic texts and teaching.
 
 Priorities:
 1. Accuracy: Preserve authentic Islamic meaning
@@ -379,11 +387,11 @@ CONTENT_ANALYSIS_PROMPT = """Analyze this Islamic text to provide:
    - Direct, precise statements only
 
 3. Difficulty Level (1-5):
-   Level 1: Basic - Simple structures, common Islamic terms
-   Level 2: Elementary - Short compounds, standard Islamic vocabulary
-   Level 3: Intermediate - Complex structures, technical Islamic terms
-   Level 4: Advanced - Specialized Islamic terminology, abstract concepts
-   Level 5: Expert - Technical Islamic language, complex rhetorical devices
+   Level 1: Basic
+   Level 2: Elementary
+   Level 3: Intermediate 
+   Level 4: Advanced 
+   Level 5: Expert
 
 IMPORTANT: Preserve ALL original text formatting, punctuation, and special characters throughout the analysis.
 
@@ -487,8 +495,8 @@ For each word provide a JSON object with these keys:
 - `arabic`: Arabic text with diacritics (exactly as in original, with all formatting preserved)
 - `english`: Simple English equivalent in context to the sentence
 - `pos`: Part of speech tag (must be one of the VALID_POS enum)
-- `essential`: Flashcard letters, stripped of affixes and diacritized without case endings
-- `essential_translation`: One-word English meaning of the essential Arabic word close to lexical meaning but not in context of the sentence
+- `essential`: Arabic word stripped of affixes and diacritized but without case endings
+- `essential_translation`: One-word English lexical meaning found in a dictionary of the essential Arabic word but without grammar
 - `notes`: Any additional grammatical or contextual details (optional)
 
 Output MUST be a JSON array where each element corresponds to one word in original order, with fields exactly matching the schema."""
