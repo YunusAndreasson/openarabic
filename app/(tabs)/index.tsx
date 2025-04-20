@@ -2,19 +2,20 @@ import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
-import Pill from '@/components/Pill';
-import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
 import ArticleList from '@/components/index/ArticleList';
+import DailyPickSection from '@/components/index/DailyPickSection';
+import FilterSection from '@/components/index/FilterSection';
+import LatestTextsSection from '@/components/index/LatestTextsSection';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
@@ -38,7 +39,6 @@ import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../../components/ErrorState';
-import DailyPickSection from '../../components/index/DailyPickSection';
 import { useAppLoading } from '../_layout';
 
 // Cache duration constants
@@ -69,15 +69,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  filterSectionContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
-  horizontalList: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -90,9 +81,6 @@ const styles = StyleSheet.create({
   metadataText: {
     marginTop: LAYOUT.SPACING.TINY / 2,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  sectionContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
   },
   textContent: {
     flex: 1,
@@ -337,19 +325,6 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [sortedInProgressArticles, lastOpenedArticles, handleArticlePress, articlesData]);
 
-  const LatestTextsSection = useMemo(() => {
-    const latestArticles = getLatestArticles(articlesData, 20);
-
-    return (
-      <View style={styles.sectionContainer}>
-        <SectionTitle title="Latest Texts" />
-        {latestArticles.map(article => (
-          <ArticleItem key={article.id} article={article} onPress={handleArticlePress} />
-        ))}
-      </View>
-    );
-  }, [articlesData, handleArticlePress]);
-
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
 
@@ -363,62 +338,34 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [beginnerArticles, handleArticlePress]);
 
-  const AuthorFilterSection = useMemo(() => {
-    return (
-      <View style={styles.filterSectionContainer}>
-        <SectionTitle title="Authors" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        >
-          {authors.map(author => (
-            <Pill
-              key={`author-${author.id}`}
-              id={author.id}
-              label={capitalizeFirstLetter(author.name)}
-              isSelected={false}
-              onSelect={id => handleSelectAuthor(Number(id))}
-              variant="filter"
-            />
-          ))}
-        </ScrollView>
-      </View>
-    );
-  }, [authors, handleSelectAuthor]);
-
-  const CategoryFilterSection = useMemo(() => {
-    return (
-      <View style={styles.filterSectionContainer}>
-        <SectionTitle title="Categories" />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.horizontalList}
-        >
-          {categoriesData.map(category => (
-            <Pill
-              key={`category-${category.id}`}
-              id={category.id}
-              label={capitalizeFirstLetter(category.name)}
-              isSelected={false}
-              onSelect={id => handleSelectCategory(Number(id))}
-              variant="filter"
-            />
-          ))}
-        </ScrollView>
-      </View>
-    );
-  }, [categoriesData, handleSelectCategory]);
-
   const ListHeaderComponent = useMemo(() => {
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
       { id: 'continue-reading', component: ContinueReadingSection },
-      { id: 'latest-texts', component: LatestTextsSection },
+      {
+        id: 'latest-texts',
+        component: (
+          <LatestTextsSection
+            articles={getLatestArticles(articlesData, 20)}
+            onArticlePress={handleArticlePress}
+          />
+        ),
+      },
       { id: 'beginner-friendly', component: BeginnerFriendlySection },
-      { id: 'author-filter', component: AuthorFilterSection },
-      { id: 'category-filter', component: CategoryFilterSection },
+      {
+        id: 'author-filter',
+        component: <FilterSection title="Authors" items={authors} onSelect={handleSelectAuthor} />,
+      },
+      {
+        id: 'category-filter',
+        component: (
+          <FilterSection
+            title="Categories"
+            items={categoriesData}
+            onSelect={handleSelectCategory}
+          />
+        ),
+      },
     ];
 
     return (
@@ -433,10 +380,13 @@ export default function ArticlesScreen(): JSX.Element {
   }, [
     DailyPick,
     ContinueReadingSection,
-    LatestTextsSection,
     BeginnerFriendlySection,
-    AuthorFilterSection,
-    CategoryFilterSection,
+    articlesData,
+    authors,
+    categoriesData,
+    handleArticlePress,
+    handleSelectAuthor,
+    handleSelectCategory,
   ]);
 
   const EmptyStateComponent = useMemo(() => null, []);

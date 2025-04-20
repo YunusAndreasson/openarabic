@@ -1,7 +1,10 @@
 import type { Article, ArticleSentence } from '@/types/articles.types';
+import type { Tables } from '@/types/database.types';
 import type { StudyWord, SentenceWord } from '@/types/vocabulary.types';
 
 import { handleError } from './errorHandling';
+
+type DatabaseRecord = Record<string, unknown>;
 
 // Disable the any rule for just these type mappers as they're designed to handle unknown shapes
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -14,10 +17,10 @@ import { handleError } from './errorHandling';
  * @param transform Optional transform function to apply to the value
  */
 function safeGet<T>(
-  obj: Record<string, any>,
+  obj: DatabaseRecord,
   key: string,
   defaultValue: T,
-  transform?: (val: any) => T
+  transform?: (val: unknown) => T
 ): T {
   const value = obj[key];
   if (value === undefined || value === null) {
@@ -39,8 +42,10 @@ function safeGet<T>(
  * @param item Database row from study_words table with related data
  * @returns A fully typed StudyWord object with all required fields
  */
-export function mapToStudyWord(item: Record<string, any>): StudyWord {
+export function mapToStudyWord(item: DatabaseRecord): StudyWord {
   return {
+    sentence_word_id: safeGet(item, 'sentence_word_id', null),
+    sentence_word: safeGet(item, 'sentence_word', undefined),
     root_id: safeGet(item, 'root_id', 0, Number),
     root: safeGet(item, 'root', undefined),
     user_id: safeGet(item, 'user_id', '', String),
@@ -82,7 +87,7 @@ export function mapToStudyWord(item: Record<string, any>): StudyWord {
  * @param items Array of database rows from study_words table
  * @returns Array of fully typed StudyWord objects
  */
-export function mapToStudyWords(items: Record<string, any>[]): StudyWord[] {
+export function mapToStudyWords(items: DatabaseRecord[]): StudyWord[] {
   if (!Array.isArray(items)) return [];
   return items.map(mapToStudyWord);
 }
@@ -92,18 +97,18 @@ export function mapToStudyWords(items: Record<string, any>[]): StudyWord[] {
  * @param item Database row from sentence_words table with related data
  * @returns A fully typed SentenceWord object
  */
-export function mapToSentenceWord(item: Record<string, any>): SentenceWord {
-  const result = item as SentenceWord;
-  // Ensure required properties are present
-  result.root = safeGet(item, 'root', null);
-  result.word_type = safeGet(item, 'word_type', null);
-  result.sentence = safeGet(item, 'sentence', null);
-  // Handle the new audio URL fields
-  result.arabic_audio_url = safeGet(item, 'arabic_audio_url', null);
-  result.english_audio_url = safeGet(item, 'english_audio_url', null);
-  result.audio_start = safeGet(item, 'audio_start', null);
-  result.audio_end = safeGet(item, 'audio_end', null);
-  return result;
+export function mapToSentenceWord(item: DatabaseRecord): SentenceWord {
+  const base = item as Tables<'sentence_words'>;
+  return {
+    ...base,
+    root: safeGet(item, 'root', null),
+    word_type: safeGet(item, 'word_type', null),
+    sentence: safeGet(item, 'sentence', null),
+    arabic_audio_url: safeGet(item, 'arabic_audio_url', null),
+    english_audio_url: safeGet(item, 'english_audio_url', null),
+    audio_start: safeGet(item, 'audio_start', null),
+    audio_end: safeGet(item, 'audio_end', null),
+  };
 }
 
 /**
@@ -111,16 +116,17 @@ export function mapToSentenceWord(item: Record<string, any>): SentenceWord {
  * @param item Database row from articles table with related data
  * @returns A fully typed Article object
  */
-export function mapToArticle(item: Record<string, any>): Article {
-  const result = item as Article;
-  // Ensure required properties are present
-  result.article_sentences = safeGet(item, 'article_sentences', [], val =>
-    Array.isArray(val) ? val.map(mapToArticleSentence) : []
-  );
-  result.category = safeGet(item, 'category', undefined);
-  result.author = safeGet(item, 'author', null);
-  result.audio_url = safeGet(item, 'audio_url', null);
-  return result;
+export function mapToArticle(item: DatabaseRecord): Article {
+  const base = item as Tables<'articles'>;
+  return {
+    ...base,
+    article_sentences: safeGet(item, 'article_sentences', [], val =>
+      Array.isArray(val) ? val.map(mapToArticleSentence) : []
+    ),
+    category: safeGet(item, 'category', undefined),
+    author: safeGet(item, 'author', null),
+    audio_url: safeGet(item, 'audio_url', null),
+  };
 }
 
 /**
@@ -128,7 +134,7 @@ export function mapToArticle(item: Record<string, any>): Article {
  * @param items Array of database rows from articles table
  * @returns Array of fully typed Article objects
  */
-export function mapToArticles(items: Record<string, any>[]): Article[] {
+export function mapToArticles(items: DatabaseRecord[]): Article[] {
   if (!Array.isArray(items)) return [];
   return items.map(mapToArticle);
 }
@@ -138,17 +144,12 @@ export function mapToArticles(items: Record<string, any>[]): Article[] {
  * @param item Database row from article_sentences table with related data
  * @returns A fully typed ArticleSentence object
  */
-export function mapToArticleSentence(item: Record<string, any>): ArticleSentence {
-  const result = item as ArticleSentence;
-  // Ensure sentence_words is always an array and audio URLs are present
-  result.sentence_words = safeGet(item, 'sentence_words', [], val =>
-    Array.isArray(val) ? val.map(mapToSentenceWord) : []
-  );
-
-  // The audio_url might still exist for backward compatibility
-  if ('audio_url' in item) {
-    result.audio_url = safeGet(item, 'audio_url', null);
-  }
-
-  return result;
+export function mapToArticleSentence(item: DatabaseRecord): ArticleSentence {
+  const base = item as Tables<'article_sentences'>;
+  return {
+    ...base,
+    sentence_words: safeGet(item, 'sentence_words', [], val =>
+      Array.isArray(val) ? val.map(mapToSentenceWord) : []
+    ),
+  };
 }

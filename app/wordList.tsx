@@ -4,7 +4,6 @@ import { useLocalSearchParams, router, Stack } from 'expo-router';
 import React, { useCallback, useMemo, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Loader } from '../components/Loader';
 import PageHeader from '../components/PageHeader';
@@ -12,13 +11,13 @@ import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
 import WordListItem from '../components/vocabulary/WordListItem';
-import { LAYOUT, getHeaderHeight } from '../constants/layout';
+import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useColors } from '../hooks/useColors';
 import type { EnhancedStudyWord } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
 
-const ITEM_HEIGHT = 60;
+const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3;
 
 // Move WordListItem component definition outside to optimize recycling
 interface WordListItemMemoProps {
@@ -37,7 +36,6 @@ export default function WordListScreen(): JSX.Element {
   const { category } = useLocalSearchParams();
   const colors = useColors();
   const { user } = useAuth();
-  const insets = useSafeAreaInsets();
 
   // Get the title and icon based on the category
   const { title } = useMemo(() => {
@@ -89,7 +87,11 @@ export default function WordListScreen(): JSX.Element {
 
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="information-circle-outline" size={60} color={colors.tint} />
+        <Ionicons
+          name="information-circle-outline"
+          size={LAYOUT.SPACING.XLARGE * 3}
+          color={colors.tint}
+        />
         <ThemedText style={styles.emptyText}>No words found</ThemedText>
       </View>
     );
@@ -121,7 +123,7 @@ export default function WordListScreen(): JSX.Element {
       <ThemedView style={styles.container}>
         <Stack.Screen options={{ title }} />
         <View style={styles.errorContainer}>
-          <ThemedText style={[styles.errorText, { color: colors.error }]}>
+          <ThemedText style={styles.errorText}>
             Failed to load vocabulary words. Please try again later.
           </ThemedText>
         </View>
@@ -157,17 +159,13 @@ export default function WordListScreen(): JSX.Element {
               ListHeaderComponent={ListHeaderComponent}
               ListEmptyComponent={renderEmptyComponent}
               showsVerticalScrollIndicator={true}
-              estimatedFirstItemOffset={getHeaderHeight(insets) + LAYOUT.SPACING.MEDIUM}
+              estimatedFirstItemOffset={LAYOUT.SPACING.XXLARGE * 3}
               overrideItemLayout={layout => {
                 layout.size = ITEM_HEIGHT;
               }}
               drawDistance={100}
               contentInsetAdjustmentBehavior="automatic"
-              contentContainerStyle={{
-                paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-                paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
-                paddingTop: LAYOUT.SPACING.XXLARGE * 3,
-              }}
+              contentContainerStyle={styles.listContentContainer}
             />
           )}
         </ThemedView>
@@ -200,7 +198,7 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.LARGE,
   },
   errorText: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
   },
   flexContainer: {
@@ -209,12 +207,17 @@ const styles = StyleSheet.create({
   headerContainer: {
     paddingBottom: 0,
   },
+  listContentContainer: {
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.XXLARGE * 3,
+  },
   loaderContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
   },
   wordItemContainer: {
-    marginVertical: 1,
+    marginVertical: LAYOUT.SPACING.TINY / 4,
   },
 });

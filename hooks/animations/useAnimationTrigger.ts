@@ -83,17 +83,16 @@ export const useAnimationTrigger = (
 
   // Safe animation starter that checks for mounted state and runs on UI thread when possible
   const safeStartAnimation = useCallback(() => {
-    if (isMountedRef.current && startAnimation) {
-      try {
-        if (isWorkletFunction(startAnimation)) {
-          runOnUI(startAnimation)();
-        } else {
-          startAnimation();
-        }
-      } catch (e) {
-        handleError(e instanceof Error ? e : String(e));
+    if (!isMountedRef.current || !startAnimation) return;
+
+    try {
+      if (isWorkletFunction(startAnimation)) {
+        runOnUI(startAnimation)();
+      } else {
         startAnimation();
       }
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error('Animation failed to start'));
     }
   }, [startAnimation]);
 
