@@ -24,12 +24,19 @@ import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
-import type { EnhancedAudioTrack } from '@/types/audio.types';
 import { handleError } from '@/utils/errorHandling';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
+
+// Format time in MM:SS format
+const formatTime = (milliseconds: number): string => {
+  if (!milliseconds || isNaN(milliseconds)) return '00:00';
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const remainingSeconds = Math.floor(totalSeconds % 60);
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
 
 type ReadingListItem = Tables<'reading_list'> & {
   articles: Article & {
@@ -123,6 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginTop: LAYOUT.SPACING.TINY,
   },
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
@@ -130,6 +138,15 @@ const styles = StyleSheet.create({
   textContent: {
     flex: 1,
     paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  timeContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  timeText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    marginLeft: LAYOUT.SPACING.TINY,
   },
   titleText: {
     marginBottom: LAYOUT.SPACING.TINY,
@@ -164,6 +181,11 @@ const BookmarkListItem = memo(
       : undefined;
     const activeTitleStyle = isActive ? { color: colors.tint } : undefined;
 
+    // Calculate remaining time in milliseconds
+    const remainingTime = Math.max(0, duration - progress);
+    const totalTime = duration;
+    const shouldShowTime = isActive && duration > 0;
+
     return (
       <View style={styles.cardContainer}>
         <BaseCard
@@ -185,6 +207,18 @@ const BookmarkListItem = memo(
                 >
                   {item.articles?.author?.name || 'Unknown Author'}
                 </ThemedText>
+                {shouldShowTime && (
+                  <View style={styles.timeContainer}>
+                    <Ionicons name="time-outline" size={14} color={colors.tint} />
+                    <ThemedText
+                      type="label"
+                      style={[styles.timeText, { color: colors.tint }]}
+                      skipDefaultColor
+                    >
+                      {formatTime(remainingTime)} / {formatTime(totalTime)}
+                    </ThemedText>
+                  </View>
+                )}
               </View>
             </View>
             <View style={styles.iconContainer}>
@@ -292,7 +326,6 @@ export default function BookmarksScreen(): JSX.Element {
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
   const [isShuffleMode, setIsShuffleMode] = useState(false);
-  const [tracksForWordCounts, setTracksForWordCounts] = useState<EnhancedAudioTrack[]>([]);
   // --- End State Hooks ---
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
@@ -343,18 +376,6 @@ export default function BookmarksScreen(): JSX.Element {
   // Add screen animation hook
   const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
 
-  const studyWordsQuery = useQuery({
-    queryKey: ['studyWordsCounts', user?.id],
-    queryFn: () => {
-      if (!user?.id) return Promise.resolve([]);
-      return studyWordsFSRSService.getFSRSWords(user.id);
-    },
-    enabled: !!user?.id,
-    staleTime: 60000,
-    gcTime: 300000,
-  });
-  const { isLoading: isStudyWordsLoading } = studyWordsQuery;
-
   const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],
     queryFn: () => {
@@ -378,13 +399,11 @@ export default function BookmarksScreen(): JSX.Element {
 
   const flashListExtraData = useMemo(
     () => ({
-      currentTrackIndex, // Direct state value
-      progress, // Direct state value
-      metadataValues, // Derived from metadata
-      tracksForWordCounts, // Local state for calculating word counts
-      isStudyWordsLoading,
+      currentTrackIndex,
+      progress,
+      metadataValues,
     }),
-    [currentTrackIndex, progress, metadataValues, tracksForWordCounts, isStudyWordsLoading]
+    [currentTrackIndex, progress, metadataValues]
   );
   // --- End Derived State & Memos ---
 
@@ -392,23 +411,12 @@ export default function BookmarksScreen(): JSX.Element {
   // Loading State Synchronization Effect
   useEffect(() => {
     const shouldBeLoading =
-      isReadingListLoading || isReadingListFetching || isEnhancedTracksLoading; // Simplified logic based on primary queries
+      isReadingListLoading || isReadingListFetching || isEnhancedTracksLoading;
+    if (shouldBeLoading === isLoadingState) return;
 
-    if (shouldBeLoading === isLoadingState) {
-      return;
-    }
-
-    // Debounce the state update slightly
-    const timeoutId = setTimeout(() => {
-      if (shouldBeLoading) {
-        startLoading();
-      } else {
-        stopLoading();
-      }
-    }, 50); // Reduced debounce slightly
+    const timeoutId = setTimeout(shouldBeLoading ? startLoading : stopLoading, 50);
 
     return () => clearTimeout(timeoutId);
-    // Dependencies MUST accurately reflect what's used to calculate shouldBeLoading and what triggers updates
   }, [
     isReadingListLoading,
     isReadingListFetching,
@@ -418,14 +426,6 @@ export default function BookmarksScreen(): JSX.Element {
     stopLoading,
   ]);
 
-  // Initialize study word counts when enhanced tracks are loaded
-  useEffect(() => {
-    if (!isEnhancedTracksLoading && enhancedTracks.length > 0) {
-      // Store enhanced tracks for word count calculations without affecting audio state
-      setTracksForWordCounts(enhancedTracks);
-    }
-  }, [isEnhancedTracksLoading, enhancedTracks]);
-
   // Screen Focus Refresh Hook
   useScreenFocusRefresh(
     queryClient,
@@ -434,7 +434,7 @@ export default function BookmarksScreen(): JSX.Element {
     1000 * 60 * 5, // 5 minutes
     true,
     false
-  ); // Stabilized
+  );
 
   // Focus Effect - uses stable actions.stopPlayback
   const focusEffectCallback = useCallback(() => {
@@ -452,9 +452,9 @@ export default function BookmarksScreen(): JSX.Element {
     }
 
     return () => {
-      actions.stopPlayback(); // Use stable action
+      actions.stopPlayback();
     };
-  }, [user?.id, queryClient, isReadingListLoading, actions.stopPlayback]); // Use stable action
+  }, [user?.id, queryClient, isReadingListLoading, actions.stopPlayback]);
   useFocusEffect(focusEffectCallback);
 
   // --- Event Handlers (use stable actions) ---
@@ -548,7 +548,9 @@ export default function BookmarksScreen(): JSX.Element {
                 item={item}
                 progress={progress}
                 duration={duration}
-                isActive={actions.isActiveArticle(item.article_id)}
+                isActive={
+                  audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
+                }
               />
             )}
             estimatedItemSize={ITEM_HEIGHT}
@@ -563,22 +565,6 @@ export default function BookmarksScreen(): JSX.Element {
             }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={null}
-            ListFooterComponent={() => (
-              <View
-                style={{
-                  paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-                  paddingBottom: LAYOUT.SPACING.MEDIUM,
-                }}
-              >
-                <ThemedText
-                  type="label"
-                  style={{ fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, color: colors.textTertiary }}
-                  skipDefaultColor
-                >
-                  Word count shows saved study words that will be played during article listening
-                </ThemedText>
-              </View>
-            )}
             drawDistance={ITEM_HEIGHT * 10}
             overrideItemLayout={layout => {
               layout.size = ITEM_HEIGHT;

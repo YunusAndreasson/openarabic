@@ -174,7 +174,10 @@ export function useAudioPlayer(): AudioPlayerResult {
 
       // Update progress and duration
       setProgress(status.positionMillis);
-      setDuration(status.durationMillis || 0);
+      // Ensure duration is set from either status or current playlist track
+      const currentTrack = currentPlaylistRef.current[currentTrackIndex];
+      const trackDuration = currentTrack?.duration;
+      setDuration(status.durationMillis || trackDuration || 0);
 
       // Handle track completion
       if (status.didJustFinish && !status.isLooping) {
@@ -188,7 +191,7 @@ export function useAudioPlayer(): AudioPlayerResult {
         }
       }
     },
-    [playlistMode, audioState]
+    [playlistMode, audioState, currentTrackIndex]
   );
 
   // Load and play audio with the specified URL

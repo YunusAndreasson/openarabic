@@ -1,5 +1,6 @@
 // Import correctly from expo-av using default import syntax
 import { Audio } from 'expo-av';
+import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
 import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { AppState } from 'react-native';
@@ -68,6 +69,8 @@ export type EnhancedPlayerAPI = EnhancedPlayerState & { actions: EnhancedPlayerA
 export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   // Base audio player
   const audioPlayer = useAudioPlayer();
+  const [localDuration, setLocalDuration] = useState(0);
+  const [localProgress, setLocalProgress] = useState(0);
 
   // --- State ---
   const [metadata, setMetadata] = useState<PlaybackMetadata>(initialMetadata);
@@ -211,32 +214,70 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       updateMetadata(queueItem.track);
       try {
         let soundObject: Audio.Sound | null = null;
-        let durationMillis: number | null = null;
+
+        // Helper function to update playback state from status
+        const updatePlaybackState = (status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            const duration = status.durationMillis ?? queueItem.track.duration ?? 0;
+            setLocalDuration(duration);
+            setLocalProgress(status.positionMillis);
+            return duration;
+          }
+          return 0;
+        };
+
+        // Set up status update callback
+        const onStatusUpdate = (status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            updatePlaybackState(status);
+          }
+        };
 
         if (queueItem.isPreloaded && queueItem.sound) {
           soundObject = queueItem.sound;
           currentSoundRef.current = soundObject;
+          soundObject.setOnPlaybackStatusUpdate(onStatusUpdate);
           await soundObject.replayAsync();
           const status = await soundObject.getStatusAsync();
-          if (status.isLoaded) {
-            durationMillis = status.durationMillis ?? null;
+          const duration = updatePlaybackState(status);
+
+          if (duration && isFinite(duration)) {
+            if (trackEndTimeoutRef.current) {
+              clearTimeout(trackEndTimeoutRef.current);
+            }
+            trackEndTimeoutRef.current = setTimeout(() => {
+              if (isPlayingRef.current && currentIndexRef.current === index) {
+                setIsTrackEnded(true);
+              }
+            }, duration + 500);
           }
         } else {
           // Load and play on demand
           try {
             const { sound, status } = await Audio.Sound.createAsync(
               { uri: queueItem.track.audioUrl },
-              { shouldPlay: true }
+              { shouldPlay: true },
+              onStatusUpdate
             );
             soundObject = sound;
             currentSoundRef.current = sound;
-            if (status.isLoaded) {
-              durationMillis = status.durationMillis ?? null;
-            }
+            const duration = updatePlaybackState(status);
+
             // Update queue item if it was loaded on demand
             if (queueItem) {
               queueItem.sound = sound;
               queueItem.isPreloaded = true;
+            }
+
+            if (duration && isFinite(duration)) {
+              if (trackEndTimeoutRef.current) {
+                clearTimeout(trackEndTimeoutRef.current);
+              }
+              trackEndTimeoutRef.current = setTimeout(() => {
+                if (isPlayingRef.current && currentIndexRef.current === index) {
+                  setIsTrackEnded(true);
+                }
+              }, duration + 500);
             }
           } catch (loadError) {
             setIsTrackEnded(true);
@@ -248,44 +289,10 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
           await soundObject.playAsync();
           isPlayingRef.current = true;
           updateExposedState();
-          if (durationMillis && isFinite(durationMillis)) {
-            // Clear any existing timeouts
-            if (trackEndTimeoutRef.current) {
-              clearTimeout(trackEndTimeoutRef.current);
-              trackEndTimeoutRef.current = null;
-            }
-            // Store the timeout ID so we can clear it if needed
-            trackEndTimeoutRef.current = setTimeout(() => {
-              if (isPlayingRef.current && currentIndexRef.current === index) {
-                setIsTrackEnded(true);
-              }
-            }, durationMillis + 500);
-          }
           return true;
         } else {
-          const baseTracks = convertToBaseTracks([queueItem.track]);
-          if (!audioPlayer || typeof audioPlayer.playTrack !== 'function') {
-            setIsTrackEnded(true);
-            return false;
-          }
-          const success = await audioPlayer.playTrack(baseTracks, 0);
-          isPlayingRef.current = success;
-          updateExposedState();
-          if (success) {
-            const trackDuration = queueItem.track.duration ?? 3000;
-            // Clear any existing timeouts
-            if (trackEndTimeoutRef.current) {
-              clearTimeout(trackEndTimeoutRef.current);
-              trackEndTimeoutRef.current = null;
-            }
-            // Store the timeout ID so we can clear it if needed
-            trackEndTimeoutRef.current = setTimeout(() => {
-              if (isPlayingRef.current && currentIndexRef.current === index) {
-                setIsTrackEnded(true);
-              }
-            }, trackDuration + 500);
-          }
-          return success;
+          setIsTrackEnded(true);
+          return false;
         }
       } catch (error) {
         handleError(error as Error);
@@ -295,7 +302,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
         return false;
       }
     },
-    [audioPlayer, updateExposedState, updateMetadata, convertToBaseTracks]
+    [updateExposedState, updateMetadata]
   );
 
   const stopPlaybackLogic = useCallback(async (): Promise<boolean> => {
@@ -309,6 +316,8 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
     isPlayingRef.current = false;
     setIsTrackEnded(false);
     currentIndexRef.current = -1;
+    setLocalProgress(0);
+    setLocalDuration(0);
 
     // Stop and unload the current sound if it exists
     if (currentSoundRef.current) {
@@ -502,25 +511,24 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
   return useMemo(
     () => ({
-      progress: audioPlayer?.progress ?? 0,
-      duration: audioPlayer?.duration ?? 0,
+      progress: localProgress,
+      duration: localDuration,
       metadata,
       isTrackEnded,
       audioState,
       currentTrackIndex,
       playlistMode: playlistModeActive,
-      // IMPORTANT: Return the stable actions object itself
       actions: stableActions,
     }),
     [
-      audioPlayer?.progress,
-      audioPlayer?.duration,
+      localProgress,
+      localDuration,
       metadata,
       isTrackEnded,
       audioState,
       currentTrackIndex,
       playlistModeActive,
-      stableActions, // Add stableActions to satisfy exhaustive-deps
+      stableActions,
     ]
   );
 }
