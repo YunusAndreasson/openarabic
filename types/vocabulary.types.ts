@@ -8,6 +8,8 @@ export interface SentenceWord extends Tables<'sentence_words'> {
   root: Tables<'roots'> | null;
   word_type: Tables<'word_types'> | null;
   sentence?: Tables<'article_sentences'> | null;
+  audio_start: string | null;
+  audio_end: string | null;
 }
 
 /**

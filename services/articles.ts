@@ -49,8 +49,6 @@ const DETAIL_VIEW_COLUMNS = `
       word_type_id,
       audio_start,
       audio_end,
-      arabic_audio_url,
-      english_audio_url,
       root:roots(id, letters, meaning),
       word_type:word_types(id, name)
     )

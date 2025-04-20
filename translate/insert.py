@@ -14,7 +14,6 @@ import io
 import time
 import functools
 import re
-from .utils import remove_final_haraka
 
 
 # Execute set_keys.py to set environment variables
@@ -56,7 +55,6 @@ ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic sentences
 ARABIC_WORD_VOICE_ID = (
     "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
 )
-ENGLISH_VOICE_ID = "pqHfZKP75CvOlQylNhV4"  # Voice ID for English
 
 # Add after other constants
 AUDIO_CACHE_DIR = os.path.join(
@@ -211,8 +209,6 @@ def generate_speech(
     text: str,
     voice_id: str,
     speed: float = 1.0,
-    previous_text: str = None,
-    next_text: str = None,
     voice_settings: Optional[VoiceSettings] = None,
 ):
     """Generate speech using ElevenLabs API with retries."""
@@ -406,12 +402,11 @@ def validate_mp3(audio_data: bytes, is_cached_file: bool = False) -> bool:
         return False
 
 
-def get_cache_key(word: str, is_arabic: bool) -> str:
-    """Generate a unique cache key for a word."""
+def get_cache_key(word: str) -> str:
+    """Generate a unique cache key for an Arabic word."""
     # Create a hash of the word to use as filename
     word_hash = hashlib.sha256(word.encode()).hexdigest()[:12]
-    prefix = "ar" if is_arabic else "en"
-    return f"{prefix}_{word_hash}.mp3"
+    return f"ar_{word_hash}.mp3"
 
 
 def ensure_valid_cache_files():
@@ -438,92 +433,8 @@ def ensure_valid_cache_files():
 
 
 def get_or_generate_word_audio(word: str, is_arabic: bool) -> Optional[str]:
-    """Get cached audio URL or generate new one for a word."""
-    cache_key = get_cache_key(word, is_arabic)
-    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
-    storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
-
-    print(
-        f"\nProcessing {'Arabic' if is_arabic else 'English'} word: '{word}' (cache_key: {cache_key})"
-    )
-
-    # First check if file exists in storage
-    if check_file_exists("audio", cache_key):
-        print(f"✅ Found file in Supabase storage: {cache_key}")
-        # If already in storage, just check if we have local cache
-        if not os.path.exists(cache_path):
-            # Try to download and save to local cache for future use
-            try:
-                response = supabase.storage.from_("audio").download(cache_key)
-                if response:
-                    with open(cache_path, "wb") as f:
-                        f.write(response)
-                    print(f"Downloaded {cache_key} to local cache")
-            except Exception as e:
-                # If download fails, just continue - we know it's on the server
-                print(f"Warning: Failed to download to cache: {str(e)}")
-        else:
-            print("✅ File exists both in storage and local cache")
-        return storage_url
-
-    # Check if file exists in local cache but not on server
-    if os.path.exists(cache_path):
-        print(f"Found in local cache but not in storage: {cache_key}")
-        try:
-            # Get file size for debugging
-            file_size = os.path.getsize(cache_path)
-            print(f"Cache file size: {file_size} bytes")
-
-            # Verify the cached file is valid
-            with open(cache_path, "rb") as f:
-                file_content = f.read()
-
-            # Use more lenient validation for cached files
-            if validate_mp3(file_content, is_cached_file=True):
-                print(f"Validated cached file, uploading to storage: {cache_key}")
-                # Upload to storage
-                try:
-                    with open(cache_path, "rb") as f:
-                        result_url = upload_to_storage("audio", cache_key, f)
-                        if result_url:
-                            print("✅ Successfully uploaded cached file to storage")
-                            return result_url
-                except Exception as e:
-                    print(f"Warning: Cache upload failed: {str(e)}")
-            else:
-                # Invalid cache file, remove it
-                os.remove(cache_path)
-                print(f"Removed invalid cache file for word: {word}")
-        except Exception as e:
-            print(f"Error with cache file: {str(e)}")
-            if os.path.exists(cache_path):
-                os.remove(cache_path)
-                print(f"Removed problematic cache file for word: {word}")
-
-    # If we reach here, we need to generate new audio
-    print(f"Generating new audio for word: {word}")
-    if is_arabic:
-        result = generate_arabic_word_audio(word, cache_key)
-    else:
-        result = generate_english_word_audio(word, cache_key)
-
-    if result and result.get("url"):
-        # Save to cache
-        temp_path = os.path.join(AUDIO_TEMP_DIR, cache_key)
-        if os.path.exists(temp_path):
-            try:
-                shutil.copy2(temp_path, cache_path)
-                print(
-                    f"✅ Cached audio for {'Arabic' if is_arabic else 'English'} word: {word}"
-                )
-                # Only remove temp file if successfully copied to cache
-                os.remove(temp_path)
-            except Exception as e:
-                print(f"Error caching audio file: {str(e)}")
-                # Don't remove temp file if copying failed - we can use it directly
-        return result["url"]
-
-    return None
+    """DEPRECATED: No longer used as we only generate audio for full sentences and roots."""
+    raise NotImplementedError("This function is no longer used")
 
 
 def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
@@ -592,53 +503,8 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
 
 
 def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
-    """Generate audio file for an English word using ElevenLabs API."""
-    temp_audio_path = None
-    try:
-        print(f"\nGenerating English audio for word: '{word}'")
-
-        try:
-            # For single words, we don't need previous/next context
-            audio_response = generate_speech(
-                text=word, voice_id=ENGLISH_VOICE_ID, speed=1.0
-            )
-        except Exception as e:
-            print(f"Error generating English speech: {str(e)}")
-            return None
-
-        # Validate the MP3 data
-        if not validate_mp3(audio_response):
-            print(f"Skipping upload of invalid MP3 file for word '{word}'")
-            return None
-
-        # Save and upload the audio file
-        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
-
-        print(f"Saving temp file to: {temp_audio_path}")
-        with open(temp_audio_path, "wb") as f:
-            f.write(audio_response)
-
-        print("Uploading to Supabase storage...")
-        try:
-            with open(temp_audio_path, "rb") as f:
-                url = upload_to_storage("audio", filename, f)
-                if not url:
-                    raise Exception("Failed to get URL from upload")
-        except Exception as e:
-            print(f"Upload failed despite retries: {str(e)}")
-            return None
-
-        # Don't remove the temp file - it will be used for caching in get_or_generate_word_audio
-        print(f"✅ Successfully generated and uploaded English audio. URL: {url}")
-        return {"url": url}
-
-    except Exception as e:
-        print(
-            f"❌ Error generating/uploading English word audio for '{word}': {str(e)}"
-        )
-        if temp_audio_path and os.path.exists(temp_audio_path):
-            os.remove(temp_audio_path)
-        return None
+    """DEPRECATED: No longer used as we only generate audio for full sentences and roots."""
+    raise NotImplementedError("This function is no longer used")
 
 
 def clean_word_for_matching(word: str) -> str:
@@ -987,6 +853,7 @@ def insert_sentence_words(
 ) -> Dict:
     """
     Insert words from a sentence with their roots and relationships.
+    No longer generates individual word audio for sentence words.
 
     Returns:
         Dict with statistics about word timing matches
@@ -1016,30 +883,18 @@ def insert_sentence_words(
             root_id = get_or_create_root(root_letters, root_meaning)
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
-            # Get or generate word audio URLs using cache
-            arabic_audio_url = get_or_generate_word_audio(
-                word["arabic"], is_arabic=True
-            )
-            english_audio_url = get_or_generate_word_audio(
-                word["english"], is_arabic=False
-            )
-
-            # Clean and normalize the word form
+            # Store the complete word form with all diacritics
             original_word = word["arabic"]
-            cleaned_word_form = remove_final_haraka(original_word)
 
             word_data = {
                 "sentence_id": sentence_id,
                 "position": position,
-                "word_form": cleaned_word_form,
+                "word_form": original_word,  # Store complete diacritized form
                 "english": word["english"],
                 "word_type_id": word_type_id,
                 "root_id": root_id,
                 "difficulty_level": 1,
                 "grammar_note": word.get("notes"),
-                "arabic_audio_url": arabic_audio_url,
-                "english_audio_url": english_audio_url,
-                # No timing info
             }
 
             supabase.table("sentence_words").insert(word_data).execute()
@@ -1056,7 +911,7 @@ def insert_sentence_words(
     # Pre-tokenize the original words using the same method for consistency
     original_tokens = []
     for word_info in word_by_word:
-        # Get the original Arabic word
+        # Get the original Arabic word with all diacritics
         original_word = word_info["arabic"]
         # Pre-process with the same method we'd expect ElevenLabs to use
         original_tokens.append(original_word)
@@ -1096,17 +951,10 @@ def insert_sentence_words(
         root_id = get_or_create_root(root_letters, root_meaning)
         word_type_id = get_word_type_id(word.get("pos", "noun"))
 
-        # Get or generate word audio URLs using cache
+        # Store the complete word form with all diacritics
         original_word = word["arabic"]
-        arabic_audio_url = get_or_generate_word_audio(original_word, is_arabic=True)
-        english_audio_url = get_or_generate_word_audio(word["english"], is_arabic=False)
 
-        # Clean the word for matching
-        cleaned_word = clean_word_for_matching(original_word)
-
-        print(
-            f"\n  Processing word {position}: '{original_word}' → cleaned: '{cleaned_word}'"
-        )
+        print(f"\n  Processing word {position}: '{original_word}'")
 
         # Initialize with no timing info
         timing_info = {}
@@ -1155,14 +1003,12 @@ def insert_sentence_words(
         word_data = {
             "sentence_id": sentence_id,
             "position": position,
-            "word_form": remove_final_haraka(original_word),
+            "word_form": original_word,  # Store complete diacritized form
             "english": word["english"],
             "word_type_id": word_type_id,
             "root_id": root_id,
             "difficulty_level": 1,
             "grammar_note": word.get("notes"),
-            "arabic_audio_url": arabic_audio_url,
-            "english_audio_url": english_audio_url,
             "audio_start": timing_info.get("start_time"),
             "audio_end": timing_info.get("end_time"),
         }
@@ -1387,6 +1233,17 @@ def process_json_file(file_path: str) -> None:
         "created_at": datetime.now(UTC).isoformat(),
     }
 
+    # Generate audio for the full article
+    print("Generating audio for full article...")
+    full_arabic_text = " ".join(t["original"] for t in data["translations"])
+    audio_filename = generate_audio_filename()
+    audio_result = generate_sentence_audio(full_arabic_text, audio_filename)
+    if audio_result:
+        article_data["audio_url"] = audio_result.get("url")
+        print(f"Added audio URL to article: {article_data['audio_url']}")
+    else:
+        print("Warning: Failed to generate article audio")
+
     # Only add content_hash if the column exists
     try:
         article_data["content_hash"] = content_hash
@@ -1516,6 +1373,88 @@ def get_author_id(name: str = "Ibn Kathir") -> int:
     return result.data[0]["id"]
 
 
+def get_or_generate_root_audio(word: str) -> Optional[str]:
+    """Get cached audio URL or generate new one for a root word."""
+    cache_key = get_cache_key(word)
+    cache_path = os.path.join(AUDIO_CACHE_DIR, cache_key)
+    storage_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key}"
+
+    print(f"\nProcessing root word: '{word}' (cache_key: {cache_key})")
+
+    # First check if file exists in storage
+    if check_file_exists("audio", cache_key):
+        print(f"✅ Found file in Supabase storage: {cache_key}")
+        # If already in storage, just check if we have local cache
+        if not os.path.exists(cache_path):
+            # Try to download and save to local cache for future use
+            try:
+                response = supabase.storage.from_("audio").download(cache_key)
+                if response:
+                    with open(cache_path, "wb") as f:
+                        f.write(response)
+                    print(f"Downloaded {cache_key} to local cache")
+            except Exception as e:
+                # If download fails, just continue - we know it's on the server
+                print(f"Warning: Failed to download to cache: {str(e)}")
+        else:
+            print("✅ File exists both in storage and local cache")
+        return storage_url
+
+    # Check if file exists in local cache but not on server
+    if os.path.exists(cache_path):
+        print(f"Found in local cache but not in storage: {cache_key}")
+        try:
+            # Get file size for debugging
+            file_size = os.path.getsize(cache_path)
+            print(f"Cache file size: {file_size} bytes")
+
+            # Verify the cached file is valid
+            with open(cache_path, "rb") as f:
+                file_content = f.read()
+
+            # Use more lenient validation for cached files
+            if validate_mp3(file_content, is_cached_file=True):
+                print(f"Validated cached file, uploading to storage: {cache_key}")
+                # Upload to storage
+                try:
+                    with open(cache_path, "rb") as f:
+                        result_url = upload_to_storage("audio", cache_key, f)
+                        if result_url:
+                            print("✅ Successfully uploaded cached file to storage")
+                            return result_url
+                except Exception as e:
+                    print(f"Warning: Cache upload failed: {str(e)}")
+            else:
+                # Invalid cache file, remove it
+                os.remove(cache_path)
+                print(f"Removed invalid cache file for word: {word}")
+        except Exception as e:
+            print(f"Error with cache file: {str(e)}")
+            if os.path.exists(cache_path):
+                os.remove(cache_path)
+                print(f"Removed problematic cache file for word: {word}")
+
+    # If we reach here, we need to generate new audio
+    print(f"Generating new audio for root word: {word}")
+    result = generate_arabic_word_audio(word, cache_key)
+
+    if result and result.get("url"):
+        # Save to cache
+        temp_path = os.path.join(AUDIO_TEMP_DIR, cache_key)
+        if os.path.exists(temp_path):
+            try:
+                shutil.copy2(temp_path, cache_path)
+                print(f"✅ Cached audio for root word: {word}")
+                # Only remove temp file if successfully copied to cache
+                os.remove(temp_path)
+            except Exception as e:
+                print(f"Error caching audio file: {str(e)}")
+                # Don't remove temp file if copying failed - we can use it directly
+        return result["url"]
+
+    return None
+
+
 def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
     """Get existing root or create a new one, and generate audio URL for the root."""
     # Clean up letters (remove extra spaces)
@@ -1534,7 +1473,8 @@ def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
         # Generate and update audio_url if missing
         if not root.get("audio_url"):
             try:
-                audio_url = get_or_generate_word_audio(letters, is_arabic=True)
+                # Get or generate audio for the root word using cache
+                audio_url = get_or_generate_root_audio(letters)
                 if audio_url:
                     supabase.table("roots").update({"audio_url": audio_url}).eq(
                         "id", root_id
@@ -1550,7 +1490,8 @@ def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
 
     # Generate and update audio_url for the new root
     try:
-        audio_url = get_or_generate_word_audio(letters, is_arabic=True)
+        # Get or generate audio for the root word using cache
+        audio_url = get_or_generate_root_audio(letters)
         if audio_url:
             supabase.table("roots").update({"audio_url": audio_url}).eq(
                 "id", root_id

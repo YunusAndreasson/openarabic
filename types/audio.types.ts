@@ -1,13 +1,18 @@
+/**
+ * Enhanced audio track type for article-level audio playback
+ * Used by the enhanced audio player for managing article audio state
+ */
 export type EnhancedAudioTrack = {
-  id: string; // Composite ID, e.g., "article-sentence-123-4" or "article-word-123-5"
-  type: 'sentence' | 'study_word_english' | 'study_word_arabic';
+  /** Composite ID for the track, e.g., "article-123" */
+  id: string;
+  /** ID of the article this track belongs to */
   articleId: number;
+  /** URL to the audio file */
   audioUrl: string;
-  title: string; // e.g., "Sentence 4" or "Word: Hello (English)"
-  wordId?: number; // Only for study word type
-  sentenceId?: number; // Only for sentence type
-  sentencePosition?: number; // Optional: Position of sentence in article for reference
-  duration?: number; // Optional: duration in milliseconds, useful for playback simulation
+  /** Title of the article (used for display) */
+  title: string;
+  /** Duration of the audio in milliseconds (optional) */
+  duration?: number;
 };
 
 // ... rest of the types

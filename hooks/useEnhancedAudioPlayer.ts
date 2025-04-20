@@ -18,10 +18,6 @@ import { AUDIO_STATES, useAudioPlayer } from './useAudioPlayer';
 interface PlaybackMetadata {
   articleId: number;
   articleTitle: string;
-  currentTrackType: 'study_word_english' | 'study_word_arabic' | 'sentence' | null;
-  currentWordId: number | null;
-  currentSentenceId: number | null;
-  currentSentencePosition: number | null;
 }
 
 /**
@@ -38,10 +34,6 @@ interface QueuedAudioItem {
 const initialMetadata: PlaybackMetadata = {
   articleId: 0,
   articleTitle: '',
-  currentTrackType: null,
-  currentWordId: null,
-  currentSentenceId: null,
-  currentSentencePosition: null,
 };
 
 // Define the return type for clarity and stability
@@ -61,9 +53,6 @@ export interface EnhancedPlayerActions {
   startEnhancedShufflePlayback: (tracks: EnhancedAudioTrack[]) => Promise<boolean>;
   stopPlayback: () => Promise<boolean>;
   playNextTrack: () => Promise<boolean>;
-  getStudyWordsCount: (articleId: number) => number;
-  isStudyWordTrack: () => boolean;
-  isSentenceTrack: () => boolean;
   isActiveArticle: (articleId: number) => boolean;
   initializeQueue: (tracks: EnhancedAudioTrack[], startIndex?: number) => boolean;
   preloadTracks: () => Promise<void>;
@@ -73,7 +62,7 @@ export interface EnhancedPlayerActions {
 export type EnhancedPlayerAPI = EnhancedPlayerState & { actions: EnhancedPlayerActions };
 
 /**
- * Hook for enhanced audio player that handles study words and sentence-level audio
+ * Hook for enhanced audio player that handles article-level audio
  * using a queue-based system with preloading
  */
 export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
@@ -83,7 +72,9 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   // --- State ---
   const [metadata, setMetadata] = useState<PlaybackMetadata>(initialMetadata);
   const [isTrackEnded, setIsTrackEnded] = useState(false);
-  const [audioState, setAudioState] = useState(AUDIO_STATES.IDLE);
+  const [audioState, setAudioState] = useState<(typeof AUDIO_STATES)[keyof typeof AUDIO_STATES]>(
+    AUDIO_STATES.IDLE
+  );
   const [currentTrackIndex, setCurrentTrackIndex] = useState(-1);
   const [playlistModeActive, setPlaylistModeActive] = useState(false);
   // --- End State ---
@@ -107,9 +98,6 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
     startEnhancedShufflePlayback: async () => false,
     stopPlayback: async () => false,
     playNextTrack: async () => false,
-    getStudyWordsCount: () => 0,
-    isStudyWordTrack: () => false,
-    isSentenceTrack: () => false,
     isActiveArticle: () => false,
     initializeQueue: () => false,
     preloadTracks: async () => {},
@@ -128,11 +116,8 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       : audioQueueRef.current.length > 0
         ? AUDIO_STATES.PAUSED
         : AUDIO_STATES.IDLE;
-    setAudioState(prev => (prev === newAudioState ? prev : newAudioState));
-    setPlaylistModeActive(prev => {
-      const next = audioQueueRef.current.length > 1;
-      return prev === next ? prev : next;
-    });
+    setAudioState(newAudioState);
+    setPlaylistModeActive(audioQueueRef.current.length > 1);
   }, []);
 
   const updateMetadata = useCallback((track: EnhancedAudioTrack | null) => {
@@ -140,28 +125,18 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       setMetadata(initialMetadata);
       return;
     }
-    const titleParts = track?.title?.split(' (') || [];
-    const baseTitle = titleParts[0] || '';
-    setMetadata(prev => {
-      const next = {
-        articleId: track.articleId,
-        articleTitle: baseTitle,
-        currentTrackType: track.type,
-        currentWordId: track.wordId || null,
-        currentSentenceId: track.sentenceId || null,
-        currentSentencePosition: track.sentencePosition || null,
-      };
-      if (JSON.stringify(prev) === JSON.stringify(next)) return prev;
-      return next;
+    setMetadata({
+      articleId: track.articleId,
+      articleTitle: track.title,
     });
   }, []);
 
   const convertToBaseTracks = useCallback((enhancedTracks: EnhancedAudioTrack[]) => {
-    return enhancedTracks.map(track => {
-      const idParts = track.id.split('-');
-      const numericId = idParts.length > 2 && idParts[2] ? parseInt(idParts[2], 10) : 0;
-      return { id: numericId || 0, audioUrl: track.audioUrl, title: track.title };
-    });
+    return enhancedTracks.map(track => ({
+      id: track.articleId,
+      audioUrl: track.audioUrl,
+      title: track.title,
+    }));
   }, []);
 
   const preloadTracksLogic = useCallback(async () => {
@@ -341,7 +316,11 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
         await currentSoundRef.current.stopAsync();
         await currentSoundRef.current.unloadAsync();
       } catch (error) {
-        handleError(error as Error, { toastMessage: 'Error unloading current sound during stop' });
+        // Silently handle cleanup errors - these are expected during normal operation
+        // Only log to console in development if needed
+        if (__DEV__) {
+          console.debug('Non-critical cleanup error:', error);
+        }
       } finally {
         currentSoundRef.current = null;
       }
@@ -362,9 +341,11 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
           }
           item.isPreloaded = false;
         } catch (error) {
-          handleError(error as Error, {
-            toastMessage: `Error unloading preloaded sound for track ${item.index}`,
-          });
+          // Silently handle cleanup errors - these are expected during normal operation
+          // Only log to console in development if needed
+          if (__DEV__) {
+            console.debug(`Non-critical cleanup error for track ${item.index}:`, error);
+          }
         }
       });
 
@@ -456,21 +437,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
     [updateExposedState]
   );
 
-  actionsRef.current.getStudyWordsCount = useCallback(articleId => {
-    return Math.floor(
-      (currentPlaylistRef.current || []).filter(
-        track =>
-          track.articleId === articleId &&
-          (track.type === 'study_word_english' || track.type === 'study_word_arabic')
-      ).length / 2
-    );
-  }, []);
-
   // Assign state-dependent checks (these are called via stable wrappers later)
-  actionsRef.current.isStudyWordTrack = () =>
-    metadata.currentTrackType === 'study_word_english' ||
-    metadata.currentTrackType === 'study_word_arabic';
-  actionsRef.current.isSentenceTrack = () => metadata.currentTrackType === 'sentence';
   actionsRef.current.isActiveArticle = articleId =>
     audioState !== AUDIO_STATES.IDLE && metadata.articleId === articleId;
 

@@ -106,8 +106,6 @@ export function mapToSentenceWord(item: DatabaseRecord): SentenceWord {
     root: safeGet(item, 'root', null),
     word_type: safeGet(item, 'word_type', null),
     sentence: safeGet(item, 'sentence', null),
-    arabic_audio_url: safeGet(item, 'arabic_audio_url', null),
-    english_audio_url: safeGet(item, 'english_audio_url', null),
     audio_start: safeGet(item, 'audio_start', null),
     audio_end: safeGet(item, 'audio_end', null),
   };

@@ -703,7 +703,6 @@ export default function ArticleScreen(): JSX.Element {
             english: props.item.english,
             arabic: props.item.arabic,
             audio_url: props.item.audio_url,
-            arabic_audio_url: null,
           }}
           words={words}
           renderWord={renderWord}

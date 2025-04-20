@@ -127,17 +127,6 @@ const styles = StyleSheet.create({
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
-  studyWordsPill: {
-    borderRadius: 12,
-    borderWidth: 1,
-    marginLeft: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: 2,
-  },
-  studyWordsPillText: {
-    fontSize: 10,
-    lineHeight: 14,
-  },
   textContent: {
     flex: 1,
     paddingRight: LAYOUT.SPACING.SMALL,
@@ -158,15 +147,11 @@ const BookmarkListItem = memo(
     progress,
     duration,
     isActive,
-    studyWordsCount,
-    isLoading,
   }: {
     item: ReadingListItem;
     progress: number;
     duration: number;
     isActive: boolean;
-    studyWordsCount: number;
-    isLoading: boolean;
   }) => {
     const colors = useColors();
     const playbackProgress = duration > 0 ? progress / duration : 0;
@@ -178,7 +163,6 @@ const BookmarkListItem = memo(
         }
       : undefined;
     const activeTitleStyle = isActive ? { color: colors.tint } : undefined;
-    const showPill = studyWordsCount > 0 || isLoading;
 
     return (
       <View style={styles.cardContainer}>
@@ -201,24 +185,6 @@ const BookmarkListItem = memo(
                 >
                   {item.articles?.author?.name || 'Unknown Author'}
                 </ThemedText>
-                {showPill ? (
-                  <View
-                    style={[
-                      styles.studyWordsPill,
-                      { borderColor: colors.tint, backgroundColor: colors.transparent },
-                    ]}
-                  >
-                    <ThemedText
-                      type="label"
-                      style={[styles.studyWordsPillText, { color: colors.tint }]}
-                      skipDefaultColor
-                    >
-                      {isLoading
-                        ? '...'
-                        : `${studyWordsCount} ${studyWordsCount === 1 ? 'word' : 'words'}`}
-                    </ThemedText>
-                  </View>
-                ) : null}
               </View>
             </View>
             <View style={styles.iconContainer}>
@@ -251,8 +217,6 @@ const BookmarkListItem = memo(
   (prevProps, nextProps) => {
     const shouldUpdate =
       prevProps.isActive !== nextProps.isActive ||
-      prevProps.studyWordsCount !== nextProps.studyWordsCount ||
-      prevProps.isLoading !== nextProps.isLoading ||
       (nextProps.isActive &&
         (prevProps.progress !== nextProps.progress || prevProps.duration !== nextProps.duration));
 
@@ -496,22 +460,6 @@ export default function BookmarksScreen(): JSX.Element {
   // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
-  const getArticleStudyWordsCount = useCallback(
-    (articleId: number): number => {
-      if (tracksForWordCounts.length > 0) {
-        return Math.floor(
-          tracksForWordCounts.filter(
-            track =>
-              track.articleId === articleId &&
-              (track.type === 'study_word_english' || track.type === 'study_word_arabic')
-          ).length / 2
-        );
-      }
-      return actions.getStudyWordsCount(articleId);
-    },
-    [actions.getStudyWordsCount, tracksForWordCounts]
-  );
-
   const handlePlayAll = useCallback(() => {
     if (isCurrentlyPlaying) {
       actions.stopPlayback();
@@ -601,8 +549,6 @@ export default function BookmarksScreen(): JSX.Element {
                 progress={progress}
                 duration={duration}
                 isActive={actions.isActiveArticle(item.article_id)}
-                studyWordsCount={getArticleStudyWordsCount(item.article_id)}
-                isLoading={isStudyWordsLoading}
               />
             )}
             estimatedItemSize={ITEM_HEIGHT}

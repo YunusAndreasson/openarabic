@@ -26,22 +26,25 @@ from schemas import (
     FINAL_VERIFICATION_USER_PROMPT,
 )
 
-from .utils import remove_final_haraka
-
 # Execute set_keys.py to set environment variables
 exec(open("set_keys.py").read())
 
 
 def clean_text(text: str) -> str:
     """
-    Keeps only Arabic characters, numbers, and basic punctuation.
+    Keeps only Arabic characters and essential punctuation.
     Normalizes whitespace to single spaces.
+    Removes numbers, parentheses, and other non-Arabic characters.
     """
     if not text:
         return text
 
-    # Arabic chars, numbers and punctuation only
-    arabic_pattern = r"[^\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF.,!?؟:;0-9\s]"
+    # Only Arabic characters and essential punctuation
+    # \u0600-\u06FF: Arabic
+    # \uFB50-\uFDFF: Arabic Presentation Forms-A
+    # \uFE70-\uFEFF: Arabic Presentation Forms-B
+    # Specific punctuation: ،؟.!
+    arabic_pattern = r"[^\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF،؟.!\s]"
     cleaned = re.sub(arabic_pattern, "", text)
 
     # Normalize whitespace
