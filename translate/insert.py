@@ -211,6 +211,28 @@ def upload_to_storage(
         raise
 
 
+def preprocess_text_for_tts(text: str) -> str:
+    """
+    Preprocess text before sending to ElevenLabs TTS.
+    - Preserves numbers by adding spaces around them
+    - Ensures proper handling of Arabic text
+
+    Args:
+        text: The text to preprocess
+
+    Returns:
+        Preprocessed text ready for TTS
+    """
+    # Add spaces around numbers to prevent ElevenLabs from trying to translate them
+    # This regex matches both Arabic and Western numerals
+    text = re.sub(r"([٠-٩0-9]+)", r" \1 ", text)
+
+    # Remove any double spaces that might have been created
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
+
+
 @retry_operation(max_attempts=3, delay=1, backoff=2)
 def generate_speech(
     text: str,
@@ -219,6 +241,9 @@ def generate_speech(
     voice_settings: Optional[VoiceSettings] = None,
 ):
     """Generate speech using ElevenLabs API with retries."""
+    # Preprocess text to handle numbers
+    text = preprocess_text_for_tts(text)
+
     # Always wrap in Arabic SSML tags since we're working with Arabic text
     text = wrap_in_arabic_ssml(text)
 
@@ -265,6 +290,9 @@ def generate_speech_with_timestamps(
     speed: float = 0.8,
 ):
     """Generate speech with timestamps using ElevenLabs API with retries."""
+    # Preprocess text to handle numbers
+    text = preprocess_text_for_tts(text)
+
     # Always wrap in Arabic SSML tags since we're working with Arabic text
     text = wrap_in_arabic_ssml(text)
 

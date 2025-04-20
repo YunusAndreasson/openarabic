@@ -43,7 +43,7 @@ def format_difficulty_levels() -> str:
 # Function for translating sentences
 TRANSLATE_SENTENCES_FUNCTION = {
     "name": "translate_sentences",
-    "description": "Translate Islamic Arabic sentences to English, preserving word order where possible and noting uncertainties",
+    "description": "Translate Classical Arabic sentences from Islamic texts to English, preserving word order where possible and noting uncertainties",
     "parameters": {
         "type": "object",
         "properties": {
@@ -55,25 +55,32 @@ TRANSLATE_SENTENCES_FUNCTION = {
                     "properties": {
                         "translation": {
                             "type": "string",
-                            "description": "The English translation of the Arabic sentence",
+                            "description": "The English translation",
                         },
                         "notes": {
                             "type": "string",
-                            "description": "Notes about the translation",
+                            "description": "Translation notes (optional)",
                         },
                         "uncertainties": {
                             "type": "array",
-                            "description": "List of specific parts with uncertain translation",
+                            "description": "List of uncertain parts",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string"},
-                                    "reason": {"type": "string"},
+                                    "text": {
+                                        "type": "string",
+                                        "description": "Uncertain text",
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Reason for uncertainty",
+                                    },
                                 },
+                                "required": ["text", "reason"],
                             },
                         },
                     },
-                    "required": ["translation", "notes"],
+                    "required": ["translation"],  # Notes are optional
                 },
             }
         },
@@ -101,26 +108,34 @@ TASHKEEL_FUNCTION = {
         "properties": {
             "tashkeels": {
                 "type": "array",
-                "description": "Array of texts with diacritical marks added",
+                "description": "Array of texts with diacritics added",
                 "items": {
                     "type": "object",
                     "properties": {
                         "tashkeel": {
                             "type": "string",
-                            "description": "The text with diacritical marks",
+                            "description": "The text with diacritics",
                         },
                         "uncertainties": {
                             "type": "array",
-                            "description": "List of specific diacritical marks that are uncertain",
+                            "description": "List of uncertain diacritics",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "word": {"type": "string"},
-                                    "reason": {"type": "string"},
+                                    "word": {
+                                        "type": "string",
+                                        "description": "Word with uncertain diacritic",
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "Reason for uncertainty",
+                                    },
                                     "related_translation_uncertainty": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "description": "Related uncertainty from translation step (optional)",
                                     },
                                 },
+                                "required": ["word", "reason"],
                             },
                         },
                     },
@@ -136,7 +151,7 @@ TASHKEEL_FUNCTION = {
 # Function for word-by-word translation
 WORD_TRANSLATION_FUNCTION = {
     "name": "translate_words",
-    "description": "Create word-by-word translations for Arabic sentences",
+    "description": "Create word-by-word translations for Arabic sentences, providing top options",
     "parameters": {
         "type": "object",
         "properties": {
@@ -154,41 +169,43 @@ WORD_TRANSLATION_FUNCTION = {
                                 "properties": {
                                     "arabic": {
                                         "type": "string",
-                                        "description": "The Arabic word",
+                                        "description": "The original Arabic word with original formatting",
                                     },
-                                    "english": {
-                                        "type": "string",
-                                        "description": "The English translation of The Arabic word in context of the sentence",
+                                    "english_options": {
+                                        "type": "array",
+                                        "description": "Top 3 likely English translations in context (most likely first)",
+                                        "items": {"type": "string"},
                                     },
                                     "pos": {
                                         "type": "string",
                                         "enum": list(VALID_POS),
-                                        "description": f"Part of speech (must be one of: {format_valid_pos()})",
+                                        "description": "Part of speech",
                                     },
                                     "essential": {
                                         "type": "string",
-                                        "description": "Flashcard essential letters: stripped of affixes (wa-/fa-/bi-/-hum/-tum etc.) and diacritized without case endings for flashcard memorization",
+                                        "description": "Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards.",
                                     },
-                                    "essential_translation": {
-                                        "type": "string",
-                                        "description": "One-word English meaning of the essential words lexical meaning without grammar",
+                                    "essential_translation_options": {
+                                        "type": "array",
+                                        "description": "Top 3 likely one-word English lexical meanings (most likely first)",
+                                        "items": {"type": "string"},
                                     },
                                     "notes": {
                                         "type": "string",
-                                        "description": "Additional grammar notes or context",
+                                        "description": "Grammar notes or context (optional)",
                                     },
                                     "uncertainties": {
                                         "type": "array",
+                                        "description": "List of uncertain parts for this word",
                                         "items": {"type": "object"},
                                     },
                                 },
                                 "required": [
                                     "arabic",
-                                    "english",
+                                    "english_options",
                                     "pos",
                                     "essential",
-                                    "essential_translation",
-                                    "notes",
+                                    "essential_translation_options",
                                 ],
                             },
                         }
@@ -205,19 +222,26 @@ WORD_TRANSLATION_FUNCTION = {
                         "word_translations": [
                             {
                                 "arabic": "قَالَ",
-                                "english": "he said",
+                                "english_options": ["he said", "he spoke", "he stated"],
                                 "pos": "verb",
                                 "essential": "قَالَ",
-                                "essential_translation": "he said",
-                                "notes": "The word was in the masdar form so no need to remove prefix or suffix",
+                                "essential_translation_options": [
+                                    "say",
+                                    "speak",
+                                    "utter",
+                                ],
+                                "notes": "Verb, perfect tense, 3rd person masculine singular.",
                             },
                             {
                                 "arabic": "النَّبِيُّ",
-                                "english": "the prophet",
+                                "english_options": ["the prophet", "the messenger"],
                                 "pos": "noun",
                                 "essential": "نَبِيّ",
-                                "essential_translation": "prophet",
-                                "notes": "Remove the definite article",
+                                "essential_translation_options": [
+                                    "prophet",
+                                    "messenger",
+                                ],
+                                "notes": "Noun, masculine singular, definite.",
                             },
                         ]
                     }
@@ -230,7 +254,7 @@ WORD_TRANSLATION_FUNCTION = {
 # Function for refining translations
 REFINEMENT_FUNCTION = {
     "name": "refine_translations",
-    "description": "Refine and improve translations based on review of all components",
+    "description": "Refine translations, selecting the best options based on full context",
     "parameters": {
         "type": "object",
         "properties": {
@@ -242,47 +266,47 @@ REFINEMENT_FUNCTION = {
                     "properties": {
                         "improved_tashkeel": {
                             "type": "string",
-                            "description": "Corrected text with diacritical marks",
+                            "description": "Corrected text with diacritics",
                         },
                         "improved_translation": {
                             "type": "string",
-                            "description": "Refined full translation",
+                            "description": "Refined full sentence translation",
                         },
                         "improved_word_translations": {
                             "type": "array",
-                            "description": "Refined word-by-word translations",
+                            "description": "Refined word-by-word translations with single best options chosen",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "a": {
+                                    "arabic": {
                                         "type": "string",
-                                        "description": "The Arabic word",
+                                        "description": "The original Arabic word",
                                     },
-                                    "e": {
+                                    "english": {
                                         "type": "string",
-                                        "description": "The English translation",
+                                        "description": "The *single* best English translation in context",
                                     },
-                                    "p": {
+                                    "pos": {
                                         "type": "string",
-                                        "description": "Part of speech",
+                                        "description": "Refined Part of speech",
                                     },
                                     "essential": {
                                         "type": "string",
-                                        "description": "Arabic essential letters with affixes stripped",
+                                        "description": "Refined essential letters",
                                     },
                                     "essential_translation": {
                                         "type": "string",
-                                        "description": "One-word English lexical meaning of the essential Arabic word",
+                                        "description": "The *single* best one-word English lexical meaning",
                                     },
-                                    "n": {
+                                    "notes": {
                                         "type": "string",
-                                        "description": "Notes",
+                                        "description": "Refined notes (optional)",
                                     },
                                 },
                                 "required": [
-                                    "a",
-                                    "e",
-                                    "p",
+                                    "arabic",
+                                    "english",
+                                    "pos",
                                     "essential",
                                     "essential_translation",
                                 ],
@@ -290,15 +314,33 @@ REFINEMENT_FUNCTION = {
                         },
                         "resolved_uncertainties": {
                             "type": "array",
-                            "description": "Explanations of how uncertainties were resolved",
+                            "description": "How uncertainties were resolved",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "step": {"type": "string"},
-                                    "original_uncertainty": {"type": "object"},
-                                    "resolution": {"type": "string"},
-                                    "explanation": {"type": "string"},
+                                    "step": {
+                                        "type": "string",
+                                        "description": "Step where uncertainty occurred (e.g., 'tashkeel', 'translation')",
+                                    },
+                                    "original_uncertainty": {
+                                        "type": "object",
+                                        "description": "The original uncertainty object",
+                                    },
+                                    "resolution": {
+                                        "type": "string",
+                                        "description": "Description of the resolution",
+                                    },
+                                    "explanation": {
+                                        "type": "string",
+                                        "description": "Reasoning for the resolution",
+                                    },
                                 },
+                                "required": [
+                                    "step",
+                                    "original_uncertainty",
+                                    "resolution",
+                                    "explanation",
+                                ],
                             },
                         },
                         "remaining_uncertainties": {
@@ -307,15 +349,29 @@ REFINEMENT_FUNCTION = {
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "type": {"type": "string"},
-                                    "description": {"type": "string"},
-                                    "reason_unresolved": {"type": "string"},
+                                    "type": {
+                                        "type": "string",
+                                        "description": "Type of uncertainty (e.g., 'diacritic', 'word meaning')",
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "description": "Description of the uncertainty",
+                                    },
+                                    "reason_unresolved": {
+                                        "type": "string",
+                                        "description": "Why it remains unresolved",
+                                    },
                                 },
+                                "required": [
+                                    "type",
+                                    "description",
+                                    "reason_unresolved",
+                                ],
                             },
                         },
                         "changes_made": {
                             "type": "array",
-                            "description": "Descriptions of changes made",
+                            "description": "List of significant changes made during refinement",
                             "items": {"type": "string"},
                         },
                     },
@@ -343,29 +399,29 @@ SPLIT_TEXT_FUNCTION = {
         "properties": {
             "title": {
                 "type": "string",
-                "description": "Concise English title (3-7 words) capturing the main Islamic topic",
+                "description": "Concise English title (3-7 words)",
             },
             "summary": {
                 "type": "string",
-                "description": "One-sentence summary describing the main Islamic content without filler or weasel words",
+                "description": "One-sentence summary of main content",
             },
             "difficulty_level": {
                 "type": "integer",
                 "enum": list(DIFFICULTY_LEVELS.keys()),
-                "description": f"Difficulty rating based on vocabulary, grammar, and Islamic concepts:\n{format_difficulty_levels()}",
+                "description": "Difficulty rating (1-5)",
             },
-            "sentences": {
+            "units": {
                 "type": "array",
-                "description": "Array of moderate-sized text units preserving complete thoughts",
+                "description": "Array of text units",
                 "items": {"type": "string"},
             },
             "unit_types": {
                 "type": "array",
-                "description": "Type of each unit (simple_clause, phrase, verse, etc.)",
+                "description": "Type of each unit",
                 "items": {"type": "string"},
             },
         },
-        "required": ["title", "summary", "difficulty_level", "sentences", "unit_types"],
+        "required": ["title", "summary", "difficulty_level", "units", "unit_types"],
     },
 }
 
@@ -386,19 +442,19 @@ Apply these principles to all translation tasks: splitting, diacritics, word ana
 CONTENT_ANALYSIS_PROMPT = (
     """Analyze this Islamic text to provide:
 
-1. Title (3-7 words):
-   - Clear, simple English
+1. Title (property: `title`):
+   - Clear, simple English (3-7 words)
    - Captures main Islamic topic
    - Uses appropriate Islamic terminology
 
-2. Summary (one sentence):
-   - Concise description of main Islamic content
+2. Summary (property: `summary`):
+   - Concise description of main Islamic content (one sentence)
    - Includes key Islamic themes
    - Uses clear, accessible language
    - NO filler/weasel words (this, that, it, possibly, seems, might, could)
    - Direct, precise statements only
 
-3. Difficulty Level (1-5):
+3. Difficulty Level (property: `difficulty_level`, 1-5):
 """
     + format_difficulty_levels()
     + """
@@ -413,130 +469,158 @@ SENTENCE_SPLITTING_USER_PROMPT = (
     CONTENT_ANALYSIS_PROMPT
     + """
 
-Split the Islamic text into learner-friendly units:
+Split the Islamic text into learner-friendly units (property: `units`) and identify their types (property: `unit_types`):
 
 Rules:
 1. Create short learner-friendly units
 2. Split at:
    - Complete thoughts
    - Distinct complete clauses
-   - Natural stops such as punctation
-   - Learning firendly units
+   - Natural stops such as punctuation
+   - Learning friendly units
 3. Special handling:
    - Keep Quran verses intact
    - Break long narrator chains
    - Keep brief prayers whole
    - Keep related phrases conveying single concepts together
    - Preserve ALL original punctuation and formatting
-4. Mark unit types: simple, compound, condition, quote, verse, phrase
-5. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله، فمن صبر واحتسب فله الأجر العظيم من الله سبحانه وتعالى."
+4. Mark unit types: simple, compound, condition, quote, verse, phrase, etc.
+5. Example length: "ولا شك أن ما يصيب المسلم في هذه الدنيا من آفات ومحن ما هو إلا محض ابتلاء من الله،"
 
-IMPORTANT: 
-- AVOID units that are too short (3-4 words)
+IMPORTANT:
+- AVOID units that are excessively short (e.g., 1-3 words) unless grammatically necessary (like single-word interjections).
 - Preserve ALL original text formatting, punctuation, and special characters in each unit
 
-Input text: 
+Return results using the `SPLIT_TEXT_FUNCTION` schema.
+Input text:
 """
 )
 
-SENTENCE_TRANSLATION_USER_PROMPT = """Translate Islamic Arabic to English:
+SENTENCE_TRANSLATION_USER_PROMPT = """Translate Classical Arabic sentences from Islamic texts to English using the `TRANSLATE_SENTENCES_FUNCTION` schema.
 
-1. Use accessible English, preserving Arabic word order as much as possible
-2. Use simple vocabulary appropriate for Islamic content (no obscure terms)
-3. Add bracketed words [like this] for words needed to complete the sentence but that is not present in the original text
-4. Document uncertainties only (do not list alternatives)
-5. Match register: solemn for supplications, precise for hadith
-6. Preserve ALL original punctuation, formatting, and special characters exactly as they appear
-7. Use appropriate Islamic terminology
+For each sentence, provide:
+1. `translation` (string):
+   - Use accessible English, preserving Arabic word order where possible.
+   - Use simple vocabulary appropriate for Islamic content (no obscure terms).
+   - Add bracketed words [like this] for clarity if needed but not present in the original text.
+   - Match register: solemn for supplications, precise for hadith.
+   - Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
+   - Use translation context and provided grammatical notes to resolve vowelization ambiguities.
+   - Pay special attention to case endings based on grammatical roles noted.
+   - Consider verb forms, tenses, and moods indicated in the notes.
+   - Ensure grammatical accuracy (case endings, conjugations).
+   - Ensure full vocalization according to standard Classical Arabic rules, applying diacritics to all letters requiring them based on grammar and context.
+   - Preserve ALL original punctuation, formatting, and special characters.
+2. `notes` (string, optional):
+   - Additional context or explanations regarding the translation.
+3. `uncertainties` (array of objects, optional):
+   - List specific words where diacritics are uncertain.
+   - Each object should have `text` (the uncertain part) and `reason` (why it's uncertain).
+   - Only list actual uncertainties, not alternative translations.
 
 Example:
 Arabic: وقال النبي صلى الله عليه وسلم
-✓ "And the Prophet [Muhammad], peace be upon him, said"
-✗ "And spoke the Prophet prayers and peace upon him"
+✓ `translation`: "And the Prophet [Muhammad], peace be upon him, said"
+  `notes`: "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article) + صَلَّى (perfect tense verb in invocation) + اللَّهُ (subject in nominative) + عَلَيْهِ (preposition with pronoun) + وَسَلَّمَ (coordinated perfect tense verb)"
+  `uncertainties`: []
+✗ `translation`: "And spoke the Prophet prayers and peace upon him"
 
-IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text.
+IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting.
 
-Return for each sentence:
-- Arabic text (exactly as provided, with all original formatting)
-- English translation with necessary bracketed words
-- Term/uncertainty notes
+Input sentences:
 """
 
-TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text:
+TASHKEEL_USER_PROMPT = """Add complete diacritical marks (tashkīl) to EVERY word in the Islamic Arabic text using the `TASHKEEL_FUNCTION` schema.
 
-1. Add ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ)
-2. Ensure EVERY eligible letter has appropriate diacritics - full vocalization is required
-3. Use translation context to resolve vowelization ambiguities
-4. Ensure grammatical accuracy (case endings, conjugations)
-5. For ambiguities:
-   - Provide primary interpretation based on Islamic context
-   - List alternatives
-   - Link to translation uncertainties
-6. Preserve ALL original punctuation, formatting, and special characters
+For each input text segment, provide:
+1. `tashkeel` (string):
+   - The text with ALL necessary marks: fatḥa (َ), kasra (ِ), ḍamma (ُ), sukūn (ْ), shadda (ّ), and tanwīn (ً ٍ ٌ).
+   - Ensure EVERY eligible letter has appropriate diacritics (full vocalization).
+   - Use translation context and provided grammatical notes to resolve vowelization ambiguities.
+   - Pay special attention to case endings based on grammatical roles noted.
+   - Consider verb forms, tenses, and moods indicated in the notes.
+   - Ensure grammatical accuracy (case endings, conjugations).
+   - Preserve ALL original punctuation, formatting, and special characters.
+2. `uncertainties` (array of objects, optional):
+   - List specific words where diacritics are uncertain.
+   - Each object should have `word` (the word), `reason` (why it's uncertain), and optionally `related_translation_uncertainty`.
+   - Provide the primary interpretation based on context even if uncertain.
 
 Example:
 Without tashkeel: قال النبي صلى الله عليه وسلم
 With tashkeel: قَالَ النَّبِيُّ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ
+✓ `tashkeel`: "قَالَ النَّبِيُّ صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ"
+   `uncertainties`: []
+   `notes`: "Grammatical structure: قَالَ (perfect tense verb) + النَّبِيُّ (subject in nominative case with definite article) + صَلَّى (perfect tense verb in invocation) + اللَّهُ (subject in nominative) + عَلَيْهِ (preposition with pronoun) + وَسَلَّمَ (coordinated perfect tense verb)"
 
 Verification steps:
-1. Check that EVERY word has complete vocalization
-2. Verify all case endings match grammatical roles
-3. Confirm shadda is applied where required for doubled consonants
-4. Ensure all vowels are consistent with Islamic scholarly conventions
-5. Verify ALL original text formatting is preserved
+1. Check that EVERY word has complete vocalization.
+2. Verify all case endings match grammatical roles from the notes.
+3. Confirm shadda is applied where required.
+4. Ensure all vowels are consistent with Islamic scholarly conventions.
+5. Verify ALL original text formatting is preserved.
+6. Cross-reference with grammatical notes for each word.
 
-IMPORTANT: 
-- Partial vocalization is NOT acceptable - every eligible consonant must receive appropriate diacritics
-- Do not modify any original punctuation or formatting"""
+IMPORTANT:
+- Partial vocalization is NOT acceptable.
+- Do not modify any original punctuation or formatting.
+- Use provided grammatical notes to inform diacritic choices.
+
+Input texts:
+"""
 
 WORD_BY_WORD_USER_PROMPT = (
-    "IMPORTANT: Return only a JSON object matching the function schema.\n"
-    "ENSURE: The `essential` and `essential_translation` fields must be populated for every word; never return null for these.\n"
-    "ENSURE: The `essential` field must retain all original diacritical marks (tashkeel) exactly as in the Arabic word.\n"
-    "ENSURE: Preserve ALL original text formatting, punctuation, and special characters in the arabic field.\n"
-    """Analyze each word in Islamic Arabic and extract flashcard-friendly essential letters:
+    "IMPORTANT: Return only a JSON object matching the `WORD_TRANSLATION_FUNCTION` schema.\\n"
+    "ENSURE: The `essential` field must be populated for every word; never return null for this.\\n"
+    "ENSURE: Provide the top 1-3 most likely options for `english_options` and `essential_translation_options`, ordered from most to least likely.\\n"
+    "ENSURE: The `essential` field should contain the core letters, stripped of affixes/suffixes and case/mood endings. Basic standard diacritics (like on فَعَلَ) are acceptable, but avoid complex or preserved original diacritics unless part of the base form.\\n"
+    "ENSURE: Preserve ALL original text formatting, punctuation, and special characters in the `arabic` field.\\n"
+    """Analyze each word in the provided Islamic Arabic sentences and extract flashcard-friendly essential letters.
 
-Rules for the `essential` field:
-- Strip common Arabic prefixes attached (و, ف, ب, ك, ل, س, etc.).
-- Strip common suffixes (object pronouns و, ه, ك, ي, نا, etc.).
-- Preserve the core internal letters in their original order.
-- Provide the fully diacritized form of the essential letters using a simple pattern (e.g., فَعَل) without case endings for flashcard memorization tailored for learning Arabic.
+For each sentence, return a result object containing `word_translations`, an array where each element corresponds to one word in the original order. Each word object must have these keys:
 
-For each word provide a JSON object with these keys:
-- `arabic`: Arabic text with diacritics (exactly as in original, with all formatting preserved)
-- `english`: Simple English equivalent in context to the sentence
-- `pos`: Part of speech tag (must be one of: """
+- `arabic` (string): Original Arabic word with diacritics (exactly as provided, with all formatting preserved).
+- `english_options` (array of strings): Top 1-3 likely English equivalents in the context of the sentence (most likely first). **Prioritize simpler, common English words suitable for learners when appropriate synonyms exist.**
+- `pos` (string): Part of speech tag (must be one of: """
     + format_valid_pos()
-    + """)
-- `essential`: Arabic word stripped of affixes and diacritized but without case endings
-- `essential_translation`: One-word English lexical meaning found in a dictionary of the essential Arabic word but without grammar
-- `notes`: Any additional grammatical or contextual details (optional)
+    + """).
+- `essential` (string): Arabic word stripped of common affixes (و, ف, ب, ك, ل, س, etc.) and common suffixes (object pronouns و, ه, ك, ي, نا, etc.), excluding case/mood endings. Provide just the core letters, ideally with basic diacritics if standard (e.g., base verb form like فَعَلَ). Aim for the simplest recognizable form for flashcards. Example: For 'وَقَالُوا', essential is 'قَالَ'. For 'الْمُسْلِمَ', essential is 'مُسْلِم'.
+- `essential_translation_options` (array of strings): Top 1-3 likely one-word English lexical meanings (dictionary form) of the `essential` Arabic word, without grammar (most likely first). **Focus on the primary/most common meaning found in standard dictionaries like Hans Wehr.**
+- `notes` (string, optional): Any additional grammatical or contextual details. **Include relevant details like verb form (e.g., Form II, perfect), grammatical case (e.g., accusative), particle function, or specific reasons for translation choices if non-obvious. Provide an empty string if no specific note is needed.**
+- `uncertainties` (array, optional): List any uncertainties related to this specific word's analysis.
 
-Output MUST be a JSON array where each element corresponds to one word in original order, with fields exactly matching the schema."""
+Output MUST be a JSON object containing a `results` array, where each item corresponds to an input sentence and contains the `word_translations` array as described.
+
+Input sentences (with existing diacritics):
+"""
 )
 
-FINAL_VERIFICATION_USER_PROMPT = """Review and resolve Islamic Arabic translation components:
+FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components using the `REFINEMENT_FUNCTION` schema. Resolve ambiguities and select the single best option for word translations, prioritizing accuracy and clarity for learners.
 
-1. Component Resolution:
-   - Resolve diacritical ambiguities using Islamic context
-   - Resolve word-level uncertainties
-   - Select definitive interpretations
-   - Standardize Islamic terminology consistently
-   - Verify ALL original text formatting is preserved
+Based on the initial tashkeel, sentence translation, and word-by-word analysis (which includes *options* for `english_options` and `essential_translation_options`), provide a final, refined output (`refinements` array). Each item in the array must contain:
 
-2. Output Requirements:
-   - Definitive diacritical text (with all original formatting preserved)
-   - Final translation with:
-     * Simple, accessible vocabulary
-     * Required bracketed words for clarity
-     * Appropriate Islamic terminology
-   - Finalized word-by-word analysis (with original text formatting preserved)
+1.  `improved_tashkeel` (string): The definitive, fully corrected text with diacritics. **Meticulously review and correct based on standard Classical Arabic grammar (I'rāb) and the full sentence context**, resolving initial uncertainties. Preserve ALL original formatting.
+2.  `improved_translation` (string): The final English sentence translation. **Ensure it is clear, natural-sounding, and uses simple, accessible English vocabulary** appropriate for the context and a learner audience. Refine the initial translation if necessary for better readability. Preserve original formatting cues.
+3.  `improved_word_translations` (array of objects): The finalized word-by-word analysis. For each word, *select the single most appropriate option* from the initial `english_options` and `essential_translation_options` provided, following these criteria:
+    - `arabic` (string): The original Arabic word (preserved).
+    - `english` (string): The *single chosen* contextual English translation. **Select the option that best fits the sentence context while prioritizing simplicity and common usage.**
+    - `pos` (string): The refined part of speech.
+    - `essential` (string): The refined essential letters.
+    - `essential_translation` (string): The *single chosen* lexical/dictionary English translation. **Select the most accurate and common dictionary meaning (like Hans Wehr primary sense)** from the options.
+    - `notes` (string, optional): Refined notes. **Ensure notes are comprehensive, including grammatical details (verb form, case), context, or choice rationale where helpful for a learner. Consolidate or refine notes from previous steps.**
+4.  `resolved_uncertainties` (array of objects): Explain how initial uncertainties (from tashkeel, translation, or word analysis) were resolved. Include `step`, `original_uncertainty` object, `resolution`, and `explanation`.
+5.  `remaining_uncertainties` (array of objects): Document any uncertainties that could not be definitively resolved. Include `type`, `description`, and `reason_unresolved`.
+6.  `changes_made` (array of strings): List significant changes made compared to the initial analysis steps, including the selection of specific word translation options and corrections to tashkeel/translation.
 
-3. Quality Checks:
-   - Grammatical accuracy in both languages
-   - Islamic terminology consistency
-   - Appropriate register for text type
-   - No unnecessarily complex vocabulary
-   - Verification that ALL original text formatting is maintained
+Quality Checks during refinement:
+- Grammatical accuracy in both Arabic (diacritics) and English.
+- Consistent use of Islamic terminology.
+- Appropriate register (solemn, precise, etc.).
+- Simple, accessible vocabulary in English.
+- Verification that ALL original text formatting, punctuation, and special characters are meticulously preserved in `improved_tashkeel` and the `arabic` fields of `improved_word_translations`.
+- Ensure the chosen `english` fits the sentence context and the chosen `essential_translation` is the most accurate dictionary meaning.
 
-IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text. Preserve ALL formatting exactly as provided."""
+IMPORTANT: Do not modify, normalize, or clean any part of the original Arabic text structure or characters beyond correcting diacritics in `improved_tashkeel`. Preserve ALL original formatting elements.
+
+Input components (Tashkeel, Translation, Word Analysis with options):
+"""

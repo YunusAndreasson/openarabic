@@ -69,13 +69,24 @@ class WordTranslation(BaseModel):
     """Word-level translation with grammatical details"""
 
     arabic: str
-    english: str
+    english: str  # Final chosen English translation
     pos: Optional[str] = None  # Part of speech
     essential: Optional[str] = None  # Essential letters for flashcards
-    essential_translation: Optional[str] = (
-        None  # One-word English meaning of the essential letters
-    )
+    essential_translation: Optional[str] = None  # Final chosen one-word English meaning
     notes: Optional[str] = None  # Any special notes about the translation
+
+
+# Intermediate model to hold options before refinement
+class WordTranslationOptions(BaseModel):
+    arabic: str
+    english_options: List[str] = []
+    pos: Optional[str] = None
+    essential: Optional[str] = None
+    essential_translation_options: List[str] = []
+    notes: Optional[str] = None
+    uncertainties: List[
+        Dict[str, Any]
+    ] = []  # Keep uncertainties tied to the options step
 
 
 class SentenceTranslation(BaseModel):
@@ -84,7 +95,7 @@ class SentenceTranslation(BaseModel):
     index: int
     original: str
     tashkeel: str  # Original with diacritical marks
-    word_by_word: List[WordTranslation]
+    word_by_word: List[WordTranslation]  # Stores final chosen words
     full_translation: str
     notes: Optional[str] = None
     verification_status: Optional[str] = None
@@ -125,6 +136,7 @@ def validate_translation_results(
     results: List[Dict[str, Any]],
     step_name: str,
     check_word_translations: bool = False,
+    check_word_options: bool = False,  # New flag for options stage
 ) -> None:
     """
     Validate translation results for common errors and data integrity.
@@ -133,7 +145,8 @@ def validate_translation_results(
         original_sentences: List of original Arabic sentences
         results: List of translation results to validate
         step_name: Name of the translation step (for error messages)
-        check_word_translations: Whether to perform word translation specific checks
+        check_word_translations: Whether to perform final word translation specific checks
+        check_word_options: Whether to perform word option specific checks
 
     Raises:
         TranslationValidationError: If validation fails
@@ -167,17 +180,61 @@ def validate_translation_results(
             if translation and len(translation.strip()) < 3:
                 errors.append(f"Sentence {i}: Suspiciously short translation")
 
-            # Check for missing Arabic text in word translations
-            if check_word_translations and "word_translations" in result:
+            # Check word translation OPTIONS stage
+            if check_word_options and "word_translations" in result:
                 word_trans = result["word_translations"]
                 if isinstance(word_trans, list):
                     for j, word in enumerate(word_trans):
                         if isinstance(word, dict):
-                            arabic = word.get("arabic", "") or word.get("a", "")
-                            english = word.get("english", "") or word.get("e", "")
-                            if not arabic or not english:
+                            arabic = word.get("arabic", "")
+                            eng_options = word.get("english_options", [])
+                            ess_opts = word.get("essential_translation_options", [])
+                            if not arabic:
                                 errors.append(
-                                    f"Sentence {i}, Word {j}: Missing {'Arabic' if not arabic else 'English'} text"
+                                    f"Sentence {i}, Word {j}: Missing Arabic text"
+                                )
+                            if not eng_options:
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing English options"
+                                )
+                            if not word.get("essential"):
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing essential letters"
+                                )
+                            if not ess_opts:
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing essential translation options"
+                                )
+
+            # Check FINAL word translations
+            if (
+                check_word_translations and "word_by_word" in result
+            ):  # Check final field name
+                word_trans = result["word_by_word"]  # Check final field name
+                if isinstance(word_trans, list):
+                    for j, word in enumerate(word_trans):
+                        if isinstance(word, dict):
+                            arabic = word.get("arabic", "")
+                            english = word.get("english", "")  # Check final field name
+                            essential = word.get("essential", "")
+                            essential_translation = word.get(
+                                "essential_translation", ""
+                            )
+                            if not arabic:
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing final Arabic text"
+                                )
+                            if not english:
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing final English text"
+                                )
+                            if not essential:
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing final essential letters"
+                                )
+                            if not essential_translation:
+                                errors.append(
+                                    f"Sentence {i}, Word {j}: Missing final essential translation"
                                 )
 
             # Check for tashkeel validity (if present)
@@ -214,7 +271,7 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
     ):
         issues.append("Translation contains error marker")
 
-    # Validate word-by-word translations
+    # Validate word-by-word translations (final chosen ones)
     if translation.word_by_word:
         # Count words in original (approximate)
         orig_word_count = len(
@@ -227,13 +284,18 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
                 f"Word translation count mismatch: got {len(translation.word_by_word)}, expected ~{orig_word_count}"
             )
 
-        # Check individual word translations
+        # Check individual final word translations
         for i, word in enumerate(translation.word_by_word):
-            if not word.arabic or not word.english:
+            if not word.arabic:
+                issues.append(f"Final Word {i + 1}: Missing Arabic text")
+            if not word.english:  # Check final single field
+                issues.append(f"Final Word {i + 1}: Missing chosen English text")
+            if not word.essential:
+                issues.append(f"Final Word {i + 1}: Missing essential letters")
+            if not word.essential_translation:  # Check final single field
                 issues.append(
-                    f"Word {i + 1}: Missing {'Arabic' if not word.arabic else 'English'} text"
+                    f"Final Word {i + 1}: Missing chosen essential translation"
                 )
-            # Skipping part-of-speech validation to allow the model to use any POS tag freely
 
     else:
         issues.append("Missing word-by-word translations")
@@ -243,9 +305,11 @@ def validate_final_translation(translation: SentenceTranslation) -> List[str]:
 
 # Configuration constants
 MODEL_ANALYSIS = "gpt-4o"  # For text splitting and analysis
-MODEL_TRANSLATION = "gpt-4o"  # For English translation and word translation
+MODEL_TRANSLATION = "gpt-4o"  # For English translation and word translation (options)
 MODEL_OTHER = "gpt-4o"  # For tashkeel and support tasks
-MODEL_VERIFICATION = "o4-mini"  # For final verification/refinement step
+MODEL_VERIFICATION = (
+    "o4-mini"  # For final verification/refinement step (selecting options)
+)
 CHECKPOINT_FILE = "translation_checkpoint.json"
 MAX_SENTENCE_LENGTH = 500  # characters
 MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
@@ -401,7 +465,9 @@ def split_text_into_sentences(text: str) -> List[str]:
         model=MODEL_ANALYSIS,  # Use the analysis model
     )
 
-    if "sentences" in response and isinstance(response["sentences"], list):
+    if "units" in response and isinstance(
+        response["units"], list
+    ):  # Changed from "sentences" to "units"
         # Log the metadata for reference
         if (
             "title" in response
@@ -413,7 +479,7 @@ def split_text_into_sentences(text: str) -> List[str]:
             logging.info(f"Summary: {response['summary']}")
             logging.info(f"Difficulty Level: {response['difficulty_level']}/5")
 
-        return response["sentences"]
+        return response["units"]  # Changed from "sentences" to "units"
     elif "error" in response:
         logging.error(f"Error splitting text: {response['error']}")
         return []
@@ -633,10 +699,22 @@ def batch_add_tashkeel(
                 f"- {u.get('text', '')}: {u.get('reason', '')}" for u in uncertainties
             )
 
+        # Extract word-level grammatical notes if available
+        grammar_notes = []
+        if "word_by_word" in translation_data:
+            for word in translation_data["word_by_word"]:
+                if word.get("notes") and word.get("arabic"):
+                    grammar_notes.append(f"{word['arabic']}: {word['notes']}")
+        grammar_notes_str = ""
+        if grammar_notes:
+            grammar_notes_str = "\nGrammatical notes:\n" + "\n".join(
+                f"- {note}" for note in grammar_notes
+            )
+
         formatted_inputs.append(
             f"Set {i + 1}:\n"
             f"Arabic: {sentence}{grammar_context}\n"
-            f"Translation: {translation}{uncertainty_notes}"
+            f"Translation: {translation}{uncertainty_notes}{grammar_notes_str}"
         )
 
     messages = [
@@ -717,8 +795,8 @@ def batch_translate_words(
     translations: List[Dict[str, Any]],
     all_sentences: List[str] = None,
     indices: List[int] = None,
-) -> List[Dict[str, Any]]:
-    """Create word-by-word translations for multiple sentences in a batch"""
+) -> List[Dict[str, Any]]:  # Returns results with options
+    """Create word-by-word translations for multiple sentences in a batch, returning options"""
     formatted_inputs = []
     for i, (sentence, tashkeel_data, translation_data) in enumerate(
         zip(sentences, tashkeel_results, translations)
@@ -797,37 +875,51 @@ def batch_translate_words(
     )
 
     if "results" in response and isinstance(response["results"], list):
-        # Simplified mapping: always include essential letters and translations
         processed_results = []
         for i, result in enumerate(response["results"]):
             if i >= len(sentences):
                 break
-            word_translations = []
-            for word in result.get("word_translations", []):
-                # Normalize both old and new field names for arabic and english
-                arabic_text = word.get("arabic") or word.get("a", "")
-                english_text = word.get("english") or word.get("e", "")
-                pos_tag = word.get("pos") or word.get("p", "")
-                notes_text = word.get("notes") or word.get("n", "")
-                # Always include essential letters; fallback to arabic if missing
+            word_translations_options = []  # List to hold WordTranslationOptions
+            raw_word_translations = result.get("word_translations", [])
+            if not isinstance(raw_word_translations, list):
+                raw_word_translations = []  # Ensure it's a list
+
+            for word_data in raw_word_translations:
+                if not isinstance(word_data, dict):
+                    continue  # Skip invalid entries
+
+                # Get options, ensuring they are lists of strings
+                eng_opts = word_data.get("english_options", [])
+                if not isinstance(eng_opts, list) or not all(
+                    isinstance(s, str) for s in eng_opts
+                ):
+                    eng_opts = []  # Default to empty list if format is wrong
+
+                ess_opts = word_data.get("essential_translation_options", [])
+                if not isinstance(ess_opts, list) or not all(
+                    isinstance(s, str) for s in ess_opts
+                ):
+                    ess_opts = []  # Default to empty list
+
+                # Get other fields
+                arabic_text = word_data.get("arabic", "")
                 essential_letters = (
-                    word.get("essential") or word.get("r") or arabic_text
+                    word_data.get("essential") or arabic_text
+                )  # Fallback
+
+                word_translations_options.append(
+                    WordTranslationOptions(
+                        arabic=arabic_text,
+                        english_options=eng_opts,
+                        pos=word_data.get("pos"),
+                        essential=essential_letters,
+                        essential_translation_options=ess_opts,
+                        notes=word_data.get("notes"),
+                        uncertainties=word_data.get("uncertainties", []),
+                    ).model_dump()  # Store as dict for refinement input
                 )
-                essential_translation = word.get("essential_translation") or word.get(
-                    "root_translation", ""
-                )
-                word_translations.append(
-                    {
-                        "arabic": arabic_text,
-                        "english": english_text,
-                        "pos": pos_tag,
-                        "essential": essential_letters,
-                        "essential_translation": essential_translation,
-                        "notes": notes_text,
-                        "uncertainties": word.get("uncertainties", []),
-                    }
-                )
-            processed_results.append({"word_translations": word_translations})
+            processed_results.append({"word_translations": word_translations_options})
+
         # Ensure alignment: one list per sentence
         while len(processed_results) < len(sentences):
             processed_results.append({"word_translations": []})
@@ -843,58 +935,70 @@ def batch_translate_words(
 def batch_refine_translations(
     refinement_input: List[Dict[str, Any]],
 ) -> Dict[str, List]:
-    """Refine all translation components for improved accuracy"""
+    """Refine all translation components, selecting best options"""
     formatted_inputs = []
 
     for i, data in enumerate(refinement_input):
-        # Extract all components
+        # Extract all components, including word options
         original = data["original"]
         translation_data = data["translation"]
         tashkeel_data = data["tashkeel"]
-        word_translations = data["word_translations"]
+        word_translations_options = data[
+            "word_translations_options"
+        ]  # Input now has options
         previous_uncertainties = data["previous_uncertainties"]
 
-        # Format word translations
+        # Format word translations options for the prompt
         word_trans_formatted = []
-        for word in word_translations:
-            entry = f"{word.get('arabic', '')}: {word.get('english', '')}"
-            if word.get("pos"):
-                entry += f" ({word.get('pos')})"
-            if word.get("essential"):
-                entry += f" [essential: {word.get('essential')}]"
+        for word_opts in word_translations_options:  # Iterate through option objects
+            entry = f"{word_opts.get('arabic', '')}:"
+            eng_opts_str = ", ".join(word_opts.get("english_options", ["N/A"]))
+            ess_opts_str = ", ".join(
+                word_opts.get("essential_translation_options", ["N/A"])
+            )
+            entry += f"\n  - English Options: [{eng_opts_str}]"
+            entry += f"\n  - Essential: {word_opts.get('essential', 'N/A')}"
+            entry += f"\n  - Essential Options: [{ess_opts_str}]"
+            if word_opts.get("pos"):
+                entry += f"\n  - POS: {word_opts.get('pos')}"
+            if word_opts.get("notes"):
+                entry += f"\n  - Notes: {word_opts.get('notes')}"
             word_trans_formatted.append(entry)
 
-        # Format all uncertainties for resolution
+        # Format all uncertainties for resolution (combine from all steps)
         all_uncertainties = []
-
-        if previous_uncertainties["translation"]:
+        if previous_uncertainties.get("translation"):
             all_uncertainties.extend(
-                f"Translation: {u.get('text', '')}"
+                f"Translation: {u.get('text', '')} ({u.get('reason', 'No reason')})"
                 for u in previous_uncertainties["translation"]
+                if isinstance(u, dict)
             )
-
-        if previous_uncertainties["tashkeel"]:
+        if previous_uncertainties.get("tashkeel"):
             all_uncertainties.extend(
-                f"Diacritics: {u.get('word', '')}"
+                f"Diacritics: {u.get('word', '')} ({u.get('reason', 'No reason')})"
                 for u in previous_uncertainties["tashkeel"]
+                if isinstance(u, dict)
             )
-
-        for word_u in previous_uncertainties["word"]:
-            if word_u:
-                all_uncertainties.extend(
-                    f"Word: {u.get('description', '')}" for u in word_u
-                )
+        # Include uncertainties from the word options step
+        for word_opts in word_translations_options:
+            word_uncertainties = word_opts.get("uncertainties", [])
+            if isinstance(word_uncertainties, list):
+                for u in word_uncertainties:
+                    if isinstance(u, dict):
+                        all_uncertainties.append(
+                            f"Word ({word_opts.get('arabic', '')}): {u.get('text', '')} ({u.get('reason', 'No reason')})"
+                        )
 
         formatted_inputs.append(
             f"Set {i + 1}:\n"
             f"Original: {original}\n"
-            f"Translation: {translation_data.get('translation', '')}\n"
-            f"With tashkeel: {tashkeel_data.get('tashkeel', '')}\n"
-            f"Word translations:\n"
+            f"Initial Translation: {translation_data.get('translation', '')}\n"
+            f"Initial Tashkeel: {tashkeel_data.get('tashkeel', '')}\n"
+            f"Word Translation Options:\n"
             + "\n".join(f"• {w}" for w in word_trans_formatted)
             + "\n"
             + (
-                "\nUncertainties to resolve:\n"
+                "\nInitial Uncertainties:\n"
                 + "\n".join(f"- {u}" for u in all_uncertainties)
                 if all_uncertainties
                 else ""
@@ -911,13 +1015,18 @@ def batch_refine_translations(
         },
     ]
 
-    response = call_openai_api(
-        messages,
-        function_schema=REFINEMENT_FUNCTION,
-        function_name="refine_translations",
-        model=MODEL_VERIFICATION,  # Use the mini model for final verification
-        temperature=1.0,  # Must use default temperature for this model
-    )
+    # Set temperature based on the verification model
+    temp_to_use = 1.0 if MODEL_VERIFICATION == "o4-mini" else 0.3
+
+    api_kwargs = {
+        "messages": messages,
+        "function_schema": REFINEMENT_FUNCTION,
+        "function_name": "refine_translations",
+        "model": MODEL_VERIFICATION,
+        "temperature": temp_to_use,  # Explicitly set the correct temperature
+    }
+
+    response = call_openai_api(**api_kwargs)
 
     if "refinements" in response and isinstance(response["refinements"], list):
         return {"refinements": response["refinements"]}
@@ -963,38 +1072,46 @@ def process_batch(
             batch_sentences, tashkeel_results, "Tashkeel Addition"
         )
 
-        # Step 3: Batch word-by-word translation with full context - use original text
-        word_results = batch_translate_words(
+        # Step 3: Batch word-by-word translation (getting options) - use original text
+        word_options_results = batch_translate_words(
             batch_sentences,
             tashkeel_results,
             translation_results,
             all_sentences,
             batch_indices,
         )
-        # Validate word translation results
+        # Validate word translation options
         validate_translation_results(
             batch_sentences,
-            word_results,
-            "Word Translation",
-            check_word_translations=True,
+            word_options_results,
+            "Word Translation Options",
+            check_word_options=True,  # Validate options structure
         )
 
-        # Step 4: Final verification with all previous results and uncertainties - use original text
+        # Step 4: Final verification (selecting options) - use original text
         refinement_input = []
+        all_word_options_uncertainties = []  # Collect uncertainties from word options step
         for i in range(batch_size):
+            word_opts_list = word_options_results[i].get("word_translations", [])
+            all_word_options_uncertainties.append(
+                [
+                    u
+                    for word_opts in word_opts_list
+                    for u in word_opts.get("uncertainties", [])
+                ]
+            )
             refinement_input.append(
                 {
-                    "original": batch_sentences[i],  # Keep original text
+                    "original": batch_sentences[i],
                     "translation": translation_results[i],
                     "tashkeel": tashkeel_results[i],
-                    "word_translations": word_results[i].get("word_translations", []),
+                    "word_translations_options": word_opts_list,  # Pass the list of option dicts
                     "previous_uncertainties": {
                         "translation": translation_results[i].get("uncertainties", []),
                         "tashkeel": tashkeel_results[i].get("uncertainties", []),
-                        "word": [
-                            w.get("uncertainties", [])
-                            for w in word_results[i].get("word_translations", [])
-                        ],
+                        "word": all_word_options_uncertainties[
+                            i
+                        ],  # Include uncertainties from word options
                     },
                 }
             )
@@ -1022,94 +1139,108 @@ def process_batch(
             # Combine notes from all steps
             notes = []
             if translation_results[i].get("notes"):
-                notes.append(translation_results[i]["notes"])
+                notes.append(
+                    f"Initial Translation Notes: {translation_results[i]['notes']}"
+                )
             if refinement.get("changes_made"):
-                notes.extend(refinement["changes_made"])
+                notes.append("Refinement Changes:")
+                notes.extend([f"- {change}" for change in refinement["changes_made"]])
 
             # Process resolved and remaining uncertainties
             resolved = refinement.get("resolved_uncertainties", [])
             remaining = refinement.get("remaining_uncertainties", [])
 
             if resolved or remaining:
-                notes.append("Uncertainty Resolution:")
+                notes.append("\nUncertainty Resolution:")
                 if resolved:
                     notes.append("- Resolved:")
                     for r in resolved:
                         notes.append(
-                            f"  * {r.get('explanation', 'Uncertainty resolved but explanation missing')}"
+                            f"  * Step: {r.get('step', 'N/A')}, "
+                            f"Explanation: {r.get('explanation', 'No explanation')}"
                         )
                 if remaining:
                     notes.append("- Remaining:")
                     for r in remaining:
                         notes.append(
-                            f"  * {r.get('description', 'Unknown issue')} ({r.get('reason_unresolved', 'No reason provided')})"
+                            f"  * Type: {r.get('type', 'N/A')}, "
+                            f"Desc: {r.get('description', 'Unknown issue')} "
+                            f"({r.get('reason_unresolved', 'No reason provided')})"
                         )
 
-            # Process refined word translations - keep original text
-            word_translations = []
-            refined_words = refinement.get("improved_word_translations", [])
-            if refined_words:
-                for word_data in refined_words:
-                    word_translations.append(
+            # Process refined word translations (extracting the chosen single values)
+            final_word_translations = []
+            refined_words_data = refinement.get("improved_word_translations", [])
+            if refined_words_data and isinstance(refined_words_data, list):
+                for word_data in refined_words_data:
+                    if not isinstance(word_data, dict):
+                        continue  # Skip invalid data
+
+                    # Extract the single chosen values
+                    final_word_translations.append(
                         WordTranslation(
-                            arabic=word_data.get("a", ""),  # Original text preserved
-                            english=word_data.get("e", ""),
-                            pos=word_data.get("p"),
-                            essential=word_data.get("essential")
-                            or word_data.get("r", ""),
-                            essential_translation=(
-                                word_data.get("essential_translation")
-                                or word_data.get("root_translation", "")
-                            ),
-                            notes=word_data.get("n"),
+                            arabic=word_data.get("arabic", ""),
+                            english=word_data.get("english", ""),  # Chosen value
+                            pos=word_data.get("pos"),
+                            essential=word_data.get("essential"),
+                            essential_translation=word_data.get(
+                                "essential_translation", ""
+                            ),  # Chosen value
+                            notes=word_data.get("notes"),
                         )
                     )
             else:
-                # Use original word translations if no refinements
-                for word_data in word_results[i].get("word_translations", []):
-                    word_translations.append(
+                # Fallback: if refinement failed, try to take the first option from the previous step
+                logging.warning(
+                    f"Refinement failed for word translations in sentence {index}. Using first option as fallback."
+                )
+                word_opts_list = word_options_results[i].get("word_translations", [])
+                for word_opts in word_opts_list:
+                    final_word_translations.append(
                         WordTranslation(
-                            arabic=word_data.get(
-                                "arabic", ""
-                            )  # Original text preserved
-                            or word_data.get("a", ""),
-                            english=word_data.get("english", "")
-                            or word_data.get("e", ""),
-                            pos=word_data.get("pos") or word_data.get("p"),
-                            essential=word_data.get("essential") or word_data.get("r"),
-                            essential_translation=(
-                                word_data.get("essential_translation")
-                                or word_data.get("root_translation", "")
-                            ),
-                            notes=word_data.get("notes") or word_data.get("n"),
+                            arabic=word_opts.get("arabic", ""),
+                            english=word_opts.get(
+                                "english_options", ["[Fallback Error]"]
+                            )[0],
+                            pos=word_opts.get("pos"),
+                            essential=word_opts.get("essential"),
+                            essential_translation=word_opts.get(
+                                "essential_translation_options", ["[Fallback Error]"]
+                            )[0],
+                            notes=word_opts.get("notes", "") + " (Refinement fallback)",
                         )
                     )
 
-            # Create sentence translation object with original text
+            # Create sentence translation object with original text and final chosen words
             sentence_translation = SentenceTranslation(
                 index=index,
-                original=batch_sentences[i],  # Original text preserved
-                tashkeel=refined_tashkeel,  # Original tashkeel preserved
-                word_by_word=word_translations,  # Original word text preserved
+                original=batch_sentences[i],
+                tashkeel=refined_tashkeel,
+                word_by_word=final_word_translations,  # Use the final list of WordTranslation objects
                 full_translation=refined_translation,
                 notes="\n".join(notes) if notes else None,
                 verification_status="Refined"
                 if refinement.get("changes_made")
                 else "Verified",
                 verification_issues=[
-                    u.get("description", "Unspecified issue") for u in remaining
+                    f"{u.get('type', 'N/A')}: {u.get('description', 'Unspecified issue')}"
+                    for u in remaining
                 ]
                 if remaining
                 else None,
             )
 
-            # Validate final translation
+            # Validate final translation structure
             validation_issues = validate_final_translation(sentence_translation)
             if validation_issues:
                 sentence_translation.verification_status = "Issues Found"
-                sentence_translation.verification_issues = validation_issues
+                # Append validation issues to existing ones if any
+                if sentence_translation.verification_issues:
+                    sentence_translation.verification_issues.extend(validation_issues)
+                else:
+                    sentence_translation.verification_issues = validation_issues
                 logging.warning(
-                    f"Validation issues in sentence {index}:\n"
+                    f"Final validation issues in sentence {index}:\n"
                     + "\n".join(validation_issues)
                 )
 
@@ -1125,13 +1256,13 @@ def process_batch(
         return [
             SentenceTranslation(
                 index=start_index + i,
-                original=sentence,  # Original text preserved for error cases
+                original=sentence,
                 tashkeel=sentence,
                 word_by_word=[],
                 full_translation="[VALIDATION ERROR]",
                 notes=str(e),
                 verification_status="Failed",
-                verification_issues=["Validation failed"],
+                verification_issues=["Validation failed during processing"],
             )
             for i, sentence in enumerate(batch_sentences)
         ]
@@ -1141,13 +1272,13 @@ def process_batch(
         return [
             SentenceTranslation(
                 index=start_index + i,
-                original=sentence,  # Original text preserved for error cases
+                original=sentence,
                 tashkeel=sentence,
                 word_by_word=[],
                 full_translation="[BATCH PROCESSING ERROR]",
                 notes=str(e),
                 verification_status="Failed",
-                verification_issues=["Processing failed"],
+                verification_issues=["General processing failed"],
             )
             for i, sentence in enumerate(batch_sentences)
         ]
@@ -1182,15 +1313,21 @@ def load_checkpoint() -> List[SentenceTranslation]:
             data = json.load(f)
             results = []
             for item in data.get("translations", []):
-                # Handle word_by_word as list of dictionaries
+                # Handle word_by_word as list of dictionaries (final format)
                 word_by_word = []
                 for word in item.get("word_by_word", []):
-                    # Remap old root fields for backward compatibility
-                    if "root" in word:
-                        word["essential"] = word.pop("root")
-                    if "root_translation" in word:
-                        word["essential_translation"] = word.pop("root_translation")
-                    word_by_word.append(WordTranslation(**word))
+                    # Ensure essential fields exist before creating WordTranslation
+                    if (
+                        "arabic" in word
+                        and "english" in word
+                        and "essential" in word
+                        and "essential_translation" in word
+                    ):
+                        word_by_word.append(WordTranslation(**word))
+                    else:
+                        logging.warning(
+                            f"Skipping invalid word data in checkpoint for sentence {item.get('index')}"
+                        )
 
                 # Create SentenceTranslation object
                 results.append(
@@ -1205,6 +1342,7 @@ def load_checkpoint() -> List[SentenceTranslation]:
                         verification_issues=item.get("verification_issues"),
                     )
                 )
+            print(f"Loaded {len(results)} sentences from checkpoint.")
             return results
     except Exception as e:
         logging.error(f"Failed to load checkpoint: {e}")
@@ -1217,20 +1355,35 @@ def create_batches(
     """Create batches of sentences with their contexts"""
     batches = []
 
-    for i in range(0, len(sentences), batch_size):
-        batch_sentences = sentences[i : i + batch_size]
-        batch_indices = [start_index + i + j for j in range(len(batch_sentences))]
+    # Iterate through the sentences starting from the start_index
+    num_remaining = len(sentences) - start_index
+    for i in range(0, num_remaining, batch_size):
+        current_batch_start_global_index = start_index + i
+        batch_sentences = sentences[
+            current_batch_start_global_index : current_batch_start_global_index
+            + batch_size
+        ]
+
+        if not batch_sentences:  # Should not happen with correct logic, but safeguard
+            continue
+
+        batch_indices = list(
+            range(
+                current_batch_start_global_index,
+                current_batch_start_global_index + len(batch_sentences),
+            )
+        )
+        # Context uses global indices relative to the full 'sentences' list
         batch_contexts = [
-            get_optimized_context(sentences, start_index + i + j)
-            for j in range(len(batch_sentences))
+            get_optimized_context(sentences, idx) for idx in batch_indices
         ]
 
         batches.append(
             {
-                "sentences": batch_sentences,
+                "sentences": batch_sentences,  # The actual text for this batch
                 "contexts": batch_contexts,
-                "start_index": start_index + i,
-                "indices": batch_indices,  # Track the specific index of each sentence
+                "start_index": current_batch_start_global_index,  # Global start index of this batch
+                "indices": batch_indices,  # Global indices of sentences in this batch
             }
         )
 
@@ -1249,10 +1402,10 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
 
         # Load checkpoint if exists
         results = load_checkpoint()
-        start_index = len(results)
+        start_index = len(results)  # Index of the first sentence *to be processed*
 
-        # Split text into sentences if not already processed - use original text
-        print("Analyzing text and splitting into sentences...")
+        # Split text into units if not already processed - use original text
+        print("Analyzing text and splitting into learner-friendly units...")
         response = call_openai_api(
             [
                 {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
@@ -1267,11 +1420,12 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
             raise ValueError(f"Failed to analyze text: {response['error']}")
 
         # Create metadata
+        all_units = response.get("units", [])  # Get all units from analysis
         metadata = TextMetadata(
             title=response.get("title", "Untitled Text"),
             summary=response.get("summary", "No summary available"),
             difficulty_level=response.get("difficulty_level", 3),
-            total_units=len(response.get("sentences", [])),
+            total_units=len(all_units),
         )
 
         # Print analysis results
@@ -1282,46 +1436,57 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
         print(f"Total Units: {metadata.total_units}")
         print("-" * 80)
 
-        # Keep original sentences for AI processing
-        all_sentences = response.get("sentences", [])
-        if not all_sentences:
-            raise ValueError("No sentences found to translate in the input file")
+        if not all_units:
+            raise ValueError("No units found to translate in the input file")
 
-        # Skip already processed sentences
-        remaining_sentences = all_sentences[start_index:]
-        if not remaining_sentences:
-            print("All sentences already processed. No work to do.")
+        # Determine units to process
+        if start_index >= len(all_units):
+            print(
+                "All units already processed based on checkpoint. Verifying output format."
+            )
+            # Ensure results are saved correctly even if nothing new processed
+            with open(output_file, "w", encoding="utf-8") as f:
+                final_result = TranslationResult(
+                    metadata=metadata, translations=results
+                )
+                json.dump(final_result.model_dump(), f, ensure_ascii=False, indent=2)
+            print(f"Output verified and saved to {output_file}")
+            return final_result
 
+        num_to_process = len(all_units) - start_index
+        print(
+            f"Starting processing from unit {start_index}. {num_to_process} units remaining."
+        )
+
+        # Create batches only for the remaining units
+        batches_to_process = create_batches(all_units, start_index, batch_size)
+
+        if not batches_to_process:
+            print(
+                "No batches created to process, finishing."
+            )  # Should be caught above, but safeguard
             # Write final output with metadata
             with open(output_file, "w", encoding="utf-8") as f:
                 final_result = TranslationResult(
                     metadata=metadata, translations=results
                 )
                 json.dump(final_result.model_dump(), f, ensure_ascii=False, indent=2)
-
-            print(f"Output saved to {output_file}")
             return final_result
 
-        # Create batches with improved context window
-        batches = create_batches(all_sentences, start_index, batch_size)
-
         # Process each batch with progress bar
-        batch_count = len(batches)
-        remaining_batches = batches[start_index // batch_size :]
-
-        with tqdm(total=len(remaining_sentences), desc="Translating") as pbar:
-            for batch in remaining_batches:
+        with tqdm(total=num_to_process, desc="Translating", initial=0) as pbar:
+            for batch in batches_to_process:
                 try:
-                    # Process batch with original text
+                    # Process batch - uses global indices from all_units
                     batch_results = process_batch(
                         batch["sentences"],
                         batch["start_index"],
                         batch["contexts"],
-                        all_sentences,
+                        all_units,  # Pass the full list for context generation
                         batch["indices"],
                     )
 
-                    # Add batch results
+                    # Add batch results to the main results list
                     results.extend(batch_results)
 
                     # Save checkpoint after each batch
@@ -1336,19 +1501,26 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
                     )
                     # Add error markers for this batch
                     for i, sentence in enumerate(batch["sentences"]):
-                        results.append(
-                            SentenceTranslation(
-                                index=batch["start_index"] + i,
-                                original=sentence,  # Keep original text
-                                tashkeel=sentence,
-                                word_by_word=[],
-                                full_translation="[BATCH PROCESSING ERROR]",
-                                notes=f"Error: {str(e)}",
-                                verification_status=None,
-                                verification_issues=None,
+                        error_index = batch["start_index"] + i
+                        # Check if this index already exists due to a partial batch failure
+                        if error_index >= len(results):
+                            results.append(
+                                SentenceTranslation(
+                                    index=error_index,
+                                    original=sentence,
+                                    tashkeel=sentence,
+                                    word_by_word=[],
+                                    full_translation="[BATCH PROCESSING ERROR]",
+                                    notes=f"Error: {str(e)}",
+                                    verification_status="Failed",
+                                    verification_issues=[
+                                        "General batch processing failed"
+                                    ],
+                                )
                             )
-                        )
-                    pbar.update(len(batch["sentences"]))
+                    pbar.update(
+                        len(batch["sentences"])
+                    )  # Update progress even on error
 
         # Write final output with metadata
         with open(output_file, "w", encoding="utf-8") as f:
@@ -1357,21 +1529,30 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
 
         # Clean up checkpoint file
         if os.path.exists(CHECKPOINT_FILE):
-            os.remove(CHECKPOINT_FILE)
+            try:
+                os.remove(CHECKPOINT_FILE)
+                print("Checkpoint file removed.")
+            except OSError as e:
+                print(f"Error removing checkpoint file: {e}")
 
         # Calculate and print statistics
         end_time = time.time()
         total_time = end_time - start_time
-        sentences_processed = len(results)
+        units_processed = len(results)  # Total in the final output
 
         print("\nTranslation Summary:")
         print(f"Time Elapsed: {total_time:.2f} seconds")
-        print(f"Total Units: {len(all_sentences)}")
-        print(f"Units Successfully Processed: {sentences_processed}")
-        if sentences_processed > 0:
-            print(
-                f"Average Time per Unit: {total_time / sentences_processed:.2f} seconds"
-            )
+        print(f"Total Units Analyzed: {len(all_units)}")
+        print(f"Units in Output File: {units_processed}")
+        if units_processed > 0 and total_time > 0:
+            # Calculate average time only for newly processed units if possible
+            newly_processed_count = units_processed - start_index
+            if newly_processed_count > 0:
+                avg_time = total_time / newly_processed_count
+                print(f"Average Time per Newly Processed Unit: {avg_time:.2f} seconds")
+            else:
+                print("Average Time per Unit: N/A (no new units processed)")
+
         print(str(token_tracker))
 
         return final_result
@@ -1412,24 +1593,42 @@ def main():
             print(f"Invalid batch size, using default of {MAX_BATCH_SIZE}")
 
     error_count = 0
+    results = None  # Initialize results to None
     try:
         results = translate_file(input_file, output_file, batch_size)
 
-        # Check for any failed translations
-        for result in results.translations:
-            if result.verification_status == "Failed":
-                error_count += 1
-                print(f"\nError in sentence {result.index}:")
-                print(f"Original: {result.original}")
-                print(f"Error: {result.notes}")
-                if result.verification_issues:
-                    print("Issues:", "\n".join(result.verification_issues))
-                print("-" * 80)
+        # Check for any failed translations or issues
+        if (
+            results and results.translations
+        ):  # Check if results exist and have translations
+            for result in results.translations:
+                if result.verification_status in ["Failed", "Issues Found"]:
+                    error_count += 1
+                    print(
+                        f"\n{'⚠️ Issue' if result.verification_status == 'Issues Found' else '❌ Error'} in sentence {result.index}:"
+                    )
+                    print(f"Original: {result.original}")
+                    print(f"Status: {result.verification_status}")
+                    if result.notes:
+                        print(f"Notes: {result.notes}")
+                    if result.verification_issues:
+                        print(
+                            "Issues Detected:",
+                            "\n".join(
+                                [f"- {iss}" for iss in result.verification_issues]
+                            ),
+                        )
+                    print("-" * 80)
+        elif not results:
+            print("\n⚠️ Translation process did not produce results.")
+            sys.exit(1)
 
         if error_count > 0:
-            print(f"\n⚠️ Translation completed with {error_count} errors.")
+            print(
+                f"\n⚠️ Translation completed with {error_count} {'errors/issues' if error_count > 1 else 'error/issue'}."
+            )
             print(f"Output saved to {output_file}")
-            sys.exit(1)
+            sys.exit(1)  # Exit with error code if issues found
         else:
             print("\n✅ Translation completed successfully.")
             print(f"Output saved to {output_file}")
@@ -1437,13 +1636,16 @@ def main():
 
     except KeyboardInterrupt:
         print("\n⚠️ Translation interrupted by user.")
-        print("Progress saved to checkpoint. Run the script again to resume.")
-        sys.exit(130)  # Standard exit code for SIGINT
-    except Exception as e:
-        print(f"\n❌ Fatal error: {str(e)}")
-        # If we have a checkpoint, mention it
         if os.path.exists(CHECKPOINT_FILE):
             print("Progress saved to checkpoint. Run the script again to resume.")
+        sys.exit(130)  # Standard exit code for SIGINT
+    except Exception as e:
+        print(f"\n❌ Fatal error during translation: {str(e)}")
+        # If we have a checkpoint, mention it
+        if os.path.exists(CHECKPOINT_FILE):
+            print(
+                "Progress saved to checkpoint. Run the script again to resume if possible."
+            )
         sys.exit(1)
 
 
