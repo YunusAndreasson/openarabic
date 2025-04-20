@@ -133,14 +133,6 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
     });
   }, []);
 
-  const convertToBaseTracks = useCallback((enhancedTracks: EnhancedAudioTrack[]) => {
-    return enhancedTracks.map(track => ({
-      id: track.articleId,
-      audioUrl: track.audioUrl,
-      title: track.title,
-    }));
-  }, []);
-
   const preloadTracksLogic = useCallback(async () => {
     if (preloadInProgressRef.current || !isPlayingRef.current) return;
     preloadInProgressRef.current = true;
