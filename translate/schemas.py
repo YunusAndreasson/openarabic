@@ -16,6 +16,28 @@ VALID_POS = {
     "numeral",
 }
 
+# Define difficulty levels with descriptions
+DIFFICULTY_LEVELS = {
+    1: "Basic - Simple vocabulary and grammar",
+    2: "Elementary - Common vocabulary with basic grammar structures",
+    3: "Intermediate - Mixed vocabulary with moderate grammar complexity",
+    4: "Advanced - Specialized vocabulary with complex grammar",
+    5: "Expert - Technical/scholarly vocabulary with intricate grammar",
+}
+
+
+def format_valid_pos() -> str:
+    """Format VALID_POS as a readable list for prompts."""
+    pos_list = sorted(list(VALID_POS))
+    return ", ".join(f"'{pos}'" for pos in pos_list)
+
+
+def format_difficulty_levels() -> str:
+    """Format difficulty levels as a readable list for prompts."""
+    return "\n".join(
+        f"Level {level}: {desc}" for level, desc in sorted(DIFFICULTY_LEVELS.items())
+    )
+
 
 # Define function schemas for API operations
 # Function for translating sentences
@@ -140,19 +162,8 @@ WORD_TRANSLATION_FUNCTION = {
                                     },
                                     "pos": {
                                         "type": "string",
-                                        "enum": [
-                                            "verb",
-                                            "noun",
-                                            "particle",
-                                            "adjective",
-                                            "pronoun",
-                                            "adverb",
-                                            "preposition",
-                                            "conjunction",
-                                            "interjection",
-                                            "numeral",
-                                        ],
-                                        "description": "Part of speech (must match VALID_POS)",
+                                        "enum": list(VALID_POS),
+                                        "description": f"Part of speech (must be one of: {format_valid_pos()})",
                                     },
                                     "essential": {
                                         "type": "string",
@@ -340,8 +351,8 @@ SPLIT_TEXT_FUNCTION = {
             },
             "difficulty_level": {
                 "type": "integer",
-                "enum": [1, 2, 3, 4, 5],
-                "description": "Difficulty rating (1=easiest to 5=hardest) based on vocabulary, grammar, and Islamic concepts",
+                "enum": list(DIFFICULTY_LEVELS.keys()),
+                "description": f"Difficulty rating based on vocabulary, grammar, and Islamic concepts:\n{format_difficulty_levels()}",
             },
             "sentences": {
                 "type": "array",
@@ -372,7 +383,8 @@ Priorities:
 
 Apply these principles to all translation tasks: splitting, diacritics, word analysis, and verification."""
 
-CONTENT_ANALYSIS_PROMPT = """Analyze this Islamic text to provide:
+CONTENT_ANALYSIS_PROMPT = (
+    """Analyze this Islamic text to provide:
 
 1. Title (3-7 words):
    - Clear, simple English
@@ -387,16 +399,15 @@ CONTENT_ANALYSIS_PROMPT = """Analyze this Islamic text to provide:
    - Direct, precise statements only
 
 3. Difficulty Level (1-5):
-   Level 1: Basic
-   Level 2: Elementary
-   Level 3: Intermediate 
-   Level 4: Advanced 
-   Level 5: Expert
+"""
+    + format_difficulty_levels()
+    + """
 
 IMPORTANT: Preserve ALL original text formatting, punctuation, and special characters throughout the analysis.
 
 Proceed to text splitting after analysis.
 """
+)
 
 SENTENCE_SPLITTING_USER_PROMPT = (
     CONTENT_ANALYSIS_PROMPT
@@ -494,7 +505,9 @@ Rules for the `essential` field:
 For each word provide a JSON object with these keys:
 - `arabic`: Arabic text with diacritics (exactly as in original, with all formatting preserved)
 - `english`: Simple English equivalent in context to the sentence
-- `pos`: Part of speech tag (must be one of the VALID_POS enum)
+- `pos`: Part of speech tag (must be one of: """
+    + format_valid_pos()
+    + """)
 - `essential`: Arabic word stripped of affixes and diacritized but without case endings
 - `essential_translation`: One-word English lexical meaning found in a dictionary of the essential Arabic word but without grammar
 - `notes`: Any additional grammatical or contextual details (optional)
