@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 
 import type { RootState, AppDispatch } from './store';
 
@@ -20,9 +20,9 @@ export function useAppSelectorMemo<Selected>(
   selector: (state: RootState) => Selected,
   equalityFn?: (left: Selected, right: Selected) => boolean
 ): Selected {
-  return useAppSelector(
-    // Memoize the selector function to prevent unnecessary rerenders
-    useMemo(() => selector, [selector]),
-    equalityFn
-  );
+  // Memoize the selector function to prevent unnecessary rerenders
+  const memoizedSelector = useMemo(() => selector, [selector]);
+
+  // Use shallowEqual by default if no equality function is provided
+  return useAppSelector(memoizedSelector, equalityFn || shallowEqual);
 }
