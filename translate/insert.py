@@ -14,6 +14,7 @@ import io
 import time
 import functools
 import re
+import subprocess
 
 
 # Execute set_keys.py to set environment variables
@@ -665,13 +666,43 @@ def pre_tokenize_arabic(text: str) -> List[str]:
 def generate_sentence_audio(
     text: str,
     filename: str,
+    tashkeel_text: Optional[str] = None,
+    is_last_sentence: bool = False,
 ) -> Optional[Dict]:
-    """Generate audio file for an Arabic sentence using ElevenLabs API with word timings."""
+    """Generate audio file for an Arabic sentence using ElevenLabs API with word timings.
+
+    Args:
+        text: The original Arabic text
+        filename: The output filename
+        tashkeel_text: Optional fully vowelized version of the text
+        is_last_sentence: Whether this is the last sentence in an article
+    """
     try:
         print(f"\nGenerating sentence audio with timestamps for: '{text}'")
 
+        # Use tashkeel text if available for better pronunciation
+        text_to_speak = tashkeel_text if tashkeel_text else text
+
+        # Add SSML enhancements for better speech quality
+        # Add pauses after punctuation marks
+        text_to_speak = text_to_speak.replace(".", ".<break time='0.3s'/>")
+        text_to_speak = text_to_speak.replace("؟", "؟<break time='0.3s'/>")
+        text_to_speak = text_to_speak.replace("!", "!<break time='0.3s'/>")
+        text_to_speak = text_to_speak.replace("،", "،<break time='0.2s'/>")
+        text_to_speak = text_to_speak.replace(":", ":<break time='0.2s'/>")
+        text_to_speak = text_to_speak.replace("؛", "؛<break time='0.2s'/>")
+
+        # Apply prosody for last sentence
+        if is_last_sentence:
+            text_to_speak = (
+                f'<prosody rate="95%" volume="-5%">{text_to_speak}</prosody>'
+            )
+
+        # Wrap in Arabic SSML tags
+        text_to_speak = f'<speak><lang xml:lang="ar">{text_to_speak}</lang></speak>'
+
         audio_response = generate_speech_with_timestamps(
-            text=text, voice_id=ARABIC_VOICE_ID, speed=0.8
+            text=text_to_speak, voice_id=ARABIC_VOICE_ID, speed=0.8
         )
 
         if not audio_response:
@@ -1139,57 +1170,127 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
         "words_with_timings": 0,
     }
 
-    for idx, translation in enumerate(translations):
-        print(f"\nProcessing sentence {idx}: {translation['original'][:50]}...")
+    # List to store temporary audio files for concatenation
+    sentence_audio_files = []
+    temp_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "temp_audio")
+    os.makedirs(temp_dir, exist_ok=True)
 
-        # Generate audio for this individual sentence with timestamps
-        audio_filename = generate_audio_filename()
-        audio_result = generate_sentence_audio(translation["original"], audio_filename)
-        storage_url = None
-        word_timings = []
+    try:
+        for idx, translation in enumerate(translations):
+            print(f"\nProcessing sentence {idx}: {translation['original'][:50]}...")
 
-        # If we have an audio result, extract URL and timings
-        if audio_result is not None:
-            storage_url = audio_result.get("url")
-            word_timings = audio_result.get("word_timings", [])
-            timing_stats["sentences_with_audio"] += 1
+            # Generate audio for this individual sentence with timestamps
+            temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")
+            audio_filename = generate_audio_filename()
 
-            if word_timings:
-                print(f"✅ Got {len(word_timings)} word timings for sentence {idx}")
-                print("Sample timings:")
-                for timing in word_timings[:2]:
-                    print(
-                        f"  {timing['word']}: {timing['start_time']}s - {timing['end_time']}s"
-                    )
+            # Use enhanced audio generation with tashkeel and SSML
+            audio_result = generate_sentence_audio(
+                text=translation["original"],
+                filename=audio_filename,
+                tashkeel_text=translation.get("tashkeel"),
+                is_last_sentence=(idx == len(translations) - 1),
+            )
+
+            storage_url = None
+            word_timings = []
+
+            # If we have an audio result, extract URL and timings
+            if audio_result is not None:
+                storage_url = audio_result.get("url")
+                word_timings = audio_result.get("word_timings", [])
+                timing_stats["sentences_with_audio"] += 1
+
+                # Download the audio file for concatenation
+                try:
+                    response = supabase.storage.from_("audio").download(audio_filename)
+                    if response:
+                        with open(temp_audio_file, "wb") as f:
+                            f.write(response)
+                        sentence_audio_files.append(temp_audio_file)
+                except Exception as e:
+                    print(f"Error downloading audio file: {str(e)}")
+
+                if word_timings:
+                    print(f"✅ Got {len(word_timings)} word timings for sentence {idx}")
+                    timing_stats["sentences_with_timings"] += 1
+                else:
+                    print(f"⚠️ No word timings found for sentence {idx}")
+                    timing_stats["sentences_without_timings"] += 1
+
+            # Insert sentence with audio URL
+            sentence_data = {
+                "article_id": article_id,
+                "position": idx,
+                "arabic": translation["original"],
+                "english": translation["full_translation"],
+                "audio_url": storage_url,
+            }
+            result = supabase.table("article_sentences").insert(sentence_data).execute()
+            sentence_id = result.data[0]["id"]
+
+            # Insert words with their timing information
+            if translation.get("word_by_word"):
+                word_stats = insert_sentence_words(
+                    sentence_id, translation, word_timings
+                )
+                timing_stats["total_words"] += word_stats["total_words"]
+                timing_stats["words_with_timings"] += word_stats["words_with_timing"]
             else:
-                print(f"⚠️ No word timings found for sentence {idx}")
-                timing_stats["sentences_without_timings"] += 1
+                print("⚠️ No word-by-word translation found, skipping word insertion")
 
-        # Insert sentence with audio URL
-        sentence_data = {
-            "article_id": article_id,
-            "position": idx,
-            "arabic": translation["original"],
-            "english": translation["full_translation"],
-            "audio_url": storage_url,
-        }
-        result = supabase.table("article_sentences").insert(sentence_data).execute()
-        sentence_id = result.data[0]["id"]
+        # After processing all sentences, concatenate their audio files
+        if sentence_audio_files:
+            print("\nConcatenating sentence audio files...")
+            final_audio_filename = generate_audio_filename()
+            final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
-        # Insert words with their individual audio and timing information from sentence audio
-        if translation.get("word_by_word"):
-            word_stats = insert_sentence_words(sentence_id, translation, word_timings)
+            if concatenate_audio_files(sentence_audio_files, final_audio_path):
+                # Upload the concatenated file
+                try:
+                    with open(final_audio_path, "rb") as f:
+                        supabase.storage.from_("audio").upload(
+                            final_audio_filename,
+                            f,
+                            file_options={"content-type": "audio/mpeg"},
+                        )
 
-            # Update statistics
-            timing_stats["total_words"] += word_stats["total_words"]
-            timing_stats["words_with_timings"] += word_stats["words_with_timing"]
+                    # Update the article with the concatenated audio URL
+                    article_audio_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{final_audio_filename}"
+                    supabase.table("articles").update(
+                        {"audio_url": article_audio_url}
+                    ).eq("id", article_id).execute()
 
-            # Update sentence-level statistics
-            if word_stats["match_stats"]["none"] == 0:
-                timing_stats["sentences_with_timings"] += 1
-        else:
-            print("⚠️ No word-by-word translation found, skipping word insertion")
-            timing_stats["sentences_without_timings"] += 1
+                    print(
+                        "✅ Successfully created and uploaded concatenated article audio"
+                    )
+                except Exception as e:
+                    print(f"Error uploading concatenated audio: {str(e)}")
+
+            # Clean up temporary files
+            for file in sentence_audio_files:
+                try:
+                    os.remove(file)
+                except:
+                    pass
+            try:
+                os.remove(final_audio_path)
+                os.rmdir(temp_dir)
+            except:
+                pass
+
+    except Exception as e:
+        print(f"Error processing sentences: {str(e)}")
+        # Clean up on error
+        for file in sentence_audio_files:
+            try:
+                os.remove(file)
+            except:
+                pass
+        try:
+            os.rmdir(temp_dir)
+        except:
+            pass
+        raise
 
     # Print summary statistics
     print("\n" + "=" * 60)
@@ -1284,19 +1385,6 @@ def process_json_file(file_path: str) -> None:
 
     if existing_article_id:
         print(f"Article already exists with ID: {existing_article_id}")
-        # If article exists but has no audio, generate it
-        if not existing_audio_url:
-            print("Generating missing audio for existing article...")
-            full_arabic_text = " ".join(t["original"] for t in data["translations"])
-            audio_filename = generate_audio_filename()
-            audio_result = generate_sentence_audio(full_arabic_text, audio_filename)
-            if audio_result:
-                storage_url = audio_result.get("url")
-                supabase.table("articles").update({"audio_url": storage_url}).eq(
-                    "id", existing_article_id
-                ).execute()
-                print(f"Added audio to existing article: {storage_url}")
-
         # Move files to archive even for existing articles
         archive_files(file_path, existing_article_id)
         return existing_article_id
@@ -1315,20 +1403,6 @@ def process_json_file(file_path: str) -> None:
         "created_at": datetime.now(UTC).isoformat(),
     }
 
-    # Generate audio for the full article
-    print("Generating audio for full article...")
-    formatted_text = format_article_text_for_tts(data["translations"])
-    audio_filename = generate_audio_filename()
-    audio_result = generate_sentence_audio(
-        text=formatted_text,
-        filename=audio_filename,
-    )
-    if audio_result:
-        article_data["audio_url"] = audio_result.get("url")
-        print(f"Added audio URL to article: {article_data['audio_url']}")
-    else:
-        print("Warning: Failed to generate article audio")
-
     # Only add content_hash if the column exists
     try:
         article_data["content_hash"] = content_hash
@@ -1342,6 +1416,7 @@ def process_json_file(file_path: str) -> None:
     article_id = result.data[0]["id"]
 
     # Insert sentences and their words
+    # This will also generate and concatenate sentence audio files
     timing_stats = insert_article_sentences(article_id, data["translations"])
 
     # Move files to archive with new article ID
@@ -1609,6 +1684,71 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
         or f"Auto-generated root for: {word.get('english', '')}"
     )
     return letters, meaning
+
+
+def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optional[str]:
+    """
+    Concatenate multiple MP3 files using ffmpeg with proper silence between them.
+
+    Args:
+        audio_files: List of audio file paths to concatenate
+        output_file: Path for the output concatenated file
+
+    Returns:
+        Path to the concatenated file if successful, None otherwise
+    """
+    try:
+        if not audio_files:
+            print("No audio files to concatenate")
+            return None
+
+        # Create a temporary directory for processing
+        temp_dir = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "temp_concat"
+        )
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Create a file list for ffmpeg
+        list_file = os.path.join(temp_dir, "files.txt")
+        with open(list_file, "w") as f:
+            for audio_file in audio_files:
+                # Add 0.5s silence between files using ffmpeg's silenceremove filter
+                f.write(f"file '{audio_file}'\n")
+                f.write("file 'silence:d=0.5'\n")
+
+        # Use ffmpeg to concatenate files with the silence
+        cmd = [
+            "ffmpeg",
+            "-f",
+            "concat",
+            "-safe",
+            "0",
+            "-i",
+            list_file,
+            "-c:a",
+            "libmp3lame",
+            "-q:a",
+            "2",  # High quality MP3
+            "-y",  # Overwrite output file if exists
+            output_file,
+        ]
+
+        # Run ffmpeg
+        result = subprocess.run(cmd, capture_output=True, text=True)
+
+        if result.returncode != 0:
+            print(f"Error concatenating audio files: {result.stderr}")
+            return None
+
+        # Clean up
+        os.remove(list_file)
+        os.rmdir(temp_dir)
+
+        return output_file
+
+    except Exception as e:
+        print(f"Error in audio concatenation: {str(e)}")
+        return None
 
 
 def main():
