@@ -797,139 +797,315 @@ def batch_translate_words(
     indices: List[int] = None,
 ) -> List[Dict[str, Any]]:  # Returns results with options
     """Create word-by-word translations for multiple sentences in a batch, returning options"""
-    formatted_inputs = []
-    for i, (sentence, tashkeel_data, translation_data) in enumerate(
-        zip(sentences, tashkeel_results, translations)
-    ):
-        # Filter to get only Arabic words for word-by-word translation
-        tashkeel = tashkeel_data.get("tashkeel", "")
-        arabic_words = filter_arabic_words(tashkeel)
 
-        # Add semantic context for word-level analysis if available
-        semantic_context = ""
-        if all_sentences and indices and i < len(indices):
-            orig_index = indices[i]
+    # Initialize results list to ensure we have a placeholder for each sentence
+    processed_results = [{"word_translations": []} for _ in range(len(sentences))]
 
-            # Extract key terms from nearby sentences for semantic context
-            key_terms = set()
+    # First try to process all sentences in a batch
+    try:
+        formatted_inputs = []
+        for i, (sentence, tashkeel_data, translation_data) in enumerate(
+            zip(sentences, tashkeel_results, translations)
+        ):
+            # Filter to get only Arabic words for word-by-word translation
+            tashkeel = tashkeel_data.get("tashkeel", "")
+            arabic_words = filter_arabic_words(tashkeel)
 
-            # Words from the current sentence to look for in context
-            important_words = [w for w in arabic_words if len(w) > 3]
+            # Add semantic context for word-level analysis if available
+            semantic_context = ""
+            if all_sentences and indices and i < len(indices):
+                orig_index = indices[i]
 
-            # Check previous and next sentences for related terms
-            for j in range(
-                max(0, orig_index - 1), min(len(all_sentences), orig_index + 2)
-            ):
-                if j != orig_index:  # Skip current sentence
-                    for word in important_words:
-                        if word in all_sentences[j]:
-                            key_terms.add(word)
+                # Extract key terms from nearby sentences for semantic context
+                key_terms = set()
 
-            if key_terms:
-                semantic_context = f"\nRelated terms in context: {', '.join(key_terms)}"
+                # Words from the current sentence to look for in context
+                important_words = [w for w in arabic_words if len(w) > 3]
 
-        # Extract tashkeel and its uncertainties
-        tashkeel_uncertainties = tashkeel_data.get("uncertainties", [])
-        tashkeel_notes = ""
-        if tashkeel_uncertainties:
-            tashkeel_notes = "\nTashkeel uncertainties:\n" + "\n".join(
-                f"- {u.get('word', '')}: {u.get('reason', '')}"
-                for u in tashkeel_uncertainties
+                # Check previous and next sentences for related terms
+                for j in range(
+                    max(0, orig_index - 1), min(len(all_sentences), orig_index + 2)
+                ):
+                    if j != orig_index:  # Skip current sentence
+                        for word in important_words:
+                            if word in all_sentences[j]:
+                                key_terms.add(word)
+
+                if key_terms:
+                    semantic_context = (
+                        f"\nRelated terms in context: {', '.join(key_terms)}"
+                    )
+
+            # Extract tashkeel and its uncertainties
+            tashkeel_uncertainties = tashkeel_data.get("uncertainties", [])
+            tashkeel_notes = ""
+            if tashkeel_uncertainties:
+                tashkeel_notes = "\nTashkeel uncertainties:\n" + "\n".join(
+                    f"- {u.get('word', '')}: {u.get('reason', '')}"
+                    for u in tashkeel_uncertainties
+                )
+
+            # Extract translation and its uncertainties
+            translation = translation_data.get("translation", "")
+            translation_uncertainties = translation_data.get("uncertainties", [])
+            translation_notes = ""
+            if translation_uncertainties:
+                translation_notes = "\nTranslation uncertainties:\n" + "\n".join(
+                    f"- {u.get('text', '')}: {u.get('reason', '')}"
+                    for u in translation_uncertainties
+                )
+
+            formatted_inputs.append(
+                f"Set {i + 1}:\n"
+                f"Arabic words to translate:\n{' '.join(arabic_words)}\n"
+                f"Full context (with tashkeel): {tashkeel}\n"
+                f"Translation: {translation}"
+                f"{semantic_context}"
+                f"{tashkeel_notes}"
+                f"{translation_notes}"
             )
 
-        # Extract translation and its uncertainties
-        translation = translation_data.get("translation", "")
-        translation_uncertainties = translation_data.get("uncertainties", [])
-        translation_notes = ""
-        if translation_uncertainties:
-            translation_notes = "\nTranslation uncertainties:\n" + "\n".join(
-                f"- {u.get('text', '')}: {u.get('reason', '')}"
-                for u in translation_uncertainties
-            )
+        messages = [
+            {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": WORD_BY_WORD_USER_PROMPT
+                + "\n\n"
+                + "\n\n".join(formatted_inputs),
+            },
+        ]
 
-        formatted_inputs.append(
-            f"Set {i + 1}:\n"
-            f"Arabic words to translate:\n{' '.join(arabic_words)}\n"
-            f"Full context (with tashkeel): {tashkeel}\n"
-            f"Translation: {translation}"
-            f"{semantic_context}"
-            f"{tashkeel_notes}"
-            f"{translation_notes}"
+        response = call_openai_api(
+            messages,
+            function_schema=WORD_TRANSLATION_FUNCTION,
+            function_name="translate_words",
+            model=MODEL_TRANSLATION,  # Use the translation model for word translations
         )
 
-    messages = [
-        {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
-        {
-            "role": "user",
-            "content": WORD_BY_WORD_USER_PROMPT
-            + "\n\n"
-            + "\n\n".join(formatted_inputs),
-        },
-    ]
+        if "results" in response and isinstance(response["results"], list):
+            # Process successful batch results
+            for i, result in enumerate(response["results"]):
+                if i >= len(sentences):
+                    break
 
-    response = call_openai_api(
-        messages,
-        function_schema=WORD_TRANSLATION_FUNCTION,
-        function_name="translate_words",
-        model=MODEL_TRANSLATION,  # Use the translation model for word translations
-    )
+                word_translations_options = []  # List to hold WordTranslationOptions
+                raw_word_translations = result.get("word_translations", [])
 
-    if "results" in response and isinstance(response["results"], list):
-        processed_results = []
-        for i, result in enumerate(response["results"]):
-            if i >= len(sentences):
-                break
-            word_translations_options = []  # List to hold WordTranslationOptions
-            raw_word_translations = result.get("word_translations", [])
-            if not isinstance(raw_word_translations, list):
-                raw_word_translations = []  # Ensure it's a list
+                if not isinstance(raw_word_translations, list):
+                    logging.warning(
+                        f"Invalid word_translations format for sentence {i}, expected list but got {type(raw_word_translations)}"
+                    )
+                    raw_word_translations = []  # Ensure it's a list
 
-            for word_data in raw_word_translations:
-                if not isinstance(word_data, dict):
-                    continue  # Skip invalid entries
+                elif not raw_word_translations:
+                    logging.warning(f"Empty word_translations for sentence {i}")
 
-                # Get options, ensuring they are lists of strings
-                eng_opts = word_data.get("english_options", [])
-                if not isinstance(eng_opts, list) or not all(
-                    isinstance(s, str) for s in eng_opts
-                ):
-                    eng_opts = []  # Default to empty list if format is wrong
+                for word_data in raw_word_translations:
+                    if not isinstance(word_data, dict):
+                        logging.warning(
+                            f"Invalid word data format in sentence {i}, expected dict but got {type(word_data)}"
+                        )
+                        continue  # Skip invalid entries
 
-                ess_opts = word_data.get("essential_translation_options", [])
-                if not isinstance(ess_opts, list) or not all(
-                    isinstance(s, str) for s in ess_opts
-                ):
-                    ess_opts = []  # Default to empty list
+                    # Get options, ensuring they are lists of strings
+                    eng_opts = word_data.get("english_options", [])
+                    if not isinstance(eng_opts, list) or not all(
+                        isinstance(s, str) for s in eng_opts
+                    ):
+                        logging.warning(
+                            f"Invalid english_options format in sentence {i}, ensuring it's a list of strings"
+                        )
+                        eng_opts = []  # Default to empty list if format is wrong
 
-                # Get other fields
-                arabic_text = word_data.get("arabic", "")
-                essential_letters = (
-                    word_data.get("essential") or arabic_text
-                )  # Fallback
+                    ess_opts = word_data.get("essential_translation_options", [])
+                    if not isinstance(ess_opts, list) or not all(
+                        isinstance(s, str) for s in ess_opts
+                    ):
+                        logging.warning(
+                            f"Invalid essential_translation_options format in sentence {i}, ensuring it's a list of strings"
+                        )
+                        ess_opts = []  # Default to empty list
 
-                word_translations_options.append(
-                    WordTranslationOptions(
-                        arabic=arabic_text,
-                        english_options=eng_opts,
-                        pos=word_data.get("pos"),
-                        essential=essential_letters,
-                        essential_translation_options=ess_opts,
-                        notes=word_data.get("notes"),
-                        uncertainties=word_data.get("uncertainties", []),
-                    ).model_dump()  # Store as dict for refinement input
+                    # Get other fields
+                    arabic_text = word_data.get("arabic", "")
+                    essential_letters = word_data.get("essential")
+
+                    # Fallback if essential is missing (critical for word card)
+                    if not essential_letters:
+                        essential_letters = arabic_text
+                        logging.warning(
+                            f"Missing essential letters for word '{arabic_text}' in sentence {i}, falling back to original word"
+                        )
+
+                    word_translations_options.append(
+                        WordTranslationOptions(
+                            arabic=arabic_text,
+                            english_options=eng_opts,
+                            pos=word_data.get("pos"),
+                            essential=essential_letters,
+                            essential_translation_options=ess_opts,
+                            notes=word_data.get("notes"),
+                            uncertainties=word_data.get("uncertainties", []),
+                        ).model_dump()  # Store as dict for refinement input
+                    )
+
+                if word_translations_options:
+                    processed_results[i] = {
+                        "word_translations": word_translations_options
+                    }
+                    logging.info(
+                        f"Successfully extracted word translations for sentence {i}"
+                    )
+
+        elif "error" in response:
+            logging.error(f"API error in batch word translation: {response['error']}")
+            # We'll handle individual sentences below instead of failing the whole batch
+        else:
+            logging.error("Unexpected response format in batch word translation")
+            # We'll handle individual sentences below
+
+    except Exception as e:
+        logging.error(f"Exception in batch word translation: {str(e)}")
+        # Continue to individual processing
+
+    # Process any sentences with empty word translations individually
+    for i, result in enumerate(processed_results):
+        if not result.get("word_translations"):
+            logging.info(f"Retrying word translation for sentence {i} individually")
+            try:
+                # Process this sentence individually with a slightly different prompt
+                sentences[i]
+                tashkeel_data = tashkeel_results[i]
+                translation_data = translations[i]
+
+                tashkeel = tashkeel_data.get("tashkeel", "")
+                arabic_words = filter_arabic_words(tashkeel)
+                translation = translation_data.get("translation", "")
+
+                # Simplified prompt for individual retry
+                individual_prompt = f"""
+Translate these Arabic words (with tashkeel) individually:
+{" ".join(arabic_words)}
+
+Full sentence context (with tashkeel): {tashkeel}
+Translation: {translation}
+
+Provide a detailed word-by-word translation with options.
+"""
+
+                messages = [
+                    {"role": "system", "content": GENERAL_SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": WORD_BY_WORD_USER_PROMPT
+                        + "\n\n"
+                        + individual_prompt,
+                    },
+                ]
+
+                # Use smaller model for individual retry if available
+                retry_model = (
+                    MODEL_OTHER
+                    if MODEL_OTHER != MODEL_TRANSLATION
+                    else MODEL_TRANSLATION
                 )
-            processed_results.append({"word_translations": word_translations_options})
 
-        # Ensure alignment: one list per sentence
-        while len(processed_results) < len(sentences):
-            processed_results.append({"word_translations": []})
-        return processed_results
-    elif "error" in response:
-        logging.error(f"Error in word translation: {response['error']}")
-        return [{"word_translations": []} for _ in sentences]
-    else:
-        logging.error("Error or unexpected format in batch word translation")
-        return [{"word_translations": []} for _ in sentences]
+                individual_response = call_openai_api(
+                    messages,
+                    function_schema=WORD_TRANSLATION_FUNCTION,
+                    function_name="translate_words",
+                    model=retry_model,
+                    temperature=0.4,  # Slightly higher temperature for retry
+                )
+
+                if (
+                    "results" in individual_response
+                    and isinstance(individual_response["results"], list)
+                    and len(individual_response["results"]) > 0
+                ):
+                    result = individual_response["results"][0]
+                    word_translations_options = []
+
+                    raw_word_translations = result.get("word_translations", [])
+                    if isinstance(raw_word_translations, list):
+                        for word_data in raw_word_translations:
+                            if not isinstance(word_data, dict):
+                                continue
+
+                            # Process options as before
+                            eng_opts = word_data.get("english_options", [])
+                            if not isinstance(eng_opts, list) or not all(
+                                isinstance(s, str) for s in eng_opts
+                            ):
+                                eng_opts = []
+
+                            ess_opts = word_data.get(
+                                "essential_translation_options", []
+                            )
+                            if not isinstance(ess_opts, list) or not all(
+                                isinstance(s, str) for s in ess_opts
+                            ):
+                                ess_opts = []
+
+                            arabic_text = word_data.get("arabic", "")
+                            essential_letters = word_data.get("essential", arabic_text)
+
+                            word_translations_options.append(
+                                WordTranslationOptions(
+                                    arabic=arabic_text,
+                                    english_options=eng_opts,
+                                    pos=word_data.get("pos"),
+                                    essential=essential_letters,
+                                    essential_translation_options=ess_opts,
+                                    notes=word_data.get("notes", "")
+                                    + " (Individual retry)",
+                                    uncertainties=word_data.get("uncertainties", []),
+                                ).model_dump()
+                            )
+
+                    if word_translations_options:
+                        processed_results[i] = {
+                            "word_translations": word_translations_options
+                        }
+                        logging.info(
+                            f"Successfully recovered word translations for sentence {i} individually"
+                        )
+                    else:
+                        # Last resort: create minimal word translations to prevent complete failure
+                        fallback_translations = []
+                        for word in arabic_words:
+                            fallback_translations.append(
+                                WordTranslationOptions(
+                                    arabic=word,
+                                    english_options=["[Translation needed]"],
+                                    pos="noun",  # Default assumption
+                                    essential=word,
+                                    essential_translation_options=[
+                                        "[Translation needed]"
+                                    ],
+                                    notes="Generated as fallback after multiple failures",
+                                    uncertainties=[
+                                        {
+                                            "text": word,
+                                            "reason": "Failed translation attempts",
+                                        }
+                                    ],
+                                ).model_dump()
+                            )
+                        processed_results[i] = {
+                            "word_translations": fallback_translations
+                        }
+                        logging.warning(
+                            f"Created fallback word translations for sentence {i}"
+                        )
+
+            except Exception as individual_error:
+                logging.error(
+                    f"Individual word translation retry failed for sentence {i}: {str(individual_error)}"
+                )
+                # We already have a placeholder empty list from initialization
+
+    return processed_results
 
 
 def batch_refine_translations(

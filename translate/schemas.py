@@ -203,7 +203,6 @@ WORD_TRANSLATION_FUNCTION = {
                                 "required": [
                                     "arabic",
                                     "english_options",
-                                    "pos",
                                     "essential",
                                     "essential_translation_options",
                                 ],
@@ -306,7 +305,6 @@ REFINEMENT_FUNCTION = {
                                 "required": [
                                     "arabic",
                                     "english",
-                                    "pos",
                                     "essential",
                                     "essential_translation",
                                 ],
@@ -596,6 +594,18 @@ Input sentences (with existing diacritics):
 )
 
 FINAL_VERIFICATION_USER_PROMPT = """Review and refine the provided Islamic Arabic translation components using the `REFINEMENT_FUNCTION` schema. Resolve ambiguities and select the single best option for word translations, prioritizing accuracy and clarity for learners.
+
+For each word, carefully consider:
+1. The provided grammatical notes and context from previous steps
+2. Any special notes about verb forms, case endings, or particle functions
+3. Notes about why certain translation options were chosen or marked as uncertain
+4. Individual retry notes that may indicate previous processing challenges
+
+When selecting final translations:
+1. Use the grammatical notes to verify the chosen options align with the word's role in the sentence
+2. Cross-reference notes about case endings and verb forms with the tashkeel
+3. Pay special attention to words where notes indicate uncertainty or special handling was needed
+4. Consider retry notes that may indicate which options were more reliable
 
 Based on the initial tashkeel, sentence translation, and word-by-word analysis (which includes *options* for `english_options` and `essential_translation_options`), provide a final, refined output (`refinements` array). Each item in the array must contain:
 
