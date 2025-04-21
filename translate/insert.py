@@ -58,8 +58,8 @@ ARABIC_WORD_VOICE_ID = (
 
 # Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
-    stability=0.9,
-    style=0.1,
+    stability=0.8,
+    style=0.2,
     use_speaker_boost=True,
 )
 
@@ -620,7 +620,7 @@ def wrap_in_arabic_ssml(text: str) -> str:
     Wrap text in Arabic SSML tags for proper language handling.
     This ensures the text is properly pronounced as Arabic.
     """
-    return f'<speak><lang xml:lang="ar-AR">{text}</lang></speak>'
+    return f'<speak><lang xml:lang="ar">{text}</lang></speak>'
 
 
 def pre_tokenize_arabic(text: str) -> List[str]:

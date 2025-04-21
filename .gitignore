@@ -50,3 +50,4 @@ translate/audio_cache/
 .env
 translate/__pycache__/
 translate/reports/
+translate/article/
