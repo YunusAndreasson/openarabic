@@ -34,6 +34,8 @@ export interface MeaningOverlayProps {
   isWarning?: boolean;
   /** Whether this is a vague knowledge indicator */
   isVague?: boolean;
+  /** Whether this indicates a struggling state */
+  isStruggling?: boolean;
   /** Animation duration in milliseconds */
   duration?: number;
   /** Whether to animate the overlay */
@@ -46,14 +48,8 @@ export interface MeaningOverlayProps {
  * Props for the InstructionFooter component
  */
 export interface InstructionFooterProps {
-  /** Primary instruction text */
-  primaryText: string;
-  /** Secondary instruction text */
-  secondaryText?: string;
   /** Additional container style */
   style?: StyleProp<ViewStyle>;
-  /** Whether to animate the instructions */
-  animate?: boolean;
 }
 
 /**
@@ -68,6 +64,4 @@ export interface ErrorMessageProps {
   message?: string;
   /** Function to retry the action */
   onRetry?: () => void;
-  /** Additional container style */
-  style?: StyleProp<ViewStyle>;
 }

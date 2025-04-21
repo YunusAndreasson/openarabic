@@ -64,6 +64,7 @@ export default function ReviewScreen(): JSX.Element {
     progressAnimationKey,
     wordFontSize,
     isVagueMeaning,
+    isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
     handleTap,
@@ -116,10 +117,11 @@ export default function ReviewScreen(): JSX.Element {
             meaning={currentMeaning}
             isWarning={!isVagueMeaning}
             isVague={isVagueMeaning}
+            isStruggling={isStruggling}
           />
         </View>
 
-        <InstructionFooter primaryText="Tap on a word to see its meaning. Long press to add to your vocabulary." />
+        <InstructionFooter />
       </View>
     </ThemedView>
   );

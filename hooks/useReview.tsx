@@ -121,6 +121,7 @@ interface UseReviewReturn {
   progressAnimationKey: number;
   wordFontSize: number;
   isVagueMeaning: boolean;
+  isStruggling: boolean;
   handleSwipeLeft: () => void;
   handleSwipeRight: () => void;
   handleTap: () => void;
@@ -161,6 +162,8 @@ export function useReview({
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
+  const [isStruggling, setIsStruggling] = useState(false);
+  const lastVagueTimeRef = useRef<number | null>(null);
 
   const meaningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completionTransitionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -234,15 +237,23 @@ export function useReview({
   }, []);
 
   // Batch state updates for meaning overlay
-  const showMeaningWithTimeout = useCallback((meaning: string, isVague: boolean) => {
-    setCurrentMeaning(meaning);
-    setIsVagueMeaning(isVague);
-    setShowMeaningOverlay(true);
+  const showMeaningWithTimeout = useCallback(
+    (meaning: string, isVague: boolean, isStruggling: boolean = false) => {
+      setCurrentMeaning(meaning);
+      setIsVagueMeaning(isVague);
+      setShowMeaningOverlay(true);
+      setIsStruggling(isStruggling);
 
-    return setTimeout(() => {
-      setShowMeaningOverlay(false);
-    }, 2000);
-  }, []);
+      return setTimeout(
+        () => {
+          setShowMeaningOverlay(false);
+          setIsStruggling(false);
+        },
+        isStruggling ? 3000 : 2000
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     if (showInitialLoading) {
@@ -347,16 +358,33 @@ export function useReview({
         setTimeout(() => {
           if (controller.signal.aborted) return;
 
+          const now = Date.now();
+          const isStruggling =
+            confidence === 'vague' &&
+            lastVagueTimeRef.current !== null &&
+            now - lastVagueTimeRef.current < 24 * 60 * 60 * 1000 && // Within 24 hours
+            (currentWord?.fsrs_stability ?? 0) < 15;
+
           if (confidence === 'unknown' || confidence === 'vague') {
             const meaning = currentWord?.root?.meaning || 'No translation available';
-            meaningTimeoutRef.current = showMeaningWithTimeout(meaning, confidence === 'vague');
+            meaningTimeoutRef.current = showMeaningWithTimeout(
+              meaning,
+              confidence === 'vague',
+              isStruggling
+            );
+          }
+
+          if (confidence === 'vague') {
+            lastVagueTimeRef.current = now;
           }
 
           const processFeedback = async () => {
             if (!currentWord?.root_id || controller.signal.aborted) return;
 
             try {
-              await updateWord(currentWord.root_id, confidence);
+              // If struggling, treat it more like 'unknown' than 'vague'
+              const effectiveConfidence = isStruggling ? 'unknown' : confidence;
+              await updateWord(currentWord.root_id, effectiveConfidence);
               if (!isUpdatingWordRef.current) return;
               setTimeout(() => fadeIn(), 150);
             } catch (error) {
@@ -373,7 +401,7 @@ export function useReview({
           };
 
           if (confidence === 'unknown' || confidence === 'vague') {
-            meaningTimeoutRef.current = setTimeout(processFeedback, 2000);
+            meaningTimeoutRef.current = setTimeout(processFeedback, isStruggling ? 3000 : 2000);
           } else {
             processFeedback();
           }
@@ -485,6 +513,7 @@ export function useReview({
     progressAnimationKey,
     wordFontSize,
     isVagueMeaning,
+    isStruggling,
     handleSwipeLeft,
     handleSwipeRight,
     handleTap,

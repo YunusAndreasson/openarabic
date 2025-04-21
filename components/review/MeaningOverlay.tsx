@@ -22,6 +22,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     meaning,
     isWarning = false,
     isVague = false,
+    isStruggling = false,
     duration = 150,
     animate = true,
     onClose,
@@ -50,7 +51,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
       setShouldRender(true);
       startAnimation();
 
-      if (isWarning || isVague) {
+      if (isWarning || isVague || isStruggling) {
         lightFeedback();
       }
     } else if (shouldRender) {
@@ -68,6 +69,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     reverseAnimation,
     isWarning,
     isVague,
+    isStruggling,
     shouldRender,
     duration,
     animate,
@@ -78,10 +80,16 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
   if (!shouldRender) return null;
 
   // Determine text color based on state
-  const textColor = isWarning ? colors.error : isVague ? colors.warning : colors.tint;
+  const textColor = isWarning
+    ? colors.error
+    : isVague || isStruggling
+      ? colors.warning
+      : colors.tint;
 
   const fontSize =
-    isWarning || isVague ? LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2 : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;
+    isWarning || isVague || isStruggling
+      ? LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2
+      : LAYOUT.TYPOGRAPHY.SCALE.XLARGE;
 
   return (
     <Animated.View
