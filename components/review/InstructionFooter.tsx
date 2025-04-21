@@ -81,18 +81,18 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
           <View style={iconStyle}>
             <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText style={textStyle}>Don&apos;t know</ThemedText>
+          <ThemedText style={textStyle}>Unknown</ThemedText>
         </View>
 
-        <View style={styles.instructionItem}>
+        <View style={[styles.instructionItem, styles.instructionItemCenter]}>
           <View style={iconStyle}>
             <Ionicons name="finger-print" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText style={textStyle}>Vaguely know</ThemedText>
+          <ThemedText style={textStyle}>Unsure</ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemRight]}>
-          <ThemedText style={textStyle}>Know</ThemedText>
+          <ThemedText style={textStyle}>Known</ThemedText>
           <View style={iconStyle}>
             <Ionicons name="arrow-forward" size={18} color={colors.tabIconDefault} />
           </View>
@@ -124,10 +124,13 @@ const styles = StyleSheet.create({
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     gap: LAYOUT.SPACING.SMALL,
     height: 40,
     flex: 1,
+  } as ViewStyle,
+  instructionItemCenter: {
+    justifyContent: 'center',
   } as ViewStyle,
   instructionItemRight: {
     justifyContent: 'flex-end',

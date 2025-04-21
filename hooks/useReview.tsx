@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Audio } from 'expo-av';
 import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audio.types';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
