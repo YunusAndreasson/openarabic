@@ -109,6 +109,12 @@ const styles = StyleSheet.create({
   controlsLabelContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
+  emptyStateContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
   flexOne: {
     flex: 1,
   },
@@ -122,9 +128,6 @@ const styles = StyleSheet.create({
   },
   inactiveIcon: {
     opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  listContentWithHeader: {
-    paddingTop: 0,
   },
   metaRow: {
     alignItems: 'center',
@@ -534,21 +537,12 @@ export default function BookmarksScreen(): JSX.Element {
           includeBottomInset={false}
           safeAreaEdges={['left', 'right']}
         >
-          <ThemedView
-            useSafeArea={false}
-            includeBottomInset={false}
-            style={styles.flexOne}
-            contentContainerStyle={[
-              styles.listContentWithHeader,
-              { paddingTop: getHeaderHeight(insets) },
-            ]}
-          >
+          <ThemedView style={styles.emptyStateContainer}>
             <EmptyState
-              title="No Bookmarks Found"
-              description="Bookmark articles to listen to them later or save them for reference."
-              iconType="name"
-              icon="book"
+              title="Save for Later"
+              description="Bookmark articles to listen and read anytime"
               colors={colors}
+              icon="book-outline"
             />
           </ThemedView>
           <PageHeader title="Bookmarks" />

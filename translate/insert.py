@@ -363,12 +363,12 @@ def generate_speech_with_timestamps(
         "optimize_streaming_latency": 0,
     }
 
-    audio_response = eleven_labs.text_to_speech.convert_with_timestamps(**params)
+    response = eleven_labs.text_to_speech.convert_with_timestamps(**params)
 
-    if not audio_response:
-        raise ValueError("Empty audio response from ElevenLabs API")
+    if not response:
+        raise ValueError("Empty response from ElevenLabs API")
 
-    return audio_response
+    return response
 
 
 def generate_content_hash(data: Dict) -> str:
@@ -623,12 +623,11 @@ def clean_word_for_matching(word: str) -> str:
 
 def format_article_text_for_tts(translations: List[Dict]) -> str:
     """
-    Format article text with SSML tags for better listening experience.
+    Format article text for better listening experience.
     Uses the tashkeel (fully vowelized) version of the text for better pronunciation.
-    Adds appropriate pauses between sections and structures the text.
+    Returns the formatted text without SSML tags - those should be added just before TTS.
     """
-    # Start with the main SSML wrapper and Arabic language
-    sections = ['<speak><lang xml:lang="ar">']
+    sections = []
 
     total_sections = len(translations)
 
@@ -636,16 +635,16 @@ def format_article_text_for_tts(translations: List[Dict]) -> str:
         # Use tashkeel text if available, fallback to original if not
         arabic_text = translation.get("tashkeel", translation["original"]).strip()
 
-        # Add slightly longer pause for sentence endings
-        arabic_text = arabic_text.replace(".", ".<break time='0.3s'/>")
-        arabic_text = arabic_text.replace("؟", "؟<break time='0.3s'/>")
-        arabic_text = arabic_text.replace("!", "!<break time='0.3s'/>")
+        # Add pause markers for sentence endings (will be converted to SSML later)
+        arabic_text = arabic_text.replace(".", ".{pause:0.3}")
+        arabic_text = arabic_text.replace("؟", "؟{pause:0.3}")
+        arabic_text = arabic_text.replace("!", "!{pause:0.3}")
         # Add shorter pause for commas
-        arabic_text = arabic_text.replace("،", "،<break time='0.2s'/>")
+        arabic_text = arabic_text.replace("،", "،{pause:0.2}")
 
-        # Last section: slightly softer and slower for conclusion
+        # Last section: mark for softer and slower speech
         if i == total_sections - 1:
-            sections.append(f'<prosody rate="95%" volume="-5%">{arabic_text}</prosody>')
+            sections.append(f"{{prosody:soft}}{arabic_text}{{/prosody}}")
         # All other sections: normal
         else:
             sections.append(arabic_text)
@@ -657,12 +656,9 @@ def format_article_text_for_tts(translations: List[Dict]) -> str:
                 "tashkeel", translations[i + 1]["original"]
             )
             if next_text.strip().startswith("*"):  # Assuming * marks new paragraphs
-                sections.append('<break time="0.8s"/>')
+                sections.append("{pause:0.8}")
             else:
-                sections.append('<break time="0.5s"/>')
-
-    # Close the main tags
-    sections.append("</lang></speak>")
+                sections.append("{pause:0.5}")
 
     return "".join(sections)
 
@@ -741,23 +737,28 @@ def generate_sentence_audio(
             clean_arabic_text(tashkeel_text) if tashkeel_text else cleaned_text
         )
 
-        # Add SSML enhancements for better speech quality
-        # Add pauses after punctuation marks
-        text_to_speak = text_to_speak.replace(".", ".<break time='0.3s'/>")
-        text_to_speak = text_to_speak.replace("؟", "؟<break time='0.3s'/>")
-        text_to_speak = text_to_speak.replace("!", "!<break time='0.3s'/>")
-        text_to_speak = text_to_speak.replace("،", "،<break time='0.2s'/>")
-        text_to_speak = text_to_speak.replace(":", ":<break time='0.2s'/>")
-        text_to_speak = text_to_speak.replace("؛", "؛<break time='0.2s'/>")
+        # Add pause markers (will be converted to SSML later)
+        text_to_speak = text_to_speak.replace(".", ".{pause:0.3}")
+        text_to_speak = text_to_speak.replace("؟", "؟{pause:0.3}")
+        text_to_speak = text_to_speak.replace("!", "!{pause:0.3}")
+        text_to_speak = text_to_speak.replace("،", "،{pause:0.2}")
+        text_to_speak = text_to_speak.replace(":", ":{pause:0.2}")
+        text_to_speak = text_to_speak.replace("؛", "؛{pause:0.2}")
 
         # Apply prosody for last sentence
         if is_last_sentence:
-            text_to_speak = (
-                f'<prosody rate="95%" volume="-5%">{text_to_speak}</prosody>'
-            )
+            text_to_speak = f"{{prosody:soft}}{text_to_speak}{{/prosody}}"
 
-        # Wrap in Arabic SSML tags
-        text_to_speak = f'<speak><lang xml:lang="ar">{text_to_speak}</lang></speak>'
+        # Convert pause markers to SSML just before TTS
+        text_to_speak = text_to_speak.replace("{pause:0.3}", "<break time='0.3s'/>")
+        text_to_speak = text_to_speak.replace("{pause:0.2}", "<break time='0.2s'/>")
+        text_to_speak = text_to_speak.replace(
+            "{prosody:soft}", '<prosody rate="95%" volume="-5%">'
+        )
+        text_to_speak = text_to_speak.replace("{/prosody}", "</prosody>")
+
+        # Wrap in Arabic SSML tags just before TTS
+        text_to_speak = wrap_in_arabic_ssml(text_to_speak)
 
         # Clean context sentences if provided
         cleaned_prev_text = clean_arabic_text(previous_text) if previous_text else None
@@ -943,6 +944,30 @@ def generate_sentence_audio(
             raise ValueError("Invalid or missing timing data in API response")
 
         print(f"Processing {len(chars)} characters for timing extraction")
+
+        # Clean up the character array by removing non-Arabic characters while preserving timing
+        cleaned_chars = []
+        cleaned_start_times = []
+        cleaned_end_times = []
+
+        # Keep only Arabic characters and their timings
+        arabic_pattern = re.compile(
+            r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF\u064B-\u065F\s]"
+        )
+        for i, char in enumerate(chars):
+            if arabic_pattern.match(char) or char.isspace():
+                cleaned_chars.append(char)
+                cleaned_start_times.append(start_times[i])
+                cleaned_end_times.append(end_times[i])
+
+        print(
+            f"Cleaned character array from {len(chars)} to {len(cleaned_chars)} characters"
+        )
+
+        # Use the cleaned arrays for word extraction
+        chars = cleaned_chars
+        start_times = cleaned_start_times
+        end_times = cleaned_end_times
 
         # Pre-tokenize the text using our consistent method
         expected_tokens = pre_tokenize_arabic(text)

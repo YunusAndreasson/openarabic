@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { memo } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 
 import type { EmptyStateProps } from '@/types/ui/layout.types';
 import { withOpacity } from '@/utils/colorUtils';
@@ -11,110 +12,173 @@ import { LAYOUT } from '../constants/layout';
 import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
 
+const DEFAULT_ICON_SIZE = 64;
+const DEFAULT_ICON_OPACITY = 0.9;
+
 /**
- * A reusable empty state component that displays a title, message, and optional action button
- * Supports both standard button and custom action button layouts
+ * EmptyState component following Gestalt principles and visual hierarchy
+ * - Proximity: Related elements are grouped together
+ * - Similarity: Consistent styling for related elements
+ * - Figure-Ground: Clear distinction between content and background
+ * - Continuation: Natural flow from icon to title to description
  */
 const EmptyState = memo(
   ({
     title,
     description,
     actionText,
-    icon,
+    icon = 'book-outline',
+    iconType = 'name',
     onAction,
     containerStyle,
     colors,
     submessage,
     customActionButton,
-    iconSize = 24,
+    iconSize = DEFAULT_ICON_SIZE,
     iconContainerStyle,
-  }: EmptyStateProps) => {
+    hideArticlesButton = false,
+  }: Partial<EmptyStateProps> & Pick<EmptyStateProps, 'title' | 'description' | 'colors'>) => {
     const IconComponent = (icon && typeof icon !== 'string' ? icon : Ionicons) as ComponentType<
       ComponentProps<typeof Ionicons>
     >;
     const iconName = typeof icon === 'string' ? icon : 'alert-circle-outline';
 
+    const handleBrowseArticles = () => {
+      router.push('/(tabs)');
+    };
+
+    const defaultActionButton = !hideArticlesButton && (
+      <TouchableOpacity
+        style={[styles.actionButton, { backgroundColor: withOpacity(colors.tint, 0.15) }]}
+        onPress={handleBrowseArticles}
+        accessibilityLabel="Browse articles"
+        accessibilityRole="button"
+      >
+        <ThemedText type="bodyBold" style={{ color: colors.tint }}>
+          Browse Articles
+        </ThemedText>
+        <Ionicons name="arrow-forward" size={18} color={colors.tint} />
+      </TouchableOpacity>
+    );
+
     return (
       <View style={[styles.container, containerStyle]}>
-        {icon ? (
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors ? withOpacity(colors.text, 0.1) : undefined },
-              iconContainerStyle,
-            ]}
-          >
-            <IconComponent
-              name={iconName}
-              size={iconSize}
-              color={colors?.text}
-              style={styles.icon}
-              accessibilityLabel={`Empty state icon for ${title}`}
-            />
-          </View>
-        ) : null}
+        <View style={styles.contentContainer}>
+          {icon && (
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: withOpacity(colors.tint, 0.1) },
+                iconContainerStyle,
+              ]}
+            >
+              <IconComponent
+                name={iconName}
+                size={iconSize}
+                color={colors?.tint}
+                style={styles.icon}
+                accessibilityLabel={`${title} illustration`}
+              />
+            </View>
+          )}
 
-        <View style={styles.titleContainer}>
-          <ThemedText type="heading2" align="center" accessibilityRole="header">
-            {title}
-          </ThemedText>
-        </View>
-
-        <View style={styles.messageContainer}>
-          <ThemedText type="bodyBold" variant="secondary" align="center">
-            {description}
-          </ThemedText>
-        </View>
-
-        {submessage ? (
-          <View style={styles.submessageContainer}>
-            <ThemedText type="body" variant="subtle" align="center">
-              {submessage}
+          <View style={styles.textContent}>
+            <ThemedText
+              type="heading2"
+              align="center"
+              accessibilityRole="header"
+              style={styles.title}
+            >
+              {title}
             </ThemedText>
-          </View>
-        ) : null}
 
-        {customActionButton
-          ? customActionButton
-          : actionText &&
-            onAction && (
+            {description && (
+              <ThemedText
+                type="bodyBold"
+                variant="secondary"
+                align="center"
+                style={styles.description}
+              >
+                {description}
+              </ThemedText>
+            )}
+
+            {submessage && (
+              <ThemedText type="body" variant="subtle" align="center" style={styles.submessage}>
+                {submessage}
+              </ThemedText>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.actionArea}>
+          {customActionButton ||
+            defaultActionButton ||
+            (actionText && onAction && (
               <ThemedButton
                 title={actionText}
                 icon={typeof icon === 'string' ? icon : undefined}
                 onPress={onAction}
+                style={styles.customActionButton}
               />
-            )}
+            ))}
+        </View>
       </View>
     );
   }
 );
 
 const styles = StyleSheet.create({
+  actionArea: {
+    marginTop: LAYOUT.SPACING.XLARGE,
+    width: '100%',
+  },
+  actionButton: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    flexDirection: 'row',
+    gap: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.XLARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
   container: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
     padding: LAYOUT.SPACING.XLARGE,
+    width: '100%',
+  },
+  contentContainer: {
+    alignItems: 'center',
+    maxWidth: 320,
+  },
+  customActionButton: {
+    minWidth: 180,
+  },
+  description: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   icon: {
-    opacity: LAYOUT.OPACITY.DIMMED,
+    // Remove transform for more consistent sizing
   },
   iconContainer: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2,
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-  },
-  messageContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  submessageContainer: {
     marginBottom: LAYOUT.SPACING.XLARGE,
+    width: LAYOUT.BUTTON.HEIGHT.LARGE * 2,
   },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+  submessage: {
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  textContent: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  title: {
+    letterSpacing: -0.5,
   },
 });
 

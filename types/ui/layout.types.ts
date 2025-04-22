@@ -118,7 +118,9 @@ export interface BaseEmptyStateProps extends BaseThemedProps {
   submessage?: string;
   customActionButton?: React.ReactNode;
   iconSize?: number;
-  style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  iconContainerStyle?: StyleProp<ViewStyle>;
+  hideArticlesButton?: boolean;
 }
 
 /**

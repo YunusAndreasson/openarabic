@@ -7,6 +7,7 @@ import Animated from 'react-native-reanimated';
 import type { AnimatedStyleProp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import EmptyState from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/Loader';
 import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -14,7 +15,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
-import { VocabularyEmptyState } from '@/components/vocabulary/VocabularyEmptyState';
 import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
@@ -182,11 +182,20 @@ export default function VocabularyScreen(): JSX.Element {
   if (shouldShowEmptyState) {
     return (
       <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
-        <ThemedView style={styles.container}>
-          <PageHeader title="Words" />
+        <ThemedView
+          style={styles.container}
+          includeBottomInset={false}
+          safeAreaEdges={['left', 'right']}
+        >
           <ThemedView style={styles.emptyStateContainer}>
-            <VocabularyEmptyState colors={colors} />
+            <EmptyState
+              title="Start Learning"
+              description="Add words while reading to build your vocabulary"
+              colors={colors}
+              icon="book-outline"
+            />
           </ThemedView>
+          <PageHeader title="Words" />
         </ThemedView>
       </Animated.View>
     );
