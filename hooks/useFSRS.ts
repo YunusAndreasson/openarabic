@@ -161,10 +161,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           if (newQueue.length === 0) {
             if (!stateTrackingRef.current.completionTriggered) {
               stateTrackingRef.current.completionTriggered = true;
-              setTimeout(() => {
+              requestAnimationFrame(() => {
                 setIsComplete(true);
                 onComplete?.();
-              }, 0);
+              });
             }
           } else {
             setCurrentWord(newQueue[0] ?? null);

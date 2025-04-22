@@ -179,11 +179,11 @@ export function useReview({
     completionTriggeredRef.current = true;
 
     cleanupAudio();
+    setIsTransitioningToCompletion(true);
+    fadeOut();
 
     maxProgressRef.current = 100;
     setProgressAnimationKey(prev => prev + 1);
-    setIsTransitioningToCompletion(true);
-    fadeOut();
 
     if (completionTransitionRef.current) {
       clearTimeout(completionTransitionRef.current);
@@ -194,7 +194,7 @@ export function useReview({
         setIsTransitioningToCompletion(false);
         cleanupAudio();
       }
-    }, 350);
+    }, 200);
   }, [fadeOut, cleanupAudio]);
 
   const { currentWord, wordQueue, isLoading, isComplete, progress, updateWord, invalidateQueries } =

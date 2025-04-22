@@ -79,7 +79,7 @@ export default function ReviewScreen(): JSX.Element {
     );
   }
 
-  if (isComplete && !isTransitioningToCompletion) {
+  if (isComplete || isTransitioningToCompletion) {
     return <CompletionScreen onClose={handleClose} />;
   }
 
