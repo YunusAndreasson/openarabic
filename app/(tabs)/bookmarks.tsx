@@ -321,6 +321,7 @@ export default function BookmarksScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
@@ -450,21 +451,18 @@ export default function BookmarksScreen(): JSX.Element {
   const focusEffectCallback = useCallback(() => {
     if (!user?.id) return;
 
-    const existingData = queryClient.getQueryData(['readingList', user.id]);
-    if (!existingData || isReadingListLoading) {
-      queryClient.prefetchQuery({
-        queryKey: ['readingList', user.id],
-        queryFn: () => readingListService.getReadingList(user.id),
-        staleTime: 60000,
-        gcTime: 300000,
-        retry: 3,
-      });
-    }
+    // Invalidate both reading list and enhanced tracks queries
+    queryClient.invalidateQueries({
+      queryKey: ['readingList', user.id],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['enhancedAudioTracks', user.id],
+    });
 
     return () => {
       actions.stopPlayback();
     };
-  }, [user?.id, queryClient, isReadingListLoading, actions.stopPlayback]);
+  }, [user?.id, queryClient, actions.stopPlayback]);
   useFocusEffect(focusEffectCallback);
 
   // --- Event Handlers (use stable actions) ---
@@ -500,6 +498,25 @@ export default function BookmarksScreen(): JSX.Element {
     actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
   ]);
+
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    if (!user?.id || isRefreshing) return;
+
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['readingList', user.id],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['enhancedAudioTracks', user.id],
+        }),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [user?.id, queryClient, isRefreshing]);
 
   const insets = useSafeAreaInsets();
 
@@ -553,6 +570,8 @@ export default function BookmarksScreen(): JSX.Element {
             data={readingList}
             extraData={flashListExtraData}
             keyExtractor={item => `${item.article_id}`}
+            onRefresh={handleRefresh}
+            refreshing={isRefreshing}
             renderItem={({ item }) => (
               <BookmarkListItem
                 item={item}

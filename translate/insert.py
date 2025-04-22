@@ -59,8 +59,6 @@ ARABIC_WORD_VOICE_ID = (
 
 # Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
-    stability=0.8,
-    style=0.2,
     use_speaker_boost=True,
 )
 
@@ -212,11 +210,44 @@ def upload_to_storage(
         raise
 
 
+def clean_arabic_text(text: str) -> str:
+    """
+    Clean Arabic text by removing all non-Arabic characters.
+    Keeps only:
+    - Arabic characters
+    - Arabic diacritical marks (tashkeel)
+    - Spaces between words
+
+    Args:
+        text: The text to clean
+
+    Returns:
+        Cleaned text containing only Arabic characters and spaces
+    """
+    if not text:
+        return text
+
+    # First remove any SSML tags if present
+    text = re.sub(r"<[^>]+>", "", text)
+
+    # Keep only:
+    # - Arabic characters: \u0600-\u06FF
+    # - Arabic presentation forms: \uFB50-\uFDFF and \uFE70-\uFEFF
+    # - Tashkeel (diacritics): \u064B-\u065F
+    # - Spaces: \s
+    arabic_pattern = r"[^\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF\u064B-\u065F\s]+"
+    text = re.sub(arabic_pattern, "", text)
+
+    # Remove any double spaces that might have been created
+    text = re.sub(r"\s+", " ", text)
+
+    return text.strip()
+
+
 def preprocess_text_for_tts(text: str) -> str:
     """
     Preprocess text before sending to ElevenLabs TTS.
-    - Preserves numbers by adding spaces around them
-    - Ensures proper handling of Arabic text
+    Simply cleans the text to keep only Arabic characters.
 
     Args:
         text: The text to preprocess
@@ -224,14 +255,7 @@ def preprocess_text_for_tts(text: str) -> str:
     Returns:
         Preprocessed text ready for TTS
     """
-    # Add spaces around numbers to prevent ElevenLabs from trying to translate them
-    # This regex matches both Arabic and Western numerals
-    text = re.sub(r"([٠-٩0-9]+)", r" \1 ", text)
-
-    # Remove any double spaces that might have been created
-    text = re.sub(r"\s+", " ", text)
-
-    return text.strip()
+    return clean_arabic_text(text)
 
 
 @retry_operation(max_attempts=3, delay=1, backoff=2)
@@ -289,10 +313,28 @@ def generate_speech_with_timestamps(
     text: str,
     voice_id: str,
     speed: float = 0.8,
-):
-    """Generate speech with timestamps using ElevenLabs API with retries."""
+    previous_text: Optional[str] = None,
+    next_text: Optional[str] = None,
+) -> Dict:
+    """Generate speech with timestamps using ElevenLabs API with retries.
+
+    Args:
+        text: The text to convert to speech
+        voice_id: The voice ID to use
+        speed: Speech speed (0.5 to 2.0)
+        previous_text: Optional text that came before this text for better continuity
+        next_text: Optional text that comes after this text for better continuity
+    """
     # Preprocess text to handle numbers
     text = preprocess_text_for_tts(text)
+    if previous_text:
+        previous_text = preprocess_text_for_tts(previous_text)
+        # Wrap previous text in SSML
+        previous_text = wrap_in_arabic_ssml(previous_text)
+    if next_text:
+        next_text = preprocess_text_for_tts(next_text)
+        # Wrap next text in SSML
+        next_text = wrap_in_arabic_ssml(next_text)
 
     # Always wrap in Arabic SSML tags since we're working with Arabic text
     text = wrap_in_arabic_ssml(text)
@@ -303,13 +345,22 @@ def generate_speech_with_timestamps(
         speed=speed,
     )
 
-    # Base parameters
+    # Base parameters with enhanced options for better quality
     params = {
         "text": text,
         "voice_id": voice_id,
         "model_id": "eleven_multilingual_v2",
         "output_format": "mp3_44100_128",
         "voice_settings": voice_settings,
+        # Add previous/next text for better continuity if available
+        "previous_text": previous_text if previous_text else None,
+        "next_text": next_text if next_text else None,
+        # Use deterministic sampling for more consistent results
+        "seed": int(hashlib.sha256(text.encode()).hexdigest()[:8], 16),
+        # Enable text normalization for better pronunciation
+        "apply_text_normalization": "on",
+        # Optimize for quality over latency since we're not streaming
+        "optimize_streaming_latency": 0,
     }
 
     audio_response = eleven_labs.text_to_speech.convert_with_timestamps(**params)
@@ -638,8 +689,7 @@ def pre_tokenize_arabic(text: str) -> List[str]:
     tokens = []
 
     # Split on whitespace and punctuation but keep them as separate tokens
-    # Fixed escape sequence with double backslash for \s
-    segments = re.split(r"([.,;:!?\"\'()[\]{}،؟" "»«\s]+)", text)
+    segments = re.split(r'([.,;:!?"\'()[\]{}،؟»«\s]+)', text)
 
     # Process each segment
     for segment in segments:
@@ -648,7 +698,7 @@ def pre_tokenize_arabic(text: str) -> List[str]:
             continue
 
         # If it's punctuation or whitespace, add it as is (or skip)
-        if all(c in " .,;:!?\"'()[]{}،؟''»«" for c in segment):
+        if all(c in " .,;:!?\"'()[]{}،؟»«" for c in segment):
             continue
 
         # Handle common Arabic prefixes that should stay attached
@@ -668,6 +718,8 @@ def generate_sentence_audio(
     filename: str,
     tashkeel_text: Optional[str] = None,
     is_last_sentence: bool = False,
+    previous_text: Optional[str] = None,
+    next_text: Optional[str] = None,
 ) -> Optional[Dict]:
     """Generate audio file for an Arabic sentence using ElevenLabs API with word timings.
 
@@ -676,12 +728,18 @@ def generate_sentence_audio(
         filename: The output filename
         tashkeel_text: Optional fully vowelized version of the text
         is_last_sentence: Whether this is the last sentence in an article
+        previous_text: Optional text that came before this sentence
+        next_text: Optional text that comes after this sentence
     """
     try:
-        print(f"\nGenerating sentence audio with timestamps for: '{text}'")
+        # Clean the text first to ensure consistency with database storage
+        cleaned_text = clean_arabic_text(text)
+        print(f"\nGenerating sentence audio with timestamps for: '{cleaned_text}'")
 
-        # Use tashkeel text if available for better pronunciation
-        text_to_speak = tashkeel_text if tashkeel_text else text
+        # Use cleaned tashkeel text if available for better pronunciation
+        text_to_speak = (
+            clean_arabic_text(tashkeel_text) if tashkeel_text else cleaned_text
+        )
 
         # Add SSML enhancements for better speech quality
         # Add pauses after punctuation marks
@@ -701,8 +759,16 @@ def generate_sentence_audio(
         # Wrap in Arabic SSML tags
         text_to_speak = f'<speak><lang xml:lang="ar">{text_to_speak}</lang></speak>'
 
+        # Clean context sentences if provided
+        cleaned_prev_text = clean_arabic_text(previous_text) if previous_text else None
+        cleaned_next_text = clean_arabic_text(next_text) if next_text else None
+
         audio_response = generate_speech_with_timestamps(
-            text=text_to_speak, voice_id=ARABIC_VOICE_ID, speed=0.8
+            text=text_to_speak,
+            voice_id=ARABIC_VOICE_ID,
+            speed=0.8,
+            previous_text=cleaned_prev_text,
+            next_text=cleaned_next_text,
         )
 
         if not audio_response:
@@ -966,10 +1032,7 @@ def insert_sentence_words(
 ) -> Dict:
     """
     Insert words from a sentence with their roots and relationships.
-    No longer generates individual word audio for sentence words.
-
-    Returns:
-        Dict with statistics about word timing matches
+    Uses cleaned Arabic text (without non-Arabic characters) for consistency with TTS.
     """
     word_by_word = translation.get("word_by_word", [])
 
@@ -996,13 +1059,13 @@ def insert_sentence_words(
             root_id = get_or_create_root(root_letters, root_meaning)
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
-            # Store the complete word form with all diacritics
-            original_word = word["arabic"]
+            # Store the cleaned word form
+            original_word = clean_arabic_text(word["arabic"])
 
             word_data = {
                 "sentence_id": sentence_id,
                 "position": position,
-                "word_form": original_word,  # Store complete diacritized form
+                "word_form": original_word,
                 "english": word["english"],
                 "word_type_id": word_type_id,
                 "root_id": root_id,
@@ -1024,9 +1087,8 @@ def insert_sentence_words(
     # Pre-tokenize the original words using the same method for consistency
     original_tokens = []
     for word_info in word_by_word:
-        # Get the original Arabic word with all diacritics
-        original_word = word_info["arabic"]
-        # Pre-process with the same method we'd expect ElevenLabs to use
+        # Get the original Arabic word and clean it
+        original_word = clean_arabic_text(word_info["arabic"])
         original_tokens.append(original_word)
 
     print("\nPre-tokenized original words:")
@@ -1034,19 +1096,19 @@ def insert_sentence_words(
         print(f"  {idx}: '{token}'")
 
     # Extract words from word timings for comparison
-    timing_words = [timing["word"] for timing in word_timings]
+    timing_words = [clean_arabic_text(timing["word"]) for timing in word_timings]
 
     print("\nWords from timing data:")
     for idx, word in enumerate(timing_words):
         print(f"  {idx}: '{word}'")
 
-    # 1. Sort word timings by start time to ensure proper sequencing
+    # Sort word timings by start time to ensure proper sequencing
     sorted_timings = sorted(word_timings, key=lambda x: float(x["start_time"]))
 
     print("\nTimings sorted by start time:")
     for idx, timing in enumerate(sorted_timings):
         print(
-            f"  {idx}: '{timing['word']}' → {timing['start_time']}s - {timing['end_time']}s"
+            f"  {idx}: '{clean_arabic_text(timing['word'])}' → {timing['start_time']}s - {timing['end_time']}s"
         )
 
     # Store the word data before inserting to validate timestamps
@@ -1064,8 +1126,8 @@ def insert_sentence_words(
         root_id = get_or_create_root(root_letters, root_meaning)
         word_type_id = get_word_type_id(word.get("pos", "noun"))
 
-        # Store the complete word form with all diacritics
-        original_word = word["arabic"]
+        # Store the cleaned word form
+        original_word = clean_arabic_text(word["arabic"])
 
         print(f"\n  Processing word {position}: '{original_word}'")
 
@@ -1116,7 +1178,7 @@ def insert_sentence_words(
         word_data = {
             "sentence_id": sentence_id,
             "position": position,
-            "word_form": original_word,  # Store complete diacritized form
+            "word_form": original_word,
             "english": word["english"],
             "word_type_id": word_type_id,
             "root_id": root_id,
@@ -1179,16 +1241,39 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
         for idx, translation in enumerate(translations):
             print(f"\nProcessing sentence {idx}: {translation['original'][:50]}...")
 
+            # Get previous and next sentences for better continuity
+            # Use tashkeel version if available for better pronunciation
+            previous_text = None
+            next_text = None
+
+            if idx > 0:
+                prev_translation = translations[idx - 1]
+                # Prefer tashkeel version for better pronunciation
+                previous_text = prev_translation.get(
+                    "tashkeel", prev_translation["original"]
+                )
+                print(f"Using previous text: {previous_text[:50]}...")
+
+            if idx < len(translations) - 1:
+                next_translation = translations[idx + 1]
+                # Prefer tashkeel version for better pronunciation
+                next_text = next_translation.get(
+                    "tashkeel", next_translation["original"]
+                )
+                print(f"Using next text: {next_text[:50]}...")
+
             # Generate audio for this individual sentence with timestamps
             temp_audio_file = os.path.join(temp_dir, f"sentence_{idx}.mp3")
             audio_filename = generate_audio_filename()
 
-            # Use enhanced audio generation with tashkeel and SSML
+            # Use enhanced audio generation with tashkeel, SSML, and sentence context
             audio_result = generate_sentence_audio(
                 text=translation["original"],
                 filename=audio_filename,
                 tashkeel_text=translation.get("tashkeel"),
                 is_last_sentence=(idx == len(translations) - 1),
+                previous_text=previous_text,
+                next_text=next_text,
             )
 
             storage_url = None
@@ -1217,12 +1302,17 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> None:
                     print(f"⚠️ No word timings found for sentence {idx}")
                     timing_stats["sentences_without_timings"] += 1
 
+            # Clean the text before storing in database
+            cleaned_arabic = clean_arabic_text(translation["original"])
+
             # Insert sentence with audio URL
             sentence_data = {
                 "article_id": article_id,
                 "position": idx,
-                "arabic": translation["original"],
-                "english": translation["full_translation"],
+                "arabic": cleaned_arabic,
+                "english": translation[
+                    "full_translation"
+                ],  # Changed back to full_translation
                 "audio_url": storage_url,
             }
             result = supabase.table("article_sentences").insert(sentence_data).execute()
@@ -1688,7 +1778,7 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
 
 def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optional[str]:
     """
-    Concatenate multiple MP3 files using ffmpeg with proper silence between them.
+    Concatenate multiple MP3 files using ffmpeg.
 
     Args:
         audio_files: List of audio file paths to concatenate
@@ -1712,11 +1802,9 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
         list_file = os.path.join(temp_dir, "files.txt")
         with open(list_file, "w") as f:
             for audio_file in audio_files:
-                # Add 0.5s silence between files using ffmpeg's silenceremove filter
                 f.write(f"file '{audio_file}'\n")
-                f.write("file 'silence:d=0.5'\n")
 
-        # Use ffmpeg to concatenate files with the silence
+        # Use ffmpeg to concatenate files
         cmd = [
             "ffmpeg",
             "-f",
@@ -1733,6 +1821,9 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
             output_file,
         ]
 
+        print("\nExecuting ffmpeg command:")
+        print(" ".join(cmd))
+
         # Run ffmpeg
         result = subprocess.run(cmd, capture_output=True, text=True)
 
@@ -1741,13 +1832,27 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
             return None
 
         # Clean up
-        os.remove(list_file)
-        os.rmdir(temp_dir)
+        try:
+            os.remove(list_file)
+            os.rmdir(temp_dir)
+        except Exception as e:
+            print(f"Warning: Cleanup error: {str(e)}")
 
-        return output_file
+        if os.path.exists(output_file):
+            print(f"✅ Successfully created concatenated audio file: {output_file}")
+            # Get file size for verification
+            size = os.path.getsize(output_file)
+            print(f"   Output file size: {size / 1024:.2f} KB")
+            return output_file
+        else:
+            print("❌ Output file was not created")
+            return None
 
     except Exception as e:
         print(f"Error in audio concatenation: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
         return None
 
 
