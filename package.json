@@ -65,6 +65,7 @@
     "@dev-plugins/react-query": "~0.2.0",
     "@expo/metro-config": "^0.19.12",
     "@jest/globals": "^29.7.0",
+    "@sentry/cli": "^2.28.6",
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.14",
