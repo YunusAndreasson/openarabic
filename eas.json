@@ -46,8 +46,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "1594031029",
-        "ascAppId": "openarabic",
+        "appleId": "",
+        "ascAppId": "1594031029",
         "appleTeamId": "G9UUQ9MDS4"
       }
     }
