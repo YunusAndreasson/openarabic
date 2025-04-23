@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: 1
+      EXPO_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.EXPO_APPLE_APP_SPECIFIC_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -48,3 +49,10 @@ jobs:
 
       - name: Publish update to Expo Go
         run: eas update --auto
+
+      - name: Build iOS TestFlight
+        id: ios_build
+        run: eas build --platform ios --profile preview --non-interactive --json > build_output.json
+
+      - name: Submit to TestFlight
+        run: eas submit --platform ios --latest

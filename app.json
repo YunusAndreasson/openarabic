@@ -2,27 +2,41 @@
   "expo": {
     "name": "Open Arabic",
     "slug": "open-arabic",
-    "version": "1.0.0",
+    "version": "1446.10.7",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.openarabic.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "processing"]
-      }
+        "UIBackgroundModes": [
+          "audio",
+          "processing",
+          "audio",
+          "processing"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "buildNumber": "7"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#1E1E1E"
       },
       "package": "com.openarabic.app",
-      "permissions": ["android.permission.FOREGROUND_SERVICE", "android.permission.WAKE_LOCK"],
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.WAKE_LOCK",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
       "foregroundService": {
         "name": "Audio Playback",
         "notificationTitle": "Open Arabic Audio",
