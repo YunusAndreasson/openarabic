@@ -14,8 +14,12 @@
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "processing", "audio", "processing"],
-        "ITSAppUsesNonExemptEncryption": false
+        "UIBackgroundModes": ["audio", "processing"],
+        "ITSAppUsesNonExemptEncryption": false,
+        "BGTaskSchedulerPermittedIdentifiers": [
+          "openarabic.backgroundtask",
+          "openarabic.backgroundfetch"
+        ]
       },
       "buildNumber": "7"
     },
