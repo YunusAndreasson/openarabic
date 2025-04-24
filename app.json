@@ -9,20 +9,12 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android"
-    ],
+    "platforms": ["ios", "android"],
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.openarabic.app",
+      "bundleIdentifier": "openarabic",
       "infoPlist": {
-        "UIBackgroundModes": [
-          "audio",
-          "processing",
-          "audio",
-          "processing"
-        ],
+        "UIBackgroundModes": ["audio", "processing", "audio", "processing"],
         "ITSAppUsesNonExemptEncryption": false
       },
       "buildNumber": "7"
@@ -31,7 +23,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#1E1E1E"
       },
-      "package": "com.openarabic.app",
+      "package": "openarabic",
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.WAKE_LOCK",

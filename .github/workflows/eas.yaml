@@ -53,9 +53,5 @@ jobs:
       - name: Publish update to Expo Go
         run: eas update --auto
 
-      - name: Build iOS TestFlight
-        id: ios_build
-        run: eas build --platform ios --profile production --non-interactive --json > build_output.json
-
-      - name: Submit to TestFlight
-        run: eas submit --platform ios --latest --non-interactive
+      - name: Build and Submit to TestFlight
+        run: eas build --platform ios --profile production --auto-submit --non-interactive
