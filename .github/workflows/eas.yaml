@@ -57,11 +57,5 @@ jobs:
         id: ios_build
         run: eas build --platform ios --profile production --non-interactive --json > build_output.json
 
-      - name: Get Build ID
-        id: get_build_id
-        run: |
-          BUILD_ID=$(cat build_output.json | jq -r '.id')
-          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
-
       - name: Submit to TestFlight
         run: eas submit --platform ios --latest --non-interactive
