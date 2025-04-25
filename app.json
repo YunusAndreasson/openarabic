@@ -9,12 +9,18 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "jsEngine": "hermes",
-    "platforms": ["ios", "android"],
+    "platforms": [
+      "ios",
+      "android"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "openarabic",
       "infoPlist": {
-        "UIBackgroundModes": ["audio", "processing"],
+        "UIBackgroundModes": [
+          "audio",
+          "processing"
+        ],
         "ITSAppUsesNonExemptEncryption": false,
         "BGTaskSchedulerPermittedIdentifiers": [
           "openarabic.backgroundtask",
@@ -32,13 +38,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.WAKE_LOCK",
         "android.permission.MODIFY_AUDIO_SETTINGS"
-      ],
-      "foregroundService": {
-        "name": "Audio Playback",
-        "notificationTitle": "Open Arabic Audio",
-        "notificationColor": "#1E1E1E",
-        "notificationIcon": "./assets/images/icon.png"
-      }
+      ]
     },
     "plugins": [
       "expo-router",
@@ -61,9 +61,16 @@
         "expo-av",
         {
           "microphonePermission": false,
-          "androidScreenCapture": false
+          "androidScreenCapture": false,
+          "foregroundService": {
+            "name": "Audio Playback",
+            "notificationTitle": "Open Arabic Audio",
+            "notificationColor": "#1E1E1E",
+            "notificationIcon": "./assets/images/icon.png"
+          }
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
