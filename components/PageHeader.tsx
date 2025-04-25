@@ -33,6 +33,7 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
       {
         backgroundColor: colors.transparent,
         borderBottomColor: colors.borderOverlay,
+        zIndex: LAYOUT.Z_INDEX.HEADER - 1,
       },
       onBackPress && styles.wrapperWithBack,
     ],
@@ -125,7 +126,6 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     width: '100%',
-    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   contentContainer: {
     paddingBottom: LAYOUT.SPACING.MEDIUM,

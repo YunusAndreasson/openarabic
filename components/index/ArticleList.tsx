@@ -1,7 +1,7 @@
 import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle, memo } from 'react';
-import { StyleSheet, Platform, View, RefreshControl } from 'react-native';
+import { StyleSheet, View, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticleListProps } from '@/types/ui/article.types';
@@ -9,7 +9,6 @@ import type { ArticleListProps } from '@/types/ui/article.types';
 import { LAYOUT, getHeaderHeight } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
-import { LoadingContainer } from '../Loader';
 import ThemedCard from '../ThemedCard';
 
 import { CopyrightFooter } from './CopyrightFooter';
@@ -85,10 +84,10 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           colors={[colors.tint]}
           tintColor={colors.tint}
           progressBackgroundColor={colors.background}
-          progressViewOffset={Platform.OS === 'android' ? 20 : 0}
+          progressViewOffset={getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE}
         />
       ),
-      [isRefreshing, onRefresh, colors.tint, colors.background]
+      [isRefreshing, onRefresh, colors.tint, colors.background, insets]
     );
 
     const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
@@ -106,11 +105,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
 
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {isRefreshing && (
-          <View style={styles.loaderContainer}>
-            <LoadingContainer size="large" color={colors.tint} />
-          </View>
-        )}
         <FlashList
           ref={listRef}
           data={displayData}
@@ -143,21 +137,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   articleItemContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
   },
   container: {
     flex: 1,
-  },
-  loaderContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    left: 0,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 1,
   },
 });
 

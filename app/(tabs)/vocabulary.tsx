@@ -217,6 +217,7 @@ export default function VocabularyScreen(): JSX.Element {
               colors={[colors.tint]}
               tintColor={colors.tint}
               progressBackgroundColor={colors.background}
+              progressViewOffset={getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE}
             />
           }
           contentContainerStyle={[styles.contentContainer, { paddingTop: getHeaderHeight(insets) }]}

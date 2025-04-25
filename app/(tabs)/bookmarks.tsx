@@ -4,7 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, RefreshControl } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -25,6 +25,7 @@ import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { handleError } from '@/utils/errorHandling';
+import { mediumFeedback } from '@/utils/haptics';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -506,6 +507,7 @@ export default function BookmarksScreen(): JSX.Element {
   const handleRefresh = useCallback(async () => {
     if (!user?.id || isRefreshing) return;
 
+    mediumFeedback();
     setIsRefreshing(true);
     try {
       await Promise.all([
@@ -564,8 +566,6 @@ export default function BookmarksScreen(): JSX.Element {
             data={readingList}
             extraData={flashListExtraData}
             keyExtractor={item => `${item.article_id}`}
-            onRefresh={handleRefresh}
-            refreshing={isRefreshing}
             renderItem={({ item }) => (
               <BookmarkListItem
                 item={item}
@@ -593,6 +593,16 @@ export default function BookmarksScreen(): JSX.Element {
               layout.size = ITEM_HEIGHT;
             }}
             removeClippedSubviews={true}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={handleRefresh}
+                colors={[colors.tint]}
+                tintColor={colors.tint}
+                progressBackgroundColor={colors.background}
+                progressViewOffset={getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE}
+              />
+            }
           />
         </ThemedView>
 
