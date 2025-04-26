@@ -12,8 +12,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.SMALL,
   },
   horizontalList: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.TINY,
   },
 });

@@ -29,7 +29,7 @@ const ArticleItem = memo(({ article, onPress }: ArticleItemProps): JSX.Element =
         </ThemedText>
       }
       onPress={() => onPress(article)}
-      containerStyle={{ paddingHorizontal: LAYOUT.SPACING.MEDIUM }}
+      containerStyle={{}}
     />
   );
 });

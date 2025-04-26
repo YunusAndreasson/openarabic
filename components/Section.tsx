@@ -35,7 +35,7 @@ interface SectionProps {
 
 const styles = StyleSheet.create({
   paddedContent: {
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   } as ViewStyle,
 });
 

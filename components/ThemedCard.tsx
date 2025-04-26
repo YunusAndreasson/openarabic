@@ -57,6 +57,9 @@ const styles = StyleSheet.create({
     height: Math.round(
       (LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE) / GOLDEN_RATIO_ADJUSTED
     ),
+    minHeight: Math.round(
+      (LAYOUT.BUTTON.HEIGHT.LARGE * 4 + LAYOUT.SPACING.XLARGE) / GOLDEN_RATIO_ADJUSTED
+    ),
     overflow: 'hidden',
     position: 'relative',
     width: '100%',
@@ -68,11 +71,15 @@ const styles = StyleSheet.create({
     }),
   },
   contentContainer: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
     position: 'relative',
     zIndex: 15,
+    ...Platform.select({
+      android: {
+        paddingBottom: LAYOUT.SPACING.MEDIUM + 4, // Add extra padding at bottom for Android
+      },
+    }),
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,

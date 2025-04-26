@@ -3,11 +3,17 @@ import React, { useCallback, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { articlesService } from '@/services/articles';
-import type { DailyPickSectionProps } from '@/types/ui/layout.types';
+import type { Article } from '@/types/articles.types';
 
 import { LAYOUT } from '../../constants/layout';
 import Section from '../Section';
 import ThemedCard from '../ThemedCard';
+
+interface DailyPickSectionProps {
+  article: Article;
+  onPress: (article: Article) => void;
+  showTitle?: boolean;
+}
 
 /**
  * A section displaying the daily pick article
@@ -59,7 +65,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
       title={showTitle ? 'Daily Pick' : undefined}
       style={styles.container}
       showTitle={false}
-      paddingHorizontal={true}
+      paddingHorizontal={false}
     >
       <ThemedCard
         variant="article"

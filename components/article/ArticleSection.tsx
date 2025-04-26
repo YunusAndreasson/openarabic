@@ -1,7 +1,7 @@
 import { FlashList } from '@shopify/flash-list';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { memo, useCallback } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 
 import { LoadingContainer } from '../../components/Loader';
 import SectionTitle from '../../components/SectionTitle';
@@ -198,10 +198,14 @@ const styles = StyleSheet.create({
   },
   horizontalArticleContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
+    ...Platform.select({
+      android: {
+        paddingBottom: 2,
+      },
+    }),
   },
   horizontalList: {
-    paddingLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    // Empty after removing horizontal padding
   },
   loadingContainer: {
     alignItems: 'center',
@@ -211,9 +215,14 @@ const styles = StyleSheet.create({
   },
   verticalArticleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    ...Platform.select({
+      android: {
+        paddingBottom: 2,
+      },
+    }),
   },
   verticalList: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    // Empty after removing horizontal padding
   },
 });
 

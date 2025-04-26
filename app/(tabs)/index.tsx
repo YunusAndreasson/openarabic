@@ -51,12 +51,6 @@ const styles = StyleSheet.create({
   arrowText: {
     opacity: LAYOUT.OPACITY.DISABLED,
   },
-  articleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  articleItemPadding: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
   card: {
     overflow: 'hidden',
   },
@@ -102,41 +96,39 @@ const ArticleItem = memo(
     const timeAgoText = formatTimeAgo(article.created_at);
 
     return (
-      <View style={[styles.articleContainer, styles.articleItemPadding]}>
-        <BaseCard onPress={() => onPress(article)} style={styles.card}>
-          <View style={styles.cardContent}>
-            <View style={styles.textContent}>
-              <ThemedText
-                type="bodyBold"
-                numberOfLines={2}
-                colorName="text"
-                weight="semibold"
-                style={styles.titleText}
-              >
-                {article.title}
-              </ThemedText>
-              <ThemedText
-                type="caption"
-                colorName="textTertiary"
-                numberOfLines={1}
-                style={styles.metadataText}
-              >
-                {timeAgoText} · {categoryName} · by {article.author?.name || 'Anonymous'}
-              </ThemedText>
-            </View>
-            <View style={styles.iconContainer}>
-              <ThemedText
-                type="label"
-                colorName="textTertiary"
-                variant={isDarkMode ? 'primary' : 'secondary'}
-                style={styles.arrowText}
-              >
-                →
-              </ThemedText>
-            </View>
+      <BaseCard onPress={() => onPress(article)} style={styles.card}>
+        <View style={styles.cardContent}>
+          <View style={styles.textContent}>
+            <ThemedText
+              type="bodyBold"
+              numberOfLines={2}
+              colorName="text"
+              weight="semibold"
+              style={styles.titleText}
+            >
+              {article.title}
+            </ThemedText>
+            <ThemedText
+              type="caption"
+              colorName="textTertiary"
+              numberOfLines={1}
+              style={styles.metadataText}
+            >
+              {timeAgoText} · {categoryName} · by {article.author?.name || 'Anonymous'}
+            </ThemedText>
           </View>
-        </BaseCard>
-      </View>
+          <View style={styles.iconContainer}>
+            <ThemedText
+              type="label"
+              colorName="textTertiary"
+              variant={isDarkMode ? 'primary' : 'secondary'}
+              style={styles.arrowText}
+            >
+              →
+            </ThemedText>
+          </View>
+        </View>
+      </BaseCard>
     );
   }
 );
@@ -419,6 +411,7 @@ export default function ArticlesScreen(): JSX.Element {
     ...styles.listContentContainer,
     backgroundColor: colors.background,
     paddingTop: headerHeight,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   });
 
   if (isInitialLoading && initialLoadComplete) {

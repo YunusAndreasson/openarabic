@@ -25,18 +25,20 @@ interface ArticleItemProps {
 
 const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
   return (
-    <View style={styles.articleItemContainer}>
-      <ThemedCard
-        variant="article"
-        imageUrl={item.image_url || 'https://picsum.photos/800/400'}
-        title={item.title}
-        category={item.category?.name ?? 'Uncategorized'}
-        author={item.author?.name ?? 'Anonymous'}
-        onPress={() => onPress(item)}
-        style={styles.articleCard}
-        shadowSize="medium"
-      />
-    </View>
+    <ThemedCard
+      variant="article"
+      imageUrl={item.image_url || 'https://picsum.photos/800/400'}
+      title={item.title}
+      category={item.category?.name ?? 'Uncategorized'}
+      author={item.author?.name ?? 'Anonymous'}
+      onPress={() => onPress(item)}
+      style={styles.articleCard}
+      shadowSize="medium"
+    >
+      <View style={{ paddingVertical: LAYOUT.SPACING.MEDIUM }}>
+        {/* Card content goes here. If ThemedCard renders its own content, move the padding logic there. */}
+      </View>
+    </ThemedCard>
   );
 });
 
@@ -103,27 +105,25 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     );
 
     return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <FlashList
-          ref={listRef}
-          data={displayData}
-          renderItem={renderItem}
-          keyExtractor={keyExtractor}
-          estimatedItemSize={ITEM_HEIGHT}
-          showsVerticalScrollIndicator={true}
-          contentContainerStyle={safeContentContainerStyle}
-          ListHeaderComponent={displayHeader}
-          ListEmptyComponent={isLoading ? null : ListEmptyComponent}
-          ListFooterComponent={footerElement}
-          refreshControl={refreshControl}
-          scrollEventThrottle={16}
-          overrideItemLayout={(layout, _item) => {
-            layout.size = ITEM_HEIGHT;
-          }}
-          drawDistance={DRAW_DISTANCE}
-          estimatedListSize={ESTIMATED_LIST_SIZE}
-        />
-      </View>
+      <FlashList
+        ref={listRef}
+        data={displayData}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        estimatedItemSize={ITEM_HEIGHT}
+        showsVerticalScrollIndicator={true}
+        contentContainerStyle={safeContentContainerStyle}
+        ListHeaderComponent={displayHeader}
+        ListEmptyComponent={isLoading ? null : ListEmptyComponent}
+        ListFooterComponent={footerElement}
+        refreshControl={refreshControl}
+        scrollEventThrottle={16}
+        overrideItemLayout={(layout, _item) => {
+          layout.size = ITEM_HEIGHT;
+        }}
+        drawDistance={DRAW_DISTANCE}
+        estimatedListSize={ESTIMATED_LIST_SIZE}
+      />
     );
   }
 );
@@ -134,10 +134,6 @@ const styles = StyleSheet.create({
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
-  },
-  articleItemContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: 0,
   },
   container: {
     flex: 1,

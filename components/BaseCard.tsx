@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, Pressable, View } from 'react-native';
+import { StyleSheet, Pressable, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -148,6 +148,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     zIndex: LAYOUT.Z_INDEX.BASE,
+    ...Platform.select({
+      android: {
+        minHeight: 1, // Prevent content collapse on Android
+      },
+    }),
   },
 });
 
