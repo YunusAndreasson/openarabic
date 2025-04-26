@@ -175,23 +175,61 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 });
 CustomTabBar.displayName = 'CustomTabBar';
 
+// Custom Header Background component with blur effect
+const CustomHeaderBackground = () => {
+  const isDarkMode = useIsDarkMode();
+
+  return (
+    <BlurView
+      tint={isDarkMode ? 'dark' : 'light'}
+      intensity={BLUR_INTENSITY}
+      style={StyleSheet.absoluteFill}
+    />
+  );
+};
+
+// Move static styles outside the component
+const HEADER_TITLE_STYLE = {
+  fontSize: 22,
+  fontWeight: '600' as const,
+  paddingLeft: 8,
+};
+
+const HEADER_STYLE = {
+  elevation: 0,
+  shadowOpacity: 0,
+  borderBottomWidth: 0,
+};
+
 export default function TabLayout(): JSX.Element | null {
   const { session, isLoading } = useAuth();
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
+
+  // Memoize headerBackground to avoid inline function recreation
+  const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
 
   const screenOptions = useMemo(
     () => ({
-      headerShown: false,
+      headerShown: true,
       tabBarActiveTintColor: colors.tint,
       tabBarInactiveTintColor: colors.tabIconDefault,
       tabBarHideOnKeyboard: true,
       tabBarShowLabel: true,
       tabBarLabelStyle: styles.tabBarLabel,
+
+      // Tab animation optimizations
       freezeOnBlur: true,
       animation: 'fade' as const,
-      popToTopOnBlur: false,
+
+      // Header customization
+      headerTitleAlign: 'left' as const,
+      headerTitleStyle: HEADER_TITLE_STYLE,
+      headerStyle: HEADER_STYLE,
+      headerBackground: headerBackground, // Use memoized function
+      headerTransparent: true,
     }),
-    [colors.tint, colors.tabIconDefault]
+    [colors.tint, colors.tabIconDefault, isDarkMode, headerBackground]
   );
 
   useEffect(() => {

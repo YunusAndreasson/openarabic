@@ -1,13 +1,17 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useScreenAnimation } from '@/hooks/animations';
+import { useColors } from '@/hooks/useColors';
+import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { handleError } from '@/utils/errorHandling';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
 import { LoadingScreen } from '../components/Loader';
@@ -30,63 +34,77 @@ const styles = StyleSheet.create({
   },
 });
 
+// Custom Header Background component with blur effect (copied from tab layout)
+const BLUR_INTENSITY = 55;
+const CustomHeaderBackground = () => {
+  const isDarkMode = useIsDarkMode();
+  return (
+    <BlurView
+      tint={isDarkMode ? 'dark' : 'light'}
+      intensity={BLUR_INTENSITY}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+    />
+  );
+};
+
+const HEADER_TITLE_STYLE = {
+  fontSize: 22,
+  fontWeight: '600' as const,
+  paddingLeft: 8,
+};
+
+const getHeaderStyle = (backgroundColor: string) => ({
+  elevation: 0,
+  shadowOpacity: 0,
+  borderBottomWidth: 0,
+  backgroundColor,
+});
+
 export default function FilterScreen(): JSX.Element {
-  // Hide the native header
+  const params = useGlobalSearchParams();
+  const colors = useColors();
+  const headerTitle = (params.headerTitle as string | undefined) || '';
+  const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle,
+          headerTitleStyle: HEADER_TITLE_STYLE,
+          headerStyle: getHeaderStyle(colors.background),
+          headerBackground: headerBackground,
+          headerTransparent: true,
+          headerTitleAlign: 'left',
+          headerTintColor: colors.tint,
+          headerBackTitle: 'Texts',
+        }}
+      />
       <FilterScreenContent />
     </>
   );
 }
 
 function FilterScreenContent() {
-  // Get route params with fallback handling
   const params = useGlobalSearchParams();
   const type = params.type as string;
   const id = params.id as string;
   const numericId = parseInt(id, 10);
-
-  // For caching purposes
   const queryClient = useQueryClient();
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
-
-  // Track whether this is the first mount of the component
   const isInitialMount = useRef(true);
-
-  // Track if we're coming back from another screen
   const isReturningFromArticle = useRef(false);
-
-  // Use this to track when the screen is actively focused vs. in background
-  const isFocused = useRef(false);
-
-  // Use focus effect to detect when screen is focused after visiting an article
   useFocusEffect(
     useCallback(() => {
-      // This screen is now focused
-      isFocused.current = true;
-
-      // If this is not the initial mount and we're returning to this screen,
-      // we should disable animations to prevent flickering
       if (!isInitialMount.current) {
         isReturningFromArticle.current = true;
       }
-
-      // Cleanup function when screen loses focus (going to article)
       return () => {
-        // Screen lost focus
-        isFocused.current = false;
-
-        // Not the initial mount anymore after first navigation
         isInitialMount.current = false;
       };
     }, [])
   );
-
-  // State
   const [isRefreshing, setIsRefreshing] = useState(false);
-
-  // Use React Query for author data with caching
   const { data: author, isLoading: isAuthorLoading } = useQuery({
     queryKey: ['author', numericId],
     queryFn: async () => {
@@ -98,11 +116,9 @@ function FilterScreenContent() {
         return null;
       }
     },
-    staleTime: 0, // No caching
-    enabled: type === 'author' && !isNaN(numericId), // Only run when type is author
+    staleTime: 0,
+    enabled: type === 'author' && !isNaN(numericId),
   });
-
-  // Use React Query for category data with caching
   const { data: category, isLoading: isCategoryLoading } = useQuery({
     queryKey: ['category', numericId],
     queryFn: async () => {
@@ -114,10 +130,8 @@ function FilterScreenContent() {
         return null;
       }
     },
-    enabled: type === 'category' || type !== 'author', // Run for categories or when not specified
+    enabled: type === 'category' || type !== 'author',
   });
-
-  // Use React Query to fetch articles with caching
   const {
     data: articles = [],
     isLoading: isArticlesLoading,
@@ -129,8 +143,6 @@ function FilterScreenContent() {
       if (!numericId || isNaN(numericId)) {
         throw new Error(`Invalid ID provided: ${id}`);
       }
-
-      // Fetch articles based on filter type
       let articlesData: Article[] = [];
       try {
         if (type === 'author') {
@@ -138,7 +150,6 @@ function FilterScreenContent() {
         } else if (type === 'category') {
           articlesData = (await articlesService.getArticles(numericId, undefined)) ?? [];
         } else {
-          // Fallback
           if (numericId) {
             articlesData = (await articlesService.getArticles(numericId, undefined)) ?? [];
           } else {
@@ -151,81 +162,66 @@ function FilterScreenContent() {
       }
     },
     refetchOnWindowFocus: true,
-    refetchOnMount: true, // Always refetch
+    refetchOnMount: true,
   });
-
-  // Overall loading state combines all loading states
   const isLoading =
     isArticlesLoading ||
     (type === 'author' && isAuthorLoading) ||
     (type === 'category' && isCategoryLoading);
-
-  // Determine if data is ready for animations
   const isDataReady = useMemo(() => {
     return articles?.length > 0 || error !== null;
   }, [articles, error]);
-
-  // Use the screen animation hook with a shorter duration for returning from article
   const { fadeInStyle } = useScreenAnimation(
     isDataReady,
     isLoading,
-    // Disable animations when returning from an article
     isReturningFromArticle.current ? 0 : 80
   );
-
-  // Use the navigation with debounce hook
   const { navigateTo } = useNavigationWithDebounce();
-
-  // Refresh handler
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
     refetch().finally(() => setIsRefreshing(false));
   }, [refetch]);
-
-  // Article press handler - using the same approach as in index.tsx
   const handleArticlePress = useCallback(
     (article: Article) => {
-      // Prefetch article data for smoother transitions
       queryClient.prefetchQuery({
         queryKey: ['article', article.id],
         queryFn: () => articlesService.getArticleById(article.id),
         retry: 3,
       });
-
-      // Use the navigation with debounce for smoother transitions
       navigateTo({ pathname: '/article/[id]', params: { id: article.id } });
     },
     [navigateTo, queryClient]
   );
-
-  // Clear filter handler
   const handleClearFilter = useCallback(() => {
     router.back();
   }, []);
-
-  // Show loading screen only on initial load, not when refreshing
-  if (isLoading && !isRefreshing && isInitialMount.current) {
-    return <LoadingScreen />;
-  }
-
-  // Show error state
-  if (error && !isRefreshing) {
-    return (
+  useEffect(() => {
+    let title = 'Filtered';
+    if (type === 'author' && author?.name) {
+      title = author.name;
+    } else if (type === 'category' && category?.name) {
+      title = capitalizeFirstLetter(category.name);
+    } else if (type === 'author') {
+      title = 'Author';
+    } else if (type === 'category') {
+      title = 'Category';
+    }
+    router.setParams({ headerTitle: title });
+  }, [type, author?.name, category?.name]);
+  if ((isLoading && !isRefreshing && isInitialMount.current) || (error && !isRefreshing)) {
+    return isLoading ? (
+      <LoadingScreen />
+    ) : (
       <ErrorState
         message={error instanceof Error ? error.message : 'Failed to load articles'}
-        onRetry={() => {
-          refetch();
-        }}
+        onRetry={refetch}
       />
     );
   }
-
-  // Main component with improved animation handling
   return (
     <Animated.View
       style={[
         styles.container,
-        // Only animate on initial mount, not when returning from article
         isInitialMount.current && !isReturningFromArticle.current ? fadeInStyle : styles.visible,
       ]}
     >

@@ -10,6 +10,7 @@ import { State } from 'ts-fsrs';
 import { LAYOUT } from '../../constants/layout';
 import { usePressAnimation } from '../../hooks/animations';
 import { useColors } from '../../hooks/useColors';
+import { useIsDarkMode } from '../../hooks/useThemeDetection';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
 
@@ -20,6 +21,7 @@ interface WordListItemProps {
 // Memoize the component to prevent unnecessary re-renders
 const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   const colors = useColors();
+  const isDarkMode = useIsDarkMode();
   const { animatedStyle } = usePressAnimation({
     type: 'card',
     scaleAmount: 0.97,
@@ -124,6 +126,18 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           >
             {letters}
           </ThemedText>
+
+          {/* Right arrow for navigation */}
+          <View style={styles.iconContainer}>
+            <ThemedText
+              type="heading3"
+              colorName="textTertiary"
+              variant={isDarkMode ? 'primary' : 'secondary'}
+              style={styles.arrowText}
+            >
+              →
+            </ThemedText>
+          </View>
         </View>
 
         {/* Memory Strength section */}
@@ -177,6 +191,10 @@ const styles = StyleSheet.create({
     flex: 0.5,
     textAlign: 'right',
   },
+  arrowText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    opacity: LAYOUT.OPACITY.DISABLED,
+  },
   cardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL * 0.75,
@@ -209,6 +227,11 @@ const styles = StyleSheet.create({
     lineHeight: Platform.OS === 'ios' ? 24 : 26,
     marginRight: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: LAYOUT.SPACING.XLARGE,
   },
   lastReview: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

@@ -12,7 +12,6 @@ import type { Tables } from '../../types/database.types';
 import { formatTimeAgo } from '../../utils/dateUtils';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
 import BaseCard from '../BaseCard';
-import PageHeader from '../PageHeader';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
 
@@ -72,7 +71,6 @@ const ArticleItem = memo(({ article, onPress, isDarkMode }: ArticleItemProps) =>
     ? capitalizeFirstLetter(article.category.name)
     : 'Uncategorized';
 
-  // Format time directly without TimeAgo component
   const timeAgoText = formatTimeAgo(article.created_at);
 
   return (
@@ -83,19 +81,15 @@ const ArticleItem = memo(({ article, onPress, isDarkMode }: ArticleItemProps) =>
             <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={styles.titleText}>
               {article.title}
             </ThemedText>
-            <ThemedText
-              type="caption"
-              colorName={isDarkMode ? 'text' : 'textSecondary'}
-              numberOfLines={1}
-            >
+            <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
               {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
             </ThemedText>
           </View>
           <View style={styles.iconContainer}>
             <ThemedText
-              type="label"
-              colorName={isDarkMode ? 'text' : undefined}
-              variant={isDarkMode ? undefined : 'secondary'}
+              type="heading3"
+              colorName="textTertiary"
+              variant={isDarkMode ? 'primary' : 'secondary'}
               style={styles.arrowText}
             >
               →
@@ -229,14 +223,14 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
           />
         }
       />
-      <PageHeader title={headerTitle} onBackPress={onClearFilter} />
     </ThemedView>
   );
 };
 
 const styles = StyleSheet.create({
   arrowText: {
-    opacity: LAYOUT.OPACITY.DISABLED / 1.5,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    opacity: LAYOUT.OPACITY.DISABLED,
   },
   articleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
@@ -245,7 +239,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContent: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
@@ -262,7 +256,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: LAYOUT.SPACING.TINY,
+    minWidth: LAYOUT.SPACING.XLARGE,
   },
   listContent: {
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,

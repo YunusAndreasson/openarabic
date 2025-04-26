@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
-import PageHeader from '@/components/PageHeader';
 import { CustomSlider } from '@/components/Slider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThemedButton } from '@/components/ThemedButton';
@@ -354,7 +353,6 @@ export default function SettingsScreen(): JSX.Element {
           </View>
         </ScrollView>
       </ThemedView>
-      <PageHeader title="Settings" />
     </ThemedView>
   );
 }

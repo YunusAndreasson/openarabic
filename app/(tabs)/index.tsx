@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
-import PageHeader from '@/components/PageHeader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
@@ -459,7 +458,6 @@ export default function ArticlesScreen(): JSX.Element {
           hideMainList={isArticlesLoading && !isDataCached}
           hideWhileRefreshing={false}
         />
-        <PageHeader title="Texts" />
       </ThemedView>
     </Animated.View>
   );

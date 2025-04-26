@@ -11,7 +11,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import BaseCard from '@/components/BaseCard';
 import EmptyState from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/Loader';
-import PageHeader from '@/components/PageHeader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -547,7 +546,6 @@ export default function BookmarksScreen(): JSX.Element {
               icon="book-outline"
             />
           </ThemedView>
-          <PageHeader title="Bookmarks" />
         </ThemedView>
       </Animated.View>
     );
@@ -612,7 +610,6 @@ export default function BookmarksScreen(): JSX.Element {
           isPlaying={isCurrentlyPlaying}
           isShuffleMode={isShuffleMode}
         />
-        <PageHeader title="Bookmarks" />
       </ThemedView>
     </Animated.View>
   );

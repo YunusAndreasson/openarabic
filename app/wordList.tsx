@@ -6,7 +6,6 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Loader } from '../components/Loader';
-import PageHeader from '../components/PageHeader';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
@@ -134,7 +133,23 @@ export default function WordListScreen(): JSX.Element {
   return (
     <>
       {/* Disable the native header */}
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerTitle: title,
+          headerTitleStyle: {
+            fontSize: 22,
+            fontWeight: '600',
+          },
+          headerStyle: {
+            backgroundColor: colors.background,
+          },
+          headerTransparent: true,
+          headerTitleAlign: 'left',
+          headerTintColor: colors.tint,
+          headerBackTitle: 'Vocabulary',
+        }}
+      />
 
       {/* Use Animated.View with explicit FadeIn animation for smoother entrance */}
       <Animated.View
@@ -146,7 +161,6 @@ export default function WordListScreen(): JSX.Element {
           includeBottomInset={false}
           safeAreaEdges={['left', 'right']}
         >
-          <PageHeader title={title} onBackPress={handleBackPress} />
           {isLoading ? (
             <View style={styles.loaderContainer}>
               <Loader size="large" color={colors.tint} />
@@ -210,7 +224,7 @@ const styles = StyleSheet.create({
   listContentContainer: {
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.XXLARGE * 3,
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
   loaderContainer: {
     alignItems: 'center',
