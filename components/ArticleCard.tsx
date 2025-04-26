@@ -47,7 +47,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       <BaseCard
         onPress={onPress}
         style={[styles.card, activeCardStyle, contentStyle]}
-        shadowSize="small"
+        shadowSize={active ? 'medium' : 'small'}
       >
         <View style={styles.cardContent}>
           <View style={styles.textContent}>
@@ -83,7 +83,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 const styles = StyleSheet.create({
   arrowText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    opacity: LAYOUT.OPACITY.DISABLED,
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   authorText: {
     marginRight: LAYOUT.SPACING.TINY,
@@ -104,8 +104,9 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: LAYOUT.SPACING.XLARGE,
     minWidth: LAYOUT.SPACING.XLARGE,
-    paddingTop: 4,
+    paddingTop: 2,
   },
   metaRow: {
     alignItems: 'center',
