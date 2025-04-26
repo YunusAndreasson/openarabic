@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // Import correctly from expo-av using default import syntax
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
@@ -271,6 +272,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
               }, duration + 100);
             }
           } catch (loadError) {
+            handleError(loadError as Error);
             setIsTrackEnded(true);
             return false;
           }

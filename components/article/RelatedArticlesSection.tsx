@@ -35,6 +35,7 @@ const styles = StyleSheet.create({
 export const RelatedArticlesSection = memo(
   ({ title, articles, renderArticleCard }: RelatedArticlesSectionProps) => {
     const renderItem = useCallback(
+      // eslint-disable-next-line react/no-unused-prop-types
       ({ item }: { item: Article }) => (
         <View style={styles.articleContainer}>{renderArticleCard(item)}</View>
       ),

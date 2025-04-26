@@ -13,6 +13,7 @@ import type {
   CompactCardProps,
   BasicCardProps,
 } from '@/types/ui/card.types';
+import type { ThemeColors } from '@/types/ui/theme.types';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
@@ -144,7 +145,7 @@ const isCompactVariant = (p: ThemedCardProps): p is CompactCardProps =>
   'variant' in p && p.variant === 'compact';
 
 // Loading component moved outside to prevent recreation
-const LoadingComponent = ({ isDarkMode, colors }: { isDarkMode: boolean; colors: any }) => (
+const LoadingComponent = ({ isDarkMode, colors }: { isDarkMode: boolean; colors: ThemeColors }) => (
   <View
     style={[
       styles.loadingComponentContainer,

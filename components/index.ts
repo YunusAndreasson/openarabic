@@ -5,7 +5,6 @@ export { ThemedButton } from './ThemedButton';
 export { ThemedInput } from './ThemedInput';
 export { default as ThemedCard } from './ThemedCard';
 export { Loader } from './Loader';
-export { default as PageHeader } from './PageHeader';
 export { default as BaseCard } from './BaseCard';
 export { default as InfoCard } from './InfoCard';
 export { StatCard } from './StatCard';

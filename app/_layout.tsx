@@ -32,6 +32,7 @@ import { ToastProvider } from '@/components/ToastProvider';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import type { RootState } from '@/store/store';
 
 import madinaFont from '../assets/fonts/Madina.otf';
 import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
@@ -99,7 +100,7 @@ export const useAppLoading = (): AppLoadingContextType => useContext(AppLoadingC
 
 function AppContent() {
   const dispatch = useAppDispatch();
-  const { theme } = useAppSelector((state: any) => state.theme);
+  const { theme } = useAppSelector((state: RootState) => state.theme);
   const isDark = theme === Theme.Dark;
   const colors = useColors();
   const [appReady, setAppReady] = useState(false);

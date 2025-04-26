@@ -5,7 +5,7 @@ import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-nat
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
-import { usePressAnimation, SPRING_CONFIG } from '@/hooks/animations';
+import { usePressAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import type {
   ThemedButtonProps,
@@ -129,13 +129,6 @@ export function ThemedButton({
   ...props
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
-  const buttonSpringConfig = {
-    ...SPRING_CONFIG.BUTTON,
-    damping: 25,
-    stiffness: 300,
-    mass: 0.8,
-    overshootClamping: true,
-  };
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',

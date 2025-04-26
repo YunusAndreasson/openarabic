@@ -269,7 +269,7 @@ export const useArticleMutations = (
           addToReadingListMutation.mutate({ userId: session.user.id, articleId });
         }
       } catch (error) {
-        showToast('Failed to update reading list');
+        handleError(error as Error);
       }
     },
     [addToReadingListMutation, removeFromReadingListMutation, showToast]
@@ -302,7 +302,7 @@ export const useArticleMutations = (
         // Always use the user ID from the session directly
         toggleWordMutation.mutate({ userId: session.user.id, wordId });
       } catch (error) {
-        showToast('Error adding word to study list');
+        handleError(error as Error);
       }
     },
     [toggleWordMutation, showToast]
@@ -349,7 +349,7 @@ export const useArticleMutations = (
           }
         );
       } catch (error) {
-        showToast('Error updating study list');
+        handleError(error as Error);
       }
     },
     [toggleRootMutation, showToast]

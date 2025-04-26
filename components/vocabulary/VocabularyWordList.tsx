@@ -4,7 +4,7 @@ import type { ListRenderItem } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { BlurView } from 'expo-blur';
 import type { ComponentProps } from 'react';
-import React, { memo, useCallback, useMemo } from 'react';
+import React, { memo, useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

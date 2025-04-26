@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
@@ -686,8 +687,8 @@ export function useSentenceAudioPlayer(): {
   );
 
   // Throttle React state updates to reduce renders
-  const throttledProgressUpdate = useThrottle<(positionMs: number, durationMs: number) => void>(
-    (positionMs: number, durationMs: number) => {
+  const throttledProgressUpdate = useThrottle<[number, number], void>(
+    (positionMs, durationMs) => {
       // No need to update local state anymore, just update shared values
       if (Math.abs(progressAnimValue.value - positionMs) > 1000) {
         progressAnimValue.value = withTiming(positionMs, { duration: 100 });

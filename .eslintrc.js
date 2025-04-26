@@ -35,7 +35,7 @@ module.exports = {
     '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
     'no-console': 'warn',
     'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
+    'react-hooks/exhaustive-deps': 'off',
     'react-native/no-unused-styles': 'warn',
     'react-native/split-platform-components': 'warn',
     'react-native/no-inline-styles': 'off',

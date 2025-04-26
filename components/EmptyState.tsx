@@ -13,7 +13,6 @@ import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
 
 const DEFAULT_ICON_SIZE = 64;
-const DEFAULT_ICON_OPACITY = 0.9;
 
 /**
  * EmptyState component following Gestalt principles and visual hierarchy
@@ -28,7 +27,6 @@ const EmptyState = memo(
     description,
     actionText,
     icon = 'book-outline',
-    iconType = 'name',
     onAction,
     containerStyle,
     colors,

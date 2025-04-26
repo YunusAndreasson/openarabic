@@ -2,12 +2,10 @@ import type { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import type { ViewProps, StyleProp, ViewStyle, ScrollView } from 'react-native';
 
-import type { Article, ArticleSentence, Category } from '../articles.types';
+import type { ArticleSentence, Category } from '../articles.types';
 import type { SentenceWord } from '../vocabulary.types';
 
-import type { DailyPickSectionProps } from './article.types';
 import type { BaseStyleProps, BaseThemedProps } from './base.types';
-import type { ThemedCardProps } from './card.types';
 import type { ThemeColors } from './theme.types';
 
 /**

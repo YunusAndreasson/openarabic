@@ -2,8 +2,6 @@ import React, { memo } from 'react';
 
 import { ArticleCard } from '@/components/ArticleCard';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { Article } from '@/types/articles.types';
 import { formatTimeAgo } from '@/utils/dateUtils';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';

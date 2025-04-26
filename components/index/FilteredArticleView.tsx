@@ -2,7 +2,6 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback, memo } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
@@ -53,11 +52,6 @@ interface FilteredArticleViewProps {
    * Selected category (if filtering by category)
    */
   selectedCategory?: Tables<'categories'> | null;
-
-  /**
-   * Callback to clear the current filter
-   */
-  onClearFilter?: () => void;
 }
 
 // Move components outside of the parent component
@@ -145,27 +139,12 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   onArticlePress,
   selectedAuthor,
   selectedCategory,
-  onClearFilter,
 }) => {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const isDarkMode = useIsDarkMode();
   const navHeaderHeight = useHeaderHeight();
 
   // Determine the header title based on selected filters
-  const headerTitle = useMemo(() => {
-    if (selectedAuthor) {
-      return selectedAuthor.name;
-    } else if (selectedCategory) {
-      return capitalizeFirstLetter(selectedCategory.name.toLowerCase());
-    } else if (isLoading) {
-      // Show a loading message while data is being fetched
-      return 'Loading...';
-    } else {
-      // Fallback
-      return 'Articles';
-    }
-  }, [selectedAuthor, selectedCategory, isLoading]);
 
   // Calculate header height for spacer
   const headerHeight = useMemo(() => navHeaderHeight + LAYOUT.SPACING.SMALL, [navHeaderHeight]);
