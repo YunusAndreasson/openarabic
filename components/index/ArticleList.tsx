@@ -98,7 +98,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       () => ({
         ...(contentContainerStyle as ContentStyle),
         paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
-        paddingTop: getHeaderHeight(insets),
       }),
       [contentContainerStyle, insets]
     );

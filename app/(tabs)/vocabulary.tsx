@@ -1,3 +1,4 @@
+import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo } from 'react';
@@ -34,6 +35,7 @@ export default function VocabularyScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const { prefetchVocabularyData } = useAppPreloader();
+  const headerHeight = useHeaderHeight();
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -215,10 +217,10 @@ export default function VocabularyScreen(): JSX.Element {
               colors={[colors.tint]}
               tintColor={colors.tint}
               progressBackgroundColor={colors.background}
-              progressViewOffset={getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE}
+              progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
             />
           }
-          contentContainerStyle={[styles.contentContainer, { paddingTop: getHeaderHeight(insets) }]}
+          contentContainerStyle={[styles.contentContainer, { paddingTop: headerHeight }]}
           showsVerticalScrollIndicator={false}
         >
           {/* Stats Dashboard */}
@@ -278,7 +280,6 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.LARGE,
   },
   emptyStateContainer: {
     alignItems: 'center',

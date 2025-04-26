@@ -1,5 +1,6 @@
 // External Libraries
 import { Ionicons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, memo } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
@@ -54,6 +55,7 @@ export default function SettingsScreen(): JSX.Element {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
 
   // Simple loading state for session loading
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
@@ -188,7 +190,7 @@ export default function SettingsScreen(): JSX.Element {
         includeBottomInset={false}
         style={styles.flexOne}
         scrollable={true}
-        contentContainerStyle={[styles.listContent, { paddingTop: getHeaderHeight(insets) }]}
+        contentContainerStyle={[styles.listContent, { paddingTop: headerHeight }]}
       >
         <ScrollView
           style={styles.scrollView}

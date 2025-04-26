@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Ionicons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
@@ -498,6 +499,7 @@ export default function BookmarksScreen(): JSX.Element {
   }, [user?.id, queryClient, isRefreshing]);
 
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
 
   // Show loading screen only during initial uncached load
   if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
@@ -551,7 +553,7 @@ export default function BookmarksScreen(): JSX.Element {
             )}
             estimatedItemSize={ITEM_HEIGHT}
             contentContainerStyle={{
-              paddingTop: getHeaderHeight(insets),
+              paddingTop: headerHeight,
               paddingBottom:
                 LAYOUT.CONTENT_SPACING.BOTTOM +
                 LAYOUT.BOTTOM_BAR.HEIGHT +
@@ -573,7 +575,7 @@ export default function BookmarksScreen(): JSX.Element {
                 colors={[colors.tint]}
                 tintColor={colors.tint}
                 progressBackgroundColor={colors.background}
-                progressViewOffset={getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE}
+                progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
               />
             }
           />

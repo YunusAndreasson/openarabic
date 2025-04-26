@@ -1,3 +1,4 @@
+import { useHeaderHeight } from '@react-navigation/elements';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -145,6 +146,7 @@ ArticleItem.displayName = 'ArticleItem';
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { initialLoadComplete } = useAppLoading();
@@ -413,10 +415,10 @@ export default function ArticlesScreen(): JSX.Element {
   useScreenFocusRefresh(queryClient, 'articles', undefined, 300000, true, false);
   useScreenFocusRefresh(queryClient, 'categories', undefined, 600000, true, false);
 
-  const getContentContainerStyle = (colors: { background: string }, insets: { top: number }) => ({
+  const getContentContainerStyle = (colors: { background: string }) => ({
     ...styles.listContentContainer,
     backgroundColor: colors.background,
-    paddingTop: getHeaderHeight(insets),
+    paddingTop: headerHeight,
   });
 
   if (isInitialLoading && initialLoadComplete) {
@@ -454,7 +456,7 @@ export default function ArticlesScreen(): JSX.Element {
           onArticlePress={handleArticlePress}
           ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
           ListEmptyComponent={EmptyStateComponent}
-          contentContainerStyle={getContentContainerStyle(colors, insets)}
+          contentContainerStyle={getContentContainerStyle(colors)}
           hideMainList={isArticlesLoading && !isDataCached}
           hideWhileRefreshing={false}
         />

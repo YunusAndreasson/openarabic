@@ -191,6 +191,20 @@ CustomTabBar.displayName = 'CustomTabBar';
 // Custom Header Background component with blur effect
 const CustomHeaderBackground = () => {
   const isDarkMode = useIsDarkMode();
+  const overlayColor = isDarkMode ? 'rgba(18,18,18,0.85)' : 'rgba(255,255,255,0.85)';
+
+  if (Platform.OS === 'android') {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        <BlurView
+          tint={isDarkMode ? 'dark' : 'light'}
+          intensity={BLUR_INTENSITY}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: overlayColor }]} />
+      </View>
+    );
+  }
 
   return (
     <BlurView

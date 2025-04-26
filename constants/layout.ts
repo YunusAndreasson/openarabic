@@ -281,7 +281,11 @@ export const getArabicTextStyle = (
 
 // Helper function to calculate consistent header height and spacing
 export const getHeaderHeight = (insets: { top: number }): number => {
-  // Updated calculation to account for the new spacing in PageHeader
+  if (Platform.OS === 'android') {
+    // Use a larger value for Android to account for status bar and header
+    return insets.top + 56;
+  }
+  // iOS and default: use the previous calculation
   return (
     insets.top +
     LAYOUT.SPACING.TINY +
