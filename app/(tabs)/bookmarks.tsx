@@ -8,6 +8,7 @@ import { StyleSheet, View, RefreshControl } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { ArticleCard } from '@/components/ArticleCard';
 import BaseCard from '@/components/BaseCard';
 import EmptyState from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/Loader';
@@ -175,79 +176,53 @@ const BookmarkListItem = memo(
   }) => {
     const colors = useColors();
     const playbackProgress = duration > 0 ? progress / duration : 0;
-    const activeCardStyle = isActive
-      ? {
-          ...styles.activeCard,
-          borderColor: colors.tint,
-          borderLeftWidth: 3,
-        }
-      : undefined;
-    const activeTitleStyle = isActive ? { color: colors.tint } : undefined;
-
     // Calculate remaining time in milliseconds
     const remainingTime = Math.max(0, duration - progress);
     const shouldShowTime = isActive && duration > 0;
 
     return (
-      <View style={styles.cardContainer}>
-        <BaseCard
-          onPress={() => router.push(`/article/${item.article_id}`)}
-          style={[styles.card, activeCardStyle]}
-          shadowSize="small"
-        >
-          <View style={styles.cardContent}>
-            <View style={styles.textContent}>
-              <ThemedText type="bodyBold" style={[styles.titleText, activeTitleStyle]}>
-                {item.articles?.title || 'Untitled'}
+      <ArticleCard
+        title={item.articles?.title || 'Untitled'}
+        author={item.articles?.author?.name || 'Unknown Author'}
+        meta={
+          shouldShowTime ? (
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+              <Ionicons name="time-outline" size={14} color={colors.tint} />
+              <ThemedText
+                type="label"
+                style={{ color: colors.tint, marginLeft: 4 }}
+                skipDefaultColor
+              >
+                {formatTime(remainingTime)}
               </ThemedText>
-              <View style={styles.metaRow}>
-                <ThemedText
-                  type="label"
-                  numberOfLines={1}
-                  style={[styles.authorText, { color: colors.authorText }]}
-                  skipDefaultColor
-                >
-                  {item.articles?.author?.name || 'Unknown Author'}
-                </ThemedText>
-                {shouldShowTime && (
-                  <View style={styles.timeContainer}>
-                    <Ionicons name="time-outline" size={14} color={colors.tint} />
-                    <ThemedText
-                      type="label"
-                      style={[styles.timeText, { color: colors.tint }]}
-                      skipDefaultColor
-                    >
-                      {formatTime(remainingTime)}
-                    </ThemedText>
-                  </View>
-                )}
-              </View>
             </View>
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={isActive ? colors.tint : colors.text}
-                style={isActive ? styles.activeIcon : styles.inactiveIcon}
-              />
-            </View>
+          ) : null
+        }
+        onPress={() => router.push(`/article/${item.article_id}`)}
+        active={isActive}
+      >
+        {isActive ? (
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 4,
+              backgroundColor: colors.transparent,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: colors.tint,
+                width: `${playbackProgress * 100}%`,
+                height: '100%',
+              }}
+            />
           </View>
-
-          {isActive ? (
-            <View style={[styles.cardProgressContainer, { backgroundColor: colors.transparent }]}>
-              <View
-                style={[
-                  styles.cardProgressBar,
-                  {
-                    backgroundColor: colors.tint,
-                    width: `${playbackProgress * 100}%`,
-                  },
-                ]}
-              />
-            </View>
-          ) : null}
-        </BaseCard>
-      </View>
+        ) : null}
+      </ArticleCard>
     );
   },
   (prevProps, nextProps) => {

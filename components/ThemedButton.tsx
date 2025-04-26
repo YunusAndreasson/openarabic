@@ -13,7 +13,6 @@ import type {
   ButtonSize,
   ButtonTextWeight,
 } from '@/types/ui/button.types';
-import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 
@@ -139,14 +138,12 @@ export function ThemedButton({
   };
 
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'custom',
-    scaleAmount: 0.98,
-    springConfig: buttonSpringConfig,
+    type: 'card',
+    opacityAmount: 0.7,
   });
 
   const handlePress = (event: GestureResponderEvent) => {
     if (onPress && !disabled && !loading) {
-      lightFeedback();
       onPress(event);
     }
   };
