@@ -187,6 +187,9 @@ export default function TabLayout(): JSX.Element | null {
       tabBarHideOnKeyboard: true,
       tabBarShowLabel: true,
       tabBarLabelStyle: styles.tabBarLabel,
+      freezeOnBlur: true,
+      animation: 'fade' as const,
+      popToTopOnBlur: false,
     }),
     [colors.tint, colors.tabIconDefault]
   );
