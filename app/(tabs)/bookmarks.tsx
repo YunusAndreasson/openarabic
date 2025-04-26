@@ -18,7 +18,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
@@ -352,8 +351,8 @@ export default function BookmarksScreen(): JSX.Element {
     return true;
   }, [user?.id, isReadingListLoading, isReadingListFetching, isDataCached]);
 
-  // Add screen animation hook
-  const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
+  // Replace the import and usage of useScreenAnimation with a simple style
+  const fadeInStyle = { opacity: 1 };
 
   const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],

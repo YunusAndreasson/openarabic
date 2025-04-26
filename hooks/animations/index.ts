@@ -11,7 +11,7 @@ export { usePulseAnimation } from './usePulseAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
 export { useComponentAnimation } from './useComponentAnimation';
-export { useScreenAnimation } from './useScreenAnimation';
+// useScreenAnimation has been removed as it's redundant with navigation animations
 export { useToggleAnimation } from './useToggleAnimation';
 
 // Export animation configs

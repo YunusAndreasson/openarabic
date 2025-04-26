@@ -24,7 +24,6 @@ import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
 import AudioControlPanel from '@/components/article/AudioControlPanel';
 import { useNavigationWithDebounce } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
 import { useArticleRenderers } from '@/hooks/useArticleRenderers';
@@ -208,8 +207,8 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, isInReadingList, isLoadingReadingList]);
 
-  // Use animation hooks for screen and buttons
-  const { fadeInStyle, triggerAnimations } = useScreenAnimation(true);
+  // Replace the useScreenAnimation hook with a simple animated style
+  const fadeInStyle = { opacity: 1 }; // Just use a simple style with opacity 1
   const buttonStyle = useAnimatedStyle(() => ({
     opacity: withTiming(isHeaderVisible ? 1 : 0, { duration: 200 }),
   }));
@@ -349,11 +348,6 @@ export default function ArticleScreen(): JSX.Element {
     articleId,
     queryClient,
   ]);
-
-  // Start content animations when mounted
-  useEffect(() => {
-    triggerAnimations();
-  }, [triggerAnimations]);
 
   // Handle article data hook callbacks
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -634,9 +628,7 @@ export default function ArticleScreen(): JSX.Element {
     // Reset screen animations
     const resetAnimations = () => {
       // Reset any active animations
-      if (triggerAnimations && typeof triggerAnimations === 'function') {
-        triggerAnimations();
-      }
+      // No need to call buttonStyle, it's not a function
     };
     resetAnimations();
 
@@ -658,7 +650,7 @@ export default function ArticleScreen(): JSX.Element {
 
     // Navigate back
     router.back();
-  }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, triggerAnimations, queryClient]);
+  }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, queryClient]);
 
   // Component renderers
   const renderWord = useCallback(

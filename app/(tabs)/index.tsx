@@ -19,7 +19,6 @@ import LatestTextsSection from '@/components/index/LatestTextsSection';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { articlesService } from '@/services/articles';
@@ -262,7 +261,7 @@ export default function ArticlesScreen(): JSX.Element {
     return articlesData.length > 0 || (!isArticlesLoading && !!articlesError);
   }, [articlesData.length, isArticlesLoading, articlesError]);
 
-  const { fadeInStyle } = useScreenAnimation(isDataReady, isLoadingState);
+  const fadeInStyle = { opacity: 1 };
 
   useEffect(() => {
     if (articlesError || articlesData.length === 0) return;

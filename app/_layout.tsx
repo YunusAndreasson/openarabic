@@ -21,7 +21,7 @@ import React, {
   memo,
 } from 'react';
 import 'react-native-reanimated';
-import { useColorScheme, AppState, View, Text, StyleSheet } from 'react-native';
+import { AppState, View, Text, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
@@ -98,7 +98,6 @@ export const AppLoadingContext = createContext<AppLoadingContextType>({
 export const useAppLoading = (): AppLoadingContextType => useContext(AppLoadingContext);
 
 function AppContent() {
-  const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
   const { theme } = useAppSelector((state: any) => state.theme);
   const isDark = theme === Theme.Dark;
@@ -159,11 +158,12 @@ function AppContent() {
 
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
 
+  // Set default theme if none is set yet
   useEffect(() => {
-    if (colorScheme && !theme) {
-      dispatch(setTheme(colorScheme === 'dark' ? Theme.Dark : Theme.Light));
+    if (!theme) {
+      dispatch(setTheme(Theme.Light));
     }
-  }, [colorScheme, dispatch, theme]);
+  }, [dispatch, theme]);
 
   useEffect(() => {
     if (!isAuthLoading && !isLoaded) {

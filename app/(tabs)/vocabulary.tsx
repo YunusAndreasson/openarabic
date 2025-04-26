@@ -18,7 +18,6 @@ import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard
 import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
 import { LAYOUT, getHeaderHeight } from '@/constants/layout';
 import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
-import { useScreenAnimation } from '@/hooks/animations';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
@@ -142,10 +141,8 @@ export default function VocabularyScreen(): JSX.Element {
     );
   }, [isDataLoading, isFetching, isDataCached, studyWords, validStudyWords]);
 
-  // Add screen animation hook to match other tab screens
-  const { fadeInStyle } = useScreenAnimation(isDataReady, isRefreshing) as {
-    fadeInStyle: AnimatedStyleProp<ViewStyle>;
-  };
+  // Replace the import and usage of useScreenAnimation with a simple style
+  const fadeInStyle = { opacity: 1 };
 
   // Handle starting a review with optimized invalidation
   const handleStartReview = () => {

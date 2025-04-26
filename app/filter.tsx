@@ -7,7 +7,6 @@ import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { useScreenAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { handleError } from '@/utils/errorHandling';
@@ -171,11 +170,7 @@ function FilterScreenContent() {
   const isDataReady = useMemo(() => {
     return articles?.length > 0 || error !== null;
   }, [articles, error]);
-  const { fadeInStyle } = useScreenAnimation(
-    isDataReady,
-    isLoading,
-    isReturningFromArticle.current ? 0 : 80
-  );
+  const fadeInStyle = { opacity: 1 };
   const { navigateTo } = useNavigationWithDebounce();
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);

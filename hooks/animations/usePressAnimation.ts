@@ -4,10 +4,8 @@ import {
   useAnimatedStyle,
   withSpring,
   interpolate,
-  Extrapolation,
+  Extrapolate,
 } from 'react-native-reanimated';
-
-import { handleError } from '@/utils/errorHandling';
 
 import { SPRING_CONFIG } from './animationConfigs';
 import type { SharedValue } from './types';
@@ -72,58 +70,35 @@ export interface PressAnimationResult {
 }
 
 /**
- * Unified hook for press animations with scale and optional opacity effects
- * Combines functionality from useButtonAnimation and useCardAnimation
- *
+ * Hook for press animations with scale and optional opacity effects
  * @param options - Configuration options for the press animation
  * @returns Animation controls and style for the pressable component
  */
 export const usePressAnimation = (options: PressAnimationOptions = {}): PressAnimationResult => {
   const { type = 'button', scaleAmount, opacityAmount, includeOpacity, springConfig } = options;
-  const isMountedRef = useRef(true);
 
   // Set defaults based on type
   const defaultScaleAmount = type === 'card' ? 0.985 : 0.97;
-  const defaultOpacityAmount = 0.97;
-  const defaultIncludeOpacity = type === 'card';
-
-  // Use provided values or defaults
   const finalScaleAmount = scaleAmount ?? defaultScaleAmount;
-  const finalOpacityAmount = opacityAmount ?? defaultOpacityAmount;
-  const finalIncludeOpacity = includeOpacity ?? defaultIncludeOpacity;
-
-  // Select spring config based on type
+  const finalOpacityAmount = opacityAmount ?? 0.97;
+  const finalIncludeOpacity = includeOpacity ?? type === 'card';
   const finalSpringConfig =
     springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON);
 
   // Animation value
   const pressed = useSharedValue(0);
+  const isMountedRef = useRef(true);
 
-  // Track mounted state and cleanup
-  useEffect(() => {
-    isMountedRef.current = true;
-
-    return () => {
-      isMountedRef.current = false;
-      try {
-        // Ensure we reset the animation on unmount to prevent memory issues
-        pressed.value = 0;
-      } catch (error) {
-        handleError(error instanceof Error ? error : String(error));
-      }
-    };
-  }, [pressed]);
-
-  // Create animated style with or without opacity
+  // Create animated style
   const animatedStyle = useAnimatedStyle(() => {
-    const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], Extrapolation.CLAMP);
+    const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], Extrapolate.CLAMP);
 
     if (finalIncludeOpacity) {
       const opacity = interpolate(
         pressed.value,
         [0, 1],
         [1, finalOpacityAmount],
-        Extrapolation.CLAMP
+        Extrapolate.CLAMP
       );
       return {
         transform: [{ scale }],
@@ -138,28 +113,24 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   // Press handlers
   const handlePressIn = useCallback(() => {
-    'worklet';
-    if (!isMountedRef.current) return;
-
-    try {
+    if (isMountedRef.current) {
       pressed.value = withSpring(1, finalSpringConfig);
-    } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
-      pressed.value = 1;
     }
   }, [pressed, finalSpringConfig]);
 
   const handlePressOut = useCallback(() => {
-    'worklet';
-    if (!isMountedRef.current) return;
-
-    try {
+    if (isMountedRef.current) {
       pressed.value = withSpring(0, finalSpringConfig);
-    } catch (error) {
-      handleError(error instanceof Error ? error : String(error));
-      pressed.value = 0;
     }
   }, [pressed, finalSpringConfig]);
+
+  // Cleanup
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return {
     animatedStyle,

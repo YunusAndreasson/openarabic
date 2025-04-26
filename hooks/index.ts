@@ -1,5 +1,5 @@
 // Animation hooks
-export * from './animations/useScreenAnimation';
+// useScreenAnimation has been removed as it's redundant with navigation animations
 export * from './animations/useOpacityAnimation';
 export * from './animations/usePulseAnimation';
 export * from './animations/usePressAnimation';
