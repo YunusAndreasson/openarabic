@@ -168,10 +168,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   }, [selectedAuthor, selectedCategory, isLoading]);
 
   // Calculate header height for spacer
-  const headerHeight = useMemo(
-    () => navHeaderHeight + 20 + LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    [navHeaderHeight]
-  );
+  const headerHeight = useMemo(() => navHeaderHeight + LAYOUT.SPACING.SMALL, [navHeaderHeight]);
 
   const renderItemCallback = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
@@ -264,7 +261,7 @@ const styles = StyleSheet.create({
     minWidth: LAYOUT.SPACING.XLARGE,
   },
   listContent: {
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   noResultsContainer: {
