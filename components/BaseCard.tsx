@@ -49,7 +49,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
         const baseShadow = {
           shadowColor: colors.shadow,
           ...LAYOUT.SHADOW.MEDIUM,
-          elevation: 3,
+          elevation: isDarkMode ? 0 : 4, // Increased elevation in light mode for better visibility
         };
 
         switch (shadowSize) {
@@ -57,14 +57,14 @@ const BaseCard: React.FC<BaseCardProps> = memo(
             calculatedShadow = {
               ...baseShadow,
               ...LAYOUT.SHADOW.SMALL,
-              elevation: 1,
+              elevation: isDarkMode ? 0 : 2, // Increased from 1
             };
             break;
           case 'large':
             calculatedShadow = {
               ...baseShadow,
               ...LAYOUT.SHADOW.LARGE,
-              elevation: 5,
+              elevation: isDarkMode ? 0 : 6, // Increased from 5
             };
             break;
           default:
@@ -75,14 +75,15 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       return {
         shadow: calculatedShadow,
         border: {
-          borderWidth: isDarkMode ? 1 : 0.5,
-          borderColor: isDarkMode ? colors.elevation3 : colors.cardBorder,
+          borderWidth: isDarkMode ? 1.5 : 0.5, // Increased dark mode border for better definition
+          borderColor: isDarkMode ? colors.cardBorder : colors.cardBorder, // Use cardBorder in both modes
+          borderStyle: 'solid',
         },
         background: {
           backgroundColor: colors.card,
         },
       };
-    }, [colors.shadow, colors.elevation3, colors.cardBorder, colors.card, isDarkMode, shadowSize]);
+    }, [colors.shadow, colors.cardBorder, colors.card, isDarkMode, shadowSize]);
 
     // Combined card style with stable reference
     const combinedCardStyle = useMemo(

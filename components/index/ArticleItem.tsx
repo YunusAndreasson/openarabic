@@ -11,6 +11,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   arrowText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     opacity: LAYOUT.OPACITY.DISABLED,
   },
   articleContainer: {
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContent: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
@@ -31,7 +32,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: LAYOUT.SPACING.TINY,
+    minWidth: LAYOUT.SPACING.XLARGE,
   },
   metadataText: {
     marginTop: LAYOUT.SPACING.TINY / 2,
@@ -68,7 +69,7 @@ const ArticleItem = memo(({ article, onPress }: ArticleItemProps): JSX.Element =
               type="bodyBold"
               numberOfLines={2}
               colorName="text"
-              weight="600"
+              weight="semibold"
               style={styles.titleText}
             >
               {article.title}
@@ -84,7 +85,7 @@ const ArticleItem = memo(({ article, onPress }: ArticleItemProps): JSX.Element =
           </View>
           <View style={styles.iconContainer}>
             <ThemedText
-              type="label"
+              type="heading3"
               colorName="textTertiary"
               variant={isDarkMode ? 'primary' : 'secondary'}
               style={styles.arrowText}

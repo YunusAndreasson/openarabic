@@ -3,9 +3,10 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { PlatformPressable } from '@react-navigation/elements';
 import type { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
+import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import React, { useMemo, useCallback, memo, useEffect } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -45,7 +46,7 @@ const TAB_SCREENS = [
 ] as const;
 
 const ICON_SIZE = 24;
-const BLUR_INTENSITY = Platform.OS === 'ios' ? 55 : 80;
+const BLUR_INTENSITY = 55;
 
 type PlatformStyle = {
   shadowOffset?: { width: number; height: number };
@@ -64,6 +65,7 @@ const PLATFORM_STYLES: PlatformStyle =
       borderTopWidth: StyleSheet.hairlineWidth,
     },
     android: {
+      borderTopWidth: StyleSheet.hairlineWidth,
       elevation: 8,
     },
   }) ?? {};
@@ -74,24 +76,36 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
   const isDarkMode = useIsDarkMode();
 
   const bottomInset = useMemo(
-    () => (Platform.OS === 'ios' ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) : 0),
+    () =>
+      Platform.OS === 'ios' ? Math.min(insets.bottom, LAYOUT.SPACING.MEDIUM) : LAYOUT.SPACING.SMALL,
     [insets.bottom]
   );
 
-  const blurContainerStyle = useMemo(
+  const containerStyle = useMemo(
     () => ({
-      ...styles.blurContainer,
-      backgroundColor: colors.transparent,
-      height: LAYOUT.BOTTOM_BAR.HEIGHT + bottomInset,
+      ...styles.container,
+      height:
+        LAYOUT.BOTTOM_BAR.HEIGHT +
+        bottomInset +
+        (Platform.OS === 'android' ? LAYOUT.SPACING.SMALL : 0),
       paddingBottom: bottomInset,
       ...PLATFORM_STYLES,
-      ...(Platform.OS === 'ios' && {
-        shadowColor: colors.shadow,
-        borderTopColor: colors.borderOverlay,
-      }),
+      borderTopColor: colors.borderOverlay,
+      ...(Platform.OS === 'ios'
+        ? { shadowColor: colors.shadow }
+        : { backgroundColor: colors.background }),
     }),
-    [colors.shadow, colors.transparent, colors.borderOverlay, bottomInset]
+    [colors.shadow, colors.background, colors.borderOverlay, bottomInset]
   );
+
+  const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
+  const blurProps =
+    Platform.OS === 'ios'
+      ? {
+          intensity: BLUR_INTENSITY,
+          tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
+        }
+      : {};
 
   const getTabButtonStyle = useCallback(
     (isFocused: boolean): TextStyle => ({
@@ -123,11 +137,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
   );
 
   return (
-    <BlurView
-      intensity={BLUR_INTENSITY}
-      tint={isDarkMode ? 'dark' : 'light'}
-      style={blurContainerStyle}
-    >
+    <TabBarContainer style={containerStyle} {...blurProps}>
       {state.routes.map((route, index) => {
         const descriptor = descriptors[route.key];
         if (!descriptor) return null;
@@ -160,7 +170,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
           </PlatformPressable>
         );
       })}
-    </BlurView>
+    </TabBarContainer>
   );
 });
 CustomTabBar.displayName = 'CustomTabBar';
@@ -210,7 +220,7 @@ const styles = StyleSheet.create({
   activeIcon: {
     opacity: 1,
   },
-  blurContainer: {
+  container: {
     borderTopWidth: 0,
     bottom: 0,
     flexDirection: 'row',
@@ -218,6 +228,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     zIndex: LAYOUT.Z_INDEX.HEADER,
+    ...Platform.select({
+      android: {
+        paddingTop: LAYOUT.SPACING.SMALL,
+        paddingBottom: LAYOUT.SPACING.TINY,
+      },
+    }),
   },
   inactiveIcon: {
     opacity: 0.7,
@@ -251,7 +267,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    paddingBottom: LAYOUT.SPACING.TINY / 2,
-    paddingTop: LAYOUT.SPACING.TINY,
+    ...Platform.select({
+      ios: {
+        paddingBottom: LAYOUT.SPACING.TINY / 2,
+        paddingTop: LAYOUT.SPACING.TINY,
+      },
+      android: {
+        paddingBottom: LAYOUT.SPACING.TINY,
+        paddingTop: LAYOUT.SPACING.SMALL,
+      },
+    }),
   },
 });

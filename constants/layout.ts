@@ -158,12 +158,12 @@ export const LAYOUT = {
       ...Platform.select({
         ios: {
           // shadowColor will be set by the component using colors.black or colors.shadow
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1, // Fixed value to avoid circular reference
-          shadowRadius: 4,
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
         },
         android: {
-          elevation: 2,
+          elevation: 4,
         },
       }),
     },
@@ -171,12 +171,12 @@ export const LAYOUT = {
       ...Platform.select({
         ios: {
           // shadowColor will be set by the component using colors.black or colors.shadow
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15, // Fixed value to avoid circular reference
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.3,
+          shadowRadius: 10,
         },
         android: {
-          elevation: 4,
+          elevation: 8,
         },
       }),
     },
@@ -184,12 +184,12 @@ export const LAYOUT = {
       ...Platform.select({
         ios: {
           // shadowColor will be set by the component using colors.black or colors.shadow
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.2, // Fixed value to avoid circular reference
-          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.35,
+          shadowRadius: 14,
         },
         android: {
-          elevation: 8,
+          elevation: 12,
         },
       }),
     },

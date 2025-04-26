@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Platform } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -61,6 +61,11 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     zIndex: 1,
+    ...Platform.select({
+      android: {
+        marginTop: 1, // Add a small margin to prevent cutoff
+      },
+    }),
   },
   contentContainer: {
     marginTop: -LAYOUT.SPACING.MEDIUM,
@@ -72,8 +77,11 @@ const styles = StyleSheet.create({
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
-    bottom: -LAYOUT.SPACING.XLARGE,
-    height: '150%',
+    borderTopLeftRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderTopRightRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    bottom: 0,
+    height: '200%',
+    overflow: 'hidden',
     zIndex: 5,
   },
   image: {
@@ -107,12 +115,12 @@ const styles = StyleSheet.create({
   },
   summaryContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
-    marginTop: LAYOUT.SPACING.SMALL - 2,
+    marginTop: LAYOUT.SPACING.SMALL,
     position: 'relative',
     zIndex: 20,
   },
   titleContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL - 2,
+    marginBottom: LAYOUT.SPACING.SMALL,
     position: 'relative',
     zIndex: 20,
   },
@@ -149,13 +157,48 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const isDarkMode = useIsDarkMode();
   const isCompact = variant === 'compact';
 
-  // Memoize gradient colors
+  // Extract base colors for gradient
+  const baseGradientColor = isDarkMode ? '30,30,30' : '248,249,250';
+
+  // Memoize gradient colors with consistent opacity stops
   const gradientColors = useMemo(() => {
-    if (isDarkMode) {
-      return ['rgba(0,0,0,0)', 'rgba(30,30,30,0.95)', colors.card] as const;
-    }
-    return ['rgba(255,255,255,0)', 'rgba(250,250,250,0.95)', colors.card] as const;
-  }, [isDarkMode, colors.card]);
+    return [
+      `rgba(${baseGradientColor},0)`,
+      `rgba(${baseGradientColor},0.95)`,
+      `rgba(${baseGradientColor},0.98)`,
+      colors.card,
+    ] as const;
+  }, [baseGradientColor, colors.card]);
+
+  // Common gradient props
+  const gradientProps = useMemo(
+    () => ({
+      colors: gradientColors,
+      start: { x: 0, y: 0.3 },
+      end: { x: 0, y: 0.8 },
+      pointerEvents: 'none' as const,
+    }),
+    [gradientColors]
+  );
+
+  // Common text styles that can be reused
+  const titleStyle = useMemo(
+    () => ({
+      letterSpacing: isDarkMode ? 0.2 : -0.2,
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.3,
+      opacity: isDarkMode ? 0.98 : 1,
+    }),
+    [isDarkMode]
+  );
+
+  const summaryStyle = useMemo(
+    () => ({
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
+      opacity: isDarkMode ? 0.95 : 0.9,
+      letterSpacing: isDarkMode ? 0.1 : 0,
+    }),
+    [isDarkMode]
+  );
 
   // Extract variant-specific props based on type
   const title = isArticleVariant(props) ? props.title : undefined;
@@ -183,7 +226,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             skipTransition={true}
             cachePolicy="memory-disk"
             alt={`Image for ${props.title}`}
-            blurRadius={1}
+            blurRadius={Platform.OS === 'ios' ? 1 : 0}
             priority="high"
             placeholder={
               props.placeholder || {
@@ -194,11 +237,15 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           />
 
           <LinearGradient
-            colors={gradientColors}
-            style={styles.gradient}
-            start={{ x: 0, y: 0.3 }}
-            end={{ x: 0, y: 0.9 }}
-            pointerEvents="none"
+            {...gradientProps}
+            style={[
+              styles.gradient,
+              {
+                bottom: -LAYOUT.SPACING.XLARGE * 2,
+                height: '200%',
+                transform: [{ scale: 1.01 }],
+              },
+            ]}
           />
         </View>
 
@@ -210,14 +257,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={titleStyle}>
               {title}
             </ThemedText>
           </View>
 
           {author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
+              <ThemedText type="label" colorName="secondaryText" numberOfLines={1}>
                 By {author}
               </ThemedText>
             </View>
@@ -227,11 +274,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             <View style={styles.summaryContainer}>
               <ThemedText
                 type="caption"
-                colorName={isDarkMode ? 'secondaryText' : 'textTertiary'}
+                colorName="secondaryText"
                 numberOfLines={3}
-                style={{
-                  lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.6,
-                }}
+                style={summaryStyle}
               >
                 {summary}
               </ThemedText>
@@ -240,7 +285,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         </View>
       </>
     );
-  }, [props, isDarkMode, gradientColors]);
+  }, [props, isDarkMode, gradientColors, titleStyle, summaryStyle]);
 
   // Memoize compact article content
   const compactArticleContent = useMemo(() => {
@@ -253,7 +298,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             style={styles.image}
             contentFit="cover"
             skipTransition={true}
-            blurRadius={1}
+            blurRadius={Platform.OS === 'ios' ? 1 : 0}
             priority="high"
             placeholder={
               props.article.placeholder || {
@@ -265,11 +310,15 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           />
 
           <LinearGradient
-            colors={gradientColors}
-            style={styles.gradient}
-            start={{ x: 0, y: 0.3 }}
-            end={{ x: 0, y: 0.9 }}
-            pointerEvents="none"
+            {...gradientProps}
+            style={[
+              styles.gradient,
+              {
+                bottom: -LAYOUT.SPACING.XLARGE * 2,
+                height: '200%',
+                transform: [{ scale: 1.01 }],
+              },
+            ]}
           />
         </View>
 
@@ -285,14 +334,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text">
+            <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={titleStyle}>
               {props.article.title}
             </ThemedText>
           </View>
 
           {props.article.author ? (
             <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="textTertiary" numberOfLines={1}>
+              <ThemedText type="label" colorName="secondaryText" numberOfLines={1}>
                 By {props.article.author.name}
               </ThemedText>
             </View>
@@ -308,7 +357,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         </View>
       </>
     );
-  }, [props, gradientColors]);
+  }, [props, gradientColors, titleStyle]);
 
   // Memoize compact content
   const compactContent = useMemo(() => {

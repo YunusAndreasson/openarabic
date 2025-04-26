@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import type { BlurTint } from 'expo-blur';
 import React, { memo, useCallback, useMemo } from 'react';
 import { View, StyleSheet, Pressable, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,8 +18,7 @@ import { ThemedText } from './ThemedText';
 const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
-  // Match tabbar intensity values for consistency
-  const intensity = Platform.OS === 'ios' ? 55 : 80;
+  const intensity = 55;
   const insets = useSafeAreaInsets();
 
   const handleBackPress = useCallback(() => {
@@ -40,32 +40,39 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
     [colors.transparent, colors.borderOverlay, onBackPress]
   );
 
-  // Memoize blur container styles for performance
-  const blurContainerStyle = useMemo(
+  const headerStyle = useMemo(
     () => [
       styles.blurContainer,
       {
-        backgroundColor: colors.transparent,
+        backgroundColor: Platform.OS === 'ios' ? colors.transparent : colors.background,
         borderBottomColor: colors.borderOverlay,
         borderBottomWidth: StyleSheet.hairlineWidth,
-        ...(Platform.OS === 'ios' && {
+        ...(Platform.OS === 'ios' 
+          ? {
           shadowColor: colors.shadow,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
           shadowRadius: LAYOUT.SPACING.SMALL / 2,
+            }
+          : {
+              elevation: 8,
         }),
       },
     ],
-    [colors.borderOverlay, colors.shadow, colors.transparent]
+    [colors.borderOverlay, colors.shadow, colors.transparent, colors.background]
   );
+
+  const HeaderContainer = Platform.OS === 'ios' ? BlurView : View;
+  const blurProps = Platform.OS === 'ios' ? {
+    intensity,
+    tint: (isDarkMode ? 'dark' : 'light') as BlurTint,
+  } : {};
 
   return (
     <View style={containerStyle}>
-      <BlurView
-        intensity={intensity}
-        tint={isDarkMode ? 'dark' : 'light'}
-        experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
-        style={blurContainerStyle}
+      <HeaderContainer
+        style={headerStyle}
+        {...blurProps}
       >
         <View
           style={[
@@ -96,7 +103,7 @@ const PageHeader = memo(({ title, onBackPress }: PageHeaderProps) => {
             </View>
           </View>
         </View>
-      </BlurView>
+      </HeaderContainer>
     </View>
   );
 });
@@ -112,11 +119,6 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     width: '100%',
-    ...Platform.select({
-      android: {
-        elevation: 8,
-      },
-    }),
   },
   container: {
     borderBottomWidth: 0,

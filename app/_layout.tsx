@@ -100,7 +100,7 @@ export const useAppLoading = (): AppLoadingContextType => useContext(AppLoadingC
 function AppContent() {
   const colorScheme = useColorScheme();
   const dispatch = useAppDispatch();
-  const { theme } = useAppSelector(state => state.theme);
+  const { theme } = useAppSelector((state: any) => state.theme);
   const isDark = theme === Theme.Dark;
   const colors = useColors();
   const [appReady, setAppReady] = useState(false);
