@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
@@ -17,8 +16,8 @@ import DailyPickSection from '@/components/index/DailyPickSection';
 import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
-import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
+import { LAYOUT } from '@/constants/layout';
+import { useScreenFocusRefresh } from '@/hooks';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { articlesService } from '@/services/articles';
@@ -136,7 +135,6 @@ ArticleItem.displayName = 'ArticleItem';
 
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
@@ -145,8 +143,6 @@ export default function ArticlesScreen(): JSX.Element {
   useEffect(() => {
     dispatch(fetchInProgressArticles());
   }, [dispatch]);
-
-  const { isLoading: isLoadingState } = useLoadingState();
 
   const {
     data: articlesData = [],
@@ -256,10 +252,6 @@ export default function ArticlesScreen(): JSX.Element {
   const handleSelectCategory = useCallback((categoryId: number) => {
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
-
-  const isDataReady = useMemo(() => {
-    return articlesData.length > 0 || (!isArticlesLoading && !!articlesError);
-  }, [articlesData.length, isArticlesLoading, articlesError]);
 
   const fadeInStyle = { opacity: 1 };
 

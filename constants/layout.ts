@@ -278,19 +278,3 @@ export const getArabicTextStyle = (
     ...additionalStyles,
   };
 };
-
-// Helper function to calculate consistent header height and spacing
-export const getHeaderHeight = (insets: { top: number }): number => {
-  if (Platform.OS === 'android') {
-    // Use a larger value for Android to account for status bar and header
-    return insets.top + 56;
-  }
-  // iOS and default: use the previous calculation
-  return (
-    insets.top +
-    LAYOUT.SPACING.TINY +
-    LAYOUT.SPACING.XLARGE +
-    LAYOUT.SPACING.LARGE +
-    LAYOUT.SPACING.SMALL
-  );
-};

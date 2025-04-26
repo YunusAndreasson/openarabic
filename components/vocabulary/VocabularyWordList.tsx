@@ -1,14 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useHeaderHeight } from '@react-navigation/elements';
 import type { ListRenderItem } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { BlurView } from 'expo-blur';
 import type { ComponentProps } from 'react';
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -77,7 +78,7 @@ const WordItem = memo(
                 size={16}
                 color={colors.background}
               />
-              <ThemedText type="caption" weight="600" colorName="background" skipDefaultColor>
+              <ThemedText type="caption" weight="semibold" colorName="background" skipDefaultColor>
                 {statusLabel}
               </ThemedText>
             </View>
@@ -97,6 +98,7 @@ export function VocabularyWordList({
 }: VocabularyWordListProps): JSX.Element {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
 
   // Memoize the render item function to prevent recreating on each render
   const renderItem = useCallback<ListRenderItem<StudyWord>>(
@@ -138,7 +140,12 @@ export function VocabularyWordList({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-          paddingTop: getHeaderHeight(insets),
+          paddingTop:
+            headerHeight +
+            LAYOUT.SPACING.TINY +
+            LAYOUT.SPACING.SMALL +
+            LAYOUT.BUTTON.HEIGHT.MEDIUM +
+            LAYOUT.SPACING.MEDIUM,
           paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
         }}
         drawDistance={500}

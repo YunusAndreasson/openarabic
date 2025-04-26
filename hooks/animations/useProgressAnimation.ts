@@ -6,6 +6,7 @@ import {
   withTiming,
   runOnJS,
   cancelAnimation,
+  runOnUI,
 } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from './animationConfigs';
@@ -41,48 +42,71 @@ export const useProgressAnimation = (
   // This tracks whether an animation is currently in progress
   const isAnimating = useRef(false);
 
+  // Track if component is mounted
+  const isMountedRef = useRef(true);
+
   // Improved function to update the progress value with animation
   const updateProgress = useCallback(
     (newPercentage: number) => {
-      'worklet';
-      // Validate input to ensure it's a number
-      if (typeof newPercentage !== 'number') {
-        return () => {}; // Return empty cleanup function
-      }
-
-      // Skip animation if value isn't changing significantly
-      if (Math.abs(progress.value - newPercentage) < 0.5) {
-        return () => {};
-      }
-
-      // Cancel any ongoing animations before starting a new one
-      cancelAnimation(progress);
-
-      // Mark that animation has been requested and is in progress
+      // Set animation state on JS thread
       hasAnimated.current = true;
       isAnimating.current = true;
 
-      // Use withTiming for smooth animation to the new value
-      progress.value = withTiming(
-        newPercentage,
-        {
-          duration: duration,
-          easing: TIMING_CONFIG.SLOW.easing,
-        },
-        finished => {
-          // Animation is complete
-          if (finished) {
-            runOnJS(() => {
+      // Run animation on UI thread
+      runOnUI(() => {
+        'worklet';
+        // Validate input to ensure it's a number
+        if (typeof newPercentage !== 'number') {
+          runOnJS(() => {
+            if (isMountedRef.current) {
               isAnimating.current = false;
-            })();
-          }
+            }
+          })();
+          return;
         }
-      );
+
+        // Skip animation if value isn't changing significantly
+        if (Math.abs(progress.value - newPercentage) < 0.5) {
+          runOnJS(() => {
+            if (isMountedRef.current) {
+              isAnimating.current = false;
+            }
+          })();
+          return;
+        }
+
+        // Cancel any ongoing animations before starting a new one
+        cancelAnimation(progress);
+
+        // Use withTiming for smooth animation to the new value
+        progress.value = withTiming(
+          newPercentage,
+          {
+            duration: duration,
+            easing: TIMING_CONFIG.SLOW.easing,
+          },
+          finished => {
+            // Animation is complete
+            if (finished) {
+              runOnJS(() => {
+                if (isMountedRef.current) {
+                  isAnimating.current = false;
+                }
+              })();
+            }
+          }
+        );
+      })();
 
       // Return cleanup function that cancels the animation if needed
       return () => {
-        isAnimating.current = false;
-        cancelAnimation(progress);
+        if (isMountedRef.current) {
+          isAnimating.current = false;
+          runOnUI(() => {
+            'worklet';
+            cancelAnimation(progress);
+          })();
+        }
       };
     },
     [progress, duration]
@@ -90,12 +114,15 @@ export const useProgressAnimation = (
 
   // Function to reset progress to initial value
   const reset = useCallback(() => {
-    'worklet';
-    // Cancel any in-progress animations before resetting
-    cancelAnimation(progress);
-    progress.value = initialPercentage;
     hasAnimated.current = false;
     isAnimating.current = false;
+
+    runOnUI(() => {
+      'worklet';
+      // Cancel any in-progress animations before resetting
+      cancelAnimation(progress);
+      progress.value = initialPercentage;
+    })();
   }, [progress, initialPercentage]);
 
   // Create animated style based on the progress value
@@ -109,6 +136,7 @@ export const useProgressAnimation = (
   useEffect(() => {
     return () => {
       // Cancel any ongoing animations to prevent memory leaks
+      isMountedRef.current = false;
       cancelAnimation(progress);
       hasAnimated.current = false;
       isAnimating.current = false;

@@ -3,10 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
-import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/Loader';
@@ -16,7 +13,7 @@ import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
 import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,7 +29,6 @@ export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
   const colors = useColors();
   const queryClient = useQueryClient();
-  const insets = useSafeAreaInsets();
   const { prefetchVocabularyData } = useAppPreloader();
   const headerHeight = useHeaderHeight();
 
@@ -118,17 +114,6 @@ export default function VocabularyScreen(): JSX.Element {
   const isDataCached = useMemo(() => {
     return !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   }, [user?.id, queryClient]);
-
-  // Check if data is ready to display with loading protection
-  const isDataReady = useMemo(() => {
-    if (!user?.id) return false;
-
-    // Consider data ready only when we have a definitive state
-    if (isDataLoading) return false;
-    if (isFetching && !isDataCached) return false;
-
-    return true;
-  }, [user?.id, isDataLoading, isFetching, isDataCached]);
 
   // Determine if we should show empty state
   const shouldShowEmptyState = useMemo(() => {

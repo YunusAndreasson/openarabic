@@ -1,3 +1,4 @@
+import { useHeaderHeight } from '@react-navigation/elements';
 import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle, memo } from 'react';
@@ -6,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticleListProps } from '@/types/ui/article.types';
 
-import { LAYOUT, getHeaderHeight } from '../../constants/layout';
+import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
 import ThemedCard from '../ThemedCard';
@@ -63,6 +64,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const colors = useColors();
     const listRef = useRef<FlashList<Article>>(null);
     const insets = useSafeAreaInsets();
+    const headerHeight = useHeaderHeight();
 
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
@@ -86,10 +88,16 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           colors={[colors.tint]}
           tintColor={colors.tint}
           progressBackgroundColor={colors.background}
-          progressViewOffset={getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE}
+          progressViewOffset={
+            headerHeight +
+            LAYOUT.SPACING.TINY +
+            LAYOUT.SPACING.SMALL +
+            LAYOUT.SPACING.XXLARGE +
+            LAYOUT.BUTTON.HEIGHT.MEDIUM
+          }
         />
       ),
-      [isRefreshing, onRefresh, colors.tint, colors.background, insets]
+      [isRefreshing, onRefresh, colors.tint, colors.background, headerHeight]
     );
 
     const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;

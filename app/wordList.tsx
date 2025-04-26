@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
-import { useLocalSearchParams, router, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useCallback, useMemo, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -95,11 +95,6 @@ export default function WordListScreen(): JSX.Element {
       </View>
     );
   }, [isLoading, colors.tint]);
-
-  // Handle back button press
-  const handleBackPress = useCallback(() => {
-    router.back();
-  }, []);
 
   // List header component with category info card
   const ListHeaderComponent = useCallback(() => {

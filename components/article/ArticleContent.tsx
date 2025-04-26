@@ -1,4 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
+import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
@@ -11,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/ThemedText';
 import { ArticleHeader } from '@/components/article/ArticleHeader';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -70,6 +71,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     ref
   ): JSX.Element => {
     const insets = useSafeAreaInsets();
+    const headerHeight = useHeaderHeight();
     const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
     const { scrollToSentence: scrollToSentenceParam } = useLocalSearchParams<{
       scrollToSentence?: string;
@@ -102,7 +104,14 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           animated: true,
           viewPosition: 0.3,
           // Push first sentence higher to ensure visibility above the header
-          viewOffset: index === 0 ? getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE : 0,
+          viewOffset:
+            index === 0
+              ? headerHeight +
+                LAYOUT.SPACING.TINY +
+                LAYOUT.SPACING.XLARGE +
+                LAYOUT.SPACING.XXLARGE +
+                LAYOUT.BUTTON.HEIGHT.MEDIUM
+              : 0,
         });
       }, 100);
     };
@@ -143,7 +152,12 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
                 paddingHorizontal: LAYOUT.SPACING.SMALL,
-                paddingTop: getHeaderHeight(insets) + LAYOUT.SPACING.XXLARGE * 2.5,
+                paddingTop:
+                  headerHeight +
+                  LAYOUT.SPACING.TINY +
+                  LAYOUT.SPACING.XLARGE +
+                  LAYOUT.SPACING.XXLARGE * 2.5 +
+                  LAYOUT.BUTTON.HEIGHT.MEDIUM,
                 paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
               }}
               onScroll={handleScroll}

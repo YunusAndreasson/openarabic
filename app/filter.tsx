@@ -167,9 +167,6 @@ function FilterScreenContent() {
     isArticlesLoading ||
     (type === 'author' && isAuthorLoading) ||
     (type === 'category' && isCategoryLoading);
-  const isDataReady = useMemo(() => {
-    return articles?.length > 0 || error !== null;
-  }, [articles, error]);
   const fadeInStyle = { opacity: 1 };
   const { navigateTo } = useNavigationWithDebounce();
   const handleRefresh = useCallback(() => {

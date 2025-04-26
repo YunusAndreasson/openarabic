@@ -1,3 +1,4 @@
+import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback, memo } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
@@ -5,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 
-import { LAYOUT, getHeaderHeight } from '../../constants/layout';
+import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -149,6 +150,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const isDarkMode = useIsDarkMode();
+  const navHeaderHeight = useHeaderHeight();
 
   // Determine the header title based on selected filters
   const headerTitle = useMemo(() => {
@@ -166,7 +168,10 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   }, [selectedAuthor, selectedCategory, isLoading]);
 
   // Calculate header height for spacer
-  const headerHeight = useMemo(() => getHeaderHeight(insets), [insets]);
+  const headerHeight = useMemo(
+    () => navHeaderHeight + 20 + LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    [navHeaderHeight]
+  );
 
   const renderItemCallback = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
@@ -188,7 +193,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 
   // Create a header spacer component
   const HeaderSpacer = useMemo(() => {
-    return <View style={[styles.headerSpacer, { height: headerHeight + 20 }]} />;
+    return <View style={[styles.headerSpacer, { height: headerHeight }]} />;
   }, [headerHeight]);
 
   // Calculate the estimated item height based on content + padding + margins

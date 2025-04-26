@@ -294,12 +294,21 @@ export const useTransformAnimation = (
   }, [value, startPosition]);
 
   // Create the appropriate animated style based on transform type
-  const animatedStyle = useAnimatedStyle(
-    () => ({
-      transform: [type === 'scale' ? { scale: value.value } : { translateX: value.value }],
-    }),
-    [type]
-  );
+  const animatedStyle = useAnimatedStyle(() => {
+    switch (type) {
+      case 'scale':
+        return { transform: [{ scale: value.value }] };
+      case 'slide':
+      case 'translateX':
+        return { transform: [{ translateX: value.value }] };
+      case 'translateY':
+        return { transform: [{ translateY: value.value }] };
+      case 'rotate':
+        return { transform: [{ rotate: `${value.value}deg` }] };
+      default:
+        return { transform: [{ scale: value.value }] };
+    }
+  }, [type, value]);
 
   // Cleanup animations on unmount
   useEffect(() => {

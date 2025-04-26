@@ -16,7 +16,7 @@ import { LoadingScreen } from '@/components/Loader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
@@ -55,18 +55,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
   },
-  activeCard: {
-    borderLeftWidth: 3,
-    elevation: 6,
-    shadowOpacity: LAYOUT.OPACITY.MEDIUM,
-    shadowRadius: 8,
-  },
-  activeIcon: {
-    opacity: LAYOUT.OPACITY.DIMMED,
-  },
-  authorText: {
-    flex: 1,
-  },
   bottomControlsContainer: {
     bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     left: LAYOUT.SCREEN_EDGE_PADDING,
@@ -76,29 +64,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
-  },
-  card: {
-    overflow: 'hidden',
-  },
-  cardContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    position: 'relative',
-  },
-  cardContent: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  cardProgressBar: {
-    height: '100%',
-  },
-  cardProgressContainer: {
-    bottom: 0,
-    height: 4,
-    left: 0,
-    overflow: 'hidden',
-    position: 'absolute',
-    width: '100%',
   },
   container: {
     flex: 1,
@@ -122,38 +87,8 @@ const styles = StyleSheet.create({
   fullWidthButton: {
     width: '100%',
   },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 4,
-  },
-  inactiveIcon: {
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  metaRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.TINY,
-  },
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-  },
-  textContent: {
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  timeContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  timeText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    marginLeft: LAYOUT.SPACING.TINY,
-  },
-  titleText: {
-    marginBottom: LAYOUT.SPACING.TINY,
   },
 });
 
@@ -342,14 +277,6 @@ export default function BookmarksScreen(): JSX.Element {
     if (isReadingListLoading || (isReadingListFetching && !isDataCached)) return false;
     return !readingList || readingList.length === 0;
   }, [isReadingListLoading, isReadingListFetching, isDataCached, readingList]);
-
-  // Check if data is ready to display
-  const isDataReady = useMemo(() => {
-    if (!user?.id) return false;
-    if (isReadingListLoading) return false;
-    if (isReadingListFetching && !isDataCached) return false;
-    return true;
-  }, [user?.id, isReadingListLoading, isReadingListFetching, isDataCached]);
 
   // Replace the import and usage of useScreenAnimation with a simple style
   const fadeInStyle = { opacity: 1 };

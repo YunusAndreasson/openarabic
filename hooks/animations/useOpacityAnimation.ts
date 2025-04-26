@@ -266,11 +266,11 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     if (autoStart && isMountedRef.current) {
       runOnUI(() => {
         'worklet';
-        opacity.value = validInitialOpacity;
+        // Set directly to target without initial flash to prevent visual glitch
         opacity.value = withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig));
       })();
     }
-  }, [autoStart, validInitialOpacity, opacity, timingConfig]);
+  }, [autoStart, opacity, timingConfig]);
 
   return {
     opacity,

@@ -5,7 +5,6 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, memo } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
@@ -15,7 +14,7 @@ import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { Toggle } from '@/components/Toggle';
-import { LAYOUT, getHeaderHeight } from '@/constants/layout';
+import { LAYOUT } from '@/constants/layout';
 import { useLoadingState } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
@@ -54,7 +53,6 @@ Divider.displayName = 'Divider';
 export default function SettingsScreen(): JSX.Element {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
-  const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
   // Simple loading state for session loading
