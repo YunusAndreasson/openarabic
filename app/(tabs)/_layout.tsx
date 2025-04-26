@@ -48,6 +48,10 @@ const TAB_SCREENS = [
 const ICON_SIZE = 24;
 const BLUR_INTENSITY = 55;
 
+const LIGHT_MODE_SHADOW_COLOR = 'rgba(0,0,0,0.06)';
+const LIGHT_MODE_SHADOW_OPACITY = 1;
+const LIGHT_MODE_SHADOW_RADIUS = 10;
+
 type PlatformStyle = {
   shadowOffset?: { width: number; height: number };
   shadowOpacity?: number;
@@ -56,24 +60,31 @@ type PlatformStyle = {
   elevation?: number;
 };
 
-const PLATFORM_STYLES: PlatformStyle =
-  Platform.select({
-    ios: {
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: LAYOUT.OPACITY.DIMMED / 2,
-      shadowRadius: LAYOUT.SPACING.SMALL / 2,
-      borderTopWidth: StyleSheet.hairlineWidth,
-    },
-    android: {
-      borderTopWidth: StyleSheet.hairlineWidth,
-      elevation: 8,
-    },
-  }) ?? {};
-
 const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
-  const insets = useSafeAreaInsets();
   const isDarkMode = useIsDarkMode();
+  const insets = useSafeAreaInsets();
+
+  const PLATFORM_STYLES: PlatformStyle =
+    Platform.select({
+      ios: isDarkMode
+        ? {
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.12,
+            shadowRadius: 8,
+            borderTopWidth: StyleSheet.hairlineWidth,
+          }
+        : {
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: LIGHT_MODE_SHADOW_OPACITY,
+            shadowRadius: LIGHT_MODE_SHADOW_RADIUS,
+            borderTopWidth: StyleSheet.hairlineWidth,
+          },
+      android: {
+        borderTopWidth: StyleSheet.hairlineWidth,
+        elevation: 8,
+      },
+    }) ?? {};
 
   const bottomInset = useMemo(
     () =>
@@ -92,10 +103,12 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       ...PLATFORM_STYLES,
       borderTopColor: colors.borderOverlay,
       ...(Platform.OS === 'ios'
-        ? { shadowColor: colors.shadow }
+        ? {
+            shadowColor: isDarkMode ? colors.shadow : LIGHT_MODE_SHADOW_COLOR,
+          }
         : { backgroundColor: colors.background }),
     }),
-    [colors.shadow, colors.background, colors.borderOverlay, bottomInset]
+    [colors.shadow, colors.background, colors.borderOverlay, bottomInset, isDarkMode]
   );
 
   const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
