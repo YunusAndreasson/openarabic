@@ -27,11 +27,13 @@ export function useAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
-  const [lastRefresh, setLastRefresh] = useState<number>(Date.now());
 
   // Function to fetch the session that can be called on demand
   const fetchSession = useCallback(async (): Promise<UserSession | null> => {
     try {
+      // Initialize auth to ensure storage is loaded
+      await supabase.auth.initialize();
+
       const {
         data: { session: fetchedSession },
         error,
@@ -52,18 +54,20 @@ export function useAuth(): AuthResult {
   // Refresh session function that can be called from components
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
+
     try {
-      // First try refreshing the token
+      // Initialize auth to ensure storage is loaded
+      await supabase.auth.initialize();
+
+      // Let Supabase handle the refresh
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError) {
         // If refresh fails, try getting the current session
         const fetchedSession = await fetchSession();
-
         if (fetchedSession) {
           setSession(fetchedSession);
           setAuthError(null);
-          setLastRefresh(Date.now());
           return fetchedSession;
         } else {
           throw new Error('Could not refresh or retrieve session');
@@ -73,7 +77,6 @@ export function useAuth(): AuthResult {
       if (refreshData.session) {
         setSession(refreshData.session);
         setAuthError(null);
-        setLastRefresh(Date.now());
         return refreshData.session;
       } else {
         setSession(null);
@@ -87,31 +90,6 @@ export function useAuth(): AuthResult {
     }
   }, [fetchSession]);
 
-  // Set up automatic token refresh
-  useEffect(() => {
-    // Check if session is about to expire and refresh it
-    const checkTokenExpiration = async () => {
-      if (!session?.expires_at) return;
-
-      const expiresAt = session.expires_at * 1000; // Convert to milliseconds
-      const now = Date.now();
-      const timeUntilExpiry = expiresAt - now;
-
-      // If token expires in less than 5 minutes or hasn't been refreshed in 30 minutes, refresh it
-      if (timeUntilExpiry < 5 * 60 * 1000 || now - lastRefresh > 30 * 60 * 1000) {
-        await refreshSession();
-      }
-    };
-
-    // Check on mount and then periodically
-    checkTokenExpiration();
-    const intervalId = setInterval(checkTokenExpiration, 60 * 1000); // Check every minute
-
-    return () => {
-      clearInterval(intervalId);
-    };
-  }, [session, refreshSession, lastRefresh]);
-
   useEffect(() => {
     let isMounted = true;
 
@@ -121,6 +99,7 @@ export function useAuth(): AuthResult {
       setIsLoading(true);
 
       try {
+        // Initialize auth to ensure storage is loaded
         await supabase.auth.initialize();
         if (!isMounted) return;
 
@@ -130,7 +109,6 @@ export function useAuth(): AuthResult {
         if (fetchedSession) {
           setSession(fetchedSession);
           setAuthError(null);
-          setLastRefresh(Date.now());
         } else {
           setSession(null);
         }
@@ -150,24 +128,28 @@ export function useAuth(): AuthResult {
 
     // Handle app state changes
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active') {
+      if (nextAppState === 'active' && isMounted) {
+        // When app becomes active, refresh the session
         refreshSession();
       }
     });
 
+    // Listen for auth state changes
     const {
       data: { subscription: authSubscription },
-    } = supabase.auth.onAuthStateChange(async (_event, newSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
-      if (newSession) {
-        setSession(newSession);
-        setAuthError(null);
-        setLastRefresh(Date.now());
-      } else {
+      if (event === 'SIGNED_OUT') {
         setSession(null);
+        setIsLoading(false);
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (newSession) {
+          setSession(newSession);
+          setAuthError(null);
+        }
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => {

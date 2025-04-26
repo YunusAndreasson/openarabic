@@ -1,6 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import type { User, Session } from '@supabase/supabase-js';
 import { createClient } from '@supabase/supabase-js';
 import { AppState } from 'react-native';
 
@@ -9,15 +9,9 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
-// Constant for session refresh interval (every 6 days to stay within 7-day max)
-const THIRTY_MINUTES_MS = 30 * 60 * 1000;
-
-// Store refresh interval ID
-let refreshIntervalId: ReturnType<typeof setInterval> | null = null;
-
 /**
  * Supabase client configuration and initialization
- * Handles authentication state persistence and auto-refresh
+ * Relies on Supabase's built-in session management
  */
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -26,80 +20,26 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     detectSessionInUrl: false,
     flowType: 'pkce',
-    // More aggressive session refresh settings
-    storageKey: 'supabase.auth.token',
   },
 });
 
-// Set up auth state change listener to manage auto-refresh
-supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-  // Clear any existing refresh interval
-  if (refreshIntervalId) {
-    clearInterval(refreshIntervalId);
-    refreshIntervalId = null;
-  }
-
-  if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
-    // Start auto-refresh when signed in or token refreshed
-    supabase.auth.startAutoRefresh();
-
-    // Set up periodic session refresh to prevent expiration
-    if (session) {
-      // More frequent refresh interval
-      refreshIntervalId = setInterval(async () => {
-        try {
-          const { error } = await supabase.auth.refreshSession();
-          if (error) {
-            // If refresh fails, try to get current session
-            const { data } = await supabase.auth.getSession();
-            if (!data.session && refreshIntervalId) {
-              clearInterval(refreshIntervalId);
-              refreshIntervalId = null;
-            }
-          }
-        } catch (err) {
-          handleError(err instanceof Error ? err : new Error(String(err)), {
-            toastMessage: 'Failed to refresh session',
-            analyticsEventName: 'Auth_Refresh_Error',
-            sentrySeverity: 'warning',
-          });
-        }
-      }, THIRTY_MINUTES_MS); // Refresh every 30 minutes instead of 6 days
-    }
-  } else if (event === 'SIGNED_OUT') {
-    // Stop auto-refresh when signed out
-    supabase.auth.stopAutoRefresh();
-  }
-});
-
-// Handle app state changes for session persistence
+// Simple AppState handler to ensure auth is maintained
 AppState.addEventListener('change', async state => {
   if (state === 'active') {
-    // When app becomes active, check and refresh session if needed
     try {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
-      if (error) {
-        return;
-      }
-
-      if (session) {
-        // Start auto-refresh and manually refresh session
-        supabase.auth.startAutoRefresh();
-        await supabase.auth.refreshSession();
-      }
+      // Initialize auth to ensure storage is loaded
+      await supabase.auth.initialize();
+      // Ensure auto-refresh is active
+      supabase.auth.startAutoRefresh();
     } catch (err) {
       handleError(err instanceof Error ? err : new Error(String(err)), {
-        toastMessage: 'Failed to refresh session',
-        analyticsEventName: 'Auth_Refresh_Error',
+        toastMessage: 'Failed to initialize session',
+        analyticsEventName: 'Auth_Init_Error',
         sentrySeverity: 'warning',
       });
     }
-  } else {
-    supabase.auth.stopAutoRefresh();
   }
+  // Don't stop auto-refresh in background to maintain session
 });
 
 /**
@@ -111,6 +51,9 @@ async function tryRefreshSession(
   expectedUserId?: string
 ): Promise<{ session: Session; user: User } | null> {
   try {
+    // Initialize auth to ensure storage is loaded
+    await supabase.auth.initialize();
+    // Use Supabase's built-in refresh
     const { data, error } = await supabase.auth.refreshSession();
 
     if (error || !data.session) {
@@ -145,6 +88,9 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   session: Session;
   user: User;
 }> {
+  // Initialize auth to ensure storage is loaded
+  await supabase.auth.initialize();
+
   const { data, error } = await supabase.auth.getSession();
 
   if (error) {
