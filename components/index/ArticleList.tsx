@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   articleItemContainer: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingVertical: 0,
   },
   container: {
     flex: 1,

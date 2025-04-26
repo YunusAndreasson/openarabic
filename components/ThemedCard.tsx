@@ -68,7 +68,6 @@ const styles = StyleSheet.create({
     }),
   },
   contentContainer: {
-    marginTop: -LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.MEDIUM,

@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
   },
   container: {
     marginBottom: LAYOUT.SPACING.LARGE,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: 0,
   },
 });
 
