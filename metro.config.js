@@ -1,8 +1,9 @@
-const { getDefaultConfig } = require('@expo/metro-config');
-const path = require('path');
+const { getDefaultConfig } = require('expo/metro-config');
 
-const projectRoot = path.resolve(__dirname);
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname);
 
-const config = getDefaultConfig(projectRoot);
+// Disable package exports resolution to avoid Node.js module issues
+config.resolver.unstable_enablePackageExports = false;
 
 module.exports = config;
