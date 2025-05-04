@@ -8,24 +8,11 @@ module.exports = {
     'plugin:import/errors',
     'plugin:import/warnings',
     'plugin:import/typescript',
-    'plugin:jest/recommended',
     'expo',
-    'prettier',
   ],
   parser: '@typescript-eslint/parser',
-  plugins: [
-    'prettier',
-    'react-native',
-    '@typescript-eslint',
-    'react',
-    'react-hooks',
-    'import',
-    'jest',
-    'sonarjs',
-    'optimize-regex',
-  ],
+  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'react-native', 'import'],
   rules: {
-    'prettier/prettier': 'warn',
     'no-unused-vars': 'off',
     '@typescript-eslint/no-unused-vars': 'warn',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
@@ -65,8 +52,6 @@ module.exports = {
     'import/no-unresolved': 'warn',
     'import/named': 'warn',
     'import/no-duplicates': 'warn',
-
-    // Performance rules
     'react/no-unstable-nested-components': ['warn', { allowAsProps: true }],
     'react/jsx-no-constructed-context-values': 'warn',
     'react/no-unused-prop-types': 'warn',
@@ -78,21 +63,11 @@ module.exports = {
     'react/no-invalid-html-attribute': 'warn',
     'react/no-namespace': 'warn',
     'react/jsx-no-duplicate-props': ['error', { ignoreCase: true }],
-
-    // Code quality
-    'sonarjs/no-identical-functions': 'off',
-    'sonarjs/cognitive-complexity': 'off',
-    'sonarjs/no-redundant-jump': 'off',
-
-    // Regular expression optimization
-    'optimize-regex/optimize-regex': 'off',
   },
   ignorePatterns: ['/dist/*', 'node_modules', '.expo', '.github', '*.config.js', '*.d.ts'],
   env: {
     node: true,
-    browser: true,
     'react-native/react-native': true,
-    jest: true,
   },
   settings: {
     react: {

@@ -51,3 +51,4 @@ translate/audio_cache/
 translate/__pycache__/
 translate/reports/
 translate/article/
+translate/translation_checkpoint.json

@@ -14,20 +14,11 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "allowJs": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "verbatimModuleSyntax": true,
-    "jsx": "react-native",
-    "target": "ES2024",
-    "useDefineForClassFields": true,
+    "lib": ["ESNext"],
     "incremental": true,
     "composite": true,
-    "removeComments": true
+    "removeComments": true,
+    "types": ["react", "react-native"]
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
   "exclude": [
