@@ -867,11 +867,12 @@ export function useSentenceAudioPlayer(): {
 
         preloadedSoundsRef.current = [];
 
-        // Preload all audio files for smoother playback between sentences
-        // This is especially important for continuous playback
+        // Only preload the first few files instead of all files
+        // This prevents resource exhaustion with large batches
+        const PRELOAD_WINDOW_SIZE = 3;
         const preloadPromises = [];
 
-        for (let i = 0; i < sentences.length; i++) {
+        for (let i = 0; i < sentences.length && i < PRELOAD_WINDOW_SIZE; i++) {
           const sentence = sentences[i];
           if (!sentence?.audioUrl) {
             preloadedSoundsRef.current[i] = null;
