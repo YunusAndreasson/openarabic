@@ -104,16 +104,11 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     [HANDLE_SIZE, colors.background, shadowStyle]
   );
 
-  // Instead of immediately rendering the animated view, position the handle directly
-  const initialHandleStyle = value ? { transform: [{ translateX: TRAVEL_DISTANCE }] } : {};
-
   return (
     <TouchableOpacity onPress={handlePress} activeOpacity={1}>
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
-          <Animated.View
-            style={[handleStyle, isMounted.current ? handleAnimatedStyle : initialHandleStyle]}
-          />
+          <Animated.View style={[handleStyle, handleAnimatedStyle]} />
         </View>
       </Animated.View>
     </TouchableOpacity>

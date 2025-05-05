@@ -50,7 +50,7 @@ const Divider = memo(() => {
 });
 Divider.displayName = 'Divider';
 
-export default function SettingsScreen(): JSX.Element {
+const SettingsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const headerHeight = useHeaderHeight();
@@ -355,7 +355,7 @@ export default function SettingsScreen(): JSX.Element {
       </ThemedView>
     </ThemedView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   actionButton: {
@@ -472,3 +472,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export default SettingsScreen;
