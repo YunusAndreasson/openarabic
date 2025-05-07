@@ -24,7 +24,7 @@ import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { setDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
-import { fetchInProgressArticles } from '@/store/readingListSlice';
+import { fetchInProgressArticles, updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
 import {
   filterArticles,
@@ -205,19 +205,15 @@ export default function ArticlesScreen(): JSX.Element {
 
   const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
 
-  const sortedInProgressArticles = useMemo(() => {
-    if (!inProgressArticles?.length) return [];
-
-    return [...inProgressArticles]
-      .sort((a, b) => {
-        const aDate = lastOpenedArticles?.[a.id] || '';
-        const bDate = lastOpenedArticles?.[b.id] || '';
-        const aTime = aDate ? new Date(aDate).getTime() : 0;
-        const bTime = bDate ? new Date(bDate).getTime() : 0;
-        return bTime - aTime;
-      })
-      .slice(0, 20);
-  }, [inProgressArticles, lastOpenedArticles]);
+  const continueReadingArticles = useMemo(() => {
+    const sortedIds = Object.entries(lastOpenedArticles)
+      .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
+      .map(([id]) => Number(id));
+    const articles = sortedIds
+      .map(id => articlesData.find(a => a.id === id))
+      .filter(Boolean) as Article[];
+    return articles.slice(0, 5);
+  }, [lastOpenedArticles, articlesData]);
 
   const isFetching = isArticlesFetching;
 
@@ -241,9 +237,13 @@ export default function ArticlesScreen(): JSX.Element {
     }
   }, [queryClient, isFetching]);
 
-  const handleArticlePress = useCallback((article: Article) => {
-    router.push(`/article/${article.id}`);
-  }, []);
+  const handleArticlePress = useCallback(
+    (article: Article) => {
+      dispatch(updateLastOpenedArticle(article.id));
+      router.push(`/article/${article.id}`);
+    },
+    [dispatch]
+  );
 
   const handleSelectAuthor = useCallback((authorId: number) => {
     router.push(`/filter?type=author&id=${authorId}`);
@@ -281,33 +281,17 @@ export default function ArticlesScreen(): JSX.Element {
   }, [articlesData, articlesError, handleArticlePress, dailyPick.articleId]);
 
   const ContinueReadingSection = useMemo(() => {
-    if (sortedInProgressArticles.length === 0) return null;
-
-    const mappedArticles = sortedInProgressArticles.map(inProgressArticle => {
-      const fullArticle = articlesData.find(a => a.id === inProgressArticle.id);
-
-      return {
-        ...inProgressArticle,
-        author: fullArticle?.author || null,
-        content_hash: '',
-        difficulty_level: 0,
-        source: '',
-        summary: '',
-        category: fullArticle?.category || { id: 0, name: 'Uncategorized' },
-        word_timings: [],
-      };
-    });
-
+    if (continueReadingArticles.length === 0) return null;
     return (
       <ArticleSection
         title="Continue Reading"
-        articles={mappedArticles}
+        articles={continueReadingArticles}
         onArticlePress={handleArticlePress}
         hideDifficulty={true}
         getLastOpenedAt={articleId => lastOpenedArticles?.[articleId]}
       />
     );
-  }, [sortedInProgressArticles, lastOpenedArticles, handleArticlePress, articlesData]);
+  }, [continueReadingArticles, lastOpenedArticles, handleArticlePress]);
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
@@ -315,7 +299,7 @@ export default function ArticlesScreen(): JSX.Element {
     return (
       <ArticleSection
         title="Beginner Friendly"
-        articles={beginnerArticles.slice(0, 20)}
+        articles={beginnerArticles.slice(0, 10)}
         onArticlePress={handleArticlePress}
         hideDifficulty={true}
       />
@@ -339,7 +323,7 @@ export default function ArticlesScreen(): JSX.Element {
         id: 'latest-texts',
         component: (
           <LatestTextsSection
-            articles={getLatestArticles(articlesData, 20)}
+            articles={getLatestArticles(articlesData, 7)}
             onArticlePress={handleArticlePress}
           />
         ),

@@ -6,13 +6,12 @@ import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
 import { capitalizeFirstLetter } from '../../utils/stringUtils';
 
-import { RelatedArticlesSection } from './RelatedArticlesSection';
+import ArticleSection from './ArticleSection';
 
 interface RelatedArticlesFooterProps {
   otherArticles: Article[];
   otherCategoryArticles: Article[];
   article: Article | null;
-  renderArticleCard: (article: Article) => React.ReactNode;
   onAuthorPress?: (author: Tables<'authors'>) => void;
   onCategoryPress?: (category: Tables<'categories'>) => void;
 }
@@ -30,7 +29,6 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
   otherArticles,
   otherCategoryArticles,
   article,
-  renderArticleCard,
   onAuthorPress,
   onCategoryPress,
 }): React.ReactElement | null => {
@@ -56,10 +54,13 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
             onPress={onAuthorPress ? handleAuthorPress : undefined}
             disabled={!onAuthorPress}
           >
-            <RelatedArticlesSection
+            <ArticleSection
               title={`By ${article.author.name}`}
               articles={otherArticles}
-              renderArticleCard={renderArticleCard}
+              onArticlePress={onAuthorPress ? handleAuthorPress : () => {}}
+              showTimeAgo={false}
+              vertical={false}
+              hideDifficulty={true}
             />
           </TouchableOpacity>
         </View>
@@ -71,10 +72,13 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
             onPress={onCategoryPress ? handleCategoryPress : undefined}
             disabled={!onCategoryPress}
           >
-            <RelatedArticlesSection
+            <ArticleSection
               title={`In ${capitalizeFirstLetter(article.category.name)}`}
               articles={otherCategoryArticles}
-              renderArticleCard={renderArticleCard}
+              onArticlePress={onCategoryPress ? handleCategoryPress : () => {}}
+              showTimeAgo={false}
+              vertical={false}
+              hideDifficulty={true}
             />
           </TouchableOpacity>
         </View>
