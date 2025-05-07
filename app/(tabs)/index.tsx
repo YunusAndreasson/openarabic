@@ -24,7 +24,7 @@ import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { setDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
-import { fetchInProgressArticles, updateLastOpenedArticle } from '@/store/readingListSlice';
+import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
 import {
   filterArticles,
@@ -140,10 +140,6 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { initialLoadComplete } = useAppLoading();
 
-  useEffect(() => {
-    dispatch(fetchInProgressArticles());
-  }, [dispatch]);
-
   const {
     data: articlesData = [],
     isLoading: isArticlesLoading,
@@ -193,9 +189,7 @@ export default function ArticlesScreen(): JSX.Element {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { inProgressArticles = [], lastOpenedArticles = {} } = useAppSelectorMemo(
-    state => state.readingList
-  );
+  const { lastOpenedArticles = {} } = useAppSelectorMemo(state => state.readingList);
 
   const { dailyPick } = useAppSelectorMemo(state => state.featuredContent);
 
