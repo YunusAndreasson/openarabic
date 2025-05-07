@@ -3,7 +3,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import type { ListRenderItem } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { BlurView } from 'expo-blur';
-import type { ComponentProps } from 'react';
+import type { ComponentProps, JSX } from 'react';
 import React, { memo, useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';

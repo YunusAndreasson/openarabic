@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import { View, StyleSheet } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';

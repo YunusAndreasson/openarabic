@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
 

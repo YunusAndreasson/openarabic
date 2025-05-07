@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
-import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect, JSX } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -184,9 +184,6 @@ function FilterScreenContent() {
     },
     [navigateTo, queryClient]
   );
-  const handleClearFilter = useCallback(() => {
-    router.back();
-  }, []);
   useEffect(() => {
     let title = 'Filtered';
     if (type === 'author' && author?.name) {
@@ -225,7 +222,6 @@ function FilterScreenContent() {
         onArticlePress={handleArticlePress}
         selectedAuthor={type === 'author' ? author : null}
         selectedCategory={type === 'category' ? category : null}
-        onClearFilter={handleClearFilter}
       />
     </Animated.View>
   );

@@ -266,15 +266,10 @@ export const VocabularyGraph = memo(
             <View style={[styles.xAxisLabels, { bottom: LAYOUT.SPACING.TINY }]}>
               {validData.map(item => (
                 <View key={`x-axis-label-${item.date}`} style={styles.labelContainer}>
-                  <ThemedText type="caption" variant="primary" weight="500">
+                  <ThemedText type="caption" variant="primary">
                     {item.date}
                   </ThemedText>
-                  <ThemedText
-                    type="caption"
-                    variant="secondary"
-                    weight="400"
-                    style={styles.wordCount}
-                  >
+                  <ThemedText type="caption" variant="secondary" style={styles.wordCount}>
                     {item.wordsLearned}
                   </ThemedText>
                 </View>

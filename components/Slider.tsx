@@ -1,5 +1,5 @@
 import Slider from '@react-native-community/slider';
-import React from 'react';
+import React, { JSX } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';

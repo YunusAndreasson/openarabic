@@ -5,7 +5,7 @@ import type { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
-import React, { useMemo, useCallback, memo, useEffect } from 'react';
+import React, { useMemo, useCallback, memo, useEffect, JSX } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

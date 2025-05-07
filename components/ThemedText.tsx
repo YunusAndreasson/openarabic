@@ -93,7 +93,7 @@ function ThemedTextComponent({
     const baseStyle = getBaseStyle(type);
     const computedStyle = [
       baseStyle,
-      type === 'link' && !textColor ? { color: colors.link } : textColor && { color: textColor },
+      textColor && { color: textColor },
       weight && { fontWeight: weight },
       align && { textAlign: align },
       style,

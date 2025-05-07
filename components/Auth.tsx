@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, JSX } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';

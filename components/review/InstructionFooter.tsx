@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';

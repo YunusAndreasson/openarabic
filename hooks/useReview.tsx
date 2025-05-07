@@ -172,7 +172,7 @@ export function useReview({
   const isUpdatingWordRef = useRef<boolean>(false);
   const lastProgressUpdateRef = useRef(Date.now());
   const lastProcessedWordIdRef = useRef<string | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerCompletionTransition = useCallback(() => {
     if (completionTriggeredRef.current) return;
@@ -208,7 +208,7 @@ export function useReview({
   const preloadNextAudio = useCallback(async (audioUrl: string) => {
     if (!audioUrl) return;
 
-    clearTimeout(timeoutRef.current);
+    clearTimeout(timeoutRef.current ?? undefined);
     timeoutRef.current = setTimeout(async () => {
       try {
         if (nextWordAudioRef.current?.url === audioUrl && nextWordAudioRef.current.loaded) {

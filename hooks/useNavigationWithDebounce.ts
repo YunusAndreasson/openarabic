@@ -38,7 +38,7 @@ export const useNavigationWithDebounce = (
 ): NavigationWithDebounceReturn => {
   const { debounceDuration = 100 } = options;
   const [isNavigating, setIsNavigating] = useState(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Clean up timeout on unmount
   useEffect(() => {
@@ -62,7 +62,7 @@ export const useNavigationWithDebounce = (
       // Clear any existing timeout first
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
-        timeoutRef.current = undefined;
+        timeoutRef.current = null;
       }
 
       // Set navigating state to prevent multiple clicks
@@ -89,7 +89,7 @@ export const useNavigationWithDebounce = (
       // Reset navigation state after debounce duration
       const timeoutId = setTimeout(() => {
         setIsNavigating(false);
-        timeoutRef.current = undefined;
+        timeoutRef.current = null;
       }, debounceDuration);
 
       timeoutRef.current = timeoutId;

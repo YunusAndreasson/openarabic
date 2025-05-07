@@ -1,1 +1,2 @@
-- [] Fix playback issue for insgle article
+- [x] Fix playback issue for single article
+- [ ] Create logo 

@@ -178,7 +178,7 @@ function AppContent() {
       setIsTransitioning(true);
       hasHiddenSplash.current = true;
 
-      let timeoutId: NodeJS.Timeout | undefined;
+      let timeoutId: any;
       const timeoutPromise = new Promise(resolve => {
         timeoutId = setTimeout(() => {
           Sentry.captureMessage('Splash screen hide timed out', {
@@ -204,7 +204,9 @@ function AppContent() {
           tags: { location: 'splash_screen_hide' },
         });
       } finally {
-        clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
         setIsTransitioning(false);
       }
     }

@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, JSX } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
 import { ScrollView, View, StyleSheet } from 'react-native';
 import type { Edge } from 'react-native-safe-area-context';

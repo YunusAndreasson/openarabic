@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
-import type { ComponentRef } from 'react';
+import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type {
   NativeScrollEvent,

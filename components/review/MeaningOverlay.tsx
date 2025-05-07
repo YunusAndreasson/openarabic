@@ -30,7 +30,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
 
   const colors = useColors();
   const [shouldRender, setShouldRender] = useState(visible);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { animatedStyle, startAnimation, reverseAnimation } = useOpacityAnimation({
     initialOpacity: 0,
@@ -41,7 +41,7 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
   const cleanup = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = undefined;
+      timeoutRef.current = null;
     }
   }, []);
 

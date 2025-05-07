@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 import type { AnimatedStyleProp } from 'react-native-reanimated';

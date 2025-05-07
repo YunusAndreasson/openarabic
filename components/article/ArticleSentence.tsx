@@ -65,11 +65,13 @@ function ArticleSentenceComponent({
 
   const previousWordIdRef = useRef<number | null>(null);
 
-  const wordRefs = useRef<React.RefObject<ComponentRef<typeof TouchableOpacity>>[]>(
-    words.map(() => createRef<ComponentRef<typeof TouchableOpacity>>())
-  );
+  const wordRefs = useRef<Array<React.RefObject<any>>>([]);
 
   const highlightOpacity = useSharedValue(0);
+
+  useEffect(() => {
+    wordRefs.current = words.map(() => createRef<any>());
+  }, [words]);
 
   useEffect(() => {
     if (isHighlighted) {
@@ -113,7 +115,7 @@ function ArticleSentenceComponent({
     const renderWordWithProps = (word: SentenceWord, index: number, isWordHighlighted: boolean) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       if (!wordRefs.current[index]) {
-        wordRefs.current[index] = createRef<ComponentRef<typeof TouchableOpacity>>();
+        wordRefs.current[index] = createRef<any>();
       }
       return renderWord ? (
         renderWord(word, isWordHighlighted, wordRefs.current[index])

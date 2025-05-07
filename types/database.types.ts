@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -52,7 +51,6 @@ export type Database = {
           source: string | null;
           summary: string | null;
           title: string;
-          word_timings: Json | null;
         };
         Insert: {
           audio_url?: string | null;
@@ -66,7 +64,6 @@ export type Database = {
           source?: string | null;
           summary?: string | null;
           title: string;
-          word_timings?: Json | null;
         };
         Update: {
           audio_url?: string | null;
@@ -80,7 +77,6 @@ export type Database = {
           source?: string | null;
           summary?: string | null;
           title?: string;
-          word_timings?: Json | null;
         };
         Relationships: [
           {
@@ -426,6 +422,54 @@ export type Database = {
             columns: ['root_id'];
             isOneToOne: false;
             referencedRelation: 'roots';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      text_staging: {
+        Row: {
+          author_id: number | null;
+          category_id: number | null;
+          created_at: string | null;
+          id: number;
+          source: string | null;
+          source_url: string | null;
+          text_arabic: string;
+          translated: boolean | null;
+        };
+        Insert: {
+          author_id?: number | null;
+          category_id?: number | null;
+          created_at?: string | null;
+          id?: number;
+          source?: string | null;
+          source_url?: string | null;
+          text_arabic: string;
+          translated?: boolean | null;
+        };
+        Update: {
+          author_id?: number | null;
+          category_id?: number | null;
+          created_at?: string | null;
+          id?: number;
+          source?: string | null;
+          source_url?: string | null;
+          text_arabic?: string;
+          translated?: boolean | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'text_staging_author_id_fkey';
+            columns: ['author_id'];
+            isOneToOne: false;
+            referencedRelation: 'authors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'text_staging_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'categories';
             referencedColumns: ['id'];
           },
         ];

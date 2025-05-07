@@ -11,7 +11,8 @@ export type TextTypeName =
   | 'heading3'
   | 'caption'
   | 'label'
-  | 'arabic';
+  | 'arabic'
+  | 'overline';
 export type TextVariant =
   | 'error'
   | 'warning'

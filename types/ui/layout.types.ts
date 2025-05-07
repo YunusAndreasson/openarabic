@@ -193,6 +193,7 @@ export interface StatCardProps extends BaseThemedProps {
   icon?: ComponentProps<typeof Ionicons>['name'];
   animateValue?: boolean;
   style?: StyleProp<ViewStyle>;
+  onPress?: () => void;
 }
 
 /**

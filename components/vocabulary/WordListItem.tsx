@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { format } from 'date-fns';
 import React, { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
