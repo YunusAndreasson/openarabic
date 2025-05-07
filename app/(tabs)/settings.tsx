@@ -289,7 +289,7 @@ const SettingsScreen: React.FC = () => {
               <ThemedButton
                 variant="outlined"
                 title="Twitter"
-                onPress={() => handleSocialLink('https://twitter.com/OpenArabicApp')}
+                onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
                 icon="logo-twitter"
                 textWeight="normal"
                 style={styles.actionButton}
