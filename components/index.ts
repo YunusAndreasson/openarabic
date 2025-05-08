@@ -20,7 +20,6 @@ export { Toggle } from './Toggle';
 export { CustomSlider } from './Slider';
 export { ThemeToggle } from './ThemeToggle';
 export { default as AnimatedItem } from './AnimatedItem';
-export { NotFound } from './NotFound';
 export { EnhancedImage } from './EnhancedImage';
 export { default as Auth } from './Auth';
 

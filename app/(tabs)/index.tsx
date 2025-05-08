@@ -4,7 +4,6 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, memo, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
@@ -247,8 +246,6 @@ export default function ArticlesScreen(): JSX.Element {
     router.push(`/filter?type=category&id=${categoryId}`);
   }, []);
 
-  const fadeInStyle = { opacity: 1 };
-
   useEffect(() => {
     if (articlesError || articlesData.length === 0) return;
 
@@ -300,50 +297,68 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [beginnerArticles, handleArticlePress]);
 
-  const ListHeaderComponent = useMemo(() => {
-    // Filter out authors and categories with no articles
-    const authorsWithArticles = authors.filter(author =>
-      articlesData.some(article => article.author?.id === author.id)
-    );
+  const latestArticlesForSection = useMemo(
+    () => getLatestArticles(articlesData, 7),
+    [articlesData]
+  );
 
-    const categoriesWithArticles = categoriesData.filter(category =>
+  const authorsWithArticles = useMemo(() => {
+    return authors.filter(author => articlesData.some(article => article.author?.id === author.id));
+  }, [authors, articlesData]);
+
+  const categoriesWithArticles = useMemo(() => {
+    return categoriesData.filter(category =>
       articlesData.some(article => article.category?.id === category.id)
     );
+  }, [categoriesData, articlesData]);
 
+  const latestTextsSectionComponent = useMemo(
+    () =>
+      latestArticlesForSection.length > 0 ? (
+        <LatestTextsSection
+          articles={latestArticlesForSection}
+          onArticlePress={handleArticlePress}
+        />
+      ) : null,
+    [latestArticlesForSection, handleArticlePress]
+  );
+
+  const authorFilterComponent = useMemo(
+    () =>
+      authorsWithArticles.length > 0 ? (
+        <FilterSection title="Authors" items={authorsWithArticles} onSelect={handleSelectAuthor} />
+      ) : null,
+    [authorsWithArticles, handleSelectAuthor]
+  );
+
+  const categoryFilterComponent = useMemo(
+    () =>
+      categoriesWithArticles.length > 0 ? (
+        <FilterSection
+          title="Categories"
+          items={categoriesWithArticles}
+          onSelect={handleSelectCategory}
+        />
+      ) : null,
+    [categoriesWithArticles, handleSelectCategory]
+  );
+
+  const ListHeaderComponent = useMemo(() => {
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
       { id: 'continue-reading', component: ContinueReadingSection },
       {
         id: 'latest-texts',
-        component: (
-          <LatestTextsSection
-            articles={getLatestArticles(articlesData, 7)}
-            onArticlePress={handleArticlePress}
-          />
-        ),
+        component: latestTextsSectionComponent,
       },
       { id: 'beginner-friendly', component: BeginnerFriendlySection },
       {
         id: 'author-filter',
-        component:
-          authorsWithArticles.length > 0 ? (
-            <FilterSection
-              title="Authors"
-              items={authorsWithArticles}
-              onSelect={handleSelectAuthor}
-            />
-          ) : null,
+        component: authorFilterComponent,
       },
       {
         id: 'category-filter',
-        component:
-          categoriesWithArticles.length > 0 ? (
-            <FilterSection
-              title="Categories"
-              items={categoriesWithArticles}
-              onSelect={handleSelectCategory}
-            />
-          ) : null,
+        component: categoryFilterComponent,
       },
     ];
 
@@ -360,12 +375,9 @@ export default function ArticlesScreen(): JSX.Element {
     DailyPick,
     ContinueReadingSection,
     BeginnerFriendlySection,
-    articlesData,
-    authors,
-    categoriesData,
-    handleArticlePress,
-    handleSelectAuthor,
-    handleSelectCategory,
+    latestTextsSectionComponent,
+    authorFilterComponent,
+    categoryFilterComponent,
   ]);
 
   const EmptyStateComponent = useMemo(() => null, []);
@@ -399,30 +411,23 @@ export default function ArticlesScreen(): JSX.Element {
   }
 
   return (
-    <Animated.View
-      style={[styles.container, fadeInStyle]}
-      entering={FadeIn.duration(300).springify().damping(14).stiffness(100)}
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
     >
-      <ThemedView
-        style={styles.container}
-        includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Articles browse screen"
-        accessibilityRole="scrollbar"
-      >
-        <ArticleList
-          articles={[]}
-          isLoading={isArticlesLoading}
-          isRefreshing={isRefreshing}
-          onRefresh={handleRefresh}
-          onArticlePress={handleArticlePress}
-          ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
-          ListEmptyComponent={EmptyStateComponent}
-          contentContainerStyle={getContentContainerStyle(colors)}
-          hideMainList={isArticlesLoading && !isDataCached}
-          hideWhileRefreshing={false}
-        />
-      </ThemedView>
-    </Animated.View>
+      <ArticleList
+        articles={[]}
+        isLoading={isArticlesLoading}
+        isRefreshing={isRefreshing}
+        onRefresh={handleRefresh}
+        onArticlePress={handleArticlePress}
+        ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
+        ListEmptyComponent={EmptyStateComponent}
+        contentContainerStyle={getContentContainerStyle(colors)}
+        hideMainList={isArticlesLoading && !isDataCached}
+        hideWhileRefreshing={false}
+      />
+    </ThemedView>
   );
 }

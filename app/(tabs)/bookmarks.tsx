@@ -5,7 +5,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo, JSX } from 'react';
 import { StyleSheet, View, RefreshControl } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
@@ -190,7 +189,7 @@ const BottomControls = memo(
       <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
           <View style={styles.controlsLabelContainer}>
-            <ThemedText type="caption" variant="secondary">
+            <ThemedText type="overline" variant="secondary">
               AUDIO CONTROLS
             </ThemedText>
           </View>
@@ -286,9 +285,6 @@ export default function BookmarksScreen(): JSX.Element {
     if (isReadingListLoading || (isReadingListFetching && !isDataCached)) return false;
     return !readingList || readingList.length === 0;
   }, [isReadingListLoading, isReadingListFetching, isDataCached, readingList]);
-
-  // Replace the import and usage of useScreenAnimation with a simple style
-  const fadeInStyle = { opacity: 1 };
 
   const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],
@@ -444,85 +440,81 @@ export default function BookmarksScreen(): JSX.Element {
   // Show empty state with animation
   if (hasNoBookmarks) {
     return (
-      <Animated.View style={[styles.flexOne, fadeInStyle]}>
-        <ThemedView
-          style={styles.container}
-          includeBottomInset={false}
-          safeAreaEdges={['left', 'right']}
-        >
-          <ThemedView style={styles.emptyStateContainer}>
-            <EmptyState
-              title="Save for Later"
-              description="Bookmark articles to listen and read anytime"
-              colors={colors}
-              icon="book-outline"
-            />
-          </ThemedView>
-        </ThemedView>
-      </Animated.View>
-    );
-  }
-
-  return (
-    <Animated.View style={[styles.flexOne, fadeInStyle]}>
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
       >
-        <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
-          <FlashList
-            ref={flashListRef}
-            data={dedupedReadingList}
-            extraData={flashListExtraData}
-            keyExtractor={item => `${item.article_id}`}
-            renderItem={({ item }) => (
-              <BookmarkListItem
-                item={item}
-                progress={progress}
-                duration={duration}
-                isActive={
-                  audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
-                }
-              />
-            )}
-            estimatedItemSize={ITEM_HEIGHT}
-            contentContainerStyle={{
-              paddingTop: headerHeight,
-              paddingBottom:
-                LAYOUT.CONTENT_SPACING.BOTTOM +
-                LAYOUT.BOTTOM_BAR.HEIGHT +
-                insets.bottom +
-                LAYOUT.SPACING.SMALL,
-              paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            }}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={null}
-            drawDistance={ITEM_HEIGHT * 5}
-            overrideItemLayout={layout => {
-              layout.size = ITEM_HEIGHT;
-            }}
-            removeClippedSubviews={true}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={handleRefresh}
-                colors={[colors.tint]}
-                tintColor={colors.tint}
-                progressBackgroundColor={colors.background}
-                progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
-              />
-            }
+        <ThemedView style={styles.emptyStateContainer}>
+          <EmptyState
+            title="Save for Later"
+            description="Bookmark articles to listen and read anytime"
+            colors={colors}
+            icon="book-outline"
           />
         </ThemedView>
+      </ThemedView>
+    );
+  }
 
-        <BottomControls
-          onPlayAll={handlePlayAll}
-          onShuffle={handleShuffle}
-          isPlaying={isCurrentlyPlaying}
-          isShuffleMode={isShuffleMode}
+  return (
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+    >
+      <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
+        <FlashList
+          ref={flashListRef}
+          data={dedupedReadingList}
+          extraData={flashListExtraData}
+          keyExtractor={item => `${item.article_id}`}
+          renderItem={({ item }) => (
+            <BookmarkListItem
+              item={item}
+              progress={progress}
+              duration={duration}
+              isActive={
+                audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
+              }
+            />
+          )}
+          estimatedItemSize={ITEM_HEIGHT}
+          contentContainerStyle={{
+            paddingTop: headerHeight,
+            paddingBottom:
+              LAYOUT.CONTENT_SPACING.BOTTOM +
+              LAYOUT.BOTTOM_BAR.HEIGHT +
+              insets.bottom +
+              LAYOUT.SPACING.SMALL,
+            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+          }}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={null}
+          drawDistance={ITEM_HEIGHT * 5}
+          overrideItemLayout={layout => {
+            layout.size = ITEM_HEIGHT;
+          }}
+          removeClippedSubviews={true}
+          refreshControl={
+            <RefreshControl
+              refreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              colors={[colors.tint]}
+              tintColor={colors.tint}
+              progressBackgroundColor={colors.background}
+              progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
+            />
+          }
         />
       </ThemedView>
-    </Animated.View>
+
+      <BottomControls
+        onPlayAll={handlePlayAll}
+        onShuffle={handleShuffle}
+        isPlaying={isCurrentlyPlaying}
+        isShuffleMode={isShuffleMode}
+      />
+    </ThemedView>
   );
 }

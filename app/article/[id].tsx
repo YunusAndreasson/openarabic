@@ -7,8 +7,6 @@ import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
 
-import { LoadingScreen } from '@/components/Loader';
-import { ArticleNotFound } from '@/components/NotFound';
 import ThemedCard from '@/components/ThemedCard';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
@@ -49,12 +47,6 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
     contentContainer: {
       backgroundColor: colors.background,
       flex: 1,
-    },
-    loadingContainer: {
-      alignItems: 'center',
-      flex: 1,
-      justifyContent: 'center',
-      paddingTop: 0,
     },
     transparentBackground: {
       backgroundColor: 'transparent',
@@ -202,7 +194,6 @@ export default function ArticleScreen(): JSX.Element {
 
   const articleContentRef = useRef<ArticleContentRef>(null);
 
-  // Compute initialBookmarkIcon based on isInReadingList
   const initialBookmarkIcon: 'bookmark-outline' | 'bookmark' = isInReadingList
     ? 'bookmark'
     : 'bookmark-outline';
@@ -213,7 +204,6 @@ export default function ArticleScreen(): JSX.Element {
     refetchStudyWords
   );
 
-  // Correct word press handler for useArticleRenderers
   const handleWordPress = useCallback(
     (word: SentenceWord) => {
       if (word.root) {
@@ -241,26 +231,6 @@ export default function ArticleScreen(): JSX.Element {
     }
     articleContentRef.current.scrollToSentence(word.sentence_id);
   }, [currentWordId, sentenceWordsMap, findWordById]);
-
-  const isLoading = useMemo(() => {
-    const articleQuery = queryClient.getQueryData(['article', articleId]);
-    if (articleQuery) return false;
-    return (
-      isLoadingArticle ||
-      isLoadingReadingList ||
-      !article?.article_sentences ||
-      !sentenceWordsMap ||
-      (article.article_sentences.length > 0 && !sortedSentences?.length)
-    );
-  }, [
-    isLoadingArticle,
-    isLoadingReadingList,
-    article,
-    sentenceWordsMap,
-    sortedSentences,
-    articleId,
-    queryClient,
-  ]);
 
   const [audioControlVisible, setAudioControlVisible] = useState(false);
   const isNavigatingRef = useRef(false);
@@ -677,62 +647,6 @@ export default function ArticleScreen(): JSX.Element {
     refetchStudyWords?.();
   }, [id]);
 
-  if (isLoading) {
-    return (
-      <ThemedView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        useSafeArea={false}
-      >
-        <StatusBar
-          style={isDarkMode ? 'light' : 'dark'}
-          translucent={true}
-          animated={true}
-          hidden={false}
-        />
-        <View style={styles.loadingContainer}>
-          <LoadingScreen />
-        </View>
-        <ArticleButtons
-          backButtonStyle={backButtonStyle}
-          bookmarkButtonStyle={bookmarkButtonStyle}
-          playButtonStyle={playButtonStyle}
-          onBackPress={handleBackPress}
-          onBookmarkPress={handleBookmarkPress}
-          onPlayPress={handlePlayPress}
-          isInReadingList={isInReadingList}
-          initialBookmarkIcon={initialBookmarkIcon}
-          isPlaying={isPlaying}
-          colors={colors}
-          isDarkMode={isDarkMode}
-          user={user}
-        />
-      </ThemedView>
-    );
-  }
-
-  if (!article) {
-    return (
-      <ThemedView style={styles.container} useSafeArea={false}>
-        <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
-        <ArticleNotFound />
-        <ArticleButtons
-          backButtonStyle={backButtonStyle}
-          bookmarkButtonStyle={bookmarkButtonStyle}
-          playButtonStyle={playButtonStyle}
-          onBackPress={handleBackPress}
-          onBookmarkPress={handleBookmarkPress}
-          onPlayPress={handlePlayPress}
-          isInReadingList={isInReadingList}
-          initialBookmarkIcon={initialBookmarkIcon}
-          isPlaying={isPlaying}
-          colors={colors}
-          isDarkMode={isDarkMode}
-          user={user}
-        />
-      </ThemedView>
-    );
-  }
-
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
       <StatusBar
@@ -756,7 +670,7 @@ export default function ArticleScreen(): JSX.Element {
         isDarkMode={isDarkMode}
       />
       <View style={styles.contentContainer}>
-        {sortedSentences && sortedSentences.length > 0 ? (
+        {article && sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}
             id={id}

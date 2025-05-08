@@ -1,11 +1,9 @@
-import { useFocusEffect } from '@react-navigation/native';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
-import React, { useState, useCallback, useMemo, useRef, useEffect, JSX } from 'react';
-import { StyleSheet } from 'react-native';
-import Animated from 'react-native-reanimated';
+import React, { useState, useCallback, useMemo, useEffect, JSX } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -13,7 +11,6 @@ import { handleError } from '@/utils/errorHandling';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
-import { LoadingScreen } from '../components/Loader';
 import FilteredArticleView from '../components/index/FilteredArticleView';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
@@ -91,18 +88,6 @@ function FilterScreenContent() {
   const numericId = parseInt(id, 10);
   const queryClient = useQueryClient();
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
-  const isInitialMount = useRef(true);
-  const isReturningFromArticle = useRef(false);
-  useFocusEffect(
-    useCallback(() => {
-      if (!isInitialMount.current) {
-        isReturningFromArticle.current = true;
-      }
-      return () => {
-        isInitialMount.current = false;
-      };
-    }, [])
-  );
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data: author, isLoading: isAuthorLoading } = useQuery({
     queryKey: ['author', numericId],
@@ -167,7 +152,6 @@ function FilterScreenContent() {
     isArticlesLoading ||
     (type === 'author' && isAuthorLoading) ||
     (type === 'category' && isCategoryLoading);
-  const fadeInStyle = { opacity: 1 };
   const { navigateTo } = useNavigationWithDebounce();
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -197,10 +181,8 @@ function FilterScreenContent() {
     }
     router.setParams({ headerTitle: title });
   }, [type, author?.name, category?.name]);
-  if ((isLoading && !isRefreshing && isInitialMount.current) || (error && !isRefreshing)) {
-    return isLoading ? (
-      <LoadingScreen />
-    ) : (
+  if (error && !isRefreshing) {
+    return (
       <ErrorState
         message={error instanceof Error ? error.message : 'Failed to load articles'}
         onRetry={refetch}
@@ -208,12 +190,7 @@ function FilterScreenContent() {
     );
   }
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        isInitialMount.current && !isReturningFromArticle.current ? fadeInStyle : styles.visible,
-      ]}
-    >
+    <View style={[styles.container, styles.visible]}>
       <FilteredArticleView
         articles={articles}
         isLoading={isLoading}
@@ -223,6 +200,6 @@ function FilterScreenContent() {
         selectedAuthor={type === 'author' ? author : null}
         selectedCategory={type === 'category' ? category : null}
       />
-    </Animated.View>
+    </View>
   );
 }

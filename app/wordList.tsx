@@ -3,7 +3,6 @@ import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useCallback, useMemo, memo, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { Loader } from '../components/Loader';
 import { ThemedText } from '../components/ThemedText';
@@ -147,38 +146,33 @@ export default function WordListScreen(): JSX.Element {
       />
 
       {/* Use Animated.View with explicit FadeIn animation for smoother entrance */}
-      <Animated.View
-        style={styles.flexContainer}
-        entering={FadeIn.duration(300).springify().damping(14).stiffness(100)}
+      <ThemedView
+        style={styles.container}
+        includeBottomInset={false}
+        safeAreaEdges={['left', 'right']}
       >
-        <ThemedView
-          style={styles.container}
-          includeBottomInset={false}
-          safeAreaEdges={['left', 'right']}
-        >
-          {isLoading ? (
-            <View style={styles.loaderContainer}>
-              <Loader size="large" color={colors.tint} />
-            </View>
-          ) : (
-            <FlashList
-              data={words || []}
-              renderItem={renderItem}
-              estimatedItemSize={ITEM_HEIGHT}
-              ListHeaderComponent={ListHeaderComponent}
-              ListEmptyComponent={renderEmptyComponent}
-              showsVerticalScrollIndicator={true}
-              estimatedFirstItemOffset={LAYOUT.SPACING.XXLARGE * 3}
-              overrideItemLayout={layout => {
-                layout.size = ITEM_HEIGHT;
-              }}
-              drawDistance={100}
-              contentInsetAdjustmentBehavior="automatic"
-              contentContainerStyle={styles.listContentContainer}
-            />
-          )}
-        </ThemedView>
-      </Animated.View>
+        {isLoading ? (
+          <View style={styles.loaderContainer}>
+            <Loader size="large" color={colors.tint} />
+          </View>
+        ) : (
+          <FlashList
+            data={words || []}
+            renderItem={renderItem}
+            estimatedItemSize={ITEM_HEIGHT}
+            ListHeaderComponent={ListHeaderComponent}
+            ListEmptyComponent={renderEmptyComponent}
+            showsVerticalScrollIndicator={true}
+            estimatedFirstItemOffset={LAYOUT.SPACING.XXLARGE * 3}
+            overrideItemLayout={layout => {
+              layout.size = ITEM_HEIGHT;
+            }}
+            drawDistance={100}
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={styles.listContentContainer}
+          />
+        )}
+      </ThemedView>
     </>
   );
 }
@@ -209,9 +203,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-  },
-  flexContainer: {
-    flex: 1,
   },
   headerContainer: {
     paddingBottom: 0,

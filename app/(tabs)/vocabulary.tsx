@@ -3,7 +3,6 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import EmptyState from '@/components/EmptyState';
 import { LoadingScreen } from '@/components/Loader';
@@ -126,9 +125,6 @@ export default function VocabularyScreen(): JSX.Element {
     );
   }, [isDataLoading, isFetching, isDataCached, studyWords, validStudyWords]);
 
-  // Replace the import and usage of useScreenAnimation with a simple style
-  const fadeInStyle = { opacity: 1 };
-
   // Handle starting a review with optimized invalidation
   const handleStartReview = () => {
     if (!user) return;
@@ -164,94 +160,90 @@ export default function VocabularyScreen(): JSX.Element {
   // Show empty state with animation
   if (shouldShowEmptyState) {
     return (
-      <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
-        <ThemedView
-          style={styles.container}
-          includeBottomInset={false}
-          safeAreaEdges={['left', 'right']}
-        >
-          <ThemedView style={styles.emptyStateContainer}>
-            <EmptyState
-              title="Start Learning"
-              description="Add words while reading to build your vocabulary"
-              colors={colors}
-              icon="book-outline"
-            />
-          </ThemedView>
-        </ThemedView>
-      </Animated.View>
-    );
-  }
-
-  // Main content with fadeInStyle applied to match other tabs
-  return (
-    <Animated.View style={[styles.flexContainer, fadeInStyle]} collapsable={false}>
       <ThemedView
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
       >
-        <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={isRefreshing}
-              onRefresh={handleRefresh}
-              colors={[colors.tint]}
-              tintColor={colors.tint}
-              progressBackgroundColor={colors.background}
-              progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
-            />
-          }
-          contentContainerStyle={[styles.contentContainer, { paddingTop: headerHeight }]}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Stats Dashboard */}
-          <VocabularyDashboard
-            totalWords={stats.totalWords}
-            masteredWords={stats.masteredWords}
-            learningWords={stats.learningWords}
-            dueWords={stats.dueWords}
-            onStatPress={handleStatPress}
+        <ThemedView style={styles.emptyStateContainer}>
+          <EmptyState
+            title="Start Learning"
+            description="Add words while reading to build your vocabulary"
+            colors={colors}
+            icon="book-outline"
           />
-
-          {/* Weekly Progress Graph */}
-          <VocabularyGraph
-            data={weeklyProgressData}
-            animationTriggered={true}
-            title="Weekly Progress"
-          />
-
-          {/* Review Button Section */}
-          {stats.dueWords > 0 ? (
-            <View style={styles.reviewButtonWrapper}>
-              <ThemedButton
-                title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'Word' : 'Words'}`}
-                onPress={handleStartReview}
-                variant="filled"
-                style={styles.reviewButton}
-                accessibilityLabel={`Review ${stats.dueWords} words`}
-              />
-              {stats.dueWords > 150 ? (
-                <ThemedText type="label" variant="warning" style={styles.warningText}>
-                  You are reviewing many words. Please catch up before adding more.
-                </ThemedText>
-              ) : null}
-            </View>
-          ) : (
-            <View style={styles.reviewButtonWrapper}>
-              <ThemedButton
-                title="No words due"
-                onPress={() => {}}
-                variant="outlined"
-                style={styles.reviewButton}
-                disabled
-                accessibilityLabel="No words due"
-              />
-            </View>
-          )}
-        </ScrollView>
+        </ThemedView>
       </ThemedView>
-    </Animated.View>
+    );
+  }
+
+  // Main content with fadeInStyle applied to match other tabs
+  return (
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+    >
+      <ScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.tint]}
+            tintColor={colors.tint}
+            progressBackgroundColor={colors.background}
+            progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
+          />
+        }
+        contentContainerStyle={[styles.contentContainer, { paddingTop: headerHeight }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Stats Dashboard */}
+        <VocabularyDashboard
+          totalWords={stats.totalWords}
+          masteredWords={stats.masteredWords}
+          learningWords={stats.learningWords}
+          dueWords={stats.dueWords}
+          onStatPress={handleStatPress}
+        />
+
+        {/* Weekly Progress Graph */}
+        <VocabularyGraph
+          data={weeklyProgressData}
+          animationTriggered={true}
+          title="Weekly Progress"
+        />
+
+        {/* Review Button Section */}
+        {stats.dueWords > 0 ? (
+          <View style={styles.reviewButtonWrapper}>
+            <ThemedButton
+              title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'Word' : 'Words'}`}
+              onPress={handleStartReview}
+              variant="filled"
+              style={styles.reviewButton}
+              accessibilityLabel={`Review ${stats.dueWords} words`}
+            />
+            {stats.dueWords > 150 ? (
+              <ThemedText type="label" variant="warning" style={styles.warningText}>
+                You are reviewing many words. Please catch up before adding more.
+              </ThemedText>
+            ) : null}
+          </View>
+        ) : (
+          <View style={styles.reviewButtonWrapper}>
+            <ThemedButton
+              title="No words due"
+              onPress={() => {}}
+              variant="outlined"
+              style={styles.reviewButton}
+              disabled
+              accessibilityLabel="No words due"
+            />
+          </View>
+        )}
+      </ScrollView>
+    </ThemedView>
   );
 }
 
@@ -268,9 +260,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  flexContainer: {
-    flex: 1,
   },
   reviewButton: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
