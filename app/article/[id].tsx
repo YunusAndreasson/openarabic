@@ -5,8 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
-import type { ViewStyle, TouchableOpacity } from 'react-native';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { TouchableOpacity } from 'react-native';
 
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleNotFound } from '@/components/NotFound';
@@ -71,12 +70,10 @@ export default function ArticleScreen(): JSX.Element {
   const isDarkMode = useIsDarkMode();
   const queryClient = useQueryClient();
   const router = useRouter();
-  const articleContentRef = useRef<ArticleContentRef>(null);
   const dispatch = useAppDispatch();
 
   const { isHeaderVisible, handleScroll, animatedStyle } = useHeaderVisibility();
 
-  const initialBookmarkIcon = 'bookmark-outline';
   useNavigationWithDebounce();
   const audioPlayer = useSentenceAudioPlayer();
   const {
@@ -87,29 +84,7 @@ export default function ArticleScreen(): JSX.Element {
     startPlayback,
     stopPlayback,
     findWordById,
-    setManualNavigation,
-  } = useMemo(
-    () => ({
-      currentWordId: audioPlayer.currentWordId,
-      currentPosition: audioPlayer.currentPosition,
-      isPlaying: audioPlayer.isPlaying,
-      currentSentenceIndex: audioPlayer.currentSentenceIndex,
-      startPlayback: audioPlayer.startPlayback,
-      stopPlayback: audioPlayer.stopPlayback,
-      findWordById: audioPlayer.findWordById,
-      setManualNavigation: audioPlayer.setManualNavigation,
-    }),
-    [
-      audioPlayer.currentWordId,
-      audioPlayer.currentPosition,
-      audioPlayer.isPlaying,
-      audioPlayer.currentSentenceIndex,
-      audioPlayer.startPlayback,
-      audioPlayer.stopPlayback,
-      audioPlayer.findWordById,
-      audioPlayer.setManualNavigation,
-    ]
-  );
+  } = audioPlayer;
 
   const articleId = useMemo(() => {
     if (!id) return undefined;
@@ -225,6 +200,37 @@ export default function ArticleScreen(): JSX.Element {
     });
   }, [sortedSentences, sentenceWordsMap]);
 
+  const articleContentRef = useRef<ArticleContentRef>(null);
+
+  // Compute initialBookmarkIcon based on isInReadingList
+  const initialBookmarkIcon: 'bookmark-outline' | 'bookmark' = isInReadingList
+    ? 'bookmark'
+    : 'bookmark-outline';
+
+  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
+    user?.id,
+    refetchReadingListStatus,
+    refetchStudyWords
+  );
+
+  // Correct word press handler for useArticleRenderers
+  const handleWordPress = useCallback(
+    (word: SentenceWord) => {
+      if (word.root) {
+        handleRootPress(word.root.id);
+      }
+    },
+    [handleRootPress]
+  );
+
+  const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
+    settings,
+    selectedWordIds,
+    sentenceWordsMap,
+    handleWordPress,
+    handleRootPress
+  );
+
   useEffect(() => {
     if (!currentWordId || !articleContentRef.current || !sentenceWordsMap) {
       return;
@@ -256,25 +262,8 @@ export default function ArticleScreen(): JSX.Element {
     queryClient,
   ]);
 
-  const { handleToggleReadingList, handleRootPress } = useArticleMutations(
-    user?.id,
-    refetchReadingListStatus,
-    refetchStudyWords
-  );
-
-  const noopWordPress = useCallback((_w: SentenceWord) => {}, []);
-
-  const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
-    settings,
-    selectedWordIds,
-    sentenceWordsMap,
-    noopWordPress,
-    handleRootPress
-  );
-
   const [audioControlVisible, setAudioControlVisible] = useState(false);
   const isNavigatingRef = useRef(false);
-  const wasPlayingRef = useRef(false);
   const pausedAudioStateRef = useRef<{
     sentenceIndex: number | null;
     wordId: number | null;
@@ -384,7 +373,6 @@ export default function ArticleScreen(): JSX.Element {
         audioPositionMs: currentAudioPositionMs,
       };
       await audioPlayer.stopPlayback(false);
-      wasPlayingRef.current = false;
       dispatch(
         updateAudioState({
           wordId: currentWordId,
@@ -401,7 +389,6 @@ export default function ArticleScreen(): JSX.Element {
   const handleStartAudio = useCallback(async () => {
     try {
       setAudioControlVisible(true);
-      wasPlayingRef.current = true;
       const savedState = pausedAudioStateRef.current;
       if (
         savedState.sentenceIndex === null ||
@@ -463,8 +450,6 @@ export default function ArticleScreen(): JSX.Element {
         handleError(error);
       });
     }
-    const resetAnimations = () => {};
-    resetAnimations();
     isNavigatingRef.current = false;
     dispatch(
       updateAudioState({
@@ -567,7 +552,6 @@ export default function ArticleScreen(): JSX.Element {
         audioPositionMs: 0,
       };
       setAudioControlVisible(false);
-      wasPlayingRef.current = false;
       await stopPlayback();
       if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
         try {
@@ -601,7 +585,6 @@ export default function ArticleScreen(): JSX.Element {
     }
     if (currentSentenceIndex < sentenceAudioData.length - 1) {
       try {
-        setManualNavigation(true);
         await stopPlayback();
         const nextSentenceIndex = currentSentenceIndex + 1;
         pausedAudioStateRef.current = {
@@ -629,14 +612,7 @@ export default function ArticleScreen(): JSX.Element {
     } else {
       isNavigatingRef.current = false;
     }
-  }, [
-    currentSentenceIndex,
-    sentenceAudioData,
-    stopPlayback,
-    startPlayback,
-    audioPlayer,
-    setManualNavigation,
-  ]);
+  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
   const handlePreviousSentence = useCallback(async () => {
     if (isNavigatingRef.current) {
@@ -650,7 +626,6 @@ export default function ArticleScreen(): JSX.Element {
     }
     if (currentSentenceIndex > 0) {
       try {
-        setManualNavigation(true);
         await stopPlayback();
         const prevSentenceIndex = currentSentenceIndex - 1;
         pausedAudioStateRef.current = {
@@ -678,19 +653,11 @@ export default function ArticleScreen(): JSX.Element {
     } else {
       isNavigatingRef.current = false;
     }
-  }, [
-    currentSentenceIndex,
-    sentenceAudioData,
-    stopPlayback,
-    startPlayback,
-    audioPlayer,
-    setManualNavigation,
-  ]);
+  }, [currentSentenceIndex, sentenceAudioData, stopPlayback, startPlayback, audioPlayer]);
 
   useEffect(() => {
     stopPlayback?.();
     setAudioControlVisible(false);
-    wasPlayingRef.current = false;
     pausedAudioStateRef.current = {
       sentenceIndex: null,
       wordId: null,
@@ -798,7 +765,6 @@ export default function ArticleScreen(): JSX.Element {
             renderSentenceItem={renderSentenceItem}
             handleScroll={handleScroll}
             colors={colors}
-            footerStyle={animatedStyle as AnimatedStyleProp<ViewStyle>}
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}

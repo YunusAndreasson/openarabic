@@ -1,15 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, memo, useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import type { ViewStyle } from 'react-native';
-import type { AnimateStyle } from 'react-native-reanimated';
-import Animated from 'react-native-reanimated';
 
 import BaseCard from '../../components/BaseCard';
 import { ThemedText } from '../../components/ThemedText';
 import { ANIMATION_TIMING } from '../../constants/animations';
 import { LAYOUT } from '../../constants/layout';
-import { useOpacityAnimation } from '../../hooks/animations';
 import { useButtonAction } from '../../hooks/useButtonAction';
 import { useColors } from '../../hooks/useColors';
 import type { AudioControlPanelProps } from '../../types/ui/audio.types';
@@ -28,26 +25,13 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
   }) => {
     const colors = useColors();
 
-    const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
-      initialOpacity: 0,
-      duration: 250,
-    });
-
     const hiddenStyle = useMemo(
       () => ({
         ...styles.container,
         opacity: 0,
       }),
       []
-    ) as AnimateStyle<ViewStyle>;
-
-    useEffect(() => {
-      if (isVisible) {
-        fadeIn();
-      } else {
-        fadeOut();
-      }
-    }, [isVisible, fadeIn, fadeOut]);
+    ) as ViewStyle;
 
     const handlePlayPause = useButtonAction(onPlayPause, ANIMATION_TIMING.DEBOUNCE.STANDARD);
     const handleStop = useButtonAction(onStop, ANIMATION_TIMING.DEBOUNCE.STANDARD);
@@ -55,14 +39,14 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
     const handleNext = useButtonAction(onNext, ANIMATION_TIMING.DEBOUNCE.STANDARD);
 
     if (!isVisible) {
-      return <Animated.View style={hiddenStyle} pointerEvents="none" />;
+      return <View style={hiddenStyle} pointerEvents="none" />;
     }
 
     const isFirstSentence = currentSentenceIndex === 0;
     const isLastSentence = currentSentenceIndex === totalSentences - 1;
 
     return (
-      <Animated.View style={[styles.container, animatedStyle as AnimateStyle<ViewStyle>]}>
+      <View style={styles.container}>
         <BaseCard style={[styles.card, { backgroundColor: colors.elevation2 }]} shadowSize="medium">
           <View style={styles.contentContainer}>
             <View style={styles.controlsContainer}>
@@ -110,7 +94,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
             </TouchableOpacity>
           </View>
         </BaseCard>
-      </Animated.View>
+      </View>
     );
   }
 );

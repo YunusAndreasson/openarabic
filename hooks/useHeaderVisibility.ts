@@ -28,8 +28,9 @@ export function useHeaderVisibility({
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
       if (ticking.current) return;
       ticking.current = true;
+      // Copy the value synchronously to avoid accessing pooled event
+      const currentScrollY = event.nativeEvent.contentOffset.y;
       requestAnimationFrame(() => {
-        const currentScrollY = event.nativeEvent.contentOffset.y;
         const isScrollingDown = currentScrollY > prevScrollYValue.current;
         const isScrollingUp = currentScrollY < prevScrollYValue.current;
         if (isScrollingDown && isHeaderVisible && currentScrollY > threshold) {
