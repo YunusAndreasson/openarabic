@@ -5,14 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react';
 import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
-import type {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ViewStyle,
-  TouchableOpacity,
-} from 'react-native';
+import type { ViewStyle, TouchableOpacity } from 'react-native';
 import type { AnimatedStyleProp } from 'react-native-reanimated';
-import { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { LoadingScreen } from '@/components/Loader';
 import { ArticleNotFound } from '@/components/NotFound';
@@ -43,10 +37,10 @@ import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
+import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
 
 import type { Article } from '../../types/articles.types';
 
-// Move styles outside component but keep it as a function
 const createStyles = (colors: ReturnType<typeof useColors>) =>
   StyleSheet.create({
     container: {
@@ -71,7 +65,6 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
 export default function ArticleScreen(): JSX.Element {
   const { id } = useLocalSearchParams<{ id: string }>();
   const colors = useColors();
-  // Create styles with current colors
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { user } = useAuth();
   const settings = useAppSelector(state => state.settings);
@@ -81,22 +74,11 @@ export default function ArticleScreen(): JSX.Element {
   const articleContentRef = useRef<ArticleContentRef>(null);
   const dispatch = useAppDispatch();
 
-  // Scroll position tracking
-  const prevScrollYValue = useRef(0);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const { isHeaderVisible, handleScroll, animatedStyle } = useHeaderVisibility();
 
-  // FORCE a default bookmark icon to ensure it's always visible
-  const [initialBookmarkIcon, setInitialBookmarkIcon] = useState<'bookmark-outline' | 'bookmark'>(
-    'bookmark-outline'
-  );
-
-  // Navigation hook
+  const initialBookmarkIcon = 'bookmark-outline';
   useNavigationWithDebounce();
-
-  // Get audio player hook - use its state directly
   const audioPlayer = useSentenceAudioPlayer();
-
-  // Memoize audio player state to prevent unnecessary rerenders
   const {
     currentWordId,
     currentPosition,
@@ -129,14 +111,12 @@ export default function ArticleScreen(): JSX.Element {
     ]
   );
 
-  // Parse article ID
   const articleId = useMemo(() => {
     if (!id) return undefined;
     const parsed = parseInt(id, 10);
     return isNaN(parsed) ? undefined : parsed;
   }, [id]);
 
-  // Extract article data hook before using any results
   const {
     article,
     isLoadingArticle,
@@ -151,39 +131,31 @@ export default function ArticleScreen(): JSX.Element {
     refetchStudyWords,
   } = useArticleData(articleId, user?.id);
 
-  // Pre-fetch study words if user is logged in with optimized caching
   useEffect(() => {
     if (user?.id) {
-      // Add stale time and caching configuration for better performance
       queryClient.fetchQuery({
         queryKey: ['studyWords', user.id],
         queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 5 * 60 * 1000, // 5 minutes stale time
-        gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
-        retry: 2, // Limit retries to avoid unnecessary network calls
+        staleTime: 5 * 60 * 1000,
+        gcTime: 10 * 60 * 1000,
+        retry: 2,
       });
     }
   }, [user, queryClient]);
 
-  // Set up AppState listener to refetch study words when app comes back to foreground
   useEffect(() => {
     if (!user?.id) return;
-
-    // When the app comes back to foreground, refetch the study words
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
-        // Force refetch study words when returning to the app
         queryClient.invalidateQueries({ queryKey: ['studyWords', user.id] });
         refetchStudyWords?.();
       }
     });
-
     return () => {
       subscription.remove();
     };
   }, [user?.id, queryClient, refetchStudyWords]);
 
-  // Track article view when article data loads
   useEffect(() => {
     if (article && !isLoadingArticle) {
       analytics.trackViewArticle(article.id, {
@@ -200,36 +172,23 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, isLoadingArticle]);
 
-  // Track reading list changes
   useEffect(() => {
     if (article && !isLoadingReadingList) {
       analytics.trackToggleReadingList(article.id, isInReadingList);
     }
   }, [article, isInReadingList, isLoadingReadingList]);
 
-  // Replace the useScreenAnimation hook with a simple animated style
-  const fadeInStyle = { opacity: 1 }; // Just use a simple style with opacity 1
-  const buttonStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(isHeaderVisible ? 1 : 0, { duration: 200 }),
-  }));
+  const backButtonStyle = animatedStyle;
+  const bookmarkButtonStyle = animatedStyle;
+  const playButtonStyle = animatedStyle;
 
-  // Use the same animated style for all buttons since they share the same visibility
-  const backButtonStyle = buttonStyle;
-  const bookmarkButtonStyle = buttonStyle;
-  const playButtonStyle = buttonStyle;
-
-  // Prepare audio data for sentence-by-sentence playback
   const sentenceAudioData = useMemo(() => {
     if (!sortedSentences || !sentenceWordsMap) {
       return [];
     }
-
-    // Early return for empty sentences
     if (sortedSentences.length === 0) {
       return [];
     }
-
-    // Pre-filter valid audio URLs for better performance
     const validSentences = sortedSentences.filter(sentence => {
       const audioUrl = sentence.audio_url?.trim();
       return (
@@ -239,21 +198,15 @@ export default function ArticleScreen(): JSX.Element {
           audioUrl.startsWith('file://'))
       );
     });
-
-    // Early return if no valid audio sentences
     if (validSentences.length === 0) {
       return [];
     }
-
     return validSentences.map(sentence => {
       const sentenceId = sentence.id;
       const words = sentenceWordsMap.get(sentenceId) || [];
-
-      // Pre-filter valid word timings for better performance
       const wordTimings = words.reduce<WordTiming[]>((acc, word, index) => {
         const start = parseFloat(word.audio_start || '');
         const end = parseFloat(word.audio_end || '');
-
         if (!isNaN(start) && !isNaN(end) && start < end) {
           acc.push({
             wordId: word.id,
@@ -264,7 +217,6 @@ export default function ArticleScreen(): JSX.Element {
         }
         return acc;
       }, []);
-
       return {
         sentenceId,
         audioUrl: sentence.audio_url || '',
@@ -273,65 +225,20 @@ export default function ArticleScreen(): JSX.Element {
     });
   }, [sortedSentences, sentenceWordsMap]);
 
-  // Auto-scroll to the currently highlighted word
   useEffect(() => {
     if (!currentWordId || !articleContentRef.current || !sentenceWordsMap) {
       return;
     }
-
-    // Find the sentence that contains this word using the hook's function
     const word = findWordById(currentWordId, sentenceWordsMap as SentenceWordsMap);
     if (!word) {
       return;
     }
-
-    // Use the ArticleContent ref to scroll to the sentence
     articleContentRef.current.scrollToSentence(word.sentence_id);
   }, [currentWordId, sentenceWordsMap, findWordById]);
 
-  // Handle scroll events
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const currentScrollY = event.nativeEvent.contentOffset.y;
-      const isScrollingDown = currentScrollY > prevScrollYValue.current;
-      const isScrollingUp = currentScrollY < prevScrollYValue.current;
-      const isCloseToBottom =
-        event.nativeEvent.layoutMeasurement.height + currentScrollY >=
-        event.nativeEvent.contentSize.height - 200;
-
-      // Toggle header visibility based on scroll direction
-      if (isScrollingDown && isHeaderVisible && currentScrollY > 50) {
-        setIsHeaderVisible(false);
-      } else if (isScrollingUp && !isHeaderVisible) {
-        setIsHeaderVisible(true);
-      }
-
-      // Track article completion
-      if (isCloseToBottom && article) {
-        // No need to check for user as we know they're authenticated
-        analytics.trackCompleteArticle(article.id, {
-          wordsAdded: selectedWordIds?.size || 0,
-        });
-      }
-
-      prevScrollYValue.current = currentScrollY;
-    },
-    [isHeaderVisible, article, selectedWordIds]
-  );
-
-  // Update bookmark icon when reading list status changes
-  useEffect(() => {
-    if (!isLoadingReadingList) {
-      setInitialBookmarkIcon(isInReadingList ? 'bookmark' : 'bookmark-outline');
-    }
-  }, [isLoadingReadingList, isInReadingList]);
-
-  // Check if all data is loaded with optimized loading states
   const isLoading = useMemo(() => {
-    // Consider data ready if we have article data in cache
     const articleQuery = queryClient.getQueryData(['article', articleId]);
     if (articleQuery) return false;
-
     return (
       isLoadingArticle ||
       isLoadingReadingList ||
@@ -349,17 +256,14 @@ export default function ArticleScreen(): JSX.Element {
     queryClient,
   ]);
 
-  // Handle article data hook callbacks
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
     user?.id,
     refetchReadingListStatus,
     refetchStudyWords
   );
 
-  // We override default word handling to use long-press for root toggles
   const noopWordPress = useCallback((_w: SentenceWord) => {}, []);
 
-  // Use the article renderers hook
   const { handleArticlePress, getWordsForSentence } = useArticleRenderers(
     settings,
     selectedWordIds,
@@ -368,16 +272,9 @@ export default function ArticleScreen(): JSX.Element {
     handleRootPress
   );
 
-  // New state to track if audio control panel should be visible
   const [audioControlVisible, setAudioControlVisible] = useState(false);
-
-  // New ref to prevent rapid navigation actions
   const isNavigatingRef = useRef(false);
-
-  // Add a ref to track previous playing state
   const wasPlayingRef = useRef(false);
-
-  // Pause audio state tracking
   const pausedAudioStateRef = useRef<{
     sentenceIndex: number | null;
     wordId: number | null;
@@ -390,7 +287,6 @@ export default function ArticleScreen(): JSX.Element {
     audioPositionMs: 0,
   });
 
-  // Define a type for the saved audio state
   type SavedAudioState = {
     sentenceIndex: number | null;
     wordId: number | null;
@@ -398,28 +294,20 @@ export default function ArticleScreen(): JSX.Element {
     audioPositionMs?: number;
   };
 
-  // Helper to check if we should resume from saved position
   const shouldResumeFromSavedPosition = useCallback(
     (savedState: SavedAudioState) => {
-      // Early return if no valid sentence index
       if (savedState.sentenceIndex === null) return false;
       if (savedState.sentenceIndex < 0) return false;
-
-      // Now TypeScript knows sentenceIndex is a number
-      // Check if index is valid (within array bounds)
       return savedState.sentenceIndex >= 0 && savedState.sentenceIndex < sentenceAudioData.length;
     },
     [sentenceAudioData]
   );
 
-  // Helper to resume from saved position
   const resumeFromSavedPosition = useCallback(
     async (savedState: SavedAudioState) => {
       if (savedState.sentenceIndex === null) {
         throw new Error('Cannot resume playback with null sentence index');
       }
-
-      // Update Redux state to indicate playback is starting
       dispatch(
         updateAudioState({
           wordId: savedState.wordId,
@@ -428,20 +316,15 @@ export default function ArticleScreen(): JSX.Element {
           sentenceId: savedState.sentenceIndex,
         })
       );
-
-      // Use the resumePlayback function to continue exact sentence
       const resumeSuccess = await audioPlayer.resumePlayback(
-        savedState.sentenceIndex, // Now safe to use directly since we checked above
+        savedState.sentenceIndex,
         savedState.audioPositionMs || 0
       );
-
       if (!resumeSuccess) {
-        // If resume fails, try starting from beginning of current sentence
         await audioPlayer.preloadAudioFiles(sentenceAudioData);
         const success = await startPlayback(sentenceAudioData, {
           sentenceOffset: savedState.sentenceIndex,
         });
-
         if (!success) {
           handleError(new Error('Failed to resume audio playback'));
           setAudioControlVisible(false);
@@ -451,50 +334,38 @@ export default function ArticleScreen(): JSX.Element {
     [audioPlayer, sentenceAudioData, startPlayback, dispatch]
   );
 
-  // Helper to start fresh playback
   const startFreshPlayback = useCallback(async () => {
-    // Clear any saved state to ensure we start fresh
     pausedAudioStateRef.current = {
       sentenceIndex: null,
       wordId: null,
       position: null,
       audioPositionMs: 0,
     };
-
-    // First stop any existing playback to ensure clean state
     await stopPlayback();
-
-    // Reset Redux state before starting new playback
     dispatch(
       updateAudioState({
         wordId: null,
         position: null,
         isPlaying: true,
-        sentenceId: 0, // Start from first sentence (index 0)
+        sentenceId: 0,
       })
     );
-
-    // Reset the sentence index offset to ensure we start from the beginning
     if (audioPlayer.setCurrentSentenceIndex) {
       audioPlayer.setCurrentSentenceIndex(0);
     }
-
     await audioPlayer.preloadAudioFiles(sentenceAudioData);
     const success = await startPlayback(sentenceAudioData, {
-      sentenceOffset: 0, // Explicitly set to start from first sentence
-      forceReset: true, // Force a reset of the playback state
+      sentenceOffset: 0,
+      forceReset: true,
     });
-
     if (!success) {
       handleError(new Error('Failed to start audio playback'));
       setAudioControlVisible(false);
     }
   }, [audioPlayer, sentenceAudioData, startPlayback, dispatch, stopPlayback]);
 
-  // Helper function to handle pausing audio
   const handlePauseAudio = useCallback(async () => {
     try {
-      // Get current audio position in milliseconds for precise resumption
       let currentAudioPositionMs = 0;
       if (audioPlayer.soundRef.current) {
         try {
@@ -506,22 +377,14 @@ export default function ArticleScreen(): JSX.Element {
           handleError(audioError as Error);
         }
       }
-
-      // Save complete state for resumption
       pausedAudioStateRef.current = {
         sentenceIndex: currentSentenceIndex,
         wordId: currentWordId,
         position: currentPosition,
         audioPositionMs: currentAudioPositionMs,
       };
-
-      // MODIFIED: Stop playback but DON'T unload the sound
       await audioPlayer.stopPlayback(false);
-
-      // Update wasPlayingRef to reflect the current state
       wasPlayingRef.current = false;
-
-      // Dispatch Redux update to indicate paused state but keep current positions
       dispatch(
         updateAudioState({
           wordId: currentWordId,
@@ -535,24 +398,15 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [audioPlayer, currentSentenceIndex, currentWordId, currentPosition, dispatch]);
 
-  // Helper function to handle starting/resuming audio
   const handleStartAudio = useCallback(async () => {
     try {
-      // Show the controls when starting playback
       setAudioControlVisible(true);
-
-      // Update wasPlayingRef to reflect that we're now playing
       wasPlayingRef.current = true;
-
-      // Check if we have a saved position to resume from
       const savedState = pausedAudioStateRef.current;
-
-      // If we're at the last sentence or finished playing, start from beginning
       if (
         savedState.sentenceIndex === null ||
         savedState.sentenceIndex >= sentenceAudioData.length - 1
       ) {
-        // Clear all states and start fresh
         pausedAudioStateRef.current = {
           sentenceIndex: null,
           wordId: null,
@@ -567,7 +421,6 @@ export default function ArticleScreen(): JSX.Element {
       }
     } catch (error) {
       handleError(error as Error);
-      // Reset UI state on error
       setAudioControlVisible(false);
     }
   }, [
@@ -577,10 +430,8 @@ export default function ArticleScreen(): JSX.Element {
     sentenceAudioData.length,
   ]);
 
-  // Handle play button press for article-level play/pause
   const handlePlayPress = useCallback(async () => {
     lightFeedback();
-
     if (isPlaying) {
       await handlePauseAudio();
     } else {
@@ -588,54 +439,33 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [isPlaying, handlePauseAudio, handleStartAudio]);
 
-  // Handle bookmark toggle with optimistic updates
   const handleBookmarkPress = useCallback(() => {
-    // The user will always be authenticated by this point due to our auth redirect
-    // so we don't need to check for user existence
     if (articleId) {
       lightFeedback();
-      setInitialBookmarkIcon(isInReadingList ? 'bookmark-outline' : 'bookmark');
       handleToggleReadingList(articleId, Boolean(isInReadingList));
     }
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
-  // Handle back button press with optimized cleanup
   const handleBackPress = useCallback(() => {
-    // Stop audio playback if it's playing
     if (isPlaying) {
       stopPlayback().catch(error => {
         handleError(error);
       });
     }
-
-    // Reset saved position
     pausedAudioStateRef.current = {
       sentenceIndex: null,
       wordId: null,
       position: null,
     };
-
-    // Hide audio controls
     setAudioControlVisible(false);
-
-    // Unload any audio resources
     if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
       audioPlayer.soundRef.current.unloadAsync().catch(error => {
         handleError(error);
       });
     }
-
-    // Reset screen animations
-    const resetAnimations = () => {
-      // Reset any active animations
-      // No need to call buttonStyle, it's not a function
-    };
+    const resetAnimations = () => {};
     resetAnimations();
-
-    // Clear any pending callbacks
-    prevScrollYValue.current = 0;
-
-    // Reset audio state in Redux
+    isNavigatingRef.current = false;
     dispatch(
       updateAudioState({
         wordId: null,
@@ -644,15 +474,10 @@ export default function ArticleScreen(): JSX.Element {
         sentenceId: null,
       })
     );
-
-    // Cancel any pending React Query mutations
     queryClient.cancelQueries();
-
-    // Navigate back
     router.back();
   }, [isPlaying, stopPlayback, audioPlayer, router, dispatch, queryClient]);
 
-  // Component renderers
   const renderWord = useCallback(
     (
       word: SentenceWord,
@@ -680,12 +505,10 @@ export default function ArticleScreen(): JSX.Element {
     [handleRootPress, settings]
   );
 
-  // Optimize sentence item rendering with better memoization
   const renderSentenceItem = useCallback(
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
       const isCurrentSentence = props.item.id === currentSentenceIndex;
-
       return (
         <ArticleSentence
           key={props.item.id}
@@ -722,7 +545,6 @@ export default function ArticleScreen(): JSX.Element {
     ]
   );
 
-  // Render article card with memoization
   const renderArticleCard = useCallback(
     (articleData: Article) => (
       <ThemedCard
@@ -735,29 +557,18 @@ export default function ArticleScreen(): JSX.Element {
     [handleArticlePress]
   );
 
-  // Handle explicit stop of playback
   const handleStopPlayback = useCallback(async () => {
     lightFeedback();
-
     try {
-      // Reset saved position
       pausedAudioStateRef.current = {
         sentenceIndex: null,
         wordId: null,
         position: null,
         audioPositionMs: 0,
       };
-
-      // Hide controls and stop playback
       setAudioControlVisible(false);
-
-      // Update wasPlayingRef to reflect that we're stopping playback
       wasPlayingRef.current = false;
-
-      // Fully stop and unload all audio resources
       await stopPlayback();
-
-      // Explicitly unload any audio resources to ensure complete cleanup
       if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
         try {
           await audioPlayer.soundRef.current.unloadAsync();
@@ -765,8 +576,6 @@ export default function ArticleScreen(): JSX.Element {
           handleError(error as Error);
         }
       }
-
-      // Reset audio state in Redux
       dispatch(
         updateAudioState({
           wordId: null,
@@ -780,30 +589,20 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [stopPlayback, dispatch, audioPlayer]);
 
-  // Handle next sentence button press
   const handleNextSentence = useCallback(async () => {
-    // Prevent rapid multiple clicks
     if (isNavigatingRef.current) {
       return;
     }
     isNavigatingRef.current = true;
     lightFeedback();
-
     if (currentSentenceIndex === null || !sentenceAudioData.length) {
       isNavigatingRef.current = false;
       return;
     }
-
-    // If not at the last sentence, go to the next one
     if (currentSentenceIndex < sentenceAudioData.length - 1) {
       try {
-        // Set manual navigation flag to prevent auto-advancement from old audio
         setManualNavigation(true);
-
-        // Stop current playback
         await stopPlayback();
-
-        // Update saved state to next sentence
         const nextSentenceIndex = currentSentenceIndex + 1;
         pausedAudioStateRef.current = {
           sentenceIndex: nextSentenceIndex,
@@ -811,13 +610,10 @@ export default function ArticleScreen(): JSX.Element {
           position: null,
           audioPositionMs: 0,
         };
-
-        // Start playback using the full audio data array with correct offset
         await audioPlayer.preloadAudioFiles(sentenceAudioData);
         const success = await startPlayback(sentenceAudioData, {
-          sentenceOffset: nextSentenceIndex, // This maintains the correct sentence index
+          sentenceOffset: nextSentenceIndex,
         });
-
         if (!success) {
           handleError(new Error('Failed to play next sentence'));
           setAudioControlVisible(false);
@@ -826,13 +622,11 @@ export default function ArticleScreen(): JSX.Element {
         handleError(error as Error);
         setAudioControlVisible(false);
       } finally {
-        // Reset navigation state after a delay to prevent rapid transitions
         setTimeout(() => {
           isNavigatingRef.current = false;
         }, 500);
       }
     } else {
-      // Already at last sentence
       isNavigatingRef.current = false;
     }
   }, [
@@ -844,30 +638,20 @@ export default function ArticleScreen(): JSX.Element {
     setManualNavigation,
   ]);
 
-  // Handle previous sentence button press
   const handlePreviousSentence = useCallback(async () => {
-    // Prevent rapid multiple clicks
     if (isNavigatingRef.current) {
       return;
     }
     isNavigatingRef.current = true;
     lightFeedback();
-
     if (currentSentenceIndex === null || !sentenceAudioData.length) {
       isNavigatingRef.current = false;
       return;
     }
-
-    // If not at the first sentence, go to the previous one
     if (currentSentenceIndex > 0) {
       try {
-        // Set manual navigation flag to prevent auto-advancement from old audio
         setManualNavigation(true);
-
-        // Stop current playback
         await stopPlayback();
-
-        // Update saved state to previous sentence
         const prevSentenceIndex = currentSentenceIndex - 1;
         pausedAudioStateRef.current = {
           sentenceIndex: prevSentenceIndex,
@@ -875,13 +659,10 @@ export default function ArticleScreen(): JSX.Element {
           position: null,
           audioPositionMs: 0,
         };
-
-        // Start playback from the previous sentence
         await audioPlayer.preloadAudioFiles(sentenceAudioData);
         const success = await startPlayback(sentenceAudioData, {
-          sentenceOffset: prevSentenceIndex, // Pass the absolute index
+          sentenceOffset: prevSentenceIndex,
         });
-
         if (!success) {
           handleError(new Error('Failed to play previous sentence'));
           setAudioControlVisible(false);
@@ -890,13 +671,11 @@ export default function ArticleScreen(): JSX.Element {
         handleError(error as Error);
         setAudioControlVisible(false);
       } finally {
-        // Reset navigation state after a delay to prevent rapid transitions
         setTimeout(() => {
           isNavigatingRef.current = false;
         }, 500);
       }
     } else {
-      // Already at first sentence
       isNavigatingRef.current = false;
     }
   }, [
@@ -908,9 +687,7 @@ export default function ArticleScreen(): JSX.Element {
     setManualNavigation,
   ]);
 
-  // --- Reset state and refs when article ID changes (for perfect navigation UX) ---
   useEffect(() => {
-    // Stop audio playback and unload resources
     stopPlayback?.();
     setAudioControlVisible(false);
     wasPlayingRef.current = false;
@@ -920,11 +697,7 @@ export default function ArticleScreen(): JSX.Element {
       position: null,
       audioPositionMs: 0,
     };
-    // Reset scroll position
-    prevScrollYValue.current = 0;
-    // Reset navigation ref
     isNavigatingRef.current = false;
-    // Reset Redux audio state
     dispatch(
       updateAudioState({
         wordId: null,
@@ -933,14 +706,10 @@ export default function ArticleScreen(): JSX.Element {
         sentenceId: null,
       })
     );
-    // Refetch article data and reading list status if hooks provide methods
     refetchReadingListStatus?.();
     refetchStudyWords?.();
-    // Scroll ArticleContent to top if possible (not supported by ref, so skip)
-    // Optionally, reset any other custom state here
   }, [id]);
 
-  // Main render - loading state
   if (isLoading) {
     return (
       <ThemedView
@@ -956,7 +725,6 @@ export default function ArticleScreen(): JSX.Element {
         <View style={styles.loadingContainer}>
           <LoadingScreen />
         </View>
-
         <ArticleButtons
           backButtonStyle={backButtonStyle}
           bookmarkButtonStyle={bookmarkButtonStyle}
@@ -975,14 +743,11 @@ export default function ArticleScreen(): JSX.Element {
     );
   }
 
-  // Article not found state
   if (!article) {
     return (
       <ThemedView style={styles.container} useSafeArea={false}>
         <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
-
         <ArticleNotFound />
-
         <ArticleButtons
           backButtonStyle={backButtonStyle}
           bookmarkButtonStyle={bookmarkButtonStyle}
@@ -1001,7 +766,6 @@ export default function ArticleScreen(): JSX.Element {
     );
   }
 
-  // Main article view
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
       <StatusBar
@@ -1010,7 +774,6 @@ export default function ArticleScreen(): JSX.Element {
         animated={true}
         hidden={!isHeaderVisible}
       />
-
       <ArticleButtons
         backButtonStyle={backButtonStyle}
         bookmarkButtonStyle={bookmarkButtonStyle}
@@ -1025,8 +788,6 @@ export default function ArticleScreen(): JSX.Element {
         user={user}
         isDarkMode={isDarkMode}
       />
-
-      {/* Article content */}
       <View style={styles.contentContainer}>
         {sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
@@ -1037,7 +798,7 @@ export default function ArticleScreen(): JSX.Element {
             renderSentenceItem={renderSentenceItem}
             handleScroll={handleScroll}
             colors={colors}
-            footerStyle={fadeInStyle as AnimatedStyleProp<ViewStyle>}
+            footerStyle={animatedStyle as AnimatedStyleProp<ViewStyle>}
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
@@ -1048,8 +809,6 @@ export default function ArticleScreen(): JSX.Element {
           />
         ) : null}
       </View>
-
-      {/* Audio Control Panel */}
       <AudioControlPanel
         isVisible={audioControlVisible}
         isPlaying={isPlaying}
