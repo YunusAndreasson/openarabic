@@ -15,8 +15,6 @@ import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
 
-import { CopyrightFooter } from './CopyrightFooter';
-
 interface FilteredArticleViewProps {
   /**
    * Articles to display in the filtered view
@@ -137,8 +135,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   isRefreshing,
   onRefresh,
   onArticlePress,
-  selectedAuthor,
-  selectedCategory,
 }) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
@@ -158,13 +154,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   );
 
   const ListFooterComponent = useMemo(() => {
-    if (!articles.length) return null;
-    return (
-      <>
-        <View style={styles.endMessageContainer} />
-        <CopyrightFooter />
-      </>
-    );
+    return null;
   }, [articles.length]);
 
   // Create a header spacer component

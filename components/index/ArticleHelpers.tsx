@@ -18,7 +18,7 @@ export const TimeAgo = memo(({ date }: { date: string }) => {
 
   return (
     <View style={styles.timeAgoContainer}>
-      <ThemedText type="caption" weight="500" colorName="textTertiary" skipDefaultColor>
+      <ThemedText type="caption" colorName="textTertiary" skipDefaultColor>
         {timeAgoText}
       </ThemedText>
     </View>

@@ -2,7 +2,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle, memo } from 'react';
-import { StyleSheet, View, RefreshControl } from 'react-native';
+import { StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ArticleListProps } from '@/types/ui/article.types';
@@ -11,8 +11,6 @@ import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
 import ThemedCard from '../ThemedCard';
-
-import { CopyrightFooter } from './CopyrightFooter';
 
 const ITEM_HEIGHT = 360;
 const DRAW_DISTANCE = ITEM_HEIGHT * 5;
@@ -35,11 +33,7 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       onPress={() => onPress(item)}
       style={styles.articleCard}
       shadowSize="medium"
-    >
-      <View style={{ paddingVertical: LAYOUT.SPACING.MEDIUM }}>
-        {/* Card content goes here. If ThemedCard renders its own content, move the padding logic there. */}
-      </View>
-    </ThemedCard>
+    />
   );
 });
 
@@ -73,11 +67,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const renderItem: ListRenderItem<Article> = useCallback(
       ({ item }) => <ArticleItem item={item} onPress={onArticlePress} />,
       [onArticlePress]
-    );
-
-    const footerElement = useMemo(
-      () => (isLoading && articles.length === 0 ? null : <CopyrightFooter />),
-      [isLoading, articles.length]
     );
 
     const refreshControl = useMemo(
@@ -123,7 +112,6 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         contentContainerStyle={safeContentContainerStyle}
         ListHeaderComponent={displayHeader}
         ListEmptyComponent={isLoading ? null : ListEmptyComponent}
-        ListFooterComponent={footerElement}
         refreshControl={refreshControl}
         scrollEventThrottle={16}
         overrideItemLayout={(layout, _item) => {

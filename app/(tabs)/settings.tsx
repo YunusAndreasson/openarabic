@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import React, { useCallback, useEffect, memo } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import Constants from 'expo-constants';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
@@ -351,6 +352,14 @@ const SettingsScreen: React.FC = () => {
               />
             </BaseCard>
           </View>
+
+          {/* App Version */}
+          <View style={styles.versionWrapper}>
+            {/* Expo's EmbeddedManifest type does not include 'version', but it is present at runtime. */}
+            <ThemedText type="caption" variant="subtle" style={styles.versionText}>
+              Version {(Constants.manifest as any)?.version || '1.0.0'}
+            </ThemedText>
+          </View>
         </ScrollView>
       </ThemedView>
     </ThemedView>
@@ -470,6 +479,16 @@ const styles = StyleSheet.create({
   },
   sliderWrapper: {
     flex: 1,
+  },
+  versionText: {
+    marginTop: LAYOUT.SPACING.TINY,
+    color: '#999', // fallback, will be overridden by ThemedText
+    letterSpacing: 0.5,
+  },
+  versionWrapper: {
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });
 
