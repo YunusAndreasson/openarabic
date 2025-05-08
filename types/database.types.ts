@@ -194,7 +194,6 @@ export type Database = {
           article_id: number;
           completed: boolean;
           completed_at: string | null;
-          position: number;
           read_count: number;
           user_id: string;
         };
@@ -203,7 +202,6 @@ export type Database = {
           article_id: number;
           completed?: boolean;
           completed_at?: string | null;
-          position: number;
           read_count?: number;
           user_id: string;
         };
@@ -212,7 +210,6 @@ export type Database = {
           article_id?: number;
           completed?: boolean;
           completed_at?: string | null;
-          position?: number;
           read_count?: number;
           user_id?: string;
         };

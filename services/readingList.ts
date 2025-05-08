@@ -7,7 +7,6 @@ import { supabase } from './supabase';
 type ReadingListItem = {
   user_id: string;
   article_id: number;
-  position: number;
   completed: boolean;
   completed_at: string | null;
   read_count: number;
@@ -82,8 +81,7 @@ export const readingListService = {
     const { data, error } = await supabase
       .from('reading_list')
       .select(articleJoinQuery)
-      .match({ user_id: userId, completed: false })
-      .order('position', { ascending: false });
+      .match({ user_id: userId, completed: false });
 
     if (error) {
       handleError(error, errorConfig.readingList.load);
@@ -103,8 +101,7 @@ export const readingListService = {
     const { data, error } = await supabase
       .from('reading_list')
       .select(`${articleJoinQuery}, completed_at`)
-      .match({ user_id: userId, completed: true })
-      .order('completed_at', { ascending: false });
+      .match({ user_id: userId, completed: true });
 
     if (error) {
       handleError(error, {
@@ -146,20 +143,9 @@ export const readingListService = {
       return;
     }
 
-    // Get the current maximum position
-    const { data: positionData } = await supabase
-      .from('reading_list')
-      .select('position')
-      .match({ user_id: userId })
-      .order('position', { ascending: false })
-      .limit(1);
-
-    const newPosition = positionData?.[0]?.position ?? -1;
-
     const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
-      position: newPosition + 1,
       completed: false,
       read_count: 0,
     });

@@ -47,6 +47,7 @@ interface ArticleContentProps {
   otherCategoryArticles?: Article[];
   renderArticleCard: (articleData: Article) => React.ReactElement;
   currentPlayingSentenceId?: number | null;
+  handleArticlePress: (articleId: string, isCompact: boolean) => void;
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
@@ -64,8 +65,8 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       footerStyle,
       otherArticles,
       otherCategoryArticles = EMPTY_ARTICLES,
-      renderArticleCard,
       currentPlayingSentenceId,
+      handleArticlePress,
     }: ArticleContentProps,
     ref
   ): JSX.Element => {
@@ -192,7 +193,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                         otherArticles={otherArticles}
                         otherCategoryArticles={otherCategoryArticles || []}
                         article={article}
-                        renderArticleCard={renderArticleCard}
+                        onArticlePress={a => handleArticlePress(String(a.id), true)}
                       />
                     </Animated.View>
                   ) : null}

@@ -265,6 +265,16 @@ export default function BookmarksScreen(): JSX.Element {
     isFetching: isReadingListFetching,
   } = readingListQuery;
 
+  // Deduplicate readingList by article_id
+  const dedupedReadingList = useMemo(() => {
+    const seen = new Set();
+    return readingList.filter(item => {
+      if (seen.has(item.article_id)) return false;
+      seen.add(item.article_id);
+      return true;
+    });
+  }, [readingList]);
+
   // Check if data is already in cache
   const isDataCached = useMemo(() => {
     return !!(user?.id && queryClient.getQueryData(['readingList', user.id]));
@@ -463,7 +473,7 @@ export default function BookmarksScreen(): JSX.Element {
         <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
           <FlashList
             ref={flashListRef}
-            data={readingList}
+            data={dedupedReadingList}
             extraData={flashListExtraData}
             keyExtractor={item => `${item.article_id}`}
             renderItem={({ item }) => (

@@ -729,7 +729,7 @@ export default function ArticleScreen(): JSX.Element {
         key={articleData.id}
         variant="compact"
         article={articleData}
-        onPress={() => handleArticlePress(articleData.id, true)}
+        onPress={() => handleArticlePress(Number(articleData.id), true)}
       />
     ),
     [handleArticlePress]
@@ -908,6 +908,38 @@ export default function ArticleScreen(): JSX.Element {
     setManualNavigation,
   ]);
 
+  // --- Reset state and refs when article ID changes (for perfect navigation UX) ---
+  useEffect(() => {
+    // Stop audio playback and unload resources
+    stopPlayback?.();
+    setAudioControlVisible(false);
+    wasPlayingRef.current = false;
+    pausedAudioStateRef.current = {
+      sentenceIndex: null,
+      wordId: null,
+      position: null,
+      audioPositionMs: 0,
+    };
+    // Reset scroll position
+    prevScrollYValue.current = 0;
+    // Reset navigation ref
+    isNavigatingRef.current = false;
+    // Reset Redux audio state
+    dispatch(
+      updateAudioState({
+        wordId: null,
+        position: null,
+        isPlaying: false,
+        sentenceId: null,
+      })
+    );
+    // Refetch article data and reading list status if hooks provide methods
+    refetchReadingListStatus?.();
+    refetchStudyWords?.();
+    // Scroll ArticleContent to top if possible (not supported by ref, so skip)
+    // Optionally, reset any other custom state here
+  }, [id]);
+
   // Main render - loading state
   if (isLoading) {
     return (
@@ -1010,6 +1042,9 @@ export default function ArticleScreen(): JSX.Element {
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
             currentPlayingSentenceId={currentSentenceIndex}
+            handleArticlePress={(articleId, isRelated) =>
+              handleArticlePress(Number(articleId), isRelated)
+            }
           />
         ) : null}
       </View>
