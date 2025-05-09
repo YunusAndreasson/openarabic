@@ -128,7 +128,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Handle starting a review with optimized invalidation
   const handleStartReview = () => {
     if (!user) return;
-    invalidateVocabularyQueries();
     navigateTo({
       pathname: '/review',
       params: { fromVocabulary: 'true' },
@@ -142,11 +141,6 @@ export default function VocabularyScreen(): JSX.Element {
       params: { category },
     });
   };
-
-  // Show loading screen only during initial uncached load
-  if (!isDataCached && isDataLoading && !isRefreshing) {
-    return <LoadingScreen />;
-  }
 
   // Show error message if there was an error loading data
   if (error) {

@@ -112,10 +112,8 @@ interface UseReviewReturn {
   currentMeaning: string;
   currentSentence: { wordForm: string };
   isTransitioningToCompletion: boolean;
-  showInitialLoading: boolean;
   opacity: SharedValue<number>;
   isComplete: boolean;
-  isLoading: boolean;
   progress: number;
   maxProgress: number;
   progressAnimationKey: number;
@@ -142,10 +140,7 @@ const fontConfig: WordSizingConfig = {
   maxScreenWidth: 500,
 };
 
-export function useReview({
-  fromVocabulary = false,
-  onClose,
-}: UseReviewProps = {}): UseReviewReturn {
+export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { playAudio, cleanup: cleanupAudio } = useAudioPlayer();
@@ -160,7 +155,6 @@ export function useReview({
   const [currentSentence, setCurrentSentence] = useState({ wordForm: '' });
   const [isTransitioningToCompletion, setIsTransitioningToCompletion] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
-  const [showInitialLoading, setShowInitialLoading] = useState(fromVocabulary);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   const [isStruggling, setIsStruggling] = useState(false);
   const lastVagueTimeRef = useRef<number | null>(null);
@@ -197,11 +191,10 @@ export function useReview({
     }, 200);
   }, [fadeOut, cleanupAudio]);
 
-  const { currentWord, wordQueue, isLoading, isComplete, progress, updateWord, invalidateQueries } =
-    useFSRS({
-      userId: user?.id,
-      onComplete: triggerCompletionTransition,
-    });
+  const { currentWord, wordQueue, isComplete, progress, updateWord, invalidateQueries } = useFSRS({
+    userId: user?.id,
+    onComplete: triggerCompletionTransition,
+  });
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
@@ -256,23 +249,6 @@ export function useReview({
   );
 
   useEffect(() => {
-    if (showInitialLoading) {
-      const mounted = { current: true };
-      const timer = setTimeout(() => {
-        if (mounted.current) {
-          setShowInitialLoading(false);
-        }
-      }, 300);
-
-      return () => {
-        mounted.current = false;
-        clearTimeout(timer);
-      };
-    }
-    return () => {};
-  }, [showInitialLoading]);
-
-  useEffect(() => {
     if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
       triggerCompletionTransition();
     }
@@ -283,7 +259,7 @@ export function useReview({
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, cleanupAudio]);
 
   useEffect(() => {
-    if (!isLoading && progress !== undefined) {
+    if (!isComplete && progress !== undefined) {
       const now = Date.now();
       if (now - lastProgressUpdateRef.current < 100) {
         return;
@@ -296,7 +272,7 @@ export function useReview({
         lastProgressUpdateRef.current = now;
       }
     }
-  }, [isLoading, progress, isComplete]);
+  }, [isComplete, progress, isComplete]);
 
   useEffect(() => {
     if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
@@ -504,10 +480,8 @@ export function useReview({
     currentMeaning,
     currentSentence,
     isTransitioningToCompletion,
-    showInitialLoading,
     opacity,
     isComplete,
-    isLoading,
     progress,
     maxProgress: maxProgressRef.current,
     progressAnimationKey,

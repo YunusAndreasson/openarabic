@@ -3,10 +3,8 @@ import React, { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { Loader } from '@/components/Loader';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
 
 import {
   ReviewCard,
@@ -47,7 +45,6 @@ const baseStyles = StyleSheet.create({
 });
 
 export default function ReviewScreen(): JSX.Element {
-  const colors = useColors();
   const params = useLocalSearchParams();
   const fromVocabulary = params.fromVocabulary === 'true';
 
@@ -56,10 +53,8 @@ export default function ReviewScreen(): JSX.Element {
     currentMeaning,
     currentSentence,
     isTransitioningToCompletion,
-    showInitialLoading,
     opacity,
     isComplete,
-    isLoading,
     maxProgress,
     progressAnimationKey,
     wordFontSize,
@@ -71,24 +66,8 @@ export default function ReviewScreen(): JSX.Element {
     handleClose,
   } = useReview({ fromVocabulary });
 
-  if (isLoading || showInitialLoading) {
-    return (
-      <ThemedView style={[baseStyles.container, baseStyles.centered]} useSafeArea={true}>
-        <Loader size="large" color={colors.tint} />
-      </ThemedView>
-    );
-  }
-
   if (isComplete || isTransitioningToCompletion) {
     return <CompletionScreen onClose={handleClose} />;
-  }
-
-  if (!currentSentence) {
-    return (
-      <ThemedView style={[baseStyles.container, baseStyles.centered]} useSafeArea={true}>
-        <Loader size="large" color={colors.tint} />
-      </ThemedView>
-    );
   }
 
   return (
