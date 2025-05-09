@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFSRS } from '@/hooks/useFSRS';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback, errorFeedback, extraLightFeedback } from '@/utils/haptics';
+import { lightFeedback, extraLightFeedback } from '@/utils/haptics';
 
 interface AudioPlayerState {
   sound: Audio.Sound | null;

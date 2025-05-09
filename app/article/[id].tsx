@@ -99,18 +99,6 @@ export default function ArticleScreen(): JSX.Element {
   } = useArticleData(articleId, user?.id);
 
   useEffect(() => {
-    if (user?.id) {
-      queryClient.fetchQuery({
-        queryKey: ['studyWords', user.id],
-        queryFn: () => studyWordsFSRSService.getFSRSWords(user.id),
-        staleTime: 5 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
-        retry: 2,
-      });
-    }
-  }, [user, queryClient]);
-
-  useEffect(() => {
     if (!user?.id) return;
     const subscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active') {
@@ -644,7 +632,6 @@ export default function ArticleScreen(): JSX.Element {
       })
     );
     refetchReadingListStatus?.();
-    refetchStudyWords?.();
   }, [id]);
 
   return (

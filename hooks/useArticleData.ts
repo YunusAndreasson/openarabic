@@ -84,22 +84,14 @@ export const useArticleData = (
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId,
-    staleTime: 0, // Always fetch fresh data when reopening article
+    staleTime: 300000, // Cache for 5 minutes, previously 0
     gcTime: 600000, // Keep in garbage collection for 10 minutes
     networkMode: 'always',
     retry: 3,
-    refetchOnMount: 'always', // Always refetch on mount
+    refetchOnMount: true, // Previously 'always', now true to respect staleTime
     refetchOnWindowFocus: true, // Also refetch when window gets focus
     placeholderData: old => old,
   });
-
-  // Ensure study words are refetched when article ID changes
-  useEffect(() => {
-    if (userId && articleId) {
-      // Force refresh study words when article changes
-      refetchStudyWords();
-    }
-  }, [articleId, userId, refetchStudyWords]);
 
   // Process sentences from article data - no additional fetch needed
   const sortedSentences = useMemo(() => {
