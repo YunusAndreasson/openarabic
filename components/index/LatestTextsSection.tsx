@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { JSX, memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import SectionTitle from '@/components/SectionTitle';

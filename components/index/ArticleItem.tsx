@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { JSX, memo } from 'react';
 
 import { ArticleCard } from '@/components/ArticleCard';
 import { ThemedText } from '@/components/ThemedText';

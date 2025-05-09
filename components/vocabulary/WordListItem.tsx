@@ -9,7 +9,6 @@ import { State } from 'ts-fsrs';
 import { LAYOUT } from '../../constants/layout';
 import { usePressAnimation } from '../../hooks/animations';
 import { useColors } from '../../hooks/useColors';
-import { useIsDarkMode } from '../../hooks/useThemeDetection';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
 
@@ -20,7 +19,6 @@ interface WordListItemProps {
 // Memoize the component to prevent unnecessary re-renders
 const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const { animatedStyle } = usePressAnimation({
     type: 'card',
     scaleAmount: 0.97,
@@ -106,9 +104,9 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           <ThemedText
             type="body"
             variant="secondary"
-            weight="medium"
+            weight="bold"
             numberOfLines={2}
-            style={styles.englishText}
+            style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, opacity: 1 }]}
           >
             {capitalizedMeaning || 'No translation available'}
           </ThemedText>
@@ -125,28 +123,11 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           >
             {letters}
           </ThemedText>
-
-          {/* Right arrow for navigation */}
-          <View style={styles.iconContainer}>
-            <ThemedText
-              type="heading3"
-              colorName="textTertiary"
-              variant={isDarkMode ? 'primary' : 'secondary'}
-              style={styles.arrowText}
-            >
-              →
-            </ThemedText>
-          </View>
         </View>
 
         {/* Memory Strength section */}
         <View style={styles.progressBarLabelContainer}>
-          <ThemedText
-            type="caption"
-            variant="subtle"
-            weight="medium"
-            style={styles.memoryStrengthLabel}
-          >
+          <ThemedText type="overline" variant="secondary">
             MEMORY STRENGTH
           </ThemedText>
           <ThemedText type="caption" variant="subtle" weight="medium">
@@ -190,10 +171,6 @@ const styles = StyleSheet.create({
     flex: 0.5,
     textAlign: 'right',
   },
-  arrowText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
   cardContent: {
     padding: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL * 0.75,
@@ -227,11 +204,6 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: LAYOUT.SPACING.XLARGE,
-  },
   lastReview: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     opacity: LAYOUT.OPACITY.MEDIUM,
@@ -241,9 +213,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: LAYOUT.SPACING.SMALL / 2,
-  },
-  memoryStrengthLabel: {
-    letterSpacing: 0.5,
   },
   progressBar: {
     borderRadius: LAYOUT.BORDER_RADIUS.SMALL,

@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   wordContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 280,
+    minHeight: 364,
     width: '100%',
   },
 });

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { JSX, memo } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 
 import Pill from '@/components/Pill';

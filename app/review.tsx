@@ -40,7 +40,7 @@ const baseStyles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 280,
+    minHeight: 364,
   } as ViewStyle,
 });
 

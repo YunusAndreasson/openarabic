@@ -11,7 +11,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFSRS } from '@/hooks/useFSRS';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback } from '@/utils/haptics';
+import { lightFeedback, errorFeedback, extraLightFeedback } from '@/utils/haptics';
 
 interface AudioPlayerState {
   sound: Audio.Sound | null;
@@ -166,14 +166,29 @@ const fontConfig: WordSizingConfig = {
 // Number of upcoming words to preload audio for
 const PRELOAD_COUNT = 3;
 // Preloading delay in milliseconds
-const PRELOAD_DELAY = 150;
+const PRELOAD_DELAY = 100;
+
+// Timing constants for transitions (milliseconds)
+const TRANSITION_DELAYS = {
+  initial: 150, // Initial delay before animation (was 200)
+  fadeAnimation: 200, // Delay for fade animation (was 300)
+  meaningDisplay: {
+    normal: 1500, // Display time for meaning overlay (was 2000)
+    struggling: 2500, // Display time for struggling words (was 3000)
+  },
+};
 
 export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { playAudio, cleanup: cleanupAudio } = useAudioPlayer();
 
-  const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
+  // Use optimized opacity animation from hooks/animations
+  const { opacity, fadeIn, fadeOut } = useOpacityAnimation({
+    initialOpacity: 1,
+    duration: TRANSITION_DELAYS.fadeAnimation,
+  });
+
   const preloadedAudioRef = useRef<Map<string, PreloadedAudio>>(new Map());
 
   // UI state
@@ -232,6 +247,83 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
+  // Batch state updates for meaning overlay
+  const showMeaningWithTimeout = useCallback(
+    (meaning: string, isVague: boolean, isStruggling: boolean = false) => {
+      setCurrentMeaning(meaning);
+      setIsVagueMeaning(isVague);
+      setShowMeaningOverlay(true);
+      setIsStruggling(isStruggling);
+
+      return setTimeout(
+        () => {
+          setShowMeaningOverlay(false);
+          setIsStruggling(false);
+        },
+        isStruggling
+          ? TRANSITION_DELAYS.meaningDisplay.struggling
+          : TRANSITION_DELAYS.meaningDisplay.normal
+      );
+    },
+    []
+  );
+
+  // Shows meaning overlay if needed
+  const displayMeaning = useCallback(
+    (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
+      if (confidence === 'known') return null;
+
+      const meaning = currentWord?.root?.meaning || 'No translation available';
+      return showMeaningWithTimeout(meaning, confidence === 'vague', isStruggling);
+    },
+    [currentWord?.root?.meaning, showMeaningWithTimeout]
+  );
+
+  // Determines if the user is struggling with this word
+  const checkIsStruggling = useCallback(
+    (confidence: 'known' | 'vague' | 'unknown'): boolean => {
+      if (confidence !== 'vague') return false;
+
+      const now = Date.now();
+      return (
+        timeRefs.current.lastVagueTime !== null &&
+        now - timeRefs.current.lastVagueTime < 24 * 60 * 60 * 1000 && // Within 24 hours
+        (currentWord?.fsrs_stability ?? 0) < 15
+      );
+    },
+    [currentWord?.fsrs_stability]
+  );
+
+  // Process the word update in FSRS
+  const processFeedback = useCallback(
+    async (
+      confidence: 'known' | 'vague' | 'unknown',
+      isStruggling: boolean,
+      controller: AbortController
+    ) => {
+      if (!currentWord?.root_id || controller.signal.aborted) return;
+
+      try {
+        // If struggling, treat it more like 'unknown' than 'vague'
+        const effectiveConfidence = isStruggling ? 'unknown' : confidence;
+        await updateWord(currentWord.root_id, effectiveConfidence);
+        if (!stateRefs.current.isUpdatingWord) return;
+        setTimeout(() => fadeIn(), 150);
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+        if (!stateRefs.current.isUpdatingWord) return;
+        fadeIn();
+      } finally {
+        stateRefs.current.isUpdatingWord = false;
+        if (stateRefs.current.meaningTimeout) {
+          clearTimeout(stateRefs.current.meaningTimeout);
+          stateRefs.current.meaningTimeout = null;
+        }
+      }
+    },
+    [currentWord, updateWord, fadeIn]
+  );
+
   // Enhanced preload function to handle multiple upcoming words
   const preloadAudio = useCallback(async (audioUrls: string[]) => {
     if (!audioUrls.length) return;
@@ -280,23 +372,68 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     }, PRELOAD_DELAY);
   }, []);
 
-  // Batch state updates for meaning overlay
-  const showMeaningWithTimeout = useCallback(
-    (meaning: string, isVague: boolean, isStruggling: boolean = false) => {
-      setCurrentMeaning(meaning);
-      setIsVagueMeaning(isVague);
-      setShowMeaningOverlay(true);
-      setIsStruggling(isStruggling);
+  const handleKnowledgeResponse = useCallback(
+    (confidence: 'known' | 'vague' | 'unknown') => {
+      // Guard conditions: exit early if we're already in a processing state
+      if (
+        stateRefs.current.isUpdatingWord ||
+        isTransitioningToCompletion ||
+        isComplete ||
+        stateRefs.current.completionTriggered
+      ) {
+        return;
+      }
 
-      return setTimeout(
-        () => {
-          setShowMeaningOverlay(false);
-          setIsStruggling(false);
-        },
-        isStruggling ? 3000 : 2000
-      );
+      stateRefs.current.isUpdatingWord = true;
+      const controller = new AbortController();
+
+      // Start transition animation
+      setTimeout(() => {
+        if (controller.signal.aborted) return;
+
+        cleanupAudio();
+        fadeOut();
+
+        setTimeout(() => {
+          if (controller.signal.aborted) return;
+
+          // Determine if user is struggling with this word
+          const isStruggling = checkIsStruggling(confidence);
+
+          // Update UI with meaning if needed
+          stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
+
+          // Track vague responses for future struggle detection
+          if (confidence === 'vague') {
+            timeRefs.current.lastVagueTime = Date.now();
+          }
+
+          // Schedule the actual word processing
+          if (confidence === 'unknown' || confidence === 'vague') {
+            stateRefs.current.meaningTimeout = setTimeout(
+              () => processFeedback(confidence, isStruggling, controller),
+              isStruggling
+                ? TRANSITION_DELAYS.meaningDisplay.struggling
+                : TRANSITION_DELAYS.meaningDisplay.normal
+            );
+          } else {
+            // For "known" responses, process immediately with minimum delay
+            processFeedback(confidence, isStruggling, controller);
+          }
+        }, TRANSITION_DELAYS.fadeAnimation);
+      }, TRANSITION_DELAYS.initial);
+
+      return () => controller.abort();
     },
-    []
+    [
+      isTransitioningToCompletion,
+      isComplete,
+      cleanupAudio,
+      fadeOut,
+      checkIsStruggling,
+      displayMeaning,
+      processFeedback,
+    ]
   );
 
   // Effect: Handle completion transition
@@ -366,8 +503,8 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         playAudio(audioUrl).catch(handleError);
       }
 
-      // Preload audio for multiple upcoming words
-      setTimeout(() => {
+      // Preload audio for multiple upcoming words - use requestAnimationFrame for timing optimization
+      requestAnimationFrame(() => {
         // Get audio URLs for the next PRELOAD_COUNT words
         const upcomingUrls = wordQueue
           .slice(0, PRELOAD_COUNT)
@@ -377,7 +514,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         if (upcomingUrls.length > 0) {
           preloadAudio(upcomingUrls);
         }
-      }, PRELOAD_DELAY);
+      });
     }
   }, [
     currentWord?.root_id,
@@ -389,132 +526,18 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     playAudio,
   ]);
 
-  // Determines if the user is struggling with this word
-  const checkIsStruggling = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown'): boolean => {
-      if (confidence !== 'vague') return false;
-
-      const now = Date.now();
-      return (
-        timeRefs.current.lastVagueTime !== null &&
-        now - timeRefs.current.lastVagueTime < 24 * 60 * 60 * 1000 && // Within 24 hours
-        (currentWord?.fsrs_stability ?? 0) < 15
-      );
-    },
-    [currentWord?.fsrs_stability]
-  );
-
-  // Shows meaning overlay if needed
-  const displayMeaning = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
-      if (confidence === 'known') return null;
-
-      const meaning = currentWord?.root?.meaning || 'No translation available';
-      return showMeaningWithTimeout(meaning, confidence === 'vague', isStruggling);
-    },
-    [currentWord?.root?.meaning, showMeaningWithTimeout]
-  );
-
-  // Process the word update in FSRS
-  const processFeedback = useCallback(
-    async (
-      confidence: 'known' | 'vague' | 'unknown',
-      isStruggling: boolean,
-      controller: AbortController
-    ) => {
-      if (!currentWord?.root_id || controller.signal.aborted) return;
-
-      try {
-        // If struggling, treat it more like 'unknown' than 'vague'
-        const effectiveConfidence = isStruggling ? 'unknown' : confidence;
-        await updateWord(currentWord.root_id, effectiveConfidence);
-        if (!stateRefs.current.isUpdatingWord) return;
-        setTimeout(() => fadeIn(), 150);
-      } catch (error) {
-        handleError(error instanceof Error ? error : new Error(String(error)));
-        if (!stateRefs.current.isUpdatingWord) return;
-        fadeIn();
-      } finally {
-        stateRefs.current.isUpdatingWord = false;
-        if (stateRefs.current.meaningTimeout) {
-          clearTimeout(stateRefs.current.meaningTimeout);
-          stateRefs.current.meaningTimeout = null;
-        }
-      }
-    },
-    [currentWord, updateWord, fadeIn]
-  );
-
-  const handleKnowledgeResponse = useCallback(
-    (confidence: 'known' | 'vague' | 'unknown') => {
-      // Guard conditions: exit early if we're already in a processing state
-      if (
-        stateRefs.current.isUpdatingWord ||
-        isTransitioningToCompletion ||
-        isComplete ||
-        stateRefs.current.completionTriggered
-      ) {
-        return;
-      }
-
-      stateRefs.current.isUpdatingWord = true;
-      const controller = new AbortController();
-
-      // Start transition animation
-      setTimeout(() => {
-        if (controller.signal.aborted) return;
-
-        cleanupAudio();
-        fadeOut();
-
-        setTimeout(() => {
-          if (controller.signal.aborted) return;
-
-          // Determine if user is struggling with this word
-          const isStruggling = checkIsStruggling(confidence);
-
-          // Update UI with meaning if needed
-          stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
-
-          // Track vague responses for future struggle detection
-          if (confidence === 'vague') {
-            timeRefs.current.lastVagueTime = Date.now();
-          }
-
-          // Schedule the actual word processing
-          if (confidence === 'unknown' || confidence === 'vague') {
-            stateRefs.current.meaningTimeout = setTimeout(
-              () => processFeedback(confidence, isStruggling, controller),
-              isStruggling ? 3000 : 2000
-            );
-          } else {
-            processFeedback(confidence, isStruggling, controller);
-          }
-        }, 300);
-      }, 200);
-
-      return () => controller.abort();
-    },
-    [
-      isTransitioningToCompletion,
-      isComplete,
-      cleanupAudio,
-      fadeOut,
-      checkIsStruggling,
-      displayMeaning,
-      processFeedback,
-    ]
-  );
-
   const handleSwipeLeft = useCallback(() => {
+    lightFeedback(); // Light haptic feedback for "unknown" response (lighter than error)
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse]);
 
   const handleSwipeRight = useCallback(() => {
+    // No haptic feedback for "known" response
     handleKnowledgeResponse('known');
   }, [handleKnowledgeResponse]);
 
   const handleTap = useCallback(() => {
+    extraLightFeedback(); // Extra light haptic feedback for "vague" response
     handleKnowledgeResponse('vague');
   }, [handleKnowledgeResponse]);
 

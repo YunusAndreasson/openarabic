@@ -5,6 +5,15 @@ import * as Haptics from 'expo-haptics';
  */
 
 /**
+ * Extra light feedback for very subtle interactions like:
+ * - Subtle confirmations
+ * - Minor selection changes
+ */
+export const extraLightFeedback = (): void => {
+  Haptics.selectionAsync();
+};
+
+/**
  * Light feedback for subtle interactions like:
  * - Selection changes
  * - Toggle switches

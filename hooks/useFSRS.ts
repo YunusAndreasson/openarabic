@@ -158,19 +158,11 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         const now = new Date();
 
         const rating =
-          card.state === State.New ||
-          card.state === State.Learning ||
-          card.state === State.Relearning
-            ? confidence === 'known'
-              ? Rating.Good
-              : confidence === 'vague'
-                ? Rating.Hard
-                : Rating.Again
-            : confidence === 'known'
-              ? Rating.Good
-              : confidence === 'vague'
-                ? Rating.Hard
-                : Rating.Again;
+          confidence === 'known'
+            ? Rating.Good
+            : confidence === 'vague'
+              ? Rating.Hard
+              : Rating.Again;
 
         const { card: newCard } = fsrsInstance.next(card, now, rating);
         const lastReview = now.toISOString();

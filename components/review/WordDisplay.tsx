@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 5,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 7,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
