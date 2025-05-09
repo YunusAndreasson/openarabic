@@ -176,12 +176,12 @@ const BottomControls = memo(
     onPlayAll,
     onShuffle,
     isPlaying,
-    isShuffleMode,
+    playbackMode,
   }: {
     onPlayAll: () => void;
     onShuffle: () => void;
     isPlaying: boolean;
-    isShuffleMode: boolean;
+    playbackMode: 'none' | 'all' | 'shuffle';
   }) => {
     const colors = useColors();
 
@@ -196,23 +196,25 @@ const BottomControls = memo(
           <View style={styles.actionButtonsRow}>
             <View style={styles.buttonContainer}>
               <ThemedButton
-                title={isPlaying && !isShuffleMode ? 'Stop' : 'Play All'}
+                title={isPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
                 onPress={onPlayAll}
                 variant="filled"
                 style={styles.fullWidthButton}
                 accessibilityLabel={
-                  isPlaying && !isShuffleMode ? 'Stop playback' : 'Play all bookmarked articles'
+                  isPlaying && playbackMode === 'all'
+                    ? 'Stop playback'
+                    : 'Play all bookmarked articles'
                 }
               />
             </View>
             <View style={styles.buttonContainer}>
               <ThemedButton
-                title={isPlaying && isShuffleMode ? 'Stop' : 'Shuffle'}
+                title={isPlaying && playbackMode === 'shuffle' ? 'Stop' : 'Shuffle'}
                 onPress={onShuffle}
                 variant="outlined"
                 style={[styles.shuffleButton, styles.fullWidthButton, { borderColor: colors.tint }]}
                 accessibilityLabel={
-                  isPlaying && isShuffleMode
+                  isPlaying && playbackMode === 'shuffle'
                     ? 'Stop shuffle playback'
                     : 'Play bookmarked articles in random order'
                 }
@@ -236,8 +238,8 @@ export default function BookmarksScreen(): JSX.Element {
 
   // --- State Hooks ---
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState();
-  const [isShuffleMode, setIsShuffleMode] = useState(false);
-  // --- End State Hooks ---
+  // playbackMode: 'none' | 'all' | 'shuffle'
+  const [playbackMode, setPlaybackMode] = useState<'none' | 'all' | 'shuffle'>('none');
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
@@ -379,31 +381,38 @@ export default function BookmarksScreen(): JSX.Element {
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
   const handlePlayAll = useCallback(() => {
-    if (isCurrentlyPlaying) {
+    if (isCurrentlyPlaying && playbackMode === 'all') {
       actions.stopPlayback();
-      setIsShuffleMode(false);
+      setPlaybackMode('none');
     } else if (enhancedTracks.length) {
       try {
         actions.startEnhancedPlayback(enhancedTracks, 0);
-        setIsShuffleMode(false);
+        setPlaybackMode('all');
       } catch (error) {
         handleError(error as Error);
       }
     } else {
       handleError('No tracks available for playback');
     }
-  }, [isCurrentlyPlaying, enhancedTracks, actions.startEnhancedPlayback, actions.stopPlayback]);
+  }, [
+    isCurrentlyPlaying,
+    playbackMode,
+    enhancedTracks,
+    actions.startEnhancedPlayback,
+    actions.stopPlayback,
+  ]);
 
   const handleShuffle = useCallback(() => {
-    if (isCurrentlyPlaying) {
+    if (isCurrentlyPlaying && playbackMode === 'shuffle') {
       actions.stopPlayback();
-      setIsShuffleMode(false);
+      setPlaybackMode('none');
     } else if (enhancedTracks.length) {
       actions.startEnhancedShufflePlayback(enhancedTracks);
-      setIsShuffleMode(true);
+      setPlaybackMode('shuffle');
     }
   }, [
     isCurrentlyPlaying,
+    playbackMode,
     enhancedTracks,
     actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
@@ -513,7 +522,7 @@ export default function BookmarksScreen(): JSX.Element {
         onPlayAll={handlePlayAll}
         onShuffle={handleShuffle}
         isPlaying={isCurrentlyPlaying}
-        isShuffleMode={isShuffleMode}
+        playbackMode={playbackMode}
       />
     </ThemedView>
   );

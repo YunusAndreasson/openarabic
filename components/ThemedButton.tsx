@@ -13,6 +13,7 @@ import type {
   ButtonSize,
   ButtonTextWeight,
 } from '@/types/ui/button.types';
+import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from './ThemedText';
 
@@ -130,12 +131,14 @@ export function ThemedButton({
 }: ThemedButtonProps): JSX.Element {
   const colors = useColors();
 
+  // Use the same animation config as BaseCard for consistency
   const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
-    opacityAmount: 0.7,
+    opacityAmount: LAYOUT.OPACITY.PRESSED,
   });
 
   const handlePress = (event: GestureResponderEvent) => {
+    lightFeedback();
     if (onPress && !disabled && !loading) {
       onPress(event);
     }
@@ -154,7 +157,7 @@ export function ThemedButton({
       // @ts-expect-error - Known type issue with Reanimated's animated style
       style={[buttonStyle, animatedStyle]}
       disabled={disabled || loading}
-      activeOpacity={1}
+      // Removed activeOpacity to allow custom animation to show
       onPress={handlePress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
