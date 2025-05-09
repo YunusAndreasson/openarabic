@@ -8,6 +8,9 @@ import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { StudyWord } from '@/types/vocabulary.types';
 
+// Minimum number of intervening words before showing a repeated word
+const MIN_WORD_SPACING = 3;
+
 export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
@@ -16,6 +19,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
   const totalWordsRef = useRef<number>(0);
   const processedWordsRef = useRef<number>(0);
+  const knownWordsRef = useRef<number>(0);
+  const uniqueWordsRef = useRef<Set<number>>(new Set());
   const stateTrackingRef = useRef<FSRSStateTracking>({
     isProcessingUpdate: false,
     completionTriggered: false,
@@ -47,7 +52,9 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     if (dueWords.length > 0) {
       setWordQueue(dueWords);
       totalWordsRef.current = dueWords.length;
+      uniqueWordsRef.current = new Set(dueWords.map(word => word.root_id));
       processedWordsRef.current = 0;
+      knownWordsRef.current = 0;
       setProgress(0);
       setIsComplete(false);
       stateTrackingRef.current.completionTriggered = false;
@@ -84,6 +91,32 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       state: word.fsrs_state ?? State.New,
       last_review: word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined,
     };
+  }, []);
+
+  // Helper function to find optimal position for word reinsertions
+  const findOptimalPosition = useCallback((queue: StudyWord[], wordToInsert: StudyWord): number => {
+    const currentRootId = wordToInsert.root_id;
+
+    // If queue is empty or has only one item, just append
+    if (queue.length <= 1) {
+      return queue.length;
+    }
+
+    // Start with the minimum spacing
+    let targetPosition = Math.min(MIN_WORD_SPACING, queue.length);
+
+    // Check if placing at minimum spacing would lead to another instance of the same word too close
+    for (let i = targetPosition - 1; i <= targetPosition + 1; i++) {
+      if (i < queue.length && queue[i]?.root_id === currentRootId) {
+        // If we would be too close to another instance of the same word,
+        // move further out if possible
+        targetPosition = Math.min(i + MIN_WORD_SPACING, queue.length);
+        break;
+      }
+    }
+
+    // Cap at queue length
+    return Math.min(targetPosition, queue.length);
   }, []);
 
   const updateWord = useCallback(
@@ -149,11 +182,50 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         });
 
         setWordQueue(prevQueue => {
-          const newQueue = prevQueue.filter((_, index) => index !== 0);
           processedWordsRef.current += 1;
+          let newQueue: StudyWord[] = [];
 
+          if (confidence === 'known') {
+            // If the word is marked as known, remove it from the queue
+            newQueue = prevQueue.filter((_, index) => index !== 0);
+            knownWordsRef.current += 1;
+          } else {
+            // For "vague" or "unknown", move the word to an optimal position in the queue
+            const [firstWord, ...remainingWords] = prevQueue;
+
+            if (firstWord) {
+              // Create a copy of the current word with updated properties
+              const updatedWord: StudyWord = {
+                ...firstWord,
+                // Update only the properties that have changed
+                fsrs_due: wordUpdateData.fsrs_due,
+                fsrs_stability: wordUpdateData.fsrs_stability,
+                fsrs_difficulty: wordUpdateData.fsrs_difficulty,
+                fsrs_elapsed_days: wordUpdateData.fsrs_elapsed_days,
+                fsrs_scheduled_days: wordUpdateData.fsrs_scheduled_days,
+                fsrs_reps: wordUpdateData.fsrs_reps,
+                fsrs_lapses: wordUpdateData.fsrs_lapses,
+                fsrs_state: wordUpdateData.fsrs_state,
+                fsrs_last_review: wordUpdateData.fsrs_last_review,
+              };
+
+              // Find optimal position for reinsertion
+              const insertPosition = findOptimalPosition(remainingWords, updatedWord);
+
+              // Insert the word at the optimal position
+              newQueue = [
+                ...remainingWords.slice(0, insertPosition),
+                updatedWord,
+                ...remainingWords.slice(insertPosition),
+              ];
+            } else {
+              newQueue = remainingWords;
+            }
+          }
+
+          // Calculate progress based on known words vs total unique words
           const newProgress = Math.min(
-            Math.round((processedWordsRef.current / totalWordsRef.current) * 100),
+            Math.round((knownWordsRef.current / uniqueWordsRef.current.size) * 100),
             100
           );
           setProgress(newProgress);
@@ -176,7 +248,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         stateTrackingRef.current.isProcessingUpdate = false;
       }
     },
-    [userId, currentWord, isComplete, convertToFSRSCard, fsrsInstance, onComplete]
+    [
+      userId,
+      currentWord,
+      isComplete,
+      convertToFSRSCard,
+      fsrsInstance,
+      onComplete,
+      findOptimalPosition,
+    ]
   );
 
   const resetQueue = useCallback(() => {
@@ -189,6 +269,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     stateTrackingRef.current.isProcessingUpdate = false;
     totalWordsRef.current = 0;
     processedWordsRef.current = 0;
+    knownWordsRef.current = 0;
+    uniqueWordsRef.current = new Set();
   }, []);
 
   useEffect(() => {

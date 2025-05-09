@@ -19,6 +19,13 @@ interface AudioPlayerState {
   isPlaying: boolean;
 }
 
+// Enhanced interface to store multiple preloaded sounds
+interface PreloadedAudio {
+  url: string;
+  loaded: boolean;
+  sound?: Audio.Sound;
+}
+
 function useAudioPlayer() {
   const audioState = useRef<AudioPlayerState>({
     sound: null,
@@ -140,15 +147,18 @@ const fontConfig: WordSizingConfig = {
   maxScreenWidth: 500,
 };
 
+// Number of upcoming words to preload audio for
+const PRELOAD_COUNT = 3;
+// Preloading delay in milliseconds
+const PRELOAD_DELAY = 150;
+
 export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { playAudio, cleanup: cleanupAudio } = useAudioPlayer();
 
   const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
-  const nextWordAudioRef = useRef<{ url: string; loaded: boolean; sound?: Audio.Sound } | null>(
-    null
-  );
+  const preloadedAudioRef = useRef<Map<string, PreloadedAudio>>(new Map());
 
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
@@ -198,35 +208,52 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
 
   const wordFontSize = useWordSizing(currentWord?.root?.letters, fontConfig);
 
-  const preloadNextAudio = useCallback(async (audioUrl: string) => {
-    if (!audioUrl) return;
+  // Enhanced preload function to handle multiple upcoming words
+  const preloadAudio = useCallback(async (audioUrls: string[]) => {
+    if (!audioUrls.length) return;
 
     clearTimeout(timeoutRef.current ?? undefined);
     timeoutRef.current = setTimeout(async () => {
       try {
-        if (nextWordAudioRef.current?.url === audioUrl && nextWordAudioRef.current.loaded) {
-          return;
+        // Process each URL
+        for (const audioUrl of audioUrls) {
+          if (!audioUrl) continue;
+
+          // Skip if already loaded
+          if (
+            preloadedAudioRef.current.has(audioUrl) &&
+            preloadedAudioRef.current.get(audioUrl)?.loaded
+          ) {
+            continue;
+          }
+
+          // Clean up old sound if exists
+          const existing = preloadedAudioRef.current.get(audioUrl);
+          if (existing?.sound) {
+            await existing.sound.unloadAsync().catch(() => {});
+          }
+
+          // Create and store new sound
+          const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false });
+          preloadedAudioRef.current.set(audioUrl, {
+            url: audioUrl,
+            loaded: true,
+            sound,
+          });
         }
 
-        if (nextWordAudioRef.current?.sound) {
-          await nextWordAudioRef.current.sound.unloadAsync().catch(() => {});
+        // Clean up any sounds that aren't in our current set of upcoming words
+        const urlSet = new Set(audioUrls);
+        for (const [url, data] of preloadedAudioRef.current.entries()) {
+          if (!urlSet.has(url) && data.sound) {
+            await data.sound.unloadAsync().catch(() => {});
+            preloadedAudioRef.current.delete(url);
+          }
         }
-
-        const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: false });
-
-        nextWordAudioRef.current = {
-          url: audioUrl,
-          loaded: true,
-          sound,
-        };
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
-        nextWordAudioRef.current = {
-          url: audioUrl,
-          loaded: false,
-        };
       }
-    }, 300);
+    }, PRELOAD_DELAY);
   }, []);
 
   // Batch state updates for meaning overlay
@@ -271,8 +298,22 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         setProgressAnimationKey(prev => prev + 1);
         lastProgressUpdateRef.current = now;
       }
+
+      // Ensure that if we're complete, the progress bar shows 100%
+      if (isComplete && maxProgressRef.current < 100) {
+        maxProgressRef.current = 100;
+        setProgressAnimationKey(prev => prev + 1);
+      }
     }
-  }, [isComplete, progress, isComplete]);
+  }, [isComplete, progress]);
+
+  useEffect(() => {
+    // When the review is complete, ensure progress bar is at 100%
+    if (isComplete && !isTransitioningToCompletion) {
+      maxProgressRef.current = 100;
+      setProgressAnimationKey(prev => prev + 1);
+    }
+  }, [isComplete, isTransitioningToCompletion]);
 
   useEffect(() => {
     if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
@@ -295,19 +336,25 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         playAudio(audioUrl).catch(handleError);
       }
 
+      // Preload audio for multiple upcoming words
       setTimeout(() => {
-        const nextWord = wordQueue[0];
-        if (nextWord?.root?.audio_url) {
-          preloadNextAudio(nextWord.root.audio_url);
+        // Get audio URLs for the next PRELOAD_COUNT words
+        const upcomingUrls = wordQueue
+          .slice(0, PRELOAD_COUNT)
+          .map(word => word?.root?.audio_url)
+          .filter(Boolean) as string[];
+
+        if (upcomingUrls.length > 0) {
+          preloadAudio(upcomingUrls);
         }
-      }, 300);
+      }, PRELOAD_DELAY);
     }
   }, [
     currentWord?.root_id,
     isComplete,
     isTransitioningToCompletion,
     wordQueue,
-    preloadNextAudio,
+    preloadAudio,
     playAudio,
   ]);
 
@@ -464,13 +511,16 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         completionTransitionRef.current = null;
       }
 
-      if (nextWordAudioRef.current?.sound) {
-        nextWordAudioRef.current.sound.unloadAsync().catch(() => {});
+      // Clean up all preloaded audio
+      for (const [, data] of preloadedAudioRef.current.entries()) {
+        if (data.sound) {
+          data.sound.unloadAsync().catch(() => {});
+        }
       }
+      preloadedAudioRef.current.clear();
 
       isUpdatingWordRef.current = false;
       maxProgressRef.current = 0;
-      nextWordAudioRef.current = null;
       lastProcessedWordIdRef.current = null;
     };
   }, [fadeIn, cleanupAudio]);
