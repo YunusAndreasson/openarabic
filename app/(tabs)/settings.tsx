@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, memo } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Constants from 'expo-constants';
+import pkg from '../../package.json';
 
 import BaseCard from '@/components/BaseCard';
 import { LoadingScreen } from '@/components/Loader';
@@ -177,6 +178,8 @@ const SettingsScreen: React.FC = () => {
   }
 
   // Button styles
+
+  const packageVersion = pkg.version;
 
   return (
     <ThemedView
@@ -355,9 +358,8 @@ const SettingsScreen: React.FC = () => {
 
           {/* App Version */}
           <View style={styles.versionWrapper}>
-            {/* Expo's EmbeddedManifest type does not include 'version', but it is present at runtime. */}
             <ThemedText type="caption" variant="subtle" style={styles.versionText}>
-              Version {(Constants.manifest as any)?.version || '1.0.0'}
+              Version {(Constants.expoConfig as any)?.version || packageVersion || '1446.0.0'}
             </ThemedText>
           </View>
         </ScrollView>

@@ -103,7 +103,7 @@ function FilterScreenContent() {
     staleTime: 0,
     enabled: type === 'author' && !isNaN(numericId),
   });
-  const { data: category, isLoading: isCategoryLoading } = useQuery({
+  const { data: category } = useQuery({
     queryKey: ['category', numericId],
     queryFn: async () => {
       try {
@@ -148,10 +148,7 @@ function FilterScreenContent() {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
-  const isLoading =
-    isArticlesLoading ||
-    (type === 'author' && isAuthorLoading) ||
-    (type === 'category' && isCategoryLoading);
+  const isLoading = type === 'author' && (isArticlesLoading || isAuthorLoading);
   const { navigateTo } = useNavigationWithDebounce();
   const handleRefresh = useCallback(() => {
     setIsRefreshing(true);
@@ -181,7 +178,7 @@ function FilterScreenContent() {
     }
     router.setParams({ headerTitle: title });
   }, [type, author?.name, category?.name]);
-  if (error && !isRefreshing) {
+  if (error && !isRefreshing && type !== 'category') {
     return (
       <ErrorState
         message={error instanceof Error ? error.message : 'Failed to load articles'}
