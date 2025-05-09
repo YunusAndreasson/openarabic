@@ -14,17 +14,21 @@ import ArticleList from '@/components/index/ArticleList';
 import DailyPickSection from '@/components/index/DailyPickSection';
 import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
+import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
+import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { useStrugglingWords } from '@/hooks/useStrugglingWords';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { setDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
+import type { StudyWord } from '@/types/vocabulary.types';
 import {
   filterArticles,
   getLatestArticles,
@@ -138,6 +142,7 @@ export default function ArticlesScreen(): JSX.Element {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { initialLoadComplete } = useAppLoading();
+  const { user } = useAuth();
 
   const {
     data: articlesData = [],
@@ -153,6 +158,12 @@ export default function ArticlesScreen(): JSX.Element {
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     placeholderData: old => old,
+  });
+
+  const { words: strugglingWords, isLoading: isStrugglingWordsLoading } = useStrugglingWords({
+    userId: user?.id,
+    limit: 10,
+    enabled: !!user?.id,
   });
 
   useEffect(() => {
@@ -220,7 +231,12 @@ export default function ArticlesScreen(): JSX.Element {
       await queryClient.invalidateQueries({
         predicate: query => {
           const key = query.queryKey[0];
-          return key === 'articles' || key === 'categories' || key === 'authors';
+          return (
+            key === 'articles' ||
+            key === 'categories' ||
+            key === 'authors' ||
+            key === 'struggling-words'
+          );
         },
       });
     } finally {
@@ -237,6 +253,11 @@ export default function ArticlesScreen(): JSX.Element {
     },
     [dispatch]
   );
+
+  const handleWordPress = useCallback((word: StudyWord) => {
+    // Navigate to word detail screen
+    router.push(`/word/${word.root_id}`);
+  }, []);
 
   const handleSelectAuthor = useCallback((authorId: number) => {
     router.push(`/filter?type=author&id=${authorId}`);
@@ -283,6 +304,12 @@ export default function ArticlesScreen(): JSX.Element {
       />
     );
   }, [continueReadingArticles, lastOpenedArticles, handleArticlePress]);
+
+  const StrugglingWordsComponent = useMemo(() => {
+    if (!user?.id) return null;
+
+    return <StrugglingWordsSection words={strugglingWords} isLoading={isStrugglingWordsLoading} />;
+  }, [strugglingWords, isStrugglingWordsLoading, user?.id]);
 
   const BeginnerFriendlySection = useMemo(() => {
     if (beginnerArticles.length === 0) return null;
@@ -348,6 +375,10 @@ export default function ArticlesScreen(): JSX.Element {
       { id: 'daily-pick', component: DailyPick },
       { id: 'continue-reading', component: ContinueReadingSection },
       {
+        id: 'struggling-words',
+        component: StrugglingWordsComponent,
+      },
+      {
         id: 'latest-texts',
         component: latestTextsSectionComponent,
       },
@@ -374,6 +405,7 @@ export default function ArticlesScreen(): JSX.Element {
   }, [
     DailyPick,
     ContinueReadingSection,
+    StrugglingWordsComponent,
     BeginnerFriendlySection,
     latestTextsSectionComponent,
     authorFilterComponent,
