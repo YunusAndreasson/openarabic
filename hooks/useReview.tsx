@@ -26,6 +26,22 @@ interface PreloadedAudio {
   sound?: Audio.Sound;
 }
 
+// Consolidated refs for easier state management
+interface ReviewTimeRefs {
+  lastVagueTime: number | null;
+  lastProgressUpdate: number;
+  lastProcessedWordId: string | null;
+}
+
+interface ReviewStateRefs {
+  meaningTimeout: ReturnType<typeof setTimeout> | null;
+  completionTransition: ReturnType<typeof setTimeout> | null;
+  timeoutRef: ReturnType<typeof setTimeout> | null;
+  maxProgress: number;
+  completionTriggered: boolean;
+  isUpdatingWord: boolean;
+}
+
 function useAudioPlayer() {
   const audioState = useRef<AudioPlayerState>({
     sound: null,
@@ -160,6 +176,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   const { opacity, fadeIn, fadeOut } = useOpacityAnimation({ initialOpacity: 1 });
   const preloadedAudioRef = useRef<Map<string, PreloadedAudio>>(new Map());
 
+  // UI state
   const [showMeaningOverlay, setShowMeaningOverlay] = useState(false);
   const [currentMeaning, setCurrentMeaning] = useState('');
   const [currentSentence, setCurrentSentence] = useState({ wordForm: '' });
@@ -167,34 +184,41 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [isVagueMeaning, setIsVagueMeaning] = useState(false);
   const [isStruggling, setIsStruggling] = useState(false);
-  const lastVagueTimeRef = useRef<number | null>(null);
 
-  const meaningTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const completionTransitionRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const maxProgressRef = useRef(0);
-  const completionTriggeredRef = useRef(false);
-  const isUpdatingWordRef = useRef<boolean>(false);
-  const lastProgressUpdateRef = useRef(Date.now());
-  const lastProcessedWordIdRef = useRef<string | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Consolidated time tracking refs
+  const timeRefs = useRef<ReviewTimeRefs>({
+    lastVagueTime: null,
+    lastProgressUpdate: Date.now(),
+    lastProcessedWordId: null,
+  });
+
+  // Consolidated state refs
+  const stateRefs = useRef<ReviewStateRefs>({
+    meaningTimeout: null,
+    completionTransition: null,
+    timeoutRef: null,
+    maxProgress: 0,
+    completionTriggered: false,
+    isUpdatingWord: false,
+  });
 
   const triggerCompletionTransition = useCallback(() => {
-    if (completionTriggeredRef.current) return;
-    completionTriggeredRef.current = true;
+    if (stateRefs.current.completionTriggered) return;
+    stateRefs.current.completionTriggered = true;
 
     cleanupAudio();
     setIsTransitioningToCompletion(true);
     fadeOut();
 
-    maxProgressRef.current = 100;
+    stateRefs.current.maxProgress = 100;
     setProgressAnimationKey(prev => prev + 1);
 
-    if (completionTransitionRef.current) {
-      clearTimeout(completionTransitionRef.current);
+    if (stateRefs.current.completionTransition) {
+      clearTimeout(stateRefs.current.completionTransition);
     }
 
-    completionTransitionRef.current = setTimeout(() => {
-      if (completionTriggeredRef.current) {
+    stateRefs.current.completionTransition = setTimeout(() => {
+      if (stateRefs.current.completionTriggered) {
         setIsTransitioningToCompletion(false);
         cleanupAudio();
       }
@@ -212,8 +236,8 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   const preloadAudio = useCallback(async (audioUrls: string[]) => {
     if (!audioUrls.length) return;
 
-    clearTimeout(timeoutRef.current ?? undefined);
-    timeoutRef.current = setTimeout(async () => {
+    clearTimeout(stateRefs.current.timeoutRef ?? undefined);
+    stateRefs.current.timeoutRef = setTimeout(async () => {
       try {
         // Process each URL
         for (const audioUrl of audioUrls) {
@@ -275,8 +299,9 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     []
   );
 
+  // Effect: Handle completion transition
   useEffect(() => {
-    if (isComplete && !isTransitioningToCompletion && !completionTriggeredRef.current) {
+    if (isComplete && !isTransitioningToCompletion && !stateRefs.current.completionTriggered) {
       triggerCompletionTransition();
     }
 
@@ -285,38 +310,40 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     }
   }, [isComplete, isTransitioningToCompletion, triggerCompletionTransition, cleanupAudio]);
 
+  // Effect: Update progress bar
   useEffect(() => {
     if (!isComplete && progress !== undefined) {
       const now = Date.now();
-      if (now - lastProgressUpdateRef.current < 100) {
+      if (now - timeRefs.current.lastProgressUpdate < 100) {
         return;
       }
 
       const safeProgress = Math.min(100, Math.max(0, progress));
-      if (safeProgress > maxProgressRef.current) {
-        maxProgressRef.current = safeProgress;
+      if (safeProgress > stateRefs.current.maxProgress) {
+        stateRefs.current.maxProgress = safeProgress;
         setProgressAnimationKey(prev => prev + 1);
-        lastProgressUpdateRef.current = now;
+        timeRefs.current.lastProgressUpdate = now;
       }
 
       // Ensure that if we're complete, the progress bar shows 100%
-      if (isComplete && maxProgressRef.current < 100) {
-        maxProgressRef.current = 100;
+      if (isComplete && stateRefs.current.maxProgress < 100) {
+        stateRefs.current.maxProgress = 100;
         setProgressAnimationKey(prev => prev + 1);
       }
     }
   }, [isComplete, progress]);
 
+  // Effect: Ensure 100% progress on completion
   useEffect(() => {
-    // When the review is complete, ensure progress bar is at 100%
     if (isComplete && !isTransitioningToCompletion) {
-      maxProgressRef.current = 100;
+      stateRefs.current.maxProgress = 100;
       setProgressAnimationKey(prev => prev + 1);
     }
   }, [isComplete, isTransitioningToCompletion]);
 
+  // Effect: Handle current word changes and preload audio
   useEffect(() => {
-    if (completionTriggeredRef.current || isComplete || isTransitioningToCompletion) {
+    if (stateRefs.current.completionTriggered || isComplete || isTransitioningToCompletion) {
       return;
     }
 
@@ -325,11 +352,14 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       const wordForm = currentWord.root.letters;
       const audioUrl = currentWord.root.audio_url;
 
-      if (lastProcessedWordIdRef.current === wordId && currentSentence.wordForm === wordForm) {
+      if (
+        timeRefs.current.lastProcessedWordId === wordId &&
+        currentSentence.wordForm === wordForm
+      ) {
         return;
       }
 
-      lastProcessedWordIdRef.current = wordId;
+      timeRefs.current.lastProcessedWordId = wordId;
       setCurrentSentence({ wordForm });
 
       if (audioUrl) {
@@ -351,6 +381,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     }
   }, [
     currentWord?.root_id,
+    currentSentence.wordForm,
     isComplete,
     isTransitioningToCompletion,
     wordQueue,
@@ -358,20 +389,78 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     playAudio,
   ]);
 
+  // Determines if the user is struggling with this word
+  const checkIsStruggling = useCallback(
+    (confidence: 'known' | 'vague' | 'unknown'): boolean => {
+      if (confidence !== 'vague') return false;
+
+      const now = Date.now();
+      return (
+        timeRefs.current.lastVagueTime !== null &&
+        now - timeRefs.current.lastVagueTime < 24 * 60 * 60 * 1000 && // Within 24 hours
+        (currentWord?.fsrs_stability ?? 0) < 15
+      );
+    },
+    [currentWord?.fsrs_stability]
+  );
+
+  // Shows meaning overlay if needed
+  const displayMeaning = useCallback(
+    (confidence: 'known' | 'vague' | 'unknown', isStruggling: boolean) => {
+      if (confidence === 'known') return null;
+
+      const meaning = currentWord?.root?.meaning || 'No translation available';
+      return showMeaningWithTimeout(meaning, confidence === 'vague', isStruggling);
+    },
+    [currentWord?.root?.meaning, showMeaningWithTimeout]
+  );
+
+  // Process the word update in FSRS
+  const processFeedback = useCallback(
+    async (
+      confidence: 'known' | 'vague' | 'unknown',
+      isStruggling: boolean,
+      controller: AbortController
+    ) => {
+      if (!currentWord?.root_id || controller.signal.aborted) return;
+
+      try {
+        // If struggling, treat it more like 'unknown' than 'vague'
+        const effectiveConfidence = isStruggling ? 'unknown' : confidence;
+        await updateWord(currentWord.root_id, effectiveConfidence);
+        if (!stateRefs.current.isUpdatingWord) return;
+        setTimeout(() => fadeIn(), 150);
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error(String(error)));
+        if (!stateRefs.current.isUpdatingWord) return;
+        fadeIn();
+      } finally {
+        stateRefs.current.isUpdatingWord = false;
+        if (stateRefs.current.meaningTimeout) {
+          clearTimeout(stateRefs.current.meaningTimeout);
+          stateRefs.current.meaningTimeout = null;
+        }
+      }
+    },
+    [currentWord, updateWord, fadeIn]
+  );
+
   const handleKnowledgeResponse = useCallback(
     (confidence: 'known' | 'vague' | 'unknown') => {
+      // Guard conditions: exit early if we're already in a processing state
       if (
-        isUpdatingWordRef.current ||
+        stateRefs.current.isUpdatingWord ||
         isTransitioningToCompletion ||
         isComplete ||
-        completionTriggeredRef.current
+        stateRefs.current.completionTriggered
       ) {
         return;
       }
 
-      isUpdatingWordRef.current = true;
-
+      stateRefs.current.isUpdatingWord = true;
       const controller = new AbortController();
+
+      // Start transition animation
       setTimeout(() => {
         if (controller.signal.aborted) return;
 
@@ -381,52 +470,25 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         setTimeout(() => {
           if (controller.signal.aborted) return;
 
-          const now = Date.now();
-          const isStruggling =
-            confidence === 'vague' &&
-            lastVagueTimeRef.current !== null &&
-            now - lastVagueTimeRef.current < 24 * 60 * 60 * 1000 && // Within 24 hours
-            (currentWord?.fsrs_stability ?? 0) < 15;
+          // Determine if user is struggling with this word
+          const isStruggling = checkIsStruggling(confidence);
 
-          if (confidence === 'unknown' || confidence === 'vague') {
-            const meaning = currentWord?.root?.meaning || 'No translation available';
-            meaningTimeoutRef.current = showMeaningWithTimeout(
-              meaning,
-              confidence === 'vague',
-              isStruggling
-            );
-          }
+          // Update UI with meaning if needed
+          stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
 
+          // Track vague responses for future struggle detection
           if (confidence === 'vague') {
-            lastVagueTimeRef.current = now;
+            timeRefs.current.lastVagueTime = Date.now();
           }
 
-          const processFeedback = async () => {
-            if (!currentWord?.root_id || controller.signal.aborted) return;
-
-            try {
-              // If struggling, treat it more like 'unknown' than 'vague'
-              const effectiveConfidence = isStruggling ? 'unknown' : confidence;
-              await updateWord(currentWord.root_id, effectiveConfidence);
-              if (!isUpdatingWordRef.current) return;
-              setTimeout(() => fadeIn(), 150);
-            } catch (error) {
-              handleError(error instanceof Error ? error : new Error(String(error)));
-              if (!isUpdatingWordRef.current) return;
-              fadeIn();
-            } finally {
-              isUpdatingWordRef.current = false;
-              if (meaningTimeoutRef.current) {
-                clearTimeout(meaningTimeoutRef.current);
-                meaningTimeoutRef.current = null;
-              }
-            }
-          };
-
+          // Schedule the actual word processing
           if (confidence === 'unknown' || confidence === 'vague') {
-            meaningTimeoutRef.current = setTimeout(processFeedback, isStruggling ? 3000 : 2000);
+            stateRefs.current.meaningTimeout = setTimeout(
+              () => processFeedback(confidence, isStruggling, controller),
+              isStruggling ? 3000 : 2000
+            );
           } else {
-            processFeedback();
+            processFeedback(confidence, isStruggling, controller);
           }
         }, 300);
       }, 200);
@@ -434,14 +496,13 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       return () => controller.abort();
     },
     [
-      currentWord,
-      updateWord,
       isTransitioningToCompletion,
       isComplete,
-      fadeIn,
-      fadeOut,
       cleanupAudio,
-      showMeaningWithTimeout,
+      fadeOut,
+      checkIsStruggling,
+      displayMeaning,
+      processFeedback,
     ]
   );
 
@@ -497,18 +558,18 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
 
     return () => {
       controller.abort();
-      completionTriggeredRef.current = true;
+      stateRefs.current.completionTriggered = true;
       fadeIn();
       cleanupAudio();
 
-      if (meaningTimeoutRef.current) {
-        clearTimeout(meaningTimeoutRef.current);
-        meaningTimeoutRef.current = null;
+      if (stateRefs.current.meaningTimeout) {
+        clearTimeout(stateRefs.current.meaningTimeout);
+        stateRefs.current.meaningTimeout = null;
       }
 
-      if (completionTransitionRef.current) {
-        clearTimeout(completionTransitionRef.current);
-        completionTransitionRef.current = null;
+      if (stateRefs.current.completionTransition) {
+        clearTimeout(stateRefs.current.completionTransition);
+        stateRefs.current.completionTransition = null;
       }
 
       // Clean up all preloaded audio
@@ -519,9 +580,9 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       }
       preloadedAudioRef.current.clear();
 
-      isUpdatingWordRef.current = false;
-      maxProgressRef.current = 0;
-      lastProcessedWordIdRef.current = null;
+      stateRefs.current.isUpdatingWord = false;
+      stateRefs.current.maxProgress = 0;
+      timeRefs.current.lastProcessedWordId = null;
     };
   }, [fadeIn, cleanupAudio]);
 
@@ -533,7 +594,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     opacity,
     isComplete,
     progress,
-    maxProgress: maxProgressRef.current,
+    maxProgress: stateRefs.current.maxProgress,
     progressAnimationKey,
     wordFontSize,
     isVagueMeaning,

@@ -11,17 +11,37 @@ import type { StudyWord } from '@/types/vocabulary.types';
 // Minimum number of intervening words before showing a repeated word
 const MIN_WORD_SPACING = 3;
 
+// Consolidated counters and tracking data
+interface FSRSCounters {
+  totalWords: number;
+  processedWords: number;
+  knownWords: number;
+  uniqueWords: Set<number>;
+}
+
+// Enhanced state tracking with more fields
+interface EnhancedFSRSStateTracking extends FSRSStateTracking {
+  completionTriggered: boolean;
+  isProcessingUpdate: boolean;
+  queueInitialized: boolean;
+}
+
 export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   const [wordQueue, setWordQueue] = useState<StudyWord[]>([]);
   const [currentWord, setCurrentWord] = useState<StudyWord | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [isComplete, setIsComplete] = useState<boolean>(false);
 
-  const totalWordsRef = useRef<number>(0);
-  const processedWordsRef = useRef<number>(0);
-  const knownWordsRef = useRef<number>(0);
-  const uniqueWordsRef = useRef<Set<number>>(new Set());
-  const stateTrackingRef = useRef<FSRSStateTracking>({
+  // Consolidated counters in a single ref
+  const countersRef = useRef<FSRSCounters>({
+    totalWords: 0,
+    processedWords: 0,
+    knownWords: 0,
+    uniqueWords: new Set<number>(),
+  });
+
+  // Enhanced state tracking
+  const stateTrackingRef = useRef<EnhancedFSRSStateTracking>({
     isProcessingUpdate: false,
     completionTriggered: false,
     queueInitialized: false,
@@ -46,15 +66,16 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     refetchOnReconnect: true,
   });
 
+  // Initialize queue when due words are fetched
   useEffect(() => {
     if (!dueWords || stateTrackingRef.current.queueInitialized) return;
 
     if (dueWords.length > 0) {
       setWordQueue(dueWords);
-      totalWordsRef.current = dueWords.length;
-      uniqueWordsRef.current = new Set(dueWords.map(word => word.root_id));
-      processedWordsRef.current = 0;
-      knownWordsRef.current = 0;
+      countersRef.current.totalWords = dueWords.length;
+      countersRef.current.uniqueWords = new Set(dueWords.map(word => word.root_id));
+      countersRef.current.processedWords = 0;
+      countersRef.current.knownWords = 0;
       setProgress(0);
       setIsComplete(false);
       stateTrackingRef.current.completionTriggered = false;
@@ -181,14 +202,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           previous_interval: currentWord.previous_interval,
         });
 
+        // Update the queue based on the user's response
         setWordQueue(prevQueue => {
-          processedWordsRef.current += 1;
+          countersRef.current.processedWords += 1;
           let newQueue: StudyWord[] = [];
 
           if (confidence === 'known') {
             // If the word is marked as known, remove it from the queue
             newQueue = prevQueue.filter((_, index) => index !== 0);
-            knownWordsRef.current += 1;
+            countersRef.current.knownWords += 1;
           } else {
             // For "vague" or "unknown", move the word to an optimal position in the queue
             const [firstWord, ...remainingWords] = prevQueue;
@@ -224,12 +246,14 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           }
 
           // Calculate progress based on known words vs total unique words
+          const uniqueWordCount = countersRef.current.uniqueWords.size;
           const newProgress = Math.min(
-            Math.round((knownWordsRef.current / uniqueWordsRef.current.size) * 100),
+            Math.round((countersRef.current.knownWords / uniqueWordCount) * 100),
             100
           );
           setProgress(newProgress);
 
+          // Check if queue is empty to trigger completion
           if (newQueue.length === 0) {
             if (!stateTrackingRef.current.completionTriggered) {
               stateTrackingRef.current.completionTriggered = true;
@@ -267,12 +291,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     setIsComplete(false);
     stateTrackingRef.current.completionTriggered = false;
     stateTrackingRef.current.isProcessingUpdate = false;
-    totalWordsRef.current = 0;
-    processedWordsRef.current = 0;
-    knownWordsRef.current = 0;
-    uniqueWordsRef.current = new Set();
+    countersRef.current = {
+      totalWords: 0,
+      processedWords: 0,
+      knownWords: 0,
+      uniqueWords: new Set(),
+    };
   }, []);
 
+  // Clean up on unmount
   useEffect(() => {
     return resetQueue;
   }, [resetQueue]);
