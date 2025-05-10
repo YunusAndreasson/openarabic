@@ -167,6 +167,9 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     return ['rgba(0,0,0,0)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)'] as const;
   }, []);
 
+  // Determine if summary is long to adjust layout (can be removed if unused)
+  // const isSummaryLong = article.summary && article.summary.length > 80;
+
   // Ensure summary is visible with appropriate line count
   const summaryLineCount = undefined; // No limit to see full text
 
@@ -343,6 +346,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+    marginBottom: LAYOUT.SPACING.TINY, // Small margin to improve spacing
   },
   author: {
     color: '#FFFFFF',
@@ -383,6 +387,7 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL, // Improved line height for readability
   },
 });
 
