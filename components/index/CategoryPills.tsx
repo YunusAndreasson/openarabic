@@ -1,5 +1,4 @@
 /* eslint-disable react-native/no-unused-styles */
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useCallback, memo } from 'react';
 import { StyleSheet, ScrollView, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -66,16 +65,6 @@ function CategoryPillsComponent({
             />
           ))}
         </ScrollView>
-
-        {/* Right fade gradient (more pronounced, starts earlier) */}
-        <LinearGradient
-          colors={[colors.transparent, colors.background, colors.background]}
-          start={{ x: 0.3, y: 0.5 }}
-          end={{ x: 1, y: 0.5 }}
-          locations={[0, 0.7, 1]}
-          style={styles.rightFadeGradient}
-          pointerEvents="none"
-        />
       </View>
     </Animated.View>
   );
