@@ -20,6 +20,8 @@ import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
+import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
+import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { handleError } from '@/utils/errorHandling';
@@ -27,6 +29,7 @@ import { mediumFeedback } from '@/utils/haptics';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
+import type { SentenceWord } from '../../types/vocabulary.types';
 
 // Format time in MM:SS format
 const formatTime = (milliseconds: number): string => {
@@ -88,6 +91,12 @@ const styles = StyleSheet.create({
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   },
+  sortingNote: {
+    marginTop: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    opacity: 0.7,
+  },
 });
 
 // Define a constant for item height calculation
@@ -101,36 +110,69 @@ const BookmarkListItem = memo(
     progress,
     duration,
     isActive,
+    dueWordCount = 0,
   }: {
     item: ReadingListItem;
     progress: number;
     duration: number;
     isActive: boolean;
+    dueWordCount?: number;
   }) => {
     const colors = useColors();
     const playbackProgress = duration > 0 ? progress / duration : 0;
     // Calculate remaining time in milliseconds
     const remainingTime = Math.max(0, duration - progress);
     const shouldShowTime = isActive && duration > 0;
+    const hasDueWords = dueWordCount > 0;
+
+    // Create meta content with time and due word count
+    const metaContent = (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {shouldShowTime && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+            <Ionicons name="time-outline" size={14} color={colors.tint} />
+            <ThemedText type="label" style={{ color: colors.tint, marginLeft: 4 }} skipDefaultColor>
+              {formatTime(remainingTime)}
+            </ThemedText>
+          </View>
+        )}
+
+        {hasDueWords && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: `${colors.warning}25`, // 25% opacity
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: `${colors.warning}40`, // 40% opacity
+            }}
+          >
+            <Ionicons name="sync-outline" size={12} color={colors.warning} />
+            <ThemedText
+              type="label"
+              style={{
+                color: colors.warning,
+                fontSize: 12,
+                marginLeft: 3,
+                fontWeight: '600',
+              }}
+              skipDefaultColor
+            >
+              {dueWordCount}
+            </ThemedText>
+          </View>
+        )}
+      </View>
+    );
 
     return (
       <ArticleCard
         title={item.articles?.title || 'Untitled'}
         author={item.articles?.author?.name || 'Unknown Author'}
-        meta={
-          shouldShowTime ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
-              <Ionicons name="time-outline" size={14} color={colors.tint} />
-              <ThemedText
-                type="label"
-                style={{ color: colors.tint, marginLeft: 4 }}
-                skipDefaultColor
-              >
-                {formatTime(remainingTime)}
-              </ThemedText>
-            </View>
-          ) : null
-        }
+        meta={metaContent}
         onPress={() => router.push(`/article/${item.article_id}`)}
         active={isActive}
       >
@@ -161,6 +203,7 @@ const BookmarkListItem = memo(
   (prevProps, nextProps) => {
     const shouldUpdate =
       prevProps.isActive !== nextProps.isActive ||
+      prevProps.dueWordCount !== nextProps.dueWordCount ||
       (nextProps.isActive &&
         (prevProps.progress !== nextProps.progress || prevProps.duration !== nextProps.duration));
 
@@ -241,6 +284,9 @@ export default function BookmarksScreen(): JSX.Element {
   // playbackMode: 'none' | 'all' | 'shuffle'
   const [playbackMode, setPlaybackMode] = useState<'none' | 'all' | 'shuffle'>('none');
 
+  // Get due words data for sorting
+  const { dueWordRootIds } = useArticlesByDueWords(user?.id, 0);
+
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
   const { progress, duration, metadata, audioState, currentTrackIndex, actions } =
@@ -266,15 +312,81 @@ export default function BookmarksScreen(): JSX.Element {
     isFetching: isReadingListFetching,
   } = readingListQuery;
 
-  // Deduplicate readingList by article_id
-  const dedupedReadingList = useMemo(() => {
+  // Query to fetch complete article data for articles in the reading list
+  const articlesWithSentencesQuery = useQuery({
+    queryKey: ['articles-with-sentences', user?.id, readingList],
+    queryFn: async () => {
+      if (!user?.id || !readingList.length || !dueWordRootIds.size)
+        return new Map<number, Article>();
+
+      // Get article IDs from reading list
+      const articleIds = readingList.map(item => item.article_id);
+
+      // Fetch complete article data with sentences and words
+      const articlesWithSentences = await Promise.all(
+        articleIds.map(id => articlesService.getArticleById(id))
+      );
+
+      // Create a map of article ID to detailed article data
+      const articleMap = new Map<number, Article>();
+      articlesWithSentences.forEach(article => {
+        if (article) {
+          articleMap.set(article.id, article);
+        }
+      });
+
+      return articleMap;
+    },
+    enabled: !!user?.id && !!readingList.length && dueWordRootIds.size > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: articleDetailsMap = new Map<number, Article>() } = articlesWithSentencesQuery;
+
+  // Helper function to count due words in an article - define before using it
+  const countDueWords = useCallback(
+    (articleId: number, dueWordRootIds: Set<number>): number => {
+      // Get detailed article data from the map
+      const article = articleDetailsMap.get(articleId);
+      if (!article?.article_sentences?.length) return 0;
+
+      let count = 0;
+      article.article_sentences.forEach((sentence: { sentence_words?: SentenceWord[] }) => {
+        sentence.sentence_words?.forEach((word: SentenceWord) => {
+          if (word.root_id && dueWordRootIds.has(word.root_id)) {
+            count++;
+          }
+        });
+      });
+
+      return count;
+    },
+    [articleDetailsMap]
+  );
+
+  // Deduplicate and sort reading list by due words
+  const sortedReadingList = useMemo(() => {
+    if (!readingList?.length) return [];
+
+    // First deduplicate the list
     const seen = new Set();
-    return readingList.filter(item => {
+    const dedupedList = readingList.filter(item => {
       if (seen.has(item.article_id)) return false;
       seen.add(item.article_id);
       return true;
     });
-  }, [readingList]);
+
+    // Then sort by due words count (if we have due words)
+    if (dueWordRootIds?.size > 0 && articleDetailsMap.size > 0) {
+      return [...dedupedList].sort((a, b) => {
+        const aDueWords = countDueWords(a.article_id, dueWordRootIds);
+        const bDueWords = countDueWords(b.article_id, dueWordRootIds);
+        return bDueWords - aDueWords; // Sort descending (most due words first)
+      });
+    }
+
+    return dedupedList;
+  }, [readingList, dueWordRootIds, articleDetailsMap, countDueWords]);
 
   // Check if data is already in cache
   const isDataCached = useMemo(() => {
@@ -288,6 +400,7 @@ export default function BookmarksScreen(): JSX.Element {
     return !readingList || readingList.length === 0;
   }, [isReadingListLoading, isReadingListFetching, isDataCached, readingList]);
 
+  // Get enhanced tracks query (keep as is)
   const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],
     queryFn: () => {
@@ -300,6 +413,23 @@ export default function BookmarksScreen(): JSX.Element {
     placeholderData: [], // Added for consistency
   });
   const { data: enhancedTracks = [], isLoading: isEnhancedTracksLoading } = enhancedTracksQuery;
+
+  // Sort the enhanced tracks to match the article sort order
+  const sortedEnhancedTracks = useMemo(() => {
+    if (!enhancedTracks.length || !sortedReadingList.length) return enhancedTracks;
+
+    // Create a map of article_id to position in sortedReadingList
+    const articlePositionMap = new Map(
+      sortedReadingList.map((item, index) => [item.article_id, index])
+    );
+
+    // Sort enhanced tracks based on the article position
+    return [...enhancedTracks].sort((a, b) => {
+      const posA = articlePositionMap.get(a.articleId) ?? 999;
+      const posB = articlePositionMap.get(b.articleId) ?? 999;
+      return posA - posB;
+    });
+  }, [enhancedTracks, sortedReadingList]);
 
   // --- Derived State & Memos (using direct state values) ---
   const metadataValues = useMemo(
@@ -384,9 +514,9 @@ export default function BookmarksScreen(): JSX.Element {
     if (isCurrentlyPlaying && playbackMode === 'all') {
       actions.stopPlayback();
       setPlaybackMode('none');
-    } else if (enhancedTracks.length) {
+    } else if (sortedEnhancedTracks.length) {
       try {
-        actions.startEnhancedPlayback(enhancedTracks, 0);
+        actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
         setPlaybackMode('all');
       } catch (error) {
         handleError(error as Error);
@@ -397,7 +527,7 @@ export default function BookmarksScreen(): JSX.Element {
   }, [
     isCurrentlyPlaying,
     playbackMode,
-    enhancedTracks,
+    sortedEnhancedTracks,
     actions.startEnhancedPlayback,
     actions.stopPlayback,
   ]);
@@ -406,14 +536,14 @@ export default function BookmarksScreen(): JSX.Element {
     if (isCurrentlyPlaying && playbackMode === 'shuffle') {
       actions.stopPlayback();
       setPlaybackMode('none');
-    } else if (enhancedTracks.length) {
-      actions.startEnhancedShufflePlayback(enhancedTracks);
+    } else if (sortedEnhancedTracks.length) {
+      actions.startEnhancedShufflePlayback(sortedEnhancedTracks);
       setPlaybackMode('shuffle');
     }
   }, [
     isCurrentlyPlaying,
     playbackMode,
-    enhancedTracks,
+    sortedEnhancedTracks,
     actions.startEnhancedShufflePlayback,
     actions.stopPlayback,
   ]);
@@ -440,6 +570,9 @@ export default function BookmarksScreen(): JSX.Element {
 
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
+
+  // Show sorting note only when we have due words
+  const hasDueWords = dueWordRootIds?.size > 0;
 
   // Show loading screen only during initial uncached load
   if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
@@ -475,19 +608,28 @@ export default function BookmarksScreen(): JSX.Element {
       <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
         <FlashList
           ref={flashListRef}
-          data={dedupedReadingList}
+          data={sortedReadingList}
           extraData={flashListExtraData}
           keyExtractor={item => `${item.article_id}`}
-          renderItem={({ item }) => (
-            <BookmarkListItem
-              item={item}
-              progress={progress}
-              duration={duration}
-              isActive={
-                audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
-              }
-            />
-          )}
+          renderItem={({ item }) => {
+            // Calculate due word count for this article
+            const dueWordCount =
+              dueWordRootIds?.size > 0 && articleDetailsMap.size > 0
+                ? countDueWords(item.article_id, dueWordRootIds)
+                : 0;
+
+            return (
+              <BookmarkListItem
+                item={item}
+                progress={progress}
+                duration={duration}
+                isActive={
+                  audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
+                }
+                dueWordCount={dueWordCount}
+              />
+            );
+          }}
           estimatedItemSize={ITEM_HEIGHT}
           contentContainerStyle={{
             paddingTop: headerHeight,
@@ -500,6 +642,13 @@ export default function BookmarksScreen(): JSX.Element {
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={null}
+          ListHeaderComponent={
+            hasDueWords ? (
+              <ThemedText type="caption" variant="subtle" style={styles.sortingNote}>
+                Articles with review words are prioritized in order
+              </ThemedText>
+            ) : null
+          }
           drawDistance={ITEM_HEIGHT * 5}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;

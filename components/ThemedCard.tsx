@@ -354,6 +354,29 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </View>
           ) : null}
 
+          {/* Due word count indicator on a separate line */}
+          {props.dueWordCount ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: LAYOUT.SPACING.TINY,
+              }}
+            >
+              <ThemedText
+                type="caption"
+                style={{
+                  color: colors.warning,
+                  fontWeight: '500',
+                  fontSize: 12,
+                }}
+                skipDefaultColor
+              >
+                {props.dueWordCount} due {props.dueWordCount === 1 ? 'word' : 'words'}
+              </ThemedText>
+            </View>
+          ) : null}
+
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
               <TimeAgo date={lastOpenedAt || props.article.created_at} />

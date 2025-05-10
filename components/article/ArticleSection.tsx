@@ -132,6 +132,11 @@ const ArticleSection = memo(
             hideDifficultyLabel={hideDifficultyLabel}
             hideDifficulty={hideDifficulty}
             lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(props.item.id) : undefined}
+            dueWordCount={
+              'dueWordCount' in props.item && typeof props.item.dueWordCount === 'number'
+                ? props.item.dueWordCount
+                : undefined
+            }
           />
         </View>
       ),

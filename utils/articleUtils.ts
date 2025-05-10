@@ -155,22 +155,24 @@ export function getArticlesByDueWords(
   // Get the root IDs of due words
   const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
 
-  // Count due words in each article
+  // Count unique due words in each article
   const articlesWithDueWordCount = articles.map(article => {
-    let dueWordCount = 0;
+    // Use a set to track unique root IDs in this article
+    const uniqueDueRootIds = new Set<number>();
 
     // Check each sentence in the article
     article.article_sentences?.forEach(sentence => {
       // Check each word in the sentence
       sentence.sentence_words?.forEach(word => {
-        // If the word's root is in the due words set, count it
-        if (dueWordRootIds.has(word.root_id)) {
-          dueWordCount++;
+        // If the word's root is in the due words set, add it to our unique set
+        if (word.root_id && dueWordRootIds.has(word.root_id)) {
+          uniqueDueRootIds.add(word.root_id);
         }
       });
     });
 
-    return { article, dueWordCount };
+    // Return the count of unique root IDs
+    return { article, dueWordCount: uniqueDueRootIds.size };
   });
 
   // Filter articles that actually have due words

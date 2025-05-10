@@ -79,6 +79,8 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
   hideDifficulty?: boolean;
   /** When the article was last opened */
   lastOpenedAt?: string;
+  /** Number of words due for review in this article */
+  dueWordCount?: number;
 }
 
 /**
@@ -118,6 +120,8 @@ export type ThemedCardProps =
         hideDifficulty?: boolean;
         /** When the article was last opened (for compact variant) */
         lastOpenedAt?: string;
+        /** Number of words due for review in this article (for compact variant) */
+        dueWordCount?: number;
         /** Variant of the card */
         variant?: CardVariant;
       });
