@@ -92,7 +92,7 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 }
 
 /**
- * Gets beginner-friendly articles (lowest difficulty level)
+ * Gets beginner-friendly articles (difficulty level 1-3)
  * @param articles - The articles to sort
  * @param limit - The maximum number of articles to return (default: 20)
  * @returns Beginner-friendly articles sorted by difficulty level (lowest first)
@@ -100,7 +100,8 @@ function seededShuffle<T>(array: T[], seed: number): T[] {
 export function getBeginnerArticles(articles: Article[], limit = 20): Article[] {
   if (!articles.length) return [];
 
-  return [...articles] // Using spread operator for clarity
+  return [...articles]
+    .filter(article => article.difficulty_level >= 1 && article.difficulty_level <= 3)
     .sort((a, b) => a.difficulty_level - b.difficulty_level)
     .slice(0, limit);
 }
@@ -119,4 +120,19 @@ export function getDailyPickArticle(articles: Article[], dayOfYear: number): Art
 
   // Return the first article from the shuffled array
   return shuffledArticles[0] ?? null;
+}
+
+/**
+ * Gets advanced articles (difficulty level 4-5)
+ * @param articles - The articles to sort
+ * @param limit - The maximum number of articles to return (default: 20)
+ * @returns Advanced articles sorted by difficulty level (highest first)
+ */
+export function getAdvancedArticles(articles: Article[], limit = 20): Article[] {
+  if (!articles.length) return [];
+
+  return [...articles]
+    .filter(article => article.difficulty_level >= 4 && article.difficulty_level <= 5)
+    .sort((a, b) => b.difficulty_level - a.difficulty_level)
+    .slice(0, limit);
 }

@@ -28,7 +28,6 @@ import { setDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
-import type { StudyWord } from '@/types/vocabulary.types';
 import {
   filterArticles,
   getLatestArticles,
@@ -254,11 +253,6 @@ export default function ArticlesScreen(): JSX.Element {
     [dispatch]
   );
 
-  const handleWordPress = useCallback((word: StudyWord) => {
-    // Navigate to word detail screen
-    router.push(`/word/${word.root_id}`);
-  }, []);
-
   const handleSelectAuthor = useCallback((authorId: number) => {
     router.push(`/filter?type=author&id=${authorId}`);
   }, []);
@@ -373,24 +367,12 @@ export default function ArticlesScreen(): JSX.Element {
   const ListHeaderComponent = useMemo(() => {
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
-      { id: 'continue-reading', component: ContinueReadingSection },
-      {
-        id: 'struggling-words',
-        component: StrugglingWordsComponent,
-      },
-      {
-        id: 'latest-texts',
-        component: latestTextsSectionComponent,
-      },
+      { id: 'struggling-words', component: StrugglingWordsComponent },
       { id: 'beginner-friendly', component: BeginnerFriendlySection },
-      {
-        id: 'author-filter',
-        component: authorFilterComponent,
-      },
-      {
-        id: 'category-filter',
-        component: categoryFilterComponent,
-      },
+      { id: 'latest-texts', component: latestTextsSectionComponent },
+      { id: 'continue-reading', component: ContinueReadingSection },
+      { id: 'author-filter', component: authorFilterComponent },
+      { id: 'category-filter', component: categoryFilterComponent },
     ];
 
     return (
@@ -404,10 +386,10 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [
     DailyPick,
-    ContinueReadingSection,
     StrugglingWordsComponent,
     BeginnerFriendlySection,
     latestTextsSectionComponent,
+    ContinueReadingSection,
     authorFilterComponent,
     categoryFilterComponent,
   ]);
