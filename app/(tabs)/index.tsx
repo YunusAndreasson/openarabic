@@ -40,7 +40,6 @@ import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../../components/ErrorState';
-import { useAppLoading } from '../_layout';
 
 // Cache duration constants
 
@@ -141,7 +140,6 @@ export default function ArticlesScreen(): JSX.Element {
   const headerHeight = useHeaderHeight();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
-  const { initialLoadComplete } = useAppLoading();
   const { user } = useAuth();
 
   const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(

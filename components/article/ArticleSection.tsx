@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     // Empty after removing horizontal padding
   },
   scrollContent: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    // paddingHorizontal removed to match other sections
   },
   articleCard: {
     marginRight: LAYOUT.SPACING.MEDIUM,

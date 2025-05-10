@@ -175,7 +175,7 @@ export const useArticleData = (
     queryFn: async () => {
       if (!article?.id || !article.category_id) return [];
       try {
-        return await articlesService.getOtherCategoryArticles(article.category_id);
+        return await articlesService.getOtherCategoryArticles(article.category_id, article.id);
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
         return [];

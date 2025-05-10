@@ -88,7 +88,6 @@ const styles = StyleSheet.create({
   hintText: {
     marginTop: -LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     opacity: 0.7,
   },
 });

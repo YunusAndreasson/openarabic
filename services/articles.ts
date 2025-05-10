@@ -128,7 +128,7 @@ export const articlesService = {
     try {
       const { data: article, error: articleError } = await supabase
         .from('articles')
-        .select('category_id')
+        .select('author_id')
         .eq('id', articleId)
         .single();
 
@@ -145,7 +145,7 @@ export const articlesService = {
       const { data, error } = await supabase
         .from('articles')
         .select(LIST_VIEW_COLUMNS)
-        .eq('category_id', article.category_id)
+        .eq('author_id', article.author_id)
         .neq('id', articleId)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -153,7 +153,7 @@ export const articlesService = {
       if (error) {
         await handleError(new Error(error.message), {
           toastMessage: 'Failed to load related articles',
-          analyticsProperties: { articleId, categoryId: article.category_id },
+          analyticsProperties: { articleId, authorId: article.author_id },
         });
         return [];
       }
@@ -172,19 +172,26 @@ export const articlesService = {
     }
   },
 
-  async getOtherCategoryArticles(categoryId: number): Promise<Article[]> {
+  async getOtherCategoryArticles(categoryId: number, articleId?: number): Promise<Article[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('articles')
         .select(LIST_VIEW_COLUMNS)
         .eq('category_id', categoryId)
         .order('created_at', { ascending: false })
         .limit(10);
 
+      // Exclude current article if articleId is provided
+      if (articleId) {
+        query = query.neq('id', articleId);
+      }
+
+      const { data, error } = await query;
+
       if (error) {
         await handleError(new Error(error.message), {
           toastMessage: 'Failed to load category articles',
-          analyticsProperties: { categoryId },
+          analyticsProperties: { categoryId, ...(articleId && { articleId }) },
         });
         return [];
       }
@@ -195,7 +202,7 @@ export const articlesService = {
         err instanceof Error ? err : new Error('Unknown error loading category articles'),
         {
           toastMessage: 'Failed to load category articles',
-          analyticsProperties: { categoryId },
+          analyticsProperties: { categoryId, ...(articleId && { articleId }) },
           showToast: false,
         }
       );
