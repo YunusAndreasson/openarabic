@@ -9,7 +9,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { EnhancedImage } from '../EnhancedImage';
-import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
+import { LAYOUT, HEADER_HEIGHT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { ThemedText } from '../ThemedText';
 import { ArticleButtons } from './ArticleButtons';
@@ -21,7 +21,6 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PARALLAX_FACTOR = 0.5; // How much slower the image moves (lower = more dramatic)
 const BUTTON_ZONE_HEIGHT = 60; // Height of the area reserved for buttons
-const BUTTON_SAFETY_MARGIN = 20; // Reduced from 30 to allow more content space
 
 interface ParallaxHeaderProps {
   article: Article;
@@ -60,12 +59,6 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
   const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
   const initialBookmarkIcon = isInReadingList ? 'bookmark' : 'bookmark-outline';
 
-  // Calculate the total button area
-  const buttonAreaHeight = BUTTON_ZONE_HEIGHT + topInset;
-
-  // Calculate the content start position (after buttons + safety margin)
-  const contentStartPosition = buttonAreaHeight + BUTTON_SAFETY_MARGIN;
-
   // Calculate reading time based on sentences count or summary length
   const readingTime = useMemo(() => {
     if (!article) return 2;
@@ -86,8 +79,23 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     return 2;
   }, [article]);
 
-  // Animated styles for the parallax image container
-  const imageContainerAnimatedStyle = useAnimatedStyle(() => {
+  // Animated styles for the container
+  const animatedContainerStyle = useAnimatedStyle(() => {
+    // Header collapses to just the buttons height when scrolling
+    const height = interpolate(
+      scrollY.value,
+      [0, headerHeight * 0.6],
+      [imageHeight, BUTTON_ZONE_HEIGHT + topInset],
+      Extrapolation.CLAMP
+    );
+
+    return {
+      height,
+    };
+  });
+
+  // Animated styles for the parallax image effect
+  const imageAnimatedStyle = useAnimatedStyle(() => {
     const translateY = interpolate(
       scrollY.value,
       [-headerHeight, 0, headerHeight],
@@ -102,7 +110,6 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
       Extrapolation.CLAMP
     );
 
-    // Fade out the image as we scroll
     const opacity = interpolate(
       scrollY.value,
       [0, headerHeight * 0.7],
@@ -116,21 +123,21 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     };
   });
 
-  // Animated styles for the main header content
-  const headerContentAnimatedStyle = useAnimatedStyle(() => {
-    // Fade out the main content completely by the time we're 70% scrolled
+  // Animated styles for content (fades out when scrolling)
+  const contentAnimatedStyle = useAnimatedStyle(() => {
+    // Content fades out more slowly over a longer scroll distance
     const opacity = interpolate(
       scrollY.value,
-      [0, headerHeight * 0.5, headerHeight * 0.7],
-      [1, 0.6, 0],
+      [0, headerHeight * 0.1, headerHeight * 0.6],
+      [1, 0.95, 0],
       Extrapolation.CLAMP
     );
 
-    // Move up slightly as we scroll
+    // Smoother upward movement during fade
     const translateY = interpolate(
       scrollY.value,
-      [0, headerHeight * 0.5],
-      [0, -headerHeight * 0.1],
+      [0, headerHeight * 0.2, headerHeight * 0.6],
+      [0, -5, -20],
       Extrapolation.CLAMP
     );
 
@@ -140,43 +147,48 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     };
   });
 
-  // Calculate the maximum height for the header content
-  const availableContentHeight = imageHeight - contentStartPosition;
+  // Animated styles for buttons (stay visible and transition nicely)
+  const buttonsAnimatedStyle = useAnimatedStyle(() => {
+    // Shift buttons slightly as we scroll
+    const translateY = interpolate(
+      scrollY.value,
+      [0, headerHeight * 0.3],
+      [0, -5],
+      Extrapolation.CLAMP
+    );
 
-  // Calculate appropriate content distribution
-  const contentDistribution = useMemo(() => {
-    // If the content area is shorter, use a more compressed layout
-    if (availableContentHeight < 240) {
-      return {
-        paddingBottom: LAYOUT.SPACING.SMALL,
-        topSpacing: LAYOUT.SPACING.MEDIUM, // Reduced from XLARGE
-        innerSpacing: LAYOUT.SPACING.SMALL,
-      };
-    }
+    // Buttons maintain visibility longer than content
+    const opacity = interpolate(
+      scrollY.value,
+      [0, headerHeight * 0.7, headerHeight * 0.9],
+      [1, 1, 0.9],
+      Extrapolation.CLAMP
+    );
 
-    // Normal layout for taller content areas
     return {
-      paddingBottom: LAYOUT.SPACING.LARGE, // Increased from MEDIUM
-      topSpacing: LAYOUT.SPACING.MEDIUM, // Reduced to provide more room for content
-      innerSpacing: LAYOUT.SPACING.SMALL, // Keep the same
+      opacity,
+      transform: [{ translateY }],
     };
-  }, [availableContentHeight]);
+  });
 
-  // Generate gradient colors based on theme
-  const gradientColors = React.useMemo(() => {
-    return ['rgba(0,0,0,0)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)'] as const;
-  }, []);
+  // Generate gradient colors that fade to match the article background color
+  const gradientColors = useMemo(() => {
+    // Extract the background color from theme colors
+    const bgColor = colors.background;
 
-  // Determine if summary is long to adjust layout (can be removed if unused)
-  // const isSummaryLong = article.summary && article.summary.length > 80;
-
-  // Ensure summary is visible with appropriate line count
-  const summaryLineCount = undefined; // No limit to see full text
+    // Create a gradient that fades from transparent to the background color
+    return [
+      'rgba(0,0,0,0)',
+      `${bgColor}40`, // 25% opacity
+      `${bgColor}D9`, // 85% opacity
+      bgColor, // 100% opacity
+    ] as const;
+  }, [colors.background]);
 
   return (
-    <View style={[styles.container, { height: imageHeight }]}>
-      {/* Parallax Image Background */}
-      <Animated.View style={[styles.imageContainer, imageContainerAnimatedStyle]}>
+    <Animated.View style={[styles.container, animatedContainerStyle]}>
+      {/* Background Image with Parallax */}
+      <Animated.View style={[styles.imageWrapper, imageAnimatedStyle]}>
         <EnhancedImage
           source={imageSource}
           style={styles.image}
@@ -188,12 +200,13 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
             }
           }
         />
-        {/* Single gradient overlay for text readability - only layer of opacity */}
-        <LinearGradient colors={gradientColors} style={styles.gradient} pointerEvents="none" />
       </Animated.View>
 
-      {/* Buttons container without animated background */}
-      <Animated.View style={[styles.buttonsContainer, { paddingTop: topInset }]}>
+      {/* Gradient Overlay to integrate content with background */}
+      <LinearGradient colors={gradientColors} style={styles.gradient} pointerEvents="none" />
+
+      {/* Buttons at the top - with their own animation */}
+      <Animated.View style={[styles.topSection, { marginTop: topInset }, buttonsAnimatedStyle]}>
         {onBackPress && onBookmarkPress && onPlayPress && (
           <ArticleButtons
             onBackPress={onBackPress}
@@ -209,27 +222,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
         )}
       </Animated.View>
 
-      {/* Content container with appropriate spacing from buttons */}
-      <Animated.View
-        style={[
-          styles.contentContainer,
-          {
-            top: contentStartPosition, // Start position after button area + safety margin
-            maxHeight: null, // Remove any height constraints
-            bottom: 0, // Ensure it extends to the bottom
-          },
-          headerContentAnimatedStyle,
-        ]}
-      >
-        <View
-          style={[
-            styles.contentWrapper,
-            {
-              paddingTop: contentDistribution.topSpacing, // Extra padding at the top
-              paddingBottom: contentDistribution.paddingBottom,
-            },
-          ]}
-        >
+      {/* Main content section - fades out when scrolling */}
+      <Animated.View style={[styles.contentSection, contentAnimatedStyle]}>
+        {/* Title and author */}
+        <View style={styles.titleContainer}>
           <ThemedText
             type="heading1"
             style={styles.title}
@@ -245,60 +241,57 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
               {article.author.name}
             </ThemedText>
           )}
+        </View>
 
-          {/* Article Metadata */}
-          <View style={[styles.metadataContainer, { marginTop: contentDistribution.innerSpacing }]}>
-            {/* Category */}
-            {article.category && (
-              <View style={styles.metadataItem}>
-                <Ionicons
-                  name="folder-outline"
-                  size={16}
-                  color="#FFFFFF"
-                  style={styles.metadataIcon}
-                />
-                <ThemedText type="caption" style={styles.metadataText}>
-                  {capitalizeFirstLetter(article.category.name)}
-                </ThemedText>
-              </View>
-            )}
-
-            {/* Reading Time */}
-            <View style={styles.metadataItem}>
-              <Ionicons name="time-outline" size={16} color="#FFFFFF" style={styles.metadataIcon} />
-              <ThemedText type="caption" style={styles.metadataText}>
-                {readingTime} min read
-              </ThemedText>
-            </View>
-
-            {/* Difficulty Level */}
+        {/* Metadata row */}
+        <View style={styles.metadataContainer}>
+          {/* Category */}
+          {article.category && (
             <View style={styles.metadataItem}>
               <Ionicons
-                name="stats-chart-outline"
+                name="folder-outline"
                 size={16}
                 color="#FFFFFF"
                 style={styles.metadataIcon}
               />
               <ThemedText type="caption" style={styles.metadataText}>
-                {formatDifficultyLevel(article.difficulty_level)}
+                {capitalizeFirstLetter(article.category.name)}
               </ThemedText>
             </View>
+          )}
+
+          {/* Reading Time */}
+          <View style={styles.metadataItem}>
+            <Ionicons name="time-outline" size={16} color="#FFFFFF" style={styles.metadataIcon} />
+            <ThemedText type="caption" style={styles.metadataText}>
+              {readingTime} min read
+            </ThemedText>
           </View>
 
-          {/* Summary without ellipsis */}
-          {article.summary && (
-            <ThemedText
-              type="body"
-              variant="subtle"
-              style={styles.summary}
-              numberOfLines={summaryLineCount}
-            >
+          {/* Difficulty Level */}
+          <View style={styles.metadataItem}>
+            <Ionicons
+              name="stats-chart-outline"
+              size={16}
+              color="#FFFFFF"
+              style={styles.metadataIcon}
+            />
+            <ThemedText type="caption" style={styles.metadataText}>
+              {formatDifficultyLevel(article.difficulty_level)}
+            </ThemedText>
+          </View>
+        </View>
+
+        {/* Summary text */}
+        {article.summary && (
+          <View style={styles.summaryContainer}>
+            <ThemedText type="body" variant="subtle" style={styles.summary} numberOfLines={4}>
               {article.summary}
             </ThemedText>
-          )}
-        </View>
+          </View>
+        )}
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -312,9 +305,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
-  imageContainer: {
+  imageWrapper: {
     ...StyleSheet.absoluteFillObject,
-    height: HEADER_IMAGE_HEIGHT,
+    width: '100%',
+    height: '100%',
   },
   image: {
     width: '100%',
@@ -324,33 +318,34 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 1,
   },
-  buttonsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10, // Higher than everything else
+  topSection: {
+    position: 'relative',
+    width: '100%',
+    zIndex: 10,
+    height: BUTTON_ZONE_HEIGHT,
   },
-  contentContainer: {
+  contentSection: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
     zIndex: 2,
   },
-  contentWrapper: {
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+  titleContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   title: {
     color: '#FFFFFF',
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
-    marginBottom: LAYOUT.SPACING.TINY, // Small margin to improve spacing
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   author: {
     color: '#FFFFFF',
-    marginTop: LAYOUT.SPACING.SMALL,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
@@ -358,6 +353,7 @@ const styles = StyleSheet.create({
   metadataContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   metadataItem: {
     flexDirection: 'row',
@@ -378,16 +374,16 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
   },
+  summaryContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
   summary: {
     color: '#FFFFFF',
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.XLARGE, // Keep large bottom margin
-    paddingBottom: LAYOUT.SPACING.MEDIUM, // Add extra padding at bottom
     opacity: 0.85,
     textShadowColor: 'rgba(0, 0, 0, 0.75)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL, // Improved line height for readability
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
 });
 
