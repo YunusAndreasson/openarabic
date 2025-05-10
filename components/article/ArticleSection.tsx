@@ -16,7 +16,7 @@ interface ArticleSectionProps {
   /**
    * Articles to display
    */
-  articles: Article[];
+  articles: (Article & { dueWordCount?: number })[];
 
   /**
    * Callback when article is pressed
@@ -111,6 +111,7 @@ const ArticleSection = memo(
                   hideDifficulty={hideDifficulty}
                   lastOpenedAt={lastOpenedAt}
                   showTimeAgo={!!lastOpenedAt}
+                  dueWordCount={article.dueWordCount}
                 />
               );
             })}

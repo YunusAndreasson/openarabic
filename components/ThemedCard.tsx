@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, View, Platform, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -353,7 +354,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </View>
           ) : null}
 
-          {/* Due word count indicator on a separate line */}
+          {/* Due word count indicator as simple text with icon */}
           {props.dueWordCount ? (
             <View
               style={{
@@ -362,12 +363,14 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
                 marginTop: LAYOUT.SPACING.TINY,
               }}
             >
+              <Ionicons name="sync-outline" size={14} color={colors.warning} />
               <ThemedText
                 type="caption"
                 style={{
                   color: colors.warning,
-                  fontWeight: '500',
+                  fontWeight: '600',
                   fontSize: 12,
+                  marginLeft: 4,
                 }}
                 skipDefaultColor
               >

@@ -174,10 +174,9 @@ const getCategoryStyle = (
     ? isDarkMode
       ? `${colors.tint}80`
       : `${colors.tint}60`
-    : isDarkMode
-      ? `${colors.white}30`
-      : colors.cardBorder,
-  borderWidth: isSelected ? 1 : 0.5,
+    : colors.cardBorder,
+  borderWidth: isSelected ? 1 : isDarkMode ? 1.5 : 0.5,
+  borderStyle: 'solid' as const,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   paddingVertical: LAYOUT.SPACING.TINY + 2,
@@ -205,8 +204,9 @@ const getFilterStyle = (
     : isDarkMode
       ? colors.elevation2
       : colors.elevation1,
-  borderWidth: isSelected ? LAYOUT.BORDER.WIDTH.NORMAL : LAYOUT.BORDER.WIDTH.THIN,
+  borderWidth: isSelected ? 1 : isDarkMode ? 1.5 : 0.5,
   borderColor: isSelected ? colors.tint : colors.cardBorder,
+  borderStyle: 'solid' as const,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   ...(Platform.OS === 'ios'
     ? {
