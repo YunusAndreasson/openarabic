@@ -1,9 +1,9 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import ArticleSection from '../../components/article/ArticleSection';
-import { ThemedText } from '../../components/ThemedText';
-import SectionTitle from '../../components/SectionTitle';
-import { ArabicWord } from '../../components/article/ArabicWord';
+import ArticleSection from '../article/ArticleSection';
+import { ThemedText } from '../ThemedText';
+import SectionTitle from '../SectionTitle';
+import { ArabicWord } from '../article/ArabicWord';
 import { useArticlesByDueWords } from '../../hooks/useArticlesByDueWords';
 import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';

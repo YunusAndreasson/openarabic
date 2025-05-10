@@ -27,13 +27,14 @@ interface StatItemProps {
   icon: keyof typeof Ionicons.glyphMap;
   iconColor: string;
   bgColor: string;
+  borderColor: string;
   category: StatCategory;
   onPress?: (category: StatCategory) => void;
 }
 
 // Separate StatItem component for better reusability and memoization
 const StatItem = memo(
-  ({ value, label, icon, iconColor, bgColor, category, onPress }: StatItemProps) => {
+  ({ value, label, icon, iconColor, bgColor, borderColor, category, onPress }: StatItemProps) => {
     // Use the standard press animation hook
     const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
       type: 'card',
@@ -56,7 +57,7 @@ const StatItem = memo(
           activeOpacity={0.7}
           disabled={!onPress}
         >
-          <View style={[styles.iconWrapper, { backgroundColor: bgColor }]}>
+          <View style={[styles.iconWrapper, { backgroundColor: bgColor, borderColor }]}>
             <Ionicons name={icon} size={24} color={iconColor} />
           </View>
           <ThemedText type="body" weight="bold" style={styles.statValue}>
@@ -92,6 +93,7 @@ export const VocabularyDashboard = memo(
           icon: 'book-outline',
           iconColor: colors.text,
           bgColor: withOpacity(colors.text, 0.19),
+          borderColor: colors.text + '40',
           category: 'total',
         },
         {
@@ -100,6 +102,7 @@ export const VocabularyDashboard = memo(
           icon: 'checkmark-circle-outline',
           iconColor: colors.success,
           bgColor: withOpacity(colors.success, 0.19),
+          borderColor: colors.success + '40',
           category: 'mastered',
         },
         {
@@ -108,6 +111,7 @@ export const VocabularyDashboard = memo(
           icon: 'school-outline',
           iconColor: colors.info,
           bgColor: withOpacity(colors.info, 0.19),
+          borderColor: colors.info + '40',
           category: 'learning',
         },
         {
@@ -116,6 +120,7 @@ export const VocabularyDashboard = memo(
           icon: 'alarm-outline',
           iconColor: colors.warning,
           bgColor: withOpacity(colors.warning, 0.19),
+          borderColor: colors.warning + '40',
           category: 'due',
         },
       ],
@@ -134,6 +139,7 @@ export const VocabularyDashboard = memo(
               icon={item.icon}
               iconColor={item.iconColor}
               bgColor={item.bgColor}
+              borderColor={item.borderColor}
               category={item.category}
               onPress={onStatPress}
             />
@@ -151,6 +157,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
     padding: LAYOUT.SPACING.SMALL,
+    borderWidth: 1.5,
   },
   mainCard: {
     marginBottom: LAYOUT.SPACING.MEDIUM,

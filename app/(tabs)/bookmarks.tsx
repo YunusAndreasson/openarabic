@@ -651,7 +651,7 @@ export default function BookmarksScreen(): JSX.Element {
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={null}
-          ListHeaderComponent={
+          ListFooterComponent={
             hasDueWords ? (
               <ThemedText type="caption" variant="subtle" style={styles.sortingNote}>
                 Articles with review words are prioritized in order

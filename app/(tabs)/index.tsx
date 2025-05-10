@@ -14,7 +14,7 @@ import DailyPickSection from '@/components/index/DailyPickSection';
 import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
-import { DueWordsArticleSection } from '@/components/home/DueWordsArticleSection';
+import { DueWordsArticleSection } from '@/components/index/DueWordsArticleSection';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';

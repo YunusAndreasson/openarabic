@@ -85,7 +85,12 @@ function VocabularyStatsComponent({
             </View>
           </View>
 
-          <View style={styles.circleContainer}>
+          <View
+            style={[
+              styles.circleBorder,
+              { borderColor: colors.warning + '40', backgroundColor: colors.warning + '25' },
+            ]}
+          >
             <Canvas style={styles.circleCanvas}>
               <Circle
                 cx={CIRCLE_CENTER}
@@ -123,7 +128,10 @@ const styles = StyleSheet.create({
     height: CIRCLE_SIZE,
     width: CIRCLE_SIZE,
   },
-  circleContainer: {
+  circleBorder: {
+    borderWidth: 2,
+    borderRadius: 9999,
+    padding: 4,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.SMALL,
