@@ -4,7 +4,6 @@ import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useCallback, useMemo, memo, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Loader } from '../components/Loader';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
@@ -66,11 +65,10 @@ export default function WordListScreen(): JSX.Element {
   }, [category]);
 
   // Use the new hook to fetch and process words
-  const {
-    data: words,
-    isLoading,
-    error,
-  } = useWordList(user?.id, category as 'total' | 'mastered' | 'learning');
+  const { data: words, error } = useWordList(
+    user?.id,
+    category as 'total' | 'mastered' | 'learning'
+  );
 
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
@@ -81,8 +79,6 @@ export default function WordListScreen(): JSX.Element {
 
   // Empty list component
   const renderEmptyComponent = useCallback(() => {
-    if (isLoading) return null;
-
     return (
       <View style={styles.emptyContainer}>
         <Ionicons
@@ -93,12 +89,10 @@ export default function WordListScreen(): JSX.Element {
         <ThemedText style={styles.emptyText}>No words found</ThemedText>
       </View>
     );
-  }, [isLoading, colors.tint]);
+  }, [colors.tint]);
 
   // List header component with category info card
   const ListHeaderComponent = useCallback(() => {
-    if (isLoading) return null;
-
     return (
       <View style={styles.headerContainer}>
         {/* Category Info Card */}
@@ -108,7 +102,7 @@ export default function WordListScreen(): JSX.Element {
         />
       </View>
     );
-  }, [isLoading, category]);
+  }, [category]);
 
   // Add error UI handling
   if (error) {
@@ -151,27 +145,21 @@ export default function WordListScreen(): JSX.Element {
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
       >
-        {isLoading ? (
-          <View style={styles.loaderContainer}>
-            <Loader size="large" color={colors.tint} />
-          </View>
-        ) : (
-          <FlashList
-            data={words || []}
-            renderItem={renderItem}
-            estimatedItemSize={ITEM_HEIGHT}
-            ListHeaderComponent={ListHeaderComponent}
-            ListEmptyComponent={renderEmptyComponent}
-            showsVerticalScrollIndicator={true}
-            estimatedFirstItemOffset={LAYOUT.SPACING.XXLARGE * 3}
-            overrideItemLayout={layout => {
-              layout.size = ITEM_HEIGHT;
-            }}
-            drawDistance={100}
-            contentInsetAdjustmentBehavior="automatic"
-            contentContainerStyle={styles.listContentContainer}
-          />
-        )}
+        <FlashList
+          data={words || []}
+          renderItem={renderItem}
+          estimatedItemSize={ITEM_HEIGHT}
+          ListHeaderComponent={ListHeaderComponent}
+          ListEmptyComponent={renderEmptyComponent}
+          showsVerticalScrollIndicator={true}
+          estimatedFirstItemOffset={LAYOUT.SPACING.XXLARGE * 3}
+          overrideItemLayout={layout => {
+            layout.size = ITEM_HEIGHT;
+          }}
+          drawDistance={100}
+          contentInsetAdjustmentBehavior="automatic"
+          contentContainerStyle={styles.listContentContainer}
+        />
       </ThemedView>
     </>
   );
@@ -211,11 +199,6 @@ const styles = StyleSheet.create({
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.LARGE,
-  },
-  loaderContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
   },
   wordItemContainer: {
     marginVertical: LAYOUT.SPACING.TINY / 4,

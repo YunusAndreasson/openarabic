@@ -1,6 +1,6 @@
 import { Canvas, Circle, Path } from '@shopify/react-native-skia';
 import React, { useMemo, useState, memo, useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useComponentAnimation, useProgressAnimation } from '@/hooks/animations';
@@ -9,7 +9,6 @@ import type { VocabularyStatsProps } from '@/types/ui/layout.types';
 import { createArcPath } from '@/utils/graphUtils';
 
 import BaseCard from '../BaseCard';
-import { LoadingContainer } from '../Loader';
 import { ThemedText } from '../ThemedText';
 
 const CIRCLE_RADIUS = 32;
@@ -49,11 +48,24 @@ function VocabularyStatsComponent({
 
   const circleBackgroundColor = useMemo(() => colors.text + '1a', [colors.text]);
 
+  if (isLoading) {
+    return (
+      <BaseCard
+        style={styles.progressCard}
+        isLoading={true}
+        loadingComponent={<ActivityIndicator size="large" color={colors.tint} />}
+        includePressAnimation={false}
+      >
+        <View />
+      </BaseCard>
+    );
+  }
+
   return (
     <BaseCard
       style={styles.progressCard}
-      isLoading={isLoading || !isReady}
-      loadingComponent={<LoadingContainer />}
+      isLoading={!isReady}
+      loadingComponent={<ActivityIndicator size="large" color={colors.tint} />}
       includePressAnimation={false}
       {...{ animated: true }}
     >

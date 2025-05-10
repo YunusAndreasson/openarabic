@@ -10,7 +10,6 @@ import { Stack, useNavigationContainerRef } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, {
-  useCallback,
   useEffect,
   useState,
   useRef,
@@ -27,8 +26,6 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { AppLoader } from '@/components/Loader';
-import { ToastProvider } from '@/components/ToastProvider';
 import { Theme } from '@/constants/Colors';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -42,17 +39,16 @@ import { analytics } from '../services/analytics';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
+import { ToastProvider } from '@/components/ToastProvider';
 
-// Prevent splash screen from auto-hiding
-try {
-  SplashScreen.preventAutoHideAsync();
-} catch (err) {
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync().catch(err => {
   Sentry.captureException(err, {
     tags: {
       location: 'splash_screen_prevention',
     },
   });
-}
+});
 
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
@@ -102,16 +98,12 @@ function AppContent() {
   const dispatch = useAppDispatch();
   const { theme } = useAppSelector((state: RootState) => state.theme);
   const isDark = theme === Theme.Dark;
-  const colors = useColors();
   const [appReady, setAppReady] = useState(false);
-  const [showLoader, setShowLoader] = useState(true);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const appState = useRef(AppState.currentState);
   const { isLoading: isAuthLoading, session } = useAuth();
-  const hasHiddenSplash = useRef(false);
   const navigationRef = useNavigationContainerRef();
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Philosopher: philosopherFont,
     NotoNaskhArabic: madinaFont,
   });
@@ -166,51 +158,35 @@ function AppContent() {
     }
   }, [dispatch, theme]);
 
+  // Handle preloading app data
   useEffect(() => {
     if (!isAuthLoading && !isLoaded) {
       preloadAppData();
     }
   }, [isAuthLoading, isLoaded, preloadAppData]);
 
-  const SPLASH_SCREEN_TIMEOUT = 5000;
-  const handleLayout = useCallback(async () => {
-    if (!hasHiddenSplash.current && fontsLoaded) {
-      setIsTransitioning(true);
-      hasHiddenSplash.current = true;
-
-      let timeoutId: any;
-      const timeoutPromise = new Promise(resolve => {
-        timeoutId = setTimeout(() => {
-          Sentry.captureMessage('Splash screen hide timed out', {
-            level: 'warning',
-            tags: { location: 'splash_screen_hide' },
-          });
-          resolve(null);
-        }, SPLASH_SCREEN_TIMEOUT);
-      });
-
+  // Hide splash screen once everything is ready
+  useEffect(() => {
+    async function prepare() {
       try {
-        await Promise.race([SplashScreen.hideAsync(), timeoutPromise]);
-        await new Promise(resolve => {
-          timeoutId = setTimeout(resolve, 100);
-        });
-        setShowLoader(false);
-        await new Promise(resolve => {
-          timeoutId = setTimeout(resolve, 50);
-        });
-        setAppReady(true);
-      } catch (err) {
-        Sentry.captureException(err, {
+        // Wait for fonts to load and app data to be available
+        if (fontsLoaded && !isAuthLoading && isLoaded) {
+          // Wait a moment for everything to settle
+          await new Promise(resolve => setTimeout(resolve, 100));
+          // Set app as ready first
+          setAppReady(true);
+          // Then hide the splash screen
+          await SplashScreen.hideAsync();
+        }
+      } catch (e) {
+        Sentry.captureException(e, {
           tags: { location: 'splash_screen_hide' },
         });
-      } finally {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        setIsTransitioning(false);
       }
     }
-  }, [fontsLoaded]);
+
+    prepare();
+  }, [fontsLoaded, isAuthLoading, isLoaded]);
 
   // Cleanup effect for AppState subscription
   useEffect(() => {
@@ -228,41 +204,36 @@ function AppContent() {
     };
   }, [appReady, preloadAppData]);
 
-  if (!fontsLoaded || isTransitioning) {
-    return <AppLoader color={colors.tint} />;
+  // Show nothing until the app is ready
+  if (!appReady) {
+    return null;
   }
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
       <ToastProvider>
         <AppLoadingContext.Provider value={appLoadingContext}>
-          <View style={styles.container} onLayout={handleLayout}>
-            {!showLoader ? (
-              <>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{
-                      headerShown: false,
-                      animation: 'none',
-                    }}
-                  />
-                  <Stack.Screen
-                    name="auth"
-                    options={{
-                      headerShown: false,
-                      animation: 'none',
-                    }}
-                  />
-                  <Stack.Screen name="article" options={{ headerShown: false }} />
-                  <Stack.Screen name="review" options={reviewScreenOptions} />
-                  <Stack.Screen name="index" />
-                </Stack>
-                <StatusBar style={isDark ? 'light' : 'dark'} />
-              </>
-            ) : (
-              <AppLoader color={colors.tint} />
-            )}
+          <View style={styles.container}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen
+                name="(tabs)"
+                options={{
+                  headerShown: false,
+                  animation: 'none',
+                }}
+              />
+              <Stack.Screen
+                name="auth"
+                options={{
+                  headerShown: false,
+                  animation: 'none',
+                }}
+              />
+              <Stack.Screen name="article" options={{ headerShown: false }} />
+              <Stack.Screen name="review" options={reviewScreenOptions} />
+              <Stack.Screen name="index" />
+            </Stack>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
           </View>
         </AppLoadingContext.Provider>
       </ToastProvider>

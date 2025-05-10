@@ -6,7 +6,6 @@ import React, { useEffect, useState, useCallback, useMemo, memo, JSX } from 'rea
 import { StyleSheet, View } from 'react-native';
 
 import BaseCard from '@/components/BaseCard';
-import { LoadingScreen } from '@/components/Loader';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
@@ -177,8 +176,6 @@ export default function ArticlesScreen(): JSX.Element {
       animation: 'none',
     });
   }, []);
-
-  const isInitialLoading = isArticlesLoading && articlesData.length === 0;
 
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
@@ -436,10 +433,6 @@ export default function ArticlesScreen(): JSX.Element {
     paddingTop: headerHeight,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   });
-
-  if (isInitialLoading && initialLoadComplete) {
-    return <LoadingScreen />;
-  }
 
   if (articlesError && !isRefreshing && !isDataCached) {
     return (

@@ -3,18 +3,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, memo } from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
+import * as Linking from 'expo-linking';
 
 import BaseCard from '@/components/BaseCard';
-import { LoadingScreen } from '@/components/Loader';
 import { CustomSlider } from '@/components/Slider';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState } from '@/hooks';
@@ -56,38 +56,45 @@ const SettingsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const headerHeight = useHeaderHeight();
+  const colors = useColors();
 
   // Simple loading state for session loading
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
-  // Check if we have concrete values
-  const hasConcreteValues =
-    settings &&
-    typeof settings.fontScale === 'number' &&
-    !Number.isNaN(settings.fontScale) &&
-    settings.fontScale >= 0.8 &&
-    settings.fontScale <= 1.3 &&
-    typeof settings.showEnglish === 'boolean';
+  // Show loading if settings aren't available yet
+  if (
+    !settings ||
+    typeof settings.fontScale !== 'number' ||
+    typeof settings.showEnglish !== 'boolean'
+  ) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.tint} />
+        </View>
+      </ThemedView>
+    );
+  }
 
   // Fade animations for UI elements that depend on Redux store data
   const { animatedStyle: themeToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues && !isLoadingState,
+    autoStart: true,
     delay: 100,
   });
 
   const { animatedStyle: englishToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues && !isLoadingState,
+    autoStart: true,
     delay: 150,
   });
 
   const { animatedStyle: sliderFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
-    autoStart: hasConcreteValues && !isLoadingState,
+    autoStart: true,
     delay: 200,
   });
 
@@ -96,7 +103,7 @@ const SettingsScreen: React.FC = () => {
 
   // Add effect to ensure animations start properly after settings are loaded
   useEffect(() => {
-    if (hasConcreteValues && !isLoadingState) {
+    if (true && !isLoadingState) {
       // Small delay to ensure animations run smoothly
       const timer = setTimeout(() => {
         // Re-trigger animations if needed
@@ -107,7 +114,7 @@ const SettingsScreen: React.FC = () => {
       return () => clearTimeout(timer);
     }
     return undefined; // Add return for when condition is not met
-  }, [hasConcreteValues, isLoadingState, themeToggleFade, englishToggleFade, sliderFade]);
+  }, [isLoadingState, themeToggleFade, englishToggleFade, sliderFade]);
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
@@ -171,11 +178,6 @@ const SettingsScreen: React.FC = () => {
   const handleSocialLink = (url: string) => {
     Linking.openURL(url);
   };
-
-  // Show loading if we don't have valid settings
-  if (!hasConcreteValues) {
-    return <LoadingScreen />;
-  }
 
   // Button styles
 
@@ -491,6 +493,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

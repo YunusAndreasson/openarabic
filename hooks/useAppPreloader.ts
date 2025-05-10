@@ -7,6 +7,7 @@ import { articlesService } from '../services/articles';
 import { categoriesService } from '../services/categories';
 import { readingListService } from '../services/readingList';
 import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '../services/studyWordsFSRS';
+import * as Sentry from '@sentry/react-native';
 
 import { useAuth } from './useAuth';
 
@@ -59,7 +60,15 @@ export const useAppPreloader = (): AppPreloaderResult => {
     setIsPreloading(true);
     setIsLoaded(false);
 
+    // Track preload start time for performance monitoring
+    const startTime = Date.now();
+
     try {
+      // Log preload start
+      if (__DEV__) {
+        console.log('[Preloader] Starting to preload app data...');
+      }
+
       const promises: Promise<unknown>[] = [
         queryClient.fetchQuery({
           queryKey: ['articles'],
@@ -103,13 +112,53 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       const results = await Promise.all(promises);
       const articlesData = results[0];
-      setIsLoaded(Array.isArray(articlesData) && articlesData.length > 0);
+      const hasArticles = Array.isArray(articlesData) && articlesData.length > 0;
+
+      setIsLoaded(hasArticles);
+
+      // Log preload completion for performance monitoring
+      const loadTime = Date.now() - startTime;
+      if (__DEV__) {
+        console.log(
+          `[Preloader] Finished preloading in ${loadTime}ms, articles loaded: ${hasArticles}`
+        );
+      }
+
+      // Send preload timing to analytics in production
+      if (!__DEV__ && hasArticles) {
+        Sentry.addBreadcrumb({
+          category: 'performance',
+          message: `App preload completed in ${loadTime}ms`,
+          level: 'info',
+        });
+      }
     } catch (error) {
+      // Calculate time spent before error
+      const errorTime = Date.now() - startTime;
+
       if (error instanceof Error) {
+        Sentry.captureException(error, {
+          tags: {
+            location: 'app_preloader',
+            loadTime: errorTime.toString(),
+          },
+        });
         handleError(error);
       } else {
-        handleError(new Error(String(error)));
+        const wrappedError = new Error(String(error));
+        Sentry.captureException(wrappedError, {
+          tags: {
+            location: 'app_preloader',
+            loadTime: errorTime.toString(),
+          },
+        });
+        handleError(wrappedError);
       }
+
+      if (__DEV__) {
+        console.error(`[Preloader] Error after ${errorTime}ms:`, error);
+      }
+
       setIsLoaded(false);
     } finally {
       setIsPreloading(false);

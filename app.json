@@ -4,7 +4,7 @@
     "slug": "open-arabic",
     "version": "1446.10.16",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/oa-logo.png",
     "scheme": "open-arabic",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -25,7 +25,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#1E1E1E"
+        "backgroundColor": "#121212"
       },
       "package": "com.edenmind.OpenArabic",
       "permissions": [
@@ -39,7 +39,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1E1E1E"
+          "backgroundColor": "#121212",
+          "imageResizeMode": "contain",
+          "image": "./assets/images/oa-logo.png"
         }
       ],
       "expo-font",
@@ -60,7 +62,7 @@
             "name": "Audio Playback",
             "notificationTitle": "Open Arabic Audio",
             "notificationColor": "#1E1E1E",
-            "notificationIcon": "./assets/images/icon.png"
+            "notificationIcon": "./assets/images/oa-logo.png"
           }
         }
       ],
@@ -70,7 +72,10 @@
       "typedRoutes": true
     },
     "splash": {
-      "backgroundColor": "#1E1E1E"
+      "image": "./assets/images/oa-logo.png",
+      "backgroundColor": "#121212",
+      "imageResizeMode": "contain",
+      "resizeMode": "contain"
     },
     "extra": {
       "router": {

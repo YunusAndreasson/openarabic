@@ -1,19 +1,12 @@
 import React, { memo, useMemo } from 'react';
-import type { ViewStyle } from 'react-native';
 import { StyleSheet, Pressable, View, Platform } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { BaseCardProps } from '@/types/ui/card.types';
 
 import { LAYOUT } from '../constants/layout';
 import { usePressAnimation } from '../hooks/animations';
 import { useColors } from '../hooks/useColors';
-
-import { LoadingContainer } from './Loader';
-
-type AnimatedViewStyle = AnimatedStyleProp<ViewStyle>;
 
 /**
  * BaseCard is the foundation component for all card-type UI elements
@@ -97,18 +90,18 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     // Render loading state if needed
     if (isLoading) {
       return (
-        <Animated.View style={combinedCardStyle as AnimatedViewStyle}>
-          {loadingComponent || <LoadingContainer size="medium" />}
-        </Animated.View>
+        <View style={combinedCardStyle} testID={testID}>
+          {loadingComponent || <View style={combinedContentStyle} />}
+        </View>
       );
     }
 
     // Non-interactive card
     if (!onPress) {
       return (
-        <Animated.View style={combinedCardStyle as AnimatedViewStyle} testID={testID}>
+        <View style={combinedCardStyle} testID={testID}>
           <View style={combinedContentStyle}>{children}</View>
-        </Animated.View>
+        </View>
       );
     }
 

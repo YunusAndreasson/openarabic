@@ -9,7 +9,7 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 import React, { useMemo, useEffect, memo, useState } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, Dimensions, ActivityIndicator } from 'react-native';
 import { useSharedValue, withTiming, useDerivedValue } from 'react-native-reanimated';
 
 import { useGraphData } from '@/hooks/useGraphData';
@@ -20,7 +20,6 @@ import { handleError } from '@/utils/errorHandling';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import BaseCard from '../BaseCard';
-import { LoadingContainer } from '../Loader';
 import { ThemedText } from '../ThemedText';
 
 interface VocabularyGraphProps {
@@ -40,7 +39,6 @@ export const VocabularyGraph = memo(
     animationTriggered = false,
   }: VocabularyGraphProps) => {
     const colors = useColors();
-    const [isReady, setIsReady] = useState(false);
     const [hasError, setHasError] = useState(false);
 
     // Use Reanimated's shared value for animation
@@ -86,15 +84,6 @@ export const VocabularyGraph = memo(
       }
     }, [data]);
 
-    // Set component as ready after initial mount
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        setIsReady(true);
-      }, 0);
-
-      return () => clearTimeout(timer);
-    }, []);
-
     // Use graph data hook to generate points and paths with error handling
     const { points, areaPath, linePath } = useGraphData(
       validData,
@@ -102,14 +91,14 @@ export const VocabularyGraph = memo(
       dimensions.graphHeight - dimensions.topPadding - dimensions.bottomPadding
     );
 
-    // Start the animation when the component is ready and parent signals animation
+    // Start the animation when ready
     useEffect(() => {
-      if (isReady && !isLoading && points.length > 0 && animationTriggered && !hasError) {
+      if (!isLoading && points.length > 0 && animationTriggered && !hasError) {
         progress.value = withTiming(1, { duration: 2000 });
       } else if (!animationTriggered) {
         progress.value = 0;
       }
-    }, [isReady, isLoading, points.length, animationTriggered, hasError, progress]);
+    }, [isLoading, points.length, animationTriggered, hasError, progress]);
 
     // Memoize gradient colors
     const gradientColors = useMemo(
@@ -166,7 +155,7 @@ export const VocabularyGraph = memo(
     // Loading component
     const loadingComponent = (
       <View style={[graphContainerStyle, styles.loadingContainer]}>
-        <LoadingContainer size="small" />
+        <ActivityIndicator size="small" color={colors.tint} />
         <ThemedText type="body" variant="secondary">
           Loading data...
         </ThemedText>

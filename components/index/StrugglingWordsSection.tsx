@@ -1,12 +1,11 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { State } from 'ts-fsrs';
 import { Ionicons } from '@expo/vector-icons';
 
 import BaseCard from '@/components/BaseCard';
 import SectionTitle from '@/components/SectionTitle';
 import { ThemedText } from '@/components/ThemedText';
-import { LoadingContainer } from '@/components/Loader';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useSimpleAudioPlayer } from '@/hooks/useSimpleAudioPlayer';
@@ -193,13 +192,14 @@ WordCard.displayName = 'WordCard';
 const StrugglingWordsSection = memo(({ words = [], isLoading = false }: StrugglingWordsProps) => {
   const displayedWords = useMemo(() => words.slice(0, 10), [words]);
   const { playAudio } = useSimpleAudioPlayer();
+  const colors = useColors();
 
   if (isLoading) {
     return (
       <View style={styles.container}>
         <SectionTitle title="Words You Struggle With" />
         <View style={styles.loadingContainer}>
-          <LoadingContainer />
+          <ActivityIndicator size="large" color={colors.tint} />
         </View>
       </View>
     );

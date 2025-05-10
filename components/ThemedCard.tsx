@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { memo, useMemo } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, ActivityIndicator } from 'react-native';
 
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
@@ -17,7 +17,6 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
-import { LoadingContainer } from './Loader';
 import Pill from './Pill';
 import { ThemedText } from './ThemedText';
 import { TimeAgo, SummaryIndicator } from './index/ArticleHelpers';
@@ -152,7 +151,7 @@ const LoadingComponent = ({ isDarkMode, colors }: { isDarkMode: boolean; colors:
       { backgroundColor: isDarkMode ? colors.cardBackground : colors.overlay },
     ]}
   >
-    <LoadingContainer />
+    <ActivityIndicator size="large" color={colors.tint} />
   </View>
 );
 

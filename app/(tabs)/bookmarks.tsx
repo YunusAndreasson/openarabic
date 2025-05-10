@@ -4,13 +4,12 @@ import { FlashList } from '@shopify/flash-list';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { router, useFocusEffect } from 'expo-router';
 import React, { useState, useRef, useEffect, useMemo, useCallback, memo, JSX } from 'react';
-import { StyleSheet, View, RefreshControl } from 'react-native';
+import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
 import BaseCard from '@/components/BaseCard';
 import EmptyState from '@/components/EmptyState';
-import { LoadingScreen } from '@/components/Loader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -87,6 +86,11 @@ const styles = StyleSheet.create({
   },
   fullWidthButton: {
     width: '100%',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   shuffleButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
@@ -576,7 +580,12 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Show loading screen only during initial uncached load
   if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
-    return <LoadingScreen />;
+    return (
+      <ThemedView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.tint} />
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading bookmarks...</ThemedText>
+      </ThemedView>
+    );
   }
 
   // Show empty state with animation

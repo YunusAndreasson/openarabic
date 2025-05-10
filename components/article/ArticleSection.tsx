@@ -1,15 +1,11 @@
-import { FlashList } from '@shopify/flash-list';
-import { useQueryClient } from '@tanstack/react-query';
-import React, { memo, useCallback } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import React, { memo } from 'react';
+import { StyleSheet, View, Platform, ScrollView, ActivityIndicator } from 'react-native';
 
-import { LoadingContainer } from '../../components/Loader';
-import SectionTitle from '../../components/SectionTitle';
-import ThemedCard from '../../components/ThemedCard';
-import { ThemedText } from '../../components/ThemedText';
-import { LAYOUT } from '../../constants/layout';
-import { articlesService } from '../../services/articles';
+import SectionTitle from '@/components/SectionTitle';
+import { ThemedCard } from '@/components';
+import { LAYOUT } from '@/constants/layout';
 import type { Article } from '../../types/articles.types';
+import { useColors } from '@/hooks/useColors';
 
 interface ArticleSectionProps {
   /**
@@ -68,12 +64,6 @@ interface ArticleSectionProps {
   isLoading?: boolean;
 }
 
-const QUERY_CONFIG = {
-  staleTime: 0,
-  gcTime: 0,
-  retry: 3,
-};
-
 /**
  * Displays a section of articles
  */
@@ -82,109 +72,50 @@ const ArticleSection = memo(
     title,
     articles,
     onArticlePress,
-    showTimeAgo = false,
-    vertical = false,
-    maxItems,
-    emptyStateMessage,
-    hideDifficultyLabel = false,
     hideDifficulty = false,
     getLastOpenedAt,
     isLoading = false,
   }: ArticleSectionProps) => {
-    const queryClient = useQueryClient();
-    const displayedArticles = maxItems ? articles.slice(0, maxItems) : articles;
+    const colors = useColors();
 
-    // Handle item press
-    const handleItemPress = useCallback(
-      (item: Article) => {
-        onArticlePress(item);
-      },
-      [onArticlePress]
-    );
+    // If no articles and not loading, don't render anything
+    if (articles.length === 0 && !isLoading) return null;
 
     // Handle viewability change for prefetching
-    const handleViewableItemsChanged = useCallback(
-      ({ viewableItems }: { viewableItems: { item: Article }[] }) => {
-        viewableItems.forEach(({ item }) => {
-          if (item?.id) {
-            queryClient.prefetchQuery({
-              queryKey: ['article', item.id],
-              queryFn: () => articlesService.getArticleById(item.id),
-              ...QUERY_CONFIG,
-            });
-          }
-        });
-      },
-      [queryClient]
-    );
-
-    // Render each article item
-    const renderItem = useCallback(
-      (props: { item: Article }) => (
-        <View
-          style={vertical ? styles.verticalArticleContainer : styles.horizontalArticleContainer}
-        >
-          <ThemedCard
-            variant="compact"
-            article={props.item}
-            onPress={() => handleItemPress(props.item)}
-            showTimeAgo={showTimeAgo}
-            hideDifficultyLabel={hideDifficultyLabel}
-            hideDifficulty={hideDifficulty}
-            lastOpenedAt={getLastOpenedAt ? getLastOpenedAt(props.item.id) : undefined}
-            dueWordCount={
-              'dueWordCount' in props.item && typeof props.item.dueWordCount === 'number'
-                ? props.item.dueWordCount
-                : undefined
-            }
-          />
-        </View>
-      ),
-      [handleItemPress, showTimeAgo, hideDifficultyLabel, hideDifficulty, getLastOpenedAt, vertical]
-    );
-
-    if (isLoading) {
-      return (
-        <View style={styles.container}>
-          <SectionTitle title={title} />
-          <View style={styles.loadingContainer}>
-            <LoadingContainer />
-          </View>
-        </View>
-      );
-    }
-
-    if (displayedArticles.length === 0) {
-      return (
-        <View style={styles.container}>
-          <SectionTitle title={title} />
-          <View style={styles.emptyContainer}>
-            <ThemedText type="body" variant="subtle">
-              {emptyStateMessage || 'No articles found'}
-            </ThemedText>
-          </View>
-        </View>
-      );
-    }
 
     return (
-      <View style={styles.container}>
+      <View style={styles.container} testID={`article-section-${title}`}>
         <SectionTitle title={title} />
-        <FlashList
-          data={displayedArticles}
-          renderItem={renderItem}
-          keyExtractor={item => `article-${item.id}`}
-          horizontal={!vertical}
-          showsHorizontalScrollIndicator={false}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={vertical ? styles.verticalList : styles.horizontalList}
-          onViewableItemsChanged={handleViewableItemsChanged}
-          viewabilityConfig={{
-            viewAreaCoveragePercentThreshold: 50,
-          }}
-          estimatedItemSize={vertical ? 150 : 200}
-          removeClippedSubviews
-        />
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.tint} />
+          </View>
+        ) : (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            accessibilityLabel={`Scroll ${title}`}
+          >
+            {articles.map(article => {
+              // Get last opened timestamp if provided
+              const lastOpenedAt = getLastOpenedAt?.(article.id);
+
+              return (
+                <ThemedCard
+                  key={`article-${article.id}`}
+                  style={styles.articleCard}
+                  variant="compact"
+                  article={article}
+                  handlePress={() => onArticlePress(article)}
+                  hideDifficulty={hideDifficulty}
+                  lastOpenedAt={lastOpenedAt}
+                  showTimeAgo={!!lastOpenedAt}
+                />
+              );
+            })}
+          </ScrollView>
+        )}
       </View>
     );
   }
@@ -228,6 +159,12 @@ const styles = StyleSheet.create({
   },
   verticalList: {
     // Empty after removing horizontal padding
+  },
+  scrollContent: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  articleCard: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 });
 

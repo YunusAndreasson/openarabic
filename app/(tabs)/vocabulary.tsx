@@ -5,7 +5,6 @@ import React, { useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
-import { LoadingScreen } from '@/components/Loader';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
