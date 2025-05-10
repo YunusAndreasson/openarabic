@@ -6,12 +6,13 @@ import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 
 import ThemedCard from '@/components/ThemedCard';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
-import { ArticleButtons } from '@/components/article/ArticleButtons';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
 import AudioControlPanel from '@/components/article/AudioControlPanel';
 import { useNavigationWithDebounce } from '@/hooks';
@@ -64,6 +65,7 @@ export default function ArticleScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const insets = useSafeAreaInsets();
 
   const { isHeaderVisible, handleScroll, animatedStyle } = useHeaderVisibility();
 
@@ -136,10 +138,7 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [article, isInReadingList, isLoadingReadingList]);
 
-  const backButtonStyle = animatedStyle;
-  const bookmarkButtonStyle = animatedStyle;
-  const playButtonStyle = animatedStyle;
-
+  // Re-add sentenceAudioData that was removed by mistake
   const sentenceAudioData = useMemo(() => {
     if (!sortedSentences || !sentenceWordsMap) {
       return [];
@@ -648,26 +647,8 @@ export default function ArticleScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
-      <StatusBar
-        style={isDarkMode ? 'light' : 'dark'}
-        translucent={true}
-        animated={true}
-        hidden={!isHeaderVisible}
-      />
-      <ArticleButtons
-        backButtonStyle={backButtonStyle}
-        bookmarkButtonStyle={bookmarkButtonStyle}
-        playButtonStyle={playButtonStyle}
-        onBackPress={handleBackPress}
-        onBookmarkPress={handleBookmarkPress}
-        onPlayPress={handlePlayPress}
-        isInReadingList={isInReadingList}
-        initialBookmarkIcon={initialBookmarkIcon}
-        isPlaying={isPlaying}
-        colors={colors}
-        user={user}
-        isDarkMode={isDarkMode}
-      />
+      <StatusBar style="light" translucent={true} animated={true} />
+
       <View style={styles.contentContainer}>
         {article && sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
@@ -685,6 +666,13 @@ export default function ArticleScreen(): JSX.Element {
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }
+            onBackPress={handleBackPress}
+            onBookmarkPress={handleBookmarkPress}
+            onPlayPress={handlePlayPress}
+            isInReadingList={isInReadingList}
+            isPlaying={isPlaying}
+            user={user}
+            isDarkMode={isDarkMode}
           />
         ) : null}
       </View>

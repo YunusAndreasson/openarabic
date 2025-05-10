@@ -5,13 +5,13 @@ import React, { useRef, useEffect, forwardRef, useImperativeHandle, JSX } from '
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import type { AnimatedStyleProp } from 'react-native-reanimated';
-import Animated from 'react-native-reanimated';
+import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
-import { ArticleHeader } from '@/components/article/ArticleHeader';
+import { ParallaxHeader } from '@/components/article/ParallaxHeader';
 import { RelatedArticlesFooter } from '@/components/article/RelatedArticlesFooter';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
@@ -28,6 +28,9 @@ const styles = StyleSheet.create({
   listContainer: {
     flex: 1,
     height: '100%',
+  },
+  spacer: {
+    height: 60, // Further increased spacer for better separation
   },
 });
 
@@ -48,6 +51,15 @@ interface ArticleContentProps {
   renderArticleCard: (articleData: Article) => React.ReactElement;
   currentPlayingSentenceId?: number | null;
   handleArticlePress: (articleId: string, isCompact: boolean) => void;
+  // Button action props
+  onBackPress?: () => void;
+  onBookmarkPress?: () => void;
+  onPlayPress?: () => void;
+  // Button state props
+  isInReadingList?: boolean;
+  isPlaying?: boolean;
+  user?: any;
+  isDarkMode?: boolean;
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
@@ -67,6 +79,15 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       otherCategoryArticles = EMPTY_ARTICLES,
       currentPlayingSentenceId,
       handleArticlePress,
+      // Button action props
+      onBackPress,
+      onBookmarkPress,
+      onPlayPress,
+      // Button state props
+      isInReadingList,
+      isPlaying,
+      user,
+      isDarkMode,
     }: ArticleContentProps,
     ref
   ): JSX.Element => {
@@ -78,6 +99,18 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       highlightWord?: string;
       wordPosition?: string;
     }>();
+
+    // Create a shared value to track scroll position for parallax effect
+    const scrollY = useSharedValue(0);
+
+    // Helper function to handle animated scroll events
+    const handleAnimatedScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      // Update our shared value for parallax effect
+      scrollY.value = event.nativeEvent.contentOffset.y;
+
+      // Call the existing scroll handler passed from parent
+      handleScroll(event);
+    };
 
     // Expose the scrollToSentence method to the parent component
     useImperativeHandle(
@@ -152,27 +185,20 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
                 paddingHorizontal: LAYOUT.SPACING.SMALL,
-                paddingTop:
-                  headerHeight +
-                  LAYOUT.SPACING.TINY +
-                  LAYOUT.SPACING.XLARGE +
-                  LAYOUT.SPACING.XXLARGE * 2.5 +
-                  LAYOUT.BUTTON.HEIGHT.MEDIUM,
+                paddingTop: HEADER_IMAGE_HEIGHT + LAYOUT.SPACING.XXLARGE, // Increased padding
                 paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
               }}
-              onScroll={handleScroll}
+              onScroll={handleAnimatedScroll}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={true}
               drawDistance={SENTENCE_ITEM_HEIGHT * 10}
               overrideItemLayout={layout => {
-                layout.size = SENTENCE_ITEM_HEIGHT + (article?.title ? 150 : 0);
+                layout.size = SENTENCE_ITEM_HEIGHT;
               }}
-              estimatedFirstItemOffset={article?.title ? 150 : 0}
-              ListHeaderComponent={
-                <Animated.View>
-                  <ArticleHeader article={article} colors={colors} />
-                </Animated.View>
-              }
+              // Remove the offset since we won't have the title header anymore
+              estimatedFirstItemOffset={0}
+              // Replace the ArticleHeader with just a simple spacer
+              ListHeaderComponent={<View style={styles.spacer} />}
               ListFooterComponent={
                 <>
                   {article.source ? (
@@ -199,6 +225,24 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                   ) : null}
                 </>
               }
+            />
+
+            {/* Parallax Header with integrated buttons */}
+            <ParallaxHeader
+              article={article}
+              scrollY={scrollY}
+              colors={colors}
+              headerHeight={HEADER_IMAGE_HEIGHT}
+              topInset={insets.top}
+              // Pass button action props
+              onBackPress={onBackPress}
+              onBookmarkPress={onBookmarkPress}
+              onPlayPress={onPlayPress}
+              // Pass button state props
+              isInReadingList={isInReadingList}
+              isPlaying={isPlaying}
+              user={user}
+              isDarkMode={isDarkMode}
             />
           </View>
         ) : null}

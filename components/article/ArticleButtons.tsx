@@ -1,118 +1,147 @@
-import React, { JSX } from 'react';
-import type { ViewStyle } from 'react-native';
-import { View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
+import Animated from 'react-native-reanimated';
 import type { AnimatedStyleProp } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { ViewStyle } from 'react-native';
 
-import FloatingButton from '@/components/FloatingButton';
 import { LAYOUT } from '@/constants/layout';
-
-import type { ThemeColors } from '../../types/ui/theme.types';
-
-const styles = StyleSheet.create({
-  floatingButton: {
-    zIndex: LAYOUT.Z_INDEX.HEADER,
-  },
-  staticButtonsContainer: {
-    left: 0,
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: LAYOUT.Z_INDEX.HEADER + 1, // Higher than other content
-  },
-  userButtonActive: {
-    opacity: 1,
-  },
-  userButtonInactive: {
-    opacity: 0.3,
-  },
-});
+import type { ThemeColors } from '@/types/ui/theme.types';
 
 interface ArticleButtonsProps {
-  backButtonStyle?: AnimatedStyleProp<ViewStyle>;
-  bookmarkButtonStyle?: AnimatedStyleProp<ViewStyle>;
-  playButtonStyle?: AnimatedStyleProp<ViewStyle>;
   onBackPress: () => void;
   onBookmarkPress: () => void;
   onPlayPress: () => void;
-  colors: ThemeColors;
-  user: { id: string } | null;
-  isInReadingList: boolean | undefined;
+  isInReadingList?: boolean;
   initialBookmarkIcon: 'bookmark-outline' | 'bookmark';
   isPlaying: boolean;
+  backButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  bookmarkButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  playButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  colors: ThemeColors;
+  user: any;
   isDarkMode: boolean;
 }
 
-export const ArticleButtons = ({
-  backButtonStyle,
-  bookmarkButtonStyle,
-  playButtonStyle,
+const styles = StyleSheet.create({
+  backButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginRight: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    width: '100%',
+    zIndex: 100,
+  },
+  leftButtonGroup: {
+    flexDirection: 'row',
+  },
+  rightButtonGroup: {
+    flexDirection: 'row',
+  },
+  iconButton: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    marginLeft: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonShadow: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+});
+
+export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   onBackPress,
   onBookmarkPress,
   onPlayPress,
-  colors,
-  user,
   isInReadingList,
   initialBookmarkIcon,
   isPlaying,
+  backButtonStyle,
+  bookmarkButtonStyle,
+  playButtonStyle,
+  colors,
+  user,
   isDarkMode,
-}: ArticleButtonsProps): JSX.Element => {
-  const insets = useSafeAreaInsets();
+}) => {
+  const [bookmarkIcon, setBookmarkIcon] = useState<'bookmark-outline' | 'bookmark'>(
+    initialBookmarkIcon
+  );
+
+  useEffect(() => {
+    setBookmarkIcon(isInReadingList ? 'bookmark' : 'bookmark-outline');
+  }, [isInReadingList]);
+
+  // Common button styles for translucent overlay effect
+  const buttonStyle = {
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+  };
 
   return (
-    <View style={styles.staticButtonsContainer}>
-      {/* Back button */}
-      <FloatingButton
-        position="top-left"
-        buttonType="back"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={backButtonStyle}
-        onPress={onBackPress}
-        iconName="chevron-back"
-        accessibilityLabel="Return to previous screen"
-        colors={colors}
-        isDarkMode={isDarkMode}
-        style={{
-          ...styles.floatingButton,
-          left: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-        }}
-      />
+    <Animated.View style={styles.buttonContainer}>
+      <View style={styles.leftButtonGroup}>
+        <Animated.View style={backButtonStyle}>
+          <TouchableOpacity
+            onPress={onBackPress}
+            style={[styles.backButton, styles.buttonShadow, buttonStyle]}
+            accessibilityLabel="Go back"
+          >
+            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
 
-      {/* ALWAYS show bookmark button regardless of user state */}
-      <FloatingButton
-        position="top-right"
-        buttonType="bookmark"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={bookmarkButtonStyle}
-        onPress={user ? onBookmarkPress : () => {}}
-        iconName={user ? initialBookmarkIcon : 'bookmark-outline'}
-        accessibilityLabel={isInReadingList ? 'Remove from reading list' : 'Add to reading list'}
-        colors={colors}
-        isDarkMode={isDarkMode}
-        isBookmarked={user ? isInReadingList : false}
-        style={{
-          ...styles.floatingButton,
-          right: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
-          ...(user ? styles.userButtonActive : styles.userButtonInactive),
-        }}
-      />
+      <View style={styles.rightButtonGroup}>
+        {user && (
+          <Animated.View style={bookmarkButtonStyle}>
+            <TouchableOpacity
+              onPress={onBookmarkPress}
+              style={[styles.iconButton, styles.buttonShadow, buttonStyle]}
+              accessibilityLabel={
+                isInReadingList ? 'Remove from reading list' : 'Add to reading list'
+              }
+            >
+              <Ionicons name={bookmarkIcon} size={22} color="#FFFFFF" />
+            </TouchableOpacity>
+          </Animated.View>
+        )}
 
-      {/* Play/Stop button */}
-      <FloatingButton
-        position="top-right"
-        buttonType="play"
-        top={insets.top + LAYOUT.SPACING.MEDIUM}
-        animatedStyle={playButtonStyle}
-        iconName={isPlaying ? 'stop' : 'play'}
-        accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
-        onPress={onPlayPress}
-        colors={colors}
-        isDarkMode={isDarkMode}
-        style={{
-          ...styles.floatingButton,
-          right: LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM + 10,
-        }}
-      />
-    </View>
+        <Animated.View style={playButtonStyle}>
+          <TouchableOpacity
+            onPress={onPlayPress}
+            style={[styles.iconButton, styles.buttonShadow, buttonStyle]}
+            accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+          >
+            <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </Animated.View>
   );
 };
+
+export default ArticleButtons;
