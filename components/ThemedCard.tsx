@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
 type ThemedCardProps = Omit<BaseThemedCardProps, 'onPress'> & {
   handlePress?: () => void;
   onPress?: () => void;
+  fullSummary?: boolean;
 } & (ArticleCardProps | CompactCardProps | BasicCardProps);
 
 // Type guards moved outside component
@@ -282,7 +283,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
               <ThemedText
                 type="caption"
                 colorName="secondaryText"
-                numberOfLines={3}
+                {...(!props.fullSummary ? { numberOfLines: 3 } : {})}
                 style={summaryStyle}
               >
                 {summary}

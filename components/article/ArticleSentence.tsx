@@ -43,6 +43,8 @@ interface ArticleSentenceProps {
   currentPlayingSentenceId: number | null;
   currentPlayingWordId: number | null;
   currentPlayingPosition: number | null;
+  isPlaying?: boolean;
+  dueWordRootIds?: Set<number>;
 }
 
 function ArticleSentenceComponent({
@@ -56,12 +58,13 @@ function ArticleSentenceComponent({
   currentPlayingSentenceId,
   currentPlayingWordId,
   currentPlayingPosition,
+  isPlaying,
+  dueWordRootIds = new Set(),
 }: ArticleSentenceProps) {
   const defaultColors = useColors();
   const colors = propColors || defaultColors;
   const { highlightSentence } = useLocalSearchParams<{ highlightSentence?: string }>();
   const isHighlighted = sentence.id != null && highlightSentence === sentence.id.toString();
-  const isPlaying = currentPlayingSentenceId === Number(sentence.id);
 
   const previousWordIdRef = useRef<number | null>(null);
 
@@ -117,6 +120,7 @@ function ArticleSentenceComponent({
       if (!wordRefs.current[index]) {
         wordRefs.current[index] = createRef<any>();
       }
+      const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
       return renderWord ? (
         renderWord(word, isWordHighlighted, wordRefs.current[index])
       ) : (
@@ -128,6 +132,7 @@ function ArticleSentenceComponent({
           isAudioHighlighted={isWordHighlighted}
           wordRef={wordRefs.current[index]}
           position={index}
+          isDueWord={isDueWord}
         />
       );
     };
@@ -135,7 +140,7 @@ function ArticleSentenceComponent({
     return words.map((word, index) => {
       const wordId = typeof word.id === 'string' ? Number(word.id) : word.id;
       const isWordHighlighted =
-        currentPlayingWordId === wordId && currentPlayingPosition === index && isPlaying;
+        currentPlayingWordId === wordId && currentPlayingPosition === index && !!isPlaying;
       return renderWordWithProps(word, index, isWordHighlighted);
     });
   }, [
@@ -143,10 +148,11 @@ function ArticleSentenceComponent({
     words,
     currentPlayingWordId,
     currentPlayingPosition,
-    isPlaying,
+    !!isPlaying,
     sentence.id,
     settings,
     onWordPress,
+    dueWordRootIds,
   ]);
 
   return (

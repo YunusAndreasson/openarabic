@@ -76,6 +76,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         summary={article.summary || undefined}
         onPress={handlePress}
         style={styles.cardStyle}
+        fullSummary={true}
       />
     </Section>
   );

@@ -116,8 +116,10 @@ const calculateWordDifficulty = (
   // Color based on difficulty
   let color;
   if (level === 5) color = colors.error;
-  else if (level === 4) color = colors.warning;
-  else if (level === 3) color = `${colors.warning}CC`;
+  else if (level === 4)
+    color = colors.warning; // Pure warning color for level 4
+  else if (level === 3)
+    color = colors.warning; // Use pure warning color for consistency
   else if (level === 2) color = colors.info;
   else color = colors.success;
 
@@ -169,7 +171,7 @@ const WordCard = memo(({ word, onPlayAudio }: WordCardProps) => {
           <View style={styles.difficultyContainer}>
             <Ionicons
               name={difficultyInfo.icon}
-              size={12}
+              size={14}
               color={difficultyInfo.color}
               style={styles.difficultyIcon}
             />
@@ -261,12 +263,12 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   difficultyIcon: {
-    marginRight: 3,
+    marginRight: 4,
   },
   difficultyText: {
-    fontSize: 10,
+    fontSize: 12,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   loadingContainer: {
     height: 100,

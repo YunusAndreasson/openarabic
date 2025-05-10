@@ -30,8 +30,8 @@ const getNextZIndex = () => {
 
 const OPACITY = {
   HIGHLIGHTED: '30',
-  UNDERLINE_DARK: '30',
-  UNDERLINE_LIGHT: '20',
+  UNDERLINE_DARK: '66',
+  UNDERLINE_LIGHT: '4D',
   TOOLTIP_DARK: 0.7,
   TOOLTIP_LIGHT: 0.5,
 } as const;
