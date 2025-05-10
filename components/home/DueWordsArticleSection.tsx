@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import ArticleSection from '../../components/article/ArticleSection';
 import { ThemedText } from '../../components/ThemedText';
+import SectionTitle from '../../components/SectionTitle';
+import { ArabicWord } from '../../components/article/ArabicWord';
 import { useArticlesByDueWords } from '../../hooks/useArticlesByDueWords';
+import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import type { Article } from '../../types/articles.types';
+import type { SentenceWord } from '../../types/vocabulary.types';
 
 interface DueWordsArticleSectionProps {
   userId: string | undefined;
   onArticlePress: (article: Article) => void;
   limit?: number;
+  dueWordRootIds?: Set<number>; // Set of root IDs for words that are due for review
 }
 
 /**
@@ -20,8 +25,10 @@ export function DueWordsArticleSection({
   userId,
   onArticlePress,
   limit = 10,
+  dueWordRootIds = new Set(),
 }: DueWordsArticleSectionProps) {
   const { articles, dueWordsCount, hasEnoughArticles } = useArticlesByDueWords(userId, limit);
+  const colors = useColors();
 
   // Don't render if we don't have enough articles with due words
   if (!hasEnoughArticles) {
@@ -38,7 +45,7 @@ export function DueWordsArticleSection({
         emptyStateMessage="No recommended articles found"
       />
       <ThemedText type="caption" variant="subtle" style={styles.hintText}>
-        Contains {dueWordsCount} words you need to review
+        Contains {dueWordsCount} words you need to review (highlighted in orange)
       </ThemedText>
     </View>
   );

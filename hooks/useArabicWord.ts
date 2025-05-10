@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { useLocalSearchParams } from 'expo-router';
 
 import { analytics } from '../services/analytics';
-import { studyWordsFSRSService } from '../services/studyWordsFSRS';
+import { studyWordsService } from '../services/studyWords';
 import { selectAudioState } from '../store/audioSlice';
-import type { SentenceWord, StudyWord } from '../types/vocabulary.types';
+import type { SentenceWord } from '../types/vocabulary.types';
 
 import { useAuth } from './useAuth';
+import { useArticlesByDueWords } from './useArticlesByDueWords';
 
 export interface UseArabicWordProps {
   word: SentenceWord;
@@ -21,6 +23,9 @@ export interface UseArabicWordReturn {
   setForceSelected: (value: boolean | null) => void;
 }
 
+/**
+ * Hook to manage the state and behavior of an Arabic word in the UI
+ */
 export function useArabicWord({
   word,
   position,
@@ -30,21 +35,34 @@ export function useArabicWord({
   const [forceSelected, setForceSelected] = useState<boolean | null>(null);
   const audioState = useSelector(selectAudioState);
 
-  const { data: studyWords } = useQuery<StudyWord[]>({
-    queryKey: ['studyWords', user?.id],
+  // Get due words data - we use 0 as limit since we only need the due word IDs
+  const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
+
+  // Check if this word is due for review
+  const isDueWord = word.root_id != null && dueWordRootIds.has(word.root_id);
+
+  // Fetch the user's study words
+  const { data: studyWords = [] } = useQuery({
+    queryKey: ['study-words', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      return studyWordsFSRSService.getFSRSWords(user.id);
+      try {
+        return studyWordsService.getStudyWords(user.id);
+      } catch (error) {
+        console.error('Error fetching study words:', error);
+        return [];
+      }
     },
     enabled: !!user?.id,
   });
 
+  // Check if the word is directly selected (added to study words)
   const directlySelected = useMemo(() => {
-    if (!studyWords?.length) return false;
-
+    if (!studyWords?.length || !word.root_id) return false;
     return studyWords.some(sw => sw.root_id === word.root_id);
   }, [studyWords, word.root_id]);
 
+  // Check if this word is currently being highlighted by audio player
   const isAudioHighlighted = useMemo(() => {
     if (position !== undefined && audioState.position !== null) {
       return audioState.wordId === word.id && audioState.position === position;
@@ -52,29 +70,27 @@ export function useArabicWord({
     return audioState.wordId === word.id;
   }, [audioState.wordId, audioState.position, word.id, position]);
 
-  const isSelected = forceSelected ?? directlySelected;
+  // Calculate final selection state, considering force state, direct selection, and due words
+  const isSelected = forceSelected !== null ? forceSelected : directlySelected || isDueWord;
 
   const handleSelectionChange = useCallback(() => {
-    if (!user?.id || !word.id || !onPress) return;
+    if (!user?.id || !onPress) return;
 
-    const analyticsData = {
-      word: word.word_form,
-      english: word.english,
-      ...(word.sentence?.article_id && { articleId: word.sentence.article_id }),
-    };
-
-    const wordId = Number(word.id);
-
-    if (isSelected) {
-      analytics.trackAddStudyWord(wordId, analyticsData);
+    // Analytics tracking - use ADD_STUDY_WORD or REMOVE_STUDY_WORD based on the selection state
+    if (!directlySelected) {
+      analytics.track('ADD_STUDY_WORD', {
+        wordId: word.id,
+        rootId: word.root_id,
+      });
     } else {
-      analytics.trackRemoveStudyWord(wordId, analyticsData);
+      analytics.track('REMOVE_STUDY_WORD', {
+        wordId: word.id,
+        rootId: word.root_id,
+      });
     }
-  }, [isSelected, user?.id, word, onPress]);
 
-  useMemo(() => {
-    handleSelectionChange();
-  }, [handleSelectionChange]);
+    onPress(word);
+  }, [user?.id, onPress, word, directlySelected]);
 
   return {
     isAudioHighlighted,

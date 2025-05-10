@@ -48,9 +48,17 @@ interface ArabicWordProps {
   };
   wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>;
   isAudioHighlighted?: boolean;
+  isDueWord?: boolean;
 }
 
-function ArabicWordComponent({ word, onPress, position, settings, wordRef }: ArabicWordProps) {
+function ArabicWordComponent({
+  word,
+  onPress,
+  position,
+  settings,
+  wordRef,
+  isDueWord = false,
+}: ArabicWordProps) {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const [tooltipVisible, setTooltipVisible] = useState(false);
@@ -209,11 +217,12 @@ function ArabicWordComponent({ word, onPress, position, settings, wordRef }: Ara
 
   const getSelectedStyle = useCallback(
     (): ViewStyle => ({
-      borderBottomWidth: 1,
-      borderBottomColor: `${colors.tint}${isDarkMode ? OPACITY.UNDERLINE_DARK : OPACITY.UNDERLINE_LIGHT}`,
-      paddingBottom: 0,
+      borderBottomWidth: 2,
+      borderBottomColor: `${isDueWord ? colors.warning : colors.tint}${isDarkMode ? OPACITY.UNDERLINE_DARK : OPACITY.UNDERLINE_LIGHT}`,
+      paddingBottom: 1,
+      marginBottom: -1,
     }),
-    [colors.tint, isDarkMode]
+    [colors.warning, colors.tint, isDarkMode, isDueWord]
   );
 
   // Compute final styles for the word container

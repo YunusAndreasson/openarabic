@@ -145,7 +145,10 @@ export default function ArticlesScreen(): JSX.Element {
   const { initialLoadComplete } = useAppLoading();
   const { user } = useAuth();
 
-  const { hasEnoughArticles = false } = useArticlesByDueWords(user?.id, 10);
+  const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(
+    user?.id,
+    10
+  );
 
   const {
     data: articlesData = [],
@@ -328,9 +331,14 @@ export default function ArticlesScreen(): JSX.Element {
     if (!user?.id) return null;
 
     return (
-      <DueWordsArticleSection userId={user.id} onArticlePress={handleArticlePress} limit={10} />
+      <DueWordsArticleSection
+        userId={user.id}
+        onArticlePress={handleArticlePress}
+        limit={10}
+        dueWordRootIds={dueWordRootIds}
+      />
     );
-  }, [user?.id, handleArticlePress]);
+  }, [user?.id, handleArticlePress, dueWordRootIds]);
 
   const latestArticlesForSection = useMemo(
     () => getLatestArticles(articlesData, 7),

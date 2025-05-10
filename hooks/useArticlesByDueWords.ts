@@ -11,6 +11,7 @@ interface UseArticlesByDueWordsResult {
   isLoading: boolean;
   dueWordsCount: number;
   hasEnoughArticles: boolean; // Flag to determine if we have enough articles (≥3)
+  dueWordRootIds: Set<number>; // Set of root IDs for words that are due for review
 }
 
 /**
@@ -33,6 +34,11 @@ export function useArticlesByDueWords(
     enabled: !!userId,
     staleTime: 300000, // 5 minutes
   });
+
+  // Extract set of root IDs from due words for highlighting
+  const dueWordRootIds = useMemo(() => {
+    return new Set(dueWords.map(word => word.root_id));
+  }, [dueWords]);
 
   // Fetch all articles with their sentences and words
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
@@ -68,5 +74,6 @@ export function useArticlesByDueWords(
     isLoading: isLoadingDueWords || isLoadingArticles,
     dueWordsCount: dueWords.length,
     hasEnoughArticles,
+    dueWordRootIds,
   };
 }

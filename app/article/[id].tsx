@@ -35,6 +35,7 @@ import type { SentenceWord } from '@/types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
+import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 
 import type { Article } from '../../types/articles.types';
 
@@ -97,6 +98,8 @@ export default function ArticleScreen(): JSX.Element {
     otherCategoryArticles,
     refetchStudyWords,
   } = useArticleData(articleId, user?.id);
+
+  const { dueWordRootIds = new Set<number>() } = useArticlesByDueWords(user?.id, 0);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -426,26 +429,35 @@ export default function ArticleScreen(): JSX.Element {
       word: SentenceWord,
       isAudioHighlighted = false,
       wordRef?: React.RefObject<ComponentRef<typeof TouchableOpacity>>
-    ) => (
-      <ArabicWord
-        key={word.id}
-        word={word}
-        onPress={() => {
-          if (word.root) {
-            handleRootPress(word.root.id);
-          }
-        }}
-        settings={{
-          showEnglish: false,
-          fontScale: settings.fontScale,
-          showTransliteration: false,
-          showWordType: false,
-        }}
-        isAudioHighlighted={isAudioHighlighted}
-        wordRef={wordRef}
-      />
-    ),
-    [handleRootPress, settings]
+    ) => {
+      // Check if this word is due for review
+      const isDueWord = word.root_id ? dueWordRootIds.has(word.root_id) : false;
+
+      return (
+        <ArabicWord
+          key={word.id}
+          word={word}
+          onPress={() => {
+            if (word.root) {
+              if (isDueWord) {
+                lightFeedback();
+              }
+              handleRootPress(word.root.id);
+            }
+          }}
+          settings={{
+            showEnglish: false,
+            fontScale: settings.fontScale,
+            showTransliteration: false,
+            showWordType: false,
+          }}
+          isAudioHighlighted={isAudioHighlighted}
+          wordRef={wordRef}
+          isDueWord={isDueWord}
+        />
+      );
+    },
+    [dueWordRootIds, handleRootPress, settings.fontScale]
   );
 
   const renderSentenceItem = useCallback(
