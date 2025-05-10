@@ -9,7 +9,7 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { EnhancedImage } from '../EnhancedImage';
-import { LAYOUT, HEADER_HEIGHT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
+import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { ThemedText } from '../ThemedText';
 import { ArticleButtons } from './ArticleButtons';
@@ -166,9 +166,6 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
   const gradientColors = React.useMemo(() => {
     return ['rgba(0,0,0,0)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.7)', 'rgba(0,0,0,0.85)'] as const;
   }, []);
-
-  // Determine if summary is long to adjust layout
-  const isSummaryLong = article.summary && article.summary.length > 80;
 
   // Ensure summary is visible with appropriate line count
   const summaryLineCount = undefined; // No limit to see full text
