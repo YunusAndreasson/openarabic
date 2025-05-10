@@ -1,0 +1,72 @@
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import type { Article } from '../types/articles.types';
+import type { StudyWord } from '../types/vocabulary.types';
+import { getArticlesByDueWords } from '../utils/articleUtils';
+import { studyWordsFSRSService } from '../services/studyWordsFSRS';
+import { articlesService } from '../services/articles';
+
+interface UseArticlesByDueWordsResult {
+  articles: Article[];
+  isLoading: boolean;
+  dueWordsCount: number;
+  hasEnoughArticles: boolean; // Flag to determine if we have enough articles (≥3)
+}
+
+/**
+ * Hook to fetch and sort articles based on the number of due words they contain
+ * @param userId - The current user ID
+ * @param limit - Maximum number of articles to return
+ * @returns Object containing sorted articles and metadata
+ */
+export function useArticlesByDueWords(
+  userId: string | undefined,
+  limit = 10
+): UseArticlesByDueWordsResult {
+  // Fetch due words for the current user
+  const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({
+    queryKey: ['due-words', userId],
+    queryFn: () => {
+      if (!userId) return Promise.resolve([]);
+      return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true });
+    },
+    enabled: !!userId,
+    staleTime: 300000, // 5 minutes
+  });
+
+  // Fetch all articles with their sentences and words
+  const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
+    queryKey: ['articles-with-sentences'],
+    queryFn: async () => {
+      // If we don't have due words, don't bother fetching detailed article data
+      if (!dueWords.length) return [];
+
+      const articles = await articlesService.getArticles();
+      // Only fetch full data for articles that could have due words
+      const articlesWithSentences = await Promise.all(
+        articles.map(article => articlesService.getArticleById(article.id))
+      );
+      return articlesWithSentences.filter(Boolean) as Article[];
+    },
+    enabled: !!userId && dueWords.length > 0,
+    staleTime: 600000, // 10 minutes
+  });
+
+  // Process and sort articles by due words count
+  const sortedArticles = useMemo(() => {
+    if (isLoadingDueWords || isLoadingArticles || !dueWords.length) return [];
+    return getArticlesByDueWords(articlesData, dueWords, limit);
+  }, [articlesData, dueWords, isLoadingDueWords, isLoadingArticles, limit]);
+
+  // Flag to determine if we have enough articles with due words (≥3)
+  const hasEnoughArticles = useMemo(() => {
+    return sortedArticles.length >= 3;
+  }, [sortedArticles.length]);
+
+  return {
+    articles: sortedArticles,
+    isLoading: isLoadingDueWords || isLoadingArticles,
+    dueWordsCount: dueWords.length,
+    hasEnoughArticles,
+  };
+}

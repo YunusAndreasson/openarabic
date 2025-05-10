@@ -15,6 +15,7 @@ import DailyPickSection from '@/components/index/DailyPickSection';
 import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
+import { DueWordsArticleSection } from '@/components/home/DueWordsArticleSection';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
@@ -22,6 +23,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { useStrugglingWords } from '@/hooks/useStrugglingWords';
+import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { setDailyPick } from '@/store/featuredContentSlice';
@@ -142,6 +144,8 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { initialLoadComplete } = useAppLoading();
   const { user } = useAuth();
+
+  const { hasEnoughArticles = false } = useArticlesByDueWords(user?.id, 10);
 
   const {
     data: articlesData = [],
@@ -318,6 +322,16 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [beginnerArticles, handleArticlePress]);
 
+  // Add Due Words Section Component
+  const DueWordsSection = useMemo(() => {
+    // Only show if user is logged in
+    if (!user?.id) return null;
+
+    return (
+      <DueWordsArticleSection userId={user.id} onArticlePress={handleArticlePress} limit={10} />
+    );
+  }, [user?.id, handleArticlePress]);
+
   const latestArticlesForSection = useMemo(
     () => getLatestArticles(articlesData, 7),
     [articlesData]
@@ -368,7 +382,11 @@ export default function ArticlesScreen(): JSX.Element {
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
       { id: 'struggling-words', component: StrugglingWordsComponent },
-      { id: 'beginner-friendly', component: BeginnerFriendlySection },
+      // Conditionally show either DueWordsSection or BeginnerFriendlySection
+      {
+        id: 'learning-section',
+        component: hasEnoughArticles ? DueWordsSection : BeginnerFriendlySection,
+      },
       { id: 'latest-texts', component: latestTextsSectionComponent },
       { id: 'continue-reading', component: ContinueReadingSection },
       { id: 'author-filter', component: authorFilterComponent },
@@ -385,8 +403,10 @@ export default function ArticlesScreen(): JSX.Element {
       </>
     );
   }, [
+    hasEnoughArticles,
     DailyPick,
     StrugglingWordsComponent,
+    DueWordsSection,
     BeginnerFriendlySection,
     latestTextsSectionComponent,
     ContinueReadingSection,

@@ -1,4 +1,5 @@
 import type { Article } from '../types/articles.types';
+import type { StudyWord } from '../types/vocabulary.types';
 
 /**
  * Filters articles by author ID
@@ -134,5 +135,50 @@ export function getAdvancedArticles(articles: Article[], limit = 20): Article[] 
   return [...articles]
     .filter(article => article.difficulty_level >= 4 && article.difficulty_level <= 5)
     .sort((a, b) => b.difficulty_level - a.difficulty_level)
+    .slice(0, limit);
+}
+
+/**
+ * Gets articles sorted by due words count - articles with more due words are prioritized
+ * @param articles - The articles to sort
+ * @param dueWords - The user's due words (from studyWordsFSRSService)
+ * @param limit - The maximum number of articles to return (default: 10)
+ * @returns Articles sorted by due words count (highest first)
+ */
+export function getArticlesByDueWords(
+  articles: Article[],
+  dueWords: StudyWord[],
+  limit = 10
+): Article[] {
+  if (!articles.length || !dueWords.length) return [];
+
+  // Get the root IDs of due words
+  const dueWordRootIds = new Set(dueWords.map(word => word.root_id));
+
+  // Count due words in each article
+  const articlesWithDueWordCount = articles.map(article => {
+    let dueWordCount = 0;
+
+    // Check each sentence in the article
+    article.article_sentences?.forEach(sentence => {
+      // Check each word in the sentence
+      sentence.sentence_words?.forEach(word => {
+        // If the word's root is in the due words set, count it
+        if (dueWordRootIds.has(word.root_id)) {
+          dueWordCount++;
+        }
+      });
+    });
+
+    return { article, dueWordCount };
+  });
+
+  // Filter articles that actually have due words
+  const articlesWithDueWords = articlesWithDueWordCount.filter(item => item.dueWordCount > 0);
+
+  // Sort by due word count (highest first)
+  return articlesWithDueWords
+    .sort((a, b) => b.dueWordCount - a.dueWordCount)
+    .map(item => item.article)
     .slice(0, limit);
 }
