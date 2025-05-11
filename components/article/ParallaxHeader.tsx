@@ -59,6 +59,52 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
   const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
   const initialBookmarkIcon = isInReadingList ? 'bookmark' : 'bookmark-outline';
 
+  // Text colors based on theme
+  const textColor = isDarkMode ? '#FFFFFF' : '#333333';
+  const textShadowColor = isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.75)';
+
+  // Dynamic text styles based on theme
+  const dynamicTextStyles = useMemo(
+    () => ({
+      title: {
+        color: textColor,
+        textShadowColor,
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: isDarkMode ? 4 : 1,
+        marginBottom: LAYOUT.SPACING.TINY,
+      },
+      author: {
+        color: textColor,
+        textShadowColor,
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: isDarkMode ? 3 : 1,
+      },
+      metadataText: {
+        color: textColor,
+        textShadowColor,
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: isDarkMode ? 2 : 1,
+      },
+      metadataIcon: {
+        color: textColor,
+        opacity: 0.9,
+        marginRight: LAYOUT.SPACING.TINY,
+        textShadowColor,
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: isDarkMode ? 2 : 1,
+      },
+      summary: {
+        color: textColor,
+        opacity: 0.85,
+        textShadowColor,
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: isDarkMode ? 3 : 1,
+        lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+      },
+    }),
+    [isDarkMode, textColor, textShadowColor]
+  );
+
   // Calculate reading time based on sentences count or summary length
   const readingTime = useMemo(() => {
     if (!article) return 2;
@@ -249,7 +295,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
         <View style={styles.titleContainer}>
           <ThemedText
             type="heading1"
-            style={styles.title}
+            style={dynamicTextStyles.title}
             accessibilityRole="header"
             adjustsFontSizeToFit={!!(article.title && article.title.length > 60)}
             numberOfLines={article.title && article.title.length > 80 ? 3 : 2}
@@ -258,7 +304,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
           </ThemedText>
 
           {article.author && (
-            <ThemedText type="label" variant="subtle" style={styles.author}>
+            <ThemedText type="label" variant="subtle" style={dynamicTextStyles.author}>
               {article.author.name}
             </ThemedText>
           )}
@@ -272,10 +318,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
               <Ionicons
                 name="folder-outline"
                 size={16}
-                color="#FFFFFF"
-                style={styles.metadataIcon}
+                color={dynamicTextStyles.metadataIcon.color}
+                style={dynamicTextStyles.metadataIcon}
               />
-              <ThemedText type="caption" style={styles.metadataText}>
+              <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
                 {capitalizeFirstLetter(article.category.name)}
               </ThemedText>
             </View>
@@ -283,8 +329,13 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
 
           {/* Reading Time */}
           <View style={styles.metadataItem}>
-            <Ionicons name="time-outline" size={16} color="#FFFFFF" style={styles.metadataIcon} />
-            <ThemedText type="caption" style={styles.metadataText}>
+            <Ionicons
+              name="time-outline"
+              size={16}
+              color={dynamicTextStyles.metadataIcon.color}
+              style={dynamicTextStyles.metadataIcon}
+            />
+            <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
               {readingTime} min read
             </ThemedText>
           </View>
@@ -294,10 +345,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
             <Ionicons
               name="stats-chart-outline"
               size={16}
-              color="#FFFFFF"
-              style={styles.metadataIcon}
+              color={dynamicTextStyles.metadataIcon.color}
+              style={dynamicTextStyles.metadataIcon}
             />
-            <ThemedText type="caption" style={styles.metadataText}>
+            <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
               {formatDifficultyLevel(article.difficulty_level)}
             </ThemedText>
           </View>
@@ -306,7 +357,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
         {/* Summary text */}
         {article.summary && (
           <View style={styles.summaryContainer}>
-            <ThemedText type="body" variant="subtle" style={styles.summary} numberOfLines={4}>
+            <ThemedText
+              type="body"
+              variant="subtle"
+              style={dynamicTextStyles.summary}
+              numberOfLines={4}
+            >
               {article.summary}
             </ThemedText>
           </View>

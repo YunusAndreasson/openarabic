@@ -7,9 +7,6 @@ import { supabase } from './supabase';
 type ReadingListItem = {
   user_id: string;
   article_id: number;
-  completed: boolean;
-  completed_at: string | null;
-  read_count: number;
   added_at: string;
   articles: Article & {
     author: {
@@ -21,7 +18,6 @@ type ReadingListItem = {
 
 type SupabaseArticleJoinResult = {
   article_id: number;
-  completed_at?: string | null;
   articles: Article;
 };
 
@@ -49,16 +45,6 @@ const errorConfig = {
       sentrySeverity: 'warning' as const,
       showToast: false,
     },
-    complete: {
-      toastMessage: 'Failed to mark article as completed',
-      analyticsEventName: 'Article_Complete_Error',
-      sentrySeverity: 'error' as const,
-    },
-    readCount: {
-      toastMessage: 'Failed to update read count',
-      analyticsEventName: 'Read_Count_Error',
-      sentrySeverity: 'warning' as const,
-    },
   },
 };
 
@@ -74,14 +60,14 @@ const articleJoinQuery = `
 
 export const readingListService = {
   /**
-   * Gets articles that the user has started but not completed
+   * Gets all reading list articles
    * @param userId - The user ID
    */
   async getInProgressArticles(userId: string): Promise<Article[]> {
     const { data, error } = await supabase
       .from('reading_list')
       .select(articleJoinQuery)
-      .match({ user_id: userId, completed: false });
+      .match({ user_id: userId });
 
     if (error) {
       handleError(error, errorConfig.readingList.load);
@@ -91,33 +77,6 @@ export const readingListService = {
     return (data || [])
       .filter((item: SupabaseArticleJoinResult) => item.articles)
       .map((item: SupabaseArticleJoinResult) => item.articles);
-  },
-
-  /**
-   * Gets articles that the user has completed
-   * @param userId - The user ID
-   */
-  async getCompletedArticles(userId: string): Promise<(Article & { completed_at: string })[]> {
-    const { data, error } = await supabase
-      .from('reading_list')
-      .select(`${articleJoinQuery}, completed_at`)
-      .match({ user_id: userId, completed: true });
-
-    if (error) {
-      handleError(error, {
-        ...errorConfig.readingList.load,
-        toastMessage: 'Failed to load completed articles',
-      });
-      throw error;
-    }
-
-    return (data || [])
-      .filter((item: SupabaseArticleJoinResult) => item.articles && item.completed_at)
-      .map((item: SupabaseArticleJoinResult) => ({
-        ...item.articles,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        completed_at: item.completed_at!,
-      }));
   },
 
   /**
@@ -146,8 +105,7 @@ export const readingListService = {
     const { error } = await supabase.from('reading_list').insert({
       user_id: userId,
       article_id: articleId,
-      completed: false,
-      read_count: 0,
+      // The added_at field has a default value in the database (now())
     });
 
     if (error) {
@@ -222,75 +180,5 @@ export const readingListService = {
     }
 
     return data || [];
-  },
-
-  /**
-   * Marks an article as completed
-   * @param userId - The user ID
-   * @param articleId - The article ID to mark as completed
-   */
-  async markAsCompleted(userId: string, articleId: number): Promise<void> {
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from('reading_list')
-      .update({
-        completed: true,
-        completed_at: now,
-        updated_at: now,
-      })
-      .match({ user_id: userId, article_id: articleId });
-
-    if (error) {
-      handleError(error, {
-        ...errorConfig.readingList.complete,
-        analyticsProperties: { articleId },
-      });
-      throw error;
-    }
-  },
-
-  /**
-   * Increments the read count for an article
-   * @param userId - The user ID
-   * @param articleId - The article ID to increment read count
-   */
-  async incrementReadCount(userId: string, articleId: number): Promise<void> {
-    const { data, error: fetchError } = await supabase
-      .from('reading_list')
-      .select('read_count')
-      .match({ user_id: userId, article_id: articleId });
-
-    if (fetchError) {
-      if (fetchError.code === 'PGRST116') {
-        await this.addToReadingList(userId, articleId);
-        return;
-      }
-      handleError(fetchError, {
-        ...errorConfig.readingList.readCount,
-        analyticsProperties: { articleId },
-      });
-      throw fetchError;
-    }
-
-    if (!data?.length) {
-      await this.addToReadingList(userId, articleId);
-      return;
-    }
-
-    const { error } = await supabase
-      .from('reading_list')
-      .update({
-        read_count: (data[0]?.read_count || 0) + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .match({ user_id: userId, article_id: articleId });
-
-    if (error) {
-      handleError(error, {
-        ...errorConfig.readingList.readCount,
-        analyticsProperties: { articleId },
-      });
-      throw error;
-    }
   },
 };
