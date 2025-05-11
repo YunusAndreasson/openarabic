@@ -57,9 +57,9 @@ export default function WordListScreen(): JSX.Element {
         };
       default:
         return {
-          title: 'Word List',
+          title: 'Review Words',
           icon: 'book',
-          description: 'All vocabulary words',
+          description: 'Words to review',
         };
     }
   }, [category]);

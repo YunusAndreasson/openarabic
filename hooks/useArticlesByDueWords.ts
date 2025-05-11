@@ -40,19 +40,12 @@ export function useArticlesByDueWords(
     return new Set(dueWords.map(word => word.root_id));
   }, [dueWords]);
 
-  // Fetch all articles with their sentences and words
+  // Fetch all articles with their sentences and words in a single query
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    queryKey: ['articles-with-sentences'],
+    queryKey: ['articles-with-sentences-and-words'],
     queryFn: async () => {
-      // If we don't have due words, don't bother fetching detailed article data
       if (!dueWords.length) return [];
-
-      const articles = await articlesService.getArticles();
-      // Only fetch full data for articles that could have due words
-      const articlesWithSentences = await Promise.all(
-        articles.map(article => articlesService.getArticleById(article.id))
-      );
-      return articlesWithSentences.filter(Boolean) as Article[];
+      return articlesService.getArticlesWithSentencesAndWords();
     },
     enabled: !!userId && dueWords.length > 0,
     staleTime: 600000, // 10 minutes

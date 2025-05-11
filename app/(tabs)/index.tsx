@@ -142,10 +142,11 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(
-    user?.id,
-    10
-  );
+  const {
+    hasEnoughArticles = false,
+    dueWordRootIds = new Set(),
+    isLoading: isDueWordsLoading,
+  } = useArticlesByDueWords(user?.id, 10);
 
   const {
     data: articlesData = [],
@@ -463,4 +464,11 @@ export default function ArticlesScreen(): JSX.Element {
       />
     </ThemedView>
   );
+}
+
+// Export a hook to check if the articles and due words are loaded
+export function useArticlesAndDueWordsLoaded() {
+  const { user } = useAuth();
+  const { isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 10);
+  return !isDueWordsLoading;
 }

@@ -64,11 +64,11 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     ...LAYOUT.SHADOW.SMALL,
-    backgroundColor: colors.overlay,
+    backgroundColor: colors.elevation2,
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.08,
       },
     }),
   };

@@ -232,4 +232,30 @@ export const articlesService = {
       );
     }
   },
+
+  async getArticlesWithSentencesAndWords(): Promise<Article[]> {
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(DETAIL_VIEW_COLUMNS)
+        .order('created_at', { ascending: false });
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load articles with sentences and words',
+        });
+        throw error;
+      }
+      return mapToArticles(data || []);
+    } catch (err) {
+      await handleError(
+        err instanceof Error
+          ? err
+          : new Error('Unknown error loading articles with sentences and words'),
+        {
+          toastMessage: 'Failed to load articles with sentences and words',
+        }
+      );
+      throw err;
+    }
+  },
 };
