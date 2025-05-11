@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, Dimensions, useWindowDimensions } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   interpolate,
@@ -18,7 +18,6 @@ import type { ThemeColors } from '@/types/ui/theme.types';
 import { formatDifficultyLevel } from '@/services/difficultyLevel';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PARALLAX_FACTOR = 0.5; // How much slower the image moves (lower = more dramatic)
 const BUTTON_ZONE_HEIGHT = 60; // Height of the area reserved for buttons
 
@@ -55,6 +54,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
   user,
   isDarkMode = false,
 }) => {
+  const { width: SCREEN_WIDTH } = useWindowDimensions();
   const imageHeight = HEADER_IMAGE_HEIGHT + topInset;
   const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
   const initialBookmarkIcon = isInReadingList ? 'bookmark' : 'bookmark-outline';
@@ -96,10 +96,13 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
 
   // Animated styles for the parallax image effect
   const imageAnimatedStyle = useAnimatedStyle(() => {
+    // Calculate parallax factor based on screen dimensions for more natural feel on different devices
+    const dynamicParallaxFactor = PARALLAX_FACTOR * (SCREEN_WIDTH / 375); // Normalize for iPhone 8 width
+
     const translateY = interpolate(
       scrollY.value,
       [-headerHeight, 0, headerHeight],
-      [headerHeight / 2, 0, -headerHeight * PARALLAX_FACTOR],
+      [headerHeight / 2, 0, -headerHeight * dynamicParallaxFactor],
       Extrapolation.CLAMP
     );
 
@@ -176,7 +179,6 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     // Extract the background color from theme colors
     const bgColor = colors.background;
 
-    // Create a gradient that fades from transparent to the background color
     return [
       'rgba(0,0,0,0)',
       `${bgColor}40`, // 25% opacity
@@ -184,6 +186,22 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
       bgColor, // 100% opacity
     ] as const;
   }, [colors.background]);
+
+  // Add animated dark overlay that becomes visible when scrolled
+  const darkOverlayStyle = useAnimatedStyle(() => {
+    // Add a dark overlay that becomes more visible when scrolling
+    const opacity = interpolate(
+      scrollY.value,
+      [0, headerHeight * 0.3, headerHeight * 0.6],
+      [0, 0.2, 0.65], // Increase opacity when collapsed
+      Extrapolation.CLAMP
+    );
+
+    return {
+      opacity,
+      backgroundColor: 'black',
+    };
+  });
 
   return (
     <Animated.View style={[styles.container, animatedContainerStyle]}>
@@ -201,6 +219,9 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
           }
         />
       </Animated.View>
+
+      {/* Dark overlay for better contrast when collapsed */}
+      <Animated.View style={[styles.overlay, darkOverlayStyle]} pointerEvents="none" />
 
       {/* Gradient Overlay to integrate content with background */}
       <LinearGradient colors={gradientColors} style={styles.gradient} pointerEvents="none" />
@@ -301,7 +322,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    width: SCREEN_WIDTH,
+    width: '100%',
     overflow: 'hidden',
     zIndex: LAYOUT.Z_INDEX.HEADER,
   },
@@ -313,6 +334,10 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: '100%',
+  },
+  gradientWrapper: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
@@ -332,7 +357,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.XLARGE,
-    zIndex: 2,
+    zIndex: 3,
   },
   titleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -384,6 +409,10 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 3,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
   },
 });
 

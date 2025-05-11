@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   spacer: {
-    height: 60, // Further increased spacer for better separation
+    height: 30, // Reduced from 60 to bring content closer to header
   },
 });
 
@@ -185,7 +185,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
                 paddingHorizontal: LAYOUT.SPACING.SMALL,
-                paddingTop: HEADER_IMAGE_HEIGHT + LAYOUT.SPACING.XXLARGE, // Increased padding
+                paddingTop: HEADER_IMAGE_HEIGHT + LAYOUT.SPACING.LARGE, // Reduced padding from XXLARGE to LARGE
                 paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
               }}
               onScroll={handleAnimatedScroll}
