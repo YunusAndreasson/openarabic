@@ -1,15 +1,17 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Dimensions, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
   SharedValue,
+  useDerivedValue,
+  withSpring,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { EnhancedImage } from '../EnhancedImage';
-import { LAYOUT, HEADER_HEIGHT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
+import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { ThemedText } from '../ThemedText';
 import { ArticleButtons } from './ArticleButtons';
@@ -58,6 +60,21 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
   const imageHeight = HEADER_IMAGE_HEIGHT + topInset;
   const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
   const initialBookmarkIcon = isInReadingList ? 'bookmark' : 'bookmark-outline';
+
+  // Create a smoothed version of scrollY for more natural parallax
+  // The "worklet" directive ensures this runs on the UI thread
+  const smoothScrollY = useDerivedValue(() => {
+    'worklet';
+    // Apply spring physics for natural, smooth motion with optimized parameters for Reanimated 3
+    return withSpring(scrollY.value, {
+      damping: 15,
+      stiffness: 90,
+      mass: 1,
+      overshootClamping: false,
+      restDisplacementThreshold: 0.01, // More precise rest point detection
+      restSpeedThreshold: 0.01, // More precise rest speed detection
+    });
+  }, [scrollY]); // Adding scrollY as dependency for better reactivity
 
   // Text colors based on theme
   const textColor = isDarkMode ? '#FFFFFF' : '#333333';
@@ -125,11 +142,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     return 2;
   }, [article]);
 
-  // Animated styles for the container
+  // Animated styles for the container with worklet annotation
   const animatedContainerStyle = useAnimatedStyle(() => {
+    'worklet';
     // Header collapses to just the buttons height when scrolling
     const height = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.6],
       [imageHeight, BUTTON_ZONE_HEIGHT + topInset],
       Extrapolation.CLAMP
@@ -140,27 +158,33 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     };
   });
 
-  // Animated styles for the parallax image effect
+  // Animated styles for the parallax image effect with worklet annotation
   const imageAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
     // Calculate parallax factor based on screen dimensions for more natural feel on different devices
     const dynamicParallaxFactor = PARALLAX_FACTOR * (SCREEN_WIDTH / 375); // Normalize for iPhone 8 width
 
+    // Enhanced overscroll handling - increase scale more dramatically when pulling down
+    const overscrollFactor = Math.max(0, -smoothScrollY.value / headerHeight) * 0.5;
+
     const translateY = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [-headerHeight, 0, headerHeight],
       [headerHeight / 2, 0, -headerHeight * dynamicParallaxFactor],
       Extrapolation.CLAMP
     );
 
-    const scale = interpolate(
-      scrollY.value,
-      [-headerHeight, 0, headerHeight],
-      [1.2, 1, 1],
-      Extrapolation.CLAMP
-    );
+    // Enhanced scale that increases more during overscroll (pull-down)
+    const scale =
+      interpolate(
+        smoothScrollY.value,
+        [-headerHeight, 0, headerHeight],
+        [1.5, 1, 1], // Increased from 1.2 to 1.5 for more prominent overscroll effect
+        Extrapolation.CLAMP
+      ) + overscrollFactor; // Additional scale during overscroll
 
     const opacity = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.7],
       [1, 0.3],
       Extrapolation.CLAMP
@@ -169,14 +193,18 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     return {
       transform: [{ translateY }, { scale }],
       opacity,
+      // Ensure image fills container, even when scaling
+      width: '100%',
+      height: '100%',
     };
-  });
+  }, []); // Empty dependency array for pure UI animations
 
-  // Animated styles for content (fades out when scrolling)
+  // Animated styles for content (fades out when scrolling) with worklet annotation
   const contentAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
     // Content fades out more slowly over a longer scroll distance
     const opacity = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.1, headerHeight * 0.6],
       [1, 0.95, 0],
       Extrapolation.CLAMP
@@ -184,7 +212,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
 
     // Smoother upward movement during fade
     const translateY = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.2, headerHeight * 0.6],
       [0, -5, -20],
       Extrapolation.CLAMP
@@ -194,13 +222,14 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
       opacity,
       transform: [{ translateY }],
     };
-  });
+  }, []); // Empty dependency array for pure UI animations
 
-  // Animated styles for buttons (stay visible and transition nicely)
+  // Animated styles for buttons (stay visible and transition nicely) with worklet annotation
   const buttonsAnimatedStyle = useAnimatedStyle(() => {
+    'worklet';
     // Shift buttons slightly as we scroll
     const translateY = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.3],
       [0, -5],
       Extrapolation.CLAMP
@@ -208,7 +237,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
 
     // Buttons maintain visibility longer than content
     const opacity = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.7, headerHeight * 0.9],
       [1, 1, 0.9],
       Extrapolation.CLAMP
@@ -218,7 +247,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
       opacity,
       transform: [{ translateY }],
     };
-  });
+  }, []); // Empty dependency array for pure UI animations
 
   // Generate gradient colors that fade to match the article background color
   const gradientColors = useMemo(() => {
@@ -233,11 +262,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     ] as const;
   }, [colors.background]);
 
-  // Add animated dark overlay that becomes visible when scrolled
+  // Add animated dark overlay that becomes visible when scrolled with worklet annotation
   const darkOverlayStyle = useAnimatedStyle(() => {
+    'worklet';
     // Add a dark overlay that becomes more visible when scrolling
     const opacity = interpolate(
-      scrollY.value,
+      smoothScrollY.value,
       [0, headerHeight * 0.3, headerHeight * 0.6],
       [0, 0.2, 0.65], // Increase opacity when collapsed
       Extrapolation.CLAMP
@@ -247,7 +277,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
       opacity,
       backgroundColor: 'black',
     };
-  });
+  }, []); // Empty dependency array for pure UI animations
 
   return (
     <Animated.View style={[styles.container, animatedContainerStyle]}>
@@ -386,14 +416,12 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
+    backgroundColor: '#000', // Add background color to prevent transparent gaps
+    overflow: 'hidden', // Ensure content doesn't spill out
   },
   image: {
     width: '100%',
     height: '100%',
-  },
-  gradientWrapper: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 1,
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,
@@ -418,19 +446,6 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  title: {
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  author: {
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
   metadataContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -442,29 +457,8 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  metadataIcon: {
-    opacity: 0.9,
-    marginRight: LAYOUT.SPACING.TINY,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  metadataText: {
-    color: '#FFFFFF',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
   summaryContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  summary: {
-    color: '#FFFFFF',
-    opacity: 0.85,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
