@@ -172,9 +172,9 @@ const getCategoryStyle = (
       : `${colors.elevation1}98`,
   borderColor: isSelected
     ? isDarkMode
-      ? `${colors.tint}80`
-      : `${colors.tint}60`
-    : colors.cardBorder,
+      ? `${colors.tint}40`
+      : `${colors.tint}30`
+    : colors.borderOverlay,
   borderWidth: isSelected ? 1 : isDarkMode ? 1.5 : 0.5,
   borderStyle: 'solid' as const,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,

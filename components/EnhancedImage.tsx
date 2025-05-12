@@ -43,9 +43,11 @@ function EnhancedImageInternal({
 
   // Process placeholder with thumbhash support
   const processedPlaceholder = useMemo(() => {
-    if (thumbhash) return { thumbhash };
-    return placeholder;
-  }, [thumbhash, placeholder]);
+    // Only use placeholder while loading, not as fallback
+    if (thumbhash && !isError) return { thumbhash };
+    if (!isError) return placeholder;
+    return undefined;
+  }, [thumbhash, placeholder, isError]);
 
   const handleError = useCallback(() => {
     setIsError(true);
@@ -54,6 +56,10 @@ function EnhancedImageInternal({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
+      {/* Debug: Uncomment to log image source and style */}
+      {/*
+      {console.log('EnhancedImage source:', source, 'style:', style)}
+      */}
       <Image
         source={source}
         style={styles.image}
@@ -66,8 +72,8 @@ function EnhancedImageInternal({
         accessible={!!alt}
         accessibilityLabel={alt}
         placeholder={processedPlaceholder}
-        blurRadius={blurRadius}
-        allowDownscaling={true}
+        blurRadius={0} // Always 0 for sharpness
+        allowDownscaling={false} // Prevent unnecessary downscaling
         priority={priority}
         autoplay={autoplay}
       />

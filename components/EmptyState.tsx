@@ -46,17 +46,16 @@ const EmptyState = memo(
     };
 
     const defaultActionButton = !hideArticlesButton && (
-      <TouchableOpacity
-        style={[styles.actionButton, { backgroundColor: withOpacity(colors.tint, 0.15) }]}
+      <ThemedButton
+        title="Browse Articles"
         onPress={handleBrowseArticles}
+        variant="filled"
+        size="medium"
+        style={styles.customActionButton}
+        textWeight="bold"
         accessibilityLabel="Browse articles"
         accessibilityRole="button"
-      >
-        <ThemedText type="bodyBold" style={{ color: colors.tint }}>
-          Browse Articles
-        </ThemedText>
-        <Ionicons name="arrow-forward" size={18} color={colors.tint} />
-      </TouchableOpacity>
+      />
     );
 
     return (

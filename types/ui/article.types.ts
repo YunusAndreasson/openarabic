@@ -29,6 +29,8 @@ export interface ArticleListProps {
   hideMainList?: boolean;
   /** Whether to hide all content while refreshing */
   hideWhileRefreshing?: boolean;
+  /** Offset for the pull-to-refresh indicator (lower = more sensitive) */
+  progressViewOffset?: number;
 }
 
 /**

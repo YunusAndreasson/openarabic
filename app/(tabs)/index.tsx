@@ -1,4 +1,5 @@
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -40,8 +41,6 @@ import { mediumFeedback } from '@/utils/haptics';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../../components/ErrorState';
-
-// Cache duration constants
 
 // Create a supabase client for fetching authors directly
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -138,6 +137,7 @@ ArticleItem.displayName = 'ArticleItem';
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -461,6 +461,7 @@ export default function ArticlesScreen(): JSX.Element {
         contentContainerStyle={getContentContainerStyle(colors)}
         hideMainList={isArticlesLoading && !isDataCached}
         hideWhileRefreshing={false}
+        progressViewOffset={headerHeight + insets.top}
       />
     </ThemedView>
   );

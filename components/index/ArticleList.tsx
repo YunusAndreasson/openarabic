@@ -52,6 +52,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       hideMainList = false,
       hideWhileRefreshing = false,
       contentContainerStyle,
+      progressViewOffset,
     },
     ref
   ) => {
@@ -78,15 +79,17 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           tintColor={colors.tint}
           progressBackgroundColor={colors.background}
           progressViewOffset={
-            headerHeight +
-            LAYOUT.SPACING.TINY +
-            LAYOUT.SPACING.SMALL +
-            LAYOUT.SPACING.XXLARGE +
-            LAYOUT.BUTTON.HEIGHT.MEDIUM
+            progressViewOffset !== undefined
+              ? progressViewOffset
+              : headerHeight +
+                LAYOUT.SPACING.TINY +
+                LAYOUT.SPACING.SMALL +
+                LAYOUT.SPACING.XXLARGE +
+                LAYOUT.BUTTON.HEIGHT.MEDIUM
           }
         />
       ),
-      [isRefreshing, onRefresh, colors.tint, colors.background, headerHeight]
+      [isRefreshing, onRefresh, colors.tint, colors.background, headerHeight, progressViewOffset]
     );
 
     const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
