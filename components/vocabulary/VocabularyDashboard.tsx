@@ -129,6 +129,11 @@ export const VocabularyDashboard = memo(
 
     return (
       <BaseCard style={styles.mainCard} includePressAnimation={false} shadowSize="medium">
+        <View style={styles.header}>
+          <ThemedText type="overline" weight="medium" variant="secondary">
+            VOCABULARY STATS
+          </ThemedText>
+        </View>
         {/* Stats Row */}
         <View style={styles.statsRow}>
           {statItems.map(item => (
@@ -178,5 +183,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  header: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
 });

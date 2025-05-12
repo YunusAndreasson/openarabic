@@ -5,7 +5,6 @@ import React, { useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
@@ -21,6 +20,8 @@ import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { mediumFeedback } from '@/utils/haptics';
 import BottomControls from '@/components/BottomControls';
+import { StreakCard } from '@/components/vocabulary/StreakCard';
+import { useStreakData } from '@/hooks/useStreakData';
 
 type StatCategory = 'total' | 'mastered' | 'learning' | 'due';
 
@@ -68,6 +69,9 @@ export default function VocabularyScreen(): JSX.Element {
     studyWords ?? [],
     dueWordsData ?? []
   );
+
+  // Get streak data using the new hook
+  const streakData = useStreakData(user?.id);
 
   // Combine query invalidation into a single function
   const invalidateVocabularyQueries = useCallback(async () => {
@@ -201,11 +205,18 @@ export default function VocabularyScreen(): JSX.Element {
           onStatPress={handleStatPress}
         />
 
-        {/* Weekly Progress Graph */}
+        {/* Streak Card */}
+        <StreakCard
+          currentStreak={streakData.currentStreak}
+          longestStreak={streakData.longestStreak}
+          lastSevenDaysActivity={streakData.lastSevenDaysActivity}
+        />
+
+        {/* Vocabulary Growth Graph */}
         <VocabularyGraph
           data={weeklyProgressData}
           animationTriggered={true}
-          title="Weekly Progress"
+          title="Vocabulary Progress"
         />
       </ScrollView>
       <BottomControls
@@ -245,20 +256,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  reviewButton: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
-    ...LAYOUT.SHADOW.SMALL,
-  },
-  reviewButtonWrapper: {
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    width: '100%',
-  },
-  warningText: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
   },
 });

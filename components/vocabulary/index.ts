@@ -7,3 +7,4 @@ export { default as ErrorMessage } from './ErrorMessage';
 export { FSRSWordStats } from './FSRSWordStats';
 export { default as CategoryInfoCard } from './CategoryInfoCard';
 export { VocabularyWordList } from './VocabularyWordList';
+export * from './StreakCard';

@@ -111,7 +111,7 @@ export const VocabularyGraph = memo(
       () => (
         <View style={styles.header}>
           <View style={styles.titleRow}>
-            <ThemedText type="overline" variant="secondary">
+            <ThemedText type="overline" weight="medium" variant="secondary">
               {title.toUpperCase()}
             </ThemedText>
           </View>
@@ -280,14 +280,17 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    width: '100%',
   },
   graphContainer: {
     alignItems: 'center',
   },
   header: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   labelContainer: {
     alignItems: 'center',
