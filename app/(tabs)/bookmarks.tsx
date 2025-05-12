@@ -25,6 +25,7 @@ import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
+import BottomControls from '@/components/BottomControls';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -216,60 +217,6 @@ const BookmarkListItem = memo(
 );
 
 BookmarkListItem.displayName = 'BookmarkListItem';
-
-// Bottom Action Buttons component
-const BottomControls = memo(
-  ({
-    onPlayAll,
-    onShuffle,
-    isPlaying,
-    playbackMode,
-  }: {
-    onPlayAll: () => void;
-    onShuffle: () => void;
-    isPlaying: boolean;
-    playbackMode: 'none' | 'all' | 'shuffle';
-  }) => {
-    const colors = useColors();
-
-    return (
-      <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]}>
-        <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
-          <View style={styles.actionButtonsRow}>
-            <View style={styles.buttonContainer}>
-              <ThemedButton
-                title={isPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
-                onPress={onPlayAll}
-                variant="filled"
-                style={styles.fullWidthButton}
-                accessibilityLabel={
-                  isPlaying && playbackMode === 'all'
-                    ? 'Stop playback'
-                    : 'Play all bookmarked articles'
-                }
-              />
-            </View>
-            <View style={styles.buttonContainer}>
-              <ThemedButton
-                title={isPlaying && playbackMode === 'shuffle' ? 'Stop' : 'Shuffle'}
-                onPress={onShuffle}
-                variant="outlined"
-                style={[styles.shuffleButton, styles.fullWidthButton, { borderColor: colors.tint }]}
-                accessibilityLabel={
-                  isPlaying && playbackMode === 'shuffle'
-                    ? 'Stop shuffle playback'
-                    : 'Play bookmarked articles in random order'
-                }
-              />
-            </View>
-          </View>
-        </BaseCard>
-      </View>
-    );
-  }
-);
-
-BottomControls.displayName = 'BottomControls';
 
 export default function BookmarksScreen(): JSX.Element {
   const colors = useColors();
@@ -672,10 +619,24 @@ export default function BookmarksScreen(): JSX.Element {
       </ThemedView>
 
       <BottomControls
-        onPlayAll={handlePlayAll}
-        onShuffle={handleShuffle}
-        isPlaying={isCurrentlyPlaying}
-        playbackMode={playbackMode}
+        primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
+        onPrimaryPress={handlePlayAll}
+        primaryVariant="filled"
+        primaryDisabled={false}
+        primaryAccessibilityLabel={
+          isCurrentlyPlaying && playbackMode === 'all'
+            ? 'Stop playback'
+            : 'Play all bookmarked articles'
+        }
+        secondaryLabel={isCurrentlyPlaying && playbackMode === 'shuffle' ? 'Stop' : 'Shuffle'}
+        onSecondaryPress={handleShuffle}
+        secondaryVariant="outlined"
+        secondaryDisabled={false}
+        secondaryAccessibilityLabel={
+          isCurrentlyPlaying && playbackMode === 'shuffle'
+            ? 'Stop shuffle playback'
+            : 'Play bookmarked articles in random order'
+        }
       />
     </ThemedView>
   );

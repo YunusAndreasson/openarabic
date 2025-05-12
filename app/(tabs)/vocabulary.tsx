@@ -20,6 +20,7 @@ import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import { mediumFeedback } from '@/utils/haptics';
+import BottomControls from '@/components/BottomControls';
 
 type StatCategory = 'total' | 'mastered' | 'learning' | 'due';
 
@@ -206,36 +207,27 @@ export default function VocabularyScreen(): JSX.Element {
           animationTriggered={true}
           title="Weekly Progress"
         />
-
-        {/* Review Button Section */}
-        {stats.dueWords > 0 ? (
-          <View style={styles.reviewButtonWrapper}>
-            <ThemedButton
-              title={`Review ${stats.dueWords} ${stats.dueWords === 1 ? 'Word' : 'Words'}`}
-              onPress={handleStartReview}
-              variant="filled"
-              style={styles.reviewButton}
-              accessibilityLabel={`Review ${stats.dueWords} words`}
-            />
-            {stats.dueWords > 150 ? (
-              <ThemedText type="label" variant="warning" style={styles.warningText}>
-                You are reviewing many words. Please catch up before adding more.
-              </ThemedText>
-            ) : null}
-          </View>
-        ) : (
-          <View style={styles.reviewButtonWrapper}>
-            <ThemedButton
-              title="No words due"
-              onPress={() => {}}
-              variant="outlined"
-              style={styles.reviewButton}
-              disabled
-              accessibilityLabel="No words due"
-            />
-          </View>
-        )}
       </ScrollView>
+      <BottomControls
+        primaryLabel="Review"
+        onPrimaryPress={stats.dueWords > 0 ? handleStartReview : () => {}}
+        primaryVariant={stats.dueWords > 0 ? 'filled' : 'outlined'}
+        primaryDisabled={stats.dueWords === 0}
+        primaryAccessibilityLabel={
+          stats.dueWords > 0 ? `Review ${stats.dueWords} words` : 'No words due'
+        }
+        secondaryLabel="Listen"
+        onSecondaryPress={() => {}}
+        secondaryVariant="outlined"
+        secondaryDisabled={false}
+        secondaryAccessibilityLabel="Listen to vocabulary (coming soon)"
+        showWarning={stats.dueWords > 150}
+        warningText={
+          stats.dueWords > 150
+            ? 'You are reviewing many words. Please catch up before adding more.'
+            : undefined
+        }
+      />
     </ThemedView>
   );
 }

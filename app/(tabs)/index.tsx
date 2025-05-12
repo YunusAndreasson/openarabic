@@ -142,11 +142,10 @@ export default function ArticlesScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  const {
-    hasEnoughArticles = false,
-    dueWordRootIds = new Set(),
-    isLoading: isDueWordsLoading,
-  } = useArticlesByDueWords(user?.id, 10);
+  const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(
+    user?.id,
+    10
+  );
 
   const {
     data: articlesData = [],
