@@ -232,12 +232,6 @@ export default function VocabularyScreen(): JSX.Element {
         secondaryVariant="outlined"
         secondaryDisabled={false}
         secondaryAccessibilityLabel="Listen to vocabulary (coming soon)"
-        showWarning={stats.dueWords > 150}
-        warningText={
-          stats.dueWords > 150
-            ? 'You are reviewing many words. Please catch up before adding more.'
-            : undefined
-        }
       />
     </ThemedView>
   );

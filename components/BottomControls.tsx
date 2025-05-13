@@ -17,8 +17,6 @@ export type BottomControlsProps = {
   secondaryVariant?: 'filled' | 'outlined';
   secondaryDisabled?: boolean;
   secondaryAccessibilityLabel?: string;
-  showWarning?: boolean;
-  warningText?: string;
 };
 
 const BottomControls = memo(
@@ -33,8 +31,6 @@ const BottomControls = memo(
     secondaryVariant = 'outlined',
     secondaryDisabled = false,
     secondaryAccessibilityLabel,
-    showWarning = false,
-    warningText,
   }: BottomControlsProps) => {
     const colors = useColors();
 
@@ -42,16 +38,6 @@ const BottomControls = memo(
       <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
           <View style={styles.actionButtonsRow}>
-            <View style={styles.buttonContainer}>
-              <ThemedButton
-                title={primaryLabel}
-                onPress={onPrimaryPress}
-                variant={primaryVariant}
-                style={styles.fullWidthButton}
-                disabled={primaryDisabled}
-                accessibilityLabel={primaryAccessibilityLabel || primaryLabel}
-              />
-            </View>
             {secondaryLabel && onSecondaryPress && (
               <View style={styles.buttonContainer}>
                 <ThemedButton
@@ -68,14 +54,17 @@ const BottomControls = memo(
                 />
               </View>
             )}
-          </View>
-          {showWarning && warningText ? (
-            <View style={styles.warningContainer}>
-              <ThemedText type="label" variant="warning" style={styles.warningText}>
-                {warningText}
-              </ThemedText>
+            <View style={styles.buttonContainer}>
+              <ThemedButton
+                title={primaryLabel}
+                onPress={onPrimaryPress}
+                variant={primaryVariant}
+                style={styles.fullWidthButton}
+                disabled={primaryDisabled}
+                accessibilityLabel={primaryAccessibilityLabel || primaryLabel}
+              />
             </View>
-          ) : null}
+          </View>
         </BaseCard>
       </View>
     );
@@ -110,15 +99,6 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-  },
-  warningContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    width: '100%',
-    alignItems: 'center',
-  },
-  warningText: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    textAlign: 'center',
   },
 });
 

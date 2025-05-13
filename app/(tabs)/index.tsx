@@ -336,7 +336,7 @@ export default function ArticlesScreen(): JSX.Element {
   }, [user?.id, handleArticlePress, dueWordRootIds]);
 
   const latestArticlesForSection = useMemo(
-    () => getLatestArticles(articlesData, 7),
+    () => getLatestArticles(articlesData, 5),
     [articlesData]
   );
 

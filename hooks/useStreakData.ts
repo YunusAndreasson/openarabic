@@ -50,7 +50,7 @@ export function useStreakData(userId?: string | null): StreakData {
         return {
           date: date.toISOString().slice(0, 10),
           active: false,
-          dayName: dayNames[date.getDay()],
+          dayName: dayNames[date.getDay()]!,
         };
       });
 
@@ -68,7 +68,7 @@ export function useStreakData(userId?: string | null): StreakData {
       return {
         date: date.toISOString().slice(0, 10),
         active: false,
-        dayName: dayNames[date.getDay()],
+        dayName: dayNames[date.getDay()]!,
       };
     });
 
@@ -109,7 +109,6 @@ export function useStreakData(userId?: string | null): StreakData {
     if (activeDatesArray.length) {
       // Convert active days to numerical sequences for streak calculation
       let currentStreakDays: Date[] = [];
-      let longestStreakDays: Date[] = [];
 
       // If today is active, start streak from today
       if (isTodayActive) {
@@ -146,6 +145,7 @@ export function useStreakData(userId?: string | null): StreakData {
       let tempStreak = 0;
       let tempStart: Date | null = null;
       let tempStreakDays: Date[] = [];
+      let longestStreakDays: Date[] = [];
 
       // Sort dates in ascending order
       const sortedDates = activeDatesArray
@@ -160,7 +160,7 @@ export function useStreakData(userId?: string | null): StreakData {
           i === 0 ||
           (currentDate &&
             sortedDates[i - 1] &&
-            currentDate.getTime() - sortedDates[i - 1].getTime() > 24 * 60 * 60 * 1000)
+            currentDate.getTime() - sortedDates[i - 1]!.getTime() > 24 * 60 * 60 * 1000)
         ) {
           // If the previous streak ended, check if it was the longest
           if (tempStreak > longestStreak) {
@@ -170,13 +170,13 @@ export function useStreakData(userId?: string | null): StreakData {
 
           // Start new streak
           tempStreak = 1;
-          tempStart = currentDate;
-          tempStreakDays = [currentDate];
+          tempStart = currentDate || null;
+          tempStreakDays = [currentDate!];
         }
         // Continue current streak
         else if (i > 0 && currentDate && sortedDates[i - 1]) {
           // Check if dates are consecutive
-          const prevDate = new Date(sortedDates[i - 1]);
+          const prevDate = new Date(sortedDates[i - 1]!);
           prevDate.setDate(prevDate.getDate() + 1);
 
           if (prevDate.toISOString().slice(0, 10) === currentDate.toISOString().slice(0, 10)) {
@@ -191,8 +191,8 @@ export function useStreakData(userId?: string | null): StreakData {
 
             // Start new streak
             tempStreak = 1;
-            tempStart = currentDate;
-            tempStreakDays = [currentDate];
+            tempStart = currentDate || null;
+            tempStreakDays = [currentDate!];
           }
         }
       }

@@ -468,8 +468,8 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
         playsInSilentModeIOS: true,
         staysActiveInBackground: true,
         shouldDuckAndroid: true,
-        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+        interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+        interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
         playThroughEarpieceAndroid: false,
       });
     } catch (error) {
@@ -483,11 +483,12 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
     initAudioSession();
 
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') {
-        // App has come to foreground
-        initAudioSession();
-      } else if (appStateRef.current === 'active' && nextAppState.match(/inactive|background/)) {
-        // App is going to background - ensure audio session stays active
+      // Maintain audio session regardless of app state
+      // This allows continuous audio playback in background
+      if (
+        (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') ||
+        (appStateRef.current === 'active' && nextAppState.match(/inactive|background/))
+      ) {
         initAudioSession();
       }
       appStateRef.current = nextAppState;

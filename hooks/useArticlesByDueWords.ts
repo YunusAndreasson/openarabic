@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { Article } from '../types/articles.types';
-import type { StudyWord } from '../types/vocabulary.types';
 import { getArticlesByDueWords } from '../utils/articleUtils';
 import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import { articlesService } from '../services/articles';

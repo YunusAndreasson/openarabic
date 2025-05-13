@@ -113,8 +113,8 @@ export function useAudioPlayer(): AudioPlayerResult {
       playsInSilentModeIOS: true,
       staysActiveInBackground: true,
       shouldDuckAndroid: true,
-      interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+      interruptionModeIOS: InterruptionModeIOS.DuckOthers,
+      interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
       playThroughEarpieceAndroid: false,
     });
 
@@ -403,9 +403,9 @@ export function useAudioPlayer(): AudioPlayerResult {
   // Handle app state changes
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appStateRef.current === 'active' && nextAppState.match(/inactive|background/)) {
-        void stopPlayback();
-      }
+      // Don't stop playback when app goes to background
+      // This allows audio to continue playing in the background
+      // and automatically move to the next track
       appStateRef.current = nextAppState;
     });
 

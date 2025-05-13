@@ -1,12 +1,12 @@
-import { Canvas, Circle, Group, Line } from '@shopify/react-native-skia';
+import { Canvas, Circle, Group, Line, Path } from '@shopify/react-native-skia';
 import React, { memo, useEffect } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated';
 
 import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { useProgressAnimation } from '@/hooks/animations';
 import { withOpacity } from '@/utils/colorUtils';
 
 interface StreakCardProps {
@@ -24,13 +24,20 @@ export const StreakCard = memo(
   ({ currentStreak = 0, longestStreak = 0, lastSevenDaysActivity = [] }: StreakCardProps) => {
     const colors = useColors();
 
-    // Animation value
-    const opacity = useSharedValue(0);
+    // Animation value for line drawing
+    const { progress } = useProgressAnimation(0, 1200);
 
     // Start animation when component mounts
     useEffect(() => {
-      opacity.value = withTiming(1, { duration: 700 });
-    }, [opacity]);
+      // Initialize the animation (0 to 100 percent)
+      progress.value = 0;
+      const updateFn = () => {
+        progress.value = 1;
+      };
+      // Small delay for better visual appeal
+      const timer = setTimeout(updateFn, 100);
+      return () => clearTimeout(timer);
+    }, [progress]);
 
     // Card constants (to ensure alignment)
     const cardPadding = LAYOUT.SPACING.LARGE;
@@ -80,6 +87,19 @@ export const StreakCard = memo(
       active: day.active,
     }));
 
+    // Create paths for connecting lines to animate them properly
+    const connectionPaths = dayPositions
+      .map((day, index) => {
+        if (index < dayPositions.length - 1 && day.active && dayPositions[index + 1]?.active) {
+          const nextDay = dayPositions[index + 1];
+          if (nextDay) {
+            return `M ${day.x} ${day.y} L ${nextDay.x} ${nextDay.y}`;
+          }
+        }
+        return '';
+      })
+      .filter(path => path !== '');
+
     return (
       <BaseCard style={styles.card} includePressAnimation={false} shadowSize="medium">
         <View style={[styles.container, { padding: cardPadding }]}>
@@ -92,7 +112,7 @@ export const StreakCard = memo(
           <View style={styles.content}>
             {/* Timeline visualization */}
             <Canvas style={styles.timelineCanvas}>
-              <Group opacity={opacity}>
+              <Group>
                 {/* Base line connecting all dots */}
                 <Line
                   p1={{ x: actualMargin, y: timelineHeight / 2 }}
@@ -101,28 +121,18 @@ export const StreakCard = memo(
                   strokeWidth={1}
                 />
 
-                {/* Green connecting lines between active days */}
-                {dayPositions.map((day, index) => {
-                  if (
-                    index < dayPositions.length - 1 &&
-                    day.active &&
-                    dayPositions[index + 1]?.active
-                  ) {
-                    return (
-                      <Line
-                        key={`connection-${index}`}
-                        p1={{ x: day.x, y: day.y }}
-                        p2={{
-                          x: dayPositions[index + 1]?.x || 0,
-                          y: dayPositions[index + 1]?.y || 0,
-                        }}
-                        color={activeColor}
-                        strokeWidth={1.5}
-                      />
-                    );
-                  }
-                  return null;
-                })}
+                {/* Green connecting lines between active days with animation */}
+                {connectionPaths.map((pathData, index) => (
+                  <Path
+                    key={`connection-path-${index}`}
+                    path={pathData}
+                    color={activeColor}
+                    style="stroke"
+                    strokeWidth={1.5}
+                    start={0}
+                    end={progress}
+                  />
+                ))}
 
                 {/* Day indicators (dots) - with white outline for consistency with graph */}
                 {dayPositions.map((day, index) => (
@@ -153,18 +163,18 @@ export const StreakCard = memo(
             <View style={styles.streakInfo}>
               <View style={styles.streakDetail}>
                 <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
-                  CURRENT STREAK
-                </ThemedText>
-                <ThemedText style={styles.streakValue}>
-                  {currentStreak} {currentStreak === 1 ? 'day' : 'days'}
-                </ThemedText>
-              </View>
-              <View style={styles.streakDetailRight}>
-                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
                   BEST STREAK
                 </ThemedText>
                 <ThemedText style={styles.streakValue}>
                   {longestStreak} {longestStreak === 1 ? 'day' : 'days'}
+                </ThemedText>
+              </View>
+              <View style={styles.streakDetailRight}>
+                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
+                  CURRENT STREAK
+                </ThemedText>
+                <ThemedText style={styles.streakValue}>
+                  {currentStreak} {currentStreak === 1 ? 'day' : 'days'}
                 </ThemedText>
               </View>
             </View>
