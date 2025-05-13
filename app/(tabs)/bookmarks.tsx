@@ -130,46 +130,44 @@ const BookmarkListItem = memo(
     const shouldShowTime = isActive && duration > 0;
     const hasDueWords = dueWordCount > 0;
 
-    // Create meta content with time and due word count
-    const metaContent = (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        {shouldShowTime && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
-            <Ionicons name="time-outline" size={14} color={colors.tint} />
-            <ThemedText type="label" style={{ color: colors.tint, marginLeft: 4 }} skipDefaultColor>
-              {formatTime(remainingTime)}
-            </ThemedText>
-          </View>
-        )}
+    // Create left meta content with due words indicator
+    const leftMetaContent = hasDueWords ? (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: `${colors.warning}25`, // 25% opacity
+          paddingHorizontal: 6,
+          paddingVertical: 2,
+          borderRadius: 10,
+          borderWidth: 1,
+          borderColor: `${colors.warning}40`, // 40% opacity
+          marginRight: 8,
+        }}
+      >
+        <Ionicons name="sync-outline" size={12} color={colors.warning} />
+        <ThemedText
+          type="label"
+          style={{
+            color: colors.warning,
+            fontSize: 12,
+            marginLeft: 3,
+            fontWeight: '600',
+          }}
+          skipDefaultColor
+        >
+          {dueWordCount}
+        </ThemedText>
+      </View>
+    ) : null;
 
-        {hasDueWords && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: `${colors.warning}25`, // 25% opacity
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: `${colors.warning}40`, // 40% opacity
-            }}
-          >
-            <Ionicons name="sync-outline" size={12} color={colors.warning} />
-            <ThemedText
-              type="label"
-              style={{
-                color: colors.warning,
-                fontSize: 12,
-                marginLeft: 3,
-                fontWeight: '600',
-              }}
-              skipDefaultColor
-            >
-              {dueWordCount}
-            </ThemedText>
-          </View>
-        )}
+    // Create meta content with time indicator
+    const metaContent = shouldShowTime && (
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Ionicons name="time-outline" size={14} color={colors.tint} />
+        <ThemedText type="label" style={{ color: colors.tint, marginLeft: 4 }} skipDefaultColor>
+          {formatTime(remainingTime)}
+        </ThemedText>
       </View>
     );
 
@@ -177,6 +175,7 @@ const BookmarkListItem = memo(
       <ArticleCard
         title={item.articles?.title || 'Untitled'}
         author={item.articles?.author?.name || 'Unknown Author'}
+        leftMeta={leftMetaContent}
         meta={metaContent}
         onPress={() => router.push(`/article/${item.article_id}`)}
         active={isActive}

@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   spacer: {
-    height: 30, // Reduced from 60 to bring content closer to header
+    height: 60, // Increased from 30 to 60 to add more space for tooltips
   },
 });
 
@@ -185,7 +185,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
                 paddingHorizontal: LAYOUT.SPACING.SMALL,
-                paddingTop: HEADER_IMAGE_HEIGHT + LAYOUT.SPACING.LARGE, // Reduced padding from XXLARGE to LARGE
+                paddingTop: HEADER_IMAGE_HEIGHT + LAYOUT.SPACING.XLARGE, // Increased from LARGE to XLARGE
                 paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.SMALL,
               }}
               onScroll={handleAnimatedScroll}
@@ -217,7 +217,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                     <Animated.View style={footerStyle}>
                       <RelatedArticlesFooter
                         otherArticles={otherArticles}
-                        otherCategoryArticles={otherCategoryArticles || []}
                         article={article}
                         onArticlePress={a => handleArticlePress(String(a.id), true)}
                       />

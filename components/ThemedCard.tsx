@@ -347,14 +347,6 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </ThemedText>
           </View>
 
-          {props.article.author ? (
-            <View style={styles.authorContainer}>
-              <ThemedText type="label" colorName="secondaryText" numberOfLines={1}>
-                By {props.article.author.name}
-              </ThemedText>
-            </View>
-          ) : null}
-
           {/* Due word count indicator as simple text with icon */}
           {props.dueWordCount ? (
             <View
@@ -383,7 +375,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
               <TimeAgo date={lastOpenedAt || props.article.created_at} />
-            ) : hideDifficulty ? null : (
+            ) : props.dueWordCount || hideDifficulty ? null : (
               <SummaryIndicator summary={props.article.summary} />
             )}
           </View>

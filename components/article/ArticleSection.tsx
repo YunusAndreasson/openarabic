@@ -108,7 +108,7 @@ const ArticleSection = memo(
                   variant="compact"
                   article={article}
                   handlePress={() => onArticlePress(article)}
-                  hideDifficulty={hideDifficulty}
+                  hideDifficulty={false}
                   lastOpenedAt={lastOpenedAt}
                   showTimeAgo={!!lastOpenedAt}
                   dueWordCount={article.dueWordCount}

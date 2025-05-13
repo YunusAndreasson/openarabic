@@ -12,6 +12,7 @@ interface ArticleCardProps {
   title: string;
   author: string;
   meta?: React.ReactNode;
+  leftMeta?: React.ReactNode;
   onPress?: () => void;
   rightElement?: React.ReactNode;
   active?: boolean;
@@ -24,6 +25,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   title,
   author,
   meta,
+  leftMeta,
   onPress,
   rightElement,
   active = false,
@@ -55,6 +57,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
               {title}
             </ThemedText>
             <View style={styles.metaRow}>
+              {leftMeta}
               <ThemedText
                 type="label"
                 numberOfLines={1}

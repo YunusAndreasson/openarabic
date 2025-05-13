@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState, useCallback, JSX } from 'react';
+import React, { useState, useCallback, JSX, useEffect } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -44,6 +44,24 @@ export default function Auth({ disableLoading = false }: AuthProps): JSX.Element
   // Validation state
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Initialize auth session on component mount to ensure token refresh
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        await supabase.auth.initialize();
+        supabase.auth.startAutoRefresh();
+      } catch (err) {
+        console.error('Failed to initialize auth:', err);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      // Don't stop autoRefresh on unmount to keep session alive
+    };
+  }, []);
 
   // Validation handlers
   const validateEmail = useCallback((email: string) => {
@@ -112,27 +130,41 @@ export default function Auth({ disableLoading = false }: AuthProps): JSX.Element
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) Alert.alert('Error', error.message);
-    else {
-      // Track successful sign in and identify user in Mixpanel
-      await analytics.identify(data.user.id, {
-        email: data.user.email,
-        last_sign_in: new Date().toISOString(),
+    try {
+      // Initialize auth to ensure storage is loaded
+      await supabase.auth.initialize();
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      await analytics.trackSignIn('email');
 
-      // Provide haptic feedback on successful login
-      lightFeedback();
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        // Ensure auto-refresh is active
+        supabase.auth.startAutoRefresh();
 
-      // Redirect to main app immediately
-      router.replace('/(tabs)');
+        // Track successful sign in and identify user in Mixpanel
+        await analytics.identify(data.user.id, {
+          email: data.user.email,
+          last_sign_in: new Date().toISOString(),
+        });
+        await analytics.trackSignIn('email');
+
+        // Provide haptic feedback on successful login
+        lightFeedback();
+
+        // Redirect to main app immediately
+        router.replace('/(tabs)');
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to sign in. Please try again.');
+      console.error('Sign in error:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [email, password, validateEmail, validatePassword]);
 
   const signUpWithEmail = useCallback(async () => {
@@ -144,28 +176,42 @@ export default function Auth({ disableLoading = false }: AuthProps): JSX.Element
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
 
-    if (error) Alert.alert('Error', error.message);
-    else {
-      // Track successful sign up and identify user in Mixpanel
-      if (data?.user) {
-        await analytics.identify(data.user.id, {
-          email: data.user.email,
-          created_at: new Date().toISOString(),
-        });
+    try {
+      // Initialize auth to ensure storage is loaded
+      await supabase.auth.initialize();
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else {
+        // Ensure auto-refresh is active
+        supabase.auth.startAutoRefresh();
+
+        // Track successful sign up and identify user in Mixpanel
+        if (data?.user) {
+          await analytics.identify(data.user.id, {
+            email: data.user.email,
+            created_at: new Date().toISOString(),
+          });
+        }
+        await analytics.trackSignUp('email');
+
+        // Provide haptic feedback on successful account creation
+        lightFeedback();
+
+        Alert.alert('Success', 'Check your email for the confirmation link!');
       }
-      await analytics.trackSignUp('email');
-
-      // Provide haptic feedback on successful account creation
-      lightFeedback();
-
-      Alert.alert('Success', 'Check your email for the confirmation link!');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to create account. Please try again.');
+      console.error('Sign up error:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [email, password, validateEmail, validatePassword]);
 
   const toggleMode = useCallback(() => {

@@ -1,7 +1,11 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { AppState } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 
 import { supabase } from '../services/supabase';
+
+// Maximum number of retry attempts for session refresh
+const MAX_REFRESH_RETRIES = 3;
 
 // Define session type based on properties we use
 type UserSession = {
@@ -27,6 +31,7 @@ export function useAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
+  const [refreshAttempts, setRefreshAttempts] = useState(0);
 
   // Function to fetch the session that can be called on demand
   const fetchSession = useCallback(async (): Promise<UserSession | null> => {
@@ -51,30 +56,55 @@ export function useAuth(): AuthResult {
     }
   }, []);
 
-  // Refresh session function that can be called from components
+  // Refresh session function that can be called from components with retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
+    setRefreshAttempts(count => count + 1);
 
     try {
+      // Check network connectivity before attempting refresh
+      const netState = await NetInfo.fetch();
+      if (!netState.isConnected) {
+        console.log('No network connection, using cached session');
+        const cachedSession = await fetchSession();
+        if (cachedSession) {
+          setSession(cachedSession);
+          setAuthError(null);
+          return cachedSession;
+        }
+        throw new Error('No network connection and no cached session available');
+      }
+
       // Initialize auth to ensure storage is loaded
       await supabase.auth.initialize();
+
+      // Ensure auto-refresh is active
+      supabase.auth.startAutoRefresh();
 
       // Let Supabase handle the refresh
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError) {
-        // If refresh fails, try getting the current session
+        // If refresh fails but under max retries, try getting the current session
         const fetchedSession = await fetchSession();
         if (fetchedSession) {
           setSession(fetchedSession);
           setAuthError(null);
           return fetchedSession;
-        } else {
-          throw new Error('Could not refresh or retrieve session');
         }
+
+        // If we've reached max retries, don't keep retrying
+        if (refreshAttempts >= MAX_REFRESH_RETRIES) {
+          console.error('Max refresh attempts reached:', refreshError);
+          throw new Error('Could not refresh session after multiple attempts');
+        }
+
+        throw new Error('Could not refresh or retrieve session');
       }
 
       if (refreshData.session) {
+        // Reset refresh attempts on success
+        setRefreshAttempts(0);
         setSession(refreshData.session);
         setAuthError(null);
         return refreshData.session;
@@ -88,10 +118,12 @@ export function useAuth(): AuthResult {
     } finally {
       setIsLoading(false);
     }
-  }, [fetchSession]);
+  }, [fetchSession, refreshAttempts]);
 
   useEffect(() => {
     let isMounted = true;
+    let appStateSubscription: ReturnType<typeof AppState.addEventListener>;
+    let authSubscriptionUnsubscribe: () => void;
 
     const initSession = async () => {
       if (!isMounted) return;
@@ -102,6 +134,9 @@ export function useAuth(): AuthResult {
         // Initialize auth to ensure storage is loaded
         await supabase.auth.initialize();
         if (!isMounted) return;
+
+        // Ensure auto-refresh is active
+        supabase.auth.startAutoRefresh();
 
         const fetchedSession = await fetchSession();
         if (!isMounted) return;
@@ -127,7 +162,7 @@ export function useAuth(): AuthResult {
     initSession();
 
     // Handle app state changes
-    const subscription = AppState.addEventListener('change', nextAppState => {
+    appStateSubscription = AppState.addEventListener('change', nextAppState => {
       if (nextAppState === 'active' && isMounted) {
         // When app becomes active, refresh the session
         refreshSession();
@@ -136,7 +171,7 @@ export function useAuth(): AuthResult {
 
     // Listen for auth state changes
     const {
-      data: { subscription: authSubscription },
+      data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
@@ -152,10 +187,22 @@ export function useAuth(): AuthResult {
       }
     });
 
+    // Store the unsubscribe function
+    authSubscriptionUnsubscribe = subscription.unsubscribe;
+
+    // Add network state listener
+    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
+      if (state.isConnected && isMounted && session?.user) {
+        // When connectivity is restored, try refreshing the session
+        refreshSession();
+      }
+    });
+
     return () => {
       isMounted = false;
-      subscription.remove();
-      authSubscription.unsubscribe();
+      appStateSubscription.remove();
+      authSubscriptionUnsubscribe();
+      unsubscribeNetInfo();
     };
   }, [fetchSession, refreshSession]);
 
