@@ -135,13 +135,13 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           </ThemedText>
         </View>
 
-        <View style={[styles.progressBar, { backgroundColor: `${colors.border}40` }]}>
+        <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
           <Animated.View
             style={[
               styles.progressFill,
               {
                 width: `${wordStatus.progress.width}%`,
-                backgroundColor: wordStatus.progress.color,
+                backgroundColor: wordStatus.progress.color.replace(/40$/, ''),
               },
             ]}
           />

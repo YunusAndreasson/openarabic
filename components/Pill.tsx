@@ -1,8 +1,8 @@
-import React, { useCallback, useMemo, memo } from 'react';
+import React, { useCallback, useMemo, memo, ReactNode } from 'react';
 import { Pressable, StyleSheet, View, Platform, type TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import type { PillProps } from '@/types/ui/pill.types';
+import type { PillProps as OriginalPillProps } from '@/types/ui/pill.types';
 
 import { LAYOUT } from '../constants/layout';
 import { useTransformAnimation } from '../hooks/animations';
@@ -22,7 +22,13 @@ const Pill = memo(
     onSelect,
     absolute = false,
     variant = 'filter',
-  }: PillProps) => {
+    pillBg,
+    pillStyle,
+  }: Omit<OriginalPillProps, 'label'> & {
+    label: ReactNode;
+    pillBg?: string;
+    pillStyle?: object;
+  }) => {
     const colors = useColors();
     const isDarkMode = useIsDarkMode();
 
@@ -51,8 +57,15 @@ const Pill = memo(
     const textStyle: TextStyle = isDarkMode ? { color: colors.text } : {};
 
     const containerStyle = useMemo(() => {
-      return getContainerStyle(isCategory, isHorizontalCategory, isDarkMode, isSelected, colors);
-    }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory]);
+      return getContainerStyle(
+        isCategory,
+        isHorizontalCategory,
+        isDarkMode,
+        isSelected,
+        colors,
+        pillBg
+      );
+    }, [colors, isDarkMode, isSelected, isCategory, isHorizontalCategory, pillBg]);
 
     const pressedStyle = useMemo(
       () => ({
@@ -120,6 +133,7 @@ const Pill = memo(
           style={({ pressed: isPressedState }) => [
             styles.pill,
             containerStyle,
+            pillStyle,
             isPressedState && !isSelected && pressedStyle,
             isSelected && styles.pillSelected,
             absolute && styles.absoluteContainer,
@@ -150,12 +164,13 @@ function getContainerStyle(
   isHorizontalCategory: boolean,
   isDarkMode: boolean,
   isSelected: boolean,
-  colors: ReturnType<typeof useColors>
+  colors: ReturnType<typeof useColors>,
+  pillBg?: string
 ) {
   if (isCategory || isHorizontalCategory) {
     return getCategoryStyle(isDarkMode, isSelected, colors);
   }
-  return getFilterStyle(isDarkMode, isSelected, colors);
+  return getFilterStyle(isDarkMode, isSelected, colors, pillBg);
 }
 
 const getCategoryStyle = (
@@ -195,15 +210,19 @@ const getCategoryStyle = (
 const getFilterStyle = (
   isDarkMode: boolean,
   isSelected: boolean,
-  colors: ReturnType<typeof useColors>
+  colors: ReturnType<typeof useColors>,
+  pillBg?: string
 ) => ({
-  backgroundColor: isSelected
-    ? isDarkMode
-      ? `${colors.tint}15`
-      : `${colors.tint}10`
-    : isDarkMode
-      ? colors.elevation2
-      : colors.elevation1,
+  backgroundColor:
+    pillBg !== undefined
+      ? pillBg
+      : isSelected
+        ? isDarkMode
+          ? `${colors.tint}15`
+          : `${colors.tint}10`
+        : isDarkMode
+          ? colors.elevation2
+          : colors.elevation1,
   borderWidth: isSelected ? 1 : isDarkMode ? 1.5 : 0.5,
   borderColor: isSelected ? colors.tint : colors.cardBorder,
   borderStyle: 'solid' as const,
@@ -244,5 +263,9 @@ const styles = StyleSheet.create({
 });
 
 Pill.displayName = 'Pill';
+
+/**
+ * pillStyle: Optional style override for the pill container (e.g., to remove margin for sort controls)
+ */
 
 export default Pill;

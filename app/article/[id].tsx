@@ -6,8 +6,6 @@ import React, { useMemo, useCallback, useState, useEffect, useRef } from 'react'
 import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated from 'react-native-reanimated';
 
 import ThemedCard from '@/components/ThemedCard';
 import { ThemedView } from '@/components/ThemedView';
@@ -28,7 +26,6 @@ import {
 } from '@/hooks/useSentenceAudioPlayer';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
-import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import { updateAudioState } from '@/store/audioSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
@@ -65,9 +62,8 @@ export default function ArticleScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const insets = useSafeAreaInsets();
 
-  const { isHeaderVisible, handleScroll, animatedStyle } = useHeaderVisibility();
+  const { handleScroll } = useHeaderVisibility();
 
   useNavigationWithDebounce();
   const audioPlayer = useSentenceAudioPlayer();
@@ -183,10 +179,6 @@ export default function ArticleScreen(): JSX.Element {
   }, [sortedSentences, sentenceWordsMap]);
 
   const articleContentRef = useRef<ArticleContentRef>(null);
-
-  const initialBookmarkIcon: 'bookmark-outline' | 'bookmark' = isInReadingList
-    ? 'bookmark'
-    : 'bookmark-outline';
 
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
     user?.id,

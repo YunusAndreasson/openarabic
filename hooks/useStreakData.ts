@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 
+// Helper function for consistent date formatting
+export const formatDate = (date: Date): string => {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+};
+
 export interface StreakData {
   currentStreak: number;
   longestStreak: number;
@@ -38,48 +43,44 @@ export function useStreakData(userId?: string | null): StreakData {
       streakStartDate: null,
     };
 
-    if (!reviewLogs.length) {
-      // Return empty activity array with appropriate structure
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+    // Set up the today date consistently with UTC midnight
+    const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
 
-      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-      defaultData.lastSevenDaysActivity = Array.from({ length: 7 }, (_, i) => {
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    // Helper function to create the 7-day activity array
+    const createSevenDayActivity = () => {
+      return Array.from({ length: 7 }, (_, i) => {
         const date = new Date(today);
         date.setDate(today.getDate() - (6 - i)); // 6 days ago to today
         return {
-          date: date.toISOString().slice(0, 10),
+          date: formatDate(date),
           active: false,
           dayName: dayNames[date.getDay()]!,
         };
       });
+    };
 
+    // Return empty data with proper structure if no logs
+    if (!reviewLogs.length) {
+      defaultData.lastSevenDaysActivity = createSevenDayActivity();
       return defaultData;
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Initialize last seven days
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const lastSevenDaysActivity = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date(today);
-      date.setDate(today.getDate() - (6 - i)); // 6 days ago to today
-      return {
-        date: date.toISOString().slice(0, 10),
-        active: false,
-        dayName: dayNames[date.getDay()]!,
-      };
-    });
+    // Initialize seven day activity array
+    const lastSevenDaysActivity = createSevenDayActivity();
 
     // Group review logs by day to identify active days
     const activeDays = new Map<string, boolean>();
     reviewLogs.forEach(log => {
       if (!log.reviewed_at) return;
-
-      // Extract date portion for grouping
-      const dateString = new Date(log.reviewed_at).toISOString().slice(0, 10);
-      activeDays.set(dateString, true);
+      try {
+        const reviewDate = new Date(log.reviewed_at);
+        activeDays.set(formatDate(reviewDate), true);
+      } catch (error) {
+        // Skip invalid dates
+      }
     });
 
     // Mark days as active in the seven-day view
@@ -90,123 +91,83 @@ export function useStreakData(userId?: string | null): StreakData {
     // Calculate the current streak
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().slice(0, 10);
-    const todayStr = today.toISOString().slice(0, 10);
 
-    // Is today active?
+    const todayStr = formatDate(today);
+    const yesterdayStr = formatDate(yesterday);
+
+    // Is today or yesterday active?
     const isTodayActive = activeDays.has(todayStr);
-    // Is yesterday active?
     const isYesterdayActive = activeDays.has(yesterdayStr);
 
-    // Calculate streak
+    // Calculate current streak
     let currentStreak = 0;
-    let longestStreak = 0;
     let streakStartDate: Date | null = null;
 
-    // Find the most recent active date
-    const activeDatesArray = Array.from(activeDays.keys()).sort();
+    if (isTodayActive) {
+      currentStreak = 1;
+      streakStartDate = new Date(today);
+    } else if (isYesterdayActive) {
+      currentStreak = 1;
+      streakStartDate = new Date(yesterday);
+    }
 
-    if (activeDatesArray.length) {
-      // Convert active days to numerical sequences for streak calculation
-      let currentStreakDays: Date[] = [];
+    // Calculate streaks by walking backward through dates
+    if (currentStreak > 0 && streakStartDate) {
+      let checkDate = new Date(streakStartDate);
+      let keepChecking = true;
 
-      // If today is active, start streak from today
-      if (isTodayActive) {
-        currentStreak = 1;
-        streakStartDate = new Date(today);
-        currentStreakDays.push(new Date(today));
-      }
-      // If yesterday is active but today is not, we keep the streak active
-      else if (isYesterdayActive) {
-        currentStreak = 1;
-        streakStartDate = new Date(yesterday);
-        currentStreakDays.push(new Date(yesterday));
-      }
-
-      // Calculate streaks by walking backward through dates
-      if (currentStreak > 0 && streakStartDate) {
-        let checkDate = new Date(streakStartDate);
-        let keepChecking = true;
-
-        while (keepChecking) {
-          checkDate.setDate(checkDate.getDate() - 1);
-          const checkDateStr = checkDate.toISOString().slice(0, 10);
-
-          if (activeDays.has(checkDateStr)) {
-            currentStreak++;
-            currentStreakDays.push(new Date(checkDate));
-          } else {
-            keepChecking = false;
-          }
+      while (keepChecking) {
+        checkDate.setDate(checkDate.getDate() - 1);
+        if (activeDays.has(formatDate(checkDate))) {
+          currentStreak++;
+        } else {
+          keepChecking = false;
         }
       }
+    }
 
-      // Find longest streak in the entire history
-      let tempStreak = 0;
-      let tempStart: Date | null = null;
-      let tempStreakDays: Date[] = [];
-      let longestStreakDays: Date[] = [];
+    // Find longest streak in the entire history
+    let longestStreak = 0;
+    if (activeDays.size > 0) {
+      // Helper function to check if two dates are consecutive
+      function areDatesConsecutive(date1: Date, date2: Date): boolean {
+        // Ensure both dates are valid
+        if (!date1 || !date2) return false;
+
+        const d1 = new Date(`${formatDate(date1)}T00:00:00.000Z`);
+        const d2 = new Date(`${formatDate(date2)}T00:00:00.000Z`);
+        const diffTime = Math.abs(d2.getTime() - d1.getTime());
+        return diffTime === 86400000; // Exactly 24 hours (1 day) in milliseconds
+      }
 
       // Sort dates in ascending order
-      const sortedDates = activeDatesArray
-        .map(date => new Date(date))
+      const sortedDates = Array.from(activeDays.keys())
+        .map(dateStr => new Date(`${dateStr}T00:00:00.000Z`))
         .sort((a, b) => a.getTime() - b.getTime());
 
-      for (let i = 0; i < sortedDates.length; i++) {
-        const currentDate = sortedDates[i];
+      let tempStreak = 1;
 
-        // Start a new streak
-        if (
-          i === 0 ||
-          (currentDate &&
-            sortedDates[i - 1] &&
-            currentDate.getTime() - sortedDates[i - 1]!.getTime() > 24 * 60 * 60 * 1000)
-        ) {
-          // If the previous streak ended, check if it was the longest
+      // Calculate longest streak
+      for (let i = 1; i < sortedDates.length; i++) {
+        if (areDatesConsecutive(sortedDates[i - 1] as Date, sortedDates[i] as Date)) {
+          tempStreak++;
+        } else {
           if (tempStreak > longestStreak) {
             longestStreak = tempStreak;
-            longestStreakDays = [...tempStreakDays];
           }
-
-          // Start new streak
           tempStreak = 1;
-          tempStart = currentDate || null;
-          tempStreakDays = [currentDate!];
-        }
-        // Continue current streak
-        else if (i > 0 && currentDate && sortedDates[i - 1]) {
-          // Check if dates are consecutive
-          const prevDate = new Date(sortedDates[i - 1]!);
-          prevDate.setDate(prevDate.getDate() + 1);
-
-          if (prevDate.toISOString().slice(0, 10) === currentDate.toISOString().slice(0, 10)) {
-            tempStreak++;
-            tempStreakDays.push(currentDate);
-          } else {
-            // If the dates aren't consecutive, check if the streak was longest
-            if (tempStreak > longestStreak) {
-              longestStreak = tempStreak;
-              longestStreakDays = [...tempStreakDays];
-            }
-
-            // Start new streak
-            tempStreak = 1;
-            tempStart = currentDate || null;
-            tempStreakDays = [currentDate!];
-          }
         }
       }
 
-      // Check the last streak
+      // Check final streak
       if (tempStreak > longestStreak) {
         longestStreak = tempStreak;
-        longestStreakDays = [...tempStreakDays];
       }
+    }
 
-      // Update current streak if it's the longest
-      if (currentStreak > longestStreak) {
-        longestStreak = currentStreak;
-      }
+    // Update longest streak if current streak is longer
+    if (currentStreak > longestStreak) {
+      longestStreak = currentStreak;
     }
 
     return {

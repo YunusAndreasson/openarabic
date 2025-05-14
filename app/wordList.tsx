@@ -11,8 +11,10 @@ import WordListItem from '../components/vocabulary/WordListItem';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useColors } from '../hooks/useColors';
-import type { EnhancedStudyWord } from '../hooks/useWordList';
+import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
+import Pill from '../components/Pill';
+import InfoCard from '../components/InfoCard';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3;
 
@@ -33,6 +35,15 @@ export default function WordListScreen(): JSX.Element {
   const { category } = useLocalSearchParams();
   const colors = useColors();
   const { user } = useAuth();
+
+  // Add sort state
+  const [sortBy, setSortBy] = React.useState<WordListSort>('retention');
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
+
+  // Compute sort card background color to match info card
+  const getSortCardBgColor = useCallback(() => {
+    return colors.card;
+  }, [colors.card]);
 
   // Get the title and icon based on the category
   const { title } = useMemo(() => {
@@ -67,7 +78,9 @@ export default function WordListScreen(): JSX.Element {
   // Use the new hook to fetch and process words
   const { data: words, error } = useWordList(
     user?.id,
-    category as 'total' | 'mastered' | 'learning'
+    category as 'total' | 'mastered' | 'learning' | 'due',
+    sortBy,
+    sortDirection
   );
 
   // Optimize renderItem for FlashList
@@ -91,18 +104,86 @@ export default function WordListScreen(): JSX.Element {
     );
   }, [colors.tint]);
 
-  // List header component with category info card
+  // List header component with category info card and sort control
   const ListHeaderComponent = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
         {/* Category Info Card */}
-        <CategoryInfoCard
-          category={category as 'total' | 'mastered' | 'learning'}
-          hideTitle={true}
-        />
+        <View style={{ marginBottom: LAYOUT.SPACING.TINY }}>
+          <CategoryInfoCard
+            category={category as 'total' | 'mastered' | 'learning'}
+            hideTitle={true}
+          />
+        </View>
+        {/* Sort Control Card (now using InfoCard for perfect match) */}
+        <InfoCard
+          hideTitle
+          iconBgColor={getSortCardBgColor()}
+          shadowSize="small"
+          style={{ marginBottom: LAYOUT.SPACING.MEDIUM }}
+        >
+          <View
+            style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}
+          >
+            {[
+              { label: 'Memory Strength', value: 'retention' },
+              { label: 'A-Z', value: 'alphabetical' },
+              { label: 'Streak', value: 'streak' },
+            ].map(option => {
+              const isSelected = sortBy === option.value;
+              return (
+                <Pill
+                  key={option.value + '-' + sortDirection}
+                  id={option.value}
+                  isSelected={isSelected}
+                  onSelect={() => {
+                    if (isSelected) {
+                      setSortDirection(d => (d === 'desc' ? 'asc' : 'desc'));
+                    } else {
+                      setSortBy(option.value as WordListSort);
+                      setSortDirection('desc');
+                    }
+                  }}
+                  variant="filter"
+                  pillBg={isSelected ? undefined : 'transparent'}
+                  pillStyle={{
+                    marginHorizontal: 4,
+                    marginBottom: 0,
+                    marginRight: 0,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                  label={
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <ThemedText
+                        type="label"
+                        colorName={isSelected ? 'tint' : 'text'}
+                        style={{ fontWeight: isSelected ? 'bold' : 'normal' }}
+                      >
+                        {option.label}
+                      </ThemedText>
+                      <Ionicons
+                        name={
+                          isSelected
+                            ? sortDirection === 'desc'
+                              ? 'chevron-down'
+                              : 'chevron-up'
+                            : 'chevron-down'
+                        }
+                        size={16}
+                        style={{ marginLeft: 4, marginTop: 1 }}
+                        color={isSelected ? '#888' : 'transparent'}
+                      />
+                    </View>
+                  }
+                />
+              );
+            })}
+          </View>
+        </InfoCard>
       </View>
     );
-  }, [category]);
+  }, [category, sortBy, getSortCardBgColor, sortDirection]);
 
   // Add error UI handling
   if (error) {

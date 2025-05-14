@@ -11,6 +11,9 @@ export interface EnhancedStudyWord extends StudyWord {
 
 type WordListCategory = 'total' | 'mastered' | 'learning' | 'due';
 
+// Add type for sort options
+export type WordListSort = 'retention' | 'due' | 'alphabetical' | 'streak';
+
 /**
  * Calculate a retention score based on FSRS parameters
  * This directly uses the key metrics from FSRS algorithm
@@ -25,12 +28,14 @@ const calculateRetentionScore = (word: StudyWord): number => {
 
 export function useWordList(
   userId: string | undefined,
-  category: WordListCategory
+  category: WordListCategory,
+  sortBy: WordListSort = 'retention',
+  sortDirection: 'asc' | 'desc' = 'desc'
 ): UseQueryResult<EnhancedStudyWord[]> {
   const queryClient = useQueryClient();
 
   return useQuery<EnhancedStudyWord[]>({
-    queryKey: ['vocabulary-words', userId, category],
+    queryKey: ['vocabulary-words', userId, category, sortBy, sortDirection],
     queryFn: async () => {
       if (!userId) throw new Error('User not authenticated');
 
@@ -82,13 +87,36 @@ export function useWordList(
             result = filteredWords;
         }
 
-        // Calculate retention score and sort by it
-        return result
-          .map(word => ({
-            ...word,
-            retentionScore: calculateRetentionScore(word),
-          }))
-          .sort((a, b) => b.retentionScore - a.retentionScore);
+        // Calculate retention score
+        const enhanced = result.map(word => ({
+          ...word,
+          retentionScore: calculateRetentionScore(word),
+        }));
+
+        // Sorting logic
+        let sorted: EnhancedStudyWord[] = enhanced;
+        if (sortBy === 'retention') {
+          sorted = enhanced.sort((a, b) => b.retentionScore - a.retentionScore);
+        } else if (sortBy === 'due') {
+          sorted = enhanced.sort((a, b) => {
+            if (!a.fsrs_due && !b.fsrs_due) return 0;
+            if (!a.fsrs_due) return 1;
+            if (!b.fsrs_due) return -1;
+            return new Date(a.fsrs_due).getTime() - new Date(b.fsrs_due).getTime();
+          });
+        } else if (sortBy === 'alphabetical') {
+          sorted = enhanced.sort((a, b) => {
+            const aWord = a.root?.letters?.toLowerCase() || '';
+            const bWord = b.root?.letters?.toLowerCase() || '';
+            return aWord.localeCompare(bWord);
+          });
+        } else if (sortBy === 'streak') {
+          sorted = enhanced.sort((a, b) => (b.success_streak ?? 0) - (a.success_streak ?? 0));
+        }
+        if (sortDirection === 'asc') {
+          sorted = [...sorted].reverse();
+        }
+        return sorted;
       } catch (error) {
         throw error instanceof Error ? error : new Error('Failed to fetch vocabulary words');
       }
@@ -124,12 +152,33 @@ export function useWordList(
           break;
       }
 
-      return filteredWords
-        .map(word => ({
-          ...word,
-          retentionScore: calculateRetentionScore(word),
-        }))
-        .sort((a, b) => b.retentionScore - a.retentionScore);
+      const enhanced = filteredWords.map(word => ({
+        ...word,
+        retentionScore: calculateRetentionScore(word),
+      }));
+      let sorted: EnhancedStudyWord[] = enhanced;
+      if (sortBy === 'retention') {
+        sorted = enhanced.sort((a, b) => b.retentionScore - a.retentionScore);
+      } else if (sortBy === 'due') {
+        sorted = enhanced.sort((a, b) => {
+          if (!a.fsrs_due && !b.fsrs_due) return 0;
+          if (!a.fsrs_due) return 1;
+          if (!b.fsrs_due) return -1;
+          return new Date(a.fsrs_due).getTime() - new Date(b.fsrs_due).getTime();
+        });
+      } else if (sortBy === 'alphabetical') {
+        sorted = enhanced.sort((a, b) => {
+          const aWord = a.root?.letters?.toLowerCase() || '';
+          const bWord = b.root?.letters?.toLowerCase() || '';
+          return aWord.localeCompare(bWord);
+        });
+      } else if (sortBy === 'streak') {
+        sorted = enhanced.sort((a, b) => (b.success_streak ?? 0) - (a.success_streak ?? 0));
+      }
+      if (sortDirection === 'asc') {
+        sorted = [...sorted].reverse();
+      }
+      return sorted;
     },
   });
 }
