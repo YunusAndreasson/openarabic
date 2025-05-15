@@ -53,10 +53,9 @@ function ThemedViewComponent({
     return includeBottomInset ? undefined : ['top', 'left', 'right'];
   }, [includeBottomInset, safeAreaEdges]);
 
-  // Use useMemo to prevent unnecessary rerenders when props don't change
-  const content = useMemo(() => {
-    // Create the scrollable content
-    const scrollableContent = (
+  // Memoize the scrollable content separately to reduce dependency chain
+  const scrollableContent = useMemo(
+    () => (
       <ScrollView
         contentContainerStyle={contentContainerStyle}
         showsVerticalScrollIndicator={false}
@@ -69,34 +68,24 @@ function ThemedViewComponent({
       >
         {children}
       </ScrollView>
-    );
+    ),
+    [children, contentContainerStyle, scrollViewProps]
+  );
 
-    // Determine whether to use SafeAreaView or regular View
-    if (useSafeArea) {
-      return (
-        <SafeAreaView style={themedStyle} {...otherProps} edges={edges}>
-          {scrollable ? scrollableContent : children}
-        </SafeAreaView>
-      );
-    }
-
+  // Render the component with fewer dependencies
+  if (useSafeArea) {
     return (
-      <View style={themedStyle} {...otherProps}>
+      <SafeAreaView style={themedStyle} {...otherProps} edges={edges}>
         {scrollable ? scrollableContent : children}
-      </View>
+      </SafeAreaView>
     );
-  }, [
-    children,
-    contentContainerStyle,
-    otherProps,
-    scrollable,
-    themedStyle,
-    useSafeArea,
-    edges,
-    scrollViewProps,
-  ]);
+  }
 
-  return content;
+  return (
+    <View style={themedStyle} {...otherProps}>
+      {scrollable ? scrollableContent : children}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

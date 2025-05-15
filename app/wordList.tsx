@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, router } from 'expo-router';
 import React, { useCallback, useMemo, memo, JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
@@ -15,6 +15,7 @@ import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
 import Pill from '../components/Pill';
 import InfoCard from '../components/InfoCard';
+import { lightFeedback } from '@/utils/haptics';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3;
 
@@ -82,6 +83,15 @@ export default function WordListScreen(): JSX.Element {
     sortBy,
     sortDirection
   );
+
+  // Handler for viewing examples
+  const handleViewExamples = useCallback(() => {
+    lightFeedback();
+    router.push({
+      pathname: '/wordExamples',
+      params: { category: category as string },
+    });
+  }, [category]);
 
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
@@ -283,5 +293,9 @@ const styles = StyleSheet.create({
   },
   wordItemContainer: {
     marginVertical: LAYOUT.SPACING.TINY / 4,
+  },
+  headerButton: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL,
   },
 });

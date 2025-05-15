@@ -1,7 +1,8 @@
 import { format } from 'date-fns';
-import React, { memo, useMemo } from 'react';
+import { router } from 'expo-router';
+import React, { memo, useMemo, useCallback } from 'react';
 import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
 import type { AnimatedStyle } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { State } from 'ts-fsrs';
@@ -11,6 +12,7 @@ import { usePressAnimation } from '../../hooks/animations';
 import { useColors } from '../../hooks/useColors';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
+import { lightFeedback } from '@/utils/haptics';
 
 interface WordListItemProps {
   word: StudyWord;
@@ -19,7 +21,7 @@ interface WordListItemProps {
 // Memoize the component to prevent unnecessary re-renders
 const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   const colors = useColors();
-  const { animatedStyle } = usePressAnimation({
+  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
     type: 'card',
     scaleAmount: 0.97,
     opacityAmount: 0.95,
@@ -31,6 +33,17 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
 
   // Capitalize first letter of meaning
   const capitalizedMeaning = meaning ? meaning.charAt(0).toUpperCase() + meaning.slice(1) : '';
+
+  // Handler for navigating to examples screen
+  const handleShowExamples = useCallback(() => {
+    if (!word.root_id) return;
+
+    // Remove haptic feedback
+    router.push({
+      pathname: '/wordExamples',
+      params: { rootId: word.root_id.toString() },
+    });
+  }, [word.root_id]);
 
   // Calculate learning progress and status
   const wordStatus = useMemo(() => {
@@ -97,7 +110,13 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
 
   return (
     <Animated.View style={animatedStyle as AnimatedStyle<ViewStyle>}>
-      <View style={[containerStyle, styles.cardContent]}>
+      <TouchableOpacity
+        style={[containerStyle, styles.cardContent]}
+        onPress={handleShowExamples}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+      >
         {/* Main content row */}
         <View style={styles.content}>
           {/* Left side with English text */}
@@ -161,7 +180,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
             </ThemedText>
           ) : null}
         </View>
-      </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 });

@@ -21,7 +21,7 @@ import React, {
   useCallback,
 } from 'react';
 import 'react-native-reanimated';
-import { AppState, View, Text, StyleSheet } from 'react-native';
+import { AppState, View, Text, StyleSheet, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
@@ -158,7 +158,18 @@ function AppContent() {
     identifyUser();
   }, [session, appReady, isAuthLoading]);
 
+  const colors = useColors();
   const navigationTheme = useMemo(() => (isDark ? DarkTheme : DefaultTheme), [isDark]);
+
+  // Extend the navigation theme with custom colors for iOS back buttons
+  React.useEffect(() => {
+    // Update the navigation theme to ensure iOS back buttons use the tint color
+    if (Platform.OS === 'ios') {
+      // This affects the native iOS back button text color
+      DefaultTheme.colors.primary = colors.tint;
+      DarkTheme.colors.primary = colors.tint;
+    }
+  }, [colors.tint]);
 
   // Set default theme if none is set yet
   useEffect(() => {
