@@ -1,0 +1,177 @@
+import os
+import time
+import uuid
+from supabase import create_client
+from typing import Dict, Optional
+
+# Supabase configuration
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+if not all([SUPABASE_URL, SUPABASE_KEY]):
+    raise EnvironmentError(
+        "Missing required environment variables. Please ensure SUPABASE_URL and SUPABASE_KEY are set."
+    )
+
+# Initialize client
+supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+# Word type mapping from POS to word_types table
+WORD_TYPE_MAPPING = {
+    "verb": 1,
+    "noun": 2,
+    "particle": 3,
+    "adjective": 4,
+    "pronoun": 5,
+    "adverb": 6,
+    "preposition": 7,
+    "conjunction": 8,
+    "interjection": 9,
+    "numeral": 56,
+}
+
+
+def check_file_exists(bucket: str, file_path: str) -> bool:
+    """Check if a file exists in Supabase storage using multiple methods."""
+    # Method 1: Using list
+    try:
+        # Get the directory path and filename
+        path_parts = file_path.rsplit("/", 1)
+
+        if len(path_parts) > 1:
+            dir_path, filename = path_parts
+            # List files in directory with search option
+            response = supabase.storage.from_(bucket).list(dir_path)
+        else:
+            # If no directory part, search in root
+            filename = path_parts[0]
+            response = supabase.storage.from_(bucket).list()
+
+        # Check if the file exists in the response
+        for item in response:
+            if isinstance(item, dict) and item.get("name") == filename:
+                return True
+            elif isinstance(item, str) and item == filename:
+                return True
+    except Exception as e:
+        print(f"List method failed for {file_path}: {str(e)}")
+
+    # Method 2: Using signed URL creation
+    try:
+        # Try to get the file metadata using createSignedUrl with very short expiry
+        # This is a lightweight way to check existence
+        supabase.storage.from_(bucket).create_signed_url(
+            file_path, 1
+        )  # 1 second expiry
+        return True
+    except Exception as e:
+        if "The specified key does not exist" in str(e) or "Object not found" in str(e):
+            return False
+        print(f"Signed URL method failed: {str(e)}")
+
+    # Method 3: Final fallback - try to get the public URL and retrieve headers
+    try:
+        # Get public URL then try a HEAD request
+        public_url = supabase.storage.from_(bucket).get_public_url(file_path)
+        if public_url:
+            return True
+    except Exception as e:
+        print(f"Public URL method failed for {file_path}: {str(e)}")
+        return False
+
+
+def upload_to_storage(
+    bucket: str, file_path: str, file_data, content_type: str = "audio/mpeg"
+):
+    """Upload a file to Supabase storage with retries and return the public URL."""
+    # First check if file already exists
+    if check_file_exists(bucket, file_path):
+        return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+
+    # If file doesn't exist, upload it
+    try:
+        print(f"Uploading file {file_path} to {bucket}...")
+        supabase.storage.from_(bucket).upload(
+            file_path, file_data, file_options={"content-type": content_type}
+        )
+
+        # Give storage a moment to process
+        time.sleep(0.5)
+
+        # Verify the file was uploaded successfully
+        for attempt in range(3):
+            if check_file_exists(bucket, file_path):
+                public_url = (
+                    f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+                )
+                return public_url
+            time.sleep(1)  # Wait a bit longer before next check
+
+        raise Exception(
+            f"File upload verification failed after 3 attempts for {file_path}"
+        )
+    except Exception as e:
+        # If error is 409 (already exists), that's fine - another process may have uploaded it
+        if hasattr(e, "statusCode") and e.statusCode == 409:
+            return f"{SUPABASE_URL}/storage/v1/object/public/{bucket}/{file_path}"
+        # Otherwise, propagate the exception to trigger retry
+        print(f"Upload failed: {str(e)}")
+        raise
+
+
+def generate_content_hash(data: Dict) -> str:
+    """Generate a unique hash for the article content."""
+    import json
+    import hashlib
+
+    content = json.dumps(data, sort_keys=True)
+    return hashlib.sha256(content.encode()).hexdigest()
+
+
+def check_article_exists(content_hash: str) -> tuple[Optional[int], Optional[str]]:
+    """Check if an article with this content hash already exists and return its ID and audio_url."""
+    try:
+        result = (
+            supabase.table("articles")
+            .select("id, audio_url")
+            .eq("content_hash", content_hash)
+            .execute()
+        )
+        if result.data:
+            return result.data[0]["id"], result.data[0].get("audio_url")
+        return None, None
+    except Exception as e:
+        if "content_hash" in str(e):
+            # Column doesn't exist yet, so no duplicates possible
+            return None, None
+        raise e
+
+
+def generate_audio_filename() -> str:
+    """Generate a unique filename for the audio file."""
+    return f"{uuid.uuid4()}.mp3"
+
+
+def get_category_id(name: str = "aqeedah") -> int:
+    """Get category ID by name."""
+    result = supabase.table("categories").select("id").eq("name", name).execute()
+    if not result.data:
+        raise ValueError(f"Category '{name}' not found")
+    return result.data[0]["id"]
+
+
+def get_author_id(name: str = "Ibn Kathir") -> int:
+    """Get author ID by name."""
+    result = supabase.table("authors").select("id").eq("name", name).execute()
+    if not result.data:
+        raise ValueError(f"Author '{name}' not found")
+    return result.data[0]["id"]
+
+
+def get_word_type_id(pos: str) -> int:
+    """Get word type ID from POS."""
+    word_type_id = WORD_TYPE_MAPPING.get(pos.lower())
+    if word_type_id is None:
+        # Default to noun if POS not found
+        return WORD_TYPE_MAPPING["noun"]
+    return word_type_id
