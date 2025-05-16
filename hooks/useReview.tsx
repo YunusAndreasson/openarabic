@@ -40,6 +40,7 @@ interface ReviewStateRefs {
   maxProgress: number;
   completionTriggered: boolean;
   isUpdatingWord: boolean;
+  progressUpdatedForCompletion: boolean;
 }
 
 function useAudioPlayer() {
@@ -215,6 +216,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     maxProgress: 0,
     completionTriggered: false,
     isUpdatingWord: false,
+    progressUpdatedForCompletion: false,
   });
 
   const triggerCompletionTransition = useCallback(() => {
@@ -449,6 +451,9 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
 
   // Effect: Update progress bar
   useEffect(() => {
+    // Don't update during transition to completion to avoid cycles
+    if (isTransitioningToCompletion) return;
+
     if (!isComplete && progress !== undefined) {
       const now = Date.now();
       if (now - timeRefs.current.lastProgressUpdate < 100) {
@@ -462,19 +467,34 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         timeRefs.current.lastProgressUpdate = now;
       }
 
-      // Ensure that if we're complete, the progress bar shows 100%
+      // Only update if not already at 100% to prevent cycles
       if (isComplete && stateRefs.current.maxProgress < 100) {
         stateRefs.current.maxProgress = 100;
-        setProgressAnimationKey(prev => prev + 1);
+        // Use a ref to track if we've already updated this cycle
+        if (!stateRefs.current.progressUpdatedForCompletion) {
+          stateRefs.current.progressUpdatedForCompletion = true;
+          setProgressAnimationKey(prev => prev + 1);
+        }
       }
     }
-  }, [isComplete, progress]);
+  }, [isComplete, progress, isTransitioningToCompletion]);
 
   // Effect: Ensure 100% progress on completion
   useEffect(() => {
-    if (isComplete && !isTransitioningToCompletion) {
+    // Skip if we've already updated or if we're transitioning
+    if (
+      isComplete &&
+      !isTransitioningToCompletion &&
+      !stateRefs.current.progressUpdatedForCompletion
+    ) {
       stateRefs.current.maxProgress = 100;
+      stateRefs.current.progressUpdatedForCompletion = true;
       setProgressAnimationKey(prev => prev + 1);
+    }
+
+    // Reset the flag when completion state changes
+    if (!isComplete) {
+      stateRefs.current.progressUpdatedForCompletion = false;
     }
   }, [isComplete, isTransitioningToCompletion]);
 
@@ -582,6 +602,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     return () => {
       controller.abort();
       stateRefs.current.completionTriggered = true;
+      stateRefs.current.progressUpdatedForCompletion = false;
       fadeIn();
       cleanupAudio();
 

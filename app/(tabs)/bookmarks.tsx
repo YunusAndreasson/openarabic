@@ -395,34 +395,24 @@ export default function BookmarksScreen(): JSX.Element {
   );
   // --- End Derived State & Memos ---
 
-  // --- Effects ---
-  // Loading State Synchronization Effect
-  useEffect(() => {
-    const shouldBeLoading =
-      (!isDataCached && isReadingListLoading) || // Only show loading for uncached initial load
-      isEnhancedTracksLoading;
+  // Memoize the loading state calculation to avoid unnecessary re-renders
+  const shouldBeLoading = useMemo(
+    () => (!isDataCached && isReadingListLoading) || isEnhancedTracksLoading,
+    [isDataCached, isReadingListLoading, isEnhancedTracksLoading]
+  );
 
+  // Simplified effect that only runs when the shouldBeLoading calculation changes
+  useEffect(() => {
+    // No-op if loading state already matches
     if (shouldBeLoading === isLoadingState) return;
 
+    // Update loading state and manage cleanup
     if (shouldBeLoading) {
       startLoading();
     } else {
       stopLoading();
     }
-
-    return () => {
-      if (isLoadingState) {
-        stopLoading();
-      }
-    };
-  }, [
-    isDataCached,
-    isReadingListLoading,
-    isEnhancedTracksLoading,
-    isLoadingState,
-    startLoading,
-    stopLoading,
-  ]);
+  }, [shouldBeLoading, isLoadingState, startLoading, stopLoading]);
 
   // Screen Focus Refresh Hook
   useScreenFocusRefresh(

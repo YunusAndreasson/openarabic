@@ -203,15 +203,38 @@ export default function ArticleScreen(): JSX.Element {
     handleRootPress
   );
 
+  // Add a ref to track the last scrolled word to prevent cycles
+  const lastScrolledWordIdRef = useRef<number | null>(null);
+
   useEffect(() => {
-    if (!currentWordId || !articleContentRef.current || !sentenceWordsMap) {
+    if (
+      !currentWordId ||
+      !articleContentRef.current ||
+      !sentenceWordsMap ||
+      currentWordId === lastScrolledWordIdRef.current
+    ) {
       return;
     }
+
     const word = findWordById(currentWordId, sentenceWordsMap as SentenceWordsMap);
     if (!word) {
       return;
     }
+
+    // Track this word ID to prevent multiple scrolls
+    lastScrolledWordIdRef.current = currentWordId;
+
+    // Scroll to the sentence containing this word
     articleContentRef.current.scrollToSentence(word.sentence_id);
+
+    // Reset the tracking after a delay to allow future scrolls to the same word if needed
+    const timer = setTimeout(() => {
+      if (lastScrolledWordIdRef.current === currentWordId) {
+        lastScrolledWordIdRef.current = null;
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [currentWordId, sentenceWordsMap, findWordById]);
 
   const [audioControlVisible, setAudioControlVisible] = useState(false);

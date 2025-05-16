@@ -447,12 +447,18 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
     actionsRef.current.playNextTrack().catch(e => handleError(e as Error));
   }, [isTrackEnded]);
 
-  // Effect to trigger preload when index changes
+  // Reference for tracking preload state
+  const isPreloadingRef = useRef(false);
+
+  // Effect to trigger preload when index changes - changed dependency from audioState to currentTrackIndex
   useEffect(() => {
-    if (isPlayingRef.current && !preloadInProgressRef.current) {
-      actionsRef.current.preloadTracks();
+    if (isPlayingRef.current && !preloadInProgressRef.current && !isPreloadingRef.current) {
+      isPreloadingRef.current = true;
+      actionsRef.current.preloadTracks().finally(() => {
+        isPreloadingRef.current = false;
+      });
     }
-  }, [audioState]);
+  }, [currentTrackIndex]);
 
   // Add initAudioSession function
   const initAudioSession = useCallback(async () => {

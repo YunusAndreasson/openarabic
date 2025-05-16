@@ -147,6 +147,9 @@ export function useSentenceAudioPlayer(): {
   const manualNavigationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const safetyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Add state tracking to prevent update cycles
+  const isProcessingRef = useRef(false);
+
   // Helper function to format time in MM:SS format
   const formatTimeDisplay = (timeMs: number): string => {
     'worklet';
@@ -1684,6 +1687,29 @@ export function useSentenceAudioPlayer(): {
       }
     },
     [clearTimer]
+  );
+
+  // Update function to handle audio state changes in a controlled way
+  const updateAudioStateWithSafety = useCallback(
+    (newState: AudioPlayerState) => {
+      if (isProcessingRef.current) return;
+      isProcessingRef.current = true;
+
+      setAudioState(newState);
+      audioStateAnimValue.value = newState;
+
+      // Dispatch Redux action after local state updates using a timeout
+      setTimeout(() => {
+        // Use the proper format for the updateAudioState action
+        dispatch(setPlayingState(newState === 'playing'));
+
+        // Allow subsequent updates after a small delay
+        setTimeout(() => {
+          isProcessingRef.current = false;
+        }, 10);
+      }, 0);
+    },
+    [dispatch, audioStateAnimValue]
   );
 
   return {

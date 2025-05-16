@@ -70,26 +70,35 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   useEffect(() => {
     if (!dueWords || stateTrackingRef.current.queueInitialized) return;
 
-    if (dueWords.length > 0) {
-      setWordQueue(dueWords);
-      countersRef.current.totalWords = dueWords.length;
-      countersRef.current.uniqueWords = new Set(dueWords.map(word => word.root_id));
-      countersRef.current.processedWords = 0;
-      countersRef.current.knownWords = 0;
-      setProgress(0);
-      setIsComplete(false);
-      stateTrackingRef.current.completionTriggered = false;
-      stateTrackingRef.current.isProcessingUpdate = false;
-      setCurrentWord(dueWords[0] ?? null);
-    } else if (!isLoading) {
-      setIsComplete(true);
-      if (onComplete && !stateTrackingRef.current.completionTriggered) {
-        stateTrackingRef.current.completionTriggered = true;
-        onComplete();
-      }
-    }
-
+    // Set initialized flag first to prevent multiple initializations
     stateTrackingRef.current.queueInitialized = true;
+
+    // Batch updates via setTimeout to separate render cycles
+    setTimeout(() => {
+      if (dueWords.length > 0) {
+        countersRef.current.totalWords = dueWords.length;
+        countersRef.current.uniqueWords = new Set(dueWords.map(word => word.root_id));
+        countersRef.current.processedWords = 0;
+        countersRef.current.knownWords = 0;
+
+        // Set all state in a predictable order
+        setProgress(0);
+        setIsComplete(false);
+        stateTrackingRef.current.completionTriggered = false;
+        stateTrackingRef.current.isProcessingUpdate = false;
+        setWordQueue(dueWords);
+        setCurrentWord(dueWords[0] ?? null);
+      } else if (!isLoading) {
+        setIsComplete(true);
+        if (onComplete && !stateTrackingRef.current.completionTriggered) {
+          stateTrackingRef.current.completionTriggered = true;
+          // Further delay the completion callback
+          setTimeout(() => {
+            onComplete();
+          }, 50);
+        }
+      }
+    }, 0);
   }, [dueWords, isLoading, onComplete]);
 
   const convertToFSRSCard = useCallback((word: StudyWord): Card => {
@@ -249,10 +258,13 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           if (newQueue.length === 0) {
             if (!stateTrackingRef.current.completionTriggered) {
               stateTrackingRef.current.completionTriggered = true;
-              requestAnimationFrame(() => {
-                setIsComplete(true);
-                onComplete?.();
-              });
+              // Use setTimeout instead of requestAnimationFrame to better separate updates
+              setTimeout(() => {
+                if (stateTrackingRef.current.completionTriggered) {
+                  setIsComplete(true);
+                  if (onComplete) onComplete();
+                }
+              }, 0);
             }
           } else {
             setCurrentWord(newQueue[0] ?? null);
