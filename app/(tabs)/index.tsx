@@ -1,5 +1,4 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
@@ -52,11 +51,9 @@ const styles = StyleSheet.create({
   },
 });
 
-
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
-  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -379,7 +376,7 @@ export default function ArticlesScreen(): JSX.Element {
         contentContainerStyle={getContentContainerStyle(colors)}
         hideMainList={isArticlesLoading && !isDataCached}
         hideWhileRefreshing={false}
-        progressViewOffset={headerHeight + insets.top}
+        progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
       />
     </ThemedView>
   );
