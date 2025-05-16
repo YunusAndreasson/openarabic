@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { JSX, useMemo } from 'react';
+import React, { memo, JSX, useMemo } from 'react';
 import type { GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 import { StyleSheet, TouchableOpacity, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -112,7 +112,7 @@ const getButtonTextStyle = (size: ButtonSize, textWeight: ButtonTextWeight) => [
   textWeight === 'normal' && styles.normalText,
 ];
 
-export function ThemedButton({
+function ThemedButtonComponent({
   variant = 'filled',
   title,
   icon,
@@ -244,3 +244,5 @@ const styles = StyleSheet.create({
     textTransform: 'none',
   },
 });
+
+export const ThemedButton = memo(ThemedButtonComponent);
