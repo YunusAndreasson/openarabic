@@ -6,8 +6,6 @@ import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, memo, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import BaseCard from '@/components/BaseCard';
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
 import ArticleList from '@/components/index/ArticleList';
@@ -21,7 +19,6 @@ import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { useStrugglingWords } from '@/hooks/useStrugglingWords';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { articlesService } from '@/services/articles';
@@ -36,9 +33,8 @@ import {
   getBeginnerArticles,
   getDailyPickArticle,
 } from '@/utils/articleUtils';
-import { getDayOfYear, formatTimeAgo } from '@/utils/dateUtils';
+import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../../components/ErrorState';
 
@@ -47,92 +43,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Define styles before components that use them
 const styles = StyleSheet.create({
-  arrowText: {
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  card: {
-    overflow: 'hidden',
-  },
-  cardContent: {
-    alignItems: 'flex-start',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
   container: {
     flex: 1,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: LAYOUT.SPACING.TINY,
   },
   listContentContainer: {
     flexGrow: 1,
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.SPACING.MEDIUM,
   },
-  metadataText: {
-    marginTop: LAYOUT.SPACING.TINY / 2,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  textContent: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  titleText: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
 });
 
-// Simple ArticleItem component for text-only cards
-const ArticleItem = memo(
-  ({ article, onPress }: { article: Article; onPress: (article: Article) => void }) => {
-    const categoryName = article.category?.name
-      ? capitalizeFirstLetter(article.category.name)
-      : 'Uncategorized';
-
-    const isDarkMode = useIsDarkMode();
-    const timeAgoText = formatTimeAgo(article.created_at);
-
-    return (
-      <BaseCard onPress={() => onPress(article)} style={styles.card}>
-        <View style={styles.cardContent}>
-          <View style={styles.textContent}>
-            <ThemedText
-              type="bodyBold"
-              numberOfLines={2}
-              colorName="text"
-              weight="semibold"
-              style={styles.titleText}
-            >
-              {article.title}
-            </ThemedText>
-            <ThemedText
-              type="caption"
-              colorName="textTertiary"
-              numberOfLines={1}
-              style={styles.metadataText}
-            >
-              {timeAgoText} · {categoryName} · by {article.author?.name || 'Anonymous'}
-            </ThemedText>
-          </View>
-          <View style={styles.iconContainer}>
-            <ThemedText
-              type="label"
-              colorName="textTertiary"
-              variant={isDarkMode ? 'primary' : 'secondary'}
-              style={styles.arrowText}
-            >
-              →
-            </ThemedText>
-          </View>
-        </View>
-      </BaseCard>
-    );
-  }
-);
-
-ArticleItem.displayName = 'ArticleItem';
 
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();

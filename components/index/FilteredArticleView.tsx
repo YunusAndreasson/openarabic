@@ -3,17 +3,13 @@ import { FlashList } from '@shopify/flash-list';
 import React, { useMemo, useCallback, memo } from 'react';
 import { StyleSheet, RefreshControl, View } from 'react-native';
 
-import { useIsDarkMode } from '@/hooks/useThemeDetection';
-
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
-import { formatTimeAgo } from '../../utils/dateUtils';
-import { capitalizeFirstLetter } from '../../utils/stringUtils';
-import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
+import ListArticleItem from './ListArticleItem';
 
 interface FilteredArticleViewProps {
   /**
@@ -53,58 +49,6 @@ interface FilteredArticleViewProps {
 }
 
 // Move components outside of the parent component
-interface ArticleItemProps {
-  article: Article;
-  onPress?: (article: Article) => void;
-  isDarkMode: boolean;
-}
-
-const ArticleItem = memo(({ article, onPress, isDarkMode }: ArticleItemProps) => {
-  const categoryName = article.category?.name
-    ? capitalizeFirstLetter(article.category.name)
-    : 'Uncategorized';
-
-  const timeAgoText = formatTimeAgo(article.created_at);
-
-  return (
-    <View style={styles.articleContainer}>
-      <BaseCard onPress={() => onPress?.(article)} style={styles.card} shadowSize="small">
-        <View style={styles.cardContent}>
-          <View style={styles.textContent}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={styles.titleText}>
-              {article.title}
-            </ThemedText>
-            <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
-              {categoryName} · {timeAgoText} · by {article.author?.name || 'Anonymous'}
-            </ThemedText>
-          </View>
-          <View style={styles.iconContainer}>
-            <ThemedText
-              type="heading3"
-              colorName="textTertiary"
-              variant={isDarkMode ? 'primary' : 'secondary'}
-              style={styles.arrowText}
-            >
-              →
-            </ThemedText>
-          </View>
-        </View>
-      </BaseCard>
-    </View>
-  );
-});
-ArticleItem.displayName = 'ArticleItem';
-
-interface RenderItemProps {
-  item: Article;
-  onPress?: (article: Article) => void;
-  isDarkMode: boolean;
-}
-
-const RenderItem = ({ item, onPress, isDarkMode }: RenderItemProps) => (
-  <ArticleItem article={item} onPress={onPress} isDarkMode={isDarkMode} />
-);
-RenderItem.displayName = 'RenderItem';
 
 interface EmptyViewProps {
   isLoading?: boolean;
@@ -137,7 +81,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   onArticlePress,
 }) => {
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
   const navHeaderHeight = useHeaderHeight();
 
   // Determine the header title based on selected filters
@@ -146,11 +89,10 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   const headerHeight = useMemo(() => navHeaderHeight + LAYOUT.SPACING.SMALL, [navHeaderHeight]);
 
   const renderItemCallback = useCallback(
-    // eslint-disable-next-line react/no-unused-prop-types
     ({ item }: { item: Article }) => (
-      <RenderItem item={item} onPress={onArticlePress} isDarkMode={isDarkMode} />
+      <ListArticleItem article={item} onPress={onArticlePress} />
     ),
-    [onArticlePress, isDarkMode]
+    [onArticlePress]
   );
 
   const ListFooterComponent = useMemo(() => {
@@ -199,22 +141,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-  arrowText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    opacity: LAYOUT.OPACITY.DISABLED,
-  },
-  articleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  card: {
-    overflow: 'hidden',
-  },
-  cardContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
   container: {
     flex: 1,
   },
@@ -223,11 +149,6 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     height: 0, // This will be dynamically set
-  },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: LAYOUT.SPACING.XLARGE,
   },
   listContent: {
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
@@ -241,13 +162,6 @@ const styles = StyleSheet.create({
   },
   noResultsText: {
     textAlign: 'center',
-  },
-  textContent: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM,
-  },
-  titleText: {
-    marginBottom: LAYOUT.SPACING.TINY,
   },
 });
 
