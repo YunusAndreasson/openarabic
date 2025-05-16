@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // Import correctly from expo-av using default import syntax
 import { Audio } from 'expo-av';
 import type { AVPlaybackStatus } from 'expo-av/build/AV.types';
@@ -319,10 +318,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
         await currentSoundRef.current.unloadAsync();
       } catch (error) {
         // Silently handle cleanup errors - these are expected during normal operation
-        // Only log to console in development if needed
-        if (__DEV__) {
-          console.debug('Non-critical cleanup error:', error);
-        }
+        handleError(error as Error, { showToast: false, sentrySeverity: 'info' });
       } finally {
         currentSoundRef.current = null;
       }
@@ -344,10 +340,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
           item.isPreloaded = false;
         } catch (error) {
           // Silently handle cleanup errors - these are expected during normal operation
-          // Only log to console in development if needed
-          if (__DEV__) {
-            console.debug(`Non-critical cleanup error for track ${item.index}:`, error);
-          }
+          handleError(error as Error, { showToast: false, sentrySeverity: 'info' });
         }
       });
 

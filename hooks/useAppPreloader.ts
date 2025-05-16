@@ -65,9 +65,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
     try {
       // Log preload start
-      if (__DEV__) {
-        console.log('[Preloader] Starting to preload app data...');
-      }
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: 'Starting to preload app data',
+        level: 'info',
+      });
 
       const promises: Promise<unknown>[] = [
         queryClient.fetchQuery({
@@ -118,11 +120,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       // Log preload completion for performance monitoring
       const loadTime = Date.now() - startTime;
-      if (__DEV__) {
-        console.log(
-          `[Preloader] Finished preloading in ${loadTime}ms, articles loaded: ${hasArticles}`
-        );
-      }
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: `Finished preloading in ${loadTime}ms, articles loaded: ${hasArticles}`,
+        level: 'info',
+      });
 
       // Send preload timing to analytics in production
       if (!__DEV__ && hasArticles) {
@@ -155,9 +157,11 @@ export const useAppPreloader = (): AppPreloaderResult => {
         handleError(wrappedError);
       }
 
-      if (__DEV__) {
-        console.error(`[Preloader] Error after ${errorTime}ms:`, error);
-      }
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: `Error after ${errorTime}ms`,
+        level: 'error',
+      });
 
       setIsLoaded(false);
     } finally {
