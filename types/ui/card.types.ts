@@ -73,8 +73,6 @@ export interface CompactCardProps extends BaseCardProps, BaseOptionalPressablePr
   article: Article;
   /** Show time ago instead of difficulty */
   showTimeAgo?: boolean;
-  /** Hide the difficulty label */
-  hideDifficultyLabel?: boolean;
   /** Hide difficulty completely */
   hideDifficulty?: boolean;
   /** When the article was last opened */
@@ -114,8 +112,6 @@ export type ThemedCardProps =
         article: Article;
         /** Show time ago instead of difficulty (for compact variant) */
         showTimeAgo?: boolean;
-        /** Hide the difficulty label (for compact variant) */
-        hideDifficultyLabel?: boolean;
         /** Hide difficulty completely (for compact variant) */
         hideDifficulty?: boolean;
         /** When the article was last opened (for compact variant) */

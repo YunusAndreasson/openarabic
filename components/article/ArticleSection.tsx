@@ -44,11 +44,6 @@ interface ArticleSectionProps {
   emptyStateMessage?: string;
 
   /**
-   * Hide difficulty label text
-   */
-  hideDifficultyLabel?: boolean;
-
-  /**
    * Hide difficulty indicator
    */
   hideDifficulty?: boolean;

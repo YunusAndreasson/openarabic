@@ -136,7 +136,6 @@ export interface ArticleItemProps {
   article: Article;
   onPress: (article: Article) => void;
   showTimeAgo?: boolean;
-  hideDifficultyLabel?: boolean;
   hideDifficulty?: boolean;
   style?: StyleProp<ViewStyle>;
 }
