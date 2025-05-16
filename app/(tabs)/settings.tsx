@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
 import React, { useCallback, useEffect, memo } from 'react';
-import { Alert, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Alert, StyleSheet, View, ActivityIndicator } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
@@ -194,177 +194,179 @@ const SettingsScreen: React.FC = () => {
         includeBottomInset={false}
         style={styles.flexOne}
         scrollable={true}
-        contentContainerStyle={[styles.listContent, { paddingTop: headerHeight }]}
+        contentContainerStyle={[
+          styles.listContent,
+          styles.scrollViewContent,
+          { paddingTop: headerHeight },
+        ]}
+        scrollViewProps={{
+          style: styles.scrollView,
+          showsVerticalScrollIndicator: false,
+        }}
       >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Preferences Section */}
-          <View style={styles.settingsWrapper}>
-            <BaseCard
-              style={styles.settingsContainer}
-              shadowSize="small"
-              includePressAnimation={false}
-            >
-              <View style={styles.settingRow}>
-                <SettingLabel icon="moon" text="Dark Mode" />
-                <Animated.View style={[emptyStyle, themeToggleFade]}>
-                  <ThemeToggle />
-                </Animated.View>
+        {/* Preferences Section */}
+        <View style={styles.settingsWrapper}>
+          <BaseCard
+            style={styles.settingsContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <View style={styles.settingRow}>
+              <SettingLabel icon="moon" text="Dark Mode" />
+              <Animated.View style={[emptyStyle, themeToggleFade]}>
+                <ThemeToggle />
+              </Animated.View>
+            </View>
+            <Divider />
+            <View style={styles.settingRow}>
+              <SettingLabel icon="language" text="English Translation" />
+              <Animated.View style={[emptyStyle, englishToggleFade]}>
+                <Toggle
+                  value={settings.showEnglish}
+                  onValueChange={value => dispatch(setShowEnglish(value))}
+                />
+              </Animated.View>
+            </View>
+            <Divider />
+            <View style={styles.settingRow}>
+              <SettingLabel icon="text" text="Text Size" />
+              <View style={styles.sliderContainer}>
+                <ThemedText
+                  type="caption"
+                  variant="secondary"
+                  align="right"
+                  style={styles.scaleText}
+                >
+                  {Math.round(settings.fontScale * 100)}%
+                </ThemedText>
+                <View style={styles.sliderWrapper}>
+                  <Animated.View style={[emptyStyle, sliderFade]}>
+                    <CustomSlider
+                      value={settings.fontScale}
+                      onValueChange={handleFontScaleChange}
+                      minimumValue={0.8}
+                      maximumValue={1.3}
+                      step={0.1}
+                      style={styles.slider}
+                    />
+                  </Animated.View>
+                </View>
               </View>
-              <Divider />
-              <View style={styles.settingRow}>
-                <SettingLabel icon="language" text="English Translation" />
-                <Animated.View style={[emptyStyle, englishToggleFade]}>
-                  <Toggle
-                    value={settings.showEnglish}
-                    onValueChange={value => dispatch(setShowEnglish(value))}
-                  />
-                </Animated.View>
-              </View>
-              <Divider />
-              <View style={styles.settingRow}>
-                <SettingLabel icon="text" text="Text Size" />
-                <View style={styles.sliderContainer}>
+            </View>
+            <Divider />
+            <View style={styles.previewContainer}>
+              <View style={styles.previewWrapper}>
+                <View style={styles.previewContent}>
                   <ThemedText
-                    type="caption"
-                    variant="secondary"
+                    type="arabic"
+                    arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale}
                     align="right"
-                    style={styles.scaleText}
+                    skipDefaultColor
+                    colorName="arabicText"
+                    style={styles.arabicPreviewText}
                   >
-                    {Math.round(settings.fontScale * 100)}%
+                    مرحباً بك في اللغة العربية
                   </ThemedText>
-                  <View style={styles.sliderWrapper}>
-                    <Animated.View style={[emptyStyle, sliderFade]}>
-                      <CustomSlider
-                        value={settings.fontScale}
-                        onValueChange={handleFontScaleChange}
-                        minimumValue={0.8}
-                        maximumValue={1.3}
-                        step={0.1}
-                        style={styles.slider}
-                      />
-                    </Animated.View>
-                  </View>
-                </View>
-              </View>
-              <Divider />
-              <View style={styles.previewContainer}>
-                <View style={styles.previewWrapper}>
-                  <View style={styles.previewContent}>
+                  {settings.showEnglish ? (
                     <ThemedText
-                      type="arabic"
-                      arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale}
-                      align="right"
+                      type="body"
                       skipDefaultColor
-                      colorName="arabicText"
-                      style={styles.arabicPreviewText}
+                      colorName="text"
+                      align="left"
+                      style={[styles.englishPreviewText, styles.mediumHighOpacity]}
                     >
-                      مرحباً بك في اللغة العربية
+                      Welcome to the Arabic language
                     </ThemedText>
-                    {settings.showEnglish ? (
-                      <ThemedText
-                        type="body"
-                        skipDefaultColor
-                        colorName="text"
-                        align="left"
-                        style={[styles.englishPreviewText, styles.mediumHighOpacity]}
-                      >
-                        Welcome to the Arabic language
-                      </ThemedText>
-                    ) : (
-                      <ThemedText type="body" style={[styles.englishPreviewText, styles.hidden]}>
-                        Welcome to the Arabic language
-                      </ThemedText>
-                    )}
-                  </View>
+                  ) : (
+                    <ThemedText type="body" style={[styles.englishPreviewText, styles.hidden]}>
+                      Welcome to the Arabic language
+                    </ThemedText>
+                  )}
                 </View>
               </View>
-            </BaseCard>
-          </View>
+            </View>
+          </BaseCard>
+        </View>
 
-          {/* Connect Section */}
-          <View style={styles.connectWrapper}>
-            <BaseCard
-              style={styles.connectContainer}
-              shadowSize="small"
-              includePressAnimation={false}
-            >
-              <ThemedButton
-                variant="outlined"
-                title="Twitter"
-                onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
-                icon="logo-twitter"
-                textWeight="normal"
-                style={styles.actionButton}
-                innerContainerStyle={styles.buttonInnerContainer}
-                contentContainerStyle={styles.buttonContentContainer}
-              />
-              <Divider />
-              <ThemedButton
-                variant="outlined"
-                title="Facebook"
-                onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
-                icon="logo-facebook"
-                textWeight="normal"
-                style={styles.actionButton}
-                innerContainerStyle={styles.buttonInnerContainer}
-                contentContainerStyle={styles.buttonContentContainer}
-              />
-              <Divider />
-              <ThemedButton
-                variant="outlined"
-                title="Instagram"
-                onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
-                icon="logo-instagram"
-                textWeight="normal"
-                style={styles.actionButton}
-                innerContainerStyle={styles.buttonInnerContainer}
-                contentContainerStyle={styles.buttonContentContainer}
-              />
-            </BaseCard>
-          </View>
+        {/* Connect Section */}
+        <View style={styles.connectWrapper}>
+          <BaseCard
+            style={styles.connectContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <ThemedButton
+              variant="outlined"
+              title="Twitter"
+              onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
+              icon="logo-twitter"
+              textWeight="normal"
+              style={styles.actionButton}
+              innerContainerStyle={styles.buttonInnerContainer}
+              contentContainerStyle={styles.buttonContentContainer}
+            />
+            <Divider />
+            <ThemedButton
+              variant="outlined"
+              title="Facebook"
+              onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
+              icon="logo-facebook"
+              textWeight="normal"
+              style={styles.actionButton}
+              innerContainerStyle={styles.buttonInnerContainer}
+              contentContainerStyle={styles.buttonContentContainer}
+            />
+            <Divider />
+            <ThemedButton
+              variant="outlined"
+              title="Instagram"
+              onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
+              icon="logo-instagram"
+              textWeight="normal"
+              style={styles.actionButton}
+              innerContainerStyle={styles.buttonInnerContainer}
+              contentContainerStyle={styles.buttonContentContainer}
+            />
+          </BaseCard>
+        </View>
 
-          {/* Support & Account Section */}
-          <View style={styles.actionsWrapper}>
-            <BaseCard
-              style={styles.actionsContainer}
-              shadowSize="small"
-              includePressAnimation={false}
-            >
-              <ThemedButton
-                variant="outlined"
-                title="Support"
-                onPress={handleSupport}
-                icon="mail"
-                textWeight="normal"
-                style={styles.actionButton}
-                innerContainerStyle={styles.buttonInnerContainer}
-                contentContainerStyle={styles.buttonContentContainer}
-              />
-              <Divider />
-              <ThemedButton
-                variant="outlined"
-                title="Sign Out"
-                onPress={handleSignOut}
-                icon="log-out"
-                textWeight="normal"
-                style={styles.actionButton}
-                innerContainerStyle={styles.buttonInnerContainer}
-                contentContainerStyle={styles.buttonContentContainer}
-              />
-            </BaseCard>
-          </View>
+        {/* Support & Account Section */}
+        <View style={styles.actionsWrapper}>
+          <BaseCard
+            style={styles.actionsContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <ThemedButton
+              variant="outlined"
+              title="Support"
+              onPress={handleSupport}
+              icon="mail"
+              textWeight="normal"
+              style={styles.actionButton}
+              innerContainerStyle={styles.buttonInnerContainer}
+              contentContainerStyle={styles.buttonContentContainer}
+            />
+            <Divider />
+            <ThemedButton
+              variant="outlined"
+              title="Sign Out"
+              onPress={handleSignOut}
+              icon="log-out"
+              textWeight="normal"
+              style={styles.actionButton}
+              innerContainerStyle={styles.buttonInnerContainer}
+              contentContainerStyle={styles.buttonContentContainer}
+            />
+          </BaseCard>
+        </View>
 
-          {/* App Version */}
-          <View style={styles.versionWrapper}>
-            <ThemedText type="caption" variant="subtle" style={styles.versionText}>
-              Version {(Constants.expoConfig as any)?.version || packageVersion || '1446.0.0'}
-            </ThemedText>
-          </View>
-        </ScrollView>
+        {/* App Version */}
+        <View style={styles.versionWrapper}>
+          <ThemedText type="caption" variant="subtle" style={styles.versionText}>
+            Version {(Constants.expoConfig as any)?.version || packageVersion || '1446.0.0'}
+          </ThemedText>
+        </View>
       </ThemedView>
     </ThemedView>
   );
