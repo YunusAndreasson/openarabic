@@ -227,9 +227,10 @@ export const articlesService = {
 
       return mapToArticles(data || []);
     } catch (err) {
-      throw handleError(
+      await handleError(
         err instanceof Error ? err : new Error('Unknown error loading category articles')
       );
+      throw err;
     }
   },
 
