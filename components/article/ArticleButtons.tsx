@@ -6,6 +6,7 @@ import type { AnimatedStyleProp } from 'react-native-reanimated';
 import type { ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 interface ArticleButtonsProps {
@@ -25,7 +26,7 @@ interface ArticleButtonsProps {
 
 const styles = StyleSheet.create({
   backButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: Colors.light.buttonOverlay,
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   iconButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    backgroundColor: Colors.light.buttonOverlay,
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -60,7 +61,7 @@ const styles = StyleSheet.create({
   buttonShadow: {
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: Colors.light.black,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.3,
         shadowRadius: 3,
@@ -96,8 +97,8 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
   // Common button styles for translucent overlay effect
   const buttonStyle = {
-    backgroundColor: 'rgba(0, 0, 0, 0.25)',
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: Colors.light.buttonOverlayActive,
+    borderColor: Colors.light.buttonBorderOverlay,
     borderWidth: 1,
   };
 
@@ -110,7 +111,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             style={[styles.backButton, styles.buttonShadow, buttonStyle]}
             accessibilityLabel="Go back"
           >
-            <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            <Ionicons name="arrow-back" size={24} color={Colors.light.white} />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -125,7 +126,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                 isInReadingList ? 'Remove from reading list' : 'Add to reading list'
               }
             >
-              <Ionicons name={bookmarkIcon} size={22} color="#FFFFFF" />
+              <Ionicons name={bookmarkIcon} size={22} color={Colors.light.white} />
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -136,7 +137,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             style={[styles.iconButton, styles.buttonShadow, buttonStyle]}
             accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
           >
-            <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color="#FFFFFF" />
+            <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color={Colors.light.white} />
           </TouchableOpacity>
         </Animated.View>
       </View>
