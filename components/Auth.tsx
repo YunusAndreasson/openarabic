@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState, useCallback, JSX, useEffect } from 'react';
+import React, { useState, useCallback, JSX, useEffect, memo } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -34,7 +34,7 @@ interface AuthProps {
 /**
  * Authentication component that handles both sign in and sign up
  */
-export default function Auth({ disableLoading = false }: AuthProps): JSX.Element {
+function Auth({ disableLoading = false }: AuthProps): JSX.Element {
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -313,3 +313,5 @@ const styles = StyleSheet.create({
     width: '100%',
   },
 });
+
+export default memo(Auth);

@@ -1,4 +1,4 @@
-import React, { JSX, useEffect } from 'react';
+import React, { JSX, useEffect, memo } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -16,11 +16,7 @@ interface PulsatingLogoProps {
 /**
  * A pulsating circle logo component that creates a subtle breathing effect
  */
-export default function PulsatingLogo({
-  size,
-  borderWidth = 12,
-  style,
-}: PulsatingLogoProps): JSX.Element {
+function PulsatingLogo({ size, borderWidth = 12, style }: PulsatingLogoProps): JSX.Element {
   const colors = useColors();
   const { width: screenWidth } = useWindowDimensions();
 
@@ -70,3 +66,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export default memo(PulsatingLogo);
