@@ -164,6 +164,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const isCompact = variant === 'compact';
+  const isArticle = variant === 'article';
 
   // Extract base colors for gradient
   const baseGradientColor = isDarkMode ? '30,30,30' : '248,249,250';
@@ -221,9 +222,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const hideDifficulty = isCompactVariant(props) ? props.hideDifficulty : false;
   const lastOpenedAt = isCompactVariant(props) ? props.lastOpenedAt : undefined;
 
-  // Memoize article content
+  // Memoize article content. Depends only on props used in the view so
+  // irrelevant prop changes don't trigger recomputation
   const articleContent = useMemo(() => {
-    if (!isArticleVariant(props)) return null;
+    if (!isArticle) return null;
     return (
       <>
         <View style={styles.imageContainer}>
@@ -293,11 +295,24 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         </View>
       </>
     );
-  }, [props, isDarkMode, gradientColors, titleStyle, summaryStyle]);
+  }, [
+    isArticle,
+    props.title,
+    props.imageUrl,
+    props.placeholder,
+    props.fullSummary,
+    category,
+    author,
+    summary,
+    gradientProps,
+    titleStyle,
+    summaryStyle,
+  ]);
 
-  // Memoize compact article content
+  // Memoize compact article content. Depends only on the compact article props
+  // used in the view so unrelated prop changes don't rerender the content
   const compactArticleContent = useMemo(() => {
-    if (!isCompactVariant(props)) return null;
+    if (!isCompact) return null;
     return (
       <>
         <View style={styles.compactImageContainer}>
@@ -382,7 +397,17 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         </View>
       </>
     );
-  }, [props, gradientColors, titleStyle]);
+  }, [
+    isCompact,
+    article,
+    props.dueWordCount,
+    showTimeAgo,
+    hideDifficulty,
+    lastOpenedAt,
+    gradientProps,
+    titleStyle,
+    colors.warning,
+  ]);
 
   // Memoize compact content
   const compactContent = useMemo(() => {
