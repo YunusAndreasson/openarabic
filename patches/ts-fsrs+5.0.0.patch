@@ -1,0 +1,15 @@
+diff --git a/node_modules/ts-fsrs/package.json b/node_modules/ts-fsrs/package.json
+index d93ae0c..beaca4d 100644
+--- a/node_modules/ts-fsrs/package.json
++++ b/node_modules/ts-fsrs/package.json
+@@ -11,6 +11,10 @@
+     }
+   },
+   "type": "module",
++  "main": "./dist/index.cjs",
++  "module": "./dist/index.mjs",
++  "react-native": "./dist/index.cjs",
++  "types": "./dist/index.d.ts",
+   "scripts": {
+     "lint": "eslint src/",
+     "lint::fix": "eslint --fix src/ && prettier --write src/",

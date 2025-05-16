@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1446.10.25",
   "scripts": {
+    "postinstall": "patch-package",
     "android": "expo start --android",
     "doctor": "npx expo-doctor",
     "ios": "expo start --ios",
@@ -57,7 +58,7 @@
     "react-native-webview": "^13.13.5",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
-    "ts-fsrs": "^4.7.1"
+    "ts-fsrs": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.27.1",
@@ -66,6 +67,7 @@
     "@eslint/js": "^9.26.0",
     "@expo/metro-config": "^0.20.14",
     "@jest/globals": "^29.7.0",
+    "@react-native-community/cli": "^18.0.0",
     "@sentry/cli": "^2.45.0",
     "@testing-library/react-native": "^13.2.0",
     "@types/jest": "^29.5.14",
@@ -87,6 +89,8 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "jest-expo": "^53.0.5",
+    "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.5.3",
     "react-test-renderer": "^19.1.0",
     "redux-devtools-expo-dev-plugin": "^2.0.0",
