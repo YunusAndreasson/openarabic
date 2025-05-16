@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { EnhancedImage } from '../EnhancedImage';
 import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import { DEFAULT_IMAGES } from '@/constants/images';
+import { Colors } from '@/constants/Colors';
 import { ThemedText } from '../ThemedText';
 import { ArticleButtons } from './ArticleButtons';
 import type { Article } from '@/types/articles.types';
@@ -77,8 +78,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
   }, [scrollY]); // Adding scrollY as dependency for better reactivity
 
   // Text colors based on theme
-  const textColor = isDarkMode ? '#FFFFFF' : '#333333';
-  const textShadowColor = isDarkMode ? 'rgba(0, 0, 0, 0.75)' : 'rgba(255, 255, 255, 0.75)';
+  const textColor = isDarkMode ? Colors.dark.primary : Colors.light.primary;
+  const textShadowColor = isDarkMode
+    ? Colors.dark.textShadowDark
+    : Colors.light.textShadowLight;
 
   // Dynamic text styles based on theme
   const dynamicTextStyles = useMemo(
@@ -255,7 +258,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
     const bgColor = colors.background;
 
     return [
-      'rgba(0,0,0,0)',
+      Colors.light.transparent,
       `${bgColor}40`, // 25% opacity
       `${bgColor}D9`, // 85% opacity
       bgColor, // 100% opacity
@@ -275,7 +278,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
 
     return {
       opacity,
-      backgroundColor: 'black',
+      backgroundColor: Colors.light.black,
     };
   }, []); // Empty dependency array for pure UI animations
 
@@ -416,7 +419,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     width: '100%',
     height: '100%',
-    backgroundColor: '#000', // Add background color to prevent transparent gaps
+    backgroundColor: Colors.light.black, // Add background color to prevent transparent gaps
     overflow: 'hidden', // Ensure content doesn't spill out
   },
   image: {
