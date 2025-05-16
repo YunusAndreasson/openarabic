@@ -64,8 +64,7 @@ export function useAuth(): AuthResult {
     try {
       // Check network connectivity before attempting refresh
       const netState = await NetInfo.fetch();
-      if (!netState.isConnected) {
-        console.log('No network connection, using cached session');
+        if (!netState.isConnected) {
         const cachedSession = await fetchSession();
         if (cachedSession) {
           setSession(cachedSession);
@@ -95,7 +94,6 @@ export function useAuth(): AuthResult {
 
         // If we've reached max retries, don't keep retrying
         if (refreshAttempts >= MAX_REFRESH_RETRIES) {
-          console.error('Max refresh attempts reached:', refreshError);
           throw new Error('Could not refresh session after multiple attempts');
         }
 

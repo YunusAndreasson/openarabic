@@ -5,6 +5,7 @@ import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
+import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedButton } from './ThemedButton';
@@ -51,10 +52,12 @@ export default function Auth({ disableLoading = false }: AuthProps): JSX.Element
       try {
         await supabase.auth.initialize();
         supabase.auth.startAutoRefresh();
-      } catch (err) {
-        console.error('Failed to initialize auth:', err);
-      }
-    };
+        } catch (err) {
+          handleError(
+            err instanceof Error ? err : new Error('Failed to initialize auth')
+          );
+        }
+      };
 
     initializeAuth();
 
@@ -159,10 +162,10 @@ export default function Auth({ disableLoading = false }: AuthProps): JSX.Element
         // Redirect to main app immediately
         router.replace('/(tabs)');
       }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to sign in. Please try again.');
-      console.error('Sign in error:', err);
-    } finally {
+      } catch (err) {
+        Alert.alert('Error', 'Failed to sign in. Please try again.');
+        handleError(err as Error);
+      } finally {
       setLoading(false);
     }
   }, [email, password, validateEmail, validatePassword]);
@@ -206,10 +209,10 @@ export default function Auth({ disableLoading = false }: AuthProps): JSX.Element
 
         Alert.alert('Success', 'Check your email for the confirmation link!');
       }
-    } catch (err) {
-      Alert.alert('Error', 'Failed to create account. Please try again.');
-      console.error('Sign up error:', err);
-    } finally {
+      } catch (err) {
+        Alert.alert('Error', 'Failed to create account. Please try again.');
+        handleError(err as Error);
+      } finally {
       setLoading(false);
     }
   }, [email, password, validateEmail, validatePassword]);
