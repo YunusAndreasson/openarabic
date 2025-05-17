@@ -25,7 +25,7 @@ export interface ProgressAnimationResult {
 
 /**
  * Hook to create a progress animation for progress bars
- * @param initialPercentage - Initial percentage value (0-100)
+ * @param initialPercentage - Initial percentage value (0-10000, representing 0-100%)
  * @param duration - Duration of animation in ms
  * @returns Object with animated style and function to update the progress
  */
@@ -66,7 +66,7 @@ export const useProgressAnimation = (
         }
 
         // Skip animation if value isn't changing significantly
-        if (Math.abs(progress.value - newPercentage) < 0.5) {
+        if (Math.abs(progress.value - newPercentage) < 50) {
           runOnJS(() => {
             if (isMounted.value) {
               isAnimating.current = false;
@@ -127,10 +127,11 @@ export const useProgressAnimation = (
 
   // Create animated style based on the progress value
   const animatedStyle = useAnimatedStyle(() => {
-    // Ensure consistent precision with 2 decimal places max
-    const roundedValue = Math.round(Math.max(0, Math.min(100, progress.value)) * 100) / 100;
+    // Ensure the value is within valid range
+    const clampedValue = Math.max(0, Math.min(10000, progress.value));
+    // Convert the integer value (0-10000) back to a percentage string (0-100%)
     return {
-      width: `${roundedValue}%`,
+      width: `${clampedValue / 100}%`,
     };
   });
 

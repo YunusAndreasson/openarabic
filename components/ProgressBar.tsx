@@ -34,16 +34,18 @@ function ProgressBarComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
+  // Convert to integer to prevent loss of precision errors at the native bridge
   // Store the previous progress value to avoid unnecessary animations
-  const prevProgressRef = useRef(progress);
+  const prevProgressRef = useRef(Math.floor(progress));
 
-  // Ensure progress is within valid range (0-100) and fix precision issues
+  // Ensure progress is within valid range (0-100) and fix precision issues by using integers
   const normalizedProgress = useMemo(() => {
     // Handle invalid inputs gracefully
     if (isNaN(progress)) return 0;
-    // Round to 2 decimal places to avoid floating point precision issues
-    const roundedProgress = Math.round(progress * 100) / 100;
-    return Math.max(0, Math.min(100, roundedProgress));
+    // Convert to integer to prevent loss of precision at the native bridge
+    // Multiply by 100 to preserve 2 decimal places worth of precision as integers
+    const intProgress = Math.floor(progress * 100);
+    return Math.max(0, Math.min(10000, intProgress));
   }, [progress]);
 
   // Use the standardized progress animation hook
@@ -123,11 +125,14 @@ function ProgressBarComponent({
     [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
   );
 
+  // Use the normalized integer value divided by 100 to get the original percentage for accessibility
+  const accessibilityProgressValue = normalizedProgress / 100;
+
   return (
     <View
       style={styles.container as StyleProp<ViewStyle>}
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: normalizedProgress }}
+      accessibilityValue={{ min: 0, max: 100, now: accessibilityProgressValue }}
     >
       <View style={styles.fillContainer}>
         <Animated.View style={styles.fill} />
