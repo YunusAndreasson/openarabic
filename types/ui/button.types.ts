@@ -1,5 +1,5 @@
 import type { TouchableOpacityProps, ViewStyle, StyleProp } from 'react-native';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from './base.types';
 
 import type { BaseAnimatedStyleProps } from './base.types';
 
