@@ -11,7 +11,8 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
 import FilteredArticleView from '../components/index/FilteredArticleView';
-import { supabase } from '../services/supabase';
+import { authorsService } from '../services/authors';
+import { categoriesService } from '../services/categories';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
 import type { Article } from '../types/articles.types';
@@ -89,8 +90,8 @@ function FilterScreenContent() {
     queryKey: ['author', numericId],
     queryFn: async () => {
       try {
-        const { data } = await supabase.from('authors').select('*').eq('id', numericId).single();
-        return data;
+        const authors = await authorsService.getAuthors();
+        return authors.find(a => a.id === numericId) ?? null;
       } catch (err) {
         handleError(err instanceof Error ? err : String(err));
         return null;
@@ -103,8 +104,7 @@ function FilterScreenContent() {
     queryKey: ['category', numericId],
     queryFn: async () => {
       try {
-        const { data } = await supabase.from('categories').select('*').eq('id', numericId).single();
-        return data ?? null;
+        return await categoriesService.getCategory(numericId);
       } catch (err) {
         handleError(err instanceof Error ? err : String(err));
         return null;
