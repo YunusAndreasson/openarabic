@@ -49,7 +49,7 @@ export const studyWordsFSRSService = {
     await checkAuthentication(userId);
 
     // Build the query step by step with proper typing
-    const query = supabase.from('study_words');
+    const query = supabase.from<'study_words'>('study_words');
 
     // Define the selection based on options
     let selectQuery;
@@ -115,7 +115,7 @@ export const studyWordsFSRSService = {
       throw error;
     }
 
-    return data as StudyWord[];
+    return data ?? [];
   },
 
   // Update word with FSRS parameters
@@ -133,7 +133,7 @@ export const studyWordsFSRSService = {
 
     // First verify the root entry exists and belongs to the user
     const { data: existingWord, error: checkError } = await supabase
-      .from('study_words')
+      .from<'study_words'>('study_words')
       .select('*')
       .eq('root_id', rootId)
       .eq('user_id', userId)
@@ -148,7 +148,7 @@ export const studyWordsFSRSService = {
     }
 
     const { error } = await supabase
-      .from('study_words')
+      .from<'study_words'>('study_words')
       .update(update)
       .eq('root_id', rootId)
       .eq('user_id', userId);
@@ -174,12 +174,14 @@ export const studyWordsFSRSService = {
     }
 
     // Add the review record
-    const { error } = await supabase.from('reviews').insert({
-      user_id: userId,
-      root_id: rootId,
-      grade: rating,
-      reviewed_at: new Date().toISOString(),
-    });
+    const { error } = await supabase
+      .from<'reviews'>('reviews')
+      .insert({
+        user_id: userId,
+        root_id: rootId,
+        grade: rating,
+        reviewed_at: new Date().toISOString(),
+      });
 
     if (error) {
       throw error;
@@ -209,7 +211,7 @@ export const studyWordsFSRSService = {
 
     // Check if a study entry already exists for this root
     const { data: existing, error: checkError } = await supabase
-      .from('study_words')
+      .from<'study_words'>('study_words')
       .select('*')
       .eq('user_id', userId)
       .eq('root_id', rootId)
@@ -222,7 +224,7 @@ export const studyWordsFSRSService = {
     if (existing) {
       // Remove existing root study entry
       const { error: deleteError } = await supabase
-        .from('study_words')
+        .from<'study_words'>('study_words')
         .delete()
         .eq('user_id', userId)
         .eq('root_id', rootId);
@@ -263,7 +265,9 @@ export const studyWordsFSRSService = {
       fsrs_last_review: null,
     };
 
-    const { error: insertError } = await supabase.from('study_words').insert(newEntry);
+    const { error: insertError } = await supabase
+      .from<'study_words'>('study_words')
+      .insert(newEntry);
 
     if (insertError) {
       throw insertError;
@@ -278,7 +282,7 @@ export const studyWordsFSRSService = {
     const startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (daysBack - 1));
 
     const { data, error } = await supabase
-      .from('reviews')
+      .from<'reviews'>('reviews')
       .select('reviewed_at, grade, root_id')
       .eq('user_id', userId)
       .not('root_id', 'is', null)
@@ -290,6 +294,6 @@ export const studyWordsFSRSService = {
       throw error;
     }
 
-    return data as ReviewLog[];
+    return data ?? [];
   },
 };
