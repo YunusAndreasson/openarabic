@@ -28,12 +28,15 @@ export const LAYOUT = {
 
   // Element spacing
   SPACING: {
-    TINY: 4,
-    SMALL: 8,
-    MEDIUM: 12,
-    LARGE: 16,
-    XLARGE: 20,
-    XXLARGE: 24,
+    MICRO: 2, // Minimal spacing for pixel-level tweaks
+    XTINY: 3, // Between MICRO and TINY
+    TINY: 4, // Default tiny spacing
+    XSMALL: 6, // Between TINY and SMALL
+    SMALL: 8, // Standard small spacing
+    MEDIUM: 12, // Base spacing for most layouts
+    LARGE: 16, // Increased spacing for grouping sections
+    XLARGE: 20, // Extra roomy spacing
+    XXLARGE: 24, // Maximum default spacing
   },
 
   /**

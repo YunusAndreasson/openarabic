@@ -317,22 +317,22 @@ const styles = StyleSheet.create({
     ios: {
       fontWeight: '500',
     },
-    android: {
-      paddingBottom: 2,
-    },
-  }) as TextStyle,
+      android: {
+        paddingBottom: LAYOUT.SPACING.MICRO,
+      },
+    }) as TextStyle,
   tabBarLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    ...Platform.select({
-      ios: {
-        marginBottom: LAYOUT.SPACING.TINY,
-        fontWeight: '500',
-      },
-      android: {
-        paddingBottom: 2,
-      },
-    }),
-  } as TextStyle,
+      ...Platform.select({
+        ios: {
+          marginBottom: LAYOUT.SPACING.TINY,
+          fontWeight: '500',
+        },
+        android: {
+          paddingBottom: LAYOUT.SPACING.MICRO,
+        },
+      }),
+    } as TextStyle,
   tabButton: {
     alignItems: 'center',
     flex: 1,

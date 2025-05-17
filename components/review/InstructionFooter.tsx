@@ -133,12 +133,12 @@ const styles = StyleSheet.create({
   instructionItemRight: {
     justifyContent: 'flex-end',
   } as ViewStyle,
-  instructionText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
-    paddingTop: 2,
-  } as TextStyle,
-});
+    instructionText: {
+      fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+      textAlign: 'center',
+      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
+      paddingTop: LAYOUT.SPACING.MICRO,
+    } as TextStyle,
+  });
 
 export default InstructionFooter;

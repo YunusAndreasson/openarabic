@@ -269,13 +269,13 @@ const styles = StyleSheet.create({
   textStyle: {
     textAlign: 'center',
   },
-  wordContainer: {
-    alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-    paddingVertical: 4,
-  },
+    wordContainer: {
+      alignItems: 'center',
+      borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+      justifyContent: 'center',
+      paddingHorizontal: LAYOUT.SPACING.MICRO,
+      paddingVertical: 4,
+    },
   wordView: {},
 });
 
