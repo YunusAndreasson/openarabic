@@ -21,7 +21,7 @@ import React, {
   useCallback,
 } from 'react';
 import 'react-native-reanimated';
-import { AppState, View, Text, StyleSheet, Platform } from 'react-native';
+import { AppState, View, StyleSheet, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider } from 'react-redux';
@@ -41,6 +41,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
 import { ToastProvider } from '@/components/ToastProvider';
+import { ThemedText } from '@/components/ThemedText';
 import { useArticlesAndDueWordsLoaded } from './(tabs)/index';
 
 // Keep the splash screen visible while we fetch resources
@@ -298,29 +299,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: LAYOUT.SPACING.XLARGE,
   },
-  errorDetail: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  errorMessage: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  errorTitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
   gestureRoot: {
     flex: 1,
   },
 });
 
 const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
-  const colors = useColors();
   return (
     <View style={styles.errorContainer}>
-      <Text style={[styles.errorTitle, { color: colors.error }]}>Something went wrong</Text>
-      <Text style={[styles.errorMessage, { color: colors.text }]}>Please try again</Text>
-      <Text style={[styles.errorDetail, { color: colors.text }]}>{error.toString()}</Text>
+      <ThemedText
+        type="heading3"
+        variant="error"
+        style={{
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+          marginBottom: LAYOUT.SPACING.SMALL,
+        }}
+      >
+        Something went wrong
+      </ThemedText>
+      <ThemedText type="body" style={{ marginBottom: LAYOUT.SPACING.XLARGE }}>
+        Please try again
+      </ThemedText>
+      <ThemedText
+        type="caption"
+        style={{ opacity: LAYOUT.OPACITY.MEDIUM_HIGH }}
+      >
+        {error.toString()}
+      </ThemedText>
     </View>
   );
 });
