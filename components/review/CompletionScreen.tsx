@@ -10,20 +10,40 @@ import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
+import { ThemedView } from '@/components/ThemedView';
 
 interface CompletionScreenProps {
   onClose: () => void;
+  title?: string;
+  subtitle?: string;
+  buttonText?: string;
+  buttonVariant?: 'filled' | 'outlined';
+  iconName?: string;
+  iconSize?: number;
+  useThemedView?: boolean;
+  contentStyle?: object;
+  buttonStyle?: object;
 }
 
-const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
+const CompletionScreen: React.FC<CompletionScreenProps> = ({
+  onClose,
+  title = 'Great job!',
+  subtitle = 'You completed your review session.',
+  buttonText = 'Done',
+  buttonVariant = 'filled',
+  iconName = 'checkmark-circle',
+  iconSize = 100,
+  useThemedView = false,
+  contentStyle = {},
+  buttonStyle = {},
+}) => {
   const colors = useColors();
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  // Ensure queries are invalidated when the component mounts
-  useEffect(() => {
-    if (user?.id) {
-      // Invalidate all relevant queries at once
+  // Only invalidate queries for review flow
+  React.useEffect(() => {
+    if (!useThemedView && user?.id) {
       queryClient.invalidateQueries({
         predicate: query => {
           const key = query.queryKey[0];
@@ -31,7 +51,45 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
         },
       });
     }
-  }, [user?.id, queryClient]);
+  }, [user?.id, queryClient, useThemedView]);
+
+  const Content = (
+    <View style={[styles.contentContainer, contentStyle]}>
+      <Section delay={100} animated>
+        <View style={styles.iconContainer}>
+          <Ionicons name={iconName as any} size={iconSize} color={colors.tint} />
+        </View>
+      </Section>
+      <View style={styles.textContainer}>
+        <Section delay={300} animated>
+          <ThemedText type="heading2" variant="primary" style={styles.titleText}>
+            {title}
+          </ThemedText>
+        </Section>
+        <Section delay={500} animated>
+          <ThemedText type="heading3" variant="primary" style={styles.subtitleText}>
+            {subtitle}
+          </ThemedText>
+        </Section>
+      </View>
+      <Section delay={700} animated>
+        <ThemedButton
+          title={buttonText}
+          onPress={onClose}
+          variant={buttonVariant}
+          style={[styles.doneButton, buttonStyle]}
+        />
+      </Section>
+    </View>
+  );
+
+  if (useThemedView) {
+    return (
+      <ThemedView style={styles.container} useSafeArea={true}>
+        {Content}
+      </ThemedView>
+    );
+  }
 
   return (
     <View
@@ -42,31 +100,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
         },
       ]}
     >
-      <View style={styles.contentContainer}>
-        <Section delay={100} animated>
-          <View style={styles.iconContainer}>
-            <Ionicons name="checkmark-circle" size={100} color={colors.tint} />
-          </View>
-        </Section>
-
-        <View style={styles.textContainer}>
-          <Section delay={300} animated>
-            <ThemedText type="heading2" variant="primary" style={styles.titleText}>
-              Great job!
-            </ThemedText>
-          </Section>
-
-          <Section delay={500} animated>
-            <ThemedText type="heading3" variant="primary" style={styles.subtitleText}>
-              You completed your review session.
-            </ThemedText>
-          </Section>
-        </View>
-
-        <Section delay={700} animated>
-          <ThemedButton title="Done" onPress={onClose} style={styles.doneButton} />
-        </Section>
-      </View>
+      {Content}
     </View>
   );
 };

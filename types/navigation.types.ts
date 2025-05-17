@@ -34,6 +34,7 @@ export type RouteParams = {
   '/article/[id]': { id: string | number };
   '/filter': FilterParams;
   '/review': ReviewParams;
+  '/listen': Record<string, never>;
   '/wordList': WordListParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
@@ -77,6 +78,7 @@ const routeParams: Record<RoutePath, true> = {
   '/article/[id]': true,
   '/filter': true,
   '/review': true,
+  '/listen': true,
   '/wordList': true,
   '/': true,
   '/(tabs)': true,

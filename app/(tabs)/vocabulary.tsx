@@ -138,6 +138,14 @@ export default function VocabularyScreen(): JSX.Element {
     });
   };
 
+  // Handle starting a listen session
+  const handleStartListen = () => {
+    if (!user) return;
+    navigateTo({
+      pathname: '/listen',
+    });
+  };
+
   // Handle stat press events with proper typing
   const handleStatPress = (category: StatCategory) => {
     navigateTo({
@@ -228,10 +236,10 @@ export default function VocabularyScreen(): JSX.Element {
           stats.dueWords > 0 ? `Review ${stats.dueWords} words` : 'No words due'
         }
         secondaryLabel="Listen"
-        onSecondaryPress={() => {}}
+        onSecondaryPress={handleStartListen}
         secondaryVariant="outlined"
         secondaryDisabled={false}
-        secondaryAccessibilityLabel="Listen to vocabulary (coming soon)"
+        secondaryAccessibilityLabel="Listen to vocabulary words with audio"
       />
     </ThemedView>
   );

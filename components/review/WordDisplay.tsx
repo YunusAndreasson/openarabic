@@ -13,7 +13,7 @@ import { useColors } from '../../hooks/useColors';
  * Uses React.memo with a custom comparison function to prevent unnecessary re-renders
  */
 const WordDisplay = memo(
-  ({ word, fontSize = 24, style }: WordDisplayProps) => {
+  ({ word, fontSize = 24, style, translation }: WordDisplayProps) => {
     const colors = useColors();
 
     // Memoize the text style to prevent unnecessary re-renders
@@ -49,6 +49,11 @@ const WordDisplay = memo(
         >
           {word}
         </ThemedText>
+        {translation && (
+          <ThemedText style={styles.translationText} colorName="tint" skipDefaultColor>
+            {translation}
+          </ThemedText>
+        )}
       </View>
     );
   },
@@ -57,7 +62,8 @@ const WordDisplay = memo(
     return (
       prevProps.word === nextProps.word &&
       prevProps.fontSize === nextProps.fontSize &&
-      prevProps.style === nextProps.style
+      prevProps.style === nextProps.style &&
+      prevProps.translation === nextProps.translation
     );
   }
 );
@@ -71,6 +77,12 @@ const styles = StyleSheet.create({
     minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 7,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
+  },
+  translationText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+    textAlign: 'center',
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    fontWeight: '500',
   },
 });
 

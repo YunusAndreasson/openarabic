@@ -255,18 +255,21 @@ export type Database = {
       roots: {
         Row: {
           audio_url: string | null
+          audio_url_en: string | null
           id: number
           letters: string
           meaning: string | null
         }
         Insert: {
           audio_url?: string | null
+          audio_url_en?: string | null
           id?: number
           letters: string
           meaning?: string | null
         }
         Update: {
           audio_url?: string | null
+          audio_url_en?: string | null
           id?: number
           letters?: string
           meaning?: string | null

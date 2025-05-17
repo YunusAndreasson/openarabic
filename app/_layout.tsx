@@ -242,6 +242,7 @@ function AppContent() {
             />
             <Stack.Screen name="article" options={{ headerShown: false }} />
             <Stack.Screen name="review" options={reviewScreenOptions} />
+            <Stack.Screen name="listen" options={{ headerShown: false }} />
             <Stack.Screen name="index" />
           </Stack>
           <StatusBar style={isDark ? 'light' : 'dark'} />
