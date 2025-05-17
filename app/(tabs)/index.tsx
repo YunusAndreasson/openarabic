@@ -12,7 +12,7 @@ import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
 import { DueWordsArticleSection } from '@/components/index/DueWordsArticleSection';
-import { supabase } from '@/services/supabase';
+import { authorsService } from '@/services/authors';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
@@ -99,10 +99,7 @@ export default function ArticlesScreen(): JSX.Element {
 
   const { data: authors = [] } = useQuery({
     queryKey: ['authors'],
-    queryFn: async () => {
-      const { data } = await supabase.from('authors').select('*').order('name');
-      return data || [];
-    },
+    queryFn: () => authorsService.getAuthors(),
     staleTime: 1800000,
     gcTime: 3600000,
     retry: 3,
