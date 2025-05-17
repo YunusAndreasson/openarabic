@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 import {
   useSharedValue,
@@ -31,7 +31,7 @@ interface ComponentAnimationResult {
  */
 export const useComponentAnimation = (delay = 300): ComponentAnimationResult => {
   const opacity = useSharedValue(0);
-  const isMountedRef = useRef(true);
+  const isMounted = useSharedValue(true);
 
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
   const entering = FadeIn.duration(TIMING_CONFIG.FAST.duration).delay(delay);
@@ -40,7 +40,7 @@ export const useComponentAnimation = (delay = 300): ComponentAnimationResult => 
   // Safe callback runner that checks if component is still mounted
   const safeRunCallback = useCallback((callback?: () => void) => {
     'worklet';
-    if (callback && isMountedRef.current) {
+    if (callback && isMounted.value) {
       runOnJS(callback)();
     }
   }, []);
@@ -84,7 +84,7 @@ export const useComponentAnimation = (delay = 300): ComponentAnimationResult => 
   // Cleanup shared animation values on unmount
   useEffect(() => {
     return () => {
-      isMountedRef.current = false;
+      isMounted.value = false;
       cancelAnimation(opacity);
     };
   }, [opacity]);
