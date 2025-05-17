@@ -8,7 +8,7 @@ import Animated, {
   runOnJS,
 } from 'react-native-reanimated';
 
-import { SCREEN_WIDTH } from '@/constants/layout';
+import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 
 import WordDisplay from './WordDisplay';
 
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   wordContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 364,
+    minHeight: WORD_AREA_MIN_HEIGHT,
     width: '100%',
   },
 });

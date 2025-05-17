@@ -4,7 +4,7 @@ import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 
 import {
   ReviewCard,
@@ -36,7 +36,7 @@ const baseStyles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 364,
+    minHeight: WORD_AREA_MIN_HEIGHT,
   } as ViewStyle,
 });
 

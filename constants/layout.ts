@@ -7,6 +7,7 @@ export const SCREEN_HEIGHT = Dimensions.get('window').height;
 // Add constants for CollapsibleHeader component
 export const HEADER_HEIGHT = 50;
 export const HEADER_IMAGE_HEIGHT = 350;
+export const WORD_AREA_MIN_HEIGHT = 364;
 
 export const LAYOUT = {
   // Screen edge spacing
