@@ -28,7 +28,7 @@ export const DIFFICULTY_LEVELS: Record<DifficultyLevel, DifficultyLevelInfo> = {
   },
 };
 
-export const getDifficultyInfo = (level: number): DifficultyLevelInfo => {
+const getDifficultyInfo = (level: number): DifficultyLevelInfo => {
   // Ensure level is between 1 and 5
   const normalizedLevel = Math.max(1, Math.min(5, Math.round(level))) as DifficultyLevel;
   return DIFFICULTY_LEVELS[normalizedLevel];
@@ -37,8 +37,5 @@ export const getDifficultyInfo = (level: number): DifficultyLevelInfo => {
 export const formatDifficultyLevel = (level: number): string => {
   const info = getDifficultyInfo(level);
   return info.label;
-};
 
-export const getDifficultyLabel = (level: number): string => {
-  return getDifficultyInfo(level).label;
 };
