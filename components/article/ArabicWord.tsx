@@ -67,11 +67,13 @@ function ArabicWordComponent({
   const [tooltipZIndex, setTooltipZIndex] = useState<number>(0);
 
   // Use our new hook
-  const { isAudioHighlighted, isSelected, setForceSelected } = useArabicWord({
-    word,
-    position,
-    onPress,
-  });
+  const { isAudioHighlighted, isSelected, setForceSelected, handleSelectionChange } = useArabicWord(
+    {
+      word,
+      position,
+      onPress,
+    }
+  );
 
   // Use transform animation for press feedback
   const {
@@ -203,9 +205,9 @@ function ArabicWordComponent({
     // Set optimistic update to show selection immediately (this toggles selection)
     setForceSelected(!isSelected);
 
-    // Then handle selection
-    onPress(word);
-  }, [onPress, word, startPressAnimation, isSelected, setForceSelected]);
+    // Then handle selection using the hook's handler
+    handleSelectionChange();
+  }, [handleSelectionChange, startPressAnimation, isSelected, setForceSelected]);
 
   // Generate dynamic styles
   const getAudioHighlightedStyle = useCallback(

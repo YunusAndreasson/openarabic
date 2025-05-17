@@ -21,6 +21,7 @@ export interface UseArabicWordReturn {
   isAudioHighlighted: boolean;
   isSelected: boolean;
   setForceSelected: (value: boolean | null) => void;
+  handleSelectionChange: () => void;
 }
 
 /**
@@ -96,5 +97,6 @@ export function useArabicWord({
     isAudioHighlighted,
     isSelected,
     setForceSelected,
+    handleSelectionChange,
   };
 }
