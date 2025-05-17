@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { LAYOUT } from '../constants/layout';
 
@@ -31,6 +32,16 @@ interface SectionProps {
    * Whether to add horizontal padding to the content
    */
   paddingHorizontal?: boolean;
+
+  /**
+   * Whether to animate the section
+   */
+  animated?: boolean;
+
+  /**
+   * Optional delay before the animation starts (ms)
+   */
+  delay?: number;
 }
 
 const styles = StyleSheet.create({
@@ -40,17 +51,34 @@ const styles = StyleSheet.create({
 });
 
 /**
- * A non-animated section component that replaces AnimatedSection for better performance
- * when animations aren't needed
+ * Section component that can optionally animate its contents.
+ * Falls back to a regular View when no animation is requested.
  */
 const Section = memo(
-  ({ title, children, style, showTitle = true, paddingHorizontal = false }: SectionProps) => {
-    return (
-      <View style={style}>
+  ({
+    title,
+    children,
+    style,
+    showTitle = true,
+    paddingHorizontal = false,
+    animated = false,
+    delay = 0,
+  }: SectionProps) => {
+    const Container = animated || delay > 0 ? Animated.View : View;
+    const content = (
+      <>
         {showTitle && title ? <SectionTitle title={title} /> : null}
         {paddingHorizontal ? <View style={styles.paddedContent}>{children}</View> : children}
-      </View>
+      </>
     );
+    if (Container === Animated.View) {
+      return (
+        <Animated.View style={style} entering={FadeIn.delay(delay).duration(300)}>
+          {content}
+        </Animated.View>
+      );
+    }
+    return <View style={style}>{content}</View>;
   }
 );
 

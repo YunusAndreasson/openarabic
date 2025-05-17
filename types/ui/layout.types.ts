@@ -48,17 +48,6 @@ export interface PageHeaderProps {
   onBackPress?: () => void;
 }
 
-/**
- * Props for the AnimatedItem component
- */
-export interface AnimatedItemProps extends BaseStyleProps {
-  /** Children to render */
-  children: React.ReactNode;
-  /** Delay before animation starts (ms) */
-  delay?: number;
-  /** Whether to animate on mount */
-  animate?: boolean;
-}
 
 export interface DisplaySettings {
   showEnglish: boolean;
