@@ -139,7 +139,8 @@ export const studyWordsService = {
       .eq('root_id', rootId)
       .single();
 
-    if (checkError) {
+    if (checkError && checkError.code !== 'PGRST116') {
+      // Only throw unexpected errors. PGRST116 just means the item was not found.
       throw checkError;
     }
 
