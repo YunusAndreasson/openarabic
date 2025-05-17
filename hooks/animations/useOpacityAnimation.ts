@@ -153,14 +153,14 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   const exiting = useRef(FadeOut.duration(safeDuration)).current;
 
   // Track if component is mounted to prevent callbacks after unmount
-  const isMountedRef = useRef(true);
+  const isMounted = useSharedValue(true);
   const opacity = useSharedValue(validInitialOpacity);
   const timingConfig = useRef(getTimingConfig(duration)).current;
 
   // Cleanup shared animation values on unmount - optimized with single cleanup function
   useEffect(() => {
     const cleanup = () => {
-      isMountedRef.current = false;
+      isMounted.value = false;
       opacity.value = validInitialOpacity;
       cancelAnimation(opacity);
     };
@@ -171,7 +171,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
   // Safe callback runner that checks if component is still mounted
   const safeRunCallback = useCallback((callback?: () => void) => {
     'worklet';
-    if (callback && isMountedRef.current) {
+    if (callback && isMounted.value) {
       runOnJS(callback)();
     }
   }, []);
@@ -263,7 +263,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {
-    if (autoStart && isMountedRef.current) {
+    if (autoStart && isMounted.value) {
       runOnUI(() => {
         'worklet';
         // Set directly to target without initial flash to prevent visual glitch

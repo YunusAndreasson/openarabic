@@ -43,7 +43,7 @@ export const useProgressAnimation = (
   const isAnimating = useRef(false);
 
   // Track if component is mounted
-  const isMountedRef = useRef(true);
+  const isMounted = useSharedValue(true);
 
   // Improved function to update the progress value with animation
   const updateProgress = useCallback(
@@ -58,7 +58,7 @@ export const useProgressAnimation = (
         // Validate input to ensure it's a number
         if (typeof newPercentage !== 'number') {
           runOnJS(() => {
-            if (isMountedRef.current) {
+            if (isMounted.value) {
               isAnimating.current = false;
             }
           })();
@@ -68,7 +68,7 @@ export const useProgressAnimation = (
         // Skip animation if value isn't changing significantly
         if (Math.abs(progress.value - newPercentage) < 0.5) {
           runOnJS(() => {
-            if (isMountedRef.current) {
+            if (isMounted.value) {
               isAnimating.current = false;
             }
           })();
@@ -89,7 +89,7 @@ export const useProgressAnimation = (
             // Animation is complete
             if (finished) {
               runOnJS(() => {
-                if (isMountedRef.current) {
+                if (isMounted.value) {
                   isAnimating.current = false;
                 }
               })();
@@ -100,7 +100,7 @@ export const useProgressAnimation = (
 
       // Return cleanup function that cancels the animation if needed
       return () => {
-        if (isMountedRef.current) {
+        if (isMounted.value) {
           isAnimating.current = false;
           runOnUI(() => {
             'worklet';
@@ -136,7 +136,7 @@ export const useProgressAnimation = (
   useEffect(() => {
     return () => {
       // Cancel any ongoing animations to prevent memory leaks
-      isMountedRef.current = false;
+      isMounted.value = false;
       cancelAnimation(progress);
       hasAnimated.current = false;
       isAnimating.current = false;
