@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
 import React, { useState, useCallback, useMemo, useEffect, JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
 
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -17,16 +16,6 @@ import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import type { Article } from '../types/articles.types';
-
-// Define styles
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  visible: {
-    opacity: 1,
-  },
-});
 
 // Custom Header Background component with blur effect (copied from tab layout)
 const BLUR_INTENSITY = 55;
@@ -180,16 +169,14 @@ function FilterScreenContent() {
     );
   }
   return (
-    <View style={[styles.container, styles.visible]}>
-      <FilteredArticleView
-        articles={articles}
-        isLoading={isLoading}
-        isRefreshing={isRefreshing}
-        onRefresh={handleRefresh}
-        onArticlePress={handleArticlePress}
-        selectedAuthor={type === 'author' ? author : null}
-        selectedCategory={type === 'category' ? category : null}
-      />
-    </View>
+    <FilteredArticleView
+      articles={articles}
+      isLoading={isLoading}
+      isRefreshing={isRefreshing}
+      onRefresh={handleRefresh}
+      onArticlePress={handleArticlePress}
+      selectedAuthor={type === 'author' ? author : null}
+      selectedCategory={type === 'category' ? category : null}
+    />
   );
 }
