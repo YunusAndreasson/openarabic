@@ -10,7 +10,8 @@ import {
   FadeOut,
   cancelAnimation,
 } from 'react-native-reanimated';
-import type { AnimatedStyleProp, SharedValue } from 'react-native-reanimated';
+import type { SharedValue } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { TIMING_CONFIG } from './animationConfigs';
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, memo, useCallback, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import type { MeaningOverlayProps } from '@/types/ui/review.types';
 

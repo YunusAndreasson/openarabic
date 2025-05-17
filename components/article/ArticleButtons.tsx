@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';

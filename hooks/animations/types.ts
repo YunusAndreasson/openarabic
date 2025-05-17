@@ -6,11 +6,11 @@
 
 import type {
   SharedValue as ReanimatedSharedValue,
-  AnimatedStyleProp as ReanimatedAnimatedStyleProp,
   AnimatedStyle as ReanimatedAnimatedStyle,
 } from 'react-native-reanimated';
 
+export type { AnimatedStyleProp } from '@/types/ui/base.types';
+
 // Re-export types
 export type SharedValue<T> = ReanimatedSharedValue<T>;
-export type AnimatedStyleProp<T> = ReanimatedAnimatedStyleProp<T>;
 export type AnimatedStyle<T> = ReanimatedAnimatedStyle<T>;

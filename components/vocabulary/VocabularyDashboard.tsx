@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import Animated from 'react-native-reanimated';
 
 import { usePressAnimation } from '@/hooks/animations';

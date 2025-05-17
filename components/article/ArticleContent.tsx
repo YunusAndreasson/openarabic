@@ -4,7 +4,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { useRef, useEffect, forwardRef, useImperativeHandle, JSX } from 'react';
 import type { NativeScrollEvent, NativeSyntheticEvent, ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import Animated, { useSharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 

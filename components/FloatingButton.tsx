@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, Pressable, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { LAYOUT } from '@/constants/layout';
 import { usePressAnimation } from '@/hooks/animations';

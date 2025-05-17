@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import type {
-  AnimatedStyleProp,
   WithTimingConfig,
   WithSpringConfig,
   BaseAnimationBuilder,
 } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import {
   useSharedValue,
   useAnimatedStyle,
