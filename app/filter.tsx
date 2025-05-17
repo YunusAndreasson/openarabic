@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
@@ -12,13 +11,10 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import ErrorState from '../components/ErrorState';
 import FilteredArticleView from '../components/index/FilteredArticleView';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import { supabase } from '../services/supabase';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
 import type { Article } from '../types/articles.types';
-
-// Create a supabase client for fetching data directly
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Define styles
 const styles = StyleSheet.create({

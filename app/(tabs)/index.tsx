@@ -1,5 +1,4 @@
 import { useHeaderHeight } from '@react-navigation/elements';
-import { createClient } from '@supabase/supabase-js';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, memo, JSX } from 'react';
@@ -13,7 +12,7 @@ import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
 import { DueWordsArticleSection } from '@/components/index/DueWordsArticleSection';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
+import { supabase } from '@/services/supabase';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
@@ -36,9 +35,6 @@ import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
 
 import ErrorState from '../../components/ErrorState';
-
-// Create a supabase client for fetching authors directly
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Define styles before components that use them
 const styles = StyleSheet.create({

@@ -1,13 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
-
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
+import { supabase } from './supabase';
 import type { Article } from '../types/articles.types';
-import type { Database } from '../types/database.types';
 import { DatabaseError } from '../types/error.types';
 import { handleError } from '../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../utils/typeMappers';
-
-const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Define the columns needed for list view for better performance
 const LIST_VIEW_COLUMNS = `
