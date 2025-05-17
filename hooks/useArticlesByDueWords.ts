@@ -25,7 +25,7 @@ export function useArticlesByDueWords(
 ): UseArticlesByDueWordsResult {
   // Fetch due words for the current user
   const { data: dueWords = [], isLoading: isLoadingDueWords } = useQuery({
-    queryKey: ['due-words', userId],
+    queryKey: ['dueWords', userId],
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true });
