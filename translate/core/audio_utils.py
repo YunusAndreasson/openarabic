@@ -2,7 +2,6 @@ import os
 import io
 import time
 import hashlib
-import base64
 import functools
 import re
 import subprocess
@@ -13,7 +12,6 @@ from elevenlabs import VoiceSettings
 from mutagen.mp3 import MP3
 
 from translate.core.arabic_text import (
-    clean_arabic_text,
     wrap_in_arabic_ssml,
     preprocess_text_for_tts,
 )
@@ -36,9 +34,7 @@ ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic sentences
 ARABIC_WORD_VOICE_ID = (
     "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
 )
-ENGLISH_WORD_VOICE_ID = (
-    "EXAVITQu4vr4xnSDxMaL"  # Example: Adam (ElevenLabs default English voice)
-)
+ENGLISH_WORD_VOICE_ID = "nPczCjzI2devNBz1zQrb"
 
 # Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
@@ -194,11 +190,10 @@ def generate_speech(
     is_arabic: bool = True,
 ):
     """Generate speech using ElevenLabs API with retries."""
-    # Preprocess text to handle numbers
-    text = preprocess_text_for_tts(text)
-
-    # Only wrap in Arabic SSML tags if the content is Arabic
+    # Preprocess text to handle numbers - only for Arabic text
     if is_arabic:
+        text = preprocess_text_for_tts(text)
+        # Wrap in Arabic SSML tags
         text = wrap_in_arabic_ssml(text)
 
     # Use provided voice settings or create new ones with default settings plus speed
