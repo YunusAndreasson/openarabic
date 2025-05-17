@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { withOpacity } from '@/utils/colorUtils';
@@ -48,7 +49,7 @@ const TAB_SCREENS = [
 const ICON_SIZE = 24;
 const BLUR_INTENSITY = 55;
 
-const LIGHT_MODE_SHADOW_COLOR = 'rgba(0,0,0,0.06)';
+const LIGHT_MODE_SHADOW_COLOR = Colors.light.borderOverlay;
 const LIGHT_MODE_SHADOW_OPACITY = 1;
 const LIGHT_MODE_SHADOW_RADIUS = 10;
 
@@ -191,7 +192,9 @@ CustomTabBar.displayName = 'CustomTabBar';
 // Custom Header Background component with blur effect
 const CustomHeaderBackground = () => {
   const isDarkMode = useIsDarkMode();
-  const overlayColor = isDarkMode ? 'rgba(18,18,18,0.85)' : 'rgba(255,255,255,0.85)';
+  const overlayColor = isDarkMode
+    ? withOpacity(Colors.dark.background, 0.85)
+    : withOpacity(Colors.light.white, 0.85);
 
   if (Platform.OS === 'android') {
     return (

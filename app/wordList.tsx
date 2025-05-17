@@ -155,7 +155,7 @@ export default function WordListScreen(): JSX.Element {
                     }
                   }}
                   variant="filter"
-                  pillBg={isSelected ? undefined : 'transparent'}
+                  pillBg={isSelected ? undefined : colors.transparent}
                   pillStyle={{
                     marginHorizontal: 4,
                     marginBottom: 0,
@@ -182,7 +182,7 @@ export default function WordListScreen(): JSX.Element {
                         }
                         size={16}
                         style={{ marginLeft: 4, marginTop: 1 }}
-                        color={isSelected ? '#888' : 'transparent'}
+                        color={isSelected ? colors.icon : colors.transparent}
                       />
                     </View>
                   }
