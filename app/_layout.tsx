@@ -113,7 +113,7 @@ function AppContent() {
 
   const [fontsLoaded] = useFonts({
     Philosopher: philosopherFont,
-    NotoNaskhArabic: madinaFont,
+    Madina: madinaFont,
   });
 
   const { preloadAppData, isLoaded } = useAppPreloader();
