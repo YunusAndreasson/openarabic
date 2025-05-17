@@ -127,8 +127,10 @@ export const useProgressAnimation = (
 
   // Create animated style based on the progress value
   const animatedStyle = useAnimatedStyle(() => {
+    // Ensure consistent precision with 2 decimal places max
+    const roundedValue = Math.round(Math.max(0, Math.min(100, progress.value)) * 100) / 100;
     return {
-      width: `${Math.max(0, Math.min(100, progress.value))}%`,
+      width: `${roundedValue}%`,
     };
   });
 

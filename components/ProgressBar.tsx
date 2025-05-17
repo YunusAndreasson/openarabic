@@ -37,11 +37,13 @@ function ProgressBarComponent({
   // Store the previous progress value to avoid unnecessary animations
   const prevProgressRef = useRef(progress);
 
-  // Ensure progress is within valid range (0-100)
+  // Ensure progress is within valid range (0-100) and fix precision issues
   const normalizedProgress = useMemo(() => {
     // Handle invalid inputs gracefully
     if (isNaN(progress)) return 0;
-    return Math.max(0, Math.min(100, progress));
+    // Round to 2 decimal places to avoid floating point precision issues
+    const roundedProgress = Math.round(progress * 100) / 100;
+    return Math.max(0, Math.min(100, roundedProgress));
   }, [progress]);
 
   // Use the standardized progress animation hook
