@@ -86,24 +86,34 @@ def get_or_create_root(
                         english_audio_text = meaning
 
                 audio_urls = get_or_generate_root_audio(letters, english_audio_text)
+
+                # Debug info for audio URL generation
+                print(f"Audio URLs for existing root '{letters}': {audio_urls}")
+
                 update_data = {}
                 if audio_urls:
                     if audio_urls.get("audio_url") and not root.get("audio_url"):
                         update_data["audio_url"] = audio_urls["audio_url"]
                     if audio_urls.get("audio_url_en") and not root.get("audio_url_en"):
                         update_data["audio_url_en"] = audio_urls["audio_url_en"]
+
                 if update_data:
+                    print(f"Updating root {root_id} with audio URLs: {update_data}")
                     supabase.table("roots").update(update_data).eq(
                         "id", root_id
                     ).execute()
             except Exception as e:
                 print(f"Error generating audio for root '{letters}': {e}")
+                import traceback
+
+                traceback.print_exc()  # Print full stack trace for debugging
         return root_id
 
     # Create new root without audio_url first
     root_data = {"letters": letters, "meaning": meaning}
     result = supabase.table("roots").insert(root_data).execute()
     root_id = result.data[0]["id"]
+    print(f"Created new root with ID {root_id} for '{letters}'")
 
     # Generate and update audio_url/audio_url_en for the new root
     try:
@@ -123,16 +133,27 @@ def get_or_create_root(
                 english_audio_text = meaning
 
         audio_urls = get_or_generate_root_audio(letters, english_audio_text)
+
+        # Debug info for audio URL generation
+        print(f"Audio URLs for new root '{letters}': {audio_urls}")
+
         update_data = {}
         if audio_urls:
             if audio_urls.get("audio_url"):
                 update_data["audio_url"] = audio_urls["audio_url"]
             if audio_urls.get("audio_url_en"):
                 update_data["audio_url_en"] = audio_urls["audio_url_en"]
+
         if update_data:
+            print(f"Updating new root {root_id} with audio URLs: {update_data}")
             supabase.table("roots").update(update_data).eq("id", root_id).execute()
+        else:
+            print(f"Warning: No audio URLs generated for root '{letters}'")
     except Exception as e:
         print(f"Error generating audio for new root '{letters}': {e}")
+        import traceback
+
+        traceback.print_exc()  # Print full stack trace for debugging
 
     return root_id
 

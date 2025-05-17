@@ -398,16 +398,27 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         try:
             with open(temp_audio_path, "rb") as f:
                 url = upload_to_storage("audio", filename, f)
+                print(f"Arabic upload result for '{word}': {url}")
                 if not url:
                     raise Exception("Failed to get URL from upload")
         except Exception as e:
             print(f"Upload failed despite retries: {str(e)}")
             return None
 
-        return {"url": url}
+        # IMPORTANT: Explicitly create storage URL if upload succeeded
+        if url:
+            from translate.core.storage_utils import SUPABASE_URL
+
+            final_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+            print(f"Final Arabic URL for '{word}': {final_url}")
+            return {"url": final_url}
+        return None
 
     except Exception as e:
         print(f"Error generating/uploading Arabic word audio for '{word}': {str(e)}")
+        import traceback
+
+        traceback.print_exc()
         if temp_audio_path and os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
         return None
@@ -453,16 +464,27 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
         try:
             with open(temp_audio_path, "rb") as f:
                 url = upload_to_storage("audio", filename, f)
+                print(f"English upload result for '{word}': {url}")
                 if not url:
                     raise Exception("Failed to get URL from upload")
         except Exception as e:
             print(f"Upload failed despite retries (EN): {str(e)}")
             return None
 
-        return {"url": url}
+        # IMPORTANT: Explicitly create storage URL if upload succeeded
+        if url:
+            from translate.core.storage_utils import SUPABASE_URL
+
+            final_url = f"{SUPABASE_URL}/storage/v1/object/public/audio/{filename}"
+            print(f"Final English URL for '{word}': {final_url}")
+            return {"url": final_url}
+        return None
 
     except Exception as e:
         print(f"Error generating/uploading English word audio for '{word}': {str(e)}")
+        import traceback
+
+        traceback.print_exc()
         if temp_audio_path and os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
         return None

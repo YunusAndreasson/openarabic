@@ -47,6 +47,10 @@ def get_or_generate_root_audio(
     storage_url_ar = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_ar}"
     storage_url_en = f"{SUPABASE_URL}/storage/v1/object/public/audio/{cache_key_en}"
 
+    # Initialize audio URLs to None to avoid "referenced before assignment" errors
+    audio_url = None
+    audio_url_en = None
+
     # --- Arabic audio ---
     if check_file_exists("audio", cache_key_ar):
         if not os.path.exists(cache_path_ar):
@@ -58,6 +62,7 @@ def get_or_generate_root_audio(
             except Exception:
                 pass
         audio_url = storage_url_ar
+        print(f"Using existing audio for {arabic_word}: {audio_url}")
     elif os.path.exists(cache_path_ar):
         try:
             with open(cache_path_ar, "rb") as f:
@@ -68,23 +73,30 @@ def get_or_generate_root_audio(
                         result_url = upload_to_storage("audio", cache_key_ar, f)
                         if result_url:
                             audio_url = result_url
+                            print(
+                                f"Uploaded cache audio for {arabic_word}: {audio_url}"
+                            )
                         else:
                             audio_url = None
+                            print(f"Failed to get URL for {arabic_word} cache upload")
                 except Exception as e:
-                    print("Cache upload failed")
+                    print(f"Cache upload failed for {arabic_word}: {e}")
                     audio_url = None
             else:
                 os.remove(cache_path_ar)
                 audio_url = None
         except Exception as e:
-            print("Error with cache file")
+            print(f"Error with cache file for {arabic_word}: {e}")
             if os.path.exists(cache_path_ar):
                 os.remove(cache_path_ar)
             audio_url = None
     else:
+        print(f"Generating new audio for Arabic word: {arabic_word}")
         result = generate_arabic_word_audio(arabic_word, cache_key_ar)
-        audio_url = getattr(result, "url", None) if result else None
+        print(f"Result from generate_arabic_word_audio: {result}")
+        audio_url = result.get("url") if result else None
         if audio_url:
+            print(f"Generated Arabic audio URL: {audio_url}")
             temp_path = os.path.join(root_dir, "audio", cache_key_ar)
             if os.path.exists(temp_path):
                 try:
@@ -93,7 +105,7 @@ def get_or_generate_root_audio(
                     shutil.copy2(temp_path, cache_path_ar)
                     os.remove(temp_path)
                 except Exception as e:
-                    print("Error caching audio file")
+                    print(f"Error caching audio file for {arabic_word}: {e}")
 
     # --- English audio ---
     # Validate that english_translation is actually English (not Arabic)
@@ -120,6 +132,7 @@ def get_or_generate_root_audio(
             except Exception:
                 pass
         audio_url_en = storage_url_en
+        print(f"Using existing EN audio for {english_word_to_use}: {audio_url_en}")
     elif os.path.exists(cache_path_en):
         try:
             with open(cache_path_en, "rb") as f:
@@ -130,24 +143,33 @@ def get_or_generate_root_audio(
                         result_url = upload_to_storage("audio", cache_key_en, f)
                         if result_url:
                             audio_url_en = result_url
+                            print(
+                                f"Uploaded EN cache audio for {english_word_to_use}: {audio_url_en}"
+                            )
                         else:
                             audio_url_en = None
+                            print(
+                                f"Failed to get URL for {english_word_to_use} EN cache upload"
+                            )
                 except Exception as e:
-                    print("Cache upload failed (EN)")
+                    print(f"Cache upload failed (EN) for {english_word_to_use}: {e}")
                     audio_url_en = None
             else:
                 os.remove(cache_path_en)
                 audio_url_en = None
         except Exception as e:
-            print("Error with cache file (EN)")
+            print(f"Error with cache file (EN) for {english_word_to_use}: {e}")
             if os.path.exists(cache_path_en):
                 os.remove(cache_path_en)
             audio_url_en = None
     else:
         # Pass the English translation to generate English audio
+        print(f"Generating new audio for English word: {english_word_to_use}")
         result_en = generate_english_word_audio(english_word_to_use, cache_key_en)
-        audio_url_en = getattr(result_en, "url", None) if result_en else None
+        print(f"Result from generate_english_word_audio: {result_en}")
+        audio_url_en = result_en.get("url") if result_en else None
         if audio_url_en:
+            print(f"Generated English audio URL: {audio_url_en}")
             temp_path_en = os.path.join(root_dir, "audio", cache_key_en)
             if os.path.exists(temp_path_en):
                 try:
@@ -156,8 +178,18 @@ def get_or_generate_root_audio(
                     shutil.copy2(temp_path_en, cache_path_en)
                     os.remove(temp_path_en)
                 except Exception as e:
-                    print("Error caching English audio file")
+                    print(
+                        f"Error caching English audio file for {english_word_to_use}: {e}"
+                    )
 
-    if audio_url or audio_url_en:
-        return {"audio_url": audio_url, "audio_url_en": audio_url_en}
-    return None
+    # If we don't have audio URLs but files exist in storage, construct URLs
+    if not audio_url and check_file_exists("audio", cache_key_ar):
+        audio_url = storage_url_ar
+        print(f"Found audio in storage without URL: {audio_url}")
+
+    if not audio_url_en and check_file_exists("audio", cache_key_en):
+        audio_url_en = storage_url_en
+        print(f"Found EN audio in storage without URL: {audio_url_en}")
+
+    # Return both URLs even if one is None
+    return {"audio_url": audio_url, "audio_url_en": audio_url_en}
