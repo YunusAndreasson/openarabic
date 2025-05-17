@@ -130,12 +130,12 @@ const styles = StyleSheet.create({
   },
   horizontalArticleContainer: {
     marginRight: LAYOUT.SPACING.MEDIUM,
-    ...Platform.select({
-      android: {
-        paddingBottom: 2,
-      },
-    }),
-  },
+      ...Platform.select({
+        android: {
+          paddingBottom: LAYOUT.SPACING.MICRO,
+        },
+      }),
+    },
   horizontalList: {
     // Empty after removing horizontal padding
   },
@@ -147,12 +147,12 @@ const styles = StyleSheet.create({
   },
   verticalArticleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-    ...Platform.select({
-      android: {
-        paddingBottom: 2,
-      },
-    }),
-  },
+      ...Platform.select({
+        android: {
+          paddingBottom: LAYOUT.SPACING.MICRO,
+        },
+      }),
+    },
   verticalList: {
     // Empty after removing horizontal padding
   },

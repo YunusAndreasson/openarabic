@@ -135,29 +135,29 @@ const BookmarkListItem = memo(
     // Create left meta content with due words indicator
     const leftMetaContent = hasDueWords ? (
       <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: `${colors.warning}25`, // 25% opacity
-          paddingHorizontal: 6,
-          paddingVertical: 2,
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-          borderColor: `${colors.warning}40`, // 40% opacity
-          marginRight: 8,
-        }}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: `${colors.warning}25`, // 25% opacity
+            paddingHorizontal: LAYOUT.SPACING.XSMALL,
+            paddingVertical: LAYOUT.SPACING.MICRO,
+            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+            borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+            borderColor: `${colors.warning}40`, // 40% opacity
+            marginRight: 8,
+          }}
       >
         <Ionicons name="sync-outline" size={12} color={colors.warning} />
         <ThemedText
           type="label"
-          style={{
-            color: colors.warning,
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-            marginLeft: 3,
-            fontWeight: '600',
-          }}
-          skipDefaultColor
-        >
+            style={{
+              color: colors.warning,
+              fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+              marginLeft: LAYOUT.SPACING.XTINY,
+              fontWeight: '600',
+            }}
+            skipDefaultColor
+          >
           {dueWordCount}
         </ThemedText>
       </View>

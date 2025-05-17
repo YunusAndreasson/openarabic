@@ -255,13 +255,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  difficultyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-    opacity: 0.9,
-  },
+    difficultyContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: LAYOUT.SPACING.MICRO,
+      opacity: 0.9,
+    },
   difficultyIcon: {
     marginRight: 4,
   },

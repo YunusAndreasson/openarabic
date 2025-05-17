@@ -104,13 +104,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
   },
-  iconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: LAYOUT.SPACING.XLARGE,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    paddingTop: 2,
-  },
+    iconContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: LAYOUT.SPACING.XLARGE,
+      minWidth: LAYOUT.SPACING.XLARGE,
+      paddingTop: LAYOUT.SPACING.MICRO,
+    },
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
