@@ -1,4 +1,4 @@
-import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { BlurView } from 'expo-blur';
 import { useGlobalSearchParams, router, Stack } from 'expo-router';
 import React, { useState, useCallback, useMemo, useEffect, JSX } from 'react';
@@ -15,6 +15,7 @@ import { authorsService } from '../services/authors';
 import { categoriesService } from '../services/categories';
 import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
+import { useAppPreloader } from '../hooks/useAppPreloader';
 import type { Article } from '../types/articles.types';
 
 // Define styles
@@ -83,7 +84,7 @@ function FilterScreenContent() {
   const type = params.type as string;
   const id = params.id as string;
   const numericId = parseInt(id, 10);
-  const queryClient = useQueryClient();
+  const { prefetchArticle } = useAppPreloader();
   const cacheKey = useMemo(() => ['filtered-articles', type, numericId], [type, numericId]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data: author, isLoading: isAuthorLoading } = useQuery({
@@ -152,14 +153,10 @@ function FilterScreenContent() {
   }, [refetch]);
   const handleArticlePress = useCallback(
     (article: Article) => {
-      queryClient.prefetchQuery({
-        queryKey: ['article', article.id],
-        queryFn: () => articlesService.getArticleById(article.id),
-        retry: 3,
-      });
+      prefetchArticle(article.id);
       navigateTo({ pathname: '/article/[id]', params: { id: article.id } });
     },
-    [navigateTo, queryClient]
+    [navigateTo, prefetchArticle]
   );
   useEffect(() => {
     let title = 'Filtered';

@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useEffect, useCallback } from 'react';
+import { useMemo, useEffect } from 'react';
 
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';
@@ -188,36 +188,6 @@ export const useArticleData = (
     placeholderData: old => old,
   });
 
-  // Prefetch next and previous articles when current article loads
-  const prefetchArticle = useCallback(
-    (articleId: number) => {
-      queryClient.prefetchQuery({
-        queryKey: ['article', articleId],
-        queryFn: () => articlesService.getArticleById(articleId),
-        staleTime: 300000,
-        gcTime: 600000,
-        retry: 3,
-      });
-    },
-    [queryClient]
-  );
-
-  useEffect(() => {
-    // Early return if we can't prefetch
-    if (!article?.id || !otherArticles?.length) return;
-
-    const currentIndex = otherArticles.findIndex(a => a.id === article.id);
-    if (currentIndex === -1) return;
-
-    // Prefetch both articles in parallel if they exist
-    const nextArticle = otherArticles[currentIndex + 1];
-    const prevArticle = otherArticles[currentIndex - 1];
-
-    Promise.all([
-      nextArticle && prefetchArticle(nextArticle.id),
-      prevArticle && prefetchArticle(prevArticle.id),
-    ]).catch(error => handleError(error));
-  }, [article?.id, otherArticles, prefetchArticle]);
 
   return {
     article,
