@@ -23,6 +23,8 @@ interface GetFSRSWordsOptions {
   onlyDue?: boolean;
   forStats?: boolean;
   limit?: number;
+  sortByDifficultyAndStability?: boolean;
+  reviewedOnly?: boolean;
 }
 
 // Query key constants for consistent key usage
@@ -80,14 +82,27 @@ export const studyWordsFSRSService = {
     // Add filters after the select
     let filteredQuery = selectQuery.eq('user_id', userId);
 
+    if (options.reviewedOnly) {
+      filteredQuery = filteredQuery
+        .not('fsrs_last_review', 'is', null)
+        .gt('fsrs_reps', 0);
+    }
+
     // Add due date filter if requested
     if (options.onlyDue) {
       const now = new Date().toISOString();
       filteredQuery = filteredQuery.lte('fsrs_due', now);
     }
 
-    // Order by due date
-    filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
+    if (options.sortByDifficultyAndStability) {
+      filteredQuery = filteredQuery
+        .order('fsrs_difficulty', { ascending: false })
+        .order('fsrs_stability', { ascending: true })
+        .order('fsrs_last_review', { ascending: false });
+    } else {
+      // Order by due date
+      filteredQuery = filteredQuery.order('fsrs_due', { ascending: true });
+    }
 
     // Apply limit if specified
     if (options.limit) {
