@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { handleError } from '@/utils/errorHandling';
 import type { Card } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State } from 'ts-fsrs';
 
@@ -248,11 +249,15 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
           // Calculate progress based on known words vs total unique words
           const uniqueWordCount = countersRef.current.uniqueWords.size;
-          const newProgress = Math.min(
-            Math.round((countersRef.current.knownWords / uniqueWordCount) * 100),
-            100
-          );
-          setProgress(newProgress);
+        const newProgress = uniqueWordCount
+          ? Math.min(
+              Math.round(
+                (countersRef.current.knownWords / uniqueWordCount) * 100
+              ),
+              100
+            )
+          : 100;
+        setProgress(newProgress);
 
           // Check if queue is empty to trigger completion
           if (newQueue.length === 0) {
@@ -272,6 +277,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
           return newQueue;
         });
+      } catch (error) {
+        handleError(
+          error instanceof Error ? error : new Error(String(error))
+        );
       } finally {
         stateTrackingRef.current.isProcessingUpdate = false;
       }
