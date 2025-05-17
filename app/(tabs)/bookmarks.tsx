@@ -586,9 +586,9 @@ export default function BookmarksScreen(): JSX.Element {
           contentContainerStyle={{
             paddingTop: headerHeight,
             paddingBottom:
+              insets.bottom +
               LAYOUT.CONTENT_SPACING.BOTTOM +
               LAYOUT.BOTTOM_BAR.HEIGHT +
-              insets.bottom +
               LAYOUT.SPACING.SMALL,
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}

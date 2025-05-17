@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, RefreshControl, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
@@ -30,6 +31,7 @@ export default function VocabularyScreen(): JSX.Element {
   const queryClient = useQueryClient();
   const { prefetchVocabularyData } = useAppPreloader();
   const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
 
   // Add state for refresh control
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -194,7 +196,17 @@ export default function VocabularyScreen(): JSX.Element {
             progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
           />
         }
-        contentContainerStyle={[styles.contentContainer, { paddingTop: headerHeight }]}
+        contentContainerStyle={[
+          styles.contentContainer,
+          {
+            paddingTop: headerHeight,
+            paddingBottom:
+              insets.bottom +
+              LAYOUT.CONTENT_SPACING.BOTTOM +
+              LAYOUT.BOTTOM_BAR.HEIGHT +
+              LAYOUT.SPACING.MEDIUM,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Stats Dashboard */}
@@ -243,7 +255,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   emptyStateContainer: {
