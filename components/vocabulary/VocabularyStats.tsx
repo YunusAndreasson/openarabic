@@ -129,8 +129,8 @@ const styles = StyleSheet.create({
     width: CIRCLE_SIZE,
   },
   circleBorder: {
-    borderWidth: 2,
-    borderRadius: 9999,
+    borderWidth: LAYOUT.BORDER.WIDTH.THICK,
+    borderRadius: CIRCLE_SIZE / 2,
     padding: 4,
     alignItems: 'center',
     justifyContent: 'center',

@@ -37,7 +37,7 @@ const SHADOW_STYLES = Platform.select({
 const styles = StyleSheet.create({
   toast: {
     alignSelf: 'center',
-    borderRadius: 50,
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
     minWidth: 120,
     overflow: 'hidden',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM + 8,

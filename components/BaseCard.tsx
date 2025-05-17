@@ -68,7 +68,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
       return {
         shadow: calculatedShadow,
         border: {
-          borderWidth: isDarkMode ? 1.5 : 0.5, // Increased dark mode border for better definition
+          borderWidth: isDarkMode ? LAYOUT.BORDER.WIDTH.THICK : LAYOUT.BORDER.WIDTH.THIN, // Increased dark mode border for better definition
           borderColor: isDarkMode ? colors.cardBorder : colors.cardBorder, // Use cardBorder in both modes
           borderStyle: 'solid',
         },
