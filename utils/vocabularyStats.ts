@@ -10,21 +10,13 @@ export interface WeeklyProgressData {
   wordsLearned: number;
 }
 
-interface ReviewLog {
-  reviewed_at: string;
-  grade: number;
-  root_id: number;
-}
-
 /**
- * Calculate weekly progress data from study words and review logs
+ * Calculate weekly progress data from study words
  * @param studyWords Array of study words
- * @param reviewLogs Array of review logs
  * @returns Array of weekly progress data points
  */
 export function calculateWeeklyProgressData(
-  studyWords: StudyWord[] = [],
-  reviewLogs: ReviewLog[] = []
+  studyWords: StudyWord[] = []
 ): WeeklyProgressData[] {
   // Get today's date and create a map of dates
   const today = new Date();

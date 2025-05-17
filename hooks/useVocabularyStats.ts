@@ -1,7 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import type { StudyWord, VocabularyStats, WeeklyProgressData } from '../types/vocabulary.types';
 import { calculateWeeklyProgressData } from '../utils/vocabularyStats';
 
@@ -107,13 +105,6 @@ export function useVocabularyStats(
 } {
   const userId = studyWords[0]?.user_id;
 
-  // Fetch review logs for weekly progress
-  const { data: reviewLogs = [] } = useQuery({
-    queryKey: ['review-logs', userId],
-    queryFn: () => (userId ? studyWordsFSRSService.getReviewLogs(userId) : Promise.resolve([])),
-    enabled: !!userId,
-  });
-
   // Filter valid study words with error protection
   const validStudyWords = useMemo(() => {
     if (!Array.isArray(studyWords)) return [] as StudyWord[];
@@ -158,10 +149,10 @@ export function useVocabularyStats(
     [baseStats, advancedStats]
   );
 
-  // Calculate weekly progress data with memoization using review logs
+  // Calculate weekly progress data with memoization
   const weeklyProgressData = useMemo<WeeklyProgressData[]>(() => {
-    return calculateWeeklyProgressData(validStudyWords, reviewLogs);
-  }, [validStudyWords, reviewLogs]);
+    return calculateWeeklyProgressData(validStudyWords);
+  }, [validStudyWords]);
 
   return {
     stats,
