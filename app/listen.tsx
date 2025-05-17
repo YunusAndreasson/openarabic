@@ -5,7 +5,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useListen } from '@/hooks/useListen';
 import { ListenHeader, CompletionScreen } from '@/components/listen';
 import { WordDisplay } from '@/components/review';
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: 364,
+    minHeight: WORD_AREA_MIN_HEIGHT,
   },
   footer: {
     width: '100%',
