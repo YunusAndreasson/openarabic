@@ -25,6 +25,12 @@ interface GetFSRSWordsOptions {
   limit?: number;
   sortByDifficultyAndStability?: boolean;
   reviewedOnly?: boolean;
+  /**
+   * Server-side filter for vocabulary category.
+   * - "mastered": fsrs_state = 3 and fsrs_stability >= 30
+   * - "learning": fsrs_state in (0,1,2) or (fsrs_state = 3 and fsrs_stability < 30)
+   */
+  category?: 'mastered' | 'learning';
 }
 
 // Query key constants for consistent key usage
@@ -92,6 +98,17 @@ export const studyWordsFSRSService = {
     if (options.onlyDue) {
       const now = new Date().toISOString();
       filteredQuery = filteredQuery.lte('fsrs_due', now);
+    }
+
+    // Apply category filters server-side to reduce payload
+    if (options.category === 'mastered') {
+      filteredQuery = filteredQuery
+        .eq('fsrs_state', 3)
+        .gte('fsrs_stability', 30);
+    } else if (options.category === 'learning') {
+      filteredQuery = filteredQuery.or(
+        'fsrs_state.in.(0,1,2),and(fsrs_state.eq.3,fsrs_stability.lt.30)'
+      );
     }
 
     if (options.sortByDifficultyAndStability) {
