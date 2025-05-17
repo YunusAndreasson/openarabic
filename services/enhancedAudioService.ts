@@ -47,19 +47,19 @@ export const enhancedAudioService = {
       // Fetch user's reading list
       const readingList = await readingListService.getReadingList(userId);
 
-      // Create a flat array of all tracks from all articles
+      // Build tracks directly from the reading list items
       const allTracks: EnhancedAudioTrack[] = [];
 
-      // Process each reading list item
       for (const item of readingList) {
-        // Skip items without articles
-        if (!item.articles) continue;
+        const article = item.articles;
+        if (!article?.audio_url) continue;
 
-        // Get track for this article
-        const articleTrack = await this.generateEnhancedAudioTrack(item.article_id);
-        if (articleTrack) {
-          allTracks.push(articleTrack);
-        }
+        allTracks.push({
+          id: generateTrackId(item.article_id),
+          articleId: item.article_id,
+          audioUrl: article.audio_url,
+          title: article.title,
+        });
       }
 
       return allTracks;
