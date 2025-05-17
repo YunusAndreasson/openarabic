@@ -3,46 +3,6 @@ import type { ViewStyle } from 'react-native';
 import type { BaseAnimatedStyleProps } from './base.types';
 
 /**
- * Props for the Loader component
- */
-export interface LoaderProps extends BaseAnimatedStyleProps {
-  /** Size of the loader - small, large, medium or a specific number */
-  size?: number | 'small' | 'medium' | 'large';
-  /** Color of the loader (defaults to text color) */
-  color?: string;
-}
-
-/**
- * Props for a full-screen loading component
- */
-export interface LoadingScreenProps {
-  /** Color of the loader (defaults to tint color) */
-  color?: string;
-  /** Optional style to customize the screen container */
-  style?: ViewStyle;
-}
-
-/**
- * Props for the LoadingContainer component
- */
-export interface LoadingContainerProps extends BaseAnimatedStyleProps {
-  /** Size of the loader - small, medium or large */
-  size?: 'small' | 'medium' | 'large';
-  /** Color of the loader */
-  color?: string;
-  /** Additional styles for the container */
-  containerStyle?: ViewStyle;
-}
-
-/**
- * Props for the app-wide loader component
- */
-export interface AppLoaderProps {
-  /** Color of the loader (defaults to tint color) */
-  color?: string;
-}
-
-/**
  * Props for the ProgressBar component
  */
 export interface ProgressBarProps extends BaseAnimatedStyleProps {
