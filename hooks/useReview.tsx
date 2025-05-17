@@ -406,6 +406,14 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
           // Update UI with meaning if needed
           stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
 
+          // Play English audio for vague or unknown responses
+          if (
+            (confidence === 'vague' || confidence === 'unknown') &&
+            currentWord?.root?.audio_url_en
+          ) {
+            playAudio(currentWord.root.audio_url_en).catch(handleError);
+          }
+
           // Track vague responses for future struggle detection
           if (confidence === 'vague') {
             timeRefs.current.lastVagueTime = Date.now();
@@ -436,6 +444,8 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       checkIsStruggling,
       displayMeaning,
       processFeedback,
+      currentWord?.root?.audio_url_en,
+      playAudio,
     ]
   );
 
