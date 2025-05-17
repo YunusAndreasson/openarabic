@@ -119,15 +119,23 @@ export default function ArticlesScreen(): JSX.Element {
 
   const beginnerArticles = useMemo(() => getBeginnerArticles(filteredArticles), [filteredArticles]);
 
+  const articleMap = useMemo(() => {
+    const map = new Map<number, Article>();
+    articlesData.forEach(article => {
+      map.set(article.id, article);
+    });
+    return map;
+  }, [articlesData]);
+
   const continueReadingArticles = useMemo(() => {
     const sortedIds = Object.entries(lastOpenedArticles)
       .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
       .map(([id]) => Number(id));
     const articles = sortedIds
-      .map(id => articlesData.find(a => a.id === id))
+      .map(id => articleMap.get(id))
       .filter(Boolean) as Article[];
     return articles.slice(0, 5);
-  }, [lastOpenedArticles, articlesData]);
+  }, [lastOpenedArticles, articleMap]);
 
   const isFetching = isArticlesFetching;
 
@@ -249,15 +257,29 @@ export default function ArticlesScreen(): JSX.Element {
     [articlesData]
   );
 
+  const authorIdsWithArticles = useMemo(() => {
+    const ids = new Set<number>();
+    articlesData.forEach(article => {
+      if (article.author?.id) ids.add(article.author.id);
+    });
+    return ids;
+  }, [articlesData]);
+
+  const categoryIdsWithArticles = useMemo(() => {
+    const ids = new Set<number>();
+    articlesData.forEach(article => {
+      if (article.category?.id) ids.add(article.category.id);
+    });
+    return ids;
+  }, [articlesData]);
+
   const authorsWithArticles = useMemo(() => {
-    return authors.filter(author => articlesData.some(article => article.author?.id === author.id));
-  }, [authors, articlesData]);
+    return authors.filter(author => authorIdsWithArticles.has(author.id));
+  }, [authors, authorIdsWithArticles]);
 
   const categoriesWithArticles = useMemo(() => {
-    return categoriesData.filter(category =>
-      articlesData.some(article => article.category?.id === category.id)
-    );
-  }, [categoriesData, articlesData]);
+    return categoriesData.filter(category => categoryIdsWithArticles.has(category.id));
+  }, [categoriesData, categoryIdsWithArticles]);
 
   const latestTextsSectionComponent = useMemo(
     () =>
@@ -334,12 +356,15 @@ export default function ArticlesScreen(): JSX.Element {
   useScreenFocusRefresh(queryClient, 'articles', undefined, 300000, true, false);
   useScreenFocusRefresh(queryClient, 'categories', undefined, 600000, true, false);
 
-  const getContentContainerStyle = (colors: { background: string }) => ({
-    ...styles.listContentContainer,
-    backgroundColor: colors.background,
-    paddingTop: headerHeight,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  });
+  const contentContainerStyle = useMemo(
+    () => ({
+      ...styles.listContentContainer,
+      backgroundColor: colors.background,
+      paddingTop: headerHeight,
+      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    }),
+    [colors.background, headerHeight]
+  );
 
   if (articlesError && !isRefreshing && !isDataCached) {
     return (
@@ -366,7 +391,7 @@ export default function ArticlesScreen(): JSX.Element {
         onArticlePress={handleArticlePress}
         ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
         ListEmptyComponent={EmptyStateComponent}
-        contentContainerStyle={getContentContainerStyle(colors)}
+        contentContainerStyle={contentContainerStyle}
         hideMainList={isArticlesLoading && !isDataCached}
         hideWhileRefreshing={false}
         progressViewOffset={headerHeight + LAYOUT.SPACING.XXLARGE}
