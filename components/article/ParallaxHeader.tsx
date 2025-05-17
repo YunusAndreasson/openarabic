@@ -291,6 +291,8 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
           style={styles.image}
           contentFit="cover"
           priority="high"
+          blurRadius={0}
+          allowDownscaling={false}
           placeholder={
             article.placeholder || {
               thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,

@@ -236,7 +236,8 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             skipTransition={true}
             cachePolicy="memory-disk"
             alt={`Image for ${props.title}`}
-            blurRadius={Platform.OS === 'ios' ? 1 : 0}
+            blurRadius={0}
+            allowDownscaling={false}
             priority="high"
             placeholder={
               props.placeholder || {
@@ -321,7 +322,8 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             style={styles.image}
             contentFit="cover"
             skipTransition={true}
-            blurRadius={Platform.OS === 'ios' ? 1 : 0}
+            blurRadius={0}
+            allowDownscaling={false}
             priority="high"
             placeholder={
               props.article.placeholder || {
