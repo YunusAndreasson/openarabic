@@ -1,30 +1,6 @@
 import type { Article } from '../types/articles.types';
 import type { StudyWord } from '../types/vocabulary.types';
 
-/**
- * Filters articles by author ID
- * @param articles - The articles to filter
- * @param authorId - The author ID to filter by
- * @returns Filtered articles by author ID
- */
-export function filterArticlesByAuthor(articles: Article[], authorId: number | null): Article[] {
-  if (authorId === null) return articles;
-  return articles.filter(article => article.author_id === authorId);
-}
-
-/**
- * Filters articles by category ID
- * @param articles - The articles to filter
- * @param categoryId - The category ID to filter by
- * @returns Filtered articles by category ID
- */
-export function filterArticlesByCategory(
-  articles: Article[],
-  categoryId: number | null
-): Article[] {
-  if (categoryId === null) return articles;
-  return articles.filter(article => article.category_id === categoryId);
-}
 
 /**
  * Filters articles by author or category ID
