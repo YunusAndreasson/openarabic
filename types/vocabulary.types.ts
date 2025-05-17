@@ -37,12 +37,12 @@ export interface StudyWord {
   // FSRS fields
   fsrs_due: string | null;
   fsrs_stability: number | null;
-  fsrs_difficulty: number;
-  fsrs_elapsed_days: number;
-  fsrs_scheduled_days: number;
-  fsrs_reps: number;
-  fsrs_lapses: number;
-  fsrs_state: number;
+  fsrs_difficulty: number | null;
+  fsrs_elapsed_days: number | null;
+  fsrs_scheduled_days: number | null;
+  fsrs_reps: number | null;
+  fsrs_lapses: number | null;
+  fsrs_state: number | null;
   fsrs_last_review: string | null;
 
   // Additional fields
