@@ -1,8 +1,8 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import React, { useEffect, useState, useCallback, useMemo, memo, JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useEffect, useState, useCallback, useMemo, useRef, JSX } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
@@ -110,6 +110,7 @@ export default function ArticlesScreen(): JSX.Element {
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { lastOpenedArticles = {} } = useAppSelectorMemo(state => state.readingList);
 
@@ -133,13 +134,19 @@ export default function ArticlesScreen(): JSX.Element {
     const sortedIds = Object.entries(lastOpenedArticles)
       .sort((a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime())
       .map(([id]) => Number(id));
-    const articles = sortedIds
-      .map(id => articleMap.get(id))
-      .filter(Boolean) as Article[];
+    const articles = sortedIds.map(id => articleMap.get(id)).filter(Boolean) as Article[];
     return articles.slice(0, 5);
   }, [lastOpenedArticles, articleMap]);
 
   const isFetching = isArticlesFetching;
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     if (isFetching) return;
@@ -160,7 +167,7 @@ export default function ArticlesScreen(): JSX.Element {
         },
       });
     } finally {
-      setTimeout(() => {
+      refreshTimeoutRef.current = setTimeout(() => {
         setIsRefreshing(false);
       }, 300);
     }
@@ -372,7 +379,9 @@ export default function ArticlesScreen(): JSX.Element {
   if (articlesError && !isRefreshing && !isDataCached) {
     return (
       <ErrorState
-        message={articlesError.message}
+        message={
+          articlesError instanceof Error ? articlesError.message : 'An unexpected error occurred'
+        }
         onRetry={() => {
           handleRefresh();
         }}
