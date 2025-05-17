@@ -2,8 +2,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, memo } from 'react';
-import { Alert, StyleSheet, View, ActivityIndicator } from 'react-native';
+import React, { useCallback, memo } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
@@ -62,21 +62,6 @@ const SettingsScreen: React.FC = () => {
   // Simple loading state for session loading
   const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
 
-  // Show loading if settings aren't available yet
-  if (
-    !settings ||
-    typeof settings.fontScale !== 'number' ||
-    typeof settings.showEnglish !== 'boolean'
-  ) {
-    return (
-      <ThemedView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color={colors.tint} />
-        </View>
-      </ThemedView>
-    );
-  }
-
   // Fade animations for UI elements that depend on Redux store data
   const { animatedStyle: themeToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
@@ -98,24 +83,6 @@ const SettingsScreen: React.FC = () => {
     autoStart: true,
     delay: 200,
   });
-
-  // Empty style object for animated views
-  const emptyStyle = {};
-
-  // Add effect to ensure animations start properly after settings are loaded
-  useEffect(() => {
-    if (true && !isLoadingState) {
-      // Small delay to ensure animations run smoothly
-      const timer = setTimeout(() => {
-        // Re-trigger animations if needed
-        if (themeToggleFade && englishToggleFade && sliderFade) {
-          // Animation will restart based on opacity hooks
-        }
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-    return undefined; // Add return for when condition is not met
-  }, [isLoadingState, themeToggleFade, englishToggleFade, sliderFade]);
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
@@ -169,7 +136,7 @@ const SettingsScreen: React.FC = () => {
       ],
       { cancelable: true }
     );
-  }, [startLoading, stopLoading]);
+  }, [analytics, supabase, router, startLoading, stopLoading]);
 
   // Simple handlers
   const handleSupport = () => {
@@ -214,14 +181,14 @@ const SettingsScreen: React.FC = () => {
           >
             <View style={styles.settingRow}>
               <SettingLabel icon="moon" text="Dark Mode" />
-              <Animated.View style={[emptyStyle, themeToggleFade]}>
+              <Animated.View style={themeToggleFade}>
                 <ThemeToggle />
               </Animated.View>
             </View>
             <Divider />
             <View style={styles.settingRow}>
               <SettingLabel icon="language" text="English Translation" />
-              <Animated.View style={[emptyStyle, englishToggleFade]}>
+              <Animated.View style={englishToggleFade}>
                 <Toggle
                   value={settings.showEnglish}
                   onValueChange={value => dispatch(setShowEnglish(value))}
@@ -241,7 +208,7 @@ const SettingsScreen: React.FC = () => {
                   {Math.round(settings.fontScale * 100)}%
                 </ThemedText>
                 <View style={styles.sliderWrapper}>
-                  <Animated.View style={[emptyStyle, sliderFade]}>
+                  <Animated.View style={sliderFade}>
                     <CustomSlider
                       value={settings.fontScale}
                       onValueChange={handleFontScaleChange}
@@ -404,7 +371,7 @@ const styles = StyleSheet.create({
   commonDivider: {
     height: LAYOUT.BORDER.WIDTH.THIN,
     opacity: LAYOUT.OPACITY.MEDIUM,
-    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
+    width: '100%',
   },
   connectContainer: {
     overflow: 'hidden',
@@ -439,7 +406,7 @@ const styles = StyleSheet.create({
   previewContent: {
     position: 'absolute',
     top: 0,
-    width: `${LAYOUT.WIDTH_RATIOS.FULL * 100}%`,
+    width: '100%',
   },
   previewWrapper: {
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
@@ -482,7 +449,7 @@ const styles = StyleSheet.create({
   sliderContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    width: `${LAYOUT.WIDTH_RATIOS.HALF * 100}%`,
+    width: '50%',
   },
   sliderWrapper: {
     flex: 1,
@@ -496,11 +463,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
 
