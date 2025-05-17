@@ -31,45 +31,6 @@ def wrap_in_arabic_ssml(text: str) -> str:
     """
     return f'<speak><lang xml:lang="ar">{text}</lang></speak>'
 
-
-def pre_tokenize_arabic(text: str) -> List[str]:
-    """
-    Pre-tokenize Arabic text in a consistent way that matches how ElevenLabs processes it.
-    This ensures that word boundaries are handled similarly in both systems.
-
-    Args:
-        text: The Arabic text to tokenize
-
-    Returns:
-        List of tokens (words)
-    """
-    tokens = []
-
-    # Split on whitespace and punctuation but keep them as separate tokens
-    segments = re.split(r'([.,;:!?"\'()[\]{}،؟»«\s]+)', text)
-
-    # Process each segment
-    for segment in segments:
-        # Skip empty segments
-        if not segment.strip():
-            continue
-
-        # If it's punctuation or whitespace, add it as is (or skip)
-        if all(c in " .,;:!?\"'()[]{}،؟»«" for c in segment):
-            continue
-
-        # Handle common Arabic prefixes that should stay attached
-        # This matches ElevenLabs' tendency to keep و, ب, ل, etc. attached to words
-        if segment.startswith("و") and len(segment) > 1:
-            # Keep و attached to the following word
-            tokens.append(segment)
-        else:
-            # Check if other prefixes should be handled
-            tokens.append(segment)
-
-    return tokens
-
-
 def clean_word_for_matching(word: str) -> str:
     """
     Clean and normalize a word for better timing matching.
