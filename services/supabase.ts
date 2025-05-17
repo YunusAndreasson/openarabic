@@ -23,24 +23,32 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
   },
 });
 
-// Simple AppState handler to ensure auth is maintained
-AppState.addEventListener('change', async state => {
-  if (state === 'active') {
-    try {
-      // Initialize auth to ensure storage is loaded
-      await supabase.auth.initialize();
-      // Ensure auto-refresh is active
-      supabase.auth.startAutoRefresh();
-    } catch (err) {
-      handleError(err instanceof Error ? err : new Error(String(err)), {
-        toastMessage: 'Failed to initialize session',
-        analyticsEventName: 'Auth_Init_Error',
-        sentrySeverity: 'warning',
-      });
+/**
+ * Registers an AppState listener to keep the auth session active.
+ *
+ * @returns A cleanup function that removes the listener.
+ */
+export function setupSupabaseAppStateListener(): () => void {
+  const subscription = AppState.addEventListener('change', async state => {
+    if (state === 'active') {
+      try {
+        // Initialize auth to ensure storage is loaded
+        await supabase.auth.initialize();
+        // Ensure auto-refresh is active
+        supabase.auth.startAutoRefresh();
+      } catch (err) {
+        handleError(err instanceof Error ? err : new Error(String(err)), {
+          toastMessage: 'Failed to initialize session',
+          analyticsEventName: 'Auth_Init_Error',
+          sentrySeverity: 'warning',
+        });
+      }
     }
-  }
-  // Don't stop auto-refresh in background to maintain session
-});
+    // Don't stop auto-refresh in background to maintain session
+  });
+
+  return () => subscription.remove();
+}
 
 /**
  * Helper function to attempt session refresh and validation

@@ -4,7 +4,7 @@ import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
-import { supabase } from '@/services/supabase';
+import { supabase, setupSupabaseAppStateListener } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -48,6 +48,7 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
 
   // Initialize auth session on component mount to ensure token refresh
   useEffect(() => {
+    const removeAppStateListener = setupSupabaseAppStateListener();
     const initializeAuth = async () => {
       try {
         await supabase.auth.initialize();
@@ -62,6 +63,7 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
     initializeAuth();
 
     return () => {
+      removeAppStateListener();
       // Don't stop autoRefresh on unmount to keep session alive
     };
   }, []);

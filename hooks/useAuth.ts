@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
-import { supabase } from '../services/supabase';
+import { supabase, setupSupabaseAppStateListener } from '../services/supabase';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
@@ -119,6 +119,7 @@ export function useAuth(): AuthResult {
   }, [fetchSession, refreshAttempts]);
 
   useEffect(() => {
+    const removeSupabaseListener = setupSupabaseAppStateListener();
     let isMounted = true;
     let appStateSubscription: ReturnType<typeof AppState.addEventListener>;
     let authSubscriptionUnsubscribe: () => void;
@@ -203,6 +204,7 @@ export function useAuth(): AuthResult {
       appStateSubscription.remove();
       authSubscriptionUnsubscribe();
       unsubscribeNetInfo();
+      removeSupabaseListener();
     };
   }, [fetchSession, refreshSession]);
 
