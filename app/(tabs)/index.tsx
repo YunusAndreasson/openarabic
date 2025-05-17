@@ -18,6 +18,7 @@ import { useScreenFocusRefresh } from '@/hooks';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useStrugglingWords } from '@/hooks/useStrugglingWords';
+import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
@@ -53,6 +54,7 @@ export default function ArticlesScreen(): JSX.Element {
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { prefetchArticle } = useAppPreloader();
 
   const { hasEnoughArticles = false, dueWordRootIds = new Set() } = useArticlesByDueWords(
     user?.id,
@@ -159,9 +161,10 @@ export default function ArticlesScreen(): JSX.Element {
   const handleArticlePress = useCallback(
     (article: Article) => {
       dispatch(updateLastOpenedArticle(article.id));
+      prefetchArticle(article.id);
       router.push(`/article/${article.id}`);
     },
-    [dispatch]
+    [dispatch, prefetchArticle]
   );
 
   const handleSelectAuthor = useCallback((authorId: number) => {

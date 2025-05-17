@@ -20,6 +20,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
+import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
@@ -116,12 +117,14 @@ const BookmarkListItem = memo(
     duration,
     isActive,
     dueWordCount = 0,
+    onPress,
   }: {
     item: ReadingListItem;
     progress: number;
     duration: number;
     isActive: boolean;
     dueWordCount?: number;
+    onPress: (id: number) => void;
   }) => {
     const colors = useColors();
     const playbackProgress = duration > 0 ? progress / duration : 0;
@@ -177,7 +180,7 @@ const BookmarkListItem = memo(
         author={item.articles?.author?.name || 'Unknown Author'}
         leftMeta={leftMetaContent}
         meta={metaContent}
-        onPress={() => router.push(`/article/${item.article_id}`)}
+        onPress={() => onPress(item.article_id)}
         active={isActive}
       >
         {isActive ? (
@@ -221,6 +224,7 @@ export default function BookmarksScreen(): JSX.Element {
   const colors = useColors();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { prefetchArticle } = useAppPreloader();
   const flashListRef = useRef<FlashList<ReadingListItem>>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -506,6 +510,14 @@ export default function BookmarksScreen(): JSX.Element {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
+  const handleArticlePress = useCallback(
+    (articleId: number) => {
+      prefetchArticle(articleId);
+      router.push(`/article/${articleId}`);
+    },
+    [prefetchArticle]
+  );
+
   // Show sorting note only when we have due words
   const hasDueWords = dueWordRootIds?.size > 0;
 
@@ -567,6 +579,7 @@ export default function BookmarksScreen(): JSX.Element {
                   audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
                 }
                 dueWordCount={dueWordCount}
+                onPress={handleArticlePress}
               />
             );
           }}
