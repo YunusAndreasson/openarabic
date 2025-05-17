@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
-import AnimatedItem from '@/components/AnimatedItem';
+import Section from '@/components/Section';
 import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
@@ -43,29 +43,29 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({ onClose }) => {
       ]}
     >
       <View style={styles.contentContainer}>
-        <AnimatedItem delay={100}>
+        <Section delay={100} animated>
           <View style={styles.iconContainer}>
             <Ionicons name="checkmark-circle" size={100} color={colors.tint} />
           </View>
-        </AnimatedItem>
+        </Section>
 
         <View style={styles.textContainer}>
-          <AnimatedItem delay={300}>
+          <Section delay={300} animated>
             <ThemedText type="heading2" variant="primary" style={styles.titleText}>
               Great job!
             </ThemedText>
-          </AnimatedItem>
+          </Section>
 
-          <AnimatedItem delay={500}>
+          <Section delay={500} animated>
             <ThemedText type="heading3" variant="primary" style={styles.subtitleText}>
               You completed your review session.
             </ThemedText>
-          </AnimatedItem>
+          </Section>
         </View>
 
-        <AnimatedItem delay={700}>
+        <Section delay={700} animated>
           <ThemedButton title="Done" onPress={onClose} style={styles.doneButton} />
-        </AnimatedItem>
+        </Section>
       </View>
     </View>
   );

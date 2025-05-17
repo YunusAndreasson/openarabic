@@ -18,7 +18,6 @@ export { default as Pill } from './Pill';
 export { Toggle } from './Toggle';
 export { CustomSlider } from './Slider';
 export { ThemeToggle } from './ThemeToggle';
-export { default as AnimatedItem } from './AnimatedItem';
 export { EnhancedImage } from './EnhancedImage';
 export { default as Auth } from './Auth';
 
