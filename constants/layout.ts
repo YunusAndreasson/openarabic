@@ -266,7 +266,7 @@ export const getArabicTextStyle = (
   additionalStyles: TextStyle = {}
 ): TextStyle => {
   return {
-    fontFamily: 'NotoNaskhArabic',
+    fontFamily: 'Madina',
     fontSize,
     lineHeight: Math.round(fontSize * 1.7),
     writingDirection: 'rtl',
