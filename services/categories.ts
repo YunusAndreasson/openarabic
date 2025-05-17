@@ -1,9 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../constants/Supabase';
-import type { Database, Tables } from '../types/database.types';
-
-const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY);
+import type { Tables } from '../types/database.types';
+import { supabase } from './supabase';
 
 export const categoriesService = {
   async getCategories(): Promise<Tables<'categories'>[]> {
