@@ -55,7 +55,7 @@ export interface EnhancedPlayerActions {
   stopPlayback: () => Promise<boolean>;
   playNextTrack: () => Promise<boolean>;
   isActiveArticle: (articleId: number) => boolean;
-  initializeQueue: (tracks: EnhancedAudioTrack[], startIndex?: number) => boolean;
+  initializeQueue: (tracks: EnhancedAudioTrack[]) => boolean;
   preloadTracks: () => Promise<void>;
   playQueuedTrack: (index: number) => Promise<boolean>;
 }
@@ -359,7 +359,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   }, [updateExposedState, updateMetadata]);
 
   const initializeQueueLogic = useCallback(
-    (tracks: EnhancedAudioTrack[], _startIndex = 0): boolean => {
+    (tracks: EnhancedAudioTrack[]): boolean => {
       isPlayingRef.current = false;
       currentIndexRef.current = -1;
       audioQueueRef.current = tracks.map((track, index) => ({ track, index, isPreloaded: false }));
@@ -408,7 +408,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       if (!tracks || tracks.length === 0) return false;
       await actionsRef.current.stopPlayback();
       currentPlaylistRef.current = tracks;
-      actionsRef.current.initializeQueue(tracks, startIndex);
+      actionsRef.current.initializeQueue(tracks);
       isPlayingRef.current = true;
       updateExposedState();
       actionsRef.current.preloadTracks();
@@ -423,7 +423,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       await actionsRef.current.stopPlayback();
       const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
       currentPlaylistRef.current = shuffledTracks;
-      actionsRef.current.initializeQueue(shuffledTracks, 0);
+      actionsRef.current.initializeQueue(shuffledTracks);
       isPlayingRef.current = true;
       updateExposedState();
       actionsRef.current.preloadTracks();
