@@ -64,7 +64,7 @@ export function useAuth(): AuthResult {
     try {
       // Check network connectivity before attempting refresh
       const netState = await NetInfo.fetch();
-        if (!netState.isConnected) {
+      if (!netState.isConnected) {
         const cachedSession = await fetchSession();
         if (cachedSession) {
           setSession(cachedSession);
@@ -121,7 +121,7 @@ export function useAuth(): AuthResult {
   useEffect(() => {
     let isMounted = true;
     let appStateSubscription: ReturnType<typeof AppState.addEventListener>;
-    let authSubscriptionUnsubscribe: () => void;
+    let authSubscriptionUnsubscribe: () => void = () => {};
 
     const initSession = async () => {
       if (!isMounted) return;
@@ -201,7 +201,9 @@ export function useAuth(): AuthResult {
       // Stop automatic refresh when the effect cleans up
       supabase.auth.stopAutoRefresh();
       appStateSubscription.remove();
-      authSubscriptionUnsubscribe();
+      if (authSubscriptionUnsubscribe) {
+        authSubscriptionUnsubscribe();
+      }
       unsubscribeNetInfo();
     };
   }, [fetchSession, refreshSession]);
