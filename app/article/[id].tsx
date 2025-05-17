@@ -178,6 +178,17 @@ export default function ArticleScreen(): JSX.Element {
     });
   }, [sortedSentences, sentenceWordsMap]);
 
+  const currentSentenceId = useMemo(() => {
+    if (
+      currentSentenceIndex !== null &&
+      sortedSentences &&
+      sortedSentences[currentSentenceIndex]
+    ) {
+      return sortedSentences[currentSentenceIndex].id;
+    }
+    return null;
+  }, [currentSentenceIndex, sortedSentences]);
+
   const articleContentRef = useRef<ArticleContentRef>(null);
 
   const { handleToggleReadingList, handleRootPress } = useArticleMutations(
@@ -477,7 +488,7 @@ export default function ArticleScreen(): JSX.Element {
   const renderSentenceItem = useCallback(
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
-      const isCurrentSentence = props.item.id === currentSentenceIndex;
+      const isCurrentSentence = props.item.id === currentSentenceId;
       return (
         <ArticleSentence
           key={props.item.id}
@@ -496,7 +507,7 @@ export default function ArticleScreen(): JSX.Element {
           }}
           colors={colors}
           containerStyle={styles.transparentBackground}
-          currentPlayingSentenceId={isCurrentSentence ? currentSentenceIndex : null}
+          currentPlayingSentenceId={isCurrentSentence ? currentSentenceId : null}
           currentPlayingWordId={isCurrentSentence ? currentWordId : null}
           currentPlayingPosition={isCurrentSentence ? currentPosition : null}
         />
@@ -508,7 +519,7 @@ export default function ArticleScreen(): JSX.Element {
       settings,
       colors,
       styles.transparentBackground,
-      currentSentenceIndex,
+      currentSentenceId,
       currentWordId,
       currentPosition,
     ]
@@ -677,7 +688,7 @@ export default function ArticleScreen(): JSX.Element {
             otherArticles={otherArticles}
             otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
-            currentPlayingSentenceId={currentSentenceIndex}
+            currentPlayingSentenceId={currentSentenceId}
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }
