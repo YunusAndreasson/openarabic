@@ -53,7 +53,7 @@ const DETAIL_VIEW_COLUMNS = `
 export const articlesService = {
   async getArticles(categoryId?: number, authorId?: number): Promise<Article[]> {
     try {
-      let query = supabase.from('articles').select(LIST_VIEW_COLUMNS);
+      let query = supabase.from<'articles'>('articles').select(LIST_VIEW_COLUMNS);
 
       if (categoryId) query = query.eq('category_id', categoryId);
       if (authorId) query = query.eq('author_id', authorId);
@@ -87,7 +87,7 @@ export const articlesService = {
   async getArticleById(id: number): Promise<Article> {
     try {
       const { data, error } = await supabase
-        .from('articles')
+        .from<'articles'>('articles')
         .select(DETAIL_VIEW_COLUMNS)
         .eq('id', id)
         .single();
@@ -122,7 +122,7 @@ export const articlesService = {
   async getRelatedArticles(articleId: number): Promise<Article[]> {
     try {
       const { data: article, error: articleError } = await supabase
-        .from('articles')
+        .from<'articles'>('articles')
         .select('author_id')
         .eq('id', articleId)
         .single();
@@ -138,7 +138,7 @@ export const articlesService = {
       if (!article) return [];
 
       const { data, error } = await supabase
-        .from('articles')
+        .from<'articles'>('articles')
         .select(LIST_VIEW_COLUMNS)
         .eq('author_id', article.author_id)
         .neq('id', articleId)
@@ -170,7 +170,7 @@ export const articlesService = {
   async getOtherCategoryArticles(categoryId: number, articleId?: number): Promise<Article[]> {
     try {
       let query = supabase
-        .from('articles')
+        .from<'articles'>('articles')
         .select(LIST_VIEW_COLUMNS)
         .eq('category_id', categoryId)
         .order('created_at', { ascending: false })
@@ -208,7 +208,7 @@ export const articlesService = {
   async getCategoryArticles(categoryId: number, limit = 10): Promise<Article[]> {
     try {
       const { data, error } = await supabase
-        .from('articles')
+        .from<'articles'>('articles')
         .select('*')
         .eq('category_id', categoryId)
         .limit(limit);
@@ -232,7 +232,7 @@ export const articlesService = {
   async getArticlesWithSentencesAndWords(): Promise<Article[]> {
     try {
       const { data, error } = await supabase
-        .from('articles')
+        .from<'articles'>('articles')
         .select(DETAIL_VIEW_COLUMNS)
         .order('created_at', { ascending: false });
       if (error) {

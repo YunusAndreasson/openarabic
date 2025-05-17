@@ -41,7 +41,7 @@ export const studyWordsService = {
     }
 
     // Build the query step by step with proper typing
-    const query = supabase.from('study_words');
+    const query = supabase.from<'study_words'>('study_words');
 
     // Define the selection based on options
     const selectQuery = query.select(options.forStats ? CORE_FIELDS : FULL_FIELDS);
@@ -80,7 +80,7 @@ export const studyWordsService = {
 
     // First verify the word exists and belongs to the user
     const { data: existingWord, error: checkError } = await supabase
-      .from('study_words')
+      .from<'study_words'>('study_words')
       .select('*')
       .eq('root_id', rootId)
       .eq('user_id', session.user.id)
@@ -105,7 +105,7 @@ export const studyWordsService = {
     }, {});
 
     const { error: updateError } = await supabase
-      .from('study_words')
+      .from<'study_words'>('study_words')
       .update(validUpdate)
       .eq('root_id', rootId)
       .eq('user_id', session.user.id);
@@ -133,7 +133,7 @@ export const studyWordsService = {
 
     // Check if word is already being studied
     const { data: existingWord, error: checkError } = await supabase
-      .from('study_words')
+      .from<'study_words'>('study_words')
       .select('*')
       .eq('user_id', userId)
       .eq('root_id', rootId)
@@ -147,7 +147,7 @@ export const studyWordsService = {
     // If word exists, delete it
     if (existingWord) {
       const { error: deleteError } = await supabase
-        .from('study_words')
+        .from<'study_words'>('study_words')
         .delete()
         .eq('user_id', userId)
         .eq('root_id', rootId);
@@ -193,7 +193,9 @@ export const studyWordsService = {
       fsrs_last_review: null, // No reviews yet
     };
 
-    const { error: insertError } = await supabase.from('study_words').insert(newWord);
+    const { error: insertError } = await supabase
+      .from<'study_words'>('study_words')
+      .insert(newWord);
 
     if (insertError) {
       throw insertError;

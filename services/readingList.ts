@@ -65,7 +65,7 @@ export const readingListService = {
    */
   async getInProgressArticles(userId: string): Promise<Article[]> {
     const { data, error } = await supabase
-      .from('reading_list')
+      .from<'reading_list'>('reading_list')
       .select(articleJoinQuery)
       .match({ user_id: userId });
 
@@ -87,7 +87,7 @@ export const readingListService = {
   async addToReadingList(userId: string, articleId: number): Promise<void> {
     // First check if the article is already in the reading list
     const { data, error: checkError } = await supabase
-      .from('reading_list')
+      .from<'reading_list'>('reading_list')
       .select('article_id')
       .match({ user_id: userId, article_id: articleId })
       .single();
@@ -102,7 +102,7 @@ export const readingListService = {
       return;
     }
 
-    const { error } = await supabase.from('reading_list').insert({
+    const { error } = await supabase.from<'reading_list'>('reading_list').insert({
       user_id: userId,
       article_id: articleId,
       // The added_at field has a default value in the database (now())
@@ -122,7 +122,7 @@ export const readingListService = {
    */
   async removeFromReadingList(userId: string, articleId: number): Promise<void> {
     const { error } = await supabase
-      .from('reading_list')
+      .from<'reading_list'>('reading_list')
       .delete()
       .match({ user_id: userId, article_id: articleId });
 
@@ -140,7 +140,7 @@ export const readingListService = {
    */
   async isInReadingList(userId: string, articleId: number): Promise<boolean> {
     const { data, error } = await supabase
-      .from('reading_list')
+      .from<'reading_list'>('reading_list')
       .select('article_id')
       .match({ user_id: userId, article_id: articleId })
       .single();
@@ -161,7 +161,7 @@ export const readingListService = {
    */
   async getReadingList(userId: string): Promise<ReadingListItem[]> {
     const { data, error } = await supabase
-      .from('reading_list')
+      .from<'reading_list'>('reading_list')
       .select(
         `
         *,
