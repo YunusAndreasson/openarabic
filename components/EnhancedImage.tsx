@@ -57,9 +57,7 @@ function EnhancedImageInternal({
   return (
     <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
       {/* Debug: Uncomment to log image source and style */}
-      {/*
-      {console.log('EnhancedImage source:', source, 'style:', style)}
-      */}
+      {/* */}
       <Image
         source={source}
         style={styles.image}
