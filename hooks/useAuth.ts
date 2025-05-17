@@ -198,6 +198,8 @@ export function useAuth(): AuthResult {
 
     return () => {
       isMounted = false;
+      // Stop automatic refresh when the effect cleans up
+      supabase.auth.stopAutoRefresh();
       appStateSubscription.remove();
       authSubscriptionUnsubscribe();
       unsubscribeNetInfo();
