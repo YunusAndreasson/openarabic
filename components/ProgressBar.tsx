@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect, useRef, memo } from 'react';
 import type { ViewStyle, StyleProp } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { cancelAnimation } from 'react-native-reanimated';
+import Animated, { cancelAnimation, useAnimatedProps } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -127,23 +127,28 @@ function ProgressBarComponent({
     [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
   );
 
-  // Convert back to percentage for accessibility
-  const accessibilityProgressValue = intProgress / 100;
-
-  return (
-    <View
-      style={styles.container as StyleProp<ViewStyle>}
-      accessibilityRole="progressbar"
-      accessibilityValue={{
+  // Use animated props for accessibility instead of accessing shared value directly
+  const animatedProps = useAnimatedProps(() => {
+    const accessibilityProgressValue = animatedProgress.value / 100;
+    return {
+      accessibilityValue: {
         min: 0,
         max: 100,
-        now: Math.round(accessibilityProgressValue), // Use integer for now value
-      }}
+        now: Math.round(accessibilityProgressValue),
+      },
+    };
+  });
+
+  return (
+    <Animated.View
+      style={styles.container as StyleProp<ViewStyle>}
+      accessibilityRole="progressbar"
+      animatedProps={animatedProps}
     >
       <View style={styles.fillContainer}>
         <Animated.View style={styles.fill} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 

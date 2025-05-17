@@ -18,8 +18,8 @@ export { CustomSlider } from './Slider';
 export { ThemeToggle } from './ThemeToggle';
 export { EnhancedImage } from './EnhancedImage';
 export { default as Auth } from './Auth';
+export { TimeAgo, DifficultyIndicator } from './index/ArticleHelpers';
 
-// Re-export from subdirectories
-export * from './article';
+// Re-export from subdirectories (except article to avoid circular dependency)
 export * from './review';
 export * from './vocabulary';

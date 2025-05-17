@@ -1,5 +1,6 @@
 import React, { useCallback, memo } from 'react';
 import { StyleSheet } from 'react-native';
+import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -7,6 +8,7 @@ import Animated, {
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { SCREEN_WIDTH, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 
@@ -44,6 +46,7 @@ interface ReviewCardProps {
   isUpdating: boolean;
   isTransitioning: boolean;
   opacity: Animated.SharedValue<number>;
+  opacityStyle: AnimatedStyleProp<ViewStyle>;
 }
 
 const ReviewCard = memo(function ReviewCard({
@@ -55,6 +58,7 @@ const ReviewCard = memo(function ReviewCard({
   isUpdating,
   isTransitioning,
   opacity,
+  opacityStyle,
 }: ReviewCardProps) {
   // Animation values
   const translateX = useSharedValue(0);
@@ -138,15 +142,10 @@ const ReviewCard = memo(function ReviewCard({
     transform: [{ translateX: translateX.value }],
   }));
 
-  // Create animated style for the word container
-  const wordContainerStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
   return (
     <GestureDetector gesture={combinedGestures()}>
       <Animated.View style={[styles.swipeContainer, swipeContainerStyle]}>
-        <Animated.View style={[styles.wordContainer, wordContainerStyle]}>
+        <Animated.View style={[styles.wordContainer, opacityStyle]}>
           <WordDisplay word={word} fontSize={fontSize} />
         </Animated.View>
       </Animated.View>

@@ -61,6 +61,8 @@ async function tryRefreshSession(
   try {
     // Initialize auth to ensure storage is loaded
     await supabase.auth.initialize();
+    // Ensure auto-refresh is active
+    supabase.auth.startAutoRefresh();
     // Use Supabase's built-in refresh
     const { data, error } = await supabase.auth.refreshSession();
 

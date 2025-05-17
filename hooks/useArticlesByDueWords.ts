@@ -52,7 +52,8 @@ export function useArticlesByDueWords(
 
   // Process and sort articles by due words count
   const sortedArticles = useMemo(() => {
-    if (isLoadingDueWords || isLoadingArticles || !dueWords.length) return [];
+    if (isLoadingDueWords || (isLoadingArticles && dueWords.length > 0) || !dueWords.length)
+      return [];
     return getArticlesByDueWords(articlesData, dueWords, limit);
   }, [articlesData, dueWords, isLoadingDueWords, isLoadingArticles, limit]);
 
@@ -61,9 +62,21 @@ export function useArticlesByDueWords(
     return sortedArticles.length >= 3;
   }, [sortedArticles.length]);
 
+  // Fix loading state calculation to handle when there are no due words
+  const isLoading = useMemo(() => {
+    // We're loading if due words are loading
+    if (isLoadingDueWords) return true;
+
+    // If due words have loaded but are empty, we're not loading anymore
+    if (dueWords.length === 0) return false;
+
+    // Otherwise, we're loading if articles are loading
+    return isLoadingArticles;
+  }, [isLoadingDueWords, dueWords.length, isLoadingArticles]);
+
   return {
     articles: sortedArticles,
-    isLoading: isLoadingDueWords || isLoadingArticles,
+    isLoading,
     dueWordsCount: dueWords.length,
     hasEnoughArticles,
     dueWordRootIds,

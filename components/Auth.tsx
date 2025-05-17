@@ -51,13 +51,18 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
     const initializeAuth = async () => {
       try {
         await supabase.auth.initialize();
+        // Ensure auto-refresh is active to maintain the session
         supabase.auth.startAutoRefresh();
-        } catch (err) {
-          handleError(
-            err instanceof Error ? err : new Error('Failed to initialize auth')
-          );
+
+        // Try to refresh the token immediately to ensure we have a valid session
+        const { error } = await supabase.auth.refreshSession();
+        if (error && error.message !== 'No current session') {
+          console.warn('Session refresh error:', error.message);
         }
-      };
+      } catch (err) {
+        handleError(err instanceof Error ? err : new Error('Failed to initialize auth'));
+      }
+    };
 
     initializeAuth();
 
@@ -162,10 +167,10 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
         // Redirect to main app immediately
         router.replace('/(tabs)');
       }
-      } catch (err) {
-        Alert.alert('Error', 'Failed to sign in. Please try again.');
-        handleError(err as Error);
-      } finally {
+    } catch (err) {
+      Alert.alert('Error', 'Failed to sign in. Please try again.');
+      handleError(err as Error);
+    } finally {
       setLoading(false);
     }
   }, [email, password, validateEmail, validatePassword]);
@@ -209,10 +214,10 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
 
         Alert.alert('Success', 'Check your email for the confirmation link!');
       }
-      } catch (err) {
-        Alert.alert('Error', 'Failed to create account. Please try again.');
-        handleError(err as Error);
-      } finally {
+    } catch (err) {
+      Alert.alert('Error', 'Failed to create account. Please try again.');
+      handleError(err as Error);
+    } finally {
       setLoading(false);
     }
   }, [email, password, validateEmail, validatePassword]);

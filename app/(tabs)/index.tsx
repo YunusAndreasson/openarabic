@@ -421,8 +421,22 @@ export default function ArticlesScreen(): JSX.Element {
 // Export a hook to check if the articles and due words are loaded
 export function useArticlesAndDueWordsLoaded() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Check if articles data is loaded
+  const articlesQueryState = queryClient.getQueryState(['articles']);
+  const articlesLoaded =
+    articlesQueryState?.status === 'success' || articlesQueryState?.status === 'error'; // Consider error as "loaded" to avoid infinite loading
+
+  // Determine due words loading state
   const { isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 10);
 
   // Use useMemo to prevent rerendering on every call
-  return useMemo(() => !isDueWordsLoading, [isDueWordsLoading]);
+  return useMemo(() => {
+    // If user is not authenticated, we only need to check articles
+    if (!user?.id) return articlesLoaded;
+
+    // If user is authenticated, we need both articles and due words loading to complete
+    return articlesLoaded && !isDueWordsLoading;
+  }, [articlesLoaded, isDueWordsLoading, user?.id]);
 }

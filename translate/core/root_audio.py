@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional
 
 from translate.core.audio_utils import (
@@ -14,6 +15,14 @@ from translate.core.storage_utils import (
     check_file_exists,
     upload_to_storage,
 )
+
+
+def is_arabic_text(text: str) -> bool:
+    """Check if text contains Arabic characters."""
+    if not text:
+        return False
+    arabic_range = re.compile(r"[\u0600-\u06FF]")
+    return bool(arabic_range.search(text))
 
 
 def get_or_generate_root_audio(
@@ -87,6 +96,13 @@ def get_or_generate_root_audio(
                     print("Error caching audio file")
 
     # --- English audio ---
+    # Validate that english_translation is actually English (not Arabic)
+    if english_translation and is_arabic_text(english_translation):
+        print(
+            f"Warning: Detected Arabic text in English translation: {english_translation}"
+        )
+        english_translation = None
+
     # If no English translation provided, use default fallback
     english_word_to_use = (
         english_translation

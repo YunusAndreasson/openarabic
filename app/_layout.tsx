@@ -193,6 +193,25 @@ function AppContent() {
     }
   }, [appReady]);
 
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    // Maximum time to wait for app to be ready (in milliseconds)
+    const MAX_LOADING_TIME = 5000; // 5 seconds
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    if (!appReady && fontsLoaded && !isAuthLoading) {
+      timeoutId = setTimeout(() => {
+        console.warn('App loading timeout reached - forcing app ready state');
+        setAppReady(true);
+      }, MAX_LOADING_TIME);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [appReady, fontsLoaded, isAuthLoading]);
+
   // Wait for all resources before setting appReady
   useEffect(() => {
     if (fontsLoaded && !isAuthLoading && isLoaded && articlesAndDueWordsLoaded) {

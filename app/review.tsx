@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
+import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
@@ -64,6 +65,14 @@ export default function ReviewScreen(): JSX.Element {
     isUpdating,
   } = useReview({ fromVocabulary });
 
+  // Create an animated style here instead of passing the shared value directly
+  const opacityStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: opacity.value,
+    };
+  });
+
   if (isComplete || isTransitioningToCompletion) {
     return <CompletionScreen onClose={handleClose} />;
   }
@@ -88,6 +97,7 @@ export default function ReviewScreen(): JSX.Element {
             isUpdating={isUpdating}
             isTransitioning={isTransitioningToCompletion}
             opacity={opacity}
+            opacityStyle={opacityStyle}
           />
           <MeaningOverlay
             visible={showMeaningOverlay}

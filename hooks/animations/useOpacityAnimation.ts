@@ -254,12 +254,13 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     [opacity, validInitialOpacity, delay, timingConfig, safeRunCallback]
   );
 
-  const animatedStyle = useAnimatedStyle(
-    () => ({
+  // Create animated style based on the opacity shared value
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
       opacity: opacity.value,
-    }),
-    [opacity]
-  );
+    };
+  });
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {

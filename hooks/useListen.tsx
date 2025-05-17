@@ -4,6 +4,7 @@ import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audi
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { SharedValue } from 'react-native-reanimated';
+import { AppState, AppStateStatus } from 'react-native';
 
 import { useAuth } from '@/hooks/useAuth';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
@@ -52,6 +53,8 @@ function useAudioPlayer() {
     sound: null,
     lastUrl: null,
   });
+  // Add ref to track app state
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   const cleanup = useCallback(async () => {
     const { sound } = audioState.current;
@@ -66,6 +69,21 @@ function useAudioPlayer() {
     }
   }, []);
 
+  const initAudioSession = useCallback(async () => {
+    try {
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+        interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+        playThroughEarpieceAndroid: false,
+      });
+    } catch (e) {
+      // Silent error
+    }
+  }, []);
+
   const playAudio = useCallback(
     async (url: string): Promise<void> => {
       if (!url) return Promise.resolve();
@@ -74,15 +92,8 @@ function useAudioPlayer() {
         await cleanup();
         audioState.current.lastUrl = url;
 
-        // Set audio mode once for better performance
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: true,
-          shouldDuckAndroid: true,
-          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
-          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
-          playThroughEarpieceAndroid: false,
-        });
+        // Use the separate initAudioSession function
+        await initAudioSession();
 
         // Create a promise that will be resolved when audio finishes
         return new Promise(resolve => {
@@ -115,14 +126,31 @@ function useAudioPlayer() {
         return Promise.resolve();
       }
     },
-    [cleanup]
+    [cleanup, initAudioSession]
   );
 
+  // Add AppState effect to reinitialize audio session when app state changes
   useEffect(() => {
+    // Initialize audio session on mount
+    initAudioSession();
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      // Maintain audio session regardless of app state
+      // This allows continuous audio playback in background
+      if (
+        (appStateRef.current.match(/inactive|background/) && nextAppState === 'active') ||
+        (appStateRef.current === 'active' && nextAppState.match(/inactive|background/))
+      ) {
+        initAudioSession();
+      }
+      appStateRef.current = nextAppState;
+    });
+
     return () => {
+      subscription.remove();
       cleanup().catch(() => {});
     };
-  }, [cleanup]);
+  }, [cleanup, initAudioSession]);
 
   return { playAudio, cleanup };
 }

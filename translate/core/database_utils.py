@@ -32,7 +32,13 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str], Optional[str]]:
     english = word.get("english", "")
     # Generate meaning field that contains context
     meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
-    return letters, meaning, english
+    # Ensure we use essential_translation as the english_translation parameter
+    # rather than the contextual english field
+    english_translation = word.get("essential_translation", "")
+    if not english_translation:
+        english_translation = english
+
+    return letters, meaning, english_translation
 
 
 def get_or_create_root(
@@ -66,10 +72,10 @@ def get_or_create_root(
                 # Get or generate audio for the root word using cache
                 from translate.core.root_audio import get_or_generate_root_audio
 
-                # Use the direct English translation if available
+                # Prioritize using essential_translation (english_translation)
                 english_audio_text = english_translation
 
-                # Fallback to meaning field if English translation not available
+                # Only fallback to meaning field if english_translation is not available
                 if not english_audio_text and meaning:
                     # If meaning starts with "Auto-generated root for:", extract the English part
                     if "Auto-generated root for:" in meaning:
@@ -103,10 +109,10 @@ def get_or_create_root(
     try:
         from translate.core.root_audio import get_or_generate_root_audio
 
-        # Use the direct English translation if available
+        # Prioritize using essential_translation (english_translation)
         english_audio_text = english_translation
 
-        # Fallback to meaning field if English translation not available
+        # Only fallback to meaning field if english_translation is not available
         if not english_audio_text and meaning:
             # If meaning starts with "Auto-generated root for:", extract the English part
             if "Auto-generated root for:" in meaning:
