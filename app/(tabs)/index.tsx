@@ -3,6 +3,7 @@ import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, useRef, JSX } from 'react';
 import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSection } from '@/components/article';
@@ -44,13 +45,13 @@ const styles = StyleSheet.create({
   },
   listContentContainer: {
     flexGrow: 1,
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.SPACING.MEDIUM,
   },
 });
 
 export default function ArticlesScreen(): JSX.Element {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
   const dispatch = useAppDispatch();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -372,8 +373,13 @@ export default function ArticlesScreen(): JSX.Element {
       backgroundColor: colors.background,
       paddingTop: headerHeight,
       paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+      paddingBottom:
+        insets.bottom +
+        LAYOUT.CONTENT_SPACING.BOTTOM +
+        LAYOUT.BOTTOM_BAR.HEIGHT +
+        LAYOUT.SPACING.MEDIUM,
     }),
-    [colors.background, headerHeight]
+    [colors.background, headerHeight, insets.bottom]
   );
 
   if (articlesError && !isRefreshing && !isDataCached) {

@@ -2,6 +2,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, memo } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -57,6 +58,7 @@ const SettingsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
   const colors = useColors();
 
   // Simple loading state for session loading
@@ -164,8 +166,13 @@ const SettingsScreen: React.FC = () => {
         scrollable={true}
         contentContainerStyle={[
           styles.listContent,
-          styles.scrollViewContent,
-          { paddingTop: headerHeight },
+          {
+            paddingTop: headerHeight,
+            paddingBottom:
+              insets.bottom +
+              LAYOUT.CONTENT_SPACING.BOTTOM +
+              LAYOUT.BOTTOM_BAR.HEIGHT,
+          },
         ]}
         scrollViewProps={{
           style: styles.scrollView,
@@ -418,9 +425,6 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
-  },
-  scrollViewContent: {
-    paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
   },
   settingLabelContainer: {
     alignItems: 'center',
