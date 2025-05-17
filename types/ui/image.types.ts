@@ -58,6 +58,9 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Blur radius for progressive loading */
   blurRadius?: number;
 
+  /** Whether the image is allowed to be downscaled when rendered */
+  allowDownscaling?: boolean;
+
   /** Loading priority */
   priority?: 'low' | 'normal' | 'high';
 

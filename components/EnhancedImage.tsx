@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ImageTransition } from 'expo-image';
 import { Image } from 'expo-image';
-import React, { useState, useMemo, useCallback, memo } from 'react';
+import React, { useState, useMemo, useCallback, memo, useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -23,8 +23,10 @@ function EnhancedImageInternal({
   placeholder,
   thumbhash,
   blurRadius = 0,
+  allowDownscaling = true,
   priority = 'normal',
   autoplay = true,
+  prefetch = false,
 }: EnhancedImageProps) {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
@@ -54,6 +56,17 @@ function EnhancedImageInternal({
     onError?.();
   }, [onError]);
 
+  useEffect(() => {
+    if (prefetch) {
+      try {
+        // Fire and forget
+        Image.prefetch?.(source);
+      } catch {
+        /* noop */
+      }
+    }
+  }, [prefetch, source]);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.imagePlaceholder }, style]}>
       {/* Debug: Uncomment to log image source and style */}
@@ -70,8 +83,8 @@ function EnhancedImageInternal({
         accessible={!!alt}
         accessibilityLabel={alt}
         placeholder={processedPlaceholder}
-        blurRadius={0} // Always 0 for sharpness
-        allowDownscaling={false} // Prevent unnecessary downscaling
+        blurRadius={blurRadius}
+        allowDownscaling={allowDownscaling}
         priority={priority}
         autoplay={autoplay}
       />
