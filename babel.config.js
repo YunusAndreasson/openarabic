@@ -4,7 +4,6 @@ module.exports = function (api) {
     presets: ['babel-preset-expo'],
     plugins: [
       '@babel/plugin-transform-runtime',
-      'react-native-reanimated/plugin',
       [
         'module-resolver',
         {
@@ -15,6 +14,8 @@ module.exports = function (api) {
           },
         },
       ],
+      // This plugin must be last for correct React Native Reanimated setup
+      'react-native-reanimated/plugin',
     ],
   };
 };
