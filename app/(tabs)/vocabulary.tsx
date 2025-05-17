@@ -92,13 +92,6 @@ export default function VocabularyScreen(): JSX.Element {
     true // Skip initial focus
   );
 
-  // Invalidate queries on focus with optimized function
-  useFocusEffect(
-    useCallback(() => {
-      invalidateVocabularyQueries();
-    }, [invalidateVocabularyQueries])
-  );
-
   // Handler for pull-to-refresh with optimized invalidation
   const handleRefresh = async () => {
     if (!user || isFetching) return;
@@ -142,6 +135,7 @@ export default function VocabularyScreen(): JSX.Element {
     if (!user) return;
     navigateTo({
       pathname: '/listen',
+      params: { fromVocabulary: 'true' },
     });
   };
 

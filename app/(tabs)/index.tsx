@@ -110,7 +110,7 @@ export default function ArticlesScreen(): JSX.Element {
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { lastOpenedArticles = {} } = useAppSelectorMemo(state => state.readingList);
 
@@ -416,5 +416,7 @@ export default function ArticlesScreen(): JSX.Element {
 export function useArticlesAndDueWordsLoaded() {
   const { user } = useAuth();
   const { isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 10);
-  return !isDueWordsLoading;
+
+  // Use useMemo to prevent rerendering on every call
+  return useMemo(() => !isDueWordsLoading, [isDueWordsLoading]);
 }

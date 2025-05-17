@@ -1,6 +1,7 @@
-import React, { JSX } from 'react';
+import React, { JSX, useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocalSearchParams } from 'expo-router';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -23,6 +24,9 @@ const fontConfig = {
 };
 
 export default function ListenScreen(): JSX.Element {
+  const params = useLocalSearchParams();
+  const fromVocabulary = params.fromVocabulary === 'true';
+
   const {
     currentArabicWord,
     currentEnglishMeaning,
@@ -32,15 +36,23 @@ export default function ListenScreen(): JSX.Element {
     isComplete,
     isTransitioning,
     handleClose,
-  } = useListen();
+  } = useListen({ fromVocabulary });
 
   const colors = useColors();
   const wordFontSize = useWordSizing(currentArabicWord, fontConfig);
 
+  // Use memoized handler to prevent re-renders
+  const onCloseHandler = useCallback(() => {
+    // Add a small delay to ensure cleanup is complete
+    setTimeout(() => {
+      handleClose();
+    }, 50);
+  }, [handleClose]);
+
   if (isComplete || isTransitioning) {
     return (
       <CompletionScreen
-        onClose={handleClose}
+        onClose={onCloseHandler}
         title="Listening Complete!"
         subtitle="You've listened to all the vocabulary words in this session."
         buttonText="Close"

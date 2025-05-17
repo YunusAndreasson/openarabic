@@ -24,6 +24,11 @@ interface AudioPlayerState {
 
 interface UseListenProps {
   onClose?: () => void;
+  /**
+   * Flag indicating if the screen was opened from the vocabulary tab
+   * Used for proper navigation behavior
+   */
+  fromVocabulary?: boolean;
 }
 
 interface UseListenReturn {
@@ -122,7 +127,7 @@ function useAudioPlayer() {
   return { playAudio, cleanup };
 }
 
-export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
+export function useListen({ onClose, fromVocabulary }: UseListenProps = {}): UseListenReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { playAudio, cleanup } = useAudioPlayer();
@@ -155,22 +160,27 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
 
   // Initialize word list when data is available
   useEffect(() => {
-    if (allWords?.length && wordList.length === 0) {
-      // Filter words with both audio_url and audio_url_en
-      const wordsWithAudio = allWords.filter(
-        word => word.root?.audio_url && word.root?.audio_url_en
-      );
-
-      // Shuffle the array to randomize the order
-      const shuffled = [...wordsWithAudio].sort(() => 0.5 - Math.random());
-
-      // Take first 20 words or less
-      const selectedWords = shuffled.slice(0, 20);
-      setWordList(selectedWords);
-
-      // Initialize progress timestamp
-      lastProgressUpdateRef.current = Date.now();
+    // Only run this effect if we have words and our list is empty
+    if (!allWords?.length || wordList.length > 0) {
+      return;
     }
+
+    // Filter words with both audio_url and audio_url_en
+    const wordsWithAudio = allWords.filter(word => word.root?.audio_url && word.root?.audio_url_en);
+
+    // Shuffle the array to randomize the order
+    const shuffled = [...wordsWithAudio].sort(() => 0.5 - Math.random());
+
+    // Take first 20 words or less
+    const selectedWords = shuffled.slice(0, 20);
+
+    // Initialize state
+    setWordList(selectedWords);
+    // Reset progress tracking
+    lastProgressUpdateRef.current = Date.now();
+    // Reset other state to initial values
+    maxProgressRef.current = 0;
+    setCurrentWordIndex(0);
   }, [allWords, wordList.length]);
 
   // Current word properties
@@ -178,8 +188,11 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
   const currentArabicWord = currentWord?.root?.letters || '';
   const currentEnglishMeaning = currentWord?.root?.meaning || '';
 
-  // Calculate progress
-  const progress = wordList.length > 0 ? (currentWordIndex / wordList.length) * 100 : 0;
+  // Calculate progress - ensure we use integer math to avoid precision errors
+  const progress = wordList.length > 0 ? Math.floor((currentWordIndex / wordList.length) * 100) : 0;
+
+  // Use a memoized value for maxProgress to prevent infinite re-renders
+  // Only read the ref, don't set maxProgressRef.current here
   const maxProgress = maxProgressRef.current;
 
   // Move to the next word safely
@@ -198,7 +211,10 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
       setTimeout(() => {
         setCurrentWordIndex(prev => {
           const newIndex = prev + 1;
-          const newProgress = (newIndex / wordList.length) * 100;
+          // Use Math.floor to avoid floating point precision issues
+          const newProgress = Math.floor((newIndex / wordList.length) * 100);
+
+          // Only update maxProgress if needed and trigger an animation key update
           if (newProgress > maxProgressRef.current) {
             maxProgressRef.current = newProgress;
             setProgressAnimationKey(p => p + 1);
@@ -209,10 +225,13 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
         fadeIn();
       }, 300);
     } else {
-      // Complete the session
+      // Complete the session - ensure all cleanup happens first
+      isPlayingRef.current = false;
+      cleanup();
+      // Then set complete flag
       setIsComplete(true);
     }
-  }, [currentWordIndex, wordList.length, fadeIn, fadeOut]);
+  }, [currentWordIndex, wordList.length, fadeIn, fadeOut, cleanup]);
 
   // Play word sequence
   const playWordSequence = useCallback(async () => {
@@ -261,34 +280,66 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
 
   // Trigger word sequence when current word changes
   useEffect(() => {
-    if (currentWord && !isComplete && !isPlayingRef.current) {
-      // Clear any existing timeout
+    // Skip this effect if there's no current word or if the session is complete
+    // or if we're already playing something
+    if (!currentWord || isComplete || isPlayingRef.current) {
+      return;
+    }
+
+    // Clear any existing timeout as a safeguard
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Flag to prevent running the effect again during cleanup
+    let isMounted = true;
+
+    // Start the sequence after a short delay
+    timeoutRef.current = setTimeout(() => {
+      if (isMounted) {
+        playWordSequence();
+      }
+    }, 500);
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [currentWord, isComplete, playWordSequence]);
+
+  // Add an effect to handle completion
+  useEffect(() => {
+    // If just completed, make sure we clean up properly
+    if (isComplete) {
+      // Ensure all audio is stopped
+      cleanup();
+
+      // Stop any timers
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
 
-      // Start the sequence after a short delay
-      timeoutRef.current = setTimeout(() => {
-        playWordSequence();
-      }, 500);
-
-      return () => {
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
-        }
-      };
+      // Reset audio state
+      isPlayingRef.current = false;
     }
-  }, [currentWord, isComplete, playWordSequence]);
+  }, [isComplete, cleanup]);
 
   // Recovery mechanism to prevent getting stuck
   useEffect(() => {
+    // Skip effect if no current word or already complete
+    if (!currentWord || isComplete) return;
+
     const recoveryTimer = setInterval(() => {
       const now = Date.now();
       const timeSinceLastProgress = now - lastProgressUpdateRef.current;
 
       // If we've been on the same word for too long, force moving to the next word
-      if (currentWord && !isComplete && timeSinceLastProgress > STUCK_THRESHOLD) {
+      if (timeSinceLastProgress > STUCK_THRESHOLD) {
         // Force cleanup
         cleanup();
         isPlayingRef.current = false;
@@ -303,30 +354,74 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
 
   // Close and cleanup
   const handleClose = useCallback(() => {
+    // Prevent multiple clicks
+    const wasAlreadyComplete = isComplete;
+
+    // Ensure audio is stopped and cleanup is done synchronously first
     cleanup();
 
+    // Reset state to avoid memory leaks
+    isPlayingRef.current = false;
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    // Invalidate relevant queries
     if (user?.id) {
       queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     }
 
-    setTimeout(() => {
-      if (onClose) {
-        onClose();
-      } else {
-        router.back();
-      }
-    }, 100);
-  }, [user?.id, queryClient, onClose, cleanup]);
+    // Use a slightly longer delay to ensure cleanup completes
+    setTimeout(
+      () => {
+        try {
+          // If was called via a button after session completion, use the most direct approach
+          if (wasAlreadyComplete) {
+            if (onClose) {
+              onClose();
+            } else {
+              // Use the most direct approach for completed sessions - forcefully go back
+              router.back();
+            }
+          } else {
+            // For user-initiated cancellations during session, use the original logic
+            if (onClose) {
+              onClose();
+            } else if (fromVocabulary) {
+              // Use replace instead of navigate to avoid navigation stack issues
+              router.replace('/(tabs)/vocabulary');
+            } else {
+              router.back();
+            }
+          }
+        } catch (error) {
+          // Fallback - if navigation fails, forcefully go back
+          console.error('Navigation error:', error);
+          router.back();
+        }
+      },
+      wasAlreadyComplete ? 100 : 300
+    ); // Faster timeout for completed sessions
+  }, [user?.id, queryClient, onClose, cleanup, fromVocabulary, isComplete]);
 
   // Cleanup on unmount
   useEffect(() => {
+    // This effect only handles cleanup on unmount, so it shouldn't trigger re-renders
     return () => {
+      // Cancel any ongoing audio
       cleanup();
 
+      // Clear any timers
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
+
+      // Reset state refs
+      isPlayingRef.current = false;
+      maxProgressRef.current = 0;
     };
   }, [cleanup]);
 

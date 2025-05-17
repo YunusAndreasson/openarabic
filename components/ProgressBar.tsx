@@ -22,7 +22,7 @@ import { useIsDarkMode } from '../hooks/useThemeDetection';
  * - Optional shadow effects based on platform
  */
 function ProgressBarComponent({
-  progress,
+  progress: rawProgress, // Rename to emphasize we're not using it directly
   height = LAYOUT.SPACING.MEDIUM,
   style,
   fillStyle,
@@ -34,31 +34,33 @@ function ProgressBarComponent({
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
 
-  // Convert to integer to prevent loss of precision errors at the native bridge
-  // Store the previous progress value to avoid unnecessary animations
-  const prevProgressRef = useRef(Math.floor(progress));
+  // CRITICAL: Intercept the incoming value and convert to integer immediately
+  // This prevents the native bridge from seeing floating point values at all
+  const intProgress = useMemo(() => {
+    // Handle invalid inputs
+    if (typeof rawProgress !== 'number' || isNaN(rawProgress)) {
+      return 0;
+    }
 
-  // Ensure progress is within valid range (0-100) and fix precision issues by using integers
-  const normalizedProgress = useMemo(() => {
-    // Handle invalid inputs gracefully
-    if (isNaN(progress)) return 0;
-    // Convert to integer to prevent loss of precision at the native bridge
-    // Multiply by 100 to preserve 2 decimal places worth of precision as integers
-    const intProgress = Math.floor(progress * 100);
-    return Math.max(0, Math.min(10000, intProgress));
-  }, [progress]);
+    // Convert to integer (preserving 2 decimal places of precision)
+    // Clamping 0-100 range to 0-10000 integers
+    return Math.max(0, Math.min(10000, Math.round(rawProgress * 100)));
+  }, [rawProgress]);
+
+  // Store the previous progress value to avoid unnecessary animations
+  const prevProgressRef = useRef(intProgress);
 
   // Use the standardized progress animation hook
   const {
     animatedStyle,
     updateProgress,
     progress: animatedProgress,
-  } = useProgressAnimation(normalizedProgress, animationDuration);
+  } = useProgressAnimation(intProgress, animationDuration);
 
   // Effect to handle animation when triggered or when progress changes
   useEffect(() => {
     // Always ensure progress doesn't go backwards
-    const targetProgress = Math.max(normalizedProgress, prevProgressRef.current);
+    const targetProgress = Math.max(intProgress, prevProgressRef.current);
 
     // Determine if animation should be immediate or animated
     const shouldAnimate = animationTriggered && prevProgressRef.current !== targetProgress;
@@ -81,7 +83,7 @@ function ProgressBarComponent({
     return () => {
       cancelAnimation(animatedProgress);
     };
-  }, [normalizedProgress, animationTriggered, animatedProgress, updateProgress]);
+  }, [intProgress, animationTriggered, animatedProgress, updateProgress]);
 
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {
@@ -125,14 +127,18 @@ function ProgressBarComponent({
     [height, bgColor, style, animatedStyle, progressFillColor, fillStyle]
   );
 
-  // Use the normalized integer value divided by 100 to get the original percentage for accessibility
-  const accessibilityProgressValue = normalizedProgress / 100;
+  // Convert back to percentage for accessibility
+  const accessibilityProgressValue = intProgress / 100;
 
   return (
     <View
       style={styles.container as StyleProp<ViewStyle>}
       accessibilityRole="progressbar"
-      accessibilityValue={{ min: 0, max: 100, now: accessibilityProgressValue }}
+      accessibilityValue={{
+        min: 0,
+        max: 100,
+        now: Math.round(accessibilityProgressValue), // Use integer for now value
+      }}
     >
       <View style={styles.fillContainer}>
         <Animated.View style={styles.fill} />
