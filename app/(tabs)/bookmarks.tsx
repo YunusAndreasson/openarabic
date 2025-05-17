@@ -101,7 +101,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    opacity: 0.7,
   },
 });
 
@@ -597,7 +596,7 @@ export default function BookmarksScreen(): JSX.Element {
           ListEmptyComponent={null}
           ListFooterComponent={
             hasDueWords ? (
-              <ThemedText type="caption" variant="subtle" style={styles.sortingNote}>
+              <ThemedText type="caption" variant="subtle">
                 Articles with review words are prioritized in order
               </ThemedText>
             ) : null

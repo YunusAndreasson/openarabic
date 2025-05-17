@@ -172,7 +172,9 @@ export default function WordExamplesScreen() {
             )}
 
             {/* Show the English translation */}
-            <ThemedText style={styles.englishSentence}>{item.sentence.english}</ThemedText>
+            <ThemedText colorName="secondaryText" style={styles.englishSentence}>
+              {item.sentence.english}
+            </ThemedText>
           </View>
         </View>
       );
@@ -346,12 +348,10 @@ const styles = StyleSheet.create({
     marginHorizontal: LAYOUT.SPACING.SMALL,
   },
   highlightedEnglish: {
-    opacity: 0.8,
     fontStyle: 'italic',
   },
   englishSentence: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    opacity: 0.8,
   },
   separator: {
     height: 1,

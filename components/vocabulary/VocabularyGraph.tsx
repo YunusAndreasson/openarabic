@@ -308,7 +308,6 @@ const styles = StyleSheet.create({
   },
   wordCount: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    opacity: 0.7,
   },
   xAxisLabels: {
     flexDirection: 'row',

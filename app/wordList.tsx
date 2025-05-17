@@ -109,7 +109,7 @@ export default function WordListScreen(): JSX.Element {
           size={LAYOUT.SPACING.XLARGE * 3}
           color={colors.tint}
         />
-        <ThemedText style={styles.emptyText}>No words found</ThemedText>
+        <ThemedText variant="secondary" style={styles.emptyText}>No words found</ThemedText>
       </View>
     );
   }, [colors.tint]);
@@ -270,7 +270,6 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     marginTop: LAYOUT.SPACING.MEDIUM,
-    opacity: LAYOUT.OPACITY.DIMMED,
     textAlign: 'center',
   },
   errorContainer: {

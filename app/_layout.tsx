@@ -320,10 +320,7 @@ const ErrorFallback = memo(function ErrorFallback({ error }: FallbackProps) {
       <ThemedText type="body" style={{ marginBottom: LAYOUT.SPACING.XLARGE }}>
         Please try again
       </ThemedText>
-      <ThemedText
-        type="caption"
-        style={{ opacity: LAYOUT.OPACITY.MEDIUM_HIGH }}
-      >
+      <ThemedText type="caption" colorName="textTertiary">
         {error.toString()}
       </ThemedText>
     </View>
