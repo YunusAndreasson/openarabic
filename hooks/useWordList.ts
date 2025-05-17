@@ -40,7 +40,20 @@ export function useWordList(
       if (!userId) throw new Error('User not authenticated');
 
       try {
-        const allWords = await studyWordsFSRSService.getFSRSWords(userId);
+        const serviceOptions: Parameters<typeof studyWordsFSRSService.getFSRSWords>[1] = {};
+
+        if (category === 'due') {
+          serviceOptions.onlyDue = true;
+        } else if (category === 'mastered') {
+          serviceOptions.category = 'mastered';
+        } else if (category === 'learning') {
+          serviceOptions.category = 'learning';
+        }
+
+        const allWords = await studyWordsFSRSService.getFSRSWords(
+          userId,
+          serviceOptions
+        );
 
         // Filter out invalid words with type guard
         const filteredWords = allWords.filter(
