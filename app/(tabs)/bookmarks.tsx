@@ -150,7 +150,7 @@ const BookmarkListItem = memo(
           type="label"
           style={{
             color: colors.warning,
-            fontSize: 12,
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
             marginLeft: 3,
             fontWeight: '600',
           }}

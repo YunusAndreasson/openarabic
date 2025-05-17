@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   wordCount: {
-    fontSize: 10,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     opacity: 0.7,
   },
   xAxisLabels: {

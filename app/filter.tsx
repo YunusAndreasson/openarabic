@@ -41,7 +41,7 @@ const CustomHeaderBackground = () => {
 };
 
 const HEADER_TITLE_STYLE = {
-  fontSize: 22,
+  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
   fontWeight: '600' as const,
   paddingLeft: 8,
 };

@@ -241,7 +241,7 @@ export default function WordExamplesScreen() {
           headerShown: true,
           headerTitle: title,
           headerTitleStyle: {
-            fontSize: 22,
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
             fontWeight: '600',
           },
           headerStyle: {
