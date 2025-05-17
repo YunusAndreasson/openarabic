@@ -16,10 +16,6 @@ import {
 import { useReview } from '../hooks/useReview';
 
 const baseStyles = StyleSheet.create({
-  centered: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -55,6 +51,7 @@ export default function ReviewScreen(): JSX.Element {
     isTransitioningToCompletion,
     opacity,
     isComplete,
+    progress,
     maxProgress,
     progressAnimationKey,
     wordFontSize,
@@ -64,6 +61,7 @@ export default function ReviewScreen(): JSX.Element {
     handleSwipeRight,
     handleTap,
     handleClose,
+    isUpdating,
   } = useReview({ fromVocabulary });
 
   if (isComplete || isTransitioningToCompletion) {
@@ -74,7 +72,7 @@ export default function ReviewScreen(): JSX.Element {
     <ThemedView style={baseStyles.container} useSafeArea={true}>
       <View style={baseStyles.contentContainer}>
         <ReviewHeader
-          progress={maxProgress}
+          progress={progress}
           maxProgress={maxProgress}
           animationKey={progressAnimationKey}
           onClose={handleClose}
@@ -87,7 +85,7 @@ export default function ReviewScreen(): JSX.Element {
             onSwipeLeft={handleSwipeLeft}
             onSwipeRight={handleSwipeRight}
             onTap={handleTap}
-            isUpdating={false}
+            isUpdating={isUpdating}
             isTransitioning={isTransitioningToCompletion}
             opacity={opacity}
           />

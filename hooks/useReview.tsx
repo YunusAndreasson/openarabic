@@ -138,6 +138,7 @@ interface UseReviewReturn {
   isTransitioningToCompletion: boolean;
   opacity: SharedValue<number>;
   isComplete: boolean;
+  isUpdating: boolean;
   progress: number;
   maxProgress: number;
   progressAnimationKey: number;
@@ -637,6 +638,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     isTransitioningToCompletion,
     opacity,
     isComplete,
+    isUpdating: stateRefs.current.isUpdatingWord,
     progress,
     maxProgress: stateRefs.current.maxProgress,
     progressAnimationKey,
