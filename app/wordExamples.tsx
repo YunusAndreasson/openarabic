@@ -12,15 +12,8 @@ import { useColors } from '@/hooks/useColors';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import type { SentenceWord } from '@/types/vocabulary.types';
-import type { Tables } from '@/types/database.types';
-import { mapToSentenceWord } from '@/utils/typeMappers';
+import { wordExamplesService, SentenceWithWords } from '@/services/wordExamples';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-
-// Type for the sentence with words data
-type SentenceWithWords = {
-  sentence: Tables<'article_sentences'>;
-  words: SentenceWord[];
-};
 
 // Simple word component that only highlights the target word and doesn't use useArabicWord
 const SimpleArabicWord = memo(
@@ -71,166 +64,25 @@ export default function WordExamplesScreen() {
   const [examples, setExamples] = useState<SentenceWithWords[]>([]);
 
   // Fetch word data and example sentences
+
   useEffect(() => {
     const fetchExamples = async () => {
       setIsLoading(true);
 
       try {
-        // If we have a rootId, get examples for that specific root
         if (rootId) {
-          const rootIdNum = parseInt(rootId);
-
-          // First get the root data to display at the top
-          const { data: rootData, error: rootError } = await supabase
-            .from('sentence_words')
-            .select('*, root:roots(*), word_type:word_types(*)')
-            .eq('root_id', rootIdNum)
-            .limit(1)
-            .single();
-
-          if (!rootError && rootData) {
-            setWordData(mapToSentenceWord(rootData));
-          }
-
-          // Get sentences containing this root
-          const { data: sentenceData, error: sentenceError } = await supabase
-            .from('sentence_words')
-            .select(
-              '*, root:roots(*), word_type:word_types(*), sentence:article_sentences!inner(*)'
-            )
-            .eq('root_id', rootIdNum)
-            .order('sentence_id', { ascending: true })
-            .limit(50);
-
-          if (sentenceError) throw sentenceError;
-
-          if (!sentenceData || sentenceData.length === 0) {
-            setExamples([]);
-            setIsLoading(false);
-            return;
-          }
-
-          // Get the unique sentence IDs from the matching words
-          const sentenceIds = [...new Set(sentenceData.map(word => word.sentence_id))];
-
-          // Now fetch ALL words for these sentences to get complete sentences
-          const { data: allSentenceWords, error: allWordsError } = await supabase
-            .from('sentence_words')
-            .select('*, root:roots(*), word_type:word_types(*), sentence:article_sentences(*)')
-            .in('sentence_id', sentenceIds)
-            .order('position', { ascending: true });
-
-          if (allWordsError) throw allWordsError;
-
-          // Group by sentence
-          const sentencesMap = new Map<number, SentenceWithWords>();
-
-          // First set up the sentences
-          sentenceData.forEach(word => {
-            const sentenceId = word.sentence_id;
-            if (!sentencesMap.has(sentenceId)) {
-              sentencesMap.set(sentenceId, {
-                sentence: word.sentence,
-                words: [],
-              });
-            }
+          const { examples, word } = await wordExamplesService.getExamples({
+            rootId: parseInt(rootId),
           });
-
-          // Then add all words to their sentences
-          if (allSentenceWords) {
-            allSentenceWords.forEach(word => {
-              const sentenceId = word.sentence_id;
-              if (sentencesMap.has(sentenceId)) {
-                const typedWord = mapToSentenceWord(word);
-                sentencesMap.get(sentenceId)?.words.push(typedWord);
-              }
-            });
-          }
-
-          setExamples(Array.from(sentencesMap.values()));
-        }
-        // If we have a wordId, get examples for that specific word
-        else if (wordId) {
-          const wordIdNum = parseInt(wordId);
-
-          // Get the word data
-          const { data: singleWord, error: wordError } = await supabase
-            .from('sentence_words')
-            .select('*, root:roots(*), word_type:word_types(*), sentence:article_sentences(*)')
-            .eq('id', wordIdNum)
-            .single();
-
-          if (wordError) throw wordError;
-
-          const typedWord = mapToSentenceWord(singleWord);
-          setWordData(typedWord);
-
-          if (!typedWord.root_id) {
-            setExamples([]);
-            setIsLoading(false);
-            return;
-          }
-
-          // Get all sentences with the same root
-          const { data: sentenceData, error: sentenceError } = await supabase
-            .from('sentence_words')
-            .select(
-              '*, root:roots(*), word_type:word_types(*), sentence:article_sentences!inner(*)'
-            )
-            .eq('root_id', typedWord.root_id)
-            .order('sentence_id', { ascending: true })
-            .limit(50);
-
-          if (sentenceError) throw sentenceError;
-
-          if (!sentenceData || sentenceData.length === 0) {
-            setExamples([]);
-            setIsLoading(false);
-            return;
-          }
-
-          // Get the unique sentence IDs from the matching words
-          const sentenceIds = [...new Set(sentenceData.map(word => word.sentence_id))];
-
-          // Now fetch ALL words for these sentences to get complete sentences
-          const { data: allSentenceWords, error: allWordsError } = await supabase
-            .from('sentence_words')
-            .select('*, root:roots(*), word_type:word_types(*), sentence:article_sentences(*)')
-            .in('sentence_id', sentenceIds)
-            .order('position', { ascending: true });
-
-          if (allWordsError) throw allWordsError;
-
-          // Group by sentence
-          const sentencesMap = new Map<number, SentenceWithWords>();
-
-          // First set up the sentences
-          sentenceData.forEach(word => {
-            const sentenceId = word.sentence_id;
-            if (!sentencesMap.has(sentenceId)) {
-              sentencesMap.set(sentenceId, {
-                sentence: word.sentence,
-                words: [],
-              });
-            }
+          setWordData(word);
+          setExamples(examples);
+        } else if (wordId) {
+          const { examples, word } = await wordExamplesService.getExamples({
+            wordId: parseInt(wordId),
           });
-
-          // Then add all words to their sentences
-          if (allSentenceWords) {
-            allSentenceWords.forEach(word => {
-              const sentenceId = word.sentence_id;
-              if (sentencesMap.has(sentenceId)) {
-                const typedWord = mapToSentenceWord(word);
-                sentencesMap.get(sentenceId)?.words.push(typedWord);
-              }
-            });
-          }
-
-          setExamples(Array.from(sentencesMap.values()));
-        }
-        // If we have a category, get examples for that category
-        else if (category && user?.id) {
-          // Get random roots from this category
+          setWordData(word);
+          setExamples(examples);
+        } else if (category && user?.id) {
           let rootsQuery = supabase
             .from('study_words')
             .select('root_id')
@@ -238,7 +90,6 @@ export default function WordExamplesScreen() {
             .order('fsrs_last_review', { ascending: false })
             .limit(5);
 
-          // Apply filters based on category
           switch (category) {
             case 'mastered':
               rootsQuery = rootsQuery.eq('fsrs_state', 3).gte('fsrs_stability', 30);
@@ -254,81 +105,19 @@ export default function WordExamplesScreen() {
           }
 
           const { data: rootsData, error: rootsError } = await rootsQuery;
-
           if (rootsError) throw rootsError;
 
-          if (!rootsData || rootsData.length === 0) {
-            setExamples([]);
-            setIsLoading(false);
-            return;
-          }
-
-          // Get example sentences for these roots
-          const rootIds = rootsData.map(r => r.root_id).filter(Boolean);
-
+          const rootIds = (rootsData || []).map(r => r.root_id).filter(Boolean);
           if (rootIds.length === 0) {
             setExamples([]);
             setIsLoading(false);
             return;
           }
 
-          const { data: sentenceData, error: sentenceError } = await supabase
-            .from('sentence_words')
-            .select(
-              '*, root:roots(*), word_type:word_types(*), sentence:article_sentences!inner(*)'
-            )
-            .in('root_id', rootIds)
-            .order('sentence_id', { ascending: true })
-            .limit(50);
-
-          if (sentenceError) throw sentenceError;
-
-          if (!sentenceData || sentenceData.length === 0) {
-            setExamples([]);
-            setIsLoading(false);
-            return;
-          }
-
-          // Get the unique sentence IDs from the matching words
-          const sentenceIds = [...new Set(sentenceData.map(word => word.sentence_id))];
-
-          // Now fetch ALL words for these sentences to get complete sentences
-          const { data: allSentenceWords, error: allWordsError } = await supabase
-            .from('sentence_words')
-            .select('*, root:roots(*), word_type:word_types(*), sentence:article_sentences(*)')
-            .in('sentence_id', sentenceIds)
-            .order('position', { ascending: true });
-
-          if (allWordsError) throw allWordsError;
-
-          // Group by sentence
-          const sentencesMap = new Map<number, SentenceWithWords>();
-
-          // First set up the sentences
-          sentenceData.forEach(word => {
-            const sentenceId = word.sentence_id;
-            if (!sentencesMap.has(sentenceId)) {
-              sentencesMap.set(sentenceId, {
-                sentence: word.sentence,
-                words: [],
-              });
-            }
-          });
-
-          // Then add all words to their sentences
-          if (allSentenceWords) {
-            allSentenceWords.forEach(word => {
-              const sentenceId = word.sentence_id;
-              if (sentencesMap.has(sentenceId)) {
-                const typedWord = mapToSentenceWord(word);
-                sentencesMap.get(sentenceId)?.words.push(typedWord);
-              }
-            });
-          }
-
-          setExamples(Array.from(sentencesMap.values()));
+          const { examples } = await wordExamplesService.getExamples({ rootIds });
+          setWordData(null);
+          setExamples(examples);
         } else {
-          // No parameters provided
           setExamples([]);
         }
       } catch (error) {
@@ -341,7 +130,6 @@ export default function WordExamplesScreen() {
 
     fetchExamples();
   }, [wordId, rootId, category, user?.id]);
-
   // Render a sentence with words using ArticleSentence component
   const renderSentenceItem = useCallback(
     ({ item }: { item: SentenceWithWords }) => {
