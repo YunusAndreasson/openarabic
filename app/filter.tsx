@@ -16,6 +16,7 @@ import { useNavigationWithDebounce } from '../hooks/useNavigationWithDebounce';
 import { articlesService } from '../services/articles';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import type { Article } from '../types/articles.types';
+import { LAYOUT } from '@/constants/layout';
 
 // Custom Header Background component with blur effect (copied from tab layout)
 const BLUR_INTENSITY = 55;

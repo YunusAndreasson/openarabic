@@ -32,29 +32,35 @@ def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
 
 
 def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
-    """Get existing root or create a new one, and generate audio URL for the root."""
+    """Get existing root or create a new one, and generate audio URLs for the root."""
     # Clean up letters (remove extra spaces)
     letters = " ".join(letters.split())
 
-    # Check if root exists, include audio_url
+    # Check if root exists, include audio_url and audio_url_en
     result = (
         supabase.table("roots")
-        .select("id", "audio_url")
+        .select("id", "audio_url", "audio_url_en")
         .eq("letters", letters)
         .execute()
     )
     if result.data:
         root = result.data[0]
         root_id = root["id"]
-        # Generate and update audio_url if missing
-        if not root.get("audio_url"):
+        # Generate and update audio_url/audio_url_en if missing
+        if not root.get("audio_url") or not root.get("audio_url_en"):
             try:
                 # Get or generate audio for the root word using cache
                 from translate.core.root_audio import get_or_generate_root_audio
 
-                audio_url = get_or_generate_root_audio(letters)
-                if audio_url:
-                    supabase.table("roots").update({"audio_url": audio_url}).eq(
+                audio_urls = get_or_generate_root_audio(letters)
+                update_data = {}
+                if audio_urls:
+                    if audio_urls.get("audio_url") and not root.get("audio_url"):
+                        update_data["audio_url"] = audio_urls["audio_url"]
+                    if audio_urls.get("audio_url_en") and not root.get("audio_url_en"):
+                        update_data["audio_url_en"] = audio_urls["audio_url_en"]
+                if update_data:
+                    supabase.table("roots").update(update_data).eq(
                         "id", root_id
                     ).execute()
             except Exception as e:
@@ -66,16 +72,19 @@ def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
     result = supabase.table("roots").insert(root_data).execute()
     root_id = result.data[0]["id"]
 
-    # Generate and update audio_url for the new root
+    # Generate and update audio_url/audio_url_en for the new root
     try:
-        # Get or generate audio for the root word using cache
         from translate.core.root_audio import get_or_generate_root_audio
 
-        audio_url = get_or_generate_root_audio(letters)
-        if audio_url:
-            supabase.table("roots").update({"audio_url": audio_url}).eq(
-                "id", root_id
-            ).execute()
+        audio_urls = get_or_generate_root_audio(letters)
+        update_data = {}
+        if audio_urls:
+            if audio_urls.get("audio_url"):
+                update_data["audio_url"] = audio_urls["audio_url"]
+            if audio_urls.get("audio_url_en"):
+                update_data["audio_url_en"] = audio_urls["audio_url_en"]
+        if update_data:
+            supabase.table("roots").update(update_data).eq("id", root_id).execute()
     except Exception as e:
         print(f"Error generating audio for new root '{letters}': {e}")
 
@@ -103,9 +112,6 @@ def insert_sentence_words(
                 f"Warning: Fewer word timings ({len(word_timings)}) than words in sentence ({len(word_by_word)})"
             )
     else:
-        print(
-            f"Warning: No word timings available for sentence with {len(word_by_word)} words"
-        )
         # Early return with empty stats if no timings
         for position, word in enumerate(word_by_word):
             # Process words without timing info
@@ -227,17 +233,6 @@ def insert_sentence_words(
             print(f"Error inserting word {idx} into database: {str(e)}")
             raise
 
-    # Print summary of timing match results
-    print("Word timing match summary:")
-    for method, count in match_stats.items():
-        percentage = (count / total_words) * 100 if total_words > 0 else 0
-        print(
-            f"  {method.capitalize()} matches: {count}/{total_words} ({percentage:.1f}%)"
-        )
-
-    if match_stats["none"] > 0:
-        print(f"Warning: {match_stats['none']} words have no timing information")
-
     # Return statistics for reporting
     return {
         "total_words": total_words,
@@ -264,8 +259,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
 
     try:
         for idx, translation in enumerate(translations):
-            print(f"Processing sentence {idx}")
-
             # Get previous and next sentences for better continuity
             # Use tashkeel version if available for better pronunciation
             previous_text = None
@@ -299,12 +292,9 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
                 next_text=next_text,
             )
 
-            storage_url = None
-            word_timings = []
-
-            # If we have an audio result, extract URL and timings
+            # Extract statistics from audio result
             if audio_result is not None:
-                storage_url = audio_result.get("url")
+                storage_url = audio_result.get("url", None)
                 word_timings = audio_result.get("word_timings", [])
                 timing_stats["sentences_with_audio"] += 1
 
@@ -353,7 +343,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
 
         # After processing all sentences, concatenate their audio files
         if sentence_audio_files:
-            print("Concatenating sentence audio files...")
             final_audio_filename = generate_audio_filename()
             final_audio_path = os.path.join(temp_dir, final_audio_filename)
 
@@ -405,24 +394,6 @@ def insert_article_sentences(article_id: int, translations: List[Dict]) -> Dict:
             pass
         raise
 
-    # Print summary statistics
-    print("ARTICLE TIMING STATISTICS SUMMARY")
-    print(f"Total sentences: {timing_stats['total_sentences']}")
-    print(f"Sentences with audio: {timing_stats['sentences_with_audio']}")
-    print(f"Sentences with word timings: {timing_stats['sentences_with_timings']}")
-    print(
-        f"Sentences without word timings: {timing_stats['sentences_without_timings']}"
-    )
-
-    if timing_stats["total_words"] > 0:
-        words_with_timing_pct = (
-            timing_stats["words_with_timings"] / timing_stats["total_words"]
-        ) * 100
-        print(f"Total words: {timing_stats['total_words']}")
-        print(
-            f"Words with timing information: {timing_stats['words_with_timings']} ({words_with_timing_pct:.1f}%)"
-        )
-
     return timing_stats
 
 
@@ -431,7 +402,8 @@ def save_timing_report(
 ) -> None:
     """Save timing statistics to a CSV report file."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    reports_dir = os.path.join(script_dir, "reports")
+    root_dir = os.path.abspath(os.path.join(script_dir, ".."))
+    reports_dir = os.path.join(root_dir, "reports")
     os.makedirs(reports_dir, exist_ok=True)
 
     report_file = os.path.join(reports_dir, "timing_reports.csv")
@@ -482,15 +454,13 @@ def save_timing_report(
 
     except Exception as e:
         print(f"Failed to save timing report: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
 
 
 def archive_files(json_path: str, article_id: int) -> None:
     """Move input and output files to archive directory with article ID as name."""
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    archive_dir = os.path.join(script_dir, "archive")
+    root_dir = os.path.abspath(os.path.join(script_dir, ".."))
+    archive_dir = os.path.join(root_dir, "archive")
     os.makedirs(archive_dir, exist_ok=True)
 
     # Get the article directory path

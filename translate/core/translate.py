@@ -29,6 +29,15 @@ MAX_SENTENCE_LENGTH = 500  # characters
 MAX_BATCH_SIZE = 5  # Maximum number of sentences to process in one batch
 
 
+def to_dict(obj):
+    if isinstance(obj, list):
+        return [to_dict(item) for item in obj]
+    elif hasattr(obj, "__dict__"):
+        return {k: to_dict(v) for k, v in obj.__dict__.items()}
+    else:
+        return obj
+
+
 def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATCH_SIZE):
     """Translate a pre-split file"""
     start_time = time.time()
@@ -104,8 +113,8 @@ def translate_file(input_file: str, output_file: str, batch_size: int = MAX_BATC
         with open(output_file, "w", encoding="utf-8") as f:
             json.dump(
                 {
-                    "metadata": metadata.__dict__,
-                    "results": [r.__dict__ for r in results],
+                    "metadata": to_dict(metadata),
+                    "translations": [to_dict(r) for r in results],
                 },
                 f,
                 ensure_ascii=False,

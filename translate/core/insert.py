@@ -88,8 +88,9 @@ def main():
     # Ensure all cache files have proper extensions
     ensure_valid_cache_files()
 
+    # Always reference the article directory inside the translate directory (not translate/translate/article)
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    articles_dir = os.path.join(script_dir, "article")
+    articles_dir = os.path.abspath(os.path.join(script_dir, "..", "article"))
 
     if not os.path.exists(articles_dir):
         print(f"Error: Could not find articles directory at {articles_dir}")

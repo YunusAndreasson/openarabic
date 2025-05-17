@@ -206,9 +206,6 @@ def process_batch(
                 )
         else:
             # Fallback: if refinement failed, try to take the first option from the previous step
-            logging.warning(
-                f"Refinement failed for word translations in sentence {index}. Using first option as fallback."
-            )
             word_opts_list = word_options_results[i].get("word_translations", [])
             for word_opts in word_opts_list:
                 final_word_translations.append(
@@ -254,10 +251,6 @@ def process_batch(
                 sentence_translation.verification_issues.extend(validation_issues)
             else:
                 sentence_translation.verification_issues = validation_issues
-            logging.warning(
-                f"Final validation issues in sentence {index}:\n"
-                + "\n".join(validation_issues)
-            )
 
         results.append(sentence_translation)
 

@@ -4,8 +4,12 @@ import sys
 import subprocess
 
 # Set constants
-DEFAULT_INPUT_FILE = "article/input.txt"
-DEFAULT_OUTPUT_FILE = "article/output.json"
+DEFAULT_INPUT_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "article", "input.txt"
+)
+DEFAULT_OUTPUT_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "article", "output.json"
+)
 DEFAULT_BATCH_SIZE = 5
 EDITOR = os.environ.get("EDITOR", "nano")  # Default to nano if no EDITOR env var set
 
@@ -194,19 +198,19 @@ def main():
     # Step 3: Translate file
     translate_file(input_file, output_file, batch_size)
 
-    # Step 3.5: Optionally run input.py
-    if confirm_step("Translation done. Would you like to continue and run input.py?"):
-        print("\nRunning input.py...")
+    # Step 3.5: Optionally run insert.py
+    if confirm_step("Translation done. Would you like to continue and run insert.py?"):
+        print("\nRunning insert.py...")
         result = subprocess.run(
-            [sys.executable, "-m", "translate.core.input", input_file, output_file],
+            [sys.executable, "-m", "translate.core.insert", input_file, output_file],
             capture_output=False,
         )
         if result.returncode != 0:
-            print("input.py completed with issues.")
+            print("insert.py completed with issues.")
         else:
-            print("\n✅ input.py completed successfully.")
+            print("\n✅ insert.py completed successfully.")
     else:
-        print("Skipping input.py. Exiting.")
+        print("Skipping insert.py. Exiting.")
         sys.exit(0)
 
     # Step 4: Show final output

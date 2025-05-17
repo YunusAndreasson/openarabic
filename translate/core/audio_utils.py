@@ -36,20 +36,26 @@ ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic sentences
 ARABIC_WORD_VOICE_ID = (
     "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
 )
+ENGLISH_WORD_VOICE_ID = (
+    "EXAVITQu4vr4xnSDxMaL"  # Example: Adam (ElevenLabs default English voice)
+)
 
 # Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
     use_speaker_boost=True,
 )
 
-# Add after other constants
-AUDIO_CACHE_DIR = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "audio_cache"
+# Get the root directory (translate/) for all file storage
+ROOT_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 )
+
+# Add after other constants
+AUDIO_CACHE_DIR = os.path.join(ROOT_DIR, "audio_cache")
 os.makedirs(AUDIO_CACHE_DIR, exist_ok=True)
 
 # Ensure audio directory exists for temporary files
-AUDIO_TEMP_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audio")
+AUDIO_TEMP_DIR = os.path.join(ROOT_DIR, "audio")
 os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 
 
@@ -300,9 +306,7 @@ def concatenate_audio_files(audio_files: List[str], output_file: str) -> Optiona
             return None
 
         # Create a temporary directory for processing
-        temp_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "temp_concat"
-        )
+        temp_dir = os.path.join(ROOT_DIR, "temp_concat")
         os.makedirs(temp_dir, exist_ok=True)
 
         # Create a file list for ffmpeg
@@ -411,15 +415,73 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         return None
 
 
+def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
+    """Generate audio file for an English word using ElevenLabs API."""
+    temp_audio_path = None
+    try:
+        # No SSML wrapping for English
+        formatted_text = word
+
+        # Create voice settings with default settings plus speed
+        voice_settings = VoiceSettings(
+            **DEFAULT_VOICE_SETTINGS.dict(),
+            speed=0.8,  # Use consistent slower speed
+        )
+
+        # Generate audio with the English voice
+        audio_response = generate_speech(
+            text=formatted_text,
+            voice_id=ENGLISH_WORD_VOICE_ID,  # Use the English voice for single words
+            voice_settings=voice_settings,
+        )
+
+        if not audio_response:
+            print("Error: Empty audio response from ElevenLabs API (EN)")
+            return None
+
+        # Validate the MP3 data
+        if not validate_mp3(audio_response):
+            print(f"Skipping upload of invalid MP3 file for English word '{word}'")
+            return None
+
+        # Save and upload the audio file
+        temp_audio_path = os.path.join(AUDIO_TEMP_DIR, filename)
+        with open(temp_audio_path, "wb") as f:
+            f.write(audio_response)
+
+        from translate.core.storage_utils import upload_to_storage
+
+        try:
+            with open(temp_audio_path, "rb") as f:
+                url = upload_to_storage("audio", filename, f)
+                if not url:
+                    raise Exception("Failed to get URL from upload")
+        except Exception as e:
+            print(f"Upload failed despite retries (EN): {str(e)}")
+            return None
+
+        return {"url": url}
+
+    except Exception as e:
+        print(f"Error generating/uploading English word audio for '{word}': {str(e)}")
+        if temp_audio_path and os.path.exists(temp_audio_path):
+            os.remove(temp_audio_path)
+        return None
+
+
 def extract_word_timings_from_alignment(alignment, text):
     """Extract word timings from ElevenLabs alignment data."""
     if not alignment:
         print("No alignment data found in response")
         raise ValueError("Missing alignment data in API response")
 
-    chars = alignment.get("characters", [])
-    start_times = alignment.get("character_start_times_seconds", [])
-    end_times = alignment.get("character_end_times_seconds", [])
+    chars = getattr(alignment, "characters", []) if alignment else []
+    start_times = (
+        getattr(alignment, "character_start_times_seconds", []) if alignment else []
+    )
+    end_times = (
+        getattr(alignment, "character_end_times_seconds", []) if alignment else []
+    )
 
     if not (
         chars
@@ -430,79 +492,54 @@ def extract_word_timings_from_alignment(alignment, text):
         print("Invalid alignment data structure")
         raise ValueError("Invalid or missing timing data in API response")
 
-    # Clean up the character array by removing non-Arabic characters while preserving timing
+    # Only keep characters that are Arabic, Arabic diacritics, or whitespace
+    arabic_pattern = re.compile(
+        r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\u064B-\u065F\s]"
+    )
     cleaned_chars = []
     cleaned_start_times = []
     cleaned_end_times = []
-
-    # Keep only Arabic characters and their timings
-    arabic_pattern = re.compile(
-        r"[\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF\u064B-\u065F\s]"
-    )
     for i, char in enumerate(chars):
-        if arabic_pattern.match(char) or char.isspace():
+        if arabic_pattern.match(char):
             cleaned_chars.append(char)
             cleaned_start_times.append(start_times[i])
             cleaned_end_times.append(end_times[i])
-
     # Use the cleaned arrays for word extraction
     chars = cleaned_chars
     start_times = cleaned_start_times
     end_times = cleaned_end_times
 
-    # Improved word timing extraction
-    # Define Arabic word boundary characters (spaces and punctuation)
-    boundaries = {" ", ".", ",", "!", "?", "؟", "،", ":", ";", "-", "\n", "\t"}
-
-    word_start_idx = None
-    current_word = ""
+    # Improved word timing extraction using regex for Arabic words
+    cleaned_str = "".join(chars)
+    # Arabic word regex: match sequences of Arabic letters/diacritics
+    word_regex = re.compile(
+        r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\u064B-\u065F]+"
+    )
     word_timings = []
+    for match in word_regex.finditer(cleaned_str):
+        word = match.group()
+        start_char_idx = match.start()
+        end_char_idx = match.end() - 1  # inclusive
+        try:
+            word_start_time = start_times[start_char_idx]
+            word_end_time = end_times[end_char_idx]
+            # Clean the word for better matching later
+            from translate.core.arabic_text import clean_word_for_matching
 
-    for i, char in enumerate(chars):
-        is_boundary = char in boundaries
-        is_last_char = i == len(chars) - 1
-
-        # If this is the start of a new word
-        if word_start_idx is None and not is_boundary:
-            word_start_idx = i
-            current_word = char
-        # If we're continuing a word
-        elif word_start_idx is not None and not is_boundary:
-            current_word += char
-
-        # Word boundary or last character - save the completed word
-        if (is_boundary or is_last_char) and word_start_idx is not None:
-            # Add last character if it's part of the word and we're at the end
-            if is_last_char and not is_boundary:
-                current_word += char
-
-            # Only process non-empty words
-            if current_word.strip():
-                # Calculate word timing
-                word_start_time = start_times[word_start_idx]
-                word_end_time = end_times[i - 1] if is_boundary else end_times[i]
-
-                # Ensure valid timing values
-                if word_start_time < word_end_time:
-                    # Clean the word for better matching later
-                    from translate.core.arabic_text import clean_word_for_matching
-
-                    clean_word = clean_word_for_matching(current_word)
-
-                    word_timings.append(
-                        {
-                            "word": current_word,
-                            "cleaned_word": clean_word,
-                            "start_time": str(word_start_time),
-                            "end_time": str(word_end_time),
-                        }
-                    )
-
-            # Reset for next word
-            word_start_idx = None
-            current_word = ""
+            clean_word = clean_word_for_matching(word)
+            word_timings.append(
+                {
+                    "word": word,
+                    "cleaned_word": clean_word,
+                    "start_time": str(word_start_time),
+                    "end_time": str(word_end_time),
+                }
+            )
+        except Exception as e:
+            print(f"Failed to extract timings for word '{word}': {str(e)}")
 
     if not word_timings:
+        print("Failed to extract any word timings from the response")
         raise ValueError("Failed to extract any word timings from the response")
 
     # Sort word timings by start time to ensure proper sequencing
@@ -541,8 +578,14 @@ def generate_sentence_audio(
             next_text=next_text,
         )
         # Extract audio and timings
-        audio_data = response.get("audio")
-        alignment = response.get("alignment")
+        audio_data = getattr(response, "audio", None) if response else None
+        if not audio_data and hasattr(response, "audio_base_64"):
+            audio_base64 = getattr(response, "audio_base_64")
+            if audio_base64:
+                import base64
+
+                audio_data = base64.b64decode(audio_base64)
+        alignment = getattr(response, "alignment", None) if response else None
         if not audio_data:
             print("No audio data returned from TTS API")
             return None
