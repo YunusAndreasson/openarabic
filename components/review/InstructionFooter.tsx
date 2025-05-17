@@ -101,6 +101,8 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   );
 };
 
+const ICON_SIZE = 32;
+
 const styles = StyleSheet.create({
   footer: {
     width: '100%',
@@ -113,9 +115,9 @@ const styles = StyleSheet.create({
     height: 80,
   } as ViewStyle,
   instructionIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: ICON_SIZE,
+    height: ICON_SIZE,
+    borderRadius: ICON_SIZE / 2,
     justifyContent: 'center',
     alignItems: 'center',
     ...LAYOUT.SHADOW.SMALL,

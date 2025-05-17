@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     marginBottom: LAYOUT.SPACING.SMALL,
     padding: LAYOUT.SPACING.SMALL,
-    borderWidth: 1.5,
+    borderWidth: LAYOUT.BORDER.WIDTH.THICK,
   },
   mainCard: {
     marginBottom: LAYOUT.SPACING.MEDIUM,

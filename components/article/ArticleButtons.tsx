@@ -99,7 +99,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   const buttonStyle = {
     backgroundColor: Colors.light.buttonOverlayActive,
     borderColor: Colors.light.buttonBorderOverlay,
-    borderWidth: 1,
+    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   };
 
   return (

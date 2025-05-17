@@ -135,11 +135,11 @@ const styles = StyleSheet.create({
   },
   playButton: {
     alignItems: 'center',
-    borderRadius: 22,
-    height: 44,
+    borderRadius: LAYOUT.BUTTON.HEIGHT.MEDIUM / 2,
+    height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     justifyContent: 'center',
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
-    width: 44,
+    width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
   },
   sentenceInfo: {
     textAlign: 'center',

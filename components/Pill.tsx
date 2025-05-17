@@ -190,7 +190,11 @@ const getCategoryStyle = (
       ? `${colors.tint}40`
       : `${colors.tint}30`
     : colors.borderOverlay,
-  borderWidth: isSelected ? 1 : isDarkMode ? 1.5 : 0.5,
+  borderWidth: isSelected
+    ? LAYOUT.BORDER.WIDTH.NORMAL
+    : isDarkMode
+      ? LAYOUT.BORDER.WIDTH.THICK
+      : LAYOUT.BORDER.WIDTH.THIN,
   borderStyle: 'solid' as const,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -223,7 +227,11 @@ const getFilterStyle = (
         : isDarkMode
           ? colors.elevation2
           : colors.elevation1,
-  borderWidth: isSelected ? 1 : isDarkMode ? 1.5 : 0.5,
+  borderWidth: isSelected
+    ? LAYOUT.BORDER.WIDTH.NORMAL
+    : isDarkMode
+      ? LAYOUT.BORDER.WIDTH.THICK
+      : LAYOUT.BORDER.WIDTH.THIN,
   borderColor: isSelected ? colors.tint : colors.cardBorder,
   borderStyle: 'solid' as const,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,

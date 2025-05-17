@@ -97,7 +97,7 @@ const getButtonStyle = (
     ? { backgroundColor: disabled ? colors.disabled : colors.tint }
     : {
         backgroundColor: colors.transparent,
-        borderWidth: 1,
+        borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
         borderColor: disabled ? colors.disabled : colors.tint,
       },
   size === 'small' && styles.buttonSmall,

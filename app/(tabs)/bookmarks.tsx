@@ -139,8 +139,8 @@ const BookmarkListItem = memo(
           backgroundColor: `${colors.warning}25`, // 25% opacity
           paddingHorizontal: 6,
           paddingVertical: 2,
-          borderRadius: 10,
-          borderWidth: 1,
+          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
           borderColor: `${colors.warning}40`, // 40% opacity
           marginRight: 8,
         }}
