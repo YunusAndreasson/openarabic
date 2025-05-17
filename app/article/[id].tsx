@@ -48,7 +48,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
       flex: 1,
     },
     transparentBackground: {
-      backgroundColor: 'transparent',
+      backgroundColor: colors.transparent,
     },
   });
 

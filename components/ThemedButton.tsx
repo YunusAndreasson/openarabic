@@ -96,7 +96,7 @@ const getButtonStyle = (
   variant === 'filled'
     ? { backgroundColor: disabled ? colors.disabled : colors.tint }
     : {
-        backgroundColor: 'transparent',
+        backgroundColor: colors.transparent,
         borderWidth: 1,
         borderColor: disabled ? colors.disabled : colors.tint,
       },

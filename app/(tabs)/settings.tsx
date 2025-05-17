@@ -17,6 +17,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT } from '@/constants/layout';
+import { Colors } from '@/constants/Colors';
 import { useLoadingState } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
@@ -488,7 +489,7 @@ const styles = StyleSheet.create({
   },
   versionText: {
     marginTop: LAYOUT.SPACING.TINY,
-    color: '#999', // fallback, will be overridden by ThemedText
+    color: Colors.light.textTertiary, // fallback, will be overridden by ThemedText
     letterSpacing: 0.5,
   },
   versionWrapper: {
