@@ -212,11 +212,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonTextLarge: {
-    fontSize: 16,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE - 1,
     letterSpacing: 2,
   },
   buttonTextSmall: {
-    fontSize: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     letterSpacing: 1,
   },
   contentContainer: {

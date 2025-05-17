@@ -377,7 +377,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
                 style={{
                   color: colors.warning,
                   fontWeight: '600',
-                  fontSize: 12,
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
                   marginLeft: 4,
                 }}
                 skipDefaultColor

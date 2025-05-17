@@ -218,13 +218,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   streakLabel: {
-    fontSize: 10,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.5,
     marginBottom: 4,
     opacity: 0.7,
   },
   streakValue: {
-    fontSize: 15,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '600',
   },
 });

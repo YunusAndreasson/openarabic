@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   difficultyText: {
-    fontSize: 12,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
     fontWeight: '600',
   },
