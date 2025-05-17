@@ -107,15 +107,13 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = ({
       },
       metadataIcon: {
         color: textColor,
-        opacity: 0.9,
         marginRight: LAYOUT.SPACING.TINY,
         textShadowColor,
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: isDarkMode ? 2 : 1,
       },
       summary: {
-        color: textColor,
-        opacity: 0.85,
+        color: colors.secondaryText,
         textShadowColor,
         textShadowOffset: { width: 0, height: 1 },
         textShadowRadius: isDarkMode ? 3 : 1,

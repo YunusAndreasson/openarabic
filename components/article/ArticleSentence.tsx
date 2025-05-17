@@ -96,11 +96,11 @@ function ArticleSentenceComponent({
       styles.englishText,
       {
         fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * settings.fontScale,
-        color: colors.text,
+        color: colors.englishText,
         lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6 * settings.fontScale,
       },
     ],
-    [colors.text, settings.fontScale]
+    [colors.englishText, settings.fontScale]
   );
 
   const backgroundStyle = useMemo(
@@ -175,7 +175,6 @@ const styles = StyleSheet.create({
   },
   englishText: {
     fontFamily: 'Philosopher',
-    opacity: 0.8,
     paddingBottom: LAYOUT.SPACING.SMALL,
     paddingLeft: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.TINY,

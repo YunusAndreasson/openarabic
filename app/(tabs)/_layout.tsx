@@ -126,7 +126,6 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       ...styles.label,
       ...styles.labelPlatform,
       color: isFocused ? colors.tint : colors.tabIconDefault,
-      opacity: isFocused ? 1 : 0.7,
     }),
     [colors.tint, colors.tabIconDefault]
   );

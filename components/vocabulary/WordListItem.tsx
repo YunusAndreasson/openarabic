@@ -125,7 +125,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
             variant="secondary"
             weight="bold"
             numberOfLines={2}
-            style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE, opacity: 1 }]}
+            style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE }]}
           >
             {capitalizedMeaning || 'No translation available'}
           </ThemedText>
@@ -221,11 +221,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     lineHeight: Platform.OS === 'ios' ? 24 : 26,
     marginRight: LAYOUT.SPACING.MEDIUM,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   lastReview: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM,
   },
   learningInfoContainer: {
     alignItems: 'center',
@@ -252,7 +250,6 @@ const styles = StyleSheet.create({
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
 });
 

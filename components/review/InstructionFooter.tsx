@@ -49,10 +49,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
   };
 
   // Create themed styles for the instruction text
-  const textStyle: TextStyle = {
-    ...styles.instructionText,
-    color: colors.tabIconDefault,
-  };
+  const textStyle: TextStyle = styles.instructionText;
 
   // Use ContainerStyle type for the container
   const containerStyle: ViewStyle = {
@@ -80,18 +77,18 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
           <View style={iconStyle}>
             <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText style={textStyle}>Unknown</ThemedText>
+          <ThemedText variant="subtle" style={textStyle}>Unknown</ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemCenter]}>
           <View style={iconStyle}>
             <Ionicons name="finger-print" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText style={textStyle}>Unsure</ThemedText>
+          <ThemedText variant="subtle" style={textStyle}>Unsure</ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemRight]}>
-          <ThemedText style={textStyle}>Known</ThemedText>
+          <ThemedText variant="subtle" style={textStyle}>Known</ThemedText>
           <View style={iconStyle}>
             <Ionicons name="arrow-forward" size={18} color={colors.tabIconDefault} />
           </View>
@@ -140,7 +137,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
-    opacity: LAYOUT.OPACITY.DIMMED,
     paddingTop: 2,
   } as TextStyle,
 });

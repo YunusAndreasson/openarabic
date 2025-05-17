@@ -134,7 +134,7 @@ export default function AuthScreen(): JSX.Element {
         onPress={handleOpenWebsite}
         activeOpacity={0.7}
       >
-        <ThemedText type="caption" align="center" variant="secondary" style={styles.footerText}>
+        <ThemedText type="caption" align="center" variant="secondary">
           By signing in, you agree to our Terms of Service and Privacy Policy
         </ThemedText>
       </TouchableOpacity>
@@ -168,9 +168,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     width: '100%',
-  },
-  footerText: {
-    opacity: 0.5,
   },
   keyboardAvoidingView: {
     flex: 1,

@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.5,
     marginBottom: 4,
-    opacity: 0.7,
   },
   streakValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
