@@ -2,10 +2,9 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo, JSX } from 'react';
-import { StyleSheet, View, RefreshControl, ScrollView } from 'react-native';
+import { StyleSheet, RefreshControl, ScrollView } from 'react-native';
 
 import EmptyState from '@/components/EmptyState';
-import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';

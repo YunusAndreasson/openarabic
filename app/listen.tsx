@@ -26,17 +26,12 @@ export default function ListenScreen(): JSX.Element {
   const {
     currentArabicWord,
     currentEnglishMeaning,
-    isArabicActive,
-    isEnglishActive,
-    opacity,
     progress,
     maxProgress,
     progressAnimationKey,
     isComplete,
     isTransitioning,
     handleClose,
-    totalWords,
-    currentWordIndex,
   } = useListen();
 
   const colors = useColors();

@@ -191,13 +191,15 @@ def generate_speech(
     voice_id: str,
     speed: float = 0.8,
     voice_settings: Optional[VoiceSettings] = None,
+    is_arabic: bool = True,
 ):
     """Generate speech using ElevenLabs API with retries."""
     # Preprocess text to handle numbers
     text = preprocess_text_for_tts(text)
 
-    # Always wrap in Arabic SSML tags since we're working with Arabic text
-    text = wrap_in_arabic_ssml(text)
+    # Only wrap in Arabic SSML tags if the content is Arabic
+    if is_arabic:
+        text = wrap_in_arabic_ssml(text)
 
     # Use provided voice settings or create new ones with default settings plus speed
     if voice_settings is None:
@@ -379,6 +381,7 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
             text=formatted_text,
             voice_id=ARABIC_WORD_VOICE_ID,  # Use the special voice for single words
             voice_settings=voice_settings,
+            is_arabic=True,
         )
 
         if not audio_response:
@@ -433,6 +436,7 @@ def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
             text=formatted_text,
             voice_id=ENGLISH_WORD_VOICE_ID,  # Use the English voice for single words
             voice_settings=voice_settings,
+            is_arabic=False,
         )
 
         if not audio_response:

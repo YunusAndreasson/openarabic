@@ -16,23 +16,37 @@ from translate.core.audio_utils import (
 )
 
 
-def extract_root_info(word: Dict) -> tuple[str, Optional[str]]:
-    """Extract root information from a word."""
+def extract_root_info(word: Dict) -> tuple[str, Optional[str], Optional[str]]:
+    """Extract root information from a word.
+
+    Returns:
+        tuple: (arabic_root, meaning, english_translation)
+    """
     # If root is directly specified, use it
     if word.get("root"):
-        return word["root"], word.get("notes")
+        return word["root"], word.get("notes"), word.get("english", "")
 
     # Use essential letters and translation as the root when available
     letters = word.get("essential", word.get("arabic"))
-    meaning = (
-        word.get("essential_translation")
-        or f"Auto-generated root for: {word.get('english', '')}"
-    )
-    return letters, meaning
+    # Get the direct English translation for audio generation
+    english = word.get("english", "")
+    # Generate meaning field that contains context
+    meaning = word.get("essential_translation") or f"Auto-generated root for: {english}"
+    return letters, meaning, english
 
 
-def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
-    """Get existing root or create a new one, and generate audio URLs for the root."""
+def get_or_create_root(
+    letters: str,
+    meaning: Optional[str] = None,
+    english_translation: Optional[str] = None,
+) -> int:
+    """Get existing root or create a new one, and generate audio URLs for the root.
+
+    Args:
+        letters: The Arabic root letters
+        meaning: The meaning description
+        english_translation: The direct English translation for audio generation
+    """
     # Clean up letters (remove extra spaces)
     letters = " ".join(letters.split())
 
@@ -52,7 +66,20 @@ def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
                 # Get or generate audio for the root word using cache
                 from translate.core.root_audio import get_or_generate_root_audio
 
-                audio_urls = get_or_generate_root_audio(letters)
+                # Use the direct English translation if available
+                english_audio_text = english_translation
+
+                # Fallback to meaning field if English translation not available
+                if not english_audio_text and meaning:
+                    # If meaning starts with "Auto-generated root for:", extract the English part
+                    if "Auto-generated root for:" in meaning:
+                        english_audio_text = meaning.replace(
+                            "Auto-generated root for:", ""
+                        ).strip()
+                    else:
+                        english_audio_text = meaning
+
+                audio_urls = get_or_generate_root_audio(letters, english_audio_text)
                 update_data = {}
                 if audio_urls:
                     if audio_urls.get("audio_url") and not root.get("audio_url"):
@@ -76,7 +103,20 @@ def get_or_create_root(letters: str, meaning: Optional[str] = None) -> int:
     try:
         from translate.core.root_audio import get_or_generate_root_audio
 
-        audio_urls = get_or_generate_root_audio(letters)
+        # Use the direct English translation if available
+        english_audio_text = english_translation
+
+        # Fallback to meaning field if English translation not available
+        if not english_audio_text and meaning:
+            # If meaning starts with "Auto-generated root for:", extract the English part
+            if "Auto-generated root for:" in meaning:
+                english_audio_text = meaning.replace(
+                    "Auto-generated root for:", ""
+                ).strip()
+            else:
+                english_audio_text = meaning
+
+        audio_urls = get_or_generate_root_audio(letters, english_audio_text)
         update_data = {}
         if audio_urls:
             if audio_urls.get("audio_url"):
@@ -115,8 +155,10 @@ def insert_sentence_words(
         # Early return with empty stats if no timings
         for position, word in enumerate(word_by_word):
             # Process words without timing info
-            root_letters, root_meaning = extract_root_info(word)
-            root_id = get_or_create_root(root_letters, root_meaning)
+            root_letters, root_meaning, english_translation = extract_root_info(word)
+            root_id = get_or_create_root(
+                root_letters, root_meaning, english_translation
+            )
             word_type_id = get_word_type_id(word.get("pos", "noun"))
 
             # Store the cleaned word form
@@ -167,8 +209,8 @@ def insert_sentence_words(
 
     for position, word in enumerate(word_by_word):
         # Extract metadata
-        root_letters, root_meaning = extract_root_info(word)
-        root_id = get_or_create_root(root_letters, root_meaning)
+        root_letters, root_meaning, english_translation = extract_root_info(word)
+        root_id = get_or_create_root(root_letters, root_meaning, english_translation)
         word_type_id = get_word_type_id(word.get("pos", "noun"))
 
         # Store the cleaned word form

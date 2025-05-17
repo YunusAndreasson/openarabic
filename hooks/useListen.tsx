@@ -8,9 +8,7 @@ import { SharedValue } from 'react-native-reanimated';
 import { useAuth } from '@/hooks/useAuth';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { StudyWord } from '@/types/vocabulary.types';
-import { handleError } from '@/utils/errorHandling';
 import { useOpacityAnimation } from '@/hooks/animations';
-import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 
 // Constants for timing
 const DELAY_BETWEEN_WORDS = 600; // ms
@@ -135,7 +133,7 @@ export function useListen({ onClose }: UseListenProps = {}): UseListenReturn {
   const [isArabicActive, setIsArabicActive] = useState(true);
   const [isEnglishActive, setIsEnglishActive] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isTransitioning] = useState(false);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
 
   // Refs

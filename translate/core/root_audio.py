@@ -16,9 +16,16 @@ from translate.core.storage_utils import (
 )
 
 
-def get_or_generate_root_audio(word: str) -> Optional[dict]:
-    """Get cached audio URLs or generate new ones for a root word (Arabic and English)."""
-    cache_key_ar = get_cache_key(word)
+def get_or_generate_root_audio(
+    arabic_word: str, english_translation: str = None
+) -> Optional[dict]:
+    """Get cached audio URLs or generate new ones for a root word (Arabic and English).
+
+    Args:
+        arabic_word: The Arabic root word
+        english_translation: The English translation of the root word
+    """
+    cache_key_ar = get_cache_key(arabic_word)
     cache_key_en = cache_key_ar.replace(
         "ar_", "en_"
     )  # Use a similar pattern for English
@@ -66,7 +73,7 @@ def get_or_generate_root_audio(word: str) -> Optional[dict]:
                 os.remove(cache_path_ar)
             audio_url = None
     else:
-        result = generate_arabic_word_audio(word, cache_key_ar)
+        result = generate_arabic_word_audio(arabic_word, cache_key_ar)
         audio_url = getattr(result, "url", None) if result else None
         if audio_url:
             temp_path = os.path.join(root_dir, "audio", cache_key_ar)
@@ -80,6 +87,13 @@ def get_or_generate_root_audio(word: str) -> Optional[dict]:
                     print("Error caching audio file")
 
     # --- English audio ---
+    # If no English translation provided, use default fallback
+    english_word_to_use = (
+        english_translation
+        if english_translation
+        else "English translation unavailable"
+    )
+
     if check_file_exists("audio", cache_key_en):
         if not os.path.exists(cache_path_en):
             try:
@@ -114,7 +128,8 @@ def get_or_generate_root_audio(word: str) -> Optional[dict]:
                 os.remove(cache_path_en)
             audio_url_en = None
     else:
-        result_en = generate_english_word_audio(word, cache_key_en)
+        # Pass the English translation to generate English audio
+        result_en = generate_english_word_audio(english_word_to_use, cache_key_en)
         audio_url_en = getattr(result_en, "url", None) if result_en else None
         if audio_url_en:
             temp_path_en = os.path.join(root_dir, "audio", cache_key_en)
