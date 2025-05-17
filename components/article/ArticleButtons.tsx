@@ -6,7 +6,6 @@ import type { AnimatedStyleProp } from '@/types/ui/base.types';
 import type { ViewStyle } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
-import { Colors } from '@/constants/Colors';
 import type { ThemeColors } from '@/types/ui/theme.types';
 
 interface ArticleButtonsProps {
@@ -26,7 +25,6 @@ interface ArticleButtonsProps {
 
 const styles = StyleSheet.create({
   backButton: {
-    backgroundColor: Colors.light.buttonOverlay,
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -50,7 +48,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   iconButton: {
-    backgroundColor: Colors.light.buttonOverlay,
     height: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
@@ -61,7 +58,6 @@ const styles = StyleSheet.create({
   buttonShadow: {
     ...Platform.select({
       ios: {
-        shadowColor: Colors.light.black,
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.3,
         shadowRadius: 3,
@@ -97,10 +93,14 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
   // Common button styles for translucent overlay effect
   const buttonStyle = {
-    backgroundColor: Colors.light.buttonOverlayActive,
-    borderColor: Colors.light.buttonBorderOverlay,
+    backgroundColor: colors.buttonOverlayActive,
+    borderColor: colors.buttonBorderOverlay,
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
   };
+
+  const iconColor = isDarkMode ? colors.white : colors.black;
+
+  const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.black } : {};
 
   return (
     <Animated.View style={styles.buttonContainer}>
@@ -108,10 +108,16 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         <Animated.View style={backButtonStyle}>
           <TouchableOpacity
             onPress={onBackPress}
-            style={[styles.backButton, styles.buttonShadow, buttonStyle]}
+            style={[
+              styles.backButton,
+              { backgroundColor: colors.buttonOverlay },
+              styles.buttonShadow,
+              shadowColorStyle,
+              buttonStyle,
+            ]}
             accessibilityLabel="Go back"
           >
-            <Ionicons name="arrow-back" size={24} color={Colors.light.white} />
+            <Ionicons name="arrow-back" size={24} color={iconColor} />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -121,12 +127,18 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
           <Animated.View style={bookmarkButtonStyle}>
             <TouchableOpacity
               onPress={onBookmarkPress}
-              style={[styles.iconButton, styles.buttonShadow, buttonStyle]}
+              style={[
+                styles.iconButton,
+                { backgroundColor: colors.buttonOverlay },
+                styles.buttonShadow,
+                shadowColorStyle,
+                buttonStyle,
+              ]}
               accessibilityLabel={
                 isInReadingList ? 'Remove from reading list' : 'Add to reading list'
               }
             >
-              <Ionicons name={bookmarkIcon} size={22} color={Colors.light.white} />
+              <Ionicons name={bookmarkIcon} size={22} color={iconColor} />
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -134,10 +146,16 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
         <Animated.View style={playButtonStyle}>
           <TouchableOpacity
             onPress={onPlayPress}
-            style={[styles.iconButton, styles.buttonShadow, buttonStyle]}
+            style={[
+              styles.iconButton,
+              { backgroundColor: colors.buttonOverlay },
+              styles.buttonShadow,
+              shadowColorStyle,
+              buttonStyle,
+            ]}
             accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
           >
-            <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color={Colors.light.white} />
+            <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color={iconColor} />
           </TouchableOpacity>
         </Animated.View>
       </View>
