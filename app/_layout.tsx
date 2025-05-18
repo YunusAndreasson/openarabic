@@ -37,7 +37,6 @@ import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/useAuth';
 import { analytics } from '../services/analytics';
-import { supabase, verifySessionIntegrity } from '../services/supabase';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
@@ -111,7 +110,7 @@ function AppContent() {
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
-  const { isLoading: isAuthLoading, session, refreshSession } = useAuth();
+  const { isLoading: isAuthLoading, session } = useAuth();
   const navigationRef = useNavigationContainerRef();
   const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
   const router = useRouter();
@@ -255,70 +254,68 @@ function AppContent() {
       appState.current = nextAppState;
 
       if (isActivating && appReady) {
-        // When resuming from background, verify session and redirect if needed
-        if (session?.user) {
-          console.log('App resumed, refreshing data');
-          // If we have a session, refresh data
-          const timeoutId = setTimeout(preloadAppData, 300);
-          return () => clearTimeout(timeoutId);
-        } else {
-          // Verify session and redirect if necessary
-          verifySessionIntegrity().then(isValid => {
-            if (isValid) {
-              // If session is valid but not loaded in state, refresh
-              refreshSession();
-            } else if (hasAttemptedRedirect) {
-              // If session isn't valid and we've already tried to redirect once,
-              // reset the flag to allow another attempt
-              setHasAttemptedRedirect(false);
-            }
-          });
-        }
+        Sentry.addBreadcrumb({
+          category: 'app_lifecycle',
+          message: 'App resumed from background',
+          level: 'info',
+        });
+
+        // When resuming from background, refresh app data
+        const timeoutId = setTimeout(preloadAppData, 300);
+        return () => clearTimeout(timeoutId);
       }
       return undefined;
     });
 
     return () => {
+      Sentry.addBreadcrumb({
+        category: 'app_lifecycle',
+        message: 'Removing app state subscription',
+        level: 'info',
+      });
       subscription.remove();
     };
-  }, [appReady, preloadAppData, session, hasAttemptedRedirect, refreshSession]);
+  }, [appReady, preloadAppData]);
 
   // Perform session-based navigation after app is ready
   useEffect(() => {
     if (appReady && !isAuthLoading && !hasAttemptedRedirect) {
       setHasAttemptedRedirect(true);
 
-      const redirectBasedOnSession = async () => {
-        try {
-          // First check session integrity
-          const sessionValid = await verifySessionIntegrity();
+      try {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Redirecting based on session state',
+          level: 'info',
+        });
 
-          // Then double-check with a fresh session fetch if needed
-          if (sessionValid) {
-            const { data } = await supabase.auth.getSession();
-            const validSession = data.session && data.session.user;
-
-            if (validSession) {
-              // If we have a valid session, go to the main app
-              console.log('Valid session found, redirecting to main app');
-              router.replace('/(tabs)');
-              return;
-            }
-          }
-
-          // If no valid session or integrity check failed, go to auth
-          console.log('No valid session, redirecting to auth');
-          router.replace('/auth');
-        } catch (err) {
-          console.warn('Error during session redirect:', err);
-          // On error, default to auth screen
+        if (session) {
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'Valid session found, redirecting to main app',
+            level: 'info',
+          });
+          router.replace('/(tabs)');
+        } else {
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'No valid session, redirecting to auth',
+            level: 'info',
+          });
           router.replace('/auth');
         }
-      };
-
-      redirectBasedOnSession();
+      } catch (err) {
+        Sentry.captureException(err, {
+          tags: {
+            location: 'app_layout',
+            action: 'session_redirect',
+          },
+        });
+        // On error, default to auth screen
+        router.replace('/auth');
+      }
     }
-  }, [appReady, isAuthLoading, hasAttemptedRedirect, session]);
+  }, [appReady, isAuthLoading, hasAttemptedRedirect, session, router]);
 
   // Show nothing until the app is ready
   if (!appReady) {

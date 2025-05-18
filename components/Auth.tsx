@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import React, { useState, useCallback, JSX, useEffect, memo } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
@@ -161,6 +162,11 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
     if (!isEmailValid || !isPasswordValid) return;
 
     setLoading(true);
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: 'Starting sign in process',
+      level: 'info',
+    });
 
     try {
       // Initialize auth to ensure storage is loaded
@@ -172,10 +178,21 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
       });
 
       if (error) {
+        Sentry.captureMessage('Sign in error', {
+          level: 'error',
+          tags: { location: 'auth_component' },
+          extra: { error: error.message },
+        });
         Alert.alert('Error', error.message);
       } else {
         // Ensure auto-refresh is active
         supabase.auth.startAutoRefresh();
+
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Sign in successful',
+          level: 'info',
+        });
 
         // Track successful sign in and identify user in Mixpanel
         await analytics.identify(data.user.id, {
@@ -188,11 +205,20 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
         lightFeedback();
 
         // Redirect to main app immediately
+        Sentry.addBreadcrumb({
+          category: 'navigation',
+          message: 'Redirecting to main app after successful login',
+          level: 'info',
+        });
         router.replace('/(tabs)');
       }
     } catch (err) {
+      handleError(err instanceof Error ? err : new Error('Sign in error'), {
+        toastMessage: 'Failed to sign in. Please try again.',
+        analyticsEventName: 'Sign_In_Error',
+        sentrySeverity: 'error',
+      });
       Alert.alert('Error', 'Failed to sign in. Please try again.');
-      handleError(err as Error);
     } finally {
       setLoading(false);
     }

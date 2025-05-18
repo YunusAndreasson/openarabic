@@ -1,12 +1,10 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
+import * as Sentry from '@sentry/react-native';
 
-import {
-  supabase,
-  setupSupabaseAppStateListener,
-  verifySessionIntegrity,
-} from '../services/supabase';
+import { supabase, setupSupabaseAppStateListener } from '../services/supabase';
+import { handleError } from '@/utils/errorHandling';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
@@ -48,10 +46,18 @@ export function useProvideAuth(): AuthResult {
       // Ensure auth is initialized
       if (!authInitialized) {
         try {
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'Initializing auth in fetchSession',
+            level: 'info',
+          });
           await supabase.auth.initialize();
           setAuthInitialized(true);
         } catch (initError) {
-          console.warn('Auth initialization error in fetchSession:', initError);
+          Sentry.captureException(initError, {
+            tags: { location: 'auth_initialization' },
+            level: 'error',
+          });
           setAuthError(
             initError instanceof Error ? initError : new Error('Failed to initialize auth')
           );
@@ -59,37 +65,40 @@ export function useProvideAuth(): AuthResult {
         }
       }
 
-      // First verify session integrity
-      const isValid = await verifySessionIntegrity();
-      if (!isValid) {
-        console.log('Session integrity check failed, returning null session');
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Error fetching session',
+          level: 'error',
+          data: { error: error.message },
+        });
+        setAuthError(error);
         return null;
       }
 
-      // Use a timeout to prevent hanging
-      const sessionPromise = supabase.auth.getSession();
-      const timeoutPromise = new Promise<{
-        data: { session: null };
-        error: Error;
-      }>(resolve => {
-        setTimeout(() => {
-          resolve({
-            data: { session: null },
-            error: new Error('Session fetch timeout'),
-          });
-        }, 3000);
-      });
-
-      const result = await Promise.race([sessionPromise, timeoutPromise]);
-
-      if (result.error) {
-        setAuthError(result.error);
-        return null;
+      if (data.session) {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Successfully fetched session',
+          level: 'info',
+        });
+      } else {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'No session found during fetch',
+          level: 'info',
+        });
       }
 
-      return result.data.session;
+      return data.session;
     } catch (error) {
-      setAuthError(error instanceof Error ? error : new Error('Failed to fetch session'));
+      handleError(error instanceof Error ? error : new Error('Failed to fetch session'), {
+        analyticsEventName: 'Session_Fetch_Error',
+        sentrySeverity: 'error',
+        showToast: false,
+      });
       return null;
     }
   }, [authInitialized]);
@@ -100,30 +109,29 @@ export function useProvideAuth(): AuthResult {
     const currentAttempt = refreshAttempts + 1;
     setRefreshAttempts(currentAttempt);
 
+    Sentry.addBreadcrumb({
+      category: 'auth',
+      message: `Refreshing session (attempt ${currentAttempt})`,
+      level: 'info',
+    });
+
     try {
       // Check network connectivity before attempting refresh
       const netState = await NetInfo.fetch();
       if (!netState.isConnected) {
-        // Try to use cached session if no network
-        const cachedSession = await fetchSession();
-        if (cachedSession) {
-          setSession(cachedSession);
-          setAuthError(null);
-          setIsLoading(false);
-          return cachedSession;
-        }
-        throw new Error('No network connection and no cached session available');
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'No network connection during refresh attempt',
+          level: 'warning',
+        });
+        setIsLoading(false);
+        return null;
       }
 
-      // Initialize auth to ensure storage is loaded
+      // Initialize auth if needed
       if (!authInitialized) {
-        try {
-          await supabase.auth.initialize();
-          setAuthInitialized(true);
-        } catch (initError) {
-          console.warn('Auth initialization error in refreshSession:', initError);
-          throw initError;
-        }
+        await supabase.auth.initialize();
+        setAuthInitialized(true);
       }
 
       // Ensure auto-refresh is active
@@ -133,18 +141,15 @@ export function useProvideAuth(): AuthResult {
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
       if (refreshError) {
-        // If refresh fails but under max retries, try getting the current session
-        const fetchedSession = await fetchSession();
-        if (fetchedSession) {
-          setSession(fetchedSession);
-          setAuthError(null);
-          setIsLoading(false);
-          return fetchedSession;
-        }
+        Sentry.captureException(refreshError, {
+          tags: { location: 'session_refresh' },
+          level: 'warning',
+        });
 
         // If we've reached max retries, don't keep retrying
         if (currentAttempt >= MAX_REFRESH_RETRIES) {
-          throw new Error(`Could not refresh session after ${MAX_REFRESH_RETRIES} attempts`);
+          setIsLoading(false);
+          return null;
         }
 
         // Implement exponential backoff for retries
@@ -157,6 +162,12 @@ export function useProvideAuth(): AuthResult {
 
       if (refreshData.session) {
         // Reset refresh attempts on success
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Session refreshed successfully',
+          level: 'info',
+        });
+
         setRefreshAttempts(0);
         setSession(refreshData.session);
         setAuthError(null);
@@ -168,63 +179,69 @@ export function useProvideAuth(): AuthResult {
         return null;
       }
     } catch (error) {
-      setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
-      // Always ensure we reset loading state even on error
+      handleError(error instanceof Error ? error : new Error('Unknown auth error'), {
+        analyticsEventName: 'Session_Refresh_Error',
+        sentrySeverity: 'error',
+        showToast: false,
+      });
       setIsLoading(false);
       return null;
     }
-  }, [fetchSession, refreshAttempts, authInitialized]);
+  }, [refreshAttempts, authInitialized]);
 
   // Perform initial auth setup
   const initAuth = useCallback(async () => {
-    let initTimeout: ReturnType<typeof setTimeout>;
-
     try {
-      // Set up timeout to prevent initialization from hanging
-      const timeoutPromise = new Promise<null>((_, reject) => {
-        initTimeout = setTimeout(() => {
-          reject(new Error('Auth initialization timed out'));
-        }, AUTH_INIT_TIMEOUT_MS);
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: 'Starting auth initialization',
+        level: 'info',
       });
 
-      // Race between auth initialization and timeout
-      await Promise.race([
-        (async () => {
-          try {
-            // Initialize auth to ensure storage is loaded
-            await supabase.auth.initialize();
-            setAuthInitialized(true);
+      await supabase.auth.initialize();
+      setAuthInitialized(true);
 
-            // Ensure auto-refresh is active
-            supabase.auth.startAutoRefresh();
+      // Ensure auto-refresh is active
+      supabase.auth.startAutoRefresh();
 
-            // Fetch session after initialization
-            const fetchedSession = await fetchSession();
-            if (fetchedSession) {
-              setSession(fetchedSession);
-              setAuthError(null);
-            } else {
-              setSession(null);
-            }
-          } catch (initErr) {
-            console.warn('Auth initialization inner error:', initErr);
-            throw initErr;
-          }
-        })(),
-        timeoutPromise,
-      ]);
+      // Fetch session after initialization
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        Sentry.captureException(error, {
+          tags: { location: 'auth_init_get_session' },
+          level: 'error',
+        });
+        setSession(null);
+        setAuthError(error);
+      } else if (data.session) {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Successfully initialized with valid session',
+          level: 'info',
+        });
+        setSession(data.session);
+        setAuthError(null);
+      } else {
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'Initialized but no valid session found',
+          level: 'info',
+        });
+        setSession(null);
+      }
     } catch (error) {
-      console.warn(
-        'Auth initialization error:',
-        error instanceof Error ? error.message : String(error)
-      );
+      handleError(error instanceof Error ? error : new Error(String(error)), {
+        analyticsEventName: 'Auth_Initialization_Failed',
+        sentrySeverity: 'error',
+        showToast: false,
+      });
       setSession(null);
       setAuthError(error instanceof Error ? error : new Error('Auth initialization failed'));
     } finally {
-      clearTimeout(initTimeout!);
       setIsLoading(false);
     }
-  }, [fetchSession]);
+  }, []);
 
   useEffect(() => {
     const removeSupabaseListener = setupSupabaseAppStateListener();
@@ -238,10 +255,16 @@ export function useProvideAuth(): AuthResult {
     // Handle app state changes
     appStateSubscription = AppState.addEventListener('change', nextAppState => {
       const isActivating = appState.current !== 'active' && nextAppState === 'active';
+
       appState.current = nextAppState;
 
       if (isActivating && isMounted) {
-        // Always re-initialize auth when app becomes active
+        // Re-initialize auth when app becomes active
+        Sentry.addBreadcrumb({
+          category: 'auth',
+          message: 'App becoming active, refreshing auth state',
+          level: 'info',
+        });
         initAuth();
       }
     });
@@ -255,11 +278,22 @@ export function useProvideAuth(): AuthResult {
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!isMounted) return;
 
+      Sentry.addBreadcrumb({
+        category: 'auth',
+        message: `Auth state change: ${event}`,
+        level: 'info',
+      });
+
       if (event === 'SIGNED_OUT') {
         setSession(null);
         setIsLoading(false);
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (newSession) {
+          Sentry.addBreadcrumb({
+            category: 'auth',
+            message: 'New session received, updating state',
+            level: 'info',
+          });
           setSession(newSession);
           setAuthError(null);
         }
@@ -270,26 +304,15 @@ export function useProvideAuth(): AuthResult {
     // Store the unsubscribe function
     authSubscriptionUnsubscribe = subscription.unsubscribe;
 
-    // Add network state listener
-    const unsubscribeNetInfo = NetInfo.addEventListener(state => {
-      if (state.isConnected && isMounted && session?.user) {
-        // When connectivity is restored, try refreshing the session
-        refreshSession();
-      }
-    });
-
     return () => {
       isMounted = false;
-      // Stop automatic refresh when the effect cleans up
-      supabase.auth.stopAutoRefresh();
       appStateSubscription.remove();
       if (authSubscriptionUnsubscribe) {
         authSubscriptionUnsubscribe();
       }
-      unsubscribeNetInfo();
       removeSupabaseListener();
     };
-  }, [initAuth, refreshSession]);
+  }, [initAuth]);
 
   // Memoize the returned object to ensure reference stability
   const authResult = useMemo(
