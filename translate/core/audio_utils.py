@@ -34,7 +34,7 @@ ARABIC_VOICE_ID = "nPczCjzI2devNBz1zQrb"  # Voice ID for Arabic sentences
 ARABIC_WORD_VOICE_ID = (
     "IES4nrmZdUBHByLBde0P"  # Special voice ID for single Arabic words
 )
-ENGLISH_WORD_VOICE_ID = "nPczCjzI2devNBz1zQrb"
+ENGLISH_WORD_VOICE_ID = "IKne3meq5aSn9XLyUdCD"
 
 # Default voice settings for consistent audio generation
 DEFAULT_VOICE_SETTINGS = VoiceSettings(
@@ -194,7 +194,12 @@ def generate_speech(
     if is_arabic:
         text = preprocess_text_for_tts(text)
         # Wrap in Arabic SSML tags
-        text = wrap_in_arabic_ssml(text)
+        if not text.startswith("<speak>"):
+            text = wrap_in_arabic_ssml(text)
+    # Don't modify text that already has SSML tags
+    elif not text.startswith("<speak>"):
+        # For non-Arabic text without SSML, we could apply generic SSML if needed
+        pass
 
     # Use provided voice settings or create new ones with default settings plus speed
     if voice_settings is None:
@@ -424,12 +429,17 @@ def generate_arabic_word_audio(word: str, filename: str) -> Optional[Dict]:
         return None
 
 
+def wrap_in_english_ssml(text: str) -> str:
+    """Wrap text in SSML tags specifying English language to ensure proper pronunciation."""
+    return f'<speak><lang xml:lang="en-US">{text}</lang></speak>'
+
+
 def generate_english_word_audio(word: str, filename: str) -> Optional[Dict]:
     """Generate audio file for an English word using ElevenLabs API."""
     temp_audio_path = None
     try:
-        # No SSML wrapping for English
-        formatted_text = word
+        # Wrap in English SSML tags to ensure proper pronunciation
+        formatted_text = wrap_in_english_ssml(word)
 
         # Create voice settings with default settings plus speed
         voice_settings = VoiceSettings(

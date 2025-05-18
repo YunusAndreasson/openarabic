@@ -311,6 +311,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
         const effectiveConfidence = isStruggling ? 'unknown' : confidence;
         await updateWord(currentWord.root_id, effectiveConfidence);
         if (!stateRefs.current.isUpdatingWord) return;
+
         setTimeout(() => fadeIn(), 150);
       } catch (error) {
         handleError(error instanceof Error ? error : new Error(String(error)));
@@ -394,6 +395,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       setTimeout(() => {
         if (controller.signal.aborted) return;
 
+        // Clean up any playing audio before proceeding
         cleanupAudio();
         fadeOut();
 
@@ -406,12 +408,23 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
           // Update UI with meaning if needed
           stateRefs.current.meaningTimeout = displayMeaning(confidence, isStruggling);
 
-          // Play English audio for vague or unknown responses
+          // Create dedicated audio playing for English audio (don't use main audio player)
           if (
             (confidence === 'vague' || confidence === 'unknown') &&
             currentWord?.root?.audio_url_en
           ) {
-            playAudio(currentWord.root.audio_url_en).catch(handleError);
+            // Use direct Audio API instead of shared audio player to avoid conflicts
+            Audio.Sound.createAsync({ uri: currentWord.root.audio_url_en }, { shouldPlay: true })
+              .then(({ sound }) => {
+                sound.setOnPlaybackStatusUpdate(status => {
+                  if (status.isLoaded && status.didJustFinish) {
+                    sound.unloadAsync().catch(() => {});
+                  }
+                });
+              })
+              .catch(error => {
+                handleError(error instanceof Error ? error : new Error(String(error)));
+              });
           }
 
           // Track vague responses for future struggle detection
@@ -422,7 +435,10 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
           // Schedule the actual word processing
           if (confidence === 'unknown' || confidence === 'vague') {
             stateRefs.current.meaningTimeout = setTimeout(
-              () => processFeedback(confidence, isStruggling, controller),
+              () => {
+                // Process feedback after meaning display timeout
+                processFeedback(confidence, isStruggling, controller);
+              },
               isStruggling
                 ? TRANSITION_DELAYS.meaningDisplay.struggling
                 : TRANSITION_DELAYS.meaningDisplay.normal
@@ -445,7 +461,6 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       displayMeaning,
       processFeedback,
       currentWord?.root?.audio_url_en,
-      playAudio,
     ]
   );
 
@@ -520,19 +535,16 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       const wordForm = currentWord.root.letters;
       const audioUrl = currentWord.root.audio_url;
 
-      if (
-        timeRefs.current.lastProcessedWordId === wordId &&
-        currentSentence.wordForm === wordForm
-      ) {
-        return;
-      }
-
-      timeRefs.current.lastProcessedWordId = wordId;
+      // Always update the current sentence
       setCurrentSentence({ wordForm });
 
+      // ALWAYS play audio for Arabic words, regardless of lastProcessedWordId
       if (audioUrl) {
         playAudio(audioUrl).catch(handleError);
       }
+
+      // Update the lastProcessedWordId after playing audio
+      timeRefs.current.lastProcessedWordId = wordId;
 
       // Preload audio for multiple upcoming words - use requestAnimationFrame for timing optimization
       requestAnimationFrame(() => {
@@ -549,7 +561,8 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     }
   }, [
     currentWord?.root_id,
-    currentSentence.wordForm,
+    currentWord?.root?.letters,
+    currentWord?.root?.audio_url,
     isComplete,
     isTransitioningToCompletion,
     wordQueue,
