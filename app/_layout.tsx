@@ -41,6 +41,7 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
 import { ToastProvider } from '@/components/ToastProvider';
+import { AuthProvider } from '@/components/AuthProvider';
 import { ThemedText } from '@/components/ThemedText';
 import { useArticlesAndDueWordsLoaded } from './(tabs)/index';
 
@@ -353,13 +354,15 @@ export default Sentry.wrap(function RootLayout() {
       <Provider store={store}>
         <PersistGate loading={null} persistor={persistor}>
           <QueryClientProvider client={queryClient}>
-            <SafeAreaProvider>
-              <ToastProvider>
-                <ErrorBoundary FallbackComponent={ErrorFallback}>
-                  <AppContent />
-                </ErrorBoundary>
-              </ToastProvider>
-            </SafeAreaProvider>
+            <AuthProvider>
+              <SafeAreaProvider>
+                <ToastProvider>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <AppContent />
+                  </ErrorBoundary>
+                </ToastProvider>
+              </SafeAreaProvider>
+            </AuthProvider>
           </QueryClientProvider>
         </PersistGate>
       </Provider>
