@@ -272,6 +272,16 @@ export function useListen({ onClose, fromVocabulary }: UseListenProps = {}): Use
     setIsEnglishActive(false);
     setIsArabicActive(true);
 
+    // Re-initialize the audio session to ensure background playback works
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: true,
+      shouldDuckAndroid: true,
+      interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+      interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+      playThroughEarpieceAndroid: false,
+    });
+
     try {
       // Play Arabic audio
       if (currentWord.root?.audio_url) {
@@ -282,6 +292,18 @@ export function useListen({ onClose, fromVocabulary }: UseListenProps = {}): Use
 
       // Delay between Arabic and English
       await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_LANGUAGES));
+
+      // Re-check app state and reinit audio if needed for English playback
+      if (AppState.currentState !== 'active') {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+          playThroughEarpieceAndroid: false,
+        });
+      }
 
       // Play English audio
       setIsArabicActive(false);
@@ -295,6 +317,18 @@ export function useListen({ onClose, fromVocabulary }: UseListenProps = {}): Use
 
       // Delay before moving to next word
       await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_WORDS));
+
+      // Re-check app state before moving to next word
+      if (AppState.currentState !== 'active') {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+          interruptionModeIOS: InterruptionModeIOS.DoNotMix,
+          interruptionModeAndroid: InterruptionModeAndroid.DoNotMix,
+          playThroughEarpieceAndroid: false,
+        });
+      }
 
       // Move to next word
       moveToNextWord();
