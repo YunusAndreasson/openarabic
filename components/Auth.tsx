@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useState, useCallback, JSX, useEffect, memo } from 'react';
 import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { LAYOUT } from '@/constants/layout';
 import { analytics } from '@/services/analytics';
@@ -48,11 +49,31 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
 
   // Initialize auth session on component mount to ensure token refresh
   useEffect(() => {
+    let isMounted = true;
     const initializeAuth = async () => {
       try {
+        // First, check AsyncStorage access
+        try {
+          await AsyncStorage.getItem('auth-test-key');
+        } catch (storageErr) {
+          console.warn('AsyncStorage error in Auth component:', storageErr);
+          // Wait a moment before trying again
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
+        if (!isMounted) return;
+
+        // Clear any potentially corrupted tokens if auth is consistently failing
+        if (__DEV__) {
+          console.log('Auth component initializing auth...');
+        }
+
         await supabase.auth.initialize();
+
         // Ensure auto-refresh is active to maintain the session
         supabase.auth.startAutoRefresh();
+
+        if (!isMounted) return;
 
         // Try to refresh the token immediately to ensure we have a valid session
         const { error } = await supabase.auth.refreshSession();
@@ -60,6 +81,7 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
           console.warn('Session refresh error:', error.message);
         }
       } catch (err) {
+        if (!isMounted) return;
         handleError(err instanceof Error ? err : new Error('Failed to initialize auth'));
       }
     };
@@ -67,6 +89,7 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
     initializeAuth();
 
     return () => {
+      isMounted = false;
       // Don't stop autoRefresh on unmount to keep session alive
     };
   }, []);
