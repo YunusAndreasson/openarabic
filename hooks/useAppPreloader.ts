@@ -31,6 +31,9 @@ const CACHE_TIMES = {
   },
 } as const;
 
+// Maximum time to wait for preloading before proceeding anyway
+const PRELOAD_TIMEOUT_MS = 5000;
+
 interface AppPreloaderResult {
   isPreloading: boolean;
   isLoaded: boolean;
@@ -38,6 +41,34 @@ interface AppPreloaderResult {
   prefetchArticle: (articleId: number) => Promise<boolean>;
   prefetchVocabularyData: () => Promise<boolean>;
   refreshPreloadedData: () => Promise<void>;
+}
+
+/**
+ * Helper function to add timeout to a promise
+ */
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  fallbackValue: T
+): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>;
+
+  const timeoutPromise = new Promise<T>(resolve => {
+    timeoutId = setTimeout(() => {
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: `[Preloader] Operation timed out after ${timeoutMs}ms`,
+        level: 'warning',
+      });
+      resolve(fallbackValue);
+    }, timeoutMs);
+  });
+
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timeoutId!);
+  }
 }
 
 /**
@@ -71,50 +102,93 @@ export const useAppPreloader = (): AppPreloaderResult => {
         level: 'info',
       });
 
-      const promises: Promise<unknown>[] = [
-        queryClient.fetchQuery({
-          queryKey: ['articles'],
-          queryFn: () => articlesService.getArticles(),
-          ...CACHE_TIMES.LONG,
-          retry: 3,
-        }),
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: '[Preloader] Starting to preload app data',
+        level: 'info',
+      });
 
-        queryClient.fetchQuery({
-          queryKey: ['categories'],
-          queryFn: () => categoriesService.getCategories(),
-          ...CACHE_TIMES.VERY_LONG,
-          retry: 3,
-        }),
+      // Create the basic promises
+      const articlesPromise = queryClient.fetchQuery({
+        queryKey: ['articles'],
+        queryFn: () => articlesService.getArticles(),
+        ...CACHE_TIMES.LONG,
+        retry: 3,
+      });
+
+      const categoriesPromise = queryClient.fetchQuery({
+        queryKey: ['categories'],
+        queryFn: () => categoriesService.getCategories(),
+        ...CACHE_TIMES.VERY_LONG,
+        retry: 3,
+      });
+
+      // Add timeouts to prevent hanging
+      const promises: Promise<unknown>[] = [
+        withTimeout(articlesPromise, PRELOAD_TIMEOUT_MS, []),
+        withTimeout(categoriesPromise, PRELOAD_TIMEOUT_MS, []),
       ];
 
       if (user?.id) {
+        const readingListPromise = queryClient.fetchQuery({
+          queryKey: ['readingList', user.id],
+          queryFn: () => readingListService.getReadingList(user.id),
+          ...CACHE_TIMES.MEDIUM,
+          retry: 3,
+        });
+
+        const dueWordsPromise = queryClient.fetchQuery({
+          queryKey: FSRS_QUERY_KEYS.due(user.id),
+          queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
+          ...CACHE_TIMES.MEDIUM,
+          retry: 3,
+        });
+
+        const allWordsPromise = queryClient.fetchQuery({
+          queryKey: FSRS_QUERY_KEYS.all(user.id),
+          queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
+          ...CACHE_TIMES.LONG,
+          retry: 3,
+        });
+
+        // Add timeouts to these promises as well
         promises.push(
-          queryClient.fetchQuery({
-            queryKey: ['readingList', user.id],
-            queryFn: () => readingListService.getReadingList(user.id),
-            ...CACHE_TIMES.MEDIUM,
-            retry: 3,
-          }),
-
-          queryClient.fetchQuery({
-            queryKey: FSRS_QUERY_KEYS.due(user.id),
-            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { onlyDue: true }),
-            ...CACHE_TIMES.MEDIUM,
-            retry: 3,
-          }),
-
-          queryClient.fetchQuery({
-            queryKey: FSRS_QUERY_KEYS.all(user.id),
-            queryFn: () => studyWordsFSRSService.getFSRSWords(user.id, { forStats: false }),
-            ...CACHE_TIMES.LONG,
-            retry: 3,
-          })
+          withTimeout(readingListPromise, PRELOAD_TIMEOUT_MS, []),
+          withTimeout(dueWordsPromise, PRELOAD_TIMEOUT_MS, []),
+          withTimeout(allWordsPromise, PRELOAD_TIMEOUT_MS, [])
         );
       }
 
-      const results = await Promise.all(promises);
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: `[Preloader] Waiting for ${promises.length} resources to load`,
+        level: 'info',
+      });
+
+      // Ensure we don't wait indefinitely for all promises
+      const overallTimeoutPromise = new Promise<unknown[]>(resolve => {
+        setTimeout(() => {
+          Sentry.addBreadcrumb({
+            category: 'preloader',
+            message: `[Preloader] Overall preload timed out after ${PRELOAD_TIMEOUT_MS}ms`,
+            level: 'warning',
+          });
+          resolve([]);
+        }, PRELOAD_TIMEOUT_MS);
+      });
+
+      // Use race with the timeout to ensure we don't hang
+      const results = await Promise.race([Promise.all(promises), overallTimeoutPromise]);
+
+      // Check if we have articles data
       const articlesData = results[0];
       const hasArticles = Array.isArray(articlesData) && articlesData.length > 0;
+
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: `[Preloader] Preload complete, has articles: ${hasArticles}`,
+        level: 'info',
+      });
 
       setIsLoaded(hasArticles);
 
@@ -137,6 +211,12 @@ export const useAppPreloader = (): AppPreloaderResult => {
     } catch (error) {
       // Calculate time spent before error
       const errorTime = Date.now() - startTime;
+
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: `[Preloader] Error after ${errorTime}ms: ${error instanceof Error ? error.message : String(error)}`,
+        level: 'error',
+      });
 
       if (error instanceof Error) {
         Sentry.captureException(error, {
@@ -165,6 +245,12 @@ export const useAppPreloader = (): AppPreloaderResult => {
 
       setIsLoaded(false);
     } finally {
+      Sentry.addBreadcrumb({
+        category: 'preloader',
+        message: '[Preloader] Finishing preload operation',
+        level: 'info',
+      });
+
       setIsPreloading(false);
       preloadLockRef.current = false;
     }

@@ -199,15 +199,35 @@ function AppContent() {
     // Maximum time to wait for app to be ready (in milliseconds)
     const MAX_LOADING_TIME = 5000; // 5 seconds
     // Authentication timeout - shorter to prioritize UX over perfect auth
-    const AUTH_TIMEOUT = 3000; // 3 seconds
+    const AUTH_TIMEOUT = 2000; // 2 seconds instead of 3000
+    // Critical failsafe - absolute maximum time to show splash regardless of state
+    const CRITICAL_FAILSAFE_TIMEOUT = 8000; // 8 seconds
 
     let timeoutId: ReturnType<typeof setTimeout>;
     let authTimeoutId: ReturnType<typeof setTimeout>;
+    let criticalFailsafeId: ReturnType<typeof setTimeout>;
+
+    // Critical failsafe to ensure app always loads eventually
+    criticalFailsafeId = setTimeout(() => {
+      Sentry.addBreadcrumb({
+        category: 'app_lifecycle',
+        message: '⚠️ CRITICAL: Forcing app to load after maximum wait time',
+        level: 'warning',
+      });
+      setAppReady(true);
+      SplashScreen.hideAsync().catch(error => {
+        Sentry.captureException(error);
+      });
+    }, CRITICAL_FAILSAFE_TIMEOUT);
 
     // Separate timeout just for auth to ensure we don't block UI rendering
     if (!appReady && isAuthLoading) {
       authTimeoutId = setTimeout(() => {
-        console.warn('Auth loading timeout reached - proceeding with app initialization');
+        Sentry.addBreadcrumb({
+          category: 'app_lifecycle',
+          message: 'Auth loading timeout reached - proceeding with app initialization',
+          level: 'warning',
+        });
         // This doesn't affect the actual auth state, just lets the app proceed
         // The auth system will keep trying in the background
       }, AUTH_TIMEOUT);
@@ -215,7 +235,11 @@ function AppContent() {
 
     if (!appReady && fontsLoaded) {
       timeoutId = setTimeout(() => {
-        console.warn('App loading timeout reached - forcing app ready state');
+        Sentry.addBreadcrumb({
+          category: 'app_lifecycle',
+          message: 'App loading timeout reached - forcing app ready state',
+          level: 'warning',
+        });
         setAppReady(true);
       }, MAX_LOADING_TIME);
     }
@@ -223,6 +247,7 @@ function AppContent() {
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       if (authTimeoutId) clearTimeout(authTimeoutId);
+      if (criticalFailsafeId) clearTimeout(criticalFailsafeId);
     };
   }, [appReady, fontsLoaded, isAuthLoading]);
 
@@ -237,8 +262,20 @@ function AppContent() {
     // Content is ready or we've waited long enough
     const contentIsReady = isLoaded && articlesAndDueWordsLoaded;
 
-    // Prioritize showing the UI even if some data isn't ready yet
+    Sentry.addBreadcrumb({
+      category: 'app_lifecycle',
+      message: `App loading status - Fonts: ${fontsAreReady}, Auth: ${authIsReady}, Content: ${contentIsReady}`,
+      level: 'info',
+    });
+
+    // More aggressive loading strategy - prioritize showing UI
+    // If fonts are ready and EITHER auth is ready OR we have content, proceed
     if (fontsAreReady && (authIsReady || contentIsReady)) {
+      Sentry.addBreadcrumb({
+        category: 'app_lifecycle',
+        message: 'Setting app ready to true',
+        level: 'info',
+      });
       setAppReady(true);
     }
   }, [fontsLoaded, isAuthLoading, isLoaded, articlesAndDueWordsLoaded]);
