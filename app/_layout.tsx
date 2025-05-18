@@ -6,7 +6,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
-import { Stack, useNavigationContainerRef } from 'expo-router';
+import { Stack, useNavigationContainerRef, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React, {
@@ -37,6 +37,7 @@ import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/useAuth';
 import { analytics } from '../services/analytics';
+import { supabase, verifySessionIntegrity } from '../services/supabase';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
@@ -110,8 +111,10 @@ function AppContent() {
   const isDark = theme === Theme.Dark;
   const [appReady, setAppReady] = useState(false);
   const appState = useRef(AppState.currentState);
-  const { isLoading: isAuthLoading, session } = useAuth();
+  const { isLoading: isAuthLoading, session, refreshSession } = useAuth();
   const navigationRef = useNavigationContainerRef();
+  const [hasAttemptedRedirect, setHasAttemptedRedirect] = useState(false);
+  const router = useRouter();
 
   const [fontsLoaded] = useFonts({
     Philosopher: philosopherFont,
@@ -246,18 +249,76 @@ function AppContent() {
   // Cleanup effect for AppState subscription
   useEffect(() => {
     const subscription = AppState.addEventListener('change', nextAppState => {
-      if (appState.current === 'background' && nextAppState === 'active' && appReady) {
-        const timeoutId = setTimeout(preloadAppData, 300);
-        return () => clearTimeout(timeoutId);
-      }
+      const wasInactive = appState.current !== 'active';
+      const isActivating = wasInactive && nextAppState === 'active';
+
       appState.current = nextAppState;
+
+      if (isActivating && appReady) {
+        // When resuming from background, verify session and redirect if needed
+        if (session?.user) {
+          console.log('App resumed, refreshing data');
+          // If we have a session, refresh data
+          const timeoutId = setTimeout(preloadAppData, 300);
+          return () => clearTimeout(timeoutId);
+        } else {
+          // Verify session and redirect if necessary
+          verifySessionIntegrity().then(isValid => {
+            if (isValid) {
+              // If session is valid but not loaded in state, refresh
+              refreshSession();
+            } else if (hasAttemptedRedirect) {
+              // If session isn't valid and we've already tried to redirect once,
+              // reset the flag to allow another attempt
+              setHasAttemptedRedirect(false);
+            }
+          });
+        }
+      }
       return undefined;
     });
 
     return () => {
       subscription.remove();
     };
-  }, [appReady, preloadAppData]);
+  }, [appReady, preloadAppData, session, hasAttemptedRedirect, refreshSession]);
+
+  // Perform session-based navigation after app is ready
+  useEffect(() => {
+    if (appReady && !isAuthLoading && !hasAttemptedRedirect) {
+      setHasAttemptedRedirect(true);
+
+      const redirectBasedOnSession = async () => {
+        try {
+          // First check session integrity
+          const sessionValid = await verifySessionIntegrity();
+
+          // Then double-check with a fresh session fetch if needed
+          if (sessionValid) {
+            const { data } = await supabase.auth.getSession();
+            const validSession = data.session && data.session.user;
+
+            if (validSession) {
+              // If we have a valid session, go to the main app
+              console.log('Valid session found, redirecting to main app');
+              router.replace('/(tabs)');
+              return;
+            }
+          }
+
+          // If no valid session or integrity check failed, go to auth
+          console.log('No valid session, redirecting to auth');
+          router.replace('/auth');
+        } catch (err) {
+          console.warn('Error during session redirect:', err);
+          // On error, default to auth screen
+          router.replace('/auth');
+        }
+      };
+
+      redirectBasedOnSession();
+    }
+  }, [appReady, isAuthLoading, hasAttemptedRedirect, session]);
 
   // Show nothing until the app is ready
   if (!appReady) {

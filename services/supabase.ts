@@ -265,3 +265,59 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
   });
   throw error_;
 }
+
+/**
+ * Verifies the integrity of the stored auth session and returns whether it's valid
+ * @returns Promise resolving to whether session is valid
+ */
+export async function verifySessionIntegrity(): Promise<boolean> {
+  try {
+    // First check if the token exists in AsyncStorage
+    const tokenJson = await AsyncStorage.getItem('supabase.auth.token');
+    if (!tokenJson) {
+      return false;
+    }
+
+    let tokenData;
+    try {
+      // Try to parse the token data
+      tokenData = JSON.parse(tokenJson);
+    } catch (parseError) {
+      console.warn('Corrupted auth token found, clearing');
+      await AsyncStorage.removeItem('supabase.auth.token');
+      return false;
+    }
+
+    // Verify token has the expected structure
+    if (!tokenData || !tokenData.access_token || !tokenData.refresh_token) {
+      console.warn('Invalid token structure, clearing');
+      await AsyncStorage.removeItem('supabase.auth.token');
+      return false;
+    }
+
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = await AsyncStorage.getItem('supabase.auth.expires_at');
+
+    if (expiresAt && parseInt(expiresAt) < now) {
+      console.log('Token expired, attempting refresh');
+
+      // Try to initialize and refresh
+      await supabase.auth.initialize();
+      const { error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.warn('Failed to refresh expired token:', error.message);
+        return false;
+      }
+
+      return true;
+    }
+
+    // If we get here, token appears valid
+    return true;
+  } catch (err) {
+    console.error('Error verifying session integrity:', err);
+    return false;
+  }
+}

@@ -2,7 +2,11 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 
-import { supabase, setupSupabaseAppStateListener } from '../services/supabase';
+import {
+  supabase,
+  setupSupabaseAppStateListener,
+  verifySessionIntegrity,
+} from '../services/supabase';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
@@ -53,6 +57,13 @@ export function useProvideAuth(): AuthResult {
           );
           return null;
         }
+      }
+
+      // First verify session integrity
+      const isValid = await verifySessionIntegrity();
+      if (!isValid) {
+        console.log('Session integrity check failed, returning null session');
+        return null;
       }
 
       // Use a timeout to prevent hanging
