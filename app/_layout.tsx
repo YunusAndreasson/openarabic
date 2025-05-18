@@ -198,10 +198,22 @@ function AppContent() {
   useEffect(() => {
     // Maximum time to wait for app to be ready (in milliseconds)
     const MAX_LOADING_TIME = 5000; // 5 seconds
+    // Authentication timeout - shorter to prioritize UX over perfect auth
+    const AUTH_TIMEOUT = 3000; // 3 seconds
 
     let timeoutId: ReturnType<typeof setTimeout>;
+    let authTimeoutId: ReturnType<typeof setTimeout>;
 
-    if (!appReady && fontsLoaded && !isAuthLoading) {
+    // Separate timeout just for auth to ensure we don't block UI rendering
+    if (!appReady && isAuthLoading) {
+      authTimeoutId = setTimeout(() => {
+        console.warn('Auth loading timeout reached - proceeding with app initialization');
+        // This doesn't affect the actual auth state, just lets the app proceed
+        // The auth system will keep trying in the background
+      }, AUTH_TIMEOUT);
+    }
+
+    if (!appReady && fontsLoaded) {
       timeoutId = setTimeout(() => {
         console.warn('App loading timeout reached - forcing app ready state');
         setAppReady(true);
@@ -210,12 +222,23 @@ function AppContent() {
 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
+      if (authTimeoutId) clearTimeout(authTimeoutId);
     };
   }, [appReady, fontsLoaded, isAuthLoading]);
 
   // Wait for all resources before setting appReady
   useEffect(() => {
-    if (fontsLoaded && !isAuthLoading && isLoaded && articlesAndDueWordsLoaded) {
+    // Primary condition - fonts must be loaded
+    const fontsAreReady = fontsLoaded;
+
+    // Either auth is ready or we've waited long enough
+    const authIsReady = !isAuthLoading;
+
+    // Content is ready or we've waited long enough
+    const contentIsReady = isLoaded && articlesAndDueWordsLoaded;
+
+    // Prioritize showing the UI even if some data isn't ready yet
+    if (fontsAreReady && (authIsReady || contentIsReady)) {
       setAppReady(true);
     }
   }, [fontsLoaded, isAuthLoading, isLoaded, articlesAndDueWordsLoaded]);

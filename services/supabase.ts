@@ -9,6 +9,11 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/constants/Supabase';
 import type { Database } from '../types/database.types';
 import { handleError } from '../utils/errorHandling';
 
+// Maximum retry attempts for initialization
+const MAX_INIT_RETRIES = 3;
+// Delay between retries in ms
+const INIT_RETRY_DELAY = 1000;
+
 /**
  * Supabase client configuration and initialization
  * Relies on Supabase's built-in session management
@@ -24,6 +29,51 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 });
 
 /**
+ * Attempts to initialize Supabase auth with retries
+ * @returns Promise resolving to success status
+ */
+async function initializeSupabaseWithRetry(retries = MAX_INIT_RETRIES): Promise<boolean> {
+  try {
+    // Initialize auth to ensure storage is loaded
+    await supabase.auth.initialize();
+
+    // Ensure auto-refresh is active
+    supabase.auth.startAutoRefresh();
+
+    // Try refreshing the session immediately
+    const { error } = await supabase.auth.refreshSession();
+
+    // If no session exists, this isn't an error
+    if (error && error.message !== 'No current session') {
+      throw error;
+    }
+
+    return true;
+  } catch (err) {
+    if (retries <= 0) {
+      handleError(err instanceof Error ? err : new Error(String(err)), {
+        toastMessage: 'Failed to initialize session',
+        analyticsEventName: 'Auth_Init_Error_Final',
+        sentrySeverity: 'error',
+      });
+      return false;
+    }
+
+    // Log the retry attempt
+    console.warn(
+      `Auth initialization error, retrying (${retries} attempts left)`,
+      err instanceof Error ? err.message : String(err)
+    );
+
+    // Wait before retrying
+    await new Promise(resolve => setTimeout(resolve, INIT_RETRY_DELAY));
+
+    // Recursive retry with one fewer attempt
+    return initializeSupabaseWithRetry(retries - 1);
+  }
+}
+
+/**
  * Registers an AppState listener to keep the auth session active.
  *
  * @returns A cleanup function that removes the listener.
@@ -31,17 +81,31 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
 export function setupSupabaseAppStateListener(): () => void {
   const subscription = AppState.addEventListener('change', async state => {
     if (state === 'active') {
-      try {
-        // Initialize auth to ensure storage is loaded
-        await supabase.auth.initialize();
-        // Ensure auto-refresh is active
-        supabase.auth.startAutoRefresh();
-      } catch (err) {
-        handleError(err instanceof Error ? err : new Error(String(err)), {
-          toastMessage: 'Failed to initialize session',
-          analyticsEventName: 'Auth_Init_Error',
-          sentrySeverity: 'warning',
-        });
+      // Track whether this is the first time becoming active
+      const isFirstActivation = !subscription.hasOwnProperty('_hasActivated');
+      (subscription as any)._hasActivated = true;
+
+      // Always initialize with retries when app becomes active
+      const success = await initializeSupabaseWithRetry();
+
+      if (!success && isFirstActivation) {
+        // If this is the first activation and initialization fails completely,
+        // try one more approach - clear storage and reinitialize
+        try {
+          // This is a last resort to fix corrupted auth state
+          await AsyncStorage.removeItem('supabase.auth.token');
+          await supabase.auth.initialize();
+          supabase.auth.startAutoRefresh();
+        } catch (lastResortErr) {
+          handleError(
+            lastResortErr instanceof Error ? lastResortErr : new Error(String(lastResortErr)),
+            {
+              toastMessage: 'Session recovery failed',
+              analyticsEventName: 'Auth_Recovery_Failed',
+              sentrySeverity: 'error',
+            }
+          );
+        }
       }
     }
     // Don't stop auto-refresh in background to maintain session

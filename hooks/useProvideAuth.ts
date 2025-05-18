@@ -6,6 +6,10 @@ import { supabase, setupSupabaseAppStateListener } from '../services/supabase';
 
 // Maximum number of retry attempts for session refresh
 const MAX_REFRESH_RETRIES = 3;
+// Time between retries (exponential backoff)
+const RETRY_DELAY_MS = 1000;
+// Maximum time to wait for auth initialization
+const AUTH_INIT_TIMEOUT_MS = 3000;
 
 // Define session type based on properties we use
 export type UserSession = {
@@ -32,12 +36,16 @@ export function useProvideAuth(): AuthResult {
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
   const [refreshAttempts, setRefreshAttempts] = useState(0);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   // Function to fetch the session that can be called on demand
   const fetchSession = useCallback(async (): Promise<UserSession | null> => {
     try {
       // Initialize auth to ensure storage is loaded
-      await supabase.auth.initialize();
+      if (!authInitialized) {
+        await supabase.auth.initialize();
+        setAuthInitialized(true);
+      }
 
       const {
         data: { session: fetchedSession },
@@ -54,28 +62,34 @@ export function useProvideAuth(): AuthResult {
       setAuthError(error instanceof Error ? error : new Error('Failed to fetch session'));
       return null;
     }
-  }, []);
+  }, [authInitialized]);
 
-  // Refresh session function that can be called from components with retry logic
+  // Refresh session function with exponential backoff retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
-    setRefreshAttempts(count => count + 1);
+    const currentAttempt = refreshAttempts + 1;
+    setRefreshAttempts(currentAttempt);
 
     try {
       // Check network connectivity before attempting refresh
       const netState = await NetInfo.fetch();
       if (!netState.isConnected) {
+        // Try to use cached session if no network
         const cachedSession = await fetchSession();
         if (cachedSession) {
           setSession(cachedSession);
           setAuthError(null);
+          setIsLoading(false);
           return cachedSession;
         }
         throw new Error('No network connection and no cached session available');
       }
 
       // Initialize auth to ensure storage is loaded
-      await supabase.auth.initialize();
+      if (!authInitialized) {
+        await supabase.auth.initialize();
+        setAuthInitialized(true);
+      }
 
       // Ensure auto-refresh is active
       supabase.auth.startAutoRefresh();
@@ -89,15 +103,21 @@ export function useProvideAuth(): AuthResult {
         if (fetchedSession) {
           setSession(fetchedSession);
           setAuthError(null);
+          setIsLoading(false);
           return fetchedSession;
         }
 
         // If we've reached max retries, don't keep retrying
-        if (refreshAttempts >= MAX_REFRESH_RETRIES) {
-          throw new Error('Could not refresh session after multiple attempts');
+        if (currentAttempt >= MAX_REFRESH_RETRIES) {
+          throw new Error(`Could not refresh session after ${MAX_REFRESH_RETRIES} attempts`);
         }
 
-        throw new Error('Could not refresh or retrieve session');
+        // Implement exponential backoff for retries
+        const retryDelay = RETRY_DELAY_MS * Math.pow(2, currentAttempt - 1);
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+
+        // Try another refresh recursively with exponential backoff
+        return refreshSession();
       }
 
       if (refreshData.session) {
@@ -105,18 +125,66 @@ export function useProvideAuth(): AuthResult {
         setRefreshAttempts(0);
         setSession(refreshData.session);
         setAuthError(null);
+        setIsLoading(false);
         return refreshData.session;
       } else {
         setSession(null);
+        setIsLoading(false);
         return null;
       }
     } catch (error) {
       setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
+      // Always ensure we reset loading state even on error
+      setIsLoading(false);
       return null;
+    }
+  }, [fetchSession, refreshAttempts, authInitialized]);
+
+  // Perform initial auth setup
+  const initAuth = useCallback(async () => {
+    let initTimeout: ReturnType<typeof setTimeout>;
+
+    try {
+      // Set up timeout to prevent initialization from hanging
+      const timeoutPromise = new Promise<null>((_, reject) => {
+        initTimeout = setTimeout(() => {
+          reject(new Error('Auth initialization timed out'));
+        }, AUTH_INIT_TIMEOUT_MS);
+      });
+
+      // Race between auth initialization and timeout
+      await Promise.race([
+        (async () => {
+          // Initialize auth to ensure storage is loaded
+          await supabase.auth.initialize();
+          setAuthInitialized(true);
+
+          // Ensure auto-refresh is active
+          supabase.auth.startAutoRefresh();
+
+          // Fetch session after initialization
+          const fetchedSession = await fetchSession();
+          if (fetchedSession) {
+            setSession(fetchedSession);
+            setAuthError(null);
+          } else {
+            setSession(null);
+          }
+        })(),
+        timeoutPromise,
+      ]);
+    } catch (error) {
+      console.warn(
+        'Auth initialization error:',
+        error instanceof Error ? error.message : String(error)
+      );
+      setSession(null);
+      setAuthError(error instanceof Error ? error : new Error('Auth initialization failed'));
     } finally {
+      clearTimeout(initTimeout!);
       setIsLoading(false);
     }
-  }, [fetchSession, refreshAttempts]);
+  }, [fetchSession]);
 
   useEffect(() => {
     const removeSupabaseListener = setupSupabaseAppStateListener();
@@ -124,49 +192,22 @@ export function useProvideAuth(): AuthResult {
     let appStateSubscription: ReturnType<typeof AppState.addEventListener>;
     let authSubscriptionUnsubscribe: () => void = () => {};
 
-    const initSession = async () => {
-      if (!isMounted) return;
-
-      setIsLoading(true);
-
-      try {
-        // Initialize auth to ensure storage is loaded
-        await supabase.auth.initialize();
-        if (!isMounted) return;
-
-        // Ensure auto-refresh is active
-        supabase.auth.startAutoRefresh();
-
-        const fetchedSession = await fetchSession();
-        if (!isMounted) return;
-
-        if (fetchedSession) {
-          setSession(fetchedSession);
-          setAuthError(null);
-        } else {
-          setSession(null);
-        }
-      } catch (error) {
-        if (!isMounted) return;
-
-        setSession(null);
-        setAuthError(error instanceof Error ? error : new Error('Unknown auth error'));
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initSession();
+    // Initialize auth
+    initAuth();
 
     // Handle app state changes
     appStateSubscription = AppState.addEventListener('change', nextAppState => {
-      if (nextAppState === 'active' && isMounted) {
-        // When app becomes active, refresh the session
-        refreshSession();
+      const isActivating = appState.current !== 'active' && nextAppState === 'active';
+      appState.current = nextAppState;
+
+      if (isActivating && isMounted) {
+        // Always re-initialize auth when app becomes active
+        initAuth();
       }
     });
+
+    // Global ref to track current app state
+    const appState = { current: AppState.currentState };
 
     // Listen for auth state changes
     const {
@@ -208,7 +249,7 @@ export function useProvideAuth(): AuthResult {
       unsubscribeNetInfo();
       removeSupabaseListener();
     };
-  }, [fetchSession, refreshSession]);
+  }, [initAuth, refreshSession]);
 
   // Memoize the returned object to ensure reference stability
   const authResult = useMemo(
