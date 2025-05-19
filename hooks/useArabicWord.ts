@@ -7,6 +7,7 @@ import { analytics } from '../services/analytics';
 import { studyWordsService } from '../services/studyWords';
 import { selectAudioState } from '../store/audioSlice';
 import type { SentenceWord } from '../types/vocabulary.types';
+import { handleError } from '@/utils/errorHandling';
 
 import { useAuth } from './useAuth';
 import { useArticlesByDueWords } from './useArticlesByDueWords';
@@ -50,7 +51,16 @@ export function useArabicWord({
       try {
         return studyWordsService.getStudyWords(user.id);
       } catch (error) {
-        console.error('Error fetching study words:', error);
+        handleError(
+          error instanceof Error
+            ? error
+            : new Error('Error fetching study words'),
+          {
+            analyticsEventName: 'Study_Word_Fetch_Error',
+            showToast: false,
+            sentrySeverity: 'warning',
+          }
+        );
         return [];
       }
     },

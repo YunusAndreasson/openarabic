@@ -57,7 +57,12 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
         try {
           await AsyncStorage.getItem('auth-test-key');
         } catch (storageErr) {
-          console.warn('AsyncStorage error in Auth component:', storageErr);
+          handleError(
+            storageErr instanceof Error
+              ? storageErr
+              : new Error('AsyncStorage error in Auth component'),
+            { showToast: false, sentrySeverity: 'warning' }
+          );
           // Wait a moment before trying again
           await new Promise(resolve => setTimeout(resolve, 500));
         }
@@ -65,9 +70,6 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
         if (!isMounted) return;
 
         // Clear any potentially corrupted tokens if auth is consistently failing
-        if (__DEV__) {
-          console.log('Auth component initializing auth...');
-        }
 
         await supabase.auth.initialize();
 
@@ -79,7 +81,11 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
         // Try to refresh the token immediately to ensure we have a valid session
         const { error } = await supabase.auth.refreshSession();
         if (error && error.message !== 'No current session') {
-          console.warn('Session refresh error:', error.message);
+          handleError(error, {
+            analyticsEventName: 'Session_Refresh_Error',
+            showToast: false,
+            sentrySeverity: 'warning',
+          });
         }
       } catch (err) {
         if (!isMounted) return;
