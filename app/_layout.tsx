@@ -37,6 +37,7 @@ import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/useAuth';
 import { analytics } from '../services/analytics';
+import { handleError } from '@/utils/errorHandling';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { store, persistor } from '../store/store';
 import { setTheme } from '../store/themeSlice';
@@ -209,7 +210,10 @@ function AppContent() {
     // Separate timeout just for auth to ensure we don't block UI rendering
     if (!appReady && isAuthLoading) {
       authTimeoutId = setTimeout(() => {
-        console.warn('Auth loading timeout reached - proceeding with app initialization');
+        handleError(
+          new Error('Auth loading timeout reached - proceeding with app initialization'),
+          { showToast: false, sentrySeverity: 'warning' }
+        );
         // This doesn't affect the actual auth state, just lets the app proceed
         // The auth system will keep trying in the background
       }, AUTH_TIMEOUT);
@@ -217,7 +221,10 @@ function AppContent() {
 
     if (!appReady && fontsLoaded) {
       timeoutId = setTimeout(() => {
-        console.warn('App loading timeout reached - forcing app ready state');
+        handleError(new Error('App loading timeout reached - forcing app ready state'), {
+          showToast: false,
+          sentrySeverity: 'warning',
+        });
         setAppReady(true);
       }, MAX_LOADING_TIME);
     }

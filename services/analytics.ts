@@ -1,12 +1,13 @@
 import { Mixpanel } from 'mixpanel-react-native';
 import { Platform } from 'react-native';
+import { handleError } from '@/utils/errorHandling';
 
-// Local error handling to avoid dependency cycle
+// Local error handling wrapper
 const logError = (error: unknown): void => {
-  if (__DEV__) {
-    // eslint-disable-next-line no-console
-    console.error(error);
-  }
+  handleError(error instanceof Error ? error : new Error(String(error)), {
+    showToast: false,
+    sentrySeverity: 'warning',
+  });
 };
 
 type AnalyticsProperties =
