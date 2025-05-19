@@ -225,6 +225,7 @@ export type Database = {
           grade: number
           id: number
           reviewed_at: string
+          learning_steps: number | null
           root_id: number | null
           user_id: string
         }
@@ -232,6 +233,7 @@ export type Database = {
           grade: number
           id?: number
           reviewed_at?: string
+          learning_steps?: number | null
           root_id?: number | null
           user_id: string
         }
@@ -239,6 +241,7 @@ export type Database = {
           grade?: number
           id?: number
           reviewed_at?: string
+          learning_steps?: number | null
           root_id?: number | null
           user_id?: string
         }
@@ -352,6 +355,7 @@ export type Database = {
           fsrs_lapses: number | null
           fsrs_last_review: string | null
           fsrs_reps: number | null
+          fsrs_learning_steps: number | null
           fsrs_scheduled_days: number | null
           fsrs_stability: number | null
           fsrs_state: number | null
@@ -376,6 +380,7 @@ export type Database = {
           fsrs_lapses?: number | null
           fsrs_last_review?: string | null
           fsrs_reps?: number | null
+          fsrs_learning_steps?: number | null
           fsrs_scheduled_days?: number | null
           fsrs_stability?: number | null
           fsrs_state?: number | null
@@ -400,6 +405,7 @@ export type Database = {
           fsrs_lapses?: number | null
           fsrs_last_review?: string | null
           fsrs_reps?: number | null
+          fsrs_learning_steps?: number | null
           fsrs_scheduled_days?: number | null
           fsrs_stability?: number | null
           fsrs_state?: number | null

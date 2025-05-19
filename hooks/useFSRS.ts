@@ -118,6 +118,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       elapsed_days: word.fsrs_elapsed_days ?? 0,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
       reps: word.fsrs_reps ?? 0,
+      learning_steps: word.fsrs_learning_steps ?? 0,
       lapses: word.fsrs_lapses ?? 0,
       state: word.fsrs_state ?? State.New,
       last_review: word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined,
@@ -182,15 +183,21 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
           fsrs_elapsed_days: newCard.elapsed_days,
-          fsrs_scheduled_days: newCard.scheduled_days,
-          fsrs_reps: newCard.reps,
-          fsrs_lapses: newCard.lapses,
-          fsrs_state: newCard.state,
-          fsrs_last_review: lastReview,
+      fsrs_scheduled_days: newCard.scheduled_days,
+      fsrs_reps: newCard.reps,
+      fsrs_learning_steps: newCard.learning_steps,
+      fsrs_lapses: newCard.lapses,
+      fsrs_state: newCard.state,
+      fsrs_last_review: lastReview,
         };
 
         await studyWordsFSRSService.updateFSRSWord(userId, rootId, wordUpdateData);
-        await studyWordsFSRSService.recordFSRSReview(userId, rootId, rating);
+        await studyWordsFSRSService.recordFSRSReview(
+          userId,
+          rootId,
+          rating,
+          newCard.learning_steps
+        );
 
         await studyWordsService.updateWordReview(rootId, {
           success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
@@ -228,6 +235,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
                 fsrs_elapsed_days: wordUpdateData.fsrs_elapsed_days,
                 fsrs_scheduled_days: wordUpdateData.fsrs_scheduled_days,
                 fsrs_reps: wordUpdateData.fsrs_reps,
+                fsrs_learning_steps: wordUpdateData.fsrs_learning_steps,
                 fsrs_lapses: wordUpdateData.fsrs_lapses,
                 fsrs_state: wordUpdateData.fsrs_state,
                 fsrs_last_review: wordUpdateData.fsrs_last_review,

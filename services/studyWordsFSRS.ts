@@ -13,6 +13,7 @@ interface FSRSWordUpdate {
   fsrs_elapsed_days: number;
   fsrs_scheduled_days: number;
   fsrs_reps: number;
+  fsrs_learning_steps: number;
   fsrs_lapses: number;
   fsrs_state: number;
   fsrs_last_review: string;
@@ -46,6 +47,7 @@ interface ReviewLog {
   reviewed_at: string;
   grade: number;
   root_id: number;
+  learning_steps: number;
 }
 
 export const studyWordsFSRSService = {
@@ -65,13 +67,14 @@ export const studyWordsFSRSService = {
         `
         fsrs_due, 
         fsrs_stability, 
-        fsrs_difficulty, 
-        fsrs_elapsed_days, 
-        fsrs_scheduled_days, 
-        fsrs_reps, 
-        fsrs_lapses, 
-        fsrs_state, 
-        fsrs_last_review, 
+        fsrs_difficulty,
+        fsrs_elapsed_days,
+        fsrs_scheduled_days,
+        fsrs_reps,
+        fsrs_learning_steps,
+        fsrs_lapses,
+        fsrs_state,
+        fsrs_last_review,
         root_id,
         created_at`
       );
@@ -178,7 +181,12 @@ export const studyWordsFSRSService = {
   },
 
   // Record a review with FSRS parameters
-  async recordFSRSReview(userId: string, rootId: number, rating: Rating): Promise<boolean> {
+  async recordFSRSReview(
+    userId: string,
+    rootId: number,
+    rating: Rating,
+    learningSteps: number
+  ): Promise<boolean> {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -197,6 +205,7 @@ export const studyWordsFSRSService = {
         user_id: userId,
         root_id: rootId,
         grade: rating,
+        learning_steps: learningSteps,
         reviewed_at: new Date().toISOString(),
       });
 
@@ -277,6 +286,7 @@ export const studyWordsFSRSService = {
       fsrs_elapsed_days: emptyCard.elapsed_days,
       fsrs_scheduled_days: emptyCard.scheduled_days,
       fsrs_reps: emptyCard.reps,
+      fsrs_learning_steps: emptyCard.learning_steps,
       fsrs_lapses: emptyCard.lapses,
       fsrs_state: emptyCard.state,
       fsrs_last_review: null,
@@ -300,7 +310,7 @@ export const studyWordsFSRSService = {
 
     const { data, error } = await supabase
       .from<'reviews'>('reviews')
-      .select('reviewed_at, grade, root_id')
+      .select('reviewed_at, grade, root_id, learning_steps')
       .eq('user_id', userId)
       .not('root_id', 'is', null)
       .gte('reviewed_at', startDate.toISOString())
