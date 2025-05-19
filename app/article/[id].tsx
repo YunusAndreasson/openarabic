@@ -681,7 +681,6 @@ export default function ArticleScreen(): JSX.Element {
             handleScroll={handleScroll}
             colors={colors}
             otherArticles={otherArticles}
-            otherCategoryArticles={otherCategoryArticles}
             renderArticleCard={renderArticleCard}
             currentPlayingSentenceId={currentSentenceId}
             handleArticlePress={(articleId, isRelated) =>
