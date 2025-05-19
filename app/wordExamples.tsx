@@ -203,23 +203,18 @@ export default function WordExamplesScreen() {
 
     if (!wordData) return 'Word Examples';
 
-    // Return English meaning instead of Arabic letters
-    return (
-      capitalizeFirstLetter(wordData?.english ?? '') ||
-      capitalizeFirstLetter(wordData?.root?.meaning ?? '') ||
-      'Word Examples'
-    );
+    // Prefer root's English meaning, then sentence word's English
+    if (wordData.root?.meaning) {
+      return capitalizeFirstLetter(wordData.root.meaning);
+    }
+    if (wordData.english) {
+      return capitalizeFirstLetter(wordData.english);
+    }
+    return 'Word Examples';
   }, [isLoading, wordData, category]);
 
   if (isLoading) {
-    return (
-      <ThemedView style={styles.container}>
-        <Stack.Screen options={{ title: 'Loading...', headerShown: true }} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.tint} />
-        </View>
-      </ThemedView>
-    );
+    return null;
   }
 
   if (examples.length === 0) {

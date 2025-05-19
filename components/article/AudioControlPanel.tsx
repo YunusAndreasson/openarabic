@@ -63,8 +63,8 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.playButton, { backgroundColor: colors.card }]}
                 onPress={handlePlayPause}
+                style={{ padding: LAYOUT.SPACING.MEDIUM }}
               >
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
               </TouchableOpacity>

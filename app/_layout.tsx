@@ -55,12 +55,6 @@ SplashScreen.preventAutoHideAsync().catch(err => {
   });
 });
 
-// Set splash screen fade-out animation options (1s fade)
-SplashScreen.setOptions({
-  duration: 1000,
-  fade: true,
-});
-
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,7 +173,7 @@ function AppContent() {
   // Set default theme if none is set yet
   useEffect(() => {
     if (!theme) {
-      dispatch(setTheme(Theme.Light));
+      dispatch(setTheme(Theme.Dark));
     }
   }, [dispatch, theme]);
 

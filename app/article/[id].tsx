@@ -179,11 +179,7 @@ export default function ArticleScreen(): JSX.Element {
   }, [sortedSentences, sentenceWordsMap]);
 
   const currentSentenceId = useMemo(() => {
-    if (
-      currentSentenceIndex !== null &&
-      sortedSentences &&
-      sortedSentences[currentSentenceIndex]
-    ) {
+    if (currentSentenceIndex !== null && sortedSentences && sortedSentences[currentSentenceIndex]) {
       return sortedSentences[currentSentenceIndex].id;
     }
     return null;
@@ -538,7 +534,6 @@ export default function ArticleScreen(): JSX.Element {
   );
 
   const handleStopPlayback = useCallback(async () => {
-    lightFeedback();
     try {
       pausedAudioStateRef.current = {
         sentenceIndex: null,

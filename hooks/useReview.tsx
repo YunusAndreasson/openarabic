@@ -571,7 +571,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   ]);
 
   const handleSwipeLeft = useCallback(() => {
-    lightFeedback(); // Light haptic feedback for "unknown" response (lighter than error)
+    // Removed haptic feedback for swipe left
     handleKnowledgeResponse('unknown');
   }, [handleKnowledgeResponse]);
 
@@ -581,14 +581,13 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
   }, [handleKnowledgeResponse]);
 
   const handleTap = useCallback(() => {
-    extraLightFeedback(); // Extra light haptic feedback for "vague" response
+    // Removed haptic feedback for tap (vague)
     handleKnowledgeResponse('vague');
   }, [handleKnowledgeResponse]);
 
   const handleClose = useCallback(() => {
     const mounted = { current: true };
-    lightFeedback();
-
+    // Removed haptic feedback for closing review
     cleanupAudio();
 
     if (!mounted.current) return;

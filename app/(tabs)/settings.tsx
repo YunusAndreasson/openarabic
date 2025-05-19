@@ -4,11 +4,12 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, memo } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
 import * as Linking from 'expo-linking';
+import type { AnimatedStyleProp } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { CustomSlider } from '@/components/Slider';
@@ -59,32 +60,34 @@ const SettingsScreen: React.FC = () => {
   const settings = useAppSelector(state => state.settings);
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-  const colors = useColors();
 
   // Simple loading state for session loading
-  const { isLoading: isLoadingState, startLoading, stopLoading } = useLoadingState(false);
+  const { startLoading, stopLoading } = useLoadingState(false);
 
   // Fade animations for UI elements that depend on Redux store data
-  const { animatedStyle: themeToggleFade } = useOpacityAnimation({
+  const { animatedStyle: _themeToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
     autoStart: true,
     delay: 100,
   });
+  const themeToggleFade = _themeToggleFade as AnimatedStyleProp<ViewStyle>;
 
-  const { animatedStyle: englishToggleFade } = useOpacityAnimation({
+  const { animatedStyle: _englishToggleFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
     autoStart: true,
     delay: 150,
   });
+  const englishToggleFade = _englishToggleFade as AnimatedStyleProp<ViewStyle>;
 
-  const { animatedStyle: sliderFade } = useOpacityAnimation({
+  const { animatedStyle: _sliderFade } = useOpacityAnimation({
     initialOpacity: 0,
     duration: 150,
     autoStart: true,
     delay: 200,
   });
+  const sliderFade = _sliderFade as AnimatedStyleProp<ViewStyle>;
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
@@ -168,10 +171,7 @@ const SettingsScreen: React.FC = () => {
           styles.listContent,
           {
             paddingTop: headerHeight,
-            paddingBottom:
-              insets.bottom +
-              LAYOUT.CONTENT_SPACING.BOTTOM +
-              LAYOUT.BOTTOM_BAR.HEIGHT,
+            paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
           },
         ]}
         scrollViewProps={{
@@ -398,7 +398,7 @@ const styles = StyleSheet.create({
   },
   hidden: {
     opacity: 0,
-  },
+  } as ViewStyle & TextStyle,
   listContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   },
   mediumHighOpacity: {
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
+  } as ViewStyle & TextStyle,
   previewContainer: {
     padding: LAYOUT.SPACING.SMALL,
   },

@@ -50,10 +50,6 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     if (visible) {
       setShouldRender(true);
       startAnimation();
-
-      if (isWarning || isVague || isStruggling) {
-        lightFeedback();
-      }
     } else if (shouldRender) {
       reverseAnimation();
       onClose?.();
@@ -67,9 +63,6 @@ const MeaningOverlay = memo((props: MeaningOverlayProps) => {
     visible,
     startAnimation,
     reverseAnimation,
-    isWarning,
-    isVague,
-    isStruggling,
     shouldRender,
     duration,
     animate,
