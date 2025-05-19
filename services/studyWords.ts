@@ -17,9 +17,9 @@ interface GetStudyWordsOptions {
 }
 
 // Consolidate select fields into constants for better maintainability
-const CORE_FIELDS = `interval_days, next_review_at, review_count, created_at, root_id, difficulty, 
-success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days, 
-fsrs_scheduled_days, fsrs_reps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor, 
+const CORE_FIELDS = `interval_days, next_review_at, review_count, created_at, root_id, difficulty,
+success_streak, failure_streak, fsrs_due, fsrs_stability, fsrs_difficulty, fsrs_elapsed_days,
+fsrs_scheduled_days, fsrs_reps, fsrs_learning_steps, fsrs_lapses, fsrs_state, fsrs_last_review, user_id, ease_factor,
 stability, lapses, previous_interval`;
 
 const FULL_FIELDS = `${CORE_FIELDS}, root:roots (*)`;
@@ -188,6 +188,7 @@ export const studyWordsService = {
       fsrs_elapsed_days: fsrsCard.elapsed_days,
       fsrs_scheduled_days: fsrsCard.scheduled_days,
       fsrs_reps: fsrsCard.reps,
+      fsrs_learning_steps: fsrsCard.learning_steps,
       fsrs_lapses: fsrsCard.lapses,
       fsrs_state: fsrsCard.state,
       fsrs_last_review: null, // No reviews yet

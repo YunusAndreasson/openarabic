@@ -41,6 +41,7 @@ export interface StudyWord {
   fsrs_elapsed_days: number | null;
   fsrs_scheduled_days: number | null;
   fsrs_reps: number | null;
+  fsrs_learning_steps: number | null;
   fsrs_lapses: number | null;
   fsrs_state: number | null;
   fsrs_last_review: string | null;
