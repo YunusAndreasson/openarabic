@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, Stack } from 'expo-router';
-import React, { useCallback, useMemo, memo, JSX } from 'react';
+import React, { useCallback, useMemo, memo, JSX, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '../components/ThemedText';
@@ -16,6 +16,7 @@ import Pill from '../components/Pill';
 import InfoCard from '../components/InfoCard';
 import BaseCard from '../components/BaseCard';
 import { router } from 'expo-router';
+import { lightFeedback } from '../utils/haptics';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3;
 
@@ -59,6 +60,8 @@ export default function WordListScreen(): JSX.Element {
   const { category } = useLocalSearchParams();
   const colors = useColors();
   const { user } = useAuth();
+  // Loading state to prevent flickering
+  const [isLoading, setIsLoading] = useState(true);
 
   // Add sort state
   const [sortBy, setSortBy] = React.useState<WordListSort>('retention');
@@ -107,6 +110,25 @@ export default function WordListScreen(): JSX.Element {
     sortDirection
   );
 
+  // Add loading delay effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Reset loading state when sort options change
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [sortBy, sortDirection]);
+
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
@@ -116,6 +138,8 @@ export default function WordListScreen(): JSX.Element {
 
   // Empty list component
   const renderEmptyComponent = useCallback(() => {
+    if (isLoading || (words && words.length > 0)) return null;
+
     return (
       <View style={styles.emptyContainer}>
         <Ionicons
@@ -128,7 +152,22 @@ export default function WordListScreen(): JSX.Element {
         </ThemedText>
       </View>
     );
-  }, [colors.tint]);
+  }, [colors.tint, isLoading, words]);
+
+  // Sort functions
+  const handleSortChange = useCallback(
+    (newSortBy: WordListSort) => {
+      lightFeedback(); // Add haptic feedback
+      setIsLoading(true);
+      if (sortBy === newSortBy) {
+        setSortDirection(d => (d === 'desc' ? 'asc' : 'desc'));
+      } else {
+        setSortBy(newSortBy);
+        setSortDirection('desc');
+      }
+    },
+    [sortBy]
+  );
 
   // List header component with sort control only
   const ListHeaderComponent = useCallback(() => {
@@ -164,14 +203,7 @@ export default function WordListScreen(): JSX.Element {
                   key={option.value + '-' + sortDirection}
                   id={option.value}
                   isSelected={isSelected}
-                  onSelect={() => {
-                    if (isSelected) {
-                      setSortDirection(d => (d === 'desc' ? 'asc' : 'desc'));
-                    } else {
-                      setSortBy(option.value as WordListSort);
-                      setSortDirection('desc');
-                    }
-                  }}
+                  onSelect={() => handleSortChange(option.value as WordListSort)}
                   variant="filter"
                   pillBg={isSelected ? undefined : colors.transparent}
                   pillStyle={{
@@ -211,7 +243,7 @@ export default function WordListScreen(): JSX.Element {
         </InfoCard>
       </View>
     );
-  }, [sortBy, getSortCardBgColor, sortDirection]);
+  }, [sortBy, getSortCardBgColor, sortDirection, handleSortChange]);
 
   // Add error UI handling
   if (error) {

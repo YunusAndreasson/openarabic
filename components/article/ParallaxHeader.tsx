@@ -44,12 +44,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       'worklet';
       // More responsive spring physics
       return withSpring(scrollY.value, {
-        damping: 20, // Increased for faster response
-        stiffness: 100, // Increased for faster response
-        mass: 0.8, // Reduced for lighter feel
-        overshootClamping: false,
-        restDisplacementThreshold: 0.005, // More precise
-        restSpeedThreshold: 0.005, // More precise
+        damping: 25, // Increased for reduced oscillation
+        stiffness: 120, // Increased for more immediate response
+        mass: 0.7, // Reduced for quicker settling
+        overshootClamping: true, // Prevent overshoot at boundaries
+        restDisplacementThreshold: 0.001, // More precise rest position
+        restSpeedThreshold: 0.001, // More precise rest speed
       });
     }, [scrollY]);
 
@@ -135,7 +135,9 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     const imageAnimatedStyle = useAnimatedStyle(() => {
       'worklet';
       const dynamicParallaxFactor = PARALLAX_FACTOR * (SCREEN_WIDTH / 375);
-      const overscrollEffect = Math.max(0, -smoothScrollY.value / headerHeight) * 0.5;
+      // Smoother transition at the boundary
+      const overscrollEffect =
+        Math.max(0, Math.min(-smoothScrollY.value / headerHeight, 0.2)) * 0.5;
 
       const translateYValue = interpolate(
         smoothScrollY.value,

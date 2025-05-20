@@ -18,6 +18,8 @@ import { listenAudioService } from '@/services/listenAudioService';
 import { useQueryClient } from '@tanstack/react-query';
 import { handleError } from '@/utils/errorHandling';
 import { StudyWord } from '@/types/vocabulary.types';
+import type { EnhancedAudioTrack } from '@/types/audio.types';
+import { useToast } from '@/components/ToastProvider';
 
 /**
  * Screen that plays Arabic words followed by their English translations
@@ -36,6 +38,7 @@ export default function ListenScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();
+  const { showToast } = useToast();
 
   // State
   const [isComplete, setIsComplete] = useState(false);
@@ -44,11 +47,15 @@ export default function ListenScreen(): JSX.Element {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isArabicActive, setIsArabicActive] = useState(true);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
+  const [repeatEnabled, setRepeatEnabled] = useState(false);
 
   // Refs
   const maxProgressRef = useRef(0);
   const lastProgressUpdateRef = useRef(Date.now());
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectedTracksRef = useRef<EnhancedAudioTrack[]>([]);
+  const lastAudioStateRef = useRef('');
+  const playbackCompletedRef = useRef(false);
 
   // Animation
   const { fadeIn, fadeOut } = useOpacityAnimation({
@@ -64,6 +71,19 @@ export default function ListenScreen(): JSX.Element {
   const { allWords } = useFSRSQueries({
     userId: user?.id,
   });
+
+  // Handle repeat toggle
+  const handleRepeatToggle = useCallback(() => {
+    const newValue = !repeatEnabled;
+    setRepeatEnabled(newValue);
+
+    // Show toast notification
+    if (newValue) {
+      showToast('Repeat mode enabled. Words will play continuously.');
+    } else {
+      showToast('Repeat mode disabled.');
+    }
+  }, [repeatEnabled, showToast]);
 
   // Function to handle track changes and update UI
   const handleTrackChange = useCallback(() => {
@@ -106,6 +126,25 @@ export default function ListenScreen(): JSX.Element {
     handleTrackChange();
   }, [currentTrackIndex, handleTrackChange]);
 
+  // Detect when the audio state changes to idle after playing
+  useEffect(() => {
+    // Track state transitions
+    if (audioState !== lastAudioStateRef.current) {
+      console.log(`Audio state changed: ${lastAudioStateRef.current} -> ${audioState}`);
+
+      // If we were playing and now we're idle, it means playback completed
+      const wasPlaying = lastAudioStateRef.current === 'playing';
+      const isNowIdle = audioState === 'idle';
+
+      if (wasPlaying && isNowIdle) {
+        playbackCompletedRef.current = true;
+        console.log('Playback completed, setting flag');
+      }
+
+      lastAudioStateRef.current = audioState;
+    }
+  }, [audioState]);
+
   // Initialize word list and start playback
   useEffect(() => {
     // Only run this effect if we have words and our list is empty
@@ -115,6 +154,7 @@ export default function ListenScreen(): JSX.Element {
 
     // Get random vocabulary tracks
     const selectedTracks = listenAudioService.getRandomVocabularyTracks(allWords, 20);
+    selectedTracksRef.current = selectedTracks;
 
     // Keep the original study words for reference
     const wordMap = new Map<number, StudyWord>();
@@ -148,6 +188,8 @@ export default function ListenScreen(): JSX.Element {
       lastProgressUpdateRef.current = Date.now();
       maxProgressRef.current = 0;
       setCurrentWordIndex(0);
+      lastAudioStateRef.current = 'idle';
+      playbackCompletedRef.current = false;
 
       // Start playback with a small delay
       if (timeoutRef.current) {
@@ -162,14 +204,61 @@ export default function ListenScreen(): JSX.Element {
     }
   }, [allWords, wordList.length, actions]);
 
+  // Function to restart playback for repeat mode
+  const handleRestartPlayback = useCallback(() => {
+    // Skip if there are no tracks to play
+    if (selectedTracksRef.current.length === 0) {
+      console.log('No tracks to restart playback');
+      return;
+    }
+
+    console.log('Restarting playback with repeat');
+
+    // Set a small delay to restart playback
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setIsComplete(false);
+      setCurrentWordIndex(0);
+      maxProgressRef.current = 0;
+      setProgressAnimationKey(prev => prev + 1);
+      playbackCompletedRef.current = false;
+
+      actions.startEnhancedPlayback(selectedTracksRef.current, 0).catch(error => {
+        handleError(error instanceof Error ? error : new Error('Failed to restart audio playback'));
+      });
+    }, 500);
+  }, [actions, setIsComplete, setCurrentWordIndex, setProgressAnimationKey]);
+
   // Handle completion when last track ends
   useEffect(() => {
-    // Check if we've played all tracks
-    if (audioState === 'idle' && currentTrackIndex >= 0 && wordList.length > 0) {
-      // We were playing but now we're idle, which means playback completed
-      setIsComplete(true);
+    // Check if playback has completed
+    if (playbackCompletedRef.current && audioState === 'idle' && wordList.length > 0) {
+      console.log('Handling playback completion, repeat enabled:', repeatEnabled);
+
+      if (repeatEnabled && selectedTracksRef.current.length > 0) {
+        // If repeat is enabled, restart playback
+        handleRestartPlayback();
+        // Show toast notification when repeating
+        showToast('Repeating vocabulary words');
+      } else {
+        // Otherwise, show completion screen
+        setIsComplete(true);
+      }
+
+      // Reset the flag
+      playbackCompletedRef.current = false;
     }
-  }, [audioState, currentTrackIndex, wordList.length]);
+  }, [
+    audioState,
+    playbackCompletedRef.current,
+    repeatEnabled,
+    handleRestartPlayback,
+    wordList.length,
+    showToast,
+  ]);
 
   // Close and cleanup
   const handleClose = useCallback(() => {
@@ -230,6 +319,7 @@ export default function ListenScreen(): JSX.Element {
 
       // Reset state refs
       maxProgressRef.current = 0;
+      playbackCompletedRef.current = false;
     };
   }, [actions]);
 
@@ -272,6 +362,8 @@ export default function ListenScreen(): JSX.Element {
           maxProgress={maxProgress}
           animationKey={progressAnimationKey}
           onClose={handleClose}
+          repeatEnabled={repeatEnabled}
+          onRepeatToggle={handleRepeatToggle}
         />
 
         <View style={styles.wordArea}>

@@ -1,16 +1,20 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { CloseButton } from '@/components/CloseButton';
 import { ProgressBar } from '@/components/ProgressBar';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { lightFeedback } from '@/utils/haptics';
 
 interface ListenHeaderProps {
   progress: number;
   maxProgress: number;
   animationKey: number;
   onClose: () => void;
+  repeatEnabled?: boolean;
+  onRepeatToggle?: () => void;
 }
 
 const ListenHeader: React.FC<ListenHeaderProps> = ({
@@ -18,8 +22,20 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
   maxProgress,
   animationKey,
   onClose,
+  repeatEnabled = false,
+  onRepeatToggle,
 }) => {
   const colors = useColors();
+
+  const handleRepeatPress = () => {
+    if (onRepeatToggle) {
+      lightFeedback();
+      onRepeatToggle();
+    }
+  };
+
+  // Determine repeat icon color based on enabled state
+  const repeatIconColor = repeatEnabled ? colors.tint : colors.tabIconDefault;
 
   return (
     <View style={styles.header}>
@@ -31,7 +47,20 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
           animationDuration={500}
         />
       </View>
-      <CloseButton onPress={onClose} size="large" iconSize={24} color={colors.tabIconDefault} />
+
+      <View style={styles.controlsContainer}>
+        {onRepeatToggle && (
+          <TouchableOpacity
+            onPress={handleRepeatPress}
+            style={styles.repeatButton}
+            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            accessibilityLabel={repeatEnabled ? 'Disable repeat' : 'Enable repeat'}
+          >
+            <Ionicons name="repeat" size={22} color={repeatIconColor} />
+          </TouchableOpacity>
+        )}
+        <CloseButton onPress={onClose} size="large" iconSize={24} color={colors.tabIconDefault} />
+      </View>
     </View>
   );
 };
@@ -51,6 +80,14 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: LAYOUT.SPACING.SMALL,
     marginVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  repeatButton: {
+    marginRight: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.SMALL,
   },
 });
 

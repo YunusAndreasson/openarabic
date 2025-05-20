@@ -128,11 +128,21 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     // Create a shared value to track scroll position for parallax effect
     const scrollY = useSharedValue(0);
+    // Add a ref to track the previous scroll position
+    const prevScrollY = useRef(0);
 
     // Helper function to handle animated scroll events
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        scrollY.value = event.nativeEvent.contentOffset.y;
+        // Apply a small damping factor to smooth transitions
+        const currentY = event.nativeEvent.contentOffset.y;
+        // Use damping when scrolling near the top to reduce flickering
+        if (currentY < HEADER_IMAGE_HEIGHT) {
+          scrollY.value = prevScrollY.current + (currentY - prevScrollY.current) * 0.6;
+        } else {
+          scrollY.value = currentY;
+        }
+        prevScrollY.current = scrollY.value;
         handleScroll(event);
       },
       [scrollY, handleScroll]
@@ -158,20 +168,37 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     const scrollToIndex = (index: number) => {
       // Add a small delay to ensure the list is rendered
       setTimeout(() => {
-        flashListRef.current?.scrollToIndex({
-          index: index,
-          animated: true,
-          viewPosition: 0.3,
-          // Push first sentence higher to ensure visibility above the header
-          viewOffset:
-            index === 0
-              ? headerHeight +
-                LAYOUT.SPACING.TINY +
-                LAYOUT.SPACING.XLARGE +
-                LAYOUT.SPACING.XXLARGE +
-                LAYOUT.BUTTON.HEIGHT.MEDIUM
-              : 0,
-        });
+        if (!flashListRef.current) return;
+
+        // Temporarily set scroll throttle to a lower value for smoother navigation
+        const currentScrollThrottle = 8;
+
+        try {
+          flashListRef.current.scrollToIndex({
+            index: index,
+            animated: true,
+            viewPosition: 0.3,
+            // Push first sentence higher to ensure visibility above the header
+            viewOffset:
+              index === 0
+                ? headerHeight +
+                  LAYOUT.SPACING.TINY +
+                  LAYOUT.SPACING.XLARGE +
+                  LAYOUT.SPACING.XXLARGE +
+                  LAYOUT.BUTTON.HEIGHT.MEDIUM
+                : 0,
+          });
+        } catch (error) {
+          // Fallback if the index is out of range
+          console.log('Error scrolling to index:', error);
+          // Try to scroll to the closest visible item
+          if (sortedSentences && sortedSentences.length > 0) {
+            flashListRef.current.scrollToItem({
+              item: sortedSentences[Math.min(index, sortedSentences.length - 1)],
+              animated: true,
+            });
+          }
+        }
       }, 100);
     };
 
@@ -279,9 +306,11 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                   LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
               }}
               onScroll={handleAnimatedScroll}
-              scrollEventThrottle={16}
+              scrollEventThrottle={8} // Increase scroll update frequency for smoother animations
               showsVerticalScrollIndicator={true}
               drawDistance={SENTENCE_ITEM_HEIGHT * 10}
+              initialScrollIndex={0}
+              persistentScrollbar={true} // Smoother scrolling experience
               overrideItemLayout={layout => {
                 layout.size = SENTENCE_ITEM_HEIGHT;
               }}
