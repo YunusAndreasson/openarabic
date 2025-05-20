@@ -149,7 +149,16 @@ export default function WordExamplesScreen() {
 
       return (
         <View style={styles.sentenceContainer}>
-          <View style={[styles.sentenceContent, { backgroundColor: colors.card }]}>
+          <View
+            style={[
+              styles.sentenceContent,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+                borderWidth: LAYOUT.BORDER.WIDTH.THIN,
+              },
+            ]}
+          >
             {/* Show the full sentence with individual word components */}
             {item.words.length > 0 && (
               <View style={styles.wordsContainer}>
