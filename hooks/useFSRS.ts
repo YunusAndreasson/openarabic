@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { handleError } from '@/utils/errorHandling';
-import type { Card } from 'ts-fsrs';
-import { createEmptyCard, fsrs, Rating, State } from 'ts-fsrs';
+import type { Card, StepUnit } from 'ts-fsrs';
+import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
 
 import { studyWordsService } from '@/services/studyWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
@@ -11,6 +11,10 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 // Minimum number of intervening words before showing a repeated word
 const MIN_WORD_SPACING = 3;
+
+// Default learning steps for new and relearning cards (in minutes)
+const DEFAULT_LEARNING_STEPS: StepUnit[] = ['1m', '10m'];
+const DEFAULT_RELEARNING_STEPS: StepUnit[] = ['5m', '10m'];
 
 // Consolidated counters and tracking data
 interface FSRSCounters {
@@ -49,7 +53,23 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
   });
 
   const queryClient = useQueryClient();
-  const fsrsInstance = useMemo(() => fsrs(), []);
+
+  // Configure FSRS with proper learning steps
+  const fsrsParams = useMemo(
+    () =>
+      generatorParameters({
+        learning_steps: DEFAULT_LEARNING_STEPS,
+        relearning_steps: DEFAULT_RELEARNING_STEPS,
+        request_retention: 0.9, // Target retention rate (90%)
+        maximum_interval: 365, // Maximum interval of 1 year
+        enable_fuzz: true, // Enable fuzzy intervals
+        enable_short_term: true, // Enable short-term learning steps
+      }),
+    []
+  );
+
+  // Create FSRS instance with configured parameters
+  const fsrsInstance = useMemo(() => fsrs(fsrsParams), [fsrsParams]);
 
   const {
     data: dueWords,
@@ -117,8 +137,8 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       difficulty: word.fsrs_difficulty ?? 0.3,
       elapsed_days: word.fsrs_elapsed_days ?? 0,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
+      learning_steps: 0, // Initialize with 0 if not present
       reps: word.fsrs_reps ?? 0,
-      learning_steps: word.fsrs_learning_steps ?? 0,
       lapses: word.fsrs_lapses ?? 0,
       state: word.fsrs_state ?? State.New,
       last_review: word.fsrs_last_review ? new Date(word.fsrs_last_review) : undefined,
@@ -183,12 +203,12 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
           fsrs_elapsed_days: newCard.elapsed_days,
-      fsrs_scheduled_days: newCard.scheduled_days,
-      fsrs_reps: newCard.reps,
-      fsrs_learning_steps: newCard.learning_steps,
-      fsrs_lapses: newCard.lapses,
-      fsrs_state: newCard.state,
-      fsrs_last_review: lastReview,
+          fsrs_scheduled_days: newCard.scheduled_days,
+          fsrs_reps: newCard.reps,
+          fsrs_learning_steps: newCard.learning_steps,
+          fsrs_lapses: newCard.lapses,
+          fsrs_state: newCard.state,
+          fsrs_last_review: lastReview,
         };
 
         await studyWordsFSRSService.updateFSRSWord(userId, rootId, wordUpdateData);
@@ -257,15 +277,10 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
 
           // Calculate progress based on known words vs total unique words
           const uniqueWordCount = countersRef.current.uniqueWords.size;
-        const newProgress = uniqueWordCount
-          ? Math.min(
-              Math.round(
-                (countersRef.current.knownWords / uniqueWordCount) * 100
-              ),
-              100
-            )
-          : 100;
-        setProgress(newProgress);
+          const newProgress = uniqueWordCount
+            ? Math.min(Math.round((countersRef.current.knownWords / uniqueWordCount) * 100), 100)
+            : 100;
+          setProgress(newProgress);
 
           // Check if queue is empty to trigger completion
           if (newQueue.length === 0) {
@@ -286,9 +301,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           return newQueue;
         });
       } catch (error) {
-        handleError(
-          error instanceof Error ? error : new Error(String(error))
-        );
+        handleError(error instanceof Error ? error : new Error(String(error)));
       } finally {
         stateTrackingRef.current.isProcessingUpdate = false;
       }

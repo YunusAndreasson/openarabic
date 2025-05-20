@@ -1,12 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
-import { useLocalSearchParams, Stack, router } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useCallback, useMemo, memo, JSX } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
-import CategoryInfoCard from '../components/vocabulary/CategoryInfoCard';
 import WordListItem from '../components/vocabulary/WordListItem';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
@@ -15,7 +14,8 @@ import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
 import Pill from '../components/Pill';
 import InfoCard from '../components/InfoCard';
-import { lightFeedback } from '@/utils/haptics';
+import BaseCard from '../components/BaseCard';
+import { router } from 'expo-router';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3;
 
@@ -24,11 +24,34 @@ interface WordListItemMemoProps {
   readonly item: EnhancedStudyWord;
 }
 
-const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => (
-  <View style={styles.wordItemContainer}>
-    <WordListItem word={item} />
-  </View>
-));
+const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => {
+  // Handler for navigating to examples screen
+  const handleShowExamples = useCallback(() => {
+    if (!item.root_id) return;
+
+    // Pass word meaning and letters directly to avoid unnecessary loading
+    router.push({
+      pathname: '/wordExamples',
+      params: {
+        rootId: item.root_id.toString(),
+        rootMeaning: item.root?.meaning || '',
+        rootLetters: item.root?.letters || '',
+      },
+    });
+  }, [item.root_id, item.root?.meaning, item.root?.letters]);
+
+  return (
+    <View style={styles.wordItemContainer}>
+      <BaseCard
+        shadowSize="small"
+        style={{ marginBottom: LAYOUT.SPACING.TINY }}
+        onPress={handleShowExamples}
+      >
+        <WordListItem word={item} />
+      </BaseCard>
+    </View>
+  );
+});
 
 WordListItemMemo.displayName = 'WordListItemMemo';
 
@@ -57,19 +80,19 @@ export default function WordListScreen(): JSX.Element {
         };
       case 'mastered':
         return {
-          title: 'Mastered Words',
+          title: 'Mastered',
           icon: 'checkmark-circle',
           description: 'Words with high stability',
         };
       case 'learning':
         return {
-          title: 'Learning Words',
+          title: 'Learning',
           icon: 'school',
           description: 'Words still being learned',
         };
       default:
         return {
-          title: 'Review Words',
+          title: 'Review',
           icon: 'book',
           description: 'Words to review',
         };
@@ -83,15 +106,6 @@ export default function WordListScreen(): JSX.Element {
     sortBy,
     sortDirection
   );
-
-  // Handler for viewing examples
-  const handleViewExamples = useCallback(() => {
-    lightFeedback();
-    router.push({
-      pathname: '/wordExamples',
-      params: { category: category as string },
-    });
-  }, [category]);
 
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
@@ -109,31 +123,35 @@ export default function WordListScreen(): JSX.Element {
           size={LAYOUT.SPACING.XLARGE * 3}
           color={colors.tint}
         />
-        <ThemedText variant="secondary" style={styles.emptyText}>No words found</ThemedText>
+        <ThemedText variant="secondary" style={styles.emptyText}>
+          No words found
+        </ThemedText>
       </View>
     );
   }, [colors.tint]);
 
-  // List header component with category info card and sort control
+  // List header component with sort control only
   const ListHeaderComponent = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        {/* Category Info Card */}
-        <View style={{ marginBottom: LAYOUT.SPACING.TINY }}>
-          <CategoryInfoCard
-            category={category as 'total' | 'mastered' | 'learning'}
-            hideTitle={true}
-          />
-        </View>
-        {/* Sort Control Card (now using InfoCard for perfect match) */}
+        {/* Sort Control Card */}
         <InfoCard
           hideTitle
           iconBgColor={getSortCardBgColor()}
           shadowSize="small"
-          style={{ marginBottom: LAYOUT.SPACING.MEDIUM }}
+          style={{
+            marginBottom: LAYOUT.SPACING.SMALL,
+            marginHorizontal: 0,
+          }}
         >
           <View
-            style={{ flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center' }}
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              alignItems: 'center',
+              paddingVertical: LAYOUT.SPACING.TINY,
+              paddingHorizontal: LAYOUT.SPACING.TINY,
+            }}
           >
             {[
               { label: 'Memory Strength', value: 'retention' },
@@ -193,7 +211,7 @@ export default function WordListScreen(): JSX.Element {
         </InfoCard>
       </View>
     );
-  }, [category, sortBy, getSortCardBgColor, sortDirection]);
+  }, [sortBy, getSortCardBgColor, sortDirection]);
 
   // Add error UI handling
   if (error) {
@@ -223,7 +241,8 @@ export default function WordListScreen(): JSX.Element {
           headerStyle: {
             backgroundColor: colors.background,
           },
-          headerTransparent: true,
+          headerShadowVisible: false,
+          headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
           headerBackTitle: 'Vocabulary',
@@ -243,7 +262,7 @@ export default function WordListScreen(): JSX.Element {
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={renderEmptyComponent}
           showsVerticalScrollIndicator={true}
-          estimatedFirstItemOffset={LAYOUT.SPACING.XXLARGE * 3}
+          estimatedFirstItemOffset={LAYOUT.SPACING.XLARGE}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
           }}
@@ -284,14 +303,15 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     paddingBottom: 0,
+    paddingTop: 0,
   },
   listContentContainer: {
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.TINY,
   },
   wordItemContainer: {
-    marginVertical: LAYOUT.SPACING.TINY / 4,
+    marginVertical: 0,
   },
   headerButton: {
     marginRight: LAYOUT.SPACING.MEDIUM,

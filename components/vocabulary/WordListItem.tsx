@@ -1,31 +1,23 @@
 import { format } from 'date-fns';
 import { router } from 'expo-router';
-import React, { memo, useMemo, useCallback } from 'react';
-import type { ViewStyle } from 'react-native';
-import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
-import type { AnimatedStyle } from 'react-native-reanimated';
+import React, { memo, useMemo } from 'react';
+import { StyleSheet, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { State } from 'ts-fsrs';
 
 import { LAYOUT } from '../../constants/layout';
-import { usePressAnimation } from '../../hooks/animations';
 import { useColors } from '../../hooks/useColors';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
-import { lightFeedback } from '@/utils/haptics';
 
 interface WordListItemProps {
   word: StudyWord;
+  onPress?: () => void;
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
+const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemProps) {
   const colors = useColors();
-  const { animatedStyle, handlePressIn, handlePressOut } = usePressAnimation({
-    type: 'card',
-    scaleAmount: 0.97,
-    opacityAmount: 0.95,
-  });
 
   // Get the actual word data from root
   const letters = word.root?.letters || '';
@@ -33,17 +25,6 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
 
   // Capitalize first letter of meaning
   const capitalizedMeaning = meaning ? meaning.charAt(0).toUpperCase() + meaning.slice(1) : '';
-
-  // Handler for navigating to examples screen
-  const handleShowExamples = useCallback(() => {
-    if (!word.root_id) return;
-
-    // Remove haptic feedback
-    router.push({
-      pathname: '/wordExamples',
-      params: { rootId: word.root_id.toString() },
-    });
-  }, [word.root_id]);
 
   // Calculate learning progress and status
   const wordStatus = useMemo(() => {
@@ -100,88 +81,72 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   // Return null early if there's no word data
   if (!letters) return null;
 
-  const containerStyle = [
-    styles.container,
-    {
-      backgroundColor: colors.card,
-      borderColor: colors.cardBorder,
-    },
-  ];
-
   return (
-    <Animated.View style={animatedStyle as AnimatedStyle<ViewStyle>}>
-      <TouchableOpacity
-        style={[containerStyle, styles.cardContent]}
-        onPress={handleShowExamples}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.9}
-      >
-        {/* Main content row */}
-        <View style={styles.content}>
-          {/* Left side with English text */}
-          <ThemedText
-            type="body"
-            variant="secondary"
-            weight="bold"
-            numberOfLines={2}
-            style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE }]}
-          >
-            {capitalizedMeaning || 'No translation available'}
+    <View style={styles.cardContent}>
+      {/* Main content row */}
+      <View style={styles.content}>
+        {/* Left side with English text */}
+        <ThemedText
+          type="body"
+          variant="secondary"
+          weight="bold"
+          numberOfLines={2}
+          style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE }]}
+        >
+          {capitalizedMeaning || 'No translation available'}
+        </ThemedText>
+
+        {/* Arabic text on the right */}
+        <ThemedText
+          type="arabic"
+          arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
+          weight="semibold"
+          align="right"
+          skipDefaultColor
+          colorName="arabicText"
+          style={styles.arabicText}
+        >
+          {letters}
+        </ThemedText>
+      </View>
+
+      {/* Memory Strength section */}
+      <View style={styles.progressBarLabelContainer}>
+        <ThemedText type="overline" variant="secondary">
+          MEMORY STRENGTH
+        </ThemedText>
+        <ThemedText type="caption" variant="subtle" weight="medium">
+          {wordStatus.progress.value}%
+        </ThemedText>
+      </View>
+
+      <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
+        <Animated.View
+          style={[
+            styles.progressFill,
+            {
+              width: `${wordStatus.progress.width}%`,
+              backgroundColor: wordStatus.progress.color.replace(/40$/, ''),
+            },
+          ]}
+        />
+      </View>
+
+      {/* Review info and streak below progress bar */}
+      <View style={styles.learningInfoContainer}>
+        {wordStatus.lastReview ? (
+          <ThemedText type="caption" variant="subtle" weight="normal" style={styles.lastReview}>
+            Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
           </ThemedText>
+        ) : null}
 
-          {/* Arabic text on the right */}
-          <ThemedText
-            type="arabic"
-            arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
-            weight="semibold"
-            align="right"
-            skipDefaultColor
-            colorName="arabicText"
-            style={styles.arabicText}
-          >
-            {letters}
+        {wordStatus.successStreak > 0 ? (
+          <ThemedText type="caption" variant="subtle" weight="medium" style={styles.streakText}>
+            🔥 {wordStatus.successStreak} streak
           </ThemedText>
-        </View>
-
-        {/* Memory Strength section */}
-        <View style={styles.progressBarLabelContainer}>
-          <ThemedText type="overline" variant="secondary">
-            MEMORY STRENGTH
-          </ThemedText>
-          <ThemedText type="caption" variant="subtle" weight="medium">
-            {wordStatus.progress.value}%
-          </ThemedText>
-        </View>
-
-        <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                width: `${wordStatus.progress.width}%`,
-                backgroundColor: wordStatus.progress.color.replace(/40$/, ''),
-              },
-            ]}
-          />
-        </View>
-
-        {/* Review info and streak below progress bar */}
-        <View style={styles.learningInfoContainer}>
-          {wordStatus.lastReview ? (
-            <ThemedText type="caption" variant="subtle" weight="normal" style={styles.lastReview}>
-              Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
-            </ThemedText>
-          ) : null}
-
-          {wordStatus.successStreak > 0 ? (
-            <ThemedText type="caption" variant="subtle" weight="medium" style={styles.streakText}>
-              🔥 {wordStatus.successStreak} streak
-            </ThemedText>
-          ) : null}
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
+        ) : null}
+      </View>
+    </View>
   );
 });
 
@@ -194,14 +159,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.MEDIUM,
     paddingTop: LAYOUT.SPACING.SMALL * 0.75,
     paddingVertical: LAYOUT.SPACING.SMALL,
-  },
-  container: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    width: '100%',
-    ...LAYOUT.SHADOW.MEDIUM,
-    marginVertical: LAYOUT.SPACING.SMALL / 4,
-    overflow: 'hidden',
   },
   content: {
     alignItems: 'center',

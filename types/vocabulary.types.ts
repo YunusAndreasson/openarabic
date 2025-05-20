@@ -40,6 +40,7 @@ export interface StudyWord {
   fsrs_difficulty: number | null;
   fsrs_elapsed_days: number | null;
   fsrs_scheduled_days: number | null;
+  fsrs_learning_steps: number | null;
   fsrs_reps: number | null;
   fsrs_learning_steps: number | null;
   fsrs_lapses: number | null;

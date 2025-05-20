@@ -30,10 +30,6 @@ const fontConfig = {
   maxScreenWidth: 500,
 };
 
-// Constants for audio playback timing
-const DELAY_BETWEEN_LANGUAGES = 1000; // ms
-const DELAY_BETWEEN_WORDS = 600; // ms
-
 export default function ListenScreen(): JSX.Element {
   const params = useLocalSearchParams();
   const fromVocabulary = params.fromVocabulary === 'true';
@@ -55,7 +51,7 @@ export default function ListenScreen(): JSX.Element {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Animation
-  const { opacity, fadeIn, fadeOut } = useOpacityAnimation({
+  const { fadeIn, fadeOut } = useOpacityAnimation({
     initialOpacity: 1,
     duration: 300,
   });

@@ -63,15 +63,8 @@ export default function ReviewScreen(): JSX.Element {
     handleTap,
     handleClose,
     isUpdating,
+    animatedStyle,
   } = useReview({ fromVocabulary });
-
-  // Create an animated style here instead of passing the shared value directly
-  const opacityStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: opacity.value,
-    };
-  });
 
   if (isComplete || isTransitioningToCompletion) {
     return <CompletionScreen onClose={handleClose} />;
@@ -96,8 +89,7 @@ export default function ReviewScreen(): JSX.Element {
             onTap={handleTap}
             isUpdating={isUpdating}
             isTransitioning={isTransitioningToCompletion}
-            opacity={opacity}
-            opacityStyle={opacityStyle}
+            opacityStyle={animatedStyle}
           />
           <MeaningOverlay
             visible={showMeaningOverlay}

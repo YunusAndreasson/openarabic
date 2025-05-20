@@ -45,7 +45,6 @@ interface ReviewCardProps {
   onTap: () => void;
   isUpdating: boolean;
   isTransitioning: boolean;
-  opacity: Animated.SharedValue<number>;
   opacityStyle: AnimatedStyleProp<ViewStyle>;
 }
 
@@ -57,7 +56,6 @@ const ReviewCard = memo(function ReviewCard({
   onTap,
   isUpdating,
   isTransitioning,
-  opacity,
   opacityStyle,
 }: ReviewCardProps) {
   // Animation values

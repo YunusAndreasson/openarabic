@@ -21,7 +21,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     persistSession: true,
     detectSessionInUrl: false,
     flowType: 'implicit', // Using implicit flow instead of pkce to fix session persistence issues
-    debug: __DEV__, // Enable auth debugging in development
+    debug: false, // Disable auth debugging completely to avoid excessive logging
   },
 });
 

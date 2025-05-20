@@ -4,6 +4,7 @@ import { InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av/build/Audi
 import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
+import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -149,6 +150,7 @@ interface UseReviewReturn {
   handleSwipeRight: () => void;
   handleTap: () => void;
   handleClose: () => void;
+  animatedStyle: ReturnType<typeof useAnimatedStyle>;
 }
 
 interface WordSizingConfig {
@@ -671,5 +673,8 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     handleSwipeRight,
     handleTap,
     handleClose,
+    animatedStyle: useAnimatedStyle(() => ({
+      opacity: opacity.value,
+    })),
   };
 }
