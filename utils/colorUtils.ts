@@ -8,7 +8,7 @@
  * @param hex - Hex color string (e.g., "#FF5500" or "#F50")
  * @returns RGB color components as a string "r,g,b"
  */
-export function hexToRgb(hex: string): string {
+function hexToRgb(hex: string): string {
   // Validate input
   if (!hex || typeof hex !== 'string') {
     return '0,0,0'; // Return black as fallback

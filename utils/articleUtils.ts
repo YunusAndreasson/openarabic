@@ -100,21 +100,6 @@ export function getDailyPickArticle(articles: Article[], dayOfYear: number): Art
 }
 
 /**
- * Gets advanced articles (difficulty level 4-5)
- * @param articles - The articles to sort
- * @param limit - The maximum number of articles to return (default: 20)
- * @returns Advanced articles sorted by difficulty level (highest first)
- */
-export function getAdvancedArticles(articles: Article[], limit = 20): Article[] {
-  if (!articles.length) return [];
-
-  return [...articles]
-    .filter(article => article.difficulty_level >= 4 && article.difficulty_level <= 5)
-    .sort((a, b) => b.difficulty_level - a.difficulty_level)
-    .slice(0, limit);
-}
-
-/**
  * Gets articles sorted by due words count - articles with more due words are prioritized
  * @param articles - The articles to sort
  * @param dueWords - The user's due words (from studyWordsFSRSService)
