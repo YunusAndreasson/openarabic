@@ -4,7 +4,6 @@ export * from './animations/usePulseAnimation';
 export * from './animations/usePressAnimation';
 export * from './animations/useTransformAnimation';
 export * from './animations/useComponentAnimation';
-export * from './animations/useAnimationTrigger';
 export * from './animations/useToggleAnimation';
 export * from './animations/useProgressAnimation';
 
