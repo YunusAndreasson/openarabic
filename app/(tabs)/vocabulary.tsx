@@ -22,6 +22,7 @@ import { mediumFeedback } from '@/utils/haptics';
 import BottomControls from '@/components/BottomControls';
 import { StreakCard } from '@/components/vocabulary/StreakCard';
 import { useStreakData } from '@/hooks/useStreakData';
+import { LearningStatusIndicator } from '@/components/vocabulary/LearningStatusIndicator';
 
 type StatCategory = 'total' | 'mastered' | 'learning' | 'due';
 
@@ -209,6 +210,14 @@ export default function VocabularyScreen(): JSX.Element {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Learning Status Indicator */}
+        <LearningStatusIndicator
+          dueWords={stats.dueWords}
+          totalWords={stats.totalWords}
+          learningWords={stats.learningWords}
+          masteredWords={stats.masteredWords}
+        />
+
         {/* Stats Dashboard */}
         <VocabularyDashboard
           totalWords={stats.totalWords}
