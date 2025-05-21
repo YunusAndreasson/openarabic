@@ -8,9 +8,7 @@ import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
-import BaseCard from '@/components/BaseCard';
 import EmptyState from '@/components/EmptyState';
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
@@ -136,29 +134,29 @@ const BookmarkListItem = memo(
     // Create left meta content with due words indicator
     const leftMetaContent = hasDueWords ? (
       <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: withOpacity(colors.warning, 0.25),
-            paddingHorizontal: LAYOUT.SPACING.XSMALL,
-            paddingVertical: LAYOUT.SPACING.MICRO,
-            borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-            borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-            borderColor: withOpacity(colors.warning, 0.4),
-            marginRight: 8,
-          }}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: withOpacity(colors.warning, 0.25),
+          paddingHorizontal: LAYOUT.SPACING.XSMALL,
+          paddingVertical: LAYOUT.SPACING.MICRO,
+          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+          borderColor: withOpacity(colors.warning, 0.4),
+          marginRight: 8,
+        }}
       >
         <Ionicons name="sync-outline" size={12} color={colors.warning} />
         <ThemedText
           type="label"
-            style={{
-              color: colors.warning,
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-              marginLeft: LAYOUT.SPACING.XTINY,
-              fontWeight: '600',
-            }}
-            skipDefaultColor
-          >
+          style={{
+            color: colors.warning,
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+            marginLeft: LAYOUT.SPACING.XTINY,
+            fontWeight: '600',
+          }}
+          skipDefaultColor
+        >
           {dueWordCount}
         </ThemedText>
       </View>
@@ -518,9 +516,6 @@ export default function BookmarksScreen(): JSX.Element {
     [prefetchArticle]
   );
 
-  // Show sorting note only when we have due words
-  const hasDueWords = dueWordRootIds?.size > 0;
-
   // Show loading screen only during initial uncached load
   if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
     return (
@@ -595,13 +590,6 @@ export default function BookmarksScreen(): JSX.Element {
           }}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={null}
-          ListFooterComponent={
-            hasDueWords ? (
-              <ThemedText type="caption" variant="subtle">
-                Articles with review words are prioritized in order
-              </ThemedText>
-            ) : null
-          }
           drawDistance={ITEM_HEIGHT * 5}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;

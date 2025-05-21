@@ -73,9 +73,6 @@ export function DueWordsArticleSection({
         onArticlePress={onArticlePress}
         hideDifficulty={true}
       />
-      <ThemedText type="caption" variant="subtle" style={styles.hintText}>
-        Articles with review words are prioritized by word count
-      </ThemedText>
     </View>
   );
 }

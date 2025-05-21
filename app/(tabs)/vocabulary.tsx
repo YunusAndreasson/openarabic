@@ -226,11 +226,7 @@ export default function VocabularyScreen(): JSX.Element {
         />
 
         {/* Vocabulary Growth Graph */}
-        <VocabularyGraph
-          data={weeklyProgressData}
-          animationTriggered={true}
-          title="Vocabulary Progress"
-        />
+        <VocabularyGraph data={weeklyProgressData} animationTriggered={true} title="Total Words" />
       </ScrollView>
       <BottomControls
         primaryLabel="Review"
