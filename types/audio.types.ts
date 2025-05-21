@@ -14,5 +14,3 @@ export type EnhancedAudioTrack = {
   /** Duration of the audio in milliseconds (optional) */
   duration?: number;
 };
-
-// ... rest of the types

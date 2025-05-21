@@ -121,7 +121,7 @@ export interface EmptyStateWithIconNameProps extends BaseEmptyStateProps {
 /**
  * Empty state props with an IconProps object
  */
-export interface EmptyStateWithIconPropsProps extends BaseEmptyStateProps {
+export interface EmptyStateWithIconProps extends BaseEmptyStateProps {
   iconType: 'props';
   icon: IconProps;
 }
@@ -130,7 +130,7 @@ export interface EmptyStateWithIconPropsProps extends BaseEmptyStateProps {
  * Props for the EmptyState component using a discriminated union
  * for better type safety of the icon property
  */
-export type EmptyStateProps = EmptyStateWithIconNameProps | EmptyStateWithIconPropsProps;
+export type EmptyStateProps = EmptyStateWithIconNameProps | EmptyStateWithIconProps;
 
 /**
  * Props for the ErrorState component
