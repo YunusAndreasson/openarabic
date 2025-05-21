@@ -1,14 +1,9 @@
-import type { StudyWord } from '../types/vocabulary.types';
+import type { StudyWord, WeeklyProgressData } from '../types/vocabulary.types';
 
 // Move to constants if this is used elsewhere in the codebase
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
 type DayName = (typeof DAY_NAMES)[number];
 
-export interface WeeklyProgressData {
-  date: string;
-  count: number;
-  wordsLearned: number;
-}
 
 /**
  * Calculate weekly progress data from study words
@@ -106,7 +101,3 @@ export function calculateWeeklyProgressData(
     });
 }
 
-export class VocabularyStats {
-  studyWords: StudyWord[] = [];
-  // ... existing code ...
-}
