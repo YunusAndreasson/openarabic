@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
 // Only keep lastOpenedArticles for local tracking
 export interface ReadingListState {
@@ -9,27 +9,17 @@ const initialState: ReadingListState = {
   lastOpenedArticles: {},
 };
 
-// Thunk to update last opened timestamp for an article
-export const updateLastOpenedArticle = createAsyncThunk(
-  'readingList/updateLastOpenedArticle',
-  async (articleId: number) => {
-    return {
-      articleId,
-      timestamp: new Date().toISOString(),
-    };
-  }
-);
-
+// Action to update last opened timestamp for an article
 const readingListSlice = createSlice({
   name: 'readingList',
   initialState,
-  reducers: {},
-  extraReducers: builder => {
-    builder.addCase(updateLastOpenedArticle.fulfilled, (state, action) => {
-      const { articleId, timestamp } = action.payload;
-      state.lastOpenedArticles[articleId] = timestamp;
-    });
+  reducers: {
+    updateLastOpenedArticle: (state, action: { payload: number }) => {
+      state.lastOpenedArticles[action.payload] = new Date().toISOString();
+    },
   },
 });
+
+export const { updateLastOpenedArticle } = readingListSlice.actions;
 
 export default readingListSlice.reducer;

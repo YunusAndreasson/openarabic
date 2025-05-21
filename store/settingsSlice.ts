@@ -1,10 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
-
-// Type for actions that include a payload
-type PayloadAction<P> = {
-  payload: P;
-  type: string;
-};
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface SettingsState {
   fontScale: number;
