@@ -127,16 +127,14 @@ export default function ListenScreen(): JSX.Element {
   // Detect when the audio state changes to idle after playing
   useEffect(() => {
     // Track state transitions
-    if (audioState !== lastAudioStateRef.current) {
-      console.log(`Audio state changed: ${lastAudioStateRef.current} -> ${audioState}`);
+      if (audioState !== lastAudioStateRef.current) {
 
       // If we were playing and now we're idle, it means playback completed
       const wasPlaying = lastAudioStateRef.current === 'playing';
       const isNowIdle = audioState === 'idle';
 
       if (wasPlaying && isNowIdle) {
-        playbackCompletedRef.current = true;
-        console.log('Playback completed, setting flag');
+          playbackCompletedRef.current = true;
       }
 
       lastAudioStateRef.current = audioState;
@@ -206,11 +204,8 @@ export default function ListenScreen(): JSX.Element {
   const handleRestartPlayback = useCallback(() => {
     // Skip if there are no tracks to play
     if (selectedTracksRef.current.length === 0) {
-      console.log('No tracks to restart playback');
       return;
     }
-
-    console.log('Restarting playback with repeat');
 
     // Set a small delay to restart playback
     if (timeoutRef.current) {
@@ -234,7 +229,6 @@ export default function ListenScreen(): JSX.Element {
   useEffect(() => {
     // Check if playback has completed
     if (playbackCompletedRef.current && audioState === 'idle' && wordList.length > 0) {
-      console.log('Handling playback completion, repeat enabled:', repeatEnabled);
 
       if (repeatEnabled && selectedTracksRef.current.length > 0) {
         // If repeat is enabled, restart playback
