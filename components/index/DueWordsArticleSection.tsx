@@ -72,7 +72,6 @@ export function DueWordsArticleSection({
         articles={articles.map(renderArticleWithDueCount)}
         onArticlePress={onArticlePress}
         hideDifficulty={true}
-        emptyStateMessage="No recommended articles found"
       />
       <ThemedText type="caption" variant="subtle" style={styles.hintText}>
         Articles with review words are prioritized by word count

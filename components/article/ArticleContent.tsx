@@ -90,7 +90,6 @@ interface ArticleContentProps {
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
-const EMPTY_ARTICLES: Article[] = [];
 
 export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>(
   (

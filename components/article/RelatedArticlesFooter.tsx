@@ -40,8 +40,6 @@ export const RelatedArticlesFooter: React.FC<RelatedArticlesFooterProps> = ({
             title={`By ${article.author.name}`}
             articles={otherArticles}
             onArticlePress={onArticlePress || (() => {})}
-            showTimeAgo={false}
-            vertical={false}
             hideDifficulty={false}
           />
         </View>
