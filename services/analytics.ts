@@ -157,14 +157,6 @@ class Analytics {
     }
   }
 
-  // Track page/screen view
-  async trackScreen(screenName: string, properties?: Record<string, AnalyticsProperties>) {
-    await this.track('VIEW_ARTICLE', {
-      screen: screenName,
-      ...properties,
-    });
-  }
-
   // Reset user (for logout)
   async reset() {
     if (!this.isInitialized) return;
@@ -176,61 +168,7 @@ class Analytics {
     }
   }
 
-  // Set super properties that will be included with all subsequent track calls
-  async setSuperProperties(properties: Record<string, AnalyticsProperties>) {
-    if (!this.isInitialized) return;
 
-    try {
-      await this.mixpanel.registerSuperProperties(properties);
-    } catch (error) {
-      logError(error);
-    }
-  }
-
-  // Time an event
-  async timeEvent(eventName: keyof typeof EVENTS) {
-    if (!this.isInitialized) return;
-
-    try {
-      await this.mixpanel.timeEvent(EVENTS[eventName]);
-    } catch (error) {
-      logError(error);
-    }
-  }
-
-  // Opt out of tracking (GDPR)
-  async optOutTracking() {
-    if (!this.isInitialized) return;
-
-    try {
-      await this.mixpanel.optOutTracking();
-    } catch (error) {
-      logError(error);
-    }
-  }
-
-  // Opt in to tracking (GDPR)
-  async optInTracking() {
-    if (!this.isInitialized) return;
-
-    try {
-      await this.mixpanel.optInTracking();
-    } catch (error) {
-      logError(error);
-    }
-  }
-
-  // Get the distinct ID of the current user
-  async getDistinctId(): Promise<string | null> {
-    if (!this.isInitialized) return null;
-
-    try {
-      return await this.mixpanel.getDistinctId();
-    } catch (error) {
-      logError(error);
-      return null;
-    }
-  }
 
   // Auth Events
   async trackSignUp(method: string = 'email') {
