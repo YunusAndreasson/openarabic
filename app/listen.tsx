@@ -2,6 +2,7 @@ import React, { JSX, useCallback, useEffect, useState, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
+import Animated from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -42,10 +43,9 @@ export default function ListenScreen(): JSX.Element {
 
   // State
   const [isComplete, setIsComplete] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [wordList, setWordList] = useState<StudyWord[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
-  const [isArabicActive, setIsArabicActive] = useState(true);
   const [progressAnimationKey, setProgressAnimationKey] = useState(0);
   const [repeatEnabled, setRepeatEnabled] = useState(false);
 
@@ -58,9 +58,10 @@ export default function ListenScreen(): JSX.Element {
   const playbackCompletedRef = useRef(false);
 
   // Animation
-  const { fadeIn, fadeOut } = useOpacityAnimation({
-    initialOpacity: 1,
+  const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
+    initialOpacity: 0,
     duration: 300,
+    autoStart: true,
   });
 
   // Get enhanced audio player
@@ -92,10 +93,7 @@ export default function ListenScreen(): JSX.Element {
     // Extract audio track information from the currentTrackIndex
     // We can determine if it's Arabic or English by looking at even/odd indices
     // Even indices are Arabic tracks, odd indices are English tracks
-    const isArabic = currentTrackIndex % 2 === 0;
     const wordIndex = Math.floor(currentTrackIndex / 2); // Each word has 2 tracks (AR+EN)
-
-    setIsArabicActive(isArabic);
 
     // Update current word if needed
     if (wordIndex !== currentWordIndex && wordIndex >= 0) {
@@ -262,8 +260,8 @@ export default function ListenScreen(): JSX.Element {
 
   // Close and cleanup
   const handleClose = useCallback(() => {
-    // Prevent multiple clicks
-    const wasAlreadyComplete = isComplete;
+    // Set the closing flag to prevent showing the completion screen
+    setIsClosing(true);
 
     // Ensure audio is stopped and cleanup is done
     actions.stopPlayback().catch(() => {});
@@ -279,31 +277,21 @@ export default function ListenScreen(): JSX.Element {
       queryClient.invalidateQueries({ queryKey: ['vocabularyStats'] });
     }
 
-    // Use a delay to ensure cleanup completes
-    setTimeout(
-      () => {
-        try {
-          // If was called via a button after session completion, use the most direct approach
-          if (wasAlreadyComplete) {
-            router.back();
-          } else {
-            // For user-initiated cancellations during session
-            if (fromVocabulary) {
-              // Use replace instead of navigate to avoid navigation stack issues
-              router.replace('/(tabs)/vocabulary');
-            } else {
-              router.back();
-            }
-          }
-        } catch (error) {
-          // Fallback - if navigation fails, forcefully go back
-          handleError(error instanceof Error ? error : new Error(String(error)));
-          router.back();
-        }
-      },
-      wasAlreadyComplete ? 100 : 300
-    ); // Faster timeout for completed sessions
-  }, [user?.id, queryClient, actions, isComplete, fromVocabulary]);
+    // For non-completion scenarios, navigate away immediately
+    try {
+      // For user-initiated cancellations during session
+      if (fromVocabulary) {
+        // Use replace instead of navigate to avoid navigation stack issues
+        router.replace('/(tabs)/vocabulary');
+      } else {
+        router.back();
+      }
+    } catch (error) {
+      // Fallback - if navigation fails, forcefully go back
+      handleError(error instanceof Error ? error : new Error(String(error)));
+      router.back();
+    }
+  }, [user?.id, queryClient, actions, fromVocabulary]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -338,7 +326,8 @@ export default function ListenScreen(): JSX.Element {
   // Calculate font size based on word length
   const wordFontSize = useWordSizing(currentArabicWord, fontConfig);
 
-  if (isComplete || isTransitioning) {
+  // Only show completion screen if we're not in the process of closing
+  if (isComplete && !isClosing) {
     return (
       <CompletionScreen
         onClose={handleClose}
@@ -367,11 +356,13 @@ export default function ListenScreen(): JSX.Element {
         />
 
         <View style={styles.wordArea}>
-          <WordDisplay
-            word={currentArabicWord}
-            translation={currentEnglishMeaning}
-            fontSize={wordFontSize}
-          />
+          <Animated.View style={[styles.wordContainer, animatedStyle as any]}>
+            <WordDisplay
+              word={currentArabicWord}
+              translation={currentEnglishMeaning}
+              fontSize={wordFontSize}
+            />
+          </Animated.View>
         </View>
 
         <View style={styles.footer}>
@@ -410,6 +401,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: WORD_AREA_MIN_HEIGHT,
+  },
+  wordContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   footer: {
     width: '100%',

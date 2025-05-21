@@ -29,7 +29,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   iconSize = LAYOUT.BUTTON.ICON_SIZE.MEDIUM,
   color,
   style,
-  hapticFeedback = true,
+  hapticFeedback = false,
 }) => {
   const colors = useColors();
 

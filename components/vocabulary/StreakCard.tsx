@@ -103,12 +103,6 @@ export const StreakCard = memo(
     return (
       <BaseCard style={styles.card} includePressAnimation={false} shadowSize="medium">
         <View style={[styles.container, { padding: cardPadding }]}>
-          <View style={styles.header}>
-            <ThemedText type="overline" weight="medium" variant="secondary">
-              DAILY ACTIVITY
-            </ThemedText>
-          </View>
-
           <View style={styles.content}>
             {/* Timeline visualization */}
             <Canvas style={styles.timelineCanvas}>
@@ -195,9 +189,6 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
-  },
-  header: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   content: {
     width: '100%',

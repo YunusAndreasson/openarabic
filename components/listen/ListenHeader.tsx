@@ -59,7 +59,13 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
             <Ionicons name="repeat" size={22} color={repeatIconColor} />
           </TouchableOpacity>
         )}
-        <CloseButton onPress={onClose} size="large" iconSize={24} color={colors.tabIconDefault} />
+        <CloseButton
+          onPress={onClose}
+          size="large"
+          iconSize={24}
+          color={colors.tabIconDefault}
+          hapticFeedback={false}
+        />
       </View>
     </View>
   );
@@ -86,7 +92,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   repeatButton: {
-    marginRight: LAYOUT.SPACING.LARGE,
     padding: LAYOUT.SPACING.SMALL,
   },
 });
