@@ -205,29 +205,6 @@ export const articlesService = {
     }
   },
 
-  async getCategoryArticles(categoryId: number, limit = 10): Promise<Article[]> {
-    try {
-      const { data, error } = await supabase
-        .from<'articles'>('articles')
-        .select('*')
-        .eq('category_id', categoryId)
-        .limit(limit);
-
-      if (error) {
-        throw new DatabaseError('Failed to load category articles', {
-          timestamp: new Date().toISOString(),
-          details: error,
-        });
-      }
-
-      return mapToArticles(data || []);
-    } catch (err) {
-      await handleError(
-        err instanceof Error ? err : new Error('Unknown error loading category articles')
-      );
-      throw err;
-    }
-  },
 
   async getArticlesWithSentencesAndWords(): Promise<Article[]> {
     try {

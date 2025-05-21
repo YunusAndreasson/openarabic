@@ -8,11 +8,6 @@ export const TRACK_TYPES = {
   ENGLISH: 'en',
 } as const;
 
-// Helper function to generate composite ID
-const generateTrackId = (rootId: number, index: number, type: string): string => {
-  return `vocab-${rootId}-${index}-${type}`;
-};
-
 export const listenAudioService = {
   /**
    * Converts vocabulary words to enhanced audio tracks for the listen screen
