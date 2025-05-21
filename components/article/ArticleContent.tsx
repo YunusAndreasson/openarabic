@@ -90,7 +90,6 @@ interface ArticleContentProps {
 }
 
 const SENTENCE_ITEM_HEIGHT = 70;
-const EMPTY_ARTICLES: Article[] = [];
 
 export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>(
   (
@@ -190,7 +189,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           });
         } catch (error) {
           // Fallback if the index is out of range
-          console.log('Error scrolling to index:', error);
           // Try to scroll to the closest visible item
           if (sortedSentences && sortedSentences.length > 0) {
             flashListRef.current.scrollToItem({

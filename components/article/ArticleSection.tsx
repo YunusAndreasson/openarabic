@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
 
 import SectionTitle from '@/components/SectionTitle';
 import { ThemedCard } from '@/components';
@@ -23,25 +23,6 @@ interface ArticleSectionProps {
    */
   onArticlePress: (article: Article) => void;
 
-  /**
-   * Show time ago indicator
-   */
-  showTimeAgo?: boolean;
-
-  /**
-   * Use vertical layout instead of horizontal
-   */
-  vertical?: boolean;
-
-  /**
-   * Maximum articles to display
-   */
-  maxItems?: number;
-
-  /**
-   * Empty state message
-   */
-  emptyStateMessage?: string;
 
   /**
    * Hide difficulty indicator
@@ -123,38 +104,11 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.LARGE,
   },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.LARGE,
-  },
-  horizontalArticleContainer: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-      ...Platform.select({
-        android: {
-          paddingBottom: LAYOUT.SPACING.MICRO,
-        },
-      }),
-    },
-  horizontalList: {
-    // Empty after removing horizontal padding
-  },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 200,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
-  verticalArticleContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-      ...Platform.select({
-        android: {
-          paddingBottom: LAYOUT.SPACING.MICRO,
-        },
-      }),
-    },
-  verticalList: {
-    // Empty after removing horizontal padding
   },
   scrollContent: {
     // paddingHorizontal removed to match other sections
