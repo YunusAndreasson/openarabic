@@ -93,14 +93,4 @@ export const selectAudioState = createSelector(
   })
 );
 
-export const selectFullAudioState = createSelector(
-  [selectCurrentWordId, selectCurrentPosition, selectIsPlaying, selectCurrentSentenceId],
-  (wordId, position, isPlaying, sentenceId) => ({
-    wordId,
-    position,
-    isPlaying,
-    sentenceId,
-  })
-);
-
 export default audioSlice.reducer;
