@@ -244,13 +244,6 @@ const VocabularyFlowVisualization = memo(
                   />
                   {/* Main circle */}
                   <Circle cx={node.x} cy={node.y} r={radius} color={node.color} />
-                  {/* Inner highlight */}
-                  <Circle
-                    cx={node.x}
-                    cy={node.y - 2}
-                    r={radius * 0.3}
-                    color={withOpacity('#FFFFFF', 0.4)}
-                  />
                 </Group>
               );
             })}
