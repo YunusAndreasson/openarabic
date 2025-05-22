@@ -68,31 +68,36 @@ export const useNavigationWithDebounce = (
       // Set navigating state to prevent multiple clicks
       setIsNavigating(true);
 
-      // Run callback if provided
-      if (callback) {
-        callback();
-      }
-
-      // Navigate immediately
+      let success = false;
       try {
+        // Run callback if provided
+        if (callback) {
+          callback();
+        }
+
+        // Navigate immediately
         if (navigateOptions?.replace) {
           router.replace(route as Parameters<typeof router.replace>[0]);
         } else {
           router.push(route as Parameters<typeof router.push>[0]);
         }
+
+        success = true;
+        // Reset navigation state after debounce duration
+        const timeoutId = setTimeout(() => {
+          setIsNavigating(false);
+          timeoutRef.current = null;
+        }, debounceDuration);
+
+        timeoutRef.current = timeoutId;
       } catch (error) {
         handleError(error instanceof Error ? error : String(error));
-        setIsNavigating(false);
-        return;
+      } finally {
+        // Ensure navigating state is cleared if an error occurred before setting the timeout
+        if (!success) {
+          setIsNavigating(false);
+        }
       }
-
-      // Reset navigation state after debounce duration
-      const timeoutId = setTimeout(() => {
-        setIsNavigating(false);
-        timeoutRef.current = null;
-      }, debounceDuration);
-
-      timeoutRef.current = timeoutId;
     },
     [isNavigating, debounceDuration]
   );
