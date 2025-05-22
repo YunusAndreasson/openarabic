@@ -118,7 +118,12 @@ export const LearningStatusIndicator = memo(
         includePressAnimation={false}
       >
         <View style={styles.content}>
-          <View style={[styles.iconContainer, { backgroundColor: withOpacity(iconColor, 0.19) }]}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: withOpacity(iconColor, 0.19), borderColor: colors.transparent },
+            ]}
+          >
             <Ionicons name={icon} size={24} color={iconColor} />
           </View>
           <View style={styles.textContainer}>
@@ -161,7 +166,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
     borderWidth: LAYOUT.BORDER.WIDTH.THIN,
-    borderColor: 'transparent',
   },
   textContainer: {
     flex: 1,
