@@ -236,7 +236,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       );
 
       return {
-        backgroundColor: withOpacity(colors.black, bgOpacity),
+        backgroundColor: `rgba(0, 0, 0, ${bgOpacity})`,
       };
     }, []);
 

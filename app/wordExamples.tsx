@@ -354,8 +354,6 @@ export default function WordExamplesScreen() {
           }}
           showsVerticalScrollIndicator={true}
           contentInsetAdjustmentBehavior="automatic"
-          estimatedFirstItemOffset={0}
-          initialScrollIndex={0}
           drawDistance={300}
           keyExtractor={(item, index) => `sentence-${item.sentence.id || index}`}
           ListEmptyComponent={

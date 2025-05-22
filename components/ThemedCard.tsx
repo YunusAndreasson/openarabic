@@ -8,7 +8,6 @@ import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
 import type {
   ThemedCardProps as BaseThemedCardProps,
   ArticleCardProps,
@@ -167,15 +166,15 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const isCompact = variant === 'compact';
   const isArticle = variant === 'article';
 
-  // Determine the base color for gradient depending on theme
-  const baseGradientColor = isDarkMode ? colors.black : colors.elevation1;
+  // Extract base colors for gradient
+  const baseGradientColor = isDarkMode ? '30,30,30' : '248,249,250';
 
   // Memoize gradient colors with consistent opacity stops
   const gradientColors = useMemo(() => {
     return [
-      withOpacity(baseGradientColor, 0),
-      withOpacity(baseGradientColor, 0.95),
-      withOpacity(baseGradientColor, 0.98),
+      `rgba(${baseGradientColor},0)`,
+      `rgba(${baseGradientColor},0.95)`,
+      `rgba(${baseGradientColor},0.98)`,
       colors.card,
     ] as const;
   }, [baseGradientColor, colors.card]);
@@ -231,17 +230,21 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <>
         <View style={styles.imageContainer}>
           <EnhancedImage
-            source={props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
+            source={
+              isArticleVariant(props)
+                ? props.imageUrl || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
+                : DEFAULT_IMAGES.ARTICLE_PLACEHOLDER
+            }
             style={styles.image}
             contentFit="cover"
             skipTransition={true}
             cachePolicy="memory-disk"
-            alt={`Image for ${props.title}`}
+            alt={`Image for ${title || 'Article'}`}
             blurRadius={0}
             allowDownscaling={false}
             priority="high"
             placeholder={
-              props.placeholder || {
+              (isArticleVariant(props) ? props.placeholder : undefined) || {
                 thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
@@ -299,9 +302,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     );
   }, [
     isArticle,
-    props.title,
-    props.imageUrl,
-    props.placeholder,
+    title,
+    isArticleVariant(props) ? props.imageUrl : undefined,
+    isArticleVariant(props) ? props.placeholder : undefined,
     props.fullSummary,
     category,
     author,
@@ -319,7 +322,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
       <>
         <View style={styles.compactImageContainer}>
           <EnhancedImage
-            source={props.article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
+            source={article?.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER}
             style={styles.image}
             contentFit="cover"
             skipTransition={true}
@@ -327,12 +330,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             allowDownscaling={false}
             priority="high"
             placeholder={
-              props.article.placeholder || {
+              article?.placeholder || {
                 thumbhash: DEFAULT_IMAGES.ARTICLE_PLACEHOLDER_THUMBHASH,
               }
             }
             prefetch={true}
-            alt={`Image for ${props.article.title}`}
+            alt={`Image for ${article?.title || 'Article'}`}
           />
 
           <LinearGradient
@@ -348,11 +351,11 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           />
         </View>
 
-        {props.article.category ? (
+        {article?.category ? (
           <View style={styles.pillContainer}>
             <Pill
-              id={props.article.category.id}
-              label={props.article.category.name}
+              id={article.category.id || ''}
+              label={article.category.name || ''}
               variant="category"
             />
           </View>
@@ -361,12 +364,12 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
             <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={titleStyle}>
-              {props.article.title}
+              {article?.title}
             </ThemedText>
           </View>
 
           {/* Due word count indicator as simple text with icon */}
-          {props.dueWordCount ? (
+          {isCompactVariant(props) && props.dueWordCount ? (
             <View
               style={{
                 flexDirection: 'row',
@@ -392,9 +395,9 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
-              <TimeAgo date={lastOpenedAt || props.article.created_at} />
-            ) : props.dueWordCount || hideDifficulty ? null : (
-              <SummaryIndicator summary={props.article.summary} />
+              <TimeAgo date={lastOpenedAt || article?.created_at || ''} />
+            ) : (isCompactVariant(props) && props.dueWordCount) || hideDifficulty ? null : (
+              <SummaryIndicator summary={article?.summary || null} />
             )}
           </View>
         </View>
@@ -403,7 +406,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   }, [
     isCompact,
     article,
-    props.dueWordCount,
+    isCompactVariant(props) ? props.dueWordCount : undefined,
     showTimeAgo,
     hideDifficulty,
     lastOpenedAt,
