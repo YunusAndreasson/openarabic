@@ -128,7 +128,7 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       return;
     }
     setMetadata({
-      articleId: track.articleId,
+      articleId: track.articleId ?? track.rootId ?? 0,
       articleTitle: track.title,
     });
   }, []);

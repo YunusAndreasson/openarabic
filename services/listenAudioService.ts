@@ -30,7 +30,7 @@ export const listenAudioService = {
       // Add Arabic track
       tracks.push({
         id: `word-${index}-${TRACK_TYPES.ARABIC}`,
-        articleId: word.root.id, // Reuse articleId field to store rootId
+        rootId: word.root.id,
         audioUrl: arabicAudio,
         title: word.root.letters || 'Arabic', // Use Arabic word as title
       });
@@ -38,7 +38,7 @@ export const listenAudioService = {
       // Add English track
       tracks.push({
         id: `word-${index}-${TRACK_TYPES.ENGLISH}`,
-        articleId: word.root.id, // Reuse articleId field to store rootId
+        rootId: word.root.id,
         audioUrl: englishAudio,
         title: word.root.meaning || 'English', // Use English meaning as title
       });

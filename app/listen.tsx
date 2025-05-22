@@ -168,7 +168,7 @@ export default function ListenScreen(): JSX.Element {
 
       // Extract wordIds from tracks
       selectedTracks.forEach(track => {
-        const wordId = track.articleId; // We're using articleId to store rootId
+        const wordId = track.rootId ?? 0;
         if (!uniqueWordIds.has(wordId)) {
           const word = wordMap.get(wordId);
           if (word) {
