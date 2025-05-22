@@ -101,7 +101,7 @@ function FilterScreenContent() {
         return null;
       }
     },
-    enabled: type === 'category' || type !== 'author',
+    enabled: type === 'category' && !isNaN(numericId),
   });
   const {
     data: articles = [],
