@@ -249,6 +249,9 @@ export function useProvideAuth(): AuthResult {
     let appStateSubscription: ReturnType<typeof AppState.addEventListener>;
     let authSubscriptionUnsubscribe: () => void = () => {};
 
+    // Global ref to track current app state
+    const appState = { current: AppState.currentState };
+
     // Initialize auth
     initAuth();
 
@@ -268,9 +271,6 @@ export function useProvideAuth(): AuthResult {
         initAuth();
       }
     });
-
-    // Global ref to track current app state
-    const appState = { current: AppState.currentState };
 
     // Listen for auth state changes
     const {
