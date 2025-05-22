@@ -31,6 +31,7 @@ import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
+import { withOpacity } from '@/utils/colorUtils';
 
 import type { ThemeColors } from '../../types/ui/theme.types';
 
@@ -235,7 +236,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       );
 
       return {
-        backgroundColor: `rgba(0, 0, 0, ${bgOpacity})`,
+        backgroundColor: withOpacity(colors.black, bgOpacity),
       };
     }, []);
 
