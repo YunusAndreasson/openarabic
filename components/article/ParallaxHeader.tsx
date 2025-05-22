@@ -39,17 +39,17 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     const imageHeight = HEADER_IMAGE_HEIGHT + topInset;
     const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
 
-    // Smoother derived value with optimized spring configs
+    // Optimized derived value with smoother spring configs
     const smoothScrollY = useDerivedValue(() => {
       'worklet';
-      // More responsive spring physics
+      // Simplified spring physics for smoother performance
       return withSpring(scrollY.value, {
-        damping: 25, // Increased for reduced oscillation
-        stiffness: 120, // Increased for more immediate response
-        mass: 0.7, // Reduced for quicker settling
+        damping: 20, // Reduced for more natural movement
+        stiffness: 100, // Reduced for smoother transitions
+        mass: 0.8, // Slightly increased for more stable movement
         overshootClamping: true, // Prevent overshoot at boundaries
-        restDisplacementThreshold: 0.001, // More precise rest position
-        restSpeedThreshold: 0.001, // More precise rest speed
+        restDisplacementThreshold: 0.01, // Less precise for better performance
+        restSpeedThreshold: 0.01, // Less precise for better performance
       });
     }, [scrollY]);
 
@@ -135,9 +135,6 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     const imageAnimatedStyle = useAnimatedStyle(() => {
       'worklet';
       const dynamicParallaxFactor = PARALLAX_FACTOR * (SCREEN_WIDTH / 375);
-      // Smoother transition at the boundary
-      const overscrollEffect =
-        Math.max(0, Math.min(-smoothScrollY.value / headerHeight, 0.2)) * 0.5;
 
       const translateYValue = interpolate(
         smoothScrollY.value,
@@ -146,14 +143,13 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         Extrapolation.CLAMP
       );
 
-      // Subtle initial zoom improves focus on the image as a figure element
-      const scaleValue =
-        interpolate(
-          smoothScrollY.value,
-          [-headerHeight, 0, headerHeight],
-          [1.3, 1.02, 1], // More subtle initial zoom (1.02 instead of 1.05)
-          Extrapolation.CLAMP
-        ) + overscrollEffect;
+      // Simplified scale animation for better performance
+      const scaleValue = interpolate(
+        smoothScrollY.value,
+        [-headerHeight, 0, headerHeight],
+        [1.2, 1.0, 1.0], // Simplified scale values
+        Extrapolation.CLAMP
+      );
 
       return {
         transform: [{ translateY: translateYValue }, { scale: scaleValue }],
@@ -174,16 +170,16 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       return {
         opacity: interpolate(
           smoothScrollY.value,
-          [0, headerHeight * 0.1, headerHeight * 0.6],
-          [1, 0.95, 0],
+          [0, headerHeight * 0.6],
+          [1, 0],
           Extrapolation.CLAMP
         ),
         transform: [
           {
             translateY: interpolate(
               smoothScrollY.value,
-              [0, headerHeight * 0.2, headerHeight * 0.6],
-              [0, -5, -20],
+              [0, headerHeight * 0.6],
+              [0, -15],
               Extrapolation.CLAMP
             ),
           },
@@ -197,8 +193,8 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       return {
         opacity: interpolate(
           smoothScrollY.value,
-          [0, headerHeight * 0.3, headerHeight * 0.6],
-          [0, 0.2, 0.65],
+          [0, headerHeight * 0.6],
+          [0, 0.5],
           Extrapolation.CLAMP
         ),
         backgroundColor: Colors.light.black,

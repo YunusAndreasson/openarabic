@@ -18,7 +18,7 @@ import BaseCard from '../components/BaseCard';
 import { router } from 'expo-router';
 import { lightFeedback } from '../utils/haptics';
 
-const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3;
+const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3.2;
 
 // Move WordListItem component definition outside to optimize recycling
 interface WordListItemMemoProps {
@@ -179,7 +179,7 @@ export default function WordListScreen(): JSX.Element {
           iconBgColor={getSortCardBgColor()}
           shadowSize="small"
           style={{
-            marginBottom: LAYOUT.SPACING.SMALL,
+            marginBottom: LAYOUT.SPACING.MEDIUM,
             marginHorizontal: 0,
           }}
         >
@@ -188,12 +188,12 @@ export default function WordListScreen(): JSX.Element {
               flexDirection: 'row',
               justifyContent: 'space-evenly',
               alignItems: 'center',
-              paddingVertical: LAYOUT.SPACING.TINY,
-              paddingHorizontal: LAYOUT.SPACING.TINY,
+              paddingVertical: LAYOUT.SPACING.MEDIUM,
+              paddingHorizontal: LAYOUT.SPACING.SMALL,
             }}
           >
             {[
-              { label: 'Memory Strength', value: 'retention' },
+              { label: 'Memory', value: 'retention' },
               { label: 'A-Z', value: 'alphabetical' },
               { label: 'Streak', value: 'streak' },
             ].map(option => {
@@ -212,13 +212,19 @@ export default function WordListScreen(): JSX.Element {
                     marginRight: 0,
                     flexDirection: 'row',
                     alignItems: 'center',
+                    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+                    paddingVertical: LAYOUT.SPACING.SMALL,
+                    minHeight: 36,
                   }}
                   label={
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <ThemedText
                         type="label"
                         colorName={isSelected ? 'tint' : 'text'}
-                        style={{ fontWeight: isSelected ? 'bold' : 'normal' }}
+                        style={{
+                          fontWeight: isSelected ? '600' : '500',
+                          fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+                        }}
                       >
                         {option.label}
                       </ThemedText>
@@ -231,7 +237,7 @@ export default function WordListScreen(): JSX.Element {
                             : 'chevron-down'
                         }
                         size={16}
-                        style={{ marginLeft: 4, marginTop: 1 }}
+                        style={{ marginLeft: 4, marginTop: 0.5 }}
                         color={isSelected ? colors.icon : colors.transparent}
                       />
                     </View>
@@ -243,7 +249,7 @@ export default function WordListScreen(): JSX.Element {
         </InfoCard>
       </View>
     );
-  }, [sortBy, getSortCardBgColor, sortDirection, handleSortChange]);
+  }, [sortBy, getSortCardBgColor, sortDirection, handleSortChange, colors]);
 
   // Add error UI handling
   if (error) {
@@ -267,8 +273,9 @@ export default function WordListScreen(): JSX.Element {
           headerShown: true,
           headerTitle: title,
           headerTitleStyle: {
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-            fontWeight: '600',
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 1,
+            fontWeight: '700',
+            color: colors.text,
           },
           headerStyle: {
             backgroundColor: colors.background,
@@ -278,6 +285,9 @@ export default function WordListScreen(): JSX.Element {
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
           headerBackTitle: 'Vocabulary',
+          headerBackTitleStyle: {
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+          },
         }}
       />
 
@@ -293,14 +303,15 @@ export default function WordListScreen(): JSX.Element {
           estimatedItemSize={ITEM_HEIGHT}
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={renderEmptyComponent}
-          showsVerticalScrollIndicator={true}
+          showsVerticalScrollIndicator={false}
           estimatedFirstItemOffset={LAYOUT.SPACING.XLARGE}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
           }}
-          drawDistance={100}
+          drawDistance={150}
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={styles.listContentContainer}
+          keyExtractor={item => `word-${item.root_id}`}
         />
       </ThemedView>
     </>
@@ -317,6 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
   emptyText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
@@ -334,16 +346,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerContainer: {
-    paddingBottom: 0,
+    paddingBottom: LAYOUT.SPACING.XSMALL,
     paddingTop: 0,
   },
   listContentContainer: {
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.TINY,
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
   wordItemContainer: {
-    marginVertical: 0,
+    marginVertical: LAYOUT.SPACING.XTINY,
   },
   headerButton: {
     marginRight: LAYOUT.SPACING.MEDIUM,

@@ -89,9 +89,9 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
         <ThemedText
           type="body"
           variant="secondary"
-          weight="bold"
+          weight="semibold"
           numberOfLines={2}
-          style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE }]}
+          style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE + 1 }]}
         >
           {capitalizedMeaning || 'No translation available'}
         </ThemedText>
@@ -99,7 +99,7 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
         {/* Arabic text on the right */}
         <ThemedText
           type="arabic"
-          arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE}
+          arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE - 2}
           weight="semibold"
           align="right"
           skipDefaultColor
@@ -112,10 +112,10 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
 
       {/* Memory Strength section */}
       <View style={styles.progressBarLabelContainer}>
-        <ThemedText type="overline" variant="secondary">
+        <ThemedText type="overline" variant="secondary" style={styles.progressLabel}>
           MEMORY STRENGTH
         </ThemedText>
-        <ThemedText type="caption" variant="subtle" weight="medium">
+        <ThemedText type="caption" variant="subtle" weight="semibold" style={styles.progressValue}>
           {wordStatus.progress.value}%
         </ThemedText>
       </View>
@@ -156,16 +156,16 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   cardContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.SMALL * 0.75,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    padding: LAYOUT.SPACING.MEDIUM + 2,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
   },
   content: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL / 2,
-    minHeight: 36,
+    marginBottom: LAYOUT.SPACING.SMALL + 2,
+    minHeight: 38,
   },
   divider: {
     height: 1,
@@ -176,8 +176,8 @@ const styles = StyleSheet.create({
   englishText: {
     flex: 1,
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    lineHeight: Platform.OS === 'ios' ? 24 : 26,
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    lineHeight: Platform.OS === 'ios' ? 26 : 28,
+    marginRight: LAYOUT.SPACING.MEDIUM + 2,
   },
   lastReview: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -186,12 +186,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.SMALL / 2,
+    marginTop: LAYOUT.SPACING.SMALL,
+    minHeight: 16,
   },
   progressBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    height: 4,
-    marginBottom: LAYOUT.SPACING.SMALL / 2,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL / 2,
+    height: 5,
+    marginBottom: LAYOUT.SPACING.SMALL,
     overflow: 'hidden',
     width: '100%',
   },
@@ -199,11 +200,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL / 3,
+    marginBottom: LAYOUT.SPACING.SMALL / 2,
   },
   progressFill: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL / 2,
     height: '100%',
+  },
+  progressLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,
+    letterSpacing: 0.5,
+  },
+  progressValue: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

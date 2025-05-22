@@ -67,11 +67,6 @@ const BaseCard: React.FC<BaseCardProps> = memo(
 
       return {
         shadow: calculatedShadow,
-        border: {
-          borderWidth: isDarkMode ? LAYOUT.BORDER.WIDTH.THICK : LAYOUT.BORDER.WIDTH.THIN, // Increased dark mode border for better definition
-          borderColor: isDarkMode ? colors.cardBorder : colors.cardBorder, // Use cardBorder in both modes
-          borderStyle: 'solid',
-        },
         background: {
           backgroundColor: colors.card,
         },
@@ -80,7 +75,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
 
     // Combined card style with stable reference
     const combinedCardStyle = useMemo(
-      () => [styles.card, baseStyles.background, baseStyles.shadow, baseStyles.border, style],
+      () => [styles.card, baseStyles.background, baseStyles.shadow, style],
       [baseStyles, style]
     );
 

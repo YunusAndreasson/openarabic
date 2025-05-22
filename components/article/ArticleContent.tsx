@@ -128,21 +128,13 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     // Create a shared value to track scroll position for parallax effect
     const scrollY = useSharedValue(0);
-    // Add a ref to track the previous scroll position
-    const prevScrollY = useRef(0);
 
     // Helper function to handle animated scroll events
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-        // Apply a small damping factor to smooth transitions
         const currentY = event.nativeEvent.contentOffset.y;
-        // Use damping when scrolling near the top to reduce flickering
-        if (currentY < HEADER_IMAGE_HEIGHT) {
-          scrollY.value = prevScrollY.current + (currentY - prevScrollY.current) * 0.6;
-        } else {
-          scrollY.value = currentY;
-        }
-        prevScrollY.current = scrollY.value;
+        // Remove damping to prevent conflicts with ParallaxHeader spring animation
+        scrollY.value = currentY;
         handleScroll(event);
       },
       [scrollY, handleScroll]
@@ -225,14 +217,11 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     // Animated style for the sticky buttons header
     const stickyButtonsStyle = useAnimatedStyle(() => {
-      const bgOpacity = withTiming(
-        interpolate(
-          scrollY.value,
-          [0, HEADER_IMAGE_HEIGHT * 0.3],
-          [0, 0.65], // Slightly reduced from 0.7 for more subtle dark background
-          Extrapolation.CLAMP
-        ),
-        { duration: 200, easing: Easing.bezier(0.25, 0.1, 0.25, 1) } // More natural easing curve
+      const bgOpacity = interpolate(
+        scrollY.value,
+        [0, HEADER_IMAGE_HEIGHT * 0.3],
+        [0, 0.65],
+        Extrapolation.CLAMP
       );
 
       return {
@@ -305,11 +294,12 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                   LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
               }}
               onScroll={handleAnimatedScroll}
-              scrollEventThrottle={8} // Increase scroll update frequency for smoother animations
+              scrollEventThrottle={16} // Consistent with other lists for smoother animations
               showsVerticalScrollIndicator={true}
               drawDistance={SENTENCE_ITEM_HEIGHT * 10}
               initialScrollIndex={0}
-              persistentScrollbar={true} // Smoother scrolling experience
+              persistentScrollbar={true}
+              removeClippedSubviews={true} // Improve performance
               overrideItemLayout={layout => {
                 layout.size = SENTENCE_ITEM_HEIGHT;
               }}
