@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import * as Sentry from '@sentry/react-native';
@@ -37,7 +37,7 @@ export function useProvideAuth(): AuthResult {
   const [session, setSession] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [authError, setAuthError] = useState<Error | null>(null);
-  const [refreshAttempts, setRefreshAttempts] = useState(0);
+  const refreshAttemptsRef = useRef(0);
   const [authInitialized, setAuthInitialized] = useState(false);
 
   // Function to fetch the session that can be called on demand
@@ -106,8 +106,8 @@ export function useProvideAuth(): AuthResult {
   // Refresh session function with exponential backoff retry logic
   const refreshSession = useCallback(async (): Promise<UserSession | null> => {
     setIsLoading(true);
-    const currentAttempt = refreshAttempts + 1;
-    setRefreshAttempts(currentAttempt);
+    const currentAttempt = refreshAttemptsRef.current + 1;
+    refreshAttemptsRef.current = currentAttempt;
 
     Sentry.addBreadcrumb({
       category: 'auth',
@@ -168,7 +168,7 @@ export function useProvideAuth(): AuthResult {
           level: 'info',
         });
 
-        setRefreshAttempts(0);
+        refreshAttemptsRef.current = 0;
         setSession(refreshData.session);
         setAuthError(null);
         setIsLoading(false);
@@ -187,7 +187,7 @@ export function useProvideAuth(): AuthResult {
       setIsLoading(false);
       return null;
     }
-  }, [refreshAttempts, authInitialized]);
+  }, [authInitialized]);
 
   // Perform initial auth setup
   const initAuth = useCallback(async () => {
