@@ -27,14 +27,25 @@ export function filterArticles(
  * Gets latest articles sorted by creation date
  * @param articles - The articles to sort
  * @param limit - The maximum number of articles to return (default: 10)
+ * @param alreadySorted - If true, assumes the array is already sorted in
+ * descending order by creation date
  * @returns Latest articles sorted by creation date (newest first)
  */
-export function getLatestArticles(articles: Article[], limit = 10): Article[] {
+export function getLatestArticles(
+  articles: Article[],
+  limit = 10,
+  alreadySorted = false,
+): Article[] {
   if (!articles.length) return [];
 
-  return [...articles] // Using spread operator for clarity
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, limit);
+  const sorted = alreadySorted
+    ? articles
+    : [...articles].sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+
+  return sorted.slice(0, limit);
 }
 
 /**
