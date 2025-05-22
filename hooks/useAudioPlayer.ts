@@ -5,6 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { AppState } from 'react-native';
 
 import { handleError } from '@/utils/errorHandling';
+import { shuffleArray } from '@/utils/arrayUtils';
 
 /**
  * Audio player states
@@ -327,7 +328,7 @@ export function useAudioPlayer(): AudioPlayerResult {
       if (!tracks.length) return false;
 
       try {
-        const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
+        const shuffledTracks = shuffleArray(tracks);
         return await startPlayback(shuffledTracks, 0);
       } catch (error) {
         handleError(
