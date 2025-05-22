@@ -2,14 +2,13 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState, useCallback, useMemo, JSX } from 'react';
-import { StyleSheet, RefreshControl, ScrollView } from 'react-native';
+import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
-import { VocabularyDashboard } from '@/components/vocabulary/VocabularyDashboard';
-import { VocabularyGraph } from '@/components/vocabulary/VocabularyGraph';
+import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh, useNavigationWithDebounce } from '@/hooks';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
@@ -172,12 +171,16 @@ export default function VocabularyScreen(): JSX.Element {
             title="Start Learning"
             description="Add words while reading to build your vocabulary"
             colors={colors}
-            icon="book-outline"
+            iconType="name"
+            icon="library-outline"
           />
         </ThemedView>
       </ThemedView>
     );
   }
+
+  // Show subtle loading indicator when fetching data
+  const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
   // Main content with fadeInStyle applied to match other tabs
   return (
@@ -210,16 +213,15 @@ export default function VocabularyScreen(): JSX.Element {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Learning Status Indicator */}
-        <LearningStatusIndicator
-          dueWords={stats.dueWords}
-          totalWords={stats.totalWords}
-          learningWords={stats.learningWords}
-          masteredWords={stats.masteredWords}
-        />
+        {/* Subtle loading indicator */}
+        {showLoadingIndicator && (
+          <ThemedView style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color={colors.tint} />
+          </ThemedView>
+        )}
 
-        {/* Stats Dashboard */}
-        <VocabularyDashboard
+        {/* PRIMARY SECTION: Learning Overview */}
+        <VocabularyStatCards
           totalWords={stats.totalWords}
           masteredWords={stats.masteredWords}
           learningWords={stats.learningWords}
@@ -227,15 +229,20 @@ export default function VocabularyScreen(): JSX.Element {
           onStatPress={handleStatPress}
         />
 
-        {/* Streak Card */}
+        {/* SECONDARY SECTION: Progress & Motivation */}
         <StreakCard
           currentStreak={streakData.currentStreak}
           longestStreak={streakData.longestStreak}
           lastSevenDaysActivity={streakData.lastSevenDaysActivity}
         />
 
-        {/* Vocabulary Growth Graph */}
-        <VocabularyGraph data={weeklyProgressData} animationTriggered={true} title="Total Words" />
+        {/* TERTIARY SECTION: Guidance */}
+        <LearningStatusIndicator
+          dueWords={stats.dueWords}
+          totalWords={stats.totalWords}
+          learningWords={stats.learningWords}
+          masteredWords={stats.masteredWords}
+        />
       </ScrollView>
       <BottomControls
         primaryLabel="Review"
@@ -267,5 +274,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    paddingVertical: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH, // Subtle loading indicator
   },
 });

@@ -39,28 +39,27 @@ export const StreakCard = memo(
       return () => clearTimeout(timer);
     }, [progress]);
 
-    // Card constants (to ensure alignment)
-    const cardPadding = LAYOUT.SPACING.LARGE;
-
-    // Day indicator size - match VocabularyGraph dot size
-    const pointRadius = 2.5;
+    // Day indicator size - smaller for less visual weight
+    const pointRadius = 2;
     const pointStroke = 1.5;
     const dotRadius = pointRadius + pointStroke; // Total visible radius with stroke
 
     // Canvas dimensions with proper spacing to avoid cut-off dots
     const actualMargin = dotRadius + 2; // Add 2px extra buffer for safety
     const canvasWidth =
-      Dimensions.get('window').width - LAYOUT.SCREEN_EDGE_PADDING * 2 - cardPadding * 2;
-    const timelineHeight = 30;
+      Dimensions.get('window').width -
+      LAYOUT.SCREEN_EDGE_PADDING * 2 -
+      LAYOUT.CARD.PADDING.MEDIUM * 2;
+    const timelineHeight = 24; // Reduced height for less prominence
 
     // Calculate usable width for dot placement
     const usableWidth = canvasWidth - 2 * actualMargin;
 
-    // Extend to 12 days of activity data
+    // Use 7 days of activity data for cleaner visualization
     const extendedActivity = [...lastSevenDaysActivity];
     const defaultDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    const dayCount = 12;
+    const dayCount = 7;
     while (extendedActivity.length < dayCount) {
       extendedActivity.unshift({
         date: '',
@@ -101,8 +100,8 @@ export const StreakCard = memo(
       .filter(path => path !== '');
 
     return (
-      <BaseCard style={styles.card} includePressAnimation={false} shadowSize="medium">
-        <View style={[styles.container, { padding: cardPadding }]}>
+      <BaseCard style={styles.card} includePressAnimation={false} shadowSize="small">
+        <View style={[styles.container, { padding: LAYOUT.CARD.PADDING.MEDIUM }]}>
           <View style={styles.content}>
             {/* Timeline visualization */}
             <Canvas style={styles.timelineCanvas}>
@@ -153,22 +152,22 @@ export const StreakCard = memo(
               </Group>
             </Canvas>
 
-            {/* Streak information */}
+            {/* Streak information - both current and longest */}
             <View style={styles.streakInfo}>
               <View style={styles.streakDetail}>
-                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
-                  BEST STREAK
-                </ThemedText>
-                <ThemedText style={styles.streakValue}>
+                <ThemedText type="body" weight="bold" style={styles.streakValue}>
                   {longestStreak} {longestStreak === 1 ? 'day' : 'days'}
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
+                  Longest streak
                 </ThemedText>
               </View>
               <View style={styles.streakDetailRight}>
-                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
-                  CURRENT STREAK
-                </ThemedText>
-                <ThemedText style={styles.streakValue}>
+                <ThemedText type="body" weight="bold" style={styles.streakValue}>
                   {currentStreak} {currentStreak === 1 ? 'day' : 'days'}
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.streakLabel}>
+                  Current streak
                 </ThemedText>
               </View>
             </View>
@@ -183,8 +182,8 @@ StreakCard.displayName = 'StreakCard';
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    padding: 0, // Remove default padding to control it precisely
+    marginBottom: LAYOUT.SPACING.LARGE, // More space for better section separation
+    padding: 0,
     width: '100%',
   },
   container: {
@@ -194,13 +193,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   timelineCanvas: {
-    height: 30,
+    height: 24, // Match reduced timeline height
     width: '100%',
   },
   streakInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.SMALL, // Reduced spacing for tighter grouping
   },
   streakDetail: {
     alignItems: 'flex-start',
@@ -209,12 +208,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   streakLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    letterSpacing: 0.5,
-    marginBottom: 4,
+    // Using caption type, no custom font size needed
+    marginTop: LAYOUT.SPACING.TINY,
   },
   streakValue: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
+    // Using body type, no custom line height needed
   },
 });

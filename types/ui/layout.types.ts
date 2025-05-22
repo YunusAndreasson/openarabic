@@ -48,7 +48,6 @@ export interface PageHeaderProps {
   onBackPress?: () => void;
 }
 
-
 export interface DisplaySettings {
   showEnglish: boolean;
   fontScale: number;
@@ -190,26 +189,6 @@ export interface StatCardProps extends BaseThemedProps {
  */
 export interface VocabularyEmptyStateProps extends BaseThemedProps {
   style?: StyleProp<ViewStyle>;
-}
-
-/**
- * Props for the VocabularyStats component
- */
-export interface VocabularyStatsProps {
-  /** Total number of words */
-  totalWords: number;
-  /** Number of mastered words */
-  masteredWords: number;
-  /** Number of words the user knows */
-  knownWords?: number;
-  /** Number of words due for review */
-  dueWords?: number;
-  /** Number of words the user is learning */
-  learningWords?: number;
-  /** Whether the stats are loading */
-  isLoading?: boolean;
-  /** Additional container style */
-  containerStyle?: StyleProp<ViewStyle>;
 }
 
 /**

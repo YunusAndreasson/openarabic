@@ -1,8 +1,6 @@
 export { default as WordListItem } from './WordListItem';
-export { VocabularyStats } from './VocabularyStats';
-export { VocabularyGraph } from './VocabularyGraph';
-export { VocabularyDashboard } from './VocabularyDashboard';
+export { VocabularyStatCards } from './VocabularyStatCards';
 export { default as ErrorMessage } from './ErrorMessage';
-export { default as CategoryInfoCard } from './CategoryInfoCard';
 export { VocabularyWordList } from './VocabularyWordList';
-export * from './StreakCard';
+export { StreakCard } from './StreakCard';
+export { LearningStatusIndicator } from './LearningStatusIndicator';
