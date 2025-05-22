@@ -16,24 +16,38 @@ interface GetExamplesOptions {
   limit?: number;
 }
 
+// Limit columns to only those required by the app to reduce payload size
+const WORD_COLUMNS = `
+  id,
+  word_form,
+  english,
+  root_id,
+  word_type_id,
+  sentence_id,
+  position
+`;
+const ROOT_COLUMNS = 'id, letters, meaning';
+const WORD_TYPE_COLUMNS = 'id, name';
+const SELECT_COLUMNS = `
+  ${WORD_COLUMNS},
+  root:roots(${ROOT_COLUMNS}),
+  word_type:word_types(${WORD_TYPE_COLUMNS}),
+  sentence:article_sentences(
+    *,
+    sentence_words(
+      ${WORD_COLUMNS},
+      root:roots(${ROOT_COLUMNS}),
+      word_type:word_types(${WORD_TYPE_COLUMNS})
+    )
+  )
+`;
+
 export const wordExamplesService = {
   async getExamples({ wordId, rootId, rootIds, limit = 50 }: GetExamplesOptions): Promise<{ word: SentenceWord | null; examples: SentenceWithWords[] }> {
     try {
       let query = supabase
         .from('sentence_words')
-        .select(
-          `*,
-           root:roots(*),
-           word_type:word_types(*),
-           sentence:article_sentences(
-             *,
-             sentence_words(
-               *,
-               root:roots(*),
-               word_type:word_types(*)
-             )
-           )`
-        )
+        .select(SELECT_COLUMNS)
         .order('sentence_id', { ascending: true })
         .limit(limit);
 
