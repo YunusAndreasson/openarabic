@@ -34,15 +34,19 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   children,
 }) => {
   const colors = useColors();
-  const activeCardStyle = active
-    ? {
-        borderLeftWidth: 3,
-        borderColor: colors.tint,
-        elevation: 6,
-        shadowOpacity: LAYOUT.OPACITY.MEDIUM,
-        shadowRadius: 8,
-      }
-    : undefined;
+  const activeCardStyle = React.useMemo(
+    () =>
+      active
+        ? {
+            borderLeftWidth: 3,
+            borderColor: colors.tint,
+            elevation: 6,
+            shadowOpacity: LAYOUT.OPACITY.MEDIUM,
+            shadowRadius: 8,
+          }
+        : undefined,
+    [active, colors.tint],
+  );
 
   return (
     <View style={[styles.cardContainer, containerStyle]}>
