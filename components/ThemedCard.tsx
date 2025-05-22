@@ -8,6 +8,7 @@ import { DEFAULT_IMAGES } from '@/constants/images';
 import { LAYOUT, SCREEN_WIDTH } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
+import { withOpacity } from '@/utils/colorUtils';
 import type {
   ThemedCardProps as BaseThemedCardProps,
   ArticleCardProps,
@@ -166,15 +167,15 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
   const isCompact = variant === 'compact';
   const isArticle = variant === 'article';
 
-  // Extract base colors for gradient
-  const baseGradientColor = isDarkMode ? '30,30,30' : '248,249,250';
+  // Determine the base color for gradient depending on theme
+  const baseGradientColor = isDarkMode ? colors.black : colors.elevation1;
 
   // Memoize gradient colors with consistent opacity stops
   const gradientColors = useMemo(() => {
     return [
-      `rgba(${baseGradientColor},0)`,
-      `rgba(${baseGradientColor},0.95)`,
-      `rgba(${baseGradientColor},0.98)`,
+      withOpacity(baseGradientColor, 0),
+      withOpacity(baseGradientColor, 0.95),
+      withOpacity(baseGradientColor, 0.98),
       colors.card,
     ] as const;
   }, [baseGradientColor, colors.card]);
