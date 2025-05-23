@@ -52,182 +52,230 @@ interface InfoContent {
 const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   streak: {
     title: 'Learning Streak',
-    subtitle: 'Track your consistency and build momentum',
+    subtitle: 'Build consistent habits that accelerate language acquisition',
     sections: [
       {
-        title: 'What is a streak?',
+        title: 'The Science of Streaks',
         content:
-          'A streak counts consecutive days where you actively engage with vocabulary learning - either by adding new words while reading or reviewing existing words.',
+          'Learning streaks leverage the psychological principle of "habit stacking" and the neurological benefits of spaced repetition. When you maintain daily vocabulary practice, your brain creates stronger neural pathways and improves long-term retention by up to 400% compared to cramming sessions.',
         icon: 'calendar-outline',
       },
       {
-        title: 'How it works',
+        title: 'How Streaks Work in Language Learning',
         content:
-          'Your streak increases by 1 each day you have learning activity. The activity dots show your last 7 days, with green dots indicating active days.',
+          'Your streak counts consecutive days with meaningful vocabulary engagement: adding words from reading, reviewing due cards, or completing practice sessions. The activity dots visualize your consistency pattern - green dots show active days, helping you identify your most productive learning periods.',
         icon: 'trending-up-outline',
       },
       {
-        title: 'Why streaks matter',
+        title: 'Why Daily Practice Transforms Learning',
         content:
-          'Consistent daily practice, even for just a few minutes, is more effective than long, infrequent study sessions. Streaks help build lasting learning habits.',
+          'Research shows that 15-20 minutes of daily vocabulary practice is more effective than 2-3 hour weekly sessions. Daily exposure prevents the "forgetting curve" - the rapid loss of new information. Consistent practice also builds automaticity, making word recall effortless over time.',
         icon: 'checkmark-circle-outline',
+      },
+      {
+        title: 'The Compound Effect',
+        content:
+          'Each day of your streak builds on the previous day. A 30-day streak with just 5 words daily results in 150 new words, but more importantly, it establishes vocabulary learning as an automatic habit. This compound effect accelerates your overall language proficiency exponentially.',
+        icon: 'rocket-outline',
       },
     ],
     tips: [
-      'Aim for at least 3-5 words per day to maintain your streak',
-      'Even reviewing a few due words counts as activity',
-      'Reading articles and adding new words is the best way to grow',
-      'Consistency beats intensity - small daily efforts compound over time',
+      'Start small: Even 2-3 words daily builds the habit foundation',
+      'Link vocabulary practice to existing routines (morning coffee, commute)',
+      'Use "streak insurance" - if you miss a day, get back immediately',
+      'Track your longest streak as motivation during difficult periods',
+      'Celebrate milestone streaks (7, 30, 100 days) to maintain momentum',
+      'Quality over quantity: Better to learn 3 words well than 10 poorly',
     ],
   },
   activity: {
-    title: 'Learning Activity',
-    subtitle: 'Monitor your daily learning progress',
+    title: 'Learning Activity Analytics',
+    subtitle: 'Optimize your vocabulary acquisition through data-driven insights',
     sections: [
       {
-        title: 'What does this show?',
+        title: 'Understanding Your Learning Patterns',
         content:
-          'This chart displays your daily learning activity over the last 14 days, including new words added and reviews completed.',
+          'This comprehensive activity chart tracks two critical learning behaviors: vocabulary discovery (blue bars) from reading articles and knowledge reinforcement (green line) through reviews. The interplay between these activities determines your overall language acquisition rate and retention quality.',
         icon: 'bar-chart-outline',
       },
       {
-        title: 'Reading the chart',
+        title: 'The Optimal Learning Ratio',
         content:
-          'Blue bars represent new words added from reading articles. The green line shows review activity. Higher activity indicates more engaged learning.',
+          'Research in second language acquisition suggests an ideal ratio of 1:3 between new words and reviews. For every new word you add, you should complete about 3 reviews. This chart helps you visualize this balance - if you see high blue bars without corresponding green line activity, you may be overwhelming your memory capacity.',
         icon: 'analytics-outline',
       },
       {
-        title: 'Daily average',
+        title: 'Daily Average: Your Learning Velocity',
         content:
-          'Your daily average combines new words and reviews. A good target is 3-5 total activities per day for steady progress without overwhelming yourself.',
+          'Your daily average represents your "learning velocity" - the rate at which you\'re expanding and consolidating vocabulary. A sustainable target is 3-7 total activities daily: 1-2 new words plus 2-5 reviews. Higher averages indicate intensive learning periods, while lower averages suggest maintenance phases.',
         icon: 'speedometer-outline',
+      },
+      {
+        title: 'Activity Patterns and Learning Efficiency',
+        content:
+          'Consistent moderate activity (steady bars and lines) typically produces better long-term retention than sporadic intense sessions (high spikes followed by gaps). The chart reveals your natural learning rhythm and helps identify optimal times for vocabulary work.',
+        icon: 'pulse-outline',
       },
     ],
     tips: [
-      'Balance adding new words with reviewing existing ones',
-      'Consistent moderate activity beats sporadic intense sessions',
-      'If your average is low, try reading more articles to discover new words',
-      'High review days often follow periods of adding many new words',
+      'Aim for consistent daily activity rather than weekend cramming sessions',
+      'If new word bars are consistently higher than review lines, slow down acquisition',
+      'Use low-activity days for reviewing difficult words rather than adding new ones',
+      'Track weekly patterns to identify your most productive learning days',
+      'Balance reading-heavy days (high blue bars) with review-focused days (high green line)',
+      'Consider your daily average when setting realistic vocabulary goals',
     ],
   },
   mastery: {
-    title: 'Mastery Progress',
-    subtitle: "Track how well you're learning vocabulary",
+    title: 'Vocabulary Mastery Progression',
+    subtitle: 'Track your journey from recognition to automatic recall',
     sections: [
       {
-        title: 'What is mastery?',
+        title: 'The Four Stages of Word Mastery',
         content:
-          "Mastery represents words you can reliably recall. A word is considered mastered when you've successfully reviewed it multiple times with good retention.",
+          'Vocabulary mastery follows a predictable progression: Recognition (seeing/hearing a word and understanding it), Recall (remembering the word when prompted), Production (using the word in speech/writing), and Automaticity (effortless, instant access). This chart tracks your progression through these stages using advanced memory science.',
         icon: 'trophy-outline',
       },
       {
-        title: "How it's calculated",
+        title: 'FSRS Algorithm: Personalized Memory Modeling',
         content:
-          'Using the FSRS algorithm, words are mastered when they reach "Review" state with stability ≥5 days, meaning you can remember them for at least 5 days.',
+          'The Free Spaced Repetition Scheduler (FSRS) algorithm creates a personalized model of your memory. Words achieve "mastery" status when they reach Review state with ≥5 days stability, meaning your brain can reliably access them for nearly a week without practice. This indicates strong neural pathway formation.',
         icon: 'calculator-outline',
       },
       {
-        title: 'The mastery curve',
+        title: 'Reading the Mastery Curve',
         content:
-          'The chart shows your mastery percentage over time. Steady upward trends indicate effective learning. Plateaus suggest you need more review practice.',
+          'The upward trend shows your vocabulary becoming more automatic over time. Steep climbs indicate effective learning periods, while plateaus suggest you need more review practice or are adding words too quickly. Temporary dips are normal when adding challenging vocabulary - your brain is reorganizing knowledge.',
         icon: 'trending-up-outline',
+      },
+      {
+        title: 'Mastery vs. Exposure: Quality Learning',
+        content:
+          "A 60-80% mastery rate indicates optimal learning - you're challenging yourself without overwhelming your memory capacity. Lower rates suggest slowing down new word acquisition; higher rates might mean you're ready for more challenging vocabulary or can increase your learning pace.",
+        icon: 'school-outline',
       },
     ],
     tips: [
-      'Focus on quality reviews rather than rushing through them',
-      "If mastery isn't growing, spend more time on difficult words",
-      'A healthy mastery rate is 60-80% for active learners',
-      "Don't worry about temporary dips - they're normal during learning",
+      'Focus on depth over breadth: truly master words rather than just recognizing them',
+      'If mastery percentage drops, prioritize reviewing over adding new words',
+      'Celebrate mastery milestones - each mastered word represents significant neural development',
+      'Use mastered words actively in speaking/writing to maintain automaticity',
+      "Don't worry about temporary mastery dips when learning challenging vocabulary",
+      'A healthy mastery curve shows steady, sustainable growth over months',
     ],
   },
   retrievability: {
-    title: 'Memory Retention Forecast',
-    subtitle: "Predict when you'll forget words",
+    title: 'Memory Retention Science',
+    subtitle: 'Predict and prevent vocabulary forgetting using cognitive science',
     sections: [
       {
-        title: 'What is retrievability?',
+        title: 'The Forgetting Curve Phenomenon',
         content:
-          'Retrievability predicts how likely you are to remember a word right now, based on when you last reviewed it and how well you knew it.',
+          'Discovered by psychologist Hermann Ebbinghaus, the forgetting curve shows that we lose 50% of new information within 24 hours and 90% within a week without review. Retrievability predicts exactly when each word will cross critical memory thresholds, allowing you to intervene before forgetting occurs.',
         icon: 'bulb-outline',
       },
       {
-        title: 'The science behind it',
+        title: 'Personalized Memory Decay Modeling',
         content:
-          'Uses the FSRS algorithm to calculate memory decay over time. The red line at 70% shows the critical threshold - below this, you should review soon.',
+          "The FSRS algorithm creates individual forgetting curves for each word based on your personal learning patterns. Factors include: your review history, response accuracy, word difficulty, and time intervals. This creates precise predictions about when you'll forget specific vocabulary items.",
         icon: 'flask-outline',
       },
       {
-        title: 'Future predictions',
+        title: 'The 70% Retention Threshold',
         content:
-          'The forecast shows how your overall retention will change over the next 30 days, helping you plan review sessions before forgetting occurs.',
+          'Cognitive research shows that 70% retrievability is the optimal review point - high enough to ensure successful recall, low enough to provide beneficial memory strengthening. Reviewing above 90% wastes time; below 50% risks failure and negative learning experiences.',
         icon: 'time-outline',
+      },
+      {
+        title: 'Proactive vs. Reactive Learning',
+        content:
+          'This forecast transforms you from reactive (reviewing after forgetting) to proactive (reviewing before forgetting). The 30-day prediction helps you plan study sessions, balance workload, and maintain consistent retention across your entire vocabulary without overwhelming daily review loads.',
+        icon: 'eye-outline',
       },
     ],
     tips: [
-      'Review words before they drop below 70% retention',
-      'Words with higher difficulty decay faster and need more frequent review',
-      'The forecast helps you plan study sessions in advance',
-      'Consistent reviewing prevents the "forgetting curve" from being too steep',
+      'Review words when they approach 70% retention for optimal memory strengthening',
+      'Use the forecast to plan lighter study days when many words need review',
+      'Words dropping below 50% retention require immediate attention',
+      'High-difficulty words decay faster and need more frequent review cycles',
+      'Plan review sessions 1-2 days before predicted retention drops',
+      'Consistent reviewing prevents the "avalanche effect" of forgotten vocabulary',
     ],
   },
   difficulty: {
-    title: 'Difficulty Distribution',
-    subtitle: 'Understand your vocabulary challenge levels',
+    title: 'Personalized Difficulty Assessment',
+    subtitle: 'Understand your unique vocabulary learning challenges and strengths',
     sections: [
       {
-        title: 'How difficulty is measured',
+        title: 'Individual Learning Fingerprint',
         content:
-          'Each word gets a difficulty score (1-10) based on how often you struggle with it. This uses the FSRS algorithm to track your personal learning patterns.',
+          'Every learner has a unique "difficulty fingerprint" - patterns of which words are easy or hard based on personal background, native language, learning style, and cognitive preferences. This chart maps your individual learning landscape, showing which vocabulary types challenge you most.',
         icon: 'speedometer-outline',
       },
       {
-        title: 'The five levels',
+        title: 'The Five Difficulty Levels Explained',
         content:
-          'Very Easy (1-3): Words you know well. Easy (3-5): Comfortable words. Medium (5-7): Moderate challenge. Hard (7-9): Frequent mistakes. Very Hard (9-10): Consistently difficult.',
+          'Very Easy (1-3): Words you grasp immediately, often cognates or familiar concepts. Easy (3-5): Comfortable vocabulary requiring minimal practice. Medium (5-7): Standard learning challenge with moderate effort. Hard (7-9): Words requiring focused attention and multiple exposures. Very Hard (9-10): Persistent challenges needing specialized strategies.',
         icon: 'layers-outline',
       },
       {
-        title: 'Balanced learning',
+        title: 'Cognitive Load and Learning Efficiency',
         content:
-          'A healthy distribution has most words in Easy-Medium range, with fewer Very Hard words. Too many hard words can be overwhelming.',
+          'Your difficulty distribution reveals your cognitive load balance. Too many hard words create overwhelming mental burden, reducing learning efficiency. An optimal distribution has most words in Easy-Medium range, allowing you to tackle challenging vocabulary without mental fatigue.',
         icon: 'scale-outline',
+      },
+      {
+        title: 'Dynamic Difficulty: Words Change Over Time',
+        content:
+          "Word difficulty isn't fixed - it evolves with your learning. Initially hard words become easier through practice, while easy words might become harder if neglected. This dynamic system helps you understand which vocabulary needs attention and which has become automatic.",
+        icon: 'refresh-outline',
       },
     ],
     tips: [
-      'Focus extra attention on "Very Hard" words with targeted practice',
-      'If you have too many hard words, slow down adding new vocabulary',
-      'Easy words still need occasional review to maintain mastery',
-      'Difficulty can decrease over time with consistent practice',
+      'Maintain 60-70% of vocabulary in Easy-Medium range for sustainable learning',
+      'Give extra attention to Very Hard words with mnemonic devices and context',
+      'If too many words are Hard/Very Hard, slow down new vocabulary acquisition',
+      'Use Easy words as confidence builders during challenging learning periods',
+      'Create targeted practice sessions for words in specific difficulty ranges',
+      'Celebrate when Hard words move to Medium - it shows real progress',
     ],
   },
   efficiency: {
-    title: 'Learning Efficiency',
-    subtitle: "Measure how effectively you're studying",
+    title: 'Learning Efficiency Optimization',
+    subtitle: 'Maximize your vocabulary acquisition through scientific study methods',
     sections: [
       {
-        title: 'What is learning efficiency?',
+        title: 'The Four Pillars of Learning Efficiency',
         content:
-          'Efficiency measures how well your study time translates into actual learning progress. It considers multiple factors like retention, difficulty management, and review success.',
+          'Learning efficiency measures how effectively your study time converts into lasting knowledge. Our algorithm evaluates four key factors: State Progression (40% weight) - how well words advance through learning stages; Stability Quality (30%) - how long memories last; Lapse Rate (20%) - how often you forget; and Difficulty Balance (10%) - optimal challenge level.',
         icon: 'rocket-outline',
       },
       {
-        title: "How it's calculated",
+        title: 'Efficiency vs. Speed: Quality Learning',
         content:
-          'Uses a 4-factor scoring system: State Progression (40%), Stability Quality (30%), Lapse Rate (20%), and Difficulty Balance (10%). Higher scores mean more effective learning.',
+          "High efficiency doesn't mean fast learning - it means effective learning. A 75% efficiency score indicates that three-quarters of your study time produces lasting memory improvements. Low efficiency often results from rushing through reviews, not engaging deeply with words, or studying when mentally fatigued.",
         icon: 'calculator-outline',
       },
       {
-        title: 'Efficiency trends',
+        title: 'The Efficiency Sweet Spot',
         content:
-          'The chart shows your efficiency over time. Improving trends suggest your study methods are working. Declining efficiency may indicate you need to adjust your approach.',
+          "Research shows 70-85% efficiency as optimal for vocabulary learning. Below 70% suggests reviewing study methods; above 85% might indicate you're not challenging yourself enough. The chart reveals efficiency patterns, helping you identify when you learn most effectively.",
         icon: 'trending-up-outline',
+      },
+      {
+        title: 'Metacognitive Learning Strategies',
+        content:
+          'Efficiency improvements come from metacognition - thinking about how you think. High-efficiency learners use strategies like: elaborative rehearsal (connecting words to personal experiences), dual coding (visual and verbal memory), and distributed practice (spacing reviews over time).',
+        icon: 'library-outline',
       },
     ],
     tips: [
-      'Aim for 70%+ efficiency for optimal learning',
-      'Low efficiency often means rushing through reviews',
-      'Take time to really think about each word during reviews',
-      'If efficiency drops, consider reviewing fewer words but more carefully',
+      'Target 70-80% efficiency for optimal learning without overwhelming yourself',
+      'Low efficiency often means rushing - take time to truly process each word',
+      'Use active recall: try to remember words before seeing answers',
+      'Connect new vocabulary to personal experiences for deeper encoding',
+      'Study when mentally fresh - efficiency drops significantly when tired',
+      'If efficiency consistently drops, consider reducing daily vocabulary load',
     ],
   },
 };

@@ -16,6 +16,12 @@ import { ThemedText } from '../ThemedText';
 import { LearningGauge } from './LearningGauge';
 import { InfoModal, type InfoModalType } from './InfoModal';
 
+// Constants for graph dimensions to avoid repetition
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const GRAPH_WIDTH = SCREEN_WIDTH - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
+const GRAPH_HEIGHT_SMALL = 100;
+const GRAPH_HEIGHT_LARGE = 120;
+
 interface VocabularyStatCardsProps
   extends Pick<VocabularyStats, 'dueWords' | 'masteredWords' | 'learningWords'> {
   onStatPress?: (category: StatCategory) => void;
@@ -164,20 +170,22 @@ const StreakInsights = memo(({ onInfoPress }: { onInfoPress: () => void }) => {
   return (
     <BaseCard style={styles.streakCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.streakContent}>
-        {/* Card Title - Prominent and consistent */}
+        {/* Card Header - Title and subtitle grouped together */}
         <View style={styles.cardHeader}>
-          <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-            Streak
-          </ThemedText>
+          <View style={styles.titleGroup}>
+            <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+              Streak
+            </ThemedText>
+            <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+              {streakData.currentStreak === 0
+                ? 'Start today to begin building consistency'
+                : streakData.currentStreak >= 7
+                  ? 'Excellent daily consistency!'
+                  : 'Building momentum'}
+            </ThemedText>
+          </View>
           <InfoIcon onPress={onInfoPress} />
         </View>
-        <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-          {streakData.currentStreak === 0
-            ? 'Start today to begin your streak'
-            : streakData.currentStreak >= 7
-              ? 'Excellent consistency!'
-              : 'Keep it up!'}
-        </ThemedText>
 
         {/* Stats display - consistent with other cards */}
         <View style={styles.progressStatsRow}>
@@ -223,10 +231,6 @@ StreakInsights.displayName = 'StreakInsights';
 const ProgressGraph = memo(
   ({ studyWords = [], onInfoPress }: { studyWords: StudyWord[]; onInfoPress: () => void }) => {
     const colors = useColors();
-    const screenWidth = Dimensions.get('window').width;
-    const graphWidth =
-      screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-    const graphHeight = 100; // Reduced height for better hierarchy
 
     // Calculate progress data over the last 14 days (shorter period for more relevant insights)
     const progressData = useMemo(() => {
@@ -287,14 +291,14 @@ const ProgressGraph = memo(
       const maxReviews = Math.max(1, Math.max(...progressData.map(d => d.reviewsToday)));
       const maxValue = Math.max(maxActivity, maxReviews);
 
-      const stepX = graphWidth / (progressData.length - 1);
+      const stepX = GRAPH_WIDTH / (progressData.length - 1);
       const hasData = progressData.some(d => d.newWords > 0 || d.reviewsToday > 0);
 
       let reviewPath = '';
 
       progressData.forEach((data, index) => {
         const x = index * stepX;
-        const reviewY = graphHeight - (data.reviewsToday / maxValue) * graphHeight;
+        const reviewY = GRAPH_HEIGHT_SMALL - (data.reviewsToday / maxValue) * GRAPH_HEIGHT_SMALL;
 
         if (index === 0) {
           reviewPath = `M ${x} ${reviewY}`;
@@ -304,7 +308,7 @@ const ProgressGraph = memo(
       });
 
       return { reviewPath, maxValue, hasData };
-    }, [progressData, graphWidth, graphHeight]);
+    }, [progressData, GRAPH_WIDTH, GRAPH_HEIGHT_SMALL]);
 
     // Calculate insights instead of raw totals
     const insights = useMemo(() => {
@@ -324,16 +328,18 @@ const ProgressGraph = memo(
       return (
         <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
           <View style={styles.progressContent}>
-            {/* Card Title - Prominent and consistent */}
+            {/* Card Header - Title and subtitle grouped together */}
             <View style={styles.cardHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-                Activity
-              </ThemedText>
+              <View style={styles.titleGroup}>
+                <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                  Activity
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                  Daily learning patterns over 14 days
+                </ThemedText>
+              </View>
               <InfoIcon onPress={onInfoPress} />
             </View>
-            <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-              Add words while reading to track activity
-            </ThemedText>
           </View>
         </BaseCard>
       );
@@ -342,22 +348,24 @@ const ProgressGraph = memo(
     return (
       <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.progressContent}>
-          {/* Card Title - Prominent and consistent */}
+          {/* Card Header - Title and subtitle grouped together */}
           <View style={styles.cardHeader}>
-            <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-              Activity
-            </ThemedText>
+            <View style={styles.titleGroup}>
+              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                Activity
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                {insights.weeklyNewWords + insights.weeklyReviews === 0
+                  ? 'No activity this week'
+                  : insights.dailyAverage >= 3
+                    ? 'Great momentum this week!'
+                    : insights.weeklyNewWords + insights.weeklyReviews >= 5
+                      ? 'Good progress this week'
+                      : 'Try to be more active'}
+              </ThemedText>
+            </View>
             <InfoIcon onPress={onInfoPress} />
           </View>
-          <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-            {insights.weeklyNewWords + insights.weeklyReviews === 0
-              ? 'No activity this week'
-              : insights.dailyAverage >= 3
-                ? 'Great momentum this week!'
-                : insights.weeklyNewWords + insights.weeklyReviews >= 5
-                  ? 'Good progress this week'
-                  : 'Try to be more active'}
-          </ThemedText>
 
           {/* Stats display */}
           <View style={styles.progressStatsRow}>
@@ -385,13 +393,13 @@ const ProgressGraph = memo(
 
           {/* Enhanced Graph with improved styling */}
           <View style={styles.graphContainer}>
-            <Canvas style={{ width: graphWidth, height: graphHeight }}>
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_SMALL }}>
               {/* Background grid lines for better readability */}
               <Group>
                 {[0.25, 0.5, 0.75].map((ratio, index) => (
                   <Path
                     key={`grid-line-${index}`}
-                    path={`M 0 ${graphHeight * ratio} L ${graphWidth} ${graphHeight * ratio}`}
+                    path={`M 0 ${GRAPH_HEIGHT_SMALL * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_SMALL * ratio}`}
                     style="stroke"
                     strokeWidth={0.5}
                     color={withOpacity(colors.text, 0.1)}
@@ -402,26 +410,26 @@ const ProgressGraph = memo(
               {/* Activity bars with gradient effect */}
               <Group>
                 {progressData.map((data, index) => {
-                  const x = (index * graphWidth) / (progressData.length - 1);
-                  const barHeight = (data.newWords / maxValue) * graphHeight;
-                  const barWidth = Math.max(2, (graphWidth / progressData.length) * 0.6);
+                  const x = (index * GRAPH_WIDTH) / (progressData.length - 1);
+                  const barHeight = (data.newWords / maxValue) * GRAPH_HEIGHT_SMALL;
+                  const barWidth = Math.max(2, (GRAPH_WIDTH / progressData.length) * 0.6);
 
                   if (barHeight > 0) {
                     return (
                       <Group key={`activity-bar-${index}`}>
                         {/* Bar shadow */}
                         <Path
-                          path={`M ${x - barWidth / 2 + 1} ${graphHeight + 1} L ${x - barWidth / 2 + 1} ${graphHeight - barHeight + 1} L ${x + barWidth / 2 + 1} ${graphHeight - barHeight + 1} L ${x + barWidth / 2 + 1} ${graphHeight + 1} Z`}
+                          path={`M ${x - barWidth / 2 + 1} ${GRAPH_HEIGHT_SMALL + 1} L ${x - barWidth / 2 + 1} ${GRAPH_HEIGHT_SMALL - barHeight + 1} L ${x + barWidth / 2 + 1} ${GRAPH_HEIGHT_SMALL - barHeight + 1} L ${x + barWidth / 2 + 1} ${GRAPH_HEIGHT_SMALL + 1} Z`}
                           color={withOpacity(colors.text, 0.1)}
                         />
                         {/* Main bar */}
                         <Path
-                          path={`M ${x - barWidth / 2} ${graphHeight} L ${x - barWidth / 2} ${graphHeight - barHeight} L ${x + barWidth / 2} ${graphHeight - barHeight} L ${x + barWidth / 2} ${graphHeight} Z`}
+                          path={`M ${x - barWidth / 2} ${GRAPH_HEIGHT_SMALL} L ${x - barWidth / 2} ${GRAPH_HEIGHT_SMALL - barHeight} L ${x + barWidth / 2} ${GRAPH_HEIGHT_SMALL - barHeight} L ${x + barWidth / 2} ${GRAPH_HEIGHT_SMALL} Z`}
                           color={colors.info}
                         />
                         {/* Bar highlight */}
                         <Path
-                          path={`M ${x - barWidth / 2} ${graphHeight - barHeight} L ${x - barWidth / 2 + 2} ${graphHeight - barHeight} L ${x - barWidth / 2 + 2} ${graphHeight} L ${x - barWidth / 2} ${graphHeight} Z`}
+                          path={`M ${x - barWidth / 2} ${GRAPH_HEIGHT_SMALL - barHeight} L ${x - barWidth / 2 + 2} ${GRAPH_HEIGHT_SMALL - barHeight} L ${x - barWidth / 2 + 2} ${GRAPH_HEIGHT_SMALL} L ${x - barWidth / 2} ${GRAPH_HEIGHT_SMALL} Z`}
                           color={withOpacity(colors.background, 0.3)}
                         />
                       </Group>
@@ -448,8 +456,9 @@ const ProgressGraph = memo(
               <Group>
                 {progressData.map((data, index) => {
                   if (data.reviewsToday > 0) {
-                    const x = (index * graphWidth) / (progressData.length - 1);
-                    const y = graphHeight - (data.reviewsToday / maxValue) * graphHeight;
+                    const x = (index * GRAPH_WIDTH) / (progressData.length - 1);
+                    const y =
+                      GRAPH_HEIGHT_SMALL - (data.reviewsToday / maxValue) * GRAPH_HEIGHT_SMALL;
                     return (
                       <Group key={`review-point-${index}`}>
                         {/* Point glow */}
@@ -471,7 +480,7 @@ const ProgressGraph = memo(
                   const actualIndex = progressData.length - 7 + index;
                   if (actualIndex < 0) return null;
 
-                  const x = (actualIndex * graphWidth) / (progressData.length - 1);
+                  const x = (actualIndex * GRAPH_WIDTH) / (progressData.length - 1);
                   const hasActivity = data.newWords > 0 || data.reviewsToday > 0;
 
                   if (hasActivity) {
@@ -479,7 +488,7 @@ const ProgressGraph = memo(
                       <Circle
                         key={`activity-indicator-${actualIndex}`}
                         cx={x}
-                        cy={graphHeight + 8}
+                        cy={GRAPH_HEIGHT_SMALL + 8}
                         r={2}
                         color={withOpacity(colors.tint, 0.6)}
                       />
@@ -530,10 +539,6 @@ ProgressGraph.displayName = 'ProgressGraph';
 const ProgressDistribution = memo(
   ({ studyWords = [], onInfoPress }: { studyWords: StudyWord[]; onInfoPress: () => void }) => {
     const colors = useColors();
-    const screenWidth = Dimensions.get('window').width;
-    const graphWidth =
-      screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-    const graphHeight = 100;
 
     // Calculate distribution data over the last 14 days
     const distributionData = useMemo(() => {
@@ -614,13 +619,13 @@ const ProgressDistribution = memo(
         return { masteryPath: '', progressDots: [], hasData: false, trendData: [] };
       }
 
-      const stepX = graphWidth / (distributionData.length - 1);
+      const stepX = GRAPH_WIDTH / (distributionData.length - 1);
 
       // Calculate mastery percentage for each day
       const trendData = distributionData.map((data, index) => {
         const masteryPercentage = data.total > 0 ? (data.masteredWords / data.total) * 100 : 0;
         const x = index * stepX;
-        const y = graphHeight - (masteryPercentage / 100) * graphHeight;
+        const y = GRAPH_HEIGHT_LARGE - (masteryPercentage / 100) * GRAPH_HEIGHT_LARGE;
 
         return {
           x,
@@ -676,7 +681,7 @@ const ProgressDistribution = memo(
         hasData,
         trendData,
       };
-    }, [distributionData, graphWidth, graphHeight]);
+    }, [distributionData, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE]);
 
     // Calculate insights
     const masteryInsights = useMemo(() => {
@@ -702,16 +707,18 @@ const ProgressDistribution = memo(
       return (
         <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
           <View style={styles.progressContent}>
-            {/* Card Title - Prominent and consistent */}
+            {/* Card Header - Title and subtitle grouped together */}
             <View style={styles.cardHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-                Mastery
-              </ThemedText>
+              <View style={styles.titleGroup}>
+                <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                  Mastery
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                  Words reaching automatic recall
+                </ThemedText>
+              </View>
               <InfoIcon onPress={onInfoPress} />
             </View>
-            <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-              Review words regularly to build mastery
-            </ThemedText>
           </View>
         </BaseCard>
       );
@@ -720,156 +727,161 @@ const ProgressDistribution = memo(
     return (
       <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.progressContent}>
-          {/* Card Title - Prominent and consistent */}
+          {/* Card Header - Title and subtitle grouped together */}
           <View style={styles.cardHeader}>
-            <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-              Mastery
-            </ThemedText>
+            <View style={styles.titleGroup}>
+              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                Mastery
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                {masteryInsights.currentMastery === 0
+                  ? 'Start reviewing to build mastery'
+                  : masteryInsights.weeklyChange > 2
+                    ? 'Excellent progress this week!'
+                    : masteryInsights.weeklyChange > 0
+                      ? 'Steady improvement'
+                      : masteryInsights.weeklyChange < -2
+                        ? 'Focus on reviewing more'
+                        : 'Keep reviewing consistently'}
+              </ThemedText>
+            </View>
             <InfoIcon onPress={onInfoPress} />
           </View>
-          <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-            {masteryInsights.currentMastery === 0
-              ? 'Start reviewing to build mastery'
-              : masteryInsights.weeklyChange > 2
-                ? 'Excellent progress this week!'
-                : masteryInsights.weeklyChange > 0
-                  ? 'Steady improvement'
-                  : masteryInsights.weeklyChange < -2
-                    ? 'Focus on reviewing more'
-                    : 'Keep reviewing consistently'}
-          </ThemedText>
-        </View>
 
-        {/* Stats display */}
-        <View style={styles.progressStatsRow}>
-          <View style={styles.progressStat}>
-            <ThemedText type="heading2" weight="bold" style={styles.progressValue}>
-              {masteryInsights.currentMastery}%
-            </ThemedText>
-            <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
-              mastered
-            </ThemedText>
+          {/* Stats display */}
+          <View style={styles.progressStatsRow}>
+            <View style={styles.progressStat}>
+              <ThemedText type="heading2" weight="bold" style={styles.progressValue}>
+                {masteryInsights.currentMastery}%
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
+                mastered
+              </ThemedText>
+            </View>
+            <View style={styles.progressStat}>
+              <ThemedText type="heading3" weight="bold" style={styles.progressValue}>
+                {trendData[trendData.length - 1]?.mastered || 0}
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
+                words
+              </ThemedText>
+            </View>
           </View>
-          <View style={styles.progressStat}>
-            <ThemedText type="heading3" weight="bold" style={styles.progressValue}>
-              {trendData[trendData.length - 1]?.mastered || 0}
-            </ThemedText>
-            <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
-              words
-            </ThemedText>
-          </View>
-        </View>
 
-        {/* Enhanced Mastery Graph */}
-        <View style={styles.graphContainer}>
-          <Canvas style={{ width: graphWidth, height: graphHeight }}>
-            {/* Background grid lines */}
-            <Group>
-              {[0.25, 0.5, 0.75].map((ratio, index) => (
-                <Path
-                  key={`mastery-grid-${index}`}
-                  path={`M 0 ${graphHeight * ratio} L ${graphWidth} ${graphHeight * ratio}`}
-                  style="stroke"
-                  strokeWidth={0.5}
-                  color={withOpacity(colors.text, 0.1)}
-                />
-              ))}
-            </Group>
-
-            {/* Mastery area fill */}
-            <Group>
-              {trendData.length > 1 && (
-                <Path
-                  path={`${masteryPath} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`}
-                  color={withOpacity(colors.success, 0.1)}
-                />
-              )}
-            </Group>
-
-            {/* Mastery line with enhanced styling */}
-            <Group>
-              {/* Outer glow */}
-              <Path
-                path={masteryPath}
-                style="stroke"
-                strokeWidth={8}
-                color={withOpacity(colors.success, 0.15)}
-              />
-              {/* Inner glow */}
-              <Path
-                path={masteryPath}
-                style="stroke"
-                strokeWidth={4}
-                color={withOpacity(colors.success, 0.4)}
-              />
-              {/* Main line */}
-              <Path path={masteryPath} style="stroke" strokeWidth={2.5} color={colors.success} />
-            </Group>
-
-            {/* Enhanced progress dots with animation-ready styling */}
-            <Group>
-              {progressDots.map((dot, index) => (
-                <Group key={`mastery-dot-${index}`}>
-                  {/* Outer ring */}
-                  <Circle cx={dot.x} cy={dot.y} r={8} color={withOpacity(colors.success, 0.2)} />
-                  {/* Middle ring */}
-                  <Circle cx={dot.x} cy={dot.y} r={5} color={withOpacity(colors.success, 0.6)} />
-                  {/* Inner dot */}
-                  <Circle cx={dot.x} cy={dot.y} r={3} color={colors.success} />
-                  {/* Center highlight */}
-                  <Circle
-                    cx={dot.x}
-                    cy={dot.y}
-                    r={1.5}
-                    color={withOpacity(colors.background, 0.9)}
+          {/* Enhanced Mastery Graph */}
+          <View style={styles.graphContainer}>
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
+              {/* Background grid lines */}
+              <Group>
+                {[0.25, 0.5, 0.75].map((ratio, index) => (
+                  <Path
+                    key={`mastery-grid-${index}`}
+                    path={`M 0 ${GRAPH_HEIGHT_SMALL * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_SMALL * ratio}`}
+                    style="stroke"
+                    strokeWidth={0.5}
+                    color={withOpacity(colors.text, 0.1)}
                   />
-                </Group>
-              ))}
-            </Group>
+                ))}
+              </Group>
 
-            {/* Percentage markers on the right */}
-            <Group>
-              {[0, 25, 50, 75, 100].map(percentage => {
-                const y = graphHeight - (percentage / 100) * graphHeight;
-                return (
-                  <Group key={`percentage-marker-${percentage}`}>
+              {/* Mastery area fill */}
+              <Group>
+                {trendData.length > 1 && (
+                  <Path
+                    path={`${masteryPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_SMALL} L 0 ${GRAPH_HEIGHT_SMALL} Z`}
+                    color={withOpacity(colors.success, 0.1)}
+                  />
+                )}
+              </Group>
+
+              {/* Mastery line with enhanced styling */}
+              <Group>
+                {/* Outer glow */}
+                <Path
+                  path={masteryPath}
+                  style="stroke"
+                  strokeWidth={8}
+                  color={withOpacity(colors.success, 0.15)}
+                />
+                {/* Inner glow */}
+                <Path
+                  path={masteryPath}
+                  style="stroke"
+                  strokeWidth={4}
+                  color={withOpacity(colors.success, 0.4)}
+                />
+                {/* Main line */}
+                <Path path={masteryPath} style="stroke" strokeWidth={2.5} color={colors.success} />
+              </Group>
+
+              {/* Enhanced progress dots with animation-ready styling */}
+              <Group>
+                {progressDots.map((dot, index) => (
+                  <Group key={`mastery-dot-${index}`}>
+                    {/* Outer ring */}
+                    <Circle cx={dot.x} cy={dot.y} r={8} color={withOpacity(colors.success, 0.2)} />
+                    {/* Middle ring */}
+                    <Circle cx={dot.x} cy={dot.y} r={5} color={withOpacity(colors.success, 0.6)} />
+                    {/* Inner dot */}
+                    <Circle cx={dot.x} cy={dot.y} r={3} color={colors.success} />
+                    {/* Center highlight */}
                     <Circle
-                      cx={graphWidth - 4}
-                      cy={y}
-                      r={1}
-                      color={withOpacity(colors.text, 0.3)}
+                      cx={dot.x}
+                      cy={dot.y}
+                      r={1.5}
+                      color={withOpacity(colors.background, 0.9)}
                     />
                   </Group>
-                );
-              })}
-            </Group>
-          </Canvas>
-        </View>
+                ))}
+              </Group>
 
-        {/* Footer */}
-        <View
-          style={[styles.progressFooter, { borderTopColor: withOpacity(colors.textTertiary, 0.1) }]}
-        >
-          <View style={styles.progressLegend}>
-            <View style={styles.legendItem}>
-              <View
-                style={[styles.legendArea, { backgroundColor: withOpacity(colors.success, 0.3) }]}
-              />
-              <ThemedText type="caption" variant="secondary" style={styles.legendText}>
-                Mastery %
-              </ThemedText>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-              <ThemedText type="caption" variant="secondary" style={styles.legendText}>
-                Progress milestones
-              </ThemedText>
-            </View>
+              {/* Percentage markers on the right */}
+              <Group>
+                {[0, 25, 50, 75, 100].map(percentage => {
+                  const y = GRAPH_HEIGHT_SMALL - (percentage / 100) * GRAPH_HEIGHT_SMALL;
+                  return (
+                    <Group key={`percentage-marker-${percentage}`}>
+                      <Circle
+                        cx={GRAPH_WIDTH - 4}
+                        cy={y}
+                        r={1}
+                        color={withOpacity(colors.text, 0.3)}
+                      />
+                    </Group>
+                  );
+                })}
+              </Group>
+            </Canvas>
           </View>
-          <View style={styles.timeRange}>
-            <ThemedText type="caption" variant="disabled" style={styles.timeRangeText}>
-              Last 14 days
-            </ThemedText>
+
+          {/* Footer */}
+          <View
+            style={[
+              styles.progressFooter,
+              { borderTopColor: withOpacity(colors.textTertiary, 0.1) },
+            ]}
+          >
+            <View style={styles.progressLegend}>
+              <View style={styles.legendItem}>
+                <View
+                  style={[styles.legendArea, { backgroundColor: withOpacity(colors.success, 0.3) }]}
+                />
+                <ThemedText type="caption" variant="secondary" style={styles.legendText}>
+                  Mastery %
+                </ThemedText>
+              </View>
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+                <ThemedText type="caption" variant="secondary" style={styles.legendText}>
+                  Progress milestones
+                </ThemedText>
+              </View>
+            </View>
+            <View style={styles.timeRange}>
+              <ThemedText type="caption" variant="disabled" style={styles.timeRangeText}>
+                Last 14 days
+              </ThemedText>
+            </View>
           </View>
         </View>
       </BaseCard>
@@ -883,10 +895,6 @@ ProgressDistribution.displayName = 'ProgressDistribution';
 const RetrievabilityForecast = memo(
   ({ studyWords = [], onInfoPress }: { studyWords: StudyWord[]; onInfoPress: () => void }) => {
     const colors = useColors();
-    const screenWidth = Dimensions.get('window').width;
-    const graphWidth =
-      screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-    const graphHeight = 120;
 
     // Calculate retrievability forecast for the next 30 days
     const forecastData = useMemo(() => {
@@ -958,12 +966,12 @@ const RetrievabilityForecast = memo(
         };
       }
 
-      const stepX = graphWidth / (forecastData.length - 1);
+      const stepX = GRAPH_WIDTH / (forecastData.length - 1);
       let chartPath = '';
 
       forecastData.forEach((data, index) => {
         const x = index * stepX;
-        const y = graphHeight - (data.avgRetrievability / 100) * graphHeight;
+        const y = GRAPH_HEIGHT_LARGE - (data.avgRetrievability / 100) * GRAPH_HEIGHT_LARGE;
 
         if (index === 0) {
           chartPath = `M ${x} ${y}`;
@@ -991,21 +999,23 @@ const RetrievabilityForecast = memo(
           trend,
         },
       };
-    }, [forecastData, graphWidth, graphHeight]);
+    }, [forecastData, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE]);
 
     if (!hasData) {
       return (
         <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
           <View style={styles.progressContent}>
             <View style={styles.cardHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-                Memory Retention
-              </ThemedText>
+              <View style={styles.titleGroup}>
+                <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                  Retention
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                  Predicted memory strength over 30 days
+                </ThemedText>
+              </View>
               <InfoIcon onPress={onInfoPress} />
             </View>
-            <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-              Review words to track memory retention
-            </ThemedText>
           </View>
         </BaseCard>
       );
@@ -1015,20 +1025,22 @@ const RetrievabilityForecast = memo(
       <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.progressContent}>
           <View style={styles.cardHeader}>
-            <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-              Memory Retention
-            </ThemedText>
+            <View style={styles.titleGroup}>
+              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                Retention
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                {insights.currentRetention >= 80
+                  ? 'Excellent retention! Keep it up'
+                  : insights.currentRetention >= 70
+                    ? 'Good retention levels'
+                    : insights.criticalWords > 5
+                      ? `${insights.criticalWords} words need review soon`
+                      : 'Review more frequently for better retention'}
+              </ThemedText>
+            </View>
             <InfoIcon onPress={onInfoPress} />
           </View>
-          <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-            {insights.currentRetention >= 80
-              ? 'Excellent retention! Keep it up'
-              : insights.currentRetention >= 70
-                ? 'Good retention levels'
-                : insights.criticalWords > 5
-                  ? `${insights.criticalWords} words need review soon`
-                  : 'Review more frequently for better retention'}
-          </ThemedText>
 
           {/* Stats display */}
           <View style={styles.progressStatsRow}>
@@ -1066,13 +1078,13 @@ const RetrievabilityForecast = memo(
 
           {/* Retention Forecast Graph */}
           <View style={styles.graphContainer}>
-            <Canvas style={{ width: graphWidth, height: graphHeight }}>
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
               {/* Background grid lines */}
               <Group>
                 {[0.25, 0.5, 0.75].map((ratio, index) => (
                   <Path
                     key={`retention-grid-${index}`}
-                    path={`M 0 ${graphHeight * ratio} L ${graphWidth} ${graphHeight * ratio}`}
+                    path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
                     style="stroke"
                     strokeWidth={0.5}
                     color={withOpacity(colors.text, 0.08)}
@@ -1083,7 +1095,7 @@ const RetrievabilityForecast = memo(
               {/* Critical threshold line at 70% */}
               <Group>
                 <Path
-                  path={`M 0 ${graphHeight * 0.3} L ${graphWidth} ${graphHeight * 0.3}`}
+                  path={`M 0 ${GRAPH_HEIGHT_LARGE * 0.3} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * 0.3}`}
                   style="stroke"
                   strokeWidth={1}
                   color={withOpacity(colors.warning, 0.6)}
@@ -1093,7 +1105,7 @@ const RetrievabilityForecast = memo(
               {/* Retention area */}
               <Group>
                 <Path
-                  path={`${chartPath} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`}
+                  path={`${chartPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
                   color={withOpacity(colors.info, 0.15)}
                 />
               </Group>
@@ -1110,8 +1122,9 @@ const RetrievabilityForecast = memo(
                   .filter((_, index) => index % 5 === 0)
                   .map((data, index) => {
                     const actualIndex = index * 5;
-                    const x = (actualIndex * graphWidth) / (forecastData.length - 1);
-                    const y = graphHeight - (data.avgRetrievability / 100) * graphHeight;
+                    const x = (actualIndex * GRAPH_WIDTH) / (forecastData.length - 1);
+                    const y =
+                      GRAPH_HEIGHT_LARGE - (data.avgRetrievability / 100) * GRAPH_HEIGHT_LARGE;
 
                     return (
                       <Group key={`retention-point-${actualIndex}`}>
@@ -1163,10 +1176,6 @@ RetrievabilityForecast.displayName = 'RetrievabilityForecast';
 const DifficultyDistribution = memo(
   ({ studyWords = [], onInfoPress }: { studyWords: StudyWord[]; onInfoPress: () => void }) => {
     const colors = useColors();
-    const screenWidth = Dimensions.get('window').width;
-    const graphWidth =
-      screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-    const graphHeight = 120;
 
     // Calculate difficulty distribution
     const distributionData = useMemo(() => {
@@ -1242,14 +1251,16 @@ const DifficultyDistribution = memo(
         <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
           <View style={styles.progressContent}>
             <View style={styles.cardHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-                Difficulty Balance
-              </ThemedText>
+              <View style={styles.titleGroup}>
+                <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                  Difficulty
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                  Word challenge distribution (1-10 scale)
+                </ThemedText>
+              </View>
               <InfoIcon onPress={onInfoPress} />
             </View>
-            <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-              Review words to analyze difficulty patterns
-            </ThemedText>
           </View>
         </BaseCard>
       );
@@ -1261,20 +1272,22 @@ const DifficultyDistribution = memo(
       <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.progressContent}>
           <View style={styles.cardHeader}>
-            <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-              Difficulty Balance
-            </ThemedText>
+            <View style={styles.titleGroup}>
+              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                Difficulty
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                {distributionData.insights.averageDifficulty <= 4
+                  ? 'Good balance - mostly easy words'
+                  : distributionData.insights.averageDifficulty <= 6
+                    ? 'Moderate challenge level'
+                    : distributionData.insights.hardWords > distributionData.insights.easyWords
+                      ? 'Many challenging words - consider reviewing more'
+                      : 'Balanced difficulty distribution'}
+              </ThemedText>
+            </View>
             <InfoIcon onPress={onInfoPress} />
           </View>
-          <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-            {distributionData.insights.averageDifficulty <= 4
-              ? 'Good balance - mostly easy words'
-              : distributionData.insights.averageDifficulty <= 6
-                ? 'Moderate challenge level'
-                : distributionData.insights.hardWords > distributionData.insights.easyWords
-                  ? 'Many challenging words - consider reviewing more'
-                  : 'Balanced difficulty distribution'}
-          </ThemedText>
 
           {/* Stats display */}
           <View style={styles.progressStatsRow}>
@@ -1321,13 +1334,13 @@ const DifficultyDistribution = memo(
 
           {/* Difficulty Distribution Chart */}
           <View style={styles.graphContainer}>
-            <Canvas style={{ width: graphWidth, height: graphHeight }}>
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
               {/* Background grid lines */}
               <Group>
                 {[0.25, 0.5, 0.75].map((ratio, index) => (
                   <Path
                     key={`difficulty-grid-${index}`}
-                    path={`M 0 ${graphHeight * ratio} L ${graphWidth} ${graphHeight * ratio}`}
+                    path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
                     style="stroke"
                     strokeWidth={0.5}
                     color={withOpacity(colors.text, 0.08)}
@@ -1338,11 +1351,11 @@ const DifficultyDistribution = memo(
               {/* Difficulty bars */}
               <Group>
                 {distributionData.buckets.map((bucket, index) => {
-                  const barWidth = (graphWidth / distributionData.buckets.length) * 0.8;
-                  const barSpacing = graphWidth / distributionData.buckets.length;
+                  const barWidth = (GRAPH_WIDTH / distributionData.buckets.length) * 0.8;
+                  const barSpacing = GRAPH_WIDTH / distributionData.buckets.length;
                   const x = index * barSpacing + (barSpacing - barWidth) / 2;
-                  const barHeight = (bucket.count / maxCount) * graphHeight * 0.8;
-                  const y = graphHeight - barHeight;
+                  const barHeight = (bucket.count / maxCount) * GRAPH_HEIGHT_LARGE * 0.8;
+                  const y = GRAPH_HEIGHT_LARGE - barHeight;
 
                   return (
                     <Group key={`difficulty-bar-${index}`}>
@@ -1410,10 +1423,6 @@ DifficultyDistribution.displayName = 'DifficultyDistribution';
 const LearningEfficiency = memo(
   ({ studyWords = [], onInfoPress }: { studyWords: StudyWord[]; onInfoPress: () => void }) => {
     const colors = useColors();
-    const screenWidth = Dimensions.get('window').width;
-    const graphWidth =
-      screenWidth - LAYOUT.SCREEN_EDGE_PADDING * 2 - LAYOUT.CARD.PADDING.MEDIUM * 2;
-    const graphHeight = 120;
 
     // Calculate learning efficiency over the last 14 days
     const efficiencyData = useMemo(() => {
@@ -1518,12 +1527,12 @@ const LearningEfficiency = memo(
         };
       }
 
-      const stepX = graphWidth / (efficiencyData.length - 1);
+      const stepX = GRAPH_WIDTH / (efficiencyData.length - 1);
       let chartPath = '';
 
       efficiencyData.forEach((data, index) => {
         const x = index * stepX;
-        const y = graphHeight - (data.efficiency / 100) * graphHeight;
+        const y = GRAPH_HEIGHT_LARGE - (data.efficiency / 100) * GRAPH_HEIGHT_LARGE;
 
         if (index === 0) {
           chartPath = `M ${x} ${y}`;
@@ -1557,21 +1566,23 @@ const LearningEfficiency = memo(
           trend,
         },
       };
-    }, [efficiencyData, graphWidth, graphHeight]);
+    }, [efficiencyData, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE]);
 
     if (!hasData) {
       return (
         <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
           <View style={styles.progressContent}>
             <View style={styles.cardHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-                Learning Efficiency
-              </ThemedText>
+              <View style={styles.titleGroup}>
+                <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                  Efficiency
+                </ThemedText>
+                <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                  How effectively you learn from reviews
+                </ThemedText>
+              </View>
               <InfoIcon onPress={onInfoPress} />
             </View>
-            <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-              Complete reviews to track learning efficiency
-            </ThemedText>
           </View>
         </BaseCard>
       );
@@ -1581,20 +1592,22 @@ const LearningEfficiency = memo(
       <BaseCard style={styles.progressCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.progressContent}>
           <View style={styles.cardHeader}>
-            <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
-              Learning Efficiency
-            </ThemedText>
+            <View style={styles.titleGroup}>
+              <ThemedText type="heading3" weight="bold" style={styles.cardTitle}>
+                Efficiency
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
+                {insights.currentEfficiency >= 80
+                  ? 'Excellent learning efficiency!'
+                  : insights.currentEfficiency >= 70
+                    ? 'Good efficiency - keep it up'
+                    : insights.currentEfficiency >= 50
+                      ? 'Moderate efficiency - room for improvement'
+                      : 'Focus on quality over quantity in reviews'}
+              </ThemedText>
+            </View>
             <InfoIcon onPress={onInfoPress} />
           </View>
-          <ThemedText type="caption" variant="secondary" style={styles.cardSubtitle}>
-            {insights.currentEfficiency >= 80
-              ? 'Excellent learning efficiency!'
-              : insights.currentEfficiency >= 70
-                ? 'Good efficiency - keep it up'
-                : insights.currentEfficiency >= 50
-                  ? 'Moderate efficiency - room for improvement'
-                  : 'Focus on quality over quantity in reviews'}
-          </ThemedText>
 
           {/* Stats display */}
           <View style={styles.progressStatsRow}>
@@ -1632,13 +1645,13 @@ const LearningEfficiency = memo(
 
           {/* Efficiency Graph */}
           <View style={styles.graphContainer}>
-            <Canvas style={{ width: graphWidth, height: graphHeight }}>
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
               {/* Background grid lines */}
               <Group>
                 {[0.25, 0.5, 0.75].map((ratio, index) => (
                   <Path
                     key={`efficiency-grid-${index}`}
-                    path={`M 0 ${graphHeight * ratio} L ${graphWidth} ${graphHeight * ratio}`}
+                    path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
                     style="stroke"
                     strokeWidth={0.5}
                     color={withOpacity(colors.text, 0.08)}
@@ -1649,7 +1662,7 @@ const LearningEfficiency = memo(
               {/* Efficiency area */}
               <Group>
                 <Path
-                  path={`${chartPath} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`}
+                  path={`${chartPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
                   color={withOpacity(colors.tint, 0.15)}
                 />
               </Group>
@@ -1662,7 +1675,7 @@ const LearningEfficiency = memo(
               {/* 70% efficiency threshold line */}
               <Group>
                 <Path
-                  path={`M 0 ${graphHeight * 0.3} L ${graphWidth} ${graphHeight * 0.3}`}
+                  path={`M 0 ${GRAPH_HEIGHT_LARGE * 0.3} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * 0.3}`}
                   style="stroke"
                   strokeWidth={1}
                   color={withOpacity(colors.success, 0.6)}
@@ -1675,8 +1688,8 @@ const LearningEfficiency = memo(
                   .filter(d => d.totalReviews > 0)
                   .map((data, index) => {
                     const actualIndex = efficiencyData.findIndex(d => d.date === data.date);
-                    const x = (actualIndex * graphWidth) / (efficiencyData.length - 1);
-                    const y = graphHeight - (data.efficiency / 100) * graphHeight;
+                    const x = (actualIndex * GRAPH_WIDTH) / (efficiencyData.length - 1);
+                    const y = GRAPH_HEIGHT_LARGE - (data.efficiency / 100) * GRAPH_HEIGHT_LARGE;
 
                     return (
                       <Group key={`efficiency-point-${actualIndex}`}>
@@ -1999,16 +2012,22 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start', // Changed to flex-start to align with title group
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.SMALL, // Reduced from LARGE to SMALL
+  },
+  titleGroup: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   cardTitle: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
+    marginBottom: 0, // Removed margin to connect with subtitle
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
   },
   cardSubtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    marginTop: LAYOUT.SPACING.TINY, // Added small margin for visual separation
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Added margin before stats
   },
   activitySection: {
     paddingTop: LAYOUT.SPACING.LARGE,
@@ -2047,7 +2066,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   progressStat: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   progressValue: {
     marginBottom: LAYOUT.SPACING.XSMALL,
