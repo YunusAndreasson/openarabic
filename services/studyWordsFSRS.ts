@@ -28,8 +28,8 @@ interface GetFSRSWordsOptions {
   reviewedOnly?: boolean;
   /**
    * Server-side filter for vocabulary category.
-   * - "mastered": fsrs_state = 3 and fsrs_stability >= 30
-   * - "learning": fsrs_state in (0,1,2) or (fsrs_state = 3 and fsrs_stability < 30)
+   * - "mastered": fsrs_state = 2 (Review) and fsrs_stability >= 5
+   * - "learning": fsrs_state in (0,1,3) or (fsrs_state = 2 and fsrs_stability < 5)
    */
   category?: 'mastered' | 'learning';
 }
@@ -103,10 +103,10 @@ export const studyWordsFSRSService = {
 
     // Apply category filters server-side to reduce payload
     if (options.category === 'mastered') {
-      filteredQuery = filteredQuery.eq('fsrs_state', 3).gte('fsrs_stability', 30);
+      filteredQuery = filteredQuery.eq('fsrs_state', 2).gte('fsrs_stability', 5);
     } else if (options.category === 'learning') {
       filteredQuery = filteredQuery.or(
-        'fsrs_state.in.(0,1,2),and(fsrs_state.eq.3,fsrs_stability.lt.30)'
+        'fsrs_state.in.(0,1,3),and(fsrs_state.eq.2,fsrs_stability.lt.5)'
       );
     }
 

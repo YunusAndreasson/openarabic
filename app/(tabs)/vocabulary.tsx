@@ -17,13 +17,9 @@ import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useVocabularyStats } from '@/hooks/useVocabularyStats';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
+import type { StatCategory } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
 import BottomControls from '@/components/BottomControls';
-import { StreakCard } from '@/components/vocabulary/StreakCard';
-import { useStreakData } from '@/hooks/useStreakData';
-import { LearningStatusIndicator } from '@/components/vocabulary/LearningStatusIndicator';
-
-type StatCategory = 'total' | 'mastered' | 'learning' | 'due';
 
 export default function VocabularyScreen(): JSX.Element {
   const { user } = useAuth();
@@ -66,13 +62,7 @@ export default function VocabularyScreen(): JSX.Element {
   });
 
   // Use the vocabulary stats hook for stats calculations
-  const { stats, weeklyProgressData, validStudyWords } = useVocabularyStats(
-    studyWords ?? [],
-    dueWordsData ?? []
-  );
-
-  // Get streak data using the new hook
-  const streakData = useStreakData(user?.id);
+  const { stats, validStudyWords } = useVocabularyStats(studyWords ?? [], dueWordsData ?? []);
 
   // Combine query invalidation into a single function
   const invalidateVocabularyQueries = useCallback(async () => {
@@ -208,7 +198,7 @@ export default function VocabularyScreen(): JSX.Element {
               insets.bottom +
               LAYOUT.CONTENT_SPACING.BOTTOM +
               LAYOUT.BOTTOM_BAR.HEIGHT +
-              LAYOUT.SPACING.MEDIUM,
+              LAYOUT.SPACING.XLARGE,
           },
         ]}
         showsVerticalScrollIndicator={false}
@@ -222,26 +212,11 @@ export default function VocabularyScreen(): JSX.Element {
 
         {/* PRIMARY SECTION: Learning Overview */}
         <VocabularyStatCards
-          totalWords={stats.totalWords}
           masteredWords={stats.masteredWords}
           learningWords={stats.learningWords}
           dueWords={stats.dueWords}
+          studyWords={validStudyWords}
           onStatPress={handleStatPress}
-        />
-
-        {/* SECONDARY SECTION: Progress & Motivation */}
-        <StreakCard
-          currentStreak={streakData.currentStreak}
-          longestStreak={streakData.longestStreak}
-          lastSevenDaysActivity={streakData.lastSevenDaysActivity}
-        />
-
-        {/* TERTIARY SECTION: Guidance */}
-        <LearningStatusIndicator
-          dueWords={stats.dueWords}
-          totalWords={stats.totalWords}
-          learningWords={stats.learningWords}
-          masteredWords={stats.masteredWords}
         />
       </ScrollView>
       <BottomControls
@@ -274,6 +249,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   loadingContainer: {
     alignItems: 'center',

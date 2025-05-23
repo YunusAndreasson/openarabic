@@ -1,22 +1,22 @@
 import { format } from 'date-fns';
-import { router } from 'expo-router';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { State } from 'ts-fsrs';
+import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
+import { withOpacity } from '../../utils/colorUtils';
 
 interface WordListItemProps {
   word: StudyWord;
-  onPress?: () => void;
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemProps) {
+const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   const colors = useColors();
 
   // Get the actual word data from root
@@ -37,20 +37,20 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
 
     // Get progress colors based on state and progress
     let progressColor: string;
-    let statusIcon: string = 'school-outline';
+    let statusText: string;
 
     if (state === State.Review && progress >= 80) {
       progressColor = colors.success; // Mastered
-      statusIcon = 'checkmark-circle-outline';
+      statusText = 'Mastered';
     } else if (state === State.Review && progress >= 50) {
       progressColor = colors.warning; // Learning well
-      statusIcon = 'thumbs-up-outline';
+      statusText = 'Strong';
     } else if (state === State.Learning || state === State.Relearning) {
       progressColor = colors.info; // In learning phase
-      statusIcon = 'sync-outline';
+      statusText = 'Learning';
     } else {
-      progressColor = `${colors.info}40`; // New or early stage
-      statusIcon = 'add-circle-outline';
+      progressColor = colors.textTertiary; // New or early stage
+      statusText = 'New';
     }
 
     const isNewWord = state === State.New;
@@ -60,14 +60,14 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
       progress: {
         value: progress,
         color: progressColor,
-        width: Math.max(5, progress),
+        width: Math.max(8, progress),
       },
       isNewWord,
       lastReview,
       reviewCount: word.fsrs_reps || 0,
       successStreak: word.success_streak || 0,
       state,
-      statusIcon,
+      statusText,
     };
   }, [
     word.fsrs_stability,
@@ -82,139 +82,206 @@ const WordListItem = memo(function WordListItem({ word, onPress }: WordListItemP
   if (!letters) return null;
 
   return (
-    <View style={styles.cardContent}>
-      {/* Main content row */}
-      <View style={styles.content}>
-        {/* Left side with English text */}
-        <ThemedText
-          type="body"
-          variant="secondary"
-          weight="semibold"
-          numberOfLines={2}
-          style={[styles.englishText, { fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE + 1 }]}
-        >
-          {capitalizedMeaning || 'No translation available'}
-        </ThemedText>
-
-        {/* Arabic text on the right */}
-        <ThemedText
-          type="arabic"
-          arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.HUGE - 2}
-          weight="semibold"
-          align="right"
-          skipDefaultColor
-          colorName="arabicText"
-          style={styles.arabicText}
-        >
-          {letters}
-        </ThemedText>
-      </View>
-
-      {/* Memory Strength section */}
-      <View style={styles.progressBarLabelContainer}>
-        <ThemedText type="overline" variant="secondary" style={styles.progressLabel}>
-          MEMORY STRENGTH
-        </ThemedText>
-        <ThemedText type="caption" variant="subtle" weight="semibold" style={styles.progressValue}>
-          {wordStatus.progress.value}%
-        </ThemedText>
-      </View>
-
-      <View style={[styles.progressBar, { backgroundColor: colors.cardBorder }]}>
-        <Animated.View
-          style={[
-            styles.progressFill,
-            {
-              width: `${wordStatus.progress.width}%`,
-              backgroundColor: wordStatus.progress.color.replace(/40$/, ''),
-            },
-          ]}
-        />
-      </View>
-
-      {/* Review info and streak below progress bar */}
-      <View style={styles.learningInfoContainer}>
-        {wordStatus.lastReview ? (
-          <ThemedText type="caption" variant="subtle" weight="normal" style={styles.lastReview}>
-            Next Review: {format(new Date(wordStatus.lastReview), 'MMM d')}
+    <View style={styles.container}>
+      {/* Primary Content - Word and Translation */}
+      <View style={styles.mainContent}>
+        {/* English meaning - Primary hierarchy */}
+        <View style={styles.meaningContainer}>
+          <ThemedText type="heading3" weight="bold" numberOfLines={2} style={styles.meaningText}>
+            {capitalizedMeaning || 'No translation available'}
           </ThemedText>
-        ) : null}
+        </View>
 
-        {wordStatus.successStreak > 0 ? (
-          <ThemedText type="caption" variant="subtle" weight="medium" style={styles.streakText}>
-            🔥 {wordStatus.successStreak} streak
+        {/* Arabic text and navigation indicator */}
+        <View style={styles.rightContent}>
+          <View style={styles.arabicContainer}>
+            <ThemedText
+              type="arabic"
+              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2}
+              weight="bold"
+              align="right"
+              skipDefaultColor
+              colorName="arabicText"
+              style={styles.arabicText}
+            >
+              {letters}
+            </ThemedText>
+          </View>
+
+          {/* Navigation indicator */}
+          <View style={styles.navigationContainer}>
+            <Ionicons
+              name="chevron-forward-outline"
+              size={18}
+              color={colors.textTertiary}
+              style={styles.navigationIcon}
+            />
+          </View>
+        </View>
+      </View>
+
+      {/* Secondary Content - Progress and Status */}
+      <View style={styles.progressSection}>
+        {/* Progress header with status */}
+        <View style={styles.progressHeader}>
+          <View style={styles.progressLabelContainer}>
+            <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
+              Memory Strength
+            </ThemedText>
+            <View
+              style={[
+                styles.statusBadge,
+                { backgroundColor: withOpacity(wordStatus.progress.color, 0.15) },
+              ]}
+            >
+              <ThemedText
+                type="caption"
+                weight="semibold"
+                style={[styles.statusText, { color: wordStatus.progress.color }]}
+              >
+                {wordStatus.statusText}
+              </ThemedText>
+            </View>
+          </View>
+          <ThemedText type="caption" variant="subtle" weight="bold" style={styles.progressValue}>
+            {wordStatus.progress.value}%
           </ThemedText>
-        ) : null}
+        </View>
+
+        {/* Progress bar */}
+        <View
+          style={[styles.progressBar, { backgroundColor: withOpacity(colors.textTertiary, 0.1) }]}
+        >
+          <Animated.View
+            style={[
+              styles.progressFill,
+              {
+                width: `${wordStatus.progress.width}%`,
+                backgroundColor: wordStatus.progress.color,
+              },
+            ]}
+          />
+        </View>
+
+        {/* Tertiary Content - Review info and streak */}
+        {(wordStatus.lastReview || wordStatus.successStreak > 0) && (
+          <View style={styles.metaInfo}>
+            {wordStatus.lastReview && (
+              <ThemedText type="caption" variant="subtle" style={styles.lastReview}>
+                Last: {format(new Date(wordStatus.lastReview), 'MMM d')}
+              </ThemedText>
+            )}
+
+            {wordStatus.successStreak > 0 && (
+              <View style={styles.streakContainer}>
+                <ThemedText
+                  type="caption"
+                  variant="subtle"
+                  weight="medium"
+                  style={styles.streakText}
+                >
+                  🔥 {wordStatus.successStreak}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
 });
 
 const styles = StyleSheet.create({
+  container: {
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    gap: LAYOUT.SPACING.LARGE,
+  },
+  mainContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  meaningContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  meaningText: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.3,
+  },
+  arabicContainer: {
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
   arabicText: {
-    flex: 0.5,
     textAlign: 'right',
   },
-  cardContent: {
-    padding: LAYOUT.SPACING.MEDIUM + 2,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
+  progressSection: {
+    gap: LAYOUT.SPACING.SMALL,
   },
-  content: {
-    alignItems: 'center',
+  progressHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL + 2,
-    minHeight: 38,
-  },
-  divider: {
-    height: 1,
-    marginVertical: LAYOUT.SPACING.SMALL / 2,
-    opacity: 0.3,
-    width: '100%',
-  },
-  englishText: {
-    flex: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
-    lineHeight: Platform.OS === 'ios' ? 26 : 28,
-    marginRight: LAYOUT.SPACING.MEDIUM + 2,
-  },
-  lastReview: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-  },
-  learningInfoContainer: {
     alignItems: 'center',
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: LAYOUT.SPACING.SMALL,
-    minHeight: 16,
   },
-  progressBar: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL / 2,
-    height: 5,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  progressBarLabelContainer: {
+  progressLabelContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL / 2,
-  },
-  progressFill: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL / 2,
-    height: '100%',
+    gap: LAYOUT.SPACING.SMALL,
   },
   progressLabel: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,
     letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  statusBadge: {
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XTINY,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+  },
+  statusText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
+    letterSpacing: 0.2,
   },
   progressValue: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
   },
+  progressBar: {
+    height: 6,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+  },
+  metaInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  lastReview: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  streakContainer: {
+    alignItems: 'center',
+  },
   streakText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  rightContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  navigationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navigationIcon: {
+    opacity: 0.6,
   },
 });
 

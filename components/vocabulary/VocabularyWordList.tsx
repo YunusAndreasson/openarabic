@@ -38,7 +38,7 @@ const WordItem = memo(
     const word = studyWord.root?.letters || '...';
     const english = studyWord.root?.meaning || '...';
     const isLearning = studyWord.fsrs_state === 1 || studyWord.fsrs_state === 2;
-    const isMastered = studyWord.fsrs_state === 3;
+    const isMastered = studyWord.fsrs_state === 2 && (studyWord.fsrs_stability ?? 0) >= 5;
     const isOverdue = studyWord.fsrs_due ? new Date(studyWord.fsrs_due) < new Date() : false;
 
     let statusLabel = isMastered ? 'Mastered' : isLearning ? 'Learning' : 'New';

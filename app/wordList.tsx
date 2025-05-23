@@ -13,7 +13,6 @@ import { useColors } from '../hooks/useColors';
 import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
 import Pill from '../components/Pill';
-import InfoCard from '../components/InfoCard';
 import BaseCard from '../components/BaseCard';
 import { router } from 'expo-router';
 import { lightFeedback } from '../utils/haptics';
@@ -67,11 +66,6 @@ export default function WordListScreen(): JSX.Element {
   const [sortBy, setSortBy] = React.useState<WordListSort>('retention');
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
 
-  // Compute sort card background color to match info card
-  const getSortCardBgColor = useCallback(() => {
-    return colors.card;
-  }, [colors.card]);
-
   // Get the title and icon based on the category
   const { title } = useMemo(() => {
     switch (category) {
@@ -93,6 +87,12 @@ export default function WordListScreen(): JSX.Element {
           icon: 'school',
           description: 'Words still being learned',
         };
+      case 'needsAttention':
+        return {
+          title: 'Needs Attention',
+          icon: 'alert-circle',
+          description: 'Words that are challenging',
+        };
       default:
         return {
           title: 'Review',
@@ -105,7 +105,7 @@ export default function WordListScreen(): JSX.Element {
   // Use the new hook to fetch and process words
   const { data: words, error } = useWordList(
     user?.id,
-    category as 'total' | 'mastered' | 'learning' | 'due',
+    category as 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention',
     sortBy,
     sortDirection
   );
@@ -173,83 +173,75 @@ export default function WordListScreen(): JSX.Element {
   const ListHeaderComponent = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        {/* Sort Control Card */}
-        <InfoCard
-          hideTitle
-          iconBgColor={getSortCardBgColor()}
-          shadowSize="small"
-          style={{
-            marginBottom: LAYOUT.SPACING.MEDIUM,
-            marginHorizontal: 0,
-          }}
-        >
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              alignItems: 'center',
-              paddingVertical: LAYOUT.SPACING.MEDIUM,
-              paddingHorizontal: LAYOUT.SPACING.SMALL,
-            }}
-          >
-            {[
-              { label: 'Memory', value: 'retention' },
-              { label: 'A-Z', value: 'alphabetical' },
-              { label: 'Streak', value: 'streak' },
-            ].map(option => {
-              const isSelected = sortBy === option.value;
-              return (
-                <Pill
-                  key={option.value + '-' + sortDirection}
-                  id={option.value}
-                  isSelected={isSelected}
-                  onSelect={() => handleSortChange(option.value as WordListSort)}
-                  variant="filter"
-                  pillBg={isSelected ? undefined : colors.transparent}
-                  pillStyle={{
-                    marginHorizontal: 4,
-                    marginBottom: 0,
-                    marginRight: 0,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-                    paddingVertical: LAYOUT.SPACING.SMALL,
-                    minHeight: 36,
-                  }}
-                  label={
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <ThemedText
-                        type="label"
-                        colorName={isSelected ? 'tint' : 'text'}
-                        style={{
-                          fontWeight: isSelected ? '600' : '500',
-                          fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
-                        }}
-                      >
-                        {option.label}
-                      </ThemedText>
-                      <Ionicons
-                        name={
-                          isSelected
-                            ? sortDirection === 'desc'
-                              ? 'chevron-down'
-                              : 'chevron-up'
-                            : 'chevron-down'
-                        }
-                        size={16}
-                        style={{ marginLeft: 4, marginTop: 0.5 }}
-                        color={isSelected ? colors.icon : colors.transparent}
-                      />
-                    </View>
-                  }
-                />
-              );
-            })}
+        {/* Sort Control Card - Consistent with vocabulary component */}
+        <BaseCard shadowSize="small" style={styles.sortCard}>
+          <View style={styles.sortContent}>
+            {/* Sort Header */}
+            <View style={styles.sortHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sortTitle}>
+                Sort by
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.sortSubtitle}>
+                Choose how to organize your words
+              </ThemedText>
+            </View>
+
+            {/* Sort Options */}
+            <View style={styles.sortOptions}>
+              {[
+                { label: 'Memory', value: 'retention', description: 'Strength' },
+                { label: 'A-Z', value: 'alphabetical', description: 'Order' },
+                { label: 'Streak', value: 'streak', description: 'Success' },
+              ].map(option => {
+                const isSelected = sortBy === option.value;
+                return (
+                  <Pill
+                    key={option.value}
+                    id={option.value}
+                    isSelected={isSelected}
+                    onSelect={() => handleSortChange(option.value as WordListSort)}
+                    variant="filter"
+                    pillBg={isSelected ? undefined : colors.transparent}
+                    pillStyle={[styles.sortPill, isSelected && styles.sortPillSelected]}
+                    label={
+                      <View style={styles.sortPillContent}>
+                        <ThemedText
+                          type="label"
+                          colorName={isSelected ? 'tint' : 'text'}
+                          style={[styles.sortPillLabel, isSelected && styles.sortPillLabelSelected]}
+                        >
+                          {option.label}
+                        </ThemedText>
+                        <ThemedText
+                          type="caption"
+                          variant="subtle"
+                          style={[styles.sortPillDescription, isSelected && { color: colors.tint }]}
+                        >
+                          {option.description}
+                        </ThemedText>
+                        <Ionicons
+                          name={
+                            isSelected
+                              ? sortDirection === 'desc'
+                                ? 'chevron-down'
+                                : 'chevron-up'
+                              : 'chevron-down'
+                          }
+                          size={14}
+                          style={styles.sortPillIcon}
+                          color={isSelected ? colors.tint : colors.textTertiary}
+                        />
+                      </View>
+                    }
+                  />
+                );
+              })}
+            </View>
           </View>
-        </InfoCard>
+        </BaseCard>
       </View>
     );
-  }, [sortBy, getSortCardBgColor, sortDirection, handleSortChange, colors]);
+  }, [sortBy, sortDirection, handleSortChange, colors]);
 
   // Add error UI handling
   if (error) {
@@ -346,19 +338,72 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerContainer: {
-    paddingBottom: LAYOUT.SPACING.XSMALL,
+    paddingBottom: LAYOUT.SPACING.SMALL,
     paddingTop: 0,
   },
   listContentContainer: {
-    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   wordItemContainer: {
-    marginVertical: LAYOUT.SPACING.XTINY,
+    marginVertical: LAYOUT.SPACING.TINY,
   },
   headerButton: {
     marginRight: LAYOUT.SPACING.MEDIUM,
     padding: LAYOUT.SPACING.SMALL,
+  },
+  sortCard: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  sortContent: {
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  sortHeader: {
+    marginBottom: LAYOUT.SPACING.XSMALL,
+  },
+  sortTitle: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  sortSubtitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+  },
+  sortOptions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  sortPill: {
+    flex: 1,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sortPillSelected: {
+    // backgroundColor will be set inline
+  },
+  sortPillContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.XTINY,
+  },
+  sortPillLabel: {
+    fontWeight: '500',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    textAlign: 'center',
+  },
+  sortPillLabelSelected: {
+    fontWeight: '600',
+  },
+  sortPillDescription: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,
+    textAlign: 'center',
+    opacity: 0.8,
+  },
+  sortPillIcon: {
+    marginTop: LAYOUT.SPACING.XTINY,
   },
 });

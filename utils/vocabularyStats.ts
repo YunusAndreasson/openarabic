@@ -47,8 +47,8 @@ export function calculateWeeklyProgressData(studyWords: StudyWord[] = []): Weekl
     reviewDate.setHours(0, 0, 0, 0);
 
     const isLearned =
-      (word.fsrs_state === 3 && (word.fsrs_stability ?? 0) >= 1) ||
-      (word.fsrs_reps > 0 && word.success_streak && word.success_streak > 0);
+      (word.fsrs_state === 2 && (word.fsrs_stability ?? 0) >= 5) ||
+      ((word.fsrs_reps ?? 0) > 0 && word.success_streak && word.success_streak > 0);
 
     if (!isLearned) continue;
 

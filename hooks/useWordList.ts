@@ -9,7 +9,7 @@ export interface EnhancedStudyWord extends StudyWord {
   retentionScore: number;
 }
 
-type WordListCategory = 'total' | 'mastered' | 'learning' | 'due';
+type WordListCategory = 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention';
 
 // Add type for sort options
 export type WordListSort = 'retention' | 'due' | 'alphabetical' | 'streak';
@@ -20,7 +20,7 @@ export type WordListSort = 'retention' | 'due' | 'alphabetical' | 'streak';
  */
 const calculateRetentionScore = (word: StudyWord): number => {
   const stabilityScore = Math.min((word.fsrs_stability ?? 0) / 100, 1) * 70;
-  const difficultyFactor = 1 - word.fsrs_difficulty;
+  const difficultyFactor = 1 - (word.fsrs_difficulty ?? 0.3);
   const difficultyScore = difficultyFactor * 20;
   const lapsesPenalty = Math.min((word.fsrs_lapses ?? 0) / 10, 1) * 10;
   return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
@@ -50,10 +50,7 @@ export function useWordList(
           serviceOptions.category = 'learning';
         }
 
-        const allWords = await studyWordsFSRSService.getFSRSWords(
-          userId,
-          serviceOptions
-        );
+        const allWords = await studyWordsFSRSService.getFSRSWords(userId, serviceOptions);
 
         // Filter out invalid words with type guard
         const filteredWords = allWords.filter(
@@ -81,7 +78,7 @@ export function useWordList(
             break;
           case 'mastered':
             result = filteredWords.filter(
-              word => word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= 30
+              word => word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= 5
             );
             break;
           case 'learning':
@@ -90,11 +87,25 @@ export function useWordList(
                 word.fsrs_state === State.New ||
                 word.fsrs_state === State.Learning ||
                 word.fsrs_state === State.Relearning ||
-                (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 30)
+                (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 5)
             );
             break;
           case 'due':
             result = filteredWords.filter(word => word.fsrs_due && word.fsrs_due <= now);
+            break;
+          case 'needsAttention':
+            result = filteredWords.filter(word => {
+              const difficulty = word.fsrs_difficulty ?? 0.3;
+              const lapses = word.fsrs_lapses ?? 0;
+              const stability = word.fsrs_stability ?? 0;
+              const state = word.fsrs_state;
+
+              const isHighDifficultyWithLapses = difficulty > 0.6 && lapses > 0;
+              const isStrugglingInLearning = (state === 1 || state === 2) && lapses > 1;
+              const isUnstableAndDifficult = stability < 7 && difficulty > 0.5 && lapses > 0;
+
+              return isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult;
+            });
             break;
           default:
             result = filteredWords;
@@ -151,7 +162,7 @@ export function useWordList(
       switch (category) {
         case 'mastered':
           filteredWords = validStudyWords.filter(
-            word => word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= 30
+            word => word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) >= 5
           );
           break;
         case 'learning':
@@ -160,7 +171,7 @@ export function useWordList(
               word.fsrs_state === State.New ||
               word.fsrs_state === State.Learning ||
               word.fsrs_state === State.Relearning ||
-              (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 30)
+              (word.fsrs_state === State.Review && (word.fsrs_stability ?? 0) < 5)
           );
           break;
       }

@@ -38,13 +38,23 @@ const getAdvancedStats = (validStudyWords: StudyWord[]) => {
         acc.easeFactorSum += word.ease_factor || 0;
       }
 
-      // Track mastery stats - use fsrs_state instead of 'state'
-      if (word.fsrs_state === 3 && (word.fsrs_stability ?? 0) >= 30) acc.masteredCount++; // Mastered only if stability >= 30
-      if (
-        word.fsrs_state === 1 || // Learning
-        word.fsrs_state === 2 || // Relearning
-        word.fsrs_state === 0 || // New
-        (word.fsrs_state === 3 && (word.fsrs_stability ?? 0) < 30) // Review but low stability
+      // Track mastery stats - CORRECTED FSRS state logic
+      // FSRS State definitions:
+      // 0 = New (never reviewed)
+      // 1 = Learning (in learning phase)
+      // 2 = Review (graduated to review) - MASTERED when stability >= 5 days
+      // 3 = Relearning (failed and relearning) - NOT mastered
+      const state = word.fsrs_state;
+      const stability = word.fsrs_stability ?? 0;
+
+      if (state === 2 && stability >= 5) {
+        // Mastered: review state with good stability (5+ days)
+        acc.masteredCount++;
+      } else if (
+        state === 0 || // New
+        state === 1 || // Learning
+        state === 3 || // Relearning (failed)
+        (state === 2 && stability < 5) // Review but low stability
       ) {
         acc.learningCount++;
       }
@@ -103,8 +113,6 @@ export function useVocabularyStats(
   weeklyProgressData: WeeklyProgressData[];
   validStudyWords: StudyWord[];
 } {
-  const userId = studyWords[0]?.user_id;
-
   // Filter valid study words with error protection
   const validStudyWords = useMemo(() => {
     if (!Array.isArray(studyWords)) return [] as StudyWord[];

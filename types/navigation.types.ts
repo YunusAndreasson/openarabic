@@ -24,7 +24,7 @@ export interface ReviewParams {
 export interface WordListParams {
   filter?: 'all' | 'due' | 'learned';
   sortBy?: 'dueDate' | 'addedDate' | 'difficulty';
-  category?: 'total' | 'mastered' | 'learning' | 'due';
+  category?: 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention';
 }
 
 /**
