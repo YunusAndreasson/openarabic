@@ -93,7 +93,6 @@ export default function ArticleScreen(): JSX.Element {
     sortedSentences,
     sentenceWordsMap,
     otherArticles,
-    otherCategoryArticles,
     refetchStudyWords,
   } = useArticleData(articleId, user?.id);
 
@@ -212,6 +211,7 @@ export default function ArticleScreen(): JSX.Element {
 
   // Add a ref to track the last scrolled word to prevent cycles
   const lastScrolledWordIdRef = useRef<number | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (
@@ -228,20 +228,34 @@ export default function ArticleScreen(): JSX.Element {
       return;
     }
 
+    // Clear any existing timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
     // Track this word ID to prevent multiple scrolls
     lastScrolledWordIdRef.current = currentWordId;
 
-    // Scroll to the sentence containing this word
-    articleContentRef.current.scrollToSentence(word.sentence_id);
+    // Debounce the scroll to prevent excessive scrolling during rapid word changes
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (articleContentRef.current) {
+        articleContentRef.current.scrollToSentence(word.sentence_id);
+      }
+    }, 100); // Small delay to batch rapid changes
 
     // Reset the tracking after a delay to allow future scrolls to the same word if needed
-    const timer = setTimeout(() => {
+    const resetTimer = setTimeout(() => {
       if (lastScrolledWordIdRef.current === currentWordId) {
         lastScrolledWordIdRef.current = null;
       }
-    }, 1000);
+    }, 1500); // Increased timeout for better stability
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(resetTimer);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
   }, [currentWordId, sentenceWordsMap, findWordById]);
 
   const [audioControlVisible, setAudioControlVisible] = useState(false);
@@ -681,7 +695,6 @@ export default function ArticleScreen(): JSX.Element {
             handleScroll={handleScroll}
             colors={colors}
             otherArticles={otherArticles}
-            renderArticleCard={renderArticleCard}
             currentPlayingSentenceId={currentSentenceId}
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)

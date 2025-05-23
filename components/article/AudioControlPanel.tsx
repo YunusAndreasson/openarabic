@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import type { ViewStyle } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import BaseCard from '../../components/BaseCard';
 import { ThemedText } from '../../components/ThemedText';
@@ -25,28 +25,41 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
   }) => {
     const colors = useColors();
 
-    const hiddenStyle = useMemo(
-      () => ({
-        ...styles.container,
-        opacity: 0,
-      }),
-      []
-    ) as ViewStyle;
+    // Animated visibility style for smoother transitions
+    const animatedStyle = useAnimatedStyle(() => {
+      return {
+        opacity: withTiming(isVisible ? 1 : 0, { duration: 300 }),
+        transform: [
+          {
+            translateY: withTiming(isVisible ? 0 : 100, { duration: 300 }),
+          },
+        ],
+      };
+    }, [isVisible]);
 
     const handlePlayPause = useButtonAction(onPlayPause, ANIMATION_TIMING.DEBOUNCE.STANDARD);
     const handleStop = useButtonAction(onStop, ANIMATION_TIMING.DEBOUNCE.STANDARD);
     const handlePrevious = useButtonAction(onPrevious, ANIMATION_TIMING.DEBOUNCE.STANDARD);
     const handleNext = useButtonAction(onNext, ANIMATION_TIMING.DEBOUNCE.STANDARD);
 
+    // Memoize button states for better performance
+    const isFirstSentence = useMemo(() => currentSentenceIndex === 0, [currentSentenceIndex]);
+    const isLastSentence = useMemo(
+      () => currentSentenceIndex === totalSentences - 1,
+      [currentSentenceIndex, totalSentences]
+    );
+
+    // Early return with invisible container to maintain layout
     if (!isVisible) {
-      return <View style={hiddenStyle} pointerEvents="none" />;
+      return (
+        <Animated.View style={[styles.container, animatedStyle]} pointerEvents="none">
+          <View style={styles.hiddenPlaceholder} />
+        </Animated.View>
+      );
     }
 
-    const isFirstSentence = currentSentenceIndex === 0;
-    const isLastSentence = currentSentenceIndex === totalSentences - 1;
-
     return (
-      <View style={styles.container}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         <BaseCard style={[styles.card, { backgroundColor: colors.elevation2 }]} shadowSize="medium">
           <View style={styles.contentContainer}>
             <View style={styles.controlsContainer}>
@@ -62,10 +75,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
                 />
               </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handlePlayPause}
-                style={{ padding: LAYOUT.SPACING.MEDIUM }}
-              >
+              <TouchableOpacity onPress={handlePlayPause} style={styles.playButton}>
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
               </TouchableOpacity>
 
@@ -94,7 +104,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
             </TouchableOpacity>
           </View>
         </BaseCard>
-      </View>
+      </Animated.View>
     );
   }
 );
@@ -126,6 +136,10 @@ const styles = StyleSheet.create({
     flex: 3,
     justifyContent: 'flex-start',
   },
+  hiddenPlaceholder: {
+    height: 1,
+    opacity: 0,
+  },
   iconButton: {
     padding: LAYOUT.SPACING.SMALL,
   },
@@ -140,6 +154,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
   },
   sentenceInfo: {
     textAlign: 'center',

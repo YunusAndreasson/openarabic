@@ -18,8 +18,6 @@ import Animated, {
   useAnimatedStyle,
   interpolate,
   Extrapolation,
-  withTiming,
-  Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -31,7 +29,6 @@ import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import type { Article } from '@/types/articles.types';
 import type { Tables } from '@/types/database.types';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { withOpacity } from '@/utils/colorUtils';
 
 import type { ThemeColors } from '../../types/ui/theme.types';
 
@@ -76,7 +73,6 @@ interface ArticleContentProps {
   colors: ThemeColors;
   footerStyle?: AnimatedStyleProp<ViewStyle>;
   otherArticles?: Article[];
-  renderArticleCard: (articleData: Article) => React.ReactElement;
   currentPlayingSentenceId?: number | null;
   handleArticlePress: (articleId: string, isCompact: boolean) => void;
   // Button action props
@@ -133,7 +129,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     const handleAnimatedScroll = useCallback(
       (event: NativeSyntheticEvent<NativeScrollEvent>) => {
         const currentY = event.nativeEvent.contentOffset.y;
-        // Remove damping to prevent conflicts with ParallaxHeader spring animation
+        // Use direct assignment for smoother parallax - no spring damping here
         scrollY.value = currentY;
         handleScroll(event);
       },
@@ -158,39 +154,36 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
 
     // Helper function to scroll to an index with consistent parameters
     const scrollToIndex = (index: number) => {
-      // Add a small delay to ensure the list is rendered
+      // Reduce delay for more responsive scrolling
       setTimeout(() => {
         if (!flashListRef.current) return;
-
-        // Temporarily set scroll throttle to a lower value for smoother navigation
-        const currentScrollThrottle = 8;
 
         try {
           flashListRef.current.scrollToIndex({
             index: index,
             animated: true,
-            viewPosition: 0.3,
-            // Push first sentence higher to ensure visibility above the header
+            viewPosition: 0.25, // Adjusted for better positioning
+            // Improved offset calculation for better visibility
             viewOffset:
               index === 0
                 ? headerHeight +
-                  LAYOUT.SPACING.TINY +
+                  LAYOUT.SPACING.MEDIUM +
                   LAYOUT.SPACING.XLARGE +
-                  LAYOUT.SPACING.XXLARGE +
                   LAYOUT.BUTTON.HEIGHT.MEDIUM
-                : 0,
+                : LAYOUT.SPACING.MEDIUM, // Add small offset for non-first sentences
           });
         } catch (error) {
-          // Fallback if the index is out of range
-          // Try to scroll to the closest visible item
+          // Enhanced fallback with better error handling
           if (sortedSentences && sortedSentences.length > 0) {
-            flashListRef.current.scrollToItem({
-              item: sortedSentences[Math.min(index, sortedSentences.length - 1)],
+            const targetIndex = Math.min(index, sortedSentences.length - 1);
+            flashListRef.current?.scrollToItem({
+              item: sortedSentences[targetIndex],
               animated: true,
+              viewPosition: 0.25,
             });
           }
         }
-      }, 100);
+      }, 50); // Reduced delay for more responsive scrolling
     };
 
     // Effect to scroll to the specified sentence when the component mounts
@@ -294,12 +287,13 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                   LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
               }}
               onScroll={handleAnimatedScroll}
-              scrollEventThrottle={16} // Consistent with other lists for smoother animations
+              scrollEventThrottle={8} // Reduced for smoother parallax animations
               showsVerticalScrollIndicator={true}
-              drawDistance={SENTENCE_ITEM_HEIGHT * 10}
+              drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
               initialScrollIndex={0}
               persistentScrollbar={true}
               removeClippedSubviews={true} // Improve performance
+              getItemType={() => 'sentence'} // Add item type for better optimization
               overrideItemLayout={layout => {
                 layout.size = SENTENCE_ITEM_HEIGHT;
               }}
