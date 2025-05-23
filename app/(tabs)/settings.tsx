@@ -28,18 +28,29 @@ import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
+import { withOpacity } from '@/utils/colorUtils';
 
 // Memoize static components to prevent unnecessary re-renders
 interface SettingLabelProps {
   readonly icon: keyof typeof Ionicons.glyphMap;
   readonly text: string;
+  readonly iconColor?: string;
+  readonly iconBackgroundColor?: string;
 }
 
-const SettingLabel = memo(({ icon, text }: SettingLabelProps) => {
+const SettingLabel = memo(({ icon, text, iconColor, iconBackgroundColor }: SettingLabelProps) => {
   const colors = useColors();
+  const defaultIconColor = iconColor || colors.textSecondary;
+
   return (
     <View style={styles.settingLabelContainer}>
-      <Ionicons name={icon} size={20} color={colors.tabIconDefault} />
+      {iconBackgroundColor ? (
+        <View style={[styles.settingIconContainer, { backgroundColor: iconBackgroundColor }]}>
+          <Ionicons name={icon} size={18} color={defaultIconColor} />
+        </View>
+      ) : (
+        <Ionicons name={icon} size={20} color={defaultIconColor} />
+      )}
       <View style={styles.settingLabelTextContainer}>
         <ThemedText type="body">{text}</ThemedText>
       </View>
@@ -58,6 +69,7 @@ Divider.displayName = 'Divider';
 const SettingsScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
+  const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
@@ -186,15 +198,35 @@ const SettingsScreen: React.FC = () => {
             shadowSize="small"
             includePressAnimation={false}
           >
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                Interface
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
+                Customize your reading experience
+              </ThemedText>
+            </View>
+
             <View style={styles.settingRow}>
-              <SettingLabel icon="moon" text="Dark Mode" />
+              <SettingLabel
+                icon="moon"
+                text="Dark Mode"
+                iconColor={colors.info}
+                iconBackgroundColor={withOpacity(colors.info, 0.15)}
+              />
               <Animated.View style={themeToggleFade}>
                 <ThemeToggle />
               </Animated.View>
             </View>
             <Divider />
             <View style={styles.settingRow}>
-              <SettingLabel icon="language" text="English Translation" />
+              <SettingLabel
+                icon="language"
+                text="English Translation"
+                iconColor={colors.success}
+                iconBackgroundColor={withOpacity(colors.success, 0.15)}
+              />
               <Animated.View style={englishToggleFade}>
                 <Toggle
                   value={settings.showEnglish}
@@ -204,7 +236,12 @@ const SettingsScreen: React.FC = () => {
             </View>
             <Divider />
             <View style={styles.settingRow}>
-              <SettingLabel icon="text" text="Text Size" />
+              <SettingLabel
+                icon="text"
+                text="Text Size"
+                iconColor={colors.warning}
+                iconBackgroundColor={withOpacity(colors.warning, 0.15)}
+              />
               <View style={styles.sliderContainer}>
                 <ThemedText
                   type="caption"
@@ -270,38 +307,105 @@ const SettingsScreen: React.FC = () => {
             shadowSize="small"
             includePressAnimation={false}
           >
-            <ThemedButton
-              variant="outlined"
-              title="Twitter"
-              onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
-              icon="logo-twitter"
-              textWeight="normal"
-              style={styles.actionButton}
-              innerContainerStyle={styles.buttonInnerContainer}
-              contentContainerStyle={styles.buttonContentContainer}
-            />
-            <Divider />
-            <ThemedButton
-              variant="outlined"
-              title="Facebook"
-              onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
-              icon="logo-facebook"
-              textWeight="normal"
-              style={styles.actionButton}
-              innerContainerStyle={styles.buttonInnerContainer}
-              contentContainerStyle={styles.buttonContentContainer}
-            />
-            <Divider />
-            <ThemedButton
-              variant="outlined"
-              title="Instagram"
-              onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
-              icon="logo-instagram"
-              textWeight="normal"
-              style={styles.actionButton}
-              innerContainerStyle={styles.buttonInnerContainer}
-              contentContainerStyle={styles.buttonContentContainer}
-            />
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                Connect
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
+                Follow us on social media
+              </ThemedText>
+            </View>
+
+            {/* Social Links */}
+            <View style={styles.socialLinksContainer}>
+              <BaseCard
+                onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
+                style={styles.socialLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.socialLinkContent}>
+                  <View style={styles.socialLinkLeft}>
+                    <View
+                      style={[
+                        styles.socialIconContainer,
+                        { backgroundColor: withOpacity('#1DA1F2', 0.15) },
+                      ]}
+                    >
+                      <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                      Twitter
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.socialLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={() => handleSocialLink('https://www.facebook.com/OpenArabic.io/')}
+                style={styles.socialLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.socialLinkContent}>
+                  <View style={styles.socialLinkLeft}>
+                    <View
+                      style={[
+                        styles.socialIconContainer,
+                        { backgroundColor: withOpacity('#1877F2', 0.15) },
+                      ]}
+                    >
+                      <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                      Facebook
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.socialLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={() => handleSocialLink('https://www.instagram.com/openarabic.io/')}
+                style={styles.socialLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.socialLinkContent}>
+                  <View style={styles.socialLinkLeft}>
+                    <View
+                      style={[
+                        styles.socialIconContainer,
+                        { backgroundColor: withOpacity('#E4405F', 0.15) },
+                      ]}
+                    >
+                      <Ionicons name="logo-instagram" size={20} color="#E4405F" />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                      Instagram
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.socialLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+            </View>
           </BaseCard>
         </View>
 
@@ -312,27 +416,76 @@ const SettingsScreen: React.FC = () => {
             shadowSize="small"
             includePressAnimation={false}
           >
-            <ThemedButton
-              variant="outlined"
-              title="Support"
-              onPress={handleSupport}
-              icon="mail"
-              textWeight="normal"
-              style={styles.actionButton}
-              innerContainerStyle={styles.buttonInnerContainer}
-              contentContainerStyle={styles.buttonContentContainer}
-            />
-            <Divider />
-            <ThemedButton
-              variant="outlined"
-              title="Sign Out"
-              onPress={handleSignOut}
-              icon="log-out"
-              textWeight="normal"
-              style={styles.actionButton}
-              innerContainerStyle={styles.buttonInnerContainer}
-              contentContainerStyle={styles.buttonContentContainer}
-            />
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                Support & Account
+              </ThemedText>
+              <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
+                Get help or manage your account
+              </ThemedText>
+            </View>
+
+            {/* Action Links */}
+            <View style={styles.actionLinksContainer}>
+              <BaseCard
+                onPress={handleSupport}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View
+                      style={[
+                        styles.actionIconContainer,
+                        { backgroundColor: withOpacity(colors.info, 0.15) },
+                      ]}
+                    >
+                      <Ionicons name="mail" size={20} color={colors.info} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Support
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={handleSignOut}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View
+                      style={[
+                        styles.actionIconContainer,
+                        { backgroundColor: withOpacity(colors.error, 0.15) },
+                      ]}
+                    >
+                      <Ionicons name="log-out" size={20} color={colors.error} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Sign Out
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+            </View>
           </BaseCard>
         </View>
 
@@ -348,31 +501,15 @@ const SettingsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  actionButton: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-  },
   actionsContainer: {
     overflow: 'hidden',
   },
   actionsWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   arabicPreviewText: {
     flexShrink: 0,
     marginBottom: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  buttonContentContainer: {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  buttonInnerContainer: {
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
     paddingVertical: LAYOUT.SPACING.TINY,
   },
   commonDivider: {
@@ -384,7 +521,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   connectWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   container: {
     flex: 1,
@@ -433,6 +570,12 @@ const styles = StyleSheet.create({
   settingLabelTextContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
+  settingIconContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    padding: LAYOUT.SPACING.TINY,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   settingRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -444,7 +587,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   settingsWrapper: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   slider: {
     flex: 1,
@@ -465,8 +608,77 @@ const styles = StyleSheet.create({
   },
   versionWrapper: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  sectionHeader: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+  },
+  sectionTitle: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  sectionSubtitle: {
+    color: Colors.light.textTertiary,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+  },
+  socialLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  socialLinkCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+    padding: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XTINY,
+  },
+  socialLinkContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  socialLinkLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  socialIconContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    padding: LAYOUT.SPACING.TINY,
+  },
+  socialLinkText: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  socialLinkChevron: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  actionLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  actionLinkCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+    padding: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XTINY,
+  },
+  actionLinkContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionLinkLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  actionIconContainer: {
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    padding: LAYOUT.SPACING.TINY,
+  },
+  actionLinkText: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  actionLinkChevron: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
 });
 
