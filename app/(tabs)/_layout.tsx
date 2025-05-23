@@ -250,6 +250,7 @@ export default function TabLayout(): JSX.Element | null {
       // Tab animation optimizations
       freezeOnBlur: true,
       animation: 'fade' as const,
+      lazy: true,
 
       // Header customization
       headerTitleAlign: 'left' as const,
@@ -317,22 +318,22 @@ const styles = StyleSheet.create({
     ios: {
       fontWeight: '500',
     },
+    android: {
+      paddingBottom: LAYOUT.SPACING.MICRO,
+    },
+  }) as TextStyle,
+  tabBarLabel: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+    ...Platform.select({
+      ios: {
+        marginBottom: LAYOUT.SPACING.TINY,
+        fontWeight: '500',
+      },
       android: {
         paddingBottom: LAYOUT.SPACING.MICRO,
       },
-    }) as TextStyle,
-  tabBarLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-      ...Platform.select({
-        ios: {
-          marginBottom: LAYOUT.SPACING.TINY,
-          fontWeight: '500',
-        },
-        android: {
-          paddingBottom: LAYOUT.SPACING.MICRO,
-        },
-      }),
-    } as TextStyle,
+    }),
+  } as TextStyle,
   tabButton: {
     alignItems: 'center',
     flex: 1,

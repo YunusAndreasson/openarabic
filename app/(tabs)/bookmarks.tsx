@@ -292,10 +292,10 @@ export default function BookmarksScreen(): JSX.Element {
 
   // Helper function to count due words in an article - define before using it
   const countDueWords = useCallback(
-    (articleId: number, dueWordRootIds: Set<number>): number => {
+    (articleId: number, dueWordRootIds: Set<number> | undefined): number => {
       // Get detailed article data from the map
       const article = articleDetailsMap.get(articleId);
-      if (!article?.article_sentences?.length) return 0;
+      if (!article?.article_sentences?.length || !dueWordRootIds?.size) return 0;
 
       let count = 0;
       article.article_sentences.forEach((sentence: { sentence_words?: SentenceWord[] }) => {
@@ -533,6 +533,7 @@ export default function BookmarksScreen(): JSX.Element {
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
+        accessibilityLabel="Bookmarks screen - empty state"
       >
         <ThemedView style={styles.emptyStateContainer}>
           <EmptyState
@@ -551,6 +552,7 @@ export default function BookmarksScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
+      accessibilityLabel="Bookmarks screen"
     >
       <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
         <FlashList

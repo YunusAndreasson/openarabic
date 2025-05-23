@@ -400,6 +400,7 @@ export default function ArticlesScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
+      accessibilityLabel="Articles screen"
     >
       <ArticleList
         articles={[]}

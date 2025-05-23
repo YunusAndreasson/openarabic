@@ -85,7 +85,7 @@ export default function VocabularyScreen(): JSX.Element {
   );
 
   // Handler for pull-to-refresh with optimized invalidation
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (!user || isFetching) return;
 
     mediumFeedback();
@@ -95,7 +95,7 @@ export default function VocabularyScreen(): JSX.Element {
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [user, isFetching, invalidateVocabularyQueries]);
 
   // Check if data is already in cache to optimize loading behavior
   const isDataCached = useMemo(() => {
@@ -114,30 +114,33 @@ export default function VocabularyScreen(): JSX.Element {
   }, [isDataLoading, isFetching, isDataCached, studyWords, validStudyWords]);
 
   // Handle starting a review with optimized invalidation
-  const handleStartReview = () => {
+  const handleStartReview = useCallback(() => {
     if (!user) return;
     navigateTo({
       pathname: '/review',
       params: { fromVocabulary: 'true' },
     });
-  };
+  }, [user, navigateTo]);
 
   // Handle starting a listen session
-  const handleStartListen = () => {
+  const handleStartListen = useCallback(() => {
     if (!user) return;
     navigateTo({
       pathname: '/listen',
       params: { fromVocabulary: 'true' },
     });
-  };
+  }, [user, navigateTo]);
 
   // Handle stat press events with proper typing
-  const handleStatPress = (category: StatCategory) => {
-    navigateTo({
-      pathname: '/wordList',
-      params: { category },
-    });
-  };
+  const handleStatPress = useCallback(
+    (category: StatCategory) => {
+      navigateTo({
+        pathname: '/wordList',
+        params: { category },
+      });
+    },
+    [navigateTo]
+  );
 
   // Show error message if there was an error loading data
   if (error) {
@@ -155,6 +158,7 @@ export default function VocabularyScreen(): JSX.Element {
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
+        accessibilityLabel="Vocabulary screen - empty state"
       >
         <ThemedView style={styles.emptyStateContainer}>
           <EmptyState
@@ -178,6 +182,7 @@ export default function VocabularyScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
+      accessibilityLabel="Vocabulary screen"
     >
       <ScrollView
         refreshControl={

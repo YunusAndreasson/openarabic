@@ -173,6 +173,7 @@ const SettingsScreen: React.FC = () => {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
+      accessibilityLabel="Settings screen"
     >
       <ThemedView
         useSafeArea={false}
