@@ -8,6 +8,7 @@ import { StyleSheet, View, RefreshControl, ActivityIndicator } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
+import { AudioProgressBar } from '@/components/AudioProgressBar';
 import EmptyState from '@/components/EmptyState';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -30,15 +31,6 @@ import { withOpacity } from '@/utils/colorUtils';
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
 import type { SentenceWord } from '../../types/vocabulary.types';
-
-// Format time in MM:SS format
-const formatTime = (milliseconds: number): string => {
-  if (!milliseconds || isNaN(milliseconds)) return '00:00';
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const remainingSeconds = Math.floor(totalSeconds % 60);
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
 
 type ReadingListItem = Tables<'reading_list'> & {
   articles: Article & {
@@ -104,8 +96,8 @@ const styles = StyleSheet.create({
 });
 
 // Define a constant for item height calculation
-// Card content + margins + borders
-const ITEM_HEIGHT = 80; // Adjust based on your actual card height with padding and margins
+// Card content + margins + borders + audio progress bar when active
+const ITEM_HEIGHT = 120; // Increased from 80 to account for AudioProgressBar
 
 // Memory-optimized component for reading list items
 const BookmarkListItem = memo(
@@ -116,6 +108,7 @@ const BookmarkListItem = memo(
     isActive,
     dueWordCount = 0,
     onPress,
+    audioState,
   }: {
     item: ReadingListItem;
     progress: number;
@@ -123,13 +116,11 @@ const BookmarkListItem = memo(
     isActive: boolean;
     dueWordCount?: number;
     onPress: (id: number) => void;
+    audioState: string;
   }) => {
     const colors = useColors();
-    const playbackProgress = duration > 0 ? progress / duration : 0;
-    // Calculate remaining time in milliseconds
-    const remainingTime = Math.max(0, duration - progress);
-    const shouldShowTime = isActive && duration > 0;
     const hasDueWords = dueWordCount > 0;
+    const isPlaying = isActive && audioState === AUDIO_STATES.PLAYING;
 
     // Create left meta content with due words indicator
     const leftMetaContent = hasDueWords ? (
@@ -162,46 +153,23 @@ const BookmarkListItem = memo(
       </View>
     ) : null;
 
-    // Create meta content with time indicator
-    const metaContent = shouldShowTime && (
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Ionicons name="time-outline" size={14} color={colors.tint} />
-        <ThemedText type="label" style={{ color: colors.tint, marginLeft: 4 }} skipDefaultColor>
-          {formatTime(remainingTime)}
-        </ThemedText>
-      </View>
-    );
-
     return (
       <ArticleCard
         title={item.articles?.title || 'Untitled'}
         author={item.articles?.author?.name || 'Unknown Author'}
         leftMeta={leftMetaContent}
-        meta={metaContent}
         onPress={() => onPress(item.article_id)}
         active={isActive}
       >
-        {isActive ? (
-          <View
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 4,
-              backgroundColor: colors.transparent,
-              overflow: 'hidden',
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: colors.tint,
-                width: `${playbackProgress * 100}%`,
-                height: '100%',
-              }}
-            />
-          </View>
-        ) : null}
+        {isActive && duration > 0 && (
+          <AudioProgressBar
+            progress={progress}
+            duration={duration}
+            isPlaying={isPlaying}
+            showTimeRemaining={true}
+            compact={false}
+          />
+        )}
       </ArticleCard>
     );
   },
@@ -209,6 +177,7 @@ const BookmarkListItem = memo(
     const shouldUpdate =
       prevProps.isActive !== nextProps.isActive ||
       prevProps.dueWordCount !== nextProps.dueWordCount ||
+      prevProps.audioState !== nextProps.audioState ||
       (nextProps.isActive &&
         (prevProps.progress !== nextProps.progress || prevProps.duration !== nextProps.duration));
 
@@ -372,8 +341,8 @@ export default function BookmarksScreen(): JSX.Element {
 
     // Sort enhanced tracks based on the article position
     return [...enhancedTracks].sort((a, b) => {
-      const posA = articlePositionMap.get(a.articleId) ?? 999;
-      const posB = articlePositionMap.get(b.articleId) ?? 999;
+      const posA = a.articleId ? (articlePositionMap.get(a.articleId) ?? 999) : 999;
+      const posB = b.articleId ? (articlePositionMap.get(b.articleId) ?? 999) : 999;
       return posA - posB;
     });
   }, [enhancedTracks, sortedReadingList]);
@@ -577,6 +546,7 @@ export default function BookmarksScreen(): JSX.Element {
                 }
                 dueWordCount={dueWordCount}
                 onPress={handleArticlePress}
+                audioState={audioState}
               />
             );
           }}

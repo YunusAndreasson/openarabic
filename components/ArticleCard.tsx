@@ -38,14 +38,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     () =>
       active
         ? {
-            borderLeftWidth: 3,
-            borderColor: colors.tint,
             elevation: 6,
             shadowOpacity: LAYOUT.OPACITY.MEDIUM,
             shadowRadius: 8,
           }
         : undefined,
-    [active, colors.tint],
+    [active]
   );
 
   return (
@@ -108,13 +106,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
   },
-    iconContainer: {
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: LAYOUT.SPACING.XLARGE,
-      minWidth: LAYOUT.SPACING.XLARGE,
-      paddingTop: LAYOUT.SPACING.MICRO,
-    },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: LAYOUT.SPACING.XLARGE,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    paddingTop: LAYOUT.SPACING.MICRO,
+  },
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
