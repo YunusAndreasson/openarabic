@@ -378,8 +378,18 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                 {/* Content */}
                 <ScrollView
                   style={styles.content}
-                  showsVerticalScrollIndicator={false}
+                  showsVerticalScrollIndicator={true}
                   contentContainerStyle={styles.contentContainer}
+                  bounces={true}
+                  scrollEventThrottle={16}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled={true}
+                  scrollIndicatorInsets={{ right: 1 }}
+                  contentInsetAdjustmentBehavior="automatic"
+                  directionalLockEnabled={true}
+                  alwaysBounceVertical={true}
+                  scrollEnabled={true}
+                  overScrollMode="always"
                 >
                   {/* Main sections */}
                   {content.sections.map((section, index) => (
@@ -460,10 +470,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.MEDIUM,
+    pointerEvents: 'box-none',
   },
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    maxHeight: '85%',
+    height: '50%',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -472,6 +483,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 12,
     elevation: 8,
+    overflow: 'hidden',
+    display: 'flex',
+    pointerEvents: 'auto',
   },
   header: {
     flexDirection: 'row',
@@ -480,6 +494,8 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.XLARGE,
     paddingBottom: LAYOUT.SPACING.LARGE,
     borderBottomWidth: 1,
+    flexShrink: 0,
+    pointerEvents: 'auto',
   },
   headerContent: {
     flex: 1,
@@ -498,13 +514,18 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   content: {
     flex: 1,
+    backgroundColor: 'transparent',
+    pointerEvents: 'auto',
+    zIndex: 1,
   },
   contentContainer: {
     padding: LAYOUT.SPACING.XLARGE,
     paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   section: {
     marginBottom: LAYOUT.SPACING.XLARGE,
@@ -521,20 +542,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
+    flexShrink: 0,
   },
   sectionTitle: {
     flex: 1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.3,
   },
   sectionContent: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
-    marginLeft: 48, // Align with title text
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+    marginLeft: 48,
   },
   tipsSection: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 1,
     padding: LAYOUT.SPACING.LARGE,
     marginTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   tipsHeader: {
     flexDirection: 'row',
@@ -548,6 +571,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,
+    flexShrink: 0,
   },
   tipsTitle: {
     flex: 1,
@@ -568,6 +592,6 @@ const styles = StyleSheet.create({
   },
   tipText: {
     flex: 1,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
   },
 });
