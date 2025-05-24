@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import BaseCard from './BaseCard';
 import { ThemedButton } from './ThemedButton';
 import { useColors } from '@/hooks/useColors';
@@ -17,6 +18,11 @@ export type BottomControlsProps = {
   secondaryVariant?: 'filled' | 'outlined';
   secondaryDisabled?: boolean;
   secondaryAccessibilityLabel?: string;
+  // Timer button props
+  showTimerButton?: boolean;
+  onTimerPress?: () => void;
+  isTimerActive?: boolean;
+  timerAccessibilityLabel?: string;
 };
 
 const BottomControls = memo(
@@ -31,12 +37,54 @@ const BottomControls = memo(
     secondaryVariant = 'outlined',
     secondaryDisabled = false,
     secondaryAccessibilityLabel,
+    showTimerButton,
+    onTimerPress,
+    isTimerActive,
+    timerAccessibilityLabel,
   }: BottomControlsProps) => {
     const colors = useColors();
 
     return (
       <View style={[styles.bottomControlsContainer, { backgroundColor: colors.transparent }]}>
         <BaseCard style={styles.controlsCard} shadowSize="medium" includePressAnimation={false}>
+          {/* Timer button row - only show when audio is playing */}
+          {showTimerButton && onTimerPress && (
+            <View style={styles.timerRow}>
+              <TouchableOpacity
+                onPress={onTimerPress}
+                style={[
+                  styles.timerButton,
+                  {
+                    backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
+                    borderColor: isTimerActive ? colors.tint : colors.borderOverlay,
+                  },
+                ]}
+                activeOpacity={0.7}
+                accessibilityLabel={timerAccessibilityLabel || 'Sleep timer'}
+              >
+                <Ionicons
+                  name={isTimerActive ? 'timer' : 'timer-outline'}
+                  size={18}
+                  color={isTimerActive ? colors.background : colors.textTertiary}
+                />
+                <ThemedText
+                  type="caption"
+                  style={[
+                    styles.timerLabel,
+                    {
+                      color: isTimerActive ? colors.background : colors.textTertiary,
+                      fontWeight: isTimerActive ? '600' : '500',
+                    },
+                  ]}
+                  skipDefaultColor
+                >
+                  Timer
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Main action buttons */}
           <View style={styles.actionButtonsRow}>
             {secondaryLabel && onSecondaryPress && (
               <View style={styles.buttonContainer}>
@@ -99,6 +147,33 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  },
+  timerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL + 2,
+  },
+  timerButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    borderWidth: 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM + 2,
+    paddingVertical: LAYOUT.SPACING.SMALL - 1,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  timerLabel: {
+    marginLeft: LAYOUT.SPACING.XSMALL - 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
+    letterSpacing: 0.2,
   },
 });
 

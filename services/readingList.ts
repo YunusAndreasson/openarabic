@@ -62,7 +62,7 @@ export const readingListService = {
   /**
    * Gets all reading list articles
    * @param userId - The user ID
-  */
+   */
   async getInProgressArticles(userId: string): Promise<Article[]> {
     await checkAuthentication(userId);
     const { data, error } = await supabase
@@ -84,7 +84,7 @@ export const readingListService = {
    * Adds an article to the reading list
    * @param userId - The user ID
    * @param articleId - The article ID to add to reading list
-  */
+   */
   async addToReadingList(userId: string, articleId: number): Promise<void> {
     await checkAuthentication(userId);
     // First check if the article is already in the reading list
@@ -121,7 +121,7 @@ export const readingListService = {
 
   /**
    * Removes an article from the reading list
-  */
+   */
   async removeFromReadingList(userId: string, articleId: number): Promise<void> {
     await checkAuthentication(userId);
     const { error } = await supabase
@@ -140,7 +140,7 @@ export const readingListService = {
 
   /**
    * Checks if an article is in the user's reading list
-  */
+   */
   async isInReadingList(userId: string, articleId: number): Promise<boolean> {
     await checkAuthentication(userId);
     const { data, error } = await supabase
@@ -162,7 +162,7 @@ export const readingListService = {
 
   /**
    * Gets the user's reading list
-  */
+   */
   async getReadingList(userId: string): Promise<ReadingListItem[]> {
     await checkAuthentication(userId);
     const { data, error } = await supabase
@@ -172,7 +172,8 @@ export const readingListService = {
         *,
         articles:article_id(
           *,
-          author:authors(*)
+          author:authors(*),
+          category:categories(*)
         )
       `
       )

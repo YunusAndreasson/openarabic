@@ -12,6 +12,9 @@ import { AudioProgressBar } from '@/components/AudioProgressBar';
 import EmptyState from '@/components/EmptyState';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import SortingControls from '@/components/SortingControls';
+import SleepTimer from '@/components/SleepTimer';
+import type { SortOption, SortDirection } from '@/components/SortingControls';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
@@ -20,6 +23,7 @@ import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
+import { useSleepTimer } from '@/hooks/useSleepTimer';
 import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
@@ -41,31 +45,8 @@ type ReadingListItem = Tables<'reading_list'> & {
 };
 
 const styles = StyleSheet.create({
-  actionButtonsRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  bottomControlsContainer: {
-    bottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-    left: LAYOUT.SCREEN_EDGE_PADDING,
-    position: 'absolute',
-    right: LAYOUT.SCREEN_EDGE_PADDING,
-    zIndex: LAYOUT.Z_INDEX.POPUP,
-  },
-  buttonContainer: {
-    width: `${LAYOUT.WIDTH_RATIOS.ALMOST_HALF * 100}%`,
-  },
   container: {
     flex: 1,
-  },
-  controlsCard: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    width: '100%',
-  },
-  controlsLabelContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   emptyStateContainer: {
     alignItems: 'center',
@@ -76,21 +57,14 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  fullWidthButton: {
-    width: '100%',
-  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  shuffleButton: {
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-  },
-  sortingNote: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  headerControls: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.SMALL,
   },
 });
 
@@ -157,6 +131,74 @@ const BookmarkListItem = memo(
         title={item.articles?.title || 'Untitled'}
         author={item.articles?.author?.name || 'Unknown Author'}
         leftMeta={leftMetaContent}
+        meta={
+          <View
+            style={{ flexDirection: 'row', alignItems: 'center', marginLeft: LAYOUT.SPACING.SMALL }}
+          >
+            {/* Level indicator */}
+            {item.articles?.difficulty_level && (
+              <View
+                style={{
+                  backgroundColor: colors.elevation1,
+                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
+                  paddingVertical: LAYOUT.SPACING.MICRO,
+                  borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+                }}
+              >
+                <ThemedText
+                  type="caption"
+                  style={{
+                    color: colors.textTertiary,
+                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                    fontWeight: '500',
+                  }}
+                  skipDefaultColor
+                >
+                  L{item.articles.difficulty_level}
+                </ThemedText>
+              </View>
+            )}
+
+            {/* Dot separator */}
+            {item.articles?.difficulty_level && item.articles?.category?.name && (
+              <ThemedText
+                type="caption"
+                style={{
+                  color: colors.textTertiary,
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                  marginHorizontal: LAYOUT.SPACING.XSMALL,
+                }}
+                skipDefaultColor
+              >
+                •
+              </ThemedText>
+            )}
+
+            {/* Category */}
+            {item.articles?.category?.name && (
+              <View
+                style={{
+                  backgroundColor: colors.elevation1,
+                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
+                  paddingVertical: LAYOUT.SPACING.MICRO,
+                  borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+                }}
+              >
+                <ThemedText
+                  type="caption"
+                  style={{
+                    color: colors.textTertiary,
+                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                    fontWeight: '500',
+                  }}
+                  skipDefaultColor
+                >
+                  {item.articles.category.name}
+                </ThemedText>
+              </View>
+            )}
+          </View>
+        }
         onPress={() => onPress(item.article_id)}
         active={isActive}
       >
@@ -199,6 +241,13 @@ export default function BookmarksScreen(): JSX.Element {
   // playbackMode: 'none' | 'all' | 'shuffle'
   const [playbackMode, setPlaybackMode] = useState<'none' | 'all' | 'shuffle'>('none');
 
+  // Sorting state
+  const [currentSort, setCurrentSort] = useState<SortOption>('dueWords');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  // Sleep timer state
+  const [showSleepTimer, setShowSleepTimer] = useState(false);
+
   // Get due words data for sorting
   const { dueWordRootIds } = useArticlesByDueWords(user?.id, 0);
 
@@ -206,6 +255,13 @@ export default function BookmarksScreen(): JSX.Element {
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
   const { progress, duration, metadata, audioState, currentTrackIndex, actions } =
     enhancedAudioPlayer;
+
+  // Sleep timer functionality
+  const sleepTimer = useSleepTimer(() => {
+    // Stop playback when timer completes
+    actions.stopPlayback();
+    setPlaybackMode('none');
+  });
 
   // --- TanStack Query Hooks ---
   const readingListQuery = useQuery({
@@ -231,7 +287,7 @@ export default function BookmarksScreen(): JSX.Element {
   const articlesWithSentencesQuery = useQuery({
     queryKey: ['articles-with-sentences', user?.id, readingList],
     queryFn: async () => {
-      if (!user?.id || !readingList.length || !dueWordRootIds.size)
+      if (!user?.id || !readingList.length || !dueWordRootIds?.size)
         return new Map<number, Article>();
 
       // Get article IDs from reading list
@@ -252,7 +308,7 @@ export default function BookmarksScreen(): JSX.Element {
 
       return articleMap;
     },
-    enabled: !!user?.id && !!readingList.length && dueWordRootIds.size > 0,
+    enabled: !!user?.id && !!readingList.length && (dueWordRootIds?.size ?? 0) > 0,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -279,7 +335,77 @@ export default function BookmarksScreen(): JSX.Element {
     [articleDetailsMap]
   );
 
-  // Deduplicate and sort reading list by due words
+  // Helper function to estimate reading time
+  const estimateReadingTime = useCallback((article: Article): number => {
+    if (article.article_sentences?.length) {
+      return Math.max(1, Math.ceil(article.article_sentences.length / 10));
+    }
+    if (article.summary) {
+      const wordCount = article.summary.split(/\s+/).length;
+      const estimatedSentences = Math.ceil(wordCount / 15);
+      return Math.max(1, Math.ceil(estimatedSentences / 10));
+    }
+    return 2; // Default fallback
+  }, []);
+
+  // Sorting function
+  const sortReadingList = useCallback(
+    (
+      list: ReadingListItem[],
+      sortBy: SortOption,
+      direction: SortDirection,
+      dueWordRootIds: Set<number> | undefined,
+      articleDetailsMap: Map<number, Article>
+    ): ReadingListItem[] => {
+      const sortedList = [...list];
+
+      switch (sortBy) {
+        case 'dueWords':
+          if (dueWordRootIds && dueWordRootIds.size > 0 && articleDetailsMap.size > 0) {
+            return sortedList.sort((a, b) => {
+              const aDueWords = countDueWords(a.article_id, dueWordRootIds);
+              const bDueWords = countDueWords(b.article_id, dueWordRootIds);
+              const result = bDueWords - aDueWords;
+              return direction === 'desc' ? result : -result;
+            });
+          }
+          // Fall through to return original list if conditions not met
+          return sortedList;
+        case 'difficulty':
+          return sortedList.sort((a, b) => {
+            const result =
+              (a.articles?.difficulty_level || 0) - (b.articles?.difficulty_level || 0);
+            return direction === 'desc' ? -result : result;
+          });
+        case 'readingTime':
+          return sortedList.sort((a, b) => {
+            const aTime = a.articles ? estimateReadingTime(a.articles) : 0;
+            const bTime = b.articles ? estimateReadingTime(b.articles) : 0;
+            const result = aTime - bTime;
+            return direction === 'desc' ? -result : result;
+          });
+        case 'author':
+          return sortedList.sort((a, b) => {
+            const result = (a.articles?.author?.name || '').localeCompare(
+              b.articles?.author?.name || ''
+            );
+            return direction === 'desc' ? -result : result;
+          });
+        case 'category':
+          return sortedList.sort((a, b) => {
+            const result = (a.articles?.category?.name || '').localeCompare(
+              b.articles?.category?.name || ''
+            );
+            return direction === 'desc' ? -result : result;
+          });
+      }
+
+      return sortedList;
+    },
+    [countDueWords, estimateReadingTime]
+  );
+
+  // Deduplicate and sort reading list
   const sortedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
 
@@ -291,17 +417,15 @@ export default function BookmarksScreen(): JSX.Element {
       return true;
     });
 
-    // Then sort by due words count (if we have due words)
-    if (dueWordRootIds?.size > 0 && articleDetailsMap.size > 0) {
-      return [...dedupedList].sort((a, b) => {
-        const aDueWords = countDueWords(a.article_id, dueWordRootIds);
-        const bDueWords = countDueWords(b.article_id, dueWordRootIds);
-        return bDueWords - aDueWords; // Sort descending (most due words first)
-      });
-    }
-
-    return dedupedList;
-  }, [readingList, dueWordRootIds, articleDetailsMap, countDueWords]);
+    // Then sort by selected option
+    return sortReadingList(
+      dedupedList,
+      currentSort,
+      sortDirection,
+      dueWordRootIds,
+      articleDetailsMap
+    );
+  }, [readingList, currentSort, sortDirection, dueWordRootIds, articleDetailsMap, sortReadingList]);
 
   // Check if data is already in cache
   const isDataCached = useMemo(() => {
@@ -473,6 +597,24 @@ export default function BookmarksScreen(): JSX.Element {
     }
   }, [user?.id, queryClient, isRefreshing]);
 
+  // Handle sorting
+  const handleSortChange = useCallback((sort: SortOption, direction: SortDirection) => {
+    setCurrentSort(sort);
+    setSortDirection(direction);
+  }, []);
+
+  // Handle sleep timer
+  const handleSleepTimerSet = useCallback(
+    (minutes: number) => {
+      sleepTimer.actions.startTimer(minutes);
+    },
+    [sleepTimer.actions]
+  );
+
+  const handleSleepTimerCancel = useCallback(() => {
+    sleepTimer.actions.cancelTimer();
+  }, [sleepTimer.actions]);
+
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
 
@@ -560,6 +702,15 @@ export default function BookmarksScreen(): JSX.Element {
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.headerControls}>
+              <SortingControls
+                currentSort={currentSort}
+                sortDirection={sortDirection}
+                onSortChange={handleSortChange}
+              />
+            </View>
+          }
           ListEmptyComponent={null}
           drawDistance={ITEM_HEIGHT * 5}
           overrideItemLayout={layout => {
@@ -598,6 +749,23 @@ export default function BookmarksScreen(): JSX.Element {
             ? 'Stop shuffle playback'
             : 'Play bookmarked articles in random order'
         }
+        showTimerButton={isCurrentlyPlaying}
+        onTimerPress={() => {
+          mediumFeedback();
+          setShowSleepTimer(true);
+        }}
+        isTimerActive={sleepTimer.state.isActive}
+        timerAccessibilityLabel="Open sleep timer"
+      />
+
+      {/* Sleep Timer Modal */}
+      <SleepTimer
+        isVisible={showSleepTimer}
+        onClose={() => setShowSleepTimer(false)}
+        onTimerSet={handleSleepTimerSet}
+        onTimerCancel={handleSleepTimerCancel}
+        remainingTime={sleepTimer.state.remainingTime}
+        isActive={sleepTimer.state.isActive}
       />
     </ThemedView>
   );
