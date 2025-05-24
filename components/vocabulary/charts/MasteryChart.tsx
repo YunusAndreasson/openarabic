@@ -11,7 +11,7 @@ import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_30 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
-import { generateDateRange, getWordState } from '../shared/utils';
+import { generateDateRange } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
 
 interface MasteryChartProps {
@@ -41,11 +41,13 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
         if (createdAt <= date) {
           totalCount++;
 
-          // Check if word was mastered by this date
-          const wordState = getWordState(word);
+          // Check if word was mastered by this date using consistent FSRS logic
+          const state = word.fsrs_state;
+          const stability = word.fsrs_stability ?? 0;
           const lastReview = word.fsrs_last_review ? new Date(word.fsrs_last_review) : null;
 
-          if (wordState === 'mastered' && lastReview && lastReview <= date) {
+          // Word is mastered if: Review state (2) with stability >= 5 days AND reviewed by this date
+          if (state === 2 && stability >= 5 && lastReview && lastReview <= date) {
             masteredCount++;
           }
         }
@@ -136,7 +138,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
       older.length > 0 ? older.reduce((sum, day) => sum + day.masteryRate, 0) / older.length : 0;
 
     const change = recentAvg - olderAvg;
-    const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
+    const trend = change > 2 ? 'improving' : change < -2 ? 'declining' : 'stable';
     const totalMastered = recent[recent.length - 1]?.masteredCount || 0;
 
     return {
@@ -163,21 +165,21 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
       return 'Start reviewing to build mastery';
     }
     if (trend === 'improving') {
-      return `Improving by ${Math.abs(weeklyChange)}% this week! 📈`;
+      return `Improving by ${Math.abs(weeklyChange)}% this week`;
     }
     if (trend === 'declining') {
-      return `Down ${Math.abs(weeklyChange)}% - focus on reviews 🔄`;
+      return `Down ${Math.abs(weeklyChange)}% - focus on reviews`;
     }
     if (currentRate >= 80) {
-      return 'Outstanding mastery rate! 🏆';
+      return 'Outstanding mastery rate';
     }
     if (currentRate >= 70) {
-      return 'Excellent mastery rate! 🎯';
+      return 'Excellent mastery rate';
     }
     if (currentRate >= 50) {
-      return 'Good mastery progress 👍';
+      return 'Good mastery progress';
     }
-    return 'Building vocabulary foundation 🌱';
+    return 'Building vocabulary foundation';
   }, [chartData.insights]);
 
   if (!chartData.hasData) {
@@ -235,7 +237,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
           }}
           rightStat={{
             value: chartData.insights.totalMastered,
-            label: 'mastered words',
+            label: 'words mastered',
           }}
         />
 
@@ -294,7 +296,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
               {chartData.smoothPath && chartData.dataPoints.length > 0 && (
                 <Path
                   path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
+                  color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
                 />
               )}
 
@@ -316,7 +318,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                       return (
                         <Path
                           path={areaPath}
-                          color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
+                          color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
                         />
                       );
                     })()}
@@ -332,33 +334,27 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                     path={chartData.smoothPath}
                     style="stroke"
                     strokeWidth={3}
-                    color={chartColors.performance.excellent}
+                    color={chartColors.ui.accent}
                   >
                     <Shadow
                       dx={0}
                       dy={2}
                       blur={4}
-                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.3)}
+                      color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
                     />
                   </Path>
 
                   {/* Data points with enhanced styling */}
                   {chartData.dataPoints.map((point, index) => (
                     <Group key={`mastery-point-${index}`}>
-                      <Circle
-                        cx={point.x}
-                        cy={point.y}
-                        r={4}
-                        color={chartColors.performance.excellent}
-                      >
+                      <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.accent}>
                         <Shadow
                           dx={0}
                           dy={1}
                           blur={2}
-                          color={chartColors.withOpacity(chartColors.performance.excellent, 0.4)}
+                          color={chartColors.withOpacity(chartColors.ui.accent, 0.4)}
                         />
                       </Circle>
-                      <Circle cx={point.x} cy={point.y} r={2} color={colors.white} />
                     </Group>
                   ))}
                 </Group>
@@ -377,7 +373,6 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                       color={chartColors.withOpacity(chartColors.ui.accent, 0.4)}
                     />
                   </Circle>
-                  <Circle cx={milestone.x} cy={milestone.y} r={3} color={colors.white} />
                 </Group>
               ))}
             </Group>
@@ -386,7 +381,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.performance.excellent, label: 'Progress' },
+            { type: 'line', color: chartColors.ui.accent, label: 'Progress' },
             { type: 'dot', color: chartColors.ui.accent, label: 'Milestones' },
           ]}
           timeRange="Last 30 days"

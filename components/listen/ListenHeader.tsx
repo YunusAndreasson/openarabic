@@ -35,7 +35,7 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
   };
 
   // Determine repeat icon color based on enabled state
-  const repeatIconColor = repeatEnabled ? colors.tint : colors.tabIconDefault;
+  const repeatIconColor = repeatEnabled ? colors.repeatActive : colors.interactiveSecondary;
 
   return (
     <View style={styles.header}>
@@ -63,7 +63,7 @@ const ListenHeader: React.FC<ListenHeaderProps> = ({
           onPress={onClose}
           size="large"
           iconSize={24}
-          color={colors.tabIconDefault}
+          color={colors.interactiveSecondary}
           hapticFeedback={false}
         />
       </View>

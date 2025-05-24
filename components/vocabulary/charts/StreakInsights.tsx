@@ -129,9 +129,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dot: {
-    width: 12,
-    height: 12,
-    borderRadius: 12 / 2,
+    width: 8,
+    height: 8,
+    borderRadius: 8 / 2,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   dayLabel: {

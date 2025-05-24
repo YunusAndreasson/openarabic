@@ -96,36 +96,36 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
     // Define performance zones using consistent color system
     const performanceZones = [
       {
-        name: 'Great',
+        name: 'Excellent',
         min: 80,
         max: 100,
         color: chartColors.performance.excellent,
-        y: GRAPH_HEIGHT_LARGE - (80 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        y: GRAPH_HEIGHT_LARGE - (100 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
         height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
       {
         name: 'Good',
         min: 60,
-        max: 80,
+        max: 79,
         color: chartColors.performance.good,
-        y: GRAPH_HEIGHT_LARGE - (80 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        y: GRAPH_HEIGHT_LARGE - (79 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (19 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
       {
-        name: 'OK',
+        name: 'Fair',
         min: 40,
-        max: 60,
+        max: 59,
         color: chartColors.performance.moderate,
-        y: GRAPH_HEIGHT_LARGE - (60 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        y: GRAPH_HEIGHT_LARGE - (59 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (19 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
       {
-        name: 'Poor',
+        name: 'Needs Work',
         min: 0,
-        max: 40,
+        max: 39,
         color: chartColors.performance.poor,
-        y: GRAPH_HEIGHT_LARGE - (40 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (40 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        y: GRAPH_HEIGHT_LARGE - (39 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (39 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
     ];
 
@@ -144,7 +144,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
         : 0;
 
     const change = recentAvg - olderAvg;
-    const trend = change > 5 ? 'improving' : change < -5 ? 'declining' : 'stable';
+    const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
 
     return {
       efficiencyPath: path.toSVGString(),
@@ -168,18 +168,18 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       return 'Study some words to see your progress';
     }
     if (trend === 'improving') {
-      return 'Getting better! 📈';
+      return 'Learning efficiency is improving';
     }
     if (trend === 'declining') {
-      return 'Try different study methods 🔄';
+      return 'Try different study methods';
     }
     if (currentEfficiency >= 80) {
-      return 'Great job! 🎯';
+      return 'Excellent learning efficiency';
     }
     if (currentEfficiency >= 60) {
-      return 'Good work 👍';
+      return 'Good learning efficiency';
     }
-    return 'Room to improve 💡';
+    return 'Room for improvement in efficiency';
   }, [chartData.insights]);
 
   if (!chartData.hasData) {
@@ -187,7 +187,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.efficiencyContent}>
           <CardHeader
-            title="How Well You Learn"
+            title="Learning Efficiency"
             subtitle="Study some words to see your progress"
             onInfoPress={onInfoPress}
           />
@@ -199,34 +199,44 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
   return (
     <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.efficiencyContent}>
-        <CardHeader title="How Well You Learn" subtitle={subtitle} onInfoPress={onInfoPress} />
+        <CardHeader title="Learning Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
 
         <StatsRow
           leftStat={{
             value: `${chartData.insights.currentEfficiency}%`,
-            label: 'today',
+            label: 'current efficiency',
             color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
           }}
           rightStat={{
             value: `${chartData.insights.weeklyAverage}%`,
-            label: 'this week',
+            label: 'weekly average',
           }}
         />
 
         {/* Enhanced Efficiency Graph */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Background zones - more subtle */}
+            {/* Background zones - more prominent */}
             <Group>
               {chartData.performanceZones.map((zone, index) => (
-                <Rect
-                  key={`zone-${index}`}
-                  x={0}
-                  y={zone.y}
-                  width={GRAPH_WIDTH}
-                  height={zone.height}
-                  color={chartColors.withOpacity(zone.color, 0.05)}
-                />
+                <Group key={`zone-group-${index}`}>
+                  {/* Zone background */}
+                  <Rect
+                    x={0}
+                    y={zone.y}
+                    width={GRAPH_WIDTH}
+                    height={zone.height}
+                    color={chartColors.withOpacity(zone.color, 0.12)}
+                  />
+                  {/* Zone border */}
+                  <Rect
+                    x={0}
+                    y={zone.y}
+                    width={GRAPH_WIDTH}
+                    height={1}
+                    color={chartColors.withOpacity(zone.color, 0.3)}
+                  />
+                </Group>
               ))}
             </Group>
 
@@ -262,7 +272,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               {chartData.smoothPath && (
                 <Path
                   path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
+                  color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
                 />
               )}
             </Group>
@@ -274,56 +284,30 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                   path={chartData.smoothPath}
                   style="stroke"
                   strokeWidth={3}
-                  color={chartColors.performance.excellent}
+                  color={chartColors.ui.accent}
                 >
                   <Shadow
                     dx={0}
                     dy={2}
                     blur={4}
-                    color={chartColors.withOpacity(chartColors.performance.excellent, 0.3)}
+                    color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
                   />
                 </Path>
               )}
             </Group>
 
             {/* Data points - show every other point for clarity */}
-            <Group>
-              {efficiencyData
-                .filter(d => d.wordCount > 0)
-                .filter((_, index) => index % 2 === 0) // Show every other point for clarity
-                .map((data, index) => {
-                  const originalIndex = efficiencyData.findIndex(d => d === data);
-                  const x = originalIndex * (GRAPH_WIDTH / (efficiencyData.length - 1));
-                  const y =
-                    GRAPH_HEIGHT_LARGE -
-                    (data.averageEfficiency / (chartData.maxEfficiency || 1)) * GRAPH_HEIGHT_LARGE;
-
-                  const pointColor = chartColors.getPerformanceColor(data.averageEfficiency);
-
-                  return (
-                    <Group key={`efficiency-point-${index}`}>
-                      <Circle cx={x} cy={y} r={4} color={pointColor}>
-                        <Shadow
-                          dx={0}
-                          dy={1}
-                          blur={2}
-                          color={chartColors.withOpacity(pointColor, 0.4)}
-                        />
-                      </Circle>
-                      <Circle cx={x} cy={y} r={2} color={colors.white} />
-                    </Group>
-                  );
-                })}
-            </Group>
+            {/* Removed individual dots as they don't make sense for daily averages */}
           </Canvas>
         </View>
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.performance.excellent, label: 'Learning' },
-            { type: 'dot', color: chartColors.performance.good, label: 'Good' },
-            { type: 'dot', color: chartColors.performance.moderate, label: 'OK' },
-            { type: 'dot', color: chartColors.performance.poor, label: 'Poor' },
+            { type: 'line', color: chartColors.ui.accent, label: 'Daily Average' },
+            { type: 'area', color: chartColors.performance.excellent, label: 'Excellent Zone' },
+            { type: 'area', color: chartColors.performance.good, label: 'Good Zone' },
+            { type: 'area', color: chartColors.performance.moderate, label: 'Fair Zone' },
+            { type: 'area', color: chartColors.performance.poor, label: 'Needs Work' },
           ]}
           timeRange="Last 30 days"
         />

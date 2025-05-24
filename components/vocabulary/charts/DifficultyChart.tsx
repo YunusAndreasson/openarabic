@@ -41,23 +41,23 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
       };
     }
 
-    // Define difficulty buckets with 3 clear categories using consistent colors
+    // Define difficulty buckets with 3 clear categories using FSRS-aligned thresholds
     const buckets: DifficultyBucket[] = [
       {
-        range: '0.0-0.5',
+        range: '0.0-0.4',
         count: 0,
         percentage: 0,
         color: chartColors.difficulty.easy,
         label: 'Easy',
-        emoji: '😊',
+        emoji: '',
       },
       {
-        range: '0.5-0.7',
+        range: '0.4-0.7',
         count: 0,
         percentage: 0,
         color: chartColors.difficulty.medium,
         label: 'Medium',
-        emoji: '😐',
+        emoji: '',
       },
       {
         range: '0.7-1.0',
@@ -65,7 +65,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         percentage: 0,
         color: chartColors.difficulty.hard,
         label: 'Hard',
-        emoji: '😰',
+        emoji: '',
       },
     ];
 
@@ -80,8 +80,8 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         hardWords++;
       }
 
-      // Categorize into 3 buckets
-      if (difficulty < 0.5) {
+      // Categorize into 3 buckets with FSRS-aligned thresholds
+      if (difficulty < 0.4) {
         buckets[0]!.count++;
       } else if (difficulty < 0.7) {
         buckets[1]!.count++;
@@ -130,12 +130,12 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
     const { distribution } = difficultyData.insights;
 
     if (distribution === 'easy') {
-      return 'Mostly easy words - ready for harder content?';
+      return 'Mostly easy words - consider harder content';
     }
     if (distribution === 'challenging') {
       return 'Many challenging words - focus on review';
     }
-    return 'Balanced difficulty - great progress!';
+    return 'Balanced difficulty distribution';
   }, [difficultyData.insights, difficultyData.hasData]);
 
   if (!difficultyData.hasData) {
@@ -160,12 +160,12 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         <StatsRow
           leftStat={{
             value: difficultyData.insights.averageDifficulty.toFixed(1),
-            label: 'average',
+            label: 'average difficulty',
             color: chartColors.getDifficultyColor(difficultyData.insights.averageDifficulty),
           }}
           rightStat={{
             value: difficultyData.insights.hardWords,
-            label: 'hard words',
+            label: 'challenging words',
             color:
               difficultyData.insights.hardWords > 10
                 ? chartColors.difficulty.hard

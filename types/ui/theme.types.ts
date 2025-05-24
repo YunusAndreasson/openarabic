@@ -63,6 +63,13 @@ export interface ThemeColors {
   headerOverlay: string;
   tabBarOverlay: string;
 
+  // Semantic UI colors for better UX
+  progressIndicator: string;
+  progressBackground: string;
+  interactiveSecondary: string;
+  completionSuccess: string;
+  repeatActive: string;
+
   [key: string]: string;
 }
 

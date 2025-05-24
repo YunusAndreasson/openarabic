@@ -31,7 +31,12 @@ const ReviewHeader: React.FC<ReviewHeaderProps> = ({
           animationDuration={500}
         />
       </View>
-      <CloseButton onPress={onClose} size="large" iconSize={24} color={colors.tabIconDefault} />
+      <CloseButton
+        onPress={onClose}
+        size="large"
+        iconSize={24}
+        color={colors.interactiveSecondary}
+      />
     </View>
   );
 };

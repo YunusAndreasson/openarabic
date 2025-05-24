@@ -57,7 +57,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
     <View style={[styles.contentContainer, contentStyle]}>
       <Section delay={100} animated>
         <View style={styles.iconContainer}>
-          <Ionicons name={iconName as any} size={iconSize} color={colors.tint} />
+          <Ionicons name={iconName as any} size={iconSize} color={colors.completionSuccess} />
         </View>
       </Section>
       <View style={styles.textContainer}>

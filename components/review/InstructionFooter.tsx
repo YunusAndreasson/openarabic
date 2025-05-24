@@ -60,12 +60,12 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
-    ...LAYOUT.SHADOW.SMALL,
-    backgroundColor: colors.elevation2,
+    backgroundColor: colors.elevation1,
+    opacity: 0.7,
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,
-        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+        shadowOpacity: LAYOUT.OPACITY.XLIGHT * 0.5,
       },
     }),
   };
@@ -75,7 +75,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
       <Animated.View style={containerStyle}>
         <View style={styles.instructionItem}>
           <View style={iconStyle}>
-            <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />
+            <Ionicons name="arrow-back" size={18} color={colors.interactiveSecondary} />
           </View>
           <ThemedText variant="subtle" style={textStyle}>
             Unknown
@@ -84,7 +84,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
 
         <View style={[styles.instructionItem, styles.instructionItemCenter]}>
           <View style={iconStyle}>
-            <Ionicons name="finger-print" size={18} color={colors.tabIconDefault} />
+            <Ionicons name="finger-print" size={18} color={colors.interactiveSecondary} />
           </View>
           <ThemedText variant="subtle" style={textStyle}>
             Unsure
@@ -96,7 +96,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
             Known
           </ThemedText>
           <View style={iconStyle}>
-            <Ionicons name="arrow-forward" size={18} color={colors.tabIconDefault} />
+            <Ionicons name="arrow-forward" size={18} color={colors.interactiveSecondary} />
           </View>
         </View>
       </Animated.View>

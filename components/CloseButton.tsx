@@ -93,7 +93,11 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
         ]}
         hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
       >
-        <Ionicons name="close-outline" size={finalIconSize} color={color || colors.tint} />
+        <Ionicons
+          name="close-outline"
+          size={finalIconSize}
+          color={color || colors.interactiveSecondary}
+        />
       </TouchableOpacity>
     </Animated.View>
   );

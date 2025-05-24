@@ -19,7 +19,7 @@ const WordDisplay = memo(
     // Memoize the text style to prevent unnecessary re-renders
     const textStyle = useMemo(
       (): TextStyle => ({
-        color: colors.tint,
+        color: colors.arabicText,
         fontWeight: '700',
         textAlign: 'center',
         paddingVertical: LAYOUT.SPACING.MEDIUM,
@@ -33,7 +33,7 @@ const WordDisplay = memo(
               elevation: LAYOUT.ELEVATION.SUBTLE,
             }),
       }),
-      [colors, fontSize]
+      [colors.arabicText, fontSize, colors.shadow]
     );
 
     // Use a key based on the word to ensure React completely replaces the component
@@ -50,7 +50,7 @@ const WordDisplay = memo(
           {word}
         </ThemedText>
         {translation && (
-          <ThemedText style={styles.translationText} colorName="tint" skipDefaultColor>
+          <ThemedText style={styles.translationText} colorName="englishText" skipDefaultColor>
             {translation}
           </ThemedText>
         )}
@@ -79,10 +79,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   translationText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
     textAlign: 'center',
     marginTop: LAYOUT.SPACING.MEDIUM,
-    fontWeight: '500',
+    fontWeight: '400',
+    opacity: 0.9,
   },
 });
 

@@ -13,7 +13,9 @@ export const GRAPH_HEIGHT_LARGE = 140;
 export const DAYS_14 = 14;
 export const DAYS_30 = 30;
 
-// FSRS thresholds
-export const MASTERY_STABILITY_THRESHOLD = 5;
-export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7;
-export const EFFICIENCY_THRESHOLD = 70;
+// FSRS thresholds - aligned with FSRS algorithm standards
+export const MASTERY_STABILITY_THRESHOLD = 5; // Days - minimum stability for mastery
+export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7; // 70% - threshold for review urgency
+export const EFFICIENCY_THRESHOLD = 60; // Minimum efficiency score for "good" performance
+export const OPTIMAL_DIFFICULTY_MIN = 0.3; // FSRS optimal difficulty range
+export const OPTIMAL_DIFFICULTY_MAX = 0.6;

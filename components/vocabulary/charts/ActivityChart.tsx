@@ -88,18 +88,18 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
     const { weeklyTotal, dailyAverage } = chartData.insights;
 
     if (weeklyTotal === 0) {
-      return 'Ready to start your learning journey?';
+      return 'Ready to start your learning journey';
     }
     if (dailyAverage >= 5) {
-      return 'Excellent consistency! 🔥';
+      return 'Excellent consistency';
     }
     if (dailyAverage >= 3) {
-      return 'Great momentum this week! 📈';
+      return 'Great momentum this week';
     }
     if (weeklyTotal >= 5) {
-      return 'Good progress this week 👍';
+      return 'Good progress this week';
     }
-    return 'Keep building your streak 💪';
+    return 'Keep building your streak';
   }, [chartData.insights]);
 
   // Helper function to get activity level and color using consistent color system
@@ -107,9 +107,9 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
     if (activity === 0) return { level: 'none', color: chartColors.activity.none };
 
     const ratio = activity / maxActivity;
-    if (ratio >= 0.7) return { level: 'high', color: chartColors.activity.high };
-    if (ratio >= 0.4) return { level: 'medium', color: chartColors.activity.medium };
-    if (ratio >= 0.1) return { level: 'low', color: chartColors.activity.low };
+    if (ratio >= 0.8) return { level: 'high', color: chartColors.activity.high };
+    if (ratio >= 0.5) return { level: 'medium', color: chartColors.activity.medium };
+    if (ratio >= 0.2) return { level: 'low', color: chartColors.activity.low };
     return { level: 'minimal', color: chartColors.activity.none };
   };
 
@@ -147,11 +147,11 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
         <StatsRow
           leftStat={{
             value: chartData.insights.dailyAverage,
-            label: 'daily avg',
+            label: 'daily average',
           }}
           rightStat={{
             value: chartData.insights.weeklyTotal,
-            label: 'this week',
+            label: 'weekly total',
             color: chartColors.activity.high,
           }}
         />

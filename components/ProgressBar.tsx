@@ -88,13 +88,13 @@ function ProgressBarComponent({
   // Determine background color based on theme if not provided
   const bgColor = useMemo(() => {
     if (backgroundColor) return backgroundColor;
-    return isDarkMode ? colors.elevation1 : `${colors.text}15`;
-  }, [backgroundColor, isDarkMode, colors.elevation1, colors.text]);
+    return colors.progressBackground;
+  }, [backgroundColor, colors.progressBackground]);
 
   // Determine fill color based on theme if not provided
   const progressFillColor = useMemo(() => {
-    return fillColor || colors.tint;
-  }, [fillColor, colors.tint]);
+    return fillColor || colors.progressIndicator;
+  }, [fillColor, colors.progressIndicator]);
 
   // Memoize all styles at once to prevent unnecessary style object creation
   const styles = useMemo(

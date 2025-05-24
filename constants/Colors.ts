@@ -62,6 +62,13 @@ export const Colors = {
     navigationRipple: 'rgba(47, 125, 50, 0.10)', // Refined forest green ripple for navigation elements
     headerOverlay: 'rgba(255, 255, 255, 0.94)', // Slightly green-tinted header overlay
     tabBarOverlay: 'rgba(250, 251, 252, 0.98)', // Very subtle green undertone for tab bar
+
+    // Semantic UI colors for better UX
+    progressIndicator: '#5B7C8D', // Muted blue-gray - distinct from action colors
+    progressBackground: 'rgba(91, 124, 141, 0.15)', // Subtle progress track
+    interactiveSecondary: '#718096', // Muted gray for secondary interactive elements
+    completionSuccess: '#4A7C59', // Deep forest green for completion states
+    repeatActive: '#B8860B', // Dark goldenrod for repeat/loop states
   } as ThemeColors,
   dark: {
     primary: '#F2F4F1', // Warm off-white with subtle green undertone
@@ -123,6 +130,13 @@ export const Colors = {
     navigationRipple: 'rgba(82, 197, 90, 0.12)', // Sophisticated bright green ripple for navigation elements
     headerOverlay: 'rgba(15, 19, 17, 0.92)', // Slightly green-tinted header overlay
     tabBarOverlay: 'rgba(15, 19, 17, 0.96)', // Very subtle green undertone for tab bar
+
+    // Semantic UI colors for better UX
+    progressIndicator: '#7A9CAD', // Muted blue with green undertones - distinct from action colors
+    progressBackground: 'rgba(122, 156, 173, 0.20)', // Subtle progress track
+    interactiveSecondary: '#AAB0A8', // Balanced green-gray for secondary interactive elements
+    completionSuccess: '#6B9A7A', // Sage green for completion states
+    repeatActive: '#D4A574', // Warm gold for repeat/loop states
   } as ThemeColors,
 };
 

@@ -127,14 +127,13 @@ export default function ListenScreen(): JSX.Element {
   // Detect when the audio state changes to idle after playing
   useEffect(() => {
     // Track state transitions
-      if (audioState !== lastAudioStateRef.current) {
-
+    if (audioState !== lastAudioStateRef.current) {
       // If we were playing and now we're idle, it means playback completed
       const wasPlaying = lastAudioStateRef.current === 'playing';
       const isNowIdle = audioState === 'idle';
 
       if (wasPlaying && isNowIdle) {
-          playbackCompletedRef.current = true;
+        playbackCompletedRef.current = true;
       }
 
       lastAudioStateRef.current = audioState;
@@ -229,7 +228,6 @@ export default function ListenScreen(): JSX.Element {
   useEffect(() => {
     // Check if playback has completed
     if (playbackCompletedRef.current && audioState === 'idle' && wordList.length > 0) {
-
       if (repeatEnabled && selectedTracksRef.current.length > 0) {
         // If repeat is enabled, restart playback
         handleRestartPlayback();
@@ -364,7 +362,7 @@ export default function ListenScreen(): JSX.Element {
             <Ionicons
               name="headset-outline"
               size={16}
-              color={colors.tabIconDefault}
+              color={colors.interactiveSecondary}
               style={styles.noteIcon}
             />
             <ThemedText style={styles.noteText}>Audio continues with screen off</ThemedText>
@@ -414,15 +412,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    opacity: 0.6,
   },
   noteIcon: {
     marginRight: LAYOUT.SPACING.TINY,
-    opacity: 0.8,
+    opacity: 0.7,
     fontWeight: '500',
   },
   noteText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.8,
-    fontWeight: '500',
+    opacity: 0.7,
+    fontWeight: '400',
   },
 });

@@ -54,7 +54,10 @@ export const calculateRetrievability = (word: StudyWord, targetDate: Date): numb
   }
 
   const daysSinceReview = (targetDate.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24);
-  const retrievability = Math.pow(1 + daysSinceReview / (9 * stability), -1);
+
+  // Correct FSRS retrievability formula: R = exp(-t/S)
+  // where t = days since review, S = stability
+  const retrievability = Math.exp(-daysSinceReview / stability);
 
   return Math.max(0, Math.min(1, retrievability));
 };
@@ -69,31 +72,46 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
 
   let score = 0;
 
-  // State progression (40% weight)
-  if (state === 2) score += 40;
-  else if (state === 1 && reps > 1) score += 30;
-  else if (state === 0 && reps === 1) score += 20;
-  else if (state === 3) score += 10;
+  // State progression (40% weight) - aligned with FSRS states
+  if (state === 2 && stability >= 5) {
+    // Mastered: review state with good stability
+    score += 40;
+  } else if (state === 2 && stability < 5) {
+    // Review but unstable
+    score += 30;
+  } else if (state === 1 && reps > 1) {
+    // Learning with progress
+    score += 25;
+  } else if (state === 0 && reps === 1) {
+    // Just started learning
+    score += 15;
+  } else if (state === 3) {
+    // Relearning (failed)
+    score += 10;
+  }
 
-  // Stability quality (30% weight)
+  // Stability quality (30% weight) - better thresholds
   if (stability >= 30) score += 30;
   else if (stability >= 14) score += 25;
   else if (stability >= 7) score += 20;
   else if (stability >= 3) score += 15;
   else if (stability >= 1) score += 10;
+  else if (stability > 0) score += 5;
 
-  // Lapse rate (20% weight)
+  // Lapse rate (20% weight) - penalize failures more appropriately
   if (lapses === 0) score += 20;
   else if (lapses === 1) score += 15;
   else if (lapses === 2) score += 10;
   else if (lapses <= 4) score += 5;
+  // No points for 5+ lapses
 
-  // Difficulty balance (10% weight)
+  // Difficulty balance (10% weight) - FSRS optimal range is 0.3-0.6
   if (difficulty >= 0.3 && difficulty <= 0.6) score += 10;
   else if (difficulty >= 0.2 && difficulty <= 0.7) score += 7;
   else if (difficulty >= 0.1 && difficulty <= 0.8) score += 5;
+  else if (difficulty >= 0.05 && difficulty <= 0.9) score += 2;
 
-  return score;
+  return Math.min(100, score); // Cap at 100
 };
 
 // Get default chart data structure

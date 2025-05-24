@@ -119,17 +119,25 @@ export const RetrievabilityChart = memo(
         }
       });
 
-      // Define danger zones for memory retention using consistent colors
+      // Define danger zones for memory retention using FSRS-aligned thresholds
       const dangerZones = [
         {
-          name: 'Safe Zone',
-          min: CRITICAL_RETRIEVABILITY_THRESHOLD * 100,
+          name: 'Strong Memory',
+          min: 80,
           max: 100,
           color: chartColors.memory.strong,
           y: 0,
+          height: GRAPH_HEIGHT_LARGE - (80 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+        },
+        {
+          name: 'Good Memory',
+          min: CRITICAL_RETRIEVABILITY_THRESHOLD * 100,
+          max: 80,
+          color: chartColors.memory.fading,
+          y: GRAPH_HEIGHT_LARGE - (80 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
           height:
-            GRAPH_HEIGHT_LARGE -
-            ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+            ((80 - CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / maxRetrievability) *
+            GRAPH_HEIGHT_LARGE,
         },
         {
           name: 'At Risk',
@@ -164,7 +172,7 @@ export const RetrievabilityChart = memo(
         week2.reduce((sum, day) => sum + day.averageRetrievability, 0) / week2.length;
 
       const change = week1Avg - week2Avg;
-      const trend = change > 5 ? 'improving' : change < -5 ? 'declining' : 'stable';
+      const trend = change > 3 ? 'improving' : change < -3 ? 'declining' : 'stable';
       const criticalWords = retrievabilityData[0]?.criticalWords || 0;
 
       return {
@@ -189,18 +197,18 @@ export const RetrievabilityChart = memo(
         return 'Review words to track retention';
       }
       if (criticalWords > 10) {
-        return `⚠️ ${criticalWords} words need urgent review`;
+        return `${criticalWords} words need urgent review`;
       }
       if (criticalWords > 5) {
-        return `⚡ ${criticalWords} words approaching forgetting`;
+        return `${criticalWords} words approaching forgetting`;
       }
       if (currentRetrievability >= 80) {
-        return 'Excellent memory retention! 🧠';
+        return 'Excellent memory retention';
       }
       if (currentRetrievability >= 60) {
-        return 'Good memory retention 👍';
+        return 'Good memory retention';
       }
-      return 'Focus on review to strengthen memory 💪';
+      return 'Focus on review to strengthen memory';
     }, [chartData.insights]);
 
     if (!chartData.hasData) {
@@ -236,7 +244,7 @@ export const RetrievabilityChart = memo(
             }}
             rightStat={{
               value: chartData.insights.criticalWords,
-              label: 'need review',
+              label: 'at risk',
               color:
                 chartData.insights.criticalWords > 5
                   ? chartColors.memory.weak
@@ -247,17 +255,27 @@ export const RetrievabilityChart = memo(
           {/* Enhanced Retrievability Graph */}
           <View style={styles.graphContainer}>
             <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-              {/* Memory zones background */}
+              {/* Memory zones background - more prominent */}
               <Group>
                 {chartData.dangerZones.map((zone, index) => (
-                  <Rect
-                    key={`zone-${index}`}
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.05)}
-                  />
+                  <Group key={`zone-group-${index}`}>
+                    {/* Zone background */}
+                    <Rect
+                      x={0}
+                      y={zone.y}
+                      width={GRAPH_WIDTH}
+                      height={zone.height}
+                      color={chartColors.withOpacity(zone.color, 0.12)}
+                    />
+                    {/* Zone border */}
+                    <Rect
+                      x={0}
+                      y={zone.y}
+                      width={GRAPH_WIDTH}
+                      height={1}
+                      color={chartColors.withOpacity(zone.color, 0.3)}
+                    />
+                  </Group>
                 ))}
               </Group>
 
@@ -280,7 +298,7 @@ export const RetrievabilityChart = memo(
                 {chartData.smoothPath && (
                   <Path
                     path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                    color={chartColors.withOpacity(chartColors.memory.strong, 0.15)}
+                    color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
                   />
                 )}
               </Group>
@@ -292,60 +310,29 @@ export const RetrievabilityChart = memo(
                     path={chartData.smoothPath}
                     style="stroke"
                     strokeWidth={3}
-                    color={chartColors.memory.strong}
+                    color={chartColors.ui.accent}
                   >
                     <Shadow
                       dx={0}
                       dy={2}
                       blur={4}
-                      color={chartColors.withOpacity(chartColors.memory.strong, 0.3)}
+                      color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
                     />
                   </Path>
                 )}
               </Group>
 
               {/* Data points */}
-              <Group>
-                {retrievabilityData
-                  .filter(d => d.wordCount > 0)
-                  .slice(0, 15) // Show first 15 days for clarity
-                  .map((data, index) => {
-                    const x = index * (GRAPH_WIDTH / (retrievabilityData.length - 1));
-                    const y =
-                      GRAPH_HEIGHT_LARGE -
-                      (data.averageRetrievability / (chartData.maxRetrievability || 1)) *
-                        GRAPH_HEIGHT_LARGE;
-
-                    return (
-                      <Group key={`retrievability-point-${index}`}>
-                        <Circle
-                          cx={x}
-                          cy={y}
-                          r={4}
-                          color={chartColors.getRetrievabilityColor(
-                            data.averageRetrievability / 100
-                          )}
-                        >
-                          <Shadow
-                            dx={0}
-                            dy={1}
-                            blur={2}
-                            color={chartColors.withOpacity(chartColors.memory.strong, 0.4)}
-                          />
-                        </Circle>
-                        <Circle cx={x} cy={y} r={2} color={colors.white} />
-                      </Group>
-                    );
-                  })}
-              </Group>
+              {/* Removed individual dots as they don't make sense for forecasted averages */}
             </Canvas>
           </View>
 
           <ChartFooter
             legendItems={[
-              { type: 'line', color: chartColors.memory.strong, label: 'Retention' },
-              { type: 'dot', color: chartColors.memory.fading, label: 'At Risk' },
-              { type: 'dot', color: chartColors.memory.weak, label: 'Critical' },
+              { type: 'line', color: chartColors.ui.accent, label: 'Forecast' },
+              { type: 'area', color: chartColors.memory.strong, label: 'Strong Zone' },
+              { type: 'area', color: chartColors.memory.fading, label: 'At Risk Zone' },
+              { type: 'area', color: chartColors.memory.weak, label: 'Critical Zone' },
             ]}
             timeRange="Next 30 days"
           />
