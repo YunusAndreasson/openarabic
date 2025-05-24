@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
   },
   headerControls: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.SMALL,
   },
 });
 

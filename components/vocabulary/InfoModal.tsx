@@ -22,7 +22,13 @@ import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../ThemedText';
 
-export type InfoModalType = 'streak' | 'mastery' | 'retrievability' | 'difficulty' | 'efficiency';
+export type InfoModalType =
+  | 'streak'
+  | 'mastery'
+  | 'retrievability'
+  | 'difficulty'
+  | 'efficiency'
+  | 'recommendation';
 
 interface InfoModalProps {
   visible: boolean;
@@ -42,6 +48,37 @@ interface InfoContent {
 }
 
 const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
+  recommendation: {
+    title: 'Smart Learning Recommendations',
+    subtitle:
+      'Your personalized study guidance based on spaced repetition science and cognitive load theory.\n\nThe system analyzes your review load, word difficulty, and memory patterns to suggest the optimal next action for maximum learning efficiency.',
+    sections: [
+      {
+        title: 'Review First',
+        content:
+          'When you have 15+ overdue cards or >25% of your deck is due. Strengthening existing memories is more efficient than adding new information when cognitive load is high.',
+        icon: 'refresh-circle',
+      },
+      {
+        title: 'Balance & Grow',
+        content:
+          'When you have 5-15 due cards with moderate review load. Perfect time to maintain existing knowledge while gradually expanding your vocabulary.',
+        icon: 'library',
+      },
+      {
+        title: 'Add New Words',
+        content:
+          'When you have <5 due cards and low review burden. Your brain has optimal capacity for encoding new information and building fresh neural pathways.',
+        icon: 'add-circle',
+      },
+    ],
+    tips: [
+      'Follow recommendations for 2-3x better retention rates',
+      'Consistency matters more than daily volume',
+      'Review when mentally fresh for best results',
+      'Small daily sessions beat marathon study sessions',
+    ],
+  },
   streak: {
     title: 'Learning Streak',
     subtitle:
@@ -197,6 +234,51 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                 <ThemedText type="body" variant="secondary" style={styles.extendedSubtitle}>
                   {content.subtitle}
                 </ThemedText>
+
+                {/* Sections */}
+                {content.sections.length > 0 && (
+                  <View style={styles.sectionsContainer}>
+                    {content.sections.map((section, index) => (
+                      <View key={`section-${index}`} style={styles.section}>
+                        <View style={styles.sectionHeader}>
+                          {section.icon && (
+                            <View
+                              style={[
+                                styles.sectionIcon,
+                                { backgroundColor: colors.buttonOverlay },
+                              ]}
+                            >
+                              <Ionicons name={section.icon} size={20} color={colors.tint} />
+                            </View>
+                          )}
+                          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                            {section.title}
+                          </ThemedText>
+                        </View>
+                        <ThemedText type="body" variant="secondary" style={styles.sectionContent}>
+                          {section.content}
+                        </ThemedText>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Tips */}
+                {content.tips.length > 0 && (
+                  <View style={styles.tipsContainer}>
+                    <ThemedText type="heading3" weight="bold" style={styles.tipsTitle}>
+                      💡 Pro Tips
+                    </ThemedText>
+                    {content.tips.map((tip, index) => (
+                      <View key={`tip-${index}`} style={styles.tip}>
+                        <View style={[styles.tipBullet, { backgroundColor: colors.tint }]} />
+                        <ThemedText type="body" variant="secondary" style={styles.tipText}>
+                          {tip}
+                        </ThemedText>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </ScrollView>
             </View>
           </Animated.View>
@@ -271,5 +353,60 @@ const styles = StyleSheet.create({
   },
   extendedSubtitle: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+  },
+  sectionsContainer: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  section: {
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  sectionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginRight: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    flex: 1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+  },
+  sectionContent: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
+    marginLeft: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.SMALL, // Align with title
+  },
+  tipsContainer: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  tipsTitle: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+  },
+  tip: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingLeft: LAYOUT.SPACING.SMALL,
+  },
+  tipBullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL, // Align with text baseline
+  },
+  tipText: {
+    flex: 1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
   },
 });

@@ -55,46 +55,54 @@ const SortingControls = memo(
     };
 
     return (
-      <BaseCard shadowSize="medium" style={styles.sortCard}>
+      <BaseCard shadowSize="small" style={styles.sortCard}>
         <View style={styles.sortContent}>
-          {sortOptions.map(option => {
-            const isSelected = currentSort === option.key;
-            return (
-              <Pill
-                key={option.key}
-                id={option.key}
-                isSelected={isSelected}
-                onSelect={() => handleSortChange(option.key)}
-                variant="filter"
-                pillBg={colors.transparent}
-                pillStyle={styles.sortPill}
-                label={
-                  <View style={styles.sortPillContent}>
-                    <ThemedText
-                      type="body"
-                      colorName={isSelected ? 'tint' : 'textTertiary'}
-                      weight={isSelected ? 'semibold' : 'medium'}
-                      style={styles.sortPillLabel}
-                    >
-                      {option.label}
-                    </ThemedText>
-                    <Ionicons
-                      name={
-                        isSelected
-                          ? internalDirection === 'desc'
-                            ? 'chevron-down'
-                            : 'chevron-up'
-                          : 'chevron-down'
-                      }
-                      size={12}
-                      color={isSelected ? colors.tint : colors.textTertiary}
-                      style={styles.chevronIcon}
-                    />
-                  </View>
-                }
-              />
-            );
-          })}
+          {/* Sort Header - H3 with minimal spacing */}
+          <ThemedText type="heading3" weight="bold" style={styles.sortTitle}>
+            Sort by
+          </ThemedText>
+
+          {/* Sort Options */}
+          <View style={styles.sortOptions}>
+            {sortOptions.map(option => {
+              const isSelected = currentSort === option.key;
+              return (
+                <Pill
+                  key={option.key}
+                  id={option.key}
+                  isSelected={isSelected}
+                  onSelect={() => handleSortChange(option.key)}
+                  variant="filter"
+                  pillBg={colors.transparent}
+                  pillStyle={styles.sortPill}
+                  label={
+                    <View style={styles.sortPillContent}>
+                      <ThemedText
+                        type="body"
+                        colorName={isSelected ? 'tint' : 'textTertiary'}
+                        weight={isSelected ? 'bold' : 'medium'}
+                        style={styles.sortPillLabel}
+                      >
+                        {option.label}
+                      </ThemedText>
+                      <Ionicons
+                        name={
+                          isSelected
+                            ? internalDirection === 'desc'
+                              ? 'chevron-down'
+                              : 'chevron-up'
+                            : 'chevron-down'
+                        }
+                        size={12}
+                        color={isSelected ? colors.tint : colors.textTertiary}
+                        style={styles.chevronIcon}
+                      />
+                    </View>
+                  }
+                />
+              );
+            })}
+          </View>
         </View>
       </BaseCard>
     );
@@ -109,12 +117,17 @@ const styles = StyleSheet.create({
     marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
   },
   sortContent: {
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+  },
+  sortTitle: {
+    marginBottom: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+  },
+  sortOptions: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    gap: LAYOUT.SPACING.XSMALL + 2,
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
+    gap: LAYOUT.SPACING.SMALL,
   },
   sortPill: {
     flex: 1,
@@ -138,6 +151,7 @@ const styles = StyleSheet.create({
   },
   chevronIcon: {
     marginLeft: LAYOUT.SPACING.XTINY / 2,
+    opacity: 0.8,
   },
 });
 
