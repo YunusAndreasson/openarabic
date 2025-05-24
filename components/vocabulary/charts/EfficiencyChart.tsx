@@ -286,11 +286,11 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               )}
             </Group>
 
-            {/* Data points - show every 3rd point for clarity */}
+            {/* Data points - show every other point for clarity */}
             <Group>
               {efficiencyData
                 .filter(d => d.wordCount > 0)
-                .filter((_, index) => index % 3 === 0) // Show every 3rd point
+                .filter((_, index) => index % 2 === 0) // Show every other point for clarity
                 .map((data, index) => {
                   const originalIndex = efficiencyData.findIndex(d => d === data);
                   const x = originalIndex * (GRAPH_WIDTH / (efficiencyData.length - 1));
@@ -320,7 +320,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
 
         <ChartFooter
           legendItems={[
-            { type: 'dot', color: chartColors.performance.excellent, label: 'Great' },
+            { type: 'line', color: chartColors.performance.excellent, label: 'Learning' },
             { type: 'dot', color: chartColors.performance.good, label: 'Good' },
             { type: 'dot', color: chartColors.performance.moderate, label: 'OK' },
             { type: 'dot', color: chartColors.performance.poor, label: 'Poor' },

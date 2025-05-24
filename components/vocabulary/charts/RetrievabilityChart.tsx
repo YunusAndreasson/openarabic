@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
+import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import BaseCard from '../../BaseCard';
@@ -25,6 +26,7 @@ interface RetrievabilityChartProps {
 
 export const RetrievabilityChart = memo(
   ({ studyWords = [], onInfoPress }: RetrievabilityChartProps) => {
+    const colors = useColors();
     const chartColors = useChartColors();
 
     // Calculate retrievability forecast over the next 30 days
@@ -254,7 +256,7 @@ export const RetrievabilityChart = memo(
                     y={zone.y}
                     width={GRAPH_WIDTH}
                     height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.1)}
+                    color={chartColors.withOpacity(zone.color, 0.05)}
                   />
                 ))}
               </Group>
@@ -271,6 +273,16 @@ export const RetrievabilityChart = memo(
                     color={chartColors.ui.grid}
                   />
                 ))}
+              </Group>
+
+              {/* Area fill under the retrievability line */}
+              <Group>
+                {chartData.smoothPath && (
+                  <Path
+                    path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                    color={chartColors.withOpacity(chartColors.memory.strong, 0.15)}
+                  />
+                )}
               </Group>
 
               {/* Retrievability line */}
@@ -309,7 +321,7 @@ export const RetrievabilityChart = memo(
                         <Circle
                           cx={x}
                           cy={y}
-                          r={3}
+                          r={4}
                           color={chartColors.getRetrievabilityColor(
                             data.averageRetrievability / 100
                           )}
@@ -321,6 +333,7 @@ export const RetrievabilityChart = memo(
                             color={chartColors.withOpacity(chartColors.memory.strong, 0.4)}
                           />
                         </Circle>
+                        <Circle cx={x} cy={y} r={2} color={colors.white} />
                       </Group>
                     );
                   })}
@@ -330,9 +343,9 @@ export const RetrievabilityChart = memo(
 
           <ChartFooter
             legendItems={[
-              { type: 'area', color: chartColors.memory.strong, label: 'Safe (70%+)' },
-              { type: 'area', color: chartColors.memory.fading, label: 'At Risk (50-70%)' },
-              { type: 'area', color: chartColors.memory.weak, label: 'Critical (<50%)' },
+              { type: 'line', color: chartColors.memory.strong, label: 'Retention' },
+              { type: 'dot', color: chartColors.memory.fading, label: 'At Risk' },
+              { type: 'dot', color: chartColors.memory.weak, label: 'Critical' },
             ]}
             timeRange="Next 30 days"
           />

@@ -273,7 +273,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                           y={TOP_PADDING}
                           width={GRAPH_WIDTH}
                           height={targetY - TOP_PADDING}
-                          color={chartColors.withOpacity(chartColors.performance.excellent, 0.08)}
+                          color={chartColors.withOpacity(chartColors.performance.excellent, 0.05)}
                         />
                         <Rect
                           x={0}
