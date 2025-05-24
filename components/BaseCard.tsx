@@ -22,6 +22,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     onPress,
     isLoading = false,
     shadowSize = 'medium',
+    includePressAnimation = true,
     loadingComponent,
     contentStyle,
     disabled = false,
@@ -103,8 +104,8 @@ const BaseCard: React.FC<BaseCardProps> = memo(
     // Interactive card with press handling
     return (
       <Pressable
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
+        onPressIn={includePressAnimation ? handlePressIn : undefined}
+        onPressOut={includePressAnimation ? handlePressOut : undefined}
         onPress={onPress}
         disabled={disabled}
         testID={testID}
@@ -115,7 +116,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
         }}
         style={({ pressed }: { pressed: boolean }) => [
           combinedCardStyle,
-          pressed && !disabled && { opacity: LAYOUT.OPACITY.PRESSED },
+          pressed && !disabled && includePressAnimation && { opacity: LAYOUT.OPACITY.PRESSED },
           disabled && { opacity: LAYOUT.OPACITY.DISABLED },
         ]}
       >
