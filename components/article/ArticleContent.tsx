@@ -287,8 +287,11 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                   LAYOUT.CONTENT_SPACING.BOTTOM + insets.bottom + LAYOUT.SPACING.MEDIUM,
               }}
               onScroll={handleAnimatedScroll}
-              scrollEventThrottle={8} // Reduced for smoother parallax animations
+              scrollEventThrottle={16} // Standard throttle for natural scrolling feel
               showsVerticalScrollIndicator={true}
+              bounces={true} // Re-enable bounce for parallax pull-down effect
+              alwaysBounceVertical={false} // Only bounce when content allows it
+              overScrollMode="auto" // Allow controlled overscroll for parallax
               drawDistance={SENTENCE_ITEM_HEIGHT * 12} // Increased for better performance
               initialScrollIndex={0}
               persistentScrollbar={true}

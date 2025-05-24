@@ -96,7 +96,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     // Advanced spring physics with motion design principles
     const smoothScrollY = useDerivedValue(() => {
       'worklet';
-      return withSpring(scrollY.value, MOTION_CONFIG.SPRING);
+      return scrollY.value; // Use direct scroll value for natural scrolling
     }, [scrollY]);
 
     // Enhanced text colors with better accessibility
@@ -201,15 +201,15 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
 
       const translateY = interpolate(
         smoothScrollY.value,
-        [-headerHeight * 0.5, 0, headerHeight * 0.8],
-        [headerHeight * 0.3, 0, -headerHeight * dynamicParallaxFactor],
+        [-headerHeight * 0.3, 0, headerHeight * 0.8], // Restored negative range for pull-down parallax
+        [headerHeight * 0.15, 0, -headerHeight * dynamicParallaxFactor], // More controlled pull-down effect
         Extrapolation.CLAMP
       );
 
       const scale = interpolate(
-        progress,
-        [0, 0.5, 1],
-        MOTION_CONFIG.SCALE_RANGE,
+        smoothScrollY.value,
+        [-headerHeight * 0.3, 0, headerHeight * 0.5], // Scale effect for pull-down
+        [1.15, 1.0, 0.98], // Slight zoom when pulling down
         Extrapolation.CLAMP
       );
 
