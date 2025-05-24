@@ -271,7 +271,7 @@ const SettingsScreen: React.FC = () => {
                     </ThemedText>
                   </View>
                   <Ionicons
-                    name="chevron-forward-outline"
+                    name="open-outline"
                     size={16}
                     color={colors.textTertiary}
                     style={styles.socialLinkChevron}
@@ -295,7 +295,7 @@ const SettingsScreen: React.FC = () => {
                     </ThemedText>
                   </View>
                   <Ionicons
-                    name="chevron-forward-outline"
+                    name="open-outline"
                     size={16}
                     color={colors.textTertiary}
                     style={styles.socialLinkChevron}
@@ -319,7 +319,7 @@ const SettingsScreen: React.FC = () => {
                     </ThemedText>
                   </View>
                   <Ionicons
-                    name="chevron-forward-outline"
+                    name="open-outline"
                     size={16}
                     color={colors.textTertiary}
                     style={styles.socialLinkChevron}
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   socialLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.XTINY,
   },
   socialLinkContent: {
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   actionLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.XTINY,
   },
   actionLinkContent: {
