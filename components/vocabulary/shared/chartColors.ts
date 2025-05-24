@@ -2,160 +2,160 @@ import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
 /**
- * Modern Chart Color System for Vocabulary Analytics
+ * Refined Chart Color System for Vocabulary Analytics
  *
- * This system provides a cohesive, modern color palette with excellent semantic clarity.
- * Colors are carefully chosen for optimal accessibility, visual harmony, and intuitive understanding.
- * The palette uses a sophisticated approach with complementary hues and consistent saturation levels.
- * Optimized for minimalistic design with refined opacity values and subtle contrasts.
+ * This system provides a cohesive, balanced color palette that seamlessly integrates with the app theme.
+ * Colors are carefully chosen for optimal accessibility, visual harmony, and clear data communication.
+ * The palette emphasizes subtlety and professionalism while maintaining excellent semantic clarity.
+ * All colors are designed to work harmoniously in both light and dark themes.
  */
 
-// Modern semantic color palette - carefully curated for visual harmony and clarity
+// Refined semantic color palette - perfectly balanced with the app theme
 export const CHART_COLORS = {
-  // Performance levels - using a sophisticated green-to-red spectrum with modern hues
-  EXCELLENT: '#06D6A0', // Modern teal-green - fresh, positive, achievement
-  GOOD: '#118AB2', // Deep ocean blue - reliable, stable, good progress
-  MODERATE: '#FFB627', // Warm amber - attention-grabbing but not alarming
-  POOR: '#EF476F', // Modern coral-red - urgent but not harsh
+  // Performance levels - using a refined spectrum that aligns with theme colors
+  EXCELLENT: '#06D6A0', // Success green from theme - achievement, mastery
+  GOOD: '#118AB2', // Info blue from theme - reliable, stable progress
+  MODERATE: '#FFB627', // Warning amber from theme - attention needed
+  POOR: '#EF476F', // Error coral from theme - urgent attention
 
-  // Activity levels - using the same semantic colors for consistency
-  HIGH_ACTIVITY: '#06D6A0', // Vibrant teal-green for high engagement
-  MEDIUM_ACTIVITY: '#118AB2', // Steady blue for moderate activity
-  LOW_ACTIVITY: '#FFB627', // Warm amber for low activity
-  NO_ACTIVITY: '#A0AEC0', // Refined gray matching the updated theme
+  // Activity levels - consistent with performance for cognitive ease
+  HIGH_ACTIVITY: '#06D6A0', // Success green - high engagement
+  MEDIUM_ACTIVITY: '#118AB2', // Info blue - moderate activity
+  LOW_ACTIVITY: '#FFB627', // Warning amber - low activity
+  NO_ACTIVITY: '#A0AEC0', // Theme tabIconDefault - inactive state
 
-  // Memory and retention states - optimized for cognitive understanding
-  STRONG_MEMORY: '#06D6A0', // Fresh green - strong retention, confidence
-  FADING_MEMORY: '#FFB627', // Warm amber - needs attention, not critical
-  WEAK_MEMORY: '#EF476F', // Modern coral - urgent review needed
+  // Memory and retention states - clear cognitive mapping
+  STRONG_MEMORY: '#06D6A0', // Success green - confident retention
+  FADING_MEMORY: '#FFB627', // Warning amber - needs attention
+  WEAK_MEMORY: '#EF476F', // Error coral - urgent review needed
 
-  // Difficulty levels - intuitive color progression
-  EASY: '#06D6A0', // Green - easy, approachable
-  MEDIUM: '#FFB627', // Amber - moderate challenge
-  HARD: '#EF476F', // Coral - challenging, requires focus
+  // Difficulty levels - intuitive progression using theme colors
+  EASY: '#06D6A0', // Success green - approachable
+  MEDIUM: '#FFB627', // Warning amber - moderate challenge
+  HARD: '#EF476F', // Error coral - challenging
 
   // Trend indicators - clear directional meaning
-  IMPROVING: '#06D6A0', // Green - positive momentum
-  STABLE: '#118AB2', // Blue - steady, consistent
-  DECLINING: '#EF476F', // Coral - needs intervention
+  IMPROVING: '#06D6A0', // Success green - positive momentum
+  STABLE: '#118AB2', // Info blue - steady progress
+  DECLINING: '#EF476F', // Error coral - needs intervention
 
-  // UI elements - modern, subtle, professional, aligned with theme
-  BACKGROUND: '#FAFBFC', // Matches light theme background
-  GRID: '#E2E8F0', // Matches light theme border
-  BORDER: '#CBD5E0', // Refined border color
-  ACCENT: '#7209B7', // Modern purple - highlights and special elements
+  // UI elements - refined, professional, theme-aligned
+  BACKGROUND: '#FAFBFC', // Theme background (light)
+  GRID: '#E2E8F0', // Theme border (light)
+  BORDER: '#CBD5E0', // Theme disabled (light)
+  ACCENT: '#2A3441', // Theme primary - subtle, professional accent
 
-  // Neutral tones - sophisticated gray scale matching theme
-  NEUTRAL_LIGHT: '#F7FAFC', // Matches cardBorder
-  NEUTRAL_MEDIUM: '#718096', // Matches textTertiary
-  NEUTRAL_DARK: '#1A202C', // Matches text color
+  // Neutral tones - directly from theme for perfect consistency
+  NEUTRAL_LIGHT: '#F7FAFC', // Theme cardBorder
+  NEUTRAL_MEDIUM: '#718096', // Theme textTertiary
+  NEUTRAL_DARK: '#1A202C', // Theme text
 
-  // Additional modern colors for variety
-  SECONDARY_BLUE: '#4299E1', // Lighter blue for secondary elements
+  // Additional refined colors for variety - more subtle and balanced
+  SECONDARY_BLUE: '#4299E1', // Softer blue for secondary elements
   SECONDARY_GREEN: '#48BB78', // Alternative green for variety
-  SECONDARY_PURPLE: '#9F7AEA', // Softer purple for accents
+  SECONDARY_PURPLE: '#805AD5', // Much softer purple - balanced and professional
   SECONDARY_ORANGE: '#ED8936', // Warm orange for highlights
 } as const;
 
-// Refined opacity levels for modern minimalistic design
+// Refined opacity levels for elegant, minimalistic design
 export const CHART_OPACITY = {
   SOLID: 1.0,
-  HIGH: 0.8, // Reduced for more subtle appearance
-  MEDIUM: 0.5, // More balanced transparency
-  LOW: 0.25, // Subtle presence
-  SUBTLE: 0.12, // Very light overlay - refined
-  MINIMAL: 0.06, // Barely visible - refined
+  HIGH: 0.75, // Slightly reduced for better balance
+  MEDIUM: 0.45, // More refined transparency
+  LOW: 0.2, // Subtle presence
+  SUBTLE: 0.1, // Very light overlay
+  MINIMAL: 0.05, // Barely visible
 } as const;
 
 /**
- * Hook to get theme-aware chart colors with modern palette
- * Maintains semantic consistency while adapting to light/dark themes
+ * Hook to get theme-aware chart colors with refined palette
+ * Maintains semantic consistency while perfectly adapting to light/dark themes
  */
 export const useChartColors = () => {
   const colors = useColors();
 
   return {
-    // Performance levels - modern, intuitive color progression
+    // Performance levels - refined, theme-consistent progression
     performance: {
-      excellent: '#06D6A0', // Modern teal-green
-      good: '#118AB2', // Deep ocean blue
-      moderate: '#FFB627', // Warm amber
-      poor: '#EF476F', // Modern coral
+      excellent: colors.success, // Use theme success color
+      good: colors.info, // Use theme info color
+      moderate: colors.warning, // Use theme warning color
+      poor: colors.error, // Use theme error color
     },
 
     // Activity levels - consistent with performance for cognitive ease
     activity: {
-      high: '#06D6A0',
-      medium: '#118AB2',
-      low: '#FFB627',
+      high: colors.success,
+      medium: colors.info,
+      low: colors.warning,
       none: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM),
     },
 
-    // Memory retention states - clear cognitive mapping
+    // Memory retention states - clear cognitive mapping using theme colors
     memory: {
-      strong: '#06D6A0', // Safe, confident
-      fading: '#FFB627', // Caution, attention needed
-      weak: '#EF476F', // Urgent, critical
+      strong: colors.success, // Safe, confident
+      fading: colors.warning, // Caution, attention needed
+      weak: colors.error, // Urgent, critical
     },
 
-    // Difficulty levels - intuitive progression
+    // Difficulty levels - intuitive progression with theme colors
     difficulty: {
-      easy: '#06D6A0',
-      medium: '#FFB627',
-      hard: '#EF476F',
+      easy: colors.success,
+      medium: colors.warning,
+      hard: colors.error,
     },
 
     // Trend indicators - clear directional meaning
     trend: {
-      improving: '#06D6A0',
-      stable: '#118AB2',
-      declining: '#EF476F',
+      improving: colors.success,
+      stable: colors.info,
+      declining: colors.error,
     },
 
-    // Streak and consistency - modern approach
+    // Streak and consistency - refined, theme-aware approach
     streak: {
-      active: '#06D6A0', // Active day - vibrant green
+      active: colors.success, // Active day - success green
       inactive: withOpacity(colors.textTertiary, CHART_OPACITY.SUBTLE),
-      today: '#7209B7', // Today's border - distinctive purple
-      weekend: withOpacity('#4299E1', CHART_OPACITY.SUBTLE), // Weekend highlight - more subtle
+      today: colors.primary, // Today's border - theme primary (subtle)
+      weekend: withOpacity(colors.info, CHART_OPACITY.SUBTLE), // Weekend highlight
     },
 
-    // Chart UI elements - modern, professional, theme-aware
+    // Chart UI elements - perfectly theme-integrated
     ui: {
       background: colors.background,
       grid: withOpacity(colors.textTertiary, CHART_OPACITY.MINIMAL),
       border: withOpacity(colors.border, CHART_OPACITY.HIGH),
-      accent: '#7209B7',
+      accent: colors.primary, // Use theme primary instead of strong purple
       shadow: withOpacity(colors.shadow, CHART_OPACITY.SUBTLE),
-      tooltip: withOpacity(colors.card, 0.98), // More opaque for better readability
+      tooltip: withOpacity(colors.card, 0.98),
     },
 
-    // Modern gradients for area charts and backgrounds - more subtle
+    // Refined gradients for area charts - more subtle and elegant
     gradients: {
       excellent: [
-        withOpacity('#06D6A0', CHART_OPACITY.MEDIUM),
-        withOpacity('#06D6A0', CHART_OPACITY.LOW),
-        withOpacity('#06D6A0', CHART_OPACITY.SUBTLE),
+        withOpacity(colors.success, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.success, CHART_OPACITY.LOW),
+        withOpacity(colors.success, CHART_OPACITY.SUBTLE),
       ],
       good: [
-        withOpacity('#118AB2', CHART_OPACITY.MEDIUM),
-        withOpacity('#118AB2', CHART_OPACITY.LOW),
-        withOpacity('#118AB2', CHART_OPACITY.SUBTLE),
+        withOpacity(colors.info, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.info, CHART_OPACITY.LOW),
+        withOpacity(colors.info, CHART_OPACITY.SUBTLE),
       ],
       warning: [
-        withOpacity('#FFB627', CHART_OPACITY.MEDIUM),
-        withOpacity('#FFB627', CHART_OPACITY.LOW),
-        withOpacity('#FFB627', CHART_OPACITY.SUBTLE),
+        withOpacity(colors.warning, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.warning, CHART_OPACITY.LOW),
+        withOpacity(colors.warning, CHART_OPACITY.SUBTLE),
       ],
       error: [
-        withOpacity('#EF476F', CHART_OPACITY.MEDIUM),
-        withOpacity('#EF476F', CHART_OPACITY.LOW),
-        withOpacity('#EF476F', CHART_OPACITY.SUBTLE),
+        withOpacity(colors.error, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.error, CHART_OPACITY.LOW),
+        withOpacity(colors.error, CHART_OPACITY.SUBTLE),
       ],
       accent: [
-        withOpacity('#7209B7', CHART_OPACITY.MEDIUM),
-        withOpacity('#7209B7', CHART_OPACITY.LOW),
-        withOpacity('#7209B7', CHART_OPACITY.SUBTLE),
+        withOpacity(colors.primary, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.primary, CHART_OPACITY.LOW),
+        withOpacity(colors.primary, CHART_OPACITY.SUBTLE),
       ],
     },
 
@@ -165,103 +165,103 @@ export const useChartColors = () => {
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
-    // Enhanced color selection functions with modern palette
+    // Enhanced color selection functions with theme-aware colors
     getPerformanceColor: (value: number) => {
-      if (value >= 85) return '#06D6A0'; // Excellent - modern teal
-      if (value >= 70) return '#118AB2'; // Good - ocean blue
-      if (value >= 50) return '#FFB627'; // Moderate - warm amber
-      return '#EF476F'; // Poor - modern coral
+      if (value >= 85) return colors.success; // Excellent
+      if (value >= 70) return colors.info; // Good
+      if (value >= 50) return colors.warning; // Moderate
+      return colors.error; // Poor
     },
 
     // Get color by difficulty level (0-1) with refined thresholds
     getDifficultyColor: (difficulty: number) => {
-      if (difficulty < 0.4) return '#06D6A0'; // Easy
-      if (difficulty < 0.7) return '#FFB627'; // Medium
-      return '#EF476F'; // Hard
+      if (difficulty < 0.4) return colors.success; // Easy
+      if (difficulty < 0.7) return colors.warning; // Medium
+      return colors.error; // Hard
     },
 
     // Get color by retrievability level (0-1) with optimized thresholds
     getRetrievabilityColor: (retrievability: number) => {
-      if (retrievability >= 0.75) return '#06D6A0'; // Strong memory
-      if (retrievability >= 0.5) return '#FFB627'; // Fading memory
-      return '#EF476F'; // Weak memory
+      if (retrievability >= 0.75) return colors.success; // Strong memory
+      if (retrievability >= 0.5) return colors.warning; // Fading memory
+      return colors.error; // Weak memory
     },
 
     // Get color by mastery level with smooth progression
     getMasteryColor: (mastery: number) => {
-      if (mastery >= 0.8) return '#06D6A0'; // Mastered
-      if (mastery >= 0.5) return '#118AB2'; // Learning
-      if (mastery >= 0.2) return '#FFB627'; // Practicing
-      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // New - theme-aware
+      if (mastery >= 0.8) return colors.success; // Mastered
+      if (mastery >= 0.5) return colors.info; // Learning
+      if (mastery >= 0.2) return colors.warning; // Practicing
+      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // New
     },
 
     // Get color for time-based data (hours studied, etc.)
     getTimeColor: (hours: number, maxHours: number) => {
       const ratio = hours / maxHours;
-      if (ratio >= 0.8) return '#06D6A0'; // High activity
-      if (ratio >= 0.5) return '#118AB2'; // Medium activity
-      if (ratio >= 0.2) return '#FFB627'; // Low activity
-      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // Minimal activity - theme-aware
+      if (ratio >= 0.8) return colors.success; // High activity
+      if (ratio >= 0.5) return colors.info; // Medium activity
+      if (ratio >= 0.2) return colors.warning; // Low activity
+      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // Minimal activity
     },
   };
 };
 
 /**
- * Modern color schemes for specific chart types
- * Provides consistent, beautiful color combinations for different visualizations
+ * Refined color schemes for specific chart types
+ * Provides consistent, beautiful color combinations using theme colors
  */
 export const CHART_COLOR_SCHEMES = {
-  // Activity chart - 4 levels with modern progression
+  // Activity chart - 4 levels with refined progression
   ACTIVITY_LEVELS: {
-    high: '#06D6A0', // Vibrant teal-green
-    medium: '#118AB2', // Ocean blue
-    low: '#FFB627', // Warm amber
-    none: '#A0AEC0', // Refined gray matching theme
+    high: '#06D6A0', // Theme success
+    medium: '#118AB2', // Theme info
+    low: '#FFB627', // Theme warning
+    none: '#A0AEC0', // Theme tabIconDefault
   },
 
-  // Mastery progression - 4 zones for better granularity
+  // Mastery progression - 4 zones with theme consistency
   MASTERY_ZONES: {
-    mastered: '#06D6A0', // Achieved - teal green
-    proficient: '#118AB2', // Strong - ocean blue
-    learning: '#FFB627', // Developing - amber
-    new: '#A0AEC0', // Starting - refined gray
+    mastered: '#06D6A0', // Theme success
+    proficient: '#118AB2', // Theme info
+    learning: '#FFB627', // Theme warning
+    new: '#A0AEC0', // Theme tabIconDefault
   },
 
-  // Efficiency levels - 3 clear zones
+  // Efficiency levels - 3 clear zones using theme colors
   EFFICIENCY_ZONES: {
-    excellent: '#06D6A0', // High efficiency
-    good: '#118AB2', // Moderate efficiency
-    needsImprovement: '#EF476F', // Low efficiency
+    excellent: '#06D6A0', // Theme success
+    good: '#118AB2', // Theme info
+    needsImprovement: '#EF476F', // Theme error
   },
 
-  // Retrievability zones - 3 memory states
+  // Retrievability zones - 3 memory states with theme colors
   RETRIEVABILITY_ZONES: {
-    safe: '#06D6A0', // Strong memory
-    atRisk: '#FFB627', // Fading memory
-    critical: '#EF476F', // Weak memory
+    safe: '#06D6A0', // Theme success
+    atRisk: '#FFB627', // Theme warning
+    critical: '#EF476F', // Theme error
   },
 
   // Difficulty distribution - 3 intuitive levels
   DIFFICULTY_LEVELS: {
-    easy: '#06D6A0', // Approachable green
-    medium: '#FFB627', // Moderate amber
-    hard: '#EF476F', // Challenging coral
+    easy: '#06D6A0', // Theme success
+    medium: '#FFB627', // Theme warning
+    hard: '#EF476F', // Theme error
   },
 
-  // Study session types - varied but harmonious
+  // Study session types - varied but harmonious with theme
   SESSION_TYPES: {
-    review: '#118AB2', // Review sessions - steady blue
-    learn: '#06D6A0', // Learning new - fresh green
-    practice: '#FFB627', // Practice - active amber
-    test: '#7209B7', // Testing - distinctive purple
+    review: '#118AB2', // Theme info - steady, reliable
+    learn: '#06D6A0', // Theme success - positive, growth
+    practice: '#FFB627', // Theme warning - active, attention
+    test: '#2A3441', // Theme primary - important, focused
   },
 
-  // Progress indicators - motivational colors
+  // Progress indicators - motivational colors using theme
   PROGRESS_INDICATORS: {
-    ahead: '#06D6A0', // Ahead of schedule
-    onTrack: '#118AB2', // On schedule
-    behind: '#FFB627', // Behind schedule
-    critical: '#EF476F', // Critically behind
+    ahead: '#06D6A0', // Theme success
+    onTrack: '#118AB2', // Theme info
+    behind: '#FFB627', // Theme warning
+    critical: '#EF476F', // Theme error
   },
 } as const;
 

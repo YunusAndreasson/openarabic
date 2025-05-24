@@ -262,7 +262,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               {chartData.smoothPath && (
                 <Path
                   path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                  color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
+                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.15)}
                 />
               )}
             </Group>
@@ -274,13 +274,13 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                   path={chartData.smoothPath}
                   style="stroke"
                   strokeWidth={3}
-                  color={chartColors.ui.accent}
+                  color={chartColors.performance.excellent}
                 >
                   <Shadow
                     dx={0}
                     dy={2}
                     blur={4}
-                    color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
+                    color={chartColors.withOpacity(chartColors.performance.excellent, 0.3)}
                   />
                 </Path>
               )}
