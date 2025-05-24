@@ -61,13 +61,7 @@ const EmptyState = memo(
       <View style={[styles.container, containerStyle]}>
         <View style={styles.contentContainer}>
           {icon && (
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: colors.textOverlay },
-                iconContainerStyle,
-              ]}
-            >
+            <View style={[styles.iconContainer, iconContainerStyle]}>
               <IconComponent
                 name={iconName}
                 size={iconSize}
@@ -160,7 +154,6 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     alignItems: 'center',
-    borderRadius: LAYOUT.BORDER_RADIUS.XLARGE,
     height: LAYOUT.BUTTON.HEIGHT.LARGE * 2,
     justifyContent: 'center',
     marginBottom: LAYOUT.SPACING.XLARGE,

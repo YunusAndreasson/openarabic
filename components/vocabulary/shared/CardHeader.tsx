@@ -28,10 +28,10 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
       </View>
       <TouchableOpacity
         onPress={onInfoPress}
-        style={[styles.infoIcon, { backgroundColor: colors.borderOverlay }]}
+        style={[styles.infoIcon, { backgroundColor: colors.textOverlay }]}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <Ionicons name="information-outline" size={16} color={colors.textTertiary} />
+        <Ionicons name="information-outline" size={18} color={colors.textTertiary} />
       </TouchableOpacity>
     </View>
   );
@@ -60,11 +60,11 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   infoIcon: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     padding: LAYOUT.SPACING.SMALL,
-    width: 40,
-    height: 40,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 16,
   },
 });

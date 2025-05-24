@@ -131,10 +131,10 @@ const InfoCard: React.FC<InfoCardProps> = ({
     if (!icon) return null;
 
     return (
-      <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
+      <View style={styles.iconContainer}>
         <Ionicons
           name={icon as ComponentProps<typeof Ionicons>['name']}
-          size={22}
+          size={24}
           color={iconClr}
         />
       </View>
@@ -261,7 +261,6 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     alignSelf: 'flex-start',
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.SMALL,
     minWidth: 38,

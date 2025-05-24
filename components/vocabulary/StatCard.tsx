@@ -22,7 +22,7 @@ interface StatCardProps {
 }
 
 export const StatCard = memo(
-  ({ value, label, icon, iconColor, bgColor, borderColor, category, onPress }: StatCardProps) => {
+  ({ value, label, icon, iconColor, bgColor, category, onPress }: StatCardProps) => {
     const colors = useColors();
 
     const handlePress = () => {
@@ -41,8 +41,8 @@ export const StatCard = memo(
       >
         <View style={styles.cardContent}>
           {/* Icon container */}
-          <View style={[styles.iconContainer, { backgroundColor: bgColor, borderColor }]}>
-            <Ionicons name={icon} size={20} color={iconColor} />
+          <View style={styles.iconContainer}>
+            <Ionicons name={icon} size={24} color={iconColor} />
           </View>
 
           {/* Main content */}
@@ -84,11 +84,8 @@ const styles = StyleSheet.create({
     minHeight: 72,
   },
   iconContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    padding: LAYOUT.SPACING.SMALL,
-    borderWidth: 1,
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -245,9 +245,7 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
 ActivityChart.displayName = 'ActivityChart';
 
 const styles = StyleSheet.create({
-  progressCard: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
+  progressCard: {},
   progressContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },

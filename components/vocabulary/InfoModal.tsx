@@ -182,10 +182,10 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                 </View>
                 <TouchableOpacity
                   onPress={handleClose}
-                  style={[styles.closeButton, { backgroundColor: colors.borderOverlay }]}
+                  style={styles.closeButton}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="close" size={20} color={colors.text} />
+                  <Ionicons name="close" size={22} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -266,9 +266,8 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
   },
   closeButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

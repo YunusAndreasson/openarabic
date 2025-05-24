@@ -5,11 +5,9 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, memo } from 'react';
 import { Alert, StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
-import Animated from 'react-native-reanimated';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
 import * as Linking from 'expo-linking';
-import type { AnimatedStyleProp } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { CustomSlider } from '@/components/Slider';
@@ -19,7 +17,6 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState } from '@/hooks';
-import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
@@ -32,22 +29,15 @@ interface SettingLabelProps {
   readonly icon: keyof typeof Ionicons.glyphMap;
   readonly text: string;
   readonly iconColor?: string;
-  readonly iconBackgroundColor?: string;
 }
 
-const SettingLabel = memo(({ icon, text, iconColor, iconBackgroundColor }: SettingLabelProps) => {
+const SettingLabel = memo(({ icon, text, iconColor }: SettingLabelProps) => {
   const colors = useColors();
   const defaultIconColor = iconColor || colors.textSecondary;
 
   return (
     <View style={styles.settingLabelContainer}>
-      {iconBackgroundColor ? (
-        <View style={[styles.settingIconContainer, { backgroundColor: iconBackgroundColor }]}>
-          <Ionicons name={icon} size={18} color={defaultIconColor} />
-        </View>
-      ) : (
-        <Ionicons name={icon} size={20} color={defaultIconColor} />
-      )}
+      <Ionicons name={icon} size={22} color={defaultIconColor} />
       <View style={styles.settingLabelTextContainer}>
         <ThemedText type="body">{text}</ThemedText>
       </View>
@@ -72,31 +62,6 @@ const SettingsScreen: React.FC = () => {
 
   // Simple loading state for session loading
   const { startLoading, stopLoading } = useLoadingState(false);
-
-  // Fade animations for UI elements that depend on Redux store data
-  const { animatedStyle: _themeToggleFade } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 150,
-    autoStart: true,
-    delay: 100,
-  });
-  const themeToggleFade = _themeToggleFade as AnimatedStyleProp<ViewStyle>;
-
-  const { animatedStyle: _englishToggleFade } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 150,
-    autoStart: true,
-    delay: 150,
-  });
-  const englishToggleFade = _englishToggleFade as AnimatedStyleProp<ViewStyle>;
-
-  const { animatedStyle: _sliderFade } = useOpacityAnimation({
-    initialOpacity: 0,
-    duration: 150,
-    autoStart: true,
-    delay: 200,
-  });
-  const sliderFade = _sliderFade as AnimatedStyleProp<ViewStyle>;
 
   // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
@@ -201,45 +166,23 @@ const SettingsScreen: React.FC = () => {
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
                 Interface
               </ThemedText>
-              <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
-                Customize your reading experience
-              </ThemedText>
             </View>
 
             <View style={styles.settingRow}>
-              <SettingLabel
-                icon="moon"
-                text="Dark Mode"
-                iconColor={colors.info}
-                iconBackgroundColor={colors.socialIconBg}
-              />
-              <Animated.View style={themeToggleFade}>
-                <ThemeToggle />
-              </Animated.View>
+              <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
+              <ThemeToggle />
             </View>
             <Divider />
             <View style={styles.settingRow}>
-              <SettingLabel
-                icon="language"
-                text="English Translation"
-                iconColor={colors.success}
-                iconBackgroundColor={colors.socialIconBg}
+              <SettingLabel icon="language" text="English Translation" iconColor={colors.icon} />
+              <Toggle
+                value={settings.showEnglish}
+                onValueChange={value => dispatch(setShowEnglish(value))}
               />
-              <Animated.View style={englishToggleFade}>
-                <Toggle
-                  value={settings.showEnglish}
-                  onValueChange={value => dispatch(setShowEnglish(value))}
-                />
-              </Animated.View>
             </View>
             <Divider />
             <View style={styles.settingRow}>
-              <SettingLabel
-                icon="text"
-                text="Text Size"
-                iconColor={colors.warning}
-                iconBackgroundColor={colors.socialIconBg}
-              />
+              <SettingLabel icon="text" text="Text Size" iconColor={colors.icon} />
               <View style={styles.sliderContainer}>
                 <ThemedText
                   type="caption"
@@ -250,16 +193,14 @@ const SettingsScreen: React.FC = () => {
                   {Math.round(settings.fontScale * 100)}%
                 </ThemedText>
                 <View style={styles.sliderWrapper}>
-                  <Animated.View style={sliderFade}>
-                    <CustomSlider
-                      value={settings.fontScale}
-                      onValueChange={handleFontScaleChange}
-                      minimumValue={0.8}
-                      maximumValue={1.3}
-                      step={0.1}
-                      style={styles.slider}
-                    />
-                  </Animated.View>
+                  <CustomSlider
+                    value={settings.fontScale}
+                    onValueChange={handleFontScaleChange}
+                    minimumValue={0.8}
+                    maximumValue={1.3}
+                    step={0.1}
+                    style={styles.slider}
+                  />
                 </View>
               </View>
             </View>
@@ -310,9 +251,6 @@ const SettingsScreen: React.FC = () => {
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
                 Connect
               </ThemedText>
-              <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
-                Follow us on social media
-              </ThemedText>
             </View>
 
             {/* Social Links */}
@@ -325,10 +263,8 @@ const SettingsScreen: React.FC = () => {
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
-                    <View
-                      style={[styles.socialIconContainer, { backgroundColor: colors.socialIconBg }]}
-                    >
-                      <Ionicons name="logo-twitter" size={20} color={colors.socialTwitter} />
+                    <View style={styles.socialIconContainer}>
+                      <Ionicons name="logo-twitter" size={22} color={colors.socialTwitter} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Twitter
@@ -351,10 +287,8 @@ const SettingsScreen: React.FC = () => {
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
-                    <View
-                      style={[styles.socialIconContainer, { backgroundColor: colors.socialIconBg }]}
-                    >
-                      <Ionicons name="logo-facebook" size={20} color={colors.socialFacebook} />
+                    <View style={styles.socialIconContainer}>
+                      <Ionicons name="logo-facebook" size={22} color={colors.socialFacebook} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Facebook
@@ -377,10 +311,8 @@ const SettingsScreen: React.FC = () => {
               >
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
-                    <View
-                      style={[styles.socialIconContainer, { backgroundColor: colors.socialIconBg }]}
-                    >
-                      <Ionicons name="logo-instagram" size={20} color={colors.socialInstagram} />
+                    <View style={styles.socialIconContainer}>
+                      <Ionicons name="logo-instagram" size={22} color={colors.socialInstagram} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Instagram
@@ -410,9 +342,6 @@ const SettingsScreen: React.FC = () => {
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
                 Support & Account
               </ThemedText>
-              <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
-                Get help or manage your account
-              </ThemedText>
             </View>
 
             {/* Action Links */}
@@ -425,10 +354,8 @@ const SettingsScreen: React.FC = () => {
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
-                    <View
-                      style={[styles.actionIconContainer, { backgroundColor: colors.socialIconBg }]}
-                    >
-                      <Ionicons name="mail" size={20} color={colors.info} />
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="mail" size={22} color={colors.info} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
                       Support
@@ -451,10 +378,8 @@ const SettingsScreen: React.FC = () => {
               >
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
-                    <View
-                      style={[styles.actionIconContainer, { backgroundColor: colors.socialIconBg }]}
-                    >
-                      <Ionicons name="log-out" size={20} color={colors.error} />
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="log-out" size={22} color={colors.error} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
                       Sign Out
@@ -554,7 +479,6 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   settingIconContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     padding: LAYOUT.SPACING.TINY,
     alignItems: 'center',
     justifyContent: 'center',
@@ -600,9 +524,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  sectionSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
-  },
   socialLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
@@ -622,8 +543,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   socialIconContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     padding: LAYOUT.SPACING.TINY,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   socialLinkText: {
     marginLeft: LAYOUT.SPACING.SMALL,
@@ -651,8 +573,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   actionIconContainer: {
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
     padding: LAYOUT.SPACING.TINY,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionLinkText: {
     marginLeft: LAYOUT.SPACING.SMALL,

@@ -110,9 +110,7 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
 StreakInsights.displayName = 'StreakInsights';
 
 const styles = StyleSheet.create({
-  streakCard: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
+  streakCard: {},
   streakContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },

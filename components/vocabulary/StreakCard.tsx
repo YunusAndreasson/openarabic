@@ -193,7 +193,6 @@ StreakCard.displayName = 'StreakCard';
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: LAYOUT.SPACING.LARGE, // More space for better section separation
     padding: 0,
     width: '100%',
   },

@@ -358,9 +358,7 @@ export const RetrievabilityChart = memo(
 RetrievabilityChart.displayName = 'RetrievabilityChart';
 
 const styles = StyleSheet.create({
-  retrievabilityCard: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
+  retrievabilityCard: {},
   retrievabilityContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },

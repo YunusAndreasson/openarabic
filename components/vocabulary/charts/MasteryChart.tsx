@@ -399,9 +399,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
 MasteryChart.displayName = 'MasteryChart';
 
 const styles = StyleSheet.create({
-  masteryCard: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
+  masteryCard: {},
   masteryContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },

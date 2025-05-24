@@ -236,9 +236,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
 DifficultyChart.displayName = 'DifficultyChart';
 
 const styles = StyleSheet.create({
-  difficultyCard: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
+  difficultyCard: {},
   difficultyContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },

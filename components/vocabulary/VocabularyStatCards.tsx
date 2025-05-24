@@ -245,7 +245,7 @@ VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
   container: {
-    gap: LAYOUT.SPACING.XLARGE,
+    gap: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   statsGrid: {
@@ -253,6 +253,5 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
-    marginTop: -LAYOUT.SPACING.SMALL,
   },
 });

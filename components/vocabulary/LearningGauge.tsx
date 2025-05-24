@@ -71,20 +71,12 @@ export const LearningGauge = memo(
 
     return (
       <BaseCard style={styles.gaugeCard} shadowSize="small" includePressAnimation={false}>
-        <View style={[styles.gaugeContent, { backgroundColor: gaugeState.bgColor }]}>
+        <View style={styles.gaugeContent}>
           {/* Status Indicator - Clean and minimal */}
           <View style={styles.statusIndicator}>
             {/* Simple Icon Container - No complex rings */}
-            <View
-              style={[
-                styles.iconContainer,
-                {
-                  backgroundColor: gaugeState.color,
-                  shadowColor: colors.shadow,
-                },
-              ]}
-            >
-              <Ionicons name={gaugeState.icon} size={28} color={colors.background} />
+            <View style={styles.iconContainer}>
+              <Ionicons name={gaugeState.icon} size={36} color={gaugeState.color} />
             </View>
           </View>
 
@@ -100,21 +92,18 @@ export const LearningGauge = memo(
               </ThemedText>
             </View>
 
-            {/* Status Badge - Visual reinforcement */}
-            <View style={[styles.statusBadge, { backgroundColor: colors.socialIconBg }]}>
-              <View style={[styles.statusDot, { backgroundColor: gaugeState.color }]} />
-              <ThemedText
-                type="caption"
-                weight="medium"
-                style={[styles.statusText, { color: gaugeState.color }]}
-              >
-                {gaugeState.level === 'optimal'
-                  ? 'Optimal'
-                  : gaugeState.level === 'moderate'
-                    ? 'Moderate'
-                    : 'Heavy Load'}
-              </ThemedText>
-            </View>
+            {/* Status text - Clean without container */}
+            <ThemedText
+              type="caption"
+              weight="medium"
+              style={[styles.statusText, { color: gaugeState.color }]}
+            >
+              {gaugeState.level === 'optimal'
+                ? 'Optimal'
+                : gaugeState.level === 'moderate'
+                  ? 'Moderate'
+                  : 'Heavy Load'}
+            </ThemedText>
           </View>
         </View>
       </BaseCard>
@@ -126,31 +115,25 @@ LearningGauge.displayName = 'LearningGauge';
 
 const styles = StyleSheet.create({
   gaugeCard: {
-    marginBottom: LAYOUT.SPACING.LARGE,
     overflow: 'hidden',
   },
   gaugeContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.LARGE,
-    minHeight: 88, // Reduced height for better proportion
+    paddingHorizontal: 3,
+    paddingVertical: LAYOUT.CARD.PADDING.MEDIUM,
+    minHeight: 96, // Increased height for better proportion and alignment
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
   },
   statusIndicator: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.LARGE,
   },
   iconContainer: {
-    width: 56, // Larger for better presence
-    height: 56,
-    borderRadius: 28,
+    width: 64, // Larger for better presence and alignment
+    height: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: LAYOUT.ELEVATION.SUBTLE, // Subtle depth
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: LAYOUT.OPACITY.XLIGHT,
-    shadowRadius: 3,
   },
   contentArea: {
     flex: 1,
@@ -169,20 +152,6 @@ const styles = StyleSheet.create({
   secondaryMessage: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3,
     opacity: LAYOUT.OPACITY.HIGH, // Subtle hierarchy using standardized opacity
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.TINY,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    alignSelf: 'flex-start',
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: LAYOUT.SPACING.TINY,
   },
   statusText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

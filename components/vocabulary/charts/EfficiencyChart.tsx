@@ -335,9 +335,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
 EfficiencyChart.displayName = 'EfficiencyChart';
 
 const styles = StyleSheet.create({
-  efficiencyCard: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-  },
+  efficiencyCard: {},
   efficiencyContent: {
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
