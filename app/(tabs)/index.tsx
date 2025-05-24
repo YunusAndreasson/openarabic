@@ -14,6 +14,7 @@ import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
 import { DueWordsArticleSection } from '@/components/index/DueWordsArticleSection';
 import { DifficultWordsArticleSection } from '@/components/index/DifficultWordsArticleSection';
+import { WelcomeMessage } from '@/components/index/WelcomeMessage';
 import { authorsService } from '@/services/authors';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
@@ -397,6 +398,7 @@ export default function ArticlesScreen(): JSX.Element {
     }
 
     const orderedSections = [
+      { id: 'welcome', component: <WelcomeMessage /> },
       { id: 'daily-pick', component: DailyPick },
       { id: 'struggling-words', component: StrugglingWordsComponent },
       { id: 'learning-section', component: learningSection },

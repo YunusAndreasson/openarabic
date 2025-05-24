@@ -47,6 +47,7 @@
     "expo-system-ui": "^5.0.7",
     "expo-updates": "^0.28.13",
     "mixpanel-react-native": "^3.0.9",
+    "moment-hijri": "^3.0.0",
     "react": "19.0.0",
     "react-native": "0.79.2",
     "react-native-gesture-handler": "~2.24.0",
