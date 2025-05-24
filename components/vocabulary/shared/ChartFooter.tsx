@@ -3,7 +3,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 
 import { ThemedText } from '../../ThemedText';
 
@@ -37,9 +36,7 @@ export const ChartFooter = memo(({ legendItems, timeRange }: ChartFooterProps) =
   };
 
   return (
-    <View
-      style={[styles.progressFooter, { borderTopColor: withOpacity(colors.textTertiary, 0.1) }]}
-    >
+    <View style={[styles.progressFooter, { borderTopColor: colors.borderOverlay }]}>
       <View style={styles.progressLegend}>
         {legendItems.map((item, index) => (
           <View key={`legend-${index}`} style={styles.legendItem}>

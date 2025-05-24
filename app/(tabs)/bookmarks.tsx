@@ -26,7 +26,6 @@ import { readingListService } from '@/services/readingList';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
 import BottomControls from '@/components/BottomControls';
-import { withOpacity } from '@/utils/colorUtils';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -128,12 +127,12 @@ const BookmarkListItem = memo(
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          backgroundColor: withOpacity(colors.warning, 0.25),
+          backgroundColor: colors.buttonOverlay,
           paddingHorizontal: LAYOUT.SPACING.XSMALL,
           paddingVertical: LAYOUT.SPACING.MICRO,
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
           borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-          borderColor: withOpacity(colors.warning, 0.4),
+          borderColor: colors.borderOverlay,
           marginRight: 8,
         }}
       >

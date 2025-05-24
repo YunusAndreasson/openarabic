@@ -13,13 +13,11 @@ import type { AnimatedStyleProp } from 'react-native-reanimated';
 
 import BaseCard from '@/components/BaseCard';
 import { CustomSlider } from '@/components/Slider';
-import { ThemedButton } from '@/components/ThemedButton';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT } from '@/constants/layout';
-import { Colors } from '@/constants/Colors';
 import { useLoadingState } from '@/hooks';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
@@ -28,7 +26,6 @@ import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
-import { withOpacity } from '@/utils/colorUtils';
 
 // Memoize static components to prevent unnecessary re-renders
 interface SettingLabelProps {
@@ -214,7 +211,7 @@ const SettingsScreen: React.FC = () => {
                 icon="moon"
                 text="Dark Mode"
                 iconColor={colors.info}
-                iconBackgroundColor={withOpacity(colors.info, 0.15)}
+                iconBackgroundColor={colors.socialIconBg}
               />
               <Animated.View style={themeToggleFade}>
                 <ThemeToggle />
@@ -226,7 +223,7 @@ const SettingsScreen: React.FC = () => {
                 icon="language"
                 text="English Translation"
                 iconColor={colors.success}
-                iconBackgroundColor={withOpacity(colors.success, 0.15)}
+                iconBackgroundColor={colors.socialIconBg}
               />
               <Animated.View style={englishToggleFade}>
                 <Toggle
@@ -241,7 +238,7 @@ const SettingsScreen: React.FC = () => {
                 icon="text"
                 text="Text Size"
                 iconColor={colors.warning}
-                iconBackgroundColor={withOpacity(colors.warning, 0.15)}
+                iconBackgroundColor={colors.socialIconBg}
               />
               <View style={styles.sliderContainer}>
                 <ThemedText
@@ -329,10 +326,7 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View
-                      style={[
-                        styles.socialIconContainer,
-                        { backgroundColor: withOpacity(colors.socialTwitter, 0.15) },
-                      ]}
+                      style={[styles.socialIconContainer, { backgroundColor: colors.socialIconBg }]}
                     >
                       <Ionicons name="logo-twitter" size={20} color={colors.socialTwitter} />
                     </View>
@@ -358,10 +352,7 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View
-                      style={[
-                        styles.socialIconContainer,
-                        { backgroundColor: withOpacity(colors.socialFacebook, 0.15) },
-                      ]}
+                      style={[styles.socialIconContainer, { backgroundColor: colors.socialIconBg }]}
                     >
                       <Ionicons name="logo-facebook" size={20} color={colors.socialFacebook} />
                     </View>
@@ -387,10 +378,7 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View
-                      style={[
-                        styles.socialIconContainer,
-                        { backgroundColor: withOpacity(colors.socialInstagram, 0.15) },
-                      ]}
+                      style={[styles.socialIconContainer, { backgroundColor: colors.socialIconBg }]}
                     >
                       <Ionicons name="logo-instagram" size={20} color={colors.socialInstagram} />
                     </View>
@@ -438,10 +426,7 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View
-                      style={[
-                        styles.actionIconContainer,
-                        { backgroundColor: withOpacity(colors.info, 0.15) },
-                      ]}
+                      style={[styles.actionIconContainer, { backgroundColor: colors.socialIconBg }]}
                     >
                       <Ionicons name="mail" size={20} color={colors.info} />
                     </View>
@@ -467,10 +452,7 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View
-                      style={[
-                        styles.actionIconContainer,
-                        { backgroundColor: withOpacity(colors.error, 0.15) },
-                      ]}
+                      style={[styles.actionIconContainer, { backgroundColor: colors.socialIconBg }]}
                     >
                       <Ionicons name="log-out" size={20} color={colors.error} />
                     </View>

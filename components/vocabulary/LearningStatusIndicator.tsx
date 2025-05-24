@@ -5,7 +5,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import BaseCard from '@/components/BaseCard';
 import { LAYOUT } from '@/constants/layout';
-import { withOpacity } from '@/utils/colorUtils';
 
 /**
  * Learning status indicator states
@@ -85,21 +84,21 @@ export const LearningStatusIndicator = memo(
       switch (status) {
         case LearningStatus.Good:
           return {
-            backgroundColor: withOpacity(colors.success, 0.15),
+            backgroundColor: colors.socialIconBg,
             iconColor: colors.success,
             borderColor: colors.success + '30',
             recommendation: 'Add more words to your vocabulary',
           };
         case LearningStatus.Warning:
           return {
-            backgroundColor: withOpacity(colors.warning, 0.15),
+            backgroundColor: colors.socialIconBg,
             iconColor: colors.warning,
             borderColor: colors.warning + '30',
             recommendation: 'Focus on reviews before adding new words',
           };
         case LearningStatus.Review:
           return {
-            backgroundColor: withOpacity(colors.error, 0.15),
+            backgroundColor: colors.socialIconBg,
             iconColor: colors.error,
             borderColor: colors.error + '30',
             recommendation: 'Complete your reviews first',

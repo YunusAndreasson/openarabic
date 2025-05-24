@@ -1,24 +1,18 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Circle, Group, vec, Shadow, Skia, Rect } from '@shopify/react-native-skia';
+import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { withOpacity } from '@/utils/colorUtils';
+import { generateDateRange, isSameDay, calculateEfficiencyScore } from '../shared/utils';
+import { useChartColors } from '../shared/chartColors';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
-import {
-  GRAPH_WIDTH,
-  GRAPH_HEIGHT_LARGE,
-  DAYS_30,
-  EFFICIENCY_THRESHOLD,
-} from '../shared/constants';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_30 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
-import { generateDateRange, isSameDay, calculateEfficiencyScore } from '../shared/utils';
-import { useChartColors } from '../shared/chartColors';
 
 interface EfficiencyChartProps {
   studyWords: StudyWord[];

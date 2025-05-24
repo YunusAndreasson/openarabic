@@ -2,10 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React, { memo } from 'react';
 import type { ComponentType, ComponentProps } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 
 import type { EmptyStateProps } from '@/types/ui/layout.types';
-import { withOpacity } from '@/utils/colorUtils';
 
 import { LAYOUT } from '../constants/layout';
 
@@ -65,7 +64,7 @@ const EmptyState = memo(
             <View
               style={[
                 styles.iconContainer,
-                { backgroundColor: withOpacity(colors.tint, 0.1) },
+                { backgroundColor: colors.textOverlay },
                 iconContainerStyle,
               ]}
             >

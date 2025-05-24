@@ -5,7 +5,6 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
-import { withOpacity } from '@/utils/colorUtils';
 
 interface AudioProgressBarProps {
   progress: number; // Current progress in milliseconds
@@ -54,26 +53,16 @@ export const AudioProgressBar: React.FC<AudioProgressBarProps> = ({
   if (compact) {
     return (
       <View style={styles.compactContainer}>
-        <View
-          style={[
-            styles.compactProgressTrack,
-            { backgroundColor: withOpacity(colors.textTertiary, 0.4) },
-          ]}
-        >
+        <View style={[styles.compactProgressTrack, { backgroundColor: colors.borderOverlay }]}>
           <Animated.View
             style={[
               styles.compactProgressFill,
-              { backgroundColor: colors.tint },
+              { backgroundColor: colors.success },
               animatedProgressStyle,
             ]}
           />
           {/* End indicator */}
-          <View
-            style={[
-              styles.compactEndIndicator,
-              { backgroundColor: withOpacity(colors.success, 0.6) },
-            ]}
-          />
+          <View style={[styles.compactEndIndicator, { backgroundColor: colors.success }]} />
         </View>
         {showTimeRemaining && duration > 0 && (
           <ThemedText
@@ -93,19 +82,16 @@ export const AudioProgressBar: React.FC<AudioProgressBarProps> = ({
       {/* Single row: Progress bar and time counter aligned */}
       <View style={styles.progressRow}>
         <View style={styles.progressContainer}>
-          <View
-            style={[
-              styles.progressTrack,
-              { backgroundColor: withOpacity(colors.textTertiary, 0.3) },
-            ]}
-          >
+          <View style={[styles.progressTrack, { backgroundColor: colors.borderOverlay }]}>
             <Animated.View
-              style={[styles.progressFill, { backgroundColor: colors.tint }, animatedProgressStyle]}
+              style={[
+                styles.progressFill,
+                { backgroundColor: colors.success },
+                animatedProgressStyle,
+              ]}
             />
             {/* End indicator - shows where the track ends */}
-            <View
-              style={[styles.endIndicator, { backgroundColor: withOpacity(colors.success, 0.7) }]}
-            />
+            <View style={[styles.endIndicator, { backgroundColor: colors.success }]} />
           </View>
         </View>
 

@@ -1,23 +1,24 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import type { VocabularyStats, StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { lightFeedback } from '@/utils/haptics';
-import { withOpacity } from '@/utils/colorUtils';
+import type { StudyWord, VocabularyStats, StatCategory } from '@/types/vocabulary.types';
+
+import { LAYOUT } from '../../constants/layout';
+import { useColors } from '../../hooks/useColors';
+import { useAuth } from '../../hooks/useAuth';
+import { useStreakData } from '../../hooks/useStreakData';
+import { lightFeedback } from '../../utils/haptics';
 
 import { LearningGauge } from './LearningGauge';
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { StatCard } from './StatCard';
-import { StreakInsights } from './charts/StreakInsights';
+import { StreakCard } from './StreakCard';
 import { ActivityChart } from './charts/ActivityChart';
 import { MasteryChart } from './charts/MasteryChart';
 import { EfficiencyChart } from './charts/EfficiencyChart';
 import { RetrievabilityChart } from './charts/RetrievabilityChart';
 import { DifficultyChart } from './charts/DifficultyChart';
-import { ThemedText } from '../ThemedText';
 
 interface VocabularyStatCardsProps
   extends Pick<VocabularyStats, 'dueWords' | 'masteredWords' | 'learningWords'> {
@@ -44,6 +45,8 @@ export const VocabularyStatCards = memo(
     studyWords = [],
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
+    const { user } = useAuth();
+    const streakData = useStreakData(user?.id);
 
     // Modal state for info dialogs
     const [modalVisible, setModalVisible] = useState(false);
@@ -131,7 +134,7 @@ export const VocabularyStatCards = memo(
           label: 'Due',
           icon: 'alarm-outline',
           iconColor: colors.warning,
-          bgColor: withOpacity(colors.warning, 0.19),
+          bgColor: colors.buttonOverlay,
           borderColor: colors.warning + '40',
           category: 'due',
         },
@@ -140,7 +143,7 @@ export const VocabularyStatCards = memo(
           label: 'Learning',
           icon: 'school-outline',
           iconColor: colors.info,
-          bgColor: withOpacity(colors.info, 0.19),
+          bgColor: colors.buttonOverlay,
           borderColor: colors.info + '40',
           category: 'learning',
         },
@@ -149,7 +152,7 @@ export const VocabularyStatCards = memo(
           label: 'Mastered',
           icon: 'checkmark-circle-outline',
           iconColor: colors.success,
-          bgColor: withOpacity(colors.success, 0.19),
+          bgColor: colors.buttonOverlay,
           borderColor: colors.success + '40',
           category: 'mastered',
         },
@@ -158,7 +161,7 @@ export const VocabularyStatCards = memo(
           label: 'Difficult',
           icon: 'alert-circle',
           iconColor: colors.error,
-          bgColor: withOpacity(colors.error, 0.19),
+          bgColor: colors.buttonOverlay,
           borderColor: colors.error + '40',
           category: 'needsAttention',
         },
@@ -194,7 +197,12 @@ export const VocabularyStatCards = memo(
         </View>
 
         {/* Streak Insights */}
-        <StreakInsights onInfoPress={() => handleInfoPress('streak')} />
+        <StreakCard
+          currentStreak={streakData.currentStreak}
+          longestStreak={streakData.longestStreak}
+          lastSevenDaysActivity={streakData.lastSevenDaysActivity}
+          onInfoPress={() => handleInfoPress('streak')}
+        />
 
         {/* Activity Chart */}
         <ActivityChart

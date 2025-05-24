@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Group, Shadow, Rect, Circle } from '@shopify/react-native-skia';
+import { Canvas, Group, Shadow, Rect } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -11,7 +11,6 @@ import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
-import { ThemedText } from '../../ThemedText';
 import { useChartColors } from '../shared/chartColors';
 
 interface DifficultyChartProps {
@@ -100,7 +99,6 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
 
     // Determine distribution type
     const easyWords = buckets[0]?.count ?? 0;
-    const mediumWords = buckets[1]?.count ?? 0;
     const hardWordsCount = buckets[2]?.count ?? 0;
 
     let distribution: 'easy' | 'balanced' | 'challenging';
@@ -178,17 +176,6 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         {/* Enhanced Difficulty Distribution Chart */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Clean background */}
-            <Group>
-              <Rect
-                x={0}
-                y={0}
-                width={GRAPH_WIDTH}
-                height={GRAPH_HEIGHT_LARGE}
-                color={chartColors.ui.background}
-              />
-            </Group>
-
             {/* Difficulty bars */}
             <Group>
               {difficultyData.buckets.map((bucket, index) => {

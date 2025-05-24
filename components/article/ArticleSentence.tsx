@@ -10,7 +10,6 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 
-import { Colors } from '../../constants/Colors';
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { ThemeColors } from '../../types/ui/theme.types';
@@ -55,7 +54,6 @@ function ArticleSentenceComponent({
   settings,
   colors: propColors,
   containerStyle,
-  currentPlayingSentenceId,
   currentPlayingWordId,
   currentPlayingPosition,
   isPlaying,
@@ -107,11 +105,11 @@ function ArticleSentenceComponent({
     () => [
       styles.sentenceBackground,
       {
-        backgroundColor: colors.tint ? `${colors.tint}40` : Colors.light.transparent,
+        backgroundColor: colors.tint ? `${colors.tint}40` : colors.transparent,
       },
       animatedHighlightStyle,
     ],
-    [colors.tint, animatedHighlightStyle]
+    [colors.tint, colors.transparent, animatedHighlightStyle]
   );
 
   const renderedWords = useMemo(() => {

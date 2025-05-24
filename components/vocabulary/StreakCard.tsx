@@ -7,7 +7,7 @@ import { ThemedText } from '../ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useProgressAnimation } from '@/hooks/animations';
-import { withOpacity } from '@/utils/colorUtils';
+import { CardHeader } from './shared/CardHeader';
 
 interface StreakCardProps {
   currentStreak: number;
@@ -18,10 +18,16 @@ interface StreakCardProps {
     active: boolean;
     dayName: string;
   }[];
+  onInfoPress: () => void;
 }
 
 export const StreakCard = memo(
-  ({ currentStreak = 0, longestStreak = 0, lastSevenDaysActivity = [] }: StreakCardProps) => {
+  ({
+    currentStreak = 0,
+    longestStreak = 0,
+    lastSevenDaysActivity = [],
+    onInfoPress,
+  }: StreakCardProps) => {
     const colors = useColors();
 
     // Animation value for line drawing
@@ -77,7 +83,7 @@ export const StreakCard = memo(
     // Colors
     const activeColor = colors.success;
     const inactiveColor = colors.warning;
-    const lineBaseColor = withOpacity(colors.text, 0.1);
+    const lineBaseColor = colors.borderOverlay;
 
     // Calculate day positions for path creation with proper margin
     const dayPositions = normalizedActivity.map((day, index) => ({
@@ -99,9 +105,19 @@ export const StreakCard = memo(
       })
       .filter(path => path !== '');
 
+    // Generate subtitle based on streak
+    const subtitle =
+      currentStreak === 0
+        ? 'Start today to begin building consistency'
+        : currentStreak >= 7
+          ? 'Excellent daily consistency!'
+          : 'Building momentum';
+
     return (
       <BaseCard style={styles.card} includePressAnimation={false} shadowSize="small">
         <View style={[styles.container, { padding: LAYOUT.CARD.PADDING.MEDIUM }]}>
+          <CardHeader title="Learning Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
+
           <View style={styles.content}>
             {/* Timeline visualization */}
             <Canvas style={styles.timelineCanvas}>
@@ -134,12 +150,7 @@ export const StreakCard = memo(
                     transform={[{ translateX: day.x }, { translateY: day.y }]}
                   >
                     {/* Background circle (serves as white stroke) */}
-                    <Circle
-                      cx={0}
-                      cy={0}
-                      r={pointRadius + pointStroke}
-                      color={colors.cardBackground}
-                    />
+                    <Circle cx={0} cy={0} r={pointRadius + pointStroke} color={colors.card} />
                     {/* Colored circle */}
                     <Circle
                       cx={0}

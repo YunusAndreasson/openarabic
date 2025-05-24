@@ -1,6 +1,6 @@
 import { format } from 'date-fns';
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View, Platform } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { State } from 'ts-fsrs';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,6 @@ import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
-import { withOpacity } from '../../utils/colorUtils';
 
 interface WordListItemProps {
   word: StudyWord;
@@ -128,12 +127,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
             <ThemedText type="caption" variant="secondary" style={styles.progressLabel}>
               Memory Strength
             </ThemedText>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: withOpacity(wordStatus.progress.color, 0.15) },
-              ]}
-            >
+            <View style={[styles.statusBadge, { backgroundColor: colors.socialIconBg }]}>
               <ThemedText
                 type="caption"
                 weight="semibold"
@@ -149,9 +143,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
         </View>
 
         {/* Progress bar */}
-        <View
-          style={[styles.progressBar, { backgroundColor: withOpacity(colors.textTertiary, 0.1) }]}
-        >
+        <View style={[styles.progressBar, { backgroundColor: colors.borderOverlay }]}>
           <Animated.View
             style={[
               styles.progressFill,

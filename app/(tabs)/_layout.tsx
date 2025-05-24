@@ -15,7 +15,6 @@ import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { withOpacity } from '@/utils/colorUtils';
 
 import { useAuth } from '../../hooks/useAuth';
 
@@ -130,7 +129,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
     [colors.tint, colors.tabIconDefault]
   );
 
-  const rippleColor = useMemo(() => withOpacity(colors.tint, 0.25), [colors.tint]);
+  const rippleColor = useMemo(() => colors.buttonOverlay, [colors.buttonOverlay]);
 
   const getTabPressHandler = useCallback(
     (route: Route<string>, isFocused: boolean) => {
@@ -192,9 +191,7 @@ CustomTabBar.displayName = 'CustomTabBar';
 const CustomHeaderBackground = () => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
-  const overlayColor = isDarkMode
-    ? withOpacity(colors.background, 0.85)
-    : withOpacity(colors.white, 0.85);
+  const overlayColor = isDarkMode ? colors.overlay : colors.modalOverlay;
 
   if (Platform.OS === 'android') {
     return (

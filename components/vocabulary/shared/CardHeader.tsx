@@ -1,10 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import React, { memo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 
 import { ThemedText } from '../../ThemedText';
 
@@ -29,7 +28,7 @@ export const CardHeader = memo(({ title, subtitle, onInfoPress }: CardHeaderProp
       </View>
       <TouchableOpacity
         onPress={onInfoPress}
-        style={[styles.infoIcon, { backgroundColor: withOpacity(colors.textTertiary, 0.1) }]}
+        style={[styles.infoIcon, { backgroundColor: colors.borderOverlay }]}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         <Ionicons name="information-outline" size={16} color={colors.textTertiary} />

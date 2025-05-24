@@ -4,7 +4,6 @@ import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 
 import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
@@ -34,7 +33,6 @@ export const LearningGauge = memo(
     // Calculate learning state with clear, intuitive thresholds
     const gaugeState: GaugeState = useMemo(() => {
       const reviewLoad = dueWords / Math.max(totalWords, 1);
-      const masteryRatio = masteredWords / Math.max(totalWords, 1);
 
       // HEAVY: High review burden - focus needed
       if (dueWords > 15 || reviewLoad > 0.25) {
@@ -44,7 +42,7 @@ export const LearningGauge = memo(
           subtitle: `${dueWords} words need attention`,
           icon: 'refresh-circle',
           color: colors.error,
-          bgColor: withOpacity(colors.error, 0.12),
+          bgColor: colors.socialIconBg,
         };
       }
 
@@ -56,7 +54,7 @@ export const LearningGauge = memo(
           subtitle: `${dueWords} words due for review`,
           icon: 'library',
           color: colors.warning,
-          bgColor: withOpacity(colors.warning, 0.12),
+          bgColor: colors.socialIconBg,
         };
       }
 
@@ -67,7 +65,7 @@ export const LearningGauge = memo(
         subtitle: totalWords < 10 ? 'Start adding words' : 'Perfect time to expand',
         icon: 'add-circle',
         color: colors.success,
-        bgColor: withOpacity(colors.success, 0.12),
+        bgColor: colors.socialIconBg,
       };
     }, [dueWords, learningWords, totalWords, masteredWords, colors]);
 
@@ -103,9 +101,7 @@ export const LearningGauge = memo(
             </View>
 
             {/* Status Badge - Visual reinforcement */}
-            <View
-              style={[styles.statusBadge, { backgroundColor: withOpacity(gaugeState.color, 0.15) }]}
-            >
+            <View style={[styles.statusBadge, { backgroundColor: colors.socialIconBg }]}>
               <View style={[styles.statusDot, { backgroundColor: gaugeState.color }]} />
               <ThemedText
                 type="caption"

@@ -4,8 +4,6 @@ import type { ComponentProps } from 'react';
 import type { StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { withOpacity } from '@/utils/colorUtils';
-
 import { LAYOUT } from '../constants/layout';
 import { useColors } from '../hooks/useColors';
 
@@ -122,7 +120,7 @@ const InfoCard: React.FC<InfoCardProps> = ({
   const colors = useColors();
 
   // Default colors if not provided
-  const bgColor = iconBgColor || withOpacity(colors.text, 0.19); // 30 in hex is approx 19%
+  const bgColor = iconBgColor || colors.textOverlay;
   const iconClr = iconColor || colors.text;
 
   // Determine if this is a stat card (has a value)

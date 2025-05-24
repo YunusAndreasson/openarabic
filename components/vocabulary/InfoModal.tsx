@@ -18,7 +18,6 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { withOpacity } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../ThemedText';
@@ -172,12 +171,7 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
               pointerEvents="auto"
             >
               {/* Header */}
-              <View
-                style={[
-                  styles.header,
-                  { borderBottomColor: withOpacity(colors.textTertiary, 0.1) },
-                ]}
-              >
+              <View style={[styles.header, { borderBottomColor: colors.borderOverlay }]}>
                 <View style={styles.headerContent}>
                   <ThemedText type="heading2" weight="bold" style={styles.title}>
                     {content.title}
@@ -188,10 +182,7 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
                 </View>
                 <TouchableOpacity
                   onPress={handleClose}
-                  style={[
-                    styles.closeButton,
-                    { backgroundColor: withOpacity(colors.textTertiary, 0.1) },
-                  ]}
+                  style={[styles.closeButton, { backgroundColor: colors.borderOverlay }]}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Ionicons name="close" size={20} color={colors.text} />

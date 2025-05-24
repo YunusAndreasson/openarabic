@@ -6,7 +6,6 @@ import Animated, {
   Extrapolation,
   SharedValue,
   useDerivedValue,
-  withSpring,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -100,7 +99,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     }, [scrollY]);
 
     // Enhanced text colors with better accessibility
-    const textColor = isDarkMode ? Colors.dark.primary : Colors.light.primary;
+    const textColor = colors.primary;
     const contrastOverlay = isDarkMode
       ? ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.DARK
       : ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.LIGHT;
@@ -449,7 +448,7 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.light.black,
+    backgroundColor: Colors.dark.background,
     overflow: 'hidden',
   },
   image: {
