@@ -45,6 +45,19 @@ export interface ThemeColors {
   socialInstagram: string;
   socialIconBg: string;
 
+  // Article reading specific colors
+  audioHighlight: string;
+  audioHighlightBorder: string;
+  wordTooltipBg: string;
+  wordTooltipText: string;
+  wordTooltipBorder: string;
+  wordTooltipShadow: string;
+  wordSelectionUnderline: string;
+  wordDueUnderline: string;
+  audioControlBg: string;
+  audioControlBorder: string;
+  audioControlShadow: string;
+
   [key: string]: string;
 }
 

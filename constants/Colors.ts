@@ -46,6 +46,18 @@ export const Colors = {
     socialFacebook: '#1877F2',
     socialInstagram: '#E4405F',
     socialIconBg: 'rgba(42, 52, 65, 0.08)',
+    // Article reading specific colors
+    audioHighlight: '#FFFFFF', // Same as tooltip background for consistency
+    audioHighlightBorder: '#E2E8F0', // Same as tooltip border
+    wordTooltipBg: '#FFFFFF',
+    wordTooltipText: '#1A202C',
+    wordTooltipBorder: '#E2E8F0',
+    wordTooltipShadow: 'rgba(42, 52, 65, 0.12)',
+    wordSelectionUnderline: 'rgba(42, 52, 65, 0.25)', // More subtle regular word selection
+    wordDueUnderline: 'rgba(255, 182, 39, 0.4)', // More subtle due words
+    audioControlBg: '#FFFFFF',
+    audioControlBorder: '#E2E8F0',
+    audioControlShadow: 'rgba(42, 52, 65, 0.08)',
   } as ThemeColors,
   dark: {
     primary: '#F8FAFC',
@@ -91,6 +103,18 @@ export const Colors = {
     socialFacebook: '#1877F2',
     socialInstagram: '#E4405F',
     socialIconBg: 'rgba(248, 250, 252, 0.08)',
+    // Article reading specific colors
+    audioHighlight: '#2D3748', // Same as tooltip background for consistency
+    audioHighlightBorder: '#4A5568', // Same as tooltip border
+    wordTooltipBg: '#2D3748',
+    wordTooltipText: '#F8FAFC',
+    wordTooltipBorder: '#4A5568',
+    wordTooltipShadow: 'rgba(0, 0, 0, 0.3)',
+    wordSelectionUnderline: 'rgba(248, 250, 252, 0.3)', // More subtle regular word selection
+    wordDueUnderline: 'rgba(255, 182, 39, 0.5)', // More subtle due words
+    audioControlBg: '#2D3748',
+    audioControlBorder: '#4A5568',
+    audioControlShadow: 'rgba(0, 0, 0, 0.2)',
   } as ThemeColors,
 };
 

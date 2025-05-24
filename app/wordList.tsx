@@ -181,9 +181,6 @@ export default function WordListScreen(): JSX.Element {
               <ThemedText type="heading3" weight="bold" style={styles.sortTitle}>
                 Sort by
               </ThemedText>
-              <ThemedText type="caption" variant="secondary" style={styles.sortSubtitle}>
-                Choose how to organize your words
-              </ThemedText>
             </View>
 
             {/* Sort Options */}
@@ -201,21 +198,25 @@ export default function WordListScreen(): JSX.Element {
                     isSelected={isSelected}
                     onSelect={() => handleSortChange(option.value as WordListSort)}
                     variant="filter"
-                    pillBg={isSelected ? undefined : colors.transparent}
-                    pillStyle={[styles.sortPill, isSelected && styles.sortPillSelected]}
+                    pillBg={colors.transparent}
+                    pillStyle={[styles.sortPill]}
                     label={
                       <View style={styles.sortPillContent}>
                         <ThemedText
                           type="label"
-                          colorName={isSelected ? 'tint' : 'text'}
-                          style={[styles.sortPillLabel, isSelected && styles.sortPillLabelSelected]}
+                          colorName={isSelected ? 'tint' : 'textTertiary'}
+                          weight={isSelected ? 'bold' : 'medium'}
+                          style={[styles.sortPillLabel]}
                         >
                           {option.label}
                         </ThemedText>
                         <ThemedText
                           type="caption"
-                          variant="subtle"
-                          style={[styles.sortPillDescription, isSelected && { color: colors.tint }]}
+                          style={[
+                            styles.sortPillDescription,
+                            { color: isSelected ? colors.tint : colors.textTertiary },
+                          ]}
+                          weight={isSelected ? 'semibold' : 'normal'}
                         >
                           {option.description}
                         </ThemedText>
@@ -365,9 +366,6 @@ const styles = StyleSheet.create({
   sortTitle: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  sortSubtitle: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-  },
   sortOptions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -382,9 +380,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  sortPillSelected: {
-    // backgroundColor will be set inline
-  },
   sortPillContent: {
     flexDirection: 'column',
     alignItems: 'center',
@@ -394,9 +389,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-  },
-  sortPillLabelSelected: {
-    fontWeight: '600',
   },
   sortPillDescription: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,

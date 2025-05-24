@@ -27,7 +27,6 @@ export const StatCard = memo(
 
     const handlePress = () => {
       if (onPress) {
-        lightFeedback();
         onPress(category);
       }
     };

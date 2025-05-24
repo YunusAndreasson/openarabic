@@ -59,9 +59,10 @@ export const WordTooltip = memo(
     }, [visible, fadeIn, handleClose]);
 
     // Get colors based on theme
-    const backgroundColor = isDarkMode ? colors.elevation2 : colors.elevation1;
-    const textColor = isDarkMode ? colors.text : colors.textSecondary;
-    const borderColor = isDarkMode ? colors.elevation3 : colors.elevation2;
+    const backgroundColor = colors.wordTooltipBg;
+    const textColor = colors.wordTooltipText;
+    const borderColor = colors.wordTooltipBorder;
+    const shadowColor = colors.wordTooltipShadow;
 
     // Memoize the tooltip content to reduce re-renders
     const tooltipContent = useMemo(
@@ -160,7 +161,7 @@ export const WordTooltip = memo(
               width: tooltipWidth,
               backgroundColor,
               borderColor,
-              shadowColor: colors.shadow,
+              shadowColor,
               padding: TOOLTIP_CONSTANTS.SPACING,
             },
           ]}

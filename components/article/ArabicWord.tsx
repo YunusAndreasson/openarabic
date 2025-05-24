@@ -29,9 +29,6 @@ const getNextZIndex = () => {
 };
 
 const OPACITY = {
-  HIGHLIGHTED: '30',
-  UNDERLINE_DARK: '66',
-  UNDERLINE_LIGHT: '4D',
   TOOLTIP_DARK: 0.7,
   TOOLTIP_LIGHT: 0.5,
 } as const;
@@ -212,19 +209,25 @@ function ArabicWordComponent({
   // Generate dynamic styles
   const getAudioHighlightedStyle = useCallback(
     (): ViewStyle => ({
-      backgroundColor: `${colors.primary}${OPACITY.HIGHLIGHTED}`,
+      backgroundColor: colors.audioHighlight,
+      borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+      shadowColor: colors.audioHighlightBorder,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 1,
+      shadowRadius: 1,
+      elevation: 2,
     }),
-    [colors.primary]
+    [colors.audioHighlight, colors.audioHighlightBorder]
   );
 
   const getSelectedStyle = useCallback(
     (): ViewStyle => ({
-      borderBottomWidth: 2,
-      borderBottomColor: `${isDueWord ? colors.warning : colors.tint}${isDarkMode ? OPACITY.UNDERLINE_DARK : OPACITY.UNDERLINE_LIGHT}`,
-      paddingBottom: 1,
+      borderBottomWidth: 1,
+      borderBottomColor: isDueWord ? colors.wordDueUnderline : colors.wordSelectionUnderline,
+      paddingBottom: 2,
       marginBottom: -1,
     }),
-    [colors.warning, colors.tint, isDarkMode, isDueWord]
+    [colors.wordDueUnderline, colors.wordSelectionUnderline, isDueWord]
   );
 
   // Compute final styles for the word container

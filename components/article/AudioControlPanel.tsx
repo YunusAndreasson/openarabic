@@ -60,7 +60,18 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
 
     return (
       <Animated.View style={[styles.container, animatedStyle]}>
-        <BaseCard style={[styles.card, { backgroundColor: colors.elevation2 }]} shadowSize="medium">
+        <BaseCard
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.audioControlBg,
+              borderColor: colors.audioControlBorder,
+              borderWidth: 1,
+              shadowColor: colors.audioControlShadow,
+            },
+          ]}
+          shadowSize="medium"
+        >
           <View style={styles.contentContainer}>
             <View style={styles.controlsContainer}>
               <TouchableOpacity
@@ -71,7 +82,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
                 <Ionicons
                   name="play-skip-back"
                   size={24}
-                  color={isFirstSentence ? colors.textTertiary : colors.text}
+                  color={isFirstSentence ? colors.disabled : colors.text}
                 />
               </TouchableOpacity>
 
@@ -87,7 +98,7 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
                 <Ionicons
                   name="play-skip-forward"
                   size={24}
-                  color={isLastSentence ? colors.textTertiary : colors.text}
+                  color={isLastSentence ? colors.disabled : colors.text}
                 />
               </TouchableOpacity>
             </View>

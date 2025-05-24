@@ -33,12 +33,12 @@ const SimpleArabicWord = memo(
       () => [
         styles.wordContainer,
         isHighlighted && {
-          backgroundColor: `${colors.primary}30`, // Use 30% opacity for highlight
+          backgroundColor: colors.audioHighlight,
           borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
           padding: LAYOUT.SPACING.TINY,
         },
       ],
-      [colors.primary, isHighlighted]
+      [colors.audioHighlight, isHighlighted]
     );
 
     return (

@@ -34,21 +34,25 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
     // Calculate memory strength based on FSRS stability
     const progress = Math.min(100, Math.round((Math.log2(1 + stability) / Math.log2(366)) * 100));
 
-    // Get progress colors based on state and progress
+    // Get progress colors based on memory strength percentage (0-100%)
     let progressColor: string;
     let statusText: string;
 
-    if (state === State.Review && progress >= 80) {
-      progressColor = colors.success; // Mastered
+    // Use a gradient from weak to strong memory retention
+    if (progress >= 80) {
+      progressColor = colors.success; // Strong memory (green)
       statusText = 'Mastered';
-    } else if (state === State.Review && progress >= 50) {
-      progressColor = colors.warning; // Learning well
+    } else if (progress >= 60) {
+      progressColor = '#4CAF50'; // Good memory (lighter green)
       statusText = 'Strong';
-    } else if (state === State.Learning || state === State.Relearning) {
-      progressColor = colors.info; // In learning phase
+    } else if (progress >= 40) {
+      progressColor = colors.warning; // Moderate memory (yellow/orange)
       statusText = 'Learning';
+    } else if (progress >= 20) {
+      progressColor = '#FF9800'; // Weak memory (orange)
+      statusText = 'Weak';
     } else {
-      progressColor = colors.textTertiary; // New or early stage
+      progressColor = colors.error; // Very weak/new (red)
       statusText = 'New';
     }
 
