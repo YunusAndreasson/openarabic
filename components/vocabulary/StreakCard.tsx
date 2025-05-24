@@ -31,19 +31,16 @@ export const StreakCard = memo(
     const colors = useColors();
 
     // Animation value for line drawing
-    const { progress } = useProgressAnimation(0, 1200);
+    const { progress, updateProgress } = useProgressAnimation(0);
 
     // Start animation when component mounts
     useEffect(() => {
-      // Initialize the animation (0 to 100 percent)
-      progress.value = 0;
-      const updateFn = () => {
-        progress.value = 1;
-      };
       // Small delay for better visual appeal
-      const timer = setTimeout(updateFn, 100);
+      const timer = setTimeout(() => {
+        updateProgress(10000); // 100% (10000 represents 100%)
+      }, 100);
       return () => clearTimeout(timer);
-    }, [progress]);
+    }, [updateProgress]);
 
     // Day indicator size - smaller for less visual weight
     const pointRadius = 2;
