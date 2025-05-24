@@ -1,6 +1,6 @@
 import type { StudyWord } from '@/types/vocabulary.types';
 
-import { DAYS_14, MASTERY_STABILITY_THRESHOLD } from './constants';
+import { MASTERY_STABILITY_THRESHOLD } from './constants';
 
 // Generate date range for charts
 export const generateDateRange = (days: number) => {
