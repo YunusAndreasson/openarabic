@@ -9,6 +9,7 @@ import {
   FadeOut,
   runOnUI,
   cancelAnimation,
+  type WithTimingConfig,
 } from 'react-native-reanimated';
 
 import { TIMING_CONFIG } from './animationConfigs';
@@ -50,11 +51,9 @@ export interface FadeAnimationOptions {
   delay?: number;
 
   /**
-   * Additional delay to wait for layout stabilization
-   * Helps prevent jumps when layout changes during animation
-   * @default 0
+   * Custom timing configuration
    */
-  layoutStabilizationDelay?: number;
+  timingConfig?: WithTimingConfig;
 }
 
 export interface FadeAnimationResult {
@@ -121,12 +120,6 @@ export interface FadeAnimationResult {
 const MIN_DURATION = 1;
 const MIN_MOUNT_DELAY = 5;
 
-// Animation config memoized outside to prevent recreation
-const getTimingConfig = (duration: number) => ({
-  duration,
-  easing: TIMING_CONFIG.MEDIUM.easing,
-});
-
 /**
  * Unified hook for opacity and fade animations
  * Combines functionality from useFadeInAnimation, useOpacityAnimation, and useFadeInEntrance
@@ -140,41 +133,48 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     duration: rawDuration = TIMING_CONFIG.MEDIUM.duration,
     autoStart = false,
     delay: rawDelay = 0,
+    timingConfig: customTimingConfig,
   } = options;
 
   // Validate parameters - memoized to prevent recalculation
-  const duration = useRef(Math.max(0, rawDuration)).current;
+  const duration = useRef(Math.max(MIN_DURATION, rawDuration)).current;
   const delay = useRef(Math.max(0, rawDelay)).current;
   const validInitialOpacity = useRef(Math.max(0, Math.min(1, initialOpacity))).current;
-  const safeDuration = useRef(Math.max(MIN_DURATION, duration)).current;
+
+  // Create optimized timing config
+  const timingConfig = useRef<WithTimingConfig>(
+    customTimingConfig ?? {
+      duration,
+      easing: TIMING_CONFIG.MEDIUM.easing,
+    }
+  ).current;
 
   // Create optimized entering and exiting animations using Reanimated 3 built-ins
-  const entering = useRef(FadeIn.duration(safeDuration).delay(delay)).current;
-  const exiting = useRef(FadeOut.duration(safeDuration)).current;
+  const entering = useRef(FadeIn.duration(duration).delay(delay)).current;
+  const exiting = useRef(FadeOut.duration(duration)).current;
 
   // Track if component is mounted to prevent callbacks after unmount
   const isMounted = useSharedValue(true);
   const opacity = useSharedValue(validInitialOpacity);
-  const timingConfig = useRef(getTimingConfig(duration)).current;
 
   // Cleanup shared animation values on unmount - optimized with single cleanup function
   useEffect(() => {
-    const cleanup = () => {
+    return () => {
       isMounted.value = false;
-      opacity.value = validInitialOpacity;
       cancelAnimation(opacity);
     };
-
-    return cleanup;
-  }, [opacity, validInitialOpacity]);
+  }, [opacity, isMounted]);
 
   // Safe callback runner that checks if component is still mounted
-  const safeRunCallback = useCallback((callback?: () => void) => {
-    'worklet';
-    if (callback && isMounted.value) {
-      runOnJS(callback)();
-    }
-  }, []);
+  const safeRunCallback = useCallback(
+    (callback?: () => void) => {
+      'worklet';
+      if (callback && isMounted.value) {
+        runOnJS(callback)();
+      }
+    },
+    [isMounted]
+  );
 
   // Common animation function to reduce code duplication - memoized with useCallback
   const animateOpacityTo = useCallback(
@@ -191,31 +191,32 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
 
   const fadeIn = useCallback(
     (onComplete?: () => void) => {
-      'worklet';
-      animateOpacityTo(1, onComplete);
+      runOnUI(animateOpacityTo)(1, onComplete);
     },
     [animateOpacityTo]
   );
 
   const fadeOut = useCallback(
     (onComplete?: () => void) => {
-      'worklet';
-      animateOpacityTo(0, onComplete);
+      runOnUI(animateOpacityTo)(0, onComplete);
     },
     [animateOpacityTo]
   );
 
   const setOpacity = useCallback(
     (value: number, onComplete?: () => void) => {
-      'worklet';
       const safeValue = Math.max(0, Math.min(1, value));
-      animateOpacityTo(safeValue, onComplete);
+      runOnUI(animateOpacityTo)(safeValue, onComplete);
     },
     [animateOpacityTo]
   );
 
   const reset = useCallback(() => {
-    opacity.value = validInitialOpacity;
+    runOnUI(() => {
+      'worklet';
+      cancelAnimation(opacity);
+      opacity.value = validInitialOpacity;
+    })();
   }, [opacity, validInitialOpacity]);
 
   const startAnimation = useCallback(
@@ -260,7 +261,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
     return {
       opacity: opacity.value,
     };
-  });
+  }, [opacity]);
 
   // Auto-start animation if enabled - using UI thread
   useEffect(() => {
@@ -271,7 +272,7 @@ export const useOpacityAnimation = (options: FadeAnimationOptions = {}): FadeAni
         opacity.value = withDelay(MIN_MOUNT_DELAY, withTiming(1, timingConfig));
       })();
     }
-  }, [autoStart, opacity, timingConfig]);
+  }, [autoStart, opacity, timingConfig, isMounted]);
 
   return {
     opacity,

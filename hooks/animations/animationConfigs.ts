@@ -20,7 +20,7 @@ export const TIMING_CONFIG = {
     duration: 300,
     easing: Easing.bezier(0.4, 0.0, 0.2, 1),
   },
-};
+} as const;
 
 /**
  * Standard spring configurations
@@ -39,17 +39,23 @@ export const SPRING_CONFIG = {
     stiffness: 120,
     mass: 0.8,
     overshootClamping: false,
+    restDisplacementThreshold: 0.01,
+    restSpeedThreshold: 0.01,
   },
   TOGGLE: {
     damping: 15,
     stiffness: 120,
     mass: 0.5,
     overshootClamping: false,
+    restDisplacementThreshold: 0.01,
+    restSpeedThreshold: 0.01,
   },
   SLIDE: {
     damping: 20,
     stiffness: 100,
     mass: 0.8,
     overshootClamping: false,
+    restDisplacementThreshold: 0.01,
+    restSpeedThreshold: 0.01,
   },
-};
+} as const;

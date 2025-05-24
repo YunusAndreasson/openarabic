@@ -5,6 +5,8 @@ import {
   withSpring,
   interpolate,
   Extrapolate,
+  runOnUI,
+  type WithSpringConfig,
 } from 'react-native-reanimated';
 
 import { SPRING_CONFIG } from './animationConfigs';
@@ -44,7 +46,7 @@ export interface PressAnimationOptions {
    * Custom spring configuration
    * @default SPRING_CONFIG.BUTTON or SPRING_CONFIG.CARD based on type
    */
-  springConfig?: typeof SPRING_CONFIG.BUTTON;
+  springConfig?: WithSpringConfig;
 }
 
 export interface PressAnimationResult {
@@ -82,8 +84,9 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
   const finalScaleAmount = scaleAmount ?? defaultScaleAmount;
   const finalOpacityAmount = opacityAmount ?? 0.97;
   const finalIncludeOpacity = includeOpacity ?? type === 'card';
-  const finalSpringConfig =
-    springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON);
+  const finalSpringConfig = useRef(
+    springConfig ?? (type === 'card' ? SPRING_CONFIG.CARD : SPRING_CONFIG.BUTTON)
+  ).current;
 
   // Animation value
   const pressed = useSharedValue(0);
@@ -91,6 +94,7 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
 
   // Create animated style
   const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
     const scale = interpolate(pressed.value, [0, 1], [1, finalScaleAmount], Extrapolate.CLAMP);
 
     if (finalIncludeOpacity) {
@@ -109,18 +113,24 @@ export const usePressAnimation = (options: PressAnimationOptions = {}): PressAni
     return {
       transform: [{ scale }],
     };
-  });
+  }, [pressed, finalScaleAmount, finalOpacityAmount, finalIncludeOpacity]);
 
-  // Press handlers
+  // Press handlers - optimized to run on UI thread
   const handlePressIn = useCallback(() => {
     if (isMountedRef.current) {
-      pressed.value = withSpring(1, finalSpringConfig);
+      runOnUI(() => {
+        'worklet';
+        pressed.value = withSpring(1, finalSpringConfig);
+      })();
     }
   }, [pressed, finalSpringConfig]);
 
   const handlePressOut = useCallback(() => {
     if (isMountedRef.current) {
-      pressed.value = withSpring(0, finalSpringConfig);
+      runOnUI(() => {
+        'worklet';
+        pressed.value = withSpring(0, finalSpringConfig);
+      })();
     }
   }, [pressed, finalSpringConfig]);
 
