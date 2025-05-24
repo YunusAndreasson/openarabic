@@ -17,7 +17,6 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
     isVisible,
     isPlaying,
     onPlayPause,
-    onStop,
     onPrevious,
     onNext,
     currentSentenceIndex,
@@ -38,7 +37,6 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
     }, [isVisible]);
 
     const handlePlayPause = useButtonAction(onPlayPause, ANIMATION_TIMING.DEBOUNCE.STANDARD);
-    const handleStop = useButtonAction(onStop, ANIMATION_TIMING.DEBOUNCE.STANDARD);
     const handlePrevious = useButtonAction(onPrevious, ANIMATION_TIMING.DEBOUNCE.STANDARD);
     const handleNext = useButtonAction(onNext, ANIMATION_TIMING.DEBOUNCE.STANDARD);
 
@@ -73,49 +71,41 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
           shadowSize="medium"
         >
           <View style={styles.contentContainer}>
-            <View style={styles.controlsContainer}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handlePrevious}
-                disabled={isFirstSentence}
-              >
-                <Ionicons
-                  name="play-skip-back"
-                  size={24}
-                  color={isFirstSentence ? colors.disabled : colors.text}
-                />
-              </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handlePrevious}
+              disabled={isFirstSentence}
+            >
+              <Ionicons
+                name="play-skip-back"
+                size={24}
+                color={isFirstSentence ? colors.disabled : colors.text}
+              />
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                onPress={handlePlayPause}
-                style={[
-                  styles.playButton,
-                  {
-                    backgroundColor: isPlaying
-                      ? colors.tint
-                      : colors.elevation2 || colors.elevation1,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={28}
-                  color={isPlaying ? colors.background : colors.text}
-                />
-              </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handlePlayPause}
+              style={[
+                styles.playButton,
+                {
+                  backgroundColor: colors.elevation2 || colors.elevation1,
+                },
+              ]}
+            >
+              <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleNext}
-                disabled={isLastSentence}
-              >
-                <Ionicons
-                  name="play-skip-forward"
-                  size={24}
-                  color={isLastSentence ? colors.disabled : colors.text}
-                />
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleNext}
+              disabled={isLastSentence}
+            >
+              <Ionicons
+                name="play-skip-forward"
+                size={24}
+                color={isLastSentence ? colors.disabled : colors.text}
+              />
+            </TouchableOpacity>
 
             <View style={styles.infoContainer}>
               <ThemedText type="caption" style={styles.sentenceInfo}>
@@ -123,10 +113,6 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
                 {totalSentences}
               </ThemedText>
             </View>
-
-            <TouchableOpacity style={styles.closeButton} onPress={handleStop}>
-              <Ionicons name="close-circle" size={24} color={colors.text} />
-            </TouchableOpacity>
           </View>
         </BaseCard>
       </Animated.View>
@@ -138,9 +124,6 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     overflow: 'hidden',
-  },
-  closeButton: {
-    padding: LAYOUT.SPACING.SMALL,
   },
   container: {
     bottom: LAYOUT.SPACING.LARGE,
@@ -155,12 +138,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: LAYOUT.SPACING.MEDIUM,
   },
-  controlsContainer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flex: 3,
-    justifyContent: 'flex-start',
-  },
   hiddenPlaceholder: {
     height: 1,
     opacity: 0,
@@ -170,7 +147,8 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     alignItems: 'center',
-    flex: 2,
+    flex: 1,
+    marginLeft: LAYOUT.SPACING.MEDIUM,
   },
   playButton: {
     alignItems: 'center',

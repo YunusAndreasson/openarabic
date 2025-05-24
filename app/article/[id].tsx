@@ -7,7 +7,6 @@ import type { ComponentRef, JSX } from 'react';
 import { StyleSheet, View, AppState } from 'react-native';
 import type { TouchableOpacity } from 'react-native';
 
-import ThemedCard from '@/components/ThemedCard';
 import { ThemedView } from '@/components/ThemedView';
 import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
@@ -34,8 +33,6 @@ import { handleError } from '@/utils/errorHandling';
 import { lightFeedback } from '@/utils/haptics';
 import { useHeaderVisibility } from '@/hooks/useHeaderVisibility';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
-
-import type { Article } from '../../types/articles.types';
 
 const createStyles = (colors: ReturnType<typeof useColors>) =>
   StyleSheet.create({
@@ -358,39 +355,6 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [audioPlayer, sentenceAudioData, startPlayback, dispatch, stopPlayback]);
 
-  const handlePauseAudio = useCallback(async () => {
-    try {
-      let currentAudioPositionMs = 0;
-      if (audioPlayer.soundRef.current) {
-        try {
-          const status = await audioPlayer.soundRef.current.getStatusAsync();
-          if (status.isLoaded) {
-            currentAudioPositionMs = status.positionMillis;
-          }
-        } catch (audioError) {
-          handleError(audioError as Error);
-        }
-      }
-      pausedAudioStateRef.current = {
-        sentenceIndex: currentSentenceIndex,
-        wordId: currentWordId,
-        position: currentPosition,
-        audioPositionMs: currentAudioPositionMs,
-      };
-      await audioPlayer.stopPlayback(false);
-      dispatch(
-        updateAudioState({
-          wordId: currentWordId,
-          position: currentPosition,
-          isPlaying: false,
-          sentenceId: currentSentenceIndex,
-        })
-      );
-    } catch (error) {
-      handleError(error as Error);
-    }
-  }, [audioPlayer, currentSentenceIndex, currentWordId, currentPosition, dispatch]);
-
   const handleStartAudio = useCallback(async () => {
     try {
       setAudioControlVisible(true);
@@ -421,15 +385,6 @@ export default function ArticleScreen(): JSX.Element {
     startFreshPlayback,
     sentenceAudioData.length,
   ]);
-
-  const handlePlayPress = useCallback(async () => {
-    lightFeedback();
-    if (isPlaying) {
-      await handlePauseAudio();
-    } else {
-      await handleStartAudio();
-    }
-  }, [isPlaying, handlePauseAudio, handleStartAudio]);
 
   const handleBookmarkPress = useCallback(() => {
     if (articleId) {
@@ -574,6 +529,61 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [stopPlayback, dispatch, audioPlayer]);
 
+  const handlePlayPress = useCallback(async () => {
+    lightFeedback();
+    if (isPlaying) {
+      // Stop audio and close control panel
+      await handleStopPlayback();
+    } else {
+      await handleStartAudio();
+    }
+  }, [isPlaying, handleStopPlayback, handleStartAudio]);
+
+  // Simple pause/resume for audio control panel
+  const handleAudioControlPause = useCallback(async () => {
+    lightFeedback();
+    if (isPlaying) {
+      // Just pause, don't stop completely
+      let currentAudioPositionMs = 0;
+      if (audioPlayer.soundRef.current) {
+        try {
+          const status = await audioPlayer.soundRef.current.getStatusAsync();
+          if (status.isLoaded) {
+            currentAudioPositionMs = status.positionMillis;
+          }
+        } catch (audioError) {
+          handleError(audioError as Error);
+        }
+      }
+      pausedAudioStateRef.current = {
+        sentenceIndex: currentSentenceIndex,
+        wordId: currentWordId,
+        position: currentPosition,
+        audioPositionMs: currentAudioPositionMs,
+      };
+      await audioPlayer.stopPlayback(false);
+      dispatch(
+        updateAudioState({
+          wordId: currentWordId,
+          position: currentPosition,
+          isPlaying: false,
+          sentenceId: currentSentenceIndex,
+        })
+      );
+    } else {
+      // Resume from where we left off
+      await handleStartAudio();
+    }
+  }, [
+    isPlaying,
+    audioPlayer,
+    currentSentenceIndex,
+    currentWordId,
+    currentPosition,
+    dispatch,
+    handleStartAudio,
+  ]);
+
   const handleNextSentence = useCallback(async () => {
     if (isNavigatingRef.current) {
       return;
@@ -713,8 +723,7 @@ export default function ArticleScreen(): JSX.Element {
       <AudioControlPanel
         isVisible={audioControlVisible}
         isPlaying={isPlaying}
-        onPlayPause={handlePlayPress}
-        onStop={handleStopPlayback}
+        onPlayPause={handleAudioControlPause}
         onPrevious={handlePreviousSentence}
         onNext={handleNextSentence}
         currentSentenceIndex={currentSentenceIndex}

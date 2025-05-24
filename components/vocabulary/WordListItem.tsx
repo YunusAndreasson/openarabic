@@ -43,13 +43,13 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
       progressColor = colors.success; // Strong memory (green)
       statusText = 'Mastered';
     } else if (progress >= 60) {
-      progressColor = '#4CAF50'; // Good memory (lighter green)
+      progressColor = colors.tint; // Good memory (vibrant action green)
       statusText = 'Strong';
     } else if (progress >= 40) {
       progressColor = colors.warning; // Moderate memory (yellow/orange)
       statusText = 'Learning';
     } else if (progress >= 20) {
-      progressColor = '#FF9800'; // Weak memory (orange)
+      progressColor = colors.warning; // Weak memory (organic gold)
       statusText = 'Weak';
     } else {
       progressColor = colors.error; // Very weak/new (red)

@@ -157,16 +157,16 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             onPress={onPlayPress}
             style={[
               styles.iconButton,
-              isPlaying ? activeButtonStyle : neutralButtonStyle, // Active when playing
+              neutralButtonStyle, // Always use neutral style, not active when playing
               styles.buttonShadow,
               shadowColorStyle,
             ]}
-            accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+            accessibilityLabel={isPlaying ? 'Stop audio' : 'Play audio'}
           >
             <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
+              name={isPlaying ? 'stop' : 'play'}
               size={22}
-              color={isPlaying ? activeIconColor : neutralIconColor}
+              color={neutralIconColor} // Always use neutral icon color
             />
           </TouchableOpacity>
         </Animated.View>

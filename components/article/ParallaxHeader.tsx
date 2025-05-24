@@ -62,16 +62,16 @@ const ACCESSIBILITY_CONFIG = {
     LIGHT: {
       offset: { width: 0, height: 2 },
       radius: 4,
-      color: 'rgba(0, 0, 0, 0.3)',
+      color: 'rgba(42, 52, 65, 0.4)', // Use theme primary color for shadows
     },
     DARK: {
       offset: { width: 0, height: 2 },
       radius: 6,
-      color: 'rgba(0, 0, 0, 0.6)',
+      color: 'rgba(0, 0, 0, 0.7)', // Darker shadow for dark mode
     },
   },
   CONTRAST_OVERLAY: {
-    LIGHT: 'rgba(0, 0, 0, 0.25)',
+    LIGHT: 'rgba(42, 52, 65, 0.25)', // Use theme primary for overlay
     DARK: 'rgba(0, 0, 0, 0.4)',
   },
 } as const;

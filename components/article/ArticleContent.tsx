@@ -220,7 +220,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       );
 
       return {
-        backgroundColor: `rgba(0, 0, 0, ${bgOpacity})`,
+        backgroundColor: colors.backdropOverlay.replace(/[\d.]+\)$/, `${bgOpacity})`),
       };
     }, []);
 

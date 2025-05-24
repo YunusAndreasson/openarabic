@@ -17,18 +17,18 @@ export const Colors = {
     englishText: '#4A5568', // Consistent with secondaryText
     arabicText: '#1A202C', // Consistent with main text
     authorText: '#718096', // Consistent with textTertiary
-    tint: '#4A7C59', // Sage green - natural action color for growth and progress
+    tint: '#2F7D32', // Refined forest green - sophisticated yet vibrant action color
     tabIconDefault: '#A0AEC0', // Muted gray for inactive tabs
-    tabIconSelected: '#4A7C59', // Sage green - consistent with tint
+    tabIconSelected: '#2F7D32', // Refined forest green - consistent with tint
     icon: '#718096', // Consistent with textTertiary
     disabled: '#CBD5E0', // Light disabled state
     imagePlaceholder: '#F7FAFC', // Consistent with cardBorder
     transparent: 'transparent',
     overlay: 'rgba(255, 255, 255, 0.85)', // Light overlay
     modalOverlay: 'rgba(255, 255, 255, 0.97)', // Strong light modal overlay
-    borderOverlay: 'rgba(74, 124, 89, 0.06)', // Subtle sage green overlay
-    buttonOverlay: 'rgba(74, 124, 89, 0.08)', // Sage green button overlay - used for ripples
-    buttonOverlayActive: 'rgba(74, 124, 89, 0.12)', // Active sage button overlay
+    borderOverlay: 'rgba(47, 125, 50, 0.06)', // Refined forest green overlay
+    buttonOverlay: 'rgba(47, 125, 50, 0.08)', // Refined forest green button overlay - used for ripples
+    buttonOverlayActive: 'rgba(47, 125, 50, 0.12)', // Active refined forest green button overlay
     buttonBorderOverlay: 'rgba(255, 255, 255, 0.15)', // Light button border overlay
     shadow: '#2A3441', // Consistent with primary
     elevation1: '#FFFFFF', // Pure white elevation
@@ -36,7 +36,7 @@ export const Colors = {
     elevation3: '#EDF2F7', // Medium elevation
     white: '#FFFFFF',
     black: '#000000',
-    textOverlay: 'rgba(74, 124, 89, 0.04)', // Very subtle sage text overlay - used for ripples
+    textOverlay: 'rgba(47, 125, 50, 0.04)', // Very subtle refined forest green text overlay - used for ripples
     textShadowDark: 'rgba(42, 52, 65, 0.75)', // Dark shadow
     textShadowLight: 'rgba(255, 255, 255, 0.75)', // Light shadow
     info: '#5B7C8D', // Muted blue-gray with green undertones
@@ -45,7 +45,7 @@ export const Colors = {
     socialTwitter: '#1DA1F2',
     socialFacebook: '#1877F2',
     socialInstagram: '#E4405F',
-    socialIconBg: 'rgba(74, 124, 89, 0.08)', // Sage green social background
+    socialIconBg: 'rgba(47, 125, 50, 0.08)', // Refined forest green social background
     // Article reading specific colors
     audioHighlight: '#FFFFFF', // Pure white highlight
     audioHighlightBorder: '#E2E8F0', // Consistent border
@@ -53,13 +53,13 @@ export const Colors = {
     wordTooltipText: '#1A202C', // Consistent text
     wordTooltipBorder: '#E2E8F0', // Consistent border
     wordTooltipShadow: 'rgba(42, 52, 65, 0.12)', // Subtle shadow
-    wordSelectionUnderline: 'rgba(74, 124, 89, 0.25)', // Sage green selection
+    wordSelectionUnderline: 'rgba(47, 125, 50, 0.25)', // Refined forest green selection
     wordDueUnderline: 'rgba(184, 134, 11, 0.4)', // Organic gold for due words
     audioControlBg: '#FFFFFF', // Pure white controls
     audioControlBorder: '#E2E8F0', // Consistent border
     audioControlShadow: 'rgba(42, 52, 65, 0.08)', // Subtle shadow
     // Navigation branding colors
-    navigationRipple: 'rgba(74, 124, 89, 0.10)', // Sage green ripple for navigation elements
+    navigationRipple: 'rgba(47, 125, 50, 0.10)', // Refined forest green ripple for navigation elements
     headerOverlay: 'rgba(255, 255, 255, 0.94)', // Slightly green-tinted header overlay
     tabBarOverlay: 'rgba(250, 251, 252, 0.98)', // Very subtle green undertone for tab bar
   } as ThemeColors,
@@ -78,18 +78,18 @@ export const Colors = {
     englishText: '#D6D8D5', // Consistent with secondaryText
     arabicText: '#F2F4F1', // Consistent with main text
     authorText: '#AAB0A8', // Consistent with textTertiary
-    tint: '#6B9A7A', // Sage green - natural action color for growth and progress
+    tint: '#52C55A', // Sophisticated bright green - refined yet vibrant action color
     tabIconDefault: '#6E746C', // Neutral with green-brown undertone
-    tabIconSelected: '#6B9A7A', // Sage green - consistent with tint
+    tabIconSelected: '#52C55A', // Sophisticated bright green - consistent with tint
     icon: '#AAB0A8', // Consistent with textTertiary
     disabled: '#3C423A', // Muted dark with green-brown undertone
     imagePlaceholder: '#2C312B', // Consistent with border
     transparent: 'transparent',
     overlay: 'rgba(15, 19, 17, 0.85)', // Dark forest overlay
     modalOverlay: 'rgba(15, 19, 17, 0.95)', // Darker forest modal
-    borderOverlay: 'rgba(107, 154, 122, 0.08)', // Sage green border overlay
-    buttonOverlay: 'rgba(107, 154, 122, 0.10)', // Sage green button overlay - used for ripples
-    buttonOverlayActive: 'rgba(107, 154, 122, 0.15)', // Active sage overlay
+    borderOverlay: 'rgba(82, 197, 90, 0.08)', // Sophisticated bright green border overlay
+    buttonOverlay: 'rgba(82, 197, 90, 0.10)', // Sophisticated bright green button overlay - used for ripples
+    buttonOverlayActive: 'rgba(82, 197, 90, 0.15)', // Active sophisticated bright green overlay
     buttonBorderOverlay: 'rgba(242, 244, 241, 0.15)', // Warm sage button border
     shadow: '#000000', // Pure black for depth
     elevation1: '#1C211B', // Dark forest with brown undertone
@@ -97,7 +97,7 @@ export const Colors = {
     elevation3: '#383E36', // Medium charcoal with green-brown
     white: '#FFFFFF',
     black: '#000000',
-    textOverlay: 'rgba(107, 154, 122, 0.06)', // Sage green text overlay - used for ripples
+    textOverlay: 'rgba(82, 197, 90, 0.06)', // Sophisticated bright green text overlay - used for ripples
     textShadowDark: 'rgba(0, 0, 0, 0.75)', // Dark shadow
     textShadowLight: 'rgba(242, 244, 241, 0.75)', // Light warm sage shadow
     info: '#7A9CAD', // Muted blue with green undertones
@@ -106,7 +106,7 @@ export const Colors = {
     socialTwitter: '#1DA1F2',
     socialFacebook: '#1877F2',
     socialInstagram: '#E4405F',
-    socialIconBg: 'rgba(107, 154, 122, 0.10)', // Sage green social background
+    socialIconBg: 'rgba(82, 197, 90, 0.10)', // Sophisticated bright green social background
     // Article reading specific colors
     audioHighlight: '#2C312B', // Rich charcoal highlight
     audioHighlightBorder: '#383E36', // Medium charcoal border
@@ -114,13 +114,13 @@ export const Colors = {
     wordTooltipText: '#F2F4F1', // Warm off-white text
     wordTooltipBorder: '#383E36', // Medium charcoal border
     wordTooltipShadow: 'rgba(0, 0, 0, 0.4)', // Tooltip shadow
-    wordSelectionUnderline: 'rgba(107, 154, 122, 0.30)', // Sage green selection
+    wordSelectionUnderline: 'rgba(82, 197, 90, 0.30)', // Sophisticated bright green selection
     wordDueUnderline: 'rgba(212, 165, 116, 0.5)', // Warm gold for due words
     audioControlBg: '#2C312B', // Rich charcoal audio controls
     audioControlBorder: '#383E36', // Medium charcoal border
     audioControlShadow: 'rgba(0, 0, 0, 0.3)', // Audio control shadow
     // Navigation branding colors
-    navigationRipple: 'rgba(107, 154, 122, 0.12)', // Sage green ripple for navigation elements
+    navigationRipple: 'rgba(82, 197, 90, 0.12)', // Sophisticated bright green ripple for navigation elements
     headerOverlay: 'rgba(15, 19, 17, 0.92)', // Slightly green-tinted header overlay
     tabBarOverlay: 'rgba(15, 19, 17, 0.96)', // Very subtle green undertone for tab bar
   } as ThemeColors,

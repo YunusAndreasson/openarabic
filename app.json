@@ -25,7 +25,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#121212"
+        "backgroundColor": "#0F1311"
       },
       "package": "com.edenmind.OpenArabic",
       "permissions": [
@@ -39,7 +39,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#121212",
+          "backgroundColor": "#0F1311",
           "imageResizeMode": "contain",
           "image": "./assets/images/oa-logo.png"
         }
@@ -61,7 +61,7 @@
           "foregroundService": {
             "name": "Audio Playback",
             "notificationTitle": "Open Arabic Audio",
-            "notificationColor": "#1E1E1E",
+            "notificationColor": "#2C312B",
             "notificationIcon": "./assets/images/oa-logo.png"
           }
         }
@@ -73,7 +73,7 @@
     },
     "splash": {
       "image": "./assets/images/oa-logo.png",
-      "backgroundColor": "#121212",
+      "backgroundColor": "#0F1311",
       "imageResizeMode": "contain",
       "resizeMode": "contain"
     },
