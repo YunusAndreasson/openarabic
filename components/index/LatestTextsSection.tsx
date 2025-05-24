@@ -9,8 +9,7 @@ import ArticleItem from './ArticleItem';
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
 });
 

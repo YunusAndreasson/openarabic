@@ -9,16 +9,21 @@ import { ThemedText } from './ThemedText';
 interface SectionTitleProps {
   title: string;
   containerStyle?: StyleProp<ViewStyle>;
+  isFirstSection?: boolean;
 }
 
 /**
  * A minimal, refined section title component
  * Clean typography with perfectly balanced spacing
  */
-const SectionTitle: React.FC<SectionTitleProps> = ({ title, containerStyle }) => {
+const SectionTitle: React.FC<SectionTitleProps> = ({
+  title,
+  containerStyle,
+  isFirstSection = false,
+}) => {
   return (
-    <View style={[styles.container, containerStyle]}>
-      <ThemedText type="label" colorName="text" weight="semibold" style={styles.titleText}>
+    <View style={[styles.container, isFirstSection && styles.firstSection, containerStyle]}>
+      <ThemedText type="heading3" weight="bold" style={styles.titleText}>
         {title}
       </ThemedText>
     </View>
@@ -31,12 +36,14 @@ export default memo(SectionTitle);
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.XLARGE,
+  },
+  firstSection: {
+    marginTop: LAYOUT.SPACING.SMALL,
   },
   titleText: {
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    // Remove the uppercase transformation and custom letter spacing
+    // to match the settings screen style
   },
 });

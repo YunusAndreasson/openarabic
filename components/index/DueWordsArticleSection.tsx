@@ -79,7 +79,7 @@ export function DueWordsArticleSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   hintText: {
     marginTop: -LAYOUT.SPACING.SMALL,

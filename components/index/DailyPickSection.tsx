@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15, // Slightly increased shadow for emphasis
   },
   container: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
     marginTop: 0,
   },
 });

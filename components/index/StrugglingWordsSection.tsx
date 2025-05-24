@@ -199,7 +199,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <SectionTitle title="Words You Struggle With" />
+        <SectionTitle title="Difficult Words" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
         </View>
@@ -213,7 +213,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
 
   return (
     <View style={styles.container}>
-      <SectionTitle title="Words You Struggle With" />
+      <SectionTitle title="Difficult Words" />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -231,12 +231,12 @@ StrugglingWordsSection.displayName = 'StrugglingWordsSection';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   scrollContent: {
     paddingVertical: LAYOUT.SPACING.TINY,
     paddingRight: LAYOUT.SPACING.MEDIUM,
+    paddingLeft: LAYOUT.SPACING.TINY,
   },
   wordCard: {
     width: 145,
@@ -255,13 +255,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-    difficultyContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginTop: LAYOUT.SPACING.MICRO,
-      opacity: 0.9,
-    },
+  difficultyContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: LAYOUT.SPACING.MICRO,
+    opacity: 0.9,
+  },
   difficultyIcon: {
     marginRight: 4,
   },

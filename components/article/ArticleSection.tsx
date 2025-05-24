@@ -23,7 +23,6 @@ interface ArticleSectionProps {
    */
   onArticlePress: (article: Article) => void;
 
-
   /**
    * Hide difficulty indicator
    */
@@ -102,7 +101,7 @@ ArticleSection.displayName = 'ArticleSection';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -111,7 +110,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   scrollContent: {
-    // paddingHorizontal removed to match other sections
+    paddingRight: LAYOUT.SPACING.SMALL,
   },
   articleCard: {
     marginRight: LAYOUT.SPACING.MEDIUM,
