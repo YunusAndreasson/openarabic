@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Group, Rect, Shadow } from '@shopify/react-native-skia';
+import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -23,8 +23,8 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
   const colors = useColors();
   const chartColors = useChartColors();
 
-  // Add top padding to prevent bars from being cut off
-  const TOP_PADDING = 8; // Space for bar tops and shadows
+  // Add top padding to prevent dots from being cut off
+  const TOP_PADDING = 8; // Space for circle radius + shadow
 
   // Calculate progress data over the last 14 days
   const progressData = useMemo(() => {
@@ -56,16 +56,54 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
   // Calculate chart paths and insights
   const chartData = useMemo(() => {
     if (progressData.length === 0) {
-      return { hasData: false, insights: { dailyAverage: 0, weeklyTotal: 0 } };
+      return {
+        activityPath: '',
+        smoothPath: '',
+        hasData: false,
+        insights: { dailyAverage: 0, weeklyTotal: 0 },
+        dataPoints: [],
+      };
     }
 
     const hasData = progressData.some(d => d.totalActivity > 0);
 
     if (!hasData) {
-      return { hasData: false, insights: { dailyAverage: 0, weeklyTotal: 0 } };
+      return {
+        activityPath: '',
+        smoothPath: '',
+        hasData: false,
+        insights: { dailyAverage: 0, weeklyTotal: 0 },
+        dataPoints: [],
+      };
     }
 
     const maxActivity = Math.max(1, Math.max(...progressData.map(d => d.totalActivity)));
+    const stepX = GRAPH_WIDTH / Math.max(1, progressData.length - 1); // Prevent division by zero
+
+    // Add top padding to prevent dots from being cut off
+    const chartHeight = GRAPH_HEIGHT_LARGE - TOP_PADDING;
+
+    // Create smooth curve using Skia Path with better interpolation
+    const path = Skia.Path.Make();
+    const points: { x: number; y: number; activity: number; date: Date }[] = [];
+
+    progressData.forEach((data, index) => {
+      const x = index * stepX;
+      const y = TOP_PADDING + (chartHeight - (data.totalActivity / maxActivity) * chartHeight);
+      points.push({ x, y, activity: data.totalActivity, date: data.date });
+
+      if (index === 0) {
+        path.moveTo(x, y);
+      } else if (progressData.length > 1) {
+        // Only create curves if we have more than one point
+        const prevPoint = points[index - 1];
+        const controlX1 = prevPoint!.x + (x - prevPoint!.x) * 0.3;
+        const controlY1 = prevPoint!.y;
+        const controlX2 = prevPoint!.x + (x - prevPoint!.x) * 0.7;
+        const controlY2 = y;
+        path.cubicTo(controlX1, controlY1, controlX2, controlY2, x, y);
+      }
+    });
 
     // Calculate insights
     const recentDays = progressData.slice(-7);
@@ -74,8 +112,11 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
     const dailyAverage = Math.round(((totalNewWords + totalReviews) / 7) * 10) / 10;
 
     return {
-      hasData,
+      activityPath: path.toSVGString(),
+      smoothPath: path.toSVGString(),
+      hasData: true,
       maxActivity,
+      dataPoints: points,
       insights: {
         dailyAverage,
         weeklyTotal: totalNewWords + totalReviews,
@@ -86,32 +127,23 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
   // Generate subtitle based on activity with more encouraging language
   const subtitle = useMemo(() => {
     const { weeklyTotal, dailyAverage } = chartData.insights;
+    const peakActivity = Math.max(...progressData.map(d => d.totalActivity));
+    const activeDays = progressData.filter(d => d.totalActivity > 0).length;
 
     if (weeklyTotal === 0) {
       return 'Ready to start your learning journey';
     }
     if (dailyAverage >= 5) {
-      return 'Excellent consistency';
+      return `Excellent consistency • ${activeDays}/14 active days`;
     }
     if (dailyAverage >= 3) {
-      return 'Great momentum this week';
+      return `Great momentum • Peak: ${peakActivity} activities`;
     }
     if (weeklyTotal >= 5) {
-      return 'Good progress this week';
+      return `Good progress • ${activeDays} active days this period`;
     }
-    return 'Keep building your streak';
-  }, [chartData.insights]);
-
-  // Helper function to get activity level and color using consistent color system
-  const getActivityLevel = (activity: number, maxActivity: number) => {
-    if (activity === 0) return { level: 'none', color: chartColors.activity.none };
-
-    const ratio = activity / maxActivity;
-    if (ratio >= 0.8) return { level: 'high', color: chartColors.activity.high };
-    if (ratio >= 0.5) return { level: 'medium', color: chartColors.activity.medium };
-    if (ratio >= 0.2) return { level: 'low', color: chartColors.activity.low };
-    return { level: 'minimal', color: chartColors.activity.none };
-  };
+    return `Building habits • ${activeDays}/14 days active`;
+  }, [chartData.insights, progressData]);
 
   if (!chartData.hasData) {
     return (
@@ -123,16 +155,30 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
             onInfoPress={onInfoPress}
           />
           <View style={styles.emptyState}>
-            <View style={[styles.emptyChart, { backgroundColor: chartColors.ui.background }]}>
-              <View style={styles.emptyBars}>
-                {Array.from({ length: 14 }).map((_, index) => (
-                  <View
-                    key={index}
-                    style={[styles.emptyBar, { backgroundColor: chartColors.activity.none }]}
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
+              {/* Vertical day markers for empty state */}
+              <Group>
+                {/* Vertical day markers */}
+                {Array.from({ length: 14 }, (_, index) => (
+                  <Rect
+                    key={`empty-day-grid-${index}`}
+                    x={(index / 13) * GRAPH_WIDTH - 0.5}
+                    y={0}
+                    width={1}
+                    height={GRAPH_HEIGHT_LARGE}
+                    color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
                   />
                 ))}
-              </View>
-            </View>
+
+                {/* Placeholder curve */}
+                <Path
+                  path={`M 20 ${GRAPH_HEIGHT_LARGE - 20} Q ${GRAPH_WIDTH / 2} ${GRAPH_HEIGHT_LARGE / 2} ${GRAPH_WIDTH - 20} 30`}
+                  style="stroke"
+                  strokeWidth={2}
+                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                />
+              </Group>
+            </Canvas>
           </View>
         </View>
       </BaseCard>
@@ -147,93 +193,126 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
         <StatsRow
           leftStat={{
             value: chartData.insights.dailyAverage,
-            label: 'daily average',
+            label: 'avg per day',
           }}
           rightStat={{
             value: chartData.insights.weeklyTotal,
-            label: 'weekly total',
-            color: chartColors.activity.high,
+            label: 'words + reviews',
           }}
         />
 
-        {/* Enhanced Activity Graph */}
+        {/* Enhanced Activity Graph with line-based visualization */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Subtle horizontal grid lines */}
+            {/* Vertical grid lines for 14-day indication */}
             <Group>
-              {[0.25, 0.5, 0.75].map((ratio, index) => (
-                <Rect
-                  key={`grid-line-${index}`}
-                  x={0}
-                  y={TOP_PADDING + (GRAPH_HEIGHT_LARGE - TOP_PADDING) * ratio - 0.5}
-                  width={GRAPH_WIDTH}
-                  height={1}
-                  color={chartColors.ui.grid}
-                />
-              ))}
+              {/* Vertical grid lines for each day */}
+              {progressData.map((_, index) => {
+                const x = (index / Math.max(1, progressData.length - 1)) * GRAPH_WIDTH;
+                return (
+                  <Rect
+                    key={`day-grid-${index}`}
+                    x={x - 0.5}
+                    y={TOP_PADDING}
+                    width={1}
+                    height={GRAPH_HEIGHT_LARGE - TOP_PADDING}
+                    color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
+                  />
+                );
+              })}
             </Group>
 
-            {/* Activity bars with improved styling */}
+            {/* Area fill under the activity line */}
             <Group>
-              {progressData.map((data, index) => {
-                const barWidth = Math.max(8, (GRAPH_WIDTH / progressData.length) * 0.7);
-                const x =
-                  index * (GRAPH_WIDTH / progressData.length) +
-                  (GRAPH_WIDTH / progressData.length - barWidth) / 2;
-                const barHeight = chartData.maxActivity
-                  ? Math.max(
-                      2,
-                      (data.totalActivity / chartData.maxActivity) *
-                        (GRAPH_HEIGHT_LARGE - TOP_PADDING - 8)
-                    )
-                  : 2;
+              {chartData.dataPoints.length > 0 &&
+                (() => {
+                  const firstPoint = chartData.dataPoints[0];
+                  const lastPoint = chartData.dataPoints[chartData.dataPoints.length - 1];
 
-                const { color: barColor } = getActivityLevel(
-                  data.totalActivity,
-                  chartData.maxActivity || 1
-                );
+                  if (!firstPoint || !lastPoint) return null;
 
-                return (
-                  <Group key={`activity-bar-${index}`}>
-                    {/* Bar with subtle shadow */}
-                    <Rect
-                      x={x}
-                      y={GRAPH_HEIGHT_LARGE - barHeight - TOP_PADDING / 2}
-                      width={barWidth}
-                      height={barHeight}
-                      color={barColor}
+                  // Create area path properly
+                  let areaPath = `M ${firstPoint.x} ${GRAPH_HEIGHT_LARGE}`;
+
+                  // Go up to first data point
+                  areaPath += ` L ${firstPoint.x} ${firstPoint.y}`;
+
+                  // Follow all data points
+                  for (let i = 1; i < chartData.dataPoints.length; i++) {
+                    const point = chartData.dataPoints[i];
+                    if (point) {
+                      areaPath += ` L ${point.x} ${point.y}`;
+                    }
+                  }
+
+                  // Close back to bottom
+                  areaPath += ` L ${lastPoint.x} ${GRAPH_HEIGHT_LARGE}`;
+                  areaPath += ` Z`;
+
+                  return (
+                    <Path
+                      path={areaPath}
+                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
+                    />
+                  );
+                })()}
+            </Group>
+
+            {/* Main activity line */}
+            <Group>
+              {chartData.dataPoints.length > 0 && (
+                <Group>
+                  {/* Render line only if we have multiple points */}
+                  {chartData.dataPoints.length > 1 && chartData.smoothPath && (
+                    <Path
+                      path={chartData.smoothPath}
+                      style="stroke"
+                      strokeWidth={3}
+                      color={chartColors.ui.dataLine}
                     >
                       <Shadow
                         dx={0}
-                        dy={1}
-                        blur={3}
-                        color={chartColors.withOpacity(barColor, 0.3)}
+                        dy={2}
+                        blur={4}
+                        color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
                       />
-                    </Rect>
+                    </Path>
+                  )}
 
-                    {/* Subtle highlight on top of bar */}
-                    {data.totalActivity > 0 && (
-                      <Rect
-                        x={x}
-                        y={GRAPH_HEIGHT_LARGE - barHeight - TOP_PADDING / 2}
-                        width={barWidth}
-                        height={Math.min(barHeight / 3, 4)}
-                        color={chartColors.withOpacity(colors.white, 0.2)}
-                      />
-                    )}
-                  </Group>
-                );
-              })}
+                  {/* Data points representing words reviewed */}
+                  {chartData.dataPoints.map((point, index) => {
+                    const dayData = progressData[index];
+                    // Only show dots for days with reviews
+                    if (!dayData || dayData.reviewsToday === 0) return null;
+
+                    return (
+                      <Group key={`review-point-${index}`}>
+                        <Circle cx={point.x} cy={point.y} r={4} color={chartColors.activity.medium}>
+                          <Shadow
+                            dx={0}
+                            dy={1}
+                            blur={2}
+                            color={chartColors.withOpacity(chartColors.activity.medium, 0.4)}
+                          />
+                        </Circle>
+                      </Group>
+                    );
+                  })}
+                </Group>
+              )}
             </Group>
           </Canvas>
         </View>
 
         <ChartFooter
           legendItems={[
-            { type: 'bar', color: chartColors.activity.high, label: 'High' },
-            { type: 'bar', color: chartColors.activity.medium, label: 'Medium' },
-            { type: 'bar', color: chartColors.activity.low, label: 'Low' },
-            { type: 'bar', color: chartColors.activity.none, label: 'None' },
+            { type: 'line', color: chartColors.ui.dataLine, label: 'Total Activity' },
+            { type: 'dot', color: chartColors.activity.medium, label: 'Words Reviewed' },
+            {
+              type: 'area',
+              color: chartColors.withOpacity(chartColors.ui.dataLine, 0.4),
+              label: 'Activity Trend',
+            },
           ]}
           timeRange="Last 14 days"
         />
@@ -258,22 +337,5 @@ const styles = StyleSheet.create({
   emptyState: {
     marginTop: LAYOUT.SPACING.MEDIUM,
     marginBottom: LAYOUT.SPACING.LARGE,
-  },
-  emptyChart: {
-    height: GRAPH_HEIGHT_LARGE,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    padding: LAYOUT.SPACING.SMALL,
-    justifyContent: 'flex-end',
-  },
-  emptyBars: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    height: 40,
-  },
-  emptyBar: {
-    width: 6,
-    height: 8,
-    borderRadius: 3,
   },
 });

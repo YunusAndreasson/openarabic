@@ -11,7 +11,7 @@ import { useChartColors } from '../shared/chartColors';
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_30 } from '../shared/constants';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 
 interface EfficiencyChartProps {
@@ -23,9 +23,9 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
   const colors = useColors();
   const chartColors = useChartColors();
 
-  // Calculate efficiency data over the last 30 days
+  // Calculate efficiency data over the last 14 days
   const efficiencyData = useMemo(() => {
-    const dates = generateDateRange(DAYS_30);
+    const dates = generateDateRange(DAYS_14);
 
     return dates.map(date => {
       let totalEfficiency = 0;
@@ -240,18 +240,25 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               ))}
             </Group>
 
-            {/* Grid lines */}
+            {/* Grid lines - prominent for better 14-day indication */}
             <Group>
-              {[0.25, 0.5, 0.75].map((ratio, index) => (
-                <Rect
-                  key={`grid-line-${index}`}
-                  x={0}
-                  y={GRAPH_HEIGHT_LARGE * ratio - 0.5}
-                  width={GRAPH_WIDTH}
-                  height={1}
-                  color={chartColors.ui.grid}
-                />
-              ))}
+              {/* Vertical grid lines for 14-day indication */}
+              <Group>
+                {/* Vertical grid lines for each day */}
+                {efficiencyData.map((_, index) => {
+                  const x = (index / Math.max(1, efficiencyData.length - 1)) * GRAPH_WIDTH;
+                  return (
+                    <Rect
+                      key={`day-grid-${index}`}
+                      x={x - 0.5}
+                      y={0}
+                      width={1}
+                      height={GRAPH_HEIGHT_LARGE}
+                      color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
+                    />
+                  );
+                })}
+              </Group>
             </Group>
 
             {/* Efficiency threshold line at 60% */}
@@ -272,7 +279,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               {chartData.smoothPath && (
                 <Path
                   path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                  color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
+                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                 />
               )}
             </Group>
@@ -284,13 +291,13 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                   path={chartData.smoothPath}
                   style="stroke"
                   strokeWidth={3}
-                  color={chartColors.ui.accent}
+                  color={chartColors.ui.dataLine}
                 >
                   <Shadow
                     dx={0}
                     dy={2}
                     blur={4}
-                    color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
+                    color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
                   />
                 </Path>
               )}
@@ -303,13 +310,13 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.ui.accent, label: 'Daily Average' },
+            { type: 'line', color: chartColors.ui.dataLine, label: 'Daily Average' },
             { type: 'area', color: chartColors.performance.excellent, label: 'Excellent Zone' },
             { type: 'area', color: chartColors.performance.good, label: 'Good Zone' },
             { type: 'area', color: chartColors.performance.moderate, label: 'Fair Zone' },
             { type: 'area', color: chartColors.performance.poor, label: 'Needs Work' },
           ]}
-          timeRange="Last 30 days"
+          timeRange="Last 14 days"
         />
       </View>
     </BaseCard>

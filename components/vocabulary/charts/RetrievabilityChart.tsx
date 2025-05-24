@@ -12,7 +12,7 @@ import { ChartFooter } from '../shared/ChartFooter';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
-  DAYS_30,
+  DAYS_14,
   CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
@@ -29,13 +29,13 @@ export const RetrievabilityChart = memo(
     const colors = useColors();
     const chartColors = useChartColors();
 
-    // Calculate retrievability forecast over the next 30 days
+    // Calculate retrievability forecast over the next 14 days
     const retrievabilityData = useMemo(() => {
       const today = new Date();
       const dates: Date[] = [];
 
       // Generate future dates for forecast
-      for (let i = 0; i < DAYS_30; i++) {
+      for (let i = 0; i < DAYS_14; i++) {
         const date = new Date(today);
         date.setDate(today.getDate() + i);
         dates.push(date);
@@ -279,18 +279,25 @@ export const RetrievabilityChart = memo(
                 ))}
               </Group>
 
-              {/* Grid lines */}
+              {/* Grid lines - prominent for better 14-day indication */}
               <Group>
-                {[0.25, 0.5, 0.75].map((ratio, index) => (
-                  <Rect
-                    key={`grid-line-${index}`}
-                    x={0}
-                    y={GRAPH_HEIGHT_LARGE * ratio - 0.5}
-                    width={GRAPH_WIDTH}
-                    height={1}
-                    color={chartColors.ui.grid}
-                  />
-                ))}
+                {/* Vertical grid lines for 14-day indication */}
+                <Group>
+                  {/* Vertical grid lines for each day */}
+                  {retrievabilityData.map((_, index) => {
+                    const x = (index / Math.max(1, retrievabilityData.length - 1)) * GRAPH_WIDTH;
+                    return (
+                      <Rect
+                        key={`day-grid-${index}`}
+                        x={x - 0.5}
+                        y={0}
+                        width={1}
+                        height={GRAPH_HEIGHT_LARGE}
+                        color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
+                      />
+                    );
+                  })}
+                </Group>
               </Group>
 
               {/* Area fill under the retrievability line */}
@@ -298,7 +305,7 @@ export const RetrievabilityChart = memo(
                 {chartData.smoothPath && (
                   <Path
                     path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                    color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
+                    color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                   />
                 )}
               </Group>
@@ -310,13 +317,13 @@ export const RetrievabilityChart = memo(
                     path={chartData.smoothPath}
                     style="stroke"
                     strokeWidth={3}
-                    color={chartColors.ui.accent}
+                    color={chartColors.ui.dataLine}
                   >
                     <Shadow
                       dx={0}
                       dy={2}
                       blur={4}
-                      color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
+                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
                     />
                   </Path>
                 )}
@@ -329,12 +336,12 @@ export const RetrievabilityChart = memo(
 
           <ChartFooter
             legendItems={[
-              { type: 'line', color: chartColors.ui.accent, label: 'Forecast' },
+              { type: 'line', color: chartColors.ui.dataLine, label: 'Forecast' },
               { type: 'area', color: chartColors.memory.strong, label: 'Strong Zone' },
               { type: 'area', color: chartColors.memory.fading, label: 'At Risk Zone' },
               { type: 'area', color: chartColors.memory.weak, label: 'Critical Zone' },
             ]}
-            timeRange="Next 30 days"
+            timeRange="Next 14 days"
           />
         </View>
       </BaseCard>

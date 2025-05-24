@@ -211,7 +211,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
                       y={GRAPH_HEIGHT_LARGE - barHeight - 10}
                       width={barWidth}
                       height={Math.min(barHeight / 4, 6)}
-                      color={chartColors.withOpacity(colors.white, 0.2)}
+                      color={chartColors.withOpacity(colors.textTertiary, 0.15)}
                     />
                   </Group>
                 );

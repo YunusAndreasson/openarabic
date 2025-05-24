@@ -9,7 +9,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_30 } from '../shared/constants';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { generateDateRange } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
@@ -26,9 +26,9 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
   // Add top padding to prevent dots from being cut off
   const TOP_PADDING = 8; // Space for circle radius + shadow
 
-  // Calculate mastery progression over the last 30 days
+  // Calculate mastery progression over the last 14 days
   const masteryData = useMemo(() => {
-    const dates = generateDateRange(DAYS_30);
+    const dates = generateDateRange(DAYS_14);
 
     return dates.map(date => {
       let masteredCount = 0;
@@ -195,17 +195,17 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
           {/* Empty state with visual guidance */}
           <View style={styles.emptyStateContainer}>
             <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-              {/* Subtle background pattern */}
+              {/* Vertical day markers for empty state */}
               <Group>
-                {/* Dotted guide lines */}
-                {[0.25, 0.5, 0.75].map((ratio, index) => (
+                {/* Vertical day markers */}
+                {Array.from({ length: 14 }, (_, index) => (
                   <Rect
-                    key={`empty-grid-${index}`}
-                    x={0}
-                    y={GRAPH_HEIGHT_LARGE * ratio - 0.5}
-                    width={GRAPH_WIDTH}
-                    height={1}
-                    color={chartColors.ui.grid}
+                    key={`empty-day-grid-${index}`}
+                    x={(index / 13) * GRAPH_WIDTH - 0.5}
+                    y={0}
+                    width={1}
+                    height={GRAPH_HEIGHT_LARGE}
+                    color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
                   />
                 ))}
 
@@ -214,7 +214,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                   path={`M 20 ${GRAPH_HEIGHT_LARGE - 20} Q ${GRAPH_WIDTH / 2} ${GRAPH_HEIGHT_LARGE / 2} ${GRAPH_WIDTH - 20} 30`}
                   style="stroke"
                   strokeWidth={2}
-                  color={chartColors.withOpacity(chartColors.performance.excellent, 0.3)}
+                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
                 />
               </Group>
             </Canvas>
@@ -244,18 +244,22 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
         {/* Enhanced Mastery Graph with advanced Skia features */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Grid lines */}
+            {/* Vertical grid lines for 14-day indication */}
             <Group>
-              {[0.25, 0.5, 0.75].map((ratio, index) => (
-                <Rect
-                  key={`grid-line-${index}`}
-                  x={0}
-                  y={TOP_PADDING + (GRAPH_HEIGHT_LARGE - TOP_PADDING) * ratio - 0.5}
-                  width={GRAPH_WIDTH}
-                  height={1}
-                  color={chartColors.ui.grid}
-                />
-              ))}
+              {/* Vertical grid lines for each day */}
+              {masteryData.map((_, index) => {
+                const x = (index / Math.max(1, masteryData.length - 1)) * GRAPH_WIDTH;
+                return (
+                  <Rect
+                    key={`day-grid-${index}`}
+                    x={x - 0.5}
+                    y={TOP_PADDING}
+                    width={1}
+                    height={GRAPH_HEIGHT_LARGE - TOP_PADDING}
+                    color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
+                  />
+                );
+              })}
             </Group>
 
             {/* Performance zone highlighting */}
@@ -296,7 +300,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
               {chartData.smoothPath && chartData.dataPoints.length > 0 && (
                 <Path
                   path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                  color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
+                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                 />
               )}
 
@@ -318,7 +322,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                       return (
                         <Path
                           path={areaPath}
-                          color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
+                          color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                         />
                       );
                     })()}
@@ -334,25 +338,25 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                     path={chartData.smoothPath}
                     style="stroke"
                     strokeWidth={3}
-                    color={chartColors.ui.accent}
+                    color={chartColors.ui.dataLine}
                   >
                     <Shadow
                       dx={0}
                       dy={2}
                       blur={4}
-                      color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
+                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
                     />
                   </Path>
 
                   {/* Data points with enhanced styling */}
                   {chartData.dataPoints.map((point, index) => (
                     <Group key={`mastery-point-${index}`}>
-                      <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.accent}>
+                      <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine}>
                         <Shadow
                           dx={0}
                           dy={1}
                           blur={2}
-                          color={chartColors.withOpacity(chartColors.ui.accent, 0.4)}
+                          color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                         />
                       </Circle>
                     </Group>
@@ -365,12 +369,12 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
             <Group>
               {chartData.milestones.map((milestone, index) => (
                 <Group key={`milestone-${index}`}>
-                  <Circle cx={milestone.x} cy={milestone.y} r={6} color={chartColors.ui.accent}>
+                  <Circle cx={milestone.x} cy={milestone.y} r={6} color={chartColors.ui.dataLine}>
                     <Shadow
                       dx={0}
                       dy={2}
                       blur={3}
-                      color={chartColors.withOpacity(chartColors.ui.accent, 0.4)}
+                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                     />
                   </Circle>
                 </Group>
@@ -381,10 +385,10 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.ui.accent, label: 'Progress' },
-            { type: 'dot', color: chartColors.ui.accent, label: 'Milestones' },
+            { type: 'line', color: chartColors.ui.dataLine, label: 'Progress' },
+            { type: 'dot', color: chartColors.ui.dataLine, label: 'Milestones' },
           ]}
-          timeRange="Last 30 days"
+          timeRange="Last 14 days"
         />
       </View>
     </BaseCard>
