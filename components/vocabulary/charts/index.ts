@@ -1,5 +1,4 @@
 export { StreakInsights } from './StreakInsights';
-export { ActivityChart } from './ActivityChart';
 export { MasteryChart } from './MasteryChart';
 export { EfficiencyChart } from './EfficiencyChart';
 export { RetrievabilityChart } from './RetrievabilityChart';

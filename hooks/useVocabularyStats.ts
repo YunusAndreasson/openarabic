@@ -38,26 +38,25 @@ const getAdvancedStats = (validStudyWords: StudyWord[]) => {
         acc.easeFactorSum += word.ease_factor || 0;
       }
 
-      // Track mastery stats - CORRECTED FSRS state logic with better validation
-      // FSRS State definitions:
+      // Track mastery stats - CORRECTED FSRS state logic based on actual database analysis
+      // FSRS State definitions (verified from database):
       // 0 = New (never reviewed)
       // 1 = Learning (in learning phase)
       // 2 = Review (graduated to review) - MASTERED when stability >= 5 days
-      // 3 = Relearning (failed and relearning) - NOT mastered
+      // 3 = Relearning (failed and relearning) - NOT mastered, back to learning
       const state = word.fsrs_state;
       const stability = word.fsrs_stability ?? 0;
       const hasReview = !!word.fsrs_last_review;
 
-      // Only count as mastered if: Review state + good stability + has been reviewed
+      // Mastered: Review state (2) with good stability (>=5) and actual review history
       if (state === 2 && stability >= 5 && hasReview) {
-        // Mastered: review state with good stability and actual review history
         acc.masteredCount++;
-      } else if (
-        state === 0 || // New
-        state === 1 || // Learning
-        state === 3 || // Relearning (failed)
-        (state === 2 && (stability < 5 || !hasReview)) // Review but low stability or no review
-      ) {
+      } else {
+        // Learning: All other states including:
+        // - New (0)
+        // - Learning (1)
+        // - Review with low stability (2 but stability < 5)
+        // - Relearning (3) - failed words back to learning
         acc.learningCount++;
       }
 

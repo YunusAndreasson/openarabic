@@ -22,13 +22,7 @@ import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../ThemedText';
 
-export type InfoModalType =
-  | 'streak'
-  | 'activity'
-  | 'mastery'
-  | 'retrievability'
-  | 'difficulty'
-  | 'efficiency';
+export type InfoModalType = 'streak' | 'mastery' | 'retrievability' | 'difficulty' | 'efficiency';
 
 interface InfoModalProps {
   visible: boolean;
@@ -52,13 +46,6 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
     title: 'Learning Streak',
     subtitle:
       'Tracks consecutive days with vocabulary activity (reading articles, reviewing words, practice sessions).\n\nDaily practice creates stronger neural pathways and improves retention by up to 400% compared to cramming.\n\nStart small with 2-3 words daily and link practice to existing routines.',
-    sections: [],
-    tips: [],
-  },
-  activity: {
-    title: 'Learning Activity',
-    subtitle:
-      'Blue bars show new words discovered from reading articles.\n\nGreen line shows words reviewed to strengthen memory.\n\nAim for 1 new word to 3 reviews for optimal retention. Consistent moderate activity beats sporadic intense sessions.\n\nTarget 3-7 total activities daily.',
     sections: [],
     tips: [],
   },

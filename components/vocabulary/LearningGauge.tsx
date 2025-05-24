@@ -19,18 +19,17 @@ type GaugeLevel = 'optimal' | 'moderate' | 'heavy';
 
 interface GaugeState {
   level: GaugeLevel;
-  title: string;
-  subtitle: string;
+  action: string;
+  insight: string;
   icon: keyof typeof Ionicons.glyphMap;
   color: string;
-  bgColor: string;
 }
 
 export const LearningGauge = memo(
   ({ dueWords, learningWords, totalWords, masteredWords }: LearningGaugeProps) => {
     const colors = useColors();
 
-    // Calculate learning state with clear, intuitive thresholds
+    // Calculate learning state with clear, actionable insights
     const gaugeState: GaugeState = useMemo(() => {
       const reviewLoad = dueWords / Math.max(totalWords, 1);
 
@@ -38,11 +37,10 @@ export const LearningGauge = memo(
       if (dueWords > 15 || reviewLoad > 0.25) {
         return {
           level: 'heavy',
-          title: 'Focus on Reviews',
-          subtitle: `${dueWords} words need attention`,
+          action: 'Review First',
+          insight: `${dueWords} cards overdue - strengthen retention before expanding`,
           icon: 'refresh-circle',
           color: colors.error,
-          bgColor: colors.socialIconBg,
         };
       }
 
@@ -50,59 +48,42 @@ export const LearningGauge = memo(
       if (dueWords > 5 || (reviewLoad > 0.1 && totalWords > 20)) {
         return {
           level: 'moderate',
-          title: 'Review & Learn',
-          subtitle: `${dueWords} words due for review`,
+          action: 'Balance & Grow',
+          insight: `${dueWords} cards due - maintain intervals while adding new words`,
           icon: 'library',
           color: colors.warning,
-          bgColor: colors.socialIconBg,
         };
       }
 
       // OPTIMAL: Low review burden - perfect for learning
       return {
         level: 'optimal',
-        title: 'Ready to Learn',
-        subtitle: totalWords < 10 ? 'Start adding words' : 'Perfect time to expand',
+        action: 'Add New Words',
+        insight:
+          totalWords < 10 ? 'Build your foundation deck' : 'Perfect time to expand vocabulary',
         icon: 'add-circle',
         color: colors.success,
-        bgColor: colors.socialIconBg,
       };
     }, [dueWords, learningWords, totalWords, masteredWords, colors]);
 
     return (
       <BaseCard style={styles.gaugeCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.gaugeContent}>
-          {/* Status Indicator - Clean and minimal */}
-          <View style={styles.statusIndicator}>
-            {/* Simple Icon Container - No complex rings */}
-            <View style={styles.iconContainer}>
-              <Ionicons name={gaugeState.icon} size={36} color={gaugeState.color} />
-            </View>
+          {/* Visual Status Indicator */}
+          <View style={[styles.statusIndicator, { backgroundColor: `${gaugeState.color}15` }]}>
+            <Ionicons name={gaugeState.icon} size={28} color={gaugeState.color} />
           </View>
 
-          {/* Content - Better hierarchy */}
-          <View style={styles.contentArea}>
-            {/* Primary Message */}
-            <View style={styles.messageContainer}>
-              <ThemedText type="heading2" weight="bold" style={styles.primaryTitle}>
-                {gaugeState.title}
-              </ThemedText>
-              <ThemedText type="body" variant="secondary" style={styles.secondaryMessage}>
-                {gaugeState.subtitle}
-              </ThemedText>
-            </View>
-
-            {/* Status text - Clean without container */}
-            <ThemedText
-              type="caption"
-              weight="medium"
-              style={[styles.statusText, { color: gaugeState.color }]}
-            >
-              {gaugeState.level === 'optimal'
-                ? 'Optimal'
-                : gaugeState.level === 'moderate'
-                  ? 'Moderate'
-                  : 'Heavy Load'}
+          {/* Unified Message */}
+          <View style={styles.messageArea}>
+            <ThemedText type="caption" weight="medium" style={styles.recommendationLabel}>
+              Recommendation
+            </ThemedText>
+            <ThemedText type="heading2" weight="bold" style={styles.actionText}>
+              {gaugeState.action}
+            </ThemedText>
+            <ThemedText type="body" variant="secondary" style={styles.insightText}>
+              {gaugeState.insight}
             </ThemedText>
           </View>
         </View>
@@ -120,43 +101,28 @@ const styles = StyleSheet.create({
   gaugeContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 3,
-    paddingVertical: LAYOUT.CARD.PADDING.MEDIUM,
-    minHeight: 96, // Increased height for better proportion and alignment
-    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   statusIndicator: {
+    width: 56,
+    height: 56,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconContainer: {
-    width: 64, // Larger for better presence and alignment
-    height: 64,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentArea: {
+  messageArea: {
     flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    gap: LAYOUT.SPACING.TINY,
   },
-  messageContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  primaryTitle: {
-    marginBottom: LAYOUT.SPACING.TINY,
+  actionText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.1,
   },
-  secondaryMessage: {
+  insightText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3,
-    opacity: LAYOUT.OPACITY.HIGH, // Subtle hierarchy using standardized opacity
+    opacity: LAYOUT.OPACITY.HIGH,
   },
-  statusText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  recommendationLabel: {
+    opacity: LAYOUT.OPACITY.HIGH,
   },
 });

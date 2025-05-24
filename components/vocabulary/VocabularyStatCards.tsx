@@ -14,7 +14,6 @@ import { LearningGauge } from './LearningGauge';
 import { InfoModal, type InfoModalType } from './InfoModal';
 import { StatCard } from './StatCard';
 import { StreakCard } from './StreakCard';
-import { ActivityChart } from './charts/ActivityChart';
 import { MasteryChart } from './charts/MasteryChart';
 import { EfficiencyChart } from './charts/EfficiencyChart';
 import { RetrievabilityChart } from './charts/RetrievabilityChart';
@@ -202,12 +201,6 @@ export const VocabularyStatCards = memo(
           longestStreak={streakData.longestStreak}
           lastSevenDaysActivity={streakData.lastSevenDaysActivity}
           onInfoPress={() => handleInfoPress('streak')}
-        />
-
-        {/* Activity Chart */}
-        <ActivityChart
-          studyWords={validatedInput.studyWords}
-          onInfoPress={() => handleInfoPress('activity')}
         />
 
         {/* Mastery Chart */}

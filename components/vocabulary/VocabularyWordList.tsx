@@ -37,15 +37,30 @@ const WordItem = memo(
     const isDarkMode = useIsDarkMode();
     const word = studyWord.root?.letters || '...';
     const english = studyWord.root?.meaning || '...';
-    const isLearning = studyWord.fsrs_state === 1 || studyWord.fsrs_state === 2;
     const isMastered = studyWord.fsrs_state === 2 && (studyWord.fsrs_stability ?? 0) >= 5;
+    const isReview = studyWord.fsrs_state === 2 && (studyWord.fsrs_stability ?? 0) < 5;
+    const isLearning = studyWord.fsrs_state === 1 || studyWord.fsrs_state === 3; // Learning or Relearning
+    const isNew = studyWord.fsrs_state === 0;
     const isOverdue = studyWord.fsrs_due ? new Date(studyWord.fsrs_due) < new Date() : false;
 
-    let statusLabel = isMastered ? 'Mastered' : isLearning ? 'Learning' : 'New';
-    if (isOverdue) statusLabel = 'Due';
+    let statusLabel = 'New';
+    let statusIcon = 'star';
 
-    let statusIcon = isMastered ? 'checkmark-circle' : isLearning ? 'school' : 'star';
-    if (isOverdue) statusIcon = 'time';
+    if (isMastered) {
+      statusLabel = 'Mastered';
+      statusIcon = 'checkmark-circle';
+    } else if (isReview) {
+      statusLabel = 'Review';
+      statusIcon = 'refresh';
+    } else if (isLearning) {
+      statusLabel = 'Learning';
+      statusIcon = 'school';
+    }
+
+    if (isOverdue) {
+      statusLabel = 'Due';
+      statusIcon = 'time';
+    }
 
     return (
       <ThemedCard variant="basic" onPress={onPress} style={styles.wordCard}>
