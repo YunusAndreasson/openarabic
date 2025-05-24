@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Circle, Group } from '@shopify/react-native-skia';
+import { Canvas, Path, Circle, Group, vec, Shadow, Skia, Rect } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -56,8 +56,10 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
     if (efficiencyData.length === 0) {
       return {
         efficiencyPath: '',
+        smoothPath: '',
         hasData: false,
         insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
+        performanceZones: [],
       };
     }
 
@@ -66,25 +68,62 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
     if (!hasData) {
       return {
         efficiencyPath: '',
+        smoothPath: '',
         hasData: false,
         insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
+        performanceZones: [],
       };
     }
 
-    const maxEfficiency = Math.max(1, Math.max(...efficiencyData.map(d => d.averageEfficiency)));
+    const maxEfficiency = Math.max(100, Math.max(...efficiencyData.map(d => d.averageEfficiency)));
     const stepX = GRAPH_WIDTH / (efficiencyData.length - 1);
-    let efficiencyPath = '';
+
+    // Create smooth curve using Skia Path
+    const path = Skia.Path.Make();
+    const points: { x: number; y: number; efficiency: number }[] = [];
 
     efficiencyData.forEach((data, index) => {
       const x = index * stepX;
       const y = GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE;
+      points.push({ x, y, efficiency: data.averageEfficiency });
 
       if (index === 0) {
-        efficiencyPath = `M ${x} ${y}`;
+        path.moveTo(x, y);
       } else {
-        efficiencyPath += ` L ${x} ${y}`;
+        // Create smooth curves using quadratic bezier
+        const prevPoint = points[index - 1];
+        const controlX = (prevPoint!.x + x) / 2;
+        path.quadTo(controlX, prevPoint!.y, x, y);
       }
     });
+
+    // Define performance zones
+    const performanceZones = [
+      {
+        name: 'Excellent',
+        min: 80,
+        max: 100,
+        color: '#22C55E', // Clear bright green
+        y: GRAPH_HEIGHT_LARGE - (80 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      },
+      {
+        name: 'Good',
+        min: EFFICIENCY_THRESHOLD,
+        max: 80,
+        color: colors.info,
+        y: GRAPH_HEIGHT_LARGE - (80 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: ((80 - EFFICIENCY_THRESHOLD) / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      },
+      {
+        name: 'Needs Improvement',
+        min: 0,
+        max: EFFICIENCY_THRESHOLD,
+        color: '#EF4444', // Clear bright red
+        y: GRAPH_HEIGHT_LARGE - (EFFICIENCY_THRESHOLD / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (EFFICIENCY_THRESHOLD / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      },
+    ];
 
     // Calculate insights
     const recent = efficiencyData.slice(-7).filter(d => d.wordCount > 0);
@@ -104,16 +143,18 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
     const trend = change > 5 ? 'improving' : change < -5 ? 'declining' : 'stable';
 
     return {
-      efficiencyPath,
+      efficiencyPath: path.toSVGString(),
+      smoothPath: path.toSVGString(),
       hasData,
       maxEfficiency,
+      performanceZones,
       insights: {
         currentEfficiency: Math.round(currentEfficiency * 10) / 10,
         trend,
         weeklyAverage: Math.round(recentAvg * 10) / 10,
       },
     };
-  }, [efficiencyData]);
+  }, [efficiencyData, colors]);
 
   // Generate subtitle based on efficiency trend
   const subtitle = useMemo(() => {
@@ -123,18 +164,18 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       return 'Complete reviews to track efficiency';
     }
     if (trend === 'improving') {
-      return 'Learning efficiency is improving!';
+      return 'Learning efficiency is improving! 📈';
     }
     if (trend === 'declining') {
-      return 'Consider adjusting study methods';
+      return 'Consider adjusting study methods 🔄';
+    }
+    if (currentEfficiency >= 80) {
+      return 'Excellent learning efficiency! 🎯';
     }
     if (currentEfficiency >= EFFICIENCY_THRESHOLD) {
-      return 'Excellent learning efficiency';
+      return 'Good learning efficiency 👍';
     }
-    if (currentEfficiency >= 50) {
-      return 'Good learning efficiency';
-    }
-    return 'Room for efficiency improvement';
+    return 'Room for efficiency improvement 💡';
   }, [chartData.insights]);
 
   if (!chartData.hasData) {
@@ -142,7 +183,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.efficiencyContent}>
           <CardHeader
-            title="Efficiency"
+            title="Learning Efficiency"
             subtitle="Track your learning efficiency over time"
             onInfoPress={onInfoPress}
           />
@@ -154,27 +195,55 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
   return (
     <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.efficiencyContent}>
-        <CardHeader title="Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
+        <CardHeader title="Learning Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
 
         <StatsRow
           leftStat={{
             value: `${chartData.insights.currentEfficiency}%`,
-            label: 'current',
+            label: 'current efficiency',
             color:
-              chartData.insights.currentEfficiency >= EFFICIENCY_THRESHOLD
-                ? colors.success
-                : colors.warning,
+              chartData.insights.currentEfficiency >= 80
+                ? '#22C55E' // Clear green for excellent
+                : chartData.insights.currentEfficiency >= EFFICIENCY_THRESHOLD
+                  ? colors.info
+                  : '#EF4444', // Clear red for needs improvement
           }}
           rightStat={{
             value: `${chartData.insights.weeklyAverage}%`,
-            label: 'weekly avg',
+            label: 'weekly average',
           }}
         />
 
-        {/* Efficiency Graph */}
+        {/* Enhanced Efficiency Graph */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Background grid lines */}
+            {/* Performance zones background */}
+            <Group>
+              {/* Good performance zone (70%+) */}
+              <Rect
+                x={0}
+                y={0}
+                width={GRAPH_WIDTH}
+                height={
+                  GRAPH_HEIGHT_LARGE -
+                  (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE
+                }
+                color={withOpacity('#22C55E', 0.08)}
+              />
+              {/* Needs improvement zone */}
+              <Rect
+                x={0}
+                y={
+                  GRAPH_HEIGHT_LARGE -
+                  (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE
+                }
+                width={GRAPH_WIDTH}
+                height={(EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE}
+                color={withOpacity('#EF4444', 0.08)}
+              />
+            </Group>
+
+            {/* Minimal grid lines */}
             <Group>
               {[0.25, 0.5, 0.75].map((ratio, index) => (
                 <Path
@@ -182,7 +251,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                   path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
                   style="stroke"
                   strokeWidth={0.5}
-                  color={withOpacity(colors.text, 0.1)}
+                  color={withOpacity(colors.textSecondary || colors.text, 0.15)}
                 />
               ))}
             </Group>
@@ -192,50 +261,48 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               <Path
                 path={`M 0 ${GRAPH_HEIGHT_LARGE - (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE - (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE}`}
                 style="stroke"
-                strokeWidth={1}
-                color={withOpacity(colors.success, 0.5)}
+                strokeWidth={2}
+                color="#F97316" // Distinct orange for goal line
               />
             </Group>
 
-            {/* Efficiency area fill */}
+            {/* Clean area fill */}
             <Group>
               <Path
-                path={`${chartData.efficiencyPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                color={withOpacity(colors.tint, 0.15)}
+                path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                color={withOpacity(colors.info, 0.15)}
               />
             </Group>
 
-            {/* Efficiency line with glow effect */}
+            {/* Main efficiency line */}
             <Group>
-              <Path
-                path={chartData.efficiencyPath}
-                style="stroke"
-                strokeWidth={6}
-                color={withOpacity(colors.tint, 0.3)}
-              />
-              <Path
-                path={chartData.efficiencyPath}
-                style="stroke"
-                strokeWidth={3}
-                color={colors.tint}
-              />
+              <Path path={chartData.smoothPath} style="stroke" strokeWidth={3} color={colors.info}>
+                <Shadow dx={0} dy={1} blur={3} color={withOpacity(colors.info, 0.25)} />
+              </Path>
             </Group>
 
-            {/* Efficiency points */}
+            {/* Performance indicators - only show significant points */}
             <Group>
               {efficiencyData.map((data, index) => {
-                if (data.wordCount > 0) {
+                if (data.wordCount > 0 && index % 5 === 0) {
+                  // Show every 5th point
                   const x = (index * GRAPH_WIDTH) / (efficiencyData.length - 1);
                   const y =
                     GRAPH_HEIGHT_LARGE -
                     (data.averageEfficiency / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE;
+
+                  // Color based on performance
                   const pointColor =
-                    data.averageEfficiency >= EFFICIENCY_THRESHOLD ? colors.success : colors.tint;
+                    data.averageEfficiency >= EFFICIENCY_THRESHOLD
+                      ? '#22C55E' // Clear green for good performance
+                      : '#EF4444'; // Clear red for needs improvement
+
                   return (
                     <Group key={`efficiency-point-${index}`}>
-                      <Circle cx={x} cy={y} r={5} color={withOpacity(pointColor, 0.3)} />
-                      <Circle cx={x} cy={y} r={3} color={pointColor} />
-                      <Circle cx={x} cy={y} r={1} color={withOpacity(colors.background, 0.8)} />
+                      <Circle cx={x} cy={y} r={4} color={pointColor}>
+                        <Shadow dx={0} dy={1} blur={2} color={withOpacity(pointColor, 0.3)} />
+                      </Circle>
+                      <Circle cx={x} cy={y} r={1.5} color={colors.background} />
                     </Group>
                   );
                 }
@@ -247,8 +314,8 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
 
         <ChartFooter
           legendItems={[
-            { type: 'area', color: colors.tint, label: 'Efficiency score' },
-            { type: 'line', color: colors.success, label: `${EFFICIENCY_THRESHOLD}% target` },
+            { type: 'area', color: colors.info, label: 'Your progress' },
+            { type: 'line', color: '#F97316', label: `${EFFICIENCY_THRESHOLD}% goal` },
           ]}
           timeRange="Last 30 days"
         />

@@ -49,7 +49,7 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
     return 'Building momentum';
   }, [streakData.currentStreak]);
 
-  // Activity dots for last 7 days
+  // Activity dots for last 7 days with enhanced styling
   const activityDots = useMemo(() => {
     return streakData.lastSevenDaysActivity.map((day, index) => {
       const isActive = day.active;
@@ -61,9 +61,14 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
             style={[
               styles.dot,
               {
-                backgroundColor: isActive ? colors.success : withOpacity(colors.textTertiary, 0.2),
+                backgroundColor: isActive ? colors.success : withOpacity(colors.textTertiary, 0.15),
                 borderWidth: isToday ? 2 : 0,
                 borderColor: isToday ? colors.tint : 'transparent',
+                shadowColor: isActive ? colors.success : 'transparent',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.3,
+                shadowRadius: 2,
+                elevation: isActive ? 2 : 0,
               },
             ]}
           />
@@ -92,11 +97,11 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
           }}
         />
 
-        {/* Activity visualization */}
+        {/* Clean activity visualization */}
         <View
           style={[
             styles.activitySection,
-            { borderTopColor: withOpacity(colors.textTertiary, 0.1) },
+            { borderTopColor: withOpacity(colors.textTertiary, 0.08) },
           ]}
         >
           <View style={styles.activityRow}>{activityDots}</View>
@@ -116,27 +121,27 @@ const styles = StyleSheet.create({
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   activitySection: {
-    paddingTop: LAYOUT.SPACING.LARGE,
     borderTopWidth: 1,
-    marginTop: LAYOUT.SPACING.MEDIUM,
+    marginTop: LAYOUT.SPACING.LARGE,
+    paddingTop: LAYOUT.SPACING.LARGE,
   },
   activityRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    alignItems: 'center',
   },
   activityDot: {
     alignItems: 'center',
     flex: 1,
   },
   dot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   dayLabel: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    fontSize: 10,
     textAlign: 'center',
   },
 });

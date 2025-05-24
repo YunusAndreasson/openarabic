@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Circle, Group } from '@shopify/react-native-skia';
+import { Canvas, Path, Circle, Group, vec, Shadow, Skia, Rect } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -44,6 +44,7 @@ export const RetrievabilityChart = memo(
         let totalRetrievability = 0;
         let wordCount = 0;
         let criticalWords = 0;
+        let urgentWords = 0;
 
         studyWords.forEach(word => {
           // Only include words that have been reviewed
@@ -55,11 +56,14 @@ export const RetrievabilityChart = memo(
             if (retrievability < CRITICAL_RETRIEVABILITY_THRESHOLD) {
               criticalWords++;
             }
+            if (retrievability < 0.5) {
+              urgentWords++;
+            }
           }
         });
 
         const averageRetrievability = wordCount > 0 ? (totalRetrievability / wordCount) * 100 : 0;
-        return { date, averageRetrievability, wordCount, criticalWords };
+        return { date, averageRetrievability, wordCount, criticalWords, urgentWords };
       });
     }, [studyWords]);
 
@@ -68,8 +72,10 @@ export const RetrievabilityChart = memo(
       if (retrievabilityData.length === 0) {
         return {
           retrievabilityPath: '',
+          smoothPath: '',
           hasData: false,
           insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
+          dangerZones: [],
         };
       }
 
@@ -78,30 +84,73 @@ export const RetrievabilityChart = memo(
       if (!hasData) {
         return {
           retrievabilityPath: '',
+          smoothPath: '',
           hasData: false,
           insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
+          dangerZones: [],
         };
       }
 
       const maxRetrievability = Math.max(
-        1,
+        100,
         Math.max(...retrievabilityData.map(d => d.averageRetrievability))
       );
       const stepX = GRAPH_WIDTH / (retrievabilityData.length - 1);
-      let retrievabilityPath = '';
+
+      // Create smooth curve using Skia Path
+      const path = Skia.Path.Make();
+      const points: { x: number; y: number; retrievability: number }[] = [];
 
       retrievabilityData.forEach((data, index) => {
         const x = index * stepX;
         const y =
           GRAPH_HEIGHT_LARGE -
           (data.averageRetrievability / maxRetrievability) * GRAPH_HEIGHT_LARGE;
+        points.push({ x, y, retrievability: data.averageRetrievability });
 
         if (index === 0) {
-          retrievabilityPath = `M ${x} ${y}`;
+          path.moveTo(x, y);
         } else {
-          retrievabilityPath += ` L ${x} ${y}`;
+          // Create smooth curves using quadratic bezier
+          const prevPoint = points[index - 1];
+          const controlX = (prevPoint!.x + x) / 2;
+          path.quadTo(controlX, prevPoint!.y, x, y);
         }
       });
+
+      // Define danger zones for memory retention
+      const dangerZones = [
+        {
+          name: 'Safe Zone',
+          min: CRITICAL_RETRIEVABILITY_THRESHOLD * 100,
+          max: 100,
+          color: colors.success,
+          y: 0,
+          height:
+            GRAPH_HEIGHT_LARGE -
+            ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+        },
+        {
+          name: 'At Risk',
+          min: 50,
+          max: CRITICAL_RETRIEVABILITY_THRESHOLD * 100,
+          color: colors.warning,
+          y:
+            GRAPH_HEIGHT_LARGE -
+            ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+          height:
+            ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100 - 50) / maxRetrievability) *
+            GRAPH_HEIGHT_LARGE,
+        },
+        {
+          name: 'Critical',
+          min: 0,
+          max: 50,
+          color: colors.error,
+          y: GRAPH_HEIGHT_LARGE - (50 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+          height: (50 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+        },
+      ];
 
       // Calculate insights
       const week1 = retrievabilityData.slice(0, 7);
@@ -118,16 +167,18 @@ export const RetrievabilityChart = memo(
       const criticalWords = retrievabilityData[0]?.criticalWords || 0;
 
       return {
-        retrievabilityPath,
+        retrievabilityPath: path.toSVGString(),
+        smoothPath: path.toSVGString(),
         hasData,
         maxRetrievability,
+        dangerZones,
         insights: {
           currentRetrievability: Math.round(currentRetrievability * 10) / 10,
           trend,
           criticalWords,
         },
       };
-    }, [retrievabilityData]);
+    }, [retrievabilityData, colors]);
 
     // Generate subtitle based on retrievability forecast
     const subtitle = useMemo(() => {
@@ -137,18 +188,18 @@ export const RetrievabilityChart = memo(
         return 'Review words to track retention';
       }
       if (criticalWords > 10) {
-        return `${criticalWords} words need urgent review`;
+        return `⚠️ ${criticalWords} words need urgent review`;
       }
       if (criticalWords > 5) {
-        return `${criticalWords} words approaching forgetting`;
+        return `⚡ ${criticalWords} words approaching forgetting`;
       }
       if (currentRetrievability >= 80) {
-        return 'Excellent memory retention';
+        return 'Excellent memory retention! 🧠';
       }
       if (currentRetrievability >= 60) {
-        return 'Good memory retention';
+        return 'Good memory retention 👍';
       }
-      return 'Consider more frequent reviews';
+      return 'Consider more frequent reviews 🔄';
     }, [chartData.insights]);
 
     if (!chartData.hasData) {
@@ -160,7 +211,7 @@ export const RetrievabilityChart = memo(
         >
           <View style={styles.retrievabilityContent}>
             <CardHeader
-              title="Retrievability"
+              title="Memory Retention"
               subtitle="Predict and prevent vocabulary forgetting"
               onInfoPress={onInfoPress}
             />
@@ -172,28 +223,70 @@ export const RetrievabilityChart = memo(
     return (
       <BaseCard style={styles.retrievabilityCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.retrievabilityContent}>
-          <CardHeader title="Retrievability" subtitle={subtitle} onInfoPress={onInfoPress} />
+          <CardHeader title="Memory Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
 
           <StatsRow
             leftStat={{
               value: `${chartData.insights.currentRetrievability}%`,
-              label: 'retention',
+              label: 'retention rate',
               color:
                 chartData.insights.currentRetrievability >= CRITICAL_RETRIEVABILITY_THRESHOLD * 100
                   ? colors.success
-                  : colors.warning,
+                  : chartData.insights.currentRetrievability >= 50
+                    ? colors.warning
+                    : colors.error,
             }}
             rightStat={{
               value: chartData.insights.criticalWords,
-              label: 'at risk',
+              label: 'words at risk',
               color: chartData.insights.criticalWords > 5 ? colors.error : colors.textSecondary,
             }}
           />
 
-          {/* Retrievability Graph */}
+          {/* Enhanced Retrievability Graph */}
           <View style={styles.graphContainer}>
             <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-              {/* Background grid lines */}
+              {/* Risk zones background */}
+              <Group>
+                {/* Safe zone (80%+) */}
+                <Rect
+                  x={0}
+                  y={0}
+                  width={GRAPH_WIDTH}
+                  height={
+                    GRAPH_HEIGHT_LARGE -
+                    ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / chartData.maxRetrievability!) *
+                      GRAPH_HEIGHT_LARGE
+                  }
+                  color={withOpacity(colors.success, 0.08)}
+                />
+                {/* At risk zone (50-80%) */}
+                <Rect
+                  x={0}
+                  y={
+                    GRAPH_HEIGHT_LARGE -
+                    ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / chartData.maxRetrievability!) *
+                      GRAPH_HEIGHT_LARGE
+                  }
+                  width={GRAPH_WIDTH}
+                  height={
+                    ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100 - 50) /
+                      chartData.maxRetrievability!) *
+                    GRAPH_HEIGHT_LARGE
+                  }
+                  color={withOpacity(colors.warning, 0.08)}
+                />
+                {/* Critical zone (0-50%) */}
+                <Rect
+                  x={0}
+                  y={GRAPH_HEIGHT_LARGE - (50 / chartData.maxRetrievability!) * GRAPH_HEIGHT_LARGE}
+                  width={GRAPH_WIDTH}
+                  height={(50 / chartData.maxRetrievability!) * GRAPH_HEIGHT_LARGE}
+                  color={withOpacity(colors.error, 0.08)}
+                />
+              </Group>
+
+              {/* Minimal grid lines */}
               <Group>
                 {[0.25, 0.5, 0.75].map((ratio, index) => (
                   <Path
@@ -201,7 +294,7 @@ export const RetrievabilityChart = memo(
                     path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
                     style="stroke"
                     strokeWidth={0.5}
-                    color={withOpacity(colors.text, 0.1)}
+                    color={withOpacity(colors.textSecondary || colors.text, 0.15)}
                   />
                 ))}
               </Group>
@@ -209,55 +302,61 @@ export const RetrievabilityChart = memo(
               {/* Critical threshold line */}
               <Group>
                 <Path
-                  path={`M 0 ${GRAPH_HEIGHT_LARGE - ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / chartData.maxRetrievability!) * GRAPH_HEIGHT_LARGE} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE - ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / chartData.maxRetrievability!) * GRAPH_HEIGHT_LARGE}`}
+                  path={`M 0 ${GRAPH_HEIGHT_LARGE - (50 / chartData.maxRetrievability!) * GRAPH_HEIGHT_LARGE} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE - (50 / chartData.maxRetrievability!) * GRAPH_HEIGHT_LARGE}`}
                   style="stroke"
-                  strokeWidth={1}
-                  color={withOpacity(colors.error, 0.5)}
+                  strokeWidth={2}
+                  color={colors.error}
                 />
               </Group>
 
-              {/* Retrievability area fill */}
+              {/* Clean area fill */}
               <Group>
                 <Path
-                  path={`${chartData.retrievabilityPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                  path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
                   color={withOpacity(colors.info, 0.15)}
                 />
               </Group>
 
-              {/* Retrievability line with glow effect */}
+              {/* Main retention line */}
               <Group>
                 <Path
-                  path={chartData.retrievabilityPath}
-                  style="stroke"
-                  strokeWidth={6}
-                  color={withOpacity(colors.info, 0.3)}
-                />
-                <Path
-                  path={chartData.retrievabilityPath}
+                  path={chartData.smoothPath}
                   style="stroke"
                   strokeWidth={3}
                   color={colors.info}
-                />
+                >
+                  <Shadow dx={0} dy={1} blur={3} color={withOpacity(colors.info, 0.25)} />
+                </Path>
               </Group>
 
-              {/* Retrievability points */}
+              {/* Risk indicators - only show critical points */}
               <Group>
                 {retrievabilityData.map((data, index) => {
-                  if (data.wordCount > 0) {
+                  if (data.wordCount > 0 && index % 5 === 0) {
+                    // Show every 5th point
                     const x = (index * GRAPH_WIDTH) / (retrievabilityData.length - 1);
                     const y =
                       GRAPH_HEIGHT_LARGE -
                       (data.averageRetrievability / chartData.maxRetrievability!) *
                         GRAPH_HEIGHT_LARGE;
-                    const pointColor =
-                      data.averageRetrievability >= CRITICAL_RETRIEVABILITY_THRESHOLD * 100
-                        ? colors.success
-                        : colors.warning;
+
+                    // Color based on risk level
+                    let pointColor = colors.success;
+                    if (data.averageRetrievability < 50) {
+                      pointColor = colors.error;
+                    } else if (
+                      data.averageRetrievability <
+                      CRITICAL_RETRIEVABILITY_THRESHOLD * 100
+                    ) {
+                      pointColor = colors.warning;
+                    }
+
                     return (
                       <Group key={`retrievability-point-${index}`}>
-                        <Circle cx={x} cy={y} r={5} color={withOpacity(pointColor, 0.3)} />
-                        <Circle cx={x} cy={y} r={3} color={pointColor} />
-                        <Circle cx={x} cy={y} r={1} color={withOpacity(colors.background, 0.8)} />
+                        <Circle cx={x} cy={y} r={4} color={pointColor}>
+                          <Shadow dx={0} dy={1} blur={2} color={withOpacity(pointColor, 0.3)} />
+                        </Circle>
+                        <Circle cx={x} cy={y} r={1.5} color={colors.background} />
                       </Group>
                     );
                   }
@@ -269,12 +368,8 @@ export const RetrievabilityChart = memo(
 
           <ChartFooter
             legendItems={[
-              { type: 'area', color: colors.info, label: 'Retention forecast' },
-              {
-                type: 'line',
-                color: colors.error,
-                label: `${CRITICAL_RETRIEVABILITY_THRESHOLD * 100}% threshold`,
-              },
+              { type: 'area', color: colors.info, label: 'Memory' },
+              { type: 'line', color: colors.error, label: 'Risk line' },
             ]}
             timeRange="Next 30 days"
           />

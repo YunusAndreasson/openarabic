@@ -44,14 +44,25 @@ export const ChartFooter = memo(({ legendItems, timeRange }: ChartFooterProps) =
         {legendItems.map((item, index) => (
           <View key={`legend-${index}`} style={styles.legendItem}>
             {renderLegendIndicator(item)}
-            <ThemedText type="caption" variant="secondary" style={styles.legendText}>
+            <ThemedText
+              type="caption"
+              variant="secondary"
+              style={styles.legendText}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
               {item.label}
             </ThemedText>
           </View>
         ))}
       </View>
       <View style={styles.timeRange}>
-        <ThemedText type="caption" variant="disabled" style={styles.timeRangeText}>
+        <ThemedText
+          type="caption"
+          variant="disabled"
+          style={styles.timeRangeText}
+          numberOfLines={1}
+        >
           {timeRange}
         </ThemedText>
       </View>
@@ -64,53 +75,71 @@ ChartFooter.displayName = 'ChartFooter';
 const styles = StyleSheet.create({
   progressFooter: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingTop: LAYOUT.SPACING.MEDIUM,
     borderTopWidth: 1,
     marginTop: LAYOUT.SPACING.SMALL,
+    minHeight: 40,
   },
   progressLegend: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.LARGE,
+    alignItems: 'flex-start',
+    flex: 1,
+    flexWrap: 'wrap',
+    gap: LAYOUT.SPACING.SMALL,
+    marginRight: LAYOUT.SPACING.SMALL,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 0,
+    flexShrink: 1,
+    maxWidth: '45%',
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   legendBar: {
-    width: 16,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 6,
+    borderRadius: 3,
     marginRight: LAYOUT.SPACING.XSMALL,
+    flexShrink: 0,
   },
   legendLine: {
-    width: 16,
+    width: 12,
     height: 2,
     borderRadius: 1,
     marginRight: LAYOUT.SPACING.XSMALL,
+    flexShrink: 0,
   },
   legendArea: {
-    width: 16,
-    height: 8,
-    borderRadius: 4,
+    width: 12,
+    height: 6,
+    borderRadius: 3,
     marginRight: LAYOUT.SPACING.XSMALL,
+    flexShrink: 0,
   },
   legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
     marginRight: LAYOUT.SPACING.XSMALL,
+    flexShrink: 0,
   },
   legendText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    flexShrink: 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    flexWrap: 'wrap',
   },
   timeRange: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
+    flexShrink: 0,
+    minWidth: 70,
+    paddingTop: 2,
   },
   timeRangeText: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    textAlign: 'right',
   },
 });
