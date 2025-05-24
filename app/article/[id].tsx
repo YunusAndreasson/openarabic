@@ -12,6 +12,7 @@ import { ArticleSentence } from '@/components/article';
 import { ArabicWord } from '@/components/article/ArabicWord';
 import { ArticleContent, type ArticleContentRef } from '@/components/article/ArticleContent';
 import AudioControlPanel from '@/components/article/AudioControlPanel';
+import { LAYOUT } from '@/constants/layout';
 import { useNavigationWithDebounce } from '@/hooks';
 import { useArticleData } from '@/hooks/useArticleData';
 import { useArticleMutations } from '@/hooks/useArticleMutations';
@@ -46,6 +47,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
     },
     transparentBackground: {
       backgroundColor: colors.transparent,
+      paddingHorizontal: LAYOUT.SPACING.XSMALL,
     },
   });
 

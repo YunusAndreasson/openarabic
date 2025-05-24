@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   buttonsWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
   },
 });
 
@@ -298,7 +298,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
               estimatedItemSize={SENTENCE_ITEM_HEIGHT}
               style={[styles.content, { backgroundColor: colors.background }]}
               contentContainerStyle={{
-                paddingHorizontal: LAYOUT.SPACING.SMALL,
                 paddingTop: 0,
                 // Slight bottom padding adjustment for better closure
                 paddingBottom:

@@ -445,15 +445,20 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     overflow: 'hidden',
+    borderRadius: 0, // Ensure no border radius on container
   },
   imageWrapper: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: Colors.dark.background,
     overflow: 'hidden',
+    borderRadius: 0, // Ensure no border radius on image wrapper
+    left: 0, // Explicitly set to reach left edge
+    right: 0, // Explicitly set to reach right edge
   },
   image: {
     width: '100%',
     height: '100%',
+    borderRadius: 0, // Override EnhancedImage's default border radius
   },
   gradient: {
     ...StyleSheet.absoluteFillObject,

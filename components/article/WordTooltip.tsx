@@ -70,7 +70,7 @@ export const WordTooltip = memo(
         <ThemedText
           style={[styles.tooltipText, { color: textColor }]}
           skipDefaultColor
-          adjustsFontSizeToFit
+          numberOfLines={2}
         >
           {text}
         </ThemedText>
@@ -109,7 +109,19 @@ export const WordTooltip = memo(
         LAYOUT.SPACING.XLARGE
       );
 
-      tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.7);
+      // Calculate minimum width to prevent word breaking
+      const words = text.split(' ');
+      const longestWord = words.reduce(
+        (longest, word) => (word.length > longest.length ? word : longest),
+        ''
+      );
+
+      // Ensure minimum width can fit the longest word with generous padding
+      const minWidthForLongestWord = longestWord.length * CHAR_WIDTH * 1.5 + SPACING * 4;
+
+      // Constrain to reasonable screen width but ensure longest word fits
+      tooltipWidth = Math.min(tooltipWidth, screenWidth * 0.8);
+      tooltipWidth = Math.max(tooltipWidth, minWidthForLongestWord);
 
       const idealTooltipLeft = wordCenterX - tooltipWidth / 2;
       const idealTooltipRight = wordCenterX + tooltipWidth / 2;
@@ -229,10 +241,9 @@ const styles = StyleSheet.create({
   },
   tooltipText: {
     flexShrink: 1,
-    flexWrap: 'nowrap',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
     textAlign: 'center',
   },
 });
