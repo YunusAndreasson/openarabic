@@ -10,53 +10,6 @@ import { withOpacity } from '@/utils/colorUtils';
  * All colors are designed to work harmoniously in both light and dark themes.
  */
 
-// Refined semantic color palette - perfectly balanced with the app theme
-export const CHART_COLORS = {
-  // Performance levels - using a refined spectrum that aligns with theme colors
-  EXCELLENT: '#06D6A0', // Success green from theme - achievement, mastery
-  GOOD: '#118AB2', // Info blue from theme - reliable, stable progress
-  MODERATE: '#FFB627', // Warning amber from theme - attention needed
-  POOR: '#EF476F', // Error coral from theme - urgent attention
-
-  // Activity levels - consistent with performance for cognitive ease
-  HIGH_ACTIVITY: '#06D6A0', // Success green - high engagement
-  MEDIUM_ACTIVITY: '#118AB2', // Info blue - moderate activity
-  LOW_ACTIVITY: '#FFB627', // Warning amber - low activity
-  NO_ACTIVITY: '#A0AEC0', // Theme tabIconDefault - inactive state
-
-  // Memory and retention states - clear cognitive mapping
-  STRONG_MEMORY: '#06D6A0', // Success green - confident retention
-  FADING_MEMORY: '#FFB627', // Warning amber - needs attention
-  WEAK_MEMORY: '#EF476F', // Error coral - urgent review needed
-
-  // Difficulty levels - intuitive progression using theme colors
-  EASY: '#06D6A0', // Success green - approachable
-  MEDIUM: '#FFB627', // Warning amber - moderate challenge
-  HARD: '#EF476F', // Error coral - challenging
-
-  // Trend indicators - clear directional meaning
-  IMPROVING: '#06D6A0', // Success green - positive momentum
-  STABLE: '#118AB2', // Info blue - steady progress
-  DECLINING: '#EF476F', // Error coral - needs intervention
-
-  // UI elements - refined, professional, theme-aligned
-  BACKGROUND: '#FAFBFC', // Theme background (light)
-  GRID: '#E2E8F0', // Theme border (light)
-  BORDER: '#CBD5E0', // Theme disabled (light)
-  ACCENT: '#2A3441', // Theme primary - subtle, professional accent
-
-  // Neutral tones - directly from theme for perfect consistency
-  NEUTRAL_LIGHT: '#F7FAFC', // Theme cardBorder
-  NEUTRAL_MEDIUM: '#718096', // Theme textTertiary
-  NEUTRAL_DARK: '#1A202C', // Theme text
-
-  // Additional refined colors for variety - more subtle and balanced
-  SECONDARY_BLUE: '#4299E1', // Softer blue for secondary elements
-  SECONDARY_GREEN: '#48BB78', // Alternative green for variety
-  SECONDARY_PURPLE: '#805AD5', // Much softer purple - balanced and professional
-  SECONDARY_ORANGE: '#ED8936', // Warm orange for highlights
-} as const;
-
 // Refined opacity levels for elegant, minimalistic design
 export const CHART_OPACITY = {
   SOLID: 1.0,
@@ -206,66 +159,6 @@ export const useChartColors = () => {
   };
 };
 
-/**
- * Refined color schemes for specific chart types
- * Provides consistent, beautiful color combinations using theme colors
- */
-export const CHART_COLOR_SCHEMES = {
-  // Activity chart - 4 levels with refined progression
-  ACTIVITY_LEVELS: {
-    high: '#06D6A0', // Theme success
-    medium: '#118AB2', // Theme info
-    low: '#FFB627', // Theme warning
-    none: '#A0AEC0', // Theme tabIconDefault
-  },
-
-  // Mastery progression - 4 zones with theme consistency
-  MASTERY_ZONES: {
-    mastered: '#06D6A0', // Theme success
-    proficient: '#118AB2', // Theme info
-    learning: '#FFB627', // Theme warning
-    new: '#A0AEC0', // Theme tabIconDefault
-  },
-
-  // Efficiency levels - 3 clear zones using theme colors
-  EFFICIENCY_ZONES: {
-    excellent: '#06D6A0', // Theme success
-    good: '#118AB2', // Theme info
-    needsImprovement: '#EF476F', // Theme error
-  },
-
-  // Retrievability zones - 3 memory states with theme colors
-  RETRIEVABILITY_ZONES: {
-    safe: '#06D6A0', // Theme success
-    atRisk: '#FFB627', // Theme warning
-    critical: '#EF476F', // Theme error
-  },
-
-  // Difficulty distribution - 3 intuitive levels
-  DIFFICULTY_LEVELS: {
-    easy: '#06D6A0', // Theme success
-    medium: '#FFB627', // Theme warning
-    hard: '#EF476F', // Theme error
-  },
-
-  // Study session types - varied but harmonious with theme
-  SESSION_TYPES: {
-    review: '#118AB2', // Theme info - steady, reliable
-    learn: '#06D6A0', // Theme success - positive, growth
-    practice: '#FFB627', // Theme warning - active, attention
-    test: '#2A3441', // Theme primary - important, focused
-  },
-
-  // Progress indicators - motivational colors using theme
-  PROGRESS_INDICATORS: {
-    ahead: '#06D6A0', // Theme success
-    onTrack: '#118AB2', // Theme info
-    behind: '#FFB627', // Theme warning
-    critical: '#EF476F', // Theme error
-  },
-} as const;
-
-export type ChartColorScheme = keyof typeof CHART_COLOR_SCHEMES;
 export type PerformanceLevel = 'excellent' | 'good' | 'moderate' | 'poor';
 export type ActivityLevel = 'high' | 'medium' | 'low' | 'none';
 export type MemoryState = 'strong' | 'fading' | 'weak';

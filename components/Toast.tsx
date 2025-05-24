@@ -30,7 +30,7 @@ const SHADOW_STYLES = Platform.select({
     shadowRadius: 5,
   },
   android: {
-    elevation: 5,
+    elevation: 8,
   },
 }) as ViewStyle;
 

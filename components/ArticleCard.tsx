@@ -38,7 +38,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     () =>
       active
         ? {
-            elevation: 6,
+            elevation: LAYOUT.ELEVATION.MEDIUM,
             shadowOpacity: LAYOUT.OPACITY.MEDIUM,
             shadowRadius: 8,
           }

@@ -70,7 +70,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       ios: isDarkMode
         ? {
             shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.12,
+            shadowOpacity: LAYOUT.OPACITY.XLIGHT,
             shadowRadius: 8,
             borderTopWidth: StyleSheet.hairlineWidth,
           }
@@ -82,7 +82,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
           },
       android: {
         borderTopWidth: StyleSheet.hairlineWidth,
-        elevation: 8,
+        elevation: LAYOUT.ELEVATION.MEDIUM,
       },
     }) ?? {};
 

@@ -199,6 +199,15 @@ export const LAYOUT = {
     },
   },
 
+  // Standardized elevation values for Android
+  ELEVATION: {
+    NONE: 0,
+    SUBTLE: 2, // For small UI elements like toggles, tooltips
+    SMALL: 4, // For cards, buttons
+    MEDIUM: 8, // For modals, prominent cards
+    LARGE: 12, // For major UI elements
+  },
+
   // Z-index and elevation levels for layering
   Z_INDEX: {
     BASE: 0,

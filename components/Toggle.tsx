@@ -139,10 +139,10 @@ const styles = StyleSheet.create({
       ? {
           shadowOffset: { width: 0, height: 2 },
           shadowRadius: 4,
-          shadowOpacity: 0.1,
+          shadowOpacity: LAYOUT.OPACITY.XLIGHT,
         }
       : {
-          elevation: 2,
+          elevation: LAYOUT.ELEVATION.SUBTLE,
         },
   toggleTrack: {
     alignItems: 'flex-start',

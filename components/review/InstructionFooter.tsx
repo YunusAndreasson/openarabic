@@ -43,7 +43,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,
-        shadowOpacity: 0.1,
+        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
       },
     }),
   };
@@ -65,7 +65,7 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
     ...Platform.select({
       ios: {
         shadowColor: colors.shadow,
-        shadowOpacity: 0.08,
+        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
       },
     }),
   };
@@ -77,18 +77,24 @@ const InstructionFooter: React.FC<InstructionFooterProps> = ({ style }) => {
           <View style={iconStyle}>
             <Ionicons name="arrow-back" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText variant="subtle" style={textStyle}>Unknown</ThemedText>
+          <ThemedText variant="subtle" style={textStyle}>
+            Unknown
+          </ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemCenter]}>
           <View style={iconStyle}>
             <Ionicons name="finger-print" size={18} color={colors.tabIconDefault} />
           </View>
-          <ThemedText variant="subtle" style={textStyle}>Unsure</ThemedText>
+          <ThemedText variant="subtle" style={textStyle}>
+            Unsure
+          </ThemedText>
         </View>
 
         <View style={[styles.instructionItem, styles.instructionItemRight]}>
-          <ThemedText variant="subtle" style={textStyle}>Known</ThemedText>
+          <ThemedText variant="subtle" style={textStyle}>
+            Known
+          </ThemedText>
           <View style={iconStyle}>
             <Ionicons name="arrow-forward" size={18} color={colors.tabIconDefault} />
           </View>
@@ -133,12 +139,12 @@ const styles = StyleSheet.create({
   instructionItemRight: {
     justifyContent: 'flex-end',
   } as ViewStyle,
-    instructionText: {
-      fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-      textAlign: 'center',
-      lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
-      paddingTop: LAYOUT.SPACING.MICRO,
-    } as TextStyle,
-  });
+  instructionText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.4,
+    paddingTop: LAYOUT.SPACING.MICRO,
+  } as TextStyle,
+});
 
 export default InstructionFooter;

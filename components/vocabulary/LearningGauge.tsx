@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2, // Subtle depth
+    elevation: LAYOUT.ELEVATION.SUBTLE, // Subtle depth
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: LAYOUT.OPACITY.XLIGHT,
     shadowRadius: 3,

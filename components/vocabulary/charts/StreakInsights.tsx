@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   dayLabel: {
-    fontSize: 10,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     textAlign: 'center',
   },
 });

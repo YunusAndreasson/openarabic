@@ -79,7 +79,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 const styles = StyleSheet.create({
   cardStyle: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    shadowOpacity: 0.15, // Slightly increased shadow for emphasis
+    shadowOpacity: LAYOUT.OPACITY.LIGHT, // Slightly increased shadow for emphasis
   },
   container: {
     marginBottom: LAYOUT.SPACING.XLARGE,

@@ -30,7 +30,7 @@ const WordDisplay = memo(
               ...LAYOUT.SHADOW.SMALL,
             }
           : {
-              elevation: 2,
+              elevation: LAYOUT.ELEVATION.SUBTLE,
             }),
       }),
       [colors, fontSize]
