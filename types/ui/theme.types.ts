@@ -23,6 +23,9 @@ export interface ThemeColors {
   overlay: string;
   modalOverlay: string;
   borderOverlay: string;
+  buttonOverlay: string;
+  buttonOverlayActive: string;
+  buttonBorderOverlay: string;
   shadow: string;
   elevation1: string;
   elevation2: string;
@@ -30,7 +33,18 @@ export interface ThemeColors {
   white: string;
   black: string;
   textOverlay: string;
+  textShadowDark: string;
+  textShadowLight: string;
   info: string;
+
+  // Enhanced theme-aware colors
+  backdropOverlay: string;
+  contrastOverlay: string;
+  socialTwitter: string;
+  socialFacebook: string;
+  socialInstagram: string;
+  socialIconBg: string;
+
   [key: string]: string;
 }
 

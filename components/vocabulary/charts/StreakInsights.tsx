@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 12,
     height: 12,
-    borderRadius: 6,
+    borderRadius: 12 / 2,
     marginBottom: LAYOUT.SPACING.TINY,
   },
   dayLabel: {

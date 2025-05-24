@@ -157,10 +157,18 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
       onRequestClose={handleClose}
     >
       <TouchableWithoutFeedback onPress={handleBackdropPress}>
-        <Animated.View style={[styles.backdrop, backdropStyle]}>
+        <Animated.View
+          style={[styles.backdrop, backdropStyle, { backgroundColor: colors.backdropOverlay }]}
+        >
           <Animated.View style={[styles.modalContainer, modalStyle]} pointerEvents="box-none">
             <View
-              style={[styles.modal, { backgroundColor: colors.background }]}
+              style={[
+                styles.modal,
+                {
+                  backgroundColor: colors.background,
+                  shadowColor: colors.shadow,
+                },
+              ]}
               pointerEvents="auto"
             >
               {/* Header */}
@@ -225,7 +233,6 @@ InfoModal.displayName = 'InfoModal';
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
@@ -237,7 +244,6 @@ const styles = StyleSheet.create({
   modal: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     maxHeight: '70%',
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: -4,

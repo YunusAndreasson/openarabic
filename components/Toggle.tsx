@@ -59,14 +59,10 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
     return [
       containerAnimatedStyle,
       {
-        backgroundColor: value
-          ? colors.tint
-          : isDarkMode
-            ? colors.disabled
-            : `${colors.disabled}40`,
+        backgroundColor: value ? colors.tint : isDarkMode ? colors.border : colors.border,
       },
     ];
-  }, [containerAnimatedStyle, value, colors.tint, colors.disabled, isDarkMode]);
+  }, [containerAnimatedStyle, value, colors.tint, colors.border, isDarkMode]);
 
   // Memoize static styles to prevent new object creation on each render
   const containerStyle = useMemo(
@@ -84,7 +80,7 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   const shadowStyle = useMemo(
     () => ({
       shadowColor: colors.shadow,
-      shadowOpacity: isDarkMode ? 0 : LAYOUT.OPACITY.OVERLAY,
+      shadowOpacity: isDarkMode ? LAYOUT.OPACITY.XLIGHT : LAYOUT.OPACITY.XLIGHT,
     }),
     [colors.shadow, isDarkMode]
   );
@@ -96,12 +92,24 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
         width: HANDLE_SIZE,
         height: HANDLE_SIZE,
         borderRadius: HANDLE_SIZE / 2,
-        backgroundColor: colors.background,
+        backgroundColor: value
+          ? colors.background
+          : isDarkMode
+            ? colors.textTertiary
+            : colors.white,
         ...shadowStyle,
       },
       styles.shadow,
     ],
-    [HANDLE_SIZE, colors.background, shadowStyle]
+    [
+      HANDLE_SIZE,
+      value,
+      colors.background,
+      colors.white,
+      colors.textTertiary,
+      isDarkMode,
+      shadowStyle,
+    ]
   );
 
   return (

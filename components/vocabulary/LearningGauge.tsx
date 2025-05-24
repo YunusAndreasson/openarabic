@@ -77,7 +77,15 @@ export const LearningGauge = memo(
           {/* Status Indicator - Clean and minimal */}
           <View style={styles.statusIndicator}>
             {/* Simple Icon Container - No complex rings */}
-            <View style={[styles.iconContainer, { backgroundColor: gaugeState.color }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: gaugeState.color,
+                  shadowColor: colors.shadow,
+                },
+              ]}
+            >
               <Ionicons name={gaugeState.icon} size={28} color={colors.background} />
             </View>
           </View>
@@ -144,9 +152,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 2, // Subtle depth
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: LAYOUT.OPACITY.XLIGHT,
     shadowRadius: 3,
   },
   contentArea: {
@@ -165,7 +172,7 @@ const styles = StyleSheet.create({
   },
   secondaryMessage: {
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3,
-    opacity: 0.8, // Subtle hierarchy
+    opacity: LAYOUT.OPACITY.HIGH, // Subtle hierarchy using standardized opacity
   },
   statusBadge: {
     flexDirection: 'row',

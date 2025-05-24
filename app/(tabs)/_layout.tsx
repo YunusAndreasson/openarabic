@@ -191,9 +191,10 @@ CustomTabBar.displayName = 'CustomTabBar';
 // Custom Header Background component with blur effect
 const CustomHeaderBackground = () => {
   const isDarkMode = useIsDarkMode();
+  const colors = useColors();
   const overlayColor = isDarkMode
-    ? withOpacity(Colors.dark.background, 0.85)
-    : withOpacity(Colors.light.white, 0.85);
+    ? withOpacity(colors.background, 0.85)
+    : withOpacity(colors.white, 0.85);
 
   if (Platform.OS === 'android') {
     return (
@@ -221,7 +222,7 @@ const CustomHeaderBackground = () => {
 const HEADER_TITLE_STYLE = {
   fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
   fontWeight: '600' as const,
-  paddingLeft: 8,
+  paddingLeft: LAYOUT.SPACING.SMALL,
 };
 
 const HEADER_STYLE = {

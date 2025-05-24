@@ -116,7 +116,7 @@ const Pill = memo(
         >
           <ThemedText
             type={textType}
-            colorName={isSelected ? 'tint' : 'text'}
+            colorName={isSelected ? 'background' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
             style={textStyle}
@@ -135,7 +135,6 @@ const Pill = memo(
             containerStyle,
             pillStyle,
             isPressedState && !isSelected && pressedStyle,
-            isSelected && styles.pillSelected,
             absolute && styles.absoluteContainer,
           ]}
           onPress={handlePress}
@@ -146,7 +145,7 @@ const Pill = memo(
         >
           <ThemedText
             type={textType}
-            colorName={isSelected ? 'tint' : 'text'}
+            colorName={isSelected ? 'background' : 'text'}
             numberOfLines={1}
             ellipsizeMode="tail"
             style={textStyle}
@@ -180,30 +179,19 @@ const getCategoryStyle = (
 ) => ({
   backgroundColor: isSelected
     ? isDarkMode
-      ? `${colors.tint}85`
-      : `${colors.tint}90`
+      ? colors.tint
+      : colors.tint
     : isDarkMode
-      ? `${colors.elevation3}95`
-      : `${colors.elevation1}98`,
-  borderColor: isSelected
-    ? isDarkMode
-      ? `${colors.tint}40`
-      : `${colors.tint}30`
-    : colors.borderOverlay,
-  borderWidth: isSelected
-    ? LAYOUT.BORDER.WIDTH.NORMAL
-    : isDarkMode
-      ? LAYOUT.BORDER.WIDTH.THICK
-      : LAYOUT.BORDER.WIDTH.THIN,
-  borderStyle: 'solid' as const,
+      ? colors.elevation2
+      : colors.elevation1,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   paddingVertical: LAYOUT.SPACING.TINY + 2,
   ...(Platform.OS === 'ios'
     ? {
-        shadowColor: isDarkMode ? colors.black : colors.shadow,
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: isDarkMode ? 0.25 : 0.1,
+        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
         shadowRadius: 4,
       }
     : {
@@ -221,25 +209,16 @@ const getFilterStyle = (
     pillBg !== undefined
       ? pillBg
       : isSelected
-        ? isDarkMode
-          ? `${colors.tint}15`
-          : `${colors.tint}10`
+        ? colors.tint
         : isDarkMode
           ? colors.elevation2
           : colors.elevation1,
-  borderWidth: isSelected
-    ? LAYOUT.BORDER.WIDTH.NORMAL
-    : isDarkMode
-      ? LAYOUT.BORDER.WIDTH.THICK
-      : LAYOUT.BORDER.WIDTH.THIN,
-  borderColor: isSelected ? colors.tint : colors.cardBorder,
-  borderStyle: 'solid' as const,
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   ...(Platform.OS === 'ios'
     ? {
-        shadowColor: isDarkMode ? colors.black : colors.shadow,
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: isDarkMode ? 0.2 : 0.08,
+        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
         shadowRadius: 3,
       }
     : {
@@ -264,9 +243,6 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.SMALL,
     paddingHorizontal: LAYOUT.SPACING.LARGE,
     paddingVertical: LAYOUT.SPACING.SMALL - 1,
-  },
-  pillSelected: {
-    borderWidth: LAYOUT.BORDER.WIDTH.THIN,
   },
 });
 

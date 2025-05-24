@@ -331,10 +331,10 @@ const SettingsScreen: React.FC = () => {
                     <View
                       style={[
                         styles.socialIconContainer,
-                        { backgroundColor: withOpacity('#1DA1F2', 0.15) },
+                        { backgroundColor: withOpacity(colors.socialTwitter, 0.15) },
                       ]}
                     >
-                      <Ionicons name="logo-twitter" size={20} color="#1DA1F2" />
+                      <Ionicons name="logo-twitter" size={20} color={colors.socialTwitter} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Twitter
@@ -360,10 +360,10 @@ const SettingsScreen: React.FC = () => {
                     <View
                       style={[
                         styles.socialIconContainer,
-                        { backgroundColor: withOpacity('#1877F2', 0.15) },
+                        { backgroundColor: withOpacity(colors.socialFacebook, 0.15) },
                       ]}
                     >
-                      <Ionicons name="logo-facebook" size={20} color="#1877F2" />
+                      <Ionicons name="logo-facebook" size={20} color={colors.socialFacebook} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Facebook
@@ -389,10 +389,10 @@ const SettingsScreen: React.FC = () => {
                     <View
                       style={[
                         styles.socialIconContainer,
-                        { backgroundColor: withOpacity('#E4405F', 0.15) },
+                        { backgroundColor: withOpacity(colors.socialInstagram, 0.15) },
                       ]}
                     >
-                      <Ionicons name="logo-instagram" size={20} color="#E4405F" />
+                      <Ionicons name="logo-instagram" size={20} color={colors.socialInstagram} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Instagram
@@ -604,7 +604,6 @@ const styles = StyleSheet.create({
   },
   versionText: {
     marginTop: LAYOUT.SPACING.TINY,
-    color: Colors.light.textTertiary, // fallback, will be overridden by ThemedText
     letterSpacing: 0.5,
   },
   versionWrapper: {
@@ -620,7 +619,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.TINY,
   },
   sectionSubtitle: {
-    color: Colors.light.textTertiary,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
   },
   socialLinksContainer: {
