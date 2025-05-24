@@ -58,6 +58,11 @@ export interface ThemeColors {
   audioControlBorder: string;
   audioControlShadow: string;
 
+  // Navigation branding colors
+  navigationRipple: string;
+  headerOverlay: string;
+  tabBarOverlay: string;
+
   [key: string]: string;
 }
 

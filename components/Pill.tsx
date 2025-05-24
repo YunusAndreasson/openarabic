@@ -78,12 +78,12 @@ const Pill = memo(
       () =>
         !isSelected
           ? {
-              color: isDarkMode ? colors.textOverlay : colors.overlay,
+              color: colors.navigationRipple,
               borderless: false,
               radius: -5,
             }
           : null,
-      [isDarkMode, isSelected, colors]
+      [isSelected, colors]
     );
 
     const handlePressIn = useCallback(() => {

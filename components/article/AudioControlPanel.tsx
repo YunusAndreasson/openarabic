@@ -86,8 +86,22 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
                 />
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={handlePlayPause} style={styles.playButton}>
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
+              <TouchableOpacity
+                onPress={handlePlayPause}
+                style={[
+                  styles.playButton,
+                  {
+                    backgroundColor: isPlaying
+                      ? colors.tint
+                      : colors.elevation2 || colors.elevation1,
+                  },
+                ]}
+              >
+                <Ionicons
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={28}
+                  color={isPlaying ? colors.background : colors.text}
+                />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -165,7 +179,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginHorizontal: LAYOUT.SPACING.MEDIUM,
     width: LAYOUT.BUTTON.HEIGHT.MEDIUM,
-    padding: LAYOUT.SPACING.MEDIUM,
   },
   sentenceInfo: {
     textAlign: 'center',

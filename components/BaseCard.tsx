@@ -110,7 +110,7 @@ const BaseCard: React.FC<BaseCardProps> = memo(
         disabled={disabled}
         testID={testID}
         android_ripple={{
-          color: colors.textOverlay,
+          color: colors.navigationRipple,
           borderless: false,
           foreground: true,
         }}

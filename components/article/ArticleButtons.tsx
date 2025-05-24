@@ -91,14 +91,21 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
     setBookmarkIcon(isInReadingList ? 'bookmark' : 'bookmark-outline');
   }, [isInReadingList]);
 
-  // Common button styles for translucent overlay effect
-  const buttonStyle = {
-    backgroundColor: colors.buttonOverlayActive,
-    borderColor: colors.buttonBorderOverlay,
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
+  // Neutral button style - matches pill inactive state
+  const neutralButtonStyle = {
+    backgroundColor: isDarkMode ? colors.elevation2 : colors.elevation1,
+    borderWidth: 0, // Remove border for cleaner pill-like appearance
   };
 
-  const iconColor = isDarkMode ? colors.white : colors.black;
+  // Active button style - matches pill selected state
+  const activeButtonStyle = {
+    backgroundColor: colors.tint, // Sage green for active states
+    borderWidth: 0, // Remove border for cleaner pill-like appearance
+  };
+
+  // Determine icon colors - matches pill text colors
+  const neutralIconColor = colors.text; // Use theme text color
+  const activeIconColor = colors.background; // High contrast on tint background
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.black } : {};
 
@@ -110,14 +117,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             onPress={onBackPress}
             style={[
               styles.backButton,
-              { backgroundColor: colors.buttonOverlay },
+              neutralButtonStyle, // Back button should be neutral for navigation
               styles.buttonShadow,
               shadowColorStyle,
-              buttonStyle,
             ]}
             accessibilityLabel="Go back"
           >
-            <Ionicons name="arrow-back" size={24} color={iconColor} />
+            <Ionicons name="arrow-back" size={24} color={neutralIconColor} />
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -129,16 +135,19 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
               onPress={onBookmarkPress}
               style={[
                 styles.iconButton,
-                { backgroundColor: colors.buttonOverlay },
+                isInReadingList ? activeButtonStyle : neutralButtonStyle, // Active when bookmarked
                 styles.buttonShadow,
                 shadowColorStyle,
-                buttonStyle,
               ]}
               accessibilityLabel={
                 isInReadingList ? 'Remove from reading list' : 'Add to reading list'
               }
             >
-              <Ionicons name={bookmarkIcon} size={22} color={iconColor} />
+              <Ionicons
+                name={bookmarkIcon}
+                size={22}
+                color={isInReadingList ? activeIconColor : neutralIconColor}
+              />
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -148,14 +157,17 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             onPress={onPlayPress}
             style={[
               styles.iconButton,
-              { backgroundColor: colors.buttonOverlay },
+              isPlaying ? activeButtonStyle : neutralButtonStyle, // Active when playing
               styles.buttonShadow,
               shadowColorStyle,
-              buttonStyle,
             ]}
             accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
           >
-            <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color={iconColor} />
+            <Ionicons
+              name={isPlaying ? 'pause' : 'play'}
+              size={22}
+              color={isPlaying ? activeIconColor : neutralIconColor}
+            />
           </TouchableOpacity>
         </Animated.View>
       </View>

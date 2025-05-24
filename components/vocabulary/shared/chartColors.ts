@@ -2,111 +2,112 @@ import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
 
 /**
- * Refined Chart Color System for Vocabulary Analytics
+ * Natural & Organic Chart Color System for Vocabulary Analytics
  *
- * This system provides a cohesive, balanced color palette that seamlessly integrates with the app theme.
+ * This refined system provides a harmonious, earth-inspired color palette that seamlessly integrates
+ * with the app's natural green undertones and warm gold/brown complementary colors.
  * Colors are carefully chosen for optimal accessibility, visual harmony, and clear data communication.
- * The palette emphasizes subtlety and professionalism while maintaining excellent semantic clarity.
- * All colors are designed to work harmoniously in both light and dark themes.
+ * The palette emphasizes organic sophistication while maintaining excellent semantic clarity.
+ * All colors work beautifully in both light and dark themes with natural warmth.
  */
 
-// Refined opacity levels for elegant, minimalistic design
+// Refined opacity levels for elegant, organic design
 export const CHART_OPACITY = {
   SOLID: 1.0,
-  HIGH: 0.75, // Slightly reduced for better balance
-  MEDIUM: 0.45, // More refined transparency
-  LOW: 0.2, // Subtle presence
-  SUBTLE: 0.1, // Very light overlay
-  MINIMAL: 0.05, // Barely visible
+  HIGH: 0.75, // Balanced for natural depth
+  MEDIUM: 0.45, // Organic transparency
+  LOW: 0.2, // Subtle earth presence
+  SUBTLE: 0.1, // Natural overlay
+  MINIMAL: 0.05, // Barely visible like morning mist
 } as const;
 
 /**
- * Hook to get theme-aware chart colors with refined palette
- * Maintains semantic consistency while perfectly adapting to light/dark themes
+ * Hook to get theme-aware chart colors with natural, organic palette
+ * Maintains semantic consistency while perfectly adapting to the earth-inspired theme
  */
 export const useChartColors = () => {
   const colors = useColors();
 
   return {
-    // Performance levels - refined, theme-consistent progression
+    // Performance levels - natural, earth-inspired progression
     performance: {
-      excellent: colors.success, // Use theme success color
-      good: colors.info, // Use theme info color
-      moderate: colors.warning, // Use theme warning color
-      poor: colors.error, // Use theme error color
+      excellent: colors.success, // Sage green - natural mastery
+      good: colors.info, // Muted blue-gray - calm progress
+      moderate: colors.warning, // Warm gold - organic caution
+      poor: colors.error, // Terracotta - natural urgency
     },
 
-    // Activity levels - consistent with performance for cognitive ease
+    // Activity levels - consistent with natural performance mapping
     activity: {
-      high: colors.success,
-      medium: colors.info,
-      low: colors.warning,
-      none: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM),
+      high: colors.success, // Sage green - thriving growth
+      medium: colors.info, // Muted blue-gray - steady flow
+      low: colors.warning, // Warm gold - gentle reminder
+      none: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM), // Natural dormancy
     },
 
-    // Memory retention states - clear cognitive mapping using theme colors
+    // Memory retention states - organic cognitive mapping
     memory: {
-      strong: colors.success, // Safe, confident
-      fading: colors.warning, // Caution, attention needed
-      weak: colors.error, // Urgent, critical
+      strong: colors.success, // Sage green - rooted knowledge
+      fading: colors.warning, // Warm gold - autumn transition
+      weak: colors.error, // Terracotta - needs nurturing
     },
 
-    // Difficulty levels - intuitive progression with theme colors
+    // Difficulty levels - natural progression like terrain
     difficulty: {
-      easy: colors.success,
-      medium: colors.warning,
-      hard: colors.error,
+      easy: colors.success, // Sage green - gentle meadow
+      medium: colors.warning, // Warm gold - rolling hills
+      hard: colors.error, // Terracotta - mountain peaks
     },
 
-    // Trend indicators - clear directional meaning
+    // Trend indicators - natural directional flow
     trend: {
-      improving: colors.success,
-      stable: colors.info,
-      declining: colors.error,
+      improving: colors.success, // Sage green - spring growth
+      stable: colors.info, // Muted blue-gray - steady river
+      declining: colors.error, // Terracotta - autumn leaves
     },
 
-    // Streak and consistency - refined, theme-aware approach
+    // Streak and consistency - natural rhythm and cycles
     streak: {
-      active: colors.success, // Active day - success green
-      inactive: withOpacity(colors.textTertiary, CHART_OPACITY.SUBTLE),
-      today: colors.primary, // Today's border - theme primary (subtle)
-      weekend: withOpacity(colors.info, CHART_OPACITY.SUBTLE), // Weekend highlight
+      active: colors.success, // Sage green - living day
+      inactive: withOpacity(colors.textTertiary, CHART_OPACITY.SUBTLE), // Dormant earth
+      today: colors.primary, // Current moment - warm presence
+      weekend: withOpacity(colors.warning, CHART_OPACITY.LOW), // Golden weekend glow
     },
 
-    // Chart UI elements - perfectly theme-integrated
+    // Chart UI elements - perfectly integrated with natural theme
     ui: {
       background: colors.background,
-      grid: withOpacity(colors.textTertiary, CHART_OPACITY.MINIMAL),
-      border: withOpacity(colors.border, CHART_OPACITY.HIGH),
-      accent: colors.primary, // Use theme primary instead of strong purple
-      shadow: withOpacity(colors.shadow, CHART_OPACITY.SUBTLE),
-      tooltip: withOpacity(colors.card, 0.98),
+      grid: withOpacity(colors.textTertiary, CHART_OPACITY.MINIMAL), // Subtle like morning dew
+      border: withOpacity(colors.border, CHART_OPACITY.HIGH), // Natural boundaries
+      accent: colors.primary, // Warm earth accent
+      shadow: withOpacity(colors.shadow, CHART_OPACITY.SUBTLE), // Natural depth
+      tooltip: withOpacity(colors.card, 0.98), // Organic tooltip surface
     },
 
-    // Refined gradients for area charts - more subtle and elegant
+    // Natural gradients for area charts - earth-inspired transitions
     gradients: {
       excellent: [
-        withOpacity(colors.success, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.success, CHART_OPACITY.MEDIUM), // Sage green fade
         withOpacity(colors.success, CHART_OPACITY.LOW),
         withOpacity(colors.success, CHART_OPACITY.SUBTLE),
       ],
       good: [
-        withOpacity(colors.info, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.info, CHART_OPACITY.MEDIUM), // Muted blue-gray fade
         withOpacity(colors.info, CHART_OPACITY.LOW),
         withOpacity(colors.info, CHART_OPACITY.SUBTLE),
       ],
       warning: [
-        withOpacity(colors.warning, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.warning, CHART_OPACITY.MEDIUM), // Warm gold fade
         withOpacity(colors.warning, CHART_OPACITY.LOW),
         withOpacity(colors.warning, CHART_OPACITY.SUBTLE),
       ],
       error: [
-        withOpacity(colors.error, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.error, CHART_OPACITY.MEDIUM), // Terracotta fade
         withOpacity(colors.error, CHART_OPACITY.LOW),
         withOpacity(colors.error, CHART_OPACITY.SUBTLE),
       ],
       accent: [
-        withOpacity(colors.primary, CHART_OPACITY.MEDIUM),
+        withOpacity(colors.primary, CHART_OPACITY.MEDIUM), // Natural earth fade
         withOpacity(colors.primary, CHART_OPACITY.LOW),
         withOpacity(colors.primary, CHART_OPACITY.SUBTLE),
       ],
@@ -118,43 +119,66 @@ export const useChartColors = () => {
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
-    // Enhanced color selection functions with theme-aware colors
+    // Enhanced color selection functions with natural, organic thresholds
     getPerformanceColor: (value: number) => {
-      if (value >= 85) return colors.success; // Excellent
-      if (value >= 70) return colors.info; // Good
-      if (value >= 50) return colors.warning; // Moderate
-      return colors.error; // Poor
+      if (value >= 85) return colors.success; // Sage green - excellent mastery
+      if (value >= 70) return colors.info; // Muted blue-gray - good progress
+      if (value >= 50) return colors.warning; // Warm gold - moderate effort
+      return colors.error; // Terracotta - needs attention
     },
 
-    // Get color by difficulty level (0-1) with refined thresholds
+    // Get color by difficulty level (0-1) with natural thresholds
     getDifficultyColor: (difficulty: number) => {
-      if (difficulty < 0.4) return colors.success; // Easy
-      if (difficulty < 0.7) return colors.warning; // Medium
-      return colors.error; // Hard
+      if (difficulty < 0.4) return colors.success; // Sage green - easy terrain
+      if (difficulty < 0.7) return colors.warning; // Warm gold - moderate climb
+      return colors.error; // Terracotta - challenging peak
     },
 
-    // Get color by retrievability level (0-1) with optimized thresholds
+    // Get color by retrievability level (0-1) with organic memory mapping
     getRetrievabilityColor: (retrievability: number) => {
-      if (retrievability >= 0.75) return colors.success; // Strong memory
-      if (retrievability >= 0.5) return colors.warning; // Fading memory
-      return colors.error; // Weak memory
+      if (retrievability >= 0.75) return colors.success; // Sage green - deeply rooted
+      if (retrievability >= 0.5) return colors.warning; // Warm gold - seasonal memory
+      return colors.error; // Terracotta - needs cultivation
     },
 
-    // Get color by mastery level with smooth progression
+    // Get color for mastery level with natural growth progression
     getMasteryColor: (mastery: number) => {
-      if (mastery >= 0.8) return colors.success; // Mastered
-      if (mastery >= 0.5) return colors.info; // Learning
-      if (mastery >= 0.2) return colors.warning; // Practicing
-      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // New
+      if (mastery >= 0.8) return colors.success; // Sage green - mature tree
+      if (mastery >= 0.5) return colors.info; // Muted blue-gray - growing sapling
+      if (mastery >= 0.2) return colors.warning; // Warm gold - young sprout
+      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // Dormant seed
     },
 
-    // Get color for time-based data (hours studied, etc.)
+    // Get color for time-based data with natural activity rhythms
     getTimeColor: (hours: number, maxHours: number) => {
       const ratio = hours / maxHours;
-      if (ratio >= 0.8) return colors.success; // High activity
-      if (ratio >= 0.5) return colors.info; // Medium activity
-      if (ratio >= 0.2) return colors.warning; // Low activity
-      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // Minimal activity
+      if (ratio >= 0.8) return colors.success; // Sage green - abundant growth
+      if (ratio >= 0.5) return colors.info; // Muted blue-gray - steady flow
+      if (ratio >= 0.2) return colors.warning; // Warm gold - gentle activity
+      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // Natural rest
+    },
+
+    // Additional natural color helpers for organic data visualization
+    getSeasonalColor: (season: 'spring' | 'summer' | 'autumn' | 'winter') => {
+      switch (season) {
+        case 'spring':
+          return colors.success; // Sage green - new growth
+        case 'summer':
+          return colors.info; // Muted blue-gray - steady warmth
+        case 'autumn':
+          return colors.warning; // Warm gold - harvest time
+        case 'winter':
+          return withOpacity(colors.textTertiary, CHART_OPACITY.HIGH); // Dormant earth
+      }
+    },
+
+    // Natural element colors for thematic consistency
+    elements: {
+      earth: colors.warning, // Warm gold - rich soil
+      water: colors.info, // Muted blue-gray - flowing stream
+      growth: colors.success, // Sage green - living plants
+      fire: colors.error, // Terracotta - warm hearth
+      air: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM), // Light breeze
     },
   };
 };
