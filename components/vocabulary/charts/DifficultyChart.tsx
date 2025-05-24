@@ -1,11 +1,10 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Group, vec, Shadow, Rect, Circle } from '@shopify/react-native-skia';
+import { Canvas, Group, Shadow, Rect, Circle } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { withOpacity } from '@/utils/colorUtils';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
@@ -13,6 +12,7 @@ import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { ThemedText } from '../../ThemedText';
+import { useChartColors } from '../shared/chartColors';
 
 interface DifficultyChartProps {
   studyWords: StudyWord[];
@@ -30,15 +30,7 @@ interface DifficultyBucket {
 
 export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: DifficultyChartProps) => {
   const colors = useColors();
-
-  // Create theme-aware difficulty colors
-  const difficultyColors = useMemo(() => {
-    return {
-      easy: colors.success, // Green
-      medium: colors.warning, // Orange
-      hard: colors.error, // Red
-    };
-  }, [colors]);
+  const chartColors = useChartColors();
 
   // Calculate difficulty distribution
   const difficultyData = useMemo(() => {
@@ -50,13 +42,13 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
       };
     }
 
-    // Define difficulty buckets with 3 clear categories
+    // Define difficulty buckets with 3 clear categories using consistent colors
     const buckets: DifficultyBucket[] = [
       {
         range: '0.0-0.5',
         count: 0,
         percentage: 0,
-        color: difficultyColors.easy,
+        color: chartColors.difficulty.easy,
         label: 'Easy',
         emoji: '😊',
       },
@@ -64,7 +56,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         range: '0.5-0.7',
         count: 0,
         percentage: 0,
-        color: difficultyColors.medium,
+        color: chartColors.difficulty.medium,
         label: 'Medium',
         emoji: '😐',
       },
@@ -72,7 +64,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         range: '0.7-1.0',
         count: 0,
         percentage: 0,
-        color: difficultyColors.hard,
+        color: chartColors.difficulty.hard,
         label: 'Hard',
         emoji: '😰',
       },
@@ -129,23 +121,23 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         distribution,
       },
     };
-  }, [studyWords, difficultyColors]);
+  }, [studyWords, chartColors]);
 
   // Generate subtitle based on difficulty distribution
   const subtitle = useMemo(() => {
-    const { distribution, hardWords, averageDifficulty } = difficultyData.insights;
-
     if (!difficultyData.hasData) {
-      return 'Color-coded difficulty levels from green (easy) to red (hard)';
+      return 'Track your vocabulary challenge levels';
     }
+
+    const { distribution } = difficultyData.insights;
 
     if (distribution === 'easy') {
-      return `Mostly easy words (avg: ${averageDifficulty.toFixed(1)}) - ready for harder content? 📚`;
+      return 'Mostly easy words - ready for harder content?';
     }
     if (distribution === 'challenging') {
-      return `${hardWords} challenging words (avg: ${averageDifficulty.toFixed(1)}) - focus on review 💪`;
+      return 'Many challenging words - focus on review';
     }
-    return `Balanced difficulty (avg: ${averageDifficulty.toFixed(1)}) - great progress! 🎯`;
+    return 'Balanced difficulty - great progress!';
   }, [difficultyData.insights, difficultyData.hasData]);
 
   if (!difficultyData.hasData) {
@@ -154,7 +146,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         <View style={styles.difficultyContent}>
           <CardHeader
             title="Difficulty Distribution"
-            subtitle="Track your vocabulary challenge levels"
+            subtitle={subtitle}
             onInfoPress={onInfoPress}
           />
         </View>
@@ -169,19 +161,17 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
 
         <StatsRow
           leftStat={{
-            value: difficultyData.insights.averageDifficulty.toFixed(2),
-            label: 'avg difficulty',
-            color:
-              difficultyData.insights.averageDifficulty > 0.7
-                ? colors.error
-                : difficultyData.insights.averageDifficulty > 0.5
-                  ? colors.warning
-                  : colors.success,
+            value: difficultyData.insights.averageDifficulty.toFixed(1),
+            label: 'average',
+            color: chartColors.getDifficultyColor(difficultyData.insights.averageDifficulty),
           }}
           rightStat={{
             value: difficultyData.insights.hardWords,
-            label: 'challenging words',
-            color: difficultyData.insights.hardWords > 10 ? colors.error : colors.textSecondary,
+            label: 'hard words',
+            color:
+              difficultyData.insights.hardWords > 10
+                ? chartColors.difficulty.hard
+                : colors.textSecondary,
           }}
         />
 
@@ -195,84 +185,47 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
                 y={0}
                 width={GRAPH_WIDTH}
                 height={GRAPH_HEIGHT_LARGE}
-                color={withOpacity(colors.background, 0.5)}
+                color={chartColors.ui.background}
               />
             </Group>
 
-            {/* Minimal grid lines */}
-            <Group>
-              {[0.25, 0.5, 0.75].map((ratio, index) => (
-                <Path
-                  key={`grid-line-${index}`}
-                  path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
-                  style="stroke"
-                  strokeWidth={0.5}
-                  color={withOpacity(colors.textSecondary || colors.text, 0.15)}
-                />
-              ))}
-            </Group>
-
-            {/* Clean difficulty bars */}
+            {/* Difficulty bars */}
             <Group>
               {difficultyData.buckets.map((bucket, index) => {
                 const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.8;
                 const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.2;
-                const x = index * (barWidth + barSpacing) + barSpacing / 2;
-                const maxPercentage = Math.max(...difficultyData.buckets.map(b => b.percentage));
-                const barHeight =
-                  (bucket.percentage / Math.max(maxPercentage, 1)) * GRAPH_HEIGHT_LARGE;
-
-                // Always show a minimal bar for visual consistency
-                const minBarHeight = bucket.count > 0 ? Math.max(barHeight, 4) : 0;
+                const x = index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
+                const barHeight = Math.max(
+                  4,
+                  (bucket.percentage / 100) * (GRAPH_HEIGHT_LARGE - 20)
+                );
 
                 return (
                   <Group key={`difficulty-bar-${index}`}>
-                    {/* Bar shadow for depth */}
-                    {minBarHeight > 0 && (
-                      <Rect
-                        x={x + 1}
-                        y={GRAPH_HEIGHT_LARGE - minBarHeight + 1}
-                        width={barWidth}
-                        height={minBarHeight}
-                        color={withOpacity(colors.textSecondary || colors.text, 0.08)}
+                    {/* Main bar */}
+                    <Rect
+                      x={x}
+                      y={GRAPH_HEIGHT_LARGE - barHeight - 10}
+                      width={barWidth}
+                      height={barHeight}
+                      color={bucket.color}
+                    >
+                      <Shadow
+                        dx={0}
+                        dy={2}
+                        blur={4}
+                        color={chartColors.withOpacity(bucket.color, 0.3)}
                       />
-                    )}
+                    </Rect>
 
-                    {/* Main bar with better styling */}
-                    {minBarHeight > 0 && (
-                      <Rect
-                        x={x}
-                        y={GRAPH_HEIGHT_LARGE - minBarHeight}
-                        width={barWidth}
-                        height={minBarHeight}
-                        color={bucket.color}
-                      >
-                        <Shadow dx={0} dy={1} blur={2} color={withOpacity(bucket.color, 0.3)} />
-                      </Rect>
-                    )}
-
-                    {/* Subtle highlight for better visual appeal */}
-                    {minBarHeight > 0 && (
-                      <Rect
-                        x={x}
-                        y={GRAPH_HEIGHT_LARGE - minBarHeight}
-                        width={barWidth * 0.4}
-                        height={minBarHeight}
-                        color={withOpacity(colors.background, 0.2)}
-                      />
-                    )}
-
-                    {/* Count indicator for non-zero values */}
-                    {bucket.count > 0 && minBarHeight > 8 && (
-                      <Circle
-                        cx={x + barWidth / 2}
-                        cy={GRAPH_HEIGHT_LARGE - minBarHeight - 6}
-                        r={2}
-                        color={bucket.color}
-                      >
-                        <Shadow dx={0} dy={1} blur={1} color={withOpacity(bucket.color, 0.4)} />
-                      </Circle>
-                    )}
+                    {/* Subtle highlight */}
+                    <Rect
+                      x={x}
+                      y={GRAPH_HEIGHT_LARGE - barHeight - 10}
+                      width={barWidth}
+                      height={Math.min(barHeight / 4, 6)}
+                      color={chartColors.withOpacity(colors.white, 0.2)}
+                    />
                   </Group>
                 );
               })}
@@ -281,12 +234,12 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         </View>
 
         <ChartFooter
-          legendItems={difficultyData.buckets.map(bucket => ({
-            type: 'bar' as const,
-            color: bucket.color,
-            label: bucket.label,
-          }))}
-          timeRange="Easy → Hard"
+          legendItems={[
+            { type: 'bar', color: chartColors.difficulty.easy, label: 'Easy' },
+            { type: 'bar', color: chartColors.difficulty.medium, label: 'Medium' },
+            { type: 'bar', color: chartColors.difficulty.hard, label: 'Hard' },
+          ]}
+          timeRange="Current vocabulary"
         />
       </View>
     </BaseCard>
@@ -307,5 +260,29 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
     marginHorizontal: -LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.SMALL,
+  },
+  difficultyBreakdown: {
+    flexDirection: 'row',
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
+  breakdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  colorIndicator: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  breakdownText: {
+    flexDirection: 'column',
+  },
+  breakdownLabel: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  breakdownValue: {
+    fontWeight: 'bold',
   },
 });

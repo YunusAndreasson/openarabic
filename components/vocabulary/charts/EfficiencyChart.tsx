@@ -18,6 +18,7 @@ import {
 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { generateDateRange, isSameDay, calculateEfficiencyScore } from '../shared/utils';
+import { useChartColors } from '../shared/chartColors';
 
 interface EfficiencyChartProps {
   studyWords: StudyWord[];
@@ -26,6 +27,7 @@ interface EfficiencyChartProps {
 
 export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: EfficiencyChartProps) => {
   const colors = useColors();
+  const chartColors = useChartColors();
 
   // Calculate efficiency data over the last 30 days
   const efficiencyData = useMemo(() => {
@@ -97,31 +99,39 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       }
     });
 
-    // Define performance zones
+    // Define performance zones using consistent color system
     const performanceZones = [
       {
-        name: 'Excellent',
+        name: 'Great',
         min: 80,
         max: 100,
-        color: '#22C55E', // Clear bright green
+        color: chartColors.performance.excellent,
         y: GRAPH_HEIGHT_LARGE - (80 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
         height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
       {
         name: 'Good',
-        min: EFFICIENCY_THRESHOLD,
+        min: 60,
         max: 80,
-        color: colors.info,
+        color: chartColors.performance.good,
         y: GRAPH_HEIGHT_LARGE - (80 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: ((80 - EFFICIENCY_THRESHOLD) / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
       {
-        name: 'Needs Improvement',
+        name: 'OK',
+        min: 40,
+        max: 60,
+        color: chartColors.performance.moderate,
+        y: GRAPH_HEIGHT_LARGE - (60 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      },
+      {
+        name: 'Poor',
         min: 0,
-        max: EFFICIENCY_THRESHOLD,
-        color: '#EF4444', // Clear bright red
-        y: GRAPH_HEIGHT_LARGE - (EFFICIENCY_THRESHOLD / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (EFFICIENCY_THRESHOLD / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        max: 40,
+        color: chartColors.performance.poor,
+        y: GRAPH_HEIGHT_LARGE - (40 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+        height: (40 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
       },
     ];
 
@@ -154,28 +164,28 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
         weeklyAverage: Math.round(recentAvg * 10) / 10,
       },
     };
-  }, [efficiencyData, colors]);
+  }, [efficiencyData, chartColors]);
 
   // Generate subtitle based on efficiency trend
   const subtitle = useMemo(() => {
     const { currentEfficiency, trend } = chartData.insights;
 
     if (currentEfficiency === 0) {
-      return 'Complete reviews to track efficiency';
+      return 'Study some words to see your progress';
     }
     if (trend === 'improving') {
-      return 'Learning efficiency is improving! 📈';
+      return 'Getting better! 📈';
     }
     if (trend === 'declining') {
-      return 'Consider adjusting study methods 🔄';
+      return 'Try different study methods 🔄';
     }
     if (currentEfficiency >= 80) {
-      return 'Excellent learning efficiency! 🎯';
+      return 'Great job! 🎯';
     }
-    if (currentEfficiency >= EFFICIENCY_THRESHOLD) {
-      return 'Good learning efficiency 👍';
+    if (currentEfficiency >= 60) {
+      return 'Good work 👍';
     }
-    return 'Room for efficiency improvement 💡';
+    return 'Room to improve 💡';
   }, [chartData.insights]);
 
   if (!chartData.hasData) {
@@ -183,8 +193,8 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.efficiencyContent}>
           <CardHeader
-            title="Learning Efficiency"
-            subtitle="Track your learning efficiency over time"
+            title="How Well You Learn"
+            subtitle="Study some words to see your progress"
             onInfoPress={onInfoPress}
           />
         </View>
@@ -195,127 +205,131 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
   return (
     <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.efficiencyContent}>
-        <CardHeader title="Learning Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
+        <CardHeader title="How Well You Learn" subtitle={subtitle} onInfoPress={onInfoPress} />
 
         <StatsRow
           leftStat={{
             value: `${chartData.insights.currentEfficiency}%`,
-            label: 'current efficiency',
-            color:
-              chartData.insights.currentEfficiency >= 80
-                ? '#22C55E' // Clear green for excellent
-                : chartData.insights.currentEfficiency >= EFFICIENCY_THRESHOLD
-                  ? colors.info
-                  : '#EF4444', // Clear red for needs improvement
+            label: 'today',
+            color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
           }}
           rightStat={{
             value: `${chartData.insights.weeklyAverage}%`,
-            label: 'weekly average',
+            label: 'this week',
           }}
         />
 
         {/* Enhanced Efficiency Graph */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Performance zones background */}
+            {/* Background zones - more subtle */}
             <Group>
-              {/* Good performance zone (70%+) */}
-              <Rect
-                x={0}
-                y={0}
-                width={GRAPH_WIDTH}
-                height={
-                  GRAPH_HEIGHT_LARGE -
-                  (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE
-                }
-                color={withOpacity('#22C55E', 0.08)}
-              />
-              {/* Needs improvement zone */}
-              <Rect
-                x={0}
-                y={
-                  GRAPH_HEIGHT_LARGE -
-                  (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE
-                }
-                width={GRAPH_WIDTH}
-                height={(EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE}
-                color={withOpacity('#EF4444', 0.08)}
-              />
-            </Group>
-
-            {/* Minimal grid lines */}
-            <Group>
-              {[0.25, 0.5, 0.75].map((ratio, index) => (
-                <Path
-                  key={`grid-line-${index}`}
-                  path={`M 0 ${GRAPH_HEIGHT_LARGE * ratio} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE * ratio}`}
-                  style="stroke"
-                  strokeWidth={0.5}
-                  color={withOpacity(colors.textSecondary || colors.text, 0.15)}
+              {chartData.performanceZones.map((zone, index) => (
+                <Rect
+                  key={`zone-${index}`}
+                  x={0}
+                  y={zone.y}
+                  width={GRAPH_WIDTH}
+                  height={zone.height}
+                  color={chartColors.withOpacity(zone.color, 0.05)}
                 />
               ))}
             </Group>
 
-            {/* Efficiency threshold line */}
+            {/* Grid lines */}
             <Group>
-              <Path
-                path={`M 0 ${GRAPH_HEIGHT_LARGE - (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE - (EFFICIENCY_THRESHOLD / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE}`}
-                style="stroke"
-                strokeWidth={2}
-                color="#F97316" // Distinct orange for goal line
-              />
+              {[0.25, 0.5, 0.75].map((ratio, index) => (
+                <Rect
+                  key={`grid-line-${index}`}
+                  x={0}
+                  y={GRAPH_HEIGHT_LARGE * ratio - 0.5}
+                  width={GRAPH_WIDTH}
+                  height={1}
+                  color={chartColors.ui.grid}
+                />
+              ))}
             </Group>
 
-            {/* Clean area fill */}
+            {/* Efficiency threshold line at 60% */}
             <Group>
-              <Path
-                path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
-                color={withOpacity(colors.info, 0.15)}
-              />
+              {chartData.maxEfficiency && (
+                <Rect
+                  x={0}
+                  y={GRAPH_HEIGHT_LARGE - (60 / chartData.maxEfficiency) * GRAPH_HEIGHT_LARGE - 0.5}
+                  width={GRAPH_WIDTH}
+                  height={1}
+                  color={chartColors.withOpacity(chartColors.performance.moderate, 0.6)}
+                />
+              )}
+            </Group>
+
+            {/* Area fill under the efficiency line */}
+            <Group>
+              {chartData.smoothPath && (
+                <Path
+                  path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                  color={chartColors.withOpacity(chartColors.ui.accent, 0.15)}
+                />
+              )}
             </Group>
 
             {/* Main efficiency line */}
             <Group>
-              <Path path={chartData.smoothPath} style="stroke" strokeWidth={3} color={colors.info}>
-                <Shadow dx={0} dy={1} blur={3} color={withOpacity(colors.info, 0.25)} />
-              </Path>
+              {chartData.smoothPath && (
+                <Path
+                  path={chartData.smoothPath}
+                  style="stroke"
+                  strokeWidth={3}
+                  color={chartColors.ui.accent}
+                >
+                  <Shadow
+                    dx={0}
+                    dy={2}
+                    blur={4}
+                    color={chartColors.withOpacity(chartColors.ui.accent, 0.3)}
+                  />
+                </Path>
+              )}
             </Group>
 
-            {/* Performance indicators - only show significant points */}
+            {/* Data points - show every 3rd point for clarity */}
             <Group>
-              {efficiencyData.map((data, index) => {
-                if (data.wordCount > 0 && index % 5 === 0) {
-                  // Show every 5th point
-                  const x = (index * GRAPH_WIDTH) / (efficiencyData.length - 1);
+              {efficiencyData
+                .filter(d => d.wordCount > 0)
+                .filter((_, index) => index % 3 === 0) // Show every 3rd point
+                .map((data, index) => {
+                  const originalIndex = efficiencyData.findIndex(d => d === data);
+                  const x = originalIndex * (GRAPH_WIDTH / (efficiencyData.length - 1));
                   const y =
                     GRAPH_HEIGHT_LARGE -
-                    (data.averageEfficiency / chartData.maxEfficiency!) * GRAPH_HEIGHT_LARGE;
+                    (data.averageEfficiency / (chartData.maxEfficiency || 1)) * GRAPH_HEIGHT_LARGE;
 
-                  // Color based on performance
-                  const pointColor =
-                    data.averageEfficiency >= EFFICIENCY_THRESHOLD
-                      ? '#22C55E' // Clear green for good performance
-                      : '#EF4444'; // Clear red for needs improvement
+                  const pointColor = chartColors.getPerformanceColor(data.averageEfficiency);
 
                   return (
                     <Group key={`efficiency-point-${index}`}>
                       <Circle cx={x} cy={y} r={4} color={pointColor}>
-                        <Shadow dx={0} dy={1} blur={2} color={withOpacity(pointColor, 0.3)} />
+                        <Shadow
+                          dx={0}
+                          dy={1}
+                          blur={2}
+                          color={chartColors.withOpacity(pointColor, 0.4)}
+                        />
                       </Circle>
-                      <Circle cx={x} cy={y} r={1.5} color={colors.background} />
+                      <Circle cx={x} cy={y} r={2} color={colors.white} />
                     </Group>
                   );
-                }
-                return null;
-              })}
+                })}
             </Group>
           </Canvas>
         </View>
 
         <ChartFooter
           legendItems={[
-            { type: 'area', color: colors.info, label: 'Your progress' },
-            { type: 'line', color: '#F97316', label: `${EFFICIENCY_THRESHOLD}% goal` },
+            { type: 'dot', color: chartColors.performance.excellent, label: 'Great' },
+            { type: 'dot', color: chartColors.performance.good, label: 'Good' },
+            { type: 'dot', color: chartColors.performance.moderate, label: 'OK' },
+            { type: 'dot', color: chartColors.performance.poor, label: 'Poor' },
           ]}
           timeRange="Last 30 days"
         />

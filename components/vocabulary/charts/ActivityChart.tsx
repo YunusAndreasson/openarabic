@@ -1,20 +1,10 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import {
-  Canvas,
-  Path,
-  Circle,
-  Group,
-  Rect,
-  Shadow,
-  LinearGradient,
-  vec,
-} from '@shopify/react-native-skia';
+import { Canvas, Group, Rect, Shadow } from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { withOpacity } from '@/utils/colorUtils';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
@@ -22,6 +12,7 @@ import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { generateDateRange, isSameDay } from '../shared/utils';
+import { useChartColors } from '../shared/chartColors';
 
 interface ActivityChartProps {
   studyWords: StudyWord[];
@@ -30,19 +21,10 @@ interface ActivityChartProps {
 
 export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityChartProps) => {
   const colors = useColors();
+  const chartColors = useChartColors();
 
-  // Define activity level colors with better contrast and visual hierarchy
-  const activityColors = useMemo(
-    () => ({
-      high: '#10B981', // Emerald green - high activity
-      moderate: '#3B82F6', // Blue - moderate activity
-      low: '#F59E0B', // Amber - low activity
-      minimal: withOpacity(colors.textTertiary, 0.3), // Very light for minimal activity
-      background: withOpacity(colors.textTertiary, 0.05), // Subtle background
-      grid: withOpacity(colors.textTertiary, 0.08), // Subtle grid lines
-    }),
-    [colors]
-  );
+  // Add top padding to prevent bars from being cut off
+  const TOP_PADDING = 8; // Space for bar tops and shadows
 
   // Calculate progress data over the last 14 days
   const progressData = useMemo(() => {
@@ -120,15 +102,15 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
     return 'Keep building your streak 💪';
   }, [chartData.insights]);
 
-  // Helper function to get activity level and color
+  // Helper function to get activity level and color using consistent color system
   const getActivityLevel = (activity: number, maxActivity: number) => {
-    if (activity === 0) return { level: 'none', color: activityColors.minimal };
+    if (activity === 0) return { level: 'none', color: chartColors.activity.none };
 
     const ratio = activity / maxActivity;
-    if (ratio >= 0.7) return { level: 'high', color: activityColors.high };
-    if (ratio >= 0.4) return { level: 'moderate', color: activityColors.moderate };
-    if (ratio >= 0.1) return { level: 'low', color: activityColors.low };
-    return { level: 'minimal', color: activityColors.minimal };
+    if (ratio >= 0.7) return { level: 'high', color: chartColors.activity.high };
+    if (ratio >= 0.4) return { level: 'medium', color: chartColors.activity.medium };
+    if (ratio >= 0.1) return { level: 'low', color: chartColors.activity.low };
+    return { level: 'minimal', color: chartColors.activity.none };
   };
 
   if (!chartData.hasData) {
@@ -141,12 +123,12 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
             onInfoPress={onInfoPress}
           />
           <View style={styles.emptyState}>
-            <View style={[styles.emptyChart, { backgroundColor: activityColors.background }]}>
+            <View style={[styles.emptyChart, { backgroundColor: chartColors.ui.background }]}>
               <View style={styles.emptyBars}>
                 {Array.from({ length: 14 }).map((_, index) => (
                   <View
                     key={index}
-                    style={[styles.emptyBar, { backgroundColor: activityColors.minimal }]}
+                    style={[styles.emptyBar, { backgroundColor: chartColors.activity.none }]}
                   />
                 ))}
               </View>
@@ -170,34 +152,23 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
           rightStat={{
             value: chartData.insights.weeklyTotal,
             label: 'this week',
-            color: activityColors.high,
+            color: chartColors.activity.high,
           }}
         />
 
         {/* Enhanced Activity Graph */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Background with subtle gradient */}
-            <Group>
-              <Rect
-                x={0}
-                y={0}
-                width={GRAPH_WIDTH}
-                height={GRAPH_HEIGHT_LARGE}
-                color={activityColors.background}
-              />
-            </Group>
-
             {/* Subtle horizontal grid lines */}
             <Group>
               {[0.25, 0.5, 0.75].map((ratio, index) => (
                 <Rect
                   key={`grid-line-${index}`}
                   x={0}
-                  y={GRAPH_HEIGHT_LARGE * ratio - 0.5}
+                  y={TOP_PADDING + (GRAPH_HEIGHT_LARGE - TOP_PADDING) * ratio - 0.5}
                   width={GRAPH_WIDTH}
                   height={1}
-                  color={activityColors.grid}
+                  color={chartColors.ui.grid}
                 />
               ))}
             </Group>
@@ -212,7 +183,8 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
                 const barHeight = chartData.maxActivity
                   ? Math.max(
                       2,
-                      (data.totalActivity / chartData.maxActivity) * (GRAPH_HEIGHT_LARGE - 8)
+                      (data.totalActivity / chartData.maxActivity) *
+                        (GRAPH_HEIGHT_LARGE - TOP_PADDING - 8)
                     )
                   : 2;
 
@@ -226,22 +198,27 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
                     {/* Bar with subtle shadow */}
                     <Rect
                       x={x}
-                      y={GRAPH_HEIGHT_LARGE - barHeight}
+                      y={GRAPH_HEIGHT_LARGE - barHeight - TOP_PADDING / 2}
                       width={barWidth}
                       height={barHeight}
                       color={barColor}
                     >
-                      <Shadow dx={0} dy={1} blur={3} color={withOpacity(barColor, 0.3)} />
+                      <Shadow
+                        dx={0}
+                        dy={1}
+                        blur={3}
+                        color={chartColors.withOpacity(barColor, 0.3)}
+                      />
                     </Rect>
 
                     {/* Subtle highlight on top of bar */}
                     {data.totalActivity > 0 && (
                       <Rect
                         x={x}
-                        y={GRAPH_HEIGHT_LARGE - barHeight}
+                        y={GRAPH_HEIGHT_LARGE - barHeight - TOP_PADDING / 2}
                         width={barWidth}
                         height={Math.min(barHeight / 3, 4)}
-                        color={withOpacity(colors.white, 0.2)}
+                        color={chartColors.withOpacity(colors.white, 0.2)}
                       />
                     )}
                   </Group>
@@ -253,9 +230,10 @@ export const ActivityChart = memo(({ studyWords = [], onInfoPress }: ActivityCha
 
         <ChartFooter
           legendItems={[
-            { type: 'bar', color: activityColors.high, label: 'High' },
-            { type: 'bar', color: activityColors.moderate, label: 'Moderate' },
-            { type: 'bar', color: activityColors.low, label: 'Low' },
+            { type: 'bar', color: chartColors.activity.high, label: 'High' },
+            { type: 'bar', color: chartColors.activity.medium, label: 'Medium' },
+            { type: 'bar', color: chartColors.activity.low, label: 'Low' },
+            { type: 'bar', color: chartColors.activity.none, label: 'None' },
           ]}
           timeRange="Last 14 days"
         />
@@ -274,11 +252,10 @@ const styles = StyleSheet.create({
     padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   graphContainer: {
-    height: GRAPH_HEIGHT_LARGE + LAYOUT.SPACING.SMALL * 2,
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    height: GRAPH_HEIGHT_LARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
     marginHorizontal: -LAYOUT.SPACING.TINY,
     paddingVertical: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.TINY,
   },
   emptyState: {
     marginTop: LAYOUT.SPACING.MEDIUM,

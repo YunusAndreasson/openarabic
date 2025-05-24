@@ -5,12 +5,12 @@ import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useStreakData } from '@/hooks/useStreakData';
-import { withOpacity } from '@/utils/colorUtils';
 
 import BaseCard from '../../BaseCard';
 import { ThemedText } from '../../ThemedText';
 import { CardHeader } from '../shared/CardHeader';
 import { StatsRow } from '../shared/StatsRow';
+import { useChartColors } from '../shared/chartColors';
 
 interface StreakInsightsProps {
   onInfoPress: () => void;
@@ -18,10 +18,11 @@ interface StreakInsightsProps {
 
 export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
   const colors = useColors();
+  const chartColors = useChartColors();
   const { user } = useAuth();
   const streakData = useStreakData(user?.id);
 
-  // Calculate streak status for visual feedback
+  // Calculate streak status for visual feedback using consistent color system
   const streakStatus = useMemo(() => {
     const { currentStreak } = streakData;
 
@@ -29,13 +30,13 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
       return { color: colors.textTertiary };
     }
     if (currentStreak >= 7) {
-      return { color: colors.success };
+      return { color: chartColors.performance.excellent };
     }
     if (currentStreak >= 3) {
-      return { color: colors.warning };
+      return { color: chartColors.performance.moderate };
     }
-    return { color: colors.info };
-  }, [streakData, colors]);
+    return { color: chartColors.performance.good };
+  }, [streakData, chartColors, colors]);
 
   // Generate subtitle based on streak
   const subtitle = useMemo(() => {
@@ -49,7 +50,7 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
     return 'Building momentum';
   }, [streakData.currentStreak]);
 
-  // Activity dots for last 7 days with enhanced styling
+  // Activity dots for last 7 days with enhanced styling using consistent colors
   const activityDots = useMemo(() => {
     return streakData.lastSevenDaysActivity.map((day, index) => {
       const isActive = day.active;
@@ -61,10 +62,10 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
             style={[
               styles.dot,
               {
-                backgroundColor: isActive ? colors.success : withOpacity(colors.textTertiary, 0.15),
+                backgroundColor: isActive ? chartColors.streak.active : chartColors.streak.inactive,
                 borderWidth: isToday ? 2 : 0,
-                borderColor: isToday ? colors.tint : 'transparent',
-                shadowColor: isActive ? colors.success : 'transparent',
+                borderColor: isToday ? chartColors.streak.today : 'transparent',
+                shadowColor: isActive ? chartColors.streak.active : 'transparent',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.3,
                 shadowRadius: 2,
@@ -78,7 +79,7 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
         </View>
       );
     });
-  }, [streakData.lastSevenDaysActivity, colors]);
+  }, [streakData.lastSevenDaysActivity, chartColors]);
 
   return (
     <BaseCard style={styles.streakCard} shadowSize="small" includePressAnimation={false}>
@@ -98,12 +99,7 @@ export const StreakInsights = memo(({ onInfoPress }: StreakInsightsProps) => {
         />
 
         {/* Clean activity visualization */}
-        <View
-          style={[
-            styles.activitySection,
-            { borderTopColor: withOpacity(colors.textTertiary, 0.08) },
-          ]}
-        >
+        <View style={[styles.activitySection, { borderTopColor: chartColors.ui.grid }]}>
           <View style={styles.activityRow}>{activityDots}</View>
         </View>
       </View>
