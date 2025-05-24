@@ -239,6 +239,97 @@ const SettingsScreen: React.FC = () => {
           </BaseCard>
         </View>
 
+        {/* Support & Account Section */}
+        <View style={styles.actionsWrapper}>
+          <BaseCard
+            style={styles.actionsContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                Support & Account
+              </ThemedText>
+            </View>
+
+            {/* Action Links */}
+            <View style={styles.actionLinksContainer}>
+              <BaseCard
+                onPress={handleSupport}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="mail" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Support
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={() => router.push('/about')}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="information-circle" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      About
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={handleSignOut}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="log-out" size={22} color={colors.error} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Sign Out
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+            </View>
+          </BaseCard>
+        </View>
+
         {/* Connect Section */}
         <View style={styles.connectWrapper}>
           <BaseCard
@@ -323,73 +414,6 @@ const SettingsScreen: React.FC = () => {
                     size={16}
                     color={colors.textTertiary}
                     style={styles.socialLinkChevron}
-                  />
-                </View>
-              </BaseCard>
-            </View>
-          </BaseCard>
-        </View>
-
-        {/* Support & Account Section */}
-        <View style={styles.actionsWrapper}>
-          <BaseCard
-            style={styles.actionsContainer}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            {/* Section Header */}
-            <View style={styles.sectionHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Support & Account
-              </ThemedText>
-            </View>
-
-            {/* Action Links */}
-            <View style={styles.actionLinksContainer}>
-              <BaseCard
-                onPress={handleSupport}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="mail" size={22} color={colors.info} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Support
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={16}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
-                  />
-                </View>
-              </BaseCard>
-
-              <BaseCard
-                onPress={handleSignOut}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="log-out" size={22} color={colors.error} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Sign Out
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={16}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
                   />
                 </View>
               </BaseCard>

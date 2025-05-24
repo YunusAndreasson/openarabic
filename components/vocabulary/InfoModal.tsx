@@ -45,35 +45,35 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   streak: {
     title: 'Learning Streak',
     subtitle:
-      'Tracks consecutive days with vocabulary activity (reading articles, reviewing words, practice sessions).\n\nDaily practice creates stronger neural pathways and improves retention by up to 400% compared to cramming.\n\nStart small with 2-3 words daily and link practice to existing routines.',
+      'Shows your daily vocabulary activity over the last 7 days with current and best streak counts.\n\nConsistent daily practice strengthens neural pathways and improves retention by up to 400% compared to sporadic study.\n\nEven 2-3 words daily builds momentum. Link practice to existing routines like morning coffee or commute.',
     sections: [],
     tips: [],
   },
   mastery: {
     title: 'Vocabulary Mastery',
     subtitle:
-      'Shows words you can recall automatically - those in Review state with ≥5 days stability where your brain can access them reliably.\n\nThe upward curve shows vocabulary becoming automatic over time. Steep climbs indicate effective learning periods.\n\nTarget 60-80% mastery rate for optimal learning and focus on depth over breadth.',
+      'Tracks the percentage of words you can recall automatically over 14 days. Words are mastered when they reach Review state with ≥5 days stability.\n\nThe curve shows your vocabulary becoming automatic over time. Steep climbs indicate effective learning periods.\n\nAim for 60-80% mastery rate - this balance ensures steady progress without overwhelming difficulty.',
     sections: [],
     tips: [],
   },
   retrievability: {
-    title: 'Memory Retention',
+    title: 'Memory Retention Forecast',
     subtitle:
-      "Predicts when you'll forget words by showing when each word will drop below 70% retention - the optimal review point.\n\nThis threshold is high enough for successful recall, low enough for memory strengthening.\n\nReview words approaching 70% retention and plan study sessions 1-2 days before predicted drops.",
+      'Predicts your average memory strength for the next 14 days using spaced repetition science. Shows when words will drop below 70% retention.\n\nThe 70% threshold is optimal for review timing - high enough for successful recall, low enough for memory strengthening.\n\nPlan study sessions 1-2 days before predicted drops to maintain strong retention.',
     sections: [],
     tips: [],
   },
   difficulty: {
-    title: 'Word Difficulty',
+    title: 'Word Difficulty Distribution',
     subtitle:
-      'Shows your personal learning challenge levels:\nVery Easy (1-3), Easy (3-5), Medium (5-7), Hard (7-9), Very Hard (9-10).\n\nKeep 60-70% of vocabulary in Easy-Medium range for sustainable learning.\n\nToo many hard words create mental fatigue, so use easy words as confidence builders.',
+      'Shows how challenging your vocabulary is across three levels: Easy (0.0-0.4), Medium (0.4-0.7), and Hard (0.7-1.0).\n\nOptimal distribution: 60-70% Easy-Medium range for sustainable learning. Too many hard words create mental fatigue.\n\nUse easy words as confidence builders while gradually introducing more challenging vocabulary.',
     sections: [],
     tips: [],
   },
   efficiency: {
     title: 'Learning Efficiency',
     subtitle:
-      'Measures how effectively your study time converts to lasting memory improvements.\n\nTarget 70-85% efficiency - below 70% suggests reviewing methods, above 85% means you could challenge yourself more.\n\nFocus on quality over speed, use active recall before seeing answers, and study when mentally fresh.',
+      'Measures how effectively your study time converts to lasting memory over 14 days. Based on word progression, stability gains, and lapse rates.\n\nTarget 70-85% efficiency - below 70% suggests reviewing methods, above 85% means you could challenge yourself more.\n\nFocus on quality over speed, use active recall, and study when mentally fresh for best results.',
     sections: [],
     tips: [],
   },
