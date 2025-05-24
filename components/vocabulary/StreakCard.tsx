@@ -1,12 +1,10 @@
-import { Canvas, Circle, Group, Line, Path } from '@shopify/react-native-skia';
-import React, { memo, useEffect } from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View, Dimensions } from 'react-native';
 
 import BaseCard from '../BaseCard';
 import { ThemedText } from '../ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
-import { useProgressAnimation } from '@/hooks/animations';
 import { CardHeader } from './shared/CardHeader';
 
 interface StreakCardProps {
@@ -29,18 +27,6 @@ export const StreakCard = memo(
     onInfoPress,
   }: StreakCardProps) => {
     const colors = useColors();
-
-    // Animation value for line drawing
-    const { progress, updateProgress } = useProgressAnimation(0);
-
-    // Start animation when component mounts
-    useEffect(() => {
-      // Small delay for better visual appeal
-      const timer = setTimeout(() => {
-        updateProgress(10000); // 100% (10000 represents 100%)
-      }, 100);
-      return () => clearTimeout(timer);
-    }, [updateProgress]);
 
     // Day indicator size - smaller for less visual weight
     const pointRadius = 2;
@@ -89,19 +75,6 @@ export const StreakCard = memo(
       active: day.active,
     }));
 
-    // Create paths for connecting lines to animate them properly
-    const connectionPaths = dayPositions
-      .map((day, index) => {
-        if (index < dayPositions.length - 1 && day.active && dayPositions[index + 1]?.active) {
-          const nextDay = dayPositions[index + 1];
-          if (nextDay) {
-            return `M ${day.x} ${day.y} L ${nextDay.x} ${nextDay.y}`;
-          }
-        }
-        return '';
-      })
-      .filter(path => path !== '');
-
     // Generate subtitle based on streak
     const subtitle =
       currentStreak === 0
@@ -116,49 +89,81 @@ export const StreakCard = memo(
           <CardHeader title="Learning Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
 
           <View style={styles.content}>
-            {/* Timeline visualization */}
-            <Canvas style={styles.timelineCanvas}>
-              <Group>
-                {/* Base line connecting all dots */}
-                <Line
-                  p1={{ x: actualMargin, y: timelineHeight / 2 }}
-                  p2={{ x: canvasWidth - actualMargin, y: timelineHeight / 2 }}
-                  color={lineBaseColor}
-                  strokeWidth={1}
-                />
+            {/* Timeline visualization using React Native Views instead of Skia Canvas */}
+            <View style={[styles.timelineContainer, { height: timelineHeight }]}>
+              {/* Base line */}
+              <View
+                style={[
+                  styles.baseLine,
+                  {
+                    backgroundColor: lineBaseColor,
+                    top: timelineHeight / 2 - 0.5,
+                    width: canvasWidth - 2 * actualMargin,
+                    left: actualMargin,
+                  },
+                ]}
+              />
 
-                {/* Green connecting lines between active days with animation */}
-                {connectionPaths.map((pathData, index) => (
-                  <Path
-                    key={`connection-path-${index}`}
-                    path={pathData}
-                    color={activeColor}
-                    style="stroke"
-                    strokeWidth={1.5}
-                    start={0}
-                    end={progress}
+              {/* Day indicators */}
+              {dayPositions.map((day, index) => (
+                <View
+                  key={`day-${index}`}
+                  style={[
+                    styles.dayIndicator,
+                    {
+                      left: day.x - pointRadius - pointStroke,
+                      top: day.y - pointRadius - pointStroke,
+                      width: (pointRadius + pointStroke) * 2,
+                      height: (pointRadius + pointStroke) * 2,
+                      borderRadius: pointRadius + pointStroke,
+                      backgroundColor: colors.card,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.dayIndicatorInner,
+                      {
+                        width: pointRadius * 2,
+                        height: pointRadius * 2,
+                        borderRadius: pointRadius,
+                        backgroundColor: day.active ? activeColor : inactiveColor,
+                        margin: pointStroke,
+                      },
+                    ]}
                   />
-                ))}
+                </View>
+              ))}
 
-                {/* Day indicators (dots) - with white outline for consistency with graph */}
-                {dayPositions.map((day, index) => (
-                  <Group
-                    key={`day-${index}`}
-                    transform={[{ translateX: day.x }, { translateY: day.y }]}
-                  >
-                    {/* Background circle (serves as white stroke) */}
-                    <Circle cx={0} cy={0} r={pointRadius + pointStroke} color={colors.card} />
-                    {/* Colored circle */}
-                    <Circle
-                      cx={0}
-                      cy={0}
-                      r={pointRadius}
-                      color={day.active ? activeColor : inactiveColor}
-                    />
-                  </Group>
-                ))}
-              </Group>
-            </Canvas>
+              {/* Connection lines between active days */}
+              {dayPositions.map((day, index) => {
+                if (
+                  index < dayPositions.length - 1 &&
+                  day.active &&
+                  dayPositions[index + 1]?.active
+                ) {
+                  const nextDay = dayPositions[index + 1];
+                  if (nextDay) {
+                    const lineWidth = nextDay.x - day.x;
+                    return (
+                      <View
+                        key={`connection-${index}`}
+                        style={[
+                          styles.connectionLine,
+                          {
+                            left: day.x,
+                            top: day.y - 0.75,
+                            width: lineWidth,
+                            backgroundColor: activeColor,
+                          },
+                        ]}
+                      />
+                    );
+                  }
+                }
+                return null;
+              })}
+            </View>
 
             {/* Streak information - both current and longest */}
             <View style={styles.streakInfo}>
@@ -199,9 +204,27 @@ const styles = StyleSheet.create({
   content: {
     width: '100%',
   },
-  timelineCanvas: {
-    height: 24, // Match reduced timeline height
+  timelineContainer: {
+    position: 'relative',
     width: '100%',
+  },
+  baseLine: {
+    position: 'absolute',
+    height: 1,
+  },
+  dayIndicator: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+  },
+  dayIndicatorInner: {
+    position: 'absolute',
+    width: 0,
+    height: 0,
+  },
+  connectionLine: {
+    position: 'absolute',
+    height: 1,
   },
   streakInfo: {
     flexDirection: 'row',
