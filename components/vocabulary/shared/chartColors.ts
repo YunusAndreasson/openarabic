@@ -7,6 +7,7 @@ import { withOpacity } from '@/utils/colorUtils';
  * This system provides a cohesive, modern color palette with excellent semantic clarity.
  * Colors are carefully chosen for optimal accessibility, visual harmony, and intuitive understanding.
  * The palette uses a sophisticated approach with complementary hues and consistent saturation levels.
+ * Optimized for minimalistic design with refined opacity values and subtle contrasts.
  */
 
 // Modern semantic color palette - carefully curated for visual harmony and clarity
@@ -21,7 +22,7 @@ export const CHART_COLORS = {
   HIGH_ACTIVITY: '#06D6A0', // Vibrant teal-green for high engagement
   MEDIUM_ACTIVITY: '#118AB2', // Steady blue for moderate activity
   LOW_ACTIVITY: '#FFB627', // Warm amber for low activity
-  NO_ACTIVITY: '#8D99AE', // Sophisticated gray-blue for inactive states
+  NO_ACTIVITY: '#A0AEC0', // Refined gray matching the updated theme
 
   // Memory and retention states - optimized for cognitive understanding
   STRONG_MEMORY: '#06D6A0', // Fresh green - strong retention, confidence
@@ -38,16 +39,16 @@ export const CHART_COLORS = {
   STABLE: '#118AB2', // Blue - steady, consistent
   DECLINING: '#EF476F', // Coral - needs intervention
 
-  // UI elements - modern, subtle, professional
-  BACKGROUND: '#FAFBFC', // Ultra-light gray with slight blue tint
-  GRID: '#E8ECEF', // Soft gray for subtle grid lines
-  BORDER: '#D1D9E0', // Medium gray with blue undertone
+  // UI elements - modern, subtle, professional, aligned with theme
+  BACKGROUND: '#FAFBFC', // Matches light theme background
+  GRID: '#E2E8F0', // Matches light theme border
+  BORDER: '#CBD5E0', // Refined border color
   ACCENT: '#7209B7', // Modern purple - highlights and special elements
 
-  // Neutral tones - sophisticated gray scale
-  NEUTRAL_LIGHT: '#F4F6F8', // Very light - empty states, backgrounds
-  NEUTRAL_MEDIUM: '#6C757D', // Medium - secondary text, icons
-  NEUTRAL_DARK: '#2D3748', // Dark - primary text, important elements
+  // Neutral tones - sophisticated gray scale matching theme
+  NEUTRAL_LIGHT: '#F7FAFC', // Matches cardBorder
+  NEUTRAL_MEDIUM: '#718096', // Matches textTertiary
+  NEUTRAL_DARK: '#1A202C', // Matches text color
 
   // Additional modern colors for variety
   SECONDARY_BLUE: '#4299E1', // Lighter blue for secondary elements
@@ -56,14 +57,14 @@ export const CHART_COLORS = {
   SECONDARY_ORANGE: '#ED8936', // Warm orange for highlights
 } as const;
 
-// Refined opacity levels for modern design
+// Refined opacity levels for modern minimalistic design
 export const CHART_OPACITY = {
   SOLID: 1.0,
-  HIGH: 0.85, // Slightly more opaque for better visibility
-  MEDIUM: 0.65, // Balanced transparency
-  LOW: 0.35, // Subtle presence
-  SUBTLE: 0.18, // Very light overlay
-  MINIMAL: 0.08, // Barely visible
+  HIGH: 0.8, // Reduced for more subtle appearance
+  MEDIUM: 0.5, // More balanced transparency
+  LOW: 0.25, // Subtle presence
+  SUBTLE: 0.12, // Very light overlay - refined
+  MINIMAL: 0.06, // Barely visible - refined
 } as const;
 
 /**
@@ -87,7 +88,7 @@ export const useChartColors = () => {
       high: '#06D6A0',
       medium: '#118AB2',
       low: '#FFB627',
-      none: withOpacity('#8D99AE', CHART_OPACITY.MEDIUM),
+      none: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM),
     },
 
     // Memory retention states - clear cognitive mapping
@@ -114,47 +115,47 @@ export const useChartColors = () => {
     // Streak and consistency - modern approach
     streak: {
       active: '#06D6A0', // Active day - vibrant green
-      inactive: withOpacity('#8D99AE', CHART_OPACITY.SUBTLE),
+      inactive: withOpacity(colors.textTertiary, CHART_OPACITY.SUBTLE),
       today: '#7209B7', // Today's border - distinctive purple
-      weekend: withOpacity('#4299E1', CHART_OPACITY.LOW), // Weekend highlight
+      weekend: withOpacity('#4299E1', CHART_OPACITY.SUBTLE), // Weekend highlight - more subtle
     },
 
-    // Chart UI elements - modern, professional
+    // Chart UI elements - modern, professional, theme-aware
     ui: {
       background: colors.background,
-      grid: withOpacity('#8D99AE', CHART_OPACITY.MINIMAL),
-      border: withOpacity('#D1D9E0', CHART_OPACITY.HIGH),
+      grid: withOpacity(colors.textTertiary, CHART_OPACITY.MINIMAL),
+      border: withOpacity(colors.border, CHART_OPACITY.HIGH),
       accent: '#7209B7',
-      shadow: withOpacity(colors.shadow, CHART_OPACITY.LOW),
-      tooltip: withOpacity(colors.card, 0.95),
+      shadow: withOpacity(colors.shadow, CHART_OPACITY.SUBTLE),
+      tooltip: withOpacity(colors.card, 0.98), // More opaque for better readability
     },
 
-    // Modern gradients for area charts and backgrounds
+    // Modern gradients for area charts and backgrounds - more subtle
     gradients: {
       excellent: [
         withOpacity('#06D6A0', CHART_OPACITY.MEDIUM),
         withOpacity('#06D6A0', CHART_OPACITY.LOW),
-        withOpacity('#06D6A0', CHART_OPACITY.MINIMAL),
+        withOpacity('#06D6A0', CHART_OPACITY.SUBTLE),
       ],
       good: [
         withOpacity('#118AB2', CHART_OPACITY.MEDIUM),
         withOpacity('#118AB2', CHART_OPACITY.LOW),
-        withOpacity('#118AB2', CHART_OPACITY.MINIMAL),
+        withOpacity('#118AB2', CHART_OPACITY.SUBTLE),
       ],
       warning: [
         withOpacity('#FFB627', CHART_OPACITY.MEDIUM),
         withOpacity('#FFB627', CHART_OPACITY.LOW),
-        withOpacity('#FFB627', CHART_OPACITY.MINIMAL),
+        withOpacity('#FFB627', CHART_OPACITY.SUBTLE),
       ],
       error: [
         withOpacity('#EF476F', CHART_OPACITY.MEDIUM),
         withOpacity('#EF476F', CHART_OPACITY.LOW),
-        withOpacity('#EF476F', CHART_OPACITY.MINIMAL),
+        withOpacity('#EF476F', CHART_OPACITY.SUBTLE),
       ],
       accent: [
         withOpacity('#7209B7', CHART_OPACITY.MEDIUM),
         withOpacity('#7209B7', CHART_OPACITY.LOW),
-        withOpacity('#7209B7', CHART_OPACITY.MINIMAL),
+        withOpacity('#7209B7', CHART_OPACITY.SUBTLE),
       ],
     },
 
@@ -191,7 +192,7 @@ export const useChartColors = () => {
       if (mastery >= 0.8) return '#06D6A0'; // Mastered
       if (mastery >= 0.5) return '#118AB2'; // Learning
       if (mastery >= 0.2) return '#FFB627'; // Practicing
-      return '#8D99AE'; // New
+      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // New - theme-aware
     },
 
     // Get color for time-based data (hours studied, etc.)
@@ -200,7 +201,7 @@ export const useChartColors = () => {
       if (ratio >= 0.8) return '#06D6A0'; // High activity
       if (ratio >= 0.5) return '#118AB2'; // Medium activity
       if (ratio >= 0.2) return '#FFB627'; // Low activity
-      return withOpacity('#8D99AE', CHART_OPACITY.MEDIUM); // Minimal activity
+      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM); // Minimal activity - theme-aware
     },
   };
 };
@@ -215,7 +216,7 @@ export const CHART_COLOR_SCHEMES = {
     high: '#06D6A0', // Vibrant teal-green
     medium: '#118AB2', // Ocean blue
     low: '#FFB627', // Warm amber
-    none: '#8D99AE', // Sophisticated gray
+    none: '#A0AEC0', // Refined gray matching theme
   },
 
   // Mastery progression - 4 zones for better granularity
@@ -223,7 +224,7 @@ export const CHART_COLOR_SCHEMES = {
     mastered: '#06D6A0', // Achieved - teal green
     proficient: '#118AB2', // Strong - ocean blue
     learning: '#FFB627', // Developing - amber
-    new: '#8D99AE', // Starting - gray
+    new: '#A0AEC0', // Starting - refined gray
   },
 
   // Efficiency levels - 3 clear zones
