@@ -5,6 +5,8 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SharedValue } from 'react-native-reanimated';
 import { useAnimatedStyle } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
+import type { AnimatedStyleProp } from '@/types/ui/base.types';
 
 import { LAYOUT } from '@/constants/layout';
 import { useOpacityAnimation } from '@/hooks/animations';
@@ -12,7 +14,6 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFSRS } from '@/hooks/useFSRS';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { handleError } from '@/utils/errorHandling';
-import { lightFeedback, extraLightFeedback } from '@/utils/haptics';
 
 interface AudioPlayerState {
   sound: Audio.Sound | null;
@@ -42,6 +43,19 @@ interface ReviewStateRefs {
   completionTriggered: boolean;
   isUpdatingWord: boolean;
   progressUpdatedForCompletion: boolean;
+}
+
+// Add session metrics tracking interface
+interface SessionMetrics {
+  wordsReviewed: number;
+  wordsKnown: number;
+  wordsVague: number;
+  wordsUnknown: number;
+  averageStabilityIncrease: number;
+  longestStreak: number;
+  currentStreak: number;
+  masteredWords: number;
+  startTime: number;
 }
 
 function useAudioPlayer() {
@@ -150,7 +164,8 @@ interface UseReviewReturn {
   handleSwipeRight: () => void;
   handleTap: () => void;
   handleClose: () => void;
-  animatedStyle: ReturnType<typeof useAnimatedStyle>;
+  animatedStyle: AnimatedStyleProp<ViewStyle>;
+  sessionMetrics: SessionMetrics;
 }
 
 interface WordSizingConfig {
@@ -220,6 +235,19 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     completionTriggered: false,
     isUpdatingWord: false,
     progressUpdatedForCompletion: false,
+  });
+
+  // Session metrics tracking
+  const sessionMetricsRef = useRef<SessionMetrics>({
+    wordsReviewed: 0,
+    wordsKnown: 0,
+    wordsVague: 0,
+    wordsUnknown: 0,
+    averageStabilityIncrease: 0,
+    longestStreak: 0,
+    currentStreak: 0,
+    masteredWords: 0,
+    startTime: Date.now(),
   });
 
   const triggerCompletionTransition = useCallback(() => {
@@ -393,6 +421,43 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       stateRefs.current.isUpdatingWord = true;
       const controller = new AbortController();
 
+      // Update session metrics
+      const metrics = sessionMetricsRef.current;
+      metrics.wordsReviewed++;
+
+      // Track response types
+      if (confidence === 'known') {
+        metrics.wordsKnown++;
+        metrics.currentStreak++;
+        metrics.longestStreak = Math.max(metrics.longestStreak, metrics.currentStreak);
+
+        // Check if word is now mastered (stability >= 5 days after this review)
+        const currentStability = currentWord?.fsrs_stability ?? 0;
+        if (currentStability >= 4) {
+          // Likely to reach 5+ after this review
+          metrics.masteredWords++;
+        }
+      } else if (confidence === 'vague') {
+        metrics.wordsVague++;
+        metrics.currentStreak = 0; // Reset streak on vague
+      } else {
+        metrics.wordsUnknown++;
+        metrics.currentStreak = 0; // Reset streak on unknown
+      }
+
+      // Calculate average stability increase (simplified estimation)
+      if (currentWord?.fsrs_stability) {
+        const estimatedIncrease =
+          confidence === 'known'
+            ? currentWord.fsrs_stability * 0.3
+            : confidence === 'vague'
+              ? currentWord.fsrs_stability * 0.1
+              : 0;
+        const totalIncrease =
+          metrics.averageStabilityIncrease * (metrics.wordsReviewed - 1) + estimatedIncrease;
+        metrics.averageStabilityIncrease = totalIncrease / metrics.wordsReviewed;
+      }
+
       // Start transition animation
       setTimeout(() => {
         if (controller.signal.aborted) return;
@@ -463,6 +528,7 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       displayMeaning,
       processFeedback,
       currentWord?.root?.audio_url_en,
+      currentWord?.fsrs_stability,
     ]
   );
 
@@ -673,8 +739,11 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
     handleSwipeRight,
     handleTap,
     handleClose,
-    animatedStyle: useAnimatedStyle(() => ({
-      opacity: opacity.value,
-    })),
+    animatedStyle: useAnimatedStyle(
+      (): ViewStyle => ({
+        opacity: opacity.value,
+      })
+    ),
+    sessionMetrics: sessionMetricsRef.current,
   };
 }

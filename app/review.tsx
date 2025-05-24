@@ -2,7 +2,6 @@ import { useLocalSearchParams } from 'expo-router';
 import React, { JSX } from 'react';
 import type { ViewStyle } from 'react-native';
 import { StyleSheet, View } from 'react-native';
-import { useAnimatedStyle } from 'react-native-reanimated';
 
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
@@ -50,7 +49,6 @@ export default function ReviewScreen(): JSX.Element {
     currentMeaning,
     currentSentence,
     isTransitioningToCompletion,
-    opacity,
     isComplete,
     progress,
     maxProgress,
@@ -64,10 +62,11 @@ export default function ReviewScreen(): JSX.Element {
     handleClose,
     isUpdating,
     animatedStyle,
+    sessionMetrics,
   } = useReview({ fromVocabulary });
 
   if (isComplete || isTransitioningToCompletion) {
-    return <CompletionScreen onClose={handleClose} />;
+    return <CompletionScreen onClose={handleClose} sessionMetrics={sessionMetrics} />;
   }
 
   return (

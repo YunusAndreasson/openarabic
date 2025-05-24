@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useEffect } from 'react';
+import React from 'react';
 import type { ViewStyle } from 'react-native';
 import { View, StyleSheet } from 'react-native';
 
@@ -11,6 +11,18 @@ import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { ThemedView } from '@/components/ThemedView';
+
+interface SessionMetrics {
+  wordsReviewed: number;
+  wordsKnown: number;
+  wordsVague: number;
+  wordsUnknown: number;
+  averageStabilityIncrease: number;
+  longestStreak: number;
+  currentStreak: number;
+  masteredWords: number;
+  startTime: number;
+}
 
 interface CompletionScreenProps {
   onClose: () => void;
@@ -23,6 +35,7 @@ interface CompletionScreenProps {
   useThemedView?: boolean;
   contentStyle?: object;
   buttonStyle?: object;
+  sessionMetrics?: SessionMetrics;
 }
 
 const CompletionScreen: React.FC<CompletionScreenProps> = ({
@@ -36,6 +49,7 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
   useThemedView = false,
   contentStyle = {},
   buttonStyle = {},
+  sessionMetrics,
 }) => {
   const colors = useColors();
   const queryClient = useQueryClient();
@@ -52,6 +66,63 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
       });
     }
   }, [user?.id, queryClient, useThemedView]);
+
+  // Generate encouraging metrics text
+  const getEncouragingMetrics = () => {
+    if (!sessionMetrics || sessionMetrics.wordsReviewed === 0) {
+      return null;
+    }
+
+    const metrics = sessionMetrics;
+    const sessionDuration = Math.round((Date.now() - metrics.startTime) / 60000); // minutes
+    const accuracyRate = Math.round((metrics.wordsKnown / metrics.wordsReviewed) * 100);
+
+    const encouragingFacts = [];
+
+    // Accuracy achievement
+    if (accuracyRate >= 80) {
+      encouragingFacts.push(`🎯 ${accuracyRate}% accuracy - excellent recall!`);
+    } else if (accuracyRate >= 60) {
+      encouragingFacts.push(`📈 ${accuracyRate}% accuracy - solid progress!`);
+    } else if (metrics.wordsKnown > 0) {
+      encouragingFacts.push(`💪 ${metrics.wordsKnown} words mastered this session!`);
+    }
+
+    // Streak achievements
+    if (metrics.longestStreak >= 5) {
+      encouragingFacts.push(`🔥 ${metrics.longestStreak}-word streak - you're on fire!`);
+    } else if (metrics.longestStreak >= 3) {
+      encouragingFacts.push(`⚡ ${metrics.longestStreak}-word streak achieved!`);
+    }
+
+    // Mastery progress
+    if (metrics.masteredWords > 0) {
+      encouragingFacts.push(`🌟 ${metrics.masteredWords} words reached mastery level!`);
+    }
+
+    // Stability improvement
+    if (metrics.averageStabilityIncrease > 0) {
+      const avgIncrease = Math.round(metrics.averageStabilityIncrease * 10) / 10;
+      encouragingFacts.push(`📊 +${avgIncrease} days average memory strength boost!`);
+    }
+
+    // Session efficiency
+    if (sessionDuration > 0 && metrics.wordsReviewed >= 10) {
+      const wordsPerMinute = Math.round((metrics.wordsReviewed / sessionDuration) * 10) / 10;
+      encouragingFacts.push(`⚡ ${wordsPerMinute} words/min - efficient learning!`);
+    }
+
+    // Effort recognition
+    if (metrics.wordsReviewed >= 20) {
+      encouragingFacts.push(`🏆 ${metrics.wordsReviewed} words reviewed - dedication pays off!`);
+    } else if (metrics.wordsReviewed >= 10) {
+      encouragingFacts.push(`👏 ${metrics.wordsReviewed} words reviewed - great effort!`);
+    }
+
+    return encouragingFacts.slice(0, 3); // Show max 3 encouraging facts
+  };
+
+  const encouragingMetrics = getEncouragingMetrics();
 
   const Content = (
     <View style={[styles.contentContainer, contentStyle]}>
@@ -71,8 +142,23 @@ const CompletionScreen: React.FC<CompletionScreenProps> = ({
             {subtitle}
           </ThemedText>
         </Section>
+
+        {/* Display encouraging metrics */}
+        {encouragingMetrics && encouragingMetrics.length > 0 && (
+          <View style={styles.metricsContainer}>
+            {encouragingMetrics.map((metric, index) => (
+              <Section key={index} delay={700 + index * 200} animated>
+                <View style={styles.metricItem}>
+                  <ThemedText type="body" variant="secondary" style={styles.metricText}>
+                    {metric}
+                  </ThemedText>
+                </View>
+              </Section>
+            ))}
+          </View>
+        )}
       </View>
-      <Section delay={700} animated>
+      <Section delay={encouragingMetrics ? 1300 : 700} animated>
         <ThemedButton
           title={buttonText}
           onPress={onClose}
@@ -141,6 +227,22 @@ const styles = StyleSheet.create({
   titleText: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'center',
+  },
+  metricsContainer: {
+    marginTop: LAYOUT.SPACING.LARGE,
+    width: '100%',
+  },
+  metricItem: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginVertical: LAYOUT.SPACING.XSMALL,
+  },
+  metricText: {
+    textAlign: 'center',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
 

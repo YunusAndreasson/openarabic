@@ -98,14 +98,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   };
 
   // Active button style - matches pill selected state
-  const activeButtonStyle = {
-    backgroundColor: colors.tint, // Sage green for active states
-    borderWidth: 0, // Remove border for cleaner pill-like appearance
-  };
 
   // Determine icon colors - matches pill text colors
   const neutralIconColor = colors.text; // Use theme text color
-  const activeIconColor = colors.background; // High contrast on tint background
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.black } : {};
 
@@ -135,7 +130,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
               onPress={onBookmarkPress}
               style={[
                 styles.iconButton,
-                isInReadingList ? activeButtonStyle : neutralButtonStyle, // Active when bookmarked
+                neutralButtonStyle, // Always use neutral style, even when bookmarked
                 styles.buttonShadow,
                 shadowColorStyle,
               ]}
@@ -146,7 +141,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
               <Ionicons
                 name={bookmarkIcon}
                 size={22}
-                color={isInReadingList ? activeIconColor : neutralIconColor}
+                color={neutralIconColor} // Always use neutral icon color
               />
             </TouchableOpacity>
           </Animated.View>
