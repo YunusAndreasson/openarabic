@@ -2,7 +2,7 @@ import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import React, { useEffect, useState, useCallback, useMemo, useRef, JSX } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
@@ -13,6 +13,7 @@ import FilterSection from '@/components/index/FilterSection';
 import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
 import { DueWordsArticleSection } from '@/components/index/DueWordsArticleSection';
+import { DifficultWordsArticleSection } from '@/components/index/DifficultWordsArticleSection';
 import { authorsService } from '@/services/authors';
 import { LAYOUT } from '@/constants/layout';
 import { useScreenFocusRefresh } from '@/hooks';
@@ -21,6 +22,7 @@ import { useColors } from '@/hooks/useColors';
 import { useStrugglingWords } from '@/hooks/useStrugglingWords';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
+import { useArticlesByDifficultWords } from '@/hooks/useArticlesByDifficultWords';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
 import { setDailyPick } from '@/store/featuredContentSlice';
@@ -37,6 +39,7 @@ import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
 
 import ErrorState from '../../components/ErrorState';
+import { ThemedText } from '@/components/ThemedText';
 
 // Define styles before components that use them
 const styles = StyleSheet.create({
@@ -63,6 +66,11 @@ export default function ArticlesScreen(): JSX.Element {
   );
 
   const {
+    hasEnoughArticles: hasEnoughDifficultArticles = false,
+    difficultWordRootIds = new Set(),
+  } = useArticlesByDifficultWords(user?.id, 10);
+
+  const {
     data: articlesData = [],
     isLoading: isArticlesLoading,
     isFetching: isArticlesFetching,
@@ -83,6 +91,20 @@ export default function ArticlesScreen(): JSX.Element {
     limit: 10,
     enabled: !!user?.id,
   });
+
+  // Check if user has any study words at all
+  const { data: allStudyWords = [] } = useQuery({
+    queryKey: ['studyWords', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { studyWordsFSRSService } = await import('@/services/studyWordsFSRS');
+      return studyWordsFSRSService.getFSRSWords(user.id);
+    },
+    enabled: !!user?.id,
+    staleTime: 300000,
+  });
+
+  const hasAnyStudyWords = allStudyWords.length > 0;
 
   useEffect(() => {
     router.setParams({
@@ -236,17 +258,38 @@ export default function ArticlesScreen(): JSX.Element {
   }, [strugglingWords, isStrugglingWordsLoading, user?.id]);
 
   const BeginnerFriendlySection = useMemo(() => {
-    if (beginnerArticles.length === 0) return null;
+    // Only show beginner articles when user has no study words at all
+    if (beginnerArticles.length === 0 || hasAnyStudyWords) return null;
 
     return (
-      <ArticleSection
-        title="Beginner Friendly"
-        articles={beginnerArticles.slice(0, 10)}
-        onArticlePress={handleArticlePress}
-        hideDifficulty={true}
-      />
+      <View style={{ marginBottom: LAYOUT.SPACING.XLARGE }}>
+        <ArticleSection
+          title="Start Your Journey"
+          articles={beginnerArticles.slice(0, 10)}
+          onArticlePress={handleArticlePress}
+          hideDifficulty={true}
+        />
+        <View
+          style={{
+            marginTop: LAYOUT.SPACING.SMALL,
+            paddingHorizontal: LAYOUT.SPACING.TINY,
+          }}
+        >
+          <ThemedText
+            type="caption"
+            colorName="textTertiary"
+            style={{
+              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+              textAlign: 'left',
+            }}
+          >
+            These beginner-friendly articles are perfect for starting your Arabic learning journey.
+            They use simpler vocabulary and shorter sentences.
+          </ThemedText>
+        </View>
+      </View>
     );
-  }, [beginnerArticles, handleArticlePress]);
+  }, [beginnerArticles, handleArticlePress, hasAnyStudyWords]);
 
   // Add Due Words Section Component
   const DueWordsSection = useMemo(() => {
@@ -262,6 +305,21 @@ export default function ArticlesScreen(): JSX.Element {
       />
     );
   }, [user?.id, handleArticlePress, dueWordRootIds]);
+
+  // Add Difficult Words Section Component
+  const DifficultWordsSection = useMemo(() => {
+    // Only show if user is logged in
+    if (!user?.id) return null;
+
+    return (
+      <DifficultWordsArticleSection
+        userId={user.id}
+        onArticlePress={handleArticlePress}
+        limit={10}
+        difficultWordRootIds={difficultWordRootIds}
+      />
+    );
+  }, [user?.id, handleArticlePress, difficultWordRootIds]);
 
   const latestArticlesForSection = useMemo(
     () => getLatestArticles(articlesData, 5, true),
@@ -324,14 +382,24 @@ export default function ArticlesScreen(): JSX.Element {
   );
 
   const ListHeaderComponent = useMemo(() => {
+    // Determine which learning section to show based on user's progress
+    let learningSection = null;
+
+    if (hasEnoughArticles) {
+      // Show due words section if user has enough articles with due words
+      learningSection = DueWordsSection;
+    } else if (hasEnoughDifficultArticles && hasAnyStudyWords) {
+      // Show difficult words section if user has study words but not enough due words
+      learningSection = DifficultWordsSection;
+    } else if (!hasAnyStudyWords) {
+      // Show beginner section only if user has no study words at all
+      learningSection = BeginnerFriendlySection;
+    }
+
     const orderedSections = [
       { id: 'daily-pick', component: DailyPick },
       { id: 'struggling-words', component: StrugglingWordsComponent },
-      // Conditionally show either DueWordsSection or BeginnerFriendlySection
-      {
-        id: 'learning-section',
-        component: hasEnoughArticles ? DueWordsSection : BeginnerFriendlySection,
-      },
+      { id: 'learning-section', component: learningSection },
       { id: 'latest-texts', component: latestTextsSectionComponent },
       { id: 'continue-reading', component: ContinueReadingSection },
       { id: 'author-filter', component: authorFilterComponent },
@@ -349,9 +417,12 @@ export default function ArticlesScreen(): JSX.Element {
     );
   }, [
     hasEnoughArticles,
+    hasEnoughDifficultArticles,
+    hasAnyStudyWords,
     DailyPick,
     StrugglingWordsComponent,
     DueWordsSection,
+    DifficultWordsSection,
     BeginnerFriendlySection,
     latestTextsSectionComponent,
     ContinueReadingSection,

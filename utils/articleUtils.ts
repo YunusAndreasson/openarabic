@@ -1,7 +1,6 @@
 import type { Article } from '../types/articles.types';
 import type { StudyWord } from '../types/vocabulary.types';
 
-
 /**
  * Filters articles by author or category ID
  * @param articles - The articles to filter
@@ -34,15 +33,14 @@ export function filterArticles(
 export function getLatestArticles(
   articles: Article[],
   limit = 10,
-  alreadySorted = false,
+  alreadySorted = false
 ): Article[] {
   if (!articles.length) return [];
 
   const sorted = alreadySorted
     ? articles
     : [...articles].sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
 
   return sorted.slice(0, limit);
@@ -153,6 +151,55 @@ export function getArticlesByDueWords(
   // Sort by due word count (highest first)
   return articlesWithDueWords
     .sort((a, b) => b.dueWordCount - a.dueWordCount)
+    .map(item => item.article)
+    .slice(0, limit);
+}
+
+/**
+ * Gets articles sorted by difficult words count - articles with more difficult words are prioritized
+ * @param articles - The articles to sort
+ * @param difficultWords - The user's difficult words (from strugglingWordsService)
+ * @param limit - The maximum number of articles to return (default: 10)
+ * @returns Articles sorted by difficult words count (highest first)
+ */
+export function getArticlesByDifficultWords(
+  articles: Article[],
+  difficultWords: StudyWord[],
+  limit = 10
+): Article[] {
+  if (!articles.length || !difficultWords.length) return [];
+
+  // Get the root IDs of difficult words
+  const difficultWordRootIds = new Set(difficultWords.map(word => word.root_id));
+
+  // Count unique difficult words in each article
+  const articlesWithDifficultWordCount = articles.map(article => {
+    // Use a set to track unique root IDs in this article
+    const uniqueDifficultRootIds = new Set<number>();
+
+    // Check each sentence in the article
+    article.article_sentences?.forEach(sentence => {
+      // Check each word in the sentence
+      sentence.sentence_words?.forEach(word => {
+        // If the word's root is in the difficult words set, add it to our unique set
+        if (word.root_id && difficultWordRootIds.has(word.root_id)) {
+          uniqueDifficultRootIds.add(word.root_id);
+        }
+      });
+    });
+
+    // Return the count of unique root IDs
+    return { article, difficultWordCount: uniqueDifficultRootIds.size };
+  });
+
+  // Filter articles that actually have difficult words
+  const articlesWithDifficultWords = articlesWithDifficultWordCount.filter(
+    item => item.difficultWordCount > 0
+  );
+
+  // Sort by difficult word count (highest first)
+  return articlesWithDifficultWords
+    .sort((a, b) => b.difficultWordCount - a.difficultWordCount)
     .map(item => item.article)
     .slice(0, limit);
 }

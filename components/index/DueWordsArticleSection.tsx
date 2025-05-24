@@ -1,14 +1,10 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import ArticleSection from '../article/ArticleSection';
 import { ThemedText } from '../ThemedText';
-import SectionTitle from '../SectionTitle';
-import { ArabicWord } from '../article/ArabicWord';
 import { useArticlesByDueWords } from '../../hooks/useArticlesByDueWords';
-import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import type { Article } from '../../types/articles.types';
-import type { SentenceWord } from '../../types/vocabulary.types';
 
 interface DueWordsArticleSectionProps {
   userId: string | undefined;
@@ -27,8 +23,7 @@ export function DueWordsArticleSection({
   limit = 10,
   dueWordRootIds = new Set(),
 }: DueWordsArticleSectionProps) {
-  const { articles, dueWordsCount, hasEnoughArticles } = useArticlesByDueWords(userId, limit);
-  const colors = useColors();
+  const { articles, hasEnoughArticles } = useArticlesByDueWords(userId, limit);
 
   // Don't render if we don't have enough articles with due words
   if (!hasEnoughArticles) {
@@ -73,16 +68,26 @@ export function DueWordsArticleSection({
         onArticlePress={onArticlePress}
         hideDifficulty={true}
       />
+      <View style={styles.explanationContainer}>
+        <ThemedText type="caption" colorName="textTertiary" style={styles.explanationText}>
+          These articles contain words that are due for review. Reading them will help reinforce
+          your vocabulary through spaced repetition.
+        </ThemedText>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    // Removed marginBottom since ArticleSection already has its own bottom margin
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  hintText: {
-    marginTop: -LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.SMALL,
+  explanationContainer: {
+    marginTop: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
+  },
+  explanationText: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+    textAlign: 'left',
   },
 });

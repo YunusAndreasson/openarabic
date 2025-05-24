@@ -1,0 +1,93 @@
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import ArticleSection from '../article/ArticleSection';
+import { ThemedText } from '../ThemedText';
+import { useArticlesByDifficultWords } from '../../hooks/useArticlesByDifficultWords';
+import { LAYOUT } from '../../constants/layout';
+import type { Article } from '../../types/articles.types';
+
+interface DifficultWordsArticleSectionProps {
+  userId: string | undefined;
+  onArticlePress: (article: Article) => void;
+  limit?: number;
+  difficultWordRootIds?: Set<number>; // Set of root IDs for words that are difficult
+}
+
+/**
+ * Section showing articles that contain difficult words for the user
+ * Uses the existing ArticleSection component for consistent UI
+ */
+export function DifficultWordsArticleSection({
+  userId,
+  onArticlePress,
+  limit = 10,
+  difficultWordRootIds = new Set(),
+}: DifficultWordsArticleSectionProps) {
+  const { articles, hasEnoughArticles } = useArticlesByDifficultWords(userId, limit);
+
+  // Don't render if we don't have enough articles with difficult words
+  if (!hasEnoughArticles) {
+    return null;
+  }
+
+  // Count UNIQUE difficult words for each article to avoid duplicates
+  const getDifficultWordCount = (article: Article): number => {
+    if (!article?.article_sentences?.length || !difficultWordRootIds.size) return 0;
+
+    // Use a Set to track unique root IDs in this article
+    const uniqueDifficultRootIds = new Set<number>();
+
+    article.article_sentences.forEach(sentence => {
+      sentence.sentence_words?.forEach(word => {
+        if (word.root_id && difficultWordRootIds.has(word.root_id)) {
+          uniqueDifficultRootIds.add(word.root_id);
+        }
+      });
+    });
+
+    // Return the count of unique root IDs
+    return uniqueDifficultRootIds.size;
+  };
+
+  // Create a render function that includes the difficult word count
+  const renderArticleWithDifficultCount = (article: Article) => {
+    // Calculate difficult word count for this article
+    const difficultWordCount = getDifficultWordCount(article);
+
+    return {
+      ...article,
+      dueWordCount: difficultWordCount, // Reuse the dueWordCount field for display
+    };
+  };
+
+  return (
+    <View style={styles.container}>
+      <ArticleSection
+        title="Challenge Yourself"
+        articles={articles.map(renderArticleWithDifficultCount)}
+        onArticlePress={onArticlePress}
+        hideDifficulty={true}
+      />
+      <View style={styles.explanationContainer}>
+        <ThemedText type="caption" colorName="textTertiary" style={styles.explanationText}>
+          These articles contain words you're struggling with. Reading them will help reinforce
+          difficult vocabulary through context and repetition.
+        </ThemedText>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  explanationContainer: {
+    marginTop: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.TINY,
+  },
+  explanationText: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
+    textAlign: 'left',
+  },
+});

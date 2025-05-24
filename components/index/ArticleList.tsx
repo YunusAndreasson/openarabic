@@ -1,7 +1,16 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import type { ListRenderItem, ContentStyle } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import React, { useCallback, useMemo, useRef, forwardRef, useImperativeHandle, memo } from 'react';
+import React, {
+  useCallback,
+  useMemo,
+  useRef,
+  forwardRef,
+  useImperativeHandle,
+  memo,
+  useDeferredValue,
+  useTransition,
+} from 'react';
 import { StyleSheet, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,6 +32,15 @@ interface ArticleItemProps {
 }
 
 const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
+  const [isPending, startTransition] = useTransition();
+
+  const handlePress = useCallback(() => {
+    // Use transition for non-urgent navigation
+    startTransition(() => {
+      onPress(item);
+    });
+  }, [item, onPress]);
+
   return (
     <ThemedCard
       variant="article"
@@ -30,8 +48,8 @@ const ArticleItem = memo(({ item, onPress }: ArticleItemProps) => {
       title={item.title}
       category={item.category?.name ?? 'Uncategorized'}
       author={item.author?.name ?? 'Anonymous'}
-      onPress={() => onPress(item)}
-      style={styles.articleCard}
+      onPress={handlePress}
+      style={[styles.articleCard, isPending && styles.pendingCard]}
       shadowSize="medium"
     />
   );
@@ -60,6 +78,10 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const listRef = useRef<FlashList<Article>>(null);
     const insets = useSafeAreaInsets();
     const headerHeight = useHeaderHeight();
+    const [isPending, startTransition] = useTransition();
+
+    // Defer articles data to prevent blocking during heavy operations
+    const deferredArticles = useDeferredValue(articles);
 
     useImperativeHandle(ref, () => listRef.current as FlashList<Article>, []);
 
@@ -70,11 +92,20 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [onArticlePress]
     );
 
+    // Optimized refresh control with transitions
+    const handleRefreshWithTransition = useCallback(() => {
+      if (onRefresh) {
+        startTransition(() => {
+          onRefresh();
+        });
+      }
+    }, [onRefresh]);
+
     const refreshControl = useMemo(
       () => (
         <RefreshControl
           refreshing={isRefreshing}
-          onRefresh={onRefresh}
+          onRefresh={handleRefreshWithTransition}
           colors={[colors.tint]}
           tintColor={colors.tint}
           progressBackgroundColor={colors.background}
@@ -89,11 +120,18 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
           }
         />
       ),
-      [isRefreshing, onRefresh, colors.tint, colors.background, headerHeight, progressViewOffset]
+      [
+        isRefreshing,
+        handleRefreshWithTransition,
+        colors.tint,
+        colors.background,
+        headerHeight,
+        progressViewOffset,
+      ]
     );
 
     const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
-    const displayData = shouldHideContent ? [] : articles;
+    const displayData = shouldHideContent ? [] : deferredArticles;
     const displayHeader = shouldHideContent ? null : ListHeaderComponent;
 
     const safeContentContainerStyle = useMemo(
@@ -104,26 +142,48 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       [contentContainerStyle, insets]
     );
 
-    return (
-      <FlashList
-        ref={listRef}
-        data={displayData}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        estimatedItemSize={ITEM_HEIGHT}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={safeContentContainerStyle}
-        ListHeaderComponent={displayHeader}
-        ListEmptyComponent={isLoading ? null : ListEmptyComponent}
-        refreshControl={refreshControl}
-        scrollEventThrottle={16}
-        overrideItemLayout={(layout, _item) => {
+    // Enhanced FlashList configuration for React Native 0.79
+    const flashListConfig = useMemo(
+      () => ({
+        data: displayData,
+        renderItem,
+        keyExtractor,
+        estimatedItemSize: ITEM_HEIGHT,
+        showsVerticalScrollIndicator: false,
+        contentContainerStyle: safeContentContainerStyle,
+        ListHeaderComponent: displayHeader,
+        ListEmptyComponent: isLoading ? null : ListEmptyComponent,
+        refreshControl,
+        scrollEventThrottle: 16,
+        overrideItemLayout: (layout: any, _item: Article) => {
           layout.size = ITEM_HEIGHT;
-        }}
-        drawDistance={DRAW_DISTANCE}
-        estimatedListSize={ESTIMATED_LIST_SIZE}
-      />
+        },
+        drawDistance: DRAW_DISTANCE,
+        estimatedListSize: ESTIMATED_LIST_SIZE,
+        // React Native 0.79 optimizations
+        removeClippedSubviews: true,
+        maxToRenderPerBatch: 10,
+        windowSize: 10,
+        initialNumToRender: 5,
+        updateCellsBatchingPeriod: 50,
+        // Performance optimizations
+        disableIntervalMomentum: true,
+        disableScrollViewPanResponder: false,
+        keyboardShouldPersistTaps: 'handled' as const,
+      }),
+      [
+        displayData,
+        renderItem,
+        keyExtractor,
+        safeContentContainerStyle,
+        displayHeader,
+        ListEmptyComponent,
+        isLoading,
+        refreshControl,
+      ]
     );
+
+    return <FlashList ref={listRef} {...flashListConfig} />;
   }
 );
 
@@ -133,6 +193,9 @@ const styles = StyleSheet.create({
   articleCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     overflow: 'hidden',
+  },
+  pendingCard: {
+    opacity: 0.7,
   },
   container: {
     flex: 1,
