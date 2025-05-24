@@ -48,10 +48,13 @@ export const WordTooltip = memo(
     useEffect(() => {
       if (visible) {
         fadeIn();
+
+        // Auto-close tooltip after a delay
         const timer = setTimeout(handleClose, LAYOUT.ANIMATION.DURATION.SLOW * 3);
         return () => clearTimeout(timer);
+      } else {
+        handleClose();
       }
-      handleClose();
       return () => {};
     }, [visible, fadeIn, handleClose]);
 

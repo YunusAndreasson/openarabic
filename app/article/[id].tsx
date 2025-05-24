@@ -211,6 +211,7 @@ export default function ArticleScreen(): JSX.Element {
 
   // Add a ref to track the last scrolled word to prevent cycles
   const lastScrolledWordIdRef = useRef<number | null>(null);
+  const lastScrolledSentenceIdRef = useRef<number | null>(null);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -228,27 +229,35 @@ export default function ArticleScreen(): JSX.Element {
       return;
     }
 
+    // Only scroll if we've moved to a different sentence, not on every word change
+    if (word.sentence_id === lastScrolledSentenceIdRef.current) {
+      lastScrolledWordIdRef.current = currentWordId;
+      return;
+    }
+
     // Clear any existing timeout
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
     }
 
-    // Track this word ID to prevent multiple scrolls
+    // Track this word ID and sentence ID to prevent multiple scrolls
     lastScrolledWordIdRef.current = currentWordId;
+    lastScrolledSentenceIdRef.current = word.sentence_id;
 
     // Debounce the scroll to prevent excessive scrolling during rapid word changes
     scrollTimeoutRef.current = setTimeout(() => {
       if (articleContentRef.current) {
         articleContentRef.current.scrollToSentence(word.sentence_id);
       }
-    }, 100); // Small delay to batch rapid changes
+    }, 150); // Slightly longer delay to let sentence-level scrolling take precedence
 
     // Reset the tracking after a delay to allow future scrolls to the same word if needed
     const resetTimer = setTimeout(() => {
       if (lastScrolledWordIdRef.current === currentWordId) {
         lastScrolledWordIdRef.current = null;
       }
-    }, 1500); // Increased timeout for better stability
+      // Don't reset sentence tracking as aggressively
+    }, 2000); // Longer timeout for better stability
 
     return () => {
       clearTimeout(resetTimer);
@@ -535,18 +544,6 @@ export default function ArticleScreen(): JSX.Element {
     ]
   );
 
-  const renderArticleCard = useCallback(
-    (articleData: Article) => (
-      <ThemedCard
-        key={articleData.id}
-        variant="compact"
-        article={articleData}
-        onPress={() => handleArticlePress(Number(articleData.id), true)}
-      />
-    ),
-    [handleArticlePress]
-  );
-
   const handleStopPlayback = useCallback(async () => {
     try {
       pausedAudioStateRef.current = {
@@ -669,6 +666,11 @@ export default function ArticleScreen(): JSX.Element {
       audioPositionMs: 0,
     };
     isNavigatingRef.current = false;
+
+    // Reset scroll tracking when article changes
+    lastScrolledWordIdRef.current = null;
+    lastScrolledSentenceIdRef.current = null;
+
     dispatch(
       updateAudioState({
         wordId: null,
@@ -695,7 +697,6 @@ export default function ArticleScreen(): JSX.Element {
             handleScroll={handleScroll}
             colors={colors}
             otherArticles={otherArticles}
-            currentPlayingSentenceId={currentSentenceId}
             handleArticlePress={(articleId, isRelated) =>
               handleArticlePress(Number(articleId), isRelated)
             }

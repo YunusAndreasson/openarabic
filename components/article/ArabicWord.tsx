@@ -180,7 +180,7 @@ function ArabicWordComponent({
     setTooltipVisible(false);
   }, []);
 
-  // Show tooltip on quick press with fade animation
+  // Show tooltip on quick press with fade animation (manual trigger)
   const handlePress = useCallback(() => {
     if (!layout) return;
 
@@ -269,13 +269,13 @@ const styles = StyleSheet.create({
   textStyle: {
     textAlign: 'center',
   },
-    wordContainer: {
-      alignItems: 'center',
-      borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-      justifyContent: 'center',
-      paddingHorizontal: LAYOUT.SPACING.MICRO,
-      paddingVertical: 4,
-    },
+  wordContainer: {
+    alignItems: 'center',
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.MICRO,
+    paddingVertical: 4,
+  },
   wordView: {},
 });
 

@@ -73,7 +73,6 @@ interface ArticleContentProps {
   colors: ThemeColors;
   footerStyle?: AnimatedStyleProp<ViewStyle>;
   otherArticles?: Article[];
-  currentPlayingSentenceId?: number | null;
   handleArticlePress: (articleId: string, isCompact: boolean) => void;
   // Button action props
   onBackPress?: () => void;
@@ -99,7 +98,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       colors,
       footerStyle,
       otherArticles,
-      currentPlayingSentenceId,
       handleArticlePress,
       // Button action props
       onBackPress,
@@ -114,8 +112,8 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     ref
   ): JSX.Element => {
     const insets = useSafeAreaInsets();
-    const headerHeight = useHeaderHeight();
     const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
+    const isScrollingRef = useRef(false);
     const { scrollToSentence: scrollToSentenceParam } = useLocalSearchParams<{
       scrollToSentence?: string;
       highlightWord?: string;
@@ -136,55 +134,69 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
       [scrollY, handleScroll]
     );
 
-    // Expose the scrollToSentence method to the parent component
-    useImperativeHandle(
-      ref,
-      () => ({
-        scrollToSentence: (sentenceId: number) => {
-          if (sortedSentences) {
-            const sentenceIndex = sortedSentences.findIndex(s => s.id === sentenceId);
-            if (sentenceIndex !== -1) {
-              scrollToIndex(sentenceIndex);
+    // Helper function to scroll to an index with consistent parameters
+    const scrollToIndex = useCallback(
+      (index: number) => {
+        // Don't scroll if already scrolling to prevent conflicts
+        if (isScrollingRef.current) return;
+
+        isScrollingRef.current = true;
+
+        // Reduce delay for more responsive scrolling
+        setTimeout(() => {
+          if (!flashListRef.current) {
+            isScrollingRef.current = false;
+            return;
+          }
+
+          try {
+            // The parallax header is always present, so we need to account for it for all sentences
+            // Calculate the total header area that needs to be cleared
+            const parallaxHeaderHeight = HEADER_IMAGE_HEIGHT;
+            const stickyButtonsHeight =
+              insets.top + LAYOUT.BUTTON.HEIGHT.MEDIUM + LAYOUT.SPACING.MEDIUM;
+
+            // For all sentences, we need to clear both the parallax header and sticky buttons
+            // The first sentence needs extra spacing, others need less
+            const baseOffset = parallaxHeaderHeight + stickyButtonsHeight;
+            const viewOffset =
+              index === 0
+                ? baseOffset + LAYOUT.SPACING.LARGE // Extra spacing for first sentence
+                : baseOffset + LAYOUT.SPACING.SMALL; // Less spacing for subsequent sentences
+
+            flashListRef.current.scrollToIndex({
+              index: index,
+              animated: true,
+              viewPosition: 0.05, // Position sentence very close to top for maximum visibility
+              viewOffset: viewOffset,
+            });
+          } catch (error) {
+            // Enhanced fallback with better error handling
+            if (sortedSentences && sortedSentences.length > 0) {
+              const targetIndex = Math.min(index, sortedSentences.length - 1);
+              const fallbackOffset =
+                HEADER_IMAGE_HEIGHT +
+                insets.top +
+                LAYOUT.BUTTON.HEIGHT.MEDIUM +
+                LAYOUT.SPACING.LARGE;
+
+              flashListRef.current?.scrollToItem({
+                item: sortedSentences[targetIndex],
+                animated: true,
+                viewPosition: 0.05,
+                viewOffset: fallbackOffset,
+              });
             }
           }
-        },
-      }),
-      [sortedSentences]
+
+          // Reset scrolling flag after animation completes
+          setTimeout(() => {
+            isScrollingRef.current = false;
+          }, 300);
+        }, 50); // Reduced delay for more responsive scrolling
+      },
+      [sortedSentences, insets.top]
     );
-
-    // Helper function to scroll to an index with consistent parameters
-    const scrollToIndex = (index: number) => {
-      // Reduce delay for more responsive scrolling
-      setTimeout(() => {
-        if (!flashListRef.current) return;
-
-        try {
-          flashListRef.current.scrollToIndex({
-            index: index,
-            animated: true,
-            viewPosition: 0.25, // Adjusted for better positioning
-            // Improved offset calculation for better visibility
-            viewOffset:
-              index === 0
-                ? headerHeight +
-                  LAYOUT.SPACING.MEDIUM +
-                  LAYOUT.SPACING.XLARGE +
-                  LAYOUT.BUTTON.HEIGHT.MEDIUM
-                : LAYOUT.SPACING.MEDIUM, // Add small offset for non-first sentences
-          });
-        } catch (error) {
-          // Enhanced fallback with better error handling
-          if (sortedSentences && sortedSentences.length > 0) {
-            const targetIndex = Math.min(index, sortedSentences.length - 1);
-            flashListRef.current?.scrollToItem({
-              item: sortedSentences[targetIndex],
-              animated: true,
-              viewPosition: 0.25,
-            });
-          }
-        }
-      }, 50); // Reduced delay for more responsive scrolling
-    };
 
     // Effect to scroll to the specified sentence when the component mounts
     useEffect(() => {
@@ -197,16 +209,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
         }
       }
     }, [scrollToSentenceParam, sortedSentences]);
-
-    // Effect to scroll to the currently playing sentence
-    useEffect(() => {
-      if (currentPlayingSentenceId && sortedSentences) {
-        const sentenceIndex = sortedSentences.findIndex(s => s.id === currentPlayingSentenceId);
-        if (sentenceIndex !== -1) {
-          scrollToIndex(sentenceIndex);
-        }
-      }
-    }, [currentPlayingSentenceId, sortedSentences]);
 
     // Animated style for the sticky buttons header
     const stickyButtonsStyle = useAnimatedStyle(() => {
@@ -265,6 +267,22 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
         </>
       ),
       [article, otherArticles, footerStyle, handleArticlePress]
+    );
+
+    // Expose the scrollToSentence method to the parent component
+    useImperativeHandle(
+      ref,
+      () => ({
+        scrollToSentence: (sentenceId: number) => {
+          if (sortedSentences) {
+            const sentenceIndex = sortedSentences.findIndex(s => s.id === sentenceId);
+            if (sentenceIndex !== -1) {
+              scrollToIndex(sentenceIndex);
+            }
+          }
+        },
+      }),
+      [sortedSentences, scrollToIndex]
     );
 
     return (
