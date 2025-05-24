@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cardContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
     position: 'relative',
   },
   cardContent: {

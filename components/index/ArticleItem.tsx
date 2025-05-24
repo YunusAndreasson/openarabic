@@ -9,9 +9,10 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 interface ArticleItemProps {
   article: Article;
   onPress: (article: Article) => void;
+  isLast?: boolean;
 }
 
-const ArticleItem = memo(({ article, onPress }: ArticleItemProps): JSX.Element => {
+const ArticleItem = memo(({ article, onPress, isLast = false }: ArticleItemProps): JSX.Element => {
   const categoryName = article.category?.name
     ? capitalizeFirstLetter(article.category.name)
     : 'Uncategorized';
@@ -27,6 +28,7 @@ const ArticleItem = memo(({ article, onPress }: ArticleItemProps): JSX.Element =
         </ThemedText>
       }
       onPress={() => onPress(article)}
+      containerStyle={isLast ? { marginBottom: 0 } : undefined}
     />
   );
 });

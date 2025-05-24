@@ -8,11 +8,10 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   horizontalList: {
-    paddingVertical: LAYOUT.SPACING.TINY,
-    paddingLeft: LAYOUT.SPACING.TINY,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
 });
 

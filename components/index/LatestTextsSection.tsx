@@ -9,7 +9,7 @@ import ArticleItem from './ArticleItem';
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
 });
 
@@ -23,8 +23,13 @@ const LatestTextsSection = memo(
     return (
       <View style={styles.sectionContainer}>
         <SectionTitle title="Latest Texts" />
-        {articles.map(article => (
-          <ArticleItem key={article.id} article={article} onPress={onArticlePress} />
+        {articles.map((article, index) => (
+          <ArticleItem
+            key={article.id}
+            article={article}
+            onPress={onArticlePress}
+            isLast={index === articles.length - 1}
+          />
         ))}
       </View>
     );

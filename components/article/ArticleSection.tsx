@@ -101,7 +101,7 @@ ArticleSection.displayName = 'ArticleSection';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   loadingContainer: {
     alignItems: 'center',
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   scrollContent: {
-    paddingRight: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
   articleCard: {
     marginRight: LAYOUT.SPACING.MEDIUM,

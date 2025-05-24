@@ -199,7 +199,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <SectionTitle title="Difficult Words" />
+        <SectionTitle title="Difficult Words" isFirstSection={true} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
         </View>
@@ -213,7 +213,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
 
   return (
     <View style={styles.container}>
-      <SectionTitle title="Difficult Words" />
+      <SectionTitle title="Difficult Words" isFirstSection={true} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -231,12 +231,10 @@ StrugglingWordsSection.displayName = 'StrugglingWordsSection';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   scrollContent: {
-    paddingVertical: LAYOUT.SPACING.TINY,
     paddingRight: LAYOUT.SPACING.MEDIUM,
-    paddingLeft: LAYOUT.SPACING.TINY,
   },
   wordCard: {
     width: 145,

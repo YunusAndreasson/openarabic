@@ -1,12 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
 
 import { LAYOUT } from '../../constants/layout';
-import Section from '../Section';
 import ThemedCard from '../ThemedCard';
 
 interface DailyPickSectionProps {
@@ -61,12 +60,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   if (!article) return null;
 
   return (
-    <Section
-      title={showTitle ? 'Daily Pick' : undefined}
-      style={styles.container}
-      showTitle={false}
-      paddingHorizontal={false}
-    >
+    <View style={styles.container}>
       <ThemedCard
         variant="article"
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
@@ -78,7 +72,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         style={styles.cardStyle}
         fullSummary={true}
       />
-    </Section>
+    </View>
   );
 };
 
@@ -88,7 +82,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15, // Slightly increased shadow for emphasis
   },
   container: {
-    marginBottom: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
     marginTop: 0,
   },
 });
