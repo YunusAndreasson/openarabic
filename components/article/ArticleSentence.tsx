@@ -194,14 +194,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export const ArticleSentence = memo(ArticleSentenceComponent, (prevProps, nextProps) => {
-  if (prevProps.currentPlayingSentenceId !== nextProps.currentPlayingSentenceId) return false;
-  if (prevProps.currentPlayingWordId !== nextProps.currentPlayingWordId) return false;
-  if (prevProps.currentPlayingPosition !== nextProps.currentPlayingPosition) return false;
-  if (prevProps.sentence.id !== nextProps.sentence.id) return false;
-  if (prevProps.settings.showEnglish !== nextProps.settings.showEnglish) return false;
-  if (prevProps.settings.showTransliteration !== nextProps.settings.showTransliteration)
-    return false;
-  if (prevProps.words !== nextProps.words) return false;
-  return true;
-});
+export const ArticleSentence = ArticleSentenceComponent;

@@ -27,6 +27,7 @@ import {
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { updateAudioState } from '@/store/audioSlice';
+import { setShowEnglish } from '@/store/settingsSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -395,6 +396,13 @@ export default function ArticleScreen(): JSX.Element {
     }
   }, [articleId, isInReadingList, handleToggleReadingList]);
 
+  const [showEnglishLocal, setShowEnglishLocal] = useState(true);
+
+  const handleEnglishToggle = useCallback(() => {
+    lightFeedback();
+    setShowEnglishLocal(!showEnglishLocal);
+  }, [showEnglishLocal]);
+
   const handleBackPress = useCallback(() => {
     if (isPlaying) {
       stopPlayback().catch(error => {
@@ -465,6 +473,15 @@ export default function ArticleScreen(): JSX.Element {
     (props: { item: Tables<'article_sentences'> }) => {
       const words = getWordsForSentence(props.item.id);
       const isCurrentSentence = props.item.id === currentSentenceId;
+
+      // Create stable settings object
+      const sentenceSettings = {
+        showEnglish: showEnglishLocal,
+        fontScale: settings.fontScale,
+        showTransliteration: false,
+        showWordType: false,
+      };
+
       return (
         <ArticleSentence
           key={props.item.id}
@@ -476,11 +493,7 @@ export default function ArticleScreen(): JSX.Element {
           }}
           words={words}
           renderWord={renderWord}
-          settings={{
-            ...settings,
-            showTransliteration: false,
-            showWordType: false,
-          }}
+          settings={sentenceSettings}
           colors={colors}
           containerStyle={styles.transparentBackground}
           currentPlayingSentenceId={isCurrentSentence ? currentSentenceId : null}
@@ -492,7 +505,8 @@ export default function ArticleScreen(): JSX.Element {
     [
       getWordsForSentence,
       renderWord,
-      settings,
+      showEnglishLocal,
+      settings.fontScale,
       colors,
       styles.transparentBackground,
       currentSentenceId,
@@ -715,8 +729,11 @@ export default function ArticleScreen(): JSX.Element {
             onBackPress={handleBackPress}
             onBookmarkPress={handleBookmarkPress}
             onPlayPress={handlePlayPress}
+            onEnglishToggle={handleEnglishToggle}
             isInReadingList={isInReadingList}
             isPlaying={isPlaying}
+            showEnglish={showEnglishLocal}
+            englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
             user={user}
             isDarkMode={isDarkMode}
           />

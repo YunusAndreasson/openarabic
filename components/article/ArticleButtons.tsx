@@ -12,11 +12,14 @@ interface ArticleButtonsProps {
   onBackPress: () => void;
   onBookmarkPress: () => void;
   onPlayPress: () => void;
+  onEnglishToggle: () => void;
   isInReadingList?: boolean;
   initialBookmarkIcon: 'bookmark-outline' | 'bookmark';
   isPlaying: boolean;
+  showEnglish: boolean;
   backButtonStyle?: AnimatedStyleProp<ViewStyle>;
   bookmarkButtonStyle?: AnimatedStyleProp<ViewStyle>;
+  englishButtonStyle?: AnimatedStyleProp<ViewStyle>;
   playButtonStyle?: AnimatedStyleProp<ViewStyle>;
   colors: ThemeColors;
   user: any;
@@ -73,11 +76,14 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   onBackPress,
   onBookmarkPress,
   onPlayPress,
+  onEnglishToggle,
   isInReadingList,
   initialBookmarkIcon,
   isPlaying,
+  showEnglish,
   backButtonStyle,
   bookmarkButtonStyle,
+  englishButtonStyle,
   playButtonStyle,
   colors,
   user,
@@ -97,10 +103,9 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
     borderWidth: 0, // Remove border for cleaner pill-like appearance
   };
 
-  // Active button style - matches pill selected state
-
   // Determine icon colors - matches pill text colors
   const neutralIconColor = colors.text; // Use theme text color
+  const activeIconColor = colors.tint; // Use theme tint color for active state
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.black } : {};
 
@@ -146,6 +151,28 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
             </TouchableOpacity>
           </Animated.View>
         )}
+
+        {/* English Toggle Button */}
+        <Animated.View style={englishButtonStyle}>
+          <TouchableOpacity
+            onPress={onEnglishToggle}
+            style={[
+              styles.iconButton,
+              neutralButtonStyle, // Always use neutral style like other buttons
+              styles.buttonShadow,
+              shadowColorStyle,
+            ]}
+            accessibilityLabel={
+              showEnglish ? 'Hide English translation' : 'Show English translation'
+            }
+          >
+            <Ionicons
+              name={showEnglish ? 'document-text' : 'document-text-outline'}
+              size={22}
+              color={neutralIconColor}
+            />
+          </TouchableOpacity>
+        </Animated.View>
 
         <Animated.View style={playButtonStyle}>
           <TouchableOpacity
