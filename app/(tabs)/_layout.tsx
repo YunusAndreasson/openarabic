@@ -15,7 +15,6 @@ import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-
 import { useAuth } from '../../hooks/useAuth';
 
 const TAB_SCREENS = [
@@ -48,10 +47,6 @@ const TAB_SCREENS = [
 const ICON_SIZE = 24;
 const BLUR_INTENSITY = 55;
 
-const LIGHT_MODE_SHADOW_COLOR = Colors.light.borderOverlay;
-const LIGHT_MODE_SHADOW_OPACITY = 1;
-const LIGHT_MODE_SHADOW_RADIUS = 10;
-
 type PlatformStyle = {
   shadowOffset?: { width: number; height: number };
   shadowOpacity?: number;
@@ -76,8 +71,8 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
           }
         : {
             shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: LIGHT_MODE_SHADOW_OPACITY,
-            shadowRadius: LIGHT_MODE_SHADOW_RADIUS,
+            shadowOpacity: 1,
+            shadowRadius: 10,
             borderTopWidth: StyleSheet.hairlineWidth,
           },
       android: {
@@ -104,11 +99,14 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       borderTopColor: colors.borderOverlay,
       ...(Platform.OS === 'ios'
         ? {
-            shadowColor: isDarkMode ? colors.shadow : LIGHT_MODE_SHADOW_COLOR,
+            shadowColor: isDarkMode ? colors.shadow : Colors.light.borderOverlay,
           }
-        : { backgroundColor: colors.background }),
+        : {
+            backgroundColor: colors.background,
+            borderTopColor: colors.border,
+          }),
     }),
-    [colors.shadow, colors.background, colors.borderOverlay, bottomInset, isDarkMode]
+    [colors.shadow, colors.background, colors.borderOverlay, colors.border, bottomInset, isDarkMode]
   );
 
   const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
@@ -125,8 +123,11 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       ...styles.label,
       ...styles.labelPlatform,
       color: isFocused ? colors.tint : colors.tabIconDefault,
+      textShadowColor: isDarkMode ? colors.textShadowLight : colors.textShadowDark,
+      textShadowOffset: { width: 0, height: 0.5 },
+      textShadowRadius: 1,
     }),
-    [colors.tint, colors.tabIconDefault]
+    [colors.tint, colors.tabIconDefault, colors.textShadowDark, colors.textShadowLight, isDarkMode]
   );
 
   const rippleColor = useMemo(() => colors.navigationRipple, [colors.navigationRipple]);
@@ -150,6 +151,21 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 
   return (
     <TabBarContainer style={containerStyle} {...blurProps}>
+      {/* Match header overlay implementation exactly */}
+      {Platform.OS === 'android' ? (
+        // Android: Add BlurView + overlay inside View container (like header)
+        <>
+          <BlurView
+            tint={isDarkMode ? 'dark' : 'light'}
+            intensity={BLUR_INTENSITY}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
+        </>
+      ) : (
+        // iOS: Simple overlay inside BlurView container (like header)
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
+      )}
       {state.routes.map((route, index) => {
         const descriptor = descriptors[route.key];
         if (!descriptor) return null;
@@ -174,7 +190,14 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
               name={isFocused ? screen.iconFilled : screen.iconOutline}
               size={ICON_SIZE}
               color={isFocused ? colors.tint : colors.tabIconDefault}
-              style={isFocused ? styles.activeIcon : styles.inactiveIcon}
+              style={[
+                isFocused ? styles.activeIcon : styles.inactiveIcon,
+                {
+                  textShadowColor: isDarkMode ? colors.textShadowLight : colors.textShadowDark,
+                  textShadowOffset: { width: 0, height: 0.5 },
+                  textShadowRadius: 1,
+                },
+              ]}
             />
             <ThemedText style={getTabButtonStyle(isFocused)} skipDefaultColor>
               {label}
@@ -191,7 +214,6 @@ CustomTabBar.displayName = 'CustomTabBar';
 const CustomHeaderBackground = () => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
-  const overlayColor = colors.headerOverlay;
 
   if (Platform.OS === 'android') {
     return (
@@ -201,7 +223,7 @@ const CustomHeaderBackground = () => {
           intensity={BLUR_INTENSITY}
           style={StyleSheet.absoluteFill}
         />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: overlayColor }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.headerOverlay }]} />
       </View>
     );
   }
@@ -231,7 +253,6 @@ const HEADER_STYLE = {
 export default function TabLayout(): JSX.Element | null {
   const { session, isLoading } = useAuth();
   const colors = useColors();
-  const isDarkMode = useIsDarkMode();
 
   // Memoize headerBackground to avoid inline function recreation
   const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
@@ -239,25 +260,18 @@ export default function TabLayout(): JSX.Element | null {
   const screenOptions = useMemo(
     () => ({
       headerShown: true,
-      tabBarActiveTintColor: colors.tint,
-      tabBarInactiveTintColor: colors.tabIconDefault,
-      tabBarHideOnKeyboard: true,
-      tabBarShowLabel: true,
-      tabBarLabelStyle: styles.tabBarLabel,
-
-      // Tab animation optimizations
-      freezeOnBlur: true,
-      animation: 'fade' as const,
-      lazy: true,
-
       // Header customization
       headerTitleAlign: 'left' as const,
       headerTitleStyle: HEADER_TITLE_STYLE,
       headerStyle: HEADER_STYLE,
-      headerBackground: headerBackground, // Use memoized function
+      headerBackground: headerBackground,
       headerTransparent: true,
+      // Tab animation optimizations
+      freezeOnBlur: true,
+      animation: 'fade' as const,
+      lazy: true,
     }),
-    [colors.tint, colors.tabIconDefault, isDarkMode, headerBackground]
+    [headerBackground]
   );
 
   useEffect(() => {
@@ -320,18 +334,6 @@ const styles = StyleSheet.create({
       paddingBottom: LAYOUT.SPACING.MICRO,
     },
   }) as TextStyle,
-  tabBarLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    ...Platform.select({
-      ios: {
-        marginBottom: LAYOUT.SPACING.TINY,
-        fontWeight: '500',
-      },
-      android: {
-        paddingBottom: LAYOUT.SPACING.MICRO,
-      },
-    }),
-  } as TextStyle,
   tabButton: {
     alignItems: 'center',
     flex: 1,

@@ -61,7 +61,7 @@ export const Colors = {
     // Navigation branding colors
     navigationRipple: 'rgba(47, 125, 50, 0.10)', // Refined forest green ripple for navigation elements
     headerOverlay: 'rgba(248, 250, 249, 0.94)', // Slightly green-tinted header overlay
-    tabBarOverlay: 'rgba(248, 250, 249, 0.98)', // Very subtle green undertone for tab bar
+    tabBarOverlay: 'rgba(248, 250, 249, 0.85)', // Balanced opacity for blur visibility with good contrast
 
     // Semantic UI colors for better UX
     progressIndicator: '#5B7C8D', // Muted blue-gray - distinct from action colors
@@ -129,7 +129,7 @@ export const Colors = {
     // Navigation branding colors
     navigationRipple: 'rgba(82, 197, 90, 0.12)', // Sophisticated bright green ripple for navigation elements
     headerOverlay: 'rgba(14, 19, 16, 0.92)', // Slightly green-tinted header overlay
-    tabBarOverlay: 'rgba(14, 19, 16, 0.96)', // Very subtle green undertone for tab bar
+    tabBarOverlay: 'rgba(14, 19, 16, 0.85)', // Balanced opacity for blur visibility with good contrast
 
     // Semantic UI colors for better UX
     progressIndicator: '#7A9CAD', // Muted blue with green undertones - distinct from action colors
