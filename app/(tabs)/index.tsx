@@ -40,7 +40,6 @@ import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
 
 import ErrorState from '../../components/ErrorState';
-import { ThemedText } from '@/components/ThemedText';
 
 // Define styles before components that use them
 const styles = StyleSheet.create({
@@ -270,24 +269,6 @@ export default function ArticlesScreen(): JSX.Element {
           onArticlePress={handleArticlePress}
           hideDifficulty={true}
         />
-        <View
-          style={{
-            marginTop: LAYOUT.SPACING.SMALL,
-            paddingHorizontal: LAYOUT.SPACING.TINY,
-          }}
-        >
-          <ThemedText
-            type="caption"
-            colorName="textTertiary"
-            style={{
-              lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
-              textAlign: 'left',
-            }}
-          >
-            These beginner-friendly articles are perfect for starting your Arabic learning journey.
-            They use simpler vocabulary and shorter sentences.
-          </ThemedText>
-        </View>
       </View>
     );
   }, [beginnerArticles, handleArticlePress, hasAnyStudyWords]);

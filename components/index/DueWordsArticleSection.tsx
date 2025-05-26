@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import ArticleSection from '../article/ArticleSection';
-import { ThemedText } from '../ThemedText';
 import { useArticlesByDueWords } from '../../hooks/useArticlesByDueWords';
 import { LAYOUT } from '../../constants/layout';
 import type { Article } from '../../types/articles.types';
@@ -68,12 +67,6 @@ export function DueWordsArticleSection({
         onArticlePress={onArticlePress}
         hideDifficulty={true}
       />
-      <View style={styles.explanationContainer}>
-        <ThemedText type="caption" colorName="textTertiary" style={styles.explanationText}>
-          These articles contain words that are due for review. Reading them will help reinforce
-          your vocabulary through spaced repetition.
-        </ThemedText>
-      </View>
     </View>
   );
 }
@@ -81,13 +74,5 @@ export function DueWordsArticleSection({
 const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  explanationContainer: {
-    marginTop: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.TINY,
-  },
-  explanationText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.4,
-    textAlign: 'left',
   },
 });

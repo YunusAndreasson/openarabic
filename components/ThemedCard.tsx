@@ -368,6 +368,15 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
             </ThemedText>
           </View>
 
+          {/* Author information for compact cards */}
+          {article?.author ? (
+            <View style={styles.authorContainer}>
+              <ThemedText type="caption" colorName="textTertiary" numberOfLines={1}>
+                {article.author.name}
+              </ThemedText>
+            </View>
+          ) : null}
+
           {/* Due word count indicator as simple text with icon */}
           {isCompactVariant(props) && props.dueWordCount ? (
             <View
