@@ -14,6 +14,7 @@ import LatestTextsSection from '@/components/index/LatestTextsSection';
 import StrugglingWordsSection from '@/components/index/StrugglingWordsSection';
 import { DueWordsArticleSection } from '@/components/index/DueWordsArticleSection';
 import { DifficultWordsArticleSection } from '@/components/index/DifficultWordsArticleSection';
+import { LongReadsSection } from '@/components/index/LongReadsSection';
 import { WelcomeMessage } from '@/components/index/WelcomeMessage';
 import { authorsService } from '@/services/authors';
 import { LAYOUT } from '@/constants/layout';
@@ -35,6 +36,7 @@ import {
   getLatestArticles,
   getBeginnerArticles,
   getDailyPickArticle,
+  getFreshDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
@@ -178,6 +180,17 @@ export default function ArticlesScreen(): JSX.Element {
     setIsRefreshing(true);
 
     try {
+      // Force a new daily pick on refresh
+      if (articlesData.length > 0) {
+        const freshDailyPick = getFreshDailyPickArticle(articlesData);
+        if (freshDailyPick?.id) {
+          const today = new Date().toISOString().split('T')[0];
+          if (today) {
+            dispatch(setDailyPick({ articleId: Number(freshDailyPick.id), date: today }));
+          }
+        }
+      }
+
       await queryClient.invalidateQueries({
         predicate: query => {
           const key = query.queryKey[0];
@@ -194,7 +207,7 @@ export default function ArticlesScreen(): JSX.Element {
         setIsRefreshing(false);
       }, 300);
     }
-  }, [queryClient, isFetching]);
+  }, [queryClient, isFetching, articlesData, dispatch]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -343,6 +356,18 @@ export default function ArticlesScreen(): JSX.Element {
     [latestArticlesForSection, handleArticlePress]
   );
 
+  const longReadsSectionComponent = useMemo(
+    () => (
+      <LongReadsSection
+        articles={articlesData}
+        onArticlePress={handleArticlePress}
+        limit={10}
+        minReadingTime={1}
+      />
+    ),
+    [articlesData, handleArticlePress]
+  );
+
   const authorFilterComponent = useMemo(
     () =>
       authorsWithArticles.length > 0 ? (
@@ -384,6 +409,7 @@ export default function ArticlesScreen(): JSX.Element {
       { id: 'struggling-words', component: StrugglingWordsComponent },
       { id: 'learning-section', component: learningSection },
       { id: 'latest-texts', component: latestTextsSectionComponent },
+      { id: 'long-reads', component: longReadsSectionComponent },
       { id: 'continue-reading', component: ContinueReadingSection },
       { id: 'author-filter', component: authorFilterComponent },
       { id: 'category-filter', component: categoryFilterComponent },
@@ -408,6 +434,7 @@ export default function ArticlesScreen(): JSX.Element {
     DifficultWordsSection,
     BeginnerFriendlySection,
     latestTextsSectionComponent,
+    longReadsSectionComponent,
     ContinueReadingSection,
     authorFilterComponent,
     categoryFilterComponent,

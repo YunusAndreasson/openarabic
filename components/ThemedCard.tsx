@@ -15,6 +15,7 @@ import type {
   BasicCardProps,
 } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
+import { calculateReadingTime } from '@/utils/articleUtils';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
@@ -405,7 +406,21 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
               <TimeAgo date={lastOpenedAt || article?.created_at || ''} />
-            ) : (isCompactVariant(props) && props.dueWordCount) || hideDifficulty ? null : (
+            ) : (isCompactVariant(props) && props.dueWordCount) || hideDifficulty ? (
+              // Show reading time for articles without due words or when hiding difficulty
+              article ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
+                  <ThemedText
+                    type="caption"
+                    colorName="textTertiary"
+                    style={{ marginLeft: 4, fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY }}
+                  >
+                    {calculateReadingTime(article)} min read
+                  </ThemedText>
+                </View>
+              ) : null
+            ) : (
               <SummaryIndicator summary={article?.summary || null} />
             )}
           </View>
@@ -422,6 +437,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
     gradientProps,
     titleStyle,
     colors.warning,
+    colors.textTertiary,
   ]);
 
   // Memoize compact content

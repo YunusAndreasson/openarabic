@@ -109,6 +109,22 @@ export function getDailyPickArticle(articles: Article[], dayOfYear: number): Art
 }
 
 /**
+ * Gets a fresh daily pick article using a random seed (for refresh functionality)
+ * @param articles - The articles to pick from
+ * @returns A random daily pick article or null if no articles are available
+ */
+export function getFreshDailyPickArticle(articles: Article[]): Article | null {
+  if (articles.length === 0) return null;
+
+  // Use current timestamp as seed for truly random selection on refresh
+  const randomSeed = Date.now();
+  const shuffledArticles = seededShuffle(articles, randomSeed);
+
+  // Return the first article from the shuffled array
+  return shuffledArticles[0] ?? null;
+}
+
+/**
  * Gets articles sorted by due words count - articles with more due words are prioritized
  * @param articles - The articles to sort
  * @param dueWords - The user's due words (from studyWordsFSRSService)
@@ -202,4 +218,56 @@ export function getArticlesByDifficultWords(
     .sort((a, b) => b.difficultWordCount - a.difficultWordCount)
     .map(item => item.article)
     .slice(0, limit);
+}
+
+/**
+ * Calculate reading time for an article based on content
+ * @param article - The article to calculate reading time for
+ * @returns Reading time in minutes
+ */
+export function calculateReadingTime(article: Article): number {
+  if (!article) return 2;
+
+  // More accurate calculation based on content type
+  if (article.article_sentences?.length) {
+    const wordCount = article.article_sentences.reduce((total, sentence) => {
+      // Estimate words from sentence length (more accurate than fixed ratio)
+      const estimatedWords = Math.ceil((sentence.english?.length || 0) / 5);
+      return total + estimatedWords;
+    }, 0);
+    return Math.max(1, Math.ceil(wordCount / 200)); // 200 WPM reading speed
+  }
+
+  if (article.summary) {
+    const wordCount = article.summary.split(/\s+/).filter(word => word.length > 0).length;
+    return Math.max(1, Math.ceil(wordCount / 200));
+  }
+
+  return 2; // Default fallback
+}
+
+/**
+ * Gets the longest articles sorted by reading time
+ * @param articles - The articles to sort
+ * @param limit - The maximum number of articles to return (default: 10)
+ * @param minReadingTime - Minimum reading time in minutes to be considered a "long read" (default: 5)
+ * @returns Longest articles sorted by reading time (longest first)
+ */
+export function getLongestArticles(
+  articles: Article[],
+  limit = 10,
+  minReadingTime = 5
+): (Article & { readingTime: number })[] {
+  if (!articles.length) return [];
+
+  // Calculate reading time for each article and filter by minimum
+  const articlesWithReadingTime = articles
+    .map(article => ({
+      ...article,
+      readingTime: calculateReadingTime(article),
+    }))
+    .filter(article => article.readingTime >= minReadingTime)
+    .sort((a, b) => b.readingTime - a.readingTime);
+
+  return articlesWithReadingTime.slice(0, limit);
 }
