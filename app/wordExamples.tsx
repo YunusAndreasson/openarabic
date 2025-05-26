@@ -119,12 +119,6 @@ export default function WordExamplesScreen() {
   const [wordData, setWordData] = useState<SentenceWord | null>(null);
   const [examples, setExamples] = useState<SentenceWithWords[]>([]);
 
-  // Initialize rootInfo from URL params if available
-  const rootInfo = useMemo(
-    () => (rootMeaning ? { letters: rootLetters || '', meaning: rootMeaning || null } : null),
-    [rootMeaning, rootLetters]
-  );
-
   // Fetch word data and example sentences
   useEffect(() => {
     const fetchExamples = async () => {
@@ -259,6 +253,7 @@ export default function WordExamplesScreen() {
             headerTitleStyle: {
               fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
               fontWeight: '600',
+              color: colors.text,
             },
             headerTintColor: colors.tint,
           }}
@@ -288,6 +283,7 @@ export default function WordExamplesScreen() {
             headerTitleStyle: {
               fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
               fontWeight: '600',
+              color: colors.text,
             },
             headerStyle: {
               backgroundColor: colors.background,
@@ -316,6 +312,7 @@ export default function WordExamplesScreen() {
           headerTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
             fontWeight: '600',
+            color: colors.text,
           },
           headerStyle: {
             backgroundColor: colors.background,

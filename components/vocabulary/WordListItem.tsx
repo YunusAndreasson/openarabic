@@ -100,7 +100,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           <View style={styles.arabicContainer}>
             <ThemedText
               type="arabic"
-              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2}
+              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE + 4}
               weight="bold"
               align="right"
               skipDefaultColor
@@ -201,17 +201,21 @@ const styles = StyleSheet.create({
   meaningContainer: {
     flex: 1,
     justifyContent: 'center',
-    paddingRight: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
   meaningText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+    opacity: 0.9,
   },
   arabicContainer: {
     alignItems: 'flex-end',
     justifyContent: 'center',
+    paddingVertical: LAYOUT.SPACING.TINY,
+    minHeight: 36,
   },
   arabicText: {
     textAlign: 'right',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.4,
   },
   progressSection: {
     gap: LAYOUT.SPACING.SMALL,
@@ -270,7 +274,7 @@ const styles = StyleSheet.create({
   rightContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.MEDIUM,
   },
   navigationContainer: {
     alignItems: 'center',

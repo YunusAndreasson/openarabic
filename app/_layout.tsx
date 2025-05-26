@@ -55,6 +55,11 @@ SplashScreen.preventAutoHideAsync().catch(err => {
   });
 });
 
+// Configure splash screen to be visible for at least 1 second with fade effect
+SplashScreen.setOptions({
+  duration: 1000,
+});
+
 // Move queryClient outside component scope for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
