@@ -237,7 +237,7 @@ export default function WordListScreen(): JSX.Element {
           estimatedItemSize={ITEM_HEIGHT}
           ListHeaderComponent={ListHeaderComponent}
           ListEmptyComponent={renderEmptyComponent}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
           estimatedFirstItemOffset={LAYOUT.SPACING.XLARGE}
           overrideItemLayout={layout => {
             layout.size = ITEM_HEIGHT;
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headerContainer: {
-    paddingBottom: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.XSMALL,
     paddingTop: 0,
   },
   listContentContainer: {
@@ -296,6 +296,6 @@ const styles = StyleSheet.create({
     padding: LAYOUT.SPACING.SMALL,
   },
   sortCard: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
 });

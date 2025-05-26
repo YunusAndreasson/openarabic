@@ -82,13 +82,20 @@ function SortingControls<T extends string>({
                 onSelect={() => handleSortChange(option.key)}
                 variant="filter"
                 pillBg={colors.transparent}
-                pillStyle={styles.sortPill}
+                pillStyle={[
+                  styles.sortPill,
+                  isSelected && {
+                    backgroundColor: colors.elevation1,
+                    borderWidth: 1,
+                    borderColor: colors.tint + '20', // 20% opacity
+                  },
+                ]}
                 label={
                   <View style={styles.sortPillContent}>
                     <ThemedText
                       type="label"
                       colorName={isSelected ? 'tint' : 'textTertiary'}
-                      weight={isSelected ? 'bold' : 'medium'}
+                      weight={isSelected ? 'bold' : 'semibold'}
                       style={styles.sortPillLabel}
                     >
                       {option.label}
@@ -100,7 +107,7 @@ function SortingControls<T extends string>({
                           styles.sortPillDescription,
                           { color: isSelected ? colors.tint : colors.textTertiary },
                         ]}
-                        weight={isSelected ? 'semibold' : 'normal'}
+                        weight={isSelected ? 'medium' : 'normal'}
                       >
                         {option.description}
                       </ThemedText>
@@ -113,7 +120,7 @@ function SortingControls<T extends string>({
                             : 'chevron-up'
                           : 'chevron-down'
                       }
-                      size={14}
+                      size={12}
                       style={styles.sortPillIcon}
                       color={isSelected ? colors.tint : colors.textTertiary}
                     />
@@ -135,48 +142,50 @@ export default MemoizedSortingControls;
 
 const styles = StyleSheet.create({
   sortCard: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.SMALL,
     marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
   },
   sortContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.XTINY,
   },
   sortHeader: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
+    marginBottom: LAYOUT.SPACING.XTINY,
   },
   sortTitle: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.XTINY,
   },
   sortOptions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.SMALL,
+    gap: LAYOUT.SPACING.XSMALL,
   },
   sortPill: {
     flex: 1,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: 44,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XSMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    minHeight: 38,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sortPillContent: {
     flexDirection: 'column',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.MICRO,
   },
   sortPillLabel: {
-    fontWeight: '500',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    fontWeight: '600',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
     textAlign: 'center',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
   },
   sortPillDescription: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     textAlign: 'center',
-    opacity: 0.8,
+    opacity: 0.75,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
   },
   sortPillIcon: {
-    marginTop: LAYOUT.SPACING.XTINY,
+    marginTop: LAYOUT.SPACING.MICRO,
   },
 });

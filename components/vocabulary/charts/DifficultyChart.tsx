@@ -12,6 +12,7 @@ import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { useChartColors } from '../shared/chartColors';
+import { CHART_LEGENDS } from '../shared/chartLegends';
 
 interface DifficultyChartProps {
   studyWords: StudyWord[];
@@ -222,11 +223,23 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
 
         <ChartFooter
           legendItems={[
-            { type: 'bar', color: chartColors.difficulty.easy, label: 'Easy' },
-            { type: 'bar', color: chartColors.difficulty.medium, label: 'Medium' },
-            { type: 'bar', color: chartColors.difficulty.hard, label: 'Hard' },
+            {
+              type: 'bar',
+              color: chartColors.difficulty.easy,
+              label: CHART_LEGENDS.difficulty.easy,
+            },
+            {
+              type: 'bar',
+              color: chartColors.difficulty.medium,
+              label: CHART_LEGENDS.difficulty.medium,
+            },
+            {
+              type: 'bar',
+              color: chartColors.difficulty.hard,
+              label: CHART_LEGENDS.difficulty.hard,
+            },
           ]}
-          timeRange="Current vocabulary"
+          timeRange={CHART_LEGENDS.timeRanges.current}
         />
       </View>
     </BaseCard>

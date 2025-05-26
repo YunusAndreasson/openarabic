@@ -7,6 +7,7 @@ import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import { generateDateRange, isSameDay, calculateEfficiencyScore } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
+import { CHART_LEGENDS } from '../shared/chartLegends';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
@@ -310,13 +311,29 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.ui.dataLine, label: 'Daily Average' },
-            { type: 'area', color: chartColors.performance.excellent, label: 'Excellent Zone' },
-            { type: 'area', color: chartColors.performance.good, label: 'Good Zone' },
-            { type: 'area', color: chartColors.performance.moderate, label: 'Fair Zone' },
-            { type: 'area', color: chartColors.performance.poor, label: 'Needs Work' },
+            { type: 'line', color: chartColors.ui.dataLine, label: CHART_LEGENDS.progress.average },
+            {
+              type: 'area',
+              color: chartColors.performance.excellent,
+              label: CHART_LEGENDS.performance.excellent,
+            },
+            {
+              type: 'area',
+              color: chartColors.performance.good,
+              label: CHART_LEGENDS.performance.good,
+            },
+            {
+              type: 'area',
+              color: chartColors.performance.moderate,
+              label: CHART_LEGENDS.performance.moderate,
+            },
+            {
+              type: 'area',
+              color: chartColors.performance.poor,
+              label: CHART_LEGENDS.performance.poor,
+            },
           ]}
-          timeRange="Last 14 days"
+          timeRange={CHART_LEGENDS.timeRanges.last14Days}
         />
       </View>
     </BaseCard>

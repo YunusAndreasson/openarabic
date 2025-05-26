@@ -13,6 +13,7 @@ import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { generateDateRange } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
+import { CHART_LEGENDS } from '../shared/chartLegends';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
@@ -385,10 +386,14 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.ui.dataLine, label: 'Progress' },
-            { type: 'dot', color: chartColors.ui.dataLine, label: 'Milestones' },
+            { type: 'line', color: chartColors.ui.dataLine, label: CHART_LEGENDS.progress.line },
+            {
+              type: 'dot',
+              color: chartColors.ui.dataLine,
+              label: CHART_LEGENDS.progress.milestones,
+            },
           ]}
-          timeRange="Last 14 days"
+          timeRange={CHART_LEGENDS.timeRanges.last14Days}
         />
       </View>
     </BaseCard>

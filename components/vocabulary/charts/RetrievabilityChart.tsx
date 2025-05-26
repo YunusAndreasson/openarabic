@@ -18,6 +18,7 @@ import {
 import { StatsRow } from '../shared/StatsRow';
 import { calculateRetrievability } from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
+import { CHART_LEGENDS } from '../shared/chartLegends';
 
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
@@ -336,12 +337,24 @@ export const RetrievabilityChart = memo(
 
           <ChartFooter
             legendItems={[
-              { type: 'line', color: chartColors.ui.dataLine, label: 'Forecast' },
-              { type: 'area', color: chartColors.memory.strong, label: 'Strong Zone' },
-              { type: 'area', color: chartColors.memory.fading, label: 'At Risk Zone' },
-              { type: 'area', color: chartColors.memory.weak, label: 'Critical Zone' },
+              {
+                type: 'line',
+                color: chartColors.ui.dataLine,
+                label: CHART_LEGENDS.progress.forecast,
+              },
+              {
+                type: 'area',
+                color: chartColors.memory.strong,
+                label: CHART_LEGENDS.memory.strong,
+              },
+              {
+                type: 'area',
+                color: chartColors.memory.fading,
+                label: CHART_LEGENDS.memory.fading,
+              },
+              { type: 'area', color: chartColors.memory.weak, label: CHART_LEGENDS.memory.weak },
             ]}
-            timeRange="Next 14 days"
+            timeRange={CHART_LEGENDS.timeRanges.next14Days}
           />
         </View>
       </BaseCard>
