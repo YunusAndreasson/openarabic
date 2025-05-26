@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, { memo, useState, useEffect, useCallback, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemedText } from './ThemedText';
@@ -8,37 +8,41 @@ import Pill from './Pill';
 import BaseCard from './BaseCard';
 import { lightFeedback } from '@/utils/haptics';
 
-export type SortOption = 'dueWords' | 'difficulty' | 'readingTime' | 'author' | 'category';
-
 export type SortDirection = 'asc' | 'desc';
 
-export interface SortingControlsProps {
-  currentSort: SortOption;
-  sortDirection?: SortDirection;
-  onSortChange: (sort: SortOption, direction: SortDirection) => void;
+export interface SortOption<T = string> {
+  key: T;
+  label: string;
+  description?: string;
 }
 
-// 3 most important options that work reliably and match what users see
-const sortOptions: {
-  key: SortOption;
-  label: string;
-}[] = [
-  { key: 'dueWords', label: 'Due Words' },
-  { key: 'difficulty', label: 'Level' },
-  { key: 'category', label: 'Category' },
-];
+export interface SortingControlsProps<T = string> {
+  currentSort: T;
+  sortDirection?: SortDirection;
+  onSortChange: (sort: T, direction: SortDirection) => void;
+  options: SortOption<T>[];
+  title?: string;
+  style?: any;
+}
 
-const SortingControls = memo(
-  ({ currentSort, sortDirection = 'desc', onSortChange }: SortingControlsProps) => {
-    const colors = useColors();
-    const [internalDirection, setInternalDirection] = useState<SortDirection>(sortDirection);
+function SortingControls<T extends string>({
+  currentSort,
+  sortDirection = 'desc',
+  onSortChange,
+  options,
+  title = 'Sort by',
+  style,
+}: SortingControlsProps<T>): JSX.Element {
+  const colors = useColors();
+  const [internalDirection, setInternalDirection] = useState<SortDirection>(sortDirection);
 
-    // Sync internal direction with prop
-    useEffect(() => {
-      setInternalDirection(sortDirection);
-    }, [sortDirection]);
+  // Sync internal direction with prop
+  useEffect(() => {
+    setInternalDirection(sortDirection);
+  }, [sortDirection]);
 
-    const handleSortChange = (sort: SortOption) => {
+  const handleSortChange = useCallback(
+    (sort: T) => {
       // Add haptic feedback
       lightFeedback();
 
@@ -52,64 +56,82 @@ const SortingControls = memo(
         setInternalDirection('desc');
         onSortChange(sort, 'desc');
       }
-    };
+    },
+    [currentSort, internalDirection, onSortChange]
+  );
 
-    return (
-      <BaseCard shadowSize="small" style={styles.sortCard}>
-        <View style={styles.sortContent}>
-          {/* Sort Header - H3 with minimal spacing */}
+  return (
+    <BaseCard shadowSize="small" style={[styles.sortCard, style]}>
+      <View style={styles.sortContent}>
+        {/* Sort Header */}
+        <View style={styles.sortHeader}>
           <ThemedText type="heading3" weight="bold" style={styles.sortTitle}>
-            Sort by
+            {title}
           </ThemedText>
-
-          {/* Sort Options */}
-          <View style={styles.sortOptions}>
-            {sortOptions.map(option => {
-              const isSelected = currentSort === option.key;
-              return (
-                <Pill
-                  key={option.key}
-                  id={option.key}
-                  isSelected={isSelected}
-                  onSelect={() => handleSortChange(option.key)}
-                  variant="filter"
-                  pillBg={colors.transparent}
-                  pillStyle={styles.sortPill}
-                  label={
-                    <View style={styles.sortPillContent}>
-                      <ThemedText
-                        type="body"
-                        colorName={isSelected ? 'tint' : 'textTertiary'}
-                        weight={isSelected ? 'bold' : 'medium'}
-                        style={styles.sortPillLabel}
-                      >
-                        {option.label}
-                      </ThemedText>
-                      <Ionicons
-                        name={
-                          isSelected
-                            ? internalDirection === 'desc'
-                              ? 'chevron-down'
-                              : 'chevron-up'
-                            : 'chevron-down'
-                        }
-                        size={12}
-                        color={isSelected ? colors.tint : colors.textTertiary}
-                        style={styles.chevronIcon}
-                      />
-                    </View>
-                  }
-                />
-              );
-            })}
-          </View>
         </View>
-      </BaseCard>
-    );
-  }
-);
 
-SortingControls.displayName = 'SortingControls';
+        {/* Sort Options */}
+        <View style={styles.sortOptions}>
+          {options.map(option => {
+            const isSelected = currentSort === option.key;
+            return (
+              <Pill
+                key={option.key}
+                id={option.key}
+                isSelected={isSelected}
+                onSelect={() => handleSortChange(option.key)}
+                variant="filter"
+                pillBg={colors.transparent}
+                pillStyle={styles.sortPill}
+                label={
+                  <View style={styles.sortPillContent}>
+                    <ThemedText
+                      type="label"
+                      colorName={isSelected ? 'tint' : 'textTertiary'}
+                      weight={isSelected ? 'bold' : 'medium'}
+                      style={styles.sortPillLabel}
+                    >
+                      {option.label}
+                    </ThemedText>
+                    {option.description && (
+                      <ThemedText
+                        type="caption"
+                        style={[
+                          styles.sortPillDescription,
+                          { color: isSelected ? colors.tint : colors.textTertiary },
+                        ]}
+                        weight={isSelected ? 'semibold' : 'normal'}
+                      >
+                        {option.description}
+                      </ThemedText>
+                    )}
+                    <Ionicons
+                      name={
+                        isSelected
+                          ? internalDirection === 'desc'
+                            ? 'chevron-down'
+                            : 'chevron-up'
+                          : 'chevron-down'
+                      }
+                      size={14}
+                      style={styles.sortPillIcon}
+                      color={isSelected ? colors.tint : colors.textTertiary}
+                    />
+                  </View>
+                }
+              />
+            );
+          })}
+        </View>
+      </View>
+    </BaseCard>
+  );
+}
+
+// Create a memoized version with proper generic typing
+const MemoizedSortingControls = memo(SortingControls);
+
+export default MemoizedSortingControls;
 
 const styles = StyleSheet.create({
   sortCard: {
@@ -117,42 +139,44 @@ const styles = StyleSheet.create({
     marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
   },
   sortContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.SPACING.MEDIUM,
+  },
+  sortHeader: {
+    marginBottom: LAYOUT.SPACING.XSMALL,
   },
   sortTitle: {
-    marginBottom: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.MEDIUM,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   sortOptions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'stretch',
     gap: LAYOUT.SPACING.SMALL,
   },
   sortPill: {
     flex: 1,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.SMALL,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: 40,
+    minHeight: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sortPillContent: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: LAYOUT.SPACING.XTINY,
   },
   sortPillLabel: {
+    fontWeight: '500',
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
   },
-  chevronIcon: {
-    marginLeft: LAYOUT.SPACING.XTINY / 2,
+  sortPillDescription: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,
+    textAlign: 'center',
     opacity: 0.8,
   },
+  sortPillIcon: {
+    marginTop: LAYOUT.SPACING.XTINY,
+  },
 });
-
-export default SortingControls;

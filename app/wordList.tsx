@@ -7,17 +7,25 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '../components/ThemedText';
 import { ThemedView } from '../components/ThemedView';
 import WordListItem from '../components/vocabulary/WordListItem';
+import SortingControls from '../components/SortingControls';
+import type { SortOption, SortDirection } from '../components/SortingControls';
+import BaseCard from '../components/BaseCard';
 import { LAYOUT } from '../constants/layout';
 import { useAuth } from '../hooks/useAuth';
 import { useColors } from '../hooks/useColors';
 import type { EnhancedStudyWord, WordListSort } from '../hooks/useWordList';
 import { useWordList } from '../hooks/useWordList';
-import Pill from '../components/Pill';
-import BaseCard from '../components/BaseCard';
 import { router } from 'expo-router';
 import { lightFeedback } from '../utils/haptics';
 
 const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3.2;
+
+// Define sort options for word list
+const wordListSortOptions: SortOption<WordListSort>[] = [
+  { key: 'retention', label: 'Memory', description: 'Strength' },
+  { key: 'alphabetical', label: 'A-Z', description: 'Order' },
+  { key: 'streak', label: 'Streak', description: 'Success' },
+];
 
 // Move WordListItem component definition outside to optimize recycling
 interface WordListItemMemoProps {
@@ -155,94 +163,27 @@ export default function WordListScreen(): JSX.Element {
   }, [colors.tint, isLoading, words]);
 
   // Sort functions
-  const handleSortChange = useCallback(
-    (newSortBy: WordListSort) => {
-      lightFeedback(); // Add haptic feedback
-      setIsLoading(true);
-      if (sortBy === newSortBy) {
-        setSortDirection(d => (d === 'desc' ? 'asc' : 'desc'));
-      } else {
-        setSortBy(newSortBy);
-        setSortDirection('desc');
-      }
-    },
-    [sortBy]
-  );
+  const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
+    lightFeedback(); // Add haptic feedback
+    setIsLoading(true);
+    setSortBy(newSortBy as WordListSort);
+    setSortDirection(newDirection);
+  }, []);
 
   // List header component with sort control only
   const ListHeaderComponent = useCallback(() => {
     return (
       <View style={styles.headerContainer}>
-        {/* Sort Control Card - Consistent with vocabulary component */}
-        <BaseCard shadowSize="small" style={styles.sortCard}>
-          <View style={styles.sortContent}>
-            {/* Sort Header */}
-            <View style={styles.sortHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sortTitle}>
-                Sort by
-              </ThemedText>
-            </View>
-
-            {/* Sort Options */}
-            <View style={styles.sortOptions}>
-              {[
-                { label: 'Memory', value: 'retention', description: 'Strength' },
-                { label: 'A-Z', value: 'alphabetical', description: 'Order' },
-                { label: 'Streak', value: 'streak', description: 'Success' },
-              ].map(option => {
-                const isSelected = sortBy === option.value;
-                return (
-                  <Pill
-                    key={option.value}
-                    id={option.value}
-                    isSelected={isSelected}
-                    onSelect={() => handleSortChange(option.value as WordListSort)}
-                    variant="filter"
-                    pillBg={colors.transparent}
-                    pillStyle={[styles.sortPill]}
-                    label={
-                      <View style={styles.sortPillContent}>
-                        <ThemedText
-                          type="label"
-                          colorName={isSelected ? 'tint' : 'textTertiary'}
-                          weight={isSelected ? 'bold' : 'medium'}
-                          style={[styles.sortPillLabel]}
-                        >
-                          {option.label}
-                        </ThemedText>
-                        <ThemedText
-                          type="caption"
-                          style={[
-                            styles.sortPillDescription,
-                            { color: isSelected ? colors.tint : colors.textTertiary },
-                          ]}
-                          weight={isSelected ? 'semibold' : 'normal'}
-                        >
-                          {option.description}
-                        </ThemedText>
-                        <Ionicons
-                          name={
-                            isSelected
-                              ? sortDirection === 'desc'
-                                ? 'chevron-down'
-                                : 'chevron-up'
-                              : 'chevron-down'
-                          }
-                          size={14}
-                          style={styles.sortPillIcon}
-                          color={isSelected ? colors.tint : colors.textTertiary}
-                        />
-                      </View>
-                    }
-                  />
-                );
-              })}
-            </View>
-          </View>
-        </BaseCard>
+        <SortingControls
+          currentSort={sortBy}
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+          options={wordListSortOptions}
+          style={styles.sortCard}
+        />
       </View>
     );
-  }, [sortBy, sortDirection, handleSortChange, colors]);
+  }, [sortBy, sortDirection, handleSortChange]);
 
   // Add error UI handling
   if (error) {
@@ -356,46 +297,5 @@ const styles = StyleSheet.create({
   },
   sortCard: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  sortContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
-  },
-  sortHeader: {
-    marginBottom: LAYOUT.SPACING.XSMALL,
-  },
-  sortTitle: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  sortOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  sortPill: {
-    flex: 1,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.SMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-    minHeight: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sortPillContent: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.XTINY,
-  },
-  sortPillLabel: {
-    fontWeight: '500',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-  },
-  sortPillDescription: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY + 0.5,
-    textAlign: 'center',
-    opacity: 0.8,
-  },
-  sortPillIcon: {
-    marginTop: LAYOUT.SPACING.XTINY,
   },
 });

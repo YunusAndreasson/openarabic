@@ -227,6 +227,15 @@ const BookmarkListItem = memo(
 
 BookmarkListItem.displayName = 'BookmarkListItem';
 
+export type BookmarkSortOption = 'dueWords' | 'difficulty' | 'readingTime' | 'author' | 'category';
+
+// Define sort options for bookmarks
+const bookmarkSortOptions: SortOption<BookmarkSortOption>[] = [
+  { key: 'dueWords', label: 'Due Words', description: 'Review' },
+  { key: 'difficulty', label: 'Level', description: 'Easy-Hard' },
+  { key: 'category', label: 'Category', description: 'Topic' },
+];
+
 export default function BookmarksScreen(): JSX.Element {
   const colors = useColors();
   const { user } = useAuth();
@@ -241,7 +250,7 @@ export default function BookmarksScreen(): JSX.Element {
   const [playbackMode, setPlaybackMode] = useState<'none' | 'all' | 'shuffle'>('none');
 
   // Sorting state
-  const [currentSort, setCurrentSort] = useState<SortOption>('dueWords');
+  const [currentSort, setCurrentSort] = useState<BookmarkSortOption>('dueWords');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Sleep timer state
@@ -351,7 +360,7 @@ export default function BookmarksScreen(): JSX.Element {
   const sortReadingList = useCallback(
     (
       list: ReadingListItem[],
-      sortBy: SortOption,
+      sortBy: BookmarkSortOption,
       direction: SortDirection,
       dueWordRootIds: Set<number> | undefined,
       articleDetailsMap: Map<number, Article>
@@ -597,8 +606,8 @@ export default function BookmarksScreen(): JSX.Element {
   }, [user?.id, queryClient, isRefreshing]);
 
   // Handle sorting
-  const handleSortChange = useCallback((sort: SortOption, direction: SortDirection) => {
-    setCurrentSort(sort);
+  const handleSortChange = useCallback((sort: string, direction: SortDirection) => {
+    setCurrentSort(sort as BookmarkSortOption);
     setSortDirection(direction);
   }, []);
 
@@ -707,6 +716,7 @@ export default function BookmarksScreen(): JSX.Element {
                 currentSort={currentSort}
                 sortDirection={sortDirection}
                 onSortChange={handleSortChange}
+                options={bookmarkSortOptions}
               />
             </View>
           }
