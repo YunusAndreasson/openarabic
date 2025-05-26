@@ -15,9 +15,9 @@ const TOOLTIP_CONSTANTS = {
   SPACING: LAYOUT.SPACING.SMALL,
   ARROW_SIZE: LAYOUT.SPACING.TINY,
   TOOLTIP_MARGIN: LAYOUT.SPACING.TINY / 5,
-  TOOLTIP_HEIGHT: LAYOUT.SPACING.LARGE * 2,
+  TOOLTIP_HEIGHT: LAYOUT.SPACING.LARGE * 2.2,
   SCREEN_MARGIN: LAYOUT.SPACING.MEDIUM,
-  CHAR_WIDTH: LAYOUT.SPACING.TINY * 1.4, // Base width per character
+  CHAR_WIDTH: LAYOUT.SPACING.TINY * 1.6, // Increased from 1.4 to accommodate larger font
   PADDING_MULTIPLIER: 1.5, // Extra space multiplier for padding
   Z_INDEX: 999999,
 } as const;
@@ -241,9 +241,9 @@ const styles = StyleSheet.create({
   },
   tooltipText: {
     flexShrink: 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: '500',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
     textAlign: 'center',
   },
 });

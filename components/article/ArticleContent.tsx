@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   buttonsWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.MICRO,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
   },
 });
 

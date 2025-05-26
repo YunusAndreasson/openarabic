@@ -47,7 +47,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
     },
     transparentBackground: {
       backgroundColor: colors.transparent,
-      paddingHorizontal: LAYOUT.SPACING.MICRO,
+      paddingHorizontal: 0,
     },
   });
 

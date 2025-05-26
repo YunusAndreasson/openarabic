@@ -104,15 +104,16 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       ? ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.DARK
       : ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.LIGHT;
 
-    // Advanced dynamic text styles with accessibility focus
+    // Dynamic text styles with enhanced hierarchy and accessibility
     const dynamicTextStyles = useMemo(
       () => ({
         title: {
           color: textColor,
-          marginBottom: LAYOUT.SPACING.TINY,
+          marginBottom: LAYOUT.SPACING.TINY, // Tighter spacing to author
           fontWeight: '700' as const,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE, // Reduced from HUGE (30px) to XXLARGE (24px) for better hierarchy
           letterSpacing: TYPOGRAPHY_REFINEMENTS.TITLE.letterSpacing,
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * TYPOGRAPHY_REFINEMENTS.TITLE.lineHeight,
+          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * TYPOGRAPHY_REFINEMENTS.TITLE.lineHeight,
           // Enhanced accessibility
           textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
           textShadowOffset: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].offset,
@@ -121,8 +122,9 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         author: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.AUTHOR.opacity,
-          marginBottom: LAYOUT.SPACING.SMALL,
-          fontWeight: '600' as const,
+          marginBottom: LAYOUT.SPACING.MEDIUM, // Increased spacing to separate from metadata
+          fontWeight: '500' as const, // Reduced from 600 for better hierarchy
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Increased from SMALL (12px) to MEDIUM (15px)
           letterSpacing: TYPOGRAPHY_REFINEMENTS.AUTHOR.letterSpacing,
           textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
           textShadowOffset: { width: 0, height: 1 },
@@ -132,6 +134,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.METADATA.opacity,
           fontWeight: '500' as const,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Explicit size for consistency
           letterSpacing: TYPOGRAPHY_REFINEMENTS.METADATA.letterSpacing,
           textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
           textShadowOffset: { width: 0, height: 1 },
@@ -145,6 +148,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         summary: {
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.SUMMARY.opacity,
+          fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Explicit size
           lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE,
           letterSpacing: TYPOGRAPHY_REFINEMENTS.SUMMARY.letterSpacing,
           textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
@@ -277,14 +281,15 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
     // Enhanced gradient with better color science
     const gradientColors = useMemo(() => {
       const bgColor = colors.background;
-      const overlayColor = isDarkMode ? 'rgba(0,0,0,' : 'rgba(0,0,0,';
+      // Use greenish-tinted overlay colors that match the new background
+      const overlayColor = isDarkMode ? 'rgba(14,19,16,' : 'rgba(248,250,249,';
 
       return [
         'transparent',
-        `${overlayColor}0.08)`, // Subtle start
-        `${overlayColor}0.16)`, // Gradual build
-        `${overlayColor}0.28)`, // Medium contrast
-        `${overlayColor}0.42)`, // Strong contrast for text
+        `${overlayColor}0.08)`, // Subtle start with green tint
+        `${overlayColor}0.16)`, // Gradual build with green tint
+        `${overlayColor}0.28)`, // Medium contrast with green tint
+        `${overlayColor}0.42)`, // Strong contrast for text with green tint
         `${bgColor}20`, // Background color introduction
         `${bgColor}60`, // More background
         `${bgColor}90`, // Nearly opaque
@@ -352,10 +357,10 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
 
         {/* Content Section with Enhanced Hierarchy */}
         <Animated.View style={[styles.contentSection, contentAnimatedStyle]}>
-          {/* Title and Author Group */}
-          <View style={styles.titleContainer}>
+          {/* Primary Content Group: Title and Author */}
+          <View style={styles.primaryContentGroup}>
             <ThemedText
-              type="heading1"
+              type="heading2"
               style={dynamicTextStyles.title}
               adjustsFontSizeToFit={!!(article.title && article.title.length > 60)}
               numberOfLines={article.title && article.title.length > 80 ? 3 : 2}
@@ -371,53 +376,61 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
             )}
           </View>
 
-          {/* Enhanced Metadata with Staggered Animation */}
-          <View style={styles.metadataContainer}>
-            {/* Category */}
+          {/* Secondary Content Group: Metadata */}
+          <View style={styles.metadataGroup}>
+            {/* Primary metadata (most important) */}
             {article.category && (
-              <Animated.View style={[styles.metadataItem, createMetadataItemStyle(0)]}>
+              <Animated.View
+                style={[styles.metadataItem, styles.primaryMetadata, createMetadataItemStyle(0)]}
+              >
                 <Ionicons
                   name="folder-outline"
-                  size={13} // Refined size for better proportion
+                  size={14} // Slightly larger for primary metadata
                   color={dynamicTextStyles.metadataIcon.color}
                   style={dynamicTextStyles.metadataIcon}
                 />
-                <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
+                <ThemedText
+                  type="caption"
+                  style={[dynamicTextStyles.metadataText, styles.primaryMetadataText]}
+                >
                   {capitalizeFirstLetter(article.category.name)}
                 </ThemedText>
               </Animated.View>
             )}
 
-            {/* Reading Time */}
-            <Animated.View style={[styles.metadataItem, createMetadataItemStyle(1)]}>
-              <Ionicons
-                name="time-outline"
-                size={13}
-                color={dynamicTextStyles.metadataIcon.color}
-                style={dynamicTextStyles.metadataIcon}
-              />
-              <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
-                {readingTime} min read
-              </ThemedText>
-            </Animated.View>
+            {/* Secondary metadata row */}
+            <View style={styles.secondaryMetadataRow}>
+              {/* Reading Time */}
+              <Animated.View style={[styles.metadataItem, createMetadataItemStyle(1)]}>
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color={dynamicTextStyles.metadataIcon.color}
+                  style={dynamicTextStyles.metadataIcon}
+                />
+                <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
+                  {readingTime} min read
+                </ThemedText>
+              </Animated.View>
 
-            {/* Difficulty Level */}
-            <Animated.View style={[styles.metadataItem, createMetadataItemStyle(2)]}>
-              <Ionicons
-                name="stats-chart-outline"
-                size={13}
-                color={dynamicTextStyles.metadataIcon.color}
-                style={dynamicTextStyles.metadataIcon}
-              />
-              <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
-                {formatDifficultyLevel(article.difficulty_level)}
-              </ThemedText>
-            </Animated.View>
+              {/* Difficulty Level */}
+              <Animated.View style={[styles.metadataItem, createMetadataItemStyle(2)]}>
+                <Ionicons
+                  name="stats-chart-outline"
+                  size={13}
+                  color={dynamicTextStyles.metadataIcon.color}
+                  style={dynamicTextStyles.metadataIcon}
+                />
+                <ThemedText type="caption" style={dynamicTextStyles.metadataText}>
+                  {formatDifficultyLevel(article.difficulty_level)}
+                </ThemedText>
+              </Animated.View>
+            </View>
           </View>
 
-          {/* Summary with Enhanced Readability */}
+          {/* Tertiary Content Group: Summary */}
           {article.summary && (
-            <View style={styles.summaryContainer}>
+            <View style={styles.summaryGroup}>
               <ThemedText type="body" style={dynamicTextStyles.summary} numberOfLines={3}>
                 {article.summary}
               </ThemedText>
@@ -473,27 +486,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingHorizontal: LAYOUT.SPACING.SMALL, // Increased to SMALL (8px) to match text below
     paddingTop: LAYOUT.SPACING.LARGE,
-    paddingBottom: LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL, // Enhanced bottom padding
+    paddingBottom: LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL,
     zIndex: 3,
   },
-  titleContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+  primaryContentGroup: {
+    marginBottom: LAYOUT.SPACING.MEDIUM, // Increased spacing to separate from metadata
   },
-  metadataContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.LARGE,
-    gap: LAYOUT.SPACING.MEDIUM, // Modern gap property for consistent spacing
+  metadataGroup: {
+    marginBottom: LAYOUT.SPACING.LARGE, // Clear separation from summary
   },
   metadataItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
   },
-  summaryContainer: {
+  primaryMetadata: {
+    marginBottom: LAYOUT.SPACING.SMALL, // Space below primary metadata
+  },
+  primaryMetadataText: {
+    fontWeight: '600' as const, // Stronger weight for primary metadata
+    opacity: 0.9, // Slightly more prominent than secondary metadata
+  },
+  secondaryMetadataRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.LARGE, // Increased gap between secondary metadata items
+  },
+  summaryGroup: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   overlay: {

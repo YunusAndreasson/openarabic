@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: LAYOUT.SPACING.SMALL,
     overflow: 'visible',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     position: 'relative',
   },
   englishText: {
