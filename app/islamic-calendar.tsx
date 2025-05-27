@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.LARGE,
   },
   headerContent: {
-    padding: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -440,22 +440,22 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   eventContent: {
-    padding: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.XTINY,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
   },
   eventHeader: {
     flexDirection: 'row',
     alignItems: 'stretch',
-    marginBottom: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.XTINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   eventTitleContainer: {
     flex: 1,
-    marginRight: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.XTINY,
+    marginRight: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'flex-start',
     gap: LAYOUT.SPACING.XTINY,
   },
   eventTitle: {
     fontWeight: '700',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     letterSpacing: -0.2,
     flex: 1,
   },
@@ -477,14 +477,14 @@ const styles = StyleSheet.create({
     paddingLeft: LAYOUT.SPACING.XTINY,
   },
   eventArabicName: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.7,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.6,
     textAlign: 'right',
     fontWeight: '600',
     includeFontPadding: false,
     textAlignVertical: 'center',
     paddingVertical: LAYOUT.SPACING.XTINY,
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   daysUntil: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
   },
   eventDates: {
     gap: LAYOUT.SPACING.XTINY,
-    paddingTop: LAYOUT.SPACING.XTINY / 2,
+    paddingTop: LAYOUT.SPACING.XTINY,
   },
   dateRow: {
     flexDirection: 'row',
@@ -519,8 +519,8 @@ const styles = StyleSheet.create({
   noteContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    padding: LAYOUT.SPACING.SMALL,
-    gap: LAYOUT.SPACING.XTINY,
+    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
   },
   noteText: {
     flex: 1,
