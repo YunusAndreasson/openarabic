@@ -58,7 +58,7 @@ export const StatCard = memo(
           <View style={styles.contentRight}>
             <Ionicons
               name="chevron-forward-outline"
-              size={16}
+              size={20}
               color={colors.textTertiary}
               style={styles.navigationIcon}
             />
@@ -91,13 +91,15 @@ const styles = StyleSheet.create({
   contentCenter: {
     flex: 1,
     marginLeft: LAYOUT.SPACING.MEDIUM,
+    paddingRight: LAYOUT.SPACING.SMALL,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
   contentRight: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: LAYOUT.SPACING.SMALL,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    marginRight: LAYOUT.SPACING.TINY,
   },
   statValue: {
     marginBottom: LAYOUT.SPACING.TINY,
@@ -107,6 +109,6 @@ const styles = StyleSheet.create({
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3,
   },
   navigationIcon: {
-    opacity: 0.5,
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });

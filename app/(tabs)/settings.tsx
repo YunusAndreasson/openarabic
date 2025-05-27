@@ -272,7 +272,7 @@ const SettingsScreen: React.FC = () => {
                   </View>
                   <Ionicons
                     name="chevron-forward-outline"
-                    size={16}
+                    size={20}
                     color={colors.textTertiary}
                     style={styles.actionLinkChevron}
                   />
@@ -296,7 +296,7 @@ const SettingsScreen: React.FC = () => {
                   </View>
                   <Ionicons
                     name="chevron-forward-outline"
-                    size={16}
+                    size={20}
                     color={colors.textTertiary}
                     style={styles.actionLinkChevron}
                   />
@@ -320,7 +320,7 @@ const SettingsScreen: React.FC = () => {
                   </View>
                   <Ionicons
                     name="chevron-forward-outline"
-                    size={16}
+                    size={20}
                     color={colors.textTertiary}
                     style={styles.actionLinkChevron}
                   />
@@ -565,6 +565,8 @@ const styles = StyleSheet.create({
   socialLinkLeft: {
     alignItems: 'center',
     flexDirection: 'row',
+    flex: 1,
+    paddingRight: LAYOUT.SPACING.SMALL,
   },
   socialIconContainer: {
     padding: LAYOUT.SPACING.TINY,
@@ -575,8 +577,10 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   socialLinkChevron: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    textAlign: 'center',
+    marginRight: LAYOUT.SPACING.TINY,
   },
   actionLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -595,6 +599,8 @@ const styles = StyleSheet.create({
   actionLinkLeft: {
     alignItems: 'center',
     flexDirection: 'row',
+    flex: 1,
+    paddingRight: LAYOUT.SPACING.SMALL,
   },
   actionIconContainer: {
     padding: LAYOUT.SPACING.TINY,
@@ -605,8 +611,10 @@ const styles = StyleSheet.create({
     marginLeft: LAYOUT.SPACING.SMALL,
   },
   actionLinkChevron: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    textAlign: 'center',
+    marginRight: LAYOUT.SPACING.TINY,
   },
 });
 

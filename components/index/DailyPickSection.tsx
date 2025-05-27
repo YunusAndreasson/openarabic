@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { articlesService } from '@/services/articles';
 import type { Article } from '@/types/articles.types';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import { LAYOUT } from '../../constants/layout';
 import ThemedCard from '../ThemedCard';
@@ -66,7 +67,11 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         title={article.title}
         category="Just for you"
-        author={article.author ? article.author.name : 'Unknown'}
+        author={
+          article.author && article.category
+            ? `${article.author.name} • ${capitalizeFirstLetter(article.category.name)}`
+            : article.author?.name || 'Unknown'
+        }
         summary={article.summary || undefined}
         onPress={handlePress}
         style={styles.cardStyle}

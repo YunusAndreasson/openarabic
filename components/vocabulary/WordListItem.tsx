@@ -115,7 +115,7 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
           <View style={styles.navigationContainer}>
             <Ionicons
               name="chevron-forward-outline"
-              size={18}
+              size={20}
               color={colors.textTertiary}
               style={styles.navigationIcon}
             />
@@ -274,14 +274,16 @@ const styles = StyleSheet.create({
   rightContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
   },
   navigationContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    minWidth: LAYOUT.SPACING.XLARGE,
+    marginRight: LAYOUT.SPACING.TINY,
   },
   navigationIcon: {
-    opacity: 0.6,
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });
 

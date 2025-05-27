@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { ViewStyle, StyleProp } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -73,9 +74,12 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
           </View>
           <View style={styles.iconContainer}>
             {rightElement ?? (
-              <ThemedText type="heading3" colorName="textTertiary" style={styles.arrowText}>
-                →
-              </ThemedText>
+              <Ionicons
+                name="chevron-forward-outline"
+                size={20}
+                color={colors.textTertiary}
+                style={styles.arrowIcon}
+              />
             )}
           </View>
         </View>
@@ -86,8 +90,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  arrowText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+  arrowIcon: {
     opacity: LAYOUT.OPACITY.MEDIUM,
   },
   authorText: {
@@ -112,6 +115,7 @@ const styles = StyleSheet.create({
     minHeight: LAYOUT.SPACING.XLARGE,
     minWidth: LAYOUT.SPACING.XLARGE,
     paddingTop: LAYOUT.SPACING.MICRO,
+    marginRight: LAYOUT.SPACING.TINY,
   },
   metaRow: {
     alignItems: 'center',

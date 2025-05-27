@@ -16,6 +16,7 @@ import type {
 } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateReadingTime } from '@/utils/articleUtils';
+import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';
@@ -281,7 +282,7 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           {author ? (
             <View style={styles.authorContainer}>
               <ThemedText type="label" colorName="secondaryText" numberOfLines={1}>
-                By {author}
+                {author}
               </ThemedText>
             </View>
           ) : null}
