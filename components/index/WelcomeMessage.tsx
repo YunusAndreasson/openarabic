@@ -1,9 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import moment from 'moment-hijri';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 import { LAYOUT } from '@/constants/layout';
 import { ThemedText } from '@/components/ThemedText';
+import { useColors } from '@/hooks/useColors';
 
 interface IslamicEvent {
   name: string;
@@ -139,6 +142,8 @@ function getNextIslamicEvent(): { event: IslamicEvent; daysUntil: number } | nul
 }
 
 export const WelcomeMessage: React.FC = () => {
+  const colors = useColors();
+
   const welcomeData = useMemo(() => {
     const now = new Date();
     const moonEmoji = getMoonPhaseEmoji();
@@ -171,6 +176,10 @@ export const WelcomeMessage: React.FC = () => {
     return { dateMessage, eventMessage };
   }, []);
 
+  const handleCalendarPress = () => {
+    router.push('/islamic-calendar');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.contentGroup}>
@@ -184,9 +193,31 @@ export const WelcomeMessage: React.FC = () => {
             {welcomeData.eventMessage}
           </ThemedText>
         ) : null}
-        <ThemedText type="body" weight="medium" colorName="text" style={styles.dateText}>
-          {welcomeData.dateMessage}
-        </ThemedText>
+        <View style={styles.dateContainer}>
+          <ThemedText type="body" weight="medium" colorName="text" style={styles.dateText}>
+            {welcomeData.dateMessage}
+          </ThemedText>
+          <TouchableOpacity
+            onPress={handleCalendarPress}
+            style={styles.calendarButton}
+            hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
+            accessibilityLabel="View Islamic calendar"
+            accessibilityHint="Opens the Islamic calendar with upcoming events"
+          >
+            <Ionicons
+              name="calendar-outline"
+              size={16}
+              color={colors.textTertiary}
+              style={styles.calendarIcon}
+            />
+            <Ionicons
+              name="chevron-forward-outline"
+              size={16}
+              color={colors.textTertiary}
+              style={styles.chevronIcon}
+            />
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -222,5 +253,25 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontVariant: ['tabular-nums'],
     fontWeight: '500',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  calendarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: LAYOUT.SPACING.XSMALL,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    opacity: LAYOUT.OPACITY.HIGH,
+    marginLeft: LAYOUT.SPACING.XTINY,
+    gap: LAYOUT.SPACING.XTINY,
+  },
+  calendarIcon: {
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  chevronIcon: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });
