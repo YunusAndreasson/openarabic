@@ -14,7 +14,6 @@ import { LAYOUT, HEADER_IMAGE_HEIGHT } from '@/constants/layout';
 import { DEFAULT_IMAGES } from '@/constants/images';
 import { Colors } from '@/constants/Colors';
 import { ThemedText } from '../ThemedText';
-import { SPRING_CONFIG } from '@/hooks/animations/animationConfigs';
 import type { Article } from '@/types/articles.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { formatDifficultyLevel } from '@/services/difficultyLevel';
@@ -26,13 +25,6 @@ const OVERLAY_MAX_OPACITY = 0.45; // Increased for better text contrast
 
 // Advanced motion design constants
 const MOTION_CONFIG = {
-  SPRING: {
-    ...SPRING_CONFIG.SLIDE,
-    damping: 18, // Slightly increased for more controlled movement
-    stiffness: 90, // Balanced for smooth yet responsive feel
-    mass: 0.7, // Optimized mass for natural motion
-  },
-  SCALE_RANGE: [1.12, 1.0, 0.98], // Subtle scale variation for depth
   OPACITY_CURVE: [1, 0.85, 0.3], // Refined opacity curve for smooth transitions
 } as const;
 
@@ -149,7 +141,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           color: textColor,
           opacity: TYPOGRAPHY_REFINEMENTS.SUMMARY.opacity,
           fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM, // Explicit size
-          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.LOOSE,
+          lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
           letterSpacing: TYPOGRAPHY_REFINEMENTS.SUMMARY.letterSpacing,
           textShadowColor: ACCESSIBILITY_CONFIG.TEXT_SHADOW[isDarkMode ? 'DARK' : 'LIGHT'].color,
           textShadowOffset: { width: 0, height: 1 },
@@ -486,7 +478,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: LAYOUT.SPACING.SMALL, // Increased to SMALL (8px) to match text below
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM, // Increased from SMALL (8px) to MEDIUM (12px)
     paddingTop: LAYOUT.SPACING.LARGE,
     paddingBottom: LAYOUT.SPACING.XXLARGE + LAYOUT.SPACING.SMALL,
     zIndex: 3,

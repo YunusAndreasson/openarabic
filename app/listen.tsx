@@ -3,12 +3,14 @@ import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import Animated from 'react-native-reanimated';
+import { useQueryClient } from '@tanstack/react-query';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
-import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { ListenHeader, CompletionScreen } from '@/components/listen';
+import RepeatButton from '@/components/listen/RepeatButton';
 import { WordDisplay } from '@/components/review';
+import { LAYOUT, WORD_AREA_MIN_HEIGHT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useWordSizing } from '@/hooks/useWordSizing';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,11 +18,9 @@ import { useFSRSQueries } from '@/hooks/useFSRSQueries';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { useOpacityAnimation } from '@/hooks/animations';
 import { listenAudioService } from '@/services/listenAudioService';
-import { useQueryClient } from '@tanstack/react-query';
 import { handleError } from '@/utils/errorHandling';
 import { StudyWord } from '@/types/vocabulary.types';
 import type { EnhancedAudioTrack } from '@/types/audio.types';
-import { useToast } from '@/components/ToastProvider';
 
 /**
  * Screen that plays Arabic words followed by their English translations
@@ -39,7 +39,6 @@ export default function ListenScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();
-  const { showToast } = useToast();
 
   // State
   const [isComplete, setIsComplete] = useState(false);
@@ -60,7 +59,7 @@ export default function ListenScreen(): JSX.Element {
   // Animation
   const { animatedStyle, fadeIn, fadeOut } = useOpacityAnimation({
     initialOpacity: 0,
-    duration: 300,
+    duration: 200,
     autoStart: true,
   });
 
@@ -77,14 +76,7 @@ export default function ListenScreen(): JSX.Element {
   const handleRepeatToggle = useCallback(() => {
     const newValue = !repeatEnabled;
     setRepeatEnabled(newValue);
-
-    // Show toast notification
-    if (newValue) {
-      showToast('Repeat mode enabled. Words will play continuously.');
-    } else {
-      showToast('Repeat mode disabled.');
-    }
-  }, [repeatEnabled, showToast]);
+  }, [repeatEnabled]);
 
   // Function to handle track changes and update UI
   const handleTrackChange = useCallback(() => {
@@ -95,7 +87,7 @@ export default function ListenScreen(): JSX.Element {
     // Even indices are Arabic tracks, odd indices are English tracks
     const wordIndex = Math.floor(currentTrackIndex / 2); // Each word has 2 tracks (AR+EN)
 
-    // Update current word if needed
+    // Update current word if needed (only when moving to a different word)
     if (wordIndex !== currentWordIndex && wordIndex >= 0) {
       fadeOut();
 
@@ -115,7 +107,7 @@ export default function ListenScreen(): JSX.Element {
         }
 
         fadeIn();
-      }, 300);
+      }, 200); // Reduced timeout for smoother transitions
     }
   }, [currentTrackIndex, fadeIn, fadeOut, currentWordIndex, wordList.length]);
 
@@ -231,8 +223,6 @@ export default function ListenScreen(): JSX.Element {
       if (repeatEnabled && selectedTracksRef.current.length > 0) {
         // If repeat is enabled, restart playback
         handleRestartPlayback();
-        // Show toast notification when repeating
-        showToast('Repeating vocabulary words');
       } else {
         // Otherwise, show completion screen
         setIsComplete(true);
@@ -247,7 +237,6 @@ export default function ListenScreen(): JSX.Element {
     repeatEnabled,
     handleRestartPlayback,
     wordList.length,
-    showToast,
   ]);
 
   // Close and cleanup
@@ -308,6 +297,11 @@ export default function ListenScreen(): JSX.Element {
   const currentArabicWord = currentWord?.root?.letters || '';
   const currentEnglishMeaning = currentWord?.root?.meaning || '';
 
+  // Determine if we should show English translation based on current track
+  // Even indices (0, 2, 4...) are Arabic tracks, odd indices (1, 3, 5...) are English tracks
+  const isEnglishTrack = currentTrackIndex >= 0 && currentTrackIndex % 2 === 1;
+  const translationToShow = isEnglishTrack ? currentEnglishMeaning : undefined;
+
   // Calculate progress
   const progress =
     wordList.length > 0 ? Math.floor(((currentWordIndex + 1) / wordList.length) * 100) : 0;
@@ -343,21 +337,21 @@ export default function ListenScreen(): JSX.Element {
           maxProgress={maxProgress}
           animationKey={progressAnimationKey}
           onClose={handleClose}
-          repeatEnabled={repeatEnabled}
-          onRepeatToggle={handleRepeatToggle}
         />
 
         <View style={styles.wordArea}>
           <Animated.View style={[styles.wordContainer, animatedStyle as any]}>
             <WordDisplay
               word={currentArabicWord}
-              translation={currentEnglishMeaning}
+              translation={translationToShow}
               fontSize={wordFontSize}
             />
           </Animated.View>
         </View>
 
         <View style={styles.footer}>
+          <RepeatButton enabled={repeatEnabled} onToggle={handleRepeatToggle} />
+
           <View style={styles.noteContainer}>
             <Ionicons
               name="headset-outline"
@@ -375,53 +369,54 @@ export default function ListenScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
   contentContainer: {
+    alignItems: 'center',
     flex: 1,
-    width: '100%',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-  wordArea: {
-    flex: 1,
     width: '100%',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: WORD_AREA_MIN_HEIGHT,
-  },
-  wordContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   footer: {
-    width: '100%',
-    paddingBottom: LAYOUT.SPACING.MEDIUM,
     alignItems: 'center',
+    gap: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.MEDIUM,
+    width: '100%',
   },
   noteContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
     opacity: 0.6,
   },
   noteIcon: {
+    fontWeight: '500',
     marginRight: LAYOUT.SPACING.TINY,
     opacity: 0.7,
-    fontWeight: '500',
   },
   noteText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    opacity: 0.7,
     fontWeight: '400',
+    opacity: 0.7,
+  },
+  wordArea: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: WORD_AREA_MIN_HEIGHT,
+    position: 'relative',
+    width: '100%',
+  },
+  wordContainer: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 });

@@ -1,4 +1,3 @@
-import { useHeaderHeight } from '@react-navigation/elements';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams } from 'expo-router';
 import React, {
@@ -53,7 +52,7 @@ const styles = StyleSheet.create({
   buttonsWrapper: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 });
 
@@ -252,7 +251,7 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           {article.source ? (
             <View
               style={{
-                paddingHorizontal: LAYOUT.SPACING.SMALL,
+                paddingHorizontal: LAYOUT.SPACING.MEDIUM,
                 marginBottom: LAYOUT.SPACING.MEDIUM,
               }}
             >

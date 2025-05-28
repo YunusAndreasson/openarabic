@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
 import type { ComponentRef } from 'react';
-import React, { createRef, memo, useEffect, useRef, useMemo } from 'react';
+import React, { createRef, useEffect, useRef, useMemo } from 'react';
 import type { ViewStyle, StyleProp, TouchableOpacity } from 'react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -168,13 +168,11 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: LAYOUT.SPACING.SMALL,
     overflow: 'visible',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
     position: 'relative',
   },
   englishText: {
     fontFamily: 'Philosopher',
     paddingBottom: LAYOUT.SPACING.SMALL,
-    paddingLeft: LAYOUT.SPACING.SMALL,
     paddingTop: LAYOUT.SPACING.TINY,
   },
   sentenceBackground: {

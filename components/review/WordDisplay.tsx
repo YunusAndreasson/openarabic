@@ -1,6 +1,7 @@
 import React, { useMemo, memo } from 'react';
 import type { TextStyle } from 'react-native';
 import { View, Platform, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
 import type { WordDisplayProps } from '@/types/ui/review.types';
@@ -22,8 +23,8 @@ const WordDisplay = memo(
         color: colors.arabicText,
         fontWeight: '700',
         textAlign: 'center',
-        paddingVertical: LAYOUT.SPACING.MEDIUM,
-        lineHeight: fontSize * 1.7,
+        lineHeight: fontSize * 1.8, // Increased line height for better Arabic text rendering
+        paddingTop: fontSize * 0.1, // Small top padding to prevent clipping
         ...(Platform.OS === 'ios'
           ? {
               shadowColor: colors.shadow,
@@ -36,24 +37,38 @@ const WordDisplay = memo(
       [colors.arabicText, fontSize, colors.shadow]
     );
 
+    // Animated style for translation with smooth opacity transition
+    const translationAnimatedStyle = useAnimatedStyle(() => {
+      return {
+        opacity: withTiming(translation ? 1 : 0, { duration: 300 }),
+      };
+    }, [translation]);
+
     // Use a key based on the word to ensure React completely replaces the component
     // when the word changes, preventing any visual glitches during transitions
     return (
       <View style={[styles.container, style]}>
-        <ThemedText
-          key={`word-${word}`}
-          type="arabic"
-          arabicFontSize={fontSize}
-          style={textStyle}
-          skipDefaultColor
-        >
-          {word}
-        </ThemedText>
-        {translation && (
-          <ThemedText style={styles.translationText} colorName="englishText" skipDefaultColor>
-            {translation}
+        {/* Fixed Arabic text container - always in the same position */}
+        <View style={styles.arabicContainer}>
+          <ThemedText
+            key={`word-${word}`}
+            type="arabic"
+            arabicFontSize={fontSize}
+            style={textStyle}
+            skipDefaultColor
+          >
+            {word}
           </ThemedText>
-        )}
+        </View>
+
+        {/* Fixed translation container - always reserves space */}
+        <View style={styles.translationContainer}>
+          <Animated.View style={translationAnimatedStyle}>
+            <ThemedText style={styles.translationText} colorName="englishText" skipDefaultColor>
+              {translation || ' '}
+            </ThemedText>
+          </Animated.View>
+        </View>
       </View>
     );
   },
@@ -71,19 +86,29 @@ const WordDisplay = memo(
 WordDisplay.displayName = 'WordDisplay';
 
 const styles = StyleSheet.create({
+  arabicContainer: {
+    alignItems: 'center',
+    flex: 1, // Use flex instead of fixed height for better text accommodation
+    justifyContent: 'center',
+    paddingVertical: LAYOUT.SPACING.LARGE, // Increased padding to prevent clipping
+  },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 7,
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 9, // Increased total height
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
+  translationContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: LAYOUT.SPACING.SMALL, // Reduced margin to balance spacing
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 2.5, // Fixed height for translation to prevent jumping
+  },
   translationText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
-    textAlign: 'center',
-    marginTop: LAYOUT.SPACING.MEDIUM,
     fontWeight: '400',
-    opacity: 0.9,
+    textAlign: 'center',
   },
 });
 

@@ -27,7 +27,6 @@ import {
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { analytics } from '@/services/analytics';
 import { updateAudioState } from '@/store/audioSlice';
-import { setShowEnglish } from '@/store/settingsSlice';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import type { Tables } from '@/types/database.types';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -42,13 +41,9 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
       backgroundColor: colors.background,
       flex: 1,
     },
-    contentContainer: {
-      backgroundColor: colors.background,
-      flex: 1,
-    },
     transparentBackground: {
       backgroundColor: colors.transparent,
-      paddingHorizontal: 0,
+      paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     },
   });
 
@@ -712,7 +707,7 @@ export default function ArticleScreen(): JSX.Element {
     <ThemedView style={styles.container} useSafeArea={false}>
       <StatusBar style="light" translucent={true} animated={true} />
 
-      <View style={styles.contentContainer}>
+      <View style={styles.container}>
         {article && sortedSentences && sortedSentences.length > 0 ? (
           <ArticleContent
             ref={articleContentRef}
