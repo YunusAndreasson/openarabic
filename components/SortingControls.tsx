@@ -13,7 +13,6 @@ export type SortDirection = 'asc' | 'desc';
 export interface SortOption<T = string> {
   key: T;
   label: string;
-  description?: string;
 }
 
 export interface SortingControlsProps<T = string> {
@@ -21,7 +20,6 @@ export interface SortingControlsProps<T = string> {
   sortDirection?: SortDirection;
   onSortChange: (sort: T, direction: SortDirection) => void;
   options: SortOption<T>[];
-  title?: string;
   style?: any;
 }
 
@@ -30,7 +28,6 @@ function SortingControls<T extends string>({
   sortDirection = 'desc',
   onSortChange,
   options,
-  title = 'Sort by',
   style,
 }: SortingControlsProps<T>): JSX.Element {
   const colors = useColors();
@@ -63,14 +60,6 @@ function SortingControls<T extends string>({
   return (
     <BaseCard shadowSize="small" style={[styles.sortCard, style]}>
       <View style={styles.sortContent}>
-        {/* Sort Header */}
-        <View style={styles.sortHeader}>
-          <ThemedText type="heading3" weight="bold" style={styles.sortTitle}>
-            {title}
-          </ThemedText>
-        </View>
-
-        {/* Sort Options */}
         <View style={styles.sortOptions}>
           {options.map(option => {
             const isSelected = currentSort === option.key;
@@ -87,7 +76,12 @@ function SortingControls<T extends string>({
                   isSelected && {
                     backgroundColor: colors.elevation1,
                     borderWidth: 1,
-                    borderColor: colors.tint + '20', // 20% opacity
+                    borderColor: colors.tint + '15', // Subtle border
+                    shadowColor: colors.tint,
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 2,
                   },
                 ]}
                 label={
@@ -95,23 +89,11 @@ function SortingControls<T extends string>({
                     <ThemedText
                       type="label"
                       colorName={isSelected ? 'tint' : 'textTertiary'}
-                      weight={isSelected ? 'bold' : 'semibold'}
-                      style={styles.sortPillLabel}
+                      weight={isSelected ? 'bold' : 'medium'}
+                      style={[styles.sortPillLabel, isSelected && styles.selectedLabel]}
                     >
                       {option.label}
                     </ThemedText>
-                    {option.description && (
-                      <ThemedText
-                        type="caption"
-                        style={[
-                          styles.sortPillDescription,
-                          { color: isSelected ? colors.tint : colors.textTertiary },
-                        ]}
-                        weight={isSelected ? 'medium' : 'normal'}
-                      >
-                        {option.description}
-                      </ThemedText>
-                    )}
                     <Ionicons
                       name={
                         isSelected
@@ -120,8 +102,8 @@ function SortingControls<T extends string>({
                             : 'chevron-up'
                           : 'chevron-down'
                       }
-                      size={12}
-                      style={styles.sortPillIcon}
+                      size={11}
+                      style={[styles.sortPillIcon, isSelected && styles.selectedIcon]}
                       color={isSelected ? colors.tint : colors.textTertiary}
                     />
                   </View>
@@ -142,17 +124,13 @@ export default MemoizedSortingControls;
 
 const styles = StyleSheet.create({
   sortCard: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.XSMALL,
     marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
+    overflow: 'hidden', // Ensures clean card edges
   },
   sortContent: {
-    padding: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.XTINY,
-  },
-  sortHeader: {
-    marginBottom: LAYOUT.SPACING.XTINY,
-  },
-  sortTitle: {
-    marginBottom: LAYOUT.SPACING.XTINY,
+    paddingHorizontal: LAYOUT.SPACING.SMALL + LAYOUT.SPACING.MICRO,
+    paddingVertical: LAYOUT.SPACING.XSMALL + LAYOUT.SPACING.MICRO,
   },
   sortOptions: {
     flexDirection: 'row',
@@ -161,31 +139,38 @@ const styles = StyleSheet.create({
   },
   sortPill: {
     flex: 1,
+    marginBottom: 0,
+    marginRight: 0,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XSMALL,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    minHeight: 38,
+    paddingVertical: LAYOUT.SPACING.XSMALL + LAYOUT.SPACING.MICRO,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL + 1,
+    minHeight: 42,
     justifyContent: 'center',
     alignItems: 'center',
+    // Subtle default state
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   sortPillContent: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.MICRO,
+    gap: LAYOUT.SPACING.XTINY,
   },
   sortPillLabel: {
-    fontWeight: '600',
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     textAlign: 'center',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 2,
+    letterSpacing: 0.2, // Subtle letter spacing for elegance
   },
-  sortPillDescription: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    textAlign: 'center',
-    opacity: 0.75,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY + 1,
+  selectedLabel: {
+    fontWeight: '600',
   },
   sortPillIcon: {
-    marginTop: LAYOUT.SPACING.MICRO,
+    marginLeft: LAYOUT.SPACING.MICRO,
+    opacity: 0.7, // Subtle when not selected
+  },
+  selectedIcon: {
+    opacity: 1, // Full opacity when selected
   },
 });

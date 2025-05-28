@@ -22,9 +22,9 @@ const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3.2;
 
 // Define sort options for word list
 const wordListSortOptions: SortOption<WordListSort>[] = [
-  { key: 'retention', label: 'Memory', description: 'Strength' },
-  { key: 'alphabetical', label: 'A-Z', description: 'Order' },
-  { key: 'streak', label: 'Streak', description: 'Success' },
+  { key: 'retention', label: 'Memory' },
+  { key: 'alphabetical', label: 'A-Z' },
+  { key: 'streak', label: 'Streak' },
 ];
 
 // Move WordListItem component definition outside to optimize recycling
@@ -297,5 +297,6 @@ const styles = StyleSheet.create({
   },
   sortCard: {
     marginBottom: LAYOUT.SPACING.SMALL,
+    marginHorizontal: 0,
   },
 });

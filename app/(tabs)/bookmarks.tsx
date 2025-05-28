@@ -94,6 +94,29 @@ const BookmarkListItem = memo(
     const hasDueWords = dueWordCount > 0;
     const isPlaying = isActive && audioState === AUDIO_STATES.PLAYING;
 
+    // Helper function to get level name
+    const getLevelName = (level: number): string => {
+      switch (level) {
+        case 1:
+          return 'Beginner';
+        case 2:
+          return 'Elementary';
+        case 3:
+          return 'Intermediate';
+        case 4:
+          return 'Advanced';
+        case 5:
+          return 'Expert';
+        default:
+          return `Level ${level}`;
+      }
+    };
+
+    // Helper function to capitalize first letter
+    const capitalizeFirstLetter = (str: string): string => {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     // Create left meta content with due words indicator
     const leftMetaContent = hasDueWords ? (
       <View
@@ -101,22 +124,28 @@ const BookmarkListItem = memo(
           flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: colors.buttonOverlay,
-          paddingHorizontal: LAYOUT.SPACING.XSMALL,
-          paddingVertical: LAYOUT.SPACING.MICRO,
+          paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
+          paddingVertical: LAYOUT.SPACING.MICRO + 1,
           borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-          borderColor: colors.borderOverlay,
+          borderWidth: 0.5,
+          borderColor: colors.warning + '30',
           marginRight: 8,
+          shadowColor: colors.warning,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 1,
+          elevation: 1,
         }}
       >
-        <Ionicons name="sync-outline" size={12} color={colors.warning} />
+        <Ionicons name="sync-outline" size={11} color={colors.warning} />
         <ThemedText
           type="label"
           style={{
             color: colors.warning,
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+            fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
             marginLeft: LAYOUT.SPACING.XTINY,
-            fontWeight: '600',
+            fontWeight: '700',
+            letterSpacing: 0.2,
           }}
           skipDefaultColor
         >
@@ -134,14 +163,32 @@ const BookmarkListItem = memo(
           <View
             style={{ flexDirection: 'row', alignItems: 'center', marginLeft: LAYOUT.SPACING.SMALL }}
           >
+            {/* Dot separator before level (if level exists) */}
+            {item.articles?.difficulty_level && (
+              <ThemedText
+                type="caption"
+                style={{
+                  color: colors.textTertiary,
+                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                  marginRight: LAYOUT.SPACING.XSMALL,
+                  opacity: 0.6, // Subtle dot
+                }}
+                skipDefaultColor
+              >
+                •
+              </ThemedText>
+            )}
+
             {/* Level indicator */}
             {item.articles?.difficulty_level && (
               <View
                 style={{
                   backgroundColor: colors.elevation1,
-                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
-                  paddingVertical: LAYOUT.SPACING.MICRO,
+                  paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
+                  paddingVertical: LAYOUT.SPACING.MICRO + 1,
                   borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+                  borderWidth: 0.5,
+                  borderColor: colors.borderOverlay,
                 }}
               >
                 <ThemedText
@@ -149,16 +196,17 @@ const BookmarkListItem = memo(
                   style={{
                     color: colors.textTertiary,
                     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                    fontWeight: '500',
+                    fontWeight: '600',
+                    letterSpacing: 0.3,
                   }}
                   skipDefaultColor
                 >
-                  L{item.articles.difficulty_level}
+                  {getLevelName(item.articles.difficulty_level)}
                 </ThemedText>
               </View>
             )}
 
-            {/* Dot separator */}
+            {/* Dot separator between level and category */}
             {item.articles?.difficulty_level && item.articles?.category?.name && (
               <ThemedText
                 type="caption"
@@ -166,6 +214,7 @@ const BookmarkListItem = memo(
                   color: colors.textTertiary,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
                   marginHorizontal: LAYOUT.SPACING.XSMALL,
+                  opacity: 0.6, // Subtle dot
                 }}
                 skipDefaultColor
               >
@@ -178,9 +227,11 @@ const BookmarkListItem = memo(
               <View
                 style={{
                   backgroundColor: colors.elevation1,
-                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
-                  paddingVertical: LAYOUT.SPACING.MICRO,
+                  paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
+                  paddingVertical: LAYOUT.SPACING.MICRO + 1,
                   borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+                  borderWidth: 0.5,
+                  borderColor: colors.borderOverlay,
                 }}
               >
                 <ThemedText
@@ -189,10 +240,11 @@ const BookmarkListItem = memo(
                     color: colors.textTertiary,
                     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
                     fontWeight: '500',
+                    letterSpacing: 0.2,
                   }}
                   skipDefaultColor
                 >
-                  {item.articles.category.name}
+                  {capitalizeFirstLetter(item.articles.category.name)}
                 </ThemedText>
               </View>
             )}
@@ -231,9 +283,9 @@ export type BookmarkSortOption = 'dueWords' | 'difficulty' | 'readingTime' | 'au
 
 // Define sort options for bookmarks
 const bookmarkSortOptions: SortOption<BookmarkSortOption>[] = [
-  { key: 'dueWords', label: 'Due Words', description: 'Review' },
-  { key: 'difficulty', label: 'Level', description: 'Easy-Hard' },
-  { key: 'category', label: 'Category', description: 'Topic' },
+  { key: 'dueWords', label: 'Due Words' },
+  { key: 'difficulty', label: 'Level' },
+  { key: 'category', label: 'Category' },
 ];
 
 export default function BookmarksScreen(): JSX.Element {
