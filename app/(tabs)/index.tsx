@@ -50,6 +50,7 @@ const styles = StyleSheet.create({
   },
   listContentContainer: {
     flexGrow: 1,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
 });
 
@@ -453,7 +454,6 @@ export default function ArticlesScreen(): JSX.Element {
       ...styles.listContentContainer,
       backgroundColor: colors.background,
       paddingTop: headerHeight,
-      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
       paddingBottom:
         insets.bottom +
         LAYOUT.CONTENT_SPACING.BOTTOM +

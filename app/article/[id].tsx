@@ -43,7 +43,7 @@ const createStyles = (colors: ReturnType<typeof useColors>) =>
     },
     transparentBackground: {
       backgroundColor: colors.transparent,
-      paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+      paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     },
   });
 
