@@ -6,9 +6,11 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import EmptyState from '@/components/EmptyState';
+import { WordStatsCard } from '@/components/vocabulary/WordStatsCard';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
+import { useWordStats } from '@/hooks/useWordStats';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -16,17 +18,9 @@ import { wordExamplesService, SentenceWithWords } from '@/services/wordExamples'
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
 import BaseCard from '@/components/BaseCard';
 
-// Simple word component that only highlights the target word and doesn't use useArabicWord
+// Optimized word component with memoized styles and enhanced highlighting
 const SimpleArabicWord = memo(
-  ({
-    word,
-    isHighlighted,
-    fontScale = 1.0,
-  }: {
-    word: SentenceWord;
-    isHighlighted: boolean;
-    fontScale?: number;
-  }) => {
+  ({ word, isHighlighted }: { word: SentenceWord; isHighlighted: boolean }) => {
     const colors = useColors();
 
     const containerStyle = useMemo(
@@ -36,6 +30,11 @@ const SimpleArabicWord = memo(
           backgroundColor: colors.audioHighlight,
           borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
           padding: LAYOUT.SPACING.TINY,
+          shadowColor: colors.audioHighlight,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.3,
+          shadowRadius: 2,
+          elevation: 2,
         },
       ],
       [colors.audioHighlight, isHighlighted]
@@ -43,7 +42,7 @@ const SimpleArabicWord = memo(
 
     return (
       <View style={containerStyle}>
-        <ThemedText type="arabic" arabicFontSize={fontScale * 24} style={styles.arabicText}>
+        <ThemedText type="arabic" arabicFontSize={24} style={styles.arabicText}>
           {word.word_form}
         </ThemedText>
       </View>
@@ -51,48 +50,51 @@ const SimpleArabicWord = memo(
   }
 );
 
-// Memoized component for word example items
-const WordExampleItem = memo(
-  ({ item, wordId, rootId }: { item: SentenceWithWords; wordId?: string; rootId?: string }) => {
-    // Find the specific target word in this sentence
-    let targetWordId: number | null = null;
+SimpleArabicWord.displayName = 'SimpleArabicWord';
 
-    if (wordId) {
-      // If we have a wordId, highlight that specific word only
-      targetWordId = parseInt(wordId);
-    } else if (rootId) {
-      // If we have a rootId, find the first word in this sentence with that root_id
-      const wordWithRoot = item.words.find(word => word.root_id === parseInt(rootId));
-      if (wordWithRoot) {
-        targetWordId = wordWithRoot.id;
+// Enhanced example item component with better visual hierarchy
+const WordExampleItem = memo(
+  ({
+    item,
+    wordId,
+    rootId,
+    hasHeader,
+  }: {
+    item: SentenceWithWords;
+    wordId?: string;
+    rootId?: string;
+    hasHeader?: boolean;
+  }) => {
+    // Find target word ID once and memoize
+    const targetWordId = useMemo(() => {
+      if (wordId) return parseInt(wordId);
+      if (rootId) {
+        const wordWithRoot = item.words.find(word => word.root_id === parseInt(rootId));
+        return wordWithRoot?.id || null;
       }
-    }
+      return null;
+    }, [wordId, rootId, item.words]);
 
     return (
-      <View style={styles.sentenceContainer}>
+      <View style={[styles.sentenceContainer, hasHeader && styles.sentenceContainerWithHeader]}>
         <BaseCard shadowSize="small" style={styles.sentenceContent}>
-          {/* Show the full sentence with individual word components */}
-          {item.words.length > 0 && (
+          {/* Render words or fallback to raw text */}
+          {item.words.length > 0 ? (
             <View style={styles.wordsContainer}>
               {item.words.map((word, index) => (
                 <SimpleArabicWord
                   key={`word-${word.id}-${index}`}
                   word={word}
                   isHighlighted={targetWordId === word.id}
-                  fontScale={1.0}
                 />
               ))}
             </View>
-          )}
-
-          {/* Fallback to raw text if no words */}
-          {item.words.length === 0 && (
+          ) : (
             <ThemedText type="arabic" align="right" style={styles.arabicSentence}>
               {item.sentence.arabic}
             </ThemedText>
           )}
 
-          {/* Show the English translation */}
           <ThemedText colorName="secondaryText" style={styles.englishSentence}>
             {item.sentence.english}
           </ThemedText>
@@ -105,12 +107,11 @@ const WordExampleItem = memo(
 WordExampleItem.displayName = 'WordExampleItem';
 
 export default function WordExamplesScreen() {
-  const { wordId, rootId, category, rootMeaning, rootLetters } = useLocalSearchParams<{
+  const { wordId, rootId, category, rootMeaning } = useLocalSearchParams<{
     wordId: string;
     rootId: string;
     category: string;
     rootMeaning: string;
-    rootLetters: string;
   }>();
   const colors = useColors();
   const { user } = useAuth();
@@ -119,10 +120,51 @@ export default function WordExamplesScreen() {
   const [wordData, setWordData] = useState<SentenceWord | null>(null);
   const [examples, setExamples] = useState<SentenceWithWords[]>([]);
 
-  // Fetch word data and example sentences
+  // Get word statistics for individual word/root
+  const {
+    stats,
+    isLoading: isStatsLoading,
+    hasData: hasStatsData,
+  } = useWordStats(rootId ? parseInt(rootId) : null, wordId ? parseInt(wordId) : null);
+
+  // Memoize derived values
+  const shouldShowStats = useMemo(
+    () => !category && (wordId || rootId) && hasStatsData,
+    [category, wordId, rootId, hasStatsData]
+  );
+
+  const showLoadingState = useMemo(
+    () => isLoading && category && !wordId && !rootId,
+    [isLoading, category, wordId, rootId]
+  );
+
+  const showEmptyState = useMemo(
+    () => !isLoading && examples.length === 0,
+    [isLoading, examples.length]
+  );
+
+  // Enhanced title calculation with better formatting
+  const title = useMemo(() => {
+    if (category) {
+      const categoryTitles = {
+        total: 'All Examples',
+        mastered: 'Mastered Words',
+        learning: 'Learning Progress',
+        due: 'Review Queue',
+      };
+      return categoryTitles[category as keyof typeof categoryTitles] || 'Word Examples';
+    }
+
+    if (rootMeaning) return capitalizeFirstLetter(rootMeaning);
+    if (wordData?.root?.meaning) return capitalizeFirstLetter(wordData.root.meaning);
+    if (wordData?.english) return capitalizeFirstLetter(wordData.english);
+
+    return wordId ? 'Word Examples' : rootId ? 'Word Root' : 'Word Examples';
+  }, [category, wordData, wordId, rootId, rootMeaning]);
+
+  // Consolidated fetch logic with better error handling
   useEffect(() => {
     const fetchExamples = async () => {
-      // Don't show loading state for direct word/root access
       if (category && !wordId && !rootId) {
         setIsLoading(true);
       }
@@ -141,6 +183,14 @@ export default function WordExamplesScreen() {
           setWordData(word);
           setExamples(examples);
         } else if (category && user?.id) {
+          // Category-based fetching with optimized query
+          const categoryQueries = {
+            mastered: 'fsrs_state.eq.3,fsrs_stability.gte.30',
+            learning:
+              'fsrs_state.eq.1,fsrs_state.eq.2,fsrs_state.eq.0,and(fsrs_state.eq.3,fsrs_stability.lt.30)',
+            due: `fsrs_due.lte.${new Date().toISOString()}`,
+          };
+
           let rootsQuery = supabase
             .from('study_words')
             .select('root_id')
@@ -148,18 +198,9 @@ export default function WordExamplesScreen() {
             .order('fsrs_last_review', { ascending: false })
             .limit(5);
 
-          switch (category) {
-            case 'mastered':
-              rootsQuery = rootsQuery.eq('fsrs_state', 3).gte('fsrs_stability', 30);
-              break;
-            case 'learning':
-              rootsQuery = rootsQuery.or(
-                'fsrs_state.eq.1,fsrs_state.eq.2,fsrs_state.eq.0,and(fsrs_state.eq.3,fsrs_stability.lt.30)'
-              );
-              break;
-            case 'due':
-              rootsQuery = rootsQuery.lte('fsrs_due', new Date().toISOString());
-              break;
+          const queryFilter = categoryQueries[category as keyof typeof categoryQueries];
+          if (queryFilter) {
+            rootsQuery = rootsQuery.or(queryFilter);
           }
 
           const { data: rootsData, error: rootsError } = await rootsQuery;
@@ -168,7 +209,6 @@ export default function WordExamplesScreen() {
           const rootIds = (rootsData || []).map(r => r.root_id).filter(Boolean);
           if (rootIds.length === 0) {
             setExamples([]);
-            setIsLoading(false);
             return;
           }
 
@@ -189,113 +229,77 @@ export default function WordExamplesScreen() {
     fetchExamples();
   }, [wordId, rootId, category, user?.id]);
 
-  // Render a sentence with words using ArticleSentence component
+  // Memoized render function
   const renderSentenceItem = useCallback(
-    ({ item }: { item: SentenceWithWords }) => {
-      return <WordExampleItem item={item} wordId={wordId} rootId={rootId} />;
-    },
-    [rootId, wordId]
+    ({ item }: { item: SentenceWithWords }) => (
+      <WordExampleItem
+        item={item}
+        wordId={wordId}
+        rootId={rootId}
+        hasHeader={shouldShowStats || !!category}
+      />
+    ),
+    [rootId, wordId, shouldShowStats, category]
   );
 
-  // Get the title for the screen
-  const title = useMemo(() => {
-    // For categories, use category name
-    if (category) {
-      switch (category) {
-        case 'total':
-          return 'Total Words Examples';
-        case 'mastered':
-          return 'Mastered Examples';
-        case 'learning':
-          return 'Learning Examples';
-        case 'due':
-          return 'Review Examples';
-        default:
-          return 'Word Examples';
-      }
-    }
+  // Enhanced header options with better styling
+  const headerOptions = useMemo(
+    () => ({
+      headerShown: true,
+      headerTitle: title,
+      headerTitleStyle: {
+        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
+        fontWeight: '700' as const,
+        color: colors.text,
+        letterSpacing: -0.5,
+      },
+      headerStyle: {
+        backgroundColor: colors.background,
+        elevation: 0,
+        shadowOpacity: 0,
+      },
+      headerShadowVisible: false,
+      headerTransparent: false,
+      headerTitleAlign: 'left' as const,
+      headerTintColor: colors.tint,
+      headerRight:
+        isLoading && (wordId || rootId)
+          ? () => (
+              <View style={styles.headerLoadingContainer}>
+                <ActivityIndicator
+                  size="small"
+                  color={colors.tint}
+                  style={{ marginRight: LAYOUT.SPACING.SMALL }}
+                />
+              </View>
+            )
+          : undefined,
+    }),
+    [title, colors, isLoading, wordId, rootId]
+  );
 
-    // Use rootMeaning from URL params if available
-    if (rootMeaning) {
-      return capitalizeFirstLetter(rootMeaning);
-    }
-
-    // If we have word data, use that
-    if (wordData) {
-      if (wordData.root?.meaning) {
-        return capitalizeFirstLetter(wordData.root.meaning);
-      }
-      if (wordData.english) {
-        return capitalizeFirstLetter(wordData.english);
-      }
-    }
-
-    // Fallback to a generic title
-    return wordId ? 'Word Examples' : rootId ? 'Word Root' : 'Word Examples';
-  }, [category, wordData, wordId, rootId, rootMeaning]);
-
-  // Only show loading state for categories
-  const showLoadingState = isLoading && category && !wordId && !rootId;
-
-  // Wait until content is ready before rendering for categories only
+  // Early returns for loading and empty states
   if (showLoadingState) {
     return (
       <ThemedView style={styles.container}>
-        <Stack.Screen
-          options={{
-            title: title,
-            headerShown: true,
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerShadowVisible: false,
-            headerTransparent: false,
-            headerTitleStyle: {
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-              fontWeight: '600',
-              color: colors.text,
-            },
-            headerTintColor: colors.tint,
-          }}
-        />
+        <Stack.Screen options={headerOptions} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
+          <ThemedText variant="secondary" style={styles.loadingText}>
+            Loading examples...
+          </ThemedText>
         </View>
       </ThemedView>
     );
   }
 
-  // If we have examples, show them
-  // If we're loading directly from word/root access, still render the component
-  // with empty examples to avoid flickering
-  const exampleList = examples.length > 0 || (isLoading && (wordId || rootId)) ? examples : [];
-
-  // Show empty state only if we're not loading and have no examples
-  const showEmptyState = !isLoading && examples.length === 0;
-
   if (showEmptyState) {
     return (
       <ThemedView style={styles.container}>
-        <Stack.Screen
-          options={{
-            title,
-            headerShown: true,
-            headerTitleStyle: {
-              fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-              fontWeight: '600',
-              color: colors.text,
-            },
-            headerStyle: {
-              backgroundColor: colors.background,
-            },
-            headerShadowVisible: false,
-            headerTransparent: false,
-            headerTintColor: colors.tint,
-          }}
-        />
+        <Stack.Screen options={headerOptions} />
         <EmptyState
           title="No Examples Found"
-          description="We couldn't find any examples for this word."
+          description="We couldn't find any examples for this word. Try exploring other words or check back later."
           icon="book-outline"
           colors={colors}
         />
@@ -303,37 +307,56 @@ export default function WordExamplesScreen() {
     );
   }
 
+  // Enhanced header component with better visual hierarchy
+  const HeaderComponent = useMemo(() => {
+    if (shouldShowStats) {
+      return (
+        <View style={styles.headerContainer}>
+          <View style={styles.sectionContainer}>
+            <ThemedText type="heading2" weight="bold" style={styles.sectionHeading}>
+              Learning Progress
+            </ThemedText>
+            {isStatsLoading ? (
+              <View style={styles.statsLoadingContainer}>
+                <BaseCard shadowSize="small" style={styles.statsLoadingCard}>
+                  <ActivityIndicator size="small" color={colors.tint} />
+                  <ThemedText variant="secondary" style={styles.statsLoadingText}>
+                    Loading statistics...
+                  </ThemedText>
+                </BaseCard>
+              </View>
+            ) : (
+              <WordStatsCard stats={stats} />
+            )}
+          </View>
+
+          <View style={[styles.sectionContainer, styles.lastSectionContainer]}>
+            <ThemedText type="heading2" weight="bold" style={styles.sectionHeading}>
+              Example Sentences
+            </ThemedText>
+          </View>
+        </View>
+      );
+    }
+
+    if (category) {
+      return (
+        <View style={styles.headerContainer}>
+          <View style={[styles.sectionContainer, styles.lastSectionContainer]}>
+            <ThemedText type="heading2" weight="bold" style={styles.sectionHeading}>
+              Example Sentences
+            </ThemedText>
+          </View>
+        </View>
+      );
+    }
+
+    return null;
+  }, [shouldShowStats, category, isStatsLoading, stats, colors.tint]);
+
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerTitle: title,
-          headerTitleStyle: {
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-            fontWeight: '600',
-            color: colors.text,
-          },
-          headerStyle: {
-            backgroundColor: colors.background,
-          },
-          headerShadowVisible: false,
-          headerTransparent: false,
-          headerTitleAlign: 'left',
-          headerTintColor: colors.tint,
-          // Only show loading indicator if loading with wordId/rootId
-          headerRight:
-            isLoading && (wordId || rootId)
-              ? () => (
-                  <ActivityIndicator
-                    size="small"
-                    color={colors.tint}
-                    style={{ marginRight: LAYOUT.SPACING.SMALL }}
-                  />
-                )
-              : undefined,
-        }}
-      />
+      <Stack.Screen options={headerOptions} />
 
       <ThemedView
         style={styles.container}
@@ -341,22 +364,26 @@ export default function WordExamplesScreen() {
         safeAreaEdges={['left', 'right']}
       >
         <FlashList
-          data={exampleList}
+          data={examples.length > 0 || (isLoading && (wordId || rootId)) ? examples : []}
           renderItem={renderSentenceItem}
-          estimatedItemSize={150}
+          estimatedItemSize={shouldShowStats ? 220 : 160}
           contentContainerStyle={{
-            paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT,
-            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: LAYOUT.SPACING.TINY,
+            paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
+            paddingHorizontal: shouldShowStats || category ? 0 : LAYOUT.SCREEN_EDGE_PADDING,
+            paddingTop: shouldShowStats || category ? 0 : LAYOUT.SPACING.SMALL,
           }}
           showsVerticalScrollIndicator={true}
           contentInsetAdjustmentBehavior="automatic"
-          drawDistance={300}
+          drawDistance={400}
           keyExtractor={(item, index) => `sentence-${item.sentence.id || index}`}
+          ListHeaderComponent={HeaderComponent}
           ListEmptyComponent={
             isLoading && (wordId || rootId) ? (
               <View style={styles.inlineLoadingContainer}>
                 <ActivityIndicator size="large" color={colors.tint} />
+                <ThemedText variant="secondary" style={styles.inlineLoadingText}>
+                  Loading examples...
+                </ThemedText>
               </View>
             ) : null
           }
@@ -374,24 +401,42 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  loadingText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    textAlign: 'center',
+  },
+  headerLoadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   inlineLoadingContainer: {
     paddingVertical: LAYOUT.SPACING.XLARGE * 2,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM,
+  },
+  inlineLoadingText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
+    textAlign: 'center',
   },
   sentenceContainer: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
     marginTop: 0,
   },
+  sentenceContainerWithHeader: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
   sentenceContent: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.LARGE,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   },
   arabicSentence: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     textAlign: 'right',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.5,
   },
   wordsContainer: {
     alignItems: 'center',
@@ -410,7 +455,35 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   englishSentence: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    marginTop: LAYOUT.SPACING.SMALL,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
+    marginTop: LAYOUT.SPACING.MEDIUM,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
+  },
+  headerContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: 0,
+  },
+  sectionContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  sectionHeading: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    letterSpacing: -0.3,
+  },
+  statsLoadingContainer: {
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  statsLoadingCard: {
+    padding: LAYOUT.SPACING.LARGE,
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.SMALL,
+  },
+  statsLoadingText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    textAlign: 'center',
+  },
+  lastSectionContainer: {
+    marginBottom: 0,
   },
 });

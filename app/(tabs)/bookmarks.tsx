@@ -161,7 +161,11 @@ const BookmarkListItem = memo(
         leftMeta={leftMetaContent}
         meta={
           <View
-            style={{ flexDirection: 'row', alignItems: 'center', marginLeft: LAYOUT.SPACING.SMALL }}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginLeft: LAYOUT.SPACING.XSMALL,
+            }}
           >
             {/* Dot separator before level (if level exists) */}
             {item.articles?.difficulty_level && (
@@ -170,7 +174,7 @@ const BookmarkListItem = memo(
                 style={{
                   color: colors.textTertiary,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  marginRight: LAYOUT.SPACING.XSMALL,
+                  marginRight: LAYOUT.SPACING.XTINY,
                   opacity: 0.6, // Subtle dot
                 }}
                 skipDefaultColor
@@ -184,8 +188,8 @@ const BookmarkListItem = memo(
               <View
                 style={{
                   backgroundColor: colors.elevation1,
-                  paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
-                  paddingVertical: LAYOUT.SPACING.MICRO + 1,
+                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
+                  paddingVertical: LAYOUT.SPACING.MICRO,
                   borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
                   borderWidth: 0.5,
                   borderColor: colors.borderOverlay,
@@ -213,7 +217,7 @@ const BookmarkListItem = memo(
                 style={{
                   color: colors.textTertiary,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  marginHorizontal: LAYOUT.SPACING.XSMALL,
+                  marginHorizontal: LAYOUT.SPACING.XTINY,
                   opacity: 0.6, // Subtle dot
                 }}
                 skipDefaultColor
@@ -227,8 +231,8 @@ const BookmarkListItem = memo(
               <View
                 style={{
                   backgroundColor: colors.elevation1,
-                  paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
-                  paddingVertical: LAYOUT.SPACING.MICRO + 1,
+                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
+                  paddingVertical: LAYOUT.SPACING.MICRO,
                   borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
                   borderWidth: 0.5,
                   borderColor: colors.borderOverlay,

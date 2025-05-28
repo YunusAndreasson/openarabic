@@ -18,7 +18,7 @@ import { useWordList } from '../hooks/useWordList';
 import { router } from 'expo-router';
 import { lightFeedback } from '../utils/haptics';
 
-const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 3.2;
+const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 2;
 
 // Define sort options for word list
 const wordListSortOptions: SortOption<WordListSort>[] = [
