@@ -146,7 +146,6 @@ export const WelcomeMessage: React.FC = () => {
 
   const welcomeData = useMemo(() => {
     const now = new Date();
-    const moonEmoji = getMoonPhaseEmoji();
 
     // Get Hijri date
     const hijriMoment = moment();
@@ -157,8 +156,8 @@ export const WelcomeMessage: React.FC = () => {
     // Get next Islamic event
     const nextEventInfo = getNextIslamicEvent();
 
-    // Create the minimal date message without day name
-    const dateMessage = `${hijriDay} ${hijriMonth} ${hijriYear} AH ${moonEmoji}`;
+    // Create the minimal date message without day name and without moon emoji
+    const dateMessage = `${hijriDay} ${hijriMonth} ${hijriYear} AH`;
 
     // Create event message
     let eventMessage = '';
@@ -194,28 +193,30 @@ export const WelcomeMessage: React.FC = () => {
           </ThemedText>
         ) : null}
         <View style={styles.dateContainer}>
-          <ThemedText type="body" weight="medium" colorName="text" style={styles.dateText}>
-            {welcomeData.dateMessage}
-          </ThemedText>
           <TouchableOpacity
             onPress={handleCalendarPress}
-            style={styles.calendarButton}
+            style={styles.dateContainer}
             hitSlop={LAYOUT.HIT_SLOP.MEDIUM}
             accessibilityLabel="View Islamic calendar"
             accessibilityHint="Opens the Islamic calendar with upcoming events"
           >
-            <Ionicons
-              name="calendar-outline"
-              size={16}
-              color={colors.textTertiary}
-              style={styles.calendarIcon}
-            />
-            <Ionicons
-              name="chevron-forward-outline"
-              size={16}
-              color={colors.textTertiary}
-              style={styles.chevronIcon}
-            />
+            <ThemedText type="body" weight="medium" colorName="text" style={styles.dateText}>
+              {welcomeData.dateMessage}
+            </ThemedText>
+            <View style={styles.calendarButton} pointerEvents="none">
+              <Ionicons
+                name="calendar-outline"
+                size={16}
+                color={colors.textTertiary}
+                style={styles.calendarIcon}
+              />
+              <Ionicons
+                name="chevron-forward-outline"
+                size={16}
+                color={colors.textTertiary}
+                style={styles.chevronIcon}
+              />
+            </View>
           </TouchableOpacity>
         </View>
       </View>

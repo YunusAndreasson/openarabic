@@ -55,7 +55,7 @@ export default function FilterScreen(): JSX.Element {
         options={{
           headerShown: true,
           headerTitle,
-          headerTitleStyle: HEADER_TITLE_STYLE,
+          headerTitleStyle: { ...HEADER_TITLE_STYLE, color: colors.text },
           headerStyle: getHeaderStyle(colors.background),
           headerBackground: headerBackground,
           headerTransparent: true,
