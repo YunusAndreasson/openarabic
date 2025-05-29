@@ -263,6 +263,7 @@ export default function ArticleScreen(): JSX.Element {
   }, [currentWordId, sentenceWordsMap, findWordById]);
 
   const [audioControlVisible, setAudioControlVisible] = useState(false);
+  const [audioSessionActive, setAudioSessionActive] = useState(false);
   const isNavigatingRef = useRef(false);
   const pausedAudioStateRef = useRef<{
     sentenceIndex: number | null;
@@ -356,6 +357,7 @@ export default function ArticleScreen(): JSX.Element {
   const handleStartAudio = useCallback(async () => {
     try {
       setAudioControlVisible(true);
+      setAudioSessionActive(true);
       const savedState = pausedAudioStateRef.current;
       if (
         savedState.sentenceIndex === null ||
@@ -410,6 +412,7 @@ export default function ArticleScreen(): JSX.Element {
       position: null,
     };
     setAudioControlVisible(false);
+    setAudioSessionActive(false);
     if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
       audioPlayer.soundRef.current.unloadAsync().catch(error => {
         handleError(error);
@@ -519,6 +522,7 @@ export default function ArticleScreen(): JSX.Element {
         audioPositionMs: 0,
       };
       setAudioControlVisible(false);
+      setAudioSessionActive(false);
       await stopPlayback();
       if (audioPlayer.soundRef && audioPlayer.soundRef.current) {
         try {
@@ -542,13 +546,13 @@ export default function ArticleScreen(): JSX.Element {
 
   const handlePlayPress = useCallback(async () => {
     lightFeedback();
-    if (isPlaying) {
+    if (audioSessionActive) {
       // Stop audio and close control panel
       await handleStopPlayback();
     } else {
       await handleStartAudio();
     }
-  }, [isPlaying, handleStopPlayback, handleStartAudio]);
+  }, [audioSessionActive, handleStopPlayback, handleStartAudio]);
 
   // Simple pause/resume for audio control panel
   const handleAudioControlPause = useCallback(async () => {
@@ -680,6 +684,7 @@ export default function ArticleScreen(): JSX.Element {
   useEffect(() => {
     stopPlayback?.();
     setAudioControlVisible(false);
+    setAudioSessionActive(false);
     pausedAudioStateRef.current = {
       sentenceIndex: null,
       wordId: null,
@@ -726,7 +731,7 @@ export default function ArticleScreen(): JSX.Element {
             onPlayPress={handlePlayPress}
             onEnglishToggle={handleEnglishToggle}
             isInReadingList={isInReadingList}
-            isPlaying={isPlaying}
+            isPlaying={audioSessionActive}
             showEnglish={showEnglishLocal}
             englishToggleKey={showEnglishLocal ? 'en' : 'ar'}
             user={user}
