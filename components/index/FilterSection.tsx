@@ -23,6 +23,7 @@ const styles = StyleSheet.create({
 interface FilterItem {
   id: number;
   name: string;
+  count?: number; // Add optional count for articles
 }
 
 interface FilterSectionProps {
@@ -31,38 +32,54 @@ interface FilterSectionProps {
   onSelect: (id: number) => void;
 }
 
-const CompactNavCard = memo(({ label, onPress }: { label: string; onPress: () => void }) => {
-  const colors = useColors();
-  const [pressed, setPressed] = useState(false);
-  return (
-    <View style={compactCardStyles.cardContainer}>
-      <BaseCard
-        onPress={onPress}
-        style={compactCardStyles.card}
-        shadowSize="small"
-        // @ts-ignore
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-      >
-        <View style={compactCardStyles.row}>
-          <ThemedText
-            type="bodyBold"
-            numberOfLines={1}
-            style={[compactCardStyles.label, { color: pressed ? colors.background : colors.text }]}
-          >
-            {label}
-          </ThemedText>
-          <Ionicons
-            name="chevron-forward-outline"
-            size={20}
-            color={pressed ? colors.background : colors.textTertiary}
-            style={compactCardStyles.icon}
-          />
-        </View>
-      </BaseCard>
-    </View>
-  );
-});
+const CompactNavCard = memo(
+  ({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) => {
+    const colors = useColors();
+    const [pressed, setPressed] = useState(false);
+    return (
+      <View style={compactCardStyles.cardContainer}>
+        <BaseCard
+          onPress={onPress}
+          style={compactCardStyles.card}
+          shadowSize="small"
+          // @ts-ignore
+          onPressIn={() => setPressed(true)}
+          onPressOut={() => setPressed(false)}
+        >
+          <View style={compactCardStyles.row}>
+            <ThemedText
+              type="bodyBold"
+              numberOfLines={1}
+              style={[
+                compactCardStyles.label,
+                { color: pressed ? colors.background : colors.text },
+              ]}
+            >
+              {label}
+            </ThemedText>
+            {count !== undefined && (
+              <View style={[compactCardStyles.countBadge, { backgroundColor: colors.textOverlay }]}>
+                <ThemedText
+                  type="caption"
+                  style={[compactCardStyles.countText, { color: colors.textTertiary }]}
+                  skipDefaultColor
+                >
+                  {count}
+                </ThemedText>
+              </View>
+            )}
+            <Ionicons
+              name="chevron-forward-outline"
+              size={20}
+              color={pressed ? colors.background : colors.textTertiary}
+              style={compactCardStyles.icon}
+            />
+          </View>
+        </BaseCard>
+      </View>
+    );
+  }
+);
 
 const compactCardStyles = StyleSheet.create({
   cardContainer: {
@@ -83,6 +100,20 @@ const compactCardStyles = StyleSheet.create({
     flex: 1,
     fontWeight: '600',
   },
+  countBadge: {
+    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XTINY,
+    marginLeft: LAYOUT.SPACING.SMALL,
+    minWidth: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  countText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   icon: {
     marginLeft: LAYOUT.SPACING.MEDIUM,
     opacity: LAYOUT.OPACITY.MEDIUM,
@@ -97,6 +128,7 @@ const FilterSection = memo(({ title, items, onSelect }: FilterSectionProps): JSX
         <CompactNavCard
           key={`${title.toLowerCase()}-${item.id}`}
           label={capitalizeFirstLetter(item.name)}
+          count={item.count}
           onPress={() => onSelect(item.id)}
         />
       ))}

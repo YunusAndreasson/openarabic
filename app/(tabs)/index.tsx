@@ -321,27 +321,41 @@ export default function ArticlesScreen(): JSX.Element {
   );
 
   const authorIdsWithArticles = useMemo(() => {
-    const ids = new Set<number>();
+    const counts = new Map<number, number>();
     articlesData.forEach(article => {
-      if (article.author?.id) ids.add(article.author.id);
+      if (article.author?.id) {
+        counts.set(article.author.id, (counts.get(article.author.id) || 0) + 1);
+      }
     });
-    return ids;
+    return counts;
   }, [articlesData]);
 
   const categoryIdsWithArticles = useMemo(() => {
-    const ids = new Set<number>();
+    const counts = new Map<number, number>();
     articlesData.forEach(article => {
-      if (article.category?.id) ids.add(article.category.id);
+      if (article.category?.id) {
+        counts.set(article.category.id, (counts.get(article.category.id) || 0) + 1);
+      }
     });
-    return ids;
+    return counts;
   }, [articlesData]);
 
   const authorsWithArticles = useMemo(() => {
-    return authors.filter(author => authorIdsWithArticles.has(author.id));
+    return authors
+      .filter(author => authorIdsWithArticles.has(author.id))
+      .map(author => ({
+        ...author,
+        count: authorIdsWithArticles.get(author.id) || 0,
+      }));
   }, [authors, authorIdsWithArticles]);
 
   const categoriesWithArticles = useMemo(() => {
-    return categoriesData.filter(category => categoryIdsWithArticles.has(category.id));
+    return categoriesData
+      .filter(category => categoryIdsWithArticles.has(category.id))
+      .map(category => ({
+        ...category,
+        count: categoryIdsWithArticles.get(category.id) || 0,
+      }));
   }, [categoriesData, categoryIdsWithArticles]);
 
   const latestTextsSectionComponent = useMemo(
