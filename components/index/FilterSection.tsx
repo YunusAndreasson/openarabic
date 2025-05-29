@@ -13,7 +13,7 @@ import { useColors } from '@/hooks/useColors';
 
 const styles = StyleSheet.create({
   filterSectionContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    // Removed margins - SectionTitle handles all section spacing
   },
   horizontalList: {
     paddingRight: LAYOUT.SPACING.MEDIUM,

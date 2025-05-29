@@ -37,10 +37,10 @@ export default memo(SectionTitle);
 const styles = StyleSheet.create({
   container: {
     marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.XXLARGE,
   },
   firstSection: {
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.LARGE,
   },
   titleText: {
     // Remove the uppercase transformation and custom letter spacing

@@ -276,14 +276,12 @@ export default function ArticlesScreen(): JSX.Element {
     if (beginnerArticles.length === 0 || hasAnyStudyWords) return null;
 
     return (
-      <View style={{ marginBottom: LAYOUT.SPACING.XLARGE }}>
-        <ArticleSection
-          title="Start Your Journey"
-          articles={beginnerArticles.slice(0, 10)}
-          onArticlePress={handleArticlePress}
-          hideDifficulty={true}
-        />
-      </View>
+      <ArticleSection
+        title="Start Your Journey"
+        articles={beginnerArticles.slice(0, 10)}
+        onArticlePress={handleArticlePress}
+        hideDifficulty={true}
+      />
     );
   }, [beginnerArticles, handleArticlePress, hasAnyStudyWords]);
 

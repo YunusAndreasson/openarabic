@@ -9,7 +9,7 @@ import ArticleItem from './ArticleItem';
 
 const styles = StyleSheet.create({
   sectionContainer: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    // Removed margins - SectionTitle handles all section spacing
   },
 });
 

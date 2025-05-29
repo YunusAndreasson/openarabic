@@ -25,15 +25,6 @@ const ISLAMIC_EVENTS: IslamicEvent[] = [
 ];
 
 // Arabic day names
-const ARABIC_DAYS = [
-  'al-Ahad', // Sunday
-  'al-Ithnayn', // Monday
-  'ath-Thulatha', // Tuesday
-  "al-Arba'a", // Wednesday
-  'al-Khamis', // Thursday
-  "al-Jumu'ah", // Friday
-  'as-Sabt', // Saturday
-];
 
 // Hijri month names
 const HIJRI_MONTHS = [
@@ -50,56 +41,6 @@ const HIJRI_MONTHS = [
   "Dhu al-Qi'dah",
   'Dhu al-Hijjah',
 ];
-
-function getArabicTimeGreeting(): string {
-  const hour = new Date().getHours();
-
-  if (hour >= 5 && hour < 12) {
-    return 'Sabah al-khayr'; // Good morning
-  } else if (hour >= 12 && hour < 15) {
-    return 'Masa al-khayr'; // Good afternoon
-  } else if (hour >= 15 && hour < 18) {
-    return "Asr sa'eed"; // Happy afternoon
-  } else if (hour >= 18 && hour < 21) {
-    return 'Masa al-khayr'; // Good evening
-  } else {
-    return 'Sabah al-layl'; // Good night
-  }
-}
-
-function getMoonPhaseEmoji(): string {
-  // Simple moon phase calculation based on date
-  const now = new Date();
-  const dayOfMonth = now.getDate();
-
-  // Approximate moon phases (simplified)
-  if (dayOfMonth >= 1 && dayOfMonth <= 3) return '🌑'; // New moon
-  if (dayOfMonth >= 4 && dayOfMonth <= 7) return '🌒'; // Waxing crescent
-  if (dayOfMonth >= 8 && dayOfMonth <= 10) return '🌓'; // First quarter
-  if (dayOfMonth >= 11 && dayOfMonth <= 14) return '🌔'; // Waxing gibbous
-  if (dayOfMonth >= 15 && dayOfMonth <= 17) return '🌕'; // Full moon
-  if (dayOfMonth >= 18 && dayOfMonth <= 21) return '🌖'; // Waning gibbous
-  if (dayOfMonth >= 22 && dayOfMonth <= 25) return '🌗'; // Last quarter
-  return '🌘'; // Waning crescent
-}
-
-function getDaysToRamadan(): number {
-  const today = moment();
-  const currentHijriYear = today.iYear();
-
-  // Ramadan starts on 1st of Ramadan (month 9)
-  let ramadanStart = moment().iYear(currentHijriYear).iMonth(8).iDate(1); // month 8 = Ramadan (0-indexed)
-
-  // If Ramadan has passed this year, get next year's Ramadan
-  if (ramadanStart.isBefore(today)) {
-    ramadanStart = moment()
-      .iYear(currentHijriYear + 1)
-      .iMonth(8)
-      .iDate(1);
-  }
-
-  return ramadanStart.diff(today, 'days');
-}
 
 function getNextIslamicEvent(): { event: IslamicEvent; daysUntil: number } | null {
   const today = moment();
@@ -145,8 +86,6 @@ export const WelcomeMessage: React.FC = () => {
   const colors = useColors();
 
   const welcomeData = useMemo(() => {
-    const now = new Date();
-
     // Get Hijri date
     const hijriMoment = moment();
     const hijriDay = hijriMoment.iDate();
@@ -227,8 +166,8 @@ export const WelcomeMessage: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     // Establish screen rhythm - first element sets the tone
-    paddingTop: LAYOUT.SPACING.MEDIUM, // Minimal top spacing after header
-    paddingBottom: LAYOUT.SPACING.XXLARGE, // Strong bottom separation from content sections
+    paddingTop: LAYOUT.SPACING.XLARGE, // Increased from LARGE for better proportion (20px)
+    paddingBottom: LAYOUT.SPACING.XXLARGE, // Increased from XLARGE for consistency (24px)
     paddingLeft: LAYOUT.SCREEN_EDGE_PADDING, // Align with screen content padding
     paddingRight: 0, // No right padding needed
     alignItems: 'flex-start',

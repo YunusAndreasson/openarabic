@@ -73,6 +73,6 @@ export function DifficultWordsArticleSection({
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    // Removed margins - SectionTitle handles all section spacing
   },
 });

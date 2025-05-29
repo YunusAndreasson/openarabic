@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
     shadowOpacity: LAYOUT.OPACITY.LIGHT, // Slightly increased shadow for emphasis
   },
   container: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-    marginTop: 0,
+    marginTop: 0, // No top margin since WelcomeMessage already has bottom padding
+    marginBottom: LAYOUT.SPACING.LARGE, // Reduced from XXLARGE to balance with next section's top margin
   },
 });
 
