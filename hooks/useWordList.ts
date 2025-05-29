@@ -19,11 +19,32 @@ export type WordListSort = 'retention' | 'due' | 'alphabetical' | 'streak';
  * This directly uses the key metrics from FSRS algorithm
  */
 const calculateRetentionScore = (word: StudyWord): number => {
-  const stabilityScore = Math.min((word.fsrs_stability ?? 0) / 100, 1) * 70;
-  const difficultyFactor = 1 - (word.fsrs_difficulty ?? 0.3);
-  const difficultyScore = difficultyFactor * 20;
-  const lapsesPenalty = Math.min((word.fsrs_lapses ?? 0) / 10, 1) * 10;
-  return Math.max(0, Math.min(100, Math.round(stabilityScore + difficultyScore - lapsesPenalty)));
+  const stability = word.fsrs_stability ?? 0;
+  const difficulty = word.fsrs_difficulty ?? 5; // FSRS difficulty is typically 1-10 scale
+  const lapses = word.fsrs_lapses ?? 0;
+  const reps = word.fsrs_reps ?? 0;
+
+  // Base score starts at 30 to give learning words a fair chance
+  let score = 30;
+
+  // Stability bonus - logarithmic scale since stability can vary widely
+  const stabilityBonus = Math.min(Math.log10(stability + 1) * 25, 50);
+  score += stabilityBonus;
+
+  // Difficulty adjustment - normalize from 1-10 scale, but be more forgiving
+  const difficultyPenalty = Math.max(0, (difficulty - 3) / 7) * 15; // Start penalty at difficulty 3
+  score -= difficultyPenalty;
+
+  // Reps bonus - reward words that have been practiced
+  const repsBonus = Math.min(reps * 2, 15);
+  score += repsBonus;
+
+  // Lapses penalty - each lapse reduces score moderately
+  const lapsesPenalty = lapses * 3;
+  score -= lapsesPenalty;
+
+  // Ensure score is between 0-100
+  return Math.max(0, Math.min(100, Math.round(score)));
 };
 
 export function useWordList(
@@ -130,8 +151,8 @@ export function useWordList(
           });
         } else if (sortBy === 'alphabetical') {
           sorted = enhanced.sort((a, b) => {
-            const aWord = a.root?.letters?.toLowerCase() || '';
-            const bWord = b.root?.letters?.toLowerCase() || '';
+            const aWord = a.root?.meaning?.toLowerCase() || '';
+            const bWord = b.root?.meaning?.toLowerCase() || '';
             return aWord.localeCompare(bWord);
           });
         } else if (sortBy === 'streak') {
@@ -192,8 +213,8 @@ export function useWordList(
         });
       } else if (sortBy === 'alphabetical') {
         sorted = enhanced.sort((a, b) => {
-          const aWord = a.root?.letters?.toLowerCase() || '';
-          const bWord = b.root?.letters?.toLowerCase() || '';
+          const aWord = a.root?.meaning?.toLowerCase() || '';
+          const bWord = b.root?.meaning?.toLowerCase() || '';
           return aWord.localeCompare(bWord);
         });
       } else if (sortBy === 'streak') {

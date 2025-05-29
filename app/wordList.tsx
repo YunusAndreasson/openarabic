@@ -18,21 +18,22 @@ import { useWordList } from '../hooks/useWordList';
 import { router } from 'expo-router';
 import { lightFeedback } from '../utils/haptics';
 
-const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 2;
+const ITEM_HEIGHT = LAYOUT.SPACING.XLARGE * 2.85;
 
 // Define sort options for word list
 const wordListSortOptions: SortOption<WordListSort>[] = [
-  { key: 'retention', label: 'Memory' },
+  { key: 'retention', label: 'Memory Strength' },
   { key: 'alphabetical', label: 'A-Z' },
-  { key: 'streak', label: 'Streak' },
+  { key: 'streak', label: 'Success Streak' },
 ];
 
 // Move WordListItem component definition outside to optimize recycling
 interface WordListItemMemoProps {
   readonly item: EnhancedStudyWord;
+  readonly currentSort: WordListSort;
 }
 
-const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => {
+const WordListItemMemo = memo(({ item, currentSort }: WordListItemMemoProps) => {
   // Handler for navigating to examples screen
   const handleShowExamples = useCallback(() => {
     if (!item.root_id) return;
@@ -55,7 +56,7 @@ const WordListItemMemo = memo(({ item }: WordListItemMemoProps) => {
         style={{ marginBottom: LAYOUT.SPACING.TINY }}
         onPress={handleShowExamples}
       >
-        <WordListItem word={item} />
+        <WordListItem word={item} currentSort={currentSort} />
       </BaseCard>
     </View>
   );
@@ -97,15 +98,21 @@ export default function WordListScreen(): JSX.Element {
         };
       case 'needsAttention':
         return {
-          title: 'Needs Attention',
+          title: 'Difficult',
           icon: 'alert-circle',
           description: 'Words that are challenging',
         };
+      case 'due':
+        return {
+          title: 'Due',
+          icon: 'alarm-outline',
+          description: 'Words ready for review',
+        };
       default:
         return {
-          title: 'Review',
-          icon: 'book',
-          description: 'Words to review',
+          title: 'Due',
+          icon: 'alarm-outline',
+          description: 'Words ready for review',
         };
     }
   }, [category]);
@@ -122,7 +129,7 @@ export default function WordListScreen(): JSX.Element {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 150);
 
     return () => clearTimeout(timer);
   }, []);
@@ -132,7 +139,7 @@ export default function WordListScreen(): JSX.Element {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 300);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [sortBy, sortDirection]);
@@ -140,8 +147,10 @@ export default function WordListScreen(): JSX.Element {
   // Optimize renderItem for FlashList
   const renderItem = useCallback(
     // eslint-disable-next-line react/no-unused-prop-types
-    ({ item }: { readonly item: EnhancedStudyWord }) => <WordListItemMemo item={item} />,
-    []
+    ({ item }: { readonly item: EnhancedStudyWord }) => (
+      <WordListItemMemo item={item} currentSort={sortBy} />
+    ),
+    [sortBy]
   );
 
   // Empty list component
@@ -246,6 +255,7 @@ export default function WordListScreen(): JSX.Element {
           contentInsetAdjustmentBehavior="automatic"
           contentContainerStyle={styles.listContentContainer}
           keyExtractor={item => `word-${item.root_id}`}
+          style={[{ opacity: isLoading ? 0.6 : 1.0 }]}
         />
       </ThemedView>
     </>
@@ -286,14 +296,9 @@ const styles = StyleSheet.create({
   listContentContainer: {
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   wordItemContainer: {
     marginVertical: LAYOUT.SPACING.TINY,
-  },
-  headerButton: {
-    marginRight: LAYOUT.SPACING.MEDIUM,
-    padding: LAYOUT.SPACING.SMALL,
   },
   sortCard: {
     marginBottom: LAYOUT.SPACING.SMALL,

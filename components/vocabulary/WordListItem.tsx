@@ -1,7 +1,6 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { State } from 'ts-fsrs';
-import { Ionicons } from '@expo/vector-icons';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
@@ -9,11 +8,12 @@ import type { StudyWord } from '../../types/vocabulary.types';
 import { ThemedText } from '../ThemedText';
 
 interface WordListItemProps {
-  word: StudyWord;
+  word: StudyWord & { retentionScore?: number };
+  currentSort?: 'retention' | 'alphabetical' | 'streak' | 'due';
 }
 
 // Memoize the component to prevent unnecessary re-renders
-const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
+const WordListItem = memo(function WordListItem({ word, currentSort }: WordListItemProps) {
   const colors = useColors();
 
   // Get the actual word data from root
@@ -23,43 +23,6 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
   // Capitalize first letter of meaning
   const capitalizedMeaning = meaning ? meaning.charAt(0).toUpperCase() + meaning.slice(1) : '';
 
-  // Enhanced status indicator with better visual feedback
-  const statusInfo = useMemo(() => {
-    const stability = word.fsrs_stability || 0;
-    const state = word.fsrs_state;
-
-    // Enhanced status calculation with better visual hierarchy
-    if (state === State.New) {
-      return {
-        color: colors.textTertiary,
-        indicator: '●',
-        label: 'New',
-        bgColor: colors.textTertiary + '15',
-      };
-    } else if (stability >= 30) {
-      return {
-        color: colors.success,
-        indicator: '●',
-        label: 'Mastered',
-        bgColor: colors.success + '15',
-      };
-    } else if (stability >= 7) {
-      return {
-        color: colors.warning,
-        indicator: '●',
-        label: 'Learning',
-        bgColor: colors.warning + '15',
-      };
-    } else {
-      return {
-        color: colors.info,
-        indicator: '●',
-        label: 'Reviewing',
-        bgColor: colors.info + '15',
-      };
-    }
-  }, [word.fsrs_stability, word.fsrs_state, colors]);
-
   // Return null early if there's no word data
   if (!letters) return null;
 
@@ -67,43 +30,109 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
     <View style={styles.container}>
       {/* Main Content - Word and Translation */}
       <View style={styles.mainContent}>
-        {/* Left side - English meaning with enhanced status indicator */}
+        {/* Left side - English meaning with clean layout */}
         <View style={styles.leftContent}>
-          <View style={styles.meaningRow}>
-            <View style={[styles.statusIndicator, { backgroundColor: statusInfo.bgColor }]}>
-              <ThemedText style={[styles.statusDot, { color: statusInfo.color }]}>
-                {statusInfo.indicator}
-              </ThemedText>
-            </View>
-            <View style={styles.textContent}>
+          <View style={styles.textContent}>
+            {/* Primary: Word meaning with optional streak badge */}
+            <View style={styles.titleRow}>
               <ThemedText
-                type="heading3"
+                type="bodyBold"
                 weight="semibold"
                 numberOfLines={2}
-                style={styles.meaningText}
+                style={[styles.meaningText, { color: colors.text }]}
+                skipDefaultColor
               >
                 {capitalizedMeaning || 'No translation available'}
               </ThemedText>
-              {/* Subtle status label for better context */}
-              <ThemedText
-                type="caption"
-                variant="subtle"
-                style={[styles.statusLabel, { color: statusInfo.color }]}
-              >
-                {statusInfo.label}
-              </ThemedText>
+              {/* Streak badge - positioned as visual accent */}
+              {word.success_streak !== undefined && word.success_streak > 0 && (
+                <View
+                  style={[
+                    styles.streakBadge,
+                    {
+                      backgroundColor:
+                        word.success_streak >= 15
+                          ? colors.success + '15'
+                          : word.success_streak >= 10
+                            ? colors.warning + '15'
+                            : word.success_streak >= 5
+                              ? colors.info + '15'
+                              : colors.interactiveSecondary + '15',
+                    },
+                  ]}
+                >
+                  <ThemedText
+                    type="caption"
+                    weight="bold"
+                    style={[
+                      styles.streakText,
+                      {
+                        color:
+                          word.success_streak >= 15
+                            ? colors.success
+                            : word.success_streak >= 10
+                              ? colors.warning
+                              : word.success_streak >= 5
+                                ? colors.info
+                                : colors.interactiveSecondary,
+                      },
+                    ]}
+                    skipDefaultColor
+                  >
+                    🔥{word.success_streak}
+                  </ThemedText>
+                </View>
+              )}
             </View>
+
+            {/* Secondary: Memory strength indicator */}
+            {word.retentionScore !== undefined && (
+              <View style={styles.memoryRow}>
+                <View style={styles.memoryLabel}>
+                  <ThemedText
+                    type="caption"
+                    weight="medium"
+                    style={[styles.memoryPercentage, { color: colors.interactiveSecondary }]}
+                    skipDefaultColor
+                  >
+                    {word.retentionScore}%
+                  </ThemedText>
+                </View>
+                <View style={styles.progressTrackContainer}>
+                  <View
+                    style={[styles.progressTrack, { backgroundColor: colors.progressBackground }]}
+                  >
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: `${word.retentionScore || 0}%`,
+                          backgroundColor:
+                            word.retentionScore >= 85
+                              ? colors.success
+                              : word.retentionScore >= 70
+                                ? colors.warning
+                                : word.retentionScore >= 50
+                                  ? colors.info
+                                  : colors.error,
+                        },
+                      ]}
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
-        {/* Right side - Arabic text and navigation with better spacing */}
+        {/* Right side - Arabic text with interaction indicator */}
         <View style={styles.rightContent}>
           <View style={styles.arabicContainer}>
             <ThemedText
               type="arabic"
-              arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 4}
               weight="bold"
-              align="right"
+              align="center"
+              numberOfLines={1}
               skipDefaultColor
               colorName="arabicText"
               style={styles.arabicText}
@@ -111,17 +140,14 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
               {letters}
             </ThemedText>
           </View>
-
-          {/* Enhanced navigation indicator */}
-          <View style={styles.navigationContainer}>
-            <View style={[styles.navigationButton, { backgroundColor: colors.buttonOverlay }]}>
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={colors.tint}
-                style={styles.navigationIcon}
-              />
-            </View>
+          {/* Subtle interaction indicator */}
+          <View style={styles.chevronContainer}>
+            <ThemedText
+              style={[styles.chevronIcon, { color: colors.interactiveSecondary }]}
+              skipDefaultColor
+            >
+              ›
+            </ThemedText>
           </View>
         </View>
       </View>
@@ -131,81 +157,117 @@ const WordListItem = memo(function WordListItem({ word }: WordListItemProps) {
 
 const styles = StyleSheet.create({
   container: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    minHeight: 72, // Ensure consistent height for better scrolling
+    paddingHorizontal: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM, // Reduced from MEDIUM + 2 for tighter spacing
+    minHeight: 90, // Optimized height for content density
   },
   mainContent: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'space-between',
-    gap: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.XLARGE, // Increased for better visual separation (proximity principle)
   },
   leftContent: {
     flex: 1,
-  },
-  meaningRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  statusIndicator: {
-    alignItems: 'center',
+    paddingRight: LAYOUT.SPACING.LARGE, // Increased for better separation from Arabic
     justifyContent: 'center',
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginTop: 2, // Align with text baseline
-  },
-  statusDot: {
-    fontSize: 10,
-    lineHeight: 10,
   },
   textContent: {
     flex: 1,
-    gap: LAYOUT.SPACING.TINY / 2,
+    gap: LAYOUT.SPACING.MEDIUM, // Restored optimal spacing for clear grouping
   },
   meaningText: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.2,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 2, // Primary text prominence
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.3, // Optimal readability
+    fontWeight: '700',
+    letterSpacing: -0.4, // Refined letter spacing for elegance
     marginBottom: 0,
   },
-  statusLabel: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * 1.2,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    fontWeight: '600',
-  },
   rightContent: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'center', // Back to center for better layout
+    minWidth: 130, // Increased to give more space for Arabic text
+    paddingLeft: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.SMALL, // Minimal right padding
+    flex: 0,
+    position: 'relative', // For absolute positioning of chevron
   },
   arabicContainer: {
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 40,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.LARGE, // Space for chevron without cutting text
   },
   arabicText: {
-    textAlign: 'right',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.4,
-    textShadowColor: 'rgba(0,0,0,0.1)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textAlign: 'center',
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 6, // Slightly smaller but still prominent
+    lineHeight: 44, // Adjusted for smaller font
+    letterSpacing: 0.5,
+    fontWeight: '600',
+    textAlignVertical: 'center',
+    paddingTop: LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.XSMALL,
   },
-  navigationContainer: {
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center', // Changed to center for better visual balance
+    gap: LAYOUT.SPACING.MEDIUM, // Increased gap for better badge separation
+    marginBottom: 0,
+  },
+  streakBadge: {
+    paddingHorizontal: LAYOUT.SPACING.SMALL + 1, // Slightly more padding
+    paddingVertical: LAYOUT.SPACING.XSMALL,
+    borderRadius: 8, // More refined radius
+    alignSelf: 'flex-start', // Align with text baseline
+  },
+  streakText: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL, // Restored readability
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.1,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  memoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.MEDIUM, // Restored for better visual grouping
+  },
+  memoryLabel: {
+    minWidth: 34, // Optimized for percentage display
+  },
+  memoryPercentage: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1, // Slightly larger for better hierarchy
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    fontWeight: '600',
+    letterSpacing: 0.3, // Refined letter spacing
+  },
+  progressTrackContainer: {
+    flex: 1,
+    maxWidth: 110, // Optimized width for better proportions
+  },
+  progressTrack: {
+    height: 4, // Slightly thicker for better visibility
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  chevronContainer: {
+    position: 'absolute',
+    right: LAYOUT.SPACING.TINY,
+    top: '50%',
+    transform: [{ translateY: -12 }],
     alignItems: 'center',
     justifyContent: 'center',
+    width: 24,
+    height: 24,
   },
-  navigationButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  navigationIcon: {
-    opacity: 0.8,
+  chevronIcon: {
+    fontSize: 24, // Much larger, standard interactive size
+    fontWeight: '500',
+    letterSpacing: 0,
+    opacity: 0.7, // Restore opacity for proper visual hierarchy
   },
 });
 

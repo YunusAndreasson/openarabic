@@ -6,11 +6,9 @@ import { StyleSheet, View, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import EmptyState from '@/components/EmptyState';
-import { WordStatsCard } from '@/components/vocabulary/WordStatsCard';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { useWordStats } from '@/hooks/useWordStats';
 import { supabase } from '@/services/supabase';
 import { handleError } from '@/utils/errorHandling';
 import type { SentenceWord } from '@/types/vocabulary.types';
@@ -54,17 +52,7 @@ SimpleArabicWord.displayName = 'SimpleArabicWord';
 
 // Enhanced example item component with better visual hierarchy
 const WordExampleItem = memo(
-  ({
-    item,
-    wordId,
-    rootId,
-    hasHeader,
-  }: {
-    item: SentenceWithWords;
-    wordId?: string;
-    rootId?: string;
-    hasHeader?: boolean;
-  }) => {
+  ({ item, wordId, rootId }: { item: SentenceWithWords; wordId?: string; rootId?: string }) => {
     // Find target word ID once and memoize
     const targetWordId = useMemo(() => {
       if (wordId) return parseInt(wordId);
@@ -76,7 +64,7 @@ const WordExampleItem = memo(
     }, [wordId, rootId, item.words]);
 
     return (
-      <View style={[styles.sentenceContainer, hasHeader && styles.sentenceContainerWithHeader]}>
+      <View style={styles.sentenceContainer}>
         <BaseCard shadowSize="small" style={styles.sentenceContent}>
           {/* Render words or fallback to raw text */}
           {item.words.length > 0 ? (
@@ -120,19 +108,7 @@ export default function WordExamplesScreen() {
   const [wordData, setWordData] = useState<SentenceWord | null>(null);
   const [examples, setExamples] = useState<SentenceWithWords[]>([]);
 
-  // Get word statistics for individual word/root
-  const {
-    stats,
-    isLoading: isStatsLoading,
-    hasData: hasStatsData,
-  } = useWordStats(rootId ? parseInt(rootId) : null, wordId ? parseInt(wordId) : null);
-
   // Memoize derived values
-  const shouldShowStats = useMemo(
-    () => !category && (wordId || rootId) && hasStatsData,
-    [category, wordId, rootId, hasStatsData]
-  );
-
   const showLoadingState = useMemo(
     () => isLoading && category && !wordId && !rootId,
     [isLoading, category, wordId, rootId]
@@ -232,14 +208,9 @@ export default function WordExamplesScreen() {
   // Memoized render function
   const renderSentenceItem = useCallback(
     ({ item }: { item: SentenceWithWords }) => (
-      <WordExampleItem
-        item={item}
-        wordId={wordId}
-        rootId={rootId}
-        hasHeader={shouldShowStats || !!category}
-      />
+      <WordExampleItem item={item} wordId={wordId} rootId={rootId} />
     ),
-    [rootId, wordId, shouldShowStats, category]
+    [rootId, wordId]
   );
 
   // Enhanced header options with better styling
@@ -262,20 +233,8 @@ export default function WordExamplesScreen() {
       headerTransparent: false,
       headerTitleAlign: 'left' as const,
       headerTintColor: colors.tint,
-      headerRight:
-        isLoading && (wordId || rootId)
-          ? () => (
-              <View style={styles.headerLoadingContainer}>
-                <ActivityIndicator
-                  size="small"
-                  color={colors.tint}
-                  style={{ marginRight: LAYOUT.SPACING.SMALL }}
-                />
-              </View>
-            )
-          : undefined,
     }),
-    [title, colors, isLoading, wordId, rootId]
+    [title, colors]
   );
 
   // Early returns for loading and empty states
@@ -307,53 +266,6 @@ export default function WordExamplesScreen() {
     );
   }
 
-  // Enhanced header component with better visual hierarchy
-  const HeaderComponent = useMemo(() => {
-    if (shouldShowStats) {
-      return (
-        <View style={styles.headerContainer}>
-          <View style={styles.sectionContainer}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionHeading}>
-              Learning Progress
-            </ThemedText>
-            {isStatsLoading ? (
-              <View style={styles.statsLoadingContainer}>
-                <BaseCard shadowSize="small" style={styles.statsLoadingCard}>
-                  <ActivityIndicator size="small" color={colors.tint} />
-                  <ThemedText variant="secondary" style={styles.statsLoadingText}>
-                    Loading statistics...
-                  </ThemedText>
-                </BaseCard>
-              </View>
-            ) : (
-              <WordStatsCard stats={stats} />
-            )}
-          </View>
-
-          <View style={[styles.sectionContainer, styles.lastSectionContainer]}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionHeading}>
-              Example Sentences
-            </ThemedText>
-          </View>
-        </View>
-      );
-    }
-
-    if (category) {
-      return (
-        <View style={styles.headerContainer}>
-          <View style={[styles.sectionContainer, styles.lastSectionContainer]}>
-            <ThemedText type="heading2" weight="bold" style={styles.sectionHeading}>
-              Example Sentences
-            </ThemedText>
-          </View>
-        </View>
-      );
-    }
-
-    return null;
-  }, [shouldShowStats, category, isStatsLoading, stats, colors.tint]);
-
   return (
     <>
       <Stack.Screen options={headerOptions} />
@@ -366,27 +278,16 @@ export default function WordExamplesScreen() {
         <FlashList
           data={examples.length > 0 || (isLoading && (wordId || rootId)) ? examples : []}
           renderItem={renderSentenceItem}
-          estimatedItemSize={shouldShowStats ? 220 : 160}
+          estimatedItemSize={160}
           contentContainerStyle={{
             paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM,
-            paddingHorizontal: shouldShowStats || category ? 0 : LAYOUT.SCREEN_EDGE_PADDING,
-            paddingTop: shouldShowStats || category ? 0 : LAYOUT.SPACING.SMALL,
+            paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+            paddingTop: LAYOUT.SPACING.SMALL,
           }}
           showsVerticalScrollIndicator={true}
           contentInsetAdjustmentBehavior="automatic"
           drawDistance={400}
           keyExtractor={(item, index) => `sentence-${item.sentence.id || index}`}
-          ListHeaderComponent={HeaderComponent}
-          ListEmptyComponent={
-            isLoading && (wordId || rootId) ? (
-              <View style={styles.inlineLoadingContainer}>
-                <ActivityIndicator size="large" color={colors.tint} />
-                <ThemedText variant="secondary" style={styles.inlineLoadingText}>
-                  Loading examples...
-                </ThemedText>
-              </View>
-            ) : null
-          }
         />
       </ThemedView>
     </>
@@ -407,26 +308,9 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     textAlign: 'center',
   },
-  headerLoadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  inlineLoadingContainer: {
-    paddingVertical: LAYOUT.SPACING.XLARGE * 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  inlineLoadingText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    textAlign: 'center',
-  },
   sentenceContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
     marginTop: 0,
-  },
-  sentenceContainerWithHeader: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
   sentenceContent: {
     padding: LAYOUT.SPACING.LARGE,
@@ -458,32 +342,5 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM + 1,
     marginTop: LAYOUT.SPACING.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.4,
-  },
-  headerContainer: {
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: 0,
-  },
-  sectionContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  sectionHeading: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    letterSpacing: -0.3,
-  },
-  statsLoadingContainer: {
-    marginBottom: LAYOUT.SPACING.MEDIUM,
-  },
-  statsLoadingCard: {
-    padding: LAYOUT.SPACING.LARGE,
-    alignItems: 'center',
-    gap: LAYOUT.SPACING.SMALL,
-  },
-  statsLoadingText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
-    textAlign: 'center',
-  },
-  lastSectionContainer: {
-    marginBottom: 0,
   },
 });
