@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useMemo, useEffect, useState } from 'react';
 import { Alert, StyleSheet, View, ViewStyle, TextStyle } from 'react-native';
 import Constants from 'expo-constants';
 import pkg from '../../package.json';
@@ -16,15 +16,15 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
 import { LAYOUT } from '@/constants/layout';
-import { useLoadingState } from '@/hooks';
 import { useColors } from '@/hooks/useColors';
+import { useAuth } from '@/hooks/useAuth';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
 
-// Memoize static components to prevent unnecessary re-renders
+// Memoized components
 interface SettingLabelProps {
   readonly icon: keyof typeof Ionicons.glyphMap;
   readonly text: string;
@@ -46,24 +46,221 @@ const SettingLabel = memo(({ icon, text, iconColor }: SettingLabelProps) => {
 });
 SettingLabel.displayName = 'SettingLabel';
 
-// Memoize divider component
 const Divider = memo(() => {
   const colors = useColors();
   return <View style={[styles.commonDivider, { backgroundColor: colors.cardBorder }]} />;
 });
 Divider.displayName = 'Divider';
 
-const SettingsScreen: React.FC = () => {
+// User initials badge component
+interface UserInitialsBadgeProps {
+  readonly email?: string;
+  readonly size?: number;
+}
+
+const UserInitialsBadge = memo(({ email, size = 88 }: UserInitialsBadgeProps) => {
+  const colors = useColors();
+
+  const initials = useMemo(() => {
+    if (!email || email.length === 0) return '?';
+
+    try {
+      const emailPrefix = email.split('@')[0];
+      if (!emailPrefix) return '?';
+
+      const parts = emailPrefix.split(/[._-]/).filter(part => part && part.length > 0);
+
+      if (parts.length >= 2) {
+        const firstInitial = parts[0]?.[0];
+        const secondInitial = parts[1]?.[0];
+        if (firstInitial && secondInitial) {
+          return (firstInitial + secondInitial).toUpperCase();
+        }
+      }
+
+      const firstChar = emailPrefix[0];
+      return firstChar ? firstChar.toUpperCase() : '?';
+    } catch {
+      return '?';
+    }
+  }, [email]);
+
+  const badgeStyle = useMemo(
+    () => [
+      styles.userInitialsBadge,
+      {
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: colors.progressIndicator,
+        shadowColor: colors.shadow,
+      },
+    ],
+    [size, colors.progressIndicator, colors.shadow]
+  );
+
+  const textStyle = useMemo(
+    () => [
+      styles.userInitialsBadgeText,
+      {
+        fontSize: size * 0.48,
+        color: colors.background,
+        lineHeight: size * 0.48,
+      },
+    ],
+    [size, colors.background]
+  );
+
+  return (
+    <View style={badgeStyle}>
+      <ThemedText style={textStyle} weight="bold">
+        {initials}
+      </ThemedText>
+    </View>
+  );
+});
+UserInitialsBadge.displayName = 'UserInitialsBadge';
+
+// Account header component
+const AccountHeader = memo(() => {
+  const colors = useColors();
+  const { user } = useAuth();
+  const [memberSince, setMemberSince] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMemberSince = async () => {
+      if (!user?.id) return;
+
+      try {
+        if (user.user_metadata && typeof user.user_metadata === 'object') {
+          const metadata = user.user_metadata as Record<string, unknown>;
+          const createdAt = metadata.created_at;
+
+          if (typeof createdAt === 'string') {
+            const date = new Date(createdAt);
+            if (!isNaN(date.getTime())) {
+              setMemberSince(
+                date.toLocaleDateString('en-US', {
+                  month: 'long',
+                  year: 'numeric',
+                })
+              );
+              return;
+            }
+          }
+        }
+
+        const currentDate = new Date();
+        setMemberSince(
+          currentDate.toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric',
+          })
+        );
+      } catch (error) {
+        console.log('Could not fetch member since date:', error);
+        setMemberSince('Recently');
+      }
+    };
+
+    fetchMemberSince();
+  }, [user?.id, user?.user_metadata]);
+
+  const userEmail = user?.email || 'No email';
+  const displayName = useMemo(() => {
+    if (!user?.email) return 'Anonymous User';
+
+    const emailPrefix = user.email.split('@')[0];
+    if (!emailPrefix) return 'Anonymous User';
+
+    const parts = emailPrefix.split(/[._-]/).filter(part => Boolean(part && part.length > 0));
+
+    if (parts.length === 0) return 'User';
+
+    return parts.map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+  }, [user?.email]);
+
+  const handleSignOut = useCallback(() => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await analytics.trackSignOut();
+              const { error } = await supabase.auth.signOut();
+              if (error) {
+                Alert.alert('Error', error.message);
+                return;
+              }
+              await analytics.reset();
+              router.replace('auth');
+            } catch (error) {
+              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to sign out');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }, []);
+
+  return (
+    <View style={styles.accountHeader}>
+      <View style={styles.accountProfileSection}>
+        <UserInitialsBadge email={user?.email} size={88} />
+        <View style={styles.accountUserInfo}>
+          <ThemedText
+            type="heading3"
+            weight="bold"
+            numberOfLines={1}
+            style={styles.accountUserName}
+          >
+            {displayName}
+          </ThemedText>
+          <ThemedText
+            type="body"
+            variant="secondary"
+            numberOfLines={1}
+            style={styles.accountUserEmail}
+          >
+            {userEmail}
+          </ThemedText>
+          {memberSince && (
+            <ThemedText type="caption" variant="subtle" style={styles.accountMemberSince}>
+              Member since {memberSince}
+            </ThemedText>
+          )}
+        </View>
+
+        <BaseCard
+          onPress={handleSignOut}
+          style={styles.signOutAction}
+          shadowSize="none"
+          includePressAnimation={true}
+        >
+          <Ionicons name="log-out-outline" size={24} color={colors.error} />
+        </BaseCard>
+      </View>
+    </View>
+  );
+});
+AccountHeader.displayName = 'AccountHeader';
+
+const AccountScreen: React.FC = () => {
   const dispatch = useAppDispatch();
   const settings = useAppSelector(state => state.settings);
   const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
 
-  // Simple loading state for session loading
-  const { startLoading, stopLoading } = useLoadingState(false);
-
-  // Keep memoization for handlers with dependencies or complex logic
   const handleFontScaleChange = useCallback(
     (value: number) => {
       const previousScale = settings.fontScale;
@@ -75,67 +272,22 @@ const SettingsScreen: React.FC = () => {
     [settings.fontScale, dispatch]
   );
 
-  const handleSignOut = useCallback(() => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            startLoading();
-            try {
-              // Track sign out event before signing out
-              await analytics.trackSignOut();
-
-              // Sign out from Supabase
-              const { error } = await supabase.auth.signOut();
-              if (error) {
-                Alert.alert('Error', error.message);
-                return;
-              }
-
-              // Reset analytics
-              await analytics.reset();
-
-              // Navigate to auth screen (no leading slash)
-              router.replace('auth');
-            } catch (error) {
-              Alert.alert('Error', error instanceof Error ? error.message : 'Failed to sign out');
-            } finally {
-              stopLoading();
-            }
-          },
-        },
-      ],
-      { cancelable: true }
-    );
-  }, [analytics, supabase, router, startLoading, stopLoading]);
-
-  // Simple handlers
-  const handleSupport = () => {
+  const handleSupportContact = useCallback(() => {
     Linking.openURL('mailto:yunus@edenmind.com');
-  };
+  }, []);
 
-  const handleSocialLink = (url: string) => {
+  const handleSocialLink = useCallback((url: string) => {
     Linking.openURL(url);
-  };
+  }, []);
 
-  // Button styles
-
-  const packageVersion = pkg.version;
+  const appVersion = pkg.version;
 
   return (
     <ThemedView
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Settings screen"
+      accessibilityLabel="Account screen"
     >
       <ThemedView
         useSafeArea={false}
@@ -143,7 +295,7 @@ const SettingsScreen: React.FC = () => {
         style={styles.flexOne}
         scrollable={true}
         contentContainerStyle={[
-          styles.listContent,
+          styles.scrollContent,
           {
             paddingTop: headerHeight,
             paddingBottom: insets.bottom + LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
@@ -154,17 +306,27 @@ const SettingsScreen: React.FC = () => {
           showsVerticalScrollIndicator: false,
         }}
       >
-        {/* Preferences Section */}
-        <View style={styles.settingsWrapper}>
+        {/* Account Header */}
+        <View style={styles.accountHeaderWrapper}>
           <BaseCard
-            style={styles.settingsContainer}
+            style={styles.accountHeaderCard}
             shadowSize="small"
             includePressAnimation={false}
           >
-            {/* Section Header */}
+            <AccountHeader />
+          </BaseCard>
+        </View>
+
+        {/* App Preferences Section */}
+        <View style={styles.preferencesWrapper}>
+          <BaseCard
+            style={styles.preferencesContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
             <View style={styles.sectionHeader}>
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Interface
+                Preferences
               </ThemedText>
             </View>
 
@@ -239,46 +401,16 @@ const SettingsScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* Support & Account Section */}
-        <View style={styles.actionsWrapper}>
-          <BaseCard
-            style={styles.actionsContainer}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            {/* Section Header */}
+        {/* Information Section */}
+        <View style={styles.infoWrapper}>
+          <BaseCard style={styles.infoContainer} shadowSize="small" includePressAnimation={false}>
             <View style={styles.sectionHeader}>
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Support & Account
+                Information
               </ThemedText>
             </View>
 
-            {/* Action Links */}
             <View style={styles.actionLinksContainer}>
-              <BaseCard
-                onPress={handleSupport}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="mail" size={22} color={colors.icon} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Support
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={20}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
-                  />
-                </View>
-              </BaseCard>
-
               <BaseCard
                 onPress={() => router.push('/about')}
                 style={styles.actionLinkCard}
@@ -304,7 +436,9 @@ const SettingsScreen: React.FC = () => {
               </BaseCard>
 
               <BaseCard
-                onPress={handleSignOut}
+                onPress={() => {
+                  /* TODO: Add terms handler */
+                }}
                 style={styles.actionLinkCard}
                 shadowSize="none"
                 includePressAnimation={true}
@@ -312,10 +446,36 @@ const SettingsScreen: React.FC = () => {
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View style={styles.actionIconContainer}>
-                      <Ionicons name="log-out" size={22} color={colors.error} />
+                      <Ionicons name="document-text" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Sign Out
+                      Terms of Service
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={() => {
+                  /* TODO: Add privacy handler */
+                }}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="shield-checkmark" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Privacy Policy
                     </ThemedText>
                   </View>
                   <Ionicons
@@ -337,14 +497,12 @@ const SettingsScreen: React.FC = () => {
             shadowSize="small"
             includePressAnimation={false}
           >
-            {/* Section Header */}
             <View style={styles.sectionHeader}>
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
                 Connect
               </ThemedText>
             </View>
 
-            {/* Social Links */}
             <View style={styles.socialLinksContainer}>
               <BaseCard
                 onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
@@ -421,10 +579,51 @@ const SettingsScreen: React.FC = () => {
           </BaseCard>
         </View>
 
+        {/* Support and Version */}
+        <View style={styles.supportWrapper}>
+          <BaseCard
+            style={styles.supportContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                Support
+              </ThemedText>
+            </View>
+
+            <View style={styles.actionLinksContainer}>
+              <BaseCard
+                onPress={handleSupportContact}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="mail" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Get Support
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+            </View>
+          </BaseCard>
+        </View>
+
         {/* App Version */}
         <View style={styles.versionWrapper}>
           <ThemedText type="caption" variant="subtle" style={styles.versionText}>
-            Version {(Constants.expoConfig as any)?.version || packageVersion || '1446.0.0'}
+            Version {(Constants.expoConfig as any)?.version || appVersion || '1446.0.0'}
           </ThemedText>
         </View>
       </ThemedView>
@@ -433,67 +632,104 @@ const SettingsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  actionsContainer: {
-    overflow: 'hidden',
-  },
-  actionsWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  arabicPreviewText: {
-    flexShrink: 0,
-    marginBottom: LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.TINY,
-  },
-  commonDivider: {
-    height: LAYOUT.BORDER.WIDTH.THIN,
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    width: '100%',
-  },
-  connectContainer: {
-    overflow: 'hidden',
-  },
-  connectWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
   container: {
     flex: 1,
-  },
-  englishPreviewText: {
-    flexShrink: 0,
-    paddingVertical: LAYOUT.SPACING.TINY,
   },
   flexOne: {
     flex: 1,
   },
-  hidden: {
-    opacity: 0,
-  } as ViewStyle & TextStyle,
-  listContent: {
+  scrollContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.MEDIUM,
   },
-  mediumHighOpacity: {
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  } as ViewStyle & TextStyle,
-  previewContainer: {
-    padding: LAYOUT.SPACING.SMALL,
-  },
-  previewContent: {
-    position: 'absolute',
-    top: 0,
-    width: '100%',
-  },
-  previewWrapper: {
-    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
-    overflow: 'hidden',
-  },
-  scaleText: {
-    marginRight: LAYOUT.SPACING.SMALL,
-    width: 45,
-  },
   scrollView: {
     flex: 1,
+  },
+
+  // Account Header Styles
+  accountHeader: {
+    padding: LAYOUT.SPACING.LARGE,
+  },
+  accountHeaderWrapper: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  accountHeaderCard: {
+    overflow: 'hidden',
+  },
+  accountProfileSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: LAYOUT.SPACING.LARGE,
+  },
+  accountUserInfo: {
+    flex: 1,
+    marginLeft: LAYOUT.SPACING.MEDIUM,
+    paddingTop: LAYOUT.SPACING.SMALL,
+    justifyContent: 'center',
+  },
+  accountUserName: {
+    marginBottom: LAYOUT.SPACING.XTINY,
+  },
+  accountUserEmail: {
+    marginBottom: LAYOUT.SPACING.XTINY,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  accountMemberSince: {
+    marginTop: LAYOUT.SPACING.MICRO,
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  },
+  signOutAction: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 48,
+    minHeight: 48,
+  },
+
+  // User initials badge styles
+  userInitialsBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  userInitialsBadgeText: {
+    textAlign: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    fontWeight: '700',
+  },
+
+  // Section Styles
+  sectionHeader: {
+    padding: LAYOUT.SPACING.MEDIUM,
+    paddingBottom: LAYOUT.SPACING.SMALL,
+  },
+  sectionTitle: {
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+
+  // Preferences Styles
+  preferencesWrapper: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  preferencesContainer: {
+    overflow: 'hidden',
+  },
+
+  // Setting Row Styles
+  settingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
   },
   settingLabelContainer: {
     alignItems: 'center',
@@ -502,86 +738,68 @@ const styles = StyleSheet.create({
   settingLabelTextContainer: {
     marginLeft: LAYOUT.SPACING.SMALL,
   },
-  settingIconContainer: {
-    padding: LAYOUT.SPACING.TINY,
-    alignItems: 'center',
-    justifyContent: 'center',
+  commonDivider: {
+    height: LAYOUT.BORDER.WIDTH.THIN,
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    width: '100%',
   },
-  settingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
-  },
-  settingsContainer: {
-    overflow: 'hidden',
-  },
-  settingsWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  slider: {
-    flex: 1,
-    height: 40,
-  },
+
+  // Slider Styles
   sliderContainer: {
     alignItems: 'center',
     flexDirection: 'row',
     width: '50%',
   },
+  scaleText: {
+    marginRight: LAYOUT.SPACING.SMALL,
+    width: 45,
+  },
   sliderWrapper: {
     flex: 1,
   },
-  versionText: {
-    marginTop: LAYOUT.SPACING.TINY,
-    letterSpacing: 0.5,
+  slider: {
+    flex: 1,
+    height: 40,
   },
-  versionWrapper: {
-    alignItems: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE,
+
+  // Preview Styles
+  previewContainer: {
+    padding: LAYOUT.SPACING.SMALL,
+  },
+  previewWrapper: {
+    height: LAYOUT.BUTTON.HEIGHT.LARGE * 2 - LAYOUT.SPACING.SMALL,
+    overflow: 'hidden',
+  },
+  previewContent: {
+    position: 'absolute',
+    top: 0,
+    width: '100%',
+  },
+  arabicPreviewText: {
+    flexShrink: 0,
+    marginBottom: LAYOUT.SPACING.TINY,
+    paddingVertical: LAYOUT.SPACING.TINY,
+  },
+  englishPreviewText: {
+    flexShrink: 0,
+    paddingVertical: LAYOUT.SPACING.TINY,
+  },
+  mediumHighOpacity: {
+    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
+  } as ViewStyle & TextStyle,
+  hidden: {
+    opacity: 0,
+  } as ViewStyle & TextStyle,
+
+  // Information Section Styles
+  infoWrapper: {
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  sectionHeader: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
+  infoContainer: {
+    overflow: 'hidden',
   },
-  sectionTitle: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  socialLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-  },
-  socialLinkCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    padding: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.XTINY,
-  },
-  socialLinkContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  socialLinkLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  socialIconContainer: {
-    padding: LAYOUT.SPACING.TINY,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  socialLinkText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  socialLinkChevron: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
-  },
+
+  // Action Links Styles
   actionLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
@@ -616,6 +834,69 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginRight: LAYOUT.SPACING.TINY,
   },
+
+  // Connect Styles
+  connectContainer: {
+    overflow: 'hidden',
+  },
+  connectWrapper: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+
+  // Social Links Styles
+  socialLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  socialLinkCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+    padding: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.XTINY,
+  },
+  socialLinkContent: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  socialLinkLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flex: 1,
+    paddingRight: LAYOUT.SPACING.SMALL,
+  },
+  socialIconContainer: {
+    padding: LAYOUT.SPACING.TINY,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialLinkText: {
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  socialLinkChevron: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    minWidth: LAYOUT.SPACING.XLARGE,
+    textAlign: 'center',
+    marginRight: LAYOUT.SPACING.TINY,
+  },
+
+  // Support Section Styles
+  supportWrapper: {
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  supportContainer: {
+    overflow: 'hidden',
+  },
+
+  // Version Styles
+  versionWrapper: {
+    alignItems: 'center',
+    marginTop: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.XLARGE,
+  },
+  versionText: {
+    marginTop: LAYOUT.SPACING.TINY,
+    letterSpacing: 0.5,
+  },
 });
 
-export default SettingsScreen;
+export default AccountScreen;

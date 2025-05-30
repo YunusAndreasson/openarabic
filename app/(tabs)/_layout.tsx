@@ -5,7 +5,7 @@ import type { Route } from '@react-navigation/native';
 import { BlurView } from 'expo-blur';
 import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
-import React, { useMemo, useCallback, memo, useEffect, JSX } from 'react';
+import React, { useMemo, useCallback, memo, useEffect } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,48 +38,43 @@ const TAB_SCREENS = [
   },
   {
     name: 'settings',
-    title: 'Settings',
-    iconOutline: 'settings-outline',
-    iconFilled: 'settings',
+    title: 'Account',
+    iconOutline: 'person-outline',
+    iconFilled: 'person',
   },
 ] as const;
 
 const ICON_SIZE = 24;
 const BLUR_INTENSITY = 55;
 
-type PlatformStyle = {
-  shadowOffset?: { width: number; height: number };
-  shadowOpacity?: number;
-  shadowRadius?: number;
-  borderTopWidth?: number;
-  elevation?: number;
-};
-
 const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps) => {
   const colors = useColors();
   const isDarkMode = useIsDarkMode();
   const insets = useSafeAreaInsets();
 
-  const PLATFORM_STYLES: PlatformStyle =
-    Platform.select({
-      ios: isDarkMode
-        ? {
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: LAYOUT.OPACITY.XLIGHT,
-            shadowRadius: 8,
-            borderTopWidth: StyleSheet.hairlineWidth,
-          }
-        : {
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 1,
-            shadowRadius: 10,
-            borderTopWidth: StyleSheet.hairlineWidth,
-          },
-      android: {
-        borderTopWidth: StyleSheet.hairlineWidth,
-        elevation: LAYOUT.ELEVATION.MEDIUM,
-      },
-    }) ?? {};
+  const platformStyles = useMemo(
+    () =>
+      Platform.select({
+        ios: isDarkMode
+          ? {
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: LAYOUT.OPACITY.XLIGHT,
+              shadowRadius: 8,
+              borderTopWidth: StyleSheet.hairlineWidth,
+            }
+          : {
+              shadowOffset: { width: 0, height: -2 },
+              shadowOpacity: 1,
+              shadowRadius: 10,
+              borderTopWidth: StyleSheet.hairlineWidth,
+            },
+        android: {
+          borderTopWidth: StyleSheet.hairlineWidth,
+          elevation: LAYOUT.ELEVATION.MEDIUM,
+        },
+      }) ?? {},
+    [isDarkMode]
+  );
 
   const bottomInset = useMemo(
     () =>
@@ -95,7 +90,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
         bottomInset +
         (Platform.OS === 'android' ? LAYOUT.SPACING.SMALL : 0),
       paddingBottom: bottomInset,
-      ...PLATFORM_STYLES,
+      ...platformStyles,
       borderTopColor: colors.borderOverlay,
       ...(Platform.OS === 'ios'
         ? {
@@ -106,7 +101,15 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
             borderTopColor: colors.border,
           }),
     }),
-    [colors.shadow, colors.background, colors.borderOverlay, colors.border, bottomInset, isDarkMode]
+    [
+      colors.shadow,
+      colors.background,
+      colors.borderOverlay,
+      colors.border,
+      bottomInset,
+      isDarkMode,
+      platformStyles,
+    ]
   );
 
   const TabBarContainer = Platform.OS === 'ios' ? BlurView : View;
@@ -151,9 +154,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 
   return (
     <TabBarContainer style={containerStyle} {...blurProps}>
-      {/* Match header overlay implementation exactly */}
       {Platform.OS === 'android' ? (
-        // Android: Add BlurView + overlay inside View container (like header)
         <>
           <BlurView
             tint={isDarkMode ? 'dark' : 'light'}
@@ -163,7 +164,6 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
           <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
         </>
       ) : (
-        // iOS: Simple overlay inside BlurView container (like header)
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.tabBarOverlay }]} />
       )}
       {state.routes.map((route, index) => {
@@ -210,8 +210,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
 });
 CustomTabBar.displayName = 'CustomTabBar';
 
-// Custom Header Background component with blur effect
-const CustomHeaderBackground = () => {
+const CustomHeaderBackground = memo(() => {
   const isDarkMode = useIsDarkMode();
   const colors = useColors();
 
@@ -235,9 +234,9 @@ const CustomHeaderBackground = () => {
       style={StyleSheet.absoluteFill}
     />
   );
-};
+});
+CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
-// Move static styles outside the component
 const HEADER_TITLE_STYLE = {
   fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
   fontWeight: '600' as const,
@@ -250,23 +249,19 @@ const HEADER_STYLE = {
   borderBottomWidth: 0,
 };
 
-export default function TabLayout(): JSX.Element | null {
+export default function TabLayout() {
   const { session, isLoading } = useAuth();
-  const colors = useColors();
 
-  // Memoize headerBackground to avoid inline function recreation
   const headerBackground = useCallback(() => <CustomHeaderBackground />, []);
 
   const screenOptions = useMemo(
     () => ({
       headerShown: true,
-      // Header customization
       headerTitleAlign: 'left' as const,
       headerTitleStyle: HEADER_TITLE_STYLE,
       headerStyle: HEADER_STYLE,
       headerBackground: headerBackground,
       headerTransparent: true,
-      // Tab animation optimizations
       freezeOnBlur: true,
       animation: 'fade' as const,
       lazy: true,
