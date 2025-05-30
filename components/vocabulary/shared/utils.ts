@@ -187,25 +187,27 @@ export const generatePerformanceSubtitle = (
     return `Study words to track ${metricName}`;
   }
 
+  // Enhanced trend messaging with actionable insights
   if (trend && trendValue !== undefined) {
     if (trend === 'improving') {
-      return `${metricName} improving by ${Math.abs(trendValue)}%`;
+      return `${metricName} improving by ${Math.abs(trendValue)}% - keep it up!`;
     }
     if (trend === 'declining') {
-      return `${metricName} down ${Math.abs(trendValue)}% - focus on review`;
+      return `${metricName} down ${Math.abs(trendValue)}% - review more often`;
     }
   }
 
+  // Enhanced performance messaging with encouragement
   if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) {
-    return `Excellent ${metricName}`;
+    return `Excellent ${metricName} - you're mastering this!`;
   }
   if (value >= PERFORMANCE_THRESHOLDS.GOOD) {
-    return `Good ${metricName}`;
+    return `Good ${metricName} - steady progress`;
   }
   if (value >= PERFORMANCE_THRESHOLDS.FAIR) {
-    return `Fair ${metricName} - room for improvement`;
+    return `Fair ${metricName} - practice more for improvement`;
   }
-  return `Focus on improving ${metricName}`;
+  return `Focus on improving ${metricName} with regular practice`;
 };
 
 /**

@@ -240,14 +240,11 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                 path={chartData.efficiencyPath}
                 style="stroke"
                 strokeWidth={3}
+                strokeCap="round"
+                strokeJoin="round"
                 color={chartColors.ui.dataLine}
               >
-                <Shadow
-                  dx={0}
-                  dy={2}
-                  blur={4}
-                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
-                />
+                <Shadow dx={0} dy={2} blur={6} color={chartColors.getDataPointGlow('efficiency')} />
               </Path>
 
               {/* Data points */}
@@ -260,20 +257,24 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                   (data.averageEfficiency / (chartData.maxEfficiency || 100)) * GRAPH_HEIGHT_LARGE;
 
                 return (
-                  <Circle
-                    key={`efficiency-point-${index}`}
-                    cx={x}
-                    cy={y}
-                    r={4}
-                    color={chartColors.ui.dataLine}
-                  >
-                    <Shadow
-                      dx={0}
-                      dy={1}
-                      blur={2}
-                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                  <Group key={`efficiency-point-${index}`}>
+                    {/* Subtle glow ring */}
+                    <Circle
+                      cx={x}
+                      cy={y}
+                      r={6}
+                      color={chartColors.getDataPointGlow('efficiency')}
                     />
-                  </Circle>
+                    {/* Main data point */}
+                    <Circle cx={x} cy={y} r={4} color={chartColors.ui.dataLine}>
+                      <Shadow
+                        dx={0}
+                        dy={1}
+                        blur={3}
+                        color={chartColors.getDataPointGlow('efficiency')}
+                      />
+                    </Circle>
+                  </Group>
                 );
               })}
             </Group>

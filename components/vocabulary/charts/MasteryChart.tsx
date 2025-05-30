@@ -343,25 +343,35 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                     path={chartData.smoothPath}
                     style="stroke"
                     strokeWidth={3}
+                    strokeCap="round"
+                    strokeJoin="round"
                     color={chartColors.ui.dataLine}
                   >
                     <Shadow
                       dx={0}
                       dy={2}
-                      blur={4}
-                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                      blur={6}
+                      color={chartColors.getDataPointGlow('mastery')}
                     />
                   </Path>
 
                   {/* Data points with enhanced styling */}
                   {chartData.dataPoints.map((point, index) => (
                     <Group key={`mastery-point-${index}`}>
+                      {/* Subtle glow ring */}
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={6}
+                        color={chartColors.getDataPointGlow('mastery')}
+                      />
+                      {/* Main data point */}
                       <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine}>
                         <Shadow
                           dx={0}
                           dy={1}
-                          blur={2}
-                          color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
+                          blur={3}
+                          color={chartColors.getDataPointGlow('mastery')}
                         />
                       </Circle>
                     </Group>
@@ -370,16 +380,36 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
               )}
             </Group>
 
-            {/* Milestone indicators */}
+            {/* Enhanced milestone indicators */}
             <Group>
               {chartData.milestones.map((milestone, index) => (
                 <Group key={`milestone-${index}`}>
-                  <Circle cx={milestone.x} cy={milestone.y} r={6} color={chartColors.ui.dataLine}>
+                  {/* Milestone glow */}
+                  <Circle
+                    cx={milestone.x}
+                    cy={milestone.y}
+                    r={9}
+                    color={chartColors.withOpacity(chartColors.performance.excellent, 0.2)}
+                  />
+                  {/* Milestone ring */}
+                  <Circle
+                    cx={milestone.x}
+                    cy={milestone.y}
+                    r={7}
+                    color={chartColors.withOpacity(chartColors.performance.excellent, 0.4)}
+                  />
+                  {/* Milestone center */}
+                  <Circle
+                    cx={milestone.x}
+                    cy={milestone.y}
+                    r={5}
+                    color={chartColors.performance.excellent}
+                  >
                     <Shadow
                       dx={0}
                       dy={2}
-                      blur={3}
-                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
+                      blur={4}
+                      color={chartColors.withOpacity(chartColors.performance.excellent, 0.5)}
                     />
                   </Circle>
                 </Group>

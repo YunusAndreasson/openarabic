@@ -184,7 +184,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
 
                 return (
                   <Group key={`difficulty-bar-${index}`}>
-                    {/* Main bar */}
+                    {/* Main bar with enhanced shadow */}
                     <Rect
                       x={x}
                       y={GRAPH_HEIGHT_LARGE - barHeight - 10}
@@ -194,19 +194,19 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
                     >
                       <Shadow
                         dx={0}
-                        dy={2}
-                        blur={4}
-                        color={chartColors.withOpacity(bucket.color, 0.3)}
+                        dy={3}
+                        blur={6}
+                        color={chartColors.withOpacity(bucket.color, 0.4)}
                       />
                     </Rect>
 
-                    {/* Subtle highlight */}
+                    {/* Enhanced highlight with gradient effect */}
                     <Rect
                       x={x}
                       y={GRAPH_HEIGHT_LARGE - barHeight - 10}
                       width={barWidth}
-                      height={Math.min(barHeight / 4, 6)}
-                      color={chartColors.withOpacity(colors.textTertiary, 0.15)}
+                      height={Math.min(barHeight / 3, 8)}
+                      color={chartColors.withOpacity(colors.background, 0.25)}
                     />
                   </Group>
                 );

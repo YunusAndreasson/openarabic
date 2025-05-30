@@ -207,6 +207,18 @@ export const useChartColors = () => {
       }
     },
 
+    // Get subtle glow colors for enhanced data point visibility
+    getDataPointGlow: (type: 'efficiency' | 'mastery' | 'retrievability' = 'efficiency') => {
+      switch (type) {
+        case 'efficiency':
+          return withOpacity(colors.info, 0.4);
+        case 'mastery':
+          return withOpacity(colors.success, 0.35);
+        case 'retrievability':
+          return withOpacity(colors.info, 0.4);
+      }
+    },
+
     // Enhanced color selection functions with standardized thresholds
     getPerformanceColor: (value: number) => {
       if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) return colors.success;

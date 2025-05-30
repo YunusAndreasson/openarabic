@@ -306,13 +306,15 @@ export const RetrievabilityChart = memo(
                     path={chartData.smoothPath}
                     style="stroke"
                     strokeWidth={3}
+                    strokeCap="round"
+                    strokeJoin="round"
                     color={chartColors.ui.dataLine}
                   >
                     <Shadow
                       dx={0}
                       dy={2}
-                      blur={4}
-                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                      blur={6}
+                      color={chartColors.getDataPointGlow('retrievability')}
                     />
                   </Path>
                 )}
@@ -327,21 +329,29 @@ export const RetrievabilityChart = memo(
                     (data.averageRetrievability / (chartData.maxRetrievability || 100)) *
                       GRAPH_HEIGHT_LARGE;
 
+                  // Show different styling for current day vs forecast
+                  const isToday = index === 0;
+                  const glowOpacity = isToday ? 0.6 : 0.3;
+
                   return (
-                    <Circle
-                      key={`retrievability-point-${index}`}
-                      cx={x}
-                      cy={y}
-                      r={4}
-                      color={chartColors.ui.dataLine}
-                    >
-                      <Shadow
-                        dx={0}
-                        dy={1}
-                        blur={2}
-                        color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                    <Group key={`retrievability-point-${index}`}>
+                      {/* Subtle glow ring */}
+                      <Circle
+                        cx={x}
+                        cy={y}
+                        r={isToday ? 7 : 6}
+                        color={chartColors.withOpacity(chartColors.ui.dataLine, glowOpacity)}
                       />
-                    </Circle>
+                      {/* Main data point */}
+                      <Circle cx={x} cy={y} r={isToday ? 5 : 4} color={chartColors.ui.dataLine}>
+                        <Shadow
+                          dx={0}
+                          dy={1}
+                          blur={3}
+                          color={chartColors.getDataPointGlow('retrievability')}
+                        />
+                      </Circle>
+                    </Group>
                   );
                 })}
               </Group>
