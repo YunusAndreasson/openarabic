@@ -87,14 +87,14 @@ export const VocabularyStatCards = memo(
 
       validatedInput.studyWords.forEach(word => {
         // Words that need attention based on FSRS metrics
-        const difficulty = word.fsrs_difficulty ?? 0.3;
+        const difficulty = word.fsrs_difficulty ?? 5.0; // Default to middle range
         const lapses = word.fsrs_lapses ?? 0;
         const stability = word.fsrs_stability ?? 0;
         const state = word.fsrs_state;
 
-        const isHighDifficultyWithLapses = difficulty > 0.6 && lapses > 0;
+        const isHighDifficultyWithLapses = difficulty > 6.0 && lapses > 0;
         const isStrugglingInLearning = (state === 1 || state === 2) && lapses > 1;
-        const isUnstableAndDifficult = stability < 7 && difficulty > 0.5 && lapses > 0;
+        const isUnstableAndDifficult = stability < 7 && difficulty > 5.0 && lapses > 0;
 
         if (isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult) {
           needsAttention++;
@@ -157,7 +157,7 @@ export const VocabularyStatCards = memo(
         },
         {
           value: validatedData.needsAttention,
-          label: 'Difficult',
+          label: 'Hard',
           icon: 'alert-circle',
           iconColor: colors.error,
           bgColor: colors.buttonOverlay,

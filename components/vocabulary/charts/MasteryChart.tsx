@@ -11,9 +11,13 @@ import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
-import { generateDateRange } from '../shared/utils';
+import {
+  generateDateRange,
+  createStandardizedPerformanceZones,
+  generatePerformanceSubtitle,
+  createAreaFillPath,
+} from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
-import { CHART_LEGENDS } from '../shared/chartLegends';
 
 interface MasteryChartProps {
   studyWords: StudyWord[];
@@ -86,7 +90,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
       };
     }
 
-    const maxRate = Math.max(1, Math.max(...masteryData.map(d => d.masteryRate)));
+    const maxRate = Math.max(100, Math.max(...masteryData.map(d => d.masteryRate))); // Always use 100% as ceiling
     const stepX = GRAPH_WIDTH / Math.max(1, masteryData.length - 1); // Prevent division by zero
 
     // Add top padding to prevent dots from being cut off
@@ -142,11 +146,19 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
     const trend = change > 2 ? 'improving' : change < -2 ? 'declining' : 'stable';
     const totalMastered = recent[recent.length - 1]?.masteredCount || 0;
 
+    // Define standardized performance zones using shared utility
+    const performanceZones = createStandardizedPerformanceZones(
+      chartHeight,
+      TOP_PADDING,
+      chartColors
+    );
+
     return {
       masteryPath: path.toSVGString(),
       smoothPath: path.toSVGString(),
       hasData: true, // We know we have data at this point
       maxRate,
+      performanceZones,
       milestones,
       dataPoints: points,
       insights: {
@@ -158,29 +170,20 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
     };
   }, [masteryData]);
 
-  // Generate subtitle based on mastery trend with more context
+  // Generate subtitle using shared utility with custom logic for trends
   const subtitle = useMemo(() => {
     const { currentRate, trend, weeklyChange } = chartData.insights;
 
     if (currentRate === 0) {
       return 'Start reviewing to build mastery';
     }
-    if (trend === 'improving') {
-      return `Improving by ${Math.abs(weeklyChange)}% this week`;
-    }
-    if (trend === 'declining') {
-      return `Down ${Math.abs(weeklyChange)}% - focus on reviews`;
-    }
-    if (currentRate >= 80) {
-      return 'Outstanding mastery rate';
-    }
-    if (currentRate >= 70) {
-      return 'Excellent mastery rate';
-    }
-    if (currentRate >= 50) {
-      return 'Good mastery progress';
-    }
-    return 'Building vocabulary foundation';
+
+    return generatePerformanceSubtitle(
+      currentRate,
+      'mastery rate',
+      trend as 'improving' | 'declining' | 'stable',
+      weeklyChange
+    );
   }, [chartData.insights]);
 
   if (!chartData.hasData) {
@@ -234,7 +237,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
           leftStat={{
             value: `${chartData.insights.currentRate}%`,
             label: 'mastery rate',
-            color: chartColors.trend[chartData.insights.trend as keyof typeof chartColors.trend],
+            color: chartColors.getPerformanceColor(chartData.insights.currentRate),
           }}
           rightStat={{
             value: chartData.insights.totalMastered,
@@ -263,44 +266,25 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
               })}
             </Group>
 
-            {/* Performance zone highlighting */}
+            {/* Standardized performance zones background */}
             <Group>
-              {chartData.maxRate && chartData.maxRate >= 70 && (
-                <Group>
-                  {(() => {
-                    const targetY =
-                      TOP_PADDING +
-                      (GRAPH_HEIGHT_LARGE - TOP_PADDING) -
-                      (70 / chartData.maxRate) * (GRAPH_HEIGHT_LARGE - TOP_PADDING);
-
-                    return (
-                      <>
-                        <Rect
-                          x={0}
-                          y={TOP_PADDING}
-                          width={GRAPH_WIDTH}
-                          height={targetY - TOP_PADDING}
-                          color={chartColors.withOpacity(chartColors.performance.excellent, 0.05)}
-                        />
-                        <Rect
-                          x={0}
-                          y={targetY - 0.5}
-                          width={GRAPH_WIDTH}
-                          height={1}
-                          color={chartColors.withOpacity(chartColors.performance.excellent, 0.4)}
-                        />
-                      </>
-                    );
-                  })()}
-                </Group>
-              )}
+              {chartData.performanceZones?.map((zone, index) => (
+                <Rect
+                  key={`performance-zone-${index}`}
+                  x={0}
+                  y={zone.y}
+                  width={GRAPH_WIDTH}
+                  height={zone.height}
+                  color={chartColors.withOpacity(zone.color, 0.12)}
+                />
+              ))}
             </Group>
 
             {/* Area fill under the mastery line */}
             <Group>
               {chartData.smoothPath && chartData.dataPoints.length > 0 && (
                 <Path
-                  path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                  path={createAreaFillPath(chartData.smoothPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
                   color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                 />
               )}
@@ -385,15 +369,8 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
         </View>
 
         <ChartFooter
-          legendItems={[
-            { type: 'line', color: chartColors.ui.dataLine, label: CHART_LEGENDS.progress.line },
-            {
-              type: 'dot',
-              color: chartColors.ui.dataLine,
-              label: CHART_LEGENDS.progress.milestones,
-            },
-          ]}
-          timeRange={CHART_LEGENDS.timeRanges.last14Days}
+          legendItems={[{ type: 'line', color: chartColors.ui.dataLine, label: 'Mastery rate' }]}
+          timeRange="Past 14 days"
         />
       </View>
     </BaseCard>

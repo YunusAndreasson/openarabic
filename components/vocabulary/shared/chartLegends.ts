@@ -1,48 +1,75 @@
 /**
  * Shared chart legend constants for vocabulary analytics
- * Ensures consistent terminology across all charts
+ * Ensures consistent terminology across all charts using FSRS-aligned language
  */
 
 export const CHART_LEGENDS = {
-  // Difficulty levels - simple, clear terms
+  // FSRS States - using official FSRS terminology
+  states: {
+    new: 'New',
+    learning: 'Learning',
+    review: 'Review',
+    relearning: 'Relearning',
+  },
+
+  // Difficulty levels - simple, clear terms aligned with FSRS
   difficulty: {
     easy: 'Easy',
     medium: 'Medium',
     hard: 'Hard',
   },
 
-  // Memory retention levels - clear status indicators
+  // Memory strength - using FSRS retrievability concept
   memory: {
     strong: 'Strong',
-    fading: 'At Risk',
-    weak: 'Critical',
+    weak: 'Weak',
+    critical: 'Critical',
   },
 
   // Performance levels - achievement-focused terms
   performance: {
     excellent: 'Excellent',
     good: 'Good',
-    moderate: 'Fair',
-    poor: 'Needs Work',
+    fair: 'Fair',
+    poor: 'Poor',
   },
 
   // Progress tracking - action-oriented terms
   progress: {
     line: 'Progress',
     forecast: 'Forecast',
-    average: 'Daily Average',
-    milestones: 'Milestones',
+    trend: 'Trend',
+    milestone: 'Milestone',
   },
 
   // Time ranges - consistent format
   timeRanges: {
-    current: 'Current vocabulary',
-    last14Days: 'Last 14 days',
-    next14Days: 'Next 14 days',
+    current: 'Current',
+    past14: 'Past 14 days',
+    next14: 'Next 14 days',
+  },
+
+  // Chart titles - short and clear
+  titles: {
+    difficulty: 'Difficulty',
+    mastery: 'Mastery',
+    efficiency: 'Efficiency',
+    memory: 'Memory',
+  },
+
+  // Stat labels - concise and intuitive
+  stats: {
+    due: 'Due',
+    learning: 'Learning',
+    mastered: 'Mastered',
+    hard: 'Hard',
+    average: 'Average',
+    total: 'Total',
   },
 } as const;
 
 // Type exports for better TypeScript support
+export type FSRSState = keyof typeof CHART_LEGENDS.states;
 export type DifficultyLevel = keyof typeof CHART_LEGENDS.difficulty;
 export type MemoryLevel = keyof typeof CHART_LEGENDS.memory;
 export type PerformanceLevel = keyof typeof CHART_LEGENDS.performance;

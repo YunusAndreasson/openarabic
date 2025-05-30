@@ -16,9 +16,13 @@ import {
   CRITICAL_RETRIEVABILITY_THRESHOLD,
 } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
-import { calculateRetrievability } from '../shared/utils';
+import {
+  calculateRetrievability,
+  createStandardizedPerformanceZones,
+  generatePerformanceSubtitle,
+  createAreaFillPath,
+} from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
-import { CHART_LEGENDS } from '../shared/chartLegends';
 
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
@@ -120,47 +124,28 @@ export const RetrievabilityChart = memo(
         }
       });
 
-      // Define danger zones for memory retention using FSRS-aligned thresholds
-      const dangerZones = [
-        {
-          name: 'Strong Memory',
-          min: 80,
-          max: 100,
-          color: chartColors.memory.strong,
-          y: 0,
-          height: GRAPH_HEIGHT_LARGE - (80 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-        },
-        {
-          name: 'Good Memory',
-          min: CRITICAL_RETRIEVABILITY_THRESHOLD * 100,
-          max: 80,
-          color: chartColors.memory.fading,
-          y: GRAPH_HEIGHT_LARGE - (80 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-          height:
-            ((80 - CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / maxRetrievability) *
-            GRAPH_HEIGHT_LARGE,
-        },
-        {
-          name: 'At Risk',
-          min: 50,
-          max: CRITICAL_RETRIEVABILITY_THRESHOLD * 100,
-          color: chartColors.memory.fading,
-          y:
-            GRAPH_HEIGHT_LARGE -
-            ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-          height:
-            ((CRITICAL_RETRIEVABILITY_THRESHOLD * 100 - 50) / maxRetrievability) *
-            GRAPH_HEIGHT_LARGE,
-        },
-        {
-          name: 'Critical',
-          min: 0,
-          max: 50,
-          color: chartColors.memory.weak,
-          y: GRAPH_HEIGHT_LARGE - (50 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-          height: (50 / maxRetrievability) * GRAPH_HEIGHT_LARGE,
-        },
-      ];
+      // Define memory zones using standardized utility (mapped to memory colors)
+      const dangerZones = createStandardizedPerformanceZones(
+        GRAPH_HEIGHT_LARGE,
+        0,
+        chartColors
+      ).map(zone => ({
+        ...zone,
+        // Map performance colors to memory colors for semantic consistency
+        color:
+          zone.name === 'Excellent'
+            ? chartColors.memory.strong
+            : zone.name === 'Good'
+              ? chartColors.memory.fading
+              : zone.name === 'Fair'
+                ? chartColors.memory.fading
+                : chartColors.memory.weak,
+        // Adjust for retrievability chart scaling
+        y:
+          GRAPH_HEIGHT_LARGE -
+          ((zone.min + (zone.max - zone.min)) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+        height: ((zone.max - zone.min) / maxRetrievability) * GRAPH_HEIGHT_LARGE,
+      }));
 
       // Calculate insights
       const week1 = retrievabilityData.slice(0, 7);
@@ -190,7 +175,7 @@ export const RetrievabilityChart = memo(
       };
     }, [retrievabilityData, chartColors]);
 
-    // Generate subtitle based on retrievability forecast
+    // Generate subtitle using shared utility with custom logic for critical words
     const subtitle = useMemo(() => {
       const { currentRetrievability, criticalWords } = chartData.insights;
 
@@ -203,13 +188,8 @@ export const RetrievabilityChart = memo(
       if (criticalWords > 5) {
         return `${criticalWords} words approaching forgetting`;
       }
-      if (currentRetrievability >= 80) {
-        return 'Excellent memory retention';
-      }
-      if (currentRetrievability >= 60) {
-        return 'Good memory retention';
-      }
-      return 'Focus on review to strengthen memory';
+
+      return generatePerformanceSubtitle(currentRetrievability, 'memory retention');
     }, [chartData.insights]);
 
     if (!chartData.hasData) {
@@ -268,14 +248,6 @@ export const RetrievabilityChart = memo(
                       height={zone.height}
                       color={chartColors.withOpacity(zone.color, 0.12)}
                     />
-                    {/* Zone border */}
-                    <Rect
-                      x={0}
-                      y={zone.y}
-                      width={GRAPH_WIDTH}
-                      height={1}
-                      color={chartColors.withOpacity(zone.color, 0.3)}
-                    />
                   </Group>
                 ))}
               </Group>
@@ -305,7 +277,7 @@ export const RetrievabilityChart = memo(
               <Group>
                 {chartData.smoothPath && (
                   <Path
-                    path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                    path={createAreaFillPath(chartData.smoothPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
                     color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                   />
                 )}
@@ -340,21 +312,10 @@ export const RetrievabilityChart = memo(
               {
                 type: 'line',
                 color: chartColors.ui.dataLine,
-                label: CHART_LEGENDS.progress.forecast,
+                label: 'Memory forecast',
               },
-              {
-                type: 'area',
-                color: chartColors.memory.strong,
-                label: CHART_LEGENDS.memory.strong,
-              },
-              {
-                type: 'area',
-                color: chartColors.memory.fading,
-                label: CHART_LEGENDS.memory.fading,
-              },
-              { type: 'area', color: chartColors.memory.weak, label: CHART_LEGENDS.memory.weak },
             ]}
-            timeRange={CHART_LEGENDS.timeRanges.next14Days}
+            timeRange="Next 14 days"
           />
         </View>
       </BaseCard>

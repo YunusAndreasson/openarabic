@@ -16,6 +16,7 @@ export interface ReviewParams {
   mode?: 'spaced' | 'random' | 'new';
   count?: number;
   fromVocabulary?: string;
+  fromRemember?: string;
 }
 
 /**
@@ -34,7 +35,7 @@ export type RouteParams = {
   '/article/[id]': { id: string | number };
   '/filter': FilterParams;
   '/review': ReviewParams;
-  '/listen': Record<string, never>;
+  '/listen': ListenParams;
   '/wordList': WordListParams;
   '/': Record<string, never>;
   '/(tabs)': Record<string, never>;
@@ -87,3 +88,10 @@ const routeParams: Record<RoutePath, true> = {
   '/settings': true,
   '/vocabulary': true,
 };
+
+/**
+ * Type for listen parameters
+ */
+export interface ListenParams {
+  fromRemember?: string;
+}

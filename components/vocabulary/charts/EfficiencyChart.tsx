@@ -5,9 +5,15 @@ import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
-import { generateDateRange, isSameDay, calculateEfficiencyScore } from '../shared/utils';
+import {
+  generateDateRange,
+  isSameDay,
+  calculateEfficiencyScore,
+  createStandardizedPerformanceZones,
+  generatePerformanceSubtitle,
+  createAreaFillPath,
+} from '../shared/utils';
 import { useChartColors } from '../shared/chartColors';
-import { CHART_LEGENDS } from '../shared/chartLegends';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
@@ -94,41 +100,19 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       }
     });
 
-    // Define performance zones using consistent color system
-    const performanceZones = [
-      {
-        name: 'Excellent',
-        min: 80,
-        max: 100,
-        color: chartColors.performance.excellent,
-        y: GRAPH_HEIGHT_LARGE - (100 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (20 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-      },
-      {
-        name: 'Good',
-        min: 60,
-        max: 79,
-        color: chartColors.performance.good,
-        y: GRAPH_HEIGHT_LARGE - (79 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (19 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-      },
-      {
-        name: 'Fair',
-        min: 40,
-        max: 59,
-        color: chartColors.performance.moderate,
-        y: GRAPH_HEIGHT_LARGE - (59 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (19 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-      },
-      {
-        name: 'Needs Work',
-        min: 0,
-        max: 39,
-        color: chartColors.performance.poor,
-        y: GRAPH_HEIGHT_LARGE - (39 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-        height: (39 / maxEfficiency) * GRAPH_HEIGHT_LARGE,
-      },
-    ];
+    // Define performance zones using standardized utility
+    const performanceZones = createStandardizedPerformanceZones(
+      GRAPH_HEIGHT_LARGE,
+      0,
+      chartColors
+    ).map(zone => ({
+      ...zone,
+      // Adjust for efficiency chart scaling
+      y:
+        GRAPH_HEIGHT_LARGE -
+        ((zone.min + (zone.max - zone.min)) / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+      height: ((zone.max - zone.min) / maxEfficiency) * GRAPH_HEIGHT_LARGE,
+    }));
 
     // Calculate insights
     const recent = efficiencyData.slice(-7).filter(d => d.wordCount > 0);
@@ -161,26 +145,14 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
     };
   }, [efficiencyData, chartColors]);
 
-  // Generate subtitle based on efficiency trend
+  // Generate subtitle using shared utility
   const subtitle = useMemo(() => {
     const { currentEfficiency, trend } = chartData.insights;
-
-    if (currentEfficiency === 0) {
-      return 'Study some words to see your progress';
-    }
-    if (trend === 'improving') {
-      return 'Learning efficiency is improving';
-    }
-    if (trend === 'declining') {
-      return 'Try different study methods';
-    }
-    if (currentEfficiency >= 80) {
-      return 'Excellent learning efficiency';
-    }
-    if (currentEfficiency >= 60) {
-      return 'Good learning efficiency';
-    }
-    return 'Room for improvement in efficiency';
+    return generatePerformanceSubtitle(
+      currentEfficiency,
+      'learning efficiency',
+      trend as 'improving' | 'declining' | 'stable'
+    );
   }, [chartData.insights]);
 
   if (!chartData.hasData) {
@@ -188,7 +160,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
       <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.efficiencyContent}>
           <CardHeader
-            title="Learning Efficiency"
+            title="Efficiency"
             subtitle="Study some words to see your progress"
             onInfoPress={onInfoPress}
           />
@@ -200,140 +172,107 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
   return (
     <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.efficiencyContent}>
-        <CardHeader title="Learning Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
+        <CardHeader title="Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
 
         <StatsRow
           leftStat={{
             value: `${chartData.insights.currentEfficiency}%`,
-            label: 'current efficiency',
+            label: 'current',
             color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
           }}
           rightStat={{
             value: `${chartData.insights.weeklyAverage}%`,
             label: 'weekly average',
+            color: chartColors.getPerformanceColor(chartData.insights.weeklyAverage),
           }}
         />
 
-        {/* Enhanced Efficiency Graph */}
+        {/* Enhanced Efficiency Chart */}
         <View style={styles.graphContainer}>
           <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Background zones - more prominent */}
+            {/* Performance zones background */}
             <Group>
               {chartData.performanceZones.map((zone, index) => (
-                <Group key={`zone-group-${index}`}>
-                  {/* Zone background */}
-                  <Rect
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={zone.height}
-                    color={chartColors.withOpacity(zone.color, 0.12)}
-                  />
-                  {/* Zone border */}
-                  <Rect
-                    x={0}
-                    y={zone.y}
-                    width={GRAPH_WIDTH}
-                    height={1}
-                    color={chartColors.withOpacity(zone.color, 0.3)}
-                  />
-                </Group>
-              ))}
-            </Group>
-
-            {/* Grid lines - prominent for better 14-day indication */}
-            <Group>
-              {/* Vertical grid lines for 14-day indication */}
-              <Group>
-                {/* Vertical grid lines for each day */}
-                {efficiencyData.map((_, index) => {
-                  const x = (index / Math.max(1, efficiencyData.length - 1)) * GRAPH_WIDTH;
-                  return (
-                    <Rect
-                      key={`day-grid-${index}`}
-                      x={x - 0.5}
-                      y={0}
-                      width={1}
-                      height={GRAPH_HEIGHT_LARGE}
-                      color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
-                    />
-                  );
-                })}
-              </Group>
-            </Group>
-
-            {/* Efficiency threshold line at 60% */}
-            <Group>
-              {chartData.maxEfficiency && (
                 <Rect
+                  key={`performance-zone-${index}`}
                   x={0}
-                  y={GRAPH_HEIGHT_LARGE - (60 / chartData.maxEfficiency) * GRAPH_HEIGHT_LARGE - 0.5}
+                  y={zone.y}
                   width={GRAPH_WIDTH}
-                  height={1}
-                  color={chartColors.withOpacity(chartColors.performance.moderate, 0.6)}
+                  height={zone.height}
+                  color={chartColors.withOpacity(zone.color, 0.1)}
                 />
-              )}
+              ))}
             </Group>
 
             {/* Area fill under the efficiency line */}
             <Group>
-              {chartData.smoothPath && (
+              {chartData.efficiencyPath && (
                 <Path
-                  path={`${chartData.smoothPath} L ${GRAPH_WIDTH} ${GRAPH_HEIGHT_LARGE} L 0 ${GRAPH_HEIGHT_LARGE} Z`}
+                  path={createAreaFillPath(
+                    chartData.efficiencyPath,
+                    GRAPH_WIDTH,
+                    GRAPH_HEIGHT_LARGE
+                  )}
                   color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
                 />
               )}
             </Group>
 
-            {/* Main efficiency line */}
+            {/* Efficiency line */}
             <Group>
-              {chartData.smoothPath && (
-                <Path
-                  path={chartData.smoothPath}
-                  style="stroke"
-                  strokeWidth={3}
-                  color={chartColors.ui.dataLine}
-                >
-                  <Shadow
-                    dx={0}
-                    dy={2}
-                    blur={4}
-                    color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
-                  />
-                </Path>
-              )}
-            </Group>
+              <Path
+                path={chartData.efficiencyPath}
+                style="stroke"
+                strokeWidth={3}
+                color={chartColors.ui.dataLine}
+              >
+                <Shadow
+                  dx={0}
+                  dy={2}
+                  blur={4}
+                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                />
+              </Path>
 
-            {/* Data points - show every other point for clarity */}
-            {/* Removed individual dots as they don't make sense for daily averages */}
+              {/* Data points */}
+              {efficiencyData.map((data, index) => {
+                if (data.wordCount === 0) return null;
+
+                const x = (index / (efficiencyData.length - 1)) * GRAPH_WIDTH;
+                const y =
+                  GRAPH_HEIGHT_LARGE -
+                  (data.averageEfficiency / (chartData.maxEfficiency || 100)) * GRAPH_HEIGHT_LARGE;
+
+                return (
+                  <Circle
+                    key={`efficiency-point-${index}`}
+                    cx={x}
+                    cy={y}
+                    r={4}
+                    color={chartColors.ui.dataLine}
+                  >
+                    <Shadow
+                      dx={0}
+                      dy={1}
+                      blur={2}
+                      color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                    />
+                  </Circle>
+                );
+              })}
+            </Group>
           </Canvas>
         </View>
 
         <ChartFooter
           legendItems={[
-            { type: 'line', color: chartColors.ui.dataLine, label: CHART_LEGENDS.progress.average },
             {
-              type: 'area',
-              color: chartColors.performance.excellent,
-              label: CHART_LEGENDS.performance.excellent,
-            },
-            {
-              type: 'area',
-              color: chartColors.performance.good,
-              label: CHART_LEGENDS.performance.good,
-            },
-            {
-              type: 'area',
-              color: chartColors.performance.moderate,
-              label: CHART_LEGENDS.performance.moderate,
-            },
-            {
-              type: 'area',
-              color: chartColors.performance.poor,
-              label: CHART_LEGENDS.performance.poor,
+              type: 'line',
+              color: chartColors.ui.dataLine,
+              label: 'Progress',
             },
           ]}
-          timeRange={CHART_LEGENDS.timeRanges.last14Days}
+          timeRange="Past 14 days"
         />
       </View>
     </BaseCard>

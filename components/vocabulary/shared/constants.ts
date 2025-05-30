@@ -16,6 +16,25 @@ export const DAYS_30 = 30;
 // FSRS thresholds - aligned with FSRS algorithm standards
 export const MASTERY_STABILITY_THRESHOLD = 5; // Days - minimum stability for mastery
 export const CRITICAL_RETRIEVABILITY_THRESHOLD = 0.7; // 70% - threshold for review urgency
-export const EFFICIENCY_THRESHOLD = 60; // Minimum efficiency score for "good" performance
-export const OPTIMAL_DIFFICULTY_MIN = 0.3; // FSRS optimal difficulty range
-export const OPTIMAL_DIFFICULTY_MAX = 0.6;
+
+// Standardized performance thresholds used across all charts
+export const PERFORMANCE_THRESHOLDS = {
+  EXCELLENT: 80,
+  GOOD: 60,
+  FAIR: 40,
+  POOR: 0,
+} as const;
+
+// Standardized performance zone names
+export const PERFORMANCE_ZONES = {
+  EXCELLENT: 'Excellent',
+  GOOD: 'Good',
+  FAIR: 'Fair',
+  POOR: 'Poor',
+} as const;
+
+// FSRS difficulty thresholds (validated from database analysis)
+export const FSRS_DIFFICULTY_THRESHOLDS = {
+  EASY: 6.5,
+  MEDIUM: 8.0,
+} as const;

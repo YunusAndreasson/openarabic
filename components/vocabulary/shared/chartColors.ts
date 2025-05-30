@@ -1,5 +1,6 @@
 import { useColors } from '@/hooks/useColors';
 import { withOpacity } from '@/utils/colorUtils';
+import { PERFORMANCE_THRESHOLDS, FSRS_DIFFICULTY_THRESHOLDS } from './constants';
 
 /**
  * Data Visualization Color System for Vocabulary Analytics
@@ -125,52 +126,28 @@ export const useChartColors = () => {
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
-    // Enhanced color selection functions with proper contrast
+    // Enhanced color selection functions with standardized thresholds
     getPerformanceColor: (value: number) => {
-      if (value >= 85) return colors.success;
-      if (value >= 70) return colors.info;
-      if (value >= 50) return colors.warning;
+      if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) return colors.success;
+      if (value >= PERFORMANCE_THRESHOLDS.GOOD) return colors.info;
+      if (value >= PERFORMANCE_THRESHOLDS.FAIR) return colors.warning;
       return colors.error;
     },
 
     getDifficultyColor: (difficulty: number) => {
-      if (difficulty < 0.4) return colors.success;
-      if (difficulty < 0.7) return colors.warning;
+      // FSRS difficulty ranges ~5-10, using validated thresholds
+      if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.EASY) return colors.success;
+      if (difficulty < FSRS_DIFFICULTY_THRESHOLDS.MEDIUM) return colors.warning;
       return colors.error;
     },
 
     getRetrievabilityColor: (retrievability: number) => {
-      if (retrievability >= 0.75) return colors.success;
-      if (retrievability >= 0.5) return colors.warning;
+      // Convert to percentage and use standardized thresholds
+      const percentage = retrievability * 100;
+      if (percentage >= PERFORMANCE_THRESHOLDS.EXCELLENT) return colors.success;
+      if (percentage >= PERFORMANCE_THRESHOLDS.GOOD) return colors.info;
+      if (percentage >= PERFORMANCE_THRESHOLDS.FAIR) return colors.warning;
       return colors.error;
-    },
-
-    getMasteryColor: (mastery: number) => {
-      if (mastery >= 0.8) return colors.success;
-      if (mastery >= 0.5) return colors.info;
-      if (mastery >= 0.2) return colors.warning;
-      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM);
-    },
-
-    getTimeColor: (hours: number, maxHours: number) => {
-      const ratio = hours / maxHours;
-      if (ratio >= 0.8) return colors.success;
-      if (ratio >= 0.5) return colors.info;
-      if (ratio >= 0.2) return colors.warning;
-      return withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM);
-    },
-
-    getSeasonalColor: (season: 'spring' | 'summer' | 'autumn' | 'winter') => {
-      switch (season) {
-        case 'spring':
-          return colors.success;
-        case 'summer':
-          return colors.info;
-        case 'autumn':
-          return colors.warning;
-        case 'winter':
-          return withOpacity(colors.textTertiary, CHART_OPACITY.HIGH);
-      }
     },
 
     // Data visualization specific colors
@@ -190,5 +167,3 @@ export type MemoryState = 'strong' | 'fading' | 'weak';
 export type DifficultyLevel = 'easy' | 'medium' | 'hard';
 export type TrendDirection = 'improving' | 'stable' | 'declining';
 export type MasteryLevel = 'mastered' | 'proficient' | 'learning' | 'new';
-export type SessionType = 'review' | 'learn' | 'practice' | 'test';
-export type ProgressStatus = 'ahead' | 'onTrack' | 'behind' | 'critical';

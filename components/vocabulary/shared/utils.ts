@@ -1,6 +1,10 @@
 import type { StudyWord } from '@/types/vocabulary.types';
 
-import { MASTERY_STABILITY_THRESHOLD } from './constants';
+import {
+  MASTERY_STABILITY_THRESHOLD,
+  PERFORMANCE_THRESHOLDS,
+  PERFORMANCE_ZONES,
+} from './constants';
 
 // Generate date range for charts
 export const generateDateRange = (days: number) => {
@@ -114,33 +118,107 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
   return Math.min(100, score); // Cap at 100
 };
 
-// Get default chart data structure
-export const getDefaultChartData = () => ({
-  hasData: false,
-  insights: { currentValue: 0, trend: 'stable' as const },
-});
-
-// Calculate insights from time series data
-export const calculateTrendInsights = <T extends { value: number }>(
-  data: T[],
-  getValue: (item: T) => number = item => item.value
+/**
+ * Creates standardized performance zones for charts
+ * @param chartHeight - Height of the chart area
+ * @param topPadding - Top padding (default 0)
+ * @param chartColors - Chart colors object
+ * @returns Array of performance zone objects
+ */
+export const createStandardizedPerformanceZones = (
+  chartHeight: number,
+  topPadding: number = 0,
+  chartColors: any
 ) => {
-  if (data.length < 2) {
-    return { current: 0, change: 0, trend: 'stable' as const };
+  const availableHeight = chartHeight - topPadding;
+
+  return [
+    {
+      name: PERFORMANCE_ZONES.EXCELLENT,
+      min: PERFORMANCE_THRESHOLDS.EXCELLENT,
+      max: 100,
+      color: chartColors.performance.excellent,
+      y: topPadding,
+      height: ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
+    },
+    {
+      name: PERFORMANCE_ZONES.GOOD,
+      min: PERFORMANCE_THRESHOLDS.GOOD,
+      max: PERFORMANCE_THRESHOLDS.EXCELLENT,
+      color: chartColors.performance.good,
+      y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.EXCELLENT) / 100) * availableHeight,
+      height:
+        ((PERFORMANCE_THRESHOLDS.EXCELLENT - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
+    },
+    {
+      name: PERFORMANCE_ZONES.FAIR,
+      min: PERFORMANCE_THRESHOLDS.FAIR,
+      max: PERFORMANCE_THRESHOLDS.GOOD,
+      color: chartColors.performance.moderate,
+      y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.GOOD) / 100) * availableHeight,
+      height: ((PERFORMANCE_THRESHOLDS.GOOD - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
+    },
+    {
+      name: PERFORMANCE_ZONES.POOR,
+      min: PERFORMANCE_THRESHOLDS.POOR,
+      max: PERFORMANCE_THRESHOLDS.FAIR,
+      color: chartColors.performance.poor,
+      y: topPadding + ((100 - PERFORMANCE_THRESHOLDS.FAIR) / 100) * availableHeight,
+      height: ((PERFORMANCE_THRESHOLDS.FAIR - PERFORMANCE_THRESHOLDS.POOR) / 100) * availableHeight,
+    },
+  ];
+};
+
+/**
+ * Generates standardized subtitle based on performance value
+ * @param value - Performance value (0-100)
+ * @param metricName - Name of the metric (e.g., 'efficiency', 'retention', 'mastery')
+ * @param trend - Optional trend direction
+ * @param trendValue - Optional trend change value
+ * @returns Subtitle string
+ */
+export const generatePerformanceSubtitle = (
+  value: number,
+  metricName: string,
+  trend?: 'improving' | 'declining' | 'stable',
+  trendValue?: number
+): string => {
+  if (value === 0) {
+    return `Study words to track ${metricName}`;
   }
 
-  const recent = data.slice(-7);
-  const older = data.slice(0, 7);
+  if (trend && trendValue !== undefined) {
+    if (trend === 'improving') {
+      return `${metricName} improving by ${Math.abs(trendValue)}%`;
+    }
+    if (trend === 'declining') {
+      return `${metricName} down ${Math.abs(trendValue)}% - focus on review`;
+    }
+  }
 
-  const currentAvg = recent.reduce((sum, item) => sum + getValue(item), 0) / recent.length;
-  const olderAvg = older.reduce((sum, item) => sum + getValue(item), 0) / older.length;
+  if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) {
+    return `Excellent ${metricName}`;
+  }
+  if (value >= PERFORMANCE_THRESHOLDS.GOOD) {
+    return `Good ${metricName}`;
+  }
+  if (value >= PERFORMANCE_THRESHOLDS.FAIR) {
+    return `Fair ${metricName} - room for improvement`;
+  }
+  return `Focus on improving ${metricName}`;
+};
 
-  const change = currentAvg - olderAvg;
-  const trend = change > 10 ? 'improving' : change < -10 ? 'declining' : 'stable';
-
-  return {
-    current: Math.round(currentAvg * 10) / 10,
-    change: Math.round(change * 10) / 10,
-    trend,
-  };
+/**
+ * Creates a smooth area fill path for line charts
+ * @param smoothPath - The main line path
+ * @param graphWidth - Width of the graph
+ * @param graphHeight - Height of the graph
+ * @returns Area fill path string
+ */
+export const createAreaFillPath = (
+  smoothPath: string,
+  graphWidth: number,
+  graphHeight: number
+): string => {
+  return `${smoothPath} L ${graphWidth} ${graphHeight} L 0 ${graphHeight} Z`;
 };

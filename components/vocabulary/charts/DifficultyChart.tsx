@@ -8,11 +8,9 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
-import { ChartFooter } from '../shared/ChartFooter';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { useChartColors } from '../shared/chartColors';
-import { CHART_LEGENDS } from '../shared/chartLegends';
 
 interface DifficultyChartProps {
   studyWords: StudyWord[];
@@ -42,10 +40,10 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
       };
     }
 
-    // Define difficulty buckets with 3 clear categories using FSRS-aligned thresholds
+    // Define difficulty buckets with FSRS-aligned thresholds (FSRS difficulty ranges ~5-10)
     const buckets: DifficultyBucket[] = [
       {
-        range: '0.0-0.4',
+        range: '< 6.5',
         count: 0,
         percentage: 0,
         color: chartColors.difficulty.easy,
@@ -53,7 +51,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         emoji: '',
       },
       {
-        range: '0.4-0.7',
+        range: '6.5-8.0',
         count: 0,
         percentage: 0,
         color: chartColors.difficulty.medium,
@@ -61,7 +59,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
         emoji: '',
       },
       {
-        range: '0.7-1.0',
+        range: '> 8.0',
         count: 0,
         percentage: 0,
         color: chartColors.difficulty.hard,
@@ -74,17 +72,17 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
     let hardWords = 0;
 
     studyWords.forEach(word => {
-      const difficulty = word.fsrs_difficulty ?? 0.3;
+      const difficulty = word.fsrs_difficulty ?? 5.0; // Default to middle range
       totalDifficulty += difficulty;
 
-      if (difficulty >= 0.7) {
+      if (difficulty >= 8.0) {
         hardWords++;
       }
 
-      // Categorize into 3 buckets with FSRS-aligned thresholds
-      if (difficulty < 0.4) {
+      // Categorize into 3 buckets with proper FSRS thresholds
+      if (difficulty < 6.5) {
         buckets[0]!.count++;
-      } else if (difficulty < 0.7) {
+      } else if (difficulty < 8.0) {
         buckets[1]!.count++;
       } else {
         buckets[2]!.count++;
@@ -125,29 +123,25 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
   // Generate subtitle based on difficulty distribution
   const subtitle = useMemo(() => {
     if (!difficultyData.hasData) {
-      return 'Track your vocabulary challenge levels';
+      return 'Track word difficulty levels';
     }
 
     const { distribution } = difficultyData.insights;
 
     if (distribution === 'easy') {
-      return 'Mostly easy words - consider harder content';
+      return 'Mostly easy - try harder content';
     }
     if (distribution === 'challenging') {
-      return 'Many challenging words - focus on review';
+      return 'Many hard words - focus on review';
     }
-    return 'Balanced difficulty distribution';
+    return 'Balanced difficulty spread';
   }, [difficultyData.insights, difficultyData.hasData]);
 
   if (!difficultyData.hasData) {
     return (
       <BaseCard style={styles.difficultyCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.difficultyContent}>
-          <CardHeader
-            title="Difficulty Distribution"
-            subtitle={subtitle}
-            onInfoPress={onInfoPress}
-          />
+          <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
         </View>
       </BaseCard>
     );
@@ -156,17 +150,17 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
   return (
     <BaseCard style={styles.difficultyCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.difficultyContent}>
-        <CardHeader title="Difficulty Distribution" subtitle={subtitle} onInfoPress={onInfoPress} />
+        <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
 
         <StatsRow
           leftStat={{
             value: difficultyData.insights.averageDifficulty.toFixed(1),
-            label: 'average difficulty',
+            label: 'average',
             color: chartColors.getDifficultyColor(difficultyData.insights.averageDifficulty),
           }}
           rightStat={{
             value: difficultyData.insights.hardWords,
-            label: 'challenging words',
+            label: 'hard words',
             color:
               difficultyData.insights.hardWords > 10
                 ? chartColors.difficulty.hard
@@ -221,26 +215,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
           </Canvas>
         </View>
 
-        <ChartFooter
-          legendItems={[
-            {
-              type: 'bar',
-              color: chartColors.difficulty.easy,
-              label: CHART_LEGENDS.difficulty.easy,
-            },
-            {
-              type: 'bar',
-              color: chartColors.difficulty.medium,
-              label: CHART_LEGENDS.difficulty.medium,
-            },
-            {
-              type: 'bar',
-              color: chartColors.difficulty.hard,
-              label: CHART_LEGENDS.difficulty.hard,
-            },
-          ]}
-          timeRange={CHART_LEGENDS.timeRanges.current}
-        />
+        {/* Remove redundant legend - chart is self-evident */}
       </View>
     </BaseCard>
   );
