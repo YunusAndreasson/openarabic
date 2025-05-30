@@ -125,7 +125,7 @@ export default MemoizedSortingControls;
 const styles = StyleSheet.create({
   sortCard: {
     marginBottom: LAYOUT.SPACING.XSMALL,
-    marginHorizontal: -LAYOUT.SCREEN_EDGE_PADDING,
+    marginHorizontal: 0,
     overflow: 'hidden', // Ensures clean card edges
   },
   sortContent: {

@@ -74,9 +74,9 @@ const BottomControls = memo<BottomControlsProps>(
             { paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.SMALL) },
           ]}
         >
-          {/* Timer button - conditionally rendered */}
+          {/* Timer button - positioned in top-right corner */}
           {hasTimerButton && (
-            <View style={styles.timerRow}>
+            <View style={styles.timerContainer}>
               <TouchableOpacity
                 onPress={onTimerPress}
                 style={[
@@ -93,22 +93,24 @@ const BottomControls = memo<BottomControlsProps>(
               >
                 <Ionicons
                   name={isTimerActive ? 'timer' : 'timer-outline'}
-                  size={18}
+                  size={16}
                   color={isTimerActive ? colors.background : colors.textTertiary}
                 />
-                <ThemedText
-                  type="caption"
-                  style={[
-                    styles.timerLabel,
-                    {
-                      color: isTimerActive ? colors.background : colors.textTertiary,
-                      fontWeight: isTimerActive ? '600' : '500',
-                    },
-                  ]}
-                  skipDefaultColor
-                >
-                  Timer
-                </ThemedText>
+                {isTimerActive && (
+                  <ThemedText
+                    type="caption"
+                    style={[
+                      styles.timerLabel,
+                      {
+                        color: colors.background,
+                        fontWeight: '600',
+                      },
+                    ]}
+                    skipDefaultColor
+                  >
+                    Timer
+                  </ThemedText>
+                )}
               </TouchableOpacity>
             </View>
           )}
@@ -172,6 +174,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
     paddingTop: LAYOUT.SPACING.TINY,
+    position: 'relative',
   },
   buttonsRow: {
     flexDirection: 'row',
@@ -193,28 +196,31 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.TINY,
+  timerContainer: {
+    position: 'absolute',
+    top: -LAYOUT.SPACING.SMALL,
+    right: LAYOUT.SCREEN_EDGE_PADDING,
+    zIndex: 1,
   },
   timerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    paddingVertical: LAYOUT.SPACING.XSMALL + 1,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.XSMALL,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    minWidth: 32,
+    minHeight: 32,
+    justifyContent: 'center',
   },
   timerLabel: {
-    marginLeft: LAYOUT.SPACING.XSMALL - 1,
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
+    marginLeft: LAYOUT.SPACING.XTINY,
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
     letterSpacing: 0.2,
   },
 });

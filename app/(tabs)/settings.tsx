@@ -744,7 +744,7 @@ const styles = StyleSheet.create({
 
   // Account Header Styles
   accountHeader: {
-    padding: LAYOUT.SPACING.LARGE,
+    padding: LAYOUT.SPACING.MEDIUM + 2,
   },
   accountHeaderWrapper: {
     marginBottom: LAYOUT.SPACING.XLARGE,
@@ -755,12 +755,12 @@ const styles = StyleSheet.create({
   accountProfileSection: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: LAYOUT.SPACING.LARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
   },
   accountUserInfo: {
     flex: 1,
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    paddingTop: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.SMALL + 2,
+    paddingTop: LAYOUT.SPACING.TINY,
     justifyContent: 'center',
   },
   accountUserName: {
@@ -775,24 +775,24 @@ const styles = StyleSheet.create({
     opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
   },
   signOutAction: {
-    padding: LAYOUT.SPACING.MEDIUM,
+    padding: LAYOUT.SPACING.SMALL + 2,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 48,
-    minHeight: 48,
+    minWidth: 44,
+    minHeight: 44,
   },
 
   // User initials badge styles
   userInitialsBadge: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginRight: LAYOUT.SPACING.SMALL,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   userInitialsBadgeText: {
     textAlign: 'center',
@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
 
   // Information Section Styles
   infoWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
   infoContainer: {
     overflow: 'hidden',
@@ -896,14 +896,14 @@ const styles = StyleSheet.create({
 
   // Action Links Styles
   actionLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   actionLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL + 2,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.XTINY,
+    marginBottom: 0,
   },
   actionLinkContent: {
     alignItems: 'center',
@@ -936,19 +936,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   connectWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.LARGE,
   },
 
   // Social Links Styles
   socialLinksContainer: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.TINY,
   },
   socialLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingVertical: LAYOUT.SPACING.SMALL + 2,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
-    marginBottom: LAYOUT.SPACING.XTINY,
+    marginBottom: 0,
   },
   socialLinkContent: {
     alignItems: 'center',
@@ -1003,7 +1003,7 @@ const styles = StyleSheet.create({
   // App Footer Styles
   appFooterWrapper: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.XLARGE,
+    marginTop: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
