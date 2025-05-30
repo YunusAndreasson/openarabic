@@ -44,6 +44,10 @@ const EVENTS = {
 
   // Reading List Events
   VIEW_READING_LIST: 'View Reading List',
+
+  // Reminder Events
+  SET_REMINDER_TIME: 'Set Reminder Time',
+  TOGGLE_REMINDER: 'Toggle Reminder',
 } as const;
 
 // User Properties
@@ -167,8 +171,6 @@ class Analytics {
       logError(error);
     }
   }
-
-
 
   // Auth Events
   async trackSignUp(method: string = 'email') {

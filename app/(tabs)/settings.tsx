@@ -15,9 +15,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
+import { TimePicker } from '@/components/TimePicker';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
+import { useReminders } from '@/hooks/useReminders';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -260,6 +262,8 @@ const AccountScreen: React.FC = () => {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
+  const { reminderTime, updateReminderTime, toggleReminder, formatReminderTime } = useReminders();
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   const handleFontScaleChange = useCallback(
     (value: number) => {
@@ -270,6 +274,56 @@ const AccountScreen: React.FC = () => {
       dispatch(setFontScale(value));
     },
     [settings.fontScale, dispatch]
+  );
+
+  const handleReminderToggle = useCallback(
+    async (enabled: boolean) => {
+      if (enabled) {
+        // Check permissions before enabling
+        const hasPermissions = await import('@/services/notificationService').then(
+          ({ notificationService }) => notificationService.hasPermissions()
+        );
+
+        if (!hasPermissions) {
+          Alert.alert(
+            'Notification Permission Required',
+            'Please allow notifications to receive study reminders.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Settings',
+                onPress: () => {
+                  // On iOS, this will open app settings
+                  Linking.openSettings();
+                },
+              },
+            ]
+          );
+          return;
+        }
+      }
+
+      await toggleReminder(enabled);
+      lightFeedback();
+    },
+    [toggleReminder]
+  );
+
+  const handleTimePickerOpen = useCallback(() => {
+    setShowTimePicker(true);
+    lightFeedback();
+  }, []);
+
+  const handleTimePickerClose = useCallback(() => {
+    setShowTimePicker(false);
+  }, []);
+
+  const handleTimeSet = useCallback(
+    async (hour: number, minute: number) => {
+      await updateReminderTime(hour, minute);
+      lightFeedback();
+    },
+    [updateReminderTime]
   );
 
   const handleSupportContact = useCallback(() => {
@@ -317,86 +371,128 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* App Preferences Section */}
-        <View style={styles.preferencesWrapper}>
+        {/* Appearance Section */}
+        <View style={styles.appearanceWrapper}>
           <BaseCard
-            style={styles.preferencesContainer}
+            style={styles.appearanceContainer}
             shadowSize="small"
             includePressAnimation={false}
           >
             <View style={styles.sectionHeader}>
               <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Preferences
+                Appearance
               </ThemedText>
             </View>
 
-            <View style={styles.settingRow}>
-              <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
-              <ThemeToggle />
-            </View>
-            <Divider />
-            <View style={styles.settingRow}>
-              <SettingLabel icon="language" text="English Translation" iconColor={colors.icon} />
-              <Toggle
-                value={settings.showEnglish}
-                onValueChange={value => dispatch(setShowEnglish(value))}
-              />
-            </View>
-            <Divider />
-            <View style={styles.settingRow}>
-              <SettingLabel icon="text" text="Text Size" iconColor={colors.icon} />
-              <View style={styles.sliderContainer}>
-                <ThemedText
-                  type="caption"
-                  variant="secondary"
-                  align="right"
-                  style={styles.scaleText}
-                >
-                  {Math.round(settings.fontScale * 100)}%
-                </ThemedText>
-                <View style={styles.sliderWrapper}>
-                  <CustomSlider
-                    value={settings.fontScale}
-                    onValueChange={handleFontScaleChange}
-                    minimumValue={0.8}
-                    maximumValue={1.3}
-                    step={0.1}
-                    style={styles.slider}
-                  />
-                </View>
+            <View style={styles.appearanceLinksContainer}>
+              <View style={styles.settingRow}>
+                <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
+                <ThemeToggle />
               </View>
-            </View>
-            <Divider />
-            <View style={styles.previewContainer}>
-              <View style={styles.previewWrapper}>
-                <View style={styles.previewContent}>
+              <Divider />
+              <View style={styles.settingRow}>
+                <SettingLabel icon="language" text="English Translation" iconColor={colors.icon} />
+                <Toggle
+                  value={settings.showEnglish}
+                  onValueChange={value => dispatch(setShowEnglish(value))}
+                />
+              </View>
+              <Divider />
+              <View style={styles.settingRow}>
+                <SettingLabel icon="text" text="Text Size" iconColor={colors.icon} />
+                <View style={styles.sliderContainer}>
                   <ThemedText
-                    type="arabic"
-                    arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale}
+                    type="caption"
+                    variant="secondary"
                     align="right"
-                    skipDefaultColor
-                    colorName="arabicText"
-                    style={styles.arabicPreviewText}
+                    style={styles.scaleText}
                   >
-                    مرحباً بك في اللغة العربية
+                    {Math.round(settings.fontScale * 100)}%
                   </ThemedText>
-                  {settings.showEnglish ? (
-                    <ThemedText
-                      type="body"
-                      skipDefaultColor
-                      colorName="text"
-                      align="left"
-                      style={[styles.englishPreviewText, styles.mediumHighOpacity]}
-                    >
-                      Welcome to the Arabic language
-                    </ThemedText>
-                  ) : (
-                    <ThemedText type="body" style={[styles.englishPreviewText, styles.hidden]}>
-                      Welcome to the Arabic language
-                    </ThemedText>
-                  )}
+                  <View style={styles.sliderWrapper}>
+                    <CustomSlider
+                      value={settings.fontScale}
+                      onValueChange={handleFontScaleChange}
+                      minimumValue={0.8}
+                      maximumValue={1.3}
+                      step={0.1}
+                      style={styles.slider}
+                    />
+                  </View>
                 </View>
               </View>
+              <Divider />
+              <View style={styles.previewContainer}>
+                <View style={styles.previewWrapper}>
+                  <View style={styles.previewContent}>
+                    <ThemedText
+                      type="arabic"
+                      arabicFontSize={LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * settings.fontScale}
+                      align="right"
+                      skipDefaultColor
+                      colorName="arabicText"
+                      style={styles.arabicPreviewText}
+                    >
+                      مرحباً بك في اللغة العربية
+                    </ThemedText>
+                    {settings.showEnglish ? (
+                      <ThemedText
+                        type="body"
+                        skipDefaultColor
+                        colorName="text"
+                        align="left"
+                        style={[styles.englishPreviewText, styles.mediumHighOpacity]}
+                      >
+                        Welcome to the Arabic language
+                      </ThemedText>
+                    ) : (
+                      <ThemedText type="body" style={[styles.englishPreviewText, styles.hidden]}>
+                        Welcome to the Arabic language
+                      </ThemedText>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
+          </BaseCard>
+        </View>
+
+        {/* Reminders Section */}
+        <View style={styles.remindersWrapper}>
+          <BaseCard
+            style={styles.remindersContainer}
+            shadowSize="small"
+            includePressAnimation={false}
+          >
+            <View style={styles.sectionHeader}>
+              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+                Reminders
+              </ThemedText>
+            </View>
+
+            <View style={styles.remindersLinksContainer}>
+              <View style={styles.settingRow}>
+                <SettingLabel icon="notifications" text="Study Reminders" iconColor={colors.icon} />
+                <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
+              </View>
+              {reminderTime.enabled && (
+                <>
+                  <Divider />
+                  <BaseCard
+                    onPress={handleTimePickerOpen}
+                    style={styles.timePickerSettingRow}
+                    shadowSize="none"
+                    includePressAnimation={true}
+                  >
+                    <View style={styles.settingRow}>
+                      <SettingLabel icon="time" text="Reminder Time" iconColor={colors.icon} />
+                      <ThemedText type="body" variant="secondary">
+                        {formatReminderTime(reminderTime.hour, reminderTime.minute)}
+                      </ThemedText>
+                    </View>
+                  </BaseCard>
+                </>
+              )}
             </View>
           </BaseCard>
         </View>
@@ -575,44 +671,27 @@ const AccountScreen: React.FC = () => {
                   />
                 </View>
               </BaseCard>
-            </View>
-          </BaseCard>
-        </View>
 
-        {/* Support and Version */}
-        <View style={styles.supportWrapper}>
-          <BaseCard
-            style={styles.supportContainer}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            <View style={styles.sectionHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Support
-              </ThemedText>
-            </View>
-
-            <View style={styles.actionLinksContainer}>
               <BaseCard
                 onPress={handleSupportContact}
-                style={styles.actionLinkCard}
+                style={styles.socialLinkCard}
                 shadowSize="none"
                 includePressAnimation={true}
               >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
+                <View style={styles.socialLinkContent}>
+                  <View style={styles.socialLinkLeft}>
+                    <View style={styles.socialIconContainer}>
                       <Ionicons name="mail" size={22} color={colors.icon} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Get Support
+                    <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
+                      Email
                     </ThemedText>
                   </View>
                   <Ionicons
-                    name="chevron-forward-outline"
-                    size={20}
+                    name="open-outline"
+                    size={16}
                     color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
+                    style={styles.socialLinkChevron}
                   />
                 </View>
               </BaseCard>
@@ -620,13 +699,29 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* App Version */}
-        <View style={styles.versionWrapper}>
-          <ThemedText type="caption" variant="subtle" style={styles.versionText}>
+        {/* App Footer */}
+        <View style={styles.appFooterWrapper}>
+          <ThemedText type="heading3" weight="bold" style={styles.appName}>
+            OpenArabic
+          </ThemedText>
+          <ThemedText type="caption" variant="secondary" style={styles.versionText}>
             Version {(Constants.expoConfig as any)?.version || appVersion || '1446.0.0'}
+          </ThemedText>
+          <ThemedText type="caption" variant="subtle" style={styles.copyrightText}>
+            © 2024 OpenArabic. All rights reserved.
           </ThemedText>
         </View>
       </ThemedView>
+
+      {/* Time Picker Modal */}
+      <TimePicker
+        isVisible={showTimePicker}
+        onClose={handleTimePickerClose}
+        onTimeSet={handleTimeSet}
+        initialHour={reminderTime.hour}
+        initialMinute={reminderTime.minute}
+        title="Set Study Reminder"
+      />
     </ThemedView>
   );
 };
@@ -716,10 +811,10 @@ const styles = StyleSheet.create({
   },
 
   // Preferences Styles
-  preferencesWrapper: {
+  appearanceWrapper: {
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  preferencesContainer: {
+  appearanceContainer: {
     overflow: 'hidden',
   },
 
@@ -806,7 +901,8 @@ const styles = StyleSheet.create({
   actionLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    padding: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.XTINY,
   },
   actionLinkContent: {
@@ -850,7 +946,8 @@ const styles = StyleSheet.create({
   socialLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    padding: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
     marginBottom: LAYOUT.SPACING.XTINY,
   },
   socialLinkContent: {
@@ -879,23 +976,46 @@ const styles = StyleSheet.create({
     marginRight: LAYOUT.SPACING.TINY,
   },
 
-  // Support Section Styles
-  supportWrapper: {
+  // Reminders Styles
+  remindersWrapper: {
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  supportContainer: {
+  remindersContainer: {
     overflow: 'hidden',
   },
 
-  // Version Styles
-  versionWrapper: {
+  // Time Picker Styles
+  timePickerSettingRow: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+  },
+
+  // Appearance Links Styles
+  appearanceLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+
+  // Reminders Links Styles
+  remindersLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+
+  // App Footer Styles
+  appFooterWrapper: {
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.XLARGE,
     marginBottom: LAYOUT.SPACING.XLARGE,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+  },
+  appName: {
+    marginBottom: LAYOUT.SPACING.SMALL,
   },
   versionText: {
-    marginTop: LAYOUT.SPACING.TINY,
-    letterSpacing: 0.5,
+    marginBottom: LAYOUT.SPACING.TINY,
+    letterSpacing: 0.3,
+  },
+  copyrightText: {
+    letterSpacing: 0.2,
   },
 });
 

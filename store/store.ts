@@ -17,10 +17,33 @@ const rootReducer = combineReducers({
   audio: audioReducer,
 });
 
+// Migration function for settings
+const migrations = {
+  0: (state: any) => {
+    // Ensure settings has reminderTime property
+    if (state.settings && !state.settings.reminderTime) {
+      state.settings.reminderTime = {
+        hour: 19,
+        minute: 0,
+        enabled: false,
+      };
+    }
+    return state;
+  },
+};
+
 // Configure redux-persist
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
+  version: 0,
+  migrate: (state: any) => {
+    // Apply migration if needed
+    if (state && state.settings && !state.settings.reminderTime) {
+      return migrations[0](state);
+    }
+    return Promise.resolve(state);
+  },
   whitelist: ['theme', 'settings', 'readingList', 'featuredContent'],
 };
 
