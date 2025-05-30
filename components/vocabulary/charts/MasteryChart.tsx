@@ -19,7 +19,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14 } from '../shared/constants';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14, CHART_LAYOUT } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import {
   generateDateRange,
@@ -432,17 +432,17 @@ MasteryChart.displayName = 'MasteryChart';
 const styles = StyleSheet.create({
   masteryCard: {},
   masteryContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: CHART_LAYOUT.CONTENT_PADDING,
   },
   graphContainer: {
     height: GRAPH_HEIGHT_LARGE,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    marginHorizontal: -LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
+    marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
+    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
   },
   emptyStateContainer: {
     marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
+    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
   },
 });

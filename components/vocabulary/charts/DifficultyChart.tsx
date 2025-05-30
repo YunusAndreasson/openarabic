@@ -8,7 +8,7 @@ import type { StudyWord } from '@/types/vocabulary.types';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE } from '../shared/constants';
+import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, CHART_LAYOUT } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { useChartColors } from '../shared/chartColors';
 
@@ -226,13 +226,13 @@ DifficultyChart.displayName = 'DifficultyChart';
 const styles = StyleSheet.create({
   difficultyCard: {},
   difficultyContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: CHART_LAYOUT.CONTENT_PADDING,
   },
   graphContainer: {
     height: GRAPH_HEIGHT_LARGE,
-    marginBottom: LAYOUT.SPACING.LARGE,
-    marginHorizontal: -LAYOUT.SPACING.TINY,
-    paddingVertical: LAYOUT.SPACING.SMALL,
+    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
+    marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
+    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
   },
   difficultyBreakdown: {
     flexDirection: 'row',

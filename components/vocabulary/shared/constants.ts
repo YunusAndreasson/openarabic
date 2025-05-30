@@ -38,3 +38,16 @@ export const FSRS_DIFFICULTY_THRESHOLDS = {
   EASY: 6.5,
   MEDIUM: 8.0,
 } as const;
+
+// Standardized chart layout constants for consistent alignment
+export const CHART_LAYOUT = {
+  // Card content padding - consistent across all charts
+  CONTENT_PADDING: LAYOUT.CARD.PADDING.MEDIUM, // 12px
+
+  // Graph container margins - eliminates conflicting margins
+  GRAPH_MARGIN_HORIZONTAL: 0, // No horizontal margin for perfect alignment
+  GRAPH_MARGIN_VERTICAL: LAYOUT.SPACING.SMALL, // 8px top/bottom
+
+  // Chart spacing within cards
+  ELEMENT_SPACING: LAYOUT.SPACING.LARGE, // 16px between major elements
+} as const;

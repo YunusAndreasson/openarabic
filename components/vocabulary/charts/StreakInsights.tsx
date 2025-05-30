@@ -11,6 +11,7 @@ import { ThemedText } from '../../ThemedText';
 import { CardHeader } from '../shared/CardHeader';
 import { StatsRow } from '../shared/StatsRow';
 import { useChartColors } from '../shared/chartColors';
+import { CHART_LAYOUT } from '../shared/constants';
 
 interface StreakInsightsProps {
   onInfoPress: () => void;
@@ -112,12 +113,10 @@ StreakInsights.displayName = 'StreakInsights';
 const styles = StyleSheet.create({
   streakCard: {},
   streakContent: {
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: CHART_LAYOUT.CONTENT_PADDING,
   },
   activitySection: {
-    borderTopWidth: 1,
-    marginTop: LAYOUT.SPACING.LARGE,
-    paddingTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
   activityRow: {
     flexDirection: 'row',
