@@ -5,7 +5,6 @@ import React, { useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import EmptyState from '@/components/EmptyState';
 import { ThemedView } from '@/components/ThemedView';
 import ErrorMessage from '@/components/vocabulary/ErrorMessage';
 import { VocabularyStatCards } from '@/components/vocabulary/VocabularyStatCards';
@@ -102,17 +101,6 @@ export default function VocabularyScreen(): JSX.Element {
     return !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   }, [user?.id, queryClient]);
 
-  // Determine if we should show empty state
-  const shouldShowEmptyState = useMemo(() => {
-    // Only show empty state when we have definitive data
-    if (isDataLoading || (isFetching && !isDataCached)) return false;
-
-    // Check both studyWords and validStudyWords to ensure consistency
-    return (
-      (!studyWords || studyWords.length === 0) && (!validStudyWords || validStudyWords.length === 0)
-    );
-  }, [isDataLoading, isFetching, isDataCached, studyWords, validStudyWords]);
-
   // Handle starting a review with optimized invalidation
   const handleStartReview = useCallback(() => {
     if (!user) return;
@@ -147,28 +135,6 @@ export default function VocabularyScreen(): JSX.Element {
     return (
       <ThemedView style={styles.container}>
         <ErrorMessage />
-      </ThemedView>
-    );
-  }
-
-  // Show empty state with animation
-  if (shouldShowEmptyState) {
-    return (
-      <ThemedView
-        style={styles.container}
-        includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Vocabulary screen - empty state"
-      >
-        <ThemedView style={styles.emptyStateContainer}>
-          <EmptyState
-            title="Start Learning"
-            description="Add words while reading to build your vocabulary"
-            colors={colors}
-            iconType="name"
-            icon="library-outline"
-          />
-        </ThemedView>
       </ThemedView>
     );
   }
@@ -248,13 +214,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  emptyStateContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingBottom: LAYOUT.SPACING.XLARGE,
   },
   loadingContainer: {
     alignItems: 'center',

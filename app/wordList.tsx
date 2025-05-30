@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import React, { useCallback, useMemo, memo, JSX, useEffect, useState } from 'react';
@@ -153,24 +152,6 @@ export default function WordListScreen(): JSX.Element {
     [sortBy]
   );
 
-  // Empty list component
-  const renderEmptyComponent = useCallback(() => {
-    if (isLoading || (words && words.length > 0)) return null;
-
-    return (
-      <View style={styles.emptyContainer}>
-        <Ionicons
-          name="information-circle-outline"
-          size={LAYOUT.SPACING.XLARGE * 3}
-          color={colors.tint}
-        />
-        <ThemedText variant="secondary" style={styles.emptyText}>
-          No words found
-        </ThemedText>
-      </View>
-    );
-  }, [colors.tint, isLoading, words]);
-
   // Sort functions
   const handleSortChange = useCallback((newSortBy: string, newDirection: SortDirection) => {
     lightFeedback(); // Add haptic feedback
@@ -245,7 +226,6 @@ export default function WordListScreen(): JSX.Element {
           renderItem={renderItem}
           estimatedItemSize={ITEM_HEIGHT}
           ListHeaderComponent={ListHeaderComponent}
-          ListEmptyComponent={renderEmptyComponent}
           showsVerticalScrollIndicator={true}
           estimatedFirstItemOffset={LAYOUT.SPACING.XLARGE}
           overrideItemLayout={layout => {
@@ -267,17 +247,6 @@ WordListScreen.displayName = 'WordListScreen';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
-    marginTop: LAYOUT.SPACING.XLARGE,
-  },
-  emptyText: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
   },
   errorContainer: {
     alignItems: 'center',

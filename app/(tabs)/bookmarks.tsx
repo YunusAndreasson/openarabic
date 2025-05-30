@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
 import { AudioProgressBar } from '@/components/AudioProgressBar';
-import EmptyState from '@/components/EmptyState';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import SortingControls from '@/components/SortingControls';
@@ -48,22 +47,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  emptyStateContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
   flexOne: {
     flex: 1,
   },
+  headerControls: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.SMALL,
+  },
   loadingContainer: {
+    alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  headerControls: {
-    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  sleepTimerButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 8,
+    height: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    width: 36,
   },
 });
 
@@ -496,13 +499,6 @@ export default function BookmarksScreen(): JSX.Element {
     return !!(user?.id && queryClient.getQueryData(['readingList', user.id]));
   }, [user?.id, queryClient]);
 
-  // Determine if we have a definitive empty state
-  const hasNoBookmarks = useMemo(() => {
-    // Only show empty state when we have definitive data
-    if (isReadingListLoading || (isReadingListFetching && !isDataCached)) return false;
-    return !readingList || readingList.length === 0;
-  }, [isReadingListLoading, isReadingListFetching, isDataCached, readingList]);
-
   // Get enhanced tracks query (keep as is)
   const enhancedTracksQuery = useQuery({
     queryKey: ['enhancedAudioTracks', user?.id],
@@ -614,8 +610,6 @@ export default function BookmarksScreen(): JSX.Element {
       } catch (error) {
         handleError(error as Error);
       }
-    } else {
-      handleError('No tracks available for playback');
     }
   }, [
     isCurrentlyPlaying,
@@ -696,27 +690,6 @@ export default function BookmarksScreen(): JSX.Element {
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.tint} />
         <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading bookmarks...</ThemedText>
-      </ThemedView>
-    );
-  }
-
-  // Show empty state with animation
-  if (hasNoBookmarks) {
-    return (
-      <ThemedView
-        style={styles.container}
-        includeBottomInset={false}
-        safeAreaEdges={['left', 'right']}
-        accessibilityLabel="Bookmarks screen - empty state"
-      >
-        <ThemedView style={styles.emptyStateContainer}>
-          <EmptyState
-            title="Save for Later"
-            description="Bookmark articles to listen and read anytime"
-            colors={colors}
-            icon="book-outline"
-          />
-        </ThemedView>
       </ThemedView>
     );
   }

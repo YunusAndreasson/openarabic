@@ -2,10 +2,10 @@ import { FlashList } from '@shopify/flash-list';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState, memo } from 'react';
 import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import EmptyState from '@/components/EmptyState';
 import { LAYOUT } from '@/constants/layout';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
@@ -109,15 +109,10 @@ export default function WordExamplesScreen() {
   const [examples, setExamples] = useState<SentenceWithWords[]>([]);
 
   // Memoize derived values
-  const showLoadingState = useMemo(
-    () => isLoading && category && !wordId && !rootId,
-    [isLoading, category, wordId, rootId]
-  );
-
-  const showEmptyState = useMemo(
-    () => !isLoading && examples.length === 0,
-    [isLoading, examples.length]
-  );
+  const showLoadingState = useMemo(() => {
+    // Show loading when actively fetching AND no cached data exists
+    return isLoading && examples.length === 0;
+  }, [isLoading, examples.length]);
 
   // Enhanced title calculation with better formatting
   const title = useMemo(() => {
@@ -237,7 +232,7 @@ export default function WordExamplesScreen() {
     [title, colors]
   );
 
-  // Early returns for loading and empty states
+  // Early returns for loading states only
   if (showLoadingState) {
     return (
       <ThemedView style={styles.container}>
@@ -252,20 +247,6 @@ export default function WordExamplesScreen() {
     );
   }
 
-  if (showEmptyState) {
-    return (
-      <ThemedView style={styles.container}>
-        <Stack.Screen options={headerOptions} />
-        <EmptyState
-          title="No Examples Found"
-          description="We couldn't find any examples for this word. Try exploring other words or check back later."
-          icon="book-outline"
-          colors={colors}
-        />
-      </ThemedView>
-    );
-  }
-
   return (
     <>
       <Stack.Screen options={headerOptions} />
@@ -276,7 +257,7 @@ export default function WordExamplesScreen() {
         safeAreaEdges={['left', 'right']}
       >
         <FlashList
-          data={examples.length > 0 || (isLoading && (wordId || rootId)) ? examples : []}
+          data={examples}
           renderItem={renderSentenceItem}
           estimatedItemSize={160}
           contentContainerStyle={{

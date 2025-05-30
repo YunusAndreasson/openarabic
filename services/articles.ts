@@ -100,15 +100,6 @@ export const articlesService = {
         throw error;
       }
 
-      if (!data) {
-        const notFoundError = new Error(`Article with id ${id} not found`);
-        await handleError(notFoundError, {
-          toastMessage: 'Article not found',
-          analyticsProperties: { id },
-        });
-        throw notFoundError;
-      }
-
       return mapToArticle(data);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
@@ -204,7 +195,6 @@ export const articlesService = {
       return [];
     }
   },
-
 
   async getArticlesWithSentencesAndWords(): Promise<Article[]> {
     try {

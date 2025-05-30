@@ -48,27 +48,6 @@ interface FilteredArticleViewProps {
   selectedCategory?: Tables<'categories'> | null;
 }
 
-// Move components outside of the parent component
-
-interface EmptyViewProps {
-  isLoading?: boolean;
-}
-
-const EmptyView = ({ isLoading }: EmptyViewProps) => {
-  if (isLoading) return null;
-  return (
-    <View style={styles.noResultsContainer}>
-      <ThemedText
-        style={styles.noResultsText}
-        accessibilityLabel="No articles found with the current filter"
-      >
-        No articles found
-      </ThemedText>
-    </View>
-  );
-};
-EmptyView.displayName = 'EmptyView';
-
 /**
  * A specialized component for displaying filtered articles
  * Uses a simple ScrollView instead of FlashList to avoid recycling issues
@@ -78,7 +57,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   isLoading,
   isRefreshing,
   onRefresh,
-  onArticlePress,
+  onArticlePress = () => {},
 }) => {
   const colors = useColors();
   const navHeaderHeight = useHeaderHeight();
@@ -89,9 +68,7 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
   const headerHeight = useMemo(() => navHeaderHeight + LAYOUT.SPACING.SMALL, [navHeaderHeight]);
 
   const renderItemCallback = useCallback(
-    ({ item }: { item: Article }) => (
-      <ListArticleItem article={item} onPress={onArticlePress} />
-    ),
+    ({ item }: { item: Article }) => <ListArticleItem article={item} onPress={onArticlePress} />,
     [onArticlePress]
   );
 
@@ -120,7 +97,6 @@ const FilteredArticleView: React.FC<FilteredArticleViewProps> = ({
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={HeaderSpacer}
-        ListEmptyComponent={<EmptyView isLoading={isLoading} />}
         ListFooterComponent={ListFooterComponent}
         showsVerticalScrollIndicator={true}
         drawDistance={ITEM_HEIGHT * 5}
@@ -153,15 +129,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.LARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-  },
-  noResultsContainer: {
-    alignItems: 'center',
-    flex: 1,
-    justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.XLARGE,
-  },
-  noResultsText: {
-    textAlign: 'center',
   },
 });
 
