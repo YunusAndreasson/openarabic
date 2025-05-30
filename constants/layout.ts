@@ -281,11 +281,14 @@ export const getArabicTextStyle = (
   return {
     fontFamily: 'Madina',
     fontSize,
-    lineHeight: Math.round(fontSize * 1.7),
+    // Increase line height to prevent clipping of Arabic diacritics
+    lineHeight: Math.round(fontSize * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.ARABIC),
     writingDirection: 'rtl',
     textAlign: 'right',
-    includeFontPadding: true,
-    paddingVertical: LAYOUT.SPACING.TINY,
+    // Disable includeFontPadding to prevent Android clipping issues
+    includeFontPadding: false,
+    // Add minimal padding to ensure text doesn't get clipped
+    paddingVertical: LAYOUT.SPACING.TINY * 1.5,
     paddingHorizontal: 0,
     textAlignVertical: 'center',
     ...additionalStyles,

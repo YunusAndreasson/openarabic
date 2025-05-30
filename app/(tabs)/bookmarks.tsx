@@ -796,7 +796,7 @@ export default function BookmarksScreen(): JSX.Element {
       </ThemedView>
 
       <BottomControls
-        primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play All'}
+        primaryLabel={isCurrentlyPlaying && playbackMode === 'all' ? 'Stop' : 'Play'}
         onPrimaryPress={handlePlayAll}
         primaryVariant="filled"
         primaryDisabled={false}

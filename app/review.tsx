@@ -26,7 +26,7 @@ const baseStyles = StyleSheet.create({
     width: '100%',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 0,
+    paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: 0,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   } as ViewStyle,
@@ -37,6 +37,8 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: WORD_AREA_MIN_HEIGHT,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.LARGE,
   } as ViewStyle,
 });
 

@@ -3,7 +3,7 @@ import type { TextStyle } from 'react-native';
 import { View, Platform, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
-import { LAYOUT } from '@/constants/layout';
+import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
 import type { WordDisplayProps } from '@/types/ui/review.types';
 
 import { ThemedText } from '../../components/ThemedText';
@@ -18,13 +18,22 @@ const WordDisplay = memo(
     const colors = useColors();
 
     // Memoize the text style to prevent unnecessary re-renders
+    // Use getArabicTextStyle as base and only override necessary properties
     const textStyle = useMemo(
       (): TextStyle => ({
-        color: colors.arabicText,
-        fontWeight: '700',
-        textAlign: 'center',
-        lineHeight: fontSize * 1.8, // Increased line height for better Arabic text rendering
-        paddingTop: fontSize * 0.1, // Small top padding to prevent clipping
+        ...getArabicTextStyle(fontSize, {
+          color: colors.arabicText,
+          fontWeight: '700',
+          textAlign: 'center', // Override to center for review cards
+          // Remove conflicting paddingVertical - use container padding instead
+          paddingVertical: 0,
+          // Ensure proper text rendering without clipping
+          includeFontPadding: false, // Disable to prevent clipping on Android
+          textAlignVertical: 'center',
+          // Add extra top padding to prevent descender clipping
+          paddingTop: fontSize * 0.15,
+          paddingBottom: fontSize * 0.05,
+        }),
         ...(Platform.OS === 'ios'
           ? {
               shadowColor: colors.shadow,
@@ -91,6 +100,9 @@ const styles = StyleSheet.create({
     flex: 1, // Use flex instead of fixed height for better text accommodation
     justifyContent: 'center',
     paddingVertical: LAYOUT.SPACING.LARGE, // Increased padding to prevent clipping
+    // Add extra padding specifically for Arabic text
+    paddingTop: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.SMALL,
+    paddingBottom: LAYOUT.SPACING.LARGE,
   },
   container: {
     alignItems: 'center',
