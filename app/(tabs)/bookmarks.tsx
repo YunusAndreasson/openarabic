@@ -731,11 +731,7 @@ export default function BookmarksScreen(): JSX.Element {
           estimatedItemSize={ITEM_HEIGHT}
           contentContainerStyle={{
             paddingTop: headerHeight,
-            paddingBottom:
-              insets.bottom +
-              LAYOUT.CONTENT_SPACING.BOTTOM +
-              LAYOUT.BOTTOM_BAR.HEIGHT +
-              LAYOUT.SPACING.SMALL,
+            paddingBottom: insets.bottom + LAYOUT.BOTTOM_BAR.HEIGHT + LAYOUT.SPACING.MEDIUM, // Reduced since controls are closer
             paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
           }}
           showsVerticalScrollIndicator={false}

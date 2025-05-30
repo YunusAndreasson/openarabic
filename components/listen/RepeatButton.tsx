@@ -21,15 +21,16 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
     onToggle();
   };
 
-  // Animated styles for the button container
+  // Animated styles for the button container - using more subtle colors
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: withTiming(enabled ? colors.repeatActive + '15' : colors.elevation2, {
+      backgroundColor: withTiming(enabled ? colors.elevation2 : colors.elevation1, {
         duration: 200,
       }),
-      borderColor: withTiming(enabled ? colors.repeatActive + '30' : colors.borderOverlay, {
+      borderColor: withTiming(enabled ? colors.borderOverlay : colors.borderOverlay, {
         duration: 200,
       }),
+      opacity: withTiming(enabled ? 1 : 0.7, { duration: 200 }),
       transform: [
         {
           scale: withSpring(enabled ? 1.02 : 1, {
@@ -63,15 +64,13 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
             <Ionicons
               name="repeat"
               size={20}
-              color={enabled ? colors.repeatActive : colors.interactiveSecondary}
+              color={enabled ? colors.tint : colors.interactiveSecondary}
             />
           </Animated.View>
 
           <ThemedText
-            style={[
-              styles.label,
-              { color: enabled ? colors.repeatActive : colors.interactiveSecondary },
-            ]}
+            variant={enabled ? undefined : 'subtle'}
+            style={[styles.label, { color: enabled ? colors.tint : colors.interactiveSecondary }]}
           >
             Repeat
           </ThemedText>
@@ -85,13 +84,13 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
     borderWidth: 1,
-    elevation: 2,
+    elevation: 1,
     minWidth: 100,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
   content: {
     alignItems: 'center',
@@ -103,8 +102,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   touchable: {
     alignSelf: 'center',
