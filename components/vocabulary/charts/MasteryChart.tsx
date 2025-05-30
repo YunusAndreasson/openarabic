@@ -1,6 +1,16 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Path,
+  Circle,
+  Group,
+  Shadow,
+  Skia,
+  Rect,
+  LinearGradient,
+  vec,
+} from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -191,7 +201,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
       <BaseCard style={styles.masteryCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.masteryContent}>
           <CardHeader
-            title="Mastery Progress"
+            title="Mastery"
             subtitle="Track your vocabulary mastery journey"
             onInfoPress={onInfoPress}
           />
@@ -231,17 +241,17 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
   return (
     <BaseCard style={styles.masteryCard} shadowSize="small" includePressAnimation={false}>
       <View style={styles.masteryContent}>
-        <CardHeader title="Mastery Progress" subtitle={subtitle} onInfoPress={onInfoPress} />
+        <CardHeader title="Mastery" subtitle={subtitle} onInfoPress={onInfoPress} />
 
         <StatsRow
           leftStat={{
             value: `${chartData.insights.currentRate}%`,
-            label: 'mastery rate',
+            label: 'current',
             color: chartColors.getPerformanceColor(chartData.insights.currentRate),
           }}
           rightStat={{
             value: chartData.insights.totalMastered,
-            label: 'words mastered',
+            label: 'mastered',
           }}
         />
 
@@ -280,13 +290,19 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
               ))}
             </Group>
 
-            {/* Area fill under the mastery line */}
+            {/* Area fill under the mastery line with gradient */}
             <Group>
               {chartData.smoothPath && chartData.dataPoints.length > 0 && (
                 <Path
                   path={createAreaFillPath(chartData.smoothPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
-                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
-                />
+                >
+                  <LinearGradient
+                    start={vec(0, TOP_PADDING)}
+                    end={vec(0, GRAPH_HEIGHT_LARGE)}
+                    colors={chartColors.getAreaFillGradient('mastery')}
+                    positions={[0, 0.25, 0.65, 1]}
+                  />
+                </Path>
               )}
 
               {(!chartData.smoothPath || chartData.smoothPath.length === 0) &&
@@ -305,10 +321,14 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
                       areaPath += ` L ${lastPoint.x} ${GRAPH_HEIGHT_LARGE} Z`;
 
                       return (
-                        <Path
-                          path={areaPath}
-                          color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
-                        />
+                        <Path path={areaPath}>
+                          <LinearGradient
+                            start={vec(0, TOP_PADDING)}
+                            end={vec(0, GRAPH_HEIGHT_LARGE)}
+                            colors={chartColors.getAreaFillGradient('mastery')}
+                            positions={[0, 0.25, 0.65, 1]}
+                          />
+                        </Path>
                       );
                     })()}
                   </Group>
@@ -369,7 +389,7 @@ export const MasteryChart = memo(({ studyWords = [], onInfoPress }: MasteryChart
         </View>
 
         <ChartFooter
-          legendItems={[{ type: 'line', color: chartColors.ui.dataLine, label: 'Mastery rate' }]}
+          legendItems={[{ type: 'line', color: chartColors.ui.dataLine, label: 'Mastery' }]}
           timeRange="Past 14 days"
         />
       </View>

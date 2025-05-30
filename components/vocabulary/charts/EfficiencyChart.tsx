@@ -1,6 +1,16 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Path,
+  Circle,
+  Group,
+  Shadow,
+  Skia,
+  Rect,
+  LinearGradient,
+  vec,
+} from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -182,7 +192,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
           }}
           rightStat={{
             value: `${chartData.insights.weeklyAverage}%`,
-            label: 'weekly average',
+            label: 'average',
             color: chartColors.getPerformanceColor(chartData.insights.weeklyAverage),
           }}
         />
@@ -204,7 +214,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
               ))}
             </Group>
 
-            {/* Area fill under the efficiency line */}
+            {/* Area fill under the efficiency line with gradient */}
             <Group>
               {chartData.efficiencyPath && (
                 <Path
@@ -213,8 +223,14 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                     GRAPH_WIDTH,
                     GRAPH_HEIGHT_LARGE
                   )}
-                  color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
-                />
+                >
+                  <LinearGradient
+                    start={vec(0, 0)}
+                    end={vec(0, GRAPH_HEIGHT_LARGE)}
+                    colors={chartColors.getAreaFillGradient('efficiency')}
+                    positions={[0, 0.3, 0.7, 1]}
+                  />
+                </Path>
               )}
             </Group>
 
@@ -269,7 +285,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
             {
               type: 'line',
               color: chartColors.ui.dataLine,
-              label: 'Progress',
+              label: 'Efficiency',
             },
           ]}
           timeRange="Past 14 days"

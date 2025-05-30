@@ -160,7 +160,7 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
           }}
           rightStat={{
             value: difficultyData.insights.hardWords,
-            label: 'hard words',
+            label: 'hard',
             color:
               difficultyData.insights.hardWords > 10
                 ? chartColors.difficulty.hard

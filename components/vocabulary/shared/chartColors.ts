@@ -126,6 +126,87 @@ export const useChartColors = () => {
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
 
+    // Get gradient colors for performance zones
+    getPerformanceGradient: (level: 'excellent' | 'good' | 'moderate' | 'poor') => {
+      switch (level) {
+        case 'excellent':
+          return [
+            withOpacity(colors.success, CHART_OPACITY.SUBTLE),
+            withOpacity(colors.success, CHART_OPACITY.MINIMAL),
+          ];
+        case 'good':
+          return [
+            withOpacity(colors.info, CHART_OPACITY.SUBTLE),
+            withOpacity(colors.info, CHART_OPACITY.MINIMAL),
+          ];
+        case 'moderate':
+          return [
+            withOpacity(colors.warning, CHART_OPACITY.SUBTLE),
+            withOpacity(colors.warning, CHART_OPACITY.MINIMAL),
+          ];
+        case 'poor':
+          return [
+            withOpacity(colors.error, CHART_OPACITY.SUBTLE),
+            withOpacity(colors.error, CHART_OPACITY.MINIMAL),
+          ];
+      }
+    },
+
+    // Get gradient colors for memory zones (mapped from performance levels)
+    getMemoryGradient: (level: 'excellent' | 'good' | 'moderate' | 'poor') => {
+      switch (level) {
+        case 'excellent':
+          return [
+            withOpacity(colors.success, CHART_OPACITY.SUBTLE), // Strong memory
+            withOpacity(colors.success, CHART_OPACITY.MINIMAL),
+          ];
+        case 'good':
+          return [
+            withOpacity(colors.warning, CHART_OPACITY.SUBTLE), // Fading memory
+            withOpacity(colors.warning, CHART_OPACITY.MINIMAL),
+          ];
+        case 'moderate':
+          return [
+            withOpacity(colors.warning, CHART_OPACITY.SUBTLE), // Fading memory
+            withOpacity(colors.warning, CHART_OPACITY.MINIMAL),
+          ];
+        case 'poor':
+          return [
+            withOpacity(colors.error, CHART_OPACITY.SUBTLE), // Weak memory
+            withOpacity(colors.error, CHART_OPACITY.MINIMAL),
+          ];
+      }
+    },
+
+    // Get polished area fill gradients for data visualization
+    getAreaFillGradient: (type: 'efficiency' | 'mastery' | 'retrievability' = 'efficiency') => {
+      const baseColor = colors.info;
+
+      switch (type) {
+        case 'efficiency':
+          return [
+            withOpacity(baseColor, 0.7), // Strong at top
+            withOpacity(baseColor, 0.4), // Medium in middle
+            withOpacity(baseColor, 0.15), // Subtle at middle-bottom
+            withOpacity(baseColor, 0.05), // Very subtle at bottom
+          ];
+        case 'mastery':
+          return [
+            withOpacity(colors.success, 0.6), // Success color for mastery
+            withOpacity(colors.success, 0.35),
+            withOpacity(colors.success, 0.12),
+            withOpacity(colors.success, 0.03),
+          ];
+        case 'retrievability':
+          return [
+            withOpacity(colors.info, 0.65), // Info color for memory
+            withOpacity(colors.info, 0.4),
+            withOpacity(colors.info, 0.15),
+            withOpacity(colors.info, 0.04),
+          ];
+      }
+    },
+
     // Enhanced color selection functions with standardized thresholds
     getPerformanceColor: (value: number) => {
       if (value >= PERFORMANCE_THRESHOLDS.EXCELLENT) return colors.success;

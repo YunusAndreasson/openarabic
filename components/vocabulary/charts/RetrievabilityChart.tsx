@@ -1,6 +1,16 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Path, Circle, Group, Shadow, Skia, Rect } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Path,
+  Circle,
+  Group,
+  Shadow,
+  Skia,
+  Rect,
+  LinearGradient,
+  vec,
+} from '@shopify/react-native-skia';
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
@@ -201,7 +211,7 @@ export const RetrievabilityChart = memo(
         >
           <View style={styles.retrievabilityContent}>
             <CardHeader
-              title="Memory Retention"
+              title="Retention"
               subtitle="Forecast of vocabulary retention over time"
               onInfoPress={onInfoPress}
             />
@@ -213,12 +223,12 @@ export const RetrievabilityChart = memo(
     return (
       <BaseCard style={styles.retrievabilityCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.retrievabilityContent}>
-          <CardHeader title="Memory Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
+          <CardHeader title="Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
 
           <StatsRow
             leftStat={{
               value: `${chartData.insights.currentRetrievability}%`,
-              label: 'retention today',
+              label: 'current',
               color: chartColors.getRetrievabilityColor(
                 chartData.insights.currentRetrievability / 100
               ),
@@ -273,13 +283,19 @@ export const RetrievabilityChart = memo(
                 </Group>
               </Group>
 
-              {/* Area fill under the retrievability line */}
+              {/* Area fill under the retrievability line with gradient */}
               <Group>
                 {chartData.smoothPath && (
                   <Path
                     path={createAreaFillPath(chartData.smoothPath, GRAPH_WIDTH, GRAPH_HEIGHT_LARGE)}
-                    color={chartColors.withOpacity(chartColors.ui.dataLine, 0.4)}
-                  />
+                  >
+                    <LinearGradient
+                      start={vec(0, 0)}
+                      end={vec(0, GRAPH_HEIGHT_LARGE)}
+                      colors={chartColors.getAreaFillGradient('retrievability')}
+                      positions={[0, 0.35, 0.75, 1]}
+                    />
+                  </Path>
                 )}
               </Group>
 
@@ -300,6 +316,34 @@ export const RetrievabilityChart = memo(
                     />
                   </Path>
                 )}
+
+                {/* Data points for forecast visualization */}
+                {retrievabilityData.map((data, index) => {
+                  if (data.wordCount === 0) return null;
+
+                  const x = (index / Math.max(1, retrievabilityData.length - 1)) * GRAPH_WIDTH;
+                  const y =
+                    GRAPH_HEIGHT_LARGE -
+                    (data.averageRetrievability / (chartData.maxRetrievability || 100)) *
+                      GRAPH_HEIGHT_LARGE;
+
+                  return (
+                    <Circle
+                      key={`retrievability-point-${index}`}
+                      cx={x}
+                      cy={y}
+                      r={4}
+                      color={chartColors.ui.dataLine}
+                    >
+                      <Shadow
+                        dx={0}
+                        dy={1}
+                        blur={2}
+                        color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
+                      />
+                    </Circle>
+                  );
+                })}
               </Group>
 
               {/* Data points */}
@@ -312,7 +356,7 @@ export const RetrievabilityChart = memo(
               {
                 type: 'line',
                 color: chartColors.ui.dataLine,
-                label: 'Memory forecast',
+                label: 'Retention',
               },
             ]}
             timeRange="Next 14 days"
