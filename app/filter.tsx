@@ -61,7 +61,7 @@ export default function FilterScreen(): JSX.Element {
           headerTransparent: true,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Texts',
+          headerBackTitle: 'Read',
         }}
       />
       <FilterScreenContent />

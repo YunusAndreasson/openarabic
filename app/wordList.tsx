@@ -182,7 +182,7 @@ export default function WordListScreen(): JSX.Element {
         <Stack.Screen options={{ title }} />
         <View style={styles.errorContainer}>
           <ThemedText style={styles.errorText}>
-            Failed to load vocabulary words. Please try again later.
+            Failed to load words. Please try again later.
           </ThemedText>
         </View>
       </ThemedView>
@@ -208,7 +208,7 @@ export default function WordListScreen(): JSX.Element {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Vocabulary',
+          headerBackTitle: 'Remember',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },

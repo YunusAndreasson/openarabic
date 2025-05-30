@@ -20,21 +20,21 @@ import { useAuth } from '../../hooks/useAuth';
 const TAB_SCREENS = [
   {
     name: 'index',
-    title: 'Texts',
+    title: 'Read',
     iconOutline: 'book-outline',
     iconFilled: 'book',
   },
   {
-    name: 'vocabulary',
-    title: 'Words',
-    iconOutline: 'receipt-outline',
-    iconFilled: 'receipt',
+    name: 'bookmarks',
+    title: 'Listen',
+    iconOutline: 'headset-outline',
+    iconFilled: 'headset',
   },
   {
-    name: 'bookmarks',
-    title: 'Bookmarks',
-    iconOutline: 'bookmark-outline',
-    iconFilled: 'bookmark',
+    name: 'vocabulary',
+    title: 'Remember',
+    iconOutline: 'library-outline',
+    iconFilled: 'library',
   },
   {
     name: 'settings',

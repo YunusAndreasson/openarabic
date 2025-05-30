@@ -199,7 +199,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <SectionTitle title="Difficult Words" isFirstSection={true} />
+        <SectionTitle title="Words you struggle with" isFirstSection={true} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
         </View>
@@ -213,7 +213,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
 
   return (
     <View style={styles.container}>
-      <SectionTitle title="Difficult Words" isFirstSection={true} />
+      <SectionTitle title="Words to Remember" isFirstSection={true} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

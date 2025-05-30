@@ -35,7 +35,7 @@ const fontConfig = {
 
 export default function ListenScreen(): JSX.Element {
   const params = useLocalSearchParams();
-  const fromVocabulary = params.fromVocabulary === 'true';
+  const fromRemember = params.fromRemember === 'true';
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();
@@ -261,7 +261,7 @@ export default function ListenScreen(): JSX.Element {
     // For non-completion scenarios, navigate away immediately
     try {
       // For user-initiated cancellations during session
-      if (fromVocabulary) {
+      if (fromRemember) {
         // Use replace instead of navigate to avoid navigation stack issues
         router.replace('/(tabs)/vocabulary');
       } else {
@@ -272,7 +272,7 @@ export default function ListenScreen(): JSX.Element {
       handleError(error instanceof Error ? error : new Error(String(error)));
       router.back();
     }
-  }, [user?.id, queryClient, actions, fromVocabulary]);
+  }, [user?.id, queryClient, actions, fromRemember]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -317,9 +317,9 @@ export default function ListenScreen(): JSX.Element {
     return (
       <CompletionScreen
         onClose={handleClose}
-        title="Listening Complete!"
-        subtitle="You've listened to all the vocabulary words in this session."
-        buttonText="Close"
+        title="Great Listening Session!"
+        subtitle="You've practiced listening to all your words. Well done!"
+        buttonText="Done"
         buttonVariant="outlined"
         iconName="checkmark-circle-outline"
         iconSize={120}

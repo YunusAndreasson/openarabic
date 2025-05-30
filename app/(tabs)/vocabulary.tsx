@@ -77,7 +77,7 @@ export default function VocabularyScreen(): JSX.Element {
   // Use single screen focus refresh with optimized invalidation
   useScreenFocusRefresh(
     queryClient,
-    'vocabulary',
+    'remember',
     user?.id,
     300000, // Cache for 5 minutes
     true // Skip initial focus
@@ -106,7 +106,7 @@ export default function VocabularyScreen(): JSX.Element {
     if (!user) return;
     navigateTo({
       pathname: '/review',
-      params: { fromVocabulary: 'true' },
+      params: { fromRemember: 'true' },
     });
   }, [user, navigateTo]);
 
@@ -115,7 +115,7 @@ export default function VocabularyScreen(): JSX.Element {
     if (!user) return;
     navigateTo({
       pathname: '/listen',
-      params: { fromVocabulary: 'true' },
+      params: { fromRemember: 'true' },
     });
   }, [user, navigateTo]);
 
@@ -148,7 +148,7 @@ export default function VocabularyScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Vocabulary screen"
+      accessibilityLabel="Remember screen"
     >
       <ScrollView
         refreshControl={
@@ -187,18 +187,18 @@ export default function VocabularyScreen(): JSX.Element {
         />
       </ScrollView>
       <BottomControls
-        primaryLabel="Review"
+        primaryLabel="Practice"
         onPrimaryPress={stats.dueWords > 0 ? handleStartReview : () => {}}
         primaryVariant={stats.dueWords > 0 ? 'filled' : 'outlined'}
         primaryDisabled={stats.dueWords === 0}
         primaryAccessibilityLabel={
-          stats.dueWords > 0 ? `Review ${stats.dueWords} words` : 'No words due'
+          stats.dueWords > 0 ? `Practice ${stats.dueWords} words` : 'No words due for practice'
         }
         secondaryLabel="Listen"
         onSecondaryPress={handleStartListen}
         secondaryVariant="outlined"
         secondaryDisabled={false}
-        secondaryAccessibilityLabel="Listen to vocabulary words with audio"
+        secondaryAccessibilityLabel="Listen to your words"
       />
     </ThemedView>
   );

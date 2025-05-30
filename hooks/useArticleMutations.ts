@@ -65,7 +65,7 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        showToast('Added to bookmarks');
+        showToast('Saved for listening');
       },
       onError: (error: Error) => {
         const errorMessage = error.message;
@@ -73,9 +73,9 @@ export const useArticleMutations = (
           errorMessage.includes('reading_list_position_unique') ||
           errorMessage.includes('duplicate key value')
         ) {
-          showToast('Article already in bookmarks');
+          showToast('Already saved for listening');
         } else {
-          showToast('Failed to add to bookmarks');
+          showToast('Failed to save for listening');
         }
       },
     }),
@@ -94,7 +94,7 @@ export const useArticleMutations = (
         // Then refetch to ensure consistency
         refetchReadingListStatus();
         queryClient.invalidateQueries({ queryKey: ['readingList', userId] });
-        showToast('Removed from bookmarks');
+        showToast('Removed from listening');
       },
       onError: () => {
         // Error handled silently

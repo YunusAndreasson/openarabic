@@ -70,12 +70,7 @@ const AboutScreen: React.FC = () => {
               <ThemedText type="heading1" weight="bold" style={styles.heroTitle} align="center">
                 Classical Islamic Learning
               </ThemedText>
-              <ThemedText
-                type="body"
-                style={[styles.heroDescription, { fontFamily: 'Philosopher' }]}
-                align="center"
-                variant="secondary"
-              >
+              <ThemedText style={styles.description}>
                 Master Arabic through authentic classical texts. Read, listen, learn, and retain
                 vocabulary from the greatest Islamic scholars in history.
               </ThemedText>
@@ -166,7 +161,7 @@ const AboutScreen: React.FC = () => {
                 </View>
                 <View style={styles.featureContent}>
                   <ThemedText type="body" weight="bold" style={styles.featureTitle}>
-                    Build Vocabulary
+                    Build Your Vocabulary
                   </ThemedText>
                   <ThemedText
                     type="body"
@@ -179,22 +174,22 @@ const AboutScreen: React.FC = () => {
                 </View>
               </View>
 
-              {/* Bookmark Feature */}
+              {/* Save for Listening Feature */}
               <View style={styles.featureCard}>
                 <View style={[styles.featureIconLarge, { backgroundColor: colors.infoLight }]}>
-                  <Ionicons name="bookmark-outline" size={26} color={colors.info} />
+                  <Ionicons name="headset-outline" size={26} color={colors.info} />
                 </View>
                 <View style={styles.featureContent}>
                   <ThemedText type="body" weight="bold" style={styles.featureTitle}>
-                    Save for Later
+                    Save for Listening
                   </ThemedText>
                   <ThemedText
                     type="body"
                     variant="secondary"
                     style={[styles.featureDescription, { fontFamily: 'Philosopher' }]}
                   >
-                    Bookmark articles instantly. Return to continue reading or listening from
-                    exactly where you left off.
+                    Save articles instantly to your listening queue. Return to continue reading or
+                    listening from exactly where you left off.
                   </ThemedText>
                 </View>
               </View>
@@ -217,13 +212,9 @@ const AboutScreen: React.FC = () => {
                   <ThemedText type="body" weight="bold" style={styles.featureTitle}>
                     Review & Retain
                   </ThemedText>
-                  <ThemedText
-                    type="body"
-                    variant="secondary"
-                    style={[styles.featureDescription, { fontFamily: 'Philosopher' }]}
-                  >
+                  <ThemedText style={styles.featureDescription}>
                     Spaced repetition moves vocabulary from short-term to permanent memory. Review
-                    at scientifically optimal intervals.
+                    words at scientifically-optimized intervals to ensure lasting retention.
                   </ThemedText>
                 </View>
               </View>
@@ -273,7 +264,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.8,
   },
-  heroDescription: {
+  description: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.15,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.8,
     maxWidth: '92%',

@@ -167,7 +167,7 @@ export default function IslamicCalendarScreen() {
           headerShadowVisible: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Texts',
+          headerBackTitle: 'Read',
           headerBackTitleStyle: { fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM },
         }}
       />

@@ -142,7 +142,7 @@ function useAudioPlayer() {
 }
 
 interface UseReviewProps {
-  fromVocabulary?: boolean;
+  fromRemember?: boolean;
   onClose?: () => void;
 }
 

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { StyleSheet, View, Platform, TouchableOpacity } from 'react-native';
 import Animated from 'react-native-reanimated';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -14,7 +14,6 @@ interface ArticleButtonsProps {
   onPlayPress: () => void;
   onEnglishToggle: () => void;
   isInReadingList?: boolean;
-  initialBookmarkIcon: 'bookmark-outline' | 'bookmark';
   isPlaying: boolean;
   showEnglish: boolean;
   backButtonStyle?: AnimatedStyleProp<ViewStyle>;
@@ -78,7 +77,6 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   onPlayPress,
   onEnglishToggle,
   isInReadingList,
-  initialBookmarkIcon,
   isPlaying,
   showEnglish,
   backButtonStyle,
@@ -89,13 +87,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
   user,
   isDarkMode,
 }) => {
-  const [bookmarkIcon, setBookmarkIcon] = useState<'bookmark-outline' | 'bookmark'>(
-    initialBookmarkIcon
-  );
-
-  useEffect(() => {
-    setBookmarkIcon(isInReadingList ? 'bookmark' : 'bookmark-outline');
-  }, [isInReadingList]);
+  // Removed bookmark icon state management since we use isInReadingList directly
 
   // Neutral button style - matches pill inactive state
   const neutralButtonStyle = {
@@ -139,12 +131,10 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
                 styles.buttonShadow,
                 shadowColorStyle,
               ]}
-              accessibilityLabel={
-                isInReadingList ? 'Remove from reading list' : 'Add to reading list'
-              }
+              accessibilityLabel={isInReadingList ? 'Remove from listening' : 'Save for listening'}
             >
               <Ionicons
-                name={bookmarkIcon}
+                name={isInReadingList ? 'headset' : 'headset-outline'}
                 size={22}
                 color={neutralIconColor} // Always use neutral icon color
               />

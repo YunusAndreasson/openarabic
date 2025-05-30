@@ -44,7 +44,7 @@ const baseStyles = StyleSheet.create({
 
 export default function ReviewScreen(): JSX.Element {
   const params = useLocalSearchParams();
-  const fromVocabulary = params.fromVocabulary === 'true';
+  const fromRemember = params.fromRemember === 'true';
 
   const {
     showMeaningOverlay,
@@ -65,7 +65,7 @@ export default function ReviewScreen(): JSX.Element {
     isUpdating,
     animatedStyle,
     sessionMetrics,
-  } = useReview({ fromVocabulary });
+  } = useReview({ fromRemember });
 
   if (isComplete || isTransitioningToCompletion) {
     return <CompletionScreen onClose={handleClose} sessionMetrics={sessionMetrics} />;

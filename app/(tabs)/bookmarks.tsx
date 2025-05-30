@@ -290,7 +290,7 @@ export type BookmarkSortOption = 'dueWords' | 'difficulty' | 'readingTime' | 'au
 
 // Define sort options for bookmarks
 const bookmarkSortOptions: SortOption<BookmarkSortOption>[] = [
-  { key: 'dueWords', label: 'Due Words' },
+  { key: 'dueWords', label: 'Review Words' },
   { key: 'difficulty', label: 'Level' },
   { key: 'category', label: 'Category' },
 ];
@@ -571,7 +571,7 @@ export default function BookmarksScreen(): JSX.Element {
   // Screen Focus Refresh Hook
   useScreenFocusRefresh(
     queryClient,
-    'bookmarks',
+    'listen',
     user?.id,
     1000 * 60 * 5, // 5 minutes
     true,
@@ -689,7 +689,9 @@ export default function BookmarksScreen(): JSX.Element {
     return (
       <ThemedView style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.tint} />
-        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>Loading bookmarks...</ThemedText>
+        <ThemedText style={{ marginTop: LAYOUT.SPACING.MEDIUM }}>
+          Loading listening queue...
+        </ThemedText>
       </ThemedView>
     );
   }
@@ -699,7 +701,7 @@ export default function BookmarksScreen(): JSX.Element {
       style={styles.container}
       includeBottomInset={false}
       safeAreaEdges={['left', 'right']}
-      accessibilityLabel="Bookmarks screen"
+      accessibilityLabel="Listen screen"
     >
       <ThemedView useSafeArea={false} includeBottomInset={false} style={styles.flexOne}>
         <FlashList
@@ -770,9 +772,7 @@ export default function BookmarksScreen(): JSX.Element {
         primaryVariant="filled"
         primaryDisabled={false}
         primaryAccessibilityLabel={
-          isCurrentlyPlaying && playbackMode === 'all'
-            ? 'Stop playback'
-            : 'Play all bookmarked articles'
+          isCurrentlyPlaying && playbackMode === 'all' ? 'Stop playback' : 'Play all saved articles'
         }
         secondaryLabel={isCurrentlyPlaying && playbackMode === 'shuffle' ? 'Stop' : 'Shuffle'}
         onSecondaryPress={handleShuffle}
@@ -781,7 +781,7 @@ export default function BookmarksScreen(): JSX.Element {
         secondaryAccessibilityLabel={
           isCurrentlyPlaying && playbackMode === 'shuffle'
             ? 'Stop shuffle playback'
-            : 'Play bookmarked articles in random order'
+            : 'Play saved articles in random order'
         }
         showTimerButton={isCurrentlyPlaying}
         onTimerPress={() => {

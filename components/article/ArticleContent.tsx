@@ -344,7 +344,6 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
                     onPlayPress={onPlayPress}
                     onEnglishToggle={onEnglishToggle}
                     isInReadingList={!!isInReadingList}
-                    initialBookmarkIcon={isInReadingList ? 'bookmark' : 'bookmark-outline'}
                     isPlaying={!!isPlaying}
                     showEnglish={!!showEnglish}
                     colors={colors}

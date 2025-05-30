@@ -104,14 +104,9 @@ export default function AuthScreen(): JSX.Element {
             <Animated.View style={[styles.contentContainer, animatedStyle]}>
               <View style={styles.logoContainer}>
                 <PulsatingLogo size={120} />
-                <ThemedText
-                  type="body"
-                  align="center"
-                  variant="secondary"
-                  style={styles.subtitleText}
-                >
+                <ThemedText style={styles.subtitle}>
                   Learn Arabic by Reading and Listening to Classical Islamic Texts by Renowned
-                  Scholars.
+                  Scholars
                 </ThemedText>
               </View>
 
@@ -188,7 +183,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     paddingBottom: LAYOUT.SPACING.LARGE,
   },
-  subtitleText: {
+  subtitle: {
     lineHeight: 22,
     marginBottom: LAYOUT.SPACING.SMALL,
     marginTop: LAYOUT.SPACING.SMALL,
