@@ -7,7 +7,6 @@
 // Export all animation hooks
 export { useOpacityAnimation } from './useOpacityAnimation';
 export { usePressAnimation } from './usePressAnimation';
-export { usePulseAnimation } from './usePulseAnimation';
 export { useTransformAnimation } from './useTransformAnimation';
 export { useProgressAnimation } from './useProgressAnimation';
 export { useComponentAnimation } from './useComponentAnimation';

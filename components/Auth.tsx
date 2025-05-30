@@ -26,17 +26,9 @@ const PASSWORD_REQUIREMENTS = {
 } as const;
 
 /**
- * Authentication component props
- */
-interface AuthProps {
-  /** Disable loading indicators */
-  disableLoading?: boolean;
-}
-
-/**
  * Authentication component that handles both sign in and sign up
  */
-function Auth({ disableLoading = false }: AuthProps): JSX.Element {
+function Auth(): JSX.Element {
   // Form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -333,7 +325,7 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
           title={isRegistering ? 'Create Account' : 'Sign In'}
           onPress={isRegistering ? signUpWithEmail : signInWithEmail}
           disabled={loading}
-          loading={disableLoading ? false : loading}
+          loading={loading}
           style={styles.button}
         />
       </View>
@@ -349,27 +341,24 @@ function Auth({ disableLoading = false }: AuthProps): JSX.Element {
 
 const styles = StyleSheet.create({
   button: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.LARGE,
     width: '100%',
   },
   container: {
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
   inputWrapper: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   inputsButtonGroup: {
-    marginBottom: LAYOUT.SPACING.SMALL,
+    marginBottom: LAYOUT.SPACING.XLARGE,
     maxWidth: 400,
     width: '100%',
   },
   toggleContainer: {
     maxWidth: 400,
-    paddingVertical: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
 });

@@ -1,6 +1,5 @@
 // Animation hooks
 export * from './animations/useOpacityAnimation';
-export * from './animations/usePulseAnimation';
 export * from './animations/usePressAnimation';
 export * from './animations/useTransformAnimation';
 export * from './animations/useComponentAnimation';

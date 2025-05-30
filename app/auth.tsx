@@ -1,79 +1,18 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { JSX, useEffect, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
-} from 'react-native';
-import Animated from 'react-native-reanimated';
+import React, { JSX, memo } from 'react';
+import { StyleSheet, View, KeyboardAvoidingView, Platform, Image, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import Auth from '@/components/Auth';
-import PulsatingLogo from '@/components/PulsatingLogo';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
-import { useTransformAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
-import { lightFeedback } from '@/utils/haptics';
 
-export default function AuthScreen(): JSX.Element {
+const AuthScreen = memo(function AuthScreen(): JSX.Element {
   const colors = useColors();
   const isDark = useIsDarkMode();
   const insets = useSafeAreaInsets();
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-
-  const { animatedStyle, startAnimation } = useTransformAnimation({
-    type: 'scale',
-    initialValue: 0.9,
-    targetValue: 1,
-    duration: 700,
-    useSpring: true,
-    damping: 12,
-    stiffness: 100,
-  });
-
-  useEffect(() => {
-    setTimeout(() => {
-      lightFeedback();
-    }, 50);
-    startAnimation();
-  }, [startAnimation]);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', event => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
-
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardHeight(0);
-    });
-
-    return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
-    };
-  }, []);
-
-  const handleOpenWebsite = () => {
-    Linking.openURL('https://openarabic.io');
-  };
-
-  const dismissKeyboard = () => {
-    Keyboard.dismiss();
-  };
-
-  const contentPadding = {
-    paddingTop: keyboardHeight > 0 ? LAYOUT.SPACING.SMALL : LAYOUT.SPACING.MEDIUM,
-  };
 
   return (
     <SafeAreaView
@@ -84,111 +23,85 @@ export default function AuthScreen(): JSX.Element {
       <Stack.Screen
         options={{
           headerShown: false,
-          animation: 'none',
+          animation: 'fade',
         }}
       />
+
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
-        enabled
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <TouchableWithoutFeedback onPress={dismissKeyboard}>
-          <ScrollView
-            style={styles.container}
-            contentContainerStyle={[styles.scrollContent, contentPadding]}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={[
+            styles.scrollContent,
+            {
+              paddingTop: Math.max(insets.top, LAYOUT.SPACING.LARGE),
+              paddingBottom: Math.max(insets.bottom, LAYOUT.SPACING.LARGE),
+            },
+          ]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          {/* Logo Section - Visual Hierarchy Level 1 */}
+          <View style={styles.logoContainer}>
+            <Image
+              source={require('@/assets/images/oa-logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="OpenArabic Logo"
+            />
+          </View>
+
+          {/* Auth Form - Visual Hierarchy Level 2 */}
+          <View
+            style={[
+              styles.authContainer,
+              {
+                paddingHorizontal: Math.max(
+                  insets.left + LAYOUT.SPACING.LARGE,
+                  LAYOUT.SPACING.LARGE
+                ),
+                paddingRight: Math.max(insets.right + LAYOUT.SPACING.LARGE, LAYOUT.SPACING.LARGE),
+              },
+            ]}
           >
-            <Animated.View style={[styles.contentContainer, animatedStyle]}>
-              <View style={styles.logoContainer}>
-                <PulsatingLogo size={120} />
-                <ThemedText style={styles.subtitle}>
-                  Learn Arabic by Reading and Listening to Classical Islamic Texts by Renowned
-                  Scholars
-                </ThemedText>
-              </View>
-
-              <ThemedView style={styles.authContainer} contentContainerStyle={styles.noPadding}>
-                <Auth disableLoading={true} />
-              </ThemedView>
-            </Animated.View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
+            <Auth />
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-
-      <TouchableOpacity
-        style={[
-          styles.footerContainer,
-          {
-            paddingBottom: insets.bottom > 0 ? insets.bottom : LAYOUT.SPACING.SMALL,
-            backgroundColor: colors.transparent,
-          },
-        ]}
-        onPress={handleOpenWebsite}
-        activeOpacity={0.7}
-      >
-        <ThemedText type="caption" align="center" variant="secondary">
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </ThemedText>
-      </TouchableOpacity>
     </SafeAreaView>
   );
-}
+});
+
+export default AuthScreen;
 
 const styles = StyleSheet.create({
   authContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: LAYOUT.SPACING.SMALL,
     width: '100%',
   },
   container: {
     flex: 1,
   },
-  contentContainer: {
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    padding: LAYOUT.SPACING.SMALL,
-    paddingBottom: 0,
-    width: '100%',
-  },
-  footerContainer: {
-    alignItems: 'center',
-    bottom: 0,
-    left: 0,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM * 1.5,
-    paddingTop: LAYOUT.SPACING.SMALL,
-    position: 'absolute',
-    right: 0,
-    width: '100%',
-  },
   keyboardAvoidingView: {
     flex: 1,
-    justifyContent: 'flex-start',
+  },
+  logo: {
+    width: 110,
+    height: 110,
   },
   logoContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.LARGE,
-    width: '100%',
-  },
-  noPadding: {
-    padding: 0,
+    paddingTop: LAYOUT.SPACING.XLARGE,
+    paddingBottom: LAYOUT.SPACING.XXLARGE,
   },
   scrollContent: {
-    flexGrow: 0,
-    justifyContent: 'flex-start',
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
-  subtitle: {
-    lineHeight: 22,
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.SMALL,
-    maxWidth: 320,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-    textAlign: 'center',
+  scrollView: {
+    flex: 1,
   },
 });
