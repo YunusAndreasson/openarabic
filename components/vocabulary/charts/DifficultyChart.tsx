@@ -1,14 +1,19 @@
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Canvas, Group, Shadow, Rect } from '@shopify/react-native-skia';
+import { Canvas, Group, Rect } from '@shopify/react-native-skia';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
-import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, CHART_LAYOUT } from '../shared/constants';
+import { ChartFooter } from '../shared/ChartFooter';
+import {
+  GRAPH_WIDTH,
+  GRAPH_HEIGHT_LARGE,
+  FSRS_DIFFICULTY_THRESHOLDS,
+  CHART_LAYOUT,
+} from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import { useChartColors } from '../shared/chartColors';
 
@@ -184,21 +189,14 @@ export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: Difficult
 
                 return (
                   <Group key={`difficulty-bar-${index}`}>
-                    {/* Main bar with enhanced shadow */}
+                    {/* Main bar */}
                     <Rect
                       x={x}
                       y={GRAPH_HEIGHT_LARGE - barHeight - 10}
                       width={barWidth}
                       height={barHeight}
                       color={bucket.color}
-                    >
-                      <Shadow
-                        dx={0}
-                        dy={3}
-                        blur={6}
-                        color={chartColors.withOpacity(bucket.color, 0.4)}
-                      />
-                    </Rect>
+                    />
 
                     {/* Enhanced highlight with gradient effect */}
                     <Rect
@@ -233,29 +231,5 @@ const styles = StyleSheet.create({
     marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
     marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
     paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
-  },
-  difficultyBreakdown: {
-    flexDirection: 'row',
-    marginTop: LAYOUT.SPACING.SMALL,
-  },
-  breakdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  colorIndicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  breakdownText: {
-    flexDirection: 'column',
-  },
-  breakdownLabel: {
-    marginBottom: LAYOUT.SPACING.TINY,
-  },
-  breakdownValue: {
-    fontWeight: 'bold',
   },
 });

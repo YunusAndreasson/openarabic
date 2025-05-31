@@ -109,7 +109,7 @@ export function useWordStats(rootId: number | null, wordId: number | null) {
       return {
         totalReviews: 0,
         averageStability: 0,
-        averageDifficulty: 0.3, // Default FSRS difficulty
+        averageDifficulty: 6.5, // Default FSRS difficulty in 5-10 range
         masteryLevel: 'New',
         daysSinceLastReview: null,
         successRate: 0,
@@ -119,7 +119,7 @@ export function useWordStats(rootId: number | null, wordId: number | null) {
 
     const totalReviews = studyWordData.fsrs_reps || 0;
     const stability = studyWordData.fsrs_stability || 0;
-    const difficulty = studyWordData.fsrs_difficulty || 0.3;
+    const difficulty = studyWordData.fsrs_difficulty || 6.5; // Default to medium difficulty in 5-10 range
     const state = studyWordData.fsrs_state || 0;
     const lastReview = studyWordData.fsrs_last_review;
     const lapses = studyWordData.fsrs_lapses || 0;

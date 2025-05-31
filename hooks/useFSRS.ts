@@ -134,7 +134,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
     return {
       due: word.fsrs_due ? new Date(word.fsrs_due) : new Date(),
       stability: word.fsrs_stability ?? 0,
-      difficulty: word.fsrs_difficulty ?? 0.3,
+      difficulty: word.fsrs_difficulty ?? 6.5,
       elapsed_days: word.fsrs_elapsed_days ?? 0,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
       learning_steps: 0, // Initialize with 0 if not present

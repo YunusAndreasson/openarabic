@@ -178,7 +178,7 @@ export const studyWordsService = {
       lapses: 0,
       review_count: 0,
       previous_interval: 0,
-      difficulty: 0.3,
+      difficulty: 6.5,
       success_streak: 0,
       failure_streak: 0,
       // FSRS fields - properly initialized by createEmptyCard

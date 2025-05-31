@@ -116,14 +116,14 @@ export function useWordList(
             break;
           case 'needsAttention':
             result = filteredWords.filter(word => {
-              const difficulty = word.fsrs_difficulty ?? 0.3;
+              const difficulty = word.fsrs_difficulty ?? 6.5; // Default to medium difficulty in 5-10 range
               const lapses = word.fsrs_lapses ?? 0;
               const stability = word.fsrs_stability ?? 0;
               const state = word.fsrs_state;
 
-              const isHighDifficultyWithLapses = difficulty > 0.6 && lapses > 0;
+              const isHighDifficultyWithLapses = difficulty >= 8.0 && lapses > 0; // Hard difficulty with lapses
               const isStrugglingInLearning = (state === 1 || state === 2) && lapses > 1;
-              const isUnstableAndDifficult = stability < 7 && difficulty > 0.5 && lapses > 0;
+              const isUnstableAndDifficult = stability < 7 && difficulty >= 7.0 && lapses > 0; // Above medium difficulty
 
               return isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult;
             });

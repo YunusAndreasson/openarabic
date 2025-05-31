@@ -64,7 +64,7 @@ export function mapToStudyWord(item: DatabaseRecord): StudyWord {
     // FSRS fields
     fsrs_due: safeGet(item, 'fsrs_due', null),
     fsrs_stability: safeGet(item, 'fsrs_stability', null),
-    fsrs_difficulty: safeGet(item, 'fsrs_difficulty', 0.3, Number),
+    fsrs_difficulty: safeGet(item, 'fsrs_difficulty', 6.5, Number),
     fsrs_elapsed_days: safeGet(item, 'fsrs_elapsed_days', 0, Number),
     fsrs_scheduled_days: safeGet(item, 'fsrs_scheduled_days', 0, Number),
     fsrs_reps: safeGet(item, 'fsrs_reps', 0, Number),

@@ -5,14 +5,12 @@ import {
   Path,
   Circle,
   Group,
-  Shadow,
   Skia,
   Rect,
   LinearGradient,
   vec,
 } from '@shopify/react-native-skia';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 
@@ -310,14 +308,7 @@ export const RetrievabilityChart = memo(
                     strokeCap="round"
                     strokeJoin="round"
                     color={chartColors.ui.dataLine}
-                  >
-                    <Shadow
-                      dx={0}
-                      dy={2}
-                      blur={6}
-                      color={chartColors.getDataPointGlow('retrievability')}
-                    />
-                  </Path>
+                  />
                 )}
 
                 {/* Data points for forecast visualization */}
@@ -344,14 +335,7 @@ export const RetrievabilityChart = memo(
                         color={chartColors.withOpacity(chartColors.ui.dataLine, glowOpacity)}
                       />
                       {/* Main data point */}
-                      <Circle cx={x} cy={y} r={isToday ? 5 : 4} color={chartColors.ui.dataLine}>
-                        <Shadow
-                          dx={0}
-                          dy={1}
-                          blur={3}
-                          color={chartColors.getDataPointGlow('retrievability')}
-                        />
-                      </Circle>
+                      <Circle cx={x} cy={y} r={isToday ? 5 : 4} color={chartColors.ui.dataLine} />
                     </Group>
                   );
                 })}

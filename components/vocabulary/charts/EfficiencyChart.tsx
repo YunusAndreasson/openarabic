@@ -5,14 +5,12 @@ import {
   Path,
   Circle,
   Group,
-  Shadow,
   Skia,
   Rect,
   LinearGradient,
   vec,
 } from '@shopify/react-native-skia';
 
-import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
@@ -243,9 +241,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                 strokeCap="round"
                 strokeJoin="round"
                 color={chartColors.ui.dataLine}
-              >
-                <Shadow dx={0} dy={2} blur={6} color={chartColors.getDataPointGlow('efficiency')} />
-              </Path>
+              />
 
               {/* Data points */}
               {efficiencyData.map((data, index) => {
@@ -266,14 +262,7 @@ export const EfficiencyChart = memo(({ studyWords = [], onInfoPress }: Efficienc
                       color={chartColors.getDataPointGlow('efficiency')}
                     />
                     {/* Main data point */}
-                    <Circle cx={x} cy={y} r={4} color={chartColors.ui.dataLine}>
-                      <Shadow
-                        dx={0}
-                        dy={1}
-                        blur={3}
-                        color={chartColors.getDataPointGlow('efficiency')}
-                      />
-                    </Circle>
+                    <Circle cx={x} cy={y} r={4} color={chartColors.ui.dataLine} />
                   </Group>
                 );
               })}

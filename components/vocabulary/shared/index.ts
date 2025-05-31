@@ -6,6 +6,5 @@ export * from './constants';
 export * from './utils';
 export * from './chartColors';
 
-// Export legend constants and specific types to avoid conflicts
-export { CHART_LEGENDS } from './chartLegends';
+// Keep only the types that are actually used
 export type { MemoryLevel, ProgressType, TimeRange } from './chartLegends';

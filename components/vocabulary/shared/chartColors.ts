@@ -86,97 +86,11 @@ export const useChartColors = () => {
       tooltip: withOpacity(colors.card, 0.98),
     },
 
-    // High-contrast gradients for area fills - optimized for visibility
-    gradients: {
-      excellent: [
-        withOpacity(colors.success, CHART_OPACITY.MEDIUM),
-        withOpacity(colors.success, CHART_OPACITY.LOW),
-        withOpacity(colors.success, CHART_OPACITY.SUBTLE),
-      ],
-      good: [
-        withOpacity(colors.info, CHART_OPACITY.MEDIUM),
-        withOpacity(colors.info, CHART_OPACITY.LOW),
-        withOpacity(colors.info, CHART_OPACITY.SUBTLE),
-      ],
-      warning: [
-        withOpacity(colors.warning, CHART_OPACITY.MEDIUM),
-        withOpacity(colors.warning, CHART_OPACITY.LOW),
-        withOpacity(colors.warning, CHART_OPACITY.SUBTLE),
-      ],
-      error: [
-        withOpacity(colors.error, CHART_OPACITY.MEDIUM),
-        withOpacity(colors.error, CHART_OPACITY.LOW),
-        withOpacity(colors.error, CHART_OPACITY.SUBTLE),
-      ],
-      primary: [
-        withOpacity(colors.tint, CHART_OPACITY.MEDIUM),
-        withOpacity(colors.tint, CHART_OPACITY.LOW),
-        withOpacity(colors.tint, CHART_OPACITY.SUBTLE),
-      ],
-      neutral: [
-        withOpacity(colors.info, CHART_OPACITY.MEDIUM),
-        withOpacity(colors.info, CHART_OPACITY.LOW),
-        withOpacity(colors.info, CHART_OPACITY.SUBTLE),
-      ],
-    },
-
     // Opacity utilities
     opacity: CHART_OPACITY,
 
     // Helper functions
     withOpacity: (color: string, opacity: number) => withOpacity(color, opacity),
-
-    // Get gradient colors for performance zones
-    getPerformanceGradient: (level: 'excellent' | 'good' | 'moderate' | 'poor') => {
-      switch (level) {
-        case 'excellent':
-          return [
-            withOpacity(colors.success, CHART_OPACITY.SUBTLE),
-            withOpacity(colors.success, CHART_OPACITY.MINIMAL),
-          ];
-        case 'good':
-          return [
-            withOpacity(colors.info, CHART_OPACITY.SUBTLE),
-            withOpacity(colors.info, CHART_OPACITY.MINIMAL),
-          ];
-        case 'moderate':
-          return [
-            withOpacity(colors.warning, CHART_OPACITY.SUBTLE),
-            withOpacity(colors.warning, CHART_OPACITY.MINIMAL),
-          ];
-        case 'poor':
-          return [
-            withOpacity(colors.error, CHART_OPACITY.SUBTLE),
-            withOpacity(colors.error, CHART_OPACITY.MINIMAL),
-          ];
-      }
-    },
-
-    // Get gradient colors for memory zones (mapped from performance levels)
-    getMemoryGradient: (level: 'excellent' | 'good' | 'moderate' | 'poor') => {
-      switch (level) {
-        case 'excellent':
-          return [
-            withOpacity(colors.success, CHART_OPACITY.SUBTLE), // Strong memory
-            withOpacity(colors.success, CHART_OPACITY.MINIMAL),
-          ];
-        case 'good':
-          return [
-            withOpacity(colors.warning, CHART_OPACITY.SUBTLE), // Fading memory
-            withOpacity(colors.warning, CHART_OPACITY.MINIMAL),
-          ];
-        case 'moderate':
-          return [
-            withOpacity(colors.warning, CHART_OPACITY.SUBTLE), // Fading memory
-            withOpacity(colors.warning, CHART_OPACITY.MINIMAL),
-          ];
-        case 'poor':
-          return [
-            withOpacity(colors.error, CHART_OPACITY.SUBTLE), // Weak memory
-            withOpacity(colors.error, CHART_OPACITY.MINIMAL),
-          ];
-      }
-    },
 
     // Get polished area fill gradients for data visualization
     getAreaFillGradient: (type: 'efficiency' | 'mastery' | 'retrievability' = 'efficiency') => {
@@ -241,15 +155,6 @@ export const useChartColors = () => {
       if (percentage >= PERFORMANCE_THRESHOLDS.GOOD) return colors.info;
       if (percentage >= PERFORMANCE_THRESHOLDS.FAIR) return colors.warning;
       return colors.error;
-    },
-
-    // Data visualization specific colors
-    elements: {
-      earth: colors.warning,
-      water: colors.info,
-      growth: colors.success,
-      fire: colors.error,
-      air: withOpacity(colors.textTertiary, CHART_OPACITY.MEDIUM),
     },
   };
 };

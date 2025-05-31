@@ -68,7 +68,7 @@ export const calculateRetrievability = (word: StudyWord, targetDate: Date): numb
 
 // Calculate learning efficiency score
 export const calculateEfficiencyScore = (word: StudyWord): number => {
-  const difficulty = word.fsrs_difficulty ?? 0.3;
+  const difficulty = word.fsrs_difficulty ?? 6.5; // Default to medium difficulty in 5-10 range
   const lapses = word.fsrs_lapses ?? 0;
   const stability = word.fsrs_stability ?? 0;
   const state = word.fsrs_state ?? 0;
@@ -109,11 +109,14 @@ export const calculateEfficiencyScore = (word: StudyWord): number => {
   else if (lapses <= 4) score += 5;
   // No points for 5+ lapses
 
-  // Difficulty balance (10% weight) - FSRS optimal range is 0.3-0.6
-  if (difficulty >= 0.3 && difficulty <= 0.6) score += 10;
-  else if (difficulty >= 0.2 && difficulty <= 0.7) score += 7;
-  else if (difficulty >= 0.1 && difficulty <= 0.8) score += 5;
-  else if (difficulty >= 0.05 && difficulty <= 0.9) score += 2;
+  // Difficulty balance (10% weight) - FSRS difficulty ranges 5-10, optimal around 6.5-8.0
+  if (difficulty >= 6.0 && difficulty <= 8.5)
+    score += 10; // Optimal learning zone
+  else if (difficulty >= 5.5 && difficulty <= 9.0)
+    score += 7; // Good range
+  else if (difficulty >= 5.0 && difficulty <= 9.5)
+    score += 5; // Acceptable range
+  else if (difficulty >= 4.5 && difficulty <= 10.0) score += 2; // Edge cases
 
   return Math.min(100, score); // Cap at 100
 };

@@ -200,9 +200,11 @@ export const WordStatsCard = memo(({ stats }: WordStatsCardProps) => {
       else if (stats.averageStability >= 7) scores.retention += 2;
       else scores.retention += 1;
 
-      if (stats.averageDifficulty <= 0.4) scores.difficulty += 1;
-      else if (stats.averageDifficulty <= 0.6) scores.difficulty += 2;
-      else scores.difficulty += 3; // High difficulty is important
+      if (stats.averageDifficulty < 6.5)
+        scores.difficulty += 1; // Easy
+      else if (stats.averageDifficulty < 8.0)
+        scores.difficulty += 2; // Medium
+      else scores.difficulty += 3; // Hard - High difficulty is important
 
       // Find the highest scoring stat for primary emphasis
       const maxScore = Math.max(scores.status, scores.success, scores.retention, scores.difficulty);
@@ -257,8 +259,8 @@ export const WordStatsCard = memo(({ stats }: WordStatsCardProps) => {
   }, [stats.successRate, colors]);
 
   const difficultyColor = useMemo(() => {
-    if (stats.averageDifficulty <= 0.4) return colors.success;
-    if (stats.averageDifficulty <= 0.6) return colors.warning;
+    if (stats.averageDifficulty < 6.5) return colors.success;
+    if (stats.averageDifficulty < 8.0) return colors.warning;
     return colors.error;
   }, [stats.averageDifficulty, colors]);
 

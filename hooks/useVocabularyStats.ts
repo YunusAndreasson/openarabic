@@ -68,7 +68,7 @@ const getAdvancedStats = (validStudyWords: StudyWord[]) => {
       // Track other stats
       acc.lapsesSum += word.fsrs_lapses || 0;
       if (word.sessionData?.failedInSession) acc.failedInSession++;
-      acc.difficultySum += word.fsrs_difficulty || 0.3;
+      acc.difficultySum += word.fsrs_difficulty || 6.5;
 
       return acc;
     },
@@ -153,7 +153,7 @@ export function useVocabularyStats(
       failedInSessionCount: advancedStats?.failedInSessionCount || 0,
       longestSuccessStreak: advancedStats?.longestSuccessStreak || 0,
       wordsWithStreaks: advancedStats?.wordsWithStreaks || 0,
-      averageDifficulty: advancedStats?.averageDifficulty || 0.3,
+      averageDifficulty: advancedStats?.averageDifficulty || 6.5,
     }),
     [baseStats, advancedStats]
   );
