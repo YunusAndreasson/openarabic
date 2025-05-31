@@ -23,7 +23,7 @@ import { useReminders } from '@/hooks/useReminders';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setFontScale, setShowEnglish, setReminderTime } from '@/store/settingsSlice';
+import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
 
 // Memoized components
@@ -385,17 +385,14 @@ const AccountScreen: React.FC = () => {
 
         {/* Appearance Section */}
         <View style={styles.appearanceWrapper}>
+          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+            Appearance
+          </ThemedText>
           <BaseCard
             style={styles.appearanceContainer}
             shadowSize="small"
             includePressAnimation={false}
           >
-            <View style={styles.sectionHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Appearance
-              </ThemedText>
-            </View>
-
             <View style={styles.appearanceLinksContainer}>
               <View style={styles.settingRow}>
                 <SettingLabel icon="moon" text="Dark Mode" iconColor={colors.icon} />
@@ -471,17 +468,14 @@ const AccountScreen: React.FC = () => {
 
         {/* Reminders Section */}
         <View style={styles.remindersWrapper}>
+          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+            Reminders
+          </ThemedText>
           <BaseCard
             style={styles.remindersContainer}
             shadowSize="small"
             includePressAnimation={false}
           >
-            <View style={styles.sectionHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Reminders
-              </ThemedText>
-            </View>
-
             <View style={styles.remindersLinksContainer}>
               <View style={styles.settingRow}>
                 <SettingLabel icon="notifications" text="Study Reminders" iconColor={colors.icon} />
@@ -511,13 +505,10 @@ const AccountScreen: React.FC = () => {
 
         {/* Information Section */}
         <View style={styles.infoWrapper}>
+          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+            Information
+          </ThemedText>
           <BaseCard style={styles.infoContainer} shadowSize="small" includePressAnimation={false}>
-            <View style={styles.sectionHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Information
-              </ThemedText>
-            </View>
-
             <View style={styles.actionLinksContainer}>
               <BaseCard
                 onPress={() => router.push('/about')}
@@ -548,17 +539,14 @@ const AccountScreen: React.FC = () => {
 
         {/* Connect Section */}
         <View style={styles.connectWrapper}>
+          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+            Connect
+          </ThemedText>
           <BaseCard
             style={styles.connectContainer}
             shadowSize="small"
             includePressAnimation={false}
           >
-            <View style={styles.sectionHeader}>
-              <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-                Connect
-              </ThemedText>
-            </View>
-
             <View style={styles.socialLinksContainer}>
               <BaseCard
                 onPress={() => handleSocialLink('https://twitter.com/OpenArabicIo')}
@@ -661,9 +649,6 @@ const AccountScreen: React.FC = () => {
 
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
-          <ThemedText type="heading3" weight="bold" style={styles.appName}>
-            OpenArabic
-          </ThemedText>
           <ThemedText type="caption" variant="secondary" style={styles.versionText}>
             Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
           </ThemedText>
@@ -761,12 +746,9 @@ const styles = StyleSheet.create({
   },
 
   // Section Styles
-  sectionHeader: {
-    padding: LAYOUT.SPACING.MEDIUM,
-    paddingBottom: LAYOUT.SPACING.SMALL,
-  },
   sectionTitle: {
-    marginBottom: LAYOUT.SPACING.TINY,
+    marginBottom: LAYOUT.SPACING.SMALL,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
 
   // Preferences Styles
