@@ -54,6 +54,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   },
+  sourceContainer: {
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  sourceLabel: {
+    fontSize: 14,
+  },
 });
 
 // Memoized ArticleButtons component to prevent unnecessary re-renders
@@ -269,18 +276,14 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     const footerComponent = useMemo(
       () => (
         <>
-          {article.source ? (
-            <View
-              style={{
-                paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-                marginBottom: LAYOUT.SPACING.MEDIUM,
-              }}
-            >
-              <ThemedText type="label" variant="secondary">
-                Source: {capitalizeFirstLetter(article.source)}
+          {/* Source field was removed from database */}
+          {false && (
+            <View style={styles.sourceContainer}>
+              <ThemedText style={[styles.sourceLabel, { color: colors.textSecondary }]}>
+                Source: deleted
               </ThemedText>
             </View>
-          ) : null}
+          )}
           {otherArticles && otherArticles.length > 0 ? (
             <Animated.View style={footerStyle}>
               <RelatedArticlesFooter

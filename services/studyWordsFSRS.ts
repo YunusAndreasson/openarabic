@@ -276,17 +276,9 @@ export const studyWordsFSRSService = {
     const newEntry = {
       user_id: userId,
       root_id: rootId,
-      next_review_at: now.toISOString(),
       created_at: now.toISOString(),
-      ease_factor: 2.5,
-      interval_days: 1,
-      stability: 0,
-      lapses: 0,
-      review_count: 0,
-      previous_interval: 0,
       difficulty: emptyCard.difficulty / 10.0, // Convert FSRS difficulty (1-10) to legacy scale (0-1)
       success_streak: 0,
-      failure_streak: 0,
       fsrs_due: now.toISOString(),
       fsrs_stability: emptyCard.stability,
       fsrs_difficulty: emptyCard.difficulty,

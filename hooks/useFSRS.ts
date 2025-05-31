@@ -4,7 +4,6 @@ import { handleError } from '@/utils/errorHandling';
 import type { Card, StepUnit } from 'ts-fsrs';
 import { createEmptyCard, fsrs, Rating, State, generatorParameters } from 'ts-fsrs';
 
-import { studyWordsService } from '@/services/studyWords';
 import { studyWordsFSRSService } from '@/services/studyWordsFSRS';
 import type { UseFSRSOptions, UseFSRSResult, FSRSStateTracking } from '@/types/fsrs.types';
 import type { StudyWord } from '@/types/vocabulary.types';
@@ -198,17 +197,20 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
         const { card: newCard } = fsrsInstance.next(card, now, rating);
         const lastReview = now.toISOString();
 
+        // Update the word with new FSRS parameters and session tracking
         const wordUpdateData = {
+          success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
+          difficulty: currentWord.difficulty,
           fsrs_due: newCard.due.toISOString(),
           fsrs_stability: newCard.stability,
           fsrs_difficulty: newCard.difficulty,
           fsrs_elapsed_days: newCard.elapsed_days,
           fsrs_scheduled_days: newCard.scheduled_days,
-          fsrs_reps: newCard.reps,
           fsrs_learning_steps: newCard.learning_steps,
+          fsrs_reps: newCard.reps,
           fsrs_lapses: newCard.lapses,
           fsrs_state: newCard.state,
-          fsrs_last_review: lastReview,
+          fsrs_last_review: new Date().toISOString(),
         };
 
         await studyWordsFSRSService.updateFSRSWord(userId, rootId, wordUpdateData);
@@ -218,18 +220,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
           rating,
           newCard.learning_steps
         );
-
-        await studyWordsService.updateWordReview(rootId, {
-          success_streak: confidence === 'known' ? (currentWord.success_streak || 0) + 1 : 0,
-          failure_streak: confidence === 'unknown' ? (currentWord.failure_streak || 0) + 1 : 0,
-          interval_days: currentWord.interval_days,
-          ease_factor: currentWord.ease_factor,
-          next_review_at: currentWord.next_review_at,
-          review_count: currentWord.review_count,
-          lapses: currentWord.lapses,
-          stability: currentWord.stability,
-          previous_interval: currentWord.previous_interval,
-        });
 
         // Update the queue based on the user's response
         setWordQueue(prevQueue => {

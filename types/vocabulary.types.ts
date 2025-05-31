@@ -21,14 +21,8 @@ export interface StudyWord {
   root?: Tables<'roots'> | null;
   user_id: string;
 
-  // Legacy fields (kept for compatibility)
-  interval_days: number;
-  ease_factor: number;
-  next_review_at: string;
-  review_count: number;
-  stability: number;
-  lapses: number;
-  previous_interval: number;
+  // Legacy compatibility field
+  difficulty?: number;
 
   // FSRS fields
   fsrs_due: string | null;
@@ -46,8 +40,6 @@ export interface StudyWord {
   created_at: string;
   last_updated_at?: string;
   success_streak?: number;
-  failure_streak?: number;
-  difficulty?: number;
 
   // Session data
   sessionData?: {

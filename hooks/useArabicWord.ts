@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { useLocalSearchParams } from 'expo-router';
 
 import { analytics } from '../services/analytics';
-import { studyWordsService } from '../services/studyWords';
+import { studyWordsFSRSService } from '../services/studyWordsFSRS';
 import { selectAudioState } from '../store/audioSlice';
-import type { SentenceWord } from '../types/vocabulary.types';
+import type { SentenceWord, StudyWord } from '../types/vocabulary.types';
 import { handleError } from '@/utils/errorHandling';
 
 import { useAuth } from './useAuth';
@@ -49,18 +48,13 @@ export function useArabicWord({
     queryFn: async () => {
       if (!user?.id) return [];
       try {
-        return studyWordsService.getStudyWords(user.id);
+        return studyWordsFSRSService.getFSRSWords(user.id, { forStats: false });
       } catch (error) {
-        handleError(
-          error instanceof Error
-            ? error
-            : new Error('Error fetching study words'),
-          {
-            analyticsEventName: 'Study_Word_Fetch_Error',
-            showToast: false,
-            sentrySeverity: 'warning',
-          }
-        );
+        handleError(error instanceof Error ? error : new Error('Error fetching study words'), {
+          analyticsEventName: 'Study_Word_Fetch_Error',
+          showToast: false,
+          sentrySeverity: 'warning',
+        });
         return [];
       }
     },
@@ -70,7 +64,7 @@ export function useArabicWord({
   // Check if the word is directly selected (added to study words)
   const directlySelected = useMemo(() => {
     if (!studyWords?.length || !word.root_id) return false;
-    return studyWords.some(sw => sw.root_id === word.root_id);
+    return studyWords.some((sw: StudyWord) => sw.root_id === word.root_id);
   }, [studyWords, word.root_id]);
 
   // Check if this word is currently being highlighted by audio player

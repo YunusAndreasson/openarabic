@@ -50,14 +50,8 @@ export function mapToStudyWord(item: DatabaseRecord): StudyWord {
     root: safeGet(item, 'root', null),
     user_id: safeGet(item, 'user_id', '', String),
 
-    // Legacy fields
-    interval_days: safeGet(item, 'interval_days', 0, Number),
-    ease_factor: safeGet(item, 'ease_factor', 2.5, Number),
-    next_review_at: safeGet(item, 'next_review_at', new Date().toISOString(), String),
-    review_count: safeGet(item, 'review_count', 0, Number),
-    stability: safeGet(item, 'stability', 0, Number),
-    lapses: safeGet(item, 'lapses', 0, Number),
-    previous_interval: safeGet(item, 'previous_interval', 0, Number),
+    // Legacy compatibility field
+    difficulty: safeGet(item, 'difficulty', undefined),
 
     // FSRS fields
     fsrs_due: safeGet(item, 'fsrs_due', null),
@@ -75,8 +69,6 @@ export function mapToStudyWord(item: DatabaseRecord): StudyWord {
     created_at: safeGet(item, 'created_at', new Date().toISOString(), String),
     last_updated_at: safeGet(item, 'last_updated_at', undefined),
     success_streak: safeGet(item, 'success_streak', undefined),
-    failure_streak: safeGet(item, 'failure_streak', undefined),
-    difficulty: safeGet(item, 'difficulty', undefined),
 
     // Session data initialized as empty
     sessionData: {},

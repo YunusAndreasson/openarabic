@@ -60,6 +60,14 @@ const styles = StyleSheet.create({
   titleContainer: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
   },
+  sourceContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: LAYOUT.SPACING.TINY,
+  },
+  sourceText: {
+    marginLeft: LAYOUT.SPACING.TINY,
+  },
 });
 
 export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
@@ -192,26 +200,17 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
           </View>
         </View>
 
-        {typeof article.source === 'string' && article.source.trim() ? (
-          <View style={styles.articleInfoItem}>
-            <Ionicons
-              name="link-outline"
-              size={16}
-              color={colors.text}
-              style={styles.infoIcon}
-              accessibilityLabel="Source"
-            />
-            <View style={styles.infoTextContainer}>
-              <ThemedText
-                type="caption"
-                variant="secondary"
-                accessibilityLabel={`Source: ${article.source}`}
-              >
-                {article.source}
-              </ThemedText>
-            </View>
+        {/* Source */}
+        {false && (
+          <View style={styles.sourceContainer}>
+            <ThemedText
+              style={[styles.sourceText, { color: colors.textSecondary }]}
+              accessibilityLabel={`Source: deleted`}
+            >
+              deleted
+            </ThemedText>
           </View>
-        ) : null}
+        )}
       </View>
 
       {article.summary ? (
