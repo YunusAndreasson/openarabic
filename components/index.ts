@@ -5,7 +5,6 @@ export { ThemedButton } from './ThemedButton';
 export { ThemedInput } from './ThemedInput';
 export { default as ThemedCard } from './ThemedCard';
 export { default as BaseCard } from './BaseCard';
-export { default as InfoCard } from './InfoCard';
 export { default as SectionTitle } from './SectionTitle';
 export { default as EmptyState } from './EmptyState';
 export { default as ErrorState } from './ErrorState';
