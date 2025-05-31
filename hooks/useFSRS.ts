@@ -137,7 +137,7 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
       difficulty: word.fsrs_difficulty ?? 6.5,
       elapsed_days: word.fsrs_elapsed_days ?? 0,
       scheduled_days: word.fsrs_scheduled_days ?? 0,
-      learning_steps: 0, // Initialize with 0 if not present
+      learning_steps: word.fsrs_learning_steps ?? 0,
       reps: word.fsrs_reps ?? 0,
       lapses: word.fsrs_lapses ?? 0,
       state: word.fsrs_state ?? State.New,
