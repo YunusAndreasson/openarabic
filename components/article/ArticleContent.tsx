@@ -119,6 +119,8 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
     const insets = useSafeAreaInsets();
     const flashListRef = useRef<FlashList<Tables<'article_sentences'>>>(null);
     const isScrollingRef = useRef(false);
+    const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const { scrollToSentence: scrollToSentenceParam } = useLocalSearchParams<{
       scrollToSentence?: string;
       highlightWord?: string;
@@ -148,7 +150,10 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
         isScrollingRef.current = true;
 
         // Reduce delay for more responsive scrolling
-        setTimeout(() => {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+        }
+        scrollTimeoutRef.current = setTimeout(() => {
           if (!flashListRef.current) {
             isScrollingRef.current = false;
             return;
@@ -195,13 +200,29 @@ export const ArticleContent = forwardRef<ArticleContentRef, ArticleContentProps>
           }
 
           // Reset scrolling flag after animation completes
-          setTimeout(() => {
+          if (resetTimeoutRef.current) {
+            clearTimeout(resetTimeoutRef.current);
+          }
+          resetTimeoutRef.current = setTimeout(() => {
             isScrollingRef.current = false;
           }, 300);
         }, 50); // Reduced delay for more responsive scrolling
       },
       [sortedSentences, insets.top]
     );
+
+    useEffect(() => {
+      return () => {
+        if (scrollTimeoutRef.current) {
+          clearTimeout(scrollTimeoutRef.current);
+          scrollTimeoutRef.current = null;
+        }
+        if (resetTimeoutRef.current) {
+          clearTimeout(resetTimeoutRef.current);
+          resetTimeoutRef.current = null;
+        }
+      };
+    }, []);
 
     // Effect to scroll to the specified sentence when the component mounts
     useEffect(() => {
