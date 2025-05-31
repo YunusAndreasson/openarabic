@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { StyleSheet, View, useWindowDimensions, Platform } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -81,8 +81,29 @@ interface ParallaxHeaderProps {
 export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
   ({ article, scrollY, colors, headerHeight, topInset = 0, isDarkMode = false }) => {
     const { width: SCREEN_WIDTH } = useWindowDimensions();
-    const imageHeight = HEADER_IMAGE_HEIGHT + topInset;
-    const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
+
+    // Memoize expensive calculations that don't change during scroll
+    const staticValues = useMemo(() => {
+      const imageHeight = HEADER_IMAGE_HEIGHT + topInset;
+      const imageSource = article.image_url || DEFAULT_IMAGES.ARTICLE_PLACEHOLDER;
+      const dynamicParallaxFactor = PARALLAX_FACTOR * (SCREEN_WIDTH / 375);
+
+      // Pre-calculate interpolation ranges to avoid repeated calculations in worklets
+      const containerHeightRange = [imageHeight, imageHeight * 0.6, imageHeight * 0.25];
+      const imageTranslateRange = [headerHeight * 0.08, 0, -headerHeight * dynamicParallaxFactor];
+      const imageScaleRange = [1.05, 1.0, 0.98];
+      const overlayOpacityRange = [0, OVERLAY_MAX_OPACITY * 0.5, OVERLAY_MAX_OPACITY];
+
+      return {
+        imageHeight,
+        imageSource,
+        dynamicParallaxFactor,
+        containerHeightRange,
+        imageTranslateRange,
+        imageScaleRange,
+        overlayOpacityRange,
+      };
+    }, [SCREEN_WIDTH, headerHeight, topInset, article.image_url]);
 
     // Advanced spring physics with motion design principles
     const smoothScrollY = useDerivedValue(() => {
@@ -90,11 +111,15 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       return scrollY.value; // Use direct scroll value for natural scrolling
     }, [scrollY]);
 
-    // Enhanced text colors with better accessibility
-    const textColor = colors.primary;
-    const contrastOverlay = isDarkMode
-      ? ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.DARK
-      : ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.LIGHT;
+    // Enhanced text colors with better accessibility - memoized
+    const textColor = useMemo(() => colors.primary, [colors.primary]);
+    const contrastOverlay = useMemo(
+      () =>
+        isDarkMode
+          ? ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.DARK
+          : ACCESSIBILITY_CONFIG.CONTRAST_OVERLAY.LIGHT,
+      [isDarkMode]
+    );
 
     // Dynamic text styles with enhanced hierarchy and accessibility
     const dynamicTextStyles = useMemo(
@@ -173,7 +198,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       return 2;
     }, [article]);
 
-    // Advanced container animation with motion design principles
+    // Optimized container animation - reduced dependency array
     const animatedContainerStyle = useAnimatedStyle(() => {
       'worklet';
       const progress = smoothScrollY.value / headerHeight;
@@ -182,29 +207,29 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         height: interpolate(
           progress,
           [0, 0.4, 0.8], // Multi-point interpolation for smoother transitions
-          [imageHeight, imageHeight * 0.6, imageHeight * 0.25],
+          staticValues.containerHeightRange,
           Extrapolation.CLAMP
         ),
       };
-    }, [imageHeight, headerHeight]);
+    }, [headerHeight]); // Removed imageHeight from deps since it's in staticValues
 
-    // Enhanced image animation with depth and parallax
+    // Optimized image animation - consolidated interpolations
     const imageAnimatedStyle = useAnimatedStyle(() => {
       'worklet';
       const progress = smoothScrollY.value / headerHeight;
-      const dynamicParallaxFactor = PARALLAX_FACTOR * (SCREEN_WIDTH / 375);
+      const scrollValue = smoothScrollY.value;
 
       const translateY = interpolate(
-        smoothScrollY.value,
-        [-headerHeight * 0.3, 0, headerHeight * 0.8], // Restored negative range for pull-down parallax
-        [headerHeight * 0.15, 0, -headerHeight * dynamicParallaxFactor], // More controlled pull-down effect
+        scrollValue,
+        [-headerHeight * 0.2, 0, headerHeight * 0.8], // Reduced negative range for less aggressive pull-down
+        staticValues.imageTranslateRange,
         Extrapolation.CLAMP
       );
 
       const scale = interpolate(
-        smoothScrollY.value,
-        [-headerHeight * 0.3, 0, headerHeight * 0.5], // Scale effect for pull-down
-        [1.15, 1.0, 0.98], // Slight zoom when pulling down
+        scrollValue,
+        [-headerHeight * 0.2, 0, headerHeight * 0.5], // Reduced range
+        staticValues.imageScaleRange,
         Extrapolation.CLAMP
       );
 
@@ -219,42 +244,41 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         transform: [{ translateY }, { scale }],
         opacity,
       };
-    }, [headerHeight]);
+    }, [headerHeight]); // Removed SCREEN_WIDTH from deps since it's in staticValues
 
-    // Refined content animation with staggered fade
+    // Optimized content animation - reduced calculations
     const contentAnimatedStyle = useAnimatedStyle(() => {
       'worklet';
       const progress = smoothScrollY.value / headerHeight;
 
+      const opacity = interpolate(
+        progress,
+        [0, CONTENT_FADE_THRESHOLD, 0.7],
+        [1, 0.6, 0],
+        Extrapolation.CLAMP
+      );
+
+      const translateY = interpolate(
+        progress,
+        [0, 0.5],
+        [0, -8], // Subtle upward movement
+        Extrapolation.CLAMP
+      );
+
+      const scale = interpolate(
+        progress,
+        [0, 0.5],
+        [1, 0.98], // Subtle scale for depth
+        Extrapolation.CLAMP
+      );
+
       return {
-        opacity: interpolate(
-          progress,
-          [0, CONTENT_FADE_THRESHOLD, 0.7],
-          [1, 0.6, 0],
-          Extrapolation.CLAMP
-        ),
-        transform: [
-          {
-            translateY: interpolate(
-              progress,
-              [0, 0.5],
-              [0, -8], // Subtle upward movement
-              Extrapolation.CLAMP
-            ),
-          },
-          {
-            scale: interpolate(
-              progress,
-              [0, 0.5],
-              [1, 0.98], // Subtle scale for depth
-              Extrapolation.CLAMP
-            ),
-          },
-        ],
+        opacity,
+        transform: [{ translateY }, { scale }],
       };
     }, [headerHeight]);
 
-    // Advanced overlay with dynamic opacity
+    // Optimized overlay animation
     const overlayStyle = useAnimatedStyle(() => {
       'worklet';
       const progress = smoothScrollY.value / headerHeight;
@@ -263,7 +287,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
         opacity: interpolate(
           progress,
           [0, 0.3, 0.8],
-          [0, OVERLAY_MAX_OPACITY * 0.5, OVERLAY_MAX_OPACITY],
+          staticValues.overlayOpacityRange,
           Extrapolation.CLAMP
         ),
         backgroundColor: contrastOverlay,
@@ -290,35 +314,47 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
       ] as const;
     }, [colors.background, isDarkMode]);
 
-    // Staggered animation for metadata items
-    const createMetadataItemStyle = (index: number) => {
-      return useAnimatedStyle(() => {
-        'worklet';
-        const progress = smoothScrollY.value / headerHeight;
-        const delay = index * 0.05; // Stagger delay
+    // Optimized staggered animation for metadata items - memoized function
+    const createMetadataItemStyle = useCallback(
+      (index: number) => {
+        return useAnimatedStyle(() => {
+          'worklet';
+          const progress = smoothScrollY.value / headerHeight;
+          const delay = index * 0.05; // Stagger delay
 
-        return {
-          opacity: interpolate(
+          const opacity = interpolate(
             progress,
             [0, CONTENT_FADE_THRESHOLD + delay, 0.7 + delay],
             [1, 0.7, 0],
             Extrapolation.CLAMP
-          ),
-          transform: [
-            {
-              translateY: interpolate(progress, [0, 0.5 + delay], [0, -4], Extrapolation.CLAMP),
-            },
-          ],
-        };
-      }, [index, headerHeight]);
-    };
+          );
+
+          const translateY = interpolate(progress, [0, 0.5 + delay], [0, -4], Extrapolation.CLAMP);
+
+          return {
+            opacity,
+            transform: [{ translateY }],
+          };
+        }, [index, headerHeight]);
+      },
+      [headerHeight]
+    );
+
+    // Dynamic content section style to handle safe area
+    const contentSectionStyle = useMemo(
+      () => ({
+        ...styles.contentSection,
+        paddingTop: LAYOUT.SPACING.LARGE + topInset, // Add topInset here instead of using topSpace
+      }),
+      [topInset]
+    );
 
     return (
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         {/* Background Image with Enhanced Parallax */}
         <Animated.View style={[styles.imageWrapper, imageAnimatedStyle]}>
           <EnhancedImage
-            source={imageSource}
+            source={staticValues.imageSource}
             style={styles.image}
             contentFit="cover"
             priority="high"
@@ -344,11 +380,11 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           locations={[0, 0.1, 0.2, 0.3, 0.45, 0.6, 0.75, 0.85, 0.95, 1]} // Precise color stops
         />
 
-        {/* Safe Area Spacer */}
-        <View style={[styles.topSpace, { marginTop: topInset }]} />
+        {/* Safe Area Spacer - Removed to make image stick to top */}
+        {/* <View style={[styles.topSpace, { marginTop: topInset }]} /> */}
 
         {/* Content Section with Enhanced Hierarchy */}
-        <Animated.View style={[styles.contentSection, contentAnimatedStyle]}>
+        <Animated.View style={[contentSectionStyle, contentAnimatedStyle]}>
           {/* Primary Content Group: Title and Author */}
           <View style={styles.primaryContentGroup}>
             <ThemedText
@@ -368,31 +404,31 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
             )}
           </View>
 
-          {/* Secondary Content Group: Metadata */}
+          {/* Secondary Content Group: Metadata - Unified Row */}
           <View style={styles.metadataGroup}>
-            {/* Primary metadata (most important) */}
-            {article.category && (
-              <Animated.View
-                style={[styles.metadataItem, styles.primaryMetadata, createMetadataItemStyle(0)]}
-              >
-                <Ionicons
-                  name="folder-outline"
-                  size={14} // Slightly larger for primary metadata
-                  color={dynamicTextStyles.metadataIcon.color}
-                  style={dynamicTextStyles.metadataIcon}
-                />
-                <ThemedText
-                  type="caption"
-                  style={[dynamicTextStyles.metadataText, styles.primaryMetadataText]}
+            {/* Single metadata row with all three items */}
+            <View style={styles.metadataRow}>
+              {/* Category - Primary importance with visual emphasis */}
+              {article.category && (
+                <Animated.View
+                  style={[styles.metadataItem, styles.categoryItem, createMetadataItemStyle(0)]}
                 >
-                  {capitalizeFirstLetter(article.category.name)}
-                </ThemedText>
-              </Animated.View>
-            )}
+                  <Ionicons
+                    name="folder-outline"
+                    size={14}
+                    color={dynamicTextStyles.metadataIcon.color}
+                    style={dynamicTextStyles.metadataIcon}
+                  />
+                  <ThemedText
+                    type="caption"
+                    style={[dynamicTextStyles.metadataText, styles.categoryText]}
+                  >
+                    {capitalizeFirstLetter(article.category.name)}
+                  </ThemedText>
+                </Animated.View>
+              )}
 
-            {/* Secondary metadata row */}
-            <View style={styles.secondaryMetadataRow}>
-              {/* Reading Time */}
+              {/* Reading Time - Secondary importance */}
               <Animated.View style={[styles.metadataItem, createMetadataItemStyle(1)]}>
                 <Ionicons
                   name="time-outline"
@@ -405,7 +441,7 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
                 </ThemedText>
               </Animated.View>
 
-              {/* Difficulty Level */}
+              {/* Difficulty Level - Tertiary importance */}
               <Animated.View style={[styles.metadataItem, createMetadataItemStyle(2)]}>
                 <Ionicons
                   name="stats-chart-outline"
@@ -423,7 +459,12 @@ export const ParallaxHeader: React.FC<ParallaxHeaderProps> = React.memo(
           {/* Tertiary Content Group: Summary */}
           {article.summary && (
             <View style={styles.summaryGroup}>
-              <ThemedText type="body" style={dynamicTextStyles.summary} numberOfLines={3}>
+              <ThemedText
+                type="body"
+                style={dynamicTextStyles.summary}
+                numberOfLines={4}
+                ellipsizeMode="tail"
+              >
                 {article.summary}
               </ThemedText>
             </View>
@@ -493,17 +534,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  primaryMetadata: {
-    marginBottom: LAYOUT.SPACING.SMALL, // Space below primary metadata
-  },
-  primaryMetadataText: {
-    fontWeight: '600' as const, // Stronger weight for primary metadata
-    opacity: 0.9, // Slightly more prominent than secondary metadata
-  },
-  secondaryMetadataRow: {
+  metadataRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.LARGE, // Increased gap between secondary metadata items
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap', // Allow wrapping on smaller screens
+    gap: LAYOUT.SPACING.LARGE, // Consistent spacing between all items
+  },
+  categoryItem: {
+    // Category gets visual emphasis through typography, not spacing
+    marginRight: LAYOUT.SPACING.TINY, // Subtle extra space to create visual grouping
+  },
+  categoryText: {
+    fontWeight: '600' as const, // Stronger weight for visual hierarchy
+    opacity: 0.95, // Highest opacity for primary importance
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL + 1, // Slightly larger for emphasis
   },
   summaryGroup: {
     marginBottom: LAYOUT.SPACING.MEDIUM,
