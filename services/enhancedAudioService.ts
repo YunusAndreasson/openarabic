@@ -30,7 +30,7 @@ export const enhancedAudioService = {
         title: article.title,
       };
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error instanceof Error ? error : new Error(String(error)), {
         toastMessage: 'Failed to generate audio track',
         analyticsEventName: 'Enhanced_Audio_Generation_Error',
         sentrySeverity: 'error',
@@ -64,7 +64,7 @@ export const enhancedAudioService = {
 
       return allTracks;
     } catch (error) {
-      handleError(error instanceof Error ? error : String(error), {
+      await handleError(error instanceof Error ? error : String(error), {
         toastMessage: 'Failed to get enhanced audio tracks',
         analyticsEventName: 'Enhanced_Audio_Playlist_Error',
         sentrySeverity: 'error',
@@ -80,7 +80,7 @@ export const enhancedAudioService = {
     try {
       return await this.generateEnhancedAudioTrack(articleId);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error instanceof Error ? error : new Error(String(error)), {
         toastMessage: 'Error fetching enhanced audio track for article',
         analyticsEventName: 'Enhanced_Audio_Track_Error',
         sentrySeverity: 'error',
