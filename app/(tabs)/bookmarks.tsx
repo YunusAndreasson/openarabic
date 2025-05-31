@@ -19,8 +19,6 @@ import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
-import { Colors } from '@/constants/Colors';
-import { withOpacity } from '@/utils/colorUtils';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
@@ -45,8 +43,6 @@ type ReadingListItem = Tables<'reading_list'> & {
   };
 };
 
-const SLEEP_TIMER_BG = withOpacity(Colors.light.white, 0.1);
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -63,16 +59,51 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  sleepTimerButton: {
+});
+
+// Static styles to avoid recreation on every render
+const itemStyles = StyleSheet.create({
+  dueWordsContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: SLEEP_TIMER_BG,
-    borderRadius: 8,
-    height: 36,
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    width: 36,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
+    paddingVertical: LAYOUT.SPACING.MICRO + 1,
+    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    borderWidth: 0.5,
+    marginRight: 8,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 1,
+    elevation: 1,
+  },
+  metaContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: LAYOUT.SPACING.XSMALL,
+  },
+  categoryContainer: {
+    paddingHorizontal: LAYOUT.SPACING.XSMALL,
+    paddingVertical: LAYOUT.SPACING.MICRO,
+    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
+    borderWidth: 0.5,
   },
 });
+
+// Helper functions moved outside component to avoid recreation on every render
+const capitalizeFirstLetter = (str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+};
+
+const getDaysAgo = (addedAt: string): string => {
+  const addedDate = new Date(addedAt);
+  const now = new Date();
+  const diffTime = Math.abs(now.getTime() - addedDate.getTime());
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return '1 day ago';
+  return `${diffDays} days ago`;
+};
 
 // Define a constant for item height calculation
 // Card content + margins + borders + audio progress bar when active
@@ -101,49 +132,27 @@ const BookmarkListItem = memo(
     const hasDueWords = dueWordCount > 0;
     const isPlaying = isActive && audioState === AUDIO_STATES.PLAYING;
 
-    // Helper function to get level name
-    const getLevelName = (level: number): string => {
-      switch (level) {
-        case 1:
-          return 'Beginner';
-        case 2:
-          return 'Elementary';
-        case 3:
-          return 'Intermediate';
-        case 4:
-          return 'Advanced';
-        case 5:
-          return 'Expert';
-        default:
-          return `Level ${level}`;
-      }
-    };
-
-    // Helper function to capitalize first letter
-    const capitalizeFirstLetter = (str: string): string => {
-      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    };
+    // Memoize dynamic styles that depend on colors
+    const dynamicStyles = useMemo(
+      () => ({
+        dueWordsContainer: {
+          ...itemStyles.dueWordsContainer,
+          backgroundColor: colors.buttonOverlay,
+          borderColor: colors.warning + '30',
+          shadowColor: colors.warning,
+        },
+        categoryContainer: {
+          ...itemStyles.categoryContainer,
+          backgroundColor: colors.elevation1,
+          borderColor: colors.borderOverlay,
+        },
+      }),
+      [colors]
+    );
 
     // Create left meta content with due words indicator
     const leftMetaContent = hasDueWords ? (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: colors.buttonOverlay,
-          paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
-          paddingVertical: LAYOUT.SPACING.MICRO + 1,
-          borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
-          borderWidth: 0.5,
-          borderColor: colors.warning + '30',
-          marginRight: 8,
-          shadowColor: colors.warning,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 1,
-          elevation: 1,
-        }}
-      >
+      <View style={dynamicStyles.dueWordsContainer}>
         <Ionicons name="sync-outline" size={11} color={colors.warning} />
         <ThemedText
           type="label"
@@ -167,65 +176,29 @@ const BookmarkListItem = memo(
         author={item.articles?.author?.name || 'Unknown Author'}
         leftMeta={leftMetaContent}
         meta={
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginLeft: LAYOUT.SPACING.XSMALL,
-            }}
-          >
-            {/* Dot separator before level (if level exists) */}
-            {item.articles?.difficulty_level && (
-              <ThemedText
-                type="caption"
-                style={{
-                  color: colors.textTertiary,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  marginRight: LAYOUT.SPACING.XTINY,
-                  opacity: 0.6, // Subtle dot
-                }}
-                skipDefaultColor
-              >
-                •
-              </ThemedText>
-            )}
+          <View style={itemStyles.metaContainer}>
+            {/* Days ago */}
+            <ThemedText
+              type="caption"
+              style={{
+                color: colors.textTertiary,
+                fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
+                fontWeight: '500',
+              }}
+              skipDefaultColor
+            >
+              {getDaysAgo(item.added_at)}
+            </ThemedText>
 
-            {/* Level indicator */}
-            {item.articles?.difficulty_level && (
-              <View
-                style={{
-                  backgroundColor: colors.elevation1,
-                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
-                  paddingVertical: LAYOUT.SPACING.MICRO,
-                  borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-                  borderWidth: 0.5,
-                  borderColor: colors.borderOverlay,
-                }}
-              >
-                <ThemedText
-                  type="caption"
-                  style={{
-                    color: colors.textTertiary,
-                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                    fontWeight: '600',
-                    letterSpacing: 0.3,
-                  }}
-                  skipDefaultColor
-                >
-                  {getLevelName(item.articles.difficulty_level)}
-                </ThemedText>
-              </View>
-            )}
-
-            {/* Dot separator between level and category */}
-            {item.articles?.difficulty_level && item.articles?.category?.name && (
+            {/* Dot separator between days ago and category */}
+            {item.articles?.category?.name && (
               <ThemedText
                 type="caption"
                 style={{
                   color: colors.textTertiary,
                   fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
                   marginHorizontal: LAYOUT.SPACING.XTINY,
-                  opacity: 0.6, // Subtle dot
+                  opacity: 0.6,
                 }}
                 skipDefaultColor
               >
@@ -235,16 +208,7 @@ const BookmarkListItem = memo(
 
             {/* Category */}
             {item.articles?.category?.name && (
-              <View
-                style={{
-                  backgroundColor: colors.elevation1,
-                  paddingHorizontal: LAYOUT.SPACING.XSMALL,
-                  paddingVertical: LAYOUT.SPACING.MICRO,
-                  borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-                  borderWidth: 0.5,
-                  borderColor: colors.borderOverlay,
-                }}
-              >
+              <View style={dynamicStyles.categoryContainer}>
                 <ThemedText
                   type="caption"
                   style={{
@@ -290,14 +254,27 @@ const BookmarkListItem = memo(
 
 BookmarkListItem.displayName = 'BookmarkListItem';
 
-export type BookmarkSortOption = 'dueWords' | 'difficulty' | 'readingTime' | 'author' | 'category';
+export type BookmarkSortOption = 'dueWords' | 'category' | 'recent';
 
-// Define sort options for bookmarks
-const bookmarkSortOptions: SortOption<BookmarkSortOption>[] = [
-  { key: 'dueWords', label: 'Review Words' },
-  { key: 'difficulty', label: 'Level' },
-  { key: 'category', label: 'Category' },
-];
+// Create dynamic sort options with loading state
+const createBookmarkSortOptions = (
+  isDueWordsLoading: boolean,
+  isDueWordsDataAvailable: boolean
+): SortOption<BookmarkSortOption>[] => {
+  const baseOptions: SortOption<BookmarkSortOption>[] = [
+    { key: 'recent', label: 'Recently Added' },
+    { key: 'category', label: 'Category' },
+  ];
+
+  // Only add due words option when data is available or loading
+  if (isDueWordsDataAvailable) {
+    baseOptions.splice(1, 0, { key: 'dueWords', label: 'Review Words' });
+  } else if (isDueWordsLoading) {
+    baseOptions.splice(1, 0, { key: 'dueWords', label: 'Review Words...' });
+  }
+
+  return baseOptions;
+};
 
 export default function BookmarksScreen(): JSX.Element {
   const colors = useColors();
@@ -312,15 +289,15 @@ export default function BookmarksScreen(): JSX.Element {
   // playbackMode: 'none' | 'all' | 'shuffle'
   const [playbackMode, setPlaybackMode] = useState<'none' | 'all' | 'shuffle'>('none');
 
-  // Sorting state
-  const [currentSort, setCurrentSort] = useState<BookmarkSortOption>('dueWords');
+  // Sorting state - default to the natural database sort (most recently added)
+  const [currentSort, setCurrentSort] = useState<BookmarkSortOption>('recent');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   // Sleep timer state
   const [showSleepTimer, setShowSleepTimer] = useState(false);
 
   // Get due words data for sorting
-  const { dueWordRootIds } = useArticlesByDueWords(user?.id, 0);
+  const { dueWordRootIds, isLoading: isDueWordsLoading } = useArticlesByDueWords(user?.id, 0);
 
   // --- Get State & Stable Actions from useEnhancedAudioPlayer ---
   const enhancedAudioPlayer = useEnhancedAudioPlayer();
@@ -354,15 +331,14 @@ export default function BookmarksScreen(): JSX.Element {
     isFetching: isReadingListFetching,
   } = readingListQuery;
 
+  // Memoize article IDs to reduce query refetches
+  const articleIds = useMemo(() => readingList.map(item => item.article_id), [readingList]);
+
   // Query to fetch complete article data for articles in the reading list
   const articlesWithSentencesQuery = useQuery({
-    queryKey: ['articles-with-sentences', user?.id, readingList],
+    queryKey: ['articles-with-sentences', user?.id, articleIds],
     queryFn: async () => {
-      if (!user?.id || !readingList.length || !dueWordRootIds?.size)
-        return new Map<number, Article>();
-
-      // Get article IDs from reading list
-      const articleIds = readingList.map(item => item.article_id);
+      if (!user?.id || !articleIds.length) return new Map<number, Article>();
 
       // Fetch complete article data with sentences and words
       const articlesWithSentences = await Promise.all(
@@ -379,11 +355,29 @@ export default function BookmarksScreen(): JSX.Element {
 
       return articleMap;
     },
-    enabled: !!user?.id && !!readingList.length && (dueWordRootIds?.size ?? 0) > 0,
+    enabled: !!user?.id && !!articleIds.length,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: articleDetailsMap = new Map<number, Article>() } = articlesWithSentencesQuery;
+
+  // Check if due words data is available for sorting
+  const isDueWordsDataAvailable = useMemo(() => {
+    return !isDueWordsLoading && dueWordRootIds?.size > 0 && articleDetailsMap.size > 0;
+  }, [isDueWordsLoading, dueWordRootIds?.size, articleDetailsMap.size]);
+
+  // Use a stable sort that doesn't change during data loading
+  const stableSort = useMemo(() => {
+    // If user explicitly selected due words and data is available, use it
+    if (currentSort === 'dueWords' && isDueWordsDataAvailable) {
+      return 'dueWords';
+    }
+    // Otherwise use the current sort
+    return currentSort;
+  }, [currentSort, isDueWordsDataAvailable]);
+
+  // Track if we should use due words sorting (simplified)
+  const shouldUseDueWordsSort = stableSort === 'dueWords' && isDueWordsDataAvailable;
 
   // Helper function to count due words in an article - define before using it
   const countDueWords = useCallback(
@@ -406,97 +400,65 @@ export default function BookmarksScreen(): JSX.Element {
     [articleDetailsMap]
   );
 
-  // Helper function to estimate reading time
-  const estimateReadingTime = useCallback((article: Article): number => {
-    if (article.article_sentences?.length) {
-      return Math.max(1, Math.ceil(article.article_sentences.length / 10));
-    }
-    if (article.summary) {
-      const wordCount = article.summary.split(/\s+/).length;
-      const estimatedSentences = Math.ceil(wordCount / 15);
-      return Math.max(1, Math.ceil(estimatedSentences / 10));
-    }
-    return 2; // Default fallback
-  }, []);
-
-  // Sorting function
-  const sortReadingList = useCallback(
-    (
-      list: ReadingListItem[],
-      sortBy: BookmarkSortOption,
-      direction: SortDirection,
-      dueWordRootIds: Set<number> | undefined,
-      articleDetailsMap: Map<number, Article>
-    ): ReadingListItem[] => {
-      const sortedList = [...list];
-
-      switch (sortBy) {
-        case 'dueWords':
-          if (dueWordRootIds && dueWordRootIds.size > 0 && articleDetailsMap.size > 0) {
-            return sortedList.sort((a, b) => {
-              const aDueWords = countDueWords(a.article_id, dueWordRootIds);
-              const bDueWords = countDueWords(b.article_id, dueWordRootIds);
-              const result = bDueWords - aDueWords;
-              return direction === 'desc' ? result : -result;
-            });
-          }
-          // Fall through to return original list if conditions not met
-          return sortedList;
-        case 'difficulty':
-          return sortedList.sort((a, b) => {
-            const result =
-              (a.articles?.difficulty_level || 0) - (b.articles?.difficulty_level || 0);
-            return direction === 'desc' ? -result : result;
-          });
-        case 'readingTime':
-          return sortedList.sort((a, b) => {
-            const aTime = a.articles ? estimateReadingTime(a.articles) : 0;
-            const bTime = b.articles ? estimateReadingTime(b.articles) : 0;
-            const result = aTime - bTime;
-            return direction === 'desc' ? -result : result;
-          });
-        case 'author':
-          return sortedList.sort((a, b) => {
-            const result = (a.articles?.author?.name || '').localeCompare(
-              b.articles?.author?.name || ''
-            );
-            return direction === 'desc' ? -result : result;
-          });
-        case 'category':
-          return sortedList.sort((a, b) => {
-            const result = (a.articles?.category?.name || '').localeCompare(
-              b.articles?.category?.name || ''
-            );
-            return direction === 'desc' ? -result : result;
-          });
-      }
-
-      return sortedList;
-    },
-    [countDueWords, estimateReadingTime]
-  );
-
-  // Deduplicate and sort reading list
-  const sortedReadingList = useMemo(() => {
+  // Deduplicate reading list first
+  const dedupedReadingList = useMemo(() => {
     if (!readingList?.length) return [];
 
-    // First deduplicate the list
     const seen = new Set();
-    const dedupedList = readingList.filter(item => {
+    return readingList.filter(item => {
       if (seen.has(item.article_id)) return false;
       seen.add(item.article_id);
       return true;
     });
+  }, [readingList]);
 
-    // Then sort by selected option
-    return sortReadingList(
-      dedupedList,
-      currentSort,
-      sortDirection,
-      dueWordRootIds,
-      articleDetailsMap
-    );
-  }, [readingList, currentSort, sortDirection, dueWordRootIds, articleDetailsMap, sortReadingList]);
+  // Sort reading list with stable dependencies
+  const sortedReadingList = useMemo(() => {
+    if (!dedupedReadingList.length) return [];
+
+    // For "recent" sort, use the natural database order (already sorted by added_at desc)
+    // This is the most common case and should be super fast with no dependencies
+    if (stableSort === 'recent') {
+      return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
+    }
+
+    // For other sorts, apply client-side sorting only when needed
+    const sortedList = [...dedupedReadingList];
+
+    switch (stableSort) {
+      case 'dueWords':
+        // Only sort by due words if we have the necessary data
+        if (shouldUseDueWordsSort && dueWordRootIds) {
+          return sortedList.sort((a, b) => {
+            const aDueWords = countDueWords(a.article_id, dueWordRootIds);
+            const bDueWords = countDueWords(b.article_id, dueWordRootIds);
+            const result = bDueWords - aDueWords;
+            return sortDirection === 'desc' ? result : -result;
+          });
+        }
+        // Fallback to recent sort if due words data isn't ready
+        return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
+
+      case 'category':
+        return sortedList.sort((a, b) => {
+          const result = (a.articles?.category?.name || '').localeCompare(
+            b.articles?.category?.name || ''
+          );
+          return sortDirection === 'desc' ? -result : result;
+        });
+
+      default:
+        // Fallback to recent sort
+        return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
+    }
+  }, [
+    dedupedReadingList,
+    stableSort,
+    sortDirection,
+    shouldUseDueWordsSort,
+    countDueWords,
+    dueWordRootIds,
+  ]);
 
   // Check if data is already in cache
   const isDataCached = useMemo(() => {
@@ -545,11 +507,22 @@ export default function BookmarksScreen(): JSX.Element {
 
   const flashListExtraData = useMemo(
     () => ({
+      // Only include data that affects ALL items, not just the active one
       currentTrackIndex,
-      progress,
       metadataValues,
+      dueWordRootIdsSize: dueWordRootIds?.size || 0,
+      articleDetailsMapSize: articleDetailsMap.size,
+      isDueWordsLoading,
+      audioState, // Include audioState to trigger re-renders when playback starts/stops
     }),
-    [currentTrackIndex, progress, metadataValues]
+    [
+      currentTrackIndex,
+      metadataValues,
+      dueWordRootIds?.size,
+      articleDetailsMap.size,
+      isDueWordsLoading,
+      audioState,
+    ]
   );
   // --- End Derived State & Memos ---
 
@@ -688,6 +661,31 @@ export default function BookmarksScreen(): JSX.Element {
     [prefetchArticle]
   );
 
+  // Memoized sort options to prevent unnecessary re-renders
+  const sortOptions = useMemo(
+    () => createBookmarkSortOptions(isDueWordsLoading, isDueWordsDataAvailable),
+    [isDueWordsLoading, isDueWordsDataAvailable]
+  );
+
+  // Pre-calculate due words counts for all articles to avoid expensive calculations in renderItem
+  const dueWordsCountMap = useMemo(() => {
+    const countMap = new Map<number, number>();
+
+    if (!dueWordRootIds?.size || isDueWordsLoading) {
+      return countMap;
+    }
+
+    // Only calculate for articles we have detailed data for
+    for (const item of dedupedReadingList) {
+      if (articleDetailsMap.has(item.article_id)) {
+        const count = countDueWords(item.article_id, dueWordRootIds);
+        countMap.set(item.article_id, count);
+      }
+    }
+
+    return countMap;
+  }, [dedupedReadingList, dueWordRootIds, isDueWordsLoading, articleDetailsMap, countDueWords]);
+
   // Show loading screen only during initial uncached load
   if (!isDataCached && isReadingListLoading && !isReadingListFetching) {
     return (
@@ -714,11 +712,8 @@ export default function BookmarksScreen(): JSX.Element {
           extraData={flashListExtraData}
           keyExtractor={item => `${item.article_id}`}
           renderItem={({ item }) => {
-            // Calculate due word count for this article
-            const dueWordCount =
-              dueWordRootIds?.size > 0 && articleDetailsMap.size > 0
-                ? countDueWords(item.article_id, dueWordRootIds)
-                : 0;
+            // Get pre-calculated due word count - much faster than calculating in render
+            const dueWordCount = dueWordsCountMap.get(item.article_id) || 0;
 
             return (
               <BookmarkListItem
@@ -747,7 +742,7 @@ export default function BookmarksScreen(): JSX.Element {
                 currentSort={currentSort}
                 sortDirection={sortDirection}
                 onSortChange={handleSortChange}
-                options={bookmarkSortOptions}
+                options={sortOptions}
               />
             </View>
           }
