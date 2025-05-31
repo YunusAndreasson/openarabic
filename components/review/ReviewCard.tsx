@@ -1,4 +1,4 @@
-import React, { useCallback, memo } from 'react';
+import React, { useCallback, memo, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import type { ViewStyle } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -61,6 +61,7 @@ const ReviewCard = memo(function ReviewCard({
   // Animation values
   const translateX = useSharedValue(0);
   const isAnimatingRef = useSharedValue(false);
+  const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset position function with callback
   const resetPosition = useCallback(() => {
@@ -78,17 +79,15 @@ const ReviewCard = memo(function ReviewCard({
       // First trigger the swipe action (which will start fading out)
       runOnJS(isRight ? onSwipeRight : onSwipeLeft)();
       // Then reset position after a short delay
-      const resetTimer = setTimeout(() => {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+      }
+      resetTimerRef.current = setTimeout(() => {
         if (isAnimatingRef.value) {
           // Only reset if still animating
           runOnJS(resetPosition)();
         }
       }, 50);
-
-      return () => {
-        clearTimeout(resetTimer);
-        isAnimatingRef.value = false;
-      };
     },
     [isAnimatingRef, onSwipeLeft, onSwipeRight, resetPosition]
   );
@@ -134,6 +133,15 @@ const ReviewCard = memo(function ReviewCard({
     () => Gesture.Exclusive(panGesture(), tapGesture()),
     [panGesture, tapGesture]
   );
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) {
+        clearTimeout(resetTimerRef.current);
+        resetTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Create animated style for the swipe container
   const swipeContainerStyle = useAnimatedStyle(() => ({

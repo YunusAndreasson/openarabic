@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import type { ViewStyle } from 'react-native';
 import { TouchableOpacity, StyleSheet } from 'react-native';
 import type { AnimatedStyleProp } from '@/types/ui/base.types';
@@ -32,6 +32,7 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
   hapticFeedback = false,
 }) => {
   const colors = useColors();
+  const pressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buttonSize = useMemo(() => {
     if (typeof size === 'number') return size;
@@ -67,13 +68,25 @@ export const CloseButton: React.FC<CloseButtonProps> = ({
     scaleAmount: 0.9,
   });
 
+  useEffect(() => {
+    return () => {
+      if (pressTimeoutRef.current) {
+        clearTimeout(pressTimeoutRef.current);
+        pressTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const handlePress = () => {
     if (hapticFeedback) {
       lightFeedback();
     }
 
     // Small delay to ensure haptic feedback is felt
-    setTimeout(onPress, 50);
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+    }
+    pressTimeoutRef.current = setTimeout(onPress, 50);
   };
 
   return (
