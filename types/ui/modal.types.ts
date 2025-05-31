@@ -100,8 +100,6 @@ export interface WordTooltipProps {
   } | null;
   /** Function to close the tooltip */
   onClose: () => void;
-  /** Whether the user knows this word */
-  isKnown?: boolean;
   /** Function to mark the word as known/unknown */
   onToggleKnown?: () => void;
   /** Optional zIndex value to control tooltip stacking order */
