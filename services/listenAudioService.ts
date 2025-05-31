@@ -50,7 +50,10 @@ export const listenAudioService = {
   /**
    * Randomizes a selection of vocabulary words up to the specified limit
    */
-  getRandomVocabularyTracks(words: StudyWord[], limit: number = 20): EnhancedAudioTrack[] {
+  async getRandomVocabularyTracks(
+    words: StudyWord[],
+    limit: number = 20
+  ): Promise<EnhancedAudioTrack[]> {
     try {
       if (!words?.length) return [];
 
