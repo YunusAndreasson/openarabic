@@ -19,6 +19,8 @@ import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
+import { Colors } from '@/constants/Colors';
+import { withOpacity } from '@/utils/colorUtils';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
 import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { useAppPreloader } from '@/hooks/useAppPreloader';
@@ -43,6 +45,8 @@ type ReadingListItem = Tables<'reading_list'> & {
   };
 };
 
+const SLEEP_TIMER_BG = withOpacity(Colors.light.white, 0.1);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -61,7 +65,7 @@ const styles = StyleSheet.create({
   },
   sleepTimerButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: SLEEP_TIMER_BG,
     borderRadius: 8,
     height: 36,
     justifyContent: 'center',

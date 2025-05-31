@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo, useEffect } from 'react';
+import React, { memo, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -18,6 +18,7 @@ import Animated, {
 
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 import { lightFeedback } from '@/utils/haptics';
 
 import { ThemedText } from '../ThemedText';
@@ -119,6 +120,11 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
 export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
   const colors = useColors();
   const screenHeight = Dimensions.get('window').height;
+
+  const tipsContainerStyle = useMemo(
+    () => [styles.tipsContainer, { borderTopColor: withOpacity(colors.shadow, 0.1) }],
+    [colors.shadow]
+  );
 
   // Animation values
   const backdropOpacity = useSharedValue(0);
@@ -265,7 +271,7 @@ export const InfoModal = memo(({ visible, type, onClose }: InfoModalProps) => {
 
                 {/* Tips */}
                 {content.tips.length > 0 && (
-                  <View style={styles.tipsContainer}>
+                  <View style={tipsContainerStyle}>
                     <ThemedText type="heading3" weight="bold" style={styles.tipsTitle}>
                       💡 Pro Tips
                     </ThemedText>
@@ -386,7 +392,6 @@ const styles = StyleSheet.create({
     marginTop: LAYOUT.SPACING.LARGE,
     paddingTop: LAYOUT.SPACING.MEDIUM,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.1)',
   },
   tipsTitle: {
     marginBottom: LAYOUT.SPACING.MEDIUM,

@@ -2,17 +2,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { LAYOUT } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
+import { withOpacity } from '@/utils/colorUtils';
 
 const AboutScreen: React.FC = () => {
   const colors = useColors();
   const insets = useSafeAreaInsets();
+
+  const featureCardBorder = useMemo(
+    () => ({ borderBottomColor: withOpacity(colors.shadow, 0.04) }),
+    [colors.shadow]
+  );
 
   return (
     <>
@@ -115,7 +121,7 @@ const AboutScreen: React.FC = () => {
 
             <View style={[styles.featuresGrid, { backgroundColor: colors.cardBackground }]}>
               {/* Read Feature */}
-              <View style={styles.featureCard}>
+              <View style={[styles.featureCard, featureCardBorder]}>
                 <View style={[styles.featureIconLarge, { backgroundColor: colors.primaryLight }]}>
                   <Ionicons name="reader-outline" size={26} color={colors.primary} />
                 </View>
@@ -135,7 +141,7 @@ const AboutScreen: React.FC = () => {
               </View>
 
               {/* Listen Feature */}
-              <View style={styles.featureCard}>
+              <View style={[styles.featureCard, featureCardBorder]}>
                 <View style={[styles.featureIconLarge, { backgroundColor: colors.successLight }]}>
                   <Ionicons name="headset-outline" size={26} color={colors.success} />
                 </View>
@@ -155,7 +161,7 @@ const AboutScreen: React.FC = () => {
               </View>
 
               {/* Vocabulary Feature */}
-              <View style={styles.featureCard}>
+              <View style={[styles.featureCard, featureCardBorder]}>
                 <View style={[styles.featureIconLarge, { backgroundColor: colors.warningLight }]}>
                   <Ionicons name="chatbubbles-outline" size={26} color={colors.warning} />
                 </View>
@@ -175,7 +181,7 @@ const AboutScreen: React.FC = () => {
               </View>
 
               {/* Save for Listening Feature */}
-              <View style={styles.featureCard}>
+              <View style={[styles.featureCard, featureCardBorder]}>
                 <View style={[styles.featureIconLarge, { backgroundColor: colors.infoLight }]}>
                   <Ionicons name="headset-outline" size={26} color={colors.info} />
                 </View>
@@ -195,7 +201,7 @@ const AboutScreen: React.FC = () => {
               </View>
 
               {/* Review Feature */}
-              <View style={[styles.featureCard, styles.lastFeatureCard]}>
+              <View style={[styles.featureCard, featureCardBorder, styles.lastFeatureCard]}>
                 <View
                   style={[
                     styles.featureIconLarge,
@@ -314,7 +320,6 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.XLARGE * 1.2,
     paddingBottom: LAYOUT.SPACING.XLARGE,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.04)',
   },
   lastFeatureCard: {
     marginBottom: 0,

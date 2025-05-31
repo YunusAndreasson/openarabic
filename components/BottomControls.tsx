@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +59,14 @@ const BottomControls = memo<BottomControlsProps>(
     const hasSecondaryButton = Boolean(secondaryLabel && onSecondaryPress);
     const hasTimerButton = showTimerButton && onTimerPress;
 
+    const dynamicStyles = useMemo(
+      () => ({
+        secondaryButton: { shadowColor: colors.shadow },
+        timerButton: { shadowColor: colors.shadow },
+      }),
+      [colors.shadow]
+    );
+
     return (
       <View style={styles.wrapper}>
         {/* Optimized gradient with calculated colors */}
@@ -81,6 +89,7 @@ const BottomControls = memo<BottomControlsProps>(
                 onPress={onTimerPress}
                 style={[
                   styles.timerButton,
+                  dynamicStyles.timerButton,
                   {
                     backgroundColor: isTimerActive ? colors.tint : colors.elevation1,
                     borderColor: isTimerActive ? colors.tint : colors.borderOverlay,
@@ -126,6 +135,7 @@ const BottomControls = memo<BottomControlsProps>(
                   style={[
                     styles.button,
                     styles.secondaryButton,
+                    dynamicStyles.secondaryButton,
                     {
                       borderColor: colors.tint,
                       backgroundColor: colors.card, // Use theme-aware card background
@@ -190,7 +200,6 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -209,7 +218,6 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.BORDER_RADIUS.PILL,
     paddingHorizontal: LAYOUT.SPACING.SMALL,
     paddingVertical: LAYOUT.SPACING.XSMALL,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
