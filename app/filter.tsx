@@ -117,12 +117,12 @@ function FilterScreenContent() {
       let articlesData: Article[] = [];
       try {
         if (type === 'author') {
-          articlesData = (await articlesService.getArticles(undefined, numericId)) ?? [];
+          articlesData = (await articlesService.getArticles({ authorId: numericId })) ?? [];
         } else if (type === 'category') {
-          articlesData = (await articlesService.getArticles(numericId, undefined)) ?? [];
+          articlesData = (await articlesService.getArticles({ categoryId: numericId })) ?? [];
         } else {
           if (numericId) {
-            articlesData = (await articlesService.getArticles(numericId, undefined)) ?? [];
+            articlesData = (await articlesService.getArticles({ categoryId: numericId })) ?? [];
           } else {
             throw new Error(`Invalid filter type: "${type}"`);
           }
