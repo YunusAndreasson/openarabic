@@ -31,7 +31,7 @@ export function useArticlesByDueWords(
       if (!userId) return Promise.resolve([]);
       return studyWordsFSRSService.getFSRSWords(userId, {
         onlyDue: true,
-        limit: 100, // Increased limit for better article matching
+        limit: 200, // Increased from 100 to support larger vocabularies
         forStats: false, // We need root data for matching
       });
     },

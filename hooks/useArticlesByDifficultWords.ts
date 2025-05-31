@@ -29,7 +29,7 @@ export function useArticlesByDifficultWords(
     queryKey: ['struggling-words', userId, 20], // Use consistent key with strugglingWords service
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
-      return strugglingWordsService.getStrugglingWords(userId, 20); // Get more words for better article matching
+      return strugglingWordsService.getStrugglingWords(userId, 50); // Increased from 20 to support larger vocabularies
     },
     enabled: !!userId,
     staleTime: 180000, // 3 minutes - struggling words change less frequently than due words

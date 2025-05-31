@@ -284,7 +284,7 @@ export const studyWordsFSRSService = {
       lapses: 0,
       review_count: 0,
       previous_interval: 0,
-      difficulty: 6.5,
+      difficulty: emptyCard.difficulty / 10.0, // Convert FSRS difficulty (1-10) to legacy scale (0-1)
       success_streak: 0,
       failure_streak: 0,
       fsrs_due: now.toISOString(),

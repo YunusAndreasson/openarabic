@@ -1,6 +1,5 @@
 import { supabase } from './supabase';
 import type { Article } from '../types/articles.types';
-import { DatabaseError } from '../types/error.types';
 import { handleError } from '../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../utils/typeMappers';
 
@@ -100,7 +99,7 @@ export const articlesService = {
       const {
         categoryId,
         authorId,
-        limit = 50,
+        limit = 100,
         offset = 0,
         minDifficulty,
         maxDifficulty,

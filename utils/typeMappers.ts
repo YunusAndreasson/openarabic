@@ -46,10 +46,8 @@ function safeGet<T>(
  */
 export function mapToStudyWord(item: DatabaseRecord): StudyWord {
   return {
-    sentence_word_id: safeGet(item, 'sentence_word_id', null),
-    sentence_word: safeGet(item, 'sentence_word', undefined),
     root_id: safeGet(item, 'root_id', 0, Number),
-    root: safeGet(item, 'root', undefined),
+    root: safeGet(item, 'root', null),
     user_id: safeGet(item, 'user_id', '', String),
 
     // Legacy fields
