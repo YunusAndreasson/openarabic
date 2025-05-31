@@ -88,7 +88,7 @@ function FilterScreenContent() {
         return null;
       }
     },
-    staleTime: 0,
+    staleTime: 86400000, // 24 hours - authors rarely change
     enabled: type === 'author' && !isNaN(numericId),
   });
   const { data: category } = useQuery({
@@ -114,20 +114,15 @@ function FilterScreenContent() {
       if (!numericId || isNaN(numericId)) {
         throw new Error(`Invalid ID provided: ${id}`);
       }
-      let articlesData: Article[] = [];
+
       try {
         if (type === 'author') {
-          articlesData = (await articlesService.getArticles({ authorId: numericId })) ?? [];
+          return await articlesService.getArticles({ authorId: numericId });
         } else if (type === 'category') {
-          articlesData = (await articlesService.getArticles({ categoryId: numericId })) ?? [];
+          return await articlesService.getArticles({ categoryId: numericId });
         } else {
-          if (numericId) {
-            articlesData = (await articlesService.getArticles({ categoryId: numericId })) ?? [];
-          } else {
-            throw new Error(`Invalid filter type: "${type}"`);
-          }
+          throw new Error(`Invalid filter type: "${type}"`);
         }
-        return articlesData;
       } catch (err) {
         throw new Error(err instanceof Error ? err.message : 'Failed to fetch articles');
       }
@@ -161,7 +156,7 @@ function FilterScreenContent() {
     }
     router.setParams({ headerTitle: title });
   }, [type, author?.name, category?.name]);
-  if (error && !isRefreshing && type !== 'category') {
+  if (error && !isRefreshing) {
     return (
       <ErrorState
         message={error instanceof Error ? error.message : 'Failed to load articles'}

@@ -152,8 +152,7 @@ export const articlesService = {
 
   // Optimized method for getting minimal article data (for dropdowns, etc.)
   async getArticlesMinimal(
-    categoryId?: number,
-    authorId?: number
+    options: Pick<GetArticlesOptions, 'categoryId' | 'authorId'> = {}
   ): Promise<
     Pick<
       Article,
@@ -161,6 +160,7 @@ export const articlesService = {
     >[]
   > {
     try {
+      const { categoryId, authorId } = options;
       let query = supabase.from('articles').select(MINIMAL_COLUMNS);
 
       if (categoryId) query = query.eq('category_id', categoryId);
@@ -184,8 +184,8 @@ export const articlesService = {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
         analyticsProperties: {
-          ...(categoryId !== undefined && { categoryId }),
-          ...(authorId !== undefined && { authorId }),
+          ...(options.categoryId !== undefined && { categoryId: options.categoryId }),
+          ...(options.authorId !== undefined && { authorId: options.authorId }),
         },
       });
       throw err;
@@ -399,8 +399,11 @@ export const articlesService = {
   },
 
   // New method for getting articles count (for pagination)
-  async getArticlesCount(categoryId?: number, authorId?: number): Promise<number> {
+  async getArticlesCount(
+    options: Pick<GetArticlesOptions, 'categoryId' | 'authorId'> = {}
+  ): Promise<number> {
     try {
+      const { categoryId, authorId } = options;
       let query = supabase.from('articles').select('id', { count: 'exact', head: true });
 
       if (categoryId) query = query.eq('category_id', categoryId);
@@ -426,8 +429,8 @@ export const articlesService = {
         {
           toastMessage: 'Failed to get articles count',
           analyticsProperties: {
-            ...(categoryId !== undefined && { categoryId }),
-            ...(authorId !== undefined && { authorId }),
+            ...(options.categoryId !== undefined && { categoryId: options.categoryId }),
+            ...(options.authorId !== undefined && { authorId: options.authorId }),
           },
         }
       );
