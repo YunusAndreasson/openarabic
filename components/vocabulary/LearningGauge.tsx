@@ -16,6 +16,8 @@ interface LearningGaugeProps {
   learningWords: number;
   totalWords: number;
   masteredWords: number;
+  hideTitle?: boolean;
+  onInfoPress?: () => void;
 }
 
 type GaugeLevel = 'optimal' | 'moderate' | 'heavy';
@@ -29,7 +31,14 @@ interface GaugeState {
 }
 
 export const LearningGauge = memo(
-  ({ dueWords, learningWords, totalWords, masteredWords }: LearningGaugeProps) => {
+  ({
+    dueWords,
+    learningWords,
+    totalWords,
+    masteredWords,
+    hideTitle = false,
+    onInfoPress,
+  }: LearningGaugeProps) => {
     const colors = useColors();
 
     // Modal state for recommendation info
@@ -44,7 +53,7 @@ export const LearningGauge = memo(
         return {
           level: 'heavy',
           action: 'Review First',
-          insight: `${dueWords} cards overdue - strengthen retention before expanding`,
+          insight: `You have ${dueWords} words to review. Focus on reviewing before adding new words to maintain strong retention.`,
           icon: 'refresh-circle',
           color: colors.error,
         };
@@ -54,19 +63,31 @@ export const LearningGauge = memo(
       if (dueWords > 5 || (reviewLoad > 0.1 && totalWords > 20)) {
         return {
           level: 'moderate',
-          action: 'Balance & Grow',
-          insight: `${dueWords} cards due - maintain intervals while adding new words`,
+          action: 'Review Then Add',
+          insight: `Complete your ${dueWords} reviews first, then you can safely add a few new words.`,
           icon: 'library',
           color: colors.warning,
         };
       }
 
       // OPTIMAL: Low review burden - perfect for learning
+      if (totalWords < 10) {
+        return {
+          level: 'optimal',
+          action: 'Add New Words',
+          insight: 'Perfect time to build your vocabulary! Add 5-10 new words to get started.',
+          icon: 'add-circle',
+          color: colors.success,
+        };
+      }
+
       return {
         level: 'optimal',
         action: 'Add New Words',
         insight:
-          totalWords < 10 ? 'Build your foundation deck' : 'Perfect time to expand vocabulary',
+          dueWords === 0
+            ? 'Excellent! No reviews due. You can safely add 3-5 new words.'
+            : `Only ${dueWords} review${dueWords === 1 ? '' : 's'} due. Great time to expand your vocabulary!`,
         icon: 'add-circle',
         color: colors.success,
       };
@@ -75,7 +96,11 @@ export const LearningGauge = memo(
     // Handle info press - show educational modal
     const handleInfoPress = () => {
       lightFeedback();
-      setModalVisible(true);
+      if (onInfoPress) {
+        onInfoPress();
+      } else {
+        setModalVisible(true);
+      }
     };
 
     const handleCloseModal = () => {
@@ -87,11 +112,13 @@ export const LearningGauge = memo(
         <BaseCard style={styles.gaugeCard} shadowSize="small" includePressAnimation={false}>
           <View style={styles.gaugeContent}>
             {/* Header with action as subtitle - single clear hierarchy */}
-            <CardHeader
-              title="Recommendation"
-              subtitle={gaugeState.action}
-              onInfoPress={handleInfoPress}
-            />
+            {!hideTitle && (
+              <CardHeader
+                title="Recommendation"
+                subtitle={gaugeState.action}
+                onInfoPress={handleInfoPress}
+              />
+            )}
 
             {/* Visual indicator and insight */}
             <View style={styles.recommendationContent}>
@@ -106,8 +133,10 @@ export const LearningGauge = memo(
           </View>
         </BaseCard>
 
-        {/* Educational Modal */}
-        <InfoModal visible={modalVisible} type="recommendation" onClose={handleCloseModal} />
+        {/* Educational Modal - only show if using internal modal */}
+        {!onInfoPress && (
+          <InfoModal visible={modalVisible} type="recommendation" onClose={handleCloseModal} />
+        )}
       </>
     );
   }

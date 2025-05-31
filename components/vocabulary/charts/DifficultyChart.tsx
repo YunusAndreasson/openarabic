@@ -20,6 +20,7 @@ import { useChartColors } from '../shared/chartColors';
 interface DifficultyChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
+  hideTitle?: boolean;
 }
 
 interface DifficultyBucket {
@@ -31,193 +32,199 @@ interface DifficultyBucket {
   emoji: string;
 }
 
-export const DifficultyChart = memo(({ studyWords = [], onInfoPress }: DifficultyChartProps) => {
-  const colors = useColors();
-  const chartColors = useChartColors();
+export const DifficultyChart = memo(
+  ({ studyWords = [], onInfoPress, hideTitle = false }: DifficultyChartProps) => {
+    const colors = useColors();
+    const chartColors = useChartColors();
 
-  // Calculate difficulty distribution
-  const difficultyData = useMemo(() => {
-    if (studyWords.length === 0) {
-      return {
-        buckets: [],
-        hasData: false,
-        insights: { averageDifficulty: 0, hardWords: 0, distribution: 'balanced' as const },
-      };
-    }
-
-    // Define difficulty buckets with FSRS-aligned thresholds (FSRS difficulty ranges ~5-10)
-    const buckets: DifficultyBucket[] = [
-      {
-        range: '< 6.5',
-        count: 0,
-        percentage: 0,
-        color: chartColors.difficulty.easy,
-        label: 'Easy',
-        emoji: '',
-      },
-      {
-        range: '6.5-8.0',
-        count: 0,
-        percentage: 0,
-        color: chartColors.difficulty.medium,
-        label: 'Medium',
-        emoji: '',
-      },
-      {
-        range: '> 8.0',
-        count: 0,
-        percentage: 0,
-        color: chartColors.difficulty.hard,
-        label: 'Hard',
-        emoji: '',
-      },
-    ];
-
-    let totalDifficulty = 0;
-    let hardWords = 0;
-
-    studyWords.forEach(word => {
-      const difficulty = word.fsrs_difficulty ?? 5.0; // Default to middle range
-      totalDifficulty += difficulty;
-
-      if (difficulty >= 8.0) {
-        hardWords++;
+    // Calculate difficulty distribution
+    const difficultyData = useMemo(() => {
+      if (studyWords.length === 0) {
+        return {
+          buckets: [],
+          hasData: false,
+          insights: { averageDifficulty: 0, hardWords: 0, distribution: 'balanced' as const },
+        };
       }
 
-      // Categorize into 3 buckets with proper FSRS thresholds
-      if (difficulty < 6.5) {
-        buckets[0]!.count++;
-      } else if (difficulty < 8.0) {
-        buckets[1]!.count++;
+      // Define difficulty buckets with FSRS-aligned thresholds (FSRS difficulty ranges ~5-10)
+      const buckets: DifficultyBucket[] = [
+        {
+          range: '< 6.5',
+          count: 0,
+          percentage: 0,
+          color: chartColors.difficulty.easy,
+          label: 'Easy',
+          emoji: '',
+        },
+        {
+          range: '6.5-8.0',
+          count: 0,
+          percentage: 0,
+          color: chartColors.difficulty.medium,
+          label: 'Medium',
+          emoji: '',
+        },
+        {
+          range: '> 8.0',
+          count: 0,
+          percentage: 0,
+          color: chartColors.difficulty.hard,
+          label: 'Hard',
+          emoji: '',
+        },
+      ];
+
+      let totalDifficulty = 0;
+      let hardWords = 0;
+
+      studyWords.forEach(word => {
+        const difficulty = word.fsrs_difficulty ?? 5.0; // Default to middle range
+        totalDifficulty += difficulty;
+
+        if (difficulty >= 8.0) {
+          hardWords++;
+        }
+
+        // Categorize into 3 buckets with proper FSRS thresholds
+        if (difficulty < 6.5) {
+          buckets[0]!.count++;
+        } else if (difficulty < 8.0) {
+          buckets[1]!.count++;
+        } else {
+          buckets[2]!.count++;
+        }
+      });
+
+      // Calculate percentages
+      buckets.forEach(bucket => {
+        bucket.percentage = (bucket.count / studyWords.length) * 100;
+      });
+
+      const averageDifficulty = totalDifficulty / studyWords.length;
+
+      // Determine distribution type
+      const easyWords = buckets[0]?.count ?? 0;
+      const hardWordsCount = buckets[2]?.count ?? 0;
+
+      let distribution: 'easy' | 'balanced' | 'challenging';
+      if (easyWords > studyWords.length * 0.6) {
+        distribution = 'easy';
+      } else if (hardWordsCount > studyWords.length * 0.4) {
+        distribution = 'challenging';
       } else {
-        buckets[2]!.count++;
+        distribution = 'balanced';
       }
-    });
 
-    // Calculate percentages
-    buckets.forEach(bucket => {
-      bucket.percentage = (bucket.count / studyWords.length) * 100;
-    });
+      return {
+        buckets,
+        hasData: true,
+        insights: {
+          averageDifficulty: Math.round(averageDifficulty * 100) / 100,
+          hardWords,
+          distribution,
+        },
+      };
+    }, [studyWords, chartColors]);
 
-    const averageDifficulty = totalDifficulty / studyWords.length;
+    // Generate subtitle based on difficulty distribution
+    const subtitle = useMemo(() => {
+      if (!difficultyData.hasData) {
+        return 'Track word difficulty levels';
+      }
 
-    // Determine distribution type
-    const easyWords = buckets[0]?.count ?? 0;
-    const hardWordsCount = buckets[2]?.count ?? 0;
+      const { distribution } = difficultyData.insights;
 
-    let distribution: 'easy' | 'balanced' | 'challenging';
-    if (easyWords > studyWords.length * 0.6) {
-      distribution = 'easy';
-    } else if (hardWordsCount > studyWords.length * 0.4) {
-      distribution = 'challenging';
-    } else {
-      distribution = 'balanced';
-    }
+      if (distribution === 'easy') {
+        return 'Mostly easy - try harder content';
+      }
+      if (distribution === 'challenging') {
+        return 'Many hard words - focus on review';
+      }
+      return 'Balanced difficulty spread';
+    }, [difficultyData.insights, difficultyData.hasData]);
 
-    return {
-      buckets,
-      hasData: true,
-      insights: {
-        averageDifficulty: Math.round(averageDifficulty * 100) / 100,
-        hardWords,
-        distribution,
-      },
-    };
-  }, [studyWords, chartColors]);
-
-  // Generate subtitle based on difficulty distribution
-  const subtitle = useMemo(() => {
     if (!difficultyData.hasData) {
-      return 'Track word difficulty levels';
+      return (
+        <BaseCard style={styles.difficultyCard} shadowSize="small" includePressAnimation={false}>
+          <View style={styles.difficultyContent}>
+            {!hideTitle && (
+              <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
+            )}
+          </View>
+        </BaseCard>
+      );
     }
 
-    const { distribution } = difficultyData.insights;
-
-    if (distribution === 'easy') {
-      return 'Mostly easy - try harder content';
-    }
-    if (distribution === 'challenging') {
-      return 'Many hard words - focus on review';
-    }
-    return 'Balanced difficulty spread';
-  }, [difficultyData.insights, difficultyData.hasData]);
-
-  if (!difficultyData.hasData) {
     return (
       <BaseCard style={styles.difficultyCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.difficultyContent}>
-          <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
+          {!hideTitle && (
+            <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
+          )}
+
+          <StatsRow
+            leftStat={{
+              value: difficultyData.insights.averageDifficulty.toFixed(1),
+              label: 'average',
+              color: chartColors.getDifficultyColor(difficultyData.insights.averageDifficulty),
+            }}
+            rightStat={{
+              value: difficultyData.insights.hardWords,
+              label: 'hard',
+              color:
+                difficultyData.insights.hardWords > 10
+                  ? chartColors.difficulty.hard
+                  : colors.textSecondary,
+            }}
+          />
+
+          {/* Enhanced Difficulty Distribution Chart */}
+          <View style={styles.graphContainer}>
+            <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
+              {/* Difficulty bars */}
+              <Group>
+                {difficultyData.buckets.map((bucket, index) => {
+                  const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.8;
+                  const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.2;
+                  const x = index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
+                  const barHeight = Math.max(
+                    4,
+                    (bucket.percentage / 100) * (GRAPH_HEIGHT_LARGE - 20)
+                  );
+
+                  return (
+                    <Group key={`difficulty-bar-${index}`}>
+                      {/* Main bar */}
+                      <Rect
+                        x={x}
+                        y={GRAPH_HEIGHT_LARGE - barHeight - 10}
+                        width={barWidth}
+                        height={barHeight}
+                        color={bucket.color}
+                      />
+
+                      {/* Enhanced highlight with gradient effect */}
+                      <Rect
+                        x={x}
+                        y={GRAPH_HEIGHT_LARGE - barHeight - 10}
+                        width={barWidth}
+                        height={Math.min(barHeight / 3, 8)}
+                        color={chartColors.withOpacity(colors.background, 0.25)}
+                      />
+                    </Group>
+                  );
+                })}
+              </Group>
+            </Canvas>
+          </View>
+
+          {/* Remove redundant legend - chart is self-evident */}
         </View>
       </BaseCard>
     );
   }
-
-  return (
-    <BaseCard style={styles.difficultyCard} shadowSize="small" includePressAnimation={false}>
-      <View style={styles.difficultyContent}>
-        <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
-
-        <StatsRow
-          leftStat={{
-            value: difficultyData.insights.averageDifficulty.toFixed(1),
-            label: 'average',
-            color: chartColors.getDifficultyColor(difficultyData.insights.averageDifficulty),
-          }}
-          rightStat={{
-            value: difficultyData.insights.hardWords,
-            label: 'hard',
-            color:
-              difficultyData.insights.hardWords > 10
-                ? chartColors.difficulty.hard
-                : colors.textSecondary,
-          }}
-        />
-
-        {/* Enhanced Difficulty Distribution Chart */}
-        <View style={styles.graphContainer}>
-          <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-            {/* Difficulty bars */}
-            <Group>
-              {difficultyData.buckets.map((bucket, index) => {
-                const barWidth = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.8;
-                const barSpacing = (GRAPH_WIDTH / difficultyData.buckets.length) * 0.2;
-                const x = index * (GRAPH_WIDTH / difficultyData.buckets.length) + barSpacing / 2;
-                const barHeight = Math.max(
-                  4,
-                  (bucket.percentage / 100) * (GRAPH_HEIGHT_LARGE - 20)
-                );
-
-                return (
-                  <Group key={`difficulty-bar-${index}`}>
-                    {/* Main bar */}
-                    <Rect
-                      x={x}
-                      y={GRAPH_HEIGHT_LARGE - barHeight - 10}
-                      width={barWidth}
-                      height={barHeight}
-                      color={bucket.color}
-                    />
-
-                    {/* Enhanced highlight with gradient effect */}
-                    <Rect
-                      x={x}
-                      y={GRAPH_HEIGHT_LARGE - barHeight - 10}
-                      width={barWidth}
-                      height={Math.min(barHeight / 3, 8)}
-                      color={chartColors.withOpacity(colors.background, 0.25)}
-                    />
-                  </Group>
-                );
-              })}
-            </Group>
-          </Canvas>
-        </View>
-
-        {/* Remove redundant legend - chart is self-evident */}
-      </View>
-    </BaseCard>
-  );
-});
+);
 
 DifficultyChart.displayName = 'DifficultyChart';
 

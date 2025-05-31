@@ -1,8 +1,9 @@
 import React, { memo, useMemo, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
+import { ThemedText } from '@/components/ThemedText';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
@@ -38,6 +39,45 @@ interface StatCardConfig {
   category: StatCategory;
 }
 
+// Section Header Component
+interface SectionHeaderProps {
+  title: string;
+  subtitle?: string;
+  onInfoPress?: () => void;
+  isFirstSection?: boolean;
+}
+
+const SectionHeader = memo(
+  ({ title, subtitle, onInfoPress, isFirstSection = false }: SectionHeaderProps) => {
+    const colors = useColors();
+
+    return (
+      <View style={[styles.sectionHeader, isFirstSection && styles.firstSectionHeader]}>
+        <View style={styles.titleGroup}>
+          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+            {title}
+          </ThemedText>
+          {subtitle && (
+            <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
+              {subtitle}
+            </ThemedText>
+          )}
+        </View>
+        {onInfoPress && (
+          <TouchableOpacity
+            onPress={onInfoPress}
+            style={[styles.infoIcon, { backgroundColor: colors.textOverlay }]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="information-outline" size={18} color={colors.textTertiary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
+);
+SectionHeader.displayName = 'SectionHeader';
+
 export const VocabularyStatCards = memo(
   ({
     masteredWords = 0,
@@ -51,17 +91,10 @@ export const VocabularyStatCards = memo(
     const [modalType, setModalType] = useState<InfoModalType | null>(null);
 
     // Get optimized chart data from database views
-    const {
-      userStats,
-      masteryProgress,
-      efficiencyProgress,
-      retrievabilityForecast,
-      difficultyDistribution,
-      isLoadingAny,
-    } = useVocabularyChartData(user?.id);
+    const { userStats } = useVocabularyChartData(user?.id);
 
     // Get streak data
-    const { currentStreak, longestStreak } = useStreakData(user?.id);
+    const { currentStreak, longestStreak, lastSevenDaysActivity } = useStreakData(user?.id);
 
     // Validate input data with safe defaults
     const validatedInput = useMemo(
@@ -192,56 +225,110 @@ export const VocabularyStatCards = memo(
 
     return (
       <View style={styles.container}>
-        {/* Learning Gauge - Primary guidance */}
-        <LearningGauge
-          dueWords={validatedData.due}
-          learningWords={validatedData.learning}
-          totalWords={validatedData.total}
-          masteredWords={validatedData.mastered}
-        />
-
-        {/* Stat Cards - Detailed breakdown */}
-        <View style={styles.statsGrid}>
-          {statCards.map(card => (
-            <StatCard
-              key={`vocab-stat-card-${card.category}`}
-              value={card.value}
-              label={card.label}
-              icon={card.icon}
-              iconColor={card.iconColor}
-              bgColor={card.bgColor}
-              borderColor={card.borderColor}
-              category={card.category}
-              onPress={onStatPress}
-            />
-          ))}
+        {/* Recommendation Section */}
+        <View style={styles.sectionWrapper}>
+          <SectionHeader
+            title="Recommendation"
+            subtitle="Smart guidance for optimal learning"
+            onInfoPress={() => handleInfoPress('recommendation')}
+            isFirstSection={true}
+          />
+          <LearningGauge
+            dueWords={validatedData.due}
+            learningWords={validatedData.learning}
+            totalWords={validatedData.total}
+            masteredWords={validatedData.mastered}
+            hideTitle={true}
+            onInfoPress={() => handleInfoPress('recommendation')}
+          />
         </View>
 
-        {/* Streak Insights */}
-        <StreakCard
-          currentStreak={currentStreak}
-          longestStreak={longestStreak}
-          lastSevenDaysActivity={[]} // TODO: Get from streak data
-          onInfoPress={() => handleInfoPress('streak')}
-        />
+        {/* Progress Section */}
+        <View style={styles.sectionWrapper}>
+          <SectionHeader title="Progress" subtitle="Current status of your vocabulary learning" />
+          <View style={styles.statsGrid}>
+            {statCards.map(card => (
+              <StatCard
+                key={`vocab-stat-card-${card.category}`}
+                value={card.value}
+                label={card.label}
+                icon={card.icon}
+                iconColor={card.iconColor}
+                bgColor={card.bgColor}
+                borderColor={card.borderColor}
+                category={card.category}
+                onPress={onStatPress}
+              />
+            ))}
+          </View>
+        </View>
 
-        {/* Chart Grid */}
-        <View style={styles.chartGrid}>
+        {/* Consistency Section */}
+        <View style={styles.sectionWrapper}>
+          <SectionHeader
+            title="Consistency"
+            subtitle="Daily practice habits and learning streaks"
+            onInfoPress={() => handleInfoPress('streak')}
+          />
+          <StreakCard
+            currentStreak={currentStreak}
+            longestStreak={longestStreak}
+            lastSevenDaysActivity={lastSevenDaysActivity}
+            onInfoPress={() => handleInfoPress('streak')}
+            hideTitle={true}
+          />
+        </View>
+
+        {/* Individual Chart Sections */}
+        <View style={styles.chartSection}>
+          <SectionHeader
+            title="Mastery"
+            subtitle="How well you know each word over time"
+            onInfoPress={() => handleInfoPress('mastery')}
+          />
           <MasteryChart
             studyWords={validatedInput.studyWords}
             onInfoPress={() => handleInfoPress('mastery')}
+            hideTitle={true}
+          />
+        </View>
+
+        <View style={styles.chartSection}>
+          <SectionHeader
+            title="Efficiency"
+            subtitle="How quickly you learn new vocabulary"
+            onInfoPress={() => handleInfoPress('efficiency')}
           />
           <EfficiencyChart
             studyWords={validatedInput.studyWords}
             onInfoPress={() => handleInfoPress('efficiency')}
+            hideTitle={true}
+          />
+        </View>
+
+        <View style={styles.chartSection}>
+          <SectionHeader
+            title="Retention"
+            subtitle="How long you remember words without practice"
+            onInfoPress={() => handleInfoPress('retrievability')}
           />
           <RetrievabilityChart
             studyWords={validatedInput.studyWords}
             onInfoPress={() => handleInfoPress('retrievability')}
+            hideTitle={true}
+          />
+        </View>
+
+        <View style={styles.chartSection}>
+          <SectionHeader
+            title="Difficulty"
+            subtitle="Which words are hardest for you to remember"
+            onInfoPress={() => handleInfoPress('difficulty')}
           />
           <DifficultyChart
             studyWords={validatedInput.studyWords}
             onInfoPress={() => handleInfoPress('difficulty')}
+            hideTitle={true}
           />
         </View>
 
@@ -267,5 +354,44 @@ const styles = StyleSheet.create({
   },
   chartGrid: {
     gap: LAYOUT.SPACING.MEDIUM,
+  },
+  sectionWrapper: {
+    // Remove gap, let SectionHeader handle spacing
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: LAYOUT.SPACING.SMALL,
+    marginTop: LAYOUT.SPACING.XXLARGE,
+  },
+  firstSectionHeader: {
+    marginTop: LAYOUT.SPACING.LARGE,
+  },
+  titleGroup: {
+    flex: 1,
+    marginRight: LAYOUT.SPACING.SMALL,
+  },
+  sectionTitle: {
+    marginBottom: 0,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
+  },
+  sectionSubtitle: {
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
+    marginTop: LAYOUT.SPACING.TINY,
+  },
+  infoIcon: {
+    padding: LAYOUT.SPACING.SMALL,
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 16,
+  },
+  chartSection: {
+    // Individual chart sections get standard spacing
+  },
+  streakCardContainer: {
+    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });

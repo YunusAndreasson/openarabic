@@ -36,10 +36,11 @@ import { useChartColors } from '../shared/chartColors';
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
+  hideTitle?: boolean;
 }
 
 export const RetrievabilityChart = memo(
-  ({ studyWords = [], onInfoPress }: RetrievabilityChartProps) => {
+  ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
     const colors = useColors();
     const chartColors = useChartColors();
 
@@ -209,11 +210,13 @@ export const RetrievabilityChart = memo(
           includePressAnimation={false}
         >
           <View style={styles.retrievabilityContent}>
-            <CardHeader
-              title="Retention"
-              subtitle="Forecast of vocabulary retention over time"
-              onInfoPress={onInfoPress}
-            />
+            {!hideTitle && (
+              <CardHeader
+                title="Retention"
+                subtitle="Forecast of vocabulary retention over time"
+                onInfoPress={onInfoPress}
+              />
+            )}
           </View>
         </BaseCard>
       );
@@ -222,7 +225,9 @@ export const RetrievabilityChart = memo(
     return (
       <BaseCard style={styles.retrievabilityCard} shadowSize="small" includePressAnimation={false}>
         <View style={styles.retrievabilityContent}>
-          <CardHeader title="Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
+          {!hideTitle && (
+            <CardHeader title="Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
+          )}
 
           <StatsRow
             leftStat={{

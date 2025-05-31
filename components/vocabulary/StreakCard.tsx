@@ -17,6 +17,7 @@ interface StreakCardProps {
     dayName: string;
   }[];
   onInfoPress: () => void;
+  hideTitle?: boolean;
 }
 
 export const StreakCard = memo(
@@ -25,6 +26,7 @@ export const StreakCard = memo(
     longestStreak = 0,
     lastSevenDaysActivity = [],
     onInfoPress,
+    hideTitle = false,
   }: StreakCardProps) => {
     const colors = useColors();
 
@@ -86,7 +88,9 @@ export const StreakCard = memo(
     return (
       <BaseCard style={styles.card} includePressAnimation={false} shadowSize="small">
         <View style={[styles.container, { padding: LAYOUT.CARD.PADDING.MEDIUM }]}>
-          <CardHeader title="Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
+          {!hideTitle && (
+            <CardHeader title="Streak" subtitle={subtitle} onInfoPress={onInfoPress} />
+          )}
 
           <View style={styles.content}>
             {/* Timeline visualization using React Native Views instead of Skia Canvas */}
