@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { Colors } from '@/constants/Colors';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -53,7 +54,7 @@ export class NotificationService {
           name: 'Study Reminders',
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#2C312B',
+          lightColor: Colors.dark.audioControlBg,
           sound: 'default',
           enableVibrate: true,
         });
