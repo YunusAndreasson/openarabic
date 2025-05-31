@@ -50,7 +50,7 @@ export function setupSupabaseAppStateListener(): () => void {
         await supabase.auth.initialize();
         supabase.auth.startAutoRefresh();
       } catch (err) {
-        handleError(err instanceof Error ? err : new Error(String(err)), {
+        await handleError(err instanceof Error ? err : new Error(String(err)), {
           analyticsEventName: 'Auth_Init_Error',
           sentrySeverity: 'error',
           showToast: false,
@@ -111,7 +111,7 @@ export async function checkAuthentication(expectedUserId?: string): Promise<{
       !data.session || !data.session.user ? 'User must be authenticated' : 'User ID mismatch';
 
     const error_ = new Error(errorMessage);
-    handleError(error_, {
+    await handleError(error_, {
       analyticsEventName:
         !data.session || !data.session.user ? 'Auth_Required' : 'Auth_User_Mismatch',
       sentrySeverity: 'info',

@@ -71,7 +71,7 @@ export const readingListService = {
       .match({ user_id: userId });
 
     if (error) {
-      handleError(error, errorConfig.readingList.load);
+      await handleError(error, errorConfig.readingList.load);
       throw error;
     }
 
@@ -95,7 +95,7 @@ export const readingListService = {
       .single();
 
     if (checkError && checkError.code !== 'PGRST116') {
-      handleError(checkError);
+      await handleError(checkError);
       throw checkError;
     }
 
@@ -111,7 +111,7 @@ export const readingListService = {
     });
 
     if (error) {
-      handleError(error, {
+      await handleError(error, {
         ...errorConfig.readingList.add,
         analyticsProperties: { articleId },
       });
@@ -130,7 +130,7 @@ export const readingListService = {
       .match({ user_id: userId, article_id: articleId });
 
     if (error) {
-      handleError(error, {
+      await handleError(error, {
         ...errorConfig.readingList.remove,
         analyticsProperties: { articleId },
       });
@@ -150,7 +150,7 @@ export const readingListService = {
       .single();
 
     if (error && error.code !== 'PGRST116') {
-      handleError(error, {
+      await handleError(error, {
         ...errorConfig.readingList.check,
         analyticsProperties: { articleId },
       });
@@ -181,7 +181,7 @@ export const readingListService = {
       .order('added_at', { ascending: false });
 
     if (error) {
-      handleError(error, errorConfig.readingList.load);
+      await handleError(error, errorConfig.readingList.load);
       throw error;
     }
 

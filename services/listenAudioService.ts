@@ -66,7 +66,7 @@ export const listenAudioService = {
       // Convert to tracks
       return this.generateVocabularyTracks(selectedWords);
     } catch (error) {
-      handleError(error instanceof Error ? error : new Error(String(error)), {
+      await handleError(error instanceof Error ? error : new Error(String(error)), {
         toastMessage: 'Failed to generate vocabulary audio tracks',
         analyticsEventName: 'Listen_Audio_Generation_Error',
         sentrySeverity: 'error',
