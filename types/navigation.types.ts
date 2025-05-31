@@ -1,12 +1,3 @@
-/**
- * Type for filter parameters
- */
-export interface FilterParams {
-  categoryId?: number;
-  authorId?: number;
-  difficulty?: number;
-  searchQuery?: string;
-}
 
 /**
  * Type for review parameters
@@ -32,7 +23,6 @@ export interface WordListParams {
  */
 export type RouteParams = {
   '/article/[id]': { id: string | number };
-  '/filter': FilterParams;
   '/review': ReviewParams;
   '/listen': Record<string, never>;
   '/wordList': WordListParams;
@@ -76,7 +66,6 @@ export function isRoutePath(path: string): path is RoutePath {
 // Route parameter definitions for type checking
 const routeParams: Record<RoutePath, true> = {
   '/article/[id]': true,
-  '/filter': true,
   '/review': true,
   '/listen': true,
   '/wordList': true,

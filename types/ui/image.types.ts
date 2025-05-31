@@ -64,20 +64,6 @@ export interface EnhancedImageProps extends BaseStyleProps, BaseOptionalPressabl
   /** Loading priority */
   priority?: 'low' | 'normal' | 'high';
 
-  /** Original width of the image in pixels (for responsive sizing) */
-  originalWidth?: number;
-
-  /** Original height of the image in pixels (for responsive sizing) */
-  originalHeight?: number;
-
-  /** Percentage of screen width the container takes (0-1) */
-  containerWidthPercent?: number;
-
-  /** Whether the image is currently visible in the viewport */
-  isVisible?: boolean;
-
-  /** Distance from viewport in pixels (for priority calculation) */
-  distanceFromViewport?: number;
 
   /** Whether to prefetch this image before it's displayed */
   prefetch?: boolean;
