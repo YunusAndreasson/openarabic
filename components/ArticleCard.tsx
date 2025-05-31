@@ -56,7 +56,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
       >
         <View style={styles.cardContent}>
           <View style={styles.textContent}>
-            <ThemedText type="bodyBold" style={styles.titleText}>
+            <ThemedText type="body" weight="bold" style={styles.titleText}>
               {title}
             </ThemedText>
             <View style={styles.metaRow}>

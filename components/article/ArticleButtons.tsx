@@ -22,7 +22,7 @@ interface ArticleButtonsProps {
   englishButtonStyle?: AnimatedStyleProp<ViewStyle>;
   playButtonStyle?: AnimatedStyleProp<ViewStyle>;
   colors: ThemeColors;
-  user: any;
+  user: { id: string } | null;
   isDarkMode: boolean;
 }
 
@@ -121,7 +121,13 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
 
   const shadowColorStyle = Platform.OS === 'ios' ? { shadowColor: colors.shadow } : {};
 
-  const IconWithShadow = ({ name, size }: { name: any; size: number }) => (
+  const IconWithShadow = ({
+    name,
+    size,
+  }: {
+    name: keyof typeof Ionicons.glyphMap;
+    size: number;
+  }) => (
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       {/* Shadow layer */}
       <Ionicons
@@ -139,7 +145,7 @@ export const ArticleButtons: React.FC<ArticleButtonsProps> = ({
     </View>
   );
 
-  const ButtonWrapper = ({ children, style }: { children: React.ReactNode; style?: any }) => (
+  const ButtonWrapper = ({ children, style }: { children: React.ReactNode; style?: ViewStyle }) => (
     <View style={[style, blurButtonStyle, styles.buttonShadow, shadowColorStyle]}>
       <BlurView
         intensity={isDarkMode ? 35 : 25}

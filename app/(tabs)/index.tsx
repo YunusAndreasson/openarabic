@@ -40,6 +40,8 @@ import {
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
+import { handleError } from '@/utils/errorHandling';
+import { studyWordsFSRSService, FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 
 import ErrorState from '../../components/ErrorState';
 
@@ -81,8 +83,8 @@ export default function ArticlesScreen(): JSX.Element {
   } = useQuery({
     queryKey: ['articles'],
     queryFn: () => articlesService.getArticles(),
-    staleTime: 300000,
-    gcTime: 600000,
+    staleTime: 3600000, // 1 hour - articles update max once a day
+    gcTime: 7200000, // 2 hours
     retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -95,16 +97,19 @@ export default function ArticlesScreen(): JSX.Element {
     enabled: !!user?.id,
   });
 
-  // Check if user has any study words at all
+  // Check if user has any study words at all - use optimized query
   const { data: allStudyWords = [] } = useQuery({
-    queryKey: ['studyWords', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { studyWordsFSRSService } = await import('@/services/studyWordsFSRS');
-      return studyWordsFSRSService.getFSRSWords(user.id);
+    queryKey: FSRS_QUERY_KEYS.all(user?.id || ''),
+    queryFn: () => {
+      if (!user?.id) return Promise.resolve([]);
+      return studyWordsFSRSService.getFSRSWords(user.id, {
+        forStats: true, // Only need basic stats, not full data
+        limit: 1, // Just need to know if any exist
+      });
     },
     enabled: !!user?.id,
-    staleTime: 300000,
+    staleTime: 180000, // 3 minutes
+    gcTime: 600000, // 10 minutes
   });
 
   const hasAnyStudyWords = allStudyWords.length > 0;
@@ -118,8 +123,8 @@ export default function ArticlesScreen(): JSX.Element {
   const { data: categoriesData = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoriesService.getCategories(),
-    staleTime: 1800000,
-    gcTime: 3600000,
+    staleTime: 86400000, // 24 hours - categories never change
+    gcTime: 172800000, // 48 hours
     retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -128,8 +133,8 @@ export default function ArticlesScreen(): JSX.Element {
   const { data: authors = [] } = useQuery({
     queryKey: ['authors'],
     queryFn: () => authorsService.getAuthors(),
-    staleTime: 1800000,
-    gcTime: 3600000,
+    staleTime: 86400000, // 24 hours - authors never change
+    gcTime: 172800000, // 48 hours
     retry: 3,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -175,40 +180,37 @@ export default function ArticlesScreen(): JSX.Element {
   }, []);
 
   const handleRefresh = useCallback(async () => {
-    if (isFetching) return;
+    if (isRefreshing) return;
 
-    mediumFeedback();
     setIsRefreshing(true);
+    mediumFeedback();
 
     try {
-      // Force a new daily pick on refresh
-      if (articlesData.length > 0) {
-        const freshDailyPick = getFreshDailyPickArticle(articlesData);
-        if (freshDailyPick?.id) {
-          const today = new Date().toISOString().split('T')[0];
-          if (today) {
-            dispatch(setDailyPick({ articleId: Number(freshDailyPick.id), date: today }));
-          }
-        }
+      // Invalidate only the queries that need refreshing
+      const queriesToInvalidate: (string | readonly string[])[] = [['articles'], ['categories']];
+
+      if (user?.id) {
+        queriesToInvalidate.push(
+          ['readingList', user.id],
+          FSRS_QUERY_KEYS.due(user.id),
+          FSRS_QUERY_KEYS.all(user.id),
+          ['struggling-words', user.id]
+        );
       }
 
-      await queryClient.invalidateQueries({
-        predicate: query => {
-          const key = query.queryKey[0];
-          return (
-            key === 'articles' ||
-            key === 'categories' ||
-            key === 'authors' ||
-            key === 'struggling-words'
-          );
-        },
-      });
+      await Promise.all(
+        queriesToInvalidate.map(queryKey =>
+          queryClient.invalidateQueries({
+            queryKey: Array.isArray(queryKey) ? [...queryKey] : [queryKey],
+          })
+        )
+      );
+    } catch (error) {
+      handleError(error instanceof Error ? error : new Error('Refresh failed'));
     } finally {
-      refreshTimeoutRef.current = setTimeout(() => {
-        setIsRefreshing(false);
-      }, 300);
+      setIsRefreshing(false);
     }
-  }, [queryClient, isFetching, articlesData, dispatch]);
+  }, [isRefreshing, queryClient, user?.id]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {

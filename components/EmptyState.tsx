@@ -73,18 +73,14 @@ const EmptyState = memo(
           )}
 
           <View style={styles.textContent}>
-            <ThemedText
-              type="heading2"
-              align="center"
-              accessibilityRole="header"
-              style={styles.title}
-            >
+            <ThemedText type="body" weight="bold" style={styles.title} align="center">
               {title}
             </ThemedText>
 
             {description && (
               <ThemedText
-                type="bodyBold"
+                type="body"
+                weight="bold"
                 variant="secondary"
                 align="center"
                 style={styles.description}

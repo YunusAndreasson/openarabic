@@ -63,17 +63,6 @@ export default function VocabularyScreen(): JSX.Element {
   // Use the vocabulary stats hook for stats calculations
   const { stats, validStudyWords } = useVocabularyStats(studyWords ?? [], dueWordsData ?? []);
 
-  // Combine query invalidation into a single function
-  const invalidateVocabularyQueries = useCallback(async () => {
-    if (!user?.id) return;
-    await queryClient.invalidateQueries({
-      predicate: query => {
-        const key = query.queryKey[0];
-        return key === FSRS_QUERY_KEYS.due(user.id)[0] || key === FSRS_QUERY_KEYS.all(user.id)[0];
-      },
-    });
-  }, [user?.id, queryClient]);
-
   // Use single screen focus refresh with optimized invalidation
   useScreenFocusRefresh(
     queryClient,
@@ -83,52 +72,49 @@ export default function VocabularyScreen(): JSX.Element {
     true // Skip initial focus
   );
 
-  // Handler for pull-to-refresh with optimized invalidation
-  const handleRefresh = useCallback(async () => {
+  // Handler for pull-to-refresh
+  const handleRefresh = async () => {
     if (!user || isFetching) return;
 
     mediumFeedback();
     setIsRefreshing(true);
     try {
-      await invalidateVocabularyQueries();
+      await queryClient.invalidateQueries({
+        predicate: query => {
+          const key = query.queryKey[0];
+          return key === FSRS_QUERY_KEYS.due(user.id)[0] || key === FSRS_QUERY_KEYS.all(user.id)[0];
+        },
+      });
     } finally {
       setIsRefreshing(false);
     }
-  }, [user, isFetching, invalidateVocabularyQueries]);
+  };
 
-  // Check if data is already in cache to optimize loading behavior
-  const isDataCached = useMemo(() => {
-    return !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
-  }, [user?.id, queryClient]);
-
-  // Handle starting a review with optimized invalidation
-  const handleStartReview = useCallback(() => {
+  // Handle starting a review
+  const handleStartReview = () => {
     if (!user) return;
     navigateTo({
       pathname: '/review',
       params: { fromRemember: 'true' },
     });
-  }, [user, navigateTo]);
+  };
 
   // Handle starting a listen session
-  const handleStartListen = useCallback(() => {
+  const handleStartListen = () => {
     if (!user) return;
     navigateTo({
       pathname: '/listen',
       params: { fromRemember: 'true' },
     });
-  }, [user, navigateTo]);
+  };
 
-  // Handle stat press events with proper typing
-  const handleStatPress = useCallback(
-    (category: StatCategory) => {
-      navigateTo({
-        pathname: '/wordList',
-        params: { category },
-      });
-    },
-    [navigateTo]
-  );
+  // Handle stat press events
+  const handleStatPress = (category: StatCategory) => {
+    navigateTo({
+      pathname: '/wordList',
+      params: { category },
+    });
+  };
 
   // Show error message if there was an error loading data
   if (error) {
@@ -139,10 +125,11 @@ export default function VocabularyScreen(): JSX.Element {
     );
   }
 
-  // Show subtle loading indicator when fetching data
+  // Check if data is cached and show loading indicator
+  const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
   const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
 
-  // Main content with fadeInStyle applied to match other tabs
+  // Main content
   return (
     <ThemedView
       style={styles.container}

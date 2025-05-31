@@ -64,15 +64,31 @@ SplashScreen.setOptions({
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 60000,
-      gcTime: 300000,
-      refetchOnMount: true,
+      staleTime: 300000, // 5 minutes default (for general data)
+      gcTime: 600000, // 10 minutes default
+      refetchOnMount: 'always', // Always refetch on mount for fresh data
       refetchOnReconnect: true,
-      retry: 3,
+      refetchOnWindowFocus: false, // Disable for mobile
+      retry: (failureCount, error) => {
+        // Don't retry on 4xx errors (client errors)
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = error.status as number;
+          if (status >= 400 && status < 500) return false;
+        }
+        return failureCount < 3;
+      },
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
     mutations: {
-      retry: 3,
-      gcTime: 0,
+      retry: (failureCount, error) => {
+        // Don't retry mutations on client errors
+        if (error && typeof error === 'object' && 'status' in error) {
+          const status = error.status as number;
+          if (status >= 400 && status < 500) return false;
+        }
+        return failureCount < 2;
+      },
+      gcTime: 0, // Don't cache mutation results
     },
   },
 });

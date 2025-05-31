@@ -1,12 +1,10 @@
-import { JSX, memo, useState } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { JSX, memo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import Pill from '@/components/Pill';
 import SectionTitle from '@/components/SectionTitle';
 import { LAYOUT } from '@/constants/layout';
 import { capitalizeFirstLetter } from '@/utils/stringUtils';
-import { ArticleCard } from '@/components/ArticleCard';
 import BaseCard from '@/components/BaseCard';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
@@ -14,9 +12,6 @@ import { useColors } from '@/hooks/useColors';
 const styles = StyleSheet.create({
   filterSectionContainer: {
     // Removed margins - SectionTitle handles all section spacing
-  },
-  horizontalList: {
-    paddingRight: LAYOUT.SPACING.MEDIUM,
   },
 });
 
@@ -35,26 +30,11 @@ interface FilterSectionProps {
 const CompactNavCard = memo(
   ({ label, count, onPress }: { label: string; count?: number; onPress: () => void }) => {
     const colors = useColors();
-    const [pressed, setPressed] = useState(false);
     return (
       <View style={compactCardStyles.cardContainer}>
-        <BaseCard
-          onPress={onPress}
-          style={compactCardStyles.card}
-          shadowSize="small"
-          // @ts-ignore
-          onPressIn={() => setPressed(true)}
-          onPressOut={() => setPressed(false)}
-        >
+        <BaseCard onPress={onPress} style={compactCardStyles.card} shadowSize="small">
           <View style={compactCardStyles.row}>
-            <ThemedText
-              type="bodyBold"
-              numberOfLines={1}
-              style={[
-                compactCardStyles.label,
-                { color: pressed ? colors.background : colors.text },
-              ]}
-            >
+            <ThemedText type="body" weight="bold" numberOfLines={1} style={compactCardStyles.label}>
               {label}
             </ThemedText>
             {count !== undefined && (
@@ -71,7 +51,7 @@ const CompactNavCard = memo(
             <Ionicons
               name="chevron-forward-outline"
               size={20}
-              color={pressed ? colors.background : colors.textTertiary}
+              color={colors.textTertiary}
               style={compactCardStyles.icon}
             />
           </View>

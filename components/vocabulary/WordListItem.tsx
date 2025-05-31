@@ -36,8 +36,8 @@ const WordListItem = memo(function WordListItem({ word, currentSort }: WordListI
             {/* Primary: Word meaning with optional streak badge */}
             <View style={styles.titleRow}>
               <ThemedText
-                type="bodyBold"
-                weight="semibold"
+                type="body"
+                weight="bold"
                 numberOfLines={2}
                 style={[styles.meaningText, { color: colors.text }]}
                 skipDefaultColor

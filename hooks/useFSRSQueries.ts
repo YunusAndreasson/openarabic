@@ -39,7 +39,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: false });
     },
     enabled: !!userId,
-    staleTime: 300000, // 5 minutes
+    staleTime: 180000, // 3 minutes - study words change moderately
     gcTime: 600000, // 10 minutes
     initialData: () => {
       if (!userId) return undefined;
@@ -55,7 +55,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId, { onlyDue: true, limit });
     },
     enabled: !!userId,
-    staleTime: 180000, // 3 minutes
+    staleTime: 60000, // 1 minute - due words change frequently
     gcTime: 300000, // 5 minutes
     // Use data from allWordsQuery if available and filter client-side
     initialData: () => {
@@ -77,7 +77,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId, { forStats: true });
     },
     enabled: !!userId,
-    staleTime: 600000, // 10 minutes
+    staleTime: 600000, // 10 minutes - stats update less frequently
     gcTime: 1800000, // 30 minutes
     // Use data from allWordsQuery if available
     initialData: () => {
@@ -95,7 +95,7 @@ export function useFSRSQueries({
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId && !!category,
-    staleTime: 300000, // 5 minutes
+    staleTime: 180000, // 3 minutes - filtered words change moderately
     gcTime: 600000, // 10 minutes
     // Use data from allWordsQuery if available
     initialData: () => {

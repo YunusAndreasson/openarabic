@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 
@@ -32,7 +32,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
 
 SectionTitle.displayName = 'SectionTitle';
 
-export default memo(SectionTitle);
+export default SectionTitle;
 
 const styles = StyleSheet.create({
   container: {

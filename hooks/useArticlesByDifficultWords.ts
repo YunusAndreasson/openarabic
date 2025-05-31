@@ -15,6 +15,7 @@ interface UseArticlesByDifficultWordsResult {
 
 /**
  * Hook to fetch and sort articles based on the number of difficult words they contain
+ * Optimized to use smart queries and reduce data fetching overhead
  * @param userId - The current user ID
  * @param limit - Maximum number of articles to return
  * @returns Object containing sorted articles and metadata
@@ -23,31 +24,35 @@ export function useArticlesByDifficultWords(
   userId: string | undefined,
   limit = 10
 ): UseArticlesByDifficultWordsResult {
-  // Fetch difficult words for the current user
+  // Fetch difficult words for the current user with optimized query
   const { data: difficultWords = [], isLoading: isLoadingDifficultWords } = useQuery({
-    queryKey: ['difficultWords', userId],
+    queryKey: ['struggling-words', userId, 20], // Use consistent key with strugglingWords service
     queryFn: () => {
       if (!userId) return Promise.resolve([]);
       return strugglingWordsService.getStrugglingWords(userId, 20); // Get more words for better article matching
     },
     enabled: !!userId,
-    staleTime: 300000, // 5 minutes
+    staleTime: 180000, // 3 minutes - struggling words change less frequently than due words
+    gcTime: 600000, // 10 minutes
+    retry: 2,
   });
 
-  // Extract set of root IDs from difficult words for highlighting
+  // Extract set of root IDs from difficult words for highlighting and matching
   const difficultWordRootIds = useMemo(() => {
     return new Set(difficultWords.map(word => word.root_id));
   }, [difficultWords]);
 
-  // Fetch all articles with their sentences and words in a single query
+  // Use optimized articles query with word stats (shared cache with due words hook)
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
-    queryKey: ['articles-with-sentences-and-words'],
-    queryFn: async () => {
-      if (!difficultWords.length) return [];
-      return articlesService.getArticlesWithSentencesAndWords();
+    queryKey: ['articles', 'with-word-stats'],
+    queryFn: () => {
+      if (!difficultWords.length) return Promise.resolve([]);
+      return articlesService.getArticlesWithWordStats();
     },
     enabled: !!userId && difficultWords.length > 0,
-    staleTime: 600000, // 10 minutes
+    staleTime: 3600000, // 1 hour - articles update max once a day
+    gcTime: 7200000, // 2 hours
+    retry: 2,
   });
 
   // Process and sort articles by difficult words count
@@ -56,8 +61,9 @@ export function useArticlesByDifficultWords(
       isLoadingDifficultWords ||
       (isLoadingArticles && difficultWords.length > 0) ||
       !difficultWords.length
-    )
+    ) {
       return [];
+    }
     return getArticlesByDifficultWords(articlesData, difficultWords, limit);
   }, [articlesData, difficultWords, isLoadingDifficultWords, isLoadingArticles, limit]);
 
@@ -66,22 +72,15 @@ export function useArticlesByDifficultWords(
     return sortedArticles.length >= 3;
   }, [sortedArticles.length]);
 
-  // Fix loading state calculation to handle when there are no difficult words
-  const isLoading = useMemo(() => {
-    // We're loading if difficult words are loading
-    if (isLoadingDifficultWords) return true;
-
-    // If difficult words have loaded but are empty, we're not loading anymore
-    if (difficultWords.length === 0) return false;
-
-    // Otherwise, we're loading if articles are loading
-    return isLoadingArticles;
-  }, [isLoadingDifficultWords, difficultWords.length, isLoadingArticles]);
+  // Count of difficult words for stats
+  const difficultWordsCount = useMemo(() => {
+    return difficultWords.length;
+  }, [difficultWords.length]);
 
   return {
     articles: sortedArticles,
-    isLoading,
-    difficultWordsCount: difficultWords.length,
+    isLoading: isLoadingDifficultWords || (isLoadingArticles && difficultWords.length > 0),
+    difficultWordsCount,
     hasEnoughArticles,
     difficultWordRootIds,
   };

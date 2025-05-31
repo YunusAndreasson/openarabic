@@ -4,7 +4,16 @@ import { DatabaseError } from '../types/error.types';
 import { handleError } from '../utils/errorHandling';
 import { mapToArticle, mapToArticles } from '../utils/typeMappers';
 
-// Define the columns needed for list view for better performance
+// Define different column sets for different use cases
+const MINIMAL_COLUMNS = `
+  id,
+  title,
+  created_at,
+  difficulty_level,
+  category_id,
+  author_id
+`;
+
 const LIST_VIEW_COLUMNS = `
   id,
   title,
@@ -16,11 +25,14 @@ const LIST_VIEW_COLUMNS = `
   summary,
   audio_url,
   category:categories(id, name),
-  author:authors(id, name),
-  article_sentences:article_sentences(id)
+  author:authors(id, name)
 `;
 
-// Define the columns needed for detail view
+const CARD_VIEW_COLUMNS = `
+  ${LIST_VIEW_COLUMNS},
+  article_sentences(id)
+`;
+
 const DETAIL_VIEW_COLUMNS = `
   *,
   category:categories(id, name),
@@ -50,10 +62,110 @@ const DETAIL_VIEW_COLUMNS = `
   )
 `;
 
+// Optimized query for articles with word counts (for due words analysis)
+const ARTICLES_WITH_WORD_STATS = `
+  id,
+  title,
+  image_url,
+  created_at,
+  difficulty_level,
+  category_id,
+  author_id,
+  summary,
+  audio_url,
+  category:categories(id, name),
+  author:authors(id, name),
+  article_sentences(
+    id,
+    sentence_words(root_id)
+  )
+`;
+
+interface GetArticlesOptions {
+  categoryId?: number;
+  authorId?: number;
+  limit?: number;
+  offset?: number;
+  minDifficulty?: number;
+  maxDifficulty?: number;
+  includeWordStats?: boolean;
+  sortBy?: 'created_at' | 'difficulty_level' | 'title';
+  sortOrder?: 'asc' | 'desc';
+}
+
 export const articlesService = {
-  async getArticles(categoryId?: number, authorId?: number): Promise<Article[]> {
+  // Optimized method for getting articles with different detail levels
+  async getArticles(options: GetArticlesOptions = {}): Promise<Article[]> {
     try {
-      let query = supabase.from<'articles'>('articles').select(LIST_VIEW_COLUMNS);
+      const {
+        categoryId,
+        authorId,
+        limit = 50,
+        offset = 0,
+        minDifficulty,
+        maxDifficulty,
+        includeWordStats = false,
+        sortBy = 'created_at',
+        sortOrder = 'desc',
+      } = options;
+
+      const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : LIST_VIEW_COLUMNS;
+      let query = supabase.from('articles').select(columns);
+
+      // Apply filters
+      if (categoryId) query = query.eq('category_id', categoryId);
+      if (authorId) query = query.eq('author_id', authorId);
+      if (minDifficulty) query = query.gte('difficulty_level', minDifficulty);
+      if (maxDifficulty) query = query.lte('difficulty_level', maxDifficulty);
+
+      // Apply sorting
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' });
+
+      // Apply pagination
+      if (limit > 0) {
+        query = query.range(offset, offset + limit - 1);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load articles',
+          analyticsProperties: {
+            ...(categoryId !== undefined && { categoryId }),
+            ...(authorId !== undefined && { authorId }),
+            limit,
+            offset,
+          },
+        });
+        throw error;
+      }
+      return mapToArticles(data || []);
+    } catch (err) {
+      await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
+        toastMessage: 'Failed to load articles',
+        analyticsProperties: {
+          ...(options.categoryId !== undefined && { categoryId: options.categoryId }),
+          ...(options.authorId !== undefined && { authorId: options.authorId }),
+          ...(options.limit !== undefined && { limit: options.limit }),
+          ...(options.offset !== undefined && { offset: options.offset }),
+        },
+      });
+      throw err;
+    }
+  },
+
+  // Optimized method for getting minimal article data (for dropdowns, etc.)
+  async getArticlesMinimal(
+    categoryId?: number,
+    authorId?: number
+  ): Promise<
+    Pick<
+      Article,
+      'id' | 'title' | 'difficulty_level' | 'category_id' | 'author_id' | 'created_at'
+    >[]
+  > {
+    try {
+      let query = supabase.from('articles').select(MINIMAL_COLUMNS);
 
       if (categoryId) query = query.eq('category_id', categoryId);
       if (authorId) query = query.eq('author_id', authorId);
@@ -65,21 +177,47 @@ export const articlesService = {
         await handleError(new Error(error.message), {
           toastMessage: 'Failed to load articles',
           analyticsProperties: {
-            ...(categoryId && { categoryId }),
-            ...(authorId && { authorId }),
+            ...(categoryId !== undefined && { categoryId }),
+            ...(authorId !== undefined && { authorId }),
           },
         });
         throw error;
       }
-      return mapToArticles(data || []);
+      return data || [];
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
         analyticsProperties: {
-          ...(categoryId && { categoryId }),
-          ...(authorId && { authorId }),
+          ...(categoryId !== undefined && { categoryId }),
+          ...(authorId !== undefined && { authorId }),
         },
       });
+      throw err;
+    }
+  },
+
+  // Optimized method for getting articles with word statistics for due words analysis
+  async getArticlesWithWordStats(): Promise<Article[]> {
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(ARTICLES_WITH_WORD_STATS)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load articles with word stats',
+        });
+        throw error;
+      }
+      return mapToArticles((data || []) as any);
+    } catch (err) {
+      await handleError(
+        err instanceof Error ? err : new Error('Unknown error loading articles with word stats'),
+        {
+          toastMessage: 'Failed to load articles with word stats',
+        }
+      );
       throw err;
     }
   },
@@ -87,7 +225,7 @@ export const articlesService = {
   async getArticleById(id: number): Promise<Article> {
     try {
       const { data, error } = await supabase
-        .from<'articles'>('articles')
+        .from('articles')
         .select(DETAIL_VIEW_COLUMNS)
         .eq('id', id)
         .single();
@@ -110,11 +248,68 @@ export const articlesService = {
     }
   },
 
-  async getRelatedArticles(articleId: number): Promise<Article[]> {
+  // Optimized method for getting article metadata only (for cards, lists)
+  async getArticleCard(id: number): Promise<Article> {
+    try {
+      const { data, error } = await supabase
+        .from('articles')
+        .select(CARD_VIEW_COLUMNS)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load article',
+          analyticsProperties: { id },
+        });
+        throw error;
+      }
+
+      return mapToArticle(data);
+    } catch (err) {
+      await handleError(err instanceof Error ? err : new Error('Unknown error loading article'), {
+        toastMessage: 'Failed to load article',
+        analyticsProperties: { id },
+      });
+      throw err;
+    }
+  },
+
+  // Optimized method for getting multiple articles by IDs
+  async getArticlesByIds(ids: number[], includeWordStats = false): Promise<Article[]> {
+    if (!ids.length) return [];
+
+    try {
+      const columns = includeWordStats ? ARTICLES_WITH_WORD_STATS : CARD_VIEW_COLUMNS;
+      const { data, error } = await supabase
+        .from('articles')
+        .select(columns)
+        .in('id', ids)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        await handleError(new Error(error.message), {
+          toastMessage: 'Failed to load articles',
+          analyticsProperties: { idsCount: ids.length },
+        });
+        throw error;
+      }
+
+      return mapToArticles(data || []);
+    } catch (err) {
+      await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
+        toastMessage: 'Failed to load articles',
+        analyticsProperties: { idsCount: ids.length },
+      });
+      throw err;
+    }
+  },
+
+  async getRelatedArticles(articleId: number, limit = 5): Promise<Article[]> {
     try {
       const { data: article, error: articleError } = await supabase
-        .from<'articles'>('articles')
-        .select('author_id')
+        .from('articles')
+        .select('author_id, category_id')
         .eq('id', articleId)
         .single();
 
@@ -128,13 +323,14 @@ export const articlesService = {
 
       if (!article) return [];
 
+      // Prioritize same author, then same category
       const { data, error } = await supabase
-        .from<'articles'>('articles')
+        .from('articles')
         .select(LIST_VIEW_COLUMNS)
-        .eq('author_id', article.author_id)
         .neq('id', articleId)
+        .or(`author_id.eq.${article.author_id},category_id.eq.${article.category_id}`)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(limit);
 
       if (error) {
         await handleError(new Error(error.message), {
@@ -158,14 +354,18 @@ export const articlesService = {
     }
   },
 
-  async getOtherCategoryArticles(categoryId: number, articleId?: number): Promise<Article[]> {
+  async getOtherCategoryArticles(
+    categoryId: number,
+    articleId?: number,
+    limit = 10
+  ): Promise<Article[]> {
     try {
       let query = supabase
-        .from<'articles'>('articles')
+        .from('articles')
         .select(LIST_VIEW_COLUMNS)
         .eq('category_id', categoryId)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(limit);
 
       // Exclude current article if articleId is provided
       if (articleId) {
@@ -177,7 +377,10 @@ export const articlesService = {
       if (error) {
         await handleError(new Error(error.message), {
           toastMessage: 'Failed to load category articles',
-          analyticsProperties: { categoryId, ...(articleId && { articleId }) },
+          analyticsProperties: {
+            categoryId,
+            ...(articleId !== undefined && { articleId }),
+          },
         });
         return [];
       }
@@ -188,7 +391,10 @@ export const articlesService = {
         err instanceof Error ? err : new Error('Unknown error loading category articles'),
         {
           toastMessage: 'Failed to load category articles',
-          analyticsProperties: { categoryId, ...(articleId && { articleId }) },
+          analyticsProperties: {
+            categoryId,
+            ...(articleId !== undefined && { articleId }),
+          },
           showToast: false,
         }
       );
@@ -196,29 +402,40 @@ export const articlesService = {
     }
   },
 
-  async getArticlesWithSentencesAndWords(): Promise<Article[]> {
+  // New method for getting articles count (for pagination)
+  async getArticlesCount(categoryId?: number, authorId?: number): Promise<number> {
     try {
-      const { data, error } = await supabase
-        .from<'articles'>('articles')
-        .select(DETAIL_VIEW_COLUMNS)
-        .order('created_at', { ascending: false });
+      let query = supabase.from('articles').select('id', { count: 'exact', head: true });
+
+      if (categoryId) query = query.eq('category_id', categoryId);
+      if (authorId) query = query.eq('author_id', authorId);
+
+      const { count, error } = await query;
+
       if (error) {
         await handleError(new Error(error.message), {
-          toastMessage: 'Failed to load articles with sentences and words',
+          toastMessage: 'Failed to get articles count',
+          analyticsProperties: {
+            ...(categoryId !== undefined && { categoryId }),
+            ...(authorId !== undefined && { authorId }),
+          },
         });
-        throw error;
+        return 0;
       }
-      return mapToArticles(data || []);
+
+      return count || 0;
     } catch (err) {
       await handleError(
-        err instanceof Error
-          ? err
-          : new Error('Unknown error loading articles with sentences and words'),
+        err instanceof Error ? err : new Error('Unknown error getting articles count'),
         {
-          toastMessage: 'Failed to load articles with sentences and words',
+          toastMessage: 'Failed to get articles count',
+          analyticsProperties: {
+            ...(categoryId !== undefined && { categoryId }),
+            ...(authorId !== undefined && { authorId }),
+          },
         }
       );
-      throw err;
+      return 0;
     }
   },
 };

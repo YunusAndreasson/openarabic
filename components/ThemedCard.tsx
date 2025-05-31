@@ -274,7 +274,13 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={titleStyle}>
+            <ThemedText
+              type="body"
+              weight="bold"
+              numberOfLines={2}
+              colorName="text"
+              style={titleStyle}
+            >
               {title}
             </ThemedText>
           </View>
@@ -365,7 +371,13 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
 
         <View style={styles.contentContainer}>
           <View style={styles.titleContainer}>
-            <ThemedText type="bodyBold" numberOfLines={2} colorName="text" style={titleStyle}>
+            <ThemedText
+              type="body"
+              weight="bold"
+              numberOfLines={2}
+              colorName="text"
+              style={titleStyle}
+            >
               {article?.title}
             </ThemedText>
           </View>

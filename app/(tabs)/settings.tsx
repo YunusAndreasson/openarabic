@@ -23,7 +23,7 @@ import { useReminders } from '@/hooks/useReminders';
 import { analytics } from '@/services/analytics';
 import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
+import { setFontScale, setShowEnglish, setReminderTime } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
 
 // Memoized components
@@ -160,7 +160,7 @@ const AccountHeader = memo(() => {
           })
         );
       } catch (error) {
-        console.log('Could not fetch member since date:', error);
+        // Silently handle error and use fallback
         setMemberSince('Recently');
       }
     };
@@ -262,8 +262,9 @@ const AccountScreen: React.FC = () => {
   const colors = useColors();
   const headerHeight = useHeaderHeight();
   const insets = useSafeAreaInsets();
-  const { reminderTime, updateReminderTime, toggleReminder, formatReminderTime } = useReminders();
+  const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [notificationPermissions, setNotificationPermissions] = useState(false);
 
   const handleFontScaleChange = useCallback(
     (value: number) => {
@@ -278,36 +279,45 @@ const AccountScreen: React.FC = () => {
 
   const handleReminderToggle = useCallback(
     async (enabled: boolean) => {
-      if (enabled) {
-        // Check permissions before enabling
-        const hasPermissions = await import('@/services/notificationService').then(
-          ({ notificationService }) => notificationService.hasPermissions()
-        );
-
-        if (!hasPermissions) {
-          Alert.alert(
-            'Notification Permission Required',
-            'Please allow notifications to receive study reminders.',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Settings',
-                onPress: () => {
-                  // On iOS, this will open app settings
-                  Linking.openSettings();
-                },
+      if (enabled && !notificationPermissions) {
+        Alert.alert(
+          'Notification Permission Required',
+          'Please allow notifications to receive study reminders.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Settings',
+              onPress: () => {
+                Linking.openSettings();
               },
-            ]
-          );
-          return;
-        }
+            },
+          ]
+        );
+        return;
       }
 
-      await toggleReminder(enabled);
+      const newReminderTime = { ...reminderTime, enabled };
+      await updateReminderTime(newReminderTime);
       lightFeedback();
     },
-    [toggleReminder]
+    [reminderTime, updateReminderTime, notificationPermissions]
   );
+
+  // Check notification permissions
+  useEffect(() => {
+    const checkNotificationPermissions = async () => {
+      try {
+        const { hasPermissions } = await import('@/services/notificationService');
+        const permissionsGranted = await hasPermissions();
+        setNotificationPermissions(permissionsGranted);
+      } catch (error) {
+        console.error('Failed to check notification permissions:', error);
+        setNotificationPermissions(false);
+      }
+    };
+
+    checkNotificationPermissions();
+  }, []);
 
   const handleTimePickerOpen = useCallback(() => {
     setShowTimePicker(true);
@@ -320,10 +330,12 @@ const AccountScreen: React.FC = () => {
 
   const handleTimeSet = useCallback(
     async (hour: number, minute: number) => {
-      await updateReminderTime(hour, minute);
+      const newReminderTime = { ...reminderTime, hour, minute };
+      await updateReminderTime(newReminderTime);
+      setShowTimePicker(false);
       lightFeedback();
     },
-    [updateReminderTime]
+    [reminderTime, updateReminderTime]
   );
 
   const handleSupportContact = useCallback(() => {
@@ -530,58 +542,6 @@ const AccountScreen: React.FC = () => {
                   />
                 </View>
               </BaseCard>
-
-              <BaseCard
-                onPress={() => {
-                  /* TODO: Add terms handler */
-                }}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="document-text" size={22} color={colors.icon} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Terms of Service
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={20}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
-                  />
-                </View>
-              </BaseCard>
-
-              <BaseCard
-                onPress={() => {
-                  /* TODO: Add privacy handler */
-                }}
-                style={styles.actionLinkCard}
-                shadowSize="none"
-                includePressAnimation={true}
-              >
-                <View style={styles.actionLinkContent}>
-                  <View style={styles.actionLinkLeft}>
-                    <View style={styles.actionIconContainer}>
-                      <Ionicons name="shield-checkmark" size={22} color={colors.icon} />
-                    </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Privacy Policy
-                    </ThemedText>
-                  </View>
-                  <Ionicons
-                    name="chevron-forward-outline"
-                    size={20}
-                    color={colors.textTertiary}
-                    style={styles.actionLinkChevron}
-                  />
-                </View>
-              </BaseCard>
             </View>
           </BaseCard>
         </View>
@@ -705,7 +665,7 @@ const AccountScreen: React.FC = () => {
             OpenArabic
           </ThemedText>
           <ThemedText type="caption" variant="secondary" style={styles.versionText}>
-            Version {(Constants.expoConfig as any)?.version || appVersion || '1446.0.0'}
+            Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
           </ThemedText>
           <ThemedText type="caption" variant="subtle" style={styles.copyrightText}>
             © 2024 OpenArabic. All rights reserved.

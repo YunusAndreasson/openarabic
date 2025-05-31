@@ -49,8 +49,8 @@ export const useArticleData = (
       return articlesService.getArticleById(articleId);
     },
     enabled: !!articleId,
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    staleTime: 3600000, // 1 hour - articles update max once a day
+    gcTime: 7200000, // 2 hours
     refetchOnMount: false, // Don't refetch on mount if we have data
     placeholderData: old => old, // Keep old data while fetching
   });
@@ -67,8 +67,8 @@ export const useArticleData = (
       return readingListService.isInReadingList(userId, articleId);
     },
     enabled: !!userId && !!articleId,
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    staleTime: 180000, // 3 minutes - reading list changes moderately
+    gcTime: 600000, // 10 minutes
     refetchOnMount: false,
   });
 
@@ -84,8 +84,8 @@ export const useArticleData = (
       return studyWordsFSRSService.getFSRSWords(userId);
     },
     enabled: !!userId,
-    staleTime: 300000, // Cache for 5 minutes, previously 0
-    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    staleTime: 180000, // 3 minutes - study words change moderately
+    gcTime: 600000, // 10 minutes
     networkMode: 'always',
     retry: 3,
     refetchOnMount: true, // Previously 'always', now true to respect staleTime
@@ -136,6 +136,7 @@ export const useArticleData = (
                 letters: '',
                 meaning: null,
                 audio_url: null,
+                audio_url_en: null,
               },
               word_type: {
                 id: word.word_type_id,
@@ -161,8 +162,8 @@ export const useArticleData = (
       }
     },
     enabled: !!article?.category_id,
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    staleTime: 3600000, // 1 hour - articles update max once a day
+    gcTime: 7200000, // 2 hours
     refetchOnMount: false,
     placeholderData: old => old,
   });
@@ -182,12 +183,11 @@ export const useArticleData = (
       }
     },
     enabled: !!article?.id,
-    staleTime: 300000, // Cache for 5 minutes
-    gcTime: 600000, // Keep in garbage collection for 10 minutes
+    staleTime: 3600000, // 1 hour - articles update max once a day
+    gcTime: 7200000, // 2 hours
     refetchOnMount: false,
     placeholderData: old => old,
   });
-
 
   return {
     article,
