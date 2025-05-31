@@ -195,7 +195,6 @@ export function useFSRS({ userId, onComplete }: UseFSRSOptions): UseFSRSResult {
               : Rating.Again;
 
         const { card: newCard } = fsrsInstance.next(card, now, rating);
-        const lastReview = now.toISOString();
 
         // Update the word with new FSRS parameters and session tracking
         const wordUpdateData = {

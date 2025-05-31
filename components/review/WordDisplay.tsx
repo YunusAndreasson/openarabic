@@ -99,28 +99,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1, // Use flex instead of fixed height for better text accommodation
     justifyContent: 'center',
-    paddingVertical: LAYOUT.SPACING.LARGE, // Increased padding to prevent clipping
-    // Add extra padding specifically for Arabic text
-    paddingTop: LAYOUT.SPACING.LARGE + LAYOUT.SPACING.SMALL,
-    paddingBottom: LAYOUT.SPACING.LARGE,
+    paddingVertical: LAYOUT.SPACING.MEDIUM, // Reduced from LARGE to bring closer to translation
+    // Reduced top padding for tighter spacing
+    paddingTop: LAYOUT.SPACING.MEDIUM + LAYOUT.SPACING.TINY,
+    paddingBottom: LAYOUT.SPACING.TINY, // Minimal bottom padding to get closer to translation
   },
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 9, // Increased total height
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 9, // Keep same total height
     paddingVertical: LAYOUT.SPACING.MEDIUM,
     width: '100%',
   },
   translationContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: LAYOUT.SPACING.SMALL, // Reduced margin to balance spacing
-    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 2.5, // Fixed height for translation to prevent jumping
+    justifyContent: 'flex-start', // Align to top to reduce visual gap
+    marginTop: -LAYOUT.SPACING.TINY, // Negative margin to bring translation closer
+    minHeight: LAYOUT.BUTTON.HEIGHT.LARGE * 2.5, // Keep fixed height to prevent jumping
+    paddingTop: LAYOUT.SPACING.TINY, // Small top padding for breathing room
   },
   translationText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE * 1.1,
     fontWeight: '400',
     textAlign: 'center',
+    opacity: 0.85, // Slightly reduce opacity to create visual hierarchy
   },
 });
 

@@ -10,8 +10,6 @@ import { handleError } from '@/utils/errorHandling';
 const MAX_REFRESH_RETRIES = 3;
 // Time between retries (exponential backoff)
 const RETRY_DELAY_MS = 1000;
-// Maximum time to wait for auth initialization
-const AUTH_INIT_TIMEOUT_MS = 5000;
 
 // Define session type based on properties we use
 export type UserSession = {

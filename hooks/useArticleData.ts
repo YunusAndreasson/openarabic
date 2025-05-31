@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
 
 import { articlesService } from '@/services/articles';
 import { readingListService } from '@/services/readingList';

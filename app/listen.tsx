@@ -139,56 +139,68 @@ export default function ListenScreen(): JSX.Element {
       return;
     }
 
-    // Get random vocabulary tracks
-    const selectedTracks = listenAudioService.getRandomVocabularyTracks(allWords, 20);
-    selectedTracksRef.current = selectedTracks;
+    // Async function to handle track loading
+    const loadTracksAndStartPlayback = async () => {
+      try {
+        // Get random vocabulary tracks (await the promise)
+        const selectedTracks = await listenAudioService.getRandomVocabularyTracks(allWords, 20);
+        selectedTracksRef.current = selectedTracks;
 
-    // Keep the original study words for reference
-    const wordMap = new Map<number, StudyWord>();
-    allWords.forEach(word => {
-      if (word.root?.id) {
-        wordMap.set(word.root.id, word);
-      }
-    });
-
-    // Initialize word list state
-    if (selectedTracks.length > 0) {
-      // Get unique words (not tracks)
-      const uniqueWordIds = new Set<number>();
-      const uniqueWords: StudyWord[] = [];
-
-      // Extract wordIds from tracks
-      selectedTracks.forEach(track => {
-        const wordId = track.rootId ?? 0;
-        if (!uniqueWordIds.has(wordId)) {
-          const word = wordMap.get(wordId);
-          if (word) {
-            uniqueWordIds.add(wordId);
-            uniqueWords.push(word);
+        // Keep the original study words for reference
+        const wordMap = new Map<number, StudyWord>();
+        allWords.forEach(word => {
+          if (word.root?.id) {
+            wordMap.set(word.root.id, word);
           }
-        }
-      });
-
-      setWordList(uniqueWords);
-
-      // Reset progress tracking
-      lastProgressUpdateRef.current = Date.now();
-      maxProgressRef.current = 0;
-      setCurrentWordIndex(0);
-      lastAudioStateRef.current = 'idle';
-      playbackCompletedRef.current = false;
-
-      // Start playback with a small delay
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
-      timeoutRef.current = setTimeout(() => {
-        actions.startEnhancedPlayback(selectedTracks, 0).catch(error => {
-          handleError(error instanceof Error ? error : new Error('Failed to start audio playback'));
         });
-      }, 500);
-    }
+
+        // Initialize word list state
+        if (selectedTracks.length > 0) {
+          // Get unique words (not tracks)
+          const uniqueWordIds = new Set<number>();
+          const uniqueWords: StudyWord[] = [];
+
+          // Extract wordIds from tracks
+          selectedTracks.forEach(track => {
+            const wordId = track.rootId ?? 0;
+            if (!uniqueWordIds.has(wordId)) {
+              const word = wordMap.get(wordId);
+              if (word) {
+                uniqueWordIds.add(wordId);
+                uniqueWords.push(word);
+              }
+            }
+          });
+
+          setWordList(uniqueWords);
+
+          // Reset progress tracking
+          lastProgressUpdateRef.current = Date.now();
+          maxProgressRef.current = 0;
+          setCurrentWordIndex(0);
+          lastAudioStateRef.current = 'idle';
+          playbackCompletedRef.current = false;
+
+          // Start playback with a small delay
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+          }
+
+          timeoutRef.current = setTimeout(() => {
+            actions.startEnhancedPlayback(selectedTracks, 0).catch(error => {
+              handleError(
+                error instanceof Error ? error : new Error('Failed to start audio playback')
+              );
+            });
+          }, 500);
+        }
+      } catch (error) {
+        handleError(error instanceof Error ? error : new Error('Failed to load vocabulary tracks'));
+      }
+    };
+
+    // Call the async function
+    loadTracksAndStartPlayback();
   }, [allWords, wordList.length, actions]);
 
   // Function to restart playback for repeat mode

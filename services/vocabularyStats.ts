@@ -1,12 +1,4 @@
 import { supabase } from './supabase';
-import type { Database } from '@/types/database.types';
-
-// Types for the database views
-type UserStudyStats = Database['public']['Views']['user_study_stats']['Row'];
-type DailyMasteryStats = Database['public']['Views']['daily_mastery_stats']['Row'];
-type DailyEfficiencyStats = Database['public']['Views']['daily_efficiency_stats']['Row'];
-type RetrievabilityForecast = Database['public']['Views']['retrievability_forecast']['Row'];
-type DifficultyDistribution = Database['public']['Views']['difficulty_distribution']['Row'];
 
 export interface VocabularyStatsFromDB {
   totalWords: number;

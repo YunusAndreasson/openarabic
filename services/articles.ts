@@ -74,10 +74,7 @@ const ARTICLES_WITH_WORD_STATS = `
   audio_url,
   category:categories(id, name),
   author:authors(id, name),
-  article_sentences(
-    id,
-    sentence_words(root_id)
-  )
+  article_sentences(id)
 `;
 
 interface GetArticlesOptions {
@@ -138,7 +135,7 @@ export const articlesService = {
         });
         throw error;
       }
-      return mapToArticles(data || []);
+      return mapToArticles((data || []) as any);
     } catch (err) {
       await handleError(err instanceof Error ? err : new Error('Unknown error loading articles'), {
         toastMessage: 'Failed to load articles',
