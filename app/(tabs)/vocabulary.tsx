@@ -77,7 +77,7 @@ export default function VocabularyScreen(): JSX.Element {
   // Use single screen focus refresh with optimized invalidation
   useScreenFocusRefresh(
     queryClient,
-    'remember',
+    'fsrs-words',
     user?.id,
     300000, // Cache for 5 minutes
     true // Skip initial focus
