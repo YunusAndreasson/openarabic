@@ -197,7 +197,7 @@ const TRANSITION_DELAYS = {
   },
 };
 
-export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
+export function useReview({ fromRemember, onClose }: UseReviewProps = {}): UseReviewReturn {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { playAudio, cleanup: cleanupAudio } = useAudioPlayer();
@@ -675,6 +675,8 @@ export function useReview({ onClose }: UseReviewProps = {}): UseReviewReturn {
       if (mounted.current) {
         if (onClose) {
           onClose();
+        } else if (fromRemember) {
+          router.replace('/(tabs)/vocabulary');
         } else {
           router.back();
         }
