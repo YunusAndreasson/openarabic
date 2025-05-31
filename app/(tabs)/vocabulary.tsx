@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState, useCallback, useMemo, JSX } from 'react';
+import React, { useState, useCallback, JSX } from 'react';
 import { StyleSheet, RefreshControl, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,7 +14,7 @@ import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useFSRSQueries } from '@/hooks/useFSRSQueries';
-import { useVocabularyStats } from '@/hooks/useVocabularyStats';
+import { useVocabularyChartData } from '@/hooks/useVocabularyChartData';
 import { FSRS_QUERY_KEYS } from '@/services/studyWordsFSRS';
 import type { StatCategory } from '@/types/vocabulary.types';
 import { mediumFeedback } from '@/utils/haptics';
@@ -60,8 +60,8 @@ export default function VocabularyScreen(): JSX.Element {
     userId: user?.id,
   });
 
-  // Use the vocabulary stats hook for stats calculations
-  const { stats, validStudyWords } = useVocabularyStats(studyWords ?? [], dueWordsData ?? []);
+  // Use the optimized vocabulary chart data hook that uses database views
+  const { userStats, isLoadingUserStats } = useVocabularyChartData(user?.id);
 
   // Use single screen focus refresh with optimized invalidation
   useScreenFocusRefresh(
@@ -82,7 +82,11 @@ export default function VocabularyScreen(): JSX.Element {
       await queryClient.invalidateQueries({
         predicate: query => {
           const key = query.queryKey[0];
-          return key === FSRS_QUERY_KEYS.due(user.id)[0] || key === FSRS_QUERY_KEYS.all(user.id)[0];
+          return (
+            key === FSRS_QUERY_KEYS.due(user.id)[0] ||
+            key === FSRS_QUERY_KEYS.all(user.id)[0] ||
+            (typeof key === 'string' && key.includes('vocabulary-stats'))
+          );
         },
       });
     } finally {
@@ -127,7 +131,17 @@ export default function VocabularyScreen(): JSX.Element {
 
   // Check if data is cached and show loading indicator
   const isDataCached = !!(user?.id && queryClient.getQueryData(FSRS_QUERY_KEYS.all(user.id)));
-  const showLoadingIndicator = (isDataLoading || isFetching) && !isDataCached;
+  const showLoadingIndicator = (isDataLoading || isFetching || isLoadingUserStats) && !isDataCached;
+
+  // Get stats from database views or fallback to FSRS data
+  const stats = {
+    masteredWords: userStats?.masteredWords ?? 0,
+    learningWords: userStats?.learningWords ?? 0,
+    dueWords: userStats?.dueWords ?? dueWordsData?.length ?? 0,
+  };
+
+  // Filter valid study words for components that still need them
+  const validStudyWords = studyWords?.filter(word => word != null && word.root_id != null) ?? [];
 
   // Main content
   return (

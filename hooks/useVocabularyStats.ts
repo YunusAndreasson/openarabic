@@ -1,3 +1,11 @@
+/**
+ * @deprecated This hook has been replaced by useVocabularyChartData which uses optimized database views
+ * instead of heavy client-side calculations. This file should be removed once all components
+ * are migrated to the new hook.
+ *
+ * TODO: Remove this file after migrating all components to useVocabularyChartData
+ */
+
 import { useMemo } from 'react';
 
 import type { StudyWord, VocabularyStats, WeeklyProgressData } from '../types/vocabulary.types';

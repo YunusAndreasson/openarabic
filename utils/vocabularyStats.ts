@@ -1,3 +1,11 @@
+/**
+ * @deprecated This utility has been replaced by database views that perform these calculations
+ * server-side for better performance. The new vocabularyStatsService uses optimized database
+ * views instead of client-side calculations.
+ *
+ * TODO: Remove this file after migrating all components to use database views
+ */
+
 import type { StudyWord, WeeklyProgressData } from '../types/vocabulary.types';
 
 // Move to constants if this is used elsewhere in the codebase

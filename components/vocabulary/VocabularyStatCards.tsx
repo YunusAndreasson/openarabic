@@ -2,12 +2,13 @@ import React, { memo, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import type { StudyWord, VocabularyStats, StatCategory } from '@/types/vocabulary.types';
+import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import { useAuth } from '../../hooks/useAuth';
 import { useStreakData } from '../../hooks/useStreakData';
+import { useVocabularyChartData } from '../../hooks/useVocabularyChartData';
 import { lightFeedback } from '../../utils/haptics';
 
 import { LearningGauge } from './LearningGauge';
@@ -19,8 +20,10 @@ import { EfficiencyChart } from './charts/EfficiencyChart';
 import { RetrievabilityChart } from './charts/RetrievabilityChart';
 import { DifficultyChart } from './charts/DifficultyChart';
 
-interface VocabularyStatCardsProps
-  extends Pick<VocabularyStats, 'dueWords' | 'masteredWords' | 'learningWords'> {
+interface VocabularyStatCardsProps {
+  masteredWords?: number;
+  learningWords?: number;
+  dueWords?: number;
   onStatPress?: (category: StatCategory) => void;
   studyWords?: StudyWord[];
 }
@@ -45,40 +48,49 @@ export const VocabularyStatCards = memo(
   }: VocabularyStatCardsProps) => {
     const colors = useColors();
     const { user } = useAuth();
-    const streakData = useStreakData(user?.id);
-
-    // Modal state for info dialogs
-    const [modalVisible, setModalVisible] = useState(false);
     const [modalType, setModalType] = useState<InfoModalType | null>(null);
 
-    // Handle info icon presses
-    const handleInfoPress = (type: InfoModalType) => {
-      lightFeedback();
-      setModalType(type);
-      setModalVisible(true);
-    };
+    // Get optimized chart data from database views
+    const {
+      userStats,
+      masteryProgress,
+      efficiencyProgress,
+      retrievabilityForecast,
+      difficultyDistribution,
+      isLoadingAny,
+    } = useVocabularyChartData(user?.id);
 
-    const handleCloseModal = () => {
-      setModalVisible(false);
-      setModalType(null);
-    };
+    // Get streak data
+    const { currentStreak, longestStreak } = useStreakData(user?.id);
 
-    // Validate input data to prevent inconsistencies
-    const validatedInput = useMemo(() => {
-      const validStudyWords = Array.isArray(studyWords) ? studyWords.filter(Boolean) : [];
-      return {
+    // Validate input data with safe defaults
+    const validatedInput = useMemo(
+      () => ({
         masteredWords: Math.max(0, masteredWords),
         learningWords: Math.max(0, learningWords),
         dueWords: Math.max(0, dueWords),
-        studyWords: validStudyWords,
-      };
-    }, [masteredWords, learningWords, dueWords, studyWords]);
+        studyWords: Array.isArray(studyWords) ? studyWords : [],
+      }),
+      [masteredWords, learningWords, dueWords, studyWords]
+    );
 
-    // Calculate FSRS-based metrics from study words
+    // Use database stats when available, fallback to props
+    const stats = useMemo(
+      () => ({
+        masteredWords: userStats?.masteredWords ?? validatedInput.masteredWords,
+        learningWords: userStats?.learningWords ?? validatedInput.learningWords,
+        dueWords: userStats?.dueWords ?? validatedInput.dueWords,
+        totalWords:
+          userStats?.totalWords ?? validatedInput.masteredWords + validatedInput.learningWords,
+      }),
+      [userStats, validatedInput]
+    );
+
+    // Calculate FSRS-based metrics from study words for components that still need them
     const fsrsMetrics = useMemo(() => {
       if (!validatedInput.studyWords.length) {
         return {
-          totalWords: 0,
+          totalWords: stats.totalWords,
           needsAttention: 0,
         };
       }
@@ -87,7 +99,7 @@ export const VocabularyStatCards = memo(
 
       validatedInput.studyWords.forEach(word => {
         // Words that need attention based on FSRS metrics
-        const difficulty = word.fsrs_difficulty ?? 5.0; // Default to middle range
+        const difficulty = word.fsrs_difficulty ?? 5.0;
         const lapses = word.fsrs_lapses ?? 0;
         const stability = word.fsrs_stability ?? 0;
         const state = word.fsrs_state;
@@ -102,19 +114,19 @@ export const VocabularyStatCards = memo(
       });
 
       return {
-        totalWords: validatedInput.studyWords.length,
+        totalWords: Math.max(validatedInput.studyWords.length, stats.totalWords),
         needsAttention,
       };
-    }, [validatedInput.studyWords]);
+    }, [validatedInput.studyWords, stats.totalWords]);
 
     // Calculate validated data with proper consistency checks
     const validatedData = useMemo(() => {
       const total = Math.max(fsrsMetrics.totalWords, 1);
 
       // Ensure data consistency - words can't exceed total
-      const validMastered = Math.min(validatedInput.masteredWords, total);
-      const validLearning = Math.min(validatedInput.learningWords, total);
-      const validDue = Math.min(validatedInput.dueWords, total);
+      const validMastered = Math.min(stats.masteredWords, total);
+      const validLearning = Math.min(stats.learningWords, total);
+      const validDue = Math.min(stats.dueWords, total);
 
       return {
         total,
@@ -123,9 +135,9 @@ export const VocabularyStatCards = memo(
         due: validDue,
         needsAttention: fsrsMetrics.needsAttention,
       };
-    }, [fsrsMetrics, validatedInput]);
+    }, [fsrsMetrics, stats]);
 
-    // Prepare stat cards configuration
+    // Prepare stat cards configuration with proper icons and colors
     const statCards: StatCardConfig[] = useMemo(
       () => [
         {
@@ -168,6 +180,16 @@ export const VocabularyStatCards = memo(
       [validatedData, colors]
     );
 
+    // Handle info modal
+    const handleInfoPress = (type: InfoModalType) => {
+      lightFeedback();
+      setModalType(type);
+    };
+
+    const handleCloseModal = () => {
+      setModalType(null);
+    };
+
     return (
       <View style={styles.container}>
         {/* Learning Gauge - Primary guidance */}
@@ -197,38 +219,34 @@ export const VocabularyStatCards = memo(
 
         {/* Streak Insights */}
         <StreakCard
-          currentStreak={streakData.currentStreak}
-          longestStreak={streakData.longestStreak}
-          lastSevenDaysActivity={streakData.lastSevenDaysActivity}
+          currentStreak={currentStreak}
+          longestStreak={longestStreak}
+          lastSevenDaysActivity={[]} // TODO: Get from streak data
           onInfoPress={() => handleInfoPress('streak')}
         />
 
-        {/* Mastery Chart */}
-        <MasteryChart
-          studyWords={validatedInput.studyWords}
-          onInfoPress={() => handleInfoPress('mastery')}
-        />
-
-        {/* Efficiency Chart */}
-        <EfficiencyChart
-          studyWords={validatedInput.studyWords}
-          onInfoPress={() => handleInfoPress('efficiency')}
-        />
-
-        {/* Retrievability Chart */}
-        <RetrievabilityChart
-          studyWords={validatedInput.studyWords}
-          onInfoPress={() => handleInfoPress('retrievability')}
-        />
-
-        {/* Difficulty Chart */}
-        <DifficultyChart
-          studyWords={validatedInput.studyWords}
-          onInfoPress={() => handleInfoPress('difficulty')}
-        />
+        {/* Chart Grid */}
+        <View style={styles.chartGrid}>
+          <MasteryChart
+            studyWords={validatedInput.studyWords}
+            onInfoPress={() => handleInfoPress('mastery')}
+          />
+          <EfficiencyChart
+            studyWords={validatedInput.studyWords}
+            onInfoPress={() => handleInfoPress('efficiency')}
+          />
+          <RetrievabilityChart
+            studyWords={validatedInput.studyWords}
+            onInfoPress={() => handleInfoPress('retrievability')}
+          />
+          <DifficultyChart
+            studyWords={validatedInput.studyWords}
+            onInfoPress={() => handleInfoPress('difficulty')}
+          />
+        </View>
 
         {/* Info Modal */}
-        <InfoModal visible={modalVisible} type={modalType} onClose={handleCloseModal} />
+        <InfoModal type={modalType} visible={modalType !== null} onClose={handleCloseModal} />
       </View>
     );
   }
@@ -246,5 +264,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
+  },
+  chartGrid: {
+    gap: LAYOUT.SPACING.MEDIUM,
   },
 });
