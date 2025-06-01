@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
+    padding: LAYOUT.SPACING.LARGE,
   } as ViewStyle,
   contentContainer: {
     alignItems: 'center',
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 120,
     justifyContent: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE * 1.5,
+    marginBottom: LAYOUT.SPACING.XLARGE,
   },
   subtitleText: {
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     alignItems: 'center',
-    marginBottom: LAYOUT.SPACING.XLARGE * 1.5,
+    marginBottom: LAYOUT.SPACING.XLARGE,
     width: '100%',
   },
   titleText: {

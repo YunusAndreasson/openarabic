@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-    padding: LAYOUT.SPACING.XLARGE,
+    padding: LAYOUT.SPACING.LARGE,
   },
   gestureRoot: {
     flex: 1,

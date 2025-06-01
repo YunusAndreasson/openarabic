@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     marginBottom: LAYOUT.SPACING.XXLARGE,
   } as ViewStyle,
   emptyContainer: {
-    padding: LAYOUT.SPACING.XLARGE,
+    padding: LAYOUT.SPACING.LARGE,
     alignItems: 'center',
     justifyContent: 'center',
   } as ViewStyle,

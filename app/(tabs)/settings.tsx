@@ -335,13 +335,13 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* Information Section */}
+        {/* Learning Guide Section */}
         <View style={styles.infoWrapper}>
-          <SectionTitle title="Information" />
+          <SectionTitle title="Learning Guide" />
           <BaseCard style={styles.infoContainer} shadowSize="small" includePressAnimation={false}>
             <View style={styles.actionLinksContainer}>
               <BaseCard
-                onPress={() => router.push('/about')}
+                onPress={() => router.push('/learning-method')}
                 style={styles.actionLinkCard}
                 shadowSize="none"
                 includePressAnimation={true}
@@ -349,10 +349,34 @@ const AccountScreen: React.FC = () => {
                 <View style={styles.actionLinkContent}>
                   <View style={styles.actionLinkLeft}>
                     <View style={styles.actionIconContainer}>
-                      <Ionicons name="information-circle" size={22} color={colors.icon} />
+                      <Ionicons name="school-outline" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      About
+                      How Language Acquisition Works
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+
+              <BaseCard
+                onPress={() => router.push('/classical-texts')}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="library-outline" size={22} color={colors.icon} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      About Classical Arabic Texts
                     </ThemedText>
                   </View>
                   <Ionicons
