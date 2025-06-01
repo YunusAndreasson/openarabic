@@ -1,9 +1,9 @@
 import React, { memo, useMemo, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
-import { ThemedText } from '@/components/ThemedText';
+import SectionTitle from '@/components/SectionTitle';
 
 import { LAYOUT } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
@@ -38,45 +38,6 @@ interface StatCardConfig {
   borderColor: string;
   category: StatCategory;
 }
-
-// Section Header Component
-interface SectionHeaderProps {
-  title: string;
-  subtitle?: string;
-  onInfoPress?: () => void;
-  isFirstSection?: boolean;
-}
-
-const SectionHeader = memo(
-  ({ title, subtitle, onInfoPress, isFirstSection = false }: SectionHeaderProps) => {
-    const colors = useColors();
-
-    return (
-      <View style={[styles.sectionHeader, isFirstSection && styles.firstSectionHeader]}>
-        <View style={styles.titleGroup}>
-          <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
-            {title}
-          </ThemedText>
-          {subtitle && (
-            <ThemedText type="caption" variant="secondary" style={styles.sectionSubtitle}>
-              {subtitle}
-            </ThemedText>
-          )}
-        </View>
-        {onInfoPress && (
-          <TouchableOpacity
-            onPress={onInfoPress}
-            style={[styles.infoIcon, { backgroundColor: colors.textOverlay }]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="information-outline" size={18} color={colors.textTertiary} />
-          </TouchableOpacity>
-        )}
-      </View>
-    );
-  }
-);
-SectionHeader.displayName = 'SectionHeader';
 
 export const VocabularyStatCards = memo(
   ({
@@ -224,10 +185,10 @@ export const VocabularyStatCards = memo(
     };
 
     return (
-      <View style={styles.container}>
+      <View>
         {/* Recommendation Section */}
-        <View style={styles.sectionWrapper}>
-          <SectionHeader title="Recommendation" isFirstSection={true} />
+        <View>
+          <SectionTitle title="Recommendation" isFirstSection={true} />
           <LearningGauge
             dueWords={validatedData.due}
             learningWords={validatedData.learning}
@@ -239,8 +200,8 @@ export const VocabularyStatCards = memo(
         </View>
 
         {/* Progress Section */}
-        <View style={styles.sectionWrapper}>
-          <SectionHeader title="Progress" />
+        <View>
+          <SectionTitle title="Progress" />
           <View style={styles.statsGrid}>
             {statCards.map(card => (
               <StatCard
@@ -259,8 +220,8 @@ export const VocabularyStatCards = memo(
         </View>
 
         {/* Consistency Section */}
-        <View style={styles.sectionWrapper}>
-          <SectionHeader title="Consistency" />
+        <View>
+          <SectionTitle title="Consistency" />
           <StreakCard
             currentStreak={currentStreak}
             longestStreak={longestStreak}
@@ -271,8 +232,8 @@ export const VocabularyStatCards = memo(
         </View>
 
         {/* Individual Chart Sections */}
-        <View style={styles.chartSection}>
-          <SectionHeader
+        <View>
+          <SectionTitle
             title="Mastery"
             subtitle="How well you know each word over time"
             onInfoPress={() => handleInfoPress('mastery')}
@@ -284,8 +245,8 @@ export const VocabularyStatCards = memo(
           />
         </View>
 
-        <View style={styles.chartSection}>
-          <SectionHeader
+        <View>
+          <SectionTitle
             title="Efficiency"
             subtitle="How quickly you learn new vocabulary"
             onInfoPress={() => handleInfoPress('efficiency')}
@@ -297,8 +258,8 @@ export const VocabularyStatCards = memo(
           />
         </View>
 
-        <View style={styles.chartSection}>
-          <SectionHeader
+        <View>
+          <SectionTitle
             title="Retention"
             subtitle="How long you remember words without practice"
             onInfoPress={() => handleInfoPress('retrievability')}
@@ -310,8 +271,8 @@ export const VocabularyStatCards = memo(
           />
         </View>
 
-        <View style={styles.chartSection}>
-          <SectionHeader
+        <View>
+          <SectionTitle
             title="Difficulty"
             subtitle="Which words are hardest for you to remember"
             onInfoPress={() => handleInfoPress('difficulty')}
@@ -333,55 +294,10 @@ export const VocabularyStatCards = memo(
 VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
-  container: {
-    // Remove custom spacing - sections handle their own spacing
-  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
-  },
-  chartGrid: {
-    gap: LAYOUT.SPACING.MEDIUM,
-  },
-  sectionWrapper: {
-    // Remove gap, let SectionHeader handle spacing
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: LAYOUT.SECTION.SPACING_INTERNAL,
-    marginTop: LAYOUT.SECTION.SPACING_BETWEEN,
-  },
-  firstSectionHeader: {
-    marginTop: LAYOUT.SPACING.XLARGE,
-  },
-  titleGroup: {
-    flex: 1,
-    marginRight: LAYOUT.SPACING.SMALL,
-  },
-  sectionTitle: {
-    marginBottom: 0,
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * 1.2,
-  },
-  sectionSubtitle: {
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.3,
-    marginTop: LAYOUT.SPACING.TINY,
-  },
-  infoIcon: {
-    padding: LAYOUT.SPACING.SMALL,
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-  },
-  chartSection: {
-    // Individual chart sections get standard spacing
-  },
-  streakCardContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
   },
 });
