@@ -459,13 +459,15 @@ export default function BookmarksScreen(): JSX.Element {
 
   const flashListExtraData = useMemo(
     () => ({
-      // Only include data that affects ALL items, not just the active one
+      // Include data that affects item rendering and re-render triggers
       currentTrackIndex,
       metadataValues,
       dueWordRootIdsSize: dueWordRootIds?.size || 0,
       articleDetailsMapSize: articleDetailsMap.size,
       isDueWordsLoading,
       audioState, // Include audioState to trigger re-renders when playback starts/stops
+      progress, // Include progress to trigger re-renders when audio progresses
+      duration, // Include duration to trigger re-renders when duration changes
     }),
     [
       currentTrackIndex,
@@ -474,6 +476,8 @@ export default function BookmarksScreen(): JSX.Element {
       articleDetailsMap.size,
       isDueWordsLoading,
       audioState,
+      progress,
+      duration,
     ]
   );
   // --- End Derived State & Memos ---
@@ -528,13 +532,13 @@ export default function BookmarksScreen(): JSX.Element {
   // --- Event Handlers (use stable actions) ---
   const isCurrentlyPlaying = audioState !== AUDIO_STATES.IDLE;
 
-  const handlePlayAll = useCallback(() => {
+  const handlePlayAll = useCallback(async () => {
     if (isCurrentlyPlaying && playbackMode === 'all') {
-      actions.stopPlayback();
+      await actions.stopPlayback();
       setPlaybackMode('none');
     } else if (sortedEnhancedTracks.length) {
       try {
-        actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
+        await actions.startEnhancedPlayback(sortedEnhancedTracks, 0);
         setPlaybackMode('all');
       } catch (error) {
         handleError(error as Error);
@@ -548,13 +552,17 @@ export default function BookmarksScreen(): JSX.Element {
     actions.stopPlayback,
   ]);
 
-  const handleShuffle = useCallback(() => {
+  const handleShuffle = useCallback(async () => {
     if (isCurrentlyPlaying && playbackMode === 'shuffle') {
-      actions.stopPlayback();
+      await actions.stopPlayback();
       setPlaybackMode('none');
     } else if (sortedEnhancedTracks.length) {
-      actions.startEnhancedShufflePlayback(sortedEnhancedTracks);
-      setPlaybackMode('shuffle');
+      try {
+        await actions.startEnhancedShufflePlayback(sortedEnhancedTracks);
+        setPlaybackMode('shuffle');
+      } catch (error) {
+        handleError(error as Error);
+      }
     }
   }, [
     isCurrentlyPlaying,
@@ -666,15 +674,15 @@ export default function BookmarksScreen(): JSX.Element {
           renderItem={({ item }) => {
             // Get pre-calculated due word count - much faster than calculating in render
             const dueWordCount = dueWordsCountMap.get(item.article_id) || 0;
+            const isActive =
+              audioState !== AUDIO_STATES.IDLE && metadata.articleId === item.article_id;
 
             return (
               <BookmarkListItem
                 item={item}
                 progress={progress}
                 duration={duration}
-                isActive={
-                  audioState === AUDIO_STATES.PLAYING && metadata.articleId === item.article_id
-                }
+                isActive={isActive}
                 dueWordCount={dueWordCount}
                 onPress={handleArticlePress}
                 audioState={audioState}

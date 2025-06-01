@@ -180,7 +180,9 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   const playQueuedTrackLogic = useCallback(
     async (index: number): Promise<boolean> => {
       const queue = audioQueueRef.current;
-      if (index < 0 || index >= queue.length || !queue[index]) return false;
+      if (index < 0 || index >= queue.length || !queue[index]) {
+        return false;
+      }
 
       if (currentSoundRef.current) {
         try {
@@ -210,8 +212,9 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
         const updatePlaybackState = (status: AVPlaybackStatus) => {
           if (status.isLoaded) {
             const duration = status.durationMillis ?? queueItem.track.duration ?? 0;
+            const progress = status.positionMillis || 0;
             setLocalDuration(duration);
-            setLocalProgress(status.positionMillis);
+            setLocalProgress(progress);
             return duration;
           }
           return 0;
@@ -405,7 +408,9 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
   actionsRef.current.startEnhancedPlayback = useCallback(
     async (tracks, startIndex = 0) => {
-      if (!tracks || tracks.length === 0) return false;
+      if (!tracks || tracks.length === 0) {
+        return false;
+      }
       await actionsRef.current.stopPlayback();
       currentPlaylistRef.current = tracks;
       actionsRef.current.initializeQueue(tracks);
@@ -419,7 +424,9 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
   actionsRef.current.startEnhancedShufflePlayback = useCallback(
     async tracks => {
-      if (!tracks || tracks.length === 0) return false;
+      if (!tracks || tracks.length === 0) {
+        return false;
+      }
       await actionsRef.current.stopPlayback();
       const shuffledTracks = [...tracks].sort(() => Math.random() - 0.5);
       currentPlaylistRef.current = shuffledTracks;
@@ -443,7 +450,6 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
 
     setIsTrackEnded(false);
 
-    // Call playNextTrack directly without a console.log
     actionsRef.current.playNextTrack().catch(e => handleError(e as Error));
   }, [isTrackEnded]);
 
@@ -502,8 +508,8 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
   // --- Final Memoized Return Value ---
   const stableActions = actionsRef.current; // Actions ref current value IS stable between renders
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    return {
       progress: localProgress,
       duration: localDuration,
       metadata,
@@ -512,16 +518,15 @@ export function useEnhancedAudioPlayer(): EnhancedPlayerAPI {
       currentTrackIndex,
       playlistMode: playlistModeActive,
       actions: stableActions,
-    }),
-    [
-      localProgress,
-      localDuration,
-      metadata,
-      isTrackEnded,
-      audioState,
-      currentTrackIndex,
-      playlistModeActive,
-      stableActions,
-    ]
-  );
+    };
+  }, [
+    localProgress,
+    localDuration,
+    metadata,
+    isTrackEnded,
+    audioState,
+    currentTrackIndex,
+    playlistModeActive,
+    stableActions,
+  ]);
 }
