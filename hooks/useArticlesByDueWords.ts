@@ -9,12 +9,13 @@ interface UseArticlesByDueWordsResult {
   articles: Article[];
   isLoading: boolean;
   dueWordsCount: number;
-  hasEnoughArticles: boolean; // Flag to determine if we have enough articles (≥3)
+  hasEnoughArticles: boolean; // Flag to determine if we have enough articles (≥1)
   dueWordRootIds: Set<number>; // Set of root IDs for words that are due
 }
 
 /**
  * Hook to fetch and sort articles based on the number of due words they contain
+ * Provides fallback to show articles with any study words when no due words exist
  * Optimized to use smart queries and reduce data fetching overhead
  * @param userId - The current user ID
  * @param limit - Maximum number of articles to return
@@ -41,45 +42,80 @@ export function useArticlesByDueWords(
     retry: 2,
   });
 
-  // Extract set of root IDs from due words for highlighting and matching
+  // Fallback: fetch all study words if no due words (for better recommendations)
+  const { data: allStudyWords = [], isLoading: isLoadingAllWords } = useQuery({
+    queryKey: FSRS_QUERY_KEYS.all(userId || ''),
+    queryFn: () => {
+      if (!userId) return Promise.resolve([]);
+      return studyWordsFSRSService.getFSRSWords(userId, {
+        forStats: false, // We need root data for matching
+        limit: 100, // Reasonable limit for fallback
+      });
+    },
+    enabled: !!userId && dueWords.length === 0, // Only fetch if no due words
+    staleTime: 180000, // 3 minutes - all words change less frequently
+    gcTime: 600000, // 10 minutes
+    retry: 2,
+  });
+
+  // Use due words if available, otherwise fallback to all study words
+  const wordsToUse = useMemo(() => {
+    return dueWords.length > 0 ? dueWords : allStudyWords;
+  }, [dueWords, allStudyWords]);
+
+  // Extract set of root IDs from words for highlighting and matching
   const dueWordRootIds = useMemo(() => {
-    return new Set(dueWords.map(word => word.root_id));
-  }, [dueWords]);
+    return new Set(wordsToUse.map(word => word.root_id));
+  }, [wordsToUse]);
 
   // Use optimized articles query with word stats (shared cache with other hooks)
   const { data: articlesData = [], isLoading: isLoadingArticles } = useQuery({
     queryKey: ['articles', 'with-word-stats'],
     queryFn: () => {
-      if (!dueWords.length) return Promise.resolve([]);
+      if (!wordsToUse.length) return Promise.resolve([]);
       return articlesService.getArticlesWithWordStats();
     },
-    enabled: !!userId && dueWords.length > 0,
+    enabled: !!userId && wordsToUse.length > 0,
     staleTime: 3600000, // 1 hour - articles update max once a day
     gcTime: 7200000, // 2 hours
     retry: 2,
   });
 
-  // Process and sort articles by due words count
+  // Process and sort articles by words count
   const sortedArticles = useMemo(() => {
-    if (isLoadingDueWords || (isLoadingArticles && dueWords.length > 0) || !dueWords.length) {
+    const isLoadingWords = isLoadingDueWords || (dueWords.length === 0 && isLoadingAllWords);
+    if (isLoadingWords || (isLoadingArticles && wordsToUse.length > 0) || !wordsToUse.length) {
       return [];
     }
-    return getArticlesByDueWords(articlesData, dueWords, limit);
-  }, [articlesData, dueWords, isLoadingDueWords, isLoadingArticles, limit]);
+    return getArticlesByDueWords(articlesData, wordsToUse, limit);
+  }, [
+    articlesData,
+    wordsToUse,
+    isLoadingDueWords,
+    isLoadingAllWords,
+    isLoadingArticles,
+    limit,
+    dueWords.length,
+  ]);
 
-  // Flag to determine if we have enough articles with due words (≥3)
+  // Flag to determine if we have enough articles with words (≥1)
   const hasEnoughArticles = useMemo(() => {
-    return sortedArticles.length >= 3;
+    return sortedArticles.length >= 1; // Reduced from 3 to 1 for better accessibility
   }, [sortedArticles.length]);
 
-  // Count of due words for stats
+  // Count of due words for stats (only actual due words, not fallback)
   const dueWordsCount = useMemo(() => {
     return dueWords.length;
   }, [dueWords.length]);
 
+  const isLoading =
+    isLoadingDueWords ||
+    (dueWords.length === 0 && isLoadingAllWords) ||
+    (isLoadingArticles && wordsToUse.length > 0);
+
   return {
     articles: sortedArticles,
-    isLoading: isLoadingDueWords || (isLoadingArticles && dueWords.length > 0),
+    isLoading,
     dueWordsCount,
     hasEnoughArticles,
     dueWordRootIds,

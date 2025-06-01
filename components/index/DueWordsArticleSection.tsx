@@ -22,7 +22,7 @@ export function DueWordsArticleSection({
   limit = 10,
   dueWordRootIds = new Set(),
 }: DueWordsArticleSectionProps) {
-  const { articles, hasEnoughArticles } = useArticlesByDueWords(userId, limit);
+  const { articles, hasEnoughArticles, dueWordsCount } = useArticlesByDueWords(userId, limit);
 
   // Don't render if we don't have enough articles with due words
   if (!hasEnoughArticles) {
@@ -59,10 +59,13 @@ export function DueWordsArticleSection({
     };
   };
 
+  // Dynamic title based on whether we have due words
+  const sectionTitle = dueWordsCount > 0 ? 'Recommended Reading' : 'Practice Reading';
+
   return (
     <View style={styles.container}>
       <ArticleSection
-        title="Recommended Reading"
+        title={sectionTitle}
         articles={articles.map(renderArticleWithDueCount)}
         onArticlePress={onArticlePress}
         hideDifficulty={true}

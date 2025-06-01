@@ -74,7 +74,13 @@ const ARTICLES_WITH_WORD_STATS = `
   audio_url,
   category:categories(id, name),
   author:authors(id, name),
-  article_sentences(id)
+  article_sentences(
+    id,
+    sentence_words(
+      id,
+      root_id
+    )
+  )
 `;
 
 interface GetArticlesOptions {

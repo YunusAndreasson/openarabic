@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
 import Animated from 'react-native-reanimated';
 import { useQueryClient } from '@tanstack/react-query';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -39,6 +41,8 @@ export default function ListenScreen(): JSX.Element {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const colors = useColors();
+  const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
 
   // State
   const [isComplete, setIsComplete] = useState(false);
@@ -342,8 +346,12 @@ export default function ListenScreen(): JSX.Element {
   }
 
   return (
-    <ThemedView style={styles.container} useSafeArea={true}>
-      <View style={styles.contentContainer}>
+    <ThemedView
+      style={styles.container}
+      includeBottomInset={false}
+      safeAreaEdges={['left', 'right']}
+    >
+      <View style={[styles.contentContainer, { paddingTop: headerHeight }]}>
         <ListenHeader
           progress={progress}
           maxProgress={maxProgress}
@@ -361,7 +369,7 @@ export default function ListenScreen(): JSX.Element {
           </Animated.View>
         </View>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom + LAYOUT.SPACING.MEDIUM }]}>
           <RepeatButton enabled={repeatEnabled} onToggle={handleRepeatToggle} />
 
           <View style={styles.noteContainer}>
