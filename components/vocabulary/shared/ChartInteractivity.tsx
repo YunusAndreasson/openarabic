@@ -34,6 +34,7 @@ import Animated, { FadeInUp, FadeOutDown } from 'react-native-reanimated';
 import { ThemedText } from '@/components/ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { lightFeedback } from '@/utils/haptics';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 interface ChartTooltip {
   x: number;
@@ -93,15 +94,18 @@ export const DataPointOverlay = memo<DataPointOverlayProps>(
       onPress(x, y, value, label);
     }, [x, y, value, label, onPress]);
 
+    const touchTargetSize = MIN_TOUCH_TARGET.SIZE;
+    const offset = touchTargetSize / 2;
+
     return (
       <TouchableOpacity
         style={{
           position: 'absolute',
-          left: x - 12,
-          top: y - 12,
-          width: 24,
-          height: 24,
-          borderRadius: 12,
+          left: x - offset,
+          top: y - offset,
+          width: touchTargetSize,
+          height: touchTargetSize,
+          borderRadius: touchTargetSize / 2,
           backgroundColor: 'transparent',
         }}
         onPress={handlePress}

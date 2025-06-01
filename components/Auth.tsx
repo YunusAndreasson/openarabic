@@ -330,7 +330,14 @@ function Auth(): JSX.Element {
         />
       </View>
 
-      <TouchableOpacity onPress={toggleMode} style={styles.toggleContainer} activeOpacity={0.7}>
+      <TouchableOpacity
+        onPress={toggleMode}
+        style={styles.toggleContainer}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={isRegistering ? 'Switch to sign in' : 'Switch to create account'}
+        accessibilityHint="Toggle between sign in and sign up modes"
+      >
         <ThemedText type="body" align="center" variant="secondary">
           {isRegistering ? 'Already have an account? Sign in' : 'Need an account? Create one'}
         </ThemedText>

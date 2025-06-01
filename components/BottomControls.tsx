@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,7 @@ import { ThemedButton } from './ThemedButton';
 import { ThemedText } from './ThemedText';
 import { useColors } from '@/hooks/useColors';
 import { LAYOUT } from '@/constants/layout';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 export type BottomControlsProps = {
   primaryLabel: string;
@@ -214,17 +215,23 @@ const styles = StyleSheet.create({
   timerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: LAYOUT.BORDER.WIDTH.NORMAL,
-    borderRadius: LAYOUT.BORDER_RADIUS.PILL,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    paddingVertical: LAYOUT.SPACING.XSMALL,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    minWidth: 32,
-    minHeight: 32,
     justifyContent: 'center',
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.TINY,
+    borderRadius: LAYOUT.BORDER_RADIUS.LARGE,
+    borderWidth: 1,
+    minWidth: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.SMALL,
+    ...Platform.select({
+      ios: {
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   timerLabel: {
     marginLeft: LAYOUT.SPACING.XTINY,

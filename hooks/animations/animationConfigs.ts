@@ -5,15 +5,15 @@ import { Easing } from 'react-native-reanimated';
  */
 export const TIMING_CONFIG = {
   FAST: {
-    duration: 50,
+    duration: 150,
     easing: Easing.out(Easing.quad),
   },
   MEDIUM: {
-    duration: 80,
+    duration: 250,
     easing: Easing.out(Easing.cubic),
   },
   SLOW: {
-    duration: 120,
+    duration: 350,
     easing: Easing.bezier(0.25, 0.1, 0.25, 1),
   },
   GENTLE: {

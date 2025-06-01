@@ -92,7 +92,13 @@ export const TimePicker = memo(
               <ThemedText type="heading3" weight="bold" style={styles.title}>
                 {title}
               </ThemedText>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.closeButton}
+                accessibilityRole="button"
+                accessibilityLabel="Close time picker"
+                accessibilityHint="Cancel time selection and close dialog"
+              >
                 <Ionicons name="close" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>

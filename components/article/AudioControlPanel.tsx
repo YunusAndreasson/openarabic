@@ -7,6 +7,7 @@ import BaseCard from '../../components/BaseCard';
 import { ThemedText } from '../../components/ThemedText';
 import { ANIMATION_TIMING } from '../../constants/animations';
 import { LAYOUT } from '../../constants/layout';
+import { MIN_TOUCH_TARGET } from '../../constants/layout';
 import { useButtonAction } from '../../hooks/useButtonAction';
 import { useColors } from '../../hooks/useColors';
 import type { AudioControlPanelProps } from '../../types/ui/audio.types';
@@ -75,6 +76,12 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
               style={styles.iconButton}
               onPress={handlePrevious}
               disabled={isFirstSentence}
+              accessibilityRole="button"
+              accessibilityLabel="Previous sentence"
+              accessibilityHint={
+                isFirstSentence ? 'Already at first sentence' : 'Go to previous sentence'
+              }
+              accessibilityState={{ disabled: isFirstSentence }}
             >
               <Ionicons
                 name="play-skip-back"
@@ -91,6 +98,11 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
                   backgroundColor: colors.elevation2 || colors.elevation1,
                 },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel={isPlaying ? 'Pause audio' : 'Play audio'}
+              accessibilityHint={
+                isPlaying ? 'Pause the current sentence' : 'Start playing the current sentence'
+              }
             >
               <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.text} />
             </TouchableOpacity>
@@ -99,6 +111,12 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
               style={styles.iconButton}
               onPress={handleNext}
               disabled={isLastSentence}
+              accessibilityRole="button"
+              accessibilityLabel="Next sentence"
+              accessibilityHint={
+                isLastSentence ? 'Already at last sentence' : 'Go to next sentence'
+              }
+              accessibilityState={{ disabled: isLastSentence }}
             >
               <Ionicons
                 name="play-skip-forward"
@@ -144,6 +162,10 @@ const styles = StyleSheet.create({
   },
   iconButton: {
     padding: LAYOUT.SPACING.SMALL,
+    minWidth: MIN_TOUCH_TARGET.SIZE,
+    minHeight: MIN_TOUCH_TARGET.SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   infoContainer: {
     alignItems: 'center',

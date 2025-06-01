@@ -16,6 +16,7 @@ import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import { useAuth } from '../../hooks/useAuth';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 
 const TAB_SCREENS = [
   {
@@ -329,6 +330,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET.SIZE,
     ...Platform.select({
       ios: {
         paddingBottom: LAYOUT.SPACING.TINY / 2,

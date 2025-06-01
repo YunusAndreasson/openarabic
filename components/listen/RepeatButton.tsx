@@ -5,6 +5,7 @@ import Animated, { useAnimatedStyle, withSpring, withTiming } from 'react-native
 
 import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { lightFeedback } from '@/utils/haptics';
 
@@ -57,7 +58,14 @@ const RepeatButton: React.FC<RepeatButtonProps> = ({ enabled, onToggle }) => {
   }, [enabled]);
 
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.touchable}>
+    <TouchableOpacity
+      onPress={handlePress}
+      style={styles.touchable}
+      accessibilityRole="button"
+      accessibilityLabel={enabled ? 'Repeat is on' : 'Repeat is off'}
+      accessibilityHint="Toggle repeat mode"
+      accessibilityState={{ selected: enabled }}
+    >
       <Animated.View style={[styles.container, animatedContainerStyle]}>
         <View style={styles.content}>
           <Animated.View style={[styles.iconContainer, animatedIconStyle]}>
@@ -86,6 +94,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     elevation: 1,
     minWidth: 100,
+    minHeight: MIN_TOUCH_TARGET.SIZE,
     paddingHorizontal: LAYOUT.SPACING.MEDIUM + 2,
     paddingVertical: LAYOUT.SPACING.SMALL + 2,
     shadowOffset: { width: 0, height: 1 },

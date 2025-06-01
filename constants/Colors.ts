@@ -7,7 +7,7 @@ export const Colors = {
     background: '#F8FAF9', // Subtle greenish tint to pure white background
     text: '#1A2B1F', // Rich dark text with subtle green undertone
     secondaryText: '#4A5D52', // Balanced secondary text with green tint
-    textTertiary: '#718B7E', // Muted tertiary text with green undertone
+    textTertiary: '#6B7B6E', // Darkened slightly for better contrast
     border: '#E2F0E8', // Subtle light borders with green tint
     card: '#FDFEFD', // Pure white cards with barely visible green tint
     cardBorder: '#F5FAF7', // Very subtle card borders with green tint
@@ -18,7 +18,7 @@ export const Colors = {
     arabicText: '#1A2B1F', // Consistent with main text
     authorText: '#718B7E', // Consistent with textTertiary
     tint: '#5A7C65', // Sophisticated sage green - balanced saturation for clear interactivity
-    tabIconDefault: '#A0B5A8', // Muted gray for inactive tabs with green tint
+    tabIconDefault: '#9BB0A3', // Darkened for better contrast when inactive
     tabIconSelected: '#5A7C65', // Sophisticated sage green - consistent with tint
     icon: '#718B7E', // Consistent with textTertiary
     disabled: '#CBD8D0', // Light disabled state with green tint
@@ -40,8 +40,8 @@ export const Colors = {
     textShadowDark: 'rgba(42, 52, 65, 0.75)', // Dark shadow
     textShadowLight: 'rgba(255, 255, 255, 0.75)', // Light shadow
     info: '#6B8471', // Muted sage-gray - earth-toned alternative to blue
-    backdropOverlay: 'rgba(42, 52, 65, 0.5)', // Backdrop overlay
-    contrastOverlay: 'rgba(42, 52, 65, 0.25)', // Contrast overlay
+    backdropOverlay: 'rgba(42, 52, 65, 0.6)', // Increased opacity for better modal focus
+    contrastOverlay: 'rgba(42, 52, 65, 0.3)', // Increased for better text contrast
     socialTwitter: '#1DA1F2',
     socialFacebook: '#1877F2',
     socialInstagram: '#E4405F',
@@ -108,8 +108,8 @@ export const Colors = {
     textShadowDark: 'rgba(0, 0, 0, 0.75)', // Dark shadow
     textShadowLight: 'rgba(240, 244, 241, 0.75)', // Light warm sage shadow
     info: '#8BA593', // Muted sage with earth undertones - dark theme
-    backdropOverlay: 'rgba(14, 19, 16, 0.75)', // Forest backdrop
-    contrastOverlay: 'rgba(0, 0, 0, 0.4)', // Dark contrast
+    backdropOverlay: 'rgba(14, 19, 16, 0.8)', // Increased opacity for better modal focus
+    contrastOverlay: 'rgba(0, 0, 0, 0.5)', // Increased for better contrast
     socialTwitter: '#1DA1F2',
     socialFacebook: '#1877F2',
     socialInstagram: '#E4405F',

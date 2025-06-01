@@ -710,7 +710,7 @@ export default function ArticleScreen(): JSX.Element {
 
   return (
     <ThemedView style={styles.container} useSafeArea={false}>
-      <StatusBar style="light" translucent={true} animated={true} />
+      <StatusBar style={isDarkMode ? 'light' : 'dark'} translucent={true} animated={true} />
 
       <View style={styles.container}>
         {article && sortedSentences && sortedSentences.length > 0 ? (

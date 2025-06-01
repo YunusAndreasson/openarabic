@@ -9,6 +9,13 @@ export const HEADER_HEIGHT = 50;
 export const HEADER_IMAGE_HEIGHT = 350;
 export const WORD_AREA_MIN_HEIGHT = 364;
 
+// Minimum touch target sizes for accessibility compliance
+export const MIN_TOUCH_TARGET = {
+  // Apple HIG: 44pt minimum, Material: 48dp minimum
+  SIZE: 44, // Use 44pt as it satisfies both guidelines
+  SMALL: 32, // For dense layouts where 44pt isn't feasible
+} as const;
+
 export const LAYOUT = {
   // Screen edge spacing
   SCREEN_EDGE_PADDING: 12, // Tighter horizontal margin matching index.tsx
@@ -117,8 +124,8 @@ export const LAYOUT = {
   // Button dimensions
   BUTTON: {
     HEIGHT: {
-      SMALL: 36,
-      MEDIUM: 44,
+      SMALL: MIN_TOUCH_TARGET.SMALL, // Use minimum small touch target (32pt) for dense layouts
+      MEDIUM: MIN_TOUCH_TARGET.SIZE, // Ensure medium buttons meet minimum requirements
       LARGE: 52,
     },
     BORDER_RADIUS: {
@@ -148,8 +155,8 @@ export const LAYOUT = {
   // Typography scale
   TYPOGRAPHY: {
     SCALE: {
-      TINY: 10, // Reduced from 11 for overline text
-      SMALL: 12, // Reduced from 13 for captions and labels
+      TINY: 11, // Increased from 10 - Apple HIG minimum for accessibility
+      SMALL: 13, // Increased from 12 - better readability for captions
       MEDIUM: 15, // Unchanged - for body text
       LARGE: 17, // For emphasized body or small headings
       XLARGE: 20, // Unchanged - for heading3

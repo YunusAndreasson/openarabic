@@ -59,7 +59,14 @@ const RightInputIcon = ({
   colors: ReturnType<typeof useColors>;
   onPress?: (e: GestureResponderEvent) => void;
 }) => (
-  <TouchableOpacity onPress={onPress} hitSlop={styles.hitSlop} style={styles.rightIcon}>
+  <TouchableOpacity
+    onPress={onPress}
+    hitSlop={styles.hitSlop}
+    style={styles.rightIcon}
+    accessibilityRole="button"
+    accessibilityLabel="Toggle password visibility"
+    accessibilityHint="Show or hide password text"
+  >
     <Ionicons
       name={name}
       size={20}

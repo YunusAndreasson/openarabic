@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View, Platform } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { LAYOUT } from '@/constants/layout';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useToggleAnimation } from '@/hooks/animations';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
@@ -113,7 +114,20 @@ function ToggleComponent({ value, onValueChange }: ToggleProps) {
   );
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={1}>
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={1}
+      style={{
+        minWidth: MIN_TOUCH_TARGET.SIZE,
+        minHeight: MIN_TOUCH_TARGET.SIZE,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={value ? 'Toggle is on' : 'Toggle is off'}
+      accessibilityHint="Double tap to toggle"
+    >
       <Animated.View style={[containerStyle, combinedContainerStyle]}>
         <View style={styles.toggleTrack}>
           <Animated.View style={[handleStyle, handleAnimatedStyle]} />

@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingVertical: LAYOUT.SPACING.SMALL,
     width: '100%',
-    zIndex: 100,
+    zIndex: LAYOUT.Z_INDEX.HEADER,
   },
   leftButtonGroup: {
     flexDirection: 'row',

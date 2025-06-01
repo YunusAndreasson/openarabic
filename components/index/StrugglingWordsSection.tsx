@@ -151,7 +151,13 @@ const WordCard = memo(({ word, onPlayAudio }: WordCardProps) => {
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} activeOpacity={0.75}>
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={`Practice word: ${arabicText}, meaning: ${englishText}`}
+      accessibilityHint="Tap to hear pronunciation"
+    >
       <BaseCard style={styles.wordCard} shadowSize="small">
         <View style={styles.wordCardContent}>
           <ThemedText
