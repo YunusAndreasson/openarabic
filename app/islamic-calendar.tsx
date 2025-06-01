@@ -159,8 +159,7 @@ export default function IslamicCalendarScreen() {
           headerShown: true,
           headerTitle: 'Islamic Calendar',
           headerTitleStyle: {
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 1,
-            fontWeight: '700',
+            ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
           },
           headerStyle: { backgroundColor: colors.background },

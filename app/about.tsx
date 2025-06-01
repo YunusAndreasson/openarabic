@@ -27,8 +27,7 @@ const AboutScreen: React.FC = () => {
           headerShown: true,
           headerTitle: 'About',
           headerTitleStyle: {
-            fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 1,
-            fontWeight: '700',
+            ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
           },
           headerStyle: {

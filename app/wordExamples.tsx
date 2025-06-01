@@ -214,8 +214,7 @@ export default function WordExamplesScreen() {
       headerShown: true,
       headerTitle: title,
       headerTitleStyle: {
-        fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-        fontWeight: '700' as const,
+        ...LAYOUT.HEADER.TITLE.SECONDARY,
         color: colors.text,
         letterSpacing: -0.5,
       },

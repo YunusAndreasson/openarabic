@@ -278,6 +278,25 @@ export const LAYOUT = {
     },
     NAV_HEIGHT: Platform.OS === 'ios' ? 44 : 56,
     NAV_HEADER_HEIGHT: Platform.OS === 'ios' ? 100 : 80,
+    // Standardized header title styles
+    TITLE: {
+      // Main navigation titles (tab screens)
+      MAIN: {
+        fontSize: 30, // HUGE - for large iOS titles
+        fontWeight: 'bold' as const,
+        marginLeft: -4, // TINY spacing adjustment for iOS alignment
+      },
+      // Secondary navigation titles (modal/stack screens)
+      SECONDARY: {
+        fontSize: 20, // XLARGE - standard for secondary screens
+        fontWeight: '600' as const,
+      },
+      // Compact navigation titles (dense screens)
+      COMPACT: {
+        fontSize: 17, // LARGE - for compact layouts
+        fontWeight: '600' as const,
+      },
+    },
   },
 };
 

@@ -31,11 +31,7 @@ const CustomHeaderBackground = () => {
   );
 };
 
-const HEADER_TITLE_STYLE = {
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-  fontWeight: '600' as const,
-  paddingLeft: 8,
-};
+const HEADER_TITLE_STYLE = LAYOUT.HEADER.TITLE.SECONDARY;
 
 const getHeaderStyle = (backgroundColor: string) => ({
   elevation: 0,
