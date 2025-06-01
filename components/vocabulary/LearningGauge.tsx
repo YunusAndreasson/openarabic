@@ -53,8 +53,8 @@ export const LearningGauge = memo(
         return {
           level: 'heavy',
           action: 'Review First',
-          insight: `You have ${dueWords} words to review. Focus on reviewing before adding new words to maintain strong retention.`,
-          icon: 'refresh-circle',
+          insight: `Stop. Complete ${dueWords} overdue reviews to clear your mental workspace.`,
+          icon: 'stop-circle',
           color: colors.error,
         };
       }
@@ -64,8 +64,8 @@ export const LearningGauge = memo(
         return {
           level: 'moderate',
           action: 'Review Then Add',
-          insight: `Complete your ${dueWords} reviews first, then you can safely add a few new words.`,
-          icon: 'library',
+          insight: `Pause. Complete ${dueWords} reviews first, then add a few new words.`,
+          icon: 'pause-circle',
           color: colors.warning,
         };
       }
@@ -75,8 +75,8 @@ export const LearningGauge = memo(
         return {
           level: 'optimal',
           action: 'Add New Words',
-          insight: 'Perfect time to build your vocabulary! Add 5-10 new words to get started.',
-          icon: 'add-circle',
+          insight: 'Go. Add new words to build your vocabulary foundation.',
+          icon: 'play-circle',
           color: colors.success,
         };
       }
@@ -86,9 +86,9 @@ export const LearningGauge = memo(
         action: 'Add New Words',
         insight:
           dueWords === 0
-            ? 'Excellent! No reviews due. You can safely add 3-5 new words.'
-            : `Only ${dueWords} review${dueWords === 1 ? '' : 's'} due. Great time to expand your vocabulary!`,
-        icon: 'add-circle',
+            ? 'Go. Add new words. Your brain is ready for new learning.'
+            : `Go. Complete ${dueWords} review${dueWords === 1 ? '' : 's'} first, then add new words.`,
+        icon: 'play-circle',
         color: colors.success,
       };
     }, [dueWords, learningWords, totalWords, masteredWords, colors]);

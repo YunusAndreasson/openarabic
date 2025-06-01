@@ -50,126 +50,126 @@ interface InfoContent {
 
 const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
   recommendation: {
-    title: 'Smart Learning Recommendations',
+    title: 'Recommendation',
     subtitle:
-      'Your personalized study guidance based on spaced repetition science and cognitive load theory. The system analyzes your review load and memory patterns to suggest the optimal next action.',
+      'Your personalized study guidance based on spaced repetition science and cognitive load theory.\n\nThe system analyzes your review load and memory patterns to determine the optimal next action for maximum learning efficiency.',
     sections: [
       {
         title: 'Review First',
         content:
-          'When you have 15+ overdue words or >25% of your deck is due. Focus on reviewing before adding new words to maintain strong retention and avoid cognitive overload.',
-        icon: 'refresh-circle',
+          'This appears when you have 15+ overdue words or >25% of your deck is due.\n\nWhy this matters:\nYour brain can only process limited new information when working memory is occupied with overdue reviews. Adding new words now creates cognitive overload and reduces retention.\n\nWhat to do:\nStop adding new words. Complete all overdue reviews first. This clears your mental workspace and prevents the forgetting curve from accelerating.',
+        icon: 'stop-circle',
       },
       {
         title: 'Review Then Add',
         content:
-          'When you have 5-15 due words with moderate review load. Complete your reviews first, then safely add a few new words to maintain balance.',
-        icon: 'library',
+          "This appears when you have 5-15 due words with moderate review load.\n\nWhy this matters:\nYou have a manageable review load that won't overwhelm your working memory, but clearing it first optimizes your brain for new learning.\n\nWhat to do:\nComplete your reviews first to reinforce existing memories. Then add 3-5 new words to maintain steady progress without overload.",
+        icon: 'pause-circle',
       },
       {
         title: 'Add New Words',
         content:
-          'When you have few or no due words. Perfect time to expand your vocabulary! Your brain has optimal capacity for encoding new information.',
-        icon: 'add-circle',
+          'This appears when you have few or no due words.\n\nWhy this matters:\nYour brain has maximum capacity for encoding new information. Your working memory is clear and ready for optimal learning.\n\nWhat to do:\nGo ahead and expand your vocabulary! Add 3-5 new words (5-10 when starting out). Your brain can dedicate full attention to forming new neural pathways.',
+        icon: 'play-circle',
       },
     ],
     tips: [
       'Follow recommendations for 2-3x better retention rates',
       'Add 3-5 new words when optimal, 5-10 when starting out',
-      'Consistency matters more than daily volume',
-      'Review when mentally fresh for best results',
+      'Consistency beats volume every time',
+      'Review when mentally fresh for maximum effectiveness',
     ],
   },
   streak: {
     title: 'Consistency',
     subtitle:
-      'Shows your daily vocabulary practice over the last 7 days with current and longest streak counts. Consistent daily practice strengthens neural pathways and improves retention by up to 400% compared to sporadic study.',
+      'This chart shows your daily vocabulary practice over the last 7 days with current and longest streak counts.\n\nConsistent daily practice strengthens neural pathways and improves retention by up to 400% compared to sporadic study sessions.',
     sections: [
       {
         title: 'Why Consistency Matters',
         content:
-          'Daily practice, even just 2-3 words, builds stronger neural pathways than marathon study sessions. Your brain consolidates memories during sleep, making daily exposure crucial.',
+          'Daily practice, even just 2-3 words, builds stronger neural pathways than marathon study sessions.\n\nThe Science:\nYour brain consolidates memories during sleep through a process called memory consolidation. Daily exposure ensures information moves from short-term to long-term memory effectively.\n\nThe Result:\nRegular practice creates automatic recall - words become instantly accessible without conscious effort.',
         icon: 'calendar',
       },
       {
         title: 'Building Habits',
         content:
-          'Link vocabulary practice to existing routines like morning coffee or commute. Small, consistent actions compound into significant progress over time.',
+          'Link vocabulary practice to existing routines like morning coffee, commute, or before bed.\n\nWhy This Works:\nHabit stacking leverages existing neural pathways to create new ones. Your brain already has strong cues for your existing routine.\n\nThe Compound Effect:\nSmall, consistent actions compound into significant progress over time. 5 minutes daily = 30+ hours annually.',
         icon: 'link',
       },
     ],
     tips: [
-      'Even 2-3 words daily builds momentum',
+      'Practice 2-3 words daily to build momentum',
       'Link practice to existing daily routines',
       'Focus on consistency over perfection',
       'Celebrate small wins to maintain motivation',
     ],
   },
   mastery: {
-    title: 'Mastery Progress',
+    title: 'Mastery',
     subtitle:
-      'Tracks how well you know each word over time. Words are considered mastered when you can recall them automatically with high confidence. The chart shows your vocabulary becoming automatic.',
+      'This chart tracks how well you know each word over time, showing your mastery percentage.\n\nWords are considered mastered when you can recall them automatically with high confidence. The line shows your vocabulary becoming automatic over the past 14 days.',
     sections: [
       {
         title: 'Mastery Levels',
         content:
-          'Words progress from New → Learning → Review → Mastered. Mastered words have strong memory traces and require less frequent review.',
+          'Words progress through four distinct stages:\n\nNew → Learning → Review → Mastered\n\nWhat Each Stage Means:\n• New: Just added, no memory trace yet\n• Learning: Building initial memory connections\n• Review: Strengthening existing memories\n• Mastered: Automatic recall, strong neural pathways\n\nMastered words require less frequent review because they have strong memory traces that resist forgetting.',
         icon: 'trending-up',
       },
       {
-        title: 'Optimal Range',
+        title: 'Target Range',
         content:
-          'Aim for 60-80% mastery rate. This balance ensures steady progress without overwhelming difficulty. Too high means you need more challenge, too low suggests reviewing methods.',
+          "Aim for 60-80% mastery rate for optimal learning.\n\nWhy This Range:\nThis balance ensures steady progress without overwhelming difficulty. It's challenging enough to promote growth but not so hard that it becomes frustrating.\n\nWhat Different Rates Mean:\n• Above 80%: You need more challenging content\n• 60-80%: Perfect learning zone\n• Below 60%: Review your study methods or reduce difficulty",
         icon: 'checkmark-circle',
       },
     ],
     tips: [
       'Steep climbs indicate effective learning periods',
-      'Plateaus are normal - focus on consistency',
-      'Quality recall beats speed',
+      'Plateaus are normal - maintain consistency',
+      'Focus on quality recall over speed',
       'Use context and associations for better retention',
     ],
   },
   retrievability: {
-    title: 'Retention Forecast',
+    title: 'Retention',
     subtitle:
-      'Predicts your average memory strength for the next 14 days using spaced repetition science. Shows when words will drop below optimal retention levels.',
+      'This chart predicts your average memory strength for the next 14 days using spaced repetition science.\n\nIt shows when words will drop below optimal retention levels, helping you plan review sessions before forgetting occurs.',
     sections: [
       {
         title: 'Memory Strength',
         content:
-          'The 70% threshold is optimal for review timing - high enough for successful recall, low enough for memory strengthening through retrieval practice.',
+          'The chart shows predicted memory strength as a percentage over time.\n\nThe 70% Threshold:\nThis is the optimal review timing - high enough for successful recall, low enough for memory strengthening through retrieval practice.\n\nWhy 70% Works:\nReviewing just before forgetting (the "desirable difficulty" zone) creates the strongest memory consolidation. Too early wastes time, too late risks forgetting.',
         icon: 'analytics-outline',
       },
       {
         title: 'Planning Reviews',
         content:
-          'Plan study sessions 1-2 days before predicted drops to maintain strong retention. This prevents forgetting while maximizing memory consolidation.',
+          'Use this forecast to plan your study sessions strategically.\n\nOptimal Timing:\nPlan study sessions 1-2 days before predicted drops below 70%. This prevents forgetting while maximizing memory consolidation.\n\nColor Zones:\n• Green: Stable retention, no immediate action needed\n• Yellow: Plan review within 2-3 days\n• Red: Review immediately to prevent forgetting',
         icon: 'time-outline',
       },
     ],
     tips: [
       'Review just before forgetting for strongest memories',
       'Green zones indicate stable retention',
-      'Red zones suggest immediate review needed',
+      'Red zones require immediate review',
       'Consistent practice prevents steep drops',
     ],
   },
   difficulty: {
-    title: 'Word Difficulty',
+    title: 'Difficulty',
     subtitle:
-      'Shows how challenging your vocabulary is across three levels: Easy (quick recall), Medium (some effort), and Hard (frequent mistakes). Optimal distribution ensures sustainable learning.',
+      'This chart shows how challenging your vocabulary is across three levels: Easy, Medium, and Hard.\n\nIt displays the distribution of word difficulty based on your recall performance. Optimal distribution ensures sustainable learning without mental fatigue.',
     sections: [
       {
         title: 'Difficulty Levels',
         content:
-          'Easy words build confidence and fluency. Medium words provide appropriate challenge. Hard words should be limited to prevent mental fatigue.',
+          'Words are categorized based on your recall performance:\n\nEasy Words (Quick Recall):\nYou remember these instantly with minimal effort. They build confidence and fluency.\n\nMedium Words (Some Effort):\nRequire conscious recall but you usually get them right. These provide appropriate challenge.\n\nHard Words (Frequent Mistakes):\nYou often struggle or forget these. They require more attention but should be limited to prevent frustration.',
         icon: 'bar-chart',
       },
       {
-        title: 'Optimal Balance',
+        title: 'Target Balance',
         content:
-          'Target 60-70% Easy-Medium range for sustainable learning. Too many hard words create frustration and reduce motivation.',
+          'Target 60-70% Easy-Medium range for sustainable learning.\n\nWhy This Balance:\nToo many hard words create cognitive overload and reduce motivation. Too many easy words provide insufficient challenge for growth.\n\nOptimal Distribution:\n• 40-50% Easy words (confidence builders)\n• 20-30% Medium words (growth zone)\n• 10-20% Hard words (challenge, but manageable)',
         icon: 'stats-chart-outline',
       },
     ],
@@ -181,20 +181,20 @@ const INFO_CONTENT: Record<InfoModalType, InfoContent> = {
     ],
   },
   efficiency: {
-    title: 'Learning Efficiency',
+    title: 'Efficiency',
     subtitle:
-      'Measures how effectively your study time converts to lasting memory over 14 days. Based on word progression, stability gains, and success rates.',
+      'This chart measures how effectively your study time converts to lasting memory over 14 days.\n\nBased on word progression, stability gains, and success rates, it shows whether your learning methods are working optimally.',
     sections: [
       {
-        title: 'Efficiency Range',
+        title: 'Target Range',
         content:
-          'Target 70-85% efficiency. Below 70% suggests reviewing methods or timing. Above 85% means you could challenge yourself more.',
+          'Target 70-85% efficiency for optimal learning.\n\nWhat Efficiency Means:\nThis measures how much lasting memory you create per minute of study time. Higher efficiency means better learning methods.\n\nInterpreting Your Score:\n• Below 70%: Review your methods or study timing\n• 70-85%: Excellent efficiency, maintain current approach\n• Above 85%: You can challenge yourself with harder content',
         icon: 'speedometer',
       },
       {
         title: 'Improving Efficiency',
         content:
-          'Focus on quality over speed, use active recall techniques, and study when mentally fresh. Avoid passive reading - test yourself actively.',
+          'Several factors impact your learning efficiency:\n\nStudy Quality:\nFocus on quality over speed. Use active recall techniques rather than passive reading.\n\nTiming:\nStudy when mentally fresh (usually mornings). Avoid studying when tired or distracted.\n\nMethod:\nTest yourself actively rather than just re-reading. Retrieval practice strengthens memory more than recognition.',
         icon: 'bulb',
       },
     ],

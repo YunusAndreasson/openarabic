@@ -208,7 +208,11 @@ export const VocabularyStatCards = memo(
       <View>
         {/* Recommendation Section */}
         <View>
-          <SectionTitle title="Recommendation" isFirstSection={true} />
+          <SectionTitle
+            title="Recommendation"
+            isFirstSection={true}
+            onInfoPress={handleRecommendationInfo}
+          />
           <LearningGauge
             dueWords={validatedData.due}
             learningWords={validatedData.learning}
