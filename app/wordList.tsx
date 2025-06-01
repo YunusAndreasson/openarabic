@@ -107,6 +107,24 @@ export default function WordListScreen(): JSX.Element {
           icon: 'alarm-outline',
           description: 'Words ready for review',
         };
+      case 'difficultyEasy':
+        return {
+          title: 'Easy Words',
+          icon: 'happy-outline',
+          description: 'Words with low difficulty',
+        };
+      case 'difficultyMedium':
+        return {
+          title: 'Medium Words',
+          icon: 'remove-circle-outline',
+          description: 'Words with medium difficulty',
+        };
+      case 'difficultyHard':
+        return {
+          title: 'Hard Words',
+          icon: 'warning-outline',
+          description: 'Words with high difficulty',
+        };
       default:
         return {
           title: 'Due',
@@ -119,7 +137,15 @@ export default function WordListScreen(): JSX.Element {
   // Use the new hook to fetch and process words
   const { data: words, error } = useWordList(
     user?.id,
-    category as 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention',
+    category as
+      | 'total'
+      | 'mastered'
+      | 'learning'
+      | 'due'
+      | 'needsAttention'
+      | 'difficultyEasy'
+      | 'difficultyMedium'
+      | 'difficultyHard',
     sortBy,
     sortDirection
   );

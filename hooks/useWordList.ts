@@ -9,7 +9,15 @@ export interface EnhancedStudyWord extends StudyWord {
   retentionScore: number;
 }
 
-type WordListCategory = 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention';
+type WordListCategory =
+  | 'total'
+  | 'mastered'
+  | 'learning'
+  | 'due'
+  | 'needsAttention'
+  | 'difficultyEasy'
+  | 'difficultyMedium'
+  | 'difficultyHard';
 
 // Add type for sort options
 export type WordListSort = 'retention' | 'due' | 'alphabetical' | 'streak';
@@ -126,6 +134,24 @@ export function useWordList(
               const isUnstableAndDifficult = stability < 7 && difficulty >= 7.0 && lapses > 0; // Above medium difficulty
 
               return isHighDifficultyWithLapses || isStrugglingInLearning || isUnstableAndDifficult;
+            });
+            break;
+          case 'difficultyEasy':
+            result = filteredWords.filter(word => {
+              const difficulty = word.fsrs_difficulty ?? 6.5;
+              return difficulty < 6.5; // Easy words
+            });
+            break;
+          case 'difficultyMedium':
+            result = filteredWords.filter(word => {
+              const difficulty = word.fsrs_difficulty ?? 6.5;
+              return difficulty >= 6.5 && difficulty < 8.0; // Medium words
+            });
+            break;
+          case 'difficultyHard':
+            result = filteredWords.filter(word => {
+              const difficulty = word.fsrs_difficulty ?? 6.5;
+              return difficulty >= 8.0; // Hard words
             });
             break;
           default:

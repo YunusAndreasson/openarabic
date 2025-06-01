@@ -88,7 +88,15 @@ export interface SrsStats extends BaseVocabularyStats {
 /**
  * Category types for vocabulary statistics and filtering
  */
-export type StatCategory = 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention';
+export type StatCategory =
+  | 'total'
+  | 'mastered'
+  | 'learning'
+  | 'due'
+  | 'needsAttention'
+  | 'difficultyEasy'
+  | 'difficultyMedium'
+  | 'difficultyHard';
 
 /**
  * Weekly progress data for vocabulary charts

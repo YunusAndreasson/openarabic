@@ -271,7 +271,7 @@ export const VocabularyStatCards = memo(
           />
         </View>
 
-        <View>
+        <View style={styles.lastSection}>
           <SectionTitle
             title="Difficulty"
             subtitle="Which words are hardest for you to remember"
@@ -280,6 +280,7 @@ export const VocabularyStatCards = memo(
           <DifficultyChart
             studyWords={validatedInput.studyWords}
             onInfoPress={() => handleInfoPress('difficulty')}
+            onDifficultyPress={onStatPress}
             hideTitle={true}
           />
         </View>
@@ -299,5 +300,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: LAYOUT.SPACING.MEDIUM,
     justifyContent: 'space-between',
+  },
+  lastSection: {
+    marginBottom: LAYOUT.SPACING.XXLARGE,
   },
 });

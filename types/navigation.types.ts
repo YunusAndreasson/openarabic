@@ -1,4 +1,3 @@
-
 /**
  * Type for review parameters
  */
@@ -16,7 +15,15 @@ export interface ReviewParams {
 export interface WordListParams {
   filter?: 'all' | 'due' | 'learned';
   sortBy?: 'dueDate' | 'addedDate' | 'difficulty';
-  category?: 'total' | 'mastered' | 'learning' | 'due' | 'needsAttention';
+  category?:
+    | 'total'
+    | 'mastered'
+    | 'learning'
+    | 'due'
+    | 'needsAttention'
+    | 'difficultyEasy'
+    | 'difficultyMedium'
+    | 'difficultyHard';
 }
 
 /**
