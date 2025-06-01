@@ -3,7 +3,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import type { Theme } from '@/constants/Colors';
 import { Colors } from '@/constants/Colors';
 
-
 type ThemeColors = (typeof Colors)[Theme];
 
 export interface ThemeState {

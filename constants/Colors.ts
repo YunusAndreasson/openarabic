@@ -17,9 +17,9 @@ export const Colors = {
     englishText: '#4A5D52', // Consistent with secondaryText
     arabicText: '#1A2B1F', // Consistent with main text
     authorText: '#718B7E', // Consistent with textTertiary
-    tint: '#E8F5E8', // Very light warm green - closer to white with subtle green warmth
+    tint: '#5A7C65', // Sophisticated sage green - balanced saturation for clear interactivity
     tabIconDefault: '#A0B5A8', // Muted gray for inactive tabs with green tint
-    tabIconSelected: '#E8F5E8', // Very light warm green - consistent with tint
+    tabIconSelected: '#5A7C65', // Sophisticated sage green - consistent with tint
     icon: '#718B7E', // Consistent with textTertiary
     disabled: '#CBD8D0', // Light disabled state with green tint
     imagePlaceholder: '#F5FAF7', // Consistent with cardBorder
@@ -85,9 +85,9 @@ export const Colors = {
     englishText: '#D4D8D5', // Consistent with secondaryText
     arabicText: '#F0F4F1', // Consistent with main text
     authorText: '#A8B0A8', // Consistent with textTertiary
-    tint: '#F0F6F0', // Very light warm sage - closer to white with subtle green warmth
+    tint: '#7A9B85', // Balanced sage green - clear contrast in dark mode without being harsh
     tabIconDefault: '#6C746C', // Neutral with green-brown undertone
-    tabIconSelected: '#F0F6F0', // Very light warm sage - consistent with tint
+    tabIconSelected: '#7A9B85', // Balanced sage green - consistent with tint
     icon: '#A8B0A8', // Consistent with textTertiary
     disabled: '#3A423A', // Muted dark with green-brown undertone
     imagePlaceholder: '#2A312B', // Consistent with border
