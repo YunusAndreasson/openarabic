@@ -25,6 +25,7 @@ import { supabase } from '@/services/supabase';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setFontScale, setShowEnglish } from '@/store/settingsSlice';
 import { lightFeedback } from '@/utils/haptics';
+import SectionTitle from '@/components/SectionTitle';
 
 // Memoized components
 interface SettingLabelProps {
@@ -54,121 +55,18 @@ const Divider = memo(() => {
 });
 Divider.displayName = 'Divider';
 
-// User initials badge component
-interface UserInitialsBadgeProps {
-  readonly email?: string;
-  readonly size?: number;
-}
-
-const UserInitialsBadge = memo(({ email, size = 88 }: UserInitialsBadgeProps) => {
+const AccountScreen: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const settings = useAppSelector(state => state.settings);
   const colors = useColors();
-
-  const initials = useMemo(() => {
-    if (!email || email.length === 0) return '?';
-
-    try {
-      const emailPrefix = email.split('@')[0];
-      if (!emailPrefix) return '?';
-
-      const parts = emailPrefix.split(/[._-]/).filter(part => part && part.length > 0);
-
-      if (parts.length >= 2) {
-        const firstInitial = parts[0]?.[0];
-        const secondInitial = parts[1]?.[0];
-        if (firstInitial && secondInitial) {
-          return (firstInitial + secondInitial).toUpperCase();
-        }
-      }
-
-      const firstChar = emailPrefix[0];
-      return firstChar ? firstChar.toUpperCase() : '?';
-    } catch {
-      return '?';
-    }
-  }, [email]);
-
-  const badgeStyle = useMemo(
-    () => [
-      styles.userInitialsBadge,
-      {
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: colors.progressIndicator,
-        shadowColor: colors.shadow,
-      },
-    ],
-    [size, colors.progressIndicator, colors.shadow]
-  );
-
-  const textStyle = useMemo(
-    () => [
-      styles.userInitialsBadgeText,
-      {
-        fontSize: size * 0.48,
-        color: colors.background,
-        lineHeight: size * 0.48,
-      },
-    ],
-    [size, colors.background]
-  );
-
-  return (
-    <View style={badgeStyle}>
-      <ThemedText style={textStyle} weight="bold">
-        {initials}
-      </ThemedText>
-    </View>
-  );
-});
-UserInitialsBadge.displayName = 'UserInitialsBadge';
-
-// Account header component
-const AccountHeader = memo(() => {
-  const colors = useColors();
+  const headerHeight = useHeaderHeight();
+  const insets = useSafeAreaInsets();
+  const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [notificationPermissions, setNotificationPermissions] = useState(false);
   const { user } = useAuth();
-  const [memberSince, setMemberSince] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchMemberSince = async () => {
-      if (!user?.id) return;
-
-      try {
-        if (user.user_metadata && typeof user.user_metadata === 'object') {
-          const metadata = user.user_metadata as Record<string, unknown>;
-          const createdAt = metadata.created_at;
-
-          if (typeof createdAt === 'string') {
-            const date = new Date(createdAt);
-            if (!isNaN(date.getTime())) {
-              setMemberSince(
-                date.toLocaleDateString('en-US', {
-                  month: 'long',
-                  year: 'numeric',
-                })
-              );
-              return;
-            }
-          }
-        }
-
-        const currentDate = new Date();
-        setMemberSince(
-          currentDate.toLocaleDateString('en-US', {
-            month: 'long',
-            year: 'numeric',
-          })
-        );
-      } catch (error) {
-        // Silently handle error and use fallback
-        setMemberSince('Recently');
-      }
-    };
-
-    fetchMemberSince();
-  }, [user?.id, user?.user_metadata]);
-
-  const userEmail = user?.email || 'No email';
+  // User display logic
   const displayName = useMemo(() => {
     if (!user?.email) return 'Anonymous User';
 
@@ -182,6 +80,7 @@ const AccountHeader = memo(() => {
     return parts.map(part => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
   }, [user?.email]);
 
+  // Sign out handler
   const handleSignOut = useCallback(() => {
     Alert.alert(
       'Sign Out',
@@ -213,58 +112,6 @@ const AccountHeader = memo(() => {
       { cancelable: true }
     );
   }, []);
-
-  return (
-    <View style={styles.accountHeader}>
-      <View style={styles.accountProfileSection}>
-        <UserInitialsBadge email={user?.email} size={88} />
-        <View style={styles.accountUserInfo}>
-          <ThemedText
-            type="heading3"
-            weight="bold"
-            numberOfLines={1}
-            style={styles.accountUserName}
-          >
-            {displayName}
-          </ThemedText>
-          <ThemedText
-            type="body"
-            variant="secondary"
-            numberOfLines={1}
-            style={styles.accountUserEmail}
-          >
-            {userEmail}
-          </ThemedText>
-          {memberSince && (
-            <ThemedText type="caption" variant="subtle" style={styles.accountMemberSince}>
-              Member since {memberSince}
-            </ThemedText>
-          )}
-        </View>
-
-        <BaseCard
-          onPress={handleSignOut}
-          style={styles.signOutAction}
-          shadowSize="none"
-          includePressAnimation={true}
-        >
-          <Ionicons name="log-out-outline" size={24} color={colors.error} />
-        </BaseCard>
-      </View>
-    </View>
-  );
-});
-AccountHeader.displayName = 'AccountHeader';
-
-const AccountScreen: React.FC = () => {
-  const dispatch = useAppDispatch();
-  const settings = useAppSelector(state => state.settings);
-  const colors = useColors();
-  const headerHeight = useHeaderHeight();
-  const insets = useSafeAreaInsets();
-  const { reminderTime, updateReminderTime, formatReminderTime } = useReminders();
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [notificationPermissions, setNotificationPermissions] = useState(false);
 
   const handleFontScaleChange = useCallback(
     (value: number) => {
@@ -372,22 +219,9 @@ const AccountScreen: React.FC = () => {
           showsVerticalScrollIndicator: false,
         }}
       >
-        {/* Account Header */}
-        <View style={styles.accountHeaderWrapper}>
-          <BaseCard
-            style={styles.accountHeaderCard}
-            shadowSize="small"
-            includePressAnimation={false}
-          >
-            <AccountHeader />
-          </BaseCard>
-        </View>
-
         {/* Appearance Section */}
         <View style={styles.appearanceWrapper}>
-          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-            Appearance
-          </ThemedText>
+          <SectionTitle title="Appearance" isFirstSection={true} />
           <BaseCard
             style={styles.appearanceContainer}
             shadowSize="small"
@@ -468,9 +302,7 @@ const AccountScreen: React.FC = () => {
 
         {/* Reminders Section */}
         <View style={styles.remindersWrapper}>
-          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-            Reminders
-          </ThemedText>
+          <SectionTitle title="Reminders" />
           <BaseCard
             style={styles.remindersContainer}
             shadowSize="small"
@@ -505,9 +337,7 @@ const AccountScreen: React.FC = () => {
 
         {/* Information Section */}
         <View style={styles.infoWrapper}>
-          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-            Information
-          </ThemedText>
+          <SectionTitle title="Information" />
           <BaseCard style={styles.infoContainer} shadowSize="small" includePressAnimation={false}>
             <View style={styles.actionLinksContainer}>
               <BaseCard
@@ -539,9 +369,7 @@ const AccountScreen: React.FC = () => {
 
         {/* Connect Section */}
         <View style={styles.connectWrapper}>
-          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
-            Connect
-          </ThemedText>
+          <SectionTitle title="Connect" />
           <BaseCard
             style={styles.connectContainer}
             shadowSize="small"
@@ -647,6 +475,45 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
+        {/* Manage Section */}
+        <View style={styles.manageWrapper}>
+          <SectionTitle title="Manage" />
+          <BaseCard style={styles.manageContainer} shadowSize="small" includePressAnimation={false}>
+            <View style={styles.manageLinksContainer}>
+              <BaseCard
+                onPress={handleSignOut}
+                style={styles.actionLinkCard}
+                shadowSize="none"
+                includePressAnimation={true}
+              >
+                <View style={styles.actionLinkContent}>
+                  <View style={styles.actionLinkLeft}>
+                    <View style={styles.actionIconContainer}>
+                      <Ionicons name="log-out-outline" size={22} color={colors.error} />
+                    </View>
+                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
+                      Sign Out
+                    </ThemedText>
+                    <ThemedText
+                      type="caption"
+                      variant="secondary"
+                      style={styles.userEmailInlineText}
+                    >
+                      ({user?.email || 'No email'})
+                    </ThemedText>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward-outline"
+                    size={20}
+                    color={colors.textTertiary}
+                    style={styles.actionLinkChevron}
+                  />
+                </View>
+              </BaseCard>
+            </View>
+          </BaseCard>
+        </View>
+
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
           <ThemedText type="caption" variant="secondary" style={styles.versionText}>
@@ -681,82 +548,57 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: LAYOUT.CONTENT_SPACING.BOTTOM + LAYOUT.BOTTOM_BAR.HEIGHT,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingTop: LAYOUT.SPACING.MEDIUM,
   },
   scrollView: {
     flex: 1,
   },
 
   // Account Header Styles
-  accountHeader: {
-    padding: LAYOUT.SPACING.MEDIUM + 2,
-  },
   accountHeaderWrapper: {
     marginBottom: LAYOUT.SPACING.XLARGE,
   },
-  accountHeaderCard: {
+  accountContainer: {
     overflow: 'hidden',
   },
-  accountProfileSection: {
+  accountLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  actionLinkCard: {
+    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
+    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
+    paddingVertical: LAYOUT.SPACING.SMALL + 2,
+    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    marginBottom: 0,
+  },
+  actionLinkContent: {
+    alignItems: 'center',
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: LAYOUT.SPACING.MEDIUM,
+    justifyContent: 'space-between',
   },
-  accountUserInfo: {
+  actionLinkLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
     flex: 1,
-    marginLeft: LAYOUT.SPACING.SMALL + 2,
-    paddingTop: LAYOUT.SPACING.TINY,
-    justifyContent: 'center',
+    paddingRight: LAYOUT.SPACING.SMALL,
   },
-  accountUserName: {
-    marginBottom: LAYOUT.SPACING.XTINY,
-  },
-  accountUserEmail: {
-    marginBottom: LAYOUT.SPACING.XTINY,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  accountMemberSince: {
-    marginTop: LAYOUT.SPACING.MICRO,
-    opacity: LAYOUT.OPACITY.MEDIUM_HIGH,
-  },
-  signOutAction: {
-    padding: LAYOUT.SPACING.SMALL + 2,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+  actionIconContainer: {
+    padding: LAYOUT.SPACING.TINY,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 44,
-    minHeight: 44,
   },
-
-  // User initials badge styles
-  userInitialsBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: LAYOUT.SPACING.SMALL,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
+  actionLinkText: {
+    marginLeft: LAYOUT.SPACING.SMALL,
   },
-  userInitialsBadgeText: {
+  actionLinkChevron: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
+    minWidth: LAYOUT.SPACING.XLARGE,
     textAlign: 'center',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-    fontWeight: '700',
+    marginRight: LAYOUT.SPACING.TINY,
   },
 
   // Section Styles
   sectionTitle: {
     marginBottom: LAYOUT.SPACING.SMALL,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
-  },
-
-  // Preferences Styles
-  appearanceWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
-  },
-  appearanceContainer: {
-    overflow: 'hidden',
   },
 
   // Setting Row Styles
@@ -798,6 +640,14 @@ const styles = StyleSheet.create({
     height: 40,
   },
 
+  // Preferences Styles
+  appearanceWrapper: {
+    // Remove marginBottom - SectionTitle handles section spacing
+  },
+  appearanceContainer: {
+    overflow: 'hidden',
+  },
+
   // Preview Styles
   previewContainer: {
     padding: LAYOUT.SPACING.SMALL,
@@ -829,7 +679,7 @@ const styles = StyleSheet.create({
 
   // Information Section Styles
   infoWrapper: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    // Remove marginBottom - SectionTitle handles section spacing
   },
   infoContainer: {
     overflow: 'hidden',
@@ -839,45 +689,13 @@ const styles = StyleSheet.create({
   actionLinksContainer: {
     marginBottom: LAYOUT.SPACING.TINY,
   },
-  actionLinkCard: {
-    borderRadius: LAYOUT.BORDER_RADIUS.NONE,
-    borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
-    marginBottom: 0,
-  },
-  actionLinkContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  actionLinkLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flex: 1,
-    paddingRight: LAYOUT.SPACING.SMALL,
-  },
-  actionIconContainer: {
-    padding: LAYOUT.SPACING.TINY,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionLinkText: {
-    marginLeft: LAYOUT.SPACING.SMALL,
-  },
-  actionLinkChevron: {
-    opacity: LAYOUT.OPACITY.MEDIUM,
-    minWidth: LAYOUT.SPACING.XLARGE,
-    textAlign: 'center',
-    marginRight: LAYOUT.SPACING.TINY,
-  },
 
   // Connect Styles
   connectContainer: {
     overflow: 'hidden',
   },
   connectWrapper: {
-    marginBottom: LAYOUT.SPACING.LARGE,
+    // Remove marginBottom - SectionTitle handles section spacing
   },
 
   // Social Links Styles
@@ -919,7 +737,7 @@ const styles = StyleSheet.create({
 
   // Reminders Styles
   remindersWrapper: {
-    marginBottom: LAYOUT.SPACING.XLARGE,
+    // Remove marginBottom - SectionTitle handles section spacing
   },
   remindersContainer: {
     overflow: 'hidden',
@@ -946,7 +764,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: LAYOUT.SPACING.LARGE,
     marginBottom: LAYOUT.SPACING.XLARGE,
-    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
   },
   appName: {
     marginBottom: LAYOUT.SPACING.SMALL,
@@ -957,6 +775,20 @@ const styles = StyleSheet.create({
   },
   copyrightText: {
     letterSpacing: 0.2,
+  },
+
+  // Manage Section Styles
+  manageWrapper: {
+    // Remove marginBottom - SectionTitle handles section spacing
+  },
+  manageContainer: {
+    overflow: 'hidden',
+  },
+  manageLinksContainer: {
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  userEmailInlineText: {
+    marginLeft: LAYOUT.SPACING.TINY,
   },
 });
 

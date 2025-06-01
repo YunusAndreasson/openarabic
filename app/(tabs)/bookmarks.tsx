@@ -11,6 +11,7 @@ import { ArticleCard } from '@/components/ArticleCard';
 import { AudioProgressBar } from '@/components/AudioProgressBar';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import SectionTitle from '@/components/SectionTitle';
 import SortingControls from '@/components/SortingControls';
 import SleepTimer from '@/components/SleepTimer';
 import type { SortOption, SortDirection } from '@/components/SortingControls';
@@ -51,13 +52,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerControls: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.SMALL,
+    // Remove custom spacing - SectionTitle handles all spacing
   },
   loadingContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
+  },
+  savedArticlesSection: {
+    // Remove custom spacing - SectionTitle handles all spacing
   },
 });
 
@@ -738,12 +741,16 @@ export default function BookmarksScreen(): JSX.Element {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={styles.headerControls}>
+              <SectionTitle title="Sort" isFirstSection={true} />
               <SortingControls
                 currentSort={currentSort}
                 sortDirection={sortDirection}
                 onSortChange={handleSortChange}
                 options={sortOptions}
               />
+              <View style={styles.savedArticlesSection}>
+                <SectionTitle title="Saved Articles" />
+              </View>
             </View>
           }
           ListEmptyComponent={null}

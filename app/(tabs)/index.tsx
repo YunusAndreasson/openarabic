@@ -250,7 +250,7 @@ export default function ArticlesScreen(): JSX.Element {
     }
 
     return dailyPickArticle ? (
-      <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={false} />
+      <DailyPickSection article={dailyPickArticle} onPress={handleArticlePress} showTitle={true} />
     ) : null;
   }, [articlesData, articlesError, handleArticlePress, dailyPick.articleId]);
 
@@ -419,7 +419,6 @@ export default function ArticlesScreen(): JSX.Element {
     }
 
     const orderedSections = [
-      { id: 'welcome', component: <WelcomeMessage /> },
       { id: 'daily-pick', component: DailyPick },
       { id: 'struggling-words', component: StrugglingWordsComponent },
       { id: 'learning-section', component: learningSection },
@@ -454,6 +453,10 @@ export default function ArticlesScreen(): JSX.Element {
     authorFilterComponent,
     categoryFilterComponent,
   ]);
+
+  const ListFooterComponent = useMemo(() => {
+    return <WelcomeMessage />;
+  }, []);
 
   const EmptyStateComponent = useMemo(() => null, []);
 
@@ -504,6 +507,7 @@ export default function ArticlesScreen(): JSX.Element {
         onRefresh={handleRefresh}
         onArticlePress={handleArticlePress}
         ListHeaderComponent={isArticlesLoading && !isDataCached ? null : ListHeaderComponent}
+        ListFooterComponent={isArticlesLoading && !isDataCached ? null : ListFooterComponent}
         ListEmptyComponent={EmptyStateComponent}
         contentContainerStyle={contentContainerStyle}
         hideMainList={isArticlesLoading && !isDataCached}

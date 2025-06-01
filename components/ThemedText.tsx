@@ -144,18 +144,18 @@ const styles = StyleSheet.create({
   },
   heading1: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
-    fontWeight: 'bold',
+    fontWeight: '700',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   heading2: {
-    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE,
-    fontWeight: 'bold',
-    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
-  },
-  heading3: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+  },
+  heading3: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
+    fontWeight: '600',
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,

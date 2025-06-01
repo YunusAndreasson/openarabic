@@ -66,6 +66,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
       onRefresh,
       onArticlePress,
       ListHeaderComponent,
+      ListFooterComponent,
       ListEmptyComponent,
       hideMainList = false,
       hideWhileRefreshing = false,
@@ -133,6 +134,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
     const shouldHideContent = (hideWhileRefreshing && isRefreshing) || hideMainList;
     const displayData = shouldHideContent ? [] : deferredArticles;
     const displayHeader = shouldHideContent ? null : ListHeaderComponent;
+    const displayFooter = shouldHideContent ? null : ListFooterComponent;
 
     const safeContentContainerStyle = useMemo(
       () => ({
@@ -152,6 +154,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         showsVerticalScrollIndicator: false,
         contentContainerStyle: safeContentContainerStyle,
         ListHeaderComponent: displayHeader,
+        ListFooterComponent: displayFooter,
         ListEmptyComponent: isLoading ? null : ListEmptyComponent,
         refreshControl,
         scrollEventThrottle: 16,
@@ -177,6 +180,7 @@ const ArticleList = forwardRef<FlashList<Article>, ArticleListProps>(
         keyExtractor,
         safeContentContainerStyle,
         displayHeader,
+        displayFooter,
         ListEmptyComponent,
         isLoading,
         refreshControl,

@@ -54,7 +54,7 @@ const SectionHeader = memo(
     return (
       <View style={[styles.sectionHeader, isFirstSection && styles.firstSectionHeader]}>
         <View style={styles.titleGroup}>
-          <ThemedText type="heading3" weight="bold" style={styles.sectionTitle}>
+          <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
             {title}
           </ThemedText>
           {subtitle && (
@@ -227,12 +227,7 @@ export const VocabularyStatCards = memo(
       <View style={styles.container}>
         {/* Recommendation Section */}
         <View style={styles.sectionWrapper}>
-          <SectionHeader
-            title="Recommendation"
-            subtitle="Smart guidance for optimal learning"
-            onInfoPress={() => handleInfoPress('recommendation')}
-            isFirstSection={true}
-          />
+          <SectionHeader title="Recommendation" isFirstSection={true} />
           <LearningGauge
             dueWords={validatedData.due}
             learningWords={validatedData.learning}
@@ -245,7 +240,7 @@ export const VocabularyStatCards = memo(
 
         {/* Progress Section */}
         <View style={styles.sectionWrapper}>
-          <SectionHeader title="Progress" subtitle="Current status of your vocabulary learning" />
+          <SectionHeader title="Progress" />
           <View style={styles.statsGrid}>
             {statCards.map(card => (
               <StatCard
@@ -265,11 +260,7 @@ export const VocabularyStatCards = memo(
 
         {/* Consistency Section */}
         <View style={styles.sectionWrapper}>
-          <SectionHeader
-            title="Consistency"
-            subtitle="Daily practice habits and learning streaks"
-            onInfoPress={() => handleInfoPress('streak')}
-          />
+          <SectionHeader title="Consistency" />
           <StreakCard
             currentStreak={currentStreak}
             longestStreak={longestStreak}
@@ -343,8 +334,7 @@ VocabularyStatCards.displayName = 'VocabularyStatCards';
 
 const styles = StyleSheet.create({
   container: {
-    gap: LAYOUT.SPACING.LARGE,
-    marginBottom: LAYOUT.SPACING.LARGE,
+    // Remove custom spacing - sections handle their own spacing
   },
   statsGrid: {
     flexDirection: 'row',
@@ -362,11 +352,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SECTION.SPACING_INTERNAL,
+    marginTop: LAYOUT.SECTION.SPACING_BETWEEN,
   },
   firstSectionHeader: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
   titleGroup: {
     flex: 1,

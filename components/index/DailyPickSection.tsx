@@ -8,6 +8,7 @@ import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import { LAYOUT } from '../../constants/layout';
 import ThemedCard from '../ThemedCard';
+import SectionTitle from '../SectionTitle';
 
 interface DailyPickSectionProps {
   article: Article;
@@ -62,16 +63,13 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 
   return (
     <View style={styles.container}>
+      {showTitle && <SectionTitle title="Daily Pick" isFirstSection={true} />}
       <ThemedCard
         variant="article"
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}
         title={article.title}
-        category="Just for you"
-        author={
-          article.author && article.category
-            ? `${article.author.name} • ${capitalizeFirstLetter(article.category.name)}`
-            : article.author?.name || 'Unknown'
-        }
+        category=""
+        author={article.author?.name || 'Unknown'}
         summary={article.summary || undefined}
         onPress={handlePress}
         style={styles.cardStyle}
@@ -87,8 +85,7 @@ const styles = StyleSheet.create({
     shadowOpacity: LAYOUT.OPACITY.LIGHT, // Slightly increased shadow for emphasis
   },
   container: {
-    marginTop: 0, // No top margin since WelcomeMessage already has bottom padding
-    marginBottom: LAYOUT.SPACING.LARGE, // Reduced from XXLARGE to balance with next section's top margin
+    // Remove custom spacing - SectionTitle handles all section spacing
   },
 });
 

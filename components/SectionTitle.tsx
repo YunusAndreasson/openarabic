@@ -23,7 +23,7 @@ const SectionTitle: React.FC<SectionTitleProps> = ({
 }) => {
   return (
     <View style={[styles.container, isFirstSection && styles.firstSection, containerStyle]}>
-      <ThemedText type="heading3" weight="bold" style={styles.titleText}>
+      <ThemedText type="heading2" weight="bold" style={styles.titleText}>
         {title}
       </ThemedText>
     </View>
@@ -36,14 +36,13 @@ export default SectionTitle;
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: LAYOUT.SPACING.SMALL,
-    marginTop: LAYOUT.SPACING.XXLARGE,
+    marginBottom: LAYOUT.SECTION.SPACING_INTERNAL,
+    marginTop: LAYOUT.SECTION.SPACING_BETWEEN,
   },
   firstSection: {
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XLARGE,
   },
   titleText: {
-    // Remove the uppercase transformation and custom letter spacing
-    // to match the settings screen style
+    // No padding needed - parent containers handle alignment
   },
 });

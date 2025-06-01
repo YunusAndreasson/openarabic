@@ -20,6 +20,14 @@ export const LAYOUT = {
     BOTTOM: 12,
   },
 
+  // Section spacing system for consistent design
+  SECTION: {
+    // Spacing between different sections (e.g., between "Daily Pick" and "Struggling Words")
+    SPACING_BETWEEN: 24, // XXLARGE - increased for better visual separation and scanning
+    // Spacing within a section (e.g., between section title and content)
+    SPACING_INTERNAL: 8, // SMALL - keep tight for content grouping
+  },
+
   // Loader sizes
   LOADER: {
     SMALL: 28,

@@ -238,9 +238,9 @@ const CustomHeaderBackground = memo(() => {
 CustomHeaderBackground.displayName = 'CustomHeaderBackground';
 
 const HEADER_TITLE_STYLE = {
-  fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE + 2,
-  fontWeight: '600' as const,
-  paddingLeft: LAYOUT.SPACING.SMALL,
+  fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
+  fontWeight: 'bold' as const,
+  marginLeft: -LAYOUT.SPACING.TINY,
 };
 
 const HEADER_STYLE = {

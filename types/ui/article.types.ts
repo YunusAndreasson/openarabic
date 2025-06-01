@@ -21,6 +21,8 @@ export interface ArticleListProps {
   onArticlePress: (article: Article) => void;
   /** Optional component to render at the top of the list */
   ListHeaderComponent?: React.ComponentType<object> | React.ReactElement | null;
+  /** Optional component to render at the bottom of the list */
+  ListFooterComponent?: React.ComponentType<object> | React.ReactElement | null;
   /** Optional component to render when the list is empty */
   ListEmptyComponent?: React.ComponentType<object> | React.ReactElement | null;
   /** Optional style for the list content container */
