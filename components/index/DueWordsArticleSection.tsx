@@ -1,7 +1,9 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import ArticleSection from '../article/ArticleSection';
+import { StyleSheet, View, ScrollView, ActivityIndicator } from 'react-native';
+import SectionTitle from '../SectionTitle';
+import { ThemedCard } from '@/components';
 import { useArticlesByDueWords } from '../../hooks/useArticlesByDueWords';
+import { useColors } from '../../hooks/useColors';
 import { LAYOUT } from '../../constants/layout';
 import type { Article } from '../../types/articles.types';
 
@@ -22,10 +24,14 @@ export function DueWordsArticleSection({
   limit = 10,
   dueWordRootIds = new Set(),
 }: DueWordsArticleSectionProps) {
-  const { articles, hasEnoughArticles, dueWordsCount } = useArticlesByDueWords(userId, limit);
+  const { articles, hasEnoughArticles, dueWordsCount, isLoading } = useArticlesByDueWords(
+    userId,
+    limit
+  );
+  const colors = useColors();
 
   // Don't render if we don't have enough articles with due words
-  if (!hasEnoughArticles) {
+  if (!hasEnoughArticles && !isLoading) {
     return null;
   }
 
@@ -62,14 +68,41 @@ export function DueWordsArticleSection({
   // Dynamic title based on whether we have due words
   const sectionTitle = dueWordsCount > 0 ? 'Recommended Reading' : 'Practice Reading';
 
+  // Dynamic subtitle based on whether we have due words
+  const sectionSubtitle =
+    dueWordsCount > 0
+      ? "Read to reinforce words you're reviewing"
+      : 'Build vocabulary through contextual reading';
+
+  const articlesWithDueCount = articles.map(renderArticleWithDueCount);
+
   return (
     <View style={styles.container}>
-      <ArticleSection
-        title={sectionTitle}
-        articles={articles.map(renderArticleWithDueCount)}
-        onArticlePress={onArticlePress}
-        hideDifficulty={true}
-      />
+      <SectionTitle title={sectionTitle} subtitle={sectionSubtitle} />
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.tint} />
+        </View>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          accessibilityLabel={`Scroll ${sectionTitle}`}
+        >
+          {articlesWithDueCount.map(article => (
+            <ThemedCard
+              key={`article-${article.id}`}
+              style={styles.articleCard}
+              variant="compact"
+              article={article}
+              handlePress={() => onArticlePress(article)}
+              hideDifficulty={true}
+              dueWordCount={article.dueWordCount}
+            />
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -77,5 +110,17 @@ export function DueWordsArticleSection({
 const styles = StyleSheet.create({
   container: {
     // Removed margins - SectionTitle handles all section spacing
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 200,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+  },
+  scrollContent: {
+    paddingRight: LAYOUT.SPACING.MEDIUM,
+  },
+  articleCard: {
+    marginRight: LAYOUT.SPACING.MEDIUM,
   },
 });

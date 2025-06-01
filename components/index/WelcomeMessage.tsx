@@ -69,9 +69,8 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: LAYOUT.SPACING.MEDIUM,
     paddingBottom: LAYOUT.SPACING.LARGE,
-    paddingLeft: LAYOUT.SCREEN_EDGE_PADDING,
-    paddingRight: 0,
-    alignItems: 'flex-start',
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    alignItems: 'center',
   },
   dateContainer: {
     flexDirection: 'row',
@@ -83,7 +82,7 @@ const styles = StyleSheet.create({
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * 1.2,
     letterSpacing: 0.1,
-    textAlign: 'left',
+    textAlign: 'center',
     fontVariant: ['tabular-nums'],
     fontWeight: '400',
   },
