@@ -220,8 +220,8 @@ const LearningMethodScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Acquisition, not learning</ThemedText> - Language
-                    develops through understanding, not memorization
+                    <ThemedText weight="bold">Acquisition, not learning</ThemedText>
+                    {'\n'}Language develops through understanding, not memorization
                   </ThemedText>
                 </View>
               </View>
@@ -231,8 +231,8 @@ const LearningMethodScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Focus on meaning</ThemedText> - Understanding messages
-                    drives language development
+                    <ThemedText weight="bold">Focus on meaning</ThemedText>
+                    {'\n'}Understanding messages drives language development
                   </ThemedText>
                 </View>
               </View>
@@ -242,8 +242,8 @@ const LearningMethodScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Natural process</ThemedText> - Acquisition occurs
-                    automatically with sufficient comprehensible input
+                    <ThemedText weight="bold">Natural process</ThemedText>
+                    {'\n'}Acquisition occurs automatically with sufficient comprehensible input
                   </ThemedText>
                 </View>
               </View>

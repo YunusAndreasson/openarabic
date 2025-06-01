@@ -42,9 +42,6 @@ export const Colors = {
     info: '#6B8471', // Muted sage-gray - earth-toned alternative to blue
     backdropOverlay: 'rgba(42, 52, 65, 0.6)', // Increased opacity for better modal focus
     contrastOverlay: 'rgba(42, 52, 65, 0.3)', // Increased for better text contrast
-    socialTwitter: '#1DA1F2',
-    socialFacebook: '#1877F2',
-    socialInstagram: '#E4405F',
     socialIconBg: 'rgba(107, 154, 122, 0.10)', // Muted sage green social background
     // Article reading specific colors
     audioHighlight: '#FDFEFD', // Pure white highlight with green tint
@@ -110,9 +107,6 @@ export const Colors = {
     info: '#8BA593', // Muted sage with earth undertones - dark theme
     backdropOverlay: 'rgba(14, 19, 16, 0.8)', // Increased opacity for better modal focus
     contrastOverlay: 'rgba(0, 0, 0, 0.5)', // Increased for better contrast
-    socialTwitter: '#1DA1F2',
-    socialFacebook: '#1877F2',
-    socialInstagram: '#E4405F',
     socialIconBg: 'rgba(107, 154, 122, 0.10)', // Muted sage green social background
     // Article reading specific colors
     audioHighlight: '#2A312B', // Rich charcoal highlight

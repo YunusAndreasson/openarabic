@@ -16,7 +16,6 @@ import type {
 } from '@/types/ui/card.types';
 import type { ThemeColors } from '@/types/ui/theme.types';
 import { calculateReadingTime } from '@/utils/articleUtils';
-import { capitalizeFirstLetter } from '@/utils/stringUtils';
 
 import BaseCard from './BaseCard';
 import { EnhancedImage } from './EnhancedImage';

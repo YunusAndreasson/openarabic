@@ -19,7 +19,7 @@ const ClassicalTextsScreen: React.FC = () => {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'About Classical Texts',
+          headerTitle: 'Why Classical Texts',
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
@@ -42,7 +42,7 @@ const ClassicalTextsScreen: React.FC = () => {
         style={styles.container}
         includeBottomInset={false}
         safeAreaEdges={['left', 'right']}
-        accessibilityLabel="About classical texts screen"
+        accessibilityLabel="Why classical texts screen"
       >
         <ThemedView
           useSafeArea={false}
@@ -84,8 +84,8 @@ const ClassicalTextsScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Complete linguistic system</ThemedText> - All Arabic
-                    grammatical structures in authentic contexts
+                    <ThemedText weight="bold">Complete linguistic system</ThemedText>
+                    {'\n'}All Arabic grammatical structures in authentic contexts
                   </ThemedText>
                 </View>
               </View>
@@ -95,8 +95,8 @@ const ClassicalTextsScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Rich vocabulary input</ThemedText> - Thousands of
-                    words in meaningful, comprehensible contexts
+                    <ThemedText weight="bold">Rich vocabulary input</ThemedText>
+                    {'\n'}Thousands of words in meaningful, comprehensible contexts
                   </ThemedText>
                 </View>
               </View>
@@ -106,8 +106,8 @@ const ClassicalTextsScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Authentic language patterns</ThemedText> - Arabic as
-                    actually written and used by native speakers
+                    <ThemedText weight="bold">Authentic language patterns</ThemedText>
+                    {'\n'}Arabic as actually written and used by native speakers
                   </ThemedText>
                 </View>
               </View>
@@ -117,8 +117,8 @@ const ClassicalTextsScreen: React.FC = () => {
                 </View>
                 <View style={styles.benefitContent}>
                   <ThemedText type="body" style={styles.benefitText}>
-                    <ThemedText weight="bold">Cultural and conceptual framework</ThemedText> -
-                    Understanding of Arabic thought patterns and expression
+                    <ThemedText weight="bold">Cultural and conceptual framework</ThemedText>
+                    {'\n'}Understanding of Arabic thought patterns and expression
                   </ThemedText>
                 </View>
               </View>

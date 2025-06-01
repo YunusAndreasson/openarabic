@@ -17,6 +17,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Toggle } from '@/components/Toggle';
 import { TimePicker } from '@/components/TimePicker';
 import { LAYOUT } from '@/constants/layout';
+import { MIN_TOUCH_TARGET } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useAuth } from '@/hooks/useAuth';
 import { useReminders } from '@/hooks/useReminders';
@@ -129,7 +130,7 @@ const AccountScreen: React.FC = () => {
       if (enabled && !notificationPermissions) {
         Alert.alert(
           'Notification Permission Required',
-          'Please allow notifications to receive study reminders.',
+          'Please allow notifications to receive daily study alerts.',
           [
             { text: 'Cancel', style: 'cancel' },
             {
@@ -300,9 +301,9 @@ const AccountScreen: React.FC = () => {
           </BaseCard>
         </View>
 
-        {/* Reminders Section */}
+        {/* Notifications Section */}
         <View style={styles.remindersWrapper}>
-          <SectionTitle title="Reminders" />
+          <SectionTitle title="Notifications" />
           <BaseCard
             style={styles.remindersContainer}
             shadowSize="small"
@@ -310,7 +311,11 @@ const AccountScreen: React.FC = () => {
           >
             <View style={styles.remindersLinksContainer}>
               <View style={styles.settingRow}>
-                <SettingLabel icon="notifications" text="Study Reminders" iconColor={colors.icon} />
+                <SettingLabel
+                  icon="notifications"
+                  text="Daily Study Alerts"
+                  iconColor={colors.icon}
+                />
                 <Toggle value={reminderTime.enabled} onValueChange={handleReminderToggle} />
               </View>
               {reminderTime.enabled && (
@@ -323,7 +328,7 @@ const AccountScreen: React.FC = () => {
                     includePressAnimation={true}
                   >
                     <View style={styles.settingRow}>
-                      <SettingLabel icon="time" text="Reminder Time" iconColor={colors.icon} />
+                      <SettingLabel icon="time" text="Notification Time" iconColor={colors.icon} />
                       <ThemedText type="body" variant="secondary">
                         {formatReminderTime(reminderTime.hour, reminderTime.minute)}
                       </ThemedText>
@@ -376,7 +381,7 @@ const AccountScreen: React.FC = () => {
                       <Ionicons name="library-outline" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      About Classical Arabic Texts
+                      Why Classical Arabic Texts
                     </ThemedText>
                   </View>
                   <Ionicons
@@ -409,7 +414,7 @@ const AccountScreen: React.FC = () => {
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="logo-twitter" size={22} color={colors.socialTwitter} />
+                      <Ionicons name="logo-twitter" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Twitter
@@ -433,7 +438,7 @@ const AccountScreen: React.FC = () => {
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="logo-facebook" size={22} color={colors.socialFacebook} />
+                      <Ionicons name="logo-facebook" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Facebook
@@ -457,7 +462,7 @@ const AccountScreen: React.FC = () => {
                 <View style={styles.socialLinkContent}>
                   <View style={styles.socialLinkLeft}>
                     <View style={styles.socialIconContainer}>
-                      <Ionicons name="logo-instagram" size={22} color={colors.socialInstagram} />
+                      <Ionicons name="logo-instagram" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.socialLinkText}>
                       Instagram
@@ -515,16 +520,14 @@ const AccountScreen: React.FC = () => {
                     <View style={styles.actionIconContainer}>
                       <Ionicons name="log-out-outline" size={22} color={colors.error} />
                     </View>
-                    <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Sign Out
-                    </ThemedText>
-                    <ThemedText
-                      type="caption"
-                      variant="secondary"
-                      style={styles.userEmailInlineText}
-                    >
-                      ({user?.email || 'No email'})
-                    </ThemedText>
+                    <View style={styles.signOutTextContainer}>
+                      <ThemedText type="body" weight="medium" style={styles.signOutTitleText}>
+                        Sign Out
+                      </ThemedText>
+                      <ThemedText type="caption" variant="subtle" style={styles.userEmailText}>
+                        {user?.email || 'No email'}
+                      </ThemedText>
+                    </View>
                   </View>
                   <Ionicons
                     name="chevron-forward-outline"
@@ -556,7 +559,7 @@ const AccountScreen: React.FC = () => {
         onTimeSet={handleTimeSet}
         initialHour={reminderTime.hour}
         initialMinute={reminderTime.minute}
-        title="Set Study Reminder"
+        title="Set Notification Time"
       />
     </ThemedView>
   );
@@ -590,9 +593,10 @@ const styles = StyleSheet.create({
   actionLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginBottom: 0,
+    minHeight: MIN_TOUCH_TARGET.SIZE,
   },
   actionLinkContent: {
     alignItems: 'center',
@@ -632,6 +636,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     paddingVertical: LAYOUT.SPACING.MEDIUM,
+    minHeight: MIN_TOUCH_TARGET.SIZE,
   },
   settingLabelContainer: {
     alignItems: 'center',
@@ -729,9 +734,10 @@ const styles = StyleSheet.create({
   socialLinkCard: {
     borderRadius: LAYOUT.BORDER_RADIUS.NONE,
     borderWidth: LAYOUT.BORDER.WIDTH.NONE,
-    paddingVertical: LAYOUT.SPACING.SMALL + 2,
-    paddingHorizontal: LAYOUT.SPACING.SMALL,
+    paddingVertical: LAYOUT.SPACING.MEDIUM,
+    paddingHorizontal: LAYOUT.SPACING.MEDIUM,
     marginBottom: 0,
+    minHeight: MIN_TOUCH_TARGET.SIZE,
   },
   socialLinkContent: {
     alignItems: 'center',
@@ -811,8 +817,15 @@ const styles = StyleSheet.create({
   manageLinksContainer: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
-  userEmailInlineText: {
-    marginLeft: LAYOUT.SPACING.TINY,
+  signOutTextContainer: {
+    flexDirection: 'column',
+    marginLeft: LAYOUT.SPACING.SMALL,
+  },
+  signOutTitleText: {
+    // No additional margin needed since container handles spacing
+  },
+  userEmailText: {
+    marginTop: LAYOUT.SPACING.TINY,
   },
 });
 

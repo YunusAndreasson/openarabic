@@ -1,27 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { scheduleReminder, hasPermissions } from '@/services/notificationService';
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/services/notificationService';
 import { analytics } from '@/services/analytics';
-import { useAuth } from './useAuth';
 
 export function useReminders() {
   const dispatch = useAppDispatch();
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const [isScheduling, setIsScheduling] = useState(false);
-  const { user } = useAuth();
-
-  // Initialize notifications on mount
-  useEffect(() => {
-    // Initialization is now handled automatically in scheduleReminder
-  }, []);
 
   const updateReminderTime = async (newReminderTime: ReminderTime) => {
     setIsScheduling(true);
     try {
-      // Schedule the reminder with user ID for personalized content
-      await scheduleReminder(newReminderTime, user?.id);
+      // Schedule the reminder
+      await scheduleReminder(newReminderTime);
 
       // Update the store
       dispatch(setReminderTime(newReminderTime));

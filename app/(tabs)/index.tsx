@@ -1,7 +1,7 @@
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
-import React, { useEffect, useState, useCallback, useMemo, useRef, JSX } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -36,7 +36,6 @@ import {
   getLatestArticles,
   getBeginnerArticles,
   getDailyPickArticle,
-  getFreshDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
@@ -78,7 +77,6 @@ export default function ArticlesScreen(): JSX.Element {
   const {
     data: articlesData = [],
     isLoading: isArticlesLoading,
-    isFetching: isArticlesFetching,
     error: articlesError,
   } = useQuery({
     queryKey: ['articles'],
@@ -141,7 +139,6 @@ export default function ArticlesScreen(): JSX.Element {
   });
 
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const refreshTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { lastOpenedArticles = {} } = useAppSelectorMemo(state => state.readingList);
 
@@ -168,16 +165,6 @@ export default function ArticlesScreen(): JSX.Element {
     const articles = sortedIds.map(id => articleMap.get(id)).filter(Boolean) as Article[];
     return articles.slice(0, 5);
   }, [lastOpenedArticles, articleMap]);
-
-  const isFetching = isArticlesFetching;
-
-  useEffect(() => {
-    return () => {
-      if (refreshTimeoutRef.current) {
-        clearTimeout(refreshTimeoutRef.current);
-      }
-    };
-  }, []);
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;

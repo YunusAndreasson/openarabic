@@ -40,9 +40,6 @@ export interface ThemeColors {
   // Enhanced theme-aware colors
   backdropOverlay: string;
   contrastOverlay: string;
-  socialTwitter: string;
-  socialFacebook: string;
-  socialInstagram: string;
   socialIconBg: string;
 
   // Article reading specific colors

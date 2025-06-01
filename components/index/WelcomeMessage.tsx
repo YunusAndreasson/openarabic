@@ -55,10 +55,10 @@ export const WelcomeMessage: React.FC = () => {
           {dateMessage}
         </ThemedText>
         <Ionicons
-          name="calendar-outline"
-          size={14}
+          name="chevron-forward-outline"
+          size={16}
           color={colors.textTertiary}
-          style={styles.calendarIcon}
+          style={styles.chevronIcon}
         />
       </TouchableOpacity>
     </View>
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
     fontWeight: '400',
   },
-  calendarIcon: {
-    opacity: 0.8,
+  chevronIcon: {
+    opacity: LAYOUT.OPACITY.MEDIUM,
   },
 });
