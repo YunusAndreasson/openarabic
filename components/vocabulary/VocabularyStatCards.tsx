@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, useCallback } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -174,15 +174,35 @@ export const VocabularyStatCards = memo(
       [validatedData, colors]
     );
 
-    // Handle info modal
-    const handleInfoPress = (type: InfoModalType) => {
+    // Handle info modal - memoized for performance
+    const handleInfoPress = useCallback((type: InfoModalType) => {
       lightFeedback();
       setModalType(type);
-    };
+    }, []);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
       setModalType(null);
-    };
+    }, []);
+
+    // Memoized info press handlers to prevent unnecessary re-renders
+    const handleRecommendationInfo = useCallback(
+      () => handleInfoPress('recommendation'),
+      [handleInfoPress]
+    );
+    const handleStreakInfo = useCallback(() => handleInfoPress('streak'), [handleInfoPress]);
+    const handleMasteryInfo = useCallback(() => handleInfoPress('mastery'), [handleInfoPress]);
+    const handleEfficiencyInfo = useCallback(
+      () => handleInfoPress('efficiency'),
+      [handleInfoPress]
+    );
+    const handleRetrievabilityInfo = useCallback(
+      () => handleInfoPress('retrievability'),
+      [handleInfoPress]
+    );
+    const handleDifficultyInfo = useCallback(
+      () => handleInfoPress('difficulty'),
+      [handleInfoPress]
+    );
 
     return (
       <View>
@@ -195,7 +215,7 @@ export const VocabularyStatCards = memo(
             totalWords={validatedData.total}
             masteredWords={validatedData.mastered}
             hideTitle={true}
-            onInfoPress={() => handleInfoPress('recommendation')}
+            onInfoPress={handleRecommendationInfo}
           />
         </View>
 
@@ -226,7 +246,7 @@ export const VocabularyStatCards = memo(
             currentStreak={currentStreak}
             longestStreak={longestStreak}
             lastSevenDaysActivity={lastSevenDaysActivity}
-            onInfoPress={() => handleInfoPress('streak')}
+            onInfoPress={handleStreakInfo}
             hideTitle={true}
           />
         </View>
@@ -236,11 +256,12 @@ export const VocabularyStatCards = memo(
           <SectionTitle
             title="Mastery"
             subtitle="How well you know each word over time"
-            onInfoPress={() => handleInfoPress('mastery')}
+            onInfoPress={handleMasteryInfo}
           />
           <MasteryChart
             studyWords={validatedInput.studyWords}
-            onInfoPress={() => handleInfoPress('mastery')}
+            onInfoPress={handleMasteryInfo}
+            onStatPress={onStatPress}
             hideTitle={true}
           />
         </View>
@@ -249,11 +270,11 @@ export const VocabularyStatCards = memo(
           <SectionTitle
             title="Efficiency"
             subtitle="How quickly you learn new vocabulary"
-            onInfoPress={() => handleInfoPress('efficiency')}
+            onInfoPress={handleEfficiencyInfo}
           />
           <EfficiencyChart
             studyWords={validatedInput.studyWords}
-            onInfoPress={() => handleInfoPress('efficiency')}
+            onInfoPress={handleEfficiencyInfo}
             hideTitle={true}
           />
         </View>
@@ -262,11 +283,12 @@ export const VocabularyStatCards = memo(
           <SectionTitle
             title="Retention"
             subtitle="How long you remember words without practice"
-            onInfoPress={() => handleInfoPress('retrievability')}
+            onInfoPress={handleRetrievabilityInfo}
           />
           <RetrievabilityChart
             studyWords={validatedInput.studyWords}
-            onInfoPress={() => handleInfoPress('retrievability')}
+            onInfoPress={handleRetrievabilityInfo}
+            onStatPress={onStatPress}
             hideTitle={true}
           />
         </View>
@@ -275,12 +297,13 @@ export const VocabularyStatCards = memo(
           <SectionTitle
             title="Difficulty"
             subtitle="Which words are hardest for you to remember"
-            onInfoPress={() => handleInfoPress('difficulty')}
+            onInfoPress={handleDifficultyInfo}
           />
           <DifficultyChart
             studyWords={validatedInput.studyWords}
-            onInfoPress={() => handleInfoPress('difficulty')}
+            onInfoPress={handleDifficultyInfo}
             onDifficultyPress={onStatPress}
+            onStatPress={onStatPress}
             hideTitle={true}
           />
         </View>

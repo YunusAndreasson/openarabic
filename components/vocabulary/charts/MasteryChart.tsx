@@ -12,13 +12,12 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 
-import { LAYOUT } from '@/constants/layout';
-import { useColors } from '@/hooks/useColors';
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
+import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14, CHART_LAYOUT } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 import {
@@ -32,13 +31,14 @@ import { useChartColors } from '../shared/chartColors';
 interface MasteryChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
+  onStatPress?: (category: StatCategory) => void;
   hideTitle?: boolean;
 }
 
 export const MasteryChart = memo(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: MasteryChartProps) => {
-    const colors = useColors();
+  ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: MasteryChartProps) => {
     const chartColors = useChartColors();
+    const { tooltip, showTooltip } = useChartTooltip();
 
     // Add top padding to prevent dots from being cut off
     const TOP_PADDING = 8; // Space for circle radius + shadow
@@ -202,50 +202,22 @@ export const MasteryChart = memo(
 
     if (!chartData.hasData) {
       return (
-        <BaseCard style={styles.masteryCard} shadowSize="small" includePressAnimation={false}>
+        <BaseCard shadowSize="small" includePressAnimation={false}>
           <View style={styles.masteryContent}>
             {!hideTitle && (
               <CardHeader
                 title="Mastery"
-                subtitle="Track your vocabulary mastery journey"
+                subtitle="Study some words to see your progress"
                 onInfoPress={onInfoPress}
               />
             )}
-
-            {/* Empty state with visual guidance */}
-            <View style={styles.emptyStateContainer}>
-              <Canvas style={{ width: GRAPH_WIDTH, height: GRAPH_HEIGHT_LARGE }}>
-                {/* Vertical day markers for empty state */}
-                <Group>
-                  {/* Vertical day markers */}
-                  {Array.from({ length: 14 }, (_, index) => (
-                    <Rect
-                      key={`empty-day-grid-${index}`}
-                      x={(index / 13) * GRAPH_WIDTH - 0.5}
-                      y={0}
-                      width={1}
-                      height={GRAPH_HEIGHT_LARGE}
-                      color={chartColors.withOpacity(chartColors.ui.border, 0.12)}
-                    />
-                  ))}
-
-                  {/* Placeholder curve */}
-                  <Path
-                    path={`M 20 ${GRAPH_HEIGHT_LARGE - 20} Q ${GRAPH_WIDTH / 2} ${GRAPH_HEIGHT_LARGE / 2} ${GRAPH_WIDTH - 20} 30`}
-                    style="stroke"
-                    strokeWidth={2}
-                    color={chartColors.withOpacity(chartColors.ui.dataLine, 0.3)}
-                  />
-                </Group>
-              </Canvas>
-            </View>
           </View>
         </BaseCard>
       );
     }
 
     return (
-      <BaseCard style={styles.masteryCard} shadowSize="small" includePressAnimation={false}>
+      <BaseCard shadowSize="small" includePressAnimation={false}>
         <View style={styles.masteryContent}>
           {!hideTitle && (
             <CardHeader title="Mastery" subtitle={subtitle} onInfoPress={onInfoPress} />
@@ -260,6 +232,7 @@ export const MasteryChart = memo(
             rightStat={{
               value: chartData.insights.totalMastered,
               label: 'mastered',
+              onPress: onStatPress ? () => onStatPress('mastered') : undefined,
             }}
           />
 
@@ -424,6 +397,27 @@ export const MasteryChart = memo(
                 ))}
               </Group>
             </Canvas>
+
+            {/* Interactive data point overlays using reusable component */}
+            {chartData.dataPoints.map((point, index) => {
+              const data = masteryData[index];
+              if (!data) return null;
+
+              return (
+                <DataPointOverlay
+                  key={`data-point-${index}`}
+                  x={point.x}
+                  y={point.y}
+                  value={`${Math.round(point.rate * 10) / 10}%`}
+                  label={data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  onPress={showTooltip}
+                  accessibilityLabel={`Data point: ${Math.round(point.rate * 10) / 10}% mastery on ${data.date.toLocaleDateString()}`}
+                />
+              );
+            })}
+
+            {/* Reusable tooltip component */}
+            <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
           </View>
 
           <ChartFooter
@@ -439,7 +433,6 @@ export const MasteryChart = memo(
 MasteryChart.displayName = 'MasteryChart';
 
 const styles = StyleSheet.create({
-  masteryCard: {},
   masteryContent: {
     padding: CHART_LAYOUT.CONTENT_PADDING,
   },
@@ -447,11 +440,6 @@ const styles = StyleSheet.create({
     height: GRAPH_HEIGHT_LARGE,
     marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
     marginHorizontal: CHART_LAYOUT.GRAPH_MARGIN_HORIZONTAL,
-    paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
-  },
-  emptyStateContainer: {
-    marginTop: LAYOUT.SPACING.MEDIUM,
-    marginBottom: CHART_LAYOUT.ELEMENT_SPACING,
     paddingVertical: CHART_LAYOUT.GRAPH_MARGIN_VERTICAL,
   },
 });

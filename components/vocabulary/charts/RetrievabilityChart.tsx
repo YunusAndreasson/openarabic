@@ -11,12 +11,12 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 
-import { useColors } from '@/hooks/useColors';
-import type { StudyWord } from '@/types/vocabulary.types';
+import type { StudyWord, StatCategory } from '@/types/vocabulary.types';
 
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
+import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
 import {
   GRAPH_WIDTH,
   GRAPH_HEIGHT_LARGE,
@@ -36,13 +36,14 @@ import { useChartColors } from '../shared/chartColors';
 interface RetrievabilityChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
+  onStatPress?: (category: StatCategory) => void;
   hideTitle?: boolean;
 }
 
 export const RetrievabilityChart = memo(
-  ({ studyWords = [], onInfoPress, hideTitle = false }: RetrievabilityChartProps) => {
-    const colors = useColors();
+  ({ studyWords = [], onInfoPress, onStatPress, hideTitle = false }: RetrievabilityChartProps) => {
     const chartColors = useChartColors();
+    const { tooltip, showTooltip } = useChartTooltip();
 
     // Calculate retrievability forecast over the next 14 days
     const retrievabilityData = useMemo(() => {
@@ -92,6 +93,7 @@ export const RetrievabilityChart = memo(
           hasData: false,
           insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
           dangerZones: [],
+          dataPoints: [],
         };
       }
 
@@ -104,6 +106,7 @@ export const RetrievabilityChart = memo(
           hasData: false,
           insights: { currentRetrievability: 0, trend: 'stable' as const, criticalWords: 0 },
           dangerZones: [],
+          dataPoints: [],
         };
       }
 
@@ -115,14 +118,14 @@ export const RetrievabilityChart = memo(
 
       // Create smooth curve using Skia Path
       const path = Skia.Path.Make();
-      const points: { x: number; y: number; retrievability: number }[] = [];
+      const points: { x: number; y: number; retrievability: number; date: Date }[] = [];
 
       retrievabilityData.forEach((data, index) => {
         const x = index * stepX;
         const y =
           GRAPH_HEIGHT_LARGE -
           (data.averageRetrievability / maxRetrievability) * GRAPH_HEIGHT_LARGE;
-        points.push({ x, y, retrievability: data.averageRetrievability });
+        points.push({ x, y, retrievability: data.averageRetrievability, date: data.date });
 
         if (index === 0) {
           path.moveTo(x, y);
@@ -177,6 +180,7 @@ export const RetrievabilityChart = memo(
         hasData,
         maxRetrievability,
         dangerZones,
+        dataPoints: points,
         insights: {
           currentRetrievability: Math.round(currentRetrievability * 10) / 10,
           trend,
@@ -204,11 +208,7 @@ export const RetrievabilityChart = memo(
 
     if (!chartData.hasData) {
       return (
-        <BaseCard
-          style={styles.retrievabilityCard}
-          shadowSize="small"
-          includePressAnimation={false}
-        >
+        <BaseCard shadowSize="small" includePressAnimation={false}>
           <View style={styles.retrievabilityContent}>
             {!hideTitle && (
               <CardHeader
@@ -223,7 +223,7 @@ export const RetrievabilityChart = memo(
     }
 
     return (
-      <BaseCard style={styles.retrievabilityCard} shadowSize="small" includePressAnimation={false}>
+      <BaseCard shadowSize="small" includePressAnimation={false}>
         <View style={styles.retrievabilityContent}>
           {!hideTitle && (
             <CardHeader title="Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
@@ -244,6 +244,10 @@ export const RetrievabilityChart = memo(
                 chartData.insights.criticalWords > 5
                   ? chartColors.memory.weak
                   : chartColors.memory.strong,
+              onPress:
+                onStatPress && chartData.insights.criticalWords > 0
+                  ? () => onStatPress('needsAttention')
+                  : undefined,
             }}
           />
 
@@ -316,15 +320,10 @@ export const RetrievabilityChart = memo(
                   />
                 )}
 
-                {/* Data points for forecast visualization */}
-                {retrievabilityData.map((data, index) => {
-                  if (data.wordCount === 0) return null;
-
-                  const x = (index / Math.max(1, retrievabilityData.length - 1)) * GRAPH_WIDTH;
-                  const y =
-                    GRAPH_HEIGHT_LARGE -
-                    (data.averageRetrievability / (chartData.maxRetrievability || 100)) *
-                      GRAPH_HEIGHT_LARGE;
+                {/* Data points for forecast visualization with enhanced styling */}
+                {chartData.dataPoints.map((point, index) => {
+                  const data = retrievabilityData[index];
+                  if (!data || data.wordCount === 0) return null;
 
                   // Show different styling for current day vs forecast
                   const isToday = index === 0;
@@ -334,21 +333,49 @@ export const RetrievabilityChart = memo(
                     <Group key={`retrievability-point-${index}`}>
                       {/* Subtle glow ring */}
                       <Circle
-                        cx={x}
-                        cy={y}
+                        cx={point.x}
+                        cy={point.y}
                         r={isToday ? 7 : 6}
                         color={chartColors.withOpacity(chartColors.ui.dataLine, glowOpacity)}
                       />
                       {/* Main data point */}
-                      <Circle cx={x} cy={y} r={isToday ? 5 : 4} color={chartColors.ui.dataLine} />
+                      <Circle
+                        cx={point.x}
+                        cy={point.y}
+                        r={isToday ? 5 : 4}
+                        color={chartColors.ui.dataLine}
+                      />
                     </Group>
                   );
                 })}
               </Group>
-
-              {/* Data points */}
-              {/* Removed individual dots as they don't make sense for forecasted averages */}
             </Canvas>
+
+            {/* Interactive data point overlays */}
+            {chartData.dataPoints.map((point, index) => {
+              const data = retrievabilityData[index];
+              if (!data || data.wordCount === 0) return null;
+
+              const isToday = index === 0;
+              const dateLabel = isToday
+                ? 'Today'
+                : data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+              return (
+                <DataPointOverlay
+                  key={`data-point-${index}`}
+                  x={point.x}
+                  y={point.y}
+                  value={`${Math.round(point.retrievability * 10) / 10}%`}
+                  label={dateLabel}
+                  onPress={showTooltip}
+                  accessibilityLabel={`Data point: ${Math.round(point.retrievability * 10) / 10}% retention on ${dateLabel}`}
+                />
+              );
+            })}
+
+            {/* Reusable tooltip component */}
+            <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
           </View>
 
           <ChartFooter
@@ -370,7 +397,6 @@ export const RetrievabilityChart = memo(
 RetrievabilityChart.displayName = 'RetrievabilityChart';
 
 const styles = StyleSheet.create({
-  retrievabilityCard: {},
   retrievabilityContent: {
     padding: CHART_LAYOUT.CONTENT_PADDING,
   },

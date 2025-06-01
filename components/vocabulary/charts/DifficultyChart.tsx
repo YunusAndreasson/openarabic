@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useEffect } from 'react';
+import React, { memo, useMemo, useEffect, useCallback } from 'react';
 import { StyleSheet, View, TouchableOpacity, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -26,6 +26,7 @@ interface DifficultyChartProps {
   studyWords: StudyWord[];
   onInfoPress: () => void;
   onDifficultyPress?: (category: StatCategory) => void;
+  onStatPress?: (category: StatCategory) => void;
   hideTitle?: boolean;
 }
 
@@ -44,6 +45,7 @@ export const DifficultyChart = memo(
     studyWords = [],
     onInfoPress,
     onDifficultyPress,
+    onStatPress,
     hideTitle = false,
   }: DifficultyChartProps) => {
     const colors = useColors();
@@ -190,13 +192,16 @@ export const DifficultyChart = memo(
       opacity: chartOpacity.value,
     }));
 
-    // Handle bar press with haptic feedback
-    const handleBarPress = (category: StatCategory, count: number) => {
-      if (count > 0 && onDifficultyPress) {
-        runOnJS(lightFeedback)();
-        onDifficultyPress(category);
-      }
-    };
+    // Handle bar press with haptic feedback - memoized for performance
+    const handleBarPress = useCallback(
+      (category: StatCategory, count: number) => {
+        if (count > 0 && onDifficultyPress) {
+          runOnJS(lightFeedback)();
+          onDifficultyPress(category);
+        }
+      },
+      [onDifficultyPress]
+    );
 
     if (!difficultyData.hasData) {
       return (
@@ -238,6 +243,8 @@ export const DifficultyChart = memo(
                 value: studyWords.length,
                 label: 'total words',
                 color: colors.secondaryText,
+                onPress:
+                  onStatPress && studyWords.length > 0 ? () => onStatPress('total') : undefined,
               }}
             />
           </Animated.View>
@@ -391,7 +398,6 @@ export const DifficultyChart = memo(
 DifficultyChart.displayName = 'DifficultyChart';
 
 const styles = StyleSheet.create({
-  difficultyCard: {},
   difficultyContent: {
     padding: CHART_LAYOUT.CONTENT_PADDING,
   },

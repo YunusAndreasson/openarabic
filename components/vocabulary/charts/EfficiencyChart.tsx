@@ -11,7 +11,6 @@ import {
   vec,
 } from '@shopify/react-native-skia';
 
-import { useColors } from '@/hooks/useColors';
 import type { StudyWord } from '@/types/vocabulary.types';
 import {
   generateDateRange,
@@ -26,6 +25,7 @@ import { useChartColors } from '../shared/chartColors';
 import BaseCard from '../../BaseCard';
 import { CardHeader } from '../shared/CardHeader';
 import { ChartFooter } from '../shared/ChartFooter';
+import { ChartTooltip, DataPointOverlay, useChartTooltip } from '../shared/ChartInteractivity';
 import { GRAPH_WIDTH, GRAPH_HEIGHT_LARGE, DAYS_14, CHART_LAYOUT } from '../shared/constants';
 import { StatsRow } from '../shared/StatsRow';
 
@@ -37,8 +37,8 @@ interface EfficiencyChartProps {
 
 export const EfficiencyChart = memo(
   ({ studyWords = [], onInfoPress, hideTitle = false }: EfficiencyChartProps) => {
-    const colors = useColors();
     const chartColors = useChartColors();
+    const { tooltip, showTooltip } = useChartTooltip();
 
     // Calculate efficiency data over the last 14 days
     const efficiencyData = useMemo(() => {
@@ -73,6 +73,7 @@ export const EfficiencyChart = memo(
           hasData: false,
           insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
           performanceZones: [],
+          dataPoints: [],
         };
       }
 
@@ -85,6 +86,7 @@ export const EfficiencyChart = memo(
           hasData: false,
           insights: { currentEfficiency: 0, trend: 'stable' as const, weeklyAverage: 0 },
           performanceZones: [],
+          dataPoints: [],
         };
       }
 
@@ -96,13 +98,13 @@ export const EfficiencyChart = memo(
 
       // Create smooth curve using Skia Path
       const path = Skia.Path.Make();
-      const points: { x: number; y: number; efficiency: number }[] = [];
+      const points: { x: number; y: number; efficiency: number; date: Date }[] = [];
 
       efficiencyData.forEach((data, index) => {
         const x = index * stepX;
         const y =
           GRAPH_HEIGHT_LARGE - (data.averageEfficiency / maxEfficiency) * GRAPH_HEIGHT_LARGE;
-        points.push({ x, y, efficiency: data.averageEfficiency });
+        points.push({ x, y, efficiency: data.averageEfficiency, date: data.date });
 
         if (index === 0) {
           path.moveTo(x, y);
@@ -151,6 +153,7 @@ export const EfficiencyChart = memo(
         hasData,
         maxEfficiency,
         performanceZones,
+        dataPoints: points,
         insights: {
           currentEfficiency: Math.round(currentEfficiency * 10) / 10,
           trend,
@@ -171,7 +174,7 @@ export const EfficiencyChart = memo(
 
     if (!chartData.hasData) {
       return (
-        <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
+        <BaseCard shadowSize="small" includePressAnimation={false}>
           <View style={styles.efficiencyContent}>
             {!hideTitle && (
               <CardHeader
@@ -186,7 +189,7 @@ export const EfficiencyChart = memo(
     }
 
     return (
-      <BaseCard style={styles.efficiencyCard} shadowSize="small" includePressAnimation={false}>
+      <BaseCard shadowSize="small" includePressAnimation={false}>
         <View style={styles.efficiencyContent}>
           {!hideTitle && (
             <CardHeader title="Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
@@ -253,32 +256,48 @@ export const EfficiencyChart = memo(
                   color={chartColors.ui.dataLine}
                 />
 
-                {/* Data points */}
-                {efficiencyData.map((data, index) => {
-                  if (data.wordCount === 0) return null;
-
-                  const x = (index / (efficiencyData.length - 1)) * GRAPH_WIDTH;
-                  const y =
-                    GRAPH_HEIGHT_LARGE -
-                    (data.averageEfficiency / (chartData.maxEfficiency || 100)) *
-                      GRAPH_HEIGHT_LARGE;
+                {/* Data points with enhanced styling */}
+                {chartData.dataPoints.map((point, index) => {
+                  const data = efficiencyData[index];
+                  if (!data || data.wordCount === 0) return null;
 
                   return (
                     <Group key={`efficiency-point-${index}`}>
                       {/* Subtle glow ring */}
                       <Circle
-                        cx={x}
-                        cy={y}
+                        cx={point.x}
+                        cy={point.y}
                         r={6}
                         color={chartColors.getDataPointGlow('efficiency')}
                       />
                       {/* Main data point */}
-                      <Circle cx={x} cy={y} r={4} color={chartColors.ui.dataLine} />
+                      <Circle cx={point.x} cy={point.y} r={4} color={chartColors.ui.dataLine} />
                     </Group>
                   );
                 })}
               </Group>
             </Canvas>
+
+            {/* Interactive data point overlays */}
+            {chartData.dataPoints.map((point, index) => {
+              const data = efficiencyData[index];
+              if (!data || data.wordCount === 0) return null;
+
+              return (
+                <DataPointOverlay
+                  key={`data-point-${index}`}
+                  x={point.x}
+                  y={point.y}
+                  value={`${Math.round(point.efficiency * 10) / 10}%`}
+                  label={data.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  onPress={showTooltip}
+                  accessibilityLabel={`Data point: ${Math.round(point.efficiency * 10) / 10}% efficiency on ${data.date.toLocaleDateString()}`}
+                />
+              );
+            })}
+
+            {/* Reusable tooltip component */}
+            <ChartTooltip tooltip={tooltip} maxWidth={GRAPH_WIDTH} />
           </View>
 
           <ChartFooter
@@ -300,7 +319,6 @@ export const EfficiencyChart = memo(
 EfficiencyChart.displayName = 'EfficiencyChart';
 
 const styles = StyleSheet.create({
-  efficiencyCard: {},
   efficiencyContent: {
     padding: CHART_LAYOUT.CONTENT_PADDING,
   },
