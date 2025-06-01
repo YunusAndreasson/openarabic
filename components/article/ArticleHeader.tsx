@@ -131,9 +131,9 @@ export const ArticleHeader: React.FC<ArticleHeaderProps> = ({
           <ThemedText
             type="label"
             variant="secondary"
-            accessibilityLabel={`Written by ${article.author?.name || 'Unknown Author'}`}
+            accessibilityLabel={`Written by ${article.author?.name || 'Unknown Scholar'}`}
           >
-            {article.author?.name || 'Unknown Author'}
+            {article.author?.name || 'Unknown Scholar'}
           </ThemedText>
         </TouchableOpacity>
       </View>

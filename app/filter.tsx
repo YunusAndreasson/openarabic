@@ -146,7 +146,7 @@ function FilterScreenContent() {
     } else if (type === 'category' && category?.name) {
       title = capitalizeFirstLetter(category.name);
     } else if (type === 'author') {
-      title = 'Author';
+      title = 'Scholar';
     } else if (type === 'category') {
       title = 'Category';
     }

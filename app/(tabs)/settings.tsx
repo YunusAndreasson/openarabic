@@ -235,7 +235,7 @@ const AccountScreen: React.FC = () => {
               </View>
               <Divider />
               <View style={styles.settingRow}>
-                <SettingLabel icon="language" text="English Translation" iconColor={colors.icon} />
+                <SettingLabel icon="eye" text="Translation" iconColor={colors.icon} />
                 <Toggle
                   value={settings.showEnglish}
                   onValueChange={value => dispatch(setShowEnglish(value))}
@@ -342,7 +342,7 @@ const AccountScreen: React.FC = () => {
 
         {/* Learning Guide Section */}
         <View style={styles.infoWrapper}>
-          <SectionTitle title="Learning Guide" />
+          <SectionTitle title="Science" />
           <BaseCard style={styles.infoContainer} shadowSize="small" includePressAnimation={false}>
             <View style={styles.actionLinksContainer}>
               <BaseCard
@@ -357,7 +357,7 @@ const AccountScreen: React.FC = () => {
                       <Ionicons name="school-outline" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      How Language Acquisition Works
+                      The Science of Language Learning
                     </ThemedText>
                   </View>
                   <Ionicons
@@ -381,7 +381,7 @@ const AccountScreen: React.FC = () => {
                       <Ionicons name="library-outline" size={22} color={colors.icon} />
                     </View>
                     <ThemedText type="body" weight="medium" style={styles.actionLinkText}>
-                      Why Classical Arabic Texts
+                      Why Classical Texts Work Best
                     </ThemedText>
                   </View>
                   <Ionicons
@@ -524,7 +524,11 @@ const AccountScreen: React.FC = () => {
                       <ThemedText type="body" weight="medium" style={styles.signOutTitleText}>
                         Sign Out
                       </ThemedText>
-                      <ThemedText type="caption" variant="subtle" style={styles.userEmailText}>
+                      <ThemedText
+                        type="caption"
+                        colorName="textTertiary"
+                        style={styles.userEmailText}
+                      >
                         {user?.email || 'No email'}
                       </ThemedText>
                     </View>
@@ -543,12 +547,14 @@ const AccountScreen: React.FC = () => {
 
         {/* App Footer */}
         <View style={styles.appFooterWrapper}>
-          <ThemedText type="caption" variant="secondary" style={styles.versionText}>
-            Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
-          </ThemedText>
-          <ThemedText type="caption" variant="subtle" style={styles.copyrightText}>
-            © 2025 OpenArabic. All rights reserved.
-          </ThemedText>
+          <View style={styles.appFooterContent}>
+            <ThemedText type="caption" colorName="tabIconDefault" style={styles.versionText}>
+              Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
+            </ThemedText>
+            <ThemedText type="caption" colorName="tabIconDefault" style={styles.copyrightText}>
+              © 2025 OpenArabic
+            </ThemedText>
+          </View>
         </View>
       </ThemedView>
 
@@ -792,19 +798,25 @@ const styles = StyleSheet.create({
   // App Footer Styles
   appFooterWrapper: {
     alignItems: 'center',
-    marginTop: LAYOUT.SPACING.LARGE,
+    marginTop: LAYOUT.SPACING.XXLARGE,
     marginBottom: LAYOUT.SPACING.XLARGE,
     paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+  },
+  appFooterContent: {
+    alignItems: 'center',
+    gap: LAYOUT.SPACING.TINY,
   },
   appName: {
     marginBottom: LAYOUT.SPACING.SMALL,
   },
   versionText: {
-    marginBottom: LAYOUT.SPACING.TINY,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
+    opacity: 0.6,
   },
   copyrightText: {
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
+    opacity: 0.4,
+    fontSize: 11,
   },
 
   // Manage Section Styles

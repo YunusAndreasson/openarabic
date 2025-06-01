@@ -373,7 +373,7 @@ export default function ArticlesScreen(): JSX.Element {
   const authorFilterComponent = useMemo(
     () =>
       authorsWithArticles.length > 0 ? (
-        <FilterSection title="Authors" items={authorsWithArticles} onSelect={handleSelectAuthor} />
+        <FilterSection title="Scholars" items={authorsWithArticles} onSelect={handleSelectAuthor} />
       ) : null,
     [authorsWithArticles, handleSelectAuthor]
   );

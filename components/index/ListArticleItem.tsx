@@ -23,7 +23,7 @@ const ListArticleItem = memo(({ article, onPress }: ListArticleItemProps): JSX.E
       author={article.author?.name || 'Anonymous'}
       meta={
         <ThemedText type="caption" colorName="textTertiary">
-          {timeAgoText} · {categoryName}
+          · {timeAgoText} · {categoryName}
         </ThemedText>
       }
       onPress={() => onPress(article)}

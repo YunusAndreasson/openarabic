@@ -418,21 +418,10 @@ function ThemedCardComponent(props: ThemedCardProps): React.JSX.Element {
           <View style={styles.cardFooter}>
             {showTimeAgo ? (
               <TimeAgo date={lastOpenedAt || article?.created_at || ''} />
-            ) : (isCompactVariant(props) && props.dueWordCount) || hideDifficulty ? (
-              // Show reading time for articles without due words or when hiding difficulty
-              article ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
-                  <ThemedText
-                    type="caption"
-                    colorName="textTertiary"
-                    style={{ marginLeft: 4, fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY }}
-                  >
-                    {calculateReadingTime(article)} min read
-                  </ThemedText>
-                </View>
-              ) : null
-            ) : (
+            ) : isCompactVariant(props) &&
+              props.dueWordCount ? // Don't show reading time when there are due words - only show due word count above
+            null : (
+              // Always show summary indicator when not showing time ago or due words
               <SummaryIndicator summary={article?.summary || null} />
             )}
           </View>

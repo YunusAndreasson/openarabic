@@ -24,7 +24,7 @@ const ArticleItem = memo(({ article, onPress, isLast = false }: ArticleItemProps
       author={article.author?.name || 'Anonymous'}
       meta={
         <ThemedText type="caption" colorName="textTertiary">
-          {timeAgoText} · {categoryName}
+          · {timeAgoText} · {categoryName}
         </ThemedText>
       }
       onPress={() => onPress(article)}

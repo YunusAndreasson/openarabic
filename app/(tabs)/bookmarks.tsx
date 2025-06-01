@@ -161,7 +161,7 @@ const BookmarkListItem = memo(
     return (
       <ArticleCard
         title={item.articles?.title || 'Untitled'}
-        author={item.articles?.author?.name || 'Unknown Author'}
+        author={item.articles?.author?.name || 'Unknown Scholar'}
         leftMeta={leftMetaContent}
         meta={
           <View style={itemStyles.metaContainer}>

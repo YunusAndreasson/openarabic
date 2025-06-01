@@ -19,7 +19,7 @@ const ClassicalTextsScreen: React.FC = () => {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerTitle: 'Why Classical Texts',
+          headerTitle: '',
           headerTitleStyle: {
             ...LAYOUT.HEADER.TITLE.SECONDARY,
             color: colors.text,
@@ -31,7 +31,7 @@ const ClassicalTextsScreen: React.FC = () => {
           headerTransparent: false,
           headerTitleAlign: 'left',
           headerTintColor: colors.tint,
-          headerBackTitle: 'Learning Guide',
+          headerBackTitle: 'Science',
           headerBackTitleStyle: {
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
           },
@@ -60,6 +60,16 @@ const ClassicalTextsScreen: React.FC = () => {
             showsVerticalScrollIndicator: false,
           }}
         >
+          {/* Custom Header */}
+          <View style={styles.customHeader}>
+            <ThemedText type="heading1" weight="bold" style={styles.customHeaderTitle}>
+              Why Classical Texts Work Best
+            </ThemedText>
+            <ThemedText type="body" variant="secondary" style={styles.customHeaderSubtitle}>
+              The optimal path to Arabic fluency through authentic content
+            </ThemedText>
+          </View>
+
           {/* Introduction */}
           <View style={styles.section}>
             <ThemedText type="heading2" weight="bold" style={styles.sectionTitle}>
@@ -421,6 +431,23 @@ const styles = StyleSheet.create({
   referenceText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
+  },
+
+  // Custom Header Styles
+  customHeader: {
+    paddingHorizontal: LAYOUT.SCREEN_EDGE_PADDING,
+    paddingTop: LAYOUT.SPACING.LARGE,
+    paddingBottom: LAYOUT.SPACING.XLARGE,
+    marginBottom: LAYOUT.SPACING.MEDIUM,
+  },
+  customHeaderTitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.2,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XXLARGE * 1.3,
+    marginBottom: LAYOUT.SPACING.SMALL,
+  },
+  customHeaderSubtitle: {
+    fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.1,
+    lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.5,
   },
 });
 
