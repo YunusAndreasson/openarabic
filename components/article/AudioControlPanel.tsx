@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { memo, useMemo } from 'react';
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import BaseCard from '../../components/BaseCard';
 import { ThemedText } from '../../components/ThemedText';
@@ -24,6 +25,12 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
     totalSentences,
   }) => {
     const colors = useColors();
+    const insets = useSafeAreaInsets();
+
+    // Calculate bottom padding that respects safe area and provides comfortable spacing
+    const bottomPadding = useMemo(() => {
+      return Math.max(insets.bottom, LAYOUT.SPACING.MEDIUM) + LAYOUT.SPACING.LARGE;
+    }, [insets.bottom]);
 
     // Animated visibility style for smoother transitions
     const animatedStyle = useAnimatedStyle(() => {
@@ -48,17 +55,23 @@ const AudioControlPanel = memo<AudioControlPanelProps>(
       [currentSentenceIndex, totalSentences]
     );
 
+    // Dynamic container style with proper safe area handling
+    const containerStyle = useMemo(
+      () => [styles.container, { bottom: bottomPadding }, animatedStyle],
+      [bottomPadding, animatedStyle]
+    );
+
     // Early return with invisible container to maintain layout
     if (!isVisible) {
       return (
-        <Animated.View style={[styles.container, animatedStyle]} pointerEvents="none">
+        <Animated.View style={containerStyle} pointerEvents="none">
           <View style={styles.hiddenPlaceholder} />
         </Animated.View>
       );
     }
 
     return (
-      <Animated.View style={[styles.container, animatedStyle]}>
+      <Animated.View style={containerStyle}>
         <BaseCard
           style={[
             styles.card,
@@ -144,9 +157,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   container: {
-    bottom: LAYOUT.SPACING.LARGE,
-    left: LAYOUT.SPACING.LARGE,
     position: 'absolute',
+    left: LAYOUT.SPACING.LARGE,
     right: LAYOUT.SPACING.LARGE,
     zIndex: LAYOUT.Z_INDEX.POPUP,
   },
