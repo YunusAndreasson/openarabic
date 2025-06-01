@@ -80,10 +80,10 @@ export const StreakCard = memo(
     // Generate subtitle based on streak
     const subtitle =
       currentStreak === 0
-        ? 'Start today to begin building consistency'
+        ? 'Study today to start your streak'
         : currentStreak >= 7
-          ? 'Excellent daily consistency!'
-          : 'Building momentum';
+          ? 'Amazing consistency! Keep it up'
+          : 'Great progress! Keep going';
 
     return (
       <BaseCard style={styles.card} includePressAnimation={false} shadowSize="small">

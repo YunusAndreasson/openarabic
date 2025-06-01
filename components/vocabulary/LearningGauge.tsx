@@ -122,7 +122,7 @@ export const LearningGauge = memo(
 
             {/* Visual indicator and insight */}
             <View style={styles.recommendationContent}>
-              <View style={[styles.statusIndicator, { backgroundColor: `${gaugeState.color}15` }]}>
+              <View style={styles.statusIndicator}>
                 <Ionicons name={gaugeState.icon} size={28} color={gaugeState.color} />
               </View>
 
@@ -154,12 +154,12 @@ const styles = StyleSheet.create({
   recommendationContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: LAYOUT.SPACING.MEDIUM,
+    gap: LAYOUT.SPACING.SMALL,
+    marginLeft: -LAYOUT.SPACING.TINY,
   },
   statusIndicator: {
-    width: 48,
-    height: 48,
-    borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,

@@ -163,7 +163,7 @@ export const VocabularyStatCards = memo(
         },
         {
           value: validatedData.needsAttention,
-          label: 'Hard',
+          label: 'Struggling',
           icon: 'alert-circle',
           iconColor: colors.error,
           bgColor: colors.buttonOverlay,
@@ -209,7 +209,7 @@ export const VocabularyStatCards = memo(
         {/* Recommendation Section */}
         <View>
           <SectionTitle
-            title="Recommendation"
+            title="What To Do Next"
             isFirstSection={true}
             onInfoPress={handleRecommendationInfo}
           />
@@ -225,7 +225,7 @@ export const VocabularyStatCards = memo(
 
         {/* Progress Section */}
         <View>
-          <SectionTitle title="Progress" />
+          <SectionTitle title="Your Words" />
           <View style={styles.statsGrid}>
             {statCards.map(card => (
               <StatCard
@@ -245,7 +245,7 @@ export const VocabularyStatCards = memo(
 
         {/* Consistency Section */}
         <View>
-          <SectionTitle title="Consistency" />
+          <SectionTitle title="Daily Habit" />
           <StreakCard
             currentStreak={currentStreak}
             longestStreak={longestStreak}
@@ -258,8 +258,8 @@ export const VocabularyStatCards = memo(
         {/* Individual Chart Sections */}
         <View>
           <SectionTitle
-            title="Mastery"
-            subtitle="How well you know each word over time"
+            title="Memory Strength"
+            subtitle="Track how well you remember each word"
             onInfoPress={handleMasteryInfo}
           />
           <MasteryChart
@@ -272,8 +272,8 @@ export const VocabularyStatCards = memo(
 
         <View>
           <SectionTitle
-            title="Efficiency"
-            subtitle="How quickly you learn new vocabulary"
+            title="Learning Speed"
+            subtitle="See how fast you master new vocabulary"
             onInfoPress={handleEfficiencyInfo}
           />
           <EfficiencyChart
@@ -285,8 +285,8 @@ export const VocabularyStatCards = memo(
 
         <View>
           <SectionTitle
-            title="Retention"
-            subtitle="How long you remember words without practice"
+            title="Memory Decay"
+            subtitle="Monitor which words you're forgetting"
             onInfoPress={handleRetrievabilityInfo}
           />
           <RetrievabilityChart
@@ -299,8 +299,8 @@ export const VocabularyStatCards = memo(
 
         <View style={styles.lastSection}>
           <SectionTitle
-            title="Difficulty"
-            subtitle="Which words are hardest for you to remember"
+            title="Challenge Level"
+            subtitle="Identify your most difficult words"
             onInfoPress={handleDifficultyInfo}
           />
           <DifficultyChart

@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LAYOUT } from '@/constants/layout';
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: LAYOUT.CARD.PADDING.MEDIUM,
+    padding: LAYOUT.CARD.PADDING.SMALL,
     minHeight: 72,
   },
   iconContainer: {
@@ -87,11 +87,12 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   contentCenter: {
     flex: 1,
-    marginLeft: LAYOUT.SPACING.MEDIUM,
-    paddingRight: LAYOUT.SPACING.SMALL,
+    marginLeft: LAYOUT.SPACING.SMALL,
+    paddingRight: LAYOUT.SPACING.TINY,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },

@@ -194,13 +194,13 @@ export const RetrievabilityChart = memo(
       const { currentRetrievability, criticalWords } = chartData.insights;
 
       if (currentRetrievability === 0) {
-        return 'Review words to track retention';
+        return 'Study words to see memory tracking';
       }
       if (criticalWords > 10) {
-        return `${criticalWords} words need urgent review`;
+        return `${criticalWords} words need review soon`;
       }
       if (criticalWords > 5) {
-        return `${criticalWords} words approaching forgetting`;
+        return `${criticalWords} words getting forgotten`;
       }
 
       return generatePerformanceSubtitle(currentRetrievability, 'memory retention');
@@ -212,8 +212,8 @@ export const RetrievabilityChart = memo(
           <View style={styles.retrievabilityContent}>
             {!hideTitle && (
               <CardHeader
-                title="Retention"
-                subtitle="Forecast of vocabulary retention over time"
+                title="Memory Decay"
+                subtitle="Study words to track memory retention"
                 onInfoPress={onInfoPress}
               />
             )}
@@ -226,20 +226,20 @@ export const RetrievabilityChart = memo(
       <BaseCard shadowSize="small" includePressAnimation={false}>
         <View style={styles.retrievabilityContent}>
           {!hideTitle && (
-            <CardHeader title="Retention" subtitle={subtitle} onInfoPress={onInfoPress} />
+            <CardHeader title="Memory Decay" subtitle={subtitle} onInfoPress={onInfoPress} />
           )}
 
           <StatsRow
             leftStat={{
               value: `${chartData.insights.currentRetrievability}%`,
-              label: 'current',
+              label: 'remembered',
               color: chartColors.getRetrievabilityColor(
                 chartData.insights.currentRetrievability / 100
               ),
             }}
             rightStat={{
               value: chartData.insights.criticalWords,
-              label: 'at risk',
+              label: 'fading',
               color:
                 chartData.insights.criticalWords > 5
                   ? chartColors.memory.weak

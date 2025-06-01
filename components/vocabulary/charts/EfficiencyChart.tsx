@@ -178,8 +178,8 @@ export const EfficiencyChart = memo(
           <View style={styles.efficiencyContent}>
             {!hideTitle && (
               <CardHeader
-                title="Efficiency"
-                subtitle="Study some words to see your progress"
+                title="Learning Speed"
+                subtitle="Study words to track your progress"
                 onInfoPress={onInfoPress}
               />
             )}
@@ -192,13 +192,13 @@ export const EfficiencyChart = memo(
       <BaseCard shadowSize="small" includePressAnimation={false}>
         <View style={styles.efficiencyContent}>
           {!hideTitle && (
-            <CardHeader title="Efficiency" subtitle={subtitle} onInfoPress={onInfoPress} />
+            <CardHeader title="Learning Speed" subtitle={subtitle} onInfoPress={onInfoPress} />
           )}
 
           <StatsRow
             leftStat={{
               value: `${chartData.insights.currentEfficiency}%`,
-              label: 'current',
+              label: 'speed',
               color: chartColors.getPerformanceColor(chartData.insights.currentEfficiency),
             }}
             rightStat={{

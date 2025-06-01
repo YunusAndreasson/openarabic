@@ -89,7 +89,7 @@ export const DifficultyChart = memo(
           count: 0,
           percentage: 0,
           color: chartColors.difficulty.hard,
-          label: 'Hard',
+          label: 'Struggling',
           category: 'difficultyHard',
         },
       ];
@@ -163,10 +163,10 @@ export const DifficultyChart = memo(
       const hardPercentage = totalWords > 0 ? (hardWords / totalWords) * 100 : 0;
 
       if (distribution === 'easy') {
-        return `${Math.round(hardPercentage)}% hard words - consider challenging content`;
+        return `${Math.round(hardPercentage)}% struggling words - consider challenging content`;
       }
       if (distribution === 'challenging') {
-        return `${Math.round(hardPercentage)}% hard words - focus on review`;
+        return `${Math.round(hardPercentage)}% struggling words - focus on review`;
       }
 
       // For balanced distribution, provide more nuanced feedback
@@ -208,11 +208,11 @@ export const DifficultyChart = memo(
         <BaseCard shadowSize="small" includePressAnimation={false}>
           <View style={styles.difficultyContent}>
             {!hideTitle && (
-              <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
+              <CardHeader title="Challenge Level" subtitle={subtitle} onInfoPress={onInfoPress} />
             )}
             <View style={styles.emptyState}>
               <ThemedText style={[styles.emptyText, { color: colors.secondaryText }]}>
-                Study some words to see difficulty distribution
+                Study words to see which ones challenge you most
               </ThemedText>
             </View>
           </View>
@@ -225,7 +225,7 @@ export const DifficultyChart = memo(
         <Animated.View style={[styles.difficultyContent, chartAnimatedStyle]}>
           {!hideTitle && (
             <Animated.View entering={FadeInUp.delay(100).duration(400)}>
-              <CardHeader title="Difficulty" subtitle={subtitle} onInfoPress={onInfoPress} />
+              <CardHeader title="Challenge Level" subtitle={subtitle} onInfoPress={onInfoPress} />
             </Animated.View>
           )}
 
@@ -235,8 +235,8 @@ export const DifficultyChart = memo(
               leftStat={{
                 value: difficultyData.insights.dominantLevel?.label ?? 'Balanced',
                 label: difficultyData.insights.dominantLevel
-                  ? `${Math.round(difficultyData.insights.dominantLevel.percentage)}% dominant`
-                  : 'distribution',
+                  ? `${Math.round(difficultyData.insights.dominantLevel.percentage)}% are this hard`
+                  : 'difficulty spread',
                 color: difficultyData.insights.dominantLevel?.color ?? colors.secondaryText,
               }}
               rightStat={{

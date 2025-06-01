@@ -226,7 +226,7 @@ export const MasteryChart = memo(
           <StatsRow
             leftStat={{
               value: `${chartData.insights.currentRate}%`,
-              label: 'current',
+              label: 'strength',
               color: chartColors.getPerformanceColor(chartData.insights.currentRate),
             }}
             rightStat={{
