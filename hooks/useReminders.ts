@@ -4,11 +4,13 @@ import { scheduleReminder, hasPermissions } from '@/services/notificationService
 import { setReminderTime } from '@/store/settingsSlice';
 import type { ReminderTime } from '@/services/notificationService';
 import { analytics } from '@/services/analytics';
+import { useAuth } from './useAuth';
 
 export function useReminders() {
   const dispatch = useAppDispatch();
   const reminderTime = useAppSelector(state => state.settings.reminderTime);
   const [isScheduling, setIsScheduling] = useState(false);
+  const { user } = useAuth();
 
   // Initialize notifications on mount
   useEffect(() => {
@@ -18,8 +20,8 @@ export function useReminders() {
   const updateReminderTime = async (newReminderTime: ReminderTime) => {
     setIsScheduling(true);
     try {
-      // Schedule the reminder
-      await scheduleReminder(newReminderTime);
+      // Schedule the reminder with user ID for personalized content
+      await scheduleReminder(newReminderTime, user?.id);
 
       // Update the store
       dispatch(setReminderTime(newReminderTime));

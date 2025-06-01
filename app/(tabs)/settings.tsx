@@ -544,7 +544,7 @@ const AccountScreen: React.FC = () => {
             Version {Constants.expoConfig?.version || appVersion || '1446.0.0'}
           </ThemedText>
           <ThemedText type="caption" variant="subtle" style={styles.copyrightText}>
-            © 2024 OpenArabic. All rights reserved.
+            © 2025 OpenArabic. All rights reserved.
           </ThemedText>
         </View>
       </ThemedView>

@@ -80,8 +80,8 @@ const LearningMethodScreen: React.FC = () => {
 
             <View style={styles.stepsList}>
               <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="eye-outline" size={20} color={colors.primary} />
+                <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="eye-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.stepContent}>
                   <ThemedText type="body" weight="bold" style={styles.stepTitle}>
@@ -95,8 +95,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="bulb-outline" size={20} color={colors.success} />
+                <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="bulb-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.stepContent}>
                   <ThemedText type="body" weight="bold" style={styles.stepTitle}>
@@ -110,8 +110,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.warningLight }]}>
-                  <Ionicons name="refresh-outline" size={20} color={colors.warning} />
+                <View style={[styles.stepIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="refresh-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.stepContent}>
                   <ThemedText type="body" weight="bold" style={styles.stepTitle}>
@@ -125,8 +125,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.stepItem}>
-                <View style={[styles.stepIcon, { backgroundColor: colors.errorLight }]}>
-                  <Ionicons name="checkmark-circle-outline" size={20} color={colors.error} />
+                <View style={[styles.stepIcon, { backgroundColor: colors.progressBackground }]}>
+                  <Ionicons name="checkmark-circle-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.stepContent}>
                   <ThemedText type="body" weight="bold" style={styles.stepTitle}>
@@ -149,8 +149,8 @@ const LearningMethodScreen: React.FC = () => {
 
             <View style={styles.reasonsList}>
               <View style={styles.reasonItem}>
-                <View style={[styles.reasonIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="heart-outline" size={20} color={colors.primary} />
+                <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+                  <Ionicons name="heart-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.reasonContent}>
                   <ThemedText type="body" weight="bold" style={styles.reasonTitle}>
@@ -164,8 +164,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.reasonItem}>
-                <View style={[styles.reasonIcon, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="library-outline" size={20} color={colors.success} />
+                <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+                  <Ionicons name="library-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.reasonContent}>
                   <ThemedText type="body" weight="bold" style={styles.reasonTitle}>
@@ -179,8 +179,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.reasonItem}>
-                <View style={[styles.reasonIcon, { backgroundColor: colors.warningLight }]}>
-                  <Ionicons name="trending-up-outline" size={20} color={colors.warning} />
+                <View style={[styles.reasonIcon, { backgroundColor: colors.progressBackground }]}>
+                  <Ionicons name="trending-up-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.reasonContent}>
                   <ThemedText type="body" weight="bold" style={styles.reasonTitle}>
@@ -215,22 +215,37 @@ const LearningMethodScreen: React.FC = () => {
 
             <View style={styles.benefitsList}>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Acquisition, not learning</ThemedText> - Language
-                  develops through understanding, not memorization
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="bulb-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Acquisition, not learning</ThemedText> - Language
+                    develops through understanding, not memorization
+                  </ThemedText>
+                </View>
               </View>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Focus on meaning</ThemedText> - Understanding messages
-                  drives language development
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="eye-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Focus on meaning</ThemedText> - Understanding messages
+                    drives language development
+                  </ThemedText>
+                </View>
               </View>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Natural process</ThemedText> - Acquisition occurs
-                  automatically with sufficient comprehensible input
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="leaf-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Natural process</ThemedText> - Acquisition occurs
+                    automatically with sufficient comprehensible input
+                  </ThemedText>
+                </View>
               </View>
             </View>
           </View>
@@ -243,8 +258,8 @@ const LearningMethodScreen: React.FC = () => {
 
             <View style={styles.referencesList}>
               <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="document-text-outline" size={18} color={colors.primary} />
+                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.referenceContent}>
                   <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
@@ -257,8 +272,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="document-text-outline" size={18} color={colors.success} />
+                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.referenceContent}>
                   <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
@@ -271,8 +286,8 @@ const LearningMethodScreen: React.FC = () => {
               </View>
 
               <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.warningLight }]}>
-                  <Ionicons name="document-text-outline" size={18} color={colors.warning} />
+                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.referenceContent}>
                   <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
@@ -388,6 +403,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
   },
+  benefitIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginTop: 2,
+  },
+  benefitContent: {
+    flex: 1,
+  },
   benefitText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * 1.6,
@@ -403,9 +430,9 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   referenceIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: LAYOUT.SPACING.MEDIUM,

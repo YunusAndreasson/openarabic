@@ -79,28 +79,48 @@ const ClassicalTextsScreen: React.FC = () => {
 
             <View style={styles.benefitsList}>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Complete linguistic system</ThemedText> - All Arabic
-                  grammatical structures in authentic contexts
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="library-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Complete linguistic system</ThemedText> - All Arabic
+                    grammatical structures in authentic contexts
+                  </ThemedText>
+                </View>
               </View>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Rich vocabulary input</ThemedText> - Thousands of
-                  words in meaningful, comprehensible contexts
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="book-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Rich vocabulary input</ThemedText> - Thousands of
+                    words in meaningful, comprehensible contexts
+                  </ThemedText>
+                </View>
               </View>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Authentic language patterns</ThemedText> - Arabic as
-                  actually written and used by native speakers
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="language-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Authentic language patterns</ThemedText> - Arabic as
+                    actually written and used by native speakers
+                  </ThemedText>
+                </View>
               </View>
               <View style={styles.benefitItem}>
-                <ThemedText type="body" style={styles.benefitText}>
-                  • <ThemedText weight="bold">Cultural and conceptual framework</ThemedText> -
-                  Understanding of Arabic thought patterns and expression
-                </ThemedText>
+                <View style={[styles.benefitIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="bulb-outline" size={20} color={colors.tint} />
+                </View>
+                <View style={styles.benefitContent}>
+                  <ThemedText type="body" style={styles.benefitText}>
+                    <ThemedText weight="bold">Cultural and conceptual framework</ThemedText> -
+                    Understanding of Arabic thought patterns and expression
+                  </ThemedText>
+                </View>
               </View>
             </View>
           </View>
@@ -113,8 +133,8 @@ const ClassicalTextsScreen: React.FC = () => {
 
             <View style={styles.concernsList}>
               <View style={styles.concernItem}>
-                <View style={[styles.concernIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+                <View style={[styles.concernIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="shield-checkmark-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.concernContent}>
                   <ThemedText type="body" weight="bold" style={styles.concernTitle}>
@@ -128,8 +148,8 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
 
               <View style={styles.concernItem}>
-                <View style={[styles.concernIcon, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="heart-outline" size={20} color={colors.success} />
+                <View style={[styles.concernIcon, { backgroundColor: colors.buttonOverlay }]}>
+                  <Ionicons name="heart-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.concernContent}>
                   <ThemedText type="body" weight="bold" style={styles.concernTitle}>
@@ -152,8 +172,8 @@ const ClassicalTextsScreen: React.FC = () => {
 
             <View style={styles.comparisonList}>
               <View style={styles.comparisonItem}>
-                <View style={[styles.comparisonIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="library-outline" size={20} color={colors.primary} />
+                <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="library-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.comparisonContent}>
                   <ThemedText type="body" weight="bold" style={styles.comparisonTitle}>
@@ -167,8 +187,8 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
 
               <View style={styles.comparisonItem}>
-                <View style={[styles.comparisonIcon, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="chatbubble-outline" size={20} color={colors.success} />
+                <View style={[styles.comparisonIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="chatbubble-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.comparisonContent}>
                   <ThemedText type="body" weight="bold" style={styles.comparisonTitle}>
@@ -208,8 +228,8 @@ const ClassicalTextsScreen: React.FC = () => {
 
             <View style={styles.referencesList}>
               <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="school-outline" size={18} color={colors.primary} />
+                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.referenceContent}>
                   <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
@@ -223,8 +243,8 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
 
               <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.successLight }]}>
-                  <Ionicons name="heart-outline" size={18} color={colors.success} />
+                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.referenceContent}>
                   <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
@@ -238,8 +258,8 @@ const ClassicalTextsScreen: React.FC = () => {
               </View>
 
               <View style={styles.referenceItem}>
-                <View style={[styles.referenceIcon, { backgroundColor: colors.warningLight }]}>
-                  <Ionicons name="library-outline" size={18} color={colors.warning} />
+                <View style={[styles.referenceIcon, { backgroundColor: colors.elevation2 }]}>
+                  <Ionicons name="document-text-outline" size={20} color={colors.tint} />
                 </View>
                 <View style={styles.referenceContent}>
                   <ThemedText type="body" weight="bold" style={styles.referenceTitle}>
@@ -326,6 +346,18 @@ const styles = StyleSheet.create({
   benefitItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+  },
+  benefitIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: LAYOUT.SPACING.MEDIUM,
+    marginTop: 2,
+  },
+  benefitContent: {
+    flex: 1,
   },
   benefitText: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
