@@ -9,27 +9,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ArticleCard } from '@/components/ArticleCard';
 import { AudioProgressBar } from '@/components/AudioProgressBar';
+import BottomControls from '@/components/BottomControls';
+import SectionTitle from '@/components/SectionTitle';
+import SleepTimer from '@/components/SleepTimer';
+import SortingControls from '@/components/SortingControls';
+import type { SortOption, SortDirection } from '@/components/SortingControls';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import SectionTitle from '@/components/SectionTitle';
-import SortingControls from '@/components/SortingControls';
-import SleepTimer from '@/components/SleepTimer';
-import type { SortOption, SortDirection } from '@/components/SortingControls';
 import { LAYOUT } from '@/constants/layout';
 import { useLoadingState, useScreenFocusRefresh } from '@/hooks';
+import { useAppPreloader } from '@/hooks/useAppPreloader';
+import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { AUDIO_STATES } from '@/hooks/useAudioPlayer';
 import { useAuth } from '@/hooks/useAuth';
 import { useColors } from '@/hooks/useColors';
 import { useEnhancedAudioPlayer } from '@/hooks/useEnhancedAudioPlayer';
-import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
-import { useAppPreloader } from '@/hooks/useAppPreloader';
 import { useSleepTimer } from '@/hooks/useSleepTimer';
 import { articlesService } from '@/services/articles';
 import { enhancedAudioService } from '@/services/enhancedAudioService';
 import { readingListService } from '@/services/readingList';
 import { handleError } from '@/utils/errorHandling';
 import { mediumFeedback } from '@/utils/haptics';
-import BottomControls from '@/components/BottomControls';
 
 import type { Article } from '../../types/articles.types';
 import type { Tables } from '../../types/database.types';
@@ -51,52 +51,36 @@ const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
   },
-  headerControls: {
-    // Remove custom spacing - SectionTitle handles all spacing
-  },
   loadingContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
-  },
-  savedArticlesSection: {
-    // Remove custom spacing - SectionTitle handles all spacing
   },
 });
 
 // Static styles to avoid recreation on every render
 const itemStyles = StyleSheet.create({
   dueWordsContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
-    paddingVertical: LAYOUT.SPACING.MICRO + 1,
     borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
     borderWidth: 0.5,
+    elevation: 1,
+    flexDirection: 'row',
     marginRight: 8,
+    paddingHorizontal: LAYOUT.SPACING.XSMALL + 1,
+    paddingVertical: LAYOUT.SPACING.MICRO + 1,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
-    elevation: 1,
   },
   metaContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     marginLeft: LAYOUT.SPACING.XSMALL,
-  },
-  categoryContainer: {
-    paddingHorizontal: LAYOUT.SPACING.XSMALL,
-    paddingVertical: LAYOUT.SPACING.MICRO,
-    borderRadius: LAYOUT.BORDER_RADIUS.SMALL,
-    borderWidth: 0.5,
   },
 });
 
 // Helper functions moved outside component to avoid recreation on every render
-const capitalizeFirstLetter = (str: string): string => {
-  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-};
-
 const getDaysAgo = (addedAt: string): string => {
   const addedDate = new Date(addedAt);
   const now = new Date();
@@ -132,7 +116,6 @@ const BookmarkListItem = memo(
     audioState: string;
   }) => {
     const colors = useColors();
-    const hasDueWords = dueWordCount > 0;
     const isPlaying = isActive && audioState === AUDIO_STATES.PLAYING;
 
     // Memoize dynamic styles that depend on colors
@@ -141,37 +124,39 @@ const BookmarkListItem = memo(
         dueWordsContainer: {
           ...itemStyles.dueWordsContainer,
           backgroundColor: colors.buttonOverlay,
-          borderColor: colors.warning + '30',
-          shadowColor: colors.warning,
-        },
-        categoryContainer: {
-          ...itemStyles.categoryContainer,
-          backgroundColor: colors.elevation1,
-          borderColor: colors.borderOverlay,
+          borderColor: dueWordCount > 0 ? colors.warning + '30' : colors.borderOverlay,
+          shadowColor: dueWordCount > 0 ? colors.warning : colors.border,
+          minWidth: 42, // Fixed minimum width to accommodate double digits
         },
       }),
-      [colors]
+      [colors, dueWordCount]
     );
 
-    // Create left meta content with due words indicator
-    const leftMetaContent = hasDueWords ? (
+    // Always show due words indicator, but change color based on count
+    const leftMetaContent = (
       <View style={dynamicStyles.dueWordsContainer}>
-        <Ionicons name="sync-outline" size={11} color={colors.warning} />
+        <Ionicons
+          name="sync-outline"
+          size={11}
+          color={dueWordCount > 0 ? colors.warning : colors.textTertiary}
+        />
         <ThemedText
           type="label"
           style={{
-            color: colors.warning,
+            color: dueWordCount > 0 ? colors.warning : colors.textTertiary,
             fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL - 1,
             marginLeft: LAYOUT.SPACING.XTINY,
             fontWeight: '700',
             letterSpacing: 0.2,
+            minWidth: 14, // Fixed width to accommodate double digits
+            textAlign: 'center',
           }}
           skipDefaultColor
         >
           {dueWordCount}
         </ThemedText>
       </View>
-    ) : null;
+    );
 
     return (
       <ArticleCard
@@ -192,40 +177,6 @@ const BookmarkListItem = memo(
             >
               {getDaysAgo(item.added_at)}
             </ThemedText>
-
-            {/* Dot separator between days ago and category */}
-            {item.articles?.category?.name && (
-              <ThemedText
-                type="caption"
-                style={{
-                  color: colors.textTertiary,
-                  fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                  marginHorizontal: LAYOUT.SPACING.XTINY,
-                  opacity: 0.6,
-                }}
-                skipDefaultColor
-              >
-                •
-              </ThemedText>
-            )}
-
-            {/* Category */}
-            {item.articles?.category?.name && (
-              <View style={dynamicStyles.categoryContainer}>
-                <ThemedText
-                  type="caption"
-                  style={{
-                    color: colors.textTertiary,
-                    fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
-                    fontWeight: '500',
-                    letterSpacing: 0.2,
-                  }}
-                  skipDefaultColor
-                >
-                  {capitalizeFirstLetter(item.articles.category.name)}
-                </ThemedText>
-              </View>
-            )}
           </View>
         }
         onPress={() => onPress(item.article_id)}
@@ -257,7 +208,7 @@ const BookmarkListItem = memo(
 
 BookmarkListItem.displayName = 'BookmarkListItem';
 
-export type BookmarkSortOption = 'dueWords' | 'category' | 'recent';
+export type BookmarkSortOption = 'dueWords' | 'alphabetical' | 'recent';
 
 // Create dynamic sort options with loading state
 const createBookmarkSortOptions = (
@@ -265,15 +216,15 @@ const createBookmarkSortOptions = (
   isDueWordsDataAvailable: boolean
 ): SortOption<BookmarkSortOption>[] => {
   const baseOptions: SortOption<BookmarkSortOption>[] = [
+    { key: 'alphabetical', label: 'A-Z' },
     { key: 'recent', label: 'Recently Added' },
-    { key: 'category', label: 'Category' },
   ];
 
-  // Only add due words option when data is available or loading
+  // Add due words option at the beginning when data is available or loading
   if (isDueWordsDataAvailable) {
-    baseOptions.splice(1, 0, { key: 'dueWords', label: 'Review Words' });
+    baseOptions.unshift({ key: 'dueWords', label: 'Review Words' });
   } else if (isDueWordsLoading) {
-    baseOptions.splice(1, 0, { key: 'dueWords', label: 'Review Words...' });
+    baseOptions.unshift({ key: 'dueWords', label: 'Review Words...' });
   }
 
   return baseOptions;
@@ -442,11 +393,9 @@ export default function BookmarksScreen(): JSX.Element {
         // Fallback to recent sort if due words data isn't ready
         return sortDirection === 'desc' ? dedupedReadingList : [...dedupedReadingList].reverse();
 
-      case 'category':
+      case 'alphabetical':
         return sortedList.sort((a, b) => {
-          const result = (a.articles?.category?.name || '').localeCompare(
-            b.articles?.category?.name || ''
-          );
+          const result = (a.articles?.title || '').localeCompare(b.articles?.title || '');
           return sortDirection === 'desc' ? -result : result;
         });
 
@@ -740,7 +689,7 @@ export default function BookmarksScreen(): JSX.Element {
           }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            <View style={styles.headerControls}>
+            <View>
               <SectionTitle title="Sort" isFirstSection={true} />
               <SortingControls
                 currentSort={currentSort}
@@ -748,7 +697,7 @@ export default function BookmarksScreen(): JSX.Element {
                 onSortChange={handleSortChange}
                 options={sortOptions}
               />
-              <View style={styles.savedArticlesSection}>
+              <View>
                 <SectionTitle title="Saved Articles" />
               </View>
             </View>
