@@ -33,7 +33,7 @@ import { useColors } from '@/hooks/useColors';
 import type { RootState } from '@/store/store';
 
 import madinaFont from '../assets/fonts/Madina.otf';
-import philosopherFont from '../assets/fonts/Philosopher-Regular.ttf';
+import figtreeFont from '../assets/fonts/Figtree.ttf';
 import { useAppPreloader } from '../hooks/useAppPreloader';
 import { useAuth } from '../hooks/useAuth';
 import { analytics } from '../services/analytics';
@@ -132,8 +132,8 @@ function AppContent() {
   const router = useRouter();
 
   const [fontsLoaded] = useFonts({
-    Philosopher: philosopherFont,
     Madina: madinaFont,
+    Figtree: figtreeFont,
   });
 
   const { preloadAppData, isLoaded } = useAppPreloader();

@@ -3,7 +3,7 @@ import React, { useMemo, memo } from 'react';
 import type { StyleProp, TextStyle } from 'react-native';
 import { Text, StyleSheet } from 'react-native';
 
-import { LAYOUT, getArabicTextStyle } from '@/constants/layout';
+import { LAYOUT, getArabicTextStyle, FONTS } from '@/constants/layout';
 import { useColors } from '@/hooks/useColors';
 import { useIsDarkMode } from '@/hooks/useThemeDetection';
 import type { ThemedTextProps } from '@/types/ui/text.types';
@@ -132,40 +132,48 @@ const styles = StyleSheet.create({
   body: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontFamily: FONTS.ENGLISH,
   },
   bodyBold: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     fontWeight: 'bold',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontFamily: FONTS.ENGLISH,
   },
   caption: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontFamily: FONTS.ENGLISH,
   },
   heading1: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.HUGE,
     fontWeight: '700',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.HUGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontFamily: FONTS.ENGLISH,
   },
   heading2: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.XLARGE,
     fontWeight: '600',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.XLARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontFamily: FONTS.ENGLISH,
   },
   heading3: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.LARGE,
     fontWeight: '600',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.LARGE * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.TIGHT,
+    fontFamily: FONTS.ENGLISH,
   },
   label: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.SMALL,
     fontWeight: '600',
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.SMALL * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
+    fontFamily: FONTS.ENGLISH,
   },
   link: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.MEDIUM * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textDecorationLine: 'underline',
+    fontFamily: FONTS.ENGLISH,
   },
   overline: {
     fontSize: LAYOUT.TYPOGRAPHY.SCALE.TINY,
@@ -173,5 +181,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     lineHeight: LAYOUT.TYPOGRAPHY.SCALE.TINY * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.NORMAL,
     textTransform: 'uppercase',
+    fontFamily: FONTS.ENGLISH,
   },
 });

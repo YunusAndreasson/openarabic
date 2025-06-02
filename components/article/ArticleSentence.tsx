@@ -10,7 +10,7 @@ import Animated, {
   useAnimatedStyle,
 } from 'react-native-reanimated';
 
-import { LAYOUT } from '../../constants/layout';
+import { LAYOUT, FONTS } from '../../constants/layout';
 import { useColors } from '../../hooks/useColors';
 import type { ThemeColors } from '../../types/ui/theme.types';
 import type { SentenceWord } from '../../types/vocabulary.types';
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   englishText: {
-    fontFamily: 'Philosopher',
+    fontFamily: FONTS.ENGLISH,
     paddingBottom: LAYOUT.SPACING.TINY,
     paddingTop: LAYOUT.SPACING.SMALL,
   },

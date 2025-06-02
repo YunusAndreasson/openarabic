@@ -6,11 +6,10 @@ import { BlurView } from 'expo-blur';
 import type { BlurTint } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import React, { useMemo, useCallback, memo, useEffect } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View, Text } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ThemedText } from '@/components/ThemedText';
 import { LAYOUT } from '@/constants/layout';
 import { Colors } from '@/constants/Colors';
 import { useColors } from '@/hooks/useColors';
@@ -127,11 +126,8 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
       ...styles.label,
       ...styles.labelPlatform,
       color: isFocused ? colors.tint : colors.tabIconDefault,
-      textShadowColor: isDarkMode ? colors.textShadowLight : colors.textShadowDark,
-      textShadowOffset: { width: 0, height: 0.5 },
-      textShadowRadius: 1,
     }),
-    [colors.tint, colors.tabIconDefault, colors.textShadowDark, colors.textShadowLight, isDarkMode]
+    [colors.tint, colors.tabIconDefault]
   );
 
   const rippleColor = useMemo(() => colors.navigationRipple, [colors.navigationRipple]);
@@ -200,9 +196,7 @@ const CustomTabBar = memo(({ state, descriptors, navigation }: BottomTabBarProps
                 },
               ]}
             />
-            <ThemedText style={getTabButtonStyle(isFocused)} skipDefaultColor>
-              {label}
-            </ThemedText>
+            <Text style={getTabButtonStyle(isFocused)}>{label}</Text>
           </PlatformPressable>
         );
       })}

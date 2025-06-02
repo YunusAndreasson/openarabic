@@ -4,6 +4,12 @@ import { Dimensions, Platform } from 'react-native';
 export const SCREEN_WIDTH = Dimensions.get('window').width;
 export const SCREEN_HEIGHT = Dimensions.get('window').height;
 
+// Font family constants
+export const FONTS = {
+  ENGLISH: 'Figtree', // Default font for all English text
+  ARABIC: 'Madina', // Font for Arabic text
+} as const;
+
 // Add constants for CollapsibleHeader component
 export const HEADER_HEIGHT = 50;
 export const HEADER_IMAGE_HEIGHT = 350;
@@ -313,7 +319,7 @@ export const getArabicTextStyle = (
   additionalStyles: TextStyle = {}
 ): TextStyle => {
   return {
-    fontFamily: 'Madina',
+    fontFamily: FONTS.ARABIC,
     fontSize,
     // Increase line height to prevent clipping of Arabic diacritics
     lineHeight: Math.round(fontSize * LAYOUT.TYPOGRAPHY.LINE_HEIGHT.ARABIC),
