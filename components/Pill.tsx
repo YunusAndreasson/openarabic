@@ -179,23 +179,24 @@ const getCategoryStyle = (
 ) => ({
   backgroundColor: isSelected
     ? isDarkMode
-      ? colors.tint
-      : colors.tint
+      ? `${colors.tint}CC` // 80% opacity for selected state
+      : `${colors.tint}CC`
     : isDarkMode
-      ? colors.elevation2
-      : colors.elevation1,
+      ? `${colors.elevation2}99` // 60% opacity for blur-like effect
+      : `${colors.elevation1}B3`, // 70% opacity for blur-like effect
   borderRadius: LAYOUT.BORDER_RADIUS.MEDIUM,
   paddingHorizontal: LAYOUT.SPACING.MEDIUM,
   paddingVertical: LAYOUT.SPACING.TINY + 2,
+  // Enhanced shadow for depth perception (simulates blur effect)
   ...(Platform.OS === 'ios'
     ? {
-        shadowColor: colors.shadow,
+        shadowColor: isDarkMode ? colors.black : colors.shadow,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: LAYOUT.OPACITY.XLIGHT,
-        shadowRadius: 4,
+        shadowOpacity: isDarkMode ? 0.4 : 0.15, // Increased opacity for blur-like effect
+        shadowRadius: 6, // Increased radius for softer shadow
       }
     : {
-        elevation: isSelected ? 3 : 2,
+        elevation: isSelected ? 4 : 3, // Higher elevation for blur-like effect
       }),
 });
 

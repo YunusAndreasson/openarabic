@@ -27,7 +27,7 @@ import { useArticlesByDueWords } from '@/hooks/useArticlesByDueWords';
 import { useArticlesByDifficultWords } from '@/hooks/useArticlesByDifficultWords';
 import { articlesService } from '@/services/articles';
 import { categoriesService } from '@/services/categories';
-import { setDailyPick } from '@/store/featuredContentSlice';
+import { setDailyPick, clearDailyPick } from '@/store/featuredContentSlice';
 import { useAppSelectorMemo, useAppDispatch } from '@/store/hooks';
 import { updateLastOpenedArticle } from '@/store/readingListSlice';
 import type { Article } from '@/types/articles.types';
@@ -36,6 +36,7 @@ import {
   getLatestArticles,
   getBeginnerArticles,
   getDailyPickArticle,
+  getFreshDailyPickArticle,
 } from '@/utils/articleUtils';
 import { getDayOfYear } from '@/utils/dateUtils';
 import { mediumFeedback } from '@/utils/haptics';
@@ -173,6 +174,9 @@ export default function ArticlesScreen(): JSX.Element {
     mediumFeedback();
 
     try {
+      // Clear the featured content state to force refresh
+      dispatch(clearDailyPick());
+
       // Invalidate only the queries that need refreshing
       const queriesToInvalidate: (string | readonly string[])[] = [['articles'], ['categories']];
 
@@ -192,12 +196,23 @@ export default function ArticlesScreen(): JSX.Element {
           })
         )
       );
+
+      // After refresh, set a new featured article using fresh random selection
+      setTimeout(() => {
+        if (articlesData.length > 0) {
+          const freshFeaturedArticle = getFreshDailyPickArticle(articlesData);
+          if (freshFeaturedArticle?.id) {
+            const today = new Date().toISOString().split('T')[0] || '';
+            dispatch(setDailyPick({ articleId: Number(freshFeaturedArticle.id), date: today }));
+          }
+        }
+      }, 100);
     } catch (error) {
       handleError(error instanceof Error ? error : new Error('Refresh failed'));
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, queryClient, user?.id]);
+  }, [isRefreshing, queryClient, user?.id, dispatch, articlesData]);
 
   const handleArticlePress = useCallback(
     (article: Article) => {
@@ -219,11 +234,13 @@ export default function ArticlesScreen(): JSX.Element {
   useEffect(() => {
     if (articlesError || articlesData.length === 0) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0] || '';
     if (dailyPick.date !== today) {
       const dailyPickArticle = getDailyPickArticle(articlesData, getDayOfYear());
-      if (dailyPickArticle?.id && today) {
-        dispatch(setDailyPick({ articleId: Number(dailyPickArticle.id), date: today }));
+      if (dailyPickArticle?.id) {
+        if (today) {
+          dispatch(setDailyPick({ articleId: Number(dailyPickArticle.id), date: today }));
+        }
       }
     }
   }, [articlesData, articlesError, dailyPick.date, dispatch]);

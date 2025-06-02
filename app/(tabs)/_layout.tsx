@@ -33,9 +33,9 @@ const TAB_SCREENS = [
   },
   {
     name: 'vocabulary',
-    title: 'Remember',
-    iconOutline: 'library-outline',
-    iconFilled: 'library',
+    title: 'Practice',
+    iconOutline: 'trending-up-outline',
+    iconFilled: 'trending-up',
   },
   {
     name: 'settings',

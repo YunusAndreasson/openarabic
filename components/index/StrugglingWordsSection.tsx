@@ -19,7 +19,7 @@ interface StrugglingWordsProps {
 
 interface WordCardProps {
   word: StudyWord;
-  onPlayAudio: (url: string | null) => void;
+  onPlayAudio: (url: string | null, englishUrl?: string | null) => void;
 }
 
 interface DifficultyInfo {
@@ -144,9 +144,9 @@ const WordCard = memo(({ word, onPlayAudio }: WordCardProps) => {
 
   const handlePress = () => {
     lightFeedback();
-    // Play the audio from the root if available
-    if (word.root?.audio_url) {
-      onPlayAudio(word.root.audio_url);
+    // Play both Arabic and English audio from the root if available
+    if (word.root?.audio_url || word.root?.audio_url_en) {
+      onPlayAudio(word.root.audio_url, word.root.audio_url_en);
     }
   };
 
@@ -202,11 +202,28 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   const { playAudio } = useSimpleAudioPlayer();
   const colors = useColors();
 
+  // Enhanced audio play function that plays both Arabic and English
+  const playWordAudio = async (arabicUrl: string | null, englishUrl?: string | null) => {
+    if (arabicUrl) {
+      await playAudio(arabicUrl);
+
+      // Play English audio after a short delay if available
+      if (englishUrl) {
+        setTimeout(() => {
+          playAudio(englishUrl);
+        }, 1500); // 1.5 second delay between Arabic and English
+      }
+    } else if (englishUrl) {
+      // Fallback to just English if no Arabic
+      await playAudio(englishUrl);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
         <SectionTitle
-          title="Words you struggle with"
+          title="Challenging Words"
           subtitle="Practice these to improve your retention rate"
           isFirstSection={true}
         />
@@ -224,7 +241,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
   return (
     <View style={styles.container}>
       <SectionTitle
-        title="Words you struggle with"
+        title="Challenging Words"
         subtitle="Practice these to improve your retention rate"
         isFirstSection={true}
       />
@@ -234,7 +251,7 @@ const StrugglingWordsSection = memo(({ words = [], isLoading = false }: Struggli
         contentContainerStyle={styles.scrollContent}
       >
         {displayedWords.map(word => (
-          <WordCard key={`word-${word.root_id}`} word={word} onPlayAudio={playAudio} />
+          <WordCard key={`word-${word.root_id}`} word={word} onPlayAudio={playWordAudio} />
         ))}
       </ScrollView>
     </View>

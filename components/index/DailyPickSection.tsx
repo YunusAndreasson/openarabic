@@ -16,7 +16,7 @@ interface DailyPickSectionProps {
 }
 
 /**
- * A section displaying the daily pick article
+ * A section displaying the featured article
  */
 const DailyPickSection: React.FC<DailyPickSectionProps> = ({
   article,
@@ -43,7 +43,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
     onPress(article);
   }, [article, onPress, queryClient]);
 
-  // Daily pick should be pre-loaded at startup since it's important
+  // Featured article should be pre-loaded at startup since it's important
   // This ensures it's ready when the user sees it
   useEffect(() => {
     if (article) {
@@ -62,7 +62,7 @@ const DailyPickSection: React.FC<DailyPickSectionProps> = ({
 
   return (
     <View style={styles.container}>
-      {showTitle && <SectionTitle title="Daily Pick" isFirstSection={true} />}
+      {showTitle && <SectionTitle title="Featured" isFirstSection={true} />}
       <ThemedCard
         variant="article"
         imageUrl={article.image_url || 'https://picsum.photos/800/400'}

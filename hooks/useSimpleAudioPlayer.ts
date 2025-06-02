@@ -11,40 +11,44 @@ export function useSimpleAudioPlayer() {
   /**
    * Play audio from a URL
    */
-  const playAudio = useCallback(async (audioUrl: string | null) => {
-    if (!audioUrl) return;
+  const playAudio = useCallback(
+    async (audioUrl: string | null): Promise<Audio.Sound | undefined> => {
+      if (!audioUrl) return;
 
-    try {
-      // Configure audio mode
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-      });
+      try {
+        // Configure audio mode
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+        });
 
-      // Load and play the sound
-      const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: true });
+        // Load and play the sound
+        const { sound } = await Audio.Sound.createAsync({ uri: audioUrl }, { shouldPlay: true });
 
-      setIsPlaying(true);
+        setIsPlaying(true);
 
-      // Set up completion handler
-      sound.setOnPlaybackStatusUpdate(status => {
-        if (status.isLoaded && status.didJustFinish) {
-          setIsPlaying(false);
-          sound.unloadAsync().catch(error => {
-            handleError(error instanceof Error ? error : new Error('Failed to unload audio'));
-          });
-        }
-      });
+        // Set up completion handler
+        sound.setOnPlaybackStatusUpdate(status => {
+          if (status.isLoaded && status.didJustFinish) {
+            setIsPlaying(false);
+            sound.unloadAsync().catch(error => {
+              handleError(error instanceof Error ? error : new Error('Failed to unload audio'));
+            });
+          }
+        });
 
-      // Start playback
-      await sound.playAsync();
+        // Start playback
+        await sound.playAsync();
 
-      return sound;
-    } catch (error) {
-      setIsPlaying(false);
-      handleError(error instanceof Error ? error : new Error('Failed to play audio'));
-    }
-  }, []);
+        return sound;
+      } catch (error) {
+        setIsPlaying(false);
+        handleError(error instanceof Error ? error : new Error('Failed to play audio'));
+        return undefined;
+      }
+    },
+    []
+  );
 
   return {
     isPlaying,

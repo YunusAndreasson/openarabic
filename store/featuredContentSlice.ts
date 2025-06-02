@@ -14,19 +14,21 @@ const initialState: FeaturedContentState = {
   },
 };
 
-
 const featuredContentSlice = createSlice({
   name: 'featuredContent',
   initialState,
   reducers: {
-    setDailyPick: (
-      state,
-      action: PayloadAction<{ articleId: number; date: string }>
-    ) => {
+    setDailyPick: (state, action: PayloadAction<{ articleId: number; date: string }>) => {
       state.dailyPick = action.payload;
+    },
+    clearDailyPick: state => {
+      state.dailyPick = {
+        articleId: null,
+        date: null,
+      };
     },
   },
 });
 
-export const { setDailyPick } = featuredContentSlice.actions;
+export const { setDailyPick, clearDailyPick } = featuredContentSlice.actions;
 export default featuredContentSlice.reducer;
